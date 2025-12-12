@@ -147,7 +147,7 @@ class TestMapIntegration(unittest.TestCase):
             with CDF(str(expected_map_path)) as cdf:
                 self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))
 
-    @skip('we set this up first for some reason, unskip once hi combined is done')
+    @skip("add 'epoch' and 'epoch_delta' to fields_which_may_differ in map_combination.py to make this pass")
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_hi_combined_sensor(self, mock_parse_cli_arguments):
         hi_test_data_dir = INTEGRATION_TEST_DATA_PATH / "hi"
@@ -182,11 +182,11 @@ class TestMapIntegration(unittest.TestCase):
             imap_l3_data_processor.imap_l3_processor()
 
             expected_map_path = ScienceFilePath(
-                'imap_hi_l3_hic-ena-h-sf-sp-full-hae-4deg-1yr_20250415_v001.cdf').construct_path()
+                'imap_hi_l3_hic-ena-h-hf-sp-full-hae-4deg-1yr_20250415_v001.cdf').construct_path()
             self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
 
             with CDF(str(expected_map_path)) as cdf:
-                self.assertEqual(files, set(cdf.attrs["Parents"]))
+                self.assertEqual(set(files), set(cdf.attrs["Parents"]))
 
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_lo_all_sp_maps(self, mock_parse_cli_arguments):

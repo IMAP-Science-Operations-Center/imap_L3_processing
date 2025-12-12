@@ -92,6 +92,7 @@ class TestImapL3DataProcessor(TestCase):
                 expected_processor.assert_called_once_with(mock_processing_input.return_value, expected_input_metadata)
                 mock_upload.assert_called_once_with(sentinel.cdf)
 
+    @patch('imap_l3_data_processor.HiCombinedInitializer')
     @patch('imap_l3_data_processor.UltraCombinedNSPInitializer')
     @patch('imap_l3_data_processor.UltraSPInitializer')
     @patch('imap_l3_data_processor.UltraProcessor')
@@ -105,10 +106,11 @@ class TestImapL3DataProcessor(TestCase):
                                                            mock_lo_processor_class, mock_lo_initializer_class,
                                                            mock_hi_processor_class, mock_hi_initializer_class,
                                                            mock_ultra_processor_class, mock_ultra_initializer_class,
-                                                           mock_ultra_combined_nsp_initializer_class):
+                                                           mock_ultra_combined_nsp_initializer_class,
+                                                           mock_hi_combined_initializer_class):
         test_cases = [
             ("hi", "sp-maps", mock_hi_initializer_class, mock_hi_processor_class, HI_SP_MAP_DESCRIPTORS),
-            ("hi", "hic-maps", mock_hi_initializer_class, mock_hi_processor_class, HI_COMBINED_DESCRIPTORS),
+            ("hi", "hic-maps", mock_hi_combined_initializer_class, mock_hi_processor_class, HI_COMBINED_DESCRIPTORS),
             ("lo", "all-maps", mock_lo_initializer_class, mock_lo_processor_class, LO_SP_MAP_DESCRIPTORS),
             ("ultra", "u45-maps", mock_ultra_initializer_class, mock_ultra_processor_class, ULTRA_45_DESCRIPTORS),
             ("ultra", "u90-maps", mock_ultra_initializer_class, mock_ultra_processor_class, ULTRA_90_DESCRIPTORS),

@@ -11,7 +11,7 @@ from imap_data_access.processing_input import ProcessingInputCollection
 from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcessor
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
-from imap_l3_processing.hi.hi_combined_initializer import HI_COMBINED_DESCRIPTORS
+from imap_l3_processing.hi.hi_combined_initializer import HI_COMBINED_DESCRIPTORS, HiCombinedInitializer
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.hi_sp_initializer import HiSPInitializer, HI_SP_MAP_DESCRIPTORS
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
@@ -86,7 +86,7 @@ def imap_l3_processor():
             args.descriptor):
         initializer_class, processor_class, descriptors = {
             ("hi", "sp-maps"): (HiSPInitializer, HiProcessor, HI_SP_MAP_DESCRIPTORS),
-            ("hi", "hic-maps"): (HiSPInitializer, HiProcessor, HI_COMBINED_DESCRIPTORS),
+            ("hi", "hic-maps"): (HiCombinedInitializer, HiProcessor, HI_COMBINED_DESCRIPTORS),
             ("lo", "all-maps"): (LoSPInitializer, LoProcessor, LO_SP_MAP_DESCRIPTORS),
             ("ultra", "u45-maps"): (UltraSPInitializer, UltraProcessor, ULTRA_45_DESCRIPTORS),
             ("ultra", "u90-maps"): (UltraSPInitializer, UltraProcessor, ULTRA_90_DESCRIPTORS),
