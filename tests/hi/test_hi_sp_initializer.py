@@ -3,16 +3,17 @@ from datetime import datetime
 from typing import Callable
 from unittest.mock import patch, call, Mock, sentinel
 
-from imap_l3_processing.hi.l3.hi_l3_initializer import HiL3Initializer, HI_SP_SPICE_KERNELS
+from imap_l3_processing.hi.hi_sp_initializer import HiSPInitializer, HI_SP_SPICE_KERNELS
 from imap_l3_processing.maps.map_descriptors import parse_map_descriptor, map_descriptor_parts_to_string
-from imap_l3_processing.maps.map_initializer import PossibleMapToProduce, logger
+from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
+from imap_l3_processing.maps.sp_map_initializer import logger
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import create_mock_query_results
 
 
-class TestHiL3Initializer(unittest.TestCase):
+class TestHiSPInitializer(unittest.TestCase):
     def setUp(self):
-        self.query_patcher = patch('imap_l3_processing.hi.l3.hi_l3_initializer.imap_data_access.query')
+        self.query_patcher = patch('imap_l3_processing.hi.hi_sp_initializer.imap_data_access.query')
         self.mock_query = self.query_patcher.start()
 
     def tearDown(self):
@@ -85,7 +86,7 @@ class TestHiL3Initializer(unittest.TestCase):
             )
         ]
 
-        initializer = HiL3Initializer()
+        initializer = HiSPInitializer()
 
         self.mock_query.assert_has_calls([
             call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-45', version="latest"),
@@ -135,7 +136,7 @@ class TestHiL3Initializer(unittest.TestCase):
             ]
         ]
 
-        initializer = HiL3Initializer()
+        initializer = HiSPInitializer()
         actual_possible_maps = initializer.get_maps_that_can_be_produced('h90-ena-h-sf-sp-full-hae-4deg-6mo')
 
         self.mock_query.assert_has_calls([
@@ -181,7 +182,6 @@ class TestHiL3Initializer(unittest.TestCase):
                 'imap_glows_l3e_survival-probability-hi-90_20100103-repoint00003_v001.cdf',
                 'imap_glows_l3e_survival-probability-hi-90_20100104-repoint00004_v001.cdf',
                 'imap_glows_l3e_survival-probability-hi-90_20100703-repoint00203_v001.cdf',
-
             ]),
             create_mock_query_results([
                 'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-6mo_20100101_v001.cdf',
@@ -200,7 +200,7 @@ class TestHiL3Initializer(unittest.TestCase):
             ]
         ]
 
-        initializer = HiL3Initializer()
+        initializer = HiSPInitializer()
 
         with self.assertLogs(logger=logger, level='WARNING') as log_context:
             actual_possible_maps = initializer.get_maps_that_can_be_produced('h90-ena-h-sf-sp-full-hae-4deg-6mo')
@@ -278,7 +278,7 @@ class TestHiL3Initializer(unittest.TestCase):
             )
         ]
 
-        initializer = HiL3Initializer()
+        initializer = HiSPInitializer()
 
         self.mock_query.assert_has_calls([
             call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-45', version="latest"),
@@ -311,11 +311,11 @@ class TestHiL3Initializer(unittest.TestCase):
 
         for descriptor, dependencies in cases:
             with self.subTest(descriptor):
-                initializer = HiL3Initializer()
+                initializer = HiSPInitializer()
                 actual_dependencies = initializer._get_l2_dependencies(parse_map_descriptor(descriptor))
                 self.assertEqual(dependencies, [map_descriptor_parts_to_string(d) for d in actual_dependencies])
 
-    @patch('imap_l3_processing.hi.l3.hi_l3_initializer.furnish_spice_metakernel')
+    @patch('imap_l3_processing.hi.hi_sp_initializer.furnish_spice_metakernel')
     def test_furnish_spice_dependencies(self, mock_furnish_metakernel):
         start_date = datetime(2025, 4, 15)
         end_date = datetime(2025, 7, 15)
@@ -330,7 +330,7 @@ class TestHiL3Initializer(unittest.TestCase):
         )
         map_to_produce = PossibleMapToProduce(set(), input_metadata)
 
-        hi_initializer = HiL3Initializer()
+        hi_initializer = HiSPInitializer()
         hi_initializer.furnish_spice_dependencies(map_to_produce)
 
         mock_furnish_metakernel.assert_called_once_with(start_date=start_date, end_date=end_date,

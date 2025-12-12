@@ -2,22 +2,22 @@ import unittest
 from datetime import datetime
 from unittest.mock import patch, call
 
-from imap_l3_processing.lo.l3.lo_initializer import LoInitializer, LO_SP_MAP_KERNELS
+from imap_l3_processing.lo.l3.lo_sp_initializer import LoSPInitializer, LO_SP_MAP_KERNELS
 from imap_l3_processing.maps.map_initializer import PossibleMapToProduce, MapInitializer
 from imap_l3_processing.models import InputMetadata
 from tests.integration.integration_test_helpers import ImapQueryPatcher
 
 
-class TestLoInitializer(unittest.TestCase):
+class TestLoSPInitializer(unittest.TestCase):
     def setUp(self):
-        self.query_patcher = patch('imap_l3_processing.lo.l3.lo_initializer.imap_data_access.query')
+        self.query_patcher = patch('imap_l3_processing.lo.l3.lo_sp_initializer.imap_data_access.query')
         self.mock_query = self.query_patcher.start()
 
     def tearDown(self):
         self.query_patcher.stop()
 
     def test_is_a_map_initializer(self):
-        initializer = LoInitializer()
+        initializer = LoSPInitializer()
         self.assertIsInstance(initializer, MapInitializer)
 
     @patch('imap_l3_processing.maps.map_initializer.read_cdf_parents')
@@ -75,7 +75,7 @@ class TestLoInitializer(unittest.TestCase):
             ]
         ]
 
-        initializer = LoInitializer()
+        initializer = LoSPInitializer()
         actual_maps_to_produce = initializer.get_maps_that_should_be_produced("l090-ena-h-sf-sp-ram-hae-6deg-12mo")
 
         self.mock_query.assert_has_calls([
@@ -114,7 +114,7 @@ class TestLoInitializer(unittest.TestCase):
 
         self.assertEqual([expected_possible_map_to_produce], actual_maps_to_produce)
 
-    @patch('imap_l3_processing.lo.l3.lo_initializer.furnish_spice_metakernel')
+    @patch('imap_l3_processing.lo.l3.lo_sp_initializer.furnish_spice_metakernel')
     def test_furnish_spice_dependencies(self, mock_furnish_metakernel):
         start_date = datetime(2025, 4, 15)
         end_date = datetime(2025, 7, 15)
@@ -129,7 +129,7 @@ class TestLoInitializer(unittest.TestCase):
         )
         map_to_produce = PossibleMapToProduce(set(), input_metadata)
 
-        lo_initializer = LoInitializer()
+        lo_initializer = LoSPInitializer()
         lo_initializer.furnish_spice_dependencies(map_to_produce)
 
         mock_furnish_metakernel.assert_called_once_with(start_date=start_date, end_date=end_date,

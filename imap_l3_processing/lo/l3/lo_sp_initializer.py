@@ -4,7 +4,8 @@ from pathlib import Path
 import imap_data_access
 
 from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, SurvivalCorrection
-from imap_l3_processing.maps.map_initializer import MapInitializer, PossibleMapToProduce
+from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
+from imap_l3_processing.maps.sp_map_initializer import SPMapInitializer
 from imap_l3_processing.utils import SpiceKernelTypes, furnish_spice_metakernel
 
 LO_SP_MAP_KERNELS = [
@@ -38,7 +39,7 @@ LO_SPECTRAL_INDEX_MAP_DESCRIPTORS = [
 ]
 
 
-class LoInitializer(MapInitializer):
+class LoSPInitializer(SPMapInitializer):
     def __init__(self):
         glows_query_result = imap_data_access.query(
             instrument='glows',
@@ -47,11 +48,9 @@ class LoInitializer(MapInitializer):
             version="latest"
         )
         self.glows_files_by_repointing = {int(r["repointing"]): Path(r["file_path"]).name for r in glows_query_result}
-
         lo_l2_query_result = imap_data_access.query(instrument="lo", data_level="l2")
-        lo_l3_query_result = imap_data_access.query(instrument="lo", data_level="l3")
 
-        super().__init__("lo", lo_l2_query_result, lo_l3_query_result)
+        super().__init__("lo", lo_l2_query_result)
 
     def _collect_glows_psets_by_repoint(self, descriptor: str) -> dict[int, str]:
         return self.glows_files_by_repointing

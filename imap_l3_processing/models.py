@@ -16,7 +16,7 @@ class InputMetadata:
     instrument: str
     data_level: str
     start_date: datetime
-    end_date: datetime
+    end_date: Optional[datetime]
     version: str
     descriptor: str = ""
     repointing: Optional[int] = None

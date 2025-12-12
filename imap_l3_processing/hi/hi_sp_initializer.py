@@ -5,7 +5,8 @@ from pathlib import Path
 import imap_data_access
 
 from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, Sensor, SurvivalCorrection, SpinPhase
-from imap_l3_processing.maps.map_initializer import MapInitializer, PossibleMapToProduce
+from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
+from imap_l3_processing.maps.sp_map_initializer import SPMapInitializer
 from imap_l3_processing.utils import SpiceKernelTypes, furnish_spice_metakernel
 
 logger = logging.getLogger(__name__)
@@ -72,7 +73,7 @@ HI_SP_MAP_DESCRIPTORS = [
 ]
 
 
-class HiL3Initializer(MapInitializer):
+class HiSPInitializer(SPMapInitializer):
     def __init__(self):
         sp_hi45_query_result = imap_data_access.query(
             instrument='glows',
@@ -91,8 +92,7 @@ class HiL3Initializer(MapInitializer):
         self.glows_hi90_file_by_repoint = {int(r["repointing"]): Path(r["file_path"]).name for r in sp_hi90_query_result}
 
         hi_l2_query_result = imap_data_access.query(instrument='hi', data_level='l2')
-        hi_l3_query_result = imap_data_access.query(instrument='hi', data_level='l3')
-        super().__init__("hi", hi_l2_query_result, hi_l3_query_result)
+        super().__init__("hi", hi_l2_query_result)
 
     def furnish_spice_dependencies(self, map_to_produce: PossibleMapToProduce):
         furnish_spice_metakernel(start_date=map_to_produce.input_metadata.start_date,

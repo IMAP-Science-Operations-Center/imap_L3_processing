@@ -4,11 +4,11 @@ from unittest.mock import patch, call, sentinel
 
 from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput
 
-from imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies import HiL3CombinedMapDependencies
+from imap_l3_processing.hi.hi_combined_sensor_dependencies import HiL3CombinedMapDependencies
 
 
-class TestHiL3CombinedDependencies(unittest.TestCase):
-    @patch("imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies.RectangularIntensityMapData.read_from_path")
+class TestHiCombinedDependencies(unittest.TestCase):
+    @patch("imap_l3_processing.hi.hi_combined_sensor_dependencies.RectangularIntensityMapData.read_from_path")
     def test_from_file_paths(self, read_cdf):
         hi_map_paths = [
             Path("test_hi_l3_cdf1.cdf"),
@@ -29,8 +29,8 @@ class TestHiL3CombinedDependencies(unittest.TestCase):
         self.assertEqual(read_cdf.call_count, 3)
         self.assertEqual(expected_return_maps, result.maps)
 
-    @patch("imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies.imap_data_access.download")
-    @patch("imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies.RectangularIntensityMapData.read_from_path")
+    @patch("imap_l3_processing.hi.hi_combined_sensor_dependencies.imap_data_access.download")
+    @patch("imap_l3_processing.hi.hi_combined_sensor_dependencies.RectangularIntensityMapData.read_from_path")
     def test_fetch_dependencies(self, read_cdf, mock_download):
         file_name1 = "imap_hi_l3_h90-spx-h-hf-sp-ram-hae-4deg-6mo_20250422_v001.cdf"
         file_name2 = "imap_hi_l3_h90-spx-h-hf-sp-anti-hae-4deg-6mo_20250422_v001.cdf"
