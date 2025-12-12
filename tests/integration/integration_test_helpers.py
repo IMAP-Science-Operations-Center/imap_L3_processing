@@ -102,8 +102,10 @@ class RequestsGetPatcher:
                     prefix = kwargs['params'].get("spice_path") or ""
 
                     spice_file_paths = [SPICEFilePath(fn) for fn in self.spice_file_names]
+                    requested_spice_paths = [p for p in spice_file_paths if p.spice_metadata["type"] in
+                                             kwargs["params"]["file_types"]]
                     all_spice_paths = []
-                    for spice_file in spice_file_paths:
+                    for spice_file in requested_spice_paths:
                         spice_subdir_name = spice_file.construct_path().parent.name
                         spice_file_name = spice_file.construct_path().name
                         spice_path = str(Path(prefix) / spice_subdir_name / spice_file_name)

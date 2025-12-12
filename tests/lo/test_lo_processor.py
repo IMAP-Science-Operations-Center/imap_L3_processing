@@ -64,54 +64,64 @@ class TestLoProcessor(unittest.TestCase):
                                             mock_process_survival_prob,
                                             mock_fetch_survival_dependencies, mock_get_parent_file_names):
         mock_get_parent_file_names.return_value = ["somewhere"]
+        cases = {
+            "spacecraft": "sf",
+            "heliospheric": "hf"
+        }
 
-        input_metadata = InputMetadata(instrument="lo",
-                                       data_level="l3",
-                                       start_date=datetime.now(),
-                                       end_date=datetime.now() + timedelta(days=1),
-                                       version="",
-                                       descriptor="l090-ena-h-sf-sp-ram-hae-4deg-6mo",
-                                       )
+        for case, reference_frame in cases.items():
+            with self.subTest(case):
+                input_metadata = InputMetadata(instrument="lo",
+                                               data_level="l3",
+                                               start_date=datetime.now(),
+                                               end_date=datetime.now() + timedelta(days=1),
+                                               version="",
+                                               descriptor=f"l090-ena-h-{reference_frame}-sp-ram-hae-4deg-6mo",
+                                               )
 
-        dependencies = Mock(
-            l1c_data=[InputRectangularPointingSet(
-                epoch=datetime(2025, 1, 1),
-                epoch_delta=None,
-                repointing=1,
-                epoch_j2000=np.array([10]),
-                exposure_times=np.full((1, 7, 3600, 40), 2),
-                esa_energy_step=np.arange(7),
-                pointing_start_met=np.array([43200_000_000_000]),
-                pointing_end_met=np.array([43200_000_100_000]),
-            )],
-            dependency_file_paths=[Path("folder/map"), Path("folder/l1c")]
-        )
-        mock_fetch_survival_dependencies.return_value = dependencies
+                dependencies = Mock(
+                    l1c_data=[InputRectangularPointingSet(
+                        epoch=datetime(2025, 1, 1),
+                        epoch_delta=None,
+                        repointing=1,
+                        epoch_j2000=np.array([10]),
+                        exposure_times=np.full((1, 7, 3600, 40), 2),
+                        esa_energy_step=np.arange(7),
+                        pointing_start_met=np.array([43200_000_000_000]),
+                        pointing_end_met=np.array([43200_000_100_000]),
+                    )],
+                    dependency_file_paths=[Path("folder/map"), Path("folder/l1c")]
+                )
+                mock_fetch_survival_dependencies.return_value = dependencies
 
-        mock_process_survival_prob.return_value = sentinel.survival_probabilities
+                mock_process_survival_prob.return_value = sentinel.survival_probabilities
 
-        processor = LoProcessor(sentinel.input_dependencies, input_metadata)
-        product = processor.process(spice_frame_name=SpiceFrame.IMAP_DPS)
+                processor = LoProcessor(sentinel.input_dependencies, input_metadata)
+                product = processor.process(spice_frame_name=SpiceFrame.IMAP_DPS)
 
-        mock_fetch_survival_dependencies.assert_called_once_with(sentinel.input_dependencies,
-                                                                 Instrument.IMAP_LO)
+                mock_fetch_survival_dependencies.assert_called_once_with(sentinel.input_dependencies,
+                                                                         Instrument.IMAP_LO)
 
-        mock_process_survival_prob.assert_called_once_with(dependencies, SpiceFrame.IMAP_DPS)
+                mock_process_survival_prob.assert_called_once_with(dependencies, SpiceFrame.IMAP_DPS)
 
-        np.testing.assert_array_equal(np.full((1, 7, 3600), 80), dependencies.l1c_data[0].exposure_times)
+                np.testing.assert_array_equal(np.full((1, 7, 3600), 80), dependencies.l1c_data[0].exposure_times)
 
-        mock_save_data.assert_called_once_with(RectangularIntensityDataProduct(
-            input_metadata=input_metadata,
-            parent_file_names=["l1c", "map", "somewhere"],
-            data=sentinel.survival_probabilities))
-        self.assertEqual([mock_save_data.return_value], product)
+                mock_save_data.assert_called_once_with(RectangularIntensityDataProduct(
+                    input_metadata=input_metadata,
+                    parent_file_names=["l1c", "map", "somewhere"],
+                    data=sentinel.survival_probabilities))
+                self.assertEqual([mock_save_data.return_value], product)
+
+                mock_fetch_survival_dependencies.reset_mock()
+                mock_process_survival_prob.reset_mock()
+                mock_save_data.reset_mock()
 
     def test_rejects_unimplemented_descriptors(self):
         input_collection = ProcessingInputCollection()
 
         cases = [
             ("not-a-valid-descriptor", ValueError, ("Could not parse descriptor not-a-valid-descriptor",)),
-            ("l090-ena-h-hf-sp-ram-hae-6deg-1yr", NotImplementedError, ("l090-ena-h-hf-sp-ram-hae-6deg-1yr",)),
+            ("l090-ena-h-hf-nsp-ram-hae-6deg-1yr", NotImplementedError, ("l090-ena-h-hf-nsp-ram-hae-6deg-1yr",)),
         ]
         for descriptor, exception_class, exception_args in cases:
             with self.subTest(descriptor):
@@ -126,3 +136,4 @@ class TestLoProcessor(unittest.TestCase):
                 with self.assertRaises(exception_class) as cm:
                     processor.process()
                 self.assertEqual(exception_args, cm.exception.args)
+

@@ -13,6 +13,8 @@ LO_SP_MAP_KERNELS = [
     SpiceKernelTypes.ScienceFrames,
     SpiceKernelTypes.PointingAttitude,
     SpiceKernelTypes.SpacecraftClock,
+    SpiceKernelTypes.EphemerisReconstructed,
+    SpiceKernelTypes.PlanetaryEphemeris,
 ]
 
 LO_SP_MAP_DESCRIPTORS = [

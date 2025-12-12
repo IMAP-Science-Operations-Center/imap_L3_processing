@@ -27,7 +27,7 @@ class LoProcessor(MapProcessor):
                 spectral_fit_data = perform_spectral_fit(deps.map_data)
                 data_product = RectangularSpectralIndexDataProduct(self.input_metadata, spectral_fit_data)
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
-                                    reference_frame=ReferenceFrame.Spacecraft):
+                                    reference_frame=ReferenceFrame.Spacecraft | ReferenceFrame.Heliospheric):
                 deps = HiLoL3SurvivalDependencies.fetch_dependencies(self.dependencies, Instrument.IMAP_LO)
                 deps.l1c_data = list(map(self._collapse_pset_dimension, deps.l1c_data))
                 data = process_survival_probabilities(deps, spice_frame_name)
