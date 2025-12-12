@@ -11,8 +11,9 @@ from imap_data_access.processing_input import ProcessingInputCollection
 from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcessor
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
+from imap_l3_processing.hi.hi_combined_initializer import HI_COMBINED_DESCRIPTORS
 from imap_l3_processing.hi.hi_processor import HiProcessor
-from imap_l3_processing.hi.hi_sp_initializer import HiSPInitializer, HI_SP_MAP_DESCRIPTORS, HI_COMBINED_DESCRIPTORS
+from imap_l3_processing.hi.hi_sp_initializer import HiSPInitializer, HI_SP_MAP_DESCRIPTORS
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.lo.l3.lo_sp_initializer import LoSPInitializer, LO_SP_MAP_DESCRIPTORS
 from imap_l3_processing.lo.lo_processor import LoProcessor
@@ -177,23 +178,3 @@ if __name__ == '__main__':
         except Exception as e:
             logger.error("Unhandled Exception:")
             raise e
-
-
-def build_ultra_sp_intializer():
-    sf_sp_query_result = imap_data_access.query(instrument='glows', data_level='l3e',
-                                                descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR, version="latest")
-    self.sf_glows_psets_by_repointing = {int(r["repointing"]): Path(r["file_path"]).name for r in
-                                         sf_sp_query_result}
-    hf_sp_query_result = imap_data_access.query(instrument='glows', data_level='l3e',
-                                                descriptor=GLOWS_L3E_ULTRA_HF_DESCRIPTOR, version="latest")
-    self.hf_glows_psets_by_repointing = {int(r["repointing"]): Path(r["file_path"]).name for r in
-                                         hf_sp_query_result}
-
-    l2_query_result = imap_data_access.query(instrument="ultra", data_level="l2")
-    l3_query_result = imap_data_access.query(instrument="ultra", data_level="l3")
-    self._energy_bin_group_sizes_files = imap_data_access.query(
-        table="ancillary",
-        instrument="ultra",
-        descriptor="l2-energy-bin-group-sizes",
-        version="latest")
-    return UltraSPInitializer()

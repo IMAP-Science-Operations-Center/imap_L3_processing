@@ -2,7 +2,7 @@ import unittest
 from datetime import datetime
 from unittest.mock import patch, call, Mock
 
-from imap_l3_processing.hi.l3.hi_combined_l3_initializer import HiCombinedL3Initializer
+from imap_l3_processing.hi.hi_combined_initializer import HiCombinedL3Initializer
 from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import create_mock_query_results
@@ -10,7 +10,7 @@ from tests.test_helpers import create_mock_query_results
 
 class TestHiCombinedL3Initializer(unittest.TestCase):
     def setUp(self):
-        self.query_patcher = patch('imap_l3_processing.hi.l3.hi_combined_l3_initializer.imap_data_access.query')
+        self.query_patcher = patch('imap_l3_processing.hi.hi_combined_initializer.imap_data_access.query')
         self.mock_query = self.query_patcher.start()
 
     def teardown(self):
@@ -66,7 +66,7 @@ class TestHiCombinedL3Initializer(unittest.TestCase):
 
         self.assertEqual(expected_maps_to_produce, actual_maps_to_produce)
 
-    @patch('imap_l3_processing.hi.l3.hi_combined_l3_initializer.read_cdf_parents')
+    @patch('imap_l3_processing.hi.hi_combined_initializer.read_cdf_parents')
     def test_get_maps_that_should_be_produced_existing_combined_and_6month_but_no_new_maps(self,
                                                                                            mock_read_cdf_parents: Mock):
         self.mock_query.side_effect = [

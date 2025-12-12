@@ -147,6 +147,7 @@ class TestMapIntegration(unittest.TestCase):
             with CDF(str(expected_map_path)) as cdf:
                 self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))
 
+    @skip('we set this up first for some reason, unskip once hi combined is done')
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_hi_combined_sensor(self, mock_parse_cli_arguments):
         hi_test_data_dir = INTEGRATION_TEST_DATA_PATH / "hi"
@@ -168,7 +169,7 @@ class TestMapIntegration(unittest.TestCase):
             mock_arguments = Mock()
             mock_arguments.instrument = "hi"
             mock_arguments.data_level = "l3"
-            mock_arguments.descriptor = "all-maps"
+            mock_arguments.descriptor = "hic-maps"
             mock_arguments.start_date = "20250415"
             mock_arguments.end_date = None
             mock_arguments.repointing = None

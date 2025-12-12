@@ -7,7 +7,8 @@ from imap_data_access.processing_input import ScienceInput, ProcessingInputColle
     AncillaryInput, SPICEInput
 
 from imap_l3_data_processor import imap_l3_processor
-from imap_l3_processing.hi.hi_sp_initializer import HI_SP_MAP_DESCRIPTORS, HI_COMBINED_DESCRIPTORS
+from imap_l3_processing.hi.hi_combined_initializer import HI_COMBINED_DESCRIPTORS
+from imap_l3_processing.hi.hi_sp_initializer import HI_SP_MAP_DESCRIPTORS
 from imap_l3_processing.lo.l3.lo_sp_initializer import LO_SP_MAP_DESCRIPTORS
 from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
 from imap_l3_processing.models import InputMetadata
@@ -101,9 +102,9 @@ class TestImapL3DataProcessor(TestCase):
     @patch('imap_l3_data_processor.imap_data_access.upload')
     @patch('imap_l3_data_processor.argparse')
     def test_scheduled_map_jobs_invoke_correct_initializer(self, mock_argparse, mock_upload,
-                                                  mock_lo_processor_class, mock_lo_initializer_class,
-                                                  mock_hi_processor_class, mock_hi_initializer_class,
-                                                  mock_ultra_processor_class, mock_ultra_initializer_class,
+                                                           mock_lo_processor_class, mock_lo_initializer_class,
+                                                           mock_hi_processor_class, mock_hi_initializer_class,
+                                                           mock_ultra_processor_class, mock_ultra_initializer_class,
                                                            mock_ultra_combined_nsp_initializer_class):
         test_cases = [
             ("hi", "sp-maps", mock_hi_initializer_class, mock_hi_processor_class, HI_SP_MAP_DESCRIPTORS),
