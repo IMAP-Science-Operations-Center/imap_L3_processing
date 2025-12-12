@@ -3,7 +3,8 @@ from datetime import datetime
 from unittest.mock import patch, call
 
 from imap_l3_processing.glows.descriptors import GLOWS_L3E_ULTRA_SF_DESCRIPTOR, GLOWS_L3E_ULTRA_HF_DESCRIPTOR
-from imap_l3_processing.maps.map_initializer import MapInitializer, PossibleMapToProduce
+from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
+from imap_l3_processing.maps.sp_map_initializer import SPMapInitializer
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.ultra.ultra_sp_initializer import UltraSPInitializer, ULTRA_SP_SPICE_KERNELS
 from tests.integration.integration_test_helpers import ImapQueryPatcher
@@ -11,7 +12,7 @@ from tests.integration.integration_test_helpers import ImapQueryPatcher
 
 class TestUltraSPInitializer(unittest.TestCase):
     def test_is_map_initializer(self):
-        self.assertIsInstance(UltraSPInitializer(), MapInitializer)
+        self.assertIsInstance(UltraSPInitializer(), SPMapInitializer)
 
     def setUp(self):
         self.mock_query_patcher = patch('imap_l3_processing.ultra.ultra_sp_initializer.imap_data_access.query')
@@ -418,7 +419,3 @@ class TestUltraSPInitializer(unittest.TestCase):
 
         mock_furnish_metakernel.assert_called_once_with(start_date=start_date, end_date=end_date,
                                                         kernel_types=ULTRA_SP_SPICE_KERNELS)
-
-
-class TestUltraCombinedNSPInitializer(unittest.TestCase):
-    pass

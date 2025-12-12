@@ -11,8 +11,9 @@ from imap_l3_processing.hi.hi_sp_initializer import HI_SP_MAP_DESCRIPTORS, HI_CO
 from imap_l3_processing.lo.l3.lo_sp_initializer import LO_SP_MAP_DESCRIPTORS
 from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
 from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.ultra.ultra_combined_nsp_initializer import ULTRA_COMBINED_NSP_DESCRIPTORS
 from imap_l3_processing.ultra.ultra_sp_initializer import ULTRA_45_DESCRIPTORS, ULTRA_90_DESCRIPTORS, \
-    ULTRA_COMBINED_SP_DESCRIPTORS, ULTRA_COMBINED_NSP_DESCRIPTORS
+    ULTRA_COMBINED_SP_DESCRIPTORS
 
 
 class TestImapL3DataProcessor(TestCase):
@@ -90,6 +91,7 @@ class TestImapL3DataProcessor(TestCase):
                 expected_processor.assert_called_once_with(mock_processing_input.return_value, expected_input_metadata)
                 mock_upload.assert_called_once_with(sentinel.cdf)
 
+    @patch('imap_l3_data_processor.UltraCombinedNSPInitializer')
     @patch('imap_l3_data_processor.UltraSPInitializer')
     @patch('imap_l3_data_processor.UltraProcessor')
     @patch('imap_l3_data_processor.HiSPInitializer')
@@ -98,11 +100,11 @@ class TestImapL3DataProcessor(TestCase):
     @patch('imap_l3_data_processor.LoProcessor')
     @patch('imap_l3_data_processor.imap_data_access.upload')
     @patch('imap_l3_data_processor.argparse')
-    def test_scheduled_lo_job_invokes_initializer(self, mock_argparse, mock_upload,
+    def test_scheduled_map_jobs_invoke_correct_initializer(self, mock_argparse, mock_upload,
                                                   mock_lo_processor_class, mock_lo_initializer_class,
                                                   mock_hi_processor_class, mock_hi_initializer_class,
                                                   mock_ultra_processor_class, mock_ultra_initializer_class,
-                                                  ):
+                                                           mock_ultra_combined_nsp_initializer_class):
         test_cases = [
             ("hi", "sp-maps", mock_hi_initializer_class, mock_hi_processor_class, HI_SP_MAP_DESCRIPTORS),
             ("hi", "hic-maps", mock_hi_initializer_class, mock_hi_processor_class, HI_COMBINED_DESCRIPTORS),
@@ -112,7 +114,7 @@ class TestImapL3DataProcessor(TestCase):
             (
                 "ultra", "ulc-sp-maps", mock_ultra_initializer_class, mock_ultra_processor_class,
                 ULTRA_COMBINED_SP_DESCRIPTORS),
-            ("ultra", "ulc-nsp-maps", mock_ultra_initializer_class, mock_ultra_processor_class,
+            ("ultra", "ulc-nsp-maps", mock_ultra_combined_nsp_initializer_class, mock_ultra_processor_class,
              ULTRA_COMBINED_NSP_DESCRIPTORS),
         ]
 

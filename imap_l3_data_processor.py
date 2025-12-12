@@ -20,9 +20,11 @@ from imap_l3_processing.maps.map_descriptors import parse_map_descriptor
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.swe_processor import SweProcessor
+from imap_l3_processing.ultra.ultra_combined_nsp_initializer import UltraCombinedNSPInitializer, \
+    ULTRA_COMBINED_NSP_DESCRIPTORS
 from imap_l3_processing.ultra.ultra_processor import UltraProcessor
 from imap_l3_processing.ultra.ultra_sp_initializer import UltraSPInitializer, ULTRA_45_DESCRIPTORS, \
-    ULTRA_90_DESCRIPTORS, ULTRA_COMBINED_SP_DESCRIPTORS, ULTRA_COMBINED_NSP_DESCRIPTORS
+    ULTRA_90_DESCRIPTORS, ULTRA_COMBINED_SP_DESCRIPTORS
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +90,7 @@ def imap_l3_processor():
             ("ultra", "u45-maps"): (UltraSPInitializer, UltraProcessor, ULTRA_45_DESCRIPTORS),
             ("ultra", "u90-maps"): (UltraSPInitializer, UltraProcessor, ULTRA_90_DESCRIPTORS),
             ("ultra", "ulc-sp-maps"): (UltraSPInitializer, UltraProcessor, ULTRA_COMBINED_SP_DESCRIPTORS),
-            ("ultra", "ulc-nsp-maps"): (UltraSPInitializer, UltraProcessor, ULTRA_COMBINED_NSP_DESCRIPTORS),
+            ("ultra", "ulc-nsp-maps"): (UltraCombinedNSPInitializer, UltraProcessor, ULTRA_COMBINED_NSP_DESCRIPTORS),
         }[args.instrument, args.descriptor]
 
         initializer = initializer_class()
