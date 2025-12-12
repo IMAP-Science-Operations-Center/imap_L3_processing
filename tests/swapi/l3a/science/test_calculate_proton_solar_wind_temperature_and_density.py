@@ -22,14 +22,14 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
         file_path = Path(
             imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
         with CDF(str(file_path)) as cdf:
-            energy = cdf["energy"][...]
+            energy = cdf["esa_energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
             count_rate_delta = cdf["swp_coin_unc"][...]
 
         efficiency = 0.1
 
         temperature, density = calculate_proton_solar_wind_temperature_and_density_for_one_sweep(
-            uarray(count_rate, count_rate_delta)[4], energy, efficiency)
+            uarray(count_rate, count_rate_delta)[4], energy[4], efficiency)
 
         self.assertAlmostEqual(100349.82969792404, temperature.nominal_value, 0)
         self.assertAlmostEqual(6277.912502, temperature.std_dev, 0)
@@ -40,7 +40,7 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
         file_path = Path(
             imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
         with CDF(str(file_path)) as cdf:
-            energy = cdf["energy"][...]
+            energy = cdf["esa_energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
             count_rate_delta = cdf["swp_coin_unc"][...]
 
@@ -111,7 +111,7 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
 
         file_path = get_test_data_path('swapi/imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf')
         with CDF(str(file_path)) as cdf:
-            energy = cdf["energy"][...]
+            energy = cdf["esa_energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
             count_rate_delta = cdf["swp_coin_unc"][...]
 

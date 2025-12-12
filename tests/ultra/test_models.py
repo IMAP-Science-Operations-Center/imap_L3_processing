@@ -6,7 +6,7 @@ from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import ENERGY_VAR_NAME, PROBABILITY_OF_SURVIVAL_VAR_NAME, \
     HEALPIX_INDEX_VAR_NAME, EPOCH_CDF_VAR_NAME
-from imap_l3_processing.ultra.l3.models import UltraGlowsL3eData, UltraL1CPSet
+from imap_l3_processing.ultra.models import UltraGlowsL3eData, UltraL1CPSet
 from tests.spice_test_case import SpiceTestCase
 from tests.test_helpers import get_test_data_folder, with_tempdir, get_integration_test_data_path
 

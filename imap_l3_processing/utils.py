@@ -11,6 +11,7 @@ import imap_data_access
 import requests
 import spiceypy
 from imap_data_access import ScienceFilePath
+from imap_data_access.processing_input import ProcessingInputCollection
 from requests import RequestException
 from spacepy.pycdf import CDF
 
@@ -23,9 +24,8 @@ from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, 
     HealPixIntensityMapData, HealPixSpectralIndexMapData, RectangularSpectralIndexDataProduct, \
     RectangularIntensityDataProduct, HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct, MapDataProduct
 from imap_l3_processing.models import UpstreamDataDependency, DataProduct, MagL1dData, InputMetadata
-from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
+from imap_l3_processing.ultra.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.version import VERSION
-from imap_data_access.processing_input import ProcessingInputCollection
 
 logger = logging.getLogger(__name__)
 

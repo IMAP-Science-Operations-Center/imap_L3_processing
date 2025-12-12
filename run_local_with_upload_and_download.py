@@ -126,7 +126,7 @@ if __name__ == "__main__":
             subprocess.run([sys.executable, 'imap_l3_data_processor.py', '--instrument', 'swapi', '--data-level', 'l3a',
                             '--descriptor', 'proton-sw', '--start-date', '20250606', '--version', 'v000',
                             '--dependency',
-                            '[{"type":"science","files":["imap_swapi_l2_sci_20250606_v001.cdf"]},'
+                            '[{"type":"science","files":["imap_swapi_l2_sci_20251208_v006.cdf"]},'
                             '{"type":"ancillary","files":["imap_swapi_proton-density-temperature-lut_20240905_v000.dat"]},'
                             '{"type":"ancillary","files":["imap_swapi_alpha-density-temperature-lut_20240920_v000.dat"]},'
                             '{"type":"ancillary","files":["imap_swapi_clock-angle-and-flow-deflection-lut_20240918_v000.dat"]},'
@@ -136,7 +136,7 @@ if __name__ == "__main__":
                             '{"type":"ancillary","files":["imap_swapi_density-of-neutral-helium-lut_20241023_v000.dat"]},'
                             '{"type": "spice", "files": ["imap_sclk_0000.tsc"]},' +
                             '{"type": "spice", "files": ["naif0012.tls"]},' +
-                            '{"type": "spice", "files": ["imap_science_0001.tf"]},' +
+                            '{"type": "spice", "files": ["imap_science_108.tf"]},' +
                             '{"type": "spice", "files": ["imap_001.tf"]},' +
                             '{"type": "spice", "files": ["imap_2025_105_2026_105_01.ah.bc"]},' +
                             '{"type": "spice", "files": ["imap_dps_2025_105_2026_105_01.ah.bc"]}'

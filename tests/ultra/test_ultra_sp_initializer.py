@@ -3,18 +3,19 @@ from datetime import datetime
 from unittest.mock import patch, call
 
 from imap_l3_processing.glows.descriptors import GLOWS_L3E_ULTRA_SF_DESCRIPTOR, GLOWS_L3E_ULTRA_HF_DESCRIPTOR
-from imap_l3_processing.maps.map_initializer import MapInitializer, PossibleMapToProduce
+from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
+from imap_l3_processing.maps.sp_map_initializer import SPMapInitializer
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.ultra.l3.ultra_initializer import UltraInitializer, ULTRA_SP_SPICE_KERNELS
+from imap_l3_processing.ultra.ultra_sp_initializer import UltraSPInitializer, ULTRA_SP_SPICE_KERNELS
 from tests.integration.integration_test_helpers import ImapQueryPatcher
 
 
-class TestUltraInitializer(unittest.TestCase):
+class TestUltraSPInitializer(unittest.TestCase):
     def test_is_map_initializer(self):
-        self.assertIsInstance(UltraInitializer(), MapInitializer)
+        self.assertIsInstance(UltraSPInitializer(), SPMapInitializer)
 
     def setUp(self):
-        self.mock_query_patcher = patch('imap_l3_processing.ultra.l3.ultra_initializer.imap_data_access.query')
+        self.mock_query_patcher = patch('imap_l3_processing.ultra.ultra_sp_initializer.imap_data_access.query')
         self.mock_query = self.mock_query_patcher.start()
 
     def tearDown(self):
@@ -28,6 +29,7 @@ class TestUltraInitializer(unittest.TestCase):
         ]
 
         for sensor in sensors:
+            self.mock_query.reset_mock()
             with self.subTest(sensor=sensor):
                 self.mock_query.side_effect = ImapQueryPatcher([
                     'imap_glows_l3e_survival-probability-ul-sf_20100101-repoint00001_v001.cdf',
@@ -85,7 +87,7 @@ class TestUltraInitializer(unittest.TestCase):
                     ]
                 ]
 
-                initializer = UltraInitializer()
+                initializer = UltraSPInitializer()
                 actual_maps_to_produce = initializer.get_maps_that_should_be_produced(
                     f"u{sensor}-ena-h-sf-sp-full-hae-4deg-3mo")
 
@@ -95,15 +97,14 @@ class TestUltraInitializer(unittest.TestCase):
                 self.assertEqual(e.exception.args, ("Reference frame should be either Spacecraft or Heliospheric",))
 
                 self.mock_query.assert_has_calls([
-
                     call(instrument='glows', data_level='l3e', descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
                          version="latest"),
                     call(instrument='glows', data_level='l3e', descriptor=GLOWS_L3E_ULTRA_HF_DESCRIPTOR,
                          version="latest"),
                     call(instrument='ultra', data_level='l2'),
-                    call(instrument='ultra', data_level='l3'),
                     call(instrument="ultra", table='ancillary', descriptor='l2-energy-bin-group-sizes',
-                         version='latest')
+                         version='latest'),
+                    call(instrument='ultra', data_level='l3')
                 ])
 
                 mock_read_cdf_parents.assert_has_calls([
@@ -218,7 +219,7 @@ class TestUltraInitializer(unittest.TestCase):
             ]
         ]
 
-        initializer = UltraInitializer()
+        initializer = UltraSPInitializer()
         actual_maps_to_produce = initializer.get_maps_that_should_be_produced(
             f"ulc-ena-h-sf-sp-full-hae-4deg-3mo")
 
@@ -226,9 +227,9 @@ class TestUltraInitializer(unittest.TestCase):
             call(instrument='glows', data_level='l3e', descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR, version="latest"),
             call(instrument='glows', data_level='l3e', descriptor=GLOWS_L3E_ULTRA_HF_DESCRIPTOR, version="latest"),
             call(instrument='ultra', data_level='l2'),
-            call(instrument='ultra', data_level='l3'),
             call(instrument="ultra", table='ancillary', descriptor='l2-energy-bin-group-sizes',
-                 version='latest')
+                 version='latest'),
+            call(instrument='ultra', data_level='l3'),
         ])
 
         mock_read_cdf_parents.assert_has_calls([
@@ -349,7 +350,7 @@ class TestUltraInitializer(unittest.TestCase):
             ]
         ]
 
-        initializer = UltraInitializer()
+        initializer = UltraSPInitializer()
         actual_maps_to_produce = initializer.get_maps_that_should_be_produced(
             f"ulc-ena-h-hf-sp-full-hae-4deg-3mo")
 
@@ -357,9 +358,9 @@ class TestUltraInitializer(unittest.TestCase):
             call(instrument='glows', data_level='l3e', descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR, version="latest"),
             call(instrument='glows', data_level='l3e', descriptor=GLOWS_L3E_ULTRA_HF_DESCRIPTOR, version="latest"),
             call(instrument='ultra', data_level='l2'),
-            call(instrument='ultra', data_level='l3'),
             call(instrument="ultra", table='ancillary', descriptor='l2-energy-bin-group-sizes',
-                 version='latest')
+                 version='latest'),
+            call(instrument='ultra', data_level='l3'),
         ])
 
         mock_read_cdf_parents.assert_has_calls([
@@ -398,7 +399,7 @@ class TestUltraInitializer(unittest.TestCase):
         )
         self.assertEqual([expected_possible_map_to_produce], actual_maps_to_produce)
 
-    @patch('imap_l3_processing.ultra.l3.ultra_initializer.furnish_spice_metakernel')
+    @patch('imap_l3_processing.ultra.ultra_sp_initializer.furnish_spice_metakernel')
     def test_furnish_spice_dependencies(self, mock_furnish_metakernel):
         start_date = datetime(2025, 4, 15)
         end_date = datetime(2025, 7, 15)
@@ -413,7 +414,7 @@ class TestUltraInitializer(unittest.TestCase):
         )
         map_to_produce = PossibleMapToProduce(set(), input_metadata)
 
-        ultra_initializer = UltraInitializer()
+        ultra_initializer = UltraSPInitializer()
         ultra_initializer.furnish_spice_dependencies(map_to_produce)
 
         mock_furnish_metakernel.assert_called_once_with(start_date=start_date, end_date=end_date,

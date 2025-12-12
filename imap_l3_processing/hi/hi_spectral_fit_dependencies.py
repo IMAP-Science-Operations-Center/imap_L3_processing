@@ -11,10 +11,10 @@ from imap_l3_processing.maps.map_models import RectangularIntensityMapData, Spec
 
 
 @dataclass
-class HiL3SpectralIndexDependencies(SpectralIndexDependencies):
+class HiSpectralIndexDependencies(SpectralIndexDependencies):
 
     @classmethod
-    def fetch_dependencies(cls, dependencies: ProcessingInputCollection) -> HiL3SpectralIndexDependencies:
+    def fetch_dependencies(cls, dependencies: ProcessingInputCollection) -> HiSpectralIndexDependencies:
         input_map_filenames = dependencies.get_file_paths(source="hi")
 
         if len(input_map_filenames) != 1:
@@ -24,7 +24,7 @@ class HiL3SpectralIndexDependencies(SpectralIndexDependencies):
         return cls.from_file_paths(hi_l3_file)
 
     @classmethod
-    def from_file_paths(cls, hi_l3_path: Path) -> HiL3SpectralIndexDependencies:
+    def from_file_paths(cls, hi_l3_path: Path) -> HiSpectralIndexDependencies:
         return cls(RectangularIntensityMapData.read_from_path(hi_l3_path))
 
     def get_fit_energy_ranges(self) -> np.ndarray:

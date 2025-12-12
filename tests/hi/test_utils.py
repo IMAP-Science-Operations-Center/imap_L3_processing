@@ -9,7 +9,7 @@ from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import PROBABILITY_OF_SURVIVAL_VAR_NAME, SPIN_ANGLE_VAR_NAME, \
     ENERGY_VAR_NAME, EPOCH_CDF_VAR_NAME
-from imap_l3_processing.hi.l3.utils import read_l1c_rectangular_pointing_set_data, read_glows_l3e_data
+from imap_l3_processing.hi.utils import read_l1c_rectangular_pointing_set_data, read_glows_l3e_data
 from tests.test_helpers import get_test_data_folder, with_tempdir
 
 

@@ -40,7 +40,7 @@ def chunk_l2_data(data: SwapiL2Data, chunk_size: int) -> Iterable[SwapiL2Data]:
     while i < len(data.sci_start_time):
         yield SwapiL2Data(
             data.sci_start_time[i:i + chunk_size],
-            data.energy,
+            data.energy[i:i + chunk_size],
             data.coincidence_count_rate[i:i + chunk_size],
             data.coincidence_count_rate_uncertainty[i:i + chunk_size]
         )

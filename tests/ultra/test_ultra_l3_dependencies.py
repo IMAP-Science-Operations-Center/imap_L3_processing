@@ -5,17 +5,17 @@ from unittest.mock import patch, sentinel, call, Mock
 import numpy as np
 from imap_data_access import ScienceInput, AncillaryInput, ProcessingInputCollection
 
-from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies, \
+from imap_l3_processing.ultra.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies, \
     UltraL3CombinedDependencies
 from tests.test_helpers import get_test_data_path
 
 
 class TestUltraL3Dependencies(unittest.TestCase):
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraL1CPSet.read_from_path')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.HealPixIntensityMapData.read_from_xarray')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.imap_data_access.download')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.ultra_l2')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.UltraL1CPSet.read_from_path')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.HealPixIntensityMapData.read_from_xarray')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.imap_data_access.download')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.ultra_l2')
     def test_fetch_dependencies(self, mock_ultra_l2, mock_download, mock_read_xarray, mock_read_ultra_l1c,
                                 mock_read_glows):
         l1c_input_paths = ["imap_ultra_l1c_pset_20251010_v001.cdf", "imap_ultra_l1c_pset_20251011_v001.cdf",
@@ -80,11 +80,11 @@ class TestUltraL3Dependencies(unittest.TestCase):
         np.testing.assert_array_equal(np.array([0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 46], dtype=np.uint8),
                                       dependencies.energy_bin_group_sizes, strict=True)
 
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraL1CPSet.read_from_path')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.HealPixIntensityMapData.read_from_xarray')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.imap_data_access.download')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.ultra_l2')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.UltraL1CPSet.read_from_path')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.HealPixIntensityMapData.read_from_xarray')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.imap_data_access.download')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.ultra_l2')
     def test_fetch_dependencies_without_energy_ancillary_file(self, mock_ultra_l2, mock_download, mock_read_xarray,
                                                               mock_read_ultra_l1c,
                                                               mock_read_glows):
@@ -116,10 +116,10 @@ class TestUltraL3Dependencies(unittest.TestCase):
 
         self.assertEqual("Incorrect number of map dependencies: 2", str(e.exception))
 
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.HealPixIntensityMapData.read_from_xarray')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraL1CPSet.read_from_path')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.ultra_l2')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.HealPixIntensityMapData.read_from_xarray')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.UltraL1CPSet.read_from_path')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.ultra_l2')
     def test_from_file_paths(self, mock_ultra_l2, mock_read_l1c: Mock, mock_read_glows: Mock, mock_read_l2: Mock):
         ultra_l2_input_path = Path("um_path")
         ultra_l1c_input_paths = [Path("u_path_1"), Path("u_path_2")]
@@ -140,8 +140,8 @@ class TestUltraL3Dependencies(unittest.TestCase):
         self.assertEqual(result.glows_l3e_sp, [sentinel.glows_data1, sentinel.glows_data2])
         self.assertEqual(result.ultra_l2_map, sentinel.ultra_l2_data)
 
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.RectangularIntensityMapData.read_from_path')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.imap_data_access.download')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.RectangularIntensityMapData.read_from_path')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.imap_data_access.download')
     def test_spectral_index_fetch_dependencies(self, mock_download, mock_rectangular_read_from_path):
         map_file_name = 'imap_ultra_l3_ultra-cool-descriptor_20250601_v000.cdf'
         ancillary_file_name = 'imap_ultra_spx-energy-ranges_20250601_v000.cdf'
@@ -178,7 +178,7 @@ class TestUltraL3Dependencies(unittest.TestCase):
             UltraL3SpectralIndexDependencies.fetch_dependencies(ProcessingInputCollection(science_input))
         self.assertEqual("Missing fit energy ranges ancillary file", str(context.exception))
 
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.RectangularIntensityMapData.read_from_path')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.RectangularIntensityMapData.read_from_path')
     def test_spectral_index_from_file_paths(self, mock_read_from_path):
         map_file_path = Mock()
         ancillary_file_path = get_test_data_path('ultra') / 'imap_ultra_ulc-spx-energy-ranges_20250407_v000.dat'
@@ -198,10 +198,10 @@ class TestUltraL3Dependencies(unittest.TestCase):
         np.testing.assert_array_equal(actual_fit_energy_ranges, expected_energy_range_values)
 
 class TestUltraL3CombinedDependencies(unittest.TestCase):
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraL1CPSet.read_from_path')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.HealPixIntensityMapData.read_from_xarray')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.imap_data_access.download')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.ultra_l2')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.UltraL1CPSet.read_from_path')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.HealPixIntensityMapData.read_from_xarray')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.imap_data_access.download')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.ultra_l2')
     def test_fetch_dependencies_no_survival_corrected(self, mock_ultra_l2, mock_download, mock_read_from_xarray,
                                                       mock_l1c_read_from_path):
         u45_map_file_name = 'imap_ultra_l2_u45-cool-descriptor_20250601_v000.cdf'
@@ -299,10 +299,10 @@ class TestUltraL3CombinedDependencies(unittest.TestCase):
 
         self.assertEqual(combined_dependencies.dependency_file_paths, expected_file_paths)
 
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraL1CPSet.read_from_path')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.HealPixIntensityMapData.read_from_xarray')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.imap_data_access.download')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.ultra_l2')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.UltraL1CPSet.read_from_path')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.HealPixIntensityMapData.read_from_xarray')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.imap_data_access.download')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.ultra_l2')
     def test_fetch_dependencies_without_ancillary_file(self, mock_ultra_l2, mock_download, mock_read_from_xarray,
                                                        mock_l1c_read_from_path):
         u45_map_file_name = 'imap_ultra_l2_u45-cool-descriptor_20250601_v000.cdf'
@@ -339,11 +339,11 @@ class TestUltraL3CombinedDependencies(unittest.TestCase):
 
         self.assertIsNone(combined_dependencies.energy_bin_group_sizes)
 
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraL1CPSet.read_from_path')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.HealPixIntensityMapData.read_from_xarray')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.imap_data_access.download')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.ultra_l2')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.UltraL1CPSet.read_from_path')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.HealPixIntensityMapData.read_from_xarray')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.imap_data_access.download')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.ultra_l2')
     def test_fetch_dependencies_with_glows_files(self, mock_ultra_l2, mock_download, mock_read_from_xarray,
                                                       mock_l1c_read_from_path, mock_l3e_read_from_path):
         cases = [["sf", "spacecraftpset"], ["hf", "heliopset"]]
@@ -456,10 +456,10 @@ class TestUltraL3CombinedDependencies(unittest.TestCase):
                                  [sentinel.glows_1, sentinel.glows_2, sentinel.glows_3])
                 self.assertEqual(combined_dependencies.dependency_file_paths, expected_file_paths)
 
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.HealPixIntensityMapData.read_from_xarray')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.UltraL1CPSet.read_from_path')
-    @patch('imap_l3_processing.ultra.l3.ultra_l3_dependencies.ultra_l2')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.HealPixIntensityMapData.read_from_xarray')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.UltraL1CPSet.read_from_path')
+    @patch('imap_l3_processing.ultra.ultra_l3_dependencies.ultra_l2')
     def test_from_file_paths(self, mock_ultra_l2, _, __, ___):
         u45_pset_paths = [
             Path('u45_l1c_path_2'),

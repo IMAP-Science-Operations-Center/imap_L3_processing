@@ -5,7 +5,8 @@ import imap_data_access
 
 from imap_l3_processing.glows.descriptors import GLOWS_L3E_ULTRA_HF_DESCRIPTOR, GLOWS_L3E_ULTRA_SF_DESCRIPTOR
 from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, SurvivalCorrection, Sensor, ReferenceFrame
-from imap_l3_processing.maps.map_initializer import MapInitializer, PossibleMapToProduce
+from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
+from imap_l3_processing.maps.sp_map_initializer import SPMapInitializer
 from imap_l3_processing.utils import furnish_spice_metakernel, SpiceKernelTypes
 
 ULTRA_SP_SPICE_KERNELS = [
@@ -75,22 +76,8 @@ ULTRA_COMBINED_SP_DESCRIPTORS = [
     "ulc-ena-h-hf-sp-full-hae-6deg-1yr",
 ]
 
-ULTRA_COMBINED_NSP_DESCRIPTORS = [
-    "ulc-ena-h-hf-nsp-full-hae-2deg-3mo",
-    "ulc-ena-h-hf-nsp-full-hae-4deg-3mo",
-    "ulc-ena-h-hf-nsp-full-hae-6deg-3mo",
 
-    "ulc-ena-h-hf-nsp-full-hae-2deg-6mo",
-    "ulc-ena-h-hf-nsp-full-hae-4deg-6mo",
-    "ulc-ena-h-hf-nsp-full-hae-6deg-6mo",
-
-    "ulc-ena-h-hf-nsp-full-hae-2deg-1yr",
-    "ulc-ena-h-hf-nsp-full-hae-4deg-1yr",
-    "ulc-ena-h-hf-nsp-full-hae-6deg-1yr",
-]
-
-
-class UltraInitializer(MapInitializer):
+class UltraSPInitializer(SPMapInitializer):
     def __init__(self):
         sf_sp_query_result = imap_data_access.query(instrument='glows', data_level='l3e',
                                                     descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR, version="latest")
@@ -102,13 +89,13 @@ class UltraInitializer(MapInitializer):
                                              hf_sp_query_result}
 
         l2_query_result = imap_data_access.query(instrument="ultra", data_level="l2")
-        l3_query_result = imap_data_access.query(instrument="ultra", data_level="l3")
         self._energy_bin_group_sizes_files = imap_data_access.query(
-            table="ancillary",
             instrument="ultra",
+            table="ancillary",
             descriptor="l2-energy-bin-group-sizes",
             version="latest")
-        super().__init__("ultra", l2_query_result, l3_query_result)
+
+        super().__init__("ultra", l2_query_result)
 
     def furnish_spice_dependencies(self, map_to_produce: PossibleMapToProduce):
         furnish_spice_metakernel(

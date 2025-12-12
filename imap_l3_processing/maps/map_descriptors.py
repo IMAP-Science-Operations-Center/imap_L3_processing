@@ -1,6 +1,7 @@
 import enum
 import re
 from dataclasses import dataclass
+from datetime import timedelta
 from typing import Optional
 
 
@@ -166,3 +167,17 @@ def map_descriptor_parts_to_string(descriptor_parts: MapDescriptorParts) -> str:
         grid_size_part_to_str[descriptor_parts.grid],
         descriptor_parts.duration,
     ])
+
+
+def get_duration_from_map_descriptor(descriptor: MapDescriptorParts) -> timedelta:
+    match descriptor:
+        case MapDescriptorParts(duration="1mo"):
+            return timedelta(days=365.25) / 12
+        case MapDescriptorParts(duration="3mo"):
+            return timedelta(days=365.25) / 4
+        case MapDescriptorParts(duration="6mo"):
+            return timedelta(days=365.25) / 2
+        case MapDescriptorParts(duration="1yr" | "12mo"):
+            return timedelta(days=365.25)
+        case _:
+            raise ValueError(f"Expected a duration in the map descriptor, got: {descriptor} (e.g., '1mo', '3mo')")

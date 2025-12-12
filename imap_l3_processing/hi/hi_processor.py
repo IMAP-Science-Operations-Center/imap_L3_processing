@@ -2,8 +2,8 @@ from pathlib import Path
 
 from imap_processing.spice.geometry import SpiceFrame
 
-from imap_l3_processing.hi.l3.hi_l3_combined_sensor_dependencies import HiL3CombinedMapDependencies
-from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralIndexDependencies
+from imap_l3_processing.hi.hi_combined_sensor_dependencies import HiL3CombinedMapDependencies
+from imap_l3_processing.hi.hi_spectral_fit_dependencies import HiSpectralIndexDependencies
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies, \
     HiL3SingleSensorFullSpinDependencies
 from imap_l3_processing.maps.map_combination import UncertaintyWeightedCombination, UnweightedCombination, \
@@ -27,7 +27,7 @@ class HiProcessor(MapProcessor):
         parsed_descriptor = parse_map_descriptor(self.input_metadata.descriptor)
         match parsed_descriptor:
             case MapDescriptorParts(quantity=MapQuantity.SpectralIndex):
-                hi_l3_spectral_fit_dependencies = HiL3SpectralIndexDependencies.fetch_dependencies(self.dependencies)
+                hi_l3_spectral_fit_dependencies = HiSpectralIndexDependencies.fetch_dependencies(self.dependencies)
                 map_data = self.process_spectral_fit_index(hi_l3_spectral_fit_dependencies)
                 data_product = RectangularSpectralIndexDataProduct(
                     data=map_data,
@@ -101,7 +101,7 @@ class HiProcessor(MapProcessor):
 
         return combination_strategy.combine_rectangular_intensity_map_data([ram_data_product, antiram_data_product])
 
-    def process_spectral_fit_index(self, hi_l3_spectral_fit_dependencies: HiL3SpectralIndexDependencies) \
+    def process_spectral_fit_index(self, hi_l3_spectral_fit_dependencies: HiSpectralIndexDependencies) \
             -> RectangularSpectralIndexMapData:
 
         return RectangularSpectralIndexMapData(

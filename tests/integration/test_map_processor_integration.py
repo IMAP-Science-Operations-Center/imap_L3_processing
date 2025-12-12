@@ -193,8 +193,9 @@ class TestMapIntegration(unittest.TestCase):
         lo_imap_data_dir = get_run_local_data_path("lo/integration_data")
 
         input_files = [
-            lo_test_data_dir / "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-1yr_20260101_v902.cdf",
-            lo_test_data_dir / "imap_lo_l1c_pset_20260101-repoint01261_v002.cdf",
+            lo_test_data_dir / "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-1yr_20260101_v900.cdf",
+            lo_test_data_dir / "imap_lo_l2_l090-ena-h-hf-nsp-ram-hae-6deg-1yr_20260101_v900.cdf",
+            get_test_data_path("lo/imap_lo_l1c_pset_20260101-repoint01261_v001.cdf"),
 
             lo_test_data_dir / "imap_glows_l3e_survival-probability-lo_20260101-repoint01261_v001.cdf",
             lo_test_data_dir / "imap_glows_l3e_survival-probability-lo_20270418-repoint03003_v001.cdf",
@@ -202,7 +203,9 @@ class TestMapIntegration(unittest.TestCase):
             INTEGRATION_TEST_DATA_PATH / "spice" / "naif020.tls",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_science_108.tf",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_sclk_008.tsc",
-            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc"
+            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
+            INTEGRATION_TEST_DATA_PATH / "spice" / "de440.bsp",
+            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_recon_20250415_20260415_v01.bsp",
         ]
 
         with (mock_imap_data_access(lo_imap_data_dir, input_files)):
@@ -229,16 +232,25 @@ class TestMapIntegration(unittest.TestCase):
 
             expected_ena_path = ScienceFilePath(
                 "imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-1yr_20260101_v001.cdf").construct_path()
+            expected_hf_ena_path = ScienceFilePath(
+                "imap_lo_l3_l090-ena-h-hf-sp-ram-hae-6deg-1yr_20260101_v001.cdf").construct_path()
             self.assertTrue(expected_ena_path.exists(), f"Expected file {expected_ena_path.name} not found")
-
+            self.assertTrue(expected_hf_ena_path.exists(), f"Expected file {expected_hf_ena_path.name} not found")
             expected_ena_parents = {
-                "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-1yr_20260101_v902.cdf",
-                "imap_lo_l1c_pset_20260101-repoint01261_v002.cdf",
+                "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-1yr_20260101_v900.cdf",
+                "imap_lo_l1c_pset_20260101-repoint01261_v001.cdf",
+                "imap_glows_l3e_survival-probability-lo_20260101-repoint01261_v001.cdf",
+            }
+            expected_hf_ena_parents = {
+                "imap_lo_l2_l090-ena-h-hf-nsp-ram-hae-6deg-1yr_20260101_v900.cdf",
+                "imap_lo_l1c_pset_20260101-repoint01261_v001.cdf",
                 "imap_glows_l3e_survival-probability-lo_20260101-repoint01261_v001.cdf",
             }
 
             with CDF(str(expected_ena_path)) as cdf:
                 self.assertEqual(expected_ena_parents, set(cdf.attrs["Parents"]))
+            with CDF(str(expected_hf_ena_path)) as cdf:
+                self.assertEqual(expected_hf_ena_parents, set(cdf.attrs["Parents"]))
 
     @run_periodically(timedelta(days=3))
     @patch("imap_l3_data_processor._parse_cli_arguments")
@@ -270,7 +282,7 @@ class TestMapIntegration(unittest.TestCase):
             mock_arguments = Mock()
             mock_arguments.instrument = "ultra"
             mock_arguments.data_level = "l3"
-            mock_arguments.descriptor = "all-maps"
+            mock_arguments.descriptor = "u45-maps"
             mock_arguments.start_date = "20250415"
             mock_arguments.end_date = None
             mock_arguments.repointing = None
