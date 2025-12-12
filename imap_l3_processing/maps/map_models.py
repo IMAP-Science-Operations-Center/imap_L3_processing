@@ -232,11 +232,11 @@ def _read_intensity_map_data_from_xarray(dataset: xarray.Dataset) -> IntensityMa
         longitude=dataset["longitude"].values,
         exposure_factor=dataset["exposure_factor"].values,
         obs_date=dataset["obs_date"].values,
-        obs_date_range=np.full_like(dataset["obs_date"].values, np.nan),
-        solid_angle=np.full_like(dataset["latitude"].values, np.nan),
+        obs_date_range=dataset["obs_date_range"].values,
+        solid_angle=dataset["solid_angle"].values,
         ena_intensity=dataset["ena_intensity"].values,
         ena_intensity_stat_uncert=dataset["ena_intensity_stat_uncert"].values,
-        ena_intensity_sys_err=np.full_like(dataset["ena_intensity_sys_err"].values, np.nan)
+        ena_intensity_sys_err=dataset["ena_intensity_sys_err"].values
     )
 
 
