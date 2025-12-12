@@ -10,14 +10,14 @@ from tests.test_helpers import create_mock_query_results
 
 class TestHiCombinedL3Initializer(unittest.TestCase):
     def setUp(self):
-        self.query_patcher = patch('imap_l3_processing.hi.hi_combined_initializer.imap_data_access.query')
-        self.mock_query = self.query_patcher.start()
+        self.map_initializer_query_patcher = patch('imap_l3_processing.maps.map_initializer.imap_data_access.query')
+        self.map_initializer_mock_query = self.map_initializer_query_patcher.start()
 
     def teardown(self):
-        self.query_patcher.stop()
+        self.map_initializer_mock_query.stop()
 
     def test_get_maps_that_should_be_produced_no_existing_combined(self):
-        self.mock_query.side_effect = [
+        self.map_initializer_mock_query.side_effect = [
             create_mock_query_results([
                 'imap_hi_l3_h45-ena-h-hf-sp-full-hae-6deg-6mo_20250101_v001.cdf',
                 'imap_hi_l3_h45-ena-h-hf-sp-full-hae-6deg-6mo_20250701_v001.cdf',
@@ -59,17 +59,17 @@ class TestHiCombinedL3Initializer(unittest.TestCase):
         initializer = HiCombinedL3Initializer()
         actual_maps_to_produce = initializer.get_maps_that_should_be_produced('hic-ena-h-hf-sp-full-hae-6deg-1yr')
 
-        self.mock_query.assert_has_calls([
+        self.map_initializer_mock_query.assert_has_calls([
             call(instrument='hi', data_level='l3'),
             # call(instrument='hi', data_level='l2'),
         ])
 
         self.assertEqual(expected_maps_to_produce, actual_maps_to_produce)
 
-    @patch('imap_l3_processing.hi.hi_combined_initializer.read_cdf_parents')
+    @patch('imap_l3_processing.maps.map_initializer.read_cdf_parents')
     def test_get_maps_that_should_be_produced_existing_combined_and_6month_but_no_new_maps(self,
                                                                                            mock_read_cdf_parents: Mock):
-        self.mock_query.side_effect = [
+        self.map_initializer_mock_query.side_effect = [
             create_mock_query_results([
                 'imap_hi_l3_hic-ena-h-hf-sp-full-hae-6deg-1yr_20250101_v001.cdf',
 
@@ -104,7 +104,7 @@ class TestHiCombinedL3Initializer(unittest.TestCase):
         initializer = HiCombinedL3Initializer()
         actual_maps_to_produce = initializer.get_maps_that_should_be_produced('hic-ena-h-hf-sp-full-hae-6deg-1yr')
 
-        self.mock_query.assert_has_calls([
+        self.map_initializer_mock_query.assert_has_calls([
             call(instrument='hi', data_level='l3'),
             # call(instrument='hi', data_level='l2'),
         ])
