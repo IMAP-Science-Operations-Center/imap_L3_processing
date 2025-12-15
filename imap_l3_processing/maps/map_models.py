@@ -222,23 +222,30 @@ def _read_healpix_coords_from_open_cdf(cdf: CDF) -> HealPixCoords:
 
 def _read_intensity_map_data_from_xarray(dataset: xarray.Dataset) -> IntensityMapData:
     return IntensityMapData(
-        epoch=dataset[CoordNames.TIME.value].values,
-        epoch_delta=dataset["epoch_delta"].values,
+        epoch=_replace_fill_values_in_xarray(dataset, CoordNames.TIME.value),
+        epoch_delta=_replace_fill_values_in_xarray(dataset, "epoch_delta"),
         energy=dataset.coords[CoordNames.ENERGY_L2.value].values,
-        energy_delta_plus=dataset["energy_delta_plus"].values,
-        energy_delta_minus=dataset["energy_delta_minus"].values,
-        energy_label=dataset["energy_label"].values,
-        latitude=dataset["latitude"].values,
-        longitude=dataset["longitude"].values,
-        exposure_factor=dataset["exposure_factor"].values,
-        obs_date=dataset["obs_date"].values,
-        obs_date_range=dataset["obs_date_range"].values,
-        solid_angle=dataset["solid_angle"].values,
-        ena_intensity=dataset["ena_intensity"].values,
-        ena_intensity_stat_uncert=dataset["ena_intensity_stat_uncert"].values,
-        ena_intensity_sys_err=dataset["ena_intensity_sys_err"].values
+        energy_delta_plus=_replace_fill_values_in_xarray(dataset, "energy_delta_plus"),
+        energy_delta_minus=_replace_fill_values_in_xarray(dataset, "energy_delta_minus"),
+        energy_label=_replace_fill_values_in_xarray(dataset, "energy_label"),
+        latitude=_replace_fill_values_in_xarray(dataset, "latitude"),
+        longitude=_replace_fill_values_in_xarray(dataset, "longitude"),
+        exposure_factor=_replace_fill_values_in_xarray(dataset, "exposure_factor"),
+        obs_date=_replace_fill_values_in_xarray(dataset, "obs_date"),
+        obs_date_range=_replace_fill_values_in_xarray(dataset, "obs_date_range"),
+        solid_angle=_replace_fill_values_in_xarray(dataset, "solid_angle"),
+        ena_intensity=_replace_fill_values_in_xarray(dataset, "ena_intensity"),
+        ena_intensity_stat_uncert=_replace_fill_values_in_xarray(dataset, "ena_intensity_stat_uncert"),
+        ena_intensity_sys_err=_replace_fill_values_in_xarray(dataset, "ena_intensity_sys_err")
     )
 
+
+def _replace_fill_values_in_xarray(dataset, variable):
+    if 'FILLVAL' in dataset[variable].attrs:
+        return np.where(dataset[variable].values == dataset[variable].attrs['FILLVAL'], np.nan,
+                        dataset[variable].values)
+    else:
+        return dataset[variable].values
 
 def _read_healpix_coords_from_xarray(dataset: xarray.Dataset) -> HealPixCoords:
     return HealPixCoords(
