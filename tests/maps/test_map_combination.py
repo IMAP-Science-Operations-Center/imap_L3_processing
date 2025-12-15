@@ -71,7 +71,8 @@ class TestMapCombination(unittest.TestCase):
     def _check_maps_match(self, combination: CombinationStrategy):
         map_1 = construct_intensity_data_with_all_zero_fields()
 
-        fields_which_may_differ = {"ena_intensity", "ena_intensity_stat_uncert", "ena_intensity_sys_err",
+        fields_which_may_differ = {"epoch", "epoch_delta", "ena_intensity", "ena_intensity_stat_uncert",
+                                   "ena_intensity_sys_err",
                                    "bg_intensity", "bg_intensity_stat_uncert", "bg_intensity_sys_err",
                                    "exposure_factor", "obs_date", "obs_date_range"}
 
