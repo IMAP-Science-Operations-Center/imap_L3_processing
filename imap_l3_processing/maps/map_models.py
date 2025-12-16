@@ -222,7 +222,7 @@ def _read_healpix_coords_from_open_cdf(cdf: CDF) -> HealPixCoords:
 
 def _read_intensity_map_data_from_xarray(dataset: xarray.Dataset) -> IntensityMapData:
     return IntensityMapData(
-        epoch=_replace_fill_values_in_xarray(dataset, CoordNames.TIME.value),
+        epoch=dataset[CoordNames.TIME.value].values,
         epoch_delta=_replace_fill_values_in_xarray(dataset, "epoch_delta"),
         energy=dataset.coords[CoordNames.ENERGY_L2.value].values,
         energy_delta_plus=_replace_fill_values_in_xarray(dataset, "energy_delta_plus"),
@@ -244,8 +244,7 @@ def _replace_fill_values_in_xarray(dataset, variable):
     if 'FILLVAL' in dataset[variable].attrs:
         return np.where(dataset[variable].values == dataset[variable].attrs['FILLVAL'], np.nan,
                         dataset[variable].values)
-    else:
-        return dataset[variable].values
+    return dataset[variable].values
 
 def _read_healpix_coords_from_xarray(dataset: xarray.Dataset) -> HealPixCoords:
     return HealPixCoords(
