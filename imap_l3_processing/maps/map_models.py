@@ -231,7 +231,7 @@ def _read_intensity_map_data_from_xarray(dataset: xarray.Dataset) -> IntensityMa
         latitude=_replace_fill_values_in_xarray(dataset, "latitude"),
         longitude=_replace_fill_values_in_xarray(dataset, "longitude"),
         exposure_factor=_replace_fill_values_in_xarray(dataset, "exposure_factor"),
-        obs_date=_replace_fill_values_in_xarray(dataset, "obs_date"),
+        obs_date=np.squeeze(_replace_fill_values_in_xarray(dataset, "obs_date")),
         obs_date_range=_replace_fill_values_in_xarray(dataset, "obs_date_range"),
         solid_angle=_replace_fill_values_in_xarray(dataset, "solid_angle"),
         ena_intensity=_replace_fill_values_in_xarray(dataset, "ena_intensity"),
