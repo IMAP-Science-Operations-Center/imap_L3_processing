@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import numpy as np
 import scipy
 import spiceypy
@@ -7,7 +9,7 @@ from uncertainties import correlated_values, unumpy, umath, wrap
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 from imap_l3_processing.constants import PROTON_CHARGE_COULOMBS, PROTON_MASS_KG, METERS_PER_KILOMETER, \
-    ONE_SECOND_IN_NANOSECONDS
+    ONE_SECOND_IN_NANOSECONDS, TT2000_EPOCH
 from imap_l3_processing.swapi.l3a.science.speed_calculation import get_peak_indices, find_peak_center_of_mass_index, \
     interpolate_energy, extract_coarse_sweep
 
@@ -36,11 +38,12 @@ def fit_energy_per_charge_peak_variations(centers_of_mass, spin_phase_angles):
     residual = abs(sine_fit_function(np.array(nominal_spin_phase_angles), a, phi, b) - nominal_centers_of_mass)
     reduced_chisq = np.sum(np.square(residual / std_devs(centers_of_mass))) / (len(spin_phase_angles) - 3)
 
-    if reduced_chisq > 10:
-        raise ValueError("Failed to fit - chi-squared too large", reduced_chisq)
     phi = np.mod(phi, 360)
 
-    return correlated_values((a, phi, b), pcov), reduced_chisq
+    if reduced_chisq > 10:
+        return False, correlated_values((a, phi, b), pcov), reduced_chisq
+
+    return True, correlated_values((a, phi, b), pcov), reduced_chisq
 
 
 def get_proton_peak_indices(count_rates):
@@ -104,7 +107,9 @@ def calculate_sw_speed_h_plus(energy):
 
 
 iter2 = 0
-def calculate_proton_solar_wind_speed(coincidence_count_rates, energies, epoch):
+
+
+def calculate_proton_solar_wind_speed(coincidence_count_rates, energies, epoch, sweep_str):
     global iter2
     energies = extract_coarse_sweep(energies)
     coincidence_count_rates = extract_coarse_sweep(coincidence_count_rates)
@@ -112,20 +117,33 @@ def calculate_proton_solar_wind_speed(coincidence_count_rates, energies, epoch):
     energies_at_center_of_mass, spin_angles_at_center_of_mass = calculate_proton_centers_of_mass(
         coincidence_count_rates, energies, epoch)
 
-    (a, phi, b), chisq = fit_energy_per_charge_peak_variations(energies_at_center_of_mass,
-                                                               spin_angles_at_center_of_mass)
-    if False:
+    success, (a, phi, b), chisq = fit_energy_per_charge_peak_variations(energies_at_center_of_mass,
+                                                                        spin_angles_at_center_of_mass)
+
+    if not success:
+        start_of_five_sweeps = TT2000_EPOCH + timedelta(seconds=epoch[0] / 1e9)
+        end_of_five_sweeps = TT2000_EPOCH + timedelta(seconds=epoch[-1] / 1e9)
+
         fig, (ax1, ax2) = plt.subplots(2, 1)
         ax1.loglog(energies.T, nominal_values(coincidence_count_rates).T)
         ax2.errorbar(x=nominal_values(spin_angles_at_center_of_mass), xerr=std_devs(spin_angles_at_center_of_mass),
                      y=nominal_values(energies_at_center_of_mass), yerr=std_devs(energies_at_center_of_mass), fmt='o')
         ax2.plot(np.linspace(0, 360, 120), sine_fit_function(np.array(np.linspace(0, 360, 120)), a.n, phi.n, b.n))
-        ax2.text(0.8, 0.8, f"reduced_chisq={chisq:.4g}", transform=ax2.transAxes, horizontalalignment='center',
+        ax2.text(0.8, 0.8, f"reduced_chisq={chisq:.4g}", transform=ax2.transAxes,
+                 horizontalalignment='center',
+                 verticalalignment='center')
+        ax2.text(0.8, 0.7, f"start_time={start_of_five_sweeps}", transform=ax2.transAxes,
+                 horizontalalignment='center',
+                 verticalalignment='center')
+        ax2.text(0.8, 0.6, f"end_time={end_of_five_sweeps}", transform=ax2.transAxes,
+                 horizontalalignment='center',
                  verticalalignment='center')
         # plt.title(f"{a=},{phi=},{b=}")
-        plt.savefig(f"{iter2:03}.png")
+        plt.savefig(f"{sweep_str}.png")
+        print(iter2)
         iter2 += 1
         if iter2 > 100:
             exit()
+        raise ValueError("Failed to fit - chi-squared too large", chisq)
     proton_sw_speed = calculate_sw_speed_h_plus(b)
     return proton_sw_speed, a, phi, b

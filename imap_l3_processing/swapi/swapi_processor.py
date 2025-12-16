@@ -33,7 +33,8 @@ from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_vdf import calcul
 from imap_l3_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
 from imap_l3_processing.utils import save_data
 
-logger=logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
+
 
 class SwapiProcessor(Processor):
     def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
@@ -111,7 +112,8 @@ class SwapiProcessor(Processor):
                         or np.any(np.isnan(sw_velocity))):
                     raise ValueError("Fill values in input data")
                 fit_params = calculate_pickup_ion_values(dependencies.instrument_response_calibration_table,
-                                                         dependencies.geometric_factor_calibration_table, data_chunk.energy,
+                                                         dependencies.geometric_factor_calibration_table,
+                                                         data_chunk.energy,
                                                          data_chunk.coincidence_count_rate,
                                                          epoch, 0.1,
                                                          sw_velocity,
@@ -152,16 +154,15 @@ class SwapiProcessor(Processor):
         alpha_solar_wind_temperatures = []
 
         for data_chunk in chunk_l2_data(data, 5):
-            alpha_solar_wind_speed= ufloat(np.nan, np.nan)
-            alpha_density= ufloat(np.nan, np.nan)
-            alpha_temperature= ufloat(np.nan, np.nan)
+            alpha_solar_wind_speed = ufloat(np.nan, np.nan)
+            alpha_density = ufloat(np.nan, np.nan)
+            alpha_temperature = ufloat(np.nan, np.nan)
             epoch = data_chunk.sci_start_time[0] + THIRTY_SECONDS_IN_NANOSECONDS
             try:
                 if np.any(np.isnan(extract_coarse_sweep(data_chunk.coincidence_count_rate))):
                     raise ValueError("Fill values in input data")
                 coincidence_count_rates_with_uncertainty = uarray(data_chunk.coincidence_count_rate,
                                                                   data_chunk.coincidence_count_rate_uncertainty)
-
 
                 alpha_solar_wind_speed = calculate_alpha_solar_wind_speed(coincidence_count_rates_with_uncertainty,
                                                                           data_chunk.energy)
@@ -179,7 +180,6 @@ class SwapiProcessor(Processor):
                 alpha_solar_wind_densities.append(alpha_density)
                 alpha_solar_wind_temperatures.append(alpha_temperature)
 
-
         alpha_solar_wind_speed_metadata = replace(self.input_metadata, descriptor="alpha-sw")
         alpha_solar_wind_l3_data = SwapiL3AlphaSolarWindData(alpha_solar_wind_speed_metadata, np.array(epochs),
                                                              np.array(alpha_solar_wind_speeds),
@@ -196,7 +196,8 @@ class SwapiProcessor(Processor):
         proton_solar_wind_clock_angles = []
         proton_solar_wind_deflection_angles = []
 
-        for data_chunk in chunk_l2_data(data, 5):
+        for i, data_chunk in enumerate(chunk_l2_data(data, 5)):
+            sweep_str = f"sweeps_{i * 5}_{(i + 1) * 5}"
             proton_solar_wind_speed = ufloat(np.nan, np.nan)
             clock_angle = ufloat(np.nan, np.nan)
             deflection_angle = ufloat(np.nan, np.nan)
@@ -210,7 +211,7 @@ class SwapiProcessor(Processor):
                 coincidence_count_rates_with_uncertainty = uarray(data_chunk.coincidence_count_rate,
                                                                   data_chunk.coincidence_count_rate_uncertainty)
                 proton_solar_wind_speed, a, phi, b = calculate_proton_solar_wind_speed(
-                    coincidence_count_rates_with_uncertainty, data_chunk.energy, data_chunk.sci_start_time)
+                    coincidence_count_rates_with_uncertainty, data_chunk.energy, data_chunk.sci_start_time, sweep_str)
 
                 clock_angle = calculate_clock_angle(dependencies.clock_angle_and_flow_deflection_calibration_table,
                                                     proton_solar_wind_speed, a, phi, b)
