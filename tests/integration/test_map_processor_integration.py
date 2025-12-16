@@ -2,7 +2,6 @@ import logging
 import unittest
 from datetime import timedelta
 from pathlib import Path
-from unittest import skip
 from unittest.mock import patch, Mock
 
 from imap_data_access import ScienceFilePath
@@ -147,7 +146,6 @@ class TestMapIntegration(unittest.TestCase):
             with CDF(str(expected_map_path)) as cdf:
                 self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))
 
-    @skip('we set this up first for some reason, unskip once hi combined is done')
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_hi_combined_sensor(self, mock_parse_cli_arguments):
         hi_test_data_dir = INTEGRATION_TEST_DATA_PATH / "hi"
@@ -182,11 +180,51 @@ class TestMapIntegration(unittest.TestCase):
             imap_l3_data_processor.imap_l3_processor()
 
             expected_map_path = ScienceFilePath(
-                'imap_hi_l3_hic-ena-h-sf-sp-full-hae-4deg-1yr_20250415_v001.cdf').construct_path()
+                'imap_hi_l3_hic-ena-h-hf-sp-full-hae-4deg-1yr_20250415_v001.cdf').construct_path()
             self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
 
             with CDF(str(expected_map_path)) as cdf:
-                self.assertEqual(files, set(cdf.attrs["Parents"]))
+                self.assertEqual(set(files), set(cdf.attrs["Parents"]))
+
+    @patch("imap_l3_data_processor._parse_cli_arguments")
+    def test_hi_combined_sensor_2(self, mock_parse_cli_arguments):
+        hi_test_data_dir = INTEGRATION_TEST_DATA_PATH / "hi"
+        hi_imap_data_dir = get_run_local_data_path("hi/integration_data")
+
+        files = [
+            "imap_hi_l3_h45-ena-h-hf-sp-full-hae-4deg-6mo_20250415_v004.cdf",
+            "imap_hi_l3_h90-ena-h-hf-sp-full-hae-4deg-6mo_20250415_v010.cdf",
+            "imap_hi_l3_h45-ena-h-hf-sp-full-hae-4deg-6mo_20251015_v001.cdf",
+            "imap_hi_l3_h90-ena-h-hf-sp-full-hae-4deg-6mo_20251015_v003.cdf",
+        ]
+
+        input_files = [Path("/Users/harrison/Development/imap_L3_processing/data/imap/hi/l3/2025") / f for f in files]
+
+        with mock_imap_data_access(hi_imap_data_dir, input_files):
+            logging.basicConfig(force=True, level=logging.INFO,
+                                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+            mock_arguments = Mock()
+            mock_arguments.instrument = "hi"
+            mock_arguments.data_level = "l3"
+            mock_arguments.descriptor = "hic-maps"
+            mock_arguments.start_date = "20250415"
+            mock_arguments.end_date = None
+            mock_arguments.repointing = None
+            mock_arguments.version = "v001"
+            mock_arguments.dependency = "[]"
+            mock_arguments.upload_to_sdc = False
+
+            mock_parse_cli_arguments.return_value = mock_arguments
+
+            imap_l3_data_processor.imap_l3_processor()
+
+            expected_map_path = ScienceFilePath(
+                'imap_hi_l3_hic-ena-h-hf-sp-full-hae-4deg-1yr_20250415_v001.cdf').construct_path()
+            self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
+
+            with CDF(str(expected_map_path)) as cdf:
+                self.assertEqual(set(files), set(cdf.attrs["Parents"]))
 
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_lo_all_sp_maps(self, mock_parse_cli_arguments):
