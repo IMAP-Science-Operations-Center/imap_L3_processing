@@ -348,7 +348,7 @@ class TestSweProcessor(unittest.TestCase):
                 from_epoch=swapi_epochs,
                 from_data=mock_calculate_solar_wind_velocity_vector.return_value,
                 to_epoch=epochs,
-                maximum_distance=timedelta(minutes=5)
+                maximum_distance=np.timedelta64(5, 'm')
             )
         ])
 
