@@ -5,6 +5,7 @@ from unittest.mock import patch, Mock, call
 from imap_l3_processing.hi.hi_combined_initializer import HiCombinedInitializer
 from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
 from imap_l3_processing.models import InputMetadata
+from tests.integration.integration_test_helpers import ImapQueryPatcher
 from tests.test_helpers import create_mock_query_results
 
 l3_h45_sp_6deg_full_spin_maps = [
@@ -45,15 +46,15 @@ class TestHiCombinedInitializer(unittest.TestCase):
                         f'imap_hi_l3_h45-ena-h-hf-sp-full-hae-{deg}-6mo_20250701_v001.cdf',
 
                         f'imap_hi_l3_h45-ena-h-hf-sp-full-hae-{deg}-1yr_20250101_v001.cdf',
-                        f'imap_hi_l3_h45-ena-h-hf-sp-ram-hae-{deg}-1yr_20250101_v001.cdf',
-                        f'imap_hi_l3_h45-ena-h-hf-sp-anti-hae-{deg}-1yr_20250101_v001.cdf',
+                        f'imap_hi_l3_h45-ena-h-hf-sp-ram-hae-{deg}-6mo_20250101_v001.cdf',
+                        f'imap_hi_l3_h45-ena-h-hf-sp-anti-hae-{deg}-6mo_20250101_v001.cdf',
 
                         f'imap_hi_l3_h90-ena-h-hf-sp-full-hae-{deg}-6mo_20250101_v001.cdf',
                         f'imap_hi_l3_h90-ena-h-hf-sp-full-hae-{deg}-6mo_20250701_v001.cdf',
 
                         f'imap_hi_l3_h90-ena-h-hf-sp-full-hae-{deg}-1yr_20250101_v001.cdf',
-                        f'imap_hi_l3_h90-ena-h-hf-sp-ram-hae-{deg}-1yr_20250101_v001.cdf',
-                        f'imap_hi_l3_h90-ena-h-hf-sp-anti-hae-{deg}-1yr_20250101_v001.cdf',
+                        f'imap_hi_l3_h90-ena-h-hf-sp-ram-hae-{deg}-6mo_20250101_v001.cdf',
+                        f'imap_hi_l3_h90-ena-h-hf-sp-anti-hae-{deg}-6mo_20250101_v001.cdf',
                     ]),
                     create_mock_query_results([])
                 ]
@@ -315,3 +316,73 @@ class TestHiCombinedInitializer(unittest.TestCase):
         ])
 
         self.assertEqual(expected_maps_to_produce, actual_maps_to_produce)
+
+    def test_get_maps_that_should_be_produced_determines_input_maps_based_on_the_first_canonical_map_start_date(self):
+
+        canonical_map_start_date = datetime(2026, 2, 1)
+
+        map_1_deps = [
+            "imap_hi_l2_h45-ena-h-hf-nsp-full-hae-6deg-6mo_20260210_v001.cdf",
+            "imap_hi_l2_h90-ena-h-hf-nsp-full-hae-6deg-6mo_20260210_v001.cdf",
+
+            "imap_hi_l2_h45-ena-h-hf-nsp-full-hae-6deg-6mo_20260811_v001.cdf",
+            "imap_hi_l2_h90-ena-h-hf-nsp-full-hae-6deg-6mo_20260811_v001.cdf",
+        ]
+
+        incomplete_map_2_deps = [
+            "imap_hi_l2_h45-ena-h-hf-nsp-full-hae-6deg-6mo_20270211_v001.cdf",
+            "imap_hi_l2_h90-ena-h-hf-nsp-full-hae-6deg-6mo_20270211_v001.cdf",
+
+            "imap_hi_l2_h45-ena-h-hf-nsp-full-hae-6deg-6mo_20270812_v001.cdf",
+        ]
+
+        map_3_deps = [
+            "imap_hi_l2_h45-ena-h-hf-nsp-full-hae-6deg-6mo_20280211_v001.cdf",
+            "imap_hi_l2_h90-ena-h-hf-nsp-full-hae-6deg-6mo_20280211_v001.cdf",
+
+            "imap_hi_l2_h45-ena-h-hf-nsp-full-hae-6deg-6mo_20280812_v001.cdf",
+            "imap_hi_l2_h90-ena-h-hf-nsp-full-hae-6deg-6mo_20280812_v001.cdf",
+        ]
+
+        incomplete_map_4_deps = [
+            "imap_hi_l2_h45-ena-h-hf-nsp-full-hae-6deg-6mo_20290210_v001.cdf",
+            "imap_hi_l2_h90-ena-h-hf-nsp-full-hae-6deg-6mo_20290210_v001.cdf",
+        ]
+
+        self.hi_combined_initializer_mock_query.side_effect = ImapQueryPatcher([
+            *map_1_deps,
+            *incomplete_map_2_deps,
+            *map_3_deps,
+            *incomplete_map_4_deps
+        ])
+
+        initializer = HiCombinedInitializer(canonical_map_start_date)
+        maps_that_should_be_produced = initializer.get_maps_that_should_be_produced(
+            'hic-ena-h-hf-nsp-full-hae-6deg-1yr')
+
+        expected_maps_that_should_be_produced = [
+            PossibleMapToProduce(
+                input_files=set(map_1_deps),
+                input_metadata=InputMetadata(
+                    instrument='hi',
+                    data_level='l3',
+                    start_date=datetime(2026, 2, 10),
+                    end_date=datetime(2027, 2, 10),
+                    version='v001',
+                    descriptor=f'hic-ena-h-hf-nsp-full-hae-6deg-1yr'
+                )
+            ),
+            PossibleMapToProduce(
+                input_files=set(map_3_deps),
+                input_metadata=InputMetadata(
+                    instrument='hi',
+                    data_level='l3',
+                    start_date=datetime(2028, 2, 11),
+                    end_date=datetime(2029, 2, 11),
+                    version='v001',
+                    descriptor=f'hic-ena-h-hf-nsp-full-hae-6deg-1yr'
+                )
+            ),
+        ]
+
+        self.assertEqual(expected_maps_that_should_be_produced, maps_that_should_be_produced)
