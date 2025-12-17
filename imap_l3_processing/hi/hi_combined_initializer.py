@@ -1,5 +1,7 @@
 import dataclasses
-from datetime import datetime
+from collections import defaultdict
+from datetime import datetime, timedelta
+from math import floor
 
 import imap_data_access
 from dateutil.relativedelta import relativedelta
@@ -16,17 +18,20 @@ HI_COMBINED_DESCRIPTORS = [
     "hic-ena-h-hf-sp-full-hae-4deg-1yr",
 ]
 
+LENGTH_OF_YEAR_IN_DAYS = timedelta(days=365.25)
+
 
 class HiCombinedInitializer(MapInitializer):
     input_map_descriptor_parts: dict[str, list[MapDescriptorParts]]
     input_map_filenames: dict[str, list[str]]
 
-    def __init__(self):
+    def __init__(self, canonical_map_start_date: datetime = datetime(2026, 1, 1)):
         super().__init__('hi')
 
         l2_query_results = imap_data_access.query(instrument="hi", data_level="l2")
         l2_by_descriptor_and_start_date = self.get_latest_version_by_descriptor_and_start_date(l2_query_results)
         self.input_maps = dict(self.existing_l3_maps, **l2_by_descriptor_and_start_date)
+        self.canonical_map_start_date = canonical_map_start_date
 
     def furnish_spice_dependencies(self, map_to_produce: PossibleMapToProduce):
         pass
@@ -44,37 +49,40 @@ class HiCombinedInitializer(MapInitializer):
             return []
 
         hi90_start_dates = sorted(self.input_maps[hi90_descriptor].keys())
-        for i in range(0, len(hi90_start_dates), 2):
-            first_6mo_start_date_str = hi90_start_dates[i]
-            first_6mo_start_date = datetime.strptime(first_6mo_start_date_str, '%Y%m%d')
 
-            if i + 1 < len(hi90_start_dates):
-                six_months_later = first_6mo_start_date + relativedelta(months=+6)
-                next_map_start_date_str = hi90_start_dates[i + 1]
-                next_map_start_date = datetime.strptime(next_map_start_date_str, "%Y%m%d")
+        input_start_dates = defaultdict(list)
 
-                if six_months_later == next_map_start_date:
-                    input_files = [
-                        self.input_maps[hi90_descriptor].get(first_6mo_start_date_str),
-                        self.input_maps[hi90_descriptor].get(next_map_start_date_str),
-                        self.input_maps[hi45_descriptor].get(first_6mo_start_date_str),
-                        self.input_maps[hi45_descriptor].get(next_map_start_date_str),
-                    ]
+        for hi90_start_date in hi90_start_dates:
+            start_date = datetime.strptime(hi90_start_date, "%Y%m%d")
+            input_start_dates[floor((start_date - self.canonical_map_start_date) / LENGTH_OF_YEAR_IN_DAYS)].append(
+                hi90_start_date)
 
-                    if not all(input_files):
-                        continue
+        for i in input_start_dates.keys():
+            if len(input_start_dates[i]) == 2:
+                first_6mo_start_date_str = input_start_dates[i][0]
+                first_6mo_start_date = datetime.strptime(first_6mo_start_date_str, '%Y%m%d')
 
-                    possible_maps_to_produce.append(PossibleMapToProduce(
-                        input_files=set(input_files),
-                        input_metadata=InputMetadata(
-                            instrument='hi',
-                            data_level='l3',
-                            start_date=first_6mo_start_date,
-                            end_date=first_6mo_start_date + relativedelta(months=+12),
-                            version='v001',
-                            descriptor=input_descriptor,
-                            repointing=None
-                        )
-                    ))
+                input_files = [
+                    self.input_maps[hi90_descriptor].get(input_start_dates[i][0]),
+                    self.input_maps[hi90_descriptor].get(input_start_dates[i][1]),
+                    self.input_maps[hi45_descriptor].get(input_start_dates[i][0]),
+                    self.input_maps[hi45_descriptor].get(input_start_dates[i][1]),
+                ]
+
+                if not all(input_files):
+                    continue
+
+                possible_maps_to_produce.append(PossibleMapToProduce(
+                    input_files=set(input_files),
+                    input_metadata=InputMetadata(
+                        instrument='hi',
+                        data_level='l3',
+                        start_date=first_6mo_start_date,
+                        end_date=first_6mo_start_date + relativedelta(months=+12),
+                        version='v001',
+                        descriptor=input_descriptor,
+                        repointing=None
+                    )
+                ))
 
         return possible_maps_to_produce
