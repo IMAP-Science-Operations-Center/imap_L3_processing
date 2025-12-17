@@ -145,7 +145,8 @@ class UncertaintyWeightedCombination(CombinationStrategy):
         intensity_stat_unc = np.array([m.ena_intensity_stat_uncert for m in maps])
         exposures = np.array([m.exposure_factor for m in maps])
 
-        mask = np.isnan(intensities) | (exposures == 0) | np.isnan(exposures) | np.isnan(intensity_stat_unc)
+        mask = np.isnan(intensities) | (exposures == 0) | np.isnan(exposures) | np.isnan(intensity_stat_unc) | np.isinf(
+            intensity_stat_unc)
 
         intensities = np.where(mask, 0, intensities)
         intensity_sys_err = np.where(mask, 0, intensity_sys_err)
