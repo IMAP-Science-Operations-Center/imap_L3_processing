@@ -417,7 +417,18 @@ class TestSweProcessor(unittest.TestCase):
     @patch("imap_l3_processing.swe.swe_processor.SweProcessor.calculate_moment_products")
     def test_calculate_pitch_angle_products_makes_nan_if_no_mag_close_enough(self, _):
         epochs = np.array([datetime(2025, 3, 6)])
-        mag_epochs = np.array([datetime(2025, 3, 6, 0, 1, 30)])
+        mag_epochs = np.array([
+            datetime(2025, 3, 6, 0, 1, 30),
+            datetime(2025, 3, 6, 0, 2, 30),
+            datetime(2025, 3, 6, 0, 3, 30),
+            datetime(2025, 3, 6, 0, 4, 30),
+            datetime(2025, 3, 6, 0, 5, 30),
+            datetime(2025, 3, 6, 0, 6, 30),
+            datetime(2025, 3, 6, 0, 7, 30),
+            datetime(2025, 3, 6, 0, 8, 30),
+            datetime(2025, 3, 6, 0, 9, 30),
+            datetime(2025, 3, 6, 0, 10, 30),
+        ])
         swapi_epochs = np.array([datetime(2025, 3, 6)])
 
         pitch_angle_bins = [70, 100, 130]
@@ -510,7 +521,8 @@ class TestSweProcessor(unittest.TestCase):
     @patch("imap_l3_processing.swe.swe_processor.SweProcessor.calculate_moment_products")
     def test_calculate_pitch_angle_products_without_mocks(self, _):
         epochs = np.array([datetime(2025, 3, 6)])
-        mag_epochs = np.array([datetime(2025, 3, 6, 0, 0, 30)])
+        mag_start_time = datetime(2025, 3, 6, 0, 1, 0)
+        mag_epochs = np.array([mag_start_time + i * timedelta(seconds=1) for i in range(10)])
         swapi_epochs = np.array([datetime(2025, 3, 6)])
 
         pitch_angle_bins = [70, 100, 130]
@@ -1351,7 +1363,8 @@ class TestSweProcessor(unittest.TestCase):
                 rebinned_mag_data = [sentinel.mag_data_1, sentinel.mag_data_2, sentinel.mag_data_3]
 
                 with self.assertLogs():
-                    swe_moment_data = swe_processor.calculate_moment_products(swe_l2_data, swe_l1_data, rebinned_mag_data,
+                    swe_moment_data = swe_processor.calculate_moment_products(swe_l2_data, swe_l1_data,
+                                                                              rebinned_mag_data,
                                                                               spacecraft_potential,
                                                                               core_halo_breakpoint,
                                                                               corrected_energy_bins,
