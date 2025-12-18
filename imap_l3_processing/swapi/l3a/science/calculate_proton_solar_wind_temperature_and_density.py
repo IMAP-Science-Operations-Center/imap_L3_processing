@@ -17,6 +17,7 @@ from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_speed impo
     calculate_sw_speed_h_plus
 from imap_l3_processing.swapi.l3a.science.speed_calculation import find_peak_center_of_mass_index, interpolate_energy, \
     extract_coarse_sweep
+from imap_l3_processing.swapi.l3a.utils import DataQualityException, SWAPIDataQualityExceptionType
 
 
 def proton_count_rate_model(efficiency, ev_per_q, density_per_cm3, temperature, bulk_flow_speed_km_per_s):
@@ -59,8 +60,9 @@ def calculate_proton_solar_wind_temperature_and_density_for_one_sweep(coincident
     peak_energies_filtered = peak_energies[at_least_minimum]
 
     initial_parameter_guess = [5, 1e5]
+
     def model(ev_per_q: ndarray, density: float, temperature: float):
-        return proton_count_rate_model(efficiency, ev_per_q, density, temperature,  nominal_values(initial_speed_guess))
+        return proton_count_rate_model(efficiency, ev_per_q, density, temperature, nominal_values(initial_speed_guess))
 
     values, covariance = scipy.optimize.curve_fit(model,
                                                   peak_energies_filtered,
@@ -70,15 +72,17 @@ def calculate_proton_solar_wind_temperature_and_density_for_one_sweep(coincident
                                                   bounds=[[0, 0], [np.inf, np.inf]],
                                                   p0=initial_parameter_guess)
     residual = abs(model(peak_energies_filtered, *values) - nominal_values(filtered_peak_count_rates))
-    reduced_chisq = np.sum(np.square(residual / std_devs(filtered_peak_count_rates))) / (len(peak_energies_filtered) - 2)
+    reduced_chisq = np.sum(np.square(residual / std_devs(filtered_peak_count_rates))) / (
+            len(peak_energies_filtered) - 2)
     if reduced_chisq > 10:
-        raise ValueError("Failed to fit - chi-squared too large", reduced_chisq)
+        raise DataQualityException(SWAPIDataQualityExceptionType.ProtonTempDensityFit,
+                                   f"Failed to fit - chi-squared too large {reduced_chisq}")
     density, temperature = correlated_values(values, covariance)
-
     return temperature, density
 
 
-def calculate_uncalibrated_proton_solar_wind_temperature_and_density(coincident_count_rates: uarray, energy: ndarray, efficiency: float):
+def calculate_uncalibrated_proton_solar_wind_temperature_and_density(coincident_count_rates: uarray, energy: ndarray,
+                                                                     efficiency: float):
     temperatures_per_sweep = []
     densities_per_sweep = []
     for sweep, single_energy in zip(coincident_count_rates, energy):
@@ -94,7 +98,8 @@ def calculate_uncalibrated_proton_solar_wind_temperature_and_density(coincident_
 
 
 def calculate_proton_speed_from_one_sweep(coincident_count_rates, energy, proton_peak_indices):
-    center_of_mass_index = find_peak_center_of_mass_index(proton_peak_indices, coincident_count_rates, minimum_count_rate=13)
+    center_of_mass_index = find_peak_center_of_mass_index(proton_peak_indices, coincident_count_rates,
+                                                          minimum_count_rate=13)
     energy_at_com = interpolate_energy(center_of_mass_index, energy)
     initial_speed_guess = calculate_sw_speed_h_plus(energy_at_com)
     return initial_speed_guess

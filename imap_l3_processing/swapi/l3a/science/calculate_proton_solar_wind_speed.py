@@ -12,6 +12,7 @@ from imap_l3_processing.constants import PROTON_CHARGE_COULOMBS, PROTON_MASS_KG,
     ONE_SECOND_IN_NANOSECONDS, TT2000_EPOCH
 from imap_l3_processing.swapi.l3a.science.speed_calculation import get_peak_indices, find_peak_center_of_mass_index, \
     interpolate_energy, extract_coarse_sweep
+from imap_l3_processing.swapi.l3a.utils import DataQualityException, SWAPIDataQualityExceptionType
 
 
 def sine_fit_function(spin_phase_angle, a, phi, b):
@@ -144,6 +145,8 @@ def calculate_proton_solar_wind_speed(coincidence_count_rates, energies, epoch, 
         iter2 += 1
         if iter2 > 100:
             exit()
-        raise ValueError("Failed to fit - chi-squared too large", chisq)
+        raise DataQualityException(SWAPIDataQualityExceptionType.ProtonVelocityFit,
+                                   f"Failed to fit - chi-squared too large {chisq}")
+
     proton_sw_speed = calculate_sw_speed_h_plus(b)
     return proton_sw_speed, a, phi, b

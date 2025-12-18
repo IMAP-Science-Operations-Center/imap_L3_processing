@@ -1,3 +1,4 @@
+import enum
 from datetime import datetime
 from typing import Iterable
 
@@ -45,3 +46,16 @@ def chunk_l2_data(data: SwapiL2Data, chunk_size: int) -> Iterable[SwapiL2Data]:
             data.coincidence_count_rate_uncertainty[i:i + chunk_size]
         )
         i += chunk_size
+
+
+class SWAPIDataQualityExceptionType(enum.Enum):
+    InputHasFill = 0
+    ProtonPeakTooFewBins = 1
+    ProtonVelocityFit = 2
+    ProtonTempDensityFit = 3
+
+
+class DataQualityException(Exception):
+    def __init__(self, exc_type: SWAPIDataQualityExceptionType, message: str):
+        self.exc_type = exc_type
+        super().__init__(message)

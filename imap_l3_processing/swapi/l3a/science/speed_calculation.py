@@ -2,17 +2,21 @@ import numpy as np
 from uncertainties import wrap
 from uncertainties.unumpy import nominal_values
 
+from imap_l3_processing.swapi.l3a.utils import SWAPIDataQualityExceptionType, DataQualityException
+
 
 def get_peak_indices(count_rates, width, mask=True) -> slice:
     max_indices = np.argwhere(
-            (count_rates == np.max(count_rates, where=mask, initial=0)) & mask)
+        (count_rates == np.max(count_rates, where=mask, initial=0)) & mask)
     left_min_index = np.min(max_indices)
     right_min_index = np.max(max_indices)
 
     if right_min_index - left_min_index > 1:
+        raise DataQualityException()
         raise Exception("Count rates contains multiple distinct peaks")
 
-    return slice(max(0, left_min_index - width), right_min_index + width+1)
+    return slice(max(0, left_min_index - width), right_min_index + width + 1)
+
 
 def find_peak_center_of_mass_index(peak_slice, count_rates, minimum_count_rate=0, minimum_bin_count=0):
     count_rates = np.asarray(count_rates)
@@ -24,11 +28,13 @@ def find_peak_center_of_mass_index(peak_slice, count_rates, minimum_count_rate=0
     filtered_peak_indices = peak_indices[at_least_minimum]
 
     if len(filtered_peak_indices) < minimum_bin_count:
-        raise Exception("Too few bins after removing low count rates")
+        raise DataQualityException(SWAPIDataQualityExceptionType.ProtonPeakTooFewBins,
+                                   "Too few bins after removing low count rates")
 
     filtered_peak_counts = peak_counts[at_least_minimum]
     center_of_mass_index = np.sum(filtered_peak_indices * filtered_peak_counts) / np.sum(filtered_peak_counts)
     return center_of_mass_index
+
 
 def interpolate_energy(center_of_mass_index, energies):
     interpolate_lambda = lambda x: np.exp(np.interp(x, np.arange(len(energies)), np.log(energies)))
