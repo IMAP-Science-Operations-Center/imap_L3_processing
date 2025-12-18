@@ -97,7 +97,6 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: P
     return file_path
 
 
-
 def generate_map_global_metadata(data_product: MapDataProduct) -> dict:
     attrs = {}
 
@@ -210,7 +209,7 @@ def read_l1d_mag_data(cdf_path: Union[str, Path]) -> MagL1dData:
     with CDF(str(cdf_path)) as cdf:
         return MagL1dData(
             epoch=cdf['epoch'][...],
-            mag_data=read_numeric_variable(cdf["vectors"])[:, :3])
+            mag_data=read_numeric_variable(cdf["b_dsrf"])[:, :3])
 
 
 L1CPointingSet = TypeVar("L1CPointingSet", bound=Union[InputRectangularPointingSet, UltraL1CPSet])
@@ -222,10 +221,12 @@ def combine_glows_l3e_with_l1c_pointing(glows_l3e_data: list[GlowsL3eData], l1c_
     l1c_by_repoint = {l1c.repointing: l1c for l1c in l1c_data}
     glows_by_repoint = {l3e.repointing: l3e for l3e in glows_l3e_data}
 
-    return [(l1c_by_repoint[repoint], glows_by_repoint[repoint]) for repoint in l1c_by_repoint.keys() if repoint in glows_by_repoint]
+    return [(l1c_by_repoint[repoint], glows_by_repoint[repoint]) for repoint in l1c_by_repoint.keys() if
+            repoint in glows_by_repoint]
 
 
-def get_dependency_paths_by_descriptor(deps: ProcessingInputCollection, descriptors: list[str]) -> dict[str, list[Path]]:
+def get_dependency_paths_by_descriptor(deps: ProcessingInputCollection, descriptors: list[str]) -> dict[
+    str, list[Path]]:
     descriptor_to_paths = {key: [] for key in descriptors}
     for input_file in deps.get_science_inputs():
         for descriptor in descriptors:
@@ -259,7 +260,9 @@ class FurnishMetakernelOutput:
     metakernel_path: Path
     spice_kernel_paths: list[Path]
 
-def get_spice_kernels_file_names(start_date: datetime, end_date: datetime, kernel_types: list[SpiceKernelTypes]) -> list[str]:
+
+def get_spice_kernels_file_names(start_date: datetime, end_date: datetime, kernel_types: list[SpiceKernelTypes]) -> \
+list[str]:
     metakernel_url = urlparse(imap_data_access.config['DATA_ACCESS_URL'])._replace(path="metakernel").geturl()
 
     parameters: dict = {

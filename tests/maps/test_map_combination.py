@@ -311,8 +311,8 @@ class TestMapCombination(unittest.TestCase):
         map_2 = construct_intensity_data_with_all_zero_fields()
         map_2.ena_intensity = np.array([5, 6, 7, 8, np.nan])
         map_2.exposure_factor = np.array([3, 1, 5, 2, 0])
-        map_2.ena_intensity_sys_err = np.array([9, 4, 2, 0, np.nan])
-        map_2.ena_intensity_stat_uncert = np.array([1, 2, 3, 4, np.nan])
+        map_2.ena_intensity_sys_err = np.array([9, 4, np.inf, 0, np.nan])
+        map_2.ena_intensity_stat_uncert = np.array([1, 2, np.inf, 4, np.nan])
         map_2.obs_date = np.ma.masked_equal(
             [datetime(2025, 5, 9),
              datetime(2025, 5, 10),
@@ -321,32 +321,32 @@ class TestMapCombination(unittest.TestCase):
              DATETIME_FILL],
             DATETIME_FILL)
 
-        expected_combined_exposure = [4, 1, 10, 8, 0]
+        expected_combined_exposure = [4, 1, 5, 8, 0]
         expected_combined_intensity = [
             (1 / (10 ** 2) + 5 / (1 ** 2)) / (1 / (10 ** 2) + 1 / (1 ** 2)),
             (6 / (2 ** 2)) / (1 / (2 ** 2)),
-            (3 / (10 ** 2) + 7 / (3 ** 2)) / (1 / (10 ** 2) + 1 / (3 ** 2)),
+            (3 / (10 ** 2)) / (1 / (10 ** 2)),
             (4 / (10 ** 2) + 8 / (4 ** 2)) / (1 / (10 ** 2) + 1 / (4 ** 2)),
             np.nan
         ]
         expected_stat_unc = [
             np.sqrt(1 / (1 / (10 ** 2) + 1 / (1 ** 2))),
             np.sqrt(1 / (1 / (2 ** 2))),
-            np.sqrt(1 / (1 / (10 ** 2) + 1 / (3 ** 2))),
+            np.sqrt(1 / (1 / (10 ** 2))),
             np.sqrt(1 / (1 / (10 ** 2) + 1 / (4 ** 2))),
             np.nan
         ]
         expected_sys_err = [
             (1 * 1 + 3 * 9) / (1 + 3),
             (1 * 4) / 1,
-            (5 * 10 + 5 * 2) / (5 + 5),
+            (5 * 10) / (5),
             (6 * 100 + 2 * 0) / (6 + 2),
             np.nan
         ]
         expected_obs_date = np.ma.array(
             [datetime(2025, 5, 8),
              datetime(2025, 5, 10),
-             datetime(2025, 5, 9),
+             datetime(2025, 5, 7),
              datetime(2025, 5, 9), np.ma.masked])
 
         exposure_weighted_strategy = UncertaintyWeightedCombination()

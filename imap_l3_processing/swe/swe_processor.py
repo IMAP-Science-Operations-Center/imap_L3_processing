@@ -1,7 +1,6 @@
 import datetime
 import logging
 from dataclasses import replace
-from datetime import timedelta
 
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
@@ -473,7 +472,7 @@ class SweProcessor(Processor):
         solar_wind_vectors = calculate_solar_wind_velocity_vector(swapi_l_a_proton_data.proton_sw_speed,
                                                                   swapi_l_a_proton_data.proton_sw_clock_angle,
                                                                   swapi_l_a_proton_data.proton_sw_deflection_angle)
-        swapi_max_distance = timedelta(minutes=config['max_swapi_offset_in_minutes'])
+        swapi_max_distance = np.timedelta64(int(config['max_swapi_offset_in_minutes'] * 60e9), 'ns')
         rebinned_solar_wind_vectors = find_closest_neighbor(from_epoch=swapi_epoch,
                                                             from_data=solar_wind_vectors,
                                                             to_epoch=swe_epoch,
