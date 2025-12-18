@@ -105,37 +105,39 @@ class PriorityEvent:
 
 @dataclass
 class CodiceLoL2DirectEventData:
+    apd_energy: ndarray
+    gain: ndarray
+    apd_id: ndarray
+    data_quality: ndarray
+    energy_step: ndarray
+    multi_flag: ndarray
+    num_events: ndarray
+    spin_sector: ndarray
+    elevation_angle: ndarray
+    tof: ndarray
+    position: ndarray
     epoch: ndarray
     epoch_delta_plus: ndarray
     epoch_delta_minus: ndarray
-    priority_events: list[PriorityEvent]
 
     @classmethod
     def read_from_cdf(cls, l2_direct_event_cdf: Path):
         with CDF(str(l2_direct_event_cdf)) as cdf:
-            priority_events = []
-            for index in range(CODICE_LO_L2_NUM_PRIORITIES):
-                priority_events.append(PriorityEvent(
-                    apd_energy=read_numeric_variable(cdf[f"p{index}_apd_energy"]),
-                    apd_gain=read_variable_and_mask_fill_values(cdf[f"p{index}_gain"]),
-                    apd_id=read_variable_and_mask_fill_values(cdf[f"p{index}_apd_id"]),
-                    data_quality=read_variable_and_mask_fill_values(cdf[f"p{index}_data_quality"]),
-                    energy_step=read_numeric_variable(cdf[f"p{index}_energy_step"]),
-                    multi_flag=read_variable_and_mask_fill_values(cdf[f"p{index}_multi_flag"]),
-                    num_events=read_variable_and_mask_fill_values(cdf[f"p{index}_num_events"]),
-                    spin_angle=read_numeric_variable(cdf[f"p{index}_spin_sector"]),
-                    elevation=read_numeric_variable(cdf[f"p{index}_elevation"]),
-                    tof=read_variable_and_mask_fill_values(cdf[f"p{index}_tof"]),
-                    position=read_variable_and_mask_fill_values(cdf[f"p{index}_position"]),
-                )
-
-                )
-
             return cls(
                 epoch=cdf["epoch"][...],
+                apd_energy=cdf["apd_energy"][...],
+                gain=cdf["gain"][...],
+                apd_id=cdf["apd_id"][...],
+                data_quality=cdf["data_quality"][...],
+                energy_step=cdf["energy_step"][...],
+                multi_flag=cdf["multi_flag"][...],
+                num_events=cdf["num_events"][...],
+                spin_sector=cdf["spin_sector"][...],
+                elevation_angle=cdf["elevation_angle"][...],
+                tof=cdf["tof"][...],
+                position=cdf["position"][...],
                 epoch_delta_plus=cdf["epoch_delta_plus"][...],
                 epoch_delta_minus=cdf["epoch_delta_minus"][...],
-                priority_events=priority_events
             )
 
 
