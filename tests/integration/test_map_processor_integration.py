@@ -2,6 +2,7 @@ import logging
 import unittest
 from datetime import timedelta
 from pathlib import Path
+from unittest import skip
 from unittest.mock import patch, Mock
 
 from imap_data_access import ScienceFilePath
@@ -27,13 +28,16 @@ class TestMapIntegration(unittest.TestCase):
         lo_multiple_arcs_test_data_dir = INTEGRATION_TEST_DATA_PATH / "lo/multiple_arcs"
         lo_imap_data_dir = get_run_local_data_path("lo/integration_data")
 
-        input_files = list(lo_multiple_arcs_test_data_dir.glob("*")) + [
+        spice_kernels = [
             INTEGRATION_TEST_DATA_PATH / "spice" / "naif020.tls",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_science_108.tf",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_sclk_008.tsc",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
             INTEGRATION_TEST_DATA_PATH / "spice" / "de440.bsp",
-            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_recon_20250415_20260415_v01.bsp"]
+            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_recon_20250415_20260415_v01.bsp"
+        ]
+
+        input_files = list(lo_multiple_arcs_test_data_dir.glob("*"))  # + spice_kernels
 
         with mock_imap_data_access(lo_imap_data_dir, input_files):
             logging.basicConfig(force=True, level=logging.INFO,
@@ -458,3 +462,33 @@ class TestMapIntegration(unittest.TestCase):
 
             with CDF(str(expected_nsp_map_path)) as cdf:
                 self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))
+
+    @skip("used to generate CSV maps of SP, run against hi validation data 12-16-2025 and download the spice")
+    @patch("imap_l3_data_processor._parse_cli_arguments")
+    def test_hi_hf_validation(self, mock_parse_cli_arguments):
+        hi_imap_data_dir = get_run_local_data_path("hi/integration_data")
+
+        validation_input_dir = Path('/Users/harrison/Documents/IMAP_Hi_HF_Validation 12-16-25/input')
+
+        spice_input_dir = validation_input_dir / "spice"
+
+        input_files = list(validation_input_dir.rglob("*.cdf")) + list(spice_input_dir.glob("*"))
+
+        with mock_imap_data_access(hi_imap_data_dir, input_files):
+            logging.basicConfig(force=True, level=logging.INFO,
+                                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+            mock_arguments = Mock()
+            mock_arguments.instrument = "hi"
+            mock_arguments.data_level = "l3"
+            mock_arguments.descriptor = "sp-maps"
+            mock_arguments.start_date = "20250415"
+            mock_arguments.end_date = None
+            mock_arguments.repointing = None
+            mock_arguments.version = "v001"
+            mock_arguments.dependency = "[]"
+            mock_arguments.upload_to_sdc = False
+
+            mock_parse_cli_arguments.return_value = mock_arguments
+
+            imap_l3_data_processor.imap_l3_processor()
