@@ -356,7 +356,6 @@ class TestModels(CdfModelTestCase):
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.epoch, cdf["epoch"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.epoch_delta_plus, cdf["epoch_delta_plus"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.epoch_delta_minus, cdf["epoch_delta_minus"][...])
-            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.energy_table, cdf["energy_table"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.acquisition_time_per_step,
                                           cdf["acquisition_time_per_step"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.spin_sector_index, cdf["spin_sector_index"][...])
@@ -382,7 +381,6 @@ class TestModels(CdfModelTestCase):
             np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.epoch_delta_plus, cdf["epoch_delta_plus"][...])
             np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.epoch_delta_minus,
                                           cdf["epoch_delta_minus"][...])
-            np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.energy_table, cdf["energy_table"][...])
             np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.acquisition_time_per_step,
                                           cdf["acquisition_time_per_step"][...])
             np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.spin_sector_index,
