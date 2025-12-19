@@ -464,7 +464,6 @@ class TestCodiceLoProcessor(unittest.TestCase):
         sw_priority_rates.p2_heplusplus = rng.random(priority_counts_variable_shape)
         sw_priority_rates.p3_heavies = rng.random(priority_counts_variable_shape)
         sw_priority_rates.p4_dcrs = rng.random(priority_counts_variable_shape)
-        sw_priority_rates.energy_table = sentinel.l1a_energy_table
 
         nsw_priority_rates = create_dataclass_mock(CodiceLoL1aNSWPriorityRates)
         nsw_priority_rates.epoch = epochs
