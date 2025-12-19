@@ -540,8 +540,8 @@ class TestUtils(TestCase):
 
                 expected_request_params = {
                     "file_types": ["leapseconds", "imap_frames"],
-                    "start_time": "315619200",
-                    "end_time": "320716800",
+                    "start_time": "315576000",
+                    "end_time": "320673600",
                 }
 
                 mock_requests.get.assert_has_calls([

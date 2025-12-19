@@ -39,6 +39,7 @@ class SpiceKernelTypes(enum.Enum):
     PointingAttitude = "pointing_attitude",
     PlanetaryEphemeris = "planetary_ephemeris",
     SpacecraftClock = "spacecraft_clock",
+    EphemerisPredicted = "ephemeris_predicted",
 
 
 def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: Path = None,
@@ -267,8 +268,8 @@ list[str]:
 
     parameters: dict = {
         'file_types': [kernel_type.value[0] for kernel_type in kernel_types],
-        'start_time': f"{int((start_date - datetime(2000, 1, 1)).total_seconds())}",
-        'end_time': f"{int((end_date - datetime(2000, 1, 1)).total_seconds())}",
+        'start_time': f"{int((start_date - datetime(2000, 1, 1, 12)).total_seconds())}",
+        'end_time': f"{int((end_date - datetime(2000, 1, 1, 12)).total_seconds())}",
     }
 
     kernels_res = requests.get(metakernel_url, params={**parameters, 'list_files': 'true'})
@@ -284,8 +285,8 @@ def furnish_spice_metakernel(start_date: datetime, end_date: datetime, kernel_ty
     parameters: dict = {
         'spice_path': kernel_path,
         'file_types': [kernel_type.value[0] for kernel_type in kernel_types],
-        'start_time': str(int((start_date - datetime(2000, 1, 1)).total_seconds())),
-        'end_time': str(int((end_date - datetime(2000, 1, 1)).total_seconds())),
+        'start_time': str(int((start_date - datetime(2000, 1, 1, 12)).total_seconds())),
+        'end_time': str(int((end_date - datetime(2000, 1, 1, 12)).total_seconds())),
     }
 
     metakernel_url = urlparse(imap_data_access.config['DATA_ACCESS_URL'])._replace(path="metakernel").geturl()
