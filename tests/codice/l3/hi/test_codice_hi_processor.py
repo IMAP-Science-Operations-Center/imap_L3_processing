@@ -1,3 +1,4 @@
+import dataclasses
 import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -8,13 +9,12 @@ import numpy as np
 from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcessor
 from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3a_direct_events_dependencies import \
     CodiceHiL3aDirectEventsDependencies
-from imap_l3_processing.codice.l3.hi.direct_event.science.tof_lookup import TOFLookup, EnergyPerNuc
-from imap_l3_processing.codice.l3.hi.models import PriorityEventL2, CodiceL2HiData, CodiceHiL2SectoredIntensitiesData, \
-    CODICE_HI_NUM_L2_PRIORITIES
+from imap_l3_processing.codice.l3.hi.models import CodiceL2HiDirectEventData, CodiceHiL2SectoredIntensitiesData, \
+    CodiceL3HiDirectEvents
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
 from imap_l3_processing.codice.l3.lo.constants import CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM
 from imap_l3_processing.models import InputMetadata
-from tests.test_helpers import NumpyArrayMatcher, get_test_instrument_team_data_path, get_test_data_path
+from tests.test_helpers import NumpyArrayMatcher, get_test_instrument_team_data_path
 
 
 class TestCodiceHiProcessor(unittest.TestCase):
@@ -39,6 +39,84 @@ class TestCodiceHiProcessor(unittest.TestCase):
         mock_save_data.assert_called_with(mock_processed_direct_events)
         self.assertEqual([mock_save_data.return_value], product)
         self.assertEqual(['parent_file_1'], mock_processed_direct_events.parent_file_names)
+
+    def test_process_l3a_with_small_dataset(self):
+
+        codice_hi_processor = CodiceHiProcessor(sentinel.processing_input_collection,
+                                                input_metadata=sentinel.input_metadata)
+
+        expected_number_of_events = np.array([
+            [0, 2], [4, 3]
+        ])
+
+        expected_ssd_energy = np.array([
+            [
+                [np.nan, np.nan, np.nan, np.nan],
+                [5, 6, np.nan, np.nan]
+            ],
+            [
+                [1, 2, 3, 4],
+                [5, 6, 2, np.nan]
+            ]
+        ], dtype=float)
+
+        expected_energy_per_nuc = np.array([
+            [
+                [np.nan, np.nan, np.nan, np.nan],
+                [15, 16, np.nan, np.nan]
+            ],
+            [
+                [11, 12, 13, 14],
+                [15, 16, 12, np.nan]
+            ]
+        ], dtype=float)
+
+        l2_data = CodiceL2HiDirectEventData(
+            epoch=sentinel.expected_epoch,
+            epoch_delta_plus=sentinel.expected_epoch_delta_plus,
+            data_quality=sentinel.expected_data_quality,
+            multi_flag=sentinel.expected_multi_flag,
+            number_of_events=expected_number_of_events,
+            ssd_energy=expected_ssd_energy,
+            ssd_id=np.ones((2, 2, 4)),
+            spin_angle=sentinel.expected_spin_angle,
+            spin_number=sentinel.expected_spin_number,
+            time_of_flight=sentinel.expected_time_of_flight,
+            type=sentinel.expected_type,
+            energy_per_nuc=expected_energy_per_nuc,
+        )
+        dependencies = CodiceHiL3aDirectEventsDependencies(
+            codice_l2_hi_data=l2_data
+        )
+        expected_output = CodiceL3HiDirectEvents(
+            input_metadata=sentinel.input_metadata,
+            epoch=sentinel.expected_epoch,
+            epoch_delta=sentinel.expected_epoch_delta_plus,
+            data_quality=sentinel.expected_data_quality,
+            multi_flag=sentinel.expected_multi_flag,
+            num_events=expected_number_of_events,
+            ssd_energy=expected_ssd_energy,
+            ssd_id=np.ones((2, 2, 4)),
+            spin_angle=sentinel.expected_spin_angle,
+            spin_number=sentinel.expected_spin_number,
+            tof=sentinel.expected_time_of_flight,
+            type=sentinel.expected_type,
+            energy_per_nuc=expected_energy_per_nuc,
+            estimated_mass=np.array([
+                [
+                    [np.nan, np.nan, np.nan, np.nan],
+                    [5 / 15, 6 / 16, np.nan, np.nan]
+                ],
+                [
+                    [1 / 11, 2 / 12, 3 / 13, 4 / 14],
+                    [5 / 15, 6 / 16, 2 / 12, np.nan]
+                ]
+            ])
+        )
+
+        actual_output = codice_hi_processor.process_l3a_direct_event(dependencies=dependencies)
+        for field in dataclasses.fields(CodiceL3HiDirectEvents):
+            np.testing.assert_equal(getattr(actual_output, field.name), getattr(expected_output, field.name))
 
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodicePitchAngleDependencies.fetch_dependencies")
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiProcessor.process_l3b")
@@ -72,83 +150,6 @@ class TestCodiceHiProcessor(unittest.TestCase):
             processor.process()
         self.assertEqual("Unknown data level for CoDICE: L2a", str(context.exception))
 
-    def test_process_l3a_returns_data_product(self):
-        rng = np.random.default_rng()
-
-        epoch = np.array([datetime(2025, 1, 1), datetime(2025, 1, 1)])
-        epoch_delta_plus = np.full(epoch.shape, 1_000_000)
-
-        num_epochs = len(epoch)
-        event_buffer_size = 10
-
-        l2_priority_events, (reshaped_l2_data_quality,
-                             reshaped_l2_multi_flag,
-                             _,
-                             reshaped_l2_ssd_energy,
-                             reshaped_l2_ssd_energy_plus,
-                             reshaped_l2_ssd_energy_minus,
-                             reshaped_l2_ssd_id,
-                             reshaped_l2_spin_angle,
-                             reshaped_l2_spin_number,
-                             _,
-                             reshaped_l2_type) = self._create_priority_events(num_epochs, event_buffer_size)
-
-        expected_estimated_mass = np.full((num_epochs, CODICE_HI_NUM_L2_PRIORITIES, event_buffer_size), np.nan)
-        expected_energy_per_nuc = np.full((num_epochs, CODICE_HI_NUM_L2_PRIORITIES, event_buffer_size), np.nan)
-
-        reshaped_l2_num_events = np.empty((num_epochs, CODICE_HI_NUM_L2_PRIORITIES))
-        reshaped_l2_time_of_flight = np.empty((num_epochs, CODICE_HI_NUM_L2_PRIORITIES, event_buffer_size))
-        for priority_index, priority_event in enumerate(l2_priority_events):
-            for epoch_i in range(num_epochs):
-                number_of_events = rng.integers(0, 10)
-                priority_event.number_of_events[epoch_i] = number_of_events
-
-                time_of_flight_for_valid_events = rng.integers(1, 25, size=number_of_events)
-                e_per_nuc_for_valid_events = time_of_flight_for_valid_events * 100
-                ssd_energy_for_valid_events = priority_event.ssd_energy[epoch_i, :number_of_events]
-                estimated_mass_for_valid_events = ssd_energy_for_valid_events / e_per_nuc_for_valid_events
-
-                time_of_flight = np.full(event_buffer_size, 65535)
-                time_of_flight[:number_of_events] = time_of_flight_for_valid_events
-
-                priority_event.time_of_flight[epoch_i] = time_of_flight
-
-                expected_energy_per_nuc[epoch_i, priority_index, :number_of_events] = e_per_nuc_for_valid_events
-                expected_estimated_mass[epoch_i, priority_index, :number_of_events] = estimated_mass_for_valid_events
-
-                reshaped_l2_num_events[epoch_i, priority_index] = number_of_events
-                reshaped_l2_time_of_flight[epoch_i, priority_index, :] = time_of_flight
-
-        l2_data = CodiceL2HiData(epoch, epoch_delta_plus, l2_priority_events)
-        multiply_by_100_energy_per_nuc_lookup = TOFLookup(
-            {i: EnergyPerNuc(i * 10, i * 100, i * 1000) for i in np.arange(1, 25)})
-        dependencies = CodiceHiL3aDirectEventsDependencies(tof_lookup=multiply_by_100_energy_per_nuc_lookup,
-                                                           codice_l2_hi_data=l2_data)
-
-        processor = CodiceHiProcessor(Mock(), Mock())
-        codice_direct_event_product = processor.process_l3a_direct_event(dependencies)
-
-        np.testing.assert_array_equal(codice_direct_event_product.epoch, l2_data.epoch)
-        np.testing.assert_array_equal(codice_direct_event_product.epoch_delta, l2_data.epoch_delta_plus)
-
-        np.testing.assert_array_equal(codice_direct_event_product.data_quality, reshaped_l2_data_quality)
-        np.testing.assert_array_equal(codice_direct_event_product.multi_flag, reshaped_l2_multi_flag)
-        np.testing.assert_array_equal(codice_direct_event_product.num_events, reshaped_l2_num_events)
-
-        np.testing.assert_array_equal(codice_direct_event_product.ssd_energy, reshaped_l2_ssd_energy)
-        np.testing.assert_array_equal(codice_direct_event_product.ssd_energy_plus, reshaped_l2_ssd_energy_plus)
-        np.testing.assert_array_equal(codice_direct_event_product.ssd_energy_minus, reshaped_l2_ssd_energy_minus)
-
-        np.testing.assert_array_equal(codice_direct_event_product.ssd_id, reshaped_l2_ssd_id)
-        np.testing.assert_array_equal(codice_direct_event_product.spin_angle,
-                                      (reshaped_l2_spin_angle + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360)
-        np.testing.assert_array_equal(codice_direct_event_product.spin_number, reshaped_l2_spin_number)
-        np.testing.assert_array_equal(codice_direct_event_product.tof, reshaped_l2_time_of_flight)
-        np.testing.assert_array_equal(codice_direct_event_product.type, reshaped_l2_type)
-
-        np.testing.assert_array_equal(codice_direct_event_product.estimated_mass, expected_estimated_mass)
-
-        np.testing.assert_array_equal(expected_energy_per_nuc, codice_direct_event_product.energy_per_nuc)
 
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.calculate_unit_vector")
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.get_sector_unit_vectors")
@@ -345,12 +346,10 @@ class TestCodiceHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(codice_hi_data_product.parent_file_names, expected_parents)
 
     def test_integration_test(self):
-        tof_lookup_path = get_test_instrument_team_data_path("codice/hi/imap_codice_tof-lookup_20241110_v002.csv")
-        l2_direct_event_sci_path = get_test_data_path(
-            "codice/imap_codice_l2_hi-direct-events_20241110_v002-all-fill.cdf")
+        l2_direct_event_sci_path = get_test_instrument_team_data_path(
+            "codice/hi/imap_codice_l2_hi-direct-events_20250814_v001.cdf")
 
-        codice_hi_dependencies = CodiceHiL3aDirectEventsDependencies.from_file_paths(l2_direct_event_sci_path,
-                                                                                     tof_lookup_path)
+        codice_hi_dependencies = CodiceHiL3aDirectEventsDependencies.from_file_paths(l2_direct_event_sci_path)
 
         input_metadata = InputMetadata(instrument='codice',
                                        data_level="l3a",
@@ -365,70 +364,3 @@ class TestCodiceHiProcessor(unittest.TestCase):
         except Exception as e:
             self.fail(e)
 
-    def _create_priority_events(self, num_epochs, event_buffer_size):
-
-        number_of_event_data_points = CODICE_HI_NUM_L2_PRIORITIES * num_epochs * event_buffer_size
-
-        numbers = (np.arange(1, number_of_event_data_points + 1).reshape(CODICE_HI_NUM_L2_PRIORITIES, num_epochs,
-                                                                         event_buffer_size))
-        tof_all_events = (numbers % 24) + 1
-        ssd_id_all_events = numbers * 1000
-
-        (reshaped_l2_data_quality,
-         reshaped_l2_number_of_events) = [np.full((num_epochs, CODICE_HI_NUM_L2_PRIORITIES), np.nan) for _ in range(2)]
-
-        (reshaped_l2_multi_flag,
-         reshaped_l2_ssd_energy,
-         reshaped_l2_ssd_energy_plus,
-         reshaped_l2_ssd_energy_minus,
-         reshaped_l2_ssd_id,
-         reshaped_l2_spin_angle,
-         reshaped_l2_spin_number,
-         reshaped_l2_time_of_flight,
-         reshaped_l2_type) = [np.full((num_epochs, CODICE_HI_NUM_L2_PRIORITIES, event_buffer_size), np.nan) for _ in
-                              range(9)]
-
-        events = []
-        for i in range(CODICE_HI_NUM_L2_PRIORITIES):
-            data_quality = np.arange(num_epochs) * 1
-            number_of_events = np.arange(num_epochs) + i
-
-            ssd_energy = ssd_id_all_events[i]
-            ssd_energy_plus = np.arange(num_epochs * event_buffer_size).reshape(num_epochs, event_buffer_size) + i
-            ssd_energy_minus = np.arange(num_epochs * event_buffer_size).reshape(num_epochs, event_buffer_size) + i
-
-            ssd_id = ssd_id_all_events[i]
-            time_of_flight = tof_all_events[i]
-
-            multi_flag = np.arange(num_epochs * event_buffer_size).reshape(num_epochs, event_buffer_size) + i
-            spin_angle = np.arange(num_epochs * event_buffer_size).reshape(num_epochs, event_buffer_size) * i
-            spin_number = np.arange(num_epochs * event_buffer_size).reshape(num_epochs, event_buffer_size) * i
-            type = np.arange(num_epochs * event_buffer_size).reshape(num_epochs, event_buffer_size) * i
-
-            events.append(PriorityEventL2(data_quality, multi_flag, number_of_events, ssd_energy, ssd_energy_plus,
-                                          ssd_energy_minus, ssd_id,
-                                          spin_angle, spin_number, time_of_flight, type))
-
-            reshaped_l2_data_quality[:, i] = data_quality
-            reshaped_l2_number_of_events[:, i] = number_of_events
-
-            reshaped_l2_multi_flag[:, i, :] = multi_flag
-            reshaped_l2_ssd_energy[:, i, :] = ssd_energy
-            reshaped_l2_ssd_id[:, i, :] = ssd_id
-            reshaped_l2_spin_angle[:, i, :] = spin_angle
-            reshaped_l2_spin_number[:, i, :] = spin_number
-            reshaped_l2_time_of_flight[:, i, :] = time_of_flight
-            reshaped_l2_type[:, i, :] = type
-            reshaped_l2_ssd_energy_plus[:, i, :] = ssd_energy_plus
-            reshaped_l2_ssd_energy_minus[:, i, :] = ssd_energy_minus
-
-        return events, (
-            reshaped_l2_data_quality, reshaped_l2_multi_flag, reshaped_l2_number_of_events,
-            reshaped_l2_ssd_energy, reshaped_l2_ssd_energy_plus, reshaped_l2_ssd_energy_minus, reshaped_l2_ssd_id,
-            reshaped_l2_spin_angle, reshaped_l2_spin_number,
-            reshaped_l2_time_of_flight, reshaped_l2_type)
-
-    def _assert_estimated_mass(self, l2_priority_event, actual_calculated_mass, actual_energy_per_nuc,
-                               expected_energy_per_nuc):
-        np.testing.assert_array_equal(l2_priority_event.ssd_energy / expected_energy_per_nuc, actual_calculated_mass)
-        np.testing.assert_array_equal(expected_energy_per_nuc, actual_energy_per_nuc)

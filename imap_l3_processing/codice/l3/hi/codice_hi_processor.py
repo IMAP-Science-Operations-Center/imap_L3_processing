@@ -3,7 +3,6 @@ from pathlib import Path
 
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
-from numpy import ma
 
 from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3a_direct_events_dependencies import \
     CodiceHiL3aDirectEventsDependencies
@@ -38,65 +37,23 @@ class CodiceHiProcessor(Processor):
         return [save_data(data_product)]
 
     def process_l3a_direct_event(self, dependencies: CodiceHiL3aDirectEventsDependencies) -> CodiceL3HiDirectEvents:
-        tof_lookup = dependencies.tof_lookup
         l2_data = dependencies.codice_l2_hi_data
 
-        event_buffer_size = l2_data.priority_events[0].ssd_id.shape[-1]
-
-        (data_quality,
-         num_events) = [np.full((len(l2_data.epoch), len(l2_data.priority_events)), np.nan) for _ in range(2)]
-
-        event_data_output_shape = (len(l2_data.epoch), len(l2_data.priority_events), event_buffer_size)
-
-        (multi_flag, ssd_energy, ssd_energy_plus, ssd_energy_minus, ssd_id, spin_angle, spin_number, tof,
-         type, energy_per_nuc, estimated_mass) = [np.full(event_data_output_shape, np.nan) for _ in range(11)]
-
-        for index, priority_event in enumerate(l2_data.priority_events):
-            multi_flag[:, index, :] = priority_event.multi_flag
-            ssd_energy[:, index, :] = priority_event.ssd_energy
-            ssd_energy_plus[:, index, :] = priority_event.ssd_energy_plus
-            ssd_energy_minus[:, index, :] = priority_event.ssd_energy_minus
-
-            ssd_id[:, index, :] = priority_event.ssd_id
-            spin_angle[:, index, :] = (priority_event.spin_angle + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360
-            spin_number[:, index, :] = priority_event.spin_number
-            tof[:, index, :] = priority_event.time_of_flight
-            type[:, index, :] = priority_event.type
-            data_quality[:, index] = priority_event.data_quality
-            num_events[:, index] = priority_event.number_of_events
-
-            for epoch_index in range(priority_event.ssd_energy.shape[0]):
-
-                number_of_events = priority_event.number_of_events[epoch_index]
-                if number_of_events is ma.masked:
-                    continue
-
-                event_energy_per_nuc = np.empty((number_of_events,))
-                for event_index in range(number_of_events):
-                    event_tof = priority_event.time_of_flight[epoch_index, event_index]
-                    event_energy_per_nuc[event_index] = tof_lookup[event_tof].energy
-
-                event_estimated_mass = priority_event.ssd_energy[epoch_index, :number_of_events] / event_energy_per_nuc
-
-                energy_per_nuc[epoch_index, index, :number_of_events] = event_energy_per_nuc
-                estimated_mass[epoch_index, index, :number_of_events] = event_estimated_mass
-
+        estimated_mass = l2_data.ssd_energy / l2_data.energy_per_nuc
         return CodiceL3HiDirectEvents(
             input_metadata=self.input_metadata,
             epoch=l2_data.epoch,
             epoch_delta=l2_data.epoch_delta_plus,
-            data_quality=data_quality,
-            multi_flag=multi_flag,
-            num_events=num_events,
-            ssd_energy=ssd_energy,
-            ssd_energy_plus=ssd_energy_plus,
-            ssd_energy_minus=ssd_energy_minus,
-            ssd_id=ssd_id,
-            spin_angle=spin_angle,
-            spin_number=spin_number,
-            tof=tof,
-            type=type,
-            energy_per_nuc=energy_per_nuc,
+            data_quality=l2_data.data_quality,
+            multi_flag=l2_data.multi_flag,
+            num_events=l2_data.number_of_events,
+            ssd_energy=l2_data.ssd_energy,
+            ssd_id=l2_data.ssd_id,
+            spin_angle=l2_data.spin_angle,
+            spin_number=l2_data.spin_number,
+            tof=l2_data.time_of_flight,
+            type=l2_data.type,
+            energy_per_nuc=l2_data.energy_per_nuc,
             estimated_mass=estimated_mass
         )
 

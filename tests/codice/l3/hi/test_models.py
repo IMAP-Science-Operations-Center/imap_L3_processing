@@ -7,8 +7,8 @@ from unittest.mock import Mock
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.codice.l3.hi.models import CodiceL2HiData, PriorityEventL2, CodiceL3HiDirectEvents, \
-    CodiceHiL2SectoredIntensitiesData, CodiceHiL3PitchAngleDataProduct, CODICE_HI_NUM_L2_PRIORITIES
+from imap_l3_processing.codice.l3.hi.models import CodiceL2HiDirectEventData, CodiceL3HiDirectEvents, \
+    CodiceHiL2SectoredIntensitiesData, CodiceHiL3PitchAngleDataProduct
 from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path
 
 
@@ -23,67 +23,38 @@ class TestModels(unittest.TestCase):
 
     def test_codice_hi_l2_data_read_from_instrument_team_cdf(self):
         l2_path = get_test_instrument_team_data_path(
-            "codice/hi/imap_codice_l2_hi-direct-events_20241110_v002.cdf")
-        l2_direct_event_data = CodiceL2HiData.read_from_cdf(l2_path)
+            "codice/hi/imap_codice_l2_hi-direct-events_20250814_v001.cdf")
+        l2_direct_event_data = CodiceL2HiDirectEventData.read_from_cdf(l2_path)
 
         with CDF(str(l2_path)) as cdf:
+            # @formatter:off
             np.testing.assert_array_equal(l2_direct_event_data.epoch, cdf["epoch"])
             np.testing.assert_array_equal(l2_direct_event_data.epoch_delta_plus, cdf["epoch_delta_plus"])
+            np.testing.assert_array_equal(l2_direct_event_data.ssd_energy, cdf[f"ssd_energy"])
+            expected_ssd_id = cdf["ssd_id"][...]
+            np.testing.assert_array_equal(l2_direct_event_data.ssd_id, expected_ssd_id)
 
-            for priority_index in range(CODICE_HI_NUM_L2_PRIORITIES):
-                actual_priority_event: PriorityEventL2 = l2_direct_event_data.priority_events[priority_index]
+            expected_energy_per_nuc = cdf["energy_per_nuc"][...]
+            expected_energy_per_nuc[expected_energy_per_nuc==-1e31] = np.nan
+            np.testing.assert_array_equal(l2_direct_event_data.energy_per_nuc, expected_energy_per_nuc)
+            
+            expected_spin_angle = cdf["spin_angle"][...]
+            expected_spin_angle[expected_spin_angle==-1e31] = np.nan
+            np.testing.assert_array_equal(l2_direct_event_data.spin_angle, expected_spin_angle)
 
-                # @formatter:off
-                np.testing.assert_array_equal(actual_priority_event.data_quality, cdf[f"p{priority_index}_data_quality"])
-                np.testing.assert_array_equal(actual_priority_event.multi_flag, cdf[f"p{priority_index}_multi_flag"])
-                np.testing.assert_array_equal(actual_priority_event.number_of_events, cdf[f"p{priority_index}_num_events"])
-                np.testing.assert_array_equal(actual_priority_event.ssd_energy, cdf[f"p{priority_index}_ssd_energy"])
-                np.testing.assert_array_equal(actual_priority_event.ssd_id, cdf[f"p{priority_index}_ssd_id"])
-                np.testing.assert_array_equal(actual_priority_event.spin_angle, cdf[f"p{priority_index}_spin_sector"])
-                np.testing.assert_array_equal(actual_priority_event.spin_number, cdf[f"p{priority_index}_spin_number"])
-                np.testing.assert_array_equal(actual_priority_event.time_of_flight, cdf[f"p{priority_index}_tof"])
-                np.testing.assert_array_equal(actual_priority_event.type, cdf[f"p{priority_index}_type"])
+            expected_spin_number = cdf["spin_number"][...]
+            np.testing.assert_array_equal(l2_direct_event_data.spin_number, expected_spin_number)
 
-                np.testing.assert_array_equal(actual_priority_event.ssd_energy_plus, cdf[f"p{priority_index}_ssd_energy_plus"])
-                np.testing.assert_array_equal(actual_priority_event.ssd_energy_minus, cdf[f"p{priority_index}_ssd_energy_minus"])
-                # @formatter:on
+            expected_time_of_flight = cdf["tof"][...]
+            expected_time_of_flight[expected_time_of_flight==-1e31] = np.nan
+            np.testing.assert_array_equal(l2_direct_event_data.time_of_flight, expected_time_of_flight)
 
-    def test_codice_hi_l2_data_read_from_instrument_team_cdf_handles_fill_values(self):
-        l2_path = get_test_data_path(
-            "codice/imap_codice_l2_hi-direct-events_20241110_v002-all-fill.cdf")
-        l2_direct_event_data = CodiceL2HiData.read_from_cdf(l2_path)
+            np.testing.assert_array_equal(l2_direct_event_data.number_of_events, cdf[f"num_events"])
+            np.testing.assert_array_equal(l2_direct_event_data.data_quality, cdf[f"data_quality"])
+            np.testing.assert_array_equal(l2_direct_event_data.multi_flag, cdf[f"multi_flag"])
 
-        with CDF(str(l2_path)) as cdf:
-            for priority_index in range(CODICE_HI_NUM_L2_PRIORITIES):
-                actual_priority_event: PriorityEventL2 = l2_direct_event_data.priority_events[priority_index]
-
-                # @formatter:off
-                np.testing.assert_array_equal(actual_priority_event.ssd_energy, np.full_like(cdf[f"p{priority_index}_ssd_energy"], np.nan))
-                np.testing.assert_array_equal(actual_priority_event.ssd_id, np.full_like(cdf[f"p{priority_index}_ssd_id"], np.nan))
-                np.testing.assert_array_equal(actual_priority_event.spin_angle, np.full_like(cdf[f"p{priority_index}_spin_sector"], np.nan))
-                np.testing.assert_array_equal(actual_priority_event.time_of_flight, np.full_like(cdf[f"p{priority_index}_tof"], np.nan))
-
-                self.assertIsInstance(actual_priority_event.number_of_events, np.ma.masked_array)
-                np.testing.assert_array_equal(actual_priority_event.number_of_events.data, cdf[f"p{priority_index}_num_events"])
-                self.assertTrue(np.all(actual_priority_event.number_of_events.mask))
-
-                self.assertIsInstance(actual_priority_event.spin_number, np.ma.masked_array)
-                np.testing.assert_array_equal(actual_priority_event.spin_number.data, cdf[f"p{priority_index}_spin_number"])
-                self.assertTrue(np.all(actual_priority_event.spin_number.mask))
-
-                self.assertIsInstance(actual_priority_event.type, np.ma.masked_array)
-                np.testing.assert_array_equal(actual_priority_event.type.data, cdf[f"p{priority_index}_type"])
-                self.assertTrue(np.all(actual_priority_event.type.mask))
-
-                self.assertIsInstance(actual_priority_event.data_quality, np.ma.masked_array)
-                np.testing.assert_array_equal(actual_priority_event.data_quality.data, cdf[f"p{priority_index}_data_quality"])
-                self.assertTrue(np.all(actual_priority_event.data_quality.mask))
-
-                self.assertIsInstance(actual_priority_event.multi_flag, np.ma.masked_array)
-                np.testing.assert_array_equal(actual_priority_event.multi_flag.data, cdf[f"p{priority_index}_multi_flag"])
-                self.assertTrue(np.all(actual_priority_event.multi_flag.mask))
-
-                # @formatter:on
+            np.testing.assert_array_equal(l2_direct_event_data.type, cdf[f"type"])
+            # @formatter:on
 
     def test_codice_l3_hi_direct_event_data_products(self):
         rng = np.random.default_rng()
@@ -97,8 +68,6 @@ class TestModels(unittest.TestCase):
          expected_multi_flag,
          expected_num_events,
          expected_ssd_energy,
-         expected_ssd_energy_plus,
-         expected_ssd_energy_minus,
          expected_ssd_id,
          expected_spin_angle,
          expected_spin_number,
@@ -106,7 +75,7 @@ class TestModels(unittest.TestCase):
          expected_type,
          expected_energy_per_nuc,
          expected_estimated_mass) = \
-            [rng.random((len(expected_epoch), number_of_priority_events, event_buffer_size)) for _ in range(13)]
+            [rng.random((len(expected_epoch), number_of_priority_events, event_buffer_size)) for _ in range(11)]
 
         expected_priority_index = np.arange(number_of_priority_events)
         expected_event_index = np.arange(event_buffer_size)
@@ -119,8 +88,6 @@ class TestModels(unittest.TestCase):
                                                  expected_multi_flag,
                                                  expected_num_events,
                                                  expected_ssd_energy,
-                                                 expected_ssd_energy_plus,
-                                                 expected_ssd_energy_minus,
                                                  expected_ssd_id,
                                                  expected_spin_angle,
                                                  expected_spin_number,
