@@ -211,7 +211,7 @@ def read_l1d_mag_data(cdf_path: Union[str, Path]) -> MagL1dData:
     with CDF(str(cdf_path)) as cdf:
         return MagL1dData(
             epoch=cdf['epoch'][...],
-            mag_data=read_numeric_variable(cdf["vectors"])[:, :3])
+            mag_data=read_numeric_variable(cdf["b_dsrf"])[:, :3])
 
 
 L1CPointingSet = TypeVar("L1CPointingSet", bound=Union[InputRectangularPointingSet, UltraL1CPSet])
