@@ -14,7 +14,10 @@ SPICE_KERNELS = [
     SpiceKernelTypes.ScienceFrames,
     SpiceKernelTypes.EphemerisReconstructed,
     SpiceKernelTypes.SpacecraftClock,
-    SpiceKernelTypes.EphemerisPredicted
+    SpiceKernelTypes.EphemerisPredicted,
+    SpiceKernelTypes.PlanetaryEphemeris,
+    SpiceKernelTypes.PlanetaryConstants,
+    SpiceKernelTypes.PointingAttitude,
 ]
 
 
@@ -91,7 +94,7 @@ def generate_swe_for_given_day(day: datetime):
 
     args_string = (f"imap_l3_data_processor.py "
                    f"--instrument swe --data-level l3 --descriptor sci "
-                   f"--start-date {day_as_string} --version v002 "
+                   f"--start-date {day_as_string} --version v004 "
                    f"--dependency {dependency_file_name}")
 
     subprocess.run([sys.executable, *args_string.split(" ")])
