@@ -125,31 +125,7 @@ ssd_energy:
   FIELDNAM: SSD Energy
   LABLAXIS: SSD energy
   UNITS: MeV
-  DELTA_PLUS_VAR: ssd_energy_plus
-  DELTA_MINUS_VAR: ssd_energy_minus
 
-
-ssd_energy_plus:
-  <<: *per_event
-  <<: *float_data
-  VAR_TYPE: support_data
-  NAME: ssd_energy_plus
-  CATDESC: SSD energy plus
-  FIELDNAM: SSD Energy
-  LABLAXIS: SSD energy
-  UNITS: MeV
-  RECORD_VARYING: RV
-
-ssd_energy_minus:
-  <<: *per_event
-  <<: *float_data
-  VAR_TYPE: support_data
-  NAME: ssd_energy_minus
-  CATDESC: SSD energy minus
-  FIELDNAM: SSD Energy
-  LABLAXIS: SSD energy
-  UNITS: MeV
-  RECORD_VARYING: RV
 
 ssd_id:
   <<: *per_event_data
@@ -172,6 +148,8 @@ spin_angle:
   FIELDNAM: Spin angle
   LABLAXIS: Spin angle
   UNITS: degrees
+  VALIDMIN: 0.0
+  VALIDMAX: 360.0
 
 spin_number:
   <<: *per_event_data
@@ -188,16 +166,12 @@ spin_number:
 
 tof:
   <<: *per_event_data
+  <<: *float_data
   NAME: tof
   CATDESC: Time of Flight of Event
   FIELDNAM: Event Time of Flight
   LABLAXIS: TOF
   UNITS: ns
-  DATA_TYPE: CDF_UINT2
-  FILLVAL: 65535
-  FORMAT: I5
-  VALIDMAX: 1024
-  VALIDMIN: 0
 
 
 type:
@@ -213,16 +187,6 @@ type:
   VALIDMAX: 3
   FORMAT: I1
 
-energy_per_nuc_lower:
-  <<: *per_event_data
-  <<: *float_data
-  NAME: energy_per_nuc_lower
-  CATDESC: Energy per nuc lower bound
-  FIELDNAM: Energy per Nuc Lower Bound
-  LABLAXIS: E per nuc low
-  UNITS: MeV/nuc
-
-
 energy_per_nuc:
   <<: *per_event_data
   <<: *float_data
@@ -232,24 +196,6 @@ energy_per_nuc:
   LABLAXIS: Energy per nuc
   UNITS: MeV/nuc
 
-energy_per_nuc_upper:
-  <<: *per_event_data
-  <<: *float_data
-  NAME: energy_per_nuc_upper
-  CATDESC: Energy per nuc upper bound
-  FIELDNAM: Energy per nuc upper
-  LABLAXIS: E per nuc high
-  UNITS: MeV/nuc
-
-estimated_mass_lower:
-  <<: *per_event_data
-  <<: *float_data
-  NAME: estimated_mass_lower
-  CATDESC: Estimated mass lower bound
-  FIELDNAM: Estimated Mass Lower
-  LABLAXIS: m lower bound
-  UNITS: amu
-
 estimated_mass:
   <<: *per_event_data
   <<: *float_data
@@ -257,15 +203,6 @@ estimated_mass:
   CATDESC: Estimated mass
   FIELDNAM: Estimated Mass
   LABLAXIS: Mass Estimate
-  UNITS: amu
-
-estimated_mass_upper:
-  <<: *per_event_data
-  <<: *float_data
-  NAME: estimated_mass_upper
-  CATDESC: Estimated mass upper bound
-  FIELDNAM: Estimated Mass Upper Bound
-  LABLAXIS: m upper bound
   UNITS: amu
 
 event_index:

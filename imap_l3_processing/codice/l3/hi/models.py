@@ -17,8 +17,6 @@ class PriorityEventL2:
     multi_flag: ndarray
     number_of_events: ndarray
     ssd_energy: ndarray
-    ssd_energy_plus: ndarray
-    ssd_energy_minus: ndarray
     ssd_id: ndarray
     spin_angle: ndarray
     spin_number: ndarray
@@ -27,35 +25,38 @@ class PriorityEventL2:
 
 
 @dataclass
-class CodiceL2HiData:
+class CodiceL2HiDirectEventData:
     epoch: ndarray
     epoch_delta_plus: ndarray
-    priority_events: list[PriorityEventL2]
+    data_quality: ndarray
+    multi_flag: ndarray
+    number_of_events: ndarray
+    ssd_energy: ndarray
+    ssd_id: ndarray
+    spin_angle: ndarray
+    spin_number: ndarray
+    time_of_flight: ndarray
+    type: ndarray
+    energy_per_nuc: ndarray
 
     @classmethod
     def read_from_cdf(cls, filename):
         with CDF(str(filename)) as cdf:
             epoch = cdf["epoch"][...]
             epoch_delta_plus = cdf['epoch_delta_plus'][...]
+            data_quality = read_variable_and_mask_fill_values(cdf["data_quality"])
+            multi_flag = read_variable_and_mask_fill_values(cdf["multi_flag"])
+            number_of_events = read_variable_and_mask_fill_values(cdf["num_events"])
+            ssd_energy = read_variable_and_mask_fill_values(cdf["ssd_energy"])
+            ssd_id = read_variable_and_mask_fill_values(cdf["ssd_id"])
+            spin_angle = read_numeric_variable(cdf["spin_angle"])
+            spin_number = read_variable_and_mask_fill_values(cdf["spin_number"])
+            time_of_flight = read_numeric_variable(cdf["tof"])
+            type = read_variable_and_mask_fill_values(cdf["type"])
+            energy_per_nuc = read_numeric_variable(cdf["energy_per_nuc"])
 
-            priority_events = []
-            for p in range(CODICE_HI_NUM_L2_PRIORITIES):
-                priority_event = PriorityEventL2(
-                    data_quality=read_variable_and_mask_fill_values(cdf[f"p{p}_data_quality"]),
-                    multi_flag=read_variable_and_mask_fill_values(cdf[f"p{p}_multi_flag"]),
-                    number_of_events=read_variable_and_mask_fill_values(cdf[f"p{p}_num_events"]),
-                    ssd_energy=read_numeric_variable(cdf[f"p{p}_ssd_energy"]),
-                    ssd_energy_plus=cdf[f"p{p}_ssd_energy_plus"][...],
-                    ssd_energy_minus=cdf[f"p{p}_ssd_energy_minus"][...],
-                    ssd_id=read_numeric_variable(cdf[f"p{p}_ssd_id"]),
-                    spin_angle=read_numeric_variable(cdf[f"p{p}_spin_sector"]),
-                    spin_number=read_variable_and_mask_fill_values(cdf[f"p{p}_spin_number"]),
-                    time_of_flight=read_numeric_variable(cdf[f"p{p}_tof"]),
-                    type=read_variable_and_mask_fill_values(cdf[f"p{p}_type"]),
-                )
-                priority_events.append(priority_event)
-
-            return cls(epoch, epoch_delta_plus, priority_events)
+            return cls(epoch, epoch_delta_plus, data_quality, multi_flag, number_of_events, ssd_energy, ssd_id,
+                       spin_angle, spin_number, time_of_flight, type, energy_per_nuc)
 
 
 EPOCH_VAR_NAME = "epoch"
@@ -70,12 +71,8 @@ SPIN_ANGLE_VAR_NAME = "spin_angle"
 SPIN_NUMBER_VAR_NAME = "spin_number"
 TOF_VAR_NAME = "tof"
 TYPE_VAR_NAME = "type"
-ENERGY_PER_NUC_LOWER_VAR_NAME = "energy_per_nuc_lower"
 ENERGY_PER_NUC_VAR_NAME = "energy_per_nuc"
-ENERGY_PER_NUC_UPPER_VAR_NAME = "energy_per_nuc_upper"
-ESTIMATED_MASS_LOWER_VAR_NAME = "estimated_mass_lower"
 ESTIMATED_MASS_VAR_NAME = "estimated_mass"
-ESTIMATED_MASS_UPPER_VAR_NAME = "estimated_mass_upper"
 PRIORITY_INDEX_VAR_NAME = "priority_index"
 EVENT_INDEX_VAR_NAME = "event_index"
 PRIORITY_INDEX_LABEL_VAR_NAME = "priority_index_label"
@@ -122,8 +119,6 @@ class CodiceL3HiDirectEvents(DataProduct):
     multi_flag: ndarray
     num_events: ndarray
     ssd_energy: ndarray
-    ssd_energy_plus: ndarray
-    ssd_energy_minus: ndarray
     ssd_id: ndarray
     spin_angle: ndarray
     spin_number: ndarray
@@ -150,8 +145,6 @@ class CodiceL3HiDirectEvents(DataProduct):
             DataProductVariable(MULTI_FLAG_VAR_NAME, self.multi_flag),
             DataProductVariable(NUM_EVENTS_VAR_NAME, self.num_events),
             DataProductVariable(SSD_ENERGY_VAR_NAME, self.ssd_energy),
-            DataProductVariable(SSD_ENERGY_PLUS_VAR_NAME, self.ssd_energy_plus),
-            DataProductVariable(SSD_ENERGY_MINUS_VAR_NAME, self.ssd_energy_minus),
             DataProductVariable(SSD_ID_VAR_NAME, self.ssd_id),
             DataProductVariable(SPIN_ANGLE_VAR_NAME, self.spin_angle),
             DataProductVariable(SPIN_NUMBER_VAR_NAME, self.spin_number),

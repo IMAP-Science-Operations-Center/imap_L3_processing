@@ -311,6 +311,14 @@ class SweProcessor(Processor):
                             total_temperature_perpendicular_to_mag[i] = [total_t_perpendicular_to_mag_average,
                                                                          total_t_perpendicular_to_mag_ratio]
 
+                        else:
+                            logger.info(f"core integrate failed at index {i}")
+
+                    else:
+                        logger.info(f"core temp {core_temp_avg} out of range at index {i}")
+                else:
+                    logger.info(f"bad core moment fit result at index {i}")
+
                 halo_moment_fit_result = halo_fit_moments_retrying_on_failure(
                     corrected_energy_bins[i],
                     velocity_vectors_cm_per_s,
@@ -389,6 +397,12 @@ class SweProcessor(Processor):
                             halo_temperature_parallel_to_mag[i] = halo_t_parallel_to_mag
                             halo_temperature_perpendicular_to_mag[i] = [halo_t_perpendicular_to_mag_average,
                                                                         halo_t_perpendicular_to_mag_ratio]
+                        else:
+                            logger.info(f"halo integrate failed at index {i}")
+                    else:
+                        logger.info(f"halo temp {halo_temp_avg} out of range at index {i}")
+                else:
+                    logger.info(f"bad halo moment fit result at index {i}")
 
             except Exception:
                 logger.info(

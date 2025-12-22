@@ -1,5 +1,6 @@
 from datetime import datetime
-from unittest.mock import Mock, call
+from unittest import mock
+from unittest.mock import Mock, call, patch, sentinel
 
 import numpy as np
 from spacepy import pycdf
@@ -78,6 +79,40 @@ class TestCdfUtils(TempFileTestCase):
             actual_var_attributes = [attribute for k, v in actual_cdf.items() for attribute in v.attrs]
             self.assertNotIn("DATA_TYPE", actual_var_attributes)
             self.assertNotIn("RECORD_VARYING", actual_var_attributes)
+
+    @patch("imap_l3_processing.cdf.cdf_utils.CDF")
+    def test_write_cdf_compresses_variables(self, mock_new_cdf):
+        attribute_manager = Mock(spec=ImapAttributeManager)
+        attribute_manager.get_global_attributes.return_value = {"global1": "global_val1", "global2": "global_val2"}
+        attribute_manager.get_variable_attributes.side_effect = [
+            {"variable_attr1": "var_val1", "DATA_TYPE": "CDF_REAL4", "RECORD_VARYING": "rV"},
+            {"variable_attr1": "var_val1", "FILLVAL": -9223372036854775808, "DATA_TYPE": "CDF_INT8",
+             "RECORD_VARYING": "RV"},
+            {"variable_attr1": "var_val1", "FILLVAL": -1e31, "DATA_TYPE": "CDF_REAL4", "RECORD_VARYING": "RV"},
+            {"variable_attr3": "var_val3", "FILLVAL": -9223372036854775808, "DATA_TYPE": "CDF_TIME_TT2000",
+             "RECORD_VARYING": "NRV"},
+            {"variable_attr5": "var_val5", "variable_attr6": "var_val6", "DATA_TYPE": "CDF_INT4",
+             "RECORD_VARYING": "NRV"},
+        ]
+
+        expected_data_product = TestDataProduct()
+
+        write_cdf(sentinel.filepath, expected_data_product, attribute_manager)
+
+        mock_new_cdf.return_value.__enter__.return_value.new.assert_has_calls(
+            [
+                call('var_without_explicit_type', mock.ANY, recVary=True, type=pycdf.const.CDF_REAL4, dims=mock.ANY,
+                     compress=pycdf.const.GZIP_COMPRESSION, compress_param=7),
+                call('int_var', mock.ANY, recVary=True, type=pycdf.const.CDF_INT8, dims=mock.ANY,
+                     compress=pycdf.const.GZIP_COMPRESSION, compress_param=7),
+                call('float_var', mock.ANY, recVary=True, type=pycdf.const.CDF_REAL4, dims=mock.ANY,
+                     compress=pycdf.const.GZIP_COMPRESSION, compress_param=7),
+                call('time_var', mock.ANY, recVary=False, type=pycdf.const.CDF_TIME_TT2000, dims=mock.ANY,
+                     compress=None, compress_param=None),
+                call('non_record_varying', mock.ANY, recVary=False, type=pycdf.const.CDF_INT4, dims=mock.ANY,
+                     compress=None, compress_param=None),
+            ]
+        )
 
     def test_write_cdf_trims_numbers_in_logical_source_when_fetching_global_metadata(self):
         path = str(self.temp_directory / "write_cdf.cdf")

@@ -40,6 +40,7 @@ class SpiceKernelTypes(enum.Enum):
     PlanetaryEphemeris = "planetary_ephemeris",
     SpacecraftClock = "spacecraft_clock",
     EphemerisPredicted = "ephemeris_predicted",
+    PlanetaryConstants = "planetary_constants",
 
 
 def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: Path = None,
