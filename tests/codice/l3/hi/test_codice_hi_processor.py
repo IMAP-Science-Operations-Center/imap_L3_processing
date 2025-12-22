@@ -118,6 +118,84 @@ class TestCodiceHiProcessor(unittest.TestCase):
         for field in dataclasses.fields(CodiceL3HiDirectEvents):
             np.testing.assert_equal(getattr(actual_output, field.name), getattr(expected_output, field.name))
 
+    def test_process_l3a_only_calculates_events_within_num_events(self):
+
+        codice_hi_processor = CodiceHiProcessor(sentinel.processing_input_collection,
+                                                input_metadata=sentinel.input_metadata)
+
+        expected_number_of_events = np.array([
+            [0, 2], [4, 3]
+        ])
+
+        expected_ssd_energy = np.array([
+            [
+                [255, 255, 255, 255],
+                [5, 6, 255, 255]
+            ],
+            [
+                [1, 2, 3, 4],
+                [5, 6, 2, 255]
+            ]
+        ], dtype=float)
+
+        expected_energy_per_nuc = np.array([
+            [
+                [255, 255, 255, 255],
+                [15, 16, 255, 255]
+            ],
+            [
+                [11, 12, 13, 14],
+                [15, 16, 12, 255]
+            ]
+        ], dtype=float)
+
+        l2_data = CodiceL2HiDirectEventData(
+            epoch=sentinel.expected_epoch,
+            epoch_delta_plus=sentinel.expected_epoch_delta_plus,
+            data_quality=sentinel.expected_data_quality,
+            multi_flag=sentinel.expected_multi_flag,
+            number_of_events=expected_number_of_events,
+            ssd_energy=expected_ssd_energy,
+            ssd_id=np.ones((2, 2, 4)),
+            spin_angle=sentinel.expected_spin_angle,
+            spin_number=sentinel.expected_spin_number,
+            time_of_flight=sentinel.expected_time_of_flight,
+            type=sentinel.expected_type,
+            energy_per_nuc=expected_energy_per_nuc,
+        )
+        dependencies = CodiceHiL3aDirectEventsDependencies(
+            codice_l2_hi_data=l2_data
+        )
+        expected_output = CodiceL3HiDirectEvents(
+            input_metadata=sentinel.input_metadata,
+            epoch=sentinel.expected_epoch,
+            epoch_delta=sentinel.expected_epoch_delta_plus,
+            data_quality=sentinel.expected_data_quality,
+            multi_flag=sentinel.expected_multi_flag,
+            num_events=expected_number_of_events,
+            ssd_energy=expected_ssd_energy,
+            ssd_id=np.ones((2, 2, 4)),
+            spin_angle=sentinel.expected_spin_angle,
+            spin_number=sentinel.expected_spin_number,
+            tof=sentinel.expected_time_of_flight,
+            type=sentinel.expected_type,
+            energy_per_nuc=expected_energy_per_nuc,
+            estimated_mass=np.array([
+                [
+                    [np.nan, np.nan, np.nan, np.nan],
+                    [5 / 15, 6 / 16, np.nan, np.nan]
+                ],
+                [
+                    [1 / 11, 2 / 12, 3 / 13, 4 / 14],
+                    [5 / 15, 6 / 16, 2 / 12, np.nan]
+                ]
+            ])
+        )
+
+        actual_output = codice_hi_processor.process_l3a_direct_event(dependencies=dependencies)
+        for field in dataclasses.fields(CodiceL3HiDirectEvents):
+            np.testing.assert_equal(getattr(actual_output, field.name), getattr(expected_output, field.name))
+
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodicePitchAngleDependencies.fetch_dependencies")
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiProcessor.process_l3b")
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.save_data")

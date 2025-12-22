@@ -39,7 +39,11 @@ class CodiceHiProcessor(Processor):
     def process_l3a_direct_event(self, dependencies: CodiceHiL3aDirectEventsDependencies) -> CodiceL3HiDirectEvents:
         l2_data = dependencies.codice_l2_hi_data
 
-        estimated_mass = l2_data.ssd_energy / l2_data.energy_per_nuc
+        estimated_mass = np.full_like(l2_data.energy_per_nuc, fill_value=np.nan)
+        for i in range(l2_data.energy_per_nuc.shape[0]):
+            for j in range(l2_data.energy_per_nuc.shape[1]):
+                npts = l2_data.number_of_events[i, j]
+                estimated_mass[i, j, :npts] = l2_data.ssd_energy[i, j, :npts] / l2_data.energy_per_nuc[i, j, :npts]
         return CodiceL3HiDirectEvents(
             input_metadata=self.input_metadata,
             epoch=l2_data.epoch,
