@@ -22,9 +22,9 @@ from imap_l3_processing.maps.map_models import RectangularCoords, SpectralIndexM
     RectangularSpectralIndexDataProduct, RectangularIntensityMapData, IntensityMapData, RectangularIntensityDataProduct, \
     HealPixIntensityMapData, \
     HealPixSpectralIndexMapData, HealPixCoords, HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct, \
-    convert_tt2000_time_to_datetime
+    convert_tt2000_time_to_datetime, _read_intensity_map_data_from_open_cdf
 from imap_l3_processing.models import DataProductVariable
-from tests.test_helpers import get_test_data_folder
+from tests.test_helpers import get_test_data_folder, get_integration_test_data_path
 
 
 class TestMapModels(unittest.TestCase):
@@ -207,6 +207,7 @@ class TestMapModels(unittest.TestCase):
         ]
 
         self.assertEqual(expected_variables, actual_variables)
+
     def test_healpix_spectral_index_to_data_product_variables(self):
         input_metadata = Mock()
 
@@ -683,6 +684,15 @@ class TestMapModels(unittest.TestCase):
         for key in [ "latitude", "longitude", "solid_angle" ]:
             self.assertEqual((CoordNames.GENERIC_PIXEL.value,), actual_dataset.data_vars[key].dims)
         # @formatter:on
+
+    def test_read_intensity_data_handles_missing_obs_date(self):
+        cdf = CDF(
+            str(get_integration_test_data_path(
+                'lo/multiple_arcs/imap_lo_l2_l090-ena-h-hf-nsp-ram-hae-6deg-1yr_20250415_v002.cdf')))
+
+        intensity_map_data = _read_intensity_map_data_from_open_cdf(cdf)
+
+        self.assertIsNotNone(intensity_map_data.obs_date)
 
 
 if __name__ == '__main__':
