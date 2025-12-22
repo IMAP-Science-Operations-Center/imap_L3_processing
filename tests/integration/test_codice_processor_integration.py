@@ -4,6 +4,8 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from imap_data_access import ProcessingInputCollection, ScienceInput, AncillaryInput
+from imap_data_access.file_validation import ScienceFilePath
+from spacepy.pycdf import CDF
 
 import imap_l3_data_processor
 import tests
@@ -21,8 +23,8 @@ class CodiceProcessorIntegration(unittest.TestCase):
         mass_coefficient_path = get_test_data_path('codice/imap_codice_mass-coefficient-lookup_20241110_v002.csv')
         input_files = [
             self.TEST_DATA_DIR / 'imap_codice_l2_lo-direct-events_20250814_v001.cdf',
-            self.TEST_DATA_DIR / 'imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf',
-            self.TEST_DATA_DIR / 'imap_codice_l1a_lo-sw-priority_20241110_v002.cdf',
+            self.TEST_DATA_DIR / 'imap_codice_l1a_lo-nsw-priority_20250814_v001.cdf',
+            self.TEST_DATA_DIR / 'imap_codice_l1a_lo-sw-priority_20250814_v001.cdf',
             energy_per_charge_path,
             mass_coefficient_path,
         ]
@@ -33,8 +35,8 @@ class CodiceProcessorIntegration(unittest.TestCase):
 
             processing_input_collection = ProcessingInputCollection(
                 ScienceInput('imap_codice_l2_lo-direct-events_20250814_v001.cdf'),
-                ScienceInput('imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf'),
-                ScienceInput('imap_codice_l1a_lo-sw-priority_20241110_v002.cdf'),
+                ScienceInput('imap_codice_l1a_lo-nsw-priority_20250814_v001.cdf'),
+                ScienceInput('imap_codice_l1a_lo-sw-priority_20250814_v001.cdf'),
                 AncillaryInput(energy_per_charge_path.name),
                 AncillaryInput(mass_coefficient_path.name)
             )
@@ -53,3 +55,16 @@ class CodiceProcessorIntegration(unittest.TestCase):
             mock_parse_cli_arguments.return_value = mock_arguments
 
             imap_l3_data_processor.imap_l3_processor()
+
+            expected_map_path = ScienceFilePath(
+                'imap_codice_l3a_lo-direct-events_20250814_v001.cdf').construct_path()
+            self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
+
+            expected_parents = {'imap_codice_l2_lo-direct-events_20250814_v001.cdf',
+                                'imap_codice_l1a_lo-nsw-priority_20250814_v001.cdf',
+                                'imap_codice_l1a_lo-sw-priority_20250814_v001.cdf',
+                                'imap_codice_lo-energy-per-charge_20241110_v001.csv',
+                                'imap_codice_mass-coefficient-lookup_20241110_v002.csv'}
+
+            with CDF(str(expected_map_path)) as cdf:
+                self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))

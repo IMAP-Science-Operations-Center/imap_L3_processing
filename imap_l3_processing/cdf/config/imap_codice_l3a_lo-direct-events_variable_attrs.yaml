@@ -200,13 +200,17 @@ apd_energy:
 
 energy_step:
   <<: *per_event
-  <<: *float_data
-  NAME: energy_step
-  VAR_TYPE: data
-  CATDESC: Energy per charge selected by ESA
+  CATDESC: Energy Step Index
   FIELDNAM: Energy Step
+  FILLVAL: 255
+  FORMAT: I3
   LABLAXIS: Energy Step
-  UNITS: keV/e
+  SCALETYP: linear
+  UNITS: " "
+  VALIDMAX: 127
+  VALIDMIN: 0
+  VAR_TYPE: data
+  DATA_TYPE: CDF_UINT1
 
 event_spin_angle:
   <<: *per_event

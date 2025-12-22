@@ -16,7 +16,6 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencie
     CodiceLoL3aPartialDensitiesDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import CodiceLoL3aRatiosDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
-from imap_l3_processing.codice.l3.lo.constants import CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.efficiency_lookup import EfficiencyLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup
@@ -472,67 +471,39 @@ class TestCodiceLoProcessor(unittest.TestCase):
         nsw_priority_rates.p6_hplus_heplusplus = rng.random(priority_counts_variable_shape)
 
         counts_rebinned_by_energy_and_spin = rng.random(
-            (CODICE_LO_L2_NUM_PRIORITIES, len(epochs), num_energy_bins, num_spin_angle_bins))
-        mock_rebin_counts_by_energy_and_spin.side_effect = list(counts_rebinned_by_energy_and_spin)
+            (len(epochs), CODICE_LO_L2_NUM_PRIORITIES, num_energy_bins, num_spin_angle_bins))
+        mock_rebin_counts_by_energy_and_spin.return_value = np.array(counts_rebinned_by_energy_and_spin)
 
-        mass_per_charge_side_effect = [rng.random((len(epochs), event_buffer_size)) for _ in
-                                       range(CODICE_LO_L2_NUM_PRIORITIES)]
-        mass_side_effect = [rng.random((len(epochs), event_buffer_size)) for _ in range(CODICE_LO_L2_NUM_PRIORITIES)]
+        mass_per_charge = rng.random((len(epochs), CODICE_LO_L2_NUM_PRIORITIES, event_buffer_size))
+        mock_calculate_mass_per_charge.return_value = mass_per_charge
+        mass = rng.random((len(epochs), CODICE_LO_L2_NUM_PRIORITIES, event_buffer_size))
+        mock_calculate_mass.return_value = mass
 
-        (expected_mass,
-         expected_mass_per_charge,
-         expected_apd_energy,
-         expected_apd_gain,
-         expected_apd_id,
-         expected_multi_flag,
-         expected_pha_type,
-         expected_tof,
-         reshaped_l2_spin_angle,
-         expected_elevation,
-         expected_position,
-         expected_energy_step,
-         ) = [np.full((len(epochs), 7, event_buffer_size), np.nan) for _ in range(12)]
+        codice_l2_variables = {f.name: rng.random((len(epochs), CODICE_LO_L2_NUM_PRIORITIES, event_buffer_size)) for f
+                               in fields(CodiceLoL2DirectEventData)}
 
-        (expected_data_quality,
-         expected_num_events) = [np.full((len(epochs), 7), np.nan) for _ in range(2)]
+        codice_l2_variables["epoch"] = epochs
+        codice_l2_variables["spin_angle"] *= 360
+        codice_l2_variables["data_quality"] = rng.random((len(epochs)))
+        codice_l2_variables["num_events"] = rng.random((len(epochs)))
 
-        mock_calculate_mass_per_charge.side_effect = mass_per_charge_side_effect
-        mock_calculate_mass.side_effect = mass_side_effect
+        expected_apd_energy = codice_l2_variables["apd_energy"]
+        expected_apd_gain = codice_l2_variables["gain"]
+        expected_apd_id = codice_l2_variables["apd_id"]
+        expected_multi_flag = codice_l2_variables["multi_flag"]
+        expected_tof = codice_l2_variables["tof"]
+        expected_elevation = codice_l2_variables["elevation_angle"]
+        expected_position = codice_l2_variables["position"]
+        expected_mass = mass
+        expected_mass_per_charge = mass_per_charge
+        expected_data_quality = codice_l2_variables["data_quality"]
+        expected_num_events = codice_l2_variables["num_events"]
+        expected_energy_step = codice_l2_variables["energy_step"]
 
-        priority_events = []
-        for i, (mass_per_charge, mass) in enumerate(
-                zip(mass_per_charge_side_effect, mass_side_effect)):
-            priority_event_kwargs = {f.name: rng.random((len(epochs), event_buffer_size)) for f in
-                                     fields(PriorityEvent)}
-            priority_event_kwargs["spin_angle"] *= 360
-            priority_event = PriorityEvent(**priority_event_kwargs)
-            priority_event.data_quality = rng.random((len(epochs)))
-            priority_event.num_events = rng.random((len(epochs)))
-            priority_event.total_events_binned_by_energy_step_and_spin_angle = Mock()
-
-            priority_event.total_events_binned_by_energy_step_and_spin_angle.return_value = [{f"mock_p{i % 1}": i % 1}
-                                                                                             for i in
-                                                                                             range(len(epochs))]
-            priority_events.append(priority_event)
-
-            expected_apd_energy[:, i, :] = np.copy(priority_event.apd_energy)
-            expected_apd_gain[:, i, :] = np.copy(priority_event.apd_gain)
-            expected_apd_id[:, i, :] = np.copy(priority_event.apd_id)
-            expected_multi_flag[:, i, :] = np.copy(priority_event.multi_flag)
-            expected_tof[:, i, :] = np.copy(priority_event.tof)
-            reshaped_l2_spin_angle[:, i, :] = np.copy(priority_event.spin_angle)
-            expected_elevation[:, i, :] = np.copy(priority_event.elevation)
-            expected_position[:, i, :] = np.copy(priority_event.position)
-            expected_mass[:, i, :] = np.copy(mass)
-            expected_mass_per_charge[:, i, :] = np.copy(mass_per_charge)
-            expected_data_quality[:, i] = np.copy(priority_event.data_quality)
-            expected_num_events[:, i] = np.copy(priority_event.num_events)
-            expected_energy_step[:, i] = np.copy(priority_event.energy_step)
-
+        # TODO: do we need to include fill values for testing?
         empty_priority_7 = PriorityEvent(
             **{f.name: rng.random((len(epochs), event_buffer_size)) for f in fields(PriorityEvent)})
-        priority_events.append(empty_priority_7)
-        direct_events = CodiceLoL2DirectEventData(epochs, np.array([]), np.array([]), priority_events)
+        direct_events = CodiceLoL2DirectEventData(**codice_l2_variables)
 
         mock_energy_lookup = create_dataclass_mock(EnergyLookup)
         mock_energy_lookup.delta_minus = np.geomspace(280, 2, 128)
@@ -550,47 +521,55 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         mock_spin_angle_lookup_class.assert_called_once()
 
-        self.assertEqual(CODICE_LO_L2_NUM_PRIORITIES, mock_rebin_counts_by_energy_and_spin.call_count)
+        self.assertEqual(1, mock_calculate_mass.call_count)
+        np.testing.assert_equal(mock_calculate_mass.call_args.args[0], expected_apd_energy)
+        np.testing.assert_equal(mock_calculate_mass.call_args.args[1], expected_tof)
+        np.testing.assert_equal(mock_calculate_mass.call_args.args[2], dependencies.mass_coefficient_lookup)
 
-        expected_calculate_mass_calls = []
-        expected_calculate_mass_per_charge_calls = []
-        for index in range(CODICE_LO_L2_NUM_PRIORITIES):
-            priority_event = direct_events.priority_events[index]
-            expected_calculate_mass_calls.append(call(priority_event, dependencies.mass_coefficient_lookup))
-            expected_calculate_mass_per_charge_calls.append(call(priority_event))
+        self.assertEqual(1, mock_calculate_mass_per_charge.call_count)
+        np.testing.assert_equal(mock_calculate_mass_per_charge.call_args.args[0], expected_apd_energy)
+        np.testing.assert_equal(mock_calculate_mass_per_charge.call_args.args[1], expected_tof)
 
-            self.assertEqual(id(priority_event), id(mock_rebin_counts_by_energy_and_spin.call_args_list[index].args[0]))
-            self.assertEqual(mock_spin_angle_lookup,
-                             mock_rebin_counts_by_energy_and_spin.call_args_list[index].args[1])
-            self.assertEqual(mock_energy_lookup,
-                             mock_rebin_counts_by_energy_and_spin.call_args_list[index].args[2])
+        expected_spin_angles = (codice_l2_variables['spin_angle'] + 316) % 360
+        self.assertEqual(1, mock_rebin_counts_by_energy_and_spin.call_count)
+        np.testing.assert_equal(mock_rebin_counts_by_energy_and_spin.call_args.args[0], expected_num_events)
+        np.testing.assert_equal(mock_rebin_counts_by_energy_and_spin.call_args.args[1], expected_spin_angles)
+        np.testing.assert_equal(mock_rebin_counts_by_energy_and_spin.call_args.args[2], expected_energy_step)
+        np.testing.assert_equal(mock_rebin_counts_by_energy_and_spin.call_args.args[3], mock_spin_angle_lookup)
+        np.testing.assert_equal(mock_rebin_counts_by_energy_and_spin.call_args.args[4], dependencies.energy_lookup)
 
         self.assertIsInstance(l3a_direct_event_data_product, CodiceLoL3aDirectEventDataProduct)
         self.assertEqual(input_metadata, l3a_direct_event_data_product.input_metadata)
 
-        np.testing.assert_array_equal(epochs, l3a_direct_event_data_product.epoch)
-        np.testing.assert_array_equal(direct_events.epoch_delta_plus, l3a_direct_event_data_product.epoch_delta)
+        np.testing.assert_array_equal(l3a_direct_event_data_product.epoch, epochs)
+        np.testing.assert_array_equal(l3a_direct_event_data_product.epoch_delta, direct_events.epoch_delta_plus)
 
         np.testing.assert_array_equal(np.arange(CODICE_LO_L2_NUM_PRIORITIES),
                                       l3a_direct_event_data_product.priority_index)
         np.testing.assert_array_equal(expected_mass_per_charge, l3a_direct_event_data_product.mass_per_charge)
         np.testing.assert_array_equal(expected_mass, l3a_direct_event_data_product.mass)
 
+        p0_total_counts = np.sum(sw_priority_rates.p0_tcrs, axis=(1, 2), keepdims=True)
+        p1_total_counts = np.sum(sw_priority_rates.p1_hplus, axis=(1, 2), keepdims=True)
+        p2_total_counts = np.sum(sw_priority_rates.p2_heplusplus, axis=(1, 2), keepdims=True)
+        p3_total_counts = np.sum(sw_priority_rates.p3_heavies, axis=(1, 2), keepdims=True)
+        p4_total_counts = np.sum(sw_priority_rates.p4_dcrs, axis=(1, 2), keepdims=True)
+        p5_total_counts = np.sum(nsw_priority_rates.p5_heavies, axis=(1, 2), keepdims=True)
+        p6_total_counts = np.sum(nsw_priority_rates.p6_hplus_heplusplus, axis=(1, 2), keepdims=True)
         expected_normalization = np.transpose([
-            sw_priority_rates.p0_tcrs / counts_rebinned_by_energy_and_spin[0],
-            sw_priority_rates.p1_hplus / counts_rebinned_by_energy_and_spin[1],
-            sw_priority_rates.p2_heplusplus / counts_rebinned_by_energy_and_spin[2],
-            sw_priority_rates.p3_heavies / counts_rebinned_by_energy_and_spin[3],
-            sw_priority_rates.p4_dcrs / counts_rebinned_by_energy_and_spin[4],
-            nsw_priority_rates.p5_heavies / counts_rebinned_by_energy_and_spin[5],
-            nsw_priority_rates.p6_hplus_heplusplus / counts_rebinned_by_energy_and_spin[6],
-        ], (1, 0, 2, 3))
+            p0_total_counts / counts_rebinned_by_energy_and_spin[:, 0, ..., ],
+            p1_total_counts / counts_rebinned_by_energy_and_spin[:, 1, ...],
+            p2_total_counts / counts_rebinned_by_energy_and_spin[:, 2, ...],
+            p3_total_counts / counts_rebinned_by_energy_and_spin[:, 3, ...],
+            p4_total_counts / counts_rebinned_by_energy_and_spin[:, 4, ...],
+            p5_total_counts / counts_rebinned_by_energy_and_spin[:, 5, ...],
+            p6_total_counts / counts_rebinned_by_energy_and_spin[:, 6, ...],
+        ], axes=(1, 0, 2, 3))
 
         np.testing.assert_array_equal(l3a_direct_event_data_product.normalization,
                                       np.flip(expected_normalization, axis=2))
 
-        np.testing.assert_array_equal((reshaped_l2_spin_angle + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360,
-                                      l3a_direct_event_data_product.spin_angle)
+        np.testing.assert_array_equal(expected_spin_angles, l3a_direct_event_data_product.spin_angle)
         np.testing.assert_array_equal(expected_elevation, l3a_direct_event_data_product.elevation)
         np.testing.assert_array_equal(expected_position, l3a_direct_event_data_product.position)
         np.testing.assert_array_equal(expected_apd_energy, l3a_direct_event_data_product.apd_energy)
@@ -774,10 +753,10 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         dependencies = CodiceLoL3aDirectEventsDependencies.from_file_paths(
             sw_priority_rates_cdf=get_test_data_path(
-                "codice/imap_codice_l1a_lo-sw-priority_20241110_v002-all-fill.cdf"),
+                "codice/imap_codice_l1a_lo-sw-priority-all-fill_20250814_v001.cdf"),
             nsw_priority_rates_cdf=get_test_data_path(
-                "codice/imap_codice_l1a_lo-nsw-priority_20241110_v002-all-fill.cdf"),
-            direct_event_path=get_test_data_path("codice/imap_codice_l2_lo-direct-events_20241110_v002-all-fill.cdf"),
+                "codice/imap_codice_l1a_lo-nsw-priority-all-fill_20250814_v001.cdf"),
+            direct_event_path=get_test_data_path("codice/imap_codice_l2_lo-direct-events-all-fill_20250814_v001.cdf"),
             mass_coefficients_file_path=get_test_data_path(
                 "codice/imap_codice_mass-coefficient-lookup_20241110_v002.csv"),
             esa_to_energy_per_charge_file_path=get_test_data_path(

@@ -9,14 +9,13 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import S
 from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup
-from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, PriorityEvent, CodiceLo3dData
+from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, CodiceLo3dData
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
     calculate_total_number_of_events, calculate_normalization_ratio, calculate_mass, calculate_mass_per_charge, \
     rebin_to_counts_by_species_elevation_and_spin_sector, rebin_counts_by_energy_and_spin_angle, \
     CODICE_LO_NUM_AZIMUTH_BINS, normalize_counts, combine_priorities_and_convert_to_rate, \
     rebin_3d_distribution_azimuth_to_elevation, convert_count_rate_to_intensity
 from imap_l3_processing.constants import ONE_SECOND_IN_MICROSECONDS
-from tests.test_helpers import create_dataclass_mock
 
 
 class TestCodiceLoCalculations(unittest.TestCase):
@@ -57,26 +56,11 @@ class TestCodiceLoCalculations(unittest.TestCase):
         np.testing.assert_array_equal(expected_normalization_ratio, normalization_ratios)
 
     def test_calculate_mass(self):
-        priority_event = PriorityEvent(
-            apd_energy=np.array([
-                [np.exp(1)], [np.exp(2)],
-            ]),
-            tof=np.array([
-                [np.exp(50)], [np.exp(60)],
-            ]),
-            apd_gain=np.array([]),
-            apd_id=np.array([]),
-            data_quality=np.array([]),
-            energy_step=np.array([]),
-            multi_flag=np.array([]),
-            num_events=np.array([]),
-            spin_angle=np.array([]),
-            elevation=np.array([]),
-            position=np.array([]),
-        )
+        apd_energy = np.array([[np.exp(1)], [np.exp(2)]])
+        tof = np.array([[np.exp(50)], [np.exp(60)]])
 
         lookup = MassCoefficientLookup(np.array([10e-1, 10e-2, 10e-3, 10e-4, 10e-5, 10e-6]))
-        actual_mass = calculate_mass(priority_event, lookup)
+        actual_mass = calculate_mass(apd_energy, tof, lookup)
 
         expected_mass_1 = lookup[0] + lookup[1] * 1 + lookup[2] * 50 + lookup[3] * 1 * 50 + lookup[4] * 1 + lookup[
             5] * np.power(50, 3)
@@ -90,23 +74,8 @@ class TestCodiceLoCalculations(unittest.TestCase):
         np.testing.assert_array_equal(actual_mass, expected_mass_calculation)
 
     def test_calculate_mass_per_charge(self):
-        priority_event = PriorityEvent(
-            apd_energy=np.array([]),
-            tof=np.array([
-                [5], [6],
-            ]),
-            apd_gain=np.array([]),
-            apd_id=np.array([]),
-            data_quality=np.array([]),
-            energy_step=np.array([
-                [1], [2],
-            ]),
-            multi_flag=np.array([]),
-            num_events=np.array([]),
-            spin_angle=np.array([]),
-            elevation=np.array([]),
-            position=np.array([]),
-        )
+        tof = np.array([[5], [6]])
+        energy_step = np.array([[1], [2]])
 
         POST_ACCELERATION_VOLTAGE_IN_KV = 15
         ENERGY_LOST_IN_CARBON_FOIL = 0
@@ -118,15 +87,14 @@ class TestCodiceLoCalculations(unittest.TestCase):
         mass_per_charge_2 = (2 + POST_ACCELERATION_VOLTAGE_IN_KV - ENERGY_LOST_IN_CARBON_FOIL) * (
                 6 ** 2) * CONVERSION_CONSTANT_K
 
-        actual_mass_per_charge = calculate_mass_per_charge(priority_event)
+        actual_mass_per_charge = calculate_mass_per_charge(energy_step, tof)
         np.testing.assert_array_equal(actual_mass_per_charge, np.array([[mass_per_charge_1], [mass_per_charge_2]]))
 
     def test_calculate_mass_per_charge_handles_fill_value(self):
-        priority_event = Mock()
-        priority_event.tof = np.ma.masked_array([[432, 234], [434, 347]], mask=[[False, True], [True, False]])
-        priority_event.energy_step = np.array([[np.nan, 2342.2], [4324.8, np.nan]])
+        tof = np.ma.masked_array([[432, 234], [434, 347]], mask=[[False, True], [True, False]])
+        energy_step = np.array([[np.nan, 2342.2], [4324.8, np.nan]])
 
-        actual_mass_per_charge = calculate_mass_per_charge(priority_event)
+        actual_mass_per_charge = calculate_mass_per_charge(energy_step, tof)
 
         self.assertIsInstance(actual_mass_per_charge, np.ma.masked_array)
         actual_filled_with_nan = np.ma.filled(actual_mass_per_charge, np.nan)
@@ -135,13 +103,12 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
     def test_calculate_mass_handles_fill_value(self):
         rng = np.random.default_rng()
-        priority_event = Mock()
         mass_coefficients = MassCoefficientLookup(coefficients=rng.random(size=6))
 
-        priority_event.tof = np.ma.masked_array([[432, 234], [434, 347]], mask=[[False, True], [True, False]])
-        priority_event.apd_energy = np.array([[np.nan, 2342.2], [4324.8, np.nan]])
+        tof = np.ma.masked_array([[432, 234], [434, 347]], mask=[[False, True], [True, False]])
+        apd_energy = np.array([[np.nan, 2342.2], [4324.8, np.nan]])
 
-        actual_mass = calculate_mass(priority_event, mass_coefficients)
+        actual_mass = calculate_mass(apd_energy, tof, mass_coefficients)
 
         self.assertIsInstance(actual_mass, np.ma.masked_array)
         actual_filled_with_nan = np.ma.filled(actual_mass, np.nan)
@@ -312,20 +279,20 @@ class TestCodiceLoCalculations(unittest.TestCase):
             np.array([5, 6, 5, 7])
         ]
 
-        priority_event = create_dataclass_mock(PriorityEvent)
         rng = np.random.default_rng()
+        num_priorities = 3
+        num_events = np.ma.masked_array(np.array([[1, 2, 4]]), mask=[[False, True, False]])
+        num_epochs = 1
+        spin_angle = rng.random((num_epochs, num_priorities, 15))
+        energy_step = rng.random((num_epochs, num_priorities, 15))
+        result = rebin_counts_by_energy_and_spin_angle(num_events, spin_angle, energy_step, mock_spin_angle_lookup,
+                                                       mock_energy_lookup)
 
-        priority_event.num_events = np.ma.masked_array(np.array([1, 2, 4]), mask=[False, True, False])
-        num_epochs = len(priority_event.num_events)
-        priority_event.spin_angle = rng.random((num_epochs, 15))
-        priority_event.energy_step = rng.random((num_epochs, 15))
-        result = rebin_counts_by_energy_and_spin_angle(priority_event, mock_spin_angle_lookup, mock_energy_lookup)
-
-        expected_rebinned_counts = np.zeros((num_epochs, num_energy_bins, num_spin_angle_bins))
-        expected_rebinned_counts[0, 7, 3] = 1
-        expected_rebinned_counts[2, 1, 5] = 2
-        expected_rebinned_counts[2, 3, 6] = 1
-        expected_rebinned_counts[2, 4, 7] = 1
+        expected_rebinned_counts = np.zeros((num_epochs, num_priorities, num_energy_bins, num_spin_angle_bins))
+        expected_rebinned_counts[0, 0, 7, 3] = 1
+        expected_rebinned_counts[0, 2, 1, 5] = 2
+        expected_rebinned_counts[0, 2, 3, 6] = 1
+        expected_rebinned_counts[0, 2, 4, 7] = 1
 
         np.testing.assert_array_equal(result, expected_rebinned_counts)
 

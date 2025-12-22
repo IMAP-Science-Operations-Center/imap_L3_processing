@@ -112,6 +112,7 @@ class CodiceLoL2DirectEventData:
     energy_step: ndarray
     multi_flag: ndarray
     num_events: ndarray
+    spin_angle: ndarray
     spin_sector: ndarray
     elevation_angle: ndarray
     tof: ndarray
@@ -125,19 +126,20 @@ class CodiceLoL2DirectEventData:
         with CDF(str(l2_direct_event_cdf)) as cdf:
             return cls(
                 epoch=cdf["epoch"][...],
-                apd_energy=cdf["apd_energy"][...],
-                gain=cdf["gain"][...],
-                apd_id=cdf["apd_id"][...],
-                data_quality=cdf["data_quality"][...],
-                energy_step=cdf["energy_step"][...],
-                multi_flag=cdf["multi_flag"][...],
-                num_events=cdf["num_events"][...],
-                spin_sector=cdf["spin_sector"][...],
-                elevation_angle=cdf["elevation_angle"][...],
-                tof=cdf["tof"][...],
-                position=cdf["position"][...],
                 epoch_delta_plus=cdf["epoch_delta_plus"][...],
                 epoch_delta_minus=cdf["epoch_delta_minus"][...],
+                apd_energy=read_variable_and_mask_fill_values(cdf["apd_energy"]),
+                gain=read_variable_and_mask_fill_values(cdf["gain"]),
+                apd_id=read_variable_and_mask_fill_values(cdf["apd_id"]),
+                data_quality=read_variable_and_mask_fill_values(cdf["data_quality"]),
+                energy_step=read_variable_and_mask_fill_values(cdf["energy_step"]),
+                multi_flag=read_variable_and_mask_fill_values(cdf["multi_flag"]),
+                num_events=read_variable_and_mask_fill_values(cdf["num_events"]),
+                spin_angle=read_variable_and_mask_fill_values(cdf["spin_angle"]),
+                spin_sector=read_variable_and_mask_fill_values(cdf["spin_sector"]),
+                elevation_angle=read_variable_and_mask_fill_values(cdf["elevation_angle"]),
+                tof=read_variable_and_mask_fill_values(cdf["tof"]),
+                position=read_variable_and_mask_fill_values(cdf["position"]),
             )
 
 
@@ -146,7 +148,6 @@ class CodiceLoL1aSWPriorityRates:
     epoch: np.ndarray
     epoch_delta_plus: np.ndarray
     epoch_delta_minus: np.ndarray
-    energy_table: np.ndarray
     acquisition_time_per_step: np.ndarray
     spin_sector_index: np.ndarray
     rgfo_half_spin: np.ndarray
@@ -168,9 +169,8 @@ class CodiceLoL1aSWPriorityRates:
                 epoch=cdf["epoch"][...],
                 epoch_delta_plus=cdf["epoch_delta_plus"][...],
                 epoch_delta_minus=cdf["epoch_delta_minus"][...],
-                energy_table=cdf["energy_table"][...],
                 acquisition_time_per_step=cdf["acquisition_time_per_step"][...],
-                spin_sector_index=cdf["spin_sector_index"][...],
+                spin_sector_index=cdf["spin_sector"][...],
                 rgfo_half_spin=read_variable_and_mask_fill_values(cdf["rgfo_half_spin"]),
                 nso_half_spin=read_variable_and_mask_fill_values(cdf["nso_half_spin"]),
                 sw_bias_gain_mode=read_variable_and_mask_fill_values(cdf["sw_bias_gain_mode"]),
@@ -190,7 +190,6 @@ class CodiceLoL1aNSWPriorityRates:
     epoch: np.ndarray
     epoch_delta_plus: np.ndarray
     epoch_delta_minus: np.ndarray
-    energy_table: np.ndarray
     acquisition_time_per_step: np.ndarray
     spin_sector_index: np.ndarray
     rgfo_half_spin: np.ndarray
@@ -209,9 +208,8 @@ class CodiceLoL1aNSWPriorityRates:
                 epoch=cdf["epoch"][...],
                 epoch_delta_plus=cdf["epoch_delta_plus"][...],
                 epoch_delta_minus=cdf["epoch_delta_minus"][...],
-                energy_table=cdf["energy_table"][...],
                 acquisition_time_per_step=cdf["acquisition_time_per_step"][...],
-                spin_sector_index=cdf["spin_sector_index"][...],
+                spin_sector_index=cdf["spin_sector"][...],
                 rgfo_half_spin=read_variable_and_mask_fill_values(cdf["rgfo_half_spin"]),
                 data_quality=read_variable_and_mask_fill_values(cdf["data_quality"]),
                 p5_heavies=read_variable_and_mask_fill_values(cdf["p5_heavies"]),

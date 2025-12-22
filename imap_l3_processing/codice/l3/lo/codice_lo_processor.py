@@ -12,7 +12,7 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import Co
 from imap_l3_processing.codice.l3.lo.constants import CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup, \
     PositionToElevationLookup
-from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
+from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, \
     CodiceLoL3aDirectEventDataProduct, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct, \
     CodiceLoL3ChargeStateDistributionsDataProduct, CODICE_LO_L2_NUM_PRIORITIES, CodiceLoL3a3dDistributionDataProduct
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
@@ -161,12 +161,14 @@ class CodiceLoProcessor(Processor):
             )
         )
 
-    def process_l3a_direct_event_data_product(self,
-                                              dependencies: CodiceLoL3aDirectEventsDependencies) -> CodiceLoL3aDirectEventDataProduct:
+    def process_l3a_direct_event_data_product(self, dependencies: CodiceLoL3aDirectEventsDependencies) \
+            -> CodiceLoL3aDirectEventDataProduct:
         codice_sw_priority_counts_l1a_data = dependencies.codice_lo_l1a_sw_priority_rates
         codice_nsw_priority_counts_l1a_data = dependencies.codice_lo_l1a_nsw_priority_rates
-        codice_direct_events: CodiceLoL2DirectEventData = dependencies.codice_l2_direct_events
-        event_buffer = codice_direct_events.priority_events[0].tof.shape[-1]
+        codice_direct_events = dependencies.codice_l2_direct_events
+        esa_energy_per_charge_lookup = dependencies.energy_lookup
+
+        event_buffer = codice_direct_events.tof[0].shape[-1]
         mass_coefficient_lookup = dependencies.mass_coefficient_lookup
         priority_counts_for_events = [
             codice_sw_priority_counts_l1a_data.p0_tcrs,
@@ -178,57 +180,28 @@ class CodiceLoProcessor(Processor):
             codice_nsw_priority_counts_l1a_data.p6_hplus_heplusplus
         ]
 
-        (mass_per_charge,
-         mass,
-         energy,
-         gain,
-         apd_id,
-         spin_angle,
-         elevation,
-         position,
-         multi_flag,
-         pha_type,
-         energy_step,
-         tof) = [
-            np.full((len(codice_direct_events.epoch), len(priority_counts_for_events), event_buffer), np.nan)
-            for _ in range(12)]
-
-        (data_quality, num_events) = [
-            np.full((len(codice_direct_events.epoch), len(priority_counts_for_events)), np.nan)
-            for _ in range(2)]
+        spin_angle = codice_direct_events.spin_angle
+        mass_per_charge = np.full((len(codice_direct_events.epoch), len(priority_counts_for_events), event_buffer),
+                                  np.nan)
+        mass = np.full((len(codice_direct_events.epoch), len(priority_counts_for_events), event_buffer), np.nan)
 
         spin_angle_lut = SpinAngleLookup()
-        esa_energy_per_charge_lookup = dependencies.energy_lookup
         normalization = np.full((len(codice_direct_events.epoch), CODICE_LO_L2_NUM_PRIORITIES,
                                  esa_energy_per_charge_lookup.num_bins, spin_angle_lut.num_bins), np.nan)
 
         try:
+            mass_per_charge = calculate_mass_per_charge(codice_direct_events.apd_energy, codice_direct_events.tof)
+            mass = calculate_mass(codice_direct_events.apd_energy, codice_direct_events.tof, mass_coefficient_lookup)
 
-            for priority_index, (priority_event, priority_counts_total_count) in enumerate(
-                    zip(codice_direct_events.priority_events, priority_counts_for_events)):
-                mass_per_charge[:, priority_index, :] = calculate_mass_per_charge(priority_event)
-                mass[:, priority_index, :] = calculate_mass(priority_event, mass_coefficient_lookup)
-
-                spin_angle_for_priority = (priority_event.spin_angle + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360
-                spin_angle[:, priority_index, :] = spin_angle_for_priority
-
-                energy[:, priority_index, :] = priority_event.apd_energy
-                gain[:, priority_index, :] = priority_event.apd_gain
-                apd_id[:, priority_index, :] = priority_event.apd_id
-                multi_flag[:, priority_index, :] = priority_event.multi_flag
-                tof[:, priority_index, :] = priority_event.tof
-                elevation[:, priority_index, :] = priority_event.elevation
-                position[:, priority_index, :] = priority_event.position
-                data_quality[:, priority_index] = priority_event.data_quality
-                num_events[:, priority_index] = priority_event.num_events
-                energy_step[:, priority_index] = priority_event.energy_step
-
-                direct_events_binned_by_energy_and_spin = rebin_counts_by_energy_and_spin_angle(priority_event,
-                                                                                                spin_angle_lut,
-                                                                                                esa_energy_per_charge_lookup)
-                normalization[:, priority_index, ...] = \
-                    priority_counts_total_count / direct_events_binned_by_energy_and_spin
-
+            spin_angle = (codice_direct_events.spin_angle + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360
+            direct_events_binned_by_energy_and_spin = rebin_counts_by_energy_and_spin_angle(
+                codice_direct_events.num_events,
+                spin_angle,
+                codice_direct_events.energy_step,
+                spin_angle_lut,
+                esa_energy_per_charge_lookup)
+            total_events_per_priority = np.sum(np.stack(priority_counts_for_events, axis=1), axis=(2, 3), keepdims=True)
+            normalization = total_events_per_priority / direct_events_binned_by_energy_and_spin
         except Exception as e:
             print(e)
 
@@ -239,23 +212,22 @@ class CodiceLoProcessor(Processor):
             normalization=np.flip(normalization, axis=2),
             mass_per_charge=mass_per_charge,
             mass=mass,
-            apd_energy=energy,
-            energy_step=energy_step,
-            gain=gain,
-            apd_id=apd_id,
-            multi_flag=multi_flag,
-            num_events=num_events,
-            tof=tof,
-            data_quality=data_quality,
+            apd_energy=codice_direct_events.apd_energy,
+            energy_step=codice_direct_events.energy_step,
+            gain=codice_direct_events.gain,
+            apd_id=codice_direct_events.apd_id,
+            multi_flag=codice_direct_events.multi_flag,
+            num_events=codice_direct_events.num_events,
+            tof=codice_direct_events.tof,
+            data_quality=codice_direct_events.data_quality,
             spin_angle=spin_angle,
-            elevation=elevation,
-            position=position,
+            elevation=codice_direct_events.elevation_angle,
+            position=codice_direct_events.position,
             energy_bin=np.flip(esa_energy_per_charge_lookup.bin_centers),
             energy_bin_delta_plus=np.flip(esa_energy_per_charge_lookup.delta_plus),
             energy_bin_delta_minus=np.flip(esa_energy_per_charge_lookup.delta_minus),
             spin_angle_bin=spin_angle_lut.bin_centers,
-            spin_angle_bin_delta=spin_angle_lut.bin_deltas,
-
+            spin_angle_bin_delta=spin_angle_lut.bin_deltas
         )
 
     def process_l3a_3d_distribution_product(self, dependencies: CodiceLoL3a3dDistributionsDependencies):
