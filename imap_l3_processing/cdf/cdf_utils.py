@@ -42,10 +42,23 @@ def write_cdf(file_path: str, data: DataProduct, attribute_manager: ImapAttribut
                 else:
                     assert not np.ma.isMaskedArray(data_array)
 
+            if (
+                    data_type
+                    not in (pycdf.const.CDF_TIME_TT2000, pycdf.const.CDF_EPOCH,
+                            pycdf.const.CDF_EPOCH16)
+                    and record_varying
+            ):
+                compress = pycdf.const.GZIP_COMPRESSION
+                compress_param = 7
+            else:
+                compress = None
+                compress_param = None
             cdf.new(var_name, data_array,
                     recVary=record_varying,
                     type=data_type,
-                    dims=dims)
+                    dims=dims,
+                    compress=compress,
+                    compress_param=compress_param)
             for k, v in variable_attributes.items():
                 if k == 'DEPEND_0' and v == '':
                     continue
