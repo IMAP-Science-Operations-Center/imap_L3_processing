@@ -1,5 +1,4 @@
 import unittest
-import unittest
 import warnings
 from dataclasses import fields
 from datetime import datetime, timedelta
@@ -21,7 +20,7 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.efficiency_lookup imp
 from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_lookup import GeometricFactorLookup
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
-    CodiceLoL3aDirectEventDataProduct, PriorityEvent, CodiceLoL2SWSpeciesData, \
+    CodiceLoL3aDirectEventDataProduct, CodiceLoL2SWSpeciesData, \
     CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct, \
     CODICE_LO_L2_NUM_PRIORITIES, CodiceLoL3ChargeStateDistributionsDataProduct, CodiceLoL3a3dDistributionDataProduct
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
@@ -499,9 +498,6 @@ class TestCodiceLoProcessor(unittest.TestCase):
         expected_num_events = codice_l2_variables["num_events"]
         expected_energy_step = codice_l2_variables["energy_step"]
 
-        # TODO: do we need to include fill values for testing?
-        empty_priority_7 = PriorityEvent(
-            **{f.name: rng.random((len(epochs), event_buffer_size)) for f in fields(PriorityEvent)})
         direct_events = CodiceLoL2DirectEventData(**codice_l2_variables)
 
         mock_energy_lookup = create_dataclass_mock(EnergyLookup)

@@ -89,21 +89,6 @@ EnergyAndSpinAngle = namedtuple(typename="EnergyAndSpinAngle", field_names=["ene
 
 
 @dataclass
-class PriorityEvent:
-    apd_energy: ndarray
-    apd_gain: ndarray
-    apd_id: ndarray
-    data_quality: ndarray
-    energy_step: ndarray
-    multi_flag: ndarray
-    num_events: ndarray
-    spin_angle: ndarray
-    elevation: ndarray
-    position: ndarray
-    tof: ndarray
-
-
-@dataclass
 class CodiceLoL2DirectEventData:
     apd_energy: ndarray
     gain: ndarray

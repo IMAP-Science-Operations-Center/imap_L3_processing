@@ -14,7 +14,7 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import S
     PositionToElevationLookup
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, \
     CodiceLoL3aDirectEventDataProduct, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct, \
-    CodiceLoL3ChargeStateDistributionsDataProduct, CODICE_LO_L2_NUM_PRIORITIES, CodiceLoL3a3dDistributionDataProduct
+    CodiceLoL3ChargeStateDistributionsDataProduct, CodiceLoL3a3dDistributionDataProduct
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
     calculate_mass, calculate_mass_per_charge, \
     rebin_counts_by_energy_and_spin_angle, rebin_to_counts_by_species_elevation_and_spin_sector, normalize_counts, \
@@ -180,13 +180,14 @@ class CodiceLoProcessor(Processor):
             codice_nsw_priority_counts_l1a_data.p6_hplus_heplusplus
         ]
 
-        spin_angle = codice_direct_events.spin_angle
+        spin_angle = np.full((len(codice_direct_events.epoch), len(priority_counts_for_events), event_buffer),
+                             np.nan)
         mass_per_charge = np.full((len(codice_direct_events.epoch), len(priority_counts_for_events), event_buffer),
                                   np.nan)
         mass = np.full((len(codice_direct_events.epoch), len(priority_counts_for_events), event_buffer), np.nan)
 
         spin_angle_lut = SpinAngleLookup()
-        normalization = np.full((len(codice_direct_events.epoch), CODICE_LO_L2_NUM_PRIORITIES,
+        normalization = np.full((len(codice_direct_events.epoch), len(priority_counts_for_events),
                                  esa_energy_per_charge_lookup.num_bins, spin_angle_lut.num_bins), np.nan)
 
         try:
