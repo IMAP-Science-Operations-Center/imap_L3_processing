@@ -126,7 +126,7 @@ ssd_energy:
   LABLAXIS: SSD energy
   UNITS: MeV
   SCALEMIN: 1.0e-2
-  SCALEMAX: 1.0e2
+  SCALEMAX: 1.0e+2
 
 
 ssd_id:
@@ -174,8 +174,8 @@ tof:
   FIELDNAM: Event Time of Flight
   LABLAXIS: TOF
   UNITS: ns
-  SCALEMIN: 1
-  SCALEMAX: 1.0e3
+  SCALEMIN: 1.0e+0
+  SCALEMAX: 1.0e+3
 
 
 type:
@@ -209,7 +209,7 @@ estimated_mass:
   LABLAXIS: Mass Estimate
   UNITS: amu
   SCALEMIN: 1.0e-1
-  SCALEMAX: 1.0e2
+  SCALEMAX: 1.0e+2
 
 event_index:
   <<: *support_data
