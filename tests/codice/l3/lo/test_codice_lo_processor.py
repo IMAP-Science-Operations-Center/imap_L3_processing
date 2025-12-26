@@ -522,7 +522,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_equal(mock_calculate_mass.call_args.args[2], dependencies.mass_coefficient_lookup)
 
         self.assertEqual(1, mock_calculate_mass_per_charge.call_count)
-        np.testing.assert_equal(mock_calculate_mass_per_charge.call_args.args[0], expected_apd_energy)
+        np.testing.assert_equal(mock_calculate_mass_per_charge.call_args.args[0], expected_energy_step)
         np.testing.assert_equal(mock_calculate_mass_per_charge.call_args.args[1], expected_tof)
 
         expected_spin_angles = (codice_l2_variables['spin_angle'] + 316) % 360

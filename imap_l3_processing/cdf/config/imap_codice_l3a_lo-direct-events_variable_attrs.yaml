@@ -300,6 +300,8 @@ tof:
   FIELDNAM: Time of flight
   LABLAXIS: TOF
   UNITS: ns
+  SCALEMIN: 1
+  SCALEMAX: 1.0e3
 
 priority_index_label:
   NAME: priority_index_label

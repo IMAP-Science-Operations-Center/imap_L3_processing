@@ -471,11 +471,11 @@ class TestModels(CdfModelTestCase):
             l2_direct_event = CodiceLoL2DirectEventData.read_from_cdf(test_cdf_path)
 
             with CDF(str(test_cdf_path)) as cdf:
-                np.testing.assert_array_equal(l2_direct_event.apd_energy, cdf["apd_energy"])
-                np.testing.assert_array_equal(l2_direct_event.energy_step, cdf["energy_step"])
-                np.testing.assert_array_equal(l2_direct_event.spin_sector, cdf["spin_sector"])
-                np.testing.assert_array_equal(l2_direct_event.spin_angle, cdf["spin_angle"])
-                np.testing.assert_array_equal(l2_direct_event.elevation_angle, cdf["elevation_angle"])
+                np.testing.assert_array_equal(l2_direct_event.apd_energy, cdf["apd_energy"][:, :7, ...])
+                np.testing.assert_array_equal(l2_direct_event.energy_step, cdf["energy_step"][:, :7, ...])
+                np.testing.assert_array_equal(l2_direct_event.spin_sector, cdf["spin_sector"][:, :7, ...])
+                np.testing.assert_array_equal(l2_direct_event.spin_angle, cdf["spin_angle"][:, :7, ...])
+                np.testing.assert_array_equal(l2_direct_event.elevation_angle, cdf["elevation_angle"][:, :7, ...])
 
     def test_codice_lo_l2_direct_events_read_from_cdf_handles_fill_value(self):
         all_fill_l2_cdf_path = get_test_data_path('codice/imap_codice_l2_lo-direct-events-all-fill_20250814_v001.cdf')
@@ -486,39 +486,38 @@ class TestModels(CdfModelTestCase):
             np.testing.assert_array_equal(cdf["epoch_delta_plus"], l2_direct_event.epoch_delta_plus)
             np.testing.assert_array_equal(cdf["epoch_delta_minus"], l2_direct_event.epoch_delta_minus)
 
-            np.testing.assert_array_equal(l2_direct_event.apd_energy, np.full(cdf["apd_energy"].shape, np.nan))
-            np.testing.assert_array_equal(l2_direct_event.energy_step, np.full(cdf["energy_step"].shape, np.nan))
-            np.testing.assert_array_equal(l2_direct_event.spin_angle, np.full(cdf["spin_angle"].shape, np.nan))
-            np.testing.assert_array_equal(l2_direct_event.spin_sector, np.full(cdf["spin_sector"].shape, np.nan))
-            np.testing.assert_array_equal(l2_direct_event.elevation_angle,
-                                          np.full(cdf["elevation_angle"].shape, np.nan))
+            np.testing.assert_array_equal(l2_direct_event.apd_energy, np.full((9, 7, 10000), np.nan))
+            np.testing.assert_array_equal(l2_direct_event.energy_step, np.full((9, 7, 10000), np.nan))
+            np.testing.assert_array_equal(l2_direct_event.spin_angle, np.full((9, 7, 10000), np.nan))
+            np.testing.assert_array_equal(l2_direct_event.spin_sector, np.full((9, 7, 10000), np.nan))
+            np.testing.assert_array_equal(l2_direct_event.elevation_angle, np.full((9, 7, 10000), np.nan))
 
             self.assertIsInstance(l2_direct_event.position, np.ma.masked_array)
-            np.testing.assert_array_equal(l2_direct_event.position.data, cdf["position"])
+            np.testing.assert_array_equal(l2_direct_event.position.data, cdf["position"][:, :7, ...])
             self.assertTrue(np.all(l2_direct_event.position.mask))
 
             self.assertIsInstance(l2_direct_event.gain, np.ma.masked_array)
-            np.testing.assert_array_equal(l2_direct_event.gain.data, cdf["gain"])
+            np.testing.assert_array_equal(l2_direct_event.gain.data, cdf["gain"][:, :7, ...])
             self.assertTrue(np.all(l2_direct_event.gain.mask))
 
             self.assertIsInstance(l2_direct_event.apd_id, np.ma.masked_array)
-            np.testing.assert_array_equal(l2_direct_event.apd_id.data, cdf["apd_id"])
+            np.testing.assert_array_equal(l2_direct_event.apd_id.data, cdf["apd_id"][:, :7, ...])
             self.assertTrue(np.all(l2_direct_event.apd_id.mask))
 
             self.assertIsInstance(l2_direct_event.data_quality, np.ma.masked_array)
-            np.testing.assert_array_equal(l2_direct_event.data_quality.data, cdf["data_quality"])
+            np.testing.assert_array_equal(l2_direct_event.data_quality.data, cdf["data_quality"][:, :7, ...])
             self.assertTrue(np.all(l2_direct_event.data_quality.mask))
 
             self.assertIsInstance(l2_direct_event.multi_flag, np.ma.masked_array)
-            np.testing.assert_array_equal(l2_direct_event.multi_flag.data, cdf["multi_flag"])
+            np.testing.assert_array_equal(l2_direct_event.multi_flag.data, cdf["multi_flag"][:, :7, ...])
             self.assertTrue(np.all(l2_direct_event.multi_flag.mask))
 
             self.assertIsInstance(l2_direct_event.num_events, np.ma.masked_array)
-            np.testing.assert_array_equal(l2_direct_event.num_events.data, cdf["num_events"])
+            np.testing.assert_array_equal(l2_direct_event.num_events.data, cdf["num_events"][:, :7, ...])
             self.assertTrue(np.all(l2_direct_event.num_events.mask))
 
             self.assertIsInstance(l2_direct_event.tof, np.ma.masked_array)
-            np.testing.assert_array_equal(l2_direct_event.tof.data, cdf["tof"])
+            np.testing.assert_array_equal(l2_direct_event.tof.data, cdf["tof"][:, :7, ...])
             self.assertTrue(np.all(l2_direct_event.tof.mask))
 
     def test_codice_lo_l1a_sw_priority_read_from_cdf_handles_fill_value(self):
