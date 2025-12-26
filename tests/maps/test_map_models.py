@@ -21,7 +21,7 @@ from imap_l3_processing.maps.map_models import RectangularCoords, SpectralIndexM
     RectangularSpectralIndexDataProduct, RectangularIntensityMapData, IntensityMapData, RectangularIntensityDataProduct, \
     HealPixIntensityMapData, \
     HealPixSpectralIndexMapData, HealPixCoords, HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct, \
-    convert_tt2000_time_to_datetime, _read_intensity_map_data_from_open_cdf
+    convert_tt2000_time_to_datetime, _read_intensity_map_data_from_open_cdf, calculate_datetime_weighted_average
 from imap_l3_processing.models import DataProductVariable
 from tests.test_helpers import get_test_data_folder, get_integration_test_data_path
 
@@ -692,6 +692,36 @@ class TestMapModels(unittest.TestCase):
         intensity_map_data = _read_intensity_map_data_from_open_cdf(cdf)
 
         self.assertIsNotNone(intensity_map_data.obs_date)
+
+    def test_calculate_datetime_weighted_average(self):
+
+        map_1_obs_date = np.ma.array(data=[
+            datetime(2000, 1, 1),
+            datetime(2000, 1, 1),
+            datetime(9999, 12, 31)],
+            mask=[False, False, True])
+        map_2_obs_date = np.ma.array(data=[
+            datetime(9999, 12, 31),
+            datetime(2000, 1, 4),
+            datetime(9999, 12, 31)],
+            mask=[True, False, True])
+
+        map_1_weights = [1, 1, 1]
+        map_2_weights = [1, 2, 1]
+
+        average_obs_date: np.ma.masked_array = calculate_datetime_weighted_average(
+            np.ma.masked_array([map_1_obs_date, map_2_obs_date]),
+            np.array([map_1_weights, map_2_weights]), axis=0)
+
+        self.assertIsInstance(average_obs_date, np.ma.masked_array)
+
+        self.assertEqual(datetime(2000, 1, 1), average_obs_date[0])
+        self.assertFalse(average_obs_date.mask[0])
+
+        self.assertEqual(datetime(2000, 1, 3), average_obs_date[1])
+        self.assertFalse(average_obs_date.mask[1])
+
+        self.assertTrue(average_obs_date.mask[2])
 
 
 if __name__ == '__main__':

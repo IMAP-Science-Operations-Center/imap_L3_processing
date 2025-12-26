@@ -404,8 +404,11 @@ def _healpix_coords_to_variables(coords: HealPixCoords) -> list[DataProductVaria
     ]
 
 
-def calculate_datetime_weighted_average(data: np.ndarray, weights: np.ndarray, axis: int, **kwargs) -> np.ndarray:
+def calculate_datetime_weighted_average(data: np.ndarray, weights: np.ndarray, axis: int,
+                                        **kwargs) -> np.ma.masked_array:
     if isinstance(np.ravel(np.ma.getdata(data))[0], datetime):
+        masked_indices = np.ma.getmask(data)
+        weights[masked_indices] = 0
 
         epoch_based_dates = np.array((np.ma.getdata(data) - TT2000_EPOCH) / timedelta(seconds=1),
                                      dtype=float)
