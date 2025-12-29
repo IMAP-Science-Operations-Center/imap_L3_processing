@@ -361,8 +361,8 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
         first_energy_corresponding_glows_data = np.linspace(0, 1, 3600)
         second_energy_corresponding_glows_data = np.linspace(0, 1, 3600) + 100.2
 
-        mock_interpolate.return_value = [first_energy_corresponding_glows_data,
-                                        second_energy_corresponding_glows_data]
+        mock_interpolate.return_value = np.array([first_energy_corresponding_glows_data,
+                                                  second_energy_corresponding_glows_data])
 
         pointing_set = RectangularSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
                                                                  self.glows_data,
@@ -395,7 +395,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
 
         self.glows_data.energy = np.array([1, 2, 3])
 
-        energy_sc = np.array([[np.full((3600,), 1000), np.full((3600,), 2000)]])
+        energy_sc = np.array([[np.full((3600,), 1250), np.full((3600,), 1850)]])
         exposure_times = np.array([[np.full((3600,), 10), np.full((3600,), 100)]])
         l1c_dataset = create_l1c_pset(exposures=exposure_times)
         uncorrected_hae_lon = np.ones((3600,))

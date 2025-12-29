@@ -104,6 +104,7 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
             )
 
             exposures = np.full_like(l1c_dataset.exposure_times, np.nan)
+            best_match_energies = np.full_like(l1c_dataset.exposure_times, np.nan)
             for cg_energy_index, cg_energy in np.ndenumerate(dataset['energy_sc'].values[0]):
                 best_guess = np.inf
                 best_guess_index = -1
@@ -116,6 +117,7 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                         break
                 exposures[0, cg_energy_index[0], cg_energy_index[1]] = l1c_dataset.exposure_times[
                     0, best_guess_index, cg_energy_index[1]]
+                best_match_energies[0, cg_energy_index[0], cg_energy_index[1]] = energies[best_guess_index]
 
             exposure = exposures * exposure_mask
 
@@ -128,14 +130,13 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
             if cg_corrected:
                 sp_interpolated_to_pset_angles = interpolate_angular_data_to_nearest_neighbor(
                     self.azimuths, glows_dataset.spin_angle, glows_dataset.probability_of_survival[0])
-                log_glows_energies_in_ev = np.log10(glows_dataset.energy * 1000)
-                log_sc_frame_energies = np.log10(dataset["energy_sc"].values[0])
+                log_sc_frame_energies = np.log10(best_match_energies[0])
 
                 sp_final = np.empty((1, len(energies), len(self.azimuths)))
                 for spin_angle_index in range(len(self.azimuths)):
                     sp_final[0, :, spin_angle_index] = np.interp(
                         log_sc_frame_energies[:, spin_angle_index],
-                        log_glows_energies_in_ev,
+                        np.log10(glows_dataset.energy),
                         sp_interpolated_to_pset_angles[:, spin_angle_index]
                     )
             else:
