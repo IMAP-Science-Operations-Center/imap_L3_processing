@@ -720,7 +720,8 @@ class TestMapModels(unittest.TestCase):
 
         self.assertEqual(datetime(2000, 1, 3), average_obs_date[1])
         self.assertFalse(average_obs_date.mask[1])
-
+        
+        self.assertEqual(TT2000_EPOCH, average_obs_date.data[2])
         self.assertTrue(average_obs_date.mask[2])
 
 
