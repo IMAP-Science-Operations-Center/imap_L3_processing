@@ -23,7 +23,7 @@ class TestMapIntegration(unittest.TestCase):
         spiceypy.kclear()
 
     @patch("imap_l3_data_processor._parse_cli_arguments")
-    def test_lo_l3(self, mock_parse_cli_arguments):
+    def test_lo_l3_multiple_arcs(self, mock_parse_cli_arguments):
         lo_multiple_arcs_test_data_dir = INTEGRATION_TEST_DATA_PATH / "lo/multiple_arcs"
         lo_imap_data_dir = get_run_local_data_path("lo/integration_data")
 
