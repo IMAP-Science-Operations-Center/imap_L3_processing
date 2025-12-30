@@ -11,7 +11,7 @@ from imap_l3_processing.maps.map_descriptors import parse_map_descriptor, MapDes
 from imap_l3_processing.maps.map_models import RectangularIntensityMapData, RectangularSpectralIndexDataProduct, \
     RectangularSpectralIndexMapData, RectangularIntensityDataProduct, InputRectangularPointingSet
 from imap_l3_processing.maps.map_processor import MapProcessor
-from imap_l3_processing.maps.spectral_fit import calculate_spectral_index_for_multiple_ranges
+from imap_l3_processing.maps.spectral_fit import fit_spectral_index_map
 from imap_l3_processing.maps.survival_probability_processing import process_survival_probabilities
 from imap_l3_processing.models import Instrument
 from imap_l3_processing.utils import save_data
@@ -47,8 +47,7 @@ class LoProcessor(MapProcessor):
         return dataclasses.replace(pset, exposure_times=np.sum(pset.exposure_times, axis=3))
 
 def perform_spectral_fit(data: RectangularIntensityMapData) -> RectangularSpectralIndexMapData:
-    esa_4_through_7_energy_range = (data.intensity_map_data.energy[3], np.inf)
     return RectangularSpectralIndexMapData(
-        spectral_index_map_data=calculate_spectral_index_for_multiple_ranges(data.intensity_map_data,
-                                                                             [esa_4_through_7_energy_range]),
-        coords=data.coords)
+        spectral_index_map_data=fit_spectral_index_map(data.intensity_map_data),
+        coords=data.coords
+    )
