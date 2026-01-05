@@ -4,12 +4,16 @@ from pathlib import Path
 import numpy as np
 from imap_processing.spice.geometry import SpiceFrame
 
+from imap_l3_processing.lo.l3.lo_l3_isn_background_subtracted_dependencies import \
+    LoL3ISNBackgroundSubtractedDependencies
 from imap_l3_processing.lo.l3.lo_l3_spectral_fit_dependencies import LoL3SpectralFitDependencies
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies
 from imap_l3_processing.maps.map_descriptors import parse_map_descriptor, MapDescriptorParts, MapQuantity, \
     SurvivalCorrection, ReferenceFrame
+from imap_l3_processing.maps.map_models import ISNRateData, ISNBackgroundSubtractedData
 from imap_l3_processing.maps.map_models import RectangularIntensityMapData, RectangularSpectralIndexDataProduct, \
-    RectangularSpectralIndexMapData, RectangularIntensityDataProduct, InputRectangularPointingSet
+    RectangularSpectralIndexMapData, RectangularIntensityDataProduct, InputRectangularPointingSet, \
+    ISNBackgroundSubtractedDataProduct
 from imap_l3_processing.maps.map_processor import MapProcessor
 from imap_l3_processing.maps.spectral_fit import fit_spectral_index_map
 from imap_l3_processing.maps.survival_probability_processing import process_survival_probabilities
@@ -26,6 +30,10 @@ class LoProcessor(MapProcessor):
                 deps = LoL3SpectralFitDependencies.fetch_dependencies(self.dependencies)
                 spectral_fit_data = perform_spectral_fit(deps.map_data)
                 data_product = RectangularSpectralIndexDataProduct(self.input_metadata, spectral_fit_data)
+            case MapDescriptorParts(quantity=MapQuantity.ISNBackgroundSubtracted):
+                deps = LoL3ISNBackgroundSubtractedDependencies.fetch_dependencies(self.dependencies)
+                background_subtracted = isn_background_subtraction(deps.map_data)
+                data_product = ISNBackgroundSubtractedDataProduct(self.input_metadata, background_subtracted)
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
                                     reference_frame=ReferenceFrame.Spacecraft | ReferenceFrame.Heliospheric):
                 deps = HiLoL3SurvivalDependencies.fetch_dependencies(self.dependencies, Instrument.IMAP_LO)
@@ -46,8 +54,37 @@ class LoProcessor(MapProcessor):
     def _collapse_pset_dimension(pset: InputRectangularPointingSet) -> InputRectangularPointingSet:
         return dataclasses.replace(pset, exposure_times=np.sum(pset.exposure_times, axis=3))
 
+
 def perform_spectral_fit(data: RectangularIntensityMapData) -> RectangularSpectralIndexMapData:
     return RectangularSpectralIndexMapData(
         spectral_index_map_data=fit_spectral_index_map(data.intensity_map_data),
         coords=data.coords
+    )
+
+
+def isn_background_subtraction(isn_rate_data: ISNRateData) -> ISNBackgroundSubtractedData:
+    isn_rate_background_subtracted = isn_rate_data.ena_count_rate - isn_rate_data.bg_rates
+
+    return ISNBackgroundSubtractedData(
+        epoch=isn_rate_data.epoch,
+        counts=isn_rate_data.counts,
+        ena_intensity=isn_rate_data.ena_intensity,
+        ena_intensity_stat_uncert=isn_rate_data.ena_intensity_stat_uncert,
+        ena_intensity_sys_err=isn_rate_data.ena_intensity_sys_err,
+        energy=isn_rate_data.energy,
+        energy_stat_uncert=isn_rate_data.energy_stat_uncert,
+        exposure_factor=isn_rate_data.exposure_factor,
+        geometric_factor=isn_rate_data.geometric_factor,
+        geometric_factor_stat_uncert=isn_rate_data.geometric_factor_stat_uncert,
+        solid_angle=isn_rate_data.solid_angle,
+        bg_rates=isn_rate_data.bg_rates,
+        bg_rates_stat_uncert=isn_rate_data.bg_rates_stat_uncert,
+        bg_rates_sys_err=isn_rate_data.bg_rates_sys_err,
+        ena_count_rate=isn_rate_data.ena_count_rate,
+        ena_count_rate_stat_uncert=isn_rate_data.ena_count_rate_stat_uncert,
+        latitude=isn_rate_data.latitude,
+        longitude=isn_rate_data.longitude,
+        isn_rate_background_subtracted=isn_rate_background_subtracted,
+        bg_subtracted_stat_err=np.square(isn_rate_data.ena_count_rate_stat_uncert) + np.square(
+            isn_rate_data.bg_rates_stat_uncert)
     )

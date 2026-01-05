@@ -27,7 +27,7 @@ class TestMapIntegration(unittest.TestCase):
         lo_multiple_arcs_test_data_dir = INTEGRATION_TEST_DATA_PATH / "lo/multiple_arcs"
         lo_imap_data_dir = get_run_local_data_path("lo/integration_data")
 
-        input_files = list(lo_multiple_arcs_test_data_dir.glob("*")) + [
+        input_files = list(lo_multiple_arcs_test_data_dir.glob("*.cdf")) + [
             INTEGRATION_TEST_DATA_PATH / "spice" / "naif020.tls",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_science_108.tf",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_sclk_008.tsc",

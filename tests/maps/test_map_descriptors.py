@@ -105,6 +105,11 @@ class TestMapDescriptors(unittest.TestCase):
                                                                             PixelSize.SixDegrees,
                                                                             "50yr",
                                                                             MapQuantity.Intensity, "CUSTOM")),
+            ("l090-isnnbkgnd-h-sf-nsp-ram-hae-6deg-1yr", MapDescriptorParts(Sensor.Lo90, ReferenceFrame.Spacecraft,
+                                                                            no_sp, SpinPhase.RamOnly, "hae",
+                                                                            PixelSize.SixDegrees,
+                                                                            "1yr",
+                                                                            MapQuantity.ISNBackgroundSubtracted, "")),
         ]
 
         for descriptor, expected in test_cases:

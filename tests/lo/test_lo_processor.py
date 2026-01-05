@@ -7,9 +7,9 @@ import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 from imap_processing.spice.geometry import SpiceFrame
 
-from imap_l3_processing.lo.lo_processor import LoProcessor
+from imap_l3_processing.lo.lo_processor import LoProcessor, isn_background_subtraction
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct, \
-    InputRectangularPointingSet
+    InputRectangularPointingSet, ISNRateData, ISNBackgroundSubtractedData, ISNBackgroundSubtractedDataProduct
 from imap_l3_processing.models import InputMetadata, Instrument
 
 
@@ -113,6 +113,40 @@ class TestLoProcessor(unittest.TestCase):
                 mock_process_survival_prob.reset_mock()
                 mock_save_data.reset_mock()
 
+    @patch('imap_l3_processing.hi.hi_processor.MapProcessor.get_parent_file_names')
+    @patch('imap_l3_processing.lo.lo_processor.LoL3ISNBackgroundSubtractedDependencies.fetch_dependencies')
+    @patch('imap_l3_processing.lo.lo_processor.isn_background_subtraction')
+    @patch('imap_l3_processing.lo.lo_processor.save_data')
+    def test_process_isn_background_subtracted(self, mock_save_data,
+                                               mock_isn_background_subtraction, mock_fetch_dependencies,
+                                               mock_get_parent_file_names):
+        mock_get_parent_file_names.return_value = ["some_input_file_name"]
+
+        input_collection = Mock()
+        lo_l3_background_subtracted_dependency = mock_fetch_dependencies.return_value
+        mock_isn_background_subtraction.return_value = Mock()
+
+        metadata = InputMetadata(instrument="lo",
+                                 data_level="l3",
+                                 version="v000",
+                                 start_date=datetime(2020, 1, 1, 1),
+                                 end_date=datetime(2020, 1, 1, 1),
+                                 descriptor="l090-isnnbkgnd-h-hf-sp-ram-hae-6deg-1yr")
+
+        processor = LoProcessor(input_collection, input_metadata=metadata)
+        product = processor.process()
+
+        mock_fetch_dependencies.assert_called_with(input_collection)
+        mock_isn_background_subtraction.assert_called_once_with(lo_l3_background_subtracted_dependency.map_data)
+
+        data_product = mock_save_data.call_args_list[0].args[0]
+
+        self.assertIsInstance(data_product, ISNBackgroundSubtractedDataProduct)
+        self.assertEqual(data_product.data, mock_isn_background_subtraction.return_value)
+        self.assertEqual(data_product.input_metadata, processor.input_metadata)
+        self.assertEqual(data_product.parent_file_names, ["some_input_file_name"])
+        self.assertEqual([mock_save_data.return_value], product)
+
     def test_rejects_unimplemented_descriptors(self):
         input_collection = ProcessingInputCollection()
 
@@ -134,3 +168,48 @@ class TestLoProcessor(unittest.TestCase):
                     processor.process()
                 self.assertEqual(exception_args, cm.exception.args)
 
+    def test_isn_background_subtraction(self):
+        input_data: ISNRateData = ISNRateData(
+            epoch=sentinel.epoch,
+            counts=sentinel.counts,
+            ena_intensity=sentinel.ena_intensity,
+            ena_intensity_stat_uncert=sentinel.ena_intensity_stat_uncert,
+            ena_intensity_sys_err=sentinel.ena_intensity_sys_err,
+            energy=sentinel.energy,
+            energy_stat_uncert=sentinel.energy_stat_uncert,
+            exposure_factor=sentinel.exposure_factor,
+            geometric_factor=sentinel.geometric_factor,
+            geometric_factor_stat_uncert=sentinel.geometric_factor_stat_uncert,
+            solid_angle=sentinel.solid_angle,
+            bg_rates=np.ones((1, 7, 60, 30)),
+            bg_rates_stat_uncert=np.ones((1, 7, 60, 30)) * 3,
+            bg_rates_sys_err=sentinel.bg_rates_sys_err,
+            ena_count_rate=np.ones((1, 7, 60, 30)) * 3,
+            ena_count_rate_stat_uncert=np.ones((1, 7, 60, 30)) * 2,
+            latitude=sentinel.latitude,
+            longitude=sentinel.longitude,
+        )
+
+        actual: ISNBackgroundSubtractedData = isn_background_subtraction(input_data)
+
+        np.testing.assert_array_equal(actual.bg_rates, np.ones((1, 7, 60, 30)))
+        np.testing.assert_array_equal(actual.ena_count_rate, np.ones((1, 7, 60, 30)) * 3)
+        np.testing.assert_array_equal(actual.isn_rate_background_subtracted, np.ones((1, 7, 60, 30)) * 2)
+        np.testing.assert_array_equal(actual.bg_rates_stat_uncert, np.ones((1, 7, 60, 30)) * 3)
+        np.testing.assert_array_equal(actual.ena_count_rate_stat_uncert, np.ones((1, 7, 60, 30)) * 2)
+        np.testing.assert_array_equal(actual.bg_subtracted_stat_err, np.ones((1, 7, 60, 30)) * 13)
+
+        self.assertEqual(actual.epoch, sentinel.epoch)
+        self.assertEqual(actual.counts, sentinel.counts)
+        self.assertEqual(actual.ena_intensity, sentinel.ena_intensity)
+        self.assertEqual(actual.ena_intensity_stat_uncert, sentinel.ena_intensity_stat_uncert)
+        self.assertEqual(actual.ena_intensity_sys_err, sentinel.ena_intensity_sys_err)
+        self.assertEqual(actual.energy, sentinel.energy)
+        self.assertEqual(actual.energy_stat_uncert, sentinel.energy_stat_uncert)
+        self.assertEqual(actual.exposure_factor, sentinel.exposure_factor)
+        self.assertEqual(actual.geometric_factor, sentinel.geometric_factor)
+        self.assertEqual(actual.solid_angle, sentinel.solid_angle)
+        self.assertEqual(actual.geometric_factor_stat_uncert, sentinel.geometric_factor_stat_uncert)
+        self.assertEqual(actual.bg_rates_sys_err, sentinel.bg_rates_sys_err)
+        self.assertEqual(actual.latitude, sentinel.latitude)
+        self.assertEqual(actual.longitude, sentinel.longitude)
