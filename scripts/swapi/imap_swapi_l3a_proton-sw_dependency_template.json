@@ -50,5 +50,17 @@
     "files": [
       "imap_swapi_density-of-neutral-helium-lut_20241023_v001.dat"
     ]
+  },
+  {
+    "type": "ancillary",
+    "files": [
+      "imap_swapi_helium-inflow-vector_20100101_v001.dat"
+    ]
+  },
+  {
+    "type": "ancillary",
+    "files": [
+      "imap_swapi_hydrogen-inflow-vector_20100101_v001.dat"
+    ]
   }
 ]

@@ -50,6 +50,9 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         dates = [datetime.strptime(arg, "%Y%m%d") for arg in sys.argv[1:]]
     else:
-        dates = [datetime(2025, 12, 15)]
+        dates = [datetime(2025, 12, 15),
+                 datetime(2025, 12, 16),
+                 datetime(2025, 12, 17),
+                 datetime(2025, 12, 18)]
     for date in dates:
         generate_swapi_for_given_day(date)
