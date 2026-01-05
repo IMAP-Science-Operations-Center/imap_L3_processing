@@ -57,9 +57,10 @@ class SweProcessor(Processor):
                                                                [datetime.timedelta(seconds=delta / 1e9) for delta in
                                                                 epoch_delta])
 
+        geometric_fractions = np.array(config["geometric_fractions"])
         for i in range(len(swe_epoch)):
             average_psd.append(average_over_look_directions(swe_l2_data.phase_space_density[i],
-                                                            np.array(config["geometric_fractions"]),
+                                                            geometric_fractions,
                                                             config["minimum_phase_space_density_value"]))
 
             spacecraft_potential[i], halo_core[i] = find_breakpoints(swe_l2_data.energy, average_psd[i],
@@ -69,6 +70,7 @@ class SweProcessor(Processor):
 
             spacecraft_potential_history = [*spacecraft_potential_history[1:], spacecraft_potential[i]]
             halo_core_history = [*halo_core_history[1:], halo_core[i]]
+            # corrected_energy_bins.append(swe_l2_data.energy)
             corrected_energy_bins.append(swe_l2_data.energy - spacecraft_potential[i])
 
         corrected_energy_bins = np.array(corrected_energy_bins)
@@ -84,6 +86,11 @@ class SweProcessor(Processor):
             intensity_by_pitch_angle_and_gyrophase, intensity_by_pitch_angle,
             uncertanties_by_pitch_angle_and_gyrophase, uncertanties_by_pitch_angle
         ) = self.calculate_pitch_angle_products(dependencies, corrected_energy_bins)
+
+        # time, energy, spin, detector
+        dist_by_phi = np.average(swe_l2_data.phase_space_density, weights=geometric_fractions, axis=-1)
+        dist_by_theta = np.average(swe_l2_data.phase_space_density, axis=-2)
+        dist_fun_1d = np.average(dist_by_phi, axis=-1)
 
         return SweL3Data(
             input_metadata=replace(self.input_metadata, descriptor="sci"),
@@ -107,7 +114,15 @@ class SweProcessor(Processor):
             phase_space_density_1d=energy_spectrum,
             phase_space_density_inward=energy_spectrum_inbound,
             phase_space_density_outward=energy_spectrum_outbound,
-            moment_data=swe_l3_moments_data
+            moment_data=swe_l3_moments_data,
+            raw_1d_psd=dist_fun_1d,
+            raw_psd_by_phi=dist_by_phi,
+            raw_psd_by_theta=dist_by_theta,
+            phi=np.array([6., 18., 30., 42., 54., 66., 78., 90., 102., 114., 126.,
+                          138., 150., 162., 174., 186., 198., 210., 222., 234., 246., 258.,
+                          270., 282., 294., 306., 318., 330., 342., 354.], dtype=np.float32),
+            # Our PSD input is not rebinned to a consistent spin angle, it's by "spin sector". Do we need to do this calculation using a different input var that has consistent angle?
+            theta=swe_l2_data.inst_el,
         )
 
     def calculate_moment_products(self, swe_l2_data: SweL2Data, swe_l1b_data: SweL1bData, rebinned_mag_data: np.ndarray,
@@ -486,6 +501,7 @@ class SweProcessor(Processor):
         solar_wind_vectors = calculate_solar_wind_velocity_vector(swapi_l_a_proton_data.proton_sw_speed,
                                                                   swapi_l_a_proton_data.proton_sw_clock_angle,
                                                                   swapi_l_a_proton_data.proton_sw_deflection_angle)
+        # solar_wind_vectors = 0 * solar_wind_vectors
         swapi_max_distance = np.timedelta64(int(config['max_swapi_offset_in_minutes'] * 60e9), 'ns')
         rebinned_solar_wind_vectors = find_closest_neighbor(from_epoch=swapi_epoch,
                                                             from_data=solar_wind_vectors,

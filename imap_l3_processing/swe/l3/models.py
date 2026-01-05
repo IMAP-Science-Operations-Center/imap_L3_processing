@@ -212,6 +212,11 @@ class SweL3Data(DataProduct):
     phase_space_density_outward: np.ndarray
     # fit moments
     moment_data: SweL3MomentData
+    raw_1d_psd: np.ndarray
+    raw_psd_by_phi: np.ndarray
+    raw_psd_by_theta: np.ndarray
+    theta: np.ndarray
+    phi: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -386,7 +391,12 @@ class SweL3Data(DataProduct):
             DataProductVariable(TEMPERATURE_TENSOR_LABEL,
                                 value=["Tensor 1", "Tensor 2", "Tensor 3", "Tensor 4", "Tensor 5", "Tensor 6"],
                                 ),
-            DataProductVariable(TENSOR_ID, value=np.array([1, 2, 3, 4, 5, 6]))
+            DataProductVariable("inst_el", value=self.theta),
+            DataProductVariable("inst_az", value=self.phi),
+            DataProductVariable(TENSOR_ID, value=np.array([1, 2, 3, 4, 5, 6])),
+            DataProductVariable("raw_1d_psd", value=self.raw_1d_psd),
+            DataProductVariable("raw_psd_by_phi", value=self.raw_psd_by_phi),
+            DataProductVariable("raw_psd_by_theta", value=self.raw_psd_by_theta),
         ]
 
 
