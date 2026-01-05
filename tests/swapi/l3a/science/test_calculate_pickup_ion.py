@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import patch, Mock, MagicMock, call
+from unittest.mock import patch, Mock, MagicMock, call, sentinel
 
 import numpy as np
 import spacepy.pycdf
@@ -10,8 +10,7 @@ from spacepy.pycdf import CDF
 from uncertainties import ufloat
 
 import imap_l3_processing
-from imap_l3_processing.constants import HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND, \
-    HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000, HYDROGEN_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000, PROTON_MASS_KG, \
+from imap_l3_processing.constants import PROTON_MASS_KG, \
     PROTON_CHARGE_COULOMBS, ONE_AU_IN_KM, ONE_SECOND_IN_NANOSECONDS, \
     HE_PUI_PARTICLE_MASS_KG, BOLTZMANN_CONSTANT_JOULES_PER_KELVIN
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_combined_sweeps
@@ -24,6 +23,7 @@ from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import calculate_
     calculate_helium_pui_temperature, calc_chi_squared_lm_fit
 from imap_l3_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table import \
     DensityOfNeutralHeliumLookupTable
+from imap_l3_processing.swapi.l3a.science.inflow_vector import InflowVector
 from imap_l3_processing.swapi.l3b.science.efficiency_calibration_table import EfficiencyCalibrationTable
 from imap_l3_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
 from imap_l3_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable, \
@@ -70,12 +70,16 @@ class TestCalculatePickupIon(SpiceTestCase):
 
         solar_wind_velocity_in_imap_frame = np.array([22, 33, 44])
 
-        energy_cutoff = calculate_pui_energy_cutoff(expected_ephemeris_time, solar_wind_velocity_in_imap_frame)
+        h_inflow_speed = 102
+        hydrogen_inflow_vector = InflowVector(h_inflow_speed, sentinel.h_inflow_lon, sentinel.h_inflow_lat)
+
+        energy_cutoff = calculate_pui_energy_cutoff(expected_ephemeris_time, solar_wind_velocity_in_imap_frame,
+                                                    hydrogen_inflow_vector)
 
         mock_spice.spkezr.assert_called_with("IMAP", expected_ephemeris_time, "ECLIPJ2000", "NONE", "SUN")
-        mock_spice.latrec.assert_called_with(-HYDROGEN_INFLOW_SPEED_IN_KM_PER_SECOND,
-                                             HYDROGEN_INFLOW_LONGITUDE_DEGREES_IN_ECLIPJ2000,
-                                             HYDROGEN_INFLOW_LATITUDE_DEGREES_IN_ECLIPJ2000)
+        mock_spice.latrec.assert_called_with(-h_inflow_speed,
+                                             sentinel.h_inflow_lon,
+                                             sentinel.h_inflow_lat)
         mock_convert_velocity.assert_called_with(solar_wind_velocity_in_imap_frame, expected_ephemeris_time,
                                                  "IMAP_DPS",
                                                  "ECLIPJ2000")
@@ -156,6 +160,9 @@ class TestCalculatePickupIon(SpiceTestCase):
         efficiency_lut = EfficiencyCalibrationTable(
             get_test_data_path("swapi/imap_swapi_efficiency-lut_20241020_v000.dat"))
 
+        helium_inflow_vector = InflowVector.from_file(
+            get_test_data_path("swapi/imap_swapi_helium-inflow-vector_20100101_v001.dat"))
+
         pui_velocity_eclipj2000 = np.array([5, 7, 9])
         sw_velocity_eclipj2000 = np.array([8, 10, 12])
         mock_convert_velocity.side_effect = [
@@ -175,6 +182,7 @@ class TestCalculatePickupIon(SpiceTestCase):
             solar_wind_vector=solar_wind_vector,
             density_of_neutral_helium_lookup_table=Mock(),
             efficiency_table=efficiency_lut,
+            helium_inflow_vector=helium_inflow_vector,
         )
 
         response_table = InstrumentResponseLookupTable(
@@ -222,12 +230,17 @@ class TestCalculatePickupIon(SpiceTestCase):
         theta = 75
         phi = -135
         solar_wind_vector = np.array([0, 0, 500])
+
+        helium_inflow_vector = InflowVector.from_file(
+            get_test_data_path("swapi/imap_swapi_helium-inflow-vector_20100101_v001.dat"))
+
         calculator = ModelCountRateCalculator(
             response_lookup_table_collection=Mock(),
             geometric_table=Mock(),
             solar_wind_vector=solar_wind_vector,
             density_of_neutral_helium_lookup_table=Mock(),
-            efficiency_table=Mock()
+            efficiency_table=Mock(),
+            helium_inflow_vector=helium_inflow_vector,
         )
 
         response_table = InstrumentResponseLookupTable(
@@ -392,16 +405,20 @@ class TestCalculatePickupIon(SpiceTestCase):
 
             efficiency_lut = EfficiencyCalibrationTable(
                 get_test_data_path("swapi/imap_swapi_efficiency-lut_20241020_v000.dat"))
+            h_inflow_vector = InflowVector.from_file(
+                get_test_data_path("swapi/imap_swapi_hydrogen-inflow-vector_20100101_v001.dat"))
+            he_inflow_vector = InflowVector.from_file(
+                get_test_data_path("swapi/imap_swapi_helium-inflow-vector_20100101_v001.dat"))
 
             actual_fitting_parameters = calculate_pickup_ion_values(
                 self.get_response_lookup_table_collection(), geometric_factor_lut, energy,
                 count_rate, input_epochs, background_count_rate_cutoff, sw_velocity,
-                self.density_of_neutral_helium_lookup_table, efficiency_lut)
+                self.density_of_neutral_helium_lookup_table, efficiency_lut, h_inflow_vector, he_inflow_vector)
 
             mock_calculate_combined_sweeps.assert_called_once_with(count_rate, energy)
 
             mock_spice.unitim.assert_called_with(input_epochs / 1e9, "TT", "ET")
-            mock_calculate_pui_energy_cutoff.assert_called_with(ephemeris_time_for_epoch, sw_velocity)
+            mock_calculate_pui_energy_cutoff.assert_called_with(ephemeris_time_for_epoch, sw_velocity, h_inflow_vector)
             mock_extract_pui_energy_bins.assert_called_with(range(62, 0, -1),
                                                             combined_energies,
                                                             combined_counts,
@@ -485,7 +502,9 @@ class TestCalculatePickupIon(SpiceTestCase):
                 background_count_rate_cutoff=10,
                 sw_velocity_vector=np.array([1, 0, 0]),
                 density_of_neutral_helium_lookup_table=Mock(),
-                efficiency_table=Mock()
+                efficiency_table=Mock(),
+                hydrogen_inflow_vector=Mock(),
+                helium_inflow_vector=Mock(),
             )
 
         self.assertEqual("Failed to fit - chi-squared too large 11", str(exc_ctx.exception))
@@ -494,9 +513,12 @@ class TestCalculatePickupIon(SpiceTestCase):
         epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 6, 6, 12))
         sw_velocity_vector = np.array([0, 0, -500])
         fitting_params = FittingParameters(1.5, 1e-7, 520, 0.1)
+        he_inflow_vector = InflowVector.from_file(
+            get_test_data_path("swapi/imap_swapi_helium-inflow-vector_20100101_v001.dat"))
         result = calculate_helium_pui_density(epoch, sw_velocity_vector,
                                               self.density_of_neutral_helium_lookup_table,
-                                              fitting_params)
+                                              fitting_params,
+                                              he_inflow_vector)
         self.assertAlmostEqual(0.00014681078095942195, result)
 
     def test_calculate_pui_density_with_uncertainty(self):
@@ -506,9 +528,12 @@ class TestCalculatePickupIon(SpiceTestCase):
                                            ufloat(1e-7, 1e-8),
                                            ufloat(520, 5),
                                            ufloat(0.1, 0.01))
+
+        he_inflow_vector = InflowVector.from_file(
+            get_test_data_path("swapi/imap_swapi_helium-inflow-vector_20100101_v001.dat"))
         result = calculate_helium_pui_density(epoch, sw_velocity_vector,
                                               self.density_of_neutral_helium_lookup_table,
-                                              fitting_params)
+                                              fitting_params, he_inflow_vector)
         self.assertAlmostEqual(0.00014681078095942195, result.n)
         self.assertAlmostEqual(1.4679499690964861e-05, result.s)
 
@@ -523,8 +548,11 @@ class TestCalculatePickupIon(SpiceTestCase):
 
         mock_density_of_neutral_helium_table = Mock()
         mock_density_of_neutral_helium_table.get_minimum_distance.return_value = 0.05
+
+        he_inflow_vector = InflowVector.from_file(
+            get_test_data_path("swapi/imap_swapi_helium-inflow-vector_20100101_v001.dat"))
         result = calculate_helium_pui_density(epoch, sw_velocity_vector, mock_density_of_neutral_helium_table,
-                                              fitting_params)
+                                              fitting_params, he_inflow_vector)
         mock_integrate.assert_called_once()
         args, kwargs = mock_integrate.call_args_list[0]
         helium_table_lower_bound = (0.05 / (149_000_000 / ONE_AU_IN_KM)) ** (1 / 1.5) * 520
@@ -550,9 +578,12 @@ class TestCalculatePickupIon(SpiceTestCase):
         mock_density_of_neutral_helium_table = Mock()
         mock_density_of_neutral_helium_table.get_minimum_distance.return_value = 0.15
 
+        he_inflow_vector = InflowVector.from_file(
+            get_test_data_path("swapi/imap_swapi_helium-inflow-vector_20100101_v001.dat"))
+
         result = calculate_helium_pui_temperature(epoch, sw_velocity_vector,
                                                   mock_density_of_neutral_helium_table,
-                                                  fitting_params)
+                                                  fitting_params, he_inflow_vector)
 
         self.assertEqual(2, mock_integrate.call_count)
         helium_table_lower_bound = (0.15 / (149_000_000 / ONE_AU_IN_KM)) ** (1 / 1.5) * 520
@@ -573,10 +604,12 @@ class TestCalculatePickupIon(SpiceTestCase):
         epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 6, 6, 12))
         sw_velocity_vector = np.array([0, 0, -500])
         fitting_params = FittingParameters(1.5, 1e-7, 500, 0.1)
+        he_inflow_vector = InflowVector.from_file(
+            get_test_data_path("swapi/imap_swapi_helium-inflow-vector_20100101_v001.dat"))
 
         result = calculate_helium_pui_temperature(epoch, sw_velocity_vector,
                                                   self.density_of_neutral_helium_lookup_table,
-                                                  fitting_params)
+                                                  fitting_params, he_inflow_vector)
         self.assertAlmostEqual(24456817.05142866, result)
 
     def test_calculate_pui_temperature_with_uncertainty(self):
@@ -588,9 +621,12 @@ class TestCalculatePickupIon(SpiceTestCase):
             ufloat(500, 5),
             ufloat(0.1, 0.01))
 
+        he_inflow_vector = InflowVector.from_file(
+            get_test_data_path("swapi/imap_swapi_helium-inflow-vector_20100101_v001.dat"))
+
         result = calculate_helium_pui_temperature(epoch, sw_velocity_vector,
                                                   self.density_of_neutral_helium_lookup_table,
-                                                  fitting_params)
+                                                  fitting_params, he_inflow_vector)
         np.testing.assert_allclose(24456817.05142866, result.n, rtol=1e-8)
         np.testing.assert_allclose(824377.0631439432, result.s, rtol=1e-8)
 
@@ -633,10 +669,17 @@ class TestCalculatePickupIon(SpiceTestCase):
             epoch = 123_456_789_000_000_000
             sw_velocity_vector = np.array([0, 0, -500])
 
+            h_inflow_vector = InflowVector.from_file(
+                get_test_data_path("swapi/imap_swapi_hydrogen-inflow-vector_20100101_v001.dat"))
+
+            he_inflow_vector = InflowVector.from_file(
+                get_test_data_path("swapi/imap_swapi_helium-inflow-vector_20100101_v001.dat"))
+
             actual_fitting_parameters = calculate_pickup_ion_values(
                 self.get_response_lookup_table_collection(), geometric_factor_lut, energy,
                 count_rate, epoch, background_count_rate_cutoff, sw_velocity_vector,
-                self.density_of_neutral_helium_lookup_table, efficiency_lut)
+                self.density_of_neutral_helium_lookup_table, efficiency_lut, h_inflow_vector,
+                he_inflow_vector)
 
             mock_spice.unitim.assert_called_with(epoch / ONE_SECOND_IN_NANOSECONDS,
                                                  "TT", "ET")
@@ -655,12 +698,16 @@ class TestCalculatePickupIon(SpiceTestCase):
         geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
         sw_velocity_vector = np.array([0, 0, -500])
 
+        helium_inflow_vector = InflowVector.from_file(
+            get_test_data_path("swapi/imap_swapi_helium-inflow-vector_20100101_v001.dat"))
+
         calculator = ModelCountRateCalculator(
             response_lookup_table_collection=self.get_response_lookup_table_collection(),
             geometric_table=geometric_factor_lut,
             solar_wind_vector=sw_velocity_vector,
             density_of_neutral_helium_lookup_table=self.density_of_neutral_helium_lookup_table,
             efficiency_table=efficiency_lut,
+            helium_inflow_vector=helium_inflow_vector,
         )
         ephemeris_time = 800000000
 
