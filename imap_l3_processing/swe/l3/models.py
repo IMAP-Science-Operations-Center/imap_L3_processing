@@ -107,6 +107,7 @@ class SweL2Data:
     inst_az_spin_sector: np.ndarray
     acquisition_time: np.ndarray
     acquisition_duration: np.ndarray
+    phase_space_density_rebinned: np.ndarray
 
 
 @dataclass
@@ -217,6 +218,9 @@ class SweL3Data(DataProduct):
     raw_psd_by_theta: np.ndarray
     theta: np.ndarray
     phi: np.ndarray
+    raw_1d_psd_rebinned: np.ndarray
+    raw_psd_by_phi_rebinned: np.ndarray
+    raw_psd_by_theta_rebinned: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -397,6 +401,9 @@ class SweL3Data(DataProduct):
             DataProductVariable("raw_1d_psd", value=self.raw_1d_psd),
             DataProductVariable("raw_psd_by_phi", value=self.raw_psd_by_phi),
             DataProductVariable("raw_psd_by_theta", value=self.raw_psd_by_theta),
+            DataProductVariable("raw_1d_psd_rebinned", value=self.raw_1d_psd_rebinned),
+            DataProductVariable("raw_psd_by_phi_rebinned", value=self.raw_psd_by_phi_rebinned),
+            DataProductVariable("raw_psd_by_theta_rebinned", value=self.raw_psd_by_theta_rebinned),
         ]
 
 

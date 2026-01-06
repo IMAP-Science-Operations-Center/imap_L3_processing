@@ -97,13 +97,22 @@ def generate_swe_for_given_day(day: datetime):
                    f"--start-date {day_as_string} --version v004 "
                    f"--dependency {dependency_file_name}")
 
-    subprocess.run([sys.executable, *args_string.split(" ")])
+    pid = subprocess.Popen([sys.executable, *args_string.split(" ")])
 
+    return pid
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         dates = [datetime.strptime(arg, "%Y%m%d") for arg in sys.argv[1:]]
     else:
-        dates = [datetime(2025, 12, 15)]
-    for date in dates:
-        generate_swe_for_given_day(date)
+        dates = [
+            datetime(2025, 12, 15),
+            datetime(2025, 12, 16),
+            datetime(2025, 12, 17),
+            datetime(2025, 12, 18),
+        ]
+
+    pids = [generate_swe_for_given_day(date) for date in dates]
+
+    for pid in pids:
+        pid.wait()

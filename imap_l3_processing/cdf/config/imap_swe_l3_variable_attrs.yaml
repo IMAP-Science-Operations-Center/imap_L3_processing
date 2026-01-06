@@ -1585,6 +1585,13 @@ raw_1d_psd:
   FORMAT: F12.6
   LABLAXIS: Raw 1D PSD
   UNITS: ' '
+  DISPLAY_TYPE: spectrogram
+  VALIDMIN: 0
+  VALIDMAX: 1.00e-20
+  SCALEMIN: 1.00e-33
+  SCALEMAX: 1.00e-24
+  FILLVAL: -1.00E+31
+  SCALETYP: log
 
 raw_psd_by_phi:
   NAME: raw_psd_by_phi
@@ -1599,6 +1606,13 @@ raw_psd_by_phi:
   FORMAT: F12.6
   LABLAXIS: Raw PSD by phi
   UNITS: ' '
+  DISPLAY_TYPE: spectrogram
+  VALIDMIN: 0
+  VALIDMAX: 1.00e-20
+  SCALEMIN: 1.00e-33
+  SCALEMAX: 1.00e-24
+  FILLVAL: -1.00E+31
+  SCALETYP: log
 
 raw_psd_by_theta:
   NAME: raw_psd_by_theta
@@ -1613,6 +1627,75 @@ raw_psd_by_theta:
   FORMAT: F12.6
   LABLAXIS: Raw PSD by theta
   UNITS: ' '
+  DISPLAY_TYPE: spectrogram
+  VALIDMIN: 0
+  VALIDMAX: 1.00e-20
+  SCALEMIN: 1.00e-33
+  SCALEMAX: 1.00e-24
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+
+raw_1d_psd_rebinned:
+  NAME: raw_1d_psd_rebinned
+  DATA_TYPE: CDF_REAL4
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  CATDESC: Raw 1D PSD from rebinned data
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  FIELDNAM: Raw 1D PSD
+  FORMAT: F12.6
+  LABLAXIS: Raw 1D PSD
+  UNITS: ' '
+  DISPLAY_TYPE: spectrogram
+  VALIDMIN: 0
+  VALIDMAX: 1.00e-20
+  SCALEMIN: 1.00e-33
+  SCALEMAX: 1.00e-24
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+
+raw_psd_by_phi_rebinned:
+  NAME: raw_psd_by_phi_rebinned
+  DATA_TYPE: CDF_REAL4
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DEPEND_2: inst_az
+  CATDESC: Raw PSD by phi from rebinned data
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  FIELDNAM: Raw PSD by phi
+  FORMAT: F12.6
+  LABLAXIS: Raw PSD by phi
+  UNITS: ' '
+  DISPLAY_TYPE: spectrogram
+  VALIDMIN: 0
+  VALIDMAX: 1.00e-20
+  SCALEMIN: 1.00e-33
+  SCALEMAX: 1.00e-24
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+
+raw_psd_by_theta_rebinned:
+  NAME: raw_psd_by_theta_rebinned
+  DATA_TYPE: CDF_REAL4
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DEPEND_2: inst_el
+  CATDESC: Raw PSD by theta from rebinned data
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  FIELDNAM: Raw PSD by theta
+  FORMAT: F12.6
+  LABLAXIS: Raw PSD by theta
+  UNITS: ' '
+  DISPLAY_TYPE: spectrogram
+  VALIDMIN: 0
+  VALIDMAX: 1.00e-20
+  SCALEMIN: 1.00e-33
+  SCALEMAX: 1.00e-24
+  FILLVAL: -1.00E+31
+  SCALETYP: log
 
 inst_el:
   NAME: inst_el
