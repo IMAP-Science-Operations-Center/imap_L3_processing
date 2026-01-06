@@ -75,8 +75,13 @@ class HiProcessor(MapProcessor):
                 )
             case MapDescriptorParts(sensor=Sensor.HiCombined):
                 dependencies = HiL3CombinedMapDependencies.fetch_dependencies(self.dependencies)
+                h45_full_spin_12mo = UncertaintyWeightedCombination().combine_rectangular_intensity_map_data(
+                    dependencies.h45_maps)
+                h90_full_spin_12mo = UncertaintyWeightedCombination().combine_rectangular_intensity_map_data(
+                    dependencies.h90_maps)
+
                 combined_map_data = ExposureWeightedCombination().combine_rectangular_intensity_map_data(
-                    dependencies.maps)
+                    [h45_full_spin_12mo, h90_full_spin_12mo])
 
                 data_product = RectangularIntensityDataProduct(
                     data=combined_map_data,

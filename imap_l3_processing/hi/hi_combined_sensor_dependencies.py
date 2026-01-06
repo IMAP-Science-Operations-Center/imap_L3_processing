@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -10,7 +11,8 @@ from imap_l3_processing.maps.map_models import RectangularIntensityMapData
 
 @dataclass
 class HiL3CombinedMapDependencies:
-    maps: list[RectangularIntensityMapData]
+    h45_maps: list[RectangularIntensityMapData]
+    h90_maps: list[RectangularIntensityMapData]
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection) -> HiL3CombinedMapDependencies:
@@ -21,4 +23,5 @@ class HiL3CombinedMapDependencies:
 
     @classmethod
     def from_file_paths(cls, hi_l3_map_paths: list[Path]) -> HiL3CombinedMapDependencies:
-        return cls([RectangularIntensityMapData.read_from_path(path) for path in hi_l3_map_paths])
+        return cls([RectangularIntensityMapData.read_from_path(path) for path in hi_l3_map_paths if 'h45' in str(path)],
+                   [RectangularIntensityMapData.read_from_path(path) for path in hi_l3_map_paths if 'h90' in str(path)])

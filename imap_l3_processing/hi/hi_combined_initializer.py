@@ -7,7 +7,7 @@ import imap_data_access
 from dateutil.relativedelta import relativedelta
 
 from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, parse_map_descriptor, Sensor, \
-    map_descriptor_parts_to_string
+    map_descriptor_parts_to_string, SpinPhase
 from imap_l3_processing.maps.map_initializer import PossibleMapToProduce, MapInitializer
 from imap_l3_processing.models import InputMetadata
 
@@ -40,15 +40,20 @@ class HiCombinedInitializer(MapInitializer):
         possible_maps_to_produce = []
         map_descriptor: MapDescriptorParts = parse_map_descriptor(input_descriptor)
 
-        hi90_descriptor = map_descriptor_parts_to_string(
-            dataclasses.replace(map_descriptor, sensor=Sensor.Hi90, duration="6mo"))
-        hi45_descriptor = map_descriptor_parts_to_string(
-            dataclasses.replace(map_descriptor, sensor=Sensor.Hi45, duration="6mo"))
+        hi90_ram_descriptor = map_descriptor_parts_to_string(
+            dataclasses.replace(map_descriptor, sensor=Sensor.Hi90, spin_phase=SpinPhase.RamOnly))
+        hi45_ram_descriptor = map_descriptor_parts_to_string(
+            dataclasses.replace(map_descriptor, sensor=Sensor.Hi45, spin_phase=SpinPhase.RamOnly))
 
-        if hi90_descriptor not in self.input_maps or hi45_descriptor not in self.input_maps:
+        hi90_anti_descriptor = map_descriptor_parts_to_string(
+            dataclasses.replace(map_descriptor, sensor=Sensor.Hi90, spin_phase=SpinPhase.AntiRamOnly))
+        hi45_anti_descriptor = map_descriptor_parts_to_string(
+            dataclasses.replace(map_descriptor, sensor=Sensor.Hi45, spin_phase=SpinPhase.AntiRamOnly))
+
+        if hi90_ram_descriptor not in self.input_maps or hi90_anti_descriptor not in self.input_maps or hi45_ram_descriptor not in self.input_maps or hi45_anti_descriptor not in self.input_maps:
             return []
 
-        hi90_start_dates = sorted(self.input_maps[hi90_descriptor].keys())
+        hi90_start_dates = sorted(self.input_maps[hi90_ram_descriptor].keys())
 
         input_start_dates = defaultdict(list)
 
@@ -58,31 +63,30 @@ class HiCombinedInitializer(MapInitializer):
                 hi90_start_date)
 
         for i in input_start_dates.keys():
-            if len(input_start_dates[i]) == 2:
-                first_6mo_start_date_str = input_start_dates[i][0]
-                first_6mo_start_date = datetime.strptime(first_6mo_start_date_str, '%Y%m%d')
+            first_6mo_start_date_str = input_start_dates[i][0]
+            first_6mo_start_date = datetime.strptime(first_6mo_start_date_str, '%Y%m%d')
 
-                input_files = [
-                    self.input_maps[hi90_descriptor].get(input_start_dates[i][0]),
-                    self.input_maps[hi90_descriptor].get(input_start_dates[i][1]),
-                    self.input_maps[hi45_descriptor].get(input_start_dates[i][0]),
-                    self.input_maps[hi45_descriptor].get(input_start_dates[i][1]),
-                ]
+            input_files = [
+                self.input_maps[hi90_ram_descriptor].get(input_start_dates[i][0]),
+                self.input_maps[hi90_anti_descriptor].get(input_start_dates[i][0]),
+                self.input_maps[hi45_ram_descriptor].get(input_start_dates[i][0]),
+                self.input_maps[hi45_anti_descriptor].get(input_start_dates[i][0]),
+            ]
 
-                if not all(input_files):
-                    continue
+            if not all(input_files):
+                continue
 
-                possible_maps_to_produce.append(PossibleMapToProduce(
-                    input_files=set(input_files),
-                    input_metadata=InputMetadata(
-                        instrument='hi',
-                        data_level='l3',
-                        start_date=first_6mo_start_date,
-                        end_date=first_6mo_start_date + relativedelta(months=+12),
-                        version='v001',
-                        descriptor=input_descriptor,
-                        repointing=None
-                    )
-                ))
+            possible_maps_to_produce.append(PossibleMapToProduce(
+                input_files=set(input_files),
+                input_metadata=InputMetadata(
+                    instrument='hi',
+                    data_level='l3',
+                    start_date=first_6mo_start_date,
+                    end_date=first_6mo_start_date + relativedelta(months=+12),
+                    version='v001',
+                    descriptor=input_descriptor,
+                    repointing=None
+                )
+            ))
 
         return possible_maps_to_produce
