@@ -1,7 +1,6 @@
 import datetime
 import logging
 from dataclasses import replace
-from datetime import timedelta
 
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
@@ -312,6 +311,14 @@ class SweProcessor(Processor):
                             total_temperature_perpendicular_to_mag[i] = [total_t_perpendicular_to_mag_average,
                                                                          total_t_perpendicular_to_mag_ratio]
 
+                        else:
+                            logger.info(f"core integrate failed at index {i}")
+
+                    else:
+                        logger.info(f"core temp {core_temp_avg} out of range at index {i}")
+                else:
+                    logger.info(f"bad core moment fit result at index {i}")
+
                 halo_moment_fit_result = halo_fit_moments_retrying_on_failure(
                     corrected_energy_bins[i],
                     velocity_vectors_cm_per_s,
@@ -390,6 +397,12 @@ class SweProcessor(Processor):
                             halo_temperature_parallel_to_mag[i] = halo_t_parallel_to_mag
                             halo_temperature_perpendicular_to_mag[i] = [halo_t_perpendicular_to_mag_average,
                                                                         halo_t_perpendicular_to_mag_ratio]
+                        else:
+                            logger.info(f"halo integrate failed at index {i}")
+                    else:
+                        logger.info(f"halo temp {halo_temp_avg} out of range at index {i}")
+                else:
+                    logger.info(f"bad halo moment fit result at index {i}")
 
             except Exception:
                 logger.info(
@@ -473,7 +486,7 @@ class SweProcessor(Processor):
         solar_wind_vectors = calculate_solar_wind_velocity_vector(swapi_l_a_proton_data.proton_sw_speed,
                                                                   swapi_l_a_proton_data.proton_sw_clock_angle,
                                                                   swapi_l_a_proton_data.proton_sw_deflection_angle)
-        swapi_max_distance = timedelta(minutes=config['max_swapi_offset_in_minutes'])
+        swapi_max_distance = np.timedelta64(int(config['max_swapi_offset_in_minutes'] * 60e9), 'ns')
         rebinned_solar_wind_vectors = find_closest_neighbor(from_epoch=swapi_epoch,
                                                             from_data=solar_wind_vectors,
                                                             to_epoch=swe_epoch,

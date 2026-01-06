@@ -1,6 +1,6 @@
 import itertools
 import time
-from concurrent.futures.thread import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import imap_data_access
@@ -14,7 +14,7 @@ l1_90_folder = Path(
     r"C:\Users\Harrison\Downloads\ULTRA_90sensor_spacecraft-psets_20251113"
 )
 glows_folder = Path(
-    r"C:\Users\Harrison\Downloads\glows_l3e_for_ultra_validation"
+    r"C:\Users\Harrison\Downloads\ultra_combined_hf_validation\glows"
 )
 l2_45_folder = Path(r"C:\Users\Harrison\Downloads\u45_l2")
 l2_90_folder = Path(r"C:\Users\Harrison\Downloads\u90_l2")
@@ -40,9 +40,9 @@ def upload_file(f):
                 return
             time.sleep(failures ** 2 * 0.5)
 
-
 with ThreadPoolExecutor() as executor:
-    for f in itertools.chain(l2_45_folder.rglob("*.cdf"),l2_90_folder.rglob("*.cdf")) :
+    for f in itertools.chain(glows_folder.rglob("*.cdf")):
+        f.rename(f.parent / f.name.replace("v021", "v022"))
         executor.submit(upload_file, f)
 
 print("uploaded", uploaded)

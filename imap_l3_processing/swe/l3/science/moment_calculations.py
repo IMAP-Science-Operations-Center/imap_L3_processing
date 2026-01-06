@@ -1,3 +1,4 @@
+import logging
 import math
 from dataclasses import dataclass
 from datetime import datetime
@@ -18,6 +19,7 @@ ZMK = 3.2971e-12
 
 ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR = np.sqrt(2 * PROTON_CHARGE_COULOMBS / ELECTRON_MASS_KG) * 100
 
+logger = logging.getLogger(__name__)
 
 @dataclass
 class Moments:
@@ -377,7 +379,8 @@ def rotate_dps_vector_to_rtn(epoch: datetime, vector: np.ndarray) -> np.ndarray:
     try:
         rotation_matrix = spiceypy.pxform("IMAP_DPS", "IMAP_RTN", et_time)
         return rotation_matrix @ vector
-    except spiceypy.SpiceyError:
+    except spiceypy.SpiceyError as e:
+        logger.info(f"Failed to rotate the vector using the rotation matrix from pxform. Error:\n{e}")
         return np.full(3, np.nan)
 
 

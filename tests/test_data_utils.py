@@ -193,3 +193,13 @@ class TestDataUtils(unittest.TestCase):
         t1 = time.perf_counter()
         self.assertEqual((1440, 24, 30, 3), actual_neighbor_values.shape)
         self.assertLess(t1 - t0, 10)
+
+    def test_find_closest_neighbor_handles_nan_values(self):
+        to_epoch = np.array([datetime(2020, 4, 4, minute=1)])
+        from_epoch = np.array([datetime(2020, 4, 4, minute=1), datetime(2020, 4, 4, minute=2)])
+
+        from_data = np.array([np.nan, 2])
+
+        actual_neighbor_values = find_closest_neighbor(from_epoch, from_data, to_epoch, timedelta(minutes=1))
+
+        self.assertEqual(actual_neighbor_values, [2])

@@ -8,6 +8,7 @@ from unittest.mock import patch, call, Mock, sentinel
 import imap_data_access
 import numpy as np
 from imap_data_access import config
+from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection
 from requests import RequestException
 from spacepy.pycdf import CDF
 
@@ -24,7 +25,6 @@ from imap_l3_processing.version import VERSION
 from tests.cdf.test_cdf_utils import TestDataProduct
 from tests.maps.test_builders import create_rectangular_spectral_index_map_data, create_rectangular_intensity_map_data
 from tests.test_helpers import get_spice_data_path, with_tempdir, create_dataclass_mock
-from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection
 
 
 class TestUtils(TestCase):
@@ -233,7 +233,6 @@ class TestUtils(TestCase):
         for case, epoch in cases:
             mock_add_global_attr.reset_mock()
             with self.subTest(case=case):
-
                 rectangular_spectral_index_map_data = create_rectangular_spectral_index_map_data(epoch=epoch,
                                                                                                  epoch_delta=epoch_delta)
                 data_product = RectangularSpectralIndexDataProduct(input_metadata=input_metadata,
@@ -249,7 +248,7 @@ class TestUtils(TestCase):
     @patch("imap_l3_processing.utils.ImapAttributeManager.add_instrument_attrs", autospec=True)
     @patch("imap_l3_processing.utils.write_cdf")
     def test_save_data_procedurally_generates_all_map_global_metadata_if_absent(self, mock_write_cdf,
-                                                                            mock_add_instrument_attrs):
+                                                                                mock_add_instrument_attrs):
         non_map_input_metadata = InputMetadata("swapi", "l3", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
                                                "descriptor")
 
@@ -286,7 +285,7 @@ class TestUtils(TestCase):
                 mock_write_cdf.reset_mock()
 
                 data_product = RectangularIntensityDataProduct(input_metadata=input_metadata,
-                                                          data=create_rectangular_intensity_map_data())
+                                                               data=create_rectangular_intensity_map_data())
                 save_data(data_product)
 
                 mock_write_cdf.assert_called_once()
@@ -425,8 +424,8 @@ class TestUtils(TestCase):
         trimmed_vectors = np.array([[0, 1, 2], [np.nan, np.nan, np.nan], [6, 7, 8]])
         with CDF(file_name_as_str, "") as mag_cdf:
             mag_cdf["epoch"] = epoch
-            mag_cdf["vectors"] = vectors_with_magnitudes
-            mag_cdf["vectors"].attrs['FILLVAL'] = 255.0
+            mag_cdf["b_dsrf"] = vectors_with_magnitudes
+            mag_cdf["b_dsrf"].attrs['FILLVAL'] = 255.0
 
         cases = [
             ("file name as str", file_name_as_str),
@@ -537,18 +536,19 @@ class TestUtils(TestCase):
 
             fake_imap_data_access_config = {"DATA_DIR": mock_data_dir, "DATA_ACCESS_URL": mock_data_access_url}
             with patch.object(imap_data_access, "config", new=fake_imap_data_access_config):
-
                 actual_output = furnish_spice_metakernel(start_date, end_date, kernel_types)
 
                 expected_request_params = {
                     "file_types": ["leapseconds", "imap_frames"],
-                    "start_time": "315619200",
-                    "end_time": "320716800",
+                    "start_time": "315576000",
+                    "end_time": "320673600",
                 }
 
                 mock_requests.get.assert_has_calls([
-                    call("https://imap-mission.com/metakernel", params={**expected_request_params, "spice_path": mock_data_dir / "imap" / "spice"}),
-                    call("https://imap-mission.com/metakernel", params={**expected_request_params, "list_files": "true"})
+                    call("https://imap-mission.com/metakernel",
+                         params={**expected_request_params, "spice_path": mock_data_dir / "imap" / "spice"}),
+                    call("https://imap-mission.com/metakernel",
+                         params={**expected_request_params, "list_files": "true"})
                 ])
 
                 mock_download.assert_has_calls([
@@ -577,9 +577,9 @@ class TestUtils(TestCase):
         cases = [
             (
                 "base case",
-                ProcessingInputCollection(ScienceInput(filename1),ScienceInput(filename2),ScienceInput(filename3)),
+                ProcessingInputCollection(ScienceInput(filename1), ScienceInput(filename2), ScienceInput(filename3)),
                 ["u90", "u45"],
-                {"u45": [filename2],"u90": [filename1, filename3]}
+                {"u45": [filename2], "u90": [filename1, filename3]}
             ),
             (
                 "no matching filenames for a descriptor",
@@ -600,12 +600,10 @@ class TestUtils(TestCase):
 
                 self.assertEqual(sorted(expected_output.keys()), sorted(actual_output.keys()))
 
-                for  i, output_key in enumerate(expected_output.keys()):
+                for i, output_key in enumerate(expected_output.keys()):
                     self.assertEqual(sorted(expected_output[output_key]),
                                      sorted(actual_output[output_key]), f"output not equal for key {output_key}" + \
-                        f", expected: {sorted(expected_output[output_key])} actual {sorted(actual_output[output_key])}")
-
-
+                                     f", expected: {sorted(expected_output[output_key])} actual {sorted(actual_output[output_key])}")
 
     @patch("imap_l3_processing.glows.l3bc.utils.imap_data_access.download")
     @with_tempdir

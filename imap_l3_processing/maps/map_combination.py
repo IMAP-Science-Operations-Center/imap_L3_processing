@@ -40,7 +40,8 @@ class CombinationStrategy(ABC):
 
         first_map_dict = dataclasses.asdict(first_map)
 
-        fields_which_may_differ = {"ena_intensity", "ena_intensity_stat_uncert", "ena_intensity_sys_err",
+        fields_which_may_differ = {"epoch", "epoch_delta", "ena_intensity", "ena_intensity_stat_uncert",
+                                   "ena_intensity_sys_err",
                                    "bg_intensity", "bg_intensity_stat_uncert", "bg_intensity_sys_err",
                                    "exposure_factor", "obs_date", "obs_date_range"}
 
@@ -121,7 +122,7 @@ class ExposureWeightedCombination(CombinationStrategy):
         summed_exposures = np.sum(masked_exposures, axis=0)
 
         combined_intensity_stat_unc = self.calculated_weighted_uncertainty(intensity_stat_unc, masked_exposures)
-        combined_intensity_sys_err = self.calculated_weighted_uncertainty(intensity_sys_err, masked_exposures)
+        combined_intensity_sys_err = self.calculate_weighted_sys_err(intensity_sys_err, masked_exposures)
 
         summed_intensity = np.sum(intensities * masked_exposures, axis=0)
         exposure_weighted_summed_intensity = safe_divide(summed_intensity, np.sum(masked_exposures, axis=0))
@@ -144,7 +145,8 @@ class UncertaintyWeightedCombination(CombinationStrategy):
         intensity_stat_unc = np.array([m.ena_intensity_stat_uncert for m in maps])
         exposures = np.array([m.exposure_factor for m in maps])
 
-        mask = np.isnan(intensities) | (exposures == 0) | np.isnan(exposures)
+        mask = np.isnan(intensities) | (exposures == 0) | np.isnan(exposures) | np.isnan(intensity_stat_unc) | np.isinf(
+            intensity_stat_unc)
 
         intensities = np.where(mask, 0, intensities)
         intensity_sys_err = np.where(mask, 0, intensity_sys_err)
@@ -155,9 +157,10 @@ class UncertaintyWeightedCombination(CombinationStrategy):
         squared_stat_unc = np.square(intensity_stat_unc)
         inverse_squared_stat_unc = safe_divide(np.ones_like(squared_stat_unc), squared_stat_unc)
         uncertainty_weighted_combined_intensity = safe_divide(
-            np.sum(safe_divide(intensities, squared_stat_unc), axis=0),
-            np.sum(inverse_squared_stat_unc, axis=0))
-        combined_intensity_stat_unc = np.reciprocal(np.sum(inverse_squared_stat_unc, axis=0))
+            np.nansum(safe_divide(intensities, squared_stat_unc), axis=0),
+            np.nansum(inverse_squared_stat_unc, axis=0))
+        combined_intensity_stat_unc = safe_divide(np.ones_like(inverse_squared_stat_unc[0]),
+                                                  np.nansum(inverse_squared_stat_unc, axis=0))
         combined_intensity_sys_err = self.calculate_weighted_sys_err(intensity_sys_err, masked_exposures)
 
         avg_obs_date = calculate_datetime_weighted_average(np.ma.array([m.obs_date for m in maps]), masked_exposures, 0)
@@ -166,6 +169,6 @@ class UncertaintyWeightedCombination(CombinationStrategy):
                                    ena_intensity=uncertainty_weighted_combined_intensity,
                                    exposure_factor=summed_exposures,
                                    ena_intensity_sys_err=combined_intensity_sys_err,
-                                   ena_intensity_stat_uncert=combined_intensity_stat_unc,
+                                   ena_intensity_stat_uncert=np.sqrt(combined_intensity_stat_unc),
                                    obs_date=avg_obs_date
                                    )

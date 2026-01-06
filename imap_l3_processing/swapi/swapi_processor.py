@@ -64,7 +64,7 @@ class SwapiProcessor(Processor):
             cdf_path = save_data(l3b_combined_vdf)
             return [cdf_path]
 
-    def process_l3a_pui(self, data, dependencies) -> SwapiL3PickupIonData:
+    def process_l3a_pui(self, data, dependencies: SwapiL3ADependencies) -> SwapiL3PickupIonData:
         proton_solar_wind_speeds = []
         proton_solar_wind_clock_angles = []
         proton_solar_wind_deflection_angles = []
@@ -120,16 +120,20 @@ class SwapiProcessor(Processor):
                                                          epoch, 0.1,
                                                          sw_velocity,
                                                          dependencies.density_of_neutral_helium_calibration_table,
-                                                         dependencies.efficiency_calibration_table)
+                                                         dependencies.efficiency_calibration_table,
+                                                         dependencies.hydrogen_inflow_vector,
+                                                         dependencies.helium_inflow_vector)
                 cooling_index = fit_params.cooling_index
                 ionization_rate = fit_params.ionization_rate
                 cutoff_speed = fit_params.cutoff_speed
                 background_count_rate = fit_params.background_count_rate
 
                 density = calculate_helium_pui_density(
-                    epoch, sw_velocity, dependencies.density_of_neutral_helium_calibration_table, fit_params)
+                    epoch, sw_velocity, dependencies.density_of_neutral_helium_calibration_table, fit_params,
+                    dependencies.helium_inflow_vector)
                 temperature = calculate_helium_pui_temperature(
-                    epoch, sw_velocity, dependencies.density_of_neutral_helium_calibration_table, fit_params)
+                    epoch, sw_velocity, dependencies.density_of_neutral_helium_calibration_table, fit_params,
+                    dependencies.helium_inflow_vector)
             except Exception as e:
                 logger.info(f"Exception occurred at epoch {epoch}, continuing with fill value", exc_info=True)
             pui_epochs.append(epoch)

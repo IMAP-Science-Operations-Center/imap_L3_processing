@@ -13,14 +13,14 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.efficiency_lookup imp
 from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup
-from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, PriorityEvent, CodiceLo3dData
+from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, CodiceLo3dData
 from imap_l3_processing.constants import ONE_SECOND_IN_MICROSECONDS
 
 
 def calculate_partial_densities(intensities: np.ndarray, esa_steps: np.ndarray, mass_per_charge: float):
     return np.nansum(
         CONSTANT_C_FROM_INSTRUMENT_TEAM * AZIMUTH_STEP_SIZE * ELEVATION_STEP_SIZE * ENERGY_STEP_SIZE * intensities * np.sqrt(
-        esa_steps[np.newaxis, :, np.newaxis]) * np.sqrt(mass_per_charge), axis=(1, 2))
+            esa_steps[np.newaxis, :, np.newaxis]) * np.sqrt(mass_per_charge), axis=(1, 2))
 
 
 def calculate_total_number_of_events(priority_rate_variable: np.ndarray, acquisition_time: np.ndarray) -> np.ndarray[
@@ -38,9 +38,9 @@ def calculate_normalization_ratio(energy_and_spin_angle_counts: dict[EnergyAndSp
     return normalization_ratio
 
 
-def calculate_mass(priority_event: PriorityEvent, mass_coefficients: MassCoefficientLookup) -> np.ndarray:
-    energy = np.log(priority_event.apd_energy)
-    tof = np.log(priority_event.tof)
+def calculate_mass(apd_energy: np.ndarray, tof: np.ndarray, mass_coefficients: MassCoefficientLookup) -> np.ndarray:
+    energy = np.log(apd_energy)
+    tof = np.log(tof)
 
     mass_calculation = mass_coefficients[0] + (mass_coefficients[1] * energy) + (mass_coefficients[2] * tof) + (
             mass_coefficients[3] * energy * tof) + (mass_coefficients[4] * np.power(energy, 2)) + (
@@ -48,32 +48,34 @@ def calculate_mass(priority_event: PriorityEvent, mass_coefficients: MassCoeffic
     return np.e ** mass_calculation
 
 
-def calculate_mass_per_charge(priority_event: PriorityEvent) -> np.ndarray:
-    return (priority_event.energy_step + POST_ACCELERATION_VOLTAGE_IN_KV - ENERGY_LOST_IN_CARBON_FOIL) * (
-            priority_event.tof ** 2) * CONVERSION_CONSTANT_K
+def calculate_mass_per_charge(energy_step: np.ndarray, tof: np.ndarray) -> np.ndarray:
+    return (energy_step + POST_ACCELERATION_VOLTAGE_IN_KV - ENERGY_LOST_IN_CARBON_FOIL) * (
+            tof ** 2) * CONVERSION_CONSTANT_K
 
 
-def rebin_counts_by_energy_and_spin_angle(priority_event: PriorityEvent,
+def rebin_counts_by_energy_and_spin_angle(num_events: np.ndarray, spin_angle: np.ndarray, energy_step: np.ndarray,
                                           spin_angle_lookup: SpinAngleLookup,
                                           energy_lookup: EnergyLookup) -> np.ndarray:
-    num_epochs = len(priority_event.num_events)
+    num_epochs = num_events.shape[0]
+    num_priorities = num_events.shape[1]
     num_energies = energy_lookup.num_bins
     num_spin_bins = spin_angle_lookup.num_bins
 
-    rebinned_output = np.zeros((num_epochs, num_energies, num_spin_bins))
+    rebinned_output = np.zeros((num_epochs, num_priorities, num_energies, num_spin_bins))
 
-    for time_index, num_events in enumerate(priority_event.num_events):
-        if num_events is np.ma.masked: continue
+    for time_index in range(num_epochs):
+        for priority_index in range(num_priorities):
+            events_at_index = num_events[time_index, priority_index]
+            if events_at_index is np.ma.masked:
+                continue
 
-        spin_angle_in_degrees = priority_event.spin_angle[time_index, :num_events]
-        energy_in_keV = priority_event.energy_step[time_index, :num_events]
+            spin_angle_in_degrees = spin_angle[time_index, priority_index, :events_at_index]
+            energy_in_keV = energy_step[time_index, priority_index, :events_at_index]
 
-        spin_angle_indices = spin_angle_lookup.get_spin_angle_index(spin_angle_in_degrees)
-        energy_indices = energy_lookup.get_energy_index(energy_in_keV)
+            spin_angle_indices = spin_angle_lookup.get_spin_angle_index(spin_angle_in_degrees)
+            energy_indices = energy_lookup.get_energy_index(energy_in_keV)
 
-        for energy_index, spin_angle_index in zip(energy_indices, spin_angle_indices):
-            rebinned_output[time_index, energy_index, spin_angle_index] += 1
-
+            np.add.at(rebinned_output[time_index, priority_index], (energy_indices, spin_angle_indices), 1)
     return rebinned_output
 
 

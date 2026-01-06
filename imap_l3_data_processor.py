@@ -11,18 +11,21 @@ from imap_data_access.processing_input import ProcessingInputCollection
 from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcessor
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
+from imap_l3_processing.hi.hi_combined_initializer import HI_COMBINED_DESCRIPTORS, HiCombinedInitializer
 from imap_l3_processing.hi.hi_processor import HiProcessor
-from imap_l3_processing.hi.l3.hi_l3_initializer import HiL3Initializer, HI_SP_MAP_DESCRIPTORS, HI_COMBINED_DESCRIPTORS
+from imap_l3_processing.hi.hi_sp_initializer import HiSPInitializer, HI_SP_MAP_DESCRIPTORS
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
-from imap_l3_processing.lo.l3.lo_initializer import LoInitializer, LO_SP_MAP_DESCRIPTORS
+from imap_l3_processing.lo.l3.lo_sp_initializer import LoSPInitializer, LO_SP_MAP_DESCRIPTORS
 from imap_l3_processing.lo.lo_processor import LoProcessor
 from imap_l3_processing.maps.map_descriptors import parse_map_descriptor
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.swe_processor import SweProcessor
-from imap_l3_processing.ultra.l3.ultra_initializer import UltraInitializer, ULTRA_45_DESCRIPTORS, ULTRA_90_DESCRIPTORS, \
-    ULTRA_COMBINED_SP_DESCRIPTORS, ULTRA_COMBINED_NSP_DESCRIPTORS
-from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
+from imap_l3_processing.ultra.ultra_combined_nsp_initializer import UltraCombinedNSPInitializer, \
+    ULTRA_COMBINED_NSP_DESCRIPTORS
+from imap_l3_processing.ultra.ultra_processor import UltraProcessor
+from imap_l3_processing.ultra.ultra_sp_initializer import UltraSPInitializer, ULTRA_45_DESCRIPTORS, \
+    ULTRA_90_DESCRIPTORS, ULTRA_COMBINED_SP_DESCRIPTORS
 
 logger = logging.getLogger(__name__)
 
@@ -82,13 +85,13 @@ def imap_l3_processor():
     if args.instrument in ["hi", "lo", "ultra"] and args.data_level == 'l3' and not parse_map_descriptor(
             args.descriptor):
         initializer_class, processor_class, descriptors = {
-            ("hi", "sp-maps"): (HiL3Initializer, HiProcessor, HI_SP_MAP_DESCRIPTORS),
-            ("hi", "hic-maps"): (HiL3Initializer, HiProcessor, HI_COMBINED_DESCRIPTORS),
-            ("lo", "all-maps"): (LoInitializer, LoProcessor, LO_SP_MAP_DESCRIPTORS),
-            ("ultra", "u45-maps"): (UltraInitializer, UltraProcessor, ULTRA_45_DESCRIPTORS),
-            ("ultra", "u90-maps"): (UltraInitializer, UltraProcessor, ULTRA_90_DESCRIPTORS),
-            ("ultra", "ulc-sp-maps"): (UltraInitializer, UltraProcessor, ULTRA_COMBINED_SP_DESCRIPTORS),
-            ("ultra", "ulc-nsp-maps"): (UltraInitializer, UltraProcessor, ULTRA_COMBINED_NSP_DESCRIPTORS),
+            ("hi", "sp-maps"): (HiSPInitializer, HiProcessor, HI_SP_MAP_DESCRIPTORS),
+            ("hi", "hic-maps"): (HiCombinedInitializer, HiProcessor, HI_COMBINED_DESCRIPTORS),
+            ("lo", "all-maps"): (LoSPInitializer, LoProcessor, LO_SP_MAP_DESCRIPTORS),
+            ("ultra", "u45-maps"): (UltraSPInitializer, UltraProcessor, ULTRA_45_DESCRIPTORS),
+            ("ultra", "u90-maps"): (UltraSPInitializer, UltraProcessor, ULTRA_90_DESCRIPTORS),
+            ("ultra", "ulc-sp-maps"): (UltraSPInitializer, UltraProcessor, ULTRA_COMBINED_SP_DESCRIPTORS),
+            ("ultra", "ulc-nsp-maps"): (UltraCombinedNSPInitializer, UltraProcessor, ULTRA_COMBINED_NSP_DESCRIPTORS),
         }[args.instrument, args.descriptor]
 
         initializer = initializer_class()
@@ -96,6 +99,7 @@ def imap_l3_processor():
         maps_to_produce = []
         for map_descriptor in descriptors:
             maps_to_produce.extend(initializer.get_maps_that_should_be_produced(map_descriptor))
+
         logger.info(f"maps to produce {[m.input_metadata.descriptor for m in maps_to_produce]}")
         if len(maps_to_produce) == 0:
             logger.info(f"Did not find any maps to produce for instrument {args.instrument}")

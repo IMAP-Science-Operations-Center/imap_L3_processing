@@ -1,5 +1,4 @@
 import os
-import os
 import sys
 import tempfile
 import unittest
@@ -22,9 +21,9 @@ from imap_l3_processing.maps.map_models import RectangularCoords, SpectralIndexM
     RectangularSpectralIndexDataProduct, RectangularIntensityMapData, IntensityMapData, RectangularIntensityDataProduct, \
     HealPixIntensityMapData, \
     HealPixSpectralIndexMapData, HealPixCoords, HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct, \
-    convert_tt2000_time_to_datetime
+    convert_tt2000_time_to_datetime, _read_intensity_map_data_from_open_cdf, calculate_datetime_weighted_average
 from imap_l3_processing.models import DataProductVariable
-from tests.test_helpers import get_test_data_folder
+from tests.test_helpers import get_test_data_folder, get_integration_test_data_path
 
 
 class TestMapModels(unittest.TestCase):
@@ -207,6 +206,7 @@ class TestMapModels(unittest.TestCase):
         ]
 
         self.assertEqual(expected_variables, actual_variables)
+
     def test_healpix_spectral_index_to_data_product_variables(self):
         input_metadata = Mock()
 
@@ -386,16 +386,14 @@ class TestMapModels(unittest.TestCase):
 
         np.testing.assert_array_equal(input_xarray["latitude"], output.intensity_map_data.latitude)
         np.testing.assert_array_equal(input_xarray["longitude"], output.intensity_map_data.longitude)
-        np.testing.assert_array_equal(np.full_like(input_xarray[CoordNames.HEALPIX_INDEX.value], np.nan),
-                                      output.intensity_map_data.solid_angle)
+        np.testing.assert_array_equal(input_xarray["solid_angle"], output.intensity_map_data.solid_angle)
         np.testing.assert_array_equal(input_xarray["obs_date"], output.intensity_map_data.obs_date)
-        np.testing.assert_array_equal(np.full_like(input_xarray["obs_date"], np.nan),
-                                      output.intensity_map_data.obs_date_range)
+        np.testing.assert_array_equal(input_xarray["obs_date_range"], output.intensity_map_data.obs_date_range)
         np.testing.assert_array_equal(input_xarray["exposure_factor"], output.intensity_map_data.exposure_factor)
         np.testing.assert_array_equal(input_xarray["ena_intensity"], output.intensity_map_data.ena_intensity)
         np.testing.assert_array_equal(input_xarray["ena_intensity_stat_uncert"],
                                       output.intensity_map_data.ena_intensity_stat_uncert)
-        np.testing.assert_array_equal(np.full_like(input_xarray["ena_intensity"], np.nan),
+        np.testing.assert_array_equal(input_xarray["ena_intensity_sys_err"],
                                       output.intensity_map_data.ena_intensity_sys_err)
 
         np.testing.assert_array_equal(input_xarray[CoordNames.TIME.value], output.intensity_map_data.epoch)
@@ -685,6 +683,46 @@ class TestMapModels(unittest.TestCase):
         for key in [ "latitude", "longitude", "solid_angle" ]:
             self.assertEqual((CoordNames.GENERIC_PIXEL.value,), actual_dataset.data_vars[key].dims)
         # @formatter:on
+
+    def test_read_intensity_data_handles_missing_obs_date(self):
+        cdf = CDF(
+            str(get_integration_test_data_path(
+                'lo/multiple_arcs/imap_lo_l2_l090-ena-h-hf-nsp-ram-hae-6deg-1yr_20250415_v005.cdf')))
+
+        intensity_map_data = _read_intensity_map_data_from_open_cdf(cdf)
+
+        self.assertIsNotNone(intensity_map_data.obs_date)
+
+    def test_calculate_datetime_weighted_average(self):
+
+        map_1_obs_date = np.ma.array(data=[
+            datetime(2000, 1, 1),
+            datetime(2000, 1, 1),
+            datetime(9999, 12, 31)],
+            mask=[False, False, True])
+        map_2_obs_date = np.ma.array(data=[
+            datetime(9999, 12, 31),
+            datetime(2000, 1, 4),
+            datetime(9999, 12, 31)],
+            mask=[True, False, True])
+
+        map_1_weights = [1, 1, 1]
+        map_2_weights = [1, 2, 1]
+
+        average_obs_date: np.ma.masked_array = calculate_datetime_weighted_average(
+            np.ma.masked_array([map_1_obs_date, map_2_obs_date]),
+            np.array([map_1_weights, map_2_weights]), axis=0)
+
+        self.assertIsInstance(average_obs_date, np.ma.masked_array)
+
+        self.assertEqual(datetime(2000, 1, 1), average_obs_date[0])
+        self.assertFalse(average_obs_date.mask[0])
+
+        self.assertEqual(datetime(2000, 1, 3), average_obs_date[1])
+        self.assertFalse(average_obs_date.mask[1])
+        
+        self.assertEqual(TT2000_EPOCH, average_obs_date.data[2])
+        self.assertTrue(average_obs_date.mask[2])
 
 
 if __name__ == '__main__':

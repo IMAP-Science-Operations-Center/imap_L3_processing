@@ -8,7 +8,7 @@ from imap_data_access.processing_input import ProcessingInputCollection, Science
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.hi.hi_processor import HiProcessor
-from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralIndexDependencies
+from imap_l3_processing.hi.hi_spectral_fit_dependencies import HiSpectralIndexDependencies
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiL3SingleSensorFullSpinDependencies, \
     HiLoL3SurvivalDependencies
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct
@@ -19,7 +19,7 @@ from tests.test_helpers import get_test_data_path, run_periodically
 
 class TestHiProcessor(unittest.TestCase):
     @patch('imap_l3_processing.hi.hi_processor.MapProcessor.get_parent_file_names')
-    @patch('imap_l3_processing.hi.hi_processor.HiL3SpectralIndexDependencies.fetch_dependencies')
+    @patch('imap_l3_processing.hi.hi_processor.HiSpectralIndexDependencies.fetch_dependencies')
     @patch('imap_l3_processing.maps.spectral_fit.fit_arrays_to_power_law')
     @patch('imap_l3_processing.hi.hi_processor.save_data')
     def test_process_spectral_fit(self, mock_save_data, mock_spectral_fit,
@@ -39,7 +39,7 @@ class TestHiProcessor(unittest.TestCase):
                                                            energy_delta=energy_delta)
         intensity_data = hi_l3_data.intensity_map_data
         intensity_data.exposure_factor = np.full_like(flux, 1)
-        dependencies = HiL3SpectralIndexDependencies(map_data=hi_l3_data)
+        dependencies = HiSpectralIndexDependencies(map_data=hi_l3_data)
 
         upstream_dependencies = ProcessingInputCollection()
 
@@ -109,7 +109,7 @@ class TestHiProcessor(unittest.TestCase):
 
         for name, input_file_path, expected_gamma_path, expected_sigma_path in test_cases:
             with self.subTest(name):
-                dependencies = HiL3SpectralIndexDependencies.from_file_paths(
+                dependencies = HiSpectralIndexDependencies.from_file_paths(
                     get_test_data_path(input_file_path)
                 )
 
@@ -162,7 +162,7 @@ class TestHiProcessor(unittest.TestCase):
 
         processor = HiProcessor(sentinel.input_metadata, sentinel.dependencies)
 
-        dependencies = HiL3SpectralIndexDependencies(input_map)
+        dependencies = HiSpectralIndexDependencies(input_map)
 
         output = processor.process_spectral_fit_index(dependencies)
 
@@ -206,7 +206,7 @@ class TestHiProcessor(unittest.TestCase):
 
         processor = HiProcessor(sentinel.input_metadata, sentinel.dependencies)
 
-        dependencies = HiL3SpectralIndexDependencies(input_map)
+        dependencies = HiSpectralIndexDependencies(input_map)
 
         output = processor.process_spectral_fit_index(dependencies)
 
@@ -235,7 +235,7 @@ class TestHiProcessor(unittest.TestCase):
 
         processor = HiProcessor(sentinel.input_metadata, sentinel.dependencies)
 
-        dependencies = HiL3SpectralIndexDependencies(input_map)
+        dependencies = HiSpectralIndexDependencies(input_map)
 
         output = processor.process_spectral_fit_index(dependencies)
 
@@ -409,10 +409,19 @@ class TestHiProcessor(unittest.TestCase):
     @patch('imap_l3_processing.hi.hi_processor.save_data')
     @patch("imap_l3_processing.hi.hi_processor.HiL3CombinedMapDependencies.fetch_dependencies")
     @patch("imap_l3_processing.hi.hi_processor.ExposureWeightedCombination")
-    def test_process_combined_sensor_map(self, mock_exposure_weighted_combination_class, mock_fetch_dependencies,
+    @patch("imap_l3_processing.hi.hi_processor.UncertaintyWeightedCombination")
+    def test_process_combined_sensor_map(self, mock_uncertainty_weighted_combination_class,
+                                         mock_exposure_weighted_combination_class, mock_fetch_dependencies,
                                          mock_save_data, mock_get_parent_file_names):
-        mock_combination = Mock()
-        mock_exposure_weighted_combination_class.return_value = mock_combination
+        mock_exposure_combination = Mock()
+        mock_exposure_weighted_combination_class.return_value = mock_exposure_combination
+
+        mock_uncertainty_weighted_combination = Mock()
+
+        mock_uncertainty_weighted_combination_class.return_value = mock_uncertainty_weighted_combination
+
+        mock_uncertainty_weighted_combination.combine_rectangular_intensity_map_data.side_effect = [
+            sentinel.h45_full_spin, sentinel.h90_full_spin]
 
         parent_map_names = [
             "imap_hi_l2_h45-ena-h-hf-sp-full-hae-4deg-6mo_20250101_v000.cdf",
@@ -434,14 +443,20 @@ class TestHiProcessor(unittest.TestCase):
 
         mock_fetch_dependencies.assert_called_once_with(dependencies)
 
-        mock_combination.combine_rectangular_intensity_map_data.assert_called_once_with(
-            mock_fetch_dependencies.return_value.maps
-        )
+        mock_uncertainty_weighted_combination.combine_rectangular_intensity_map_data.assert_has_calls([
+            call(mock_fetch_dependencies.return_value.h45_maps),
+            call(mock_fetch_dependencies.return_value.h90_maps)
+        ])
+
+        mock_exposure_combination.combine_rectangular_intensity_map_data.assert_called_once_with([
+            sentinel.h45_full_spin,
+            sentinel.h90_full_spin
+        ])
 
         mock_save_data.assert_called_once_with(RectangularIntensityDataProduct(
             input_metadata=input_metadata,
             parent_file_names=parent_map_names,
-            data=mock_combination.combine_rectangular_intensity_map_data.return_value))
+            data=mock_exposure_combination.combine_rectangular_intensity_map_data.return_value))
 
         self.assertEqual([mock_save_data.return_value], data_product)
 

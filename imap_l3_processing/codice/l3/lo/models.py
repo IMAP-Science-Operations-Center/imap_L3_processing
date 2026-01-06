@@ -89,53 +89,46 @@ EnergyAndSpinAngle = namedtuple(typename="EnergyAndSpinAngle", field_names=["ene
 
 
 @dataclass
-class PriorityEvent:
+class CodiceLoL2DirectEventData:
     apd_energy: ndarray
-    apd_gain: ndarray
+    gain: ndarray
     apd_id: ndarray
     data_quality: ndarray
     energy_step: ndarray
     multi_flag: ndarray
     num_events: ndarray
     spin_angle: ndarray
-    elevation: ndarray
-    position: ndarray
+    spin_sector: ndarray
+    elevation_angle: ndarray
     tof: ndarray
-
-
-@dataclass
-class CodiceLoL2DirectEventData:
+    position: ndarray
     epoch: ndarray
     epoch_delta_plus: ndarray
     epoch_delta_minus: ndarray
-    priority_events: list[PriorityEvent]
 
     @classmethod
     def read_from_cdf(cls, l2_direct_event_cdf: Path):
         with CDF(str(l2_direct_event_cdf)) as cdf:
-            priority_events = []
-            for index in range(CODICE_LO_L2_NUM_PRIORITIES):
-                priority_events.append(PriorityEvent(
-                    apd_energy=read_numeric_variable(cdf[f"p{index}_apd_energy"]),
-                    apd_gain=read_variable_and_mask_fill_values(cdf[f"p{index}_gain"]),
-                    apd_id=read_variable_and_mask_fill_values(cdf[f"p{index}_apd_id"]),
-                    data_quality=read_variable_and_mask_fill_values(cdf[f"p{index}_data_quality"]),
-                    energy_step=read_numeric_variable(cdf[f"p{index}_energy_step"]),
-                    multi_flag=read_variable_and_mask_fill_values(cdf[f"p{index}_multi_flag"]),
-                    num_events=read_variable_and_mask_fill_values(cdf[f"p{index}_num_events"]),
-                    spin_angle=read_numeric_variable(cdf[f"p{index}_spin_sector"]),
-                    elevation=read_numeric_variable(cdf[f"p{index}_elevation"]),
-                    tof=read_variable_and_mask_fill_values(cdf[f"p{index}_tof"]),
-                    position=read_variable_and_mask_fill_values(cdf[f"p{index}_position"]),
-                )
-
-                )
-
             return cls(
                 epoch=cdf["epoch"][...],
                 epoch_delta_plus=cdf["epoch_delta_plus"][...],
                 epoch_delta_minus=cdf["epoch_delta_minus"][...],
-                priority_events=priority_events
+                apd_energy=read_variable_and_mask_fill_values(cdf["apd_energy"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
+                gain=read_variable_and_mask_fill_values(cdf["gain"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
+                apd_id=read_variable_and_mask_fill_values(cdf["apd_id"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
+                data_quality=read_variable_and_mask_fill_values(cdf["data_quality"])[:, :CODICE_LO_L2_NUM_PRIORITIES,
+                             ...],
+                energy_step=read_variable_and_mask_fill_values(cdf["energy_step"])[:, :CODICE_LO_L2_NUM_PRIORITIES,
+                            ...],
+                multi_flag=read_variable_and_mask_fill_values(cdf["multi_flag"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
+                num_events=read_variable_and_mask_fill_values(cdf["num_events"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
+                spin_angle=read_variable_and_mask_fill_values(cdf["spin_angle"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
+                spin_sector=read_variable_and_mask_fill_values(cdf["spin_sector"])[:, :CODICE_LO_L2_NUM_PRIORITIES,
+                            ...],
+                elevation_angle=read_variable_and_mask_fill_values(cdf["elevation_angle"])[:,
+                                :CODICE_LO_L2_NUM_PRIORITIES, ...],
+                tof=read_variable_and_mask_fill_values(cdf["tof"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
+                position=read_variable_and_mask_fill_values(cdf["position"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
             )
 
 
@@ -144,7 +137,6 @@ class CodiceLoL1aSWPriorityRates:
     epoch: np.ndarray
     epoch_delta_plus: np.ndarray
     epoch_delta_minus: np.ndarray
-    energy_table: np.ndarray
     acquisition_time_per_step: np.ndarray
     spin_sector_index: np.ndarray
     rgfo_half_spin: np.ndarray
@@ -166,9 +158,8 @@ class CodiceLoL1aSWPriorityRates:
                 epoch=cdf["epoch"][...],
                 epoch_delta_plus=cdf["epoch_delta_plus"][...],
                 epoch_delta_minus=cdf["epoch_delta_minus"][...],
-                energy_table=cdf["energy_table"][...],
                 acquisition_time_per_step=cdf["acquisition_time_per_step"][...],
-                spin_sector_index=cdf["spin_sector_index"][...],
+                spin_sector_index=cdf["spin_sector"][...],
                 rgfo_half_spin=read_variable_and_mask_fill_values(cdf["rgfo_half_spin"]),
                 nso_half_spin=read_variable_and_mask_fill_values(cdf["nso_half_spin"]),
                 sw_bias_gain_mode=read_variable_and_mask_fill_values(cdf["sw_bias_gain_mode"]),
@@ -188,7 +179,6 @@ class CodiceLoL1aNSWPriorityRates:
     epoch: np.ndarray
     epoch_delta_plus: np.ndarray
     epoch_delta_minus: np.ndarray
-    energy_table: np.ndarray
     acquisition_time_per_step: np.ndarray
     spin_sector_index: np.ndarray
     rgfo_half_spin: np.ndarray
@@ -207,9 +197,8 @@ class CodiceLoL1aNSWPriorityRates:
                 epoch=cdf["epoch"][...],
                 epoch_delta_plus=cdf["epoch_delta_plus"][...],
                 epoch_delta_minus=cdf["epoch_delta_minus"][...],
-                energy_table=cdf["energy_table"][...],
                 acquisition_time_per_step=cdf["acquisition_time_per_step"][...],
-                spin_sector_index=cdf["spin_sector_index"][...],
+                spin_sector_index=cdf["spin_sector"][...],
                 rgfo_half_spin=read_variable_and_mask_fill_values(cdf["rgfo_half_spin"]),
                 data_quality=read_variable_and_mask_fill_values(cdf["data_quality"]),
                 p5_heavies=read_variable_and_mask_fill_values(cdf["p5_heavies"]),

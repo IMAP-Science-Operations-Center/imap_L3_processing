@@ -3,20 +3,22 @@ import sys
 import time
 from pathlib import Path
 
+import dotenv
 
-def download_parents(path: Path):
-    initial_cwd = os.getcwd()
-    os.chdir(path)
+
+def download_parents(path: Path, output_dir: Path):
     import imap_data_access
     from spacepy.pycdf import CDF
     retries = 10
 
+    imap_data_access.config["DATA_DIR"] = output_dir
+
     try:
         files_to_download = set()
 
-        for file in path.glob("*.cdf"):
+        for file in path.rglob("*.cdf"):
             print(f"opening {path / file}")
-            with CDF(str(path / file)) as cdf:
+            with CDF(str(file)) as cdf:
                 for parent in cdf.attrs['Parents']:
                     files_to_download.add(parent)
 
@@ -42,8 +44,12 @@ def download_parents(path: Path):
 
     except Exception as e:
         print(e)
-        os.chdir(initial_cwd)
 
 
 if __name__ == '__main__':
-    download_parents(Path(sys.argv[1]))
+    dotenv.load_dotenv(".env")
+
+    output_dir = Path(os.getcwd()) / "hi_hf_validation_data"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    download_parents(Path(sys.argv[1]), output_dir)

@@ -126,7 +126,8 @@ class TestSwapiProcessor(TestCase):
             [chunk_of_fifty],
         ]
 
-        mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.data = sentinel.swapi_l2_data
+        mock_l3a_dependencies = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value
+        mock_l3a_dependencies.data = sentinel.swapi_l2_data
 
         mock_manager = mock_imap_attribute_manager.return_value
 
@@ -139,10 +140,12 @@ class TestSwapiProcessor(TestCase):
 
         mock_swapi_l3_dependencies_class.fetch_dependencies.assert_called_once_with(dependencies)
 
-        mock_instrument_response_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.instrument_response_calibration_table
-        mock_geometric_factor_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.geometric_factor_calibration_table
-        mock_efficiency_lut = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.efficiency_calibration_table
-        mock_density_of_neutral_helium_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.density_of_neutral_helium_calibration_table
+        mock_instrument_response_calibration_table = mock_l3a_dependencies.instrument_response_calibration_table
+        mock_geometric_factor_calibration_table = mock_l3a_dependencies.geometric_factor_calibration_table
+        mock_efficiency_lut = mock_l3a_dependencies.efficiency_calibration_table
+        mock_density_of_neutral_helium_calibration_table = mock_l3a_dependencies.density_of_neutral_helium_calibration_table
+        mock_hydrogen_inflow_vector = mock_l3a_dependencies.hydrogen_inflow_vector
+        mock_helium_inflow_vector = mock_l3a_dependencies.helium_inflow_vector
 
         mock_chunk_l2_data.side_effect = []
 
@@ -150,7 +153,7 @@ class TestSwapiProcessor(TestCase):
                                              call(sentinel.swapi_l2_data, 50)])
 
         instrument_response_lut, geometric_factor_lut, energies, count_rates, pui_epoch, background_rate_cutoff, \
-            sw_velocity_vector, density_of_neutral_helium_lut, efficiency_lut = mock_calculate_pickup_ion.call_args.args
+            sw_velocity_vector, density_of_neutral_helium_lut, efficiency_lut, hydrogen_inflow_vector, helium_inflow_vector = mock_calculate_pickup_ion.call_args.args
 
         self.assertEqual(mock_instrument_response_calibration_table, instrument_response_lut)
         self.assertEqual(mock_efficiency_lut, efficiency_lut)
@@ -160,21 +163,25 @@ class TestSwapiProcessor(TestCase):
         np.testing.assert_array_equal(chunk_of_fifty.coincidence_count_rate, count_rates)
         self.assertEqual(chunk_of_fifty.sci_start_time[0] + FIVE_MINUTES_IN_NANOSECONDS, pui_epoch)
         self.assertEqual(0.1, background_rate_cutoff)
+        self.assertEqual(mock_hydrogen_inflow_vector, hydrogen_inflow_vector)
+        self.assertEqual(mock_helium_inflow_vector, helium_inflow_vector)
         np.testing.assert_array_equal([17, 18, 19], sw_velocity_vector)
 
-        actual_he_epoch, sw_velocity_vector, density_of_neutral_helium_lut, passed_in_fitting_params = mock_calculate_helium_pui_density.call_args.args
+        actual_he_epoch, sw_velocity_vector, density_of_neutral_helium_lut, passed_in_fitting_params, helium_inflow_vector = mock_calculate_helium_pui_density.call_args.args
 
         self.assertEqual(chunk_of_fifty.sci_start_time[0] + FIVE_MINUTES_IN_NANOSECONDS, actual_he_epoch)
         np.testing.assert_array_equal([17, 18, 19], sw_velocity_vector)
         self.assertEqual(mock_density_of_neutral_helium_calibration_table, density_of_neutral_helium_lut)
         self.assertEqual(expected_fitting_params, passed_in_fitting_params)
+        self.assertEqual(mock_helium_inflow_vector, helium_inflow_vector)
 
-        actual_he_epoch, sw_velocity_vector, density_of_neutral_helium_lut, passed_in_fitting_params = mock_calculate_helium_pui_temperature.call_args.args
+        actual_he_epoch, sw_velocity_vector, density_of_neutral_helium_lut, passed_in_fitting_params, helium_inflow_vector = mock_calculate_helium_pui_temperature.call_args.args
 
         self.assertEqual(chunk_of_fifty.sci_start_time[0] + FIVE_MINUTES_IN_NANOSECONDS, actual_he_epoch)
         np.testing.assert_array_equal([17, 18, 19], sw_velocity_vector)
         self.assertEqual(mock_density_of_neutral_helium_calibration_table, density_of_neutral_helium_lut)
         self.assertEqual(expected_fitting_params, passed_in_fitting_params)
+        self.assertEqual(mock_helium_inflow_vector, helium_inflow_vector)
 
         mock_calculate_ten_minute_velocities.assert_called_with([returned_proton_sw_speed.nominal_value],
                                                                 [
@@ -940,5 +947,7 @@ def create_swapi_l3a_dependencies_with_mocks():
         efficiency_calibration_table=efficiency_calibration_table,
         geometric_factor_calibration_table=geometric_factor_calibration_table,
         instrument_response_calibration_table=instrument_response_calibration_table,
-        density_of_neutral_helium_calibration_table=density_of_neutral_helium_calibration_table
+        density_of_neutral_helium_calibration_table=density_of_neutral_helium_calibration_table,
+        hydrogen_inflow_vector=Mock(),
+        helium_inflow_vector=Mock(),
     )

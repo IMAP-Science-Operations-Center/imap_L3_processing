@@ -183,10 +183,19 @@ def convert_tt2000_time_to_datetime(time: np.ndarray) -> np.ndarray:
 
 
 def _read_intensity_map_data_from_open_cdf(cdf: CDF) -> IntensityMapData:
-    masked_obs_date = read_variable_and_mask_fill_values(cdf["obs_date"])
-    if np.issubdtype(cdf["obs_date"].dtype, np.number):
-        obs_date = convert_tt2000_time_to_datetime(masked_obs_date.filled(0))
-        masked_obs_date = np.ma.masked_array(data=obs_date, mask=masked_obs_date.mask)
+    if "obs_date" in cdf and "obs_date_range" in cdf:
+        masked_obs_date = read_variable_and_mask_fill_values(cdf["obs_date"])
+        if np.issubdtype(cdf["obs_date"].dtype, np.number):
+            obs_date = convert_tt2000_time_to_datetime(masked_obs_date.filled(0))
+            masked_obs_date = np.ma.masked_array(data=obs_date, mask=masked_obs_date.mask)
+        obs_date_range = read_variable_and_mask_fill_values(cdf["obs_date_range"])
+    else:
+        obs_date_shape = cdf["ena_intensity"].shape
+        all_mask_array = np.full(obs_date_shape, True)
+        masked_obs_date = np.ma.masked_array(np.full(obs_date_shape, TT2000_EPOCH), mask=all_mask_array)
+        obs_date_range = np.ma.masked_array(np.full(obs_date_shape, 0),
+                                            mask=all_mask_array,
+                                            dtype=np.int64)
 
     map_intensity_data = IntensityMapData(epoch=cdf["epoch"][...],
                                           epoch_delta=read_variable_and_mask_fill_values(cdf["epoch_delta"]),
@@ -198,7 +207,7 @@ def _read_intensity_map_data_from_open_cdf(cdf: CDF) -> IntensityMapData:
                                           longitude=read_numeric_variable(cdf["longitude"]),
                                           exposure_factor=read_numeric_variable(cdf["exposure_factor"]),
                                           obs_date=masked_obs_date,
-                                          obs_date_range=read_variable_and_mask_fill_values(cdf["obs_date_range"]),
+                                          obs_date_range=obs_date_range,
                                           solid_angle=read_numeric_variable(cdf["solid_angle"]),
                                           ena_intensity=read_numeric_variable(cdf["ena_intensity"]),
                                           ena_intensity_stat_uncert=read_numeric_variable(
@@ -223,21 +232,28 @@ def _read_healpix_coords_from_open_cdf(cdf: CDF) -> HealPixCoords:
 def _read_intensity_map_data_from_xarray(dataset: xarray.Dataset) -> IntensityMapData:
     return IntensityMapData(
         epoch=dataset[CoordNames.TIME.value].values,
-        epoch_delta=dataset["epoch_delta"].values,
+        epoch_delta=_replace_fill_values_in_xarray(dataset, "epoch_delta"),
         energy=dataset.coords[CoordNames.ENERGY_L2.value].values,
-        energy_delta_plus=dataset["energy_delta_plus"].values,
-        energy_delta_minus=dataset["energy_delta_minus"].values,
-        energy_label=dataset["energy_label"].values,
-        latitude=dataset["latitude"].values,
-        longitude=dataset["longitude"].values,
-        exposure_factor=dataset["exposure_factor"].values,
-        obs_date=dataset["obs_date"].values,
-        obs_date_range=np.full_like(dataset["obs_date"].values, np.nan),
-        solid_angle=np.full_like(dataset["latitude"].values, np.nan),
-        ena_intensity=dataset["ena_intensity"].values,
-        ena_intensity_stat_uncert=dataset["ena_intensity_stat_uncert"].values,
-        ena_intensity_sys_err=np.full_like(dataset["ena_intensity_sys_err"].values, np.nan)
+        energy_delta_plus=_replace_fill_values_in_xarray(dataset, "energy_delta_plus"),
+        energy_delta_minus=_replace_fill_values_in_xarray(dataset, "energy_delta_minus"),
+        energy_label=_replace_fill_values_in_xarray(dataset, "energy_label"),
+        latitude=_replace_fill_values_in_xarray(dataset, "latitude"),
+        longitude=_replace_fill_values_in_xarray(dataset, "longitude"),
+        exposure_factor=_replace_fill_values_in_xarray(dataset, "exposure_factor"),
+        obs_date=_replace_fill_values_in_xarray(dataset, "obs_date"),
+        obs_date_range=_replace_fill_values_in_xarray(dataset, "obs_date_range"),
+        solid_angle=np.squeeze(_replace_fill_values_in_xarray(dataset, "solid_angle")),
+        ena_intensity=_replace_fill_values_in_xarray(dataset, "ena_intensity"),
+        ena_intensity_stat_uncert=_replace_fill_values_in_xarray(dataset, "ena_intensity_stat_uncert"),
+        ena_intensity_sys_err=_replace_fill_values_in_xarray(dataset, "ena_intensity_sys_err")
     )
+
+
+def _replace_fill_values_in_xarray(dataset, variable):
+    if 'FILLVAL' in dataset[variable].attrs:
+        return np.where(dataset[variable].values == dataset[variable].attrs['FILLVAL'], np.nan,
+                        dataset[variable].values)
+    return dataset[variable].values
 
 
 def _read_healpix_coords_from_xarray(dataset: xarray.Dataset) -> HealPixCoords:
@@ -388,8 +404,11 @@ def _healpix_coords_to_variables(coords: HealPixCoords) -> list[DataProductVaria
     ]
 
 
-def calculate_datetime_weighted_average(data: np.ndarray, weights: np.ndarray, axis: int, **kwargs) -> np.ndarray:
+def calculate_datetime_weighted_average(data: np.ndarray, weights: np.ndarray, axis: int,
+                                        **kwargs) -> np.ma.masked_array:
     if isinstance(np.ravel(np.ma.getdata(data))[0], datetime):
+        masked_indices = np.ma.getmask(data)
+        weights[masked_indices] = 0
 
         epoch_based_dates = np.array((np.ma.getdata(data) - TT2000_EPOCH) / timedelta(seconds=1),
                                      dtype=float)
