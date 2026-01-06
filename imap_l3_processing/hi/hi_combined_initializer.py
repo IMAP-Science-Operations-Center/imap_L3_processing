@@ -1,7 +1,5 @@
 import dataclasses
-from collections import defaultdict
 from datetime import datetime, timedelta
-from math import floor
 
 import imap_data_access
 from dateutil.relativedelta import relativedelta
@@ -55,22 +53,14 @@ class HiCombinedInitializer(MapInitializer):
 
         hi90_start_dates = sorted(self.input_maps[hi90_ram_descriptor].keys())
 
-        input_start_dates = defaultdict(list)
-
-        for hi90_start_date in hi90_start_dates:
-            start_date = datetime.strptime(hi90_start_date, "%Y%m%d")
-            input_start_dates[floor((start_date - self.canonical_map_start_date) / LENGTH_OF_YEAR_IN_DAYS)].append(
-                hi90_start_date)
-
-        for i in input_start_dates.keys():
-            first_6mo_start_date_str = input_start_dates[i][0]
-            first_6mo_start_date = datetime.strptime(first_6mo_start_date_str, '%Y%m%d')
+        for start_date_str in hi90_start_dates:
+            start_date = datetime.strptime(start_date_str, '%Y%m%d')
 
             input_files = [
-                self.input_maps[hi90_ram_descriptor].get(input_start_dates[i][0]),
-                self.input_maps[hi90_anti_descriptor].get(input_start_dates[i][0]),
-                self.input_maps[hi45_ram_descriptor].get(input_start_dates[i][0]),
-                self.input_maps[hi45_anti_descriptor].get(input_start_dates[i][0]),
+                self.input_maps[hi90_ram_descriptor].get(start_date_str),
+                self.input_maps[hi90_anti_descriptor].get(start_date_str),
+                self.input_maps[hi45_ram_descriptor].get(start_date_str),
+                self.input_maps[hi45_anti_descriptor].get(start_date_str),
             ]
 
             if not all(input_files):
@@ -81,8 +71,8 @@ class HiCombinedInitializer(MapInitializer):
                 input_metadata=InputMetadata(
                     instrument='hi',
                     data_level='l3',
-                    start_date=first_6mo_start_date,
-                    end_date=first_6mo_start_date + relativedelta(months=+12),
+                    start_date=start_date,
+                    end_date=start_date + relativedelta(months=+12),
                     version='v001',
                     descriptor=input_descriptor,
                     repointing=None
