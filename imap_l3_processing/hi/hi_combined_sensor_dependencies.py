@@ -23,5 +23,7 @@ class HiL3CombinedMapDependencies:
 
     @classmethod
     def from_file_paths(cls, hi_l3_map_paths: list[Path]) -> HiL3CombinedMapDependencies:
-        return cls([RectangularIntensityMapData.read_from_path(path) for path in hi_l3_map_paths if 'h45' in str(path)],
-                   [RectangularIntensityMapData.read_from_path(path) for path in hi_l3_map_paths if 'h90' in str(path)])
+        return cls([RectangularIntensityMapData.read_from_path(path) for path in hi_l3_map_paths if
+                    'h45' == path.name.split('_')[3][:3]],
+                   [RectangularIntensityMapData.read_from_path(path) for path in hi_l3_map_paths if
+                    'h90' == path.name.split('_')[3][:3]])

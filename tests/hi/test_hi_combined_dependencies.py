@@ -11,14 +11,14 @@ class TestHiCombinedDependencies(unittest.TestCase):
     @patch("imap_l3_processing.hi.hi_combined_sensor_dependencies.RectangularIntensityMapData.read_from_path")
     def test_from_file_paths(self, read_cdf):
         hi_map_paths = [
-            Path("test_h45_l3_cdf1.cdf"),
-            Path("test_h45_l3_cdf2.cdf"),
-            Path("test_h45_l3_cdf3.cdf"),
-            Path("test_h45_l3_cdf4.cdf"),
-            Path("test_h90_l3_cdf1.cdf"),
-            Path("test_h90_l3_cdf2.cdf"),
-            Path("test_h90_l3_cdf3.cdf"),
-            Path("test_h90_l3_cdf4.cdf"),
+            Path("imap_hi_l3_h45-ena-h-hf-sp-ram-hae-4deg-6mo_20251022_v001.cdf"),
+            Path("imap_hi_l3_h45-ena-h-hf-sp-anti-hae-4deg-6mo_20251022_v001.cdf"),
+            Path("imap_hi_l3_h45-ena-h-hf-sp-ram-hae-4deg-6mo_20250422_v001.cdf"),
+            Path("imap_hi_l3_h45-ena-h-hf-sp-anti-hae-4deg-6mo_20250422_v001.cdf"),
+            Path("imap_hi_l3_h90-ena-h-hf-sp-ram-hae-4deg-6mo_20251022_v001.cdf"),
+            Path("imap_hi_l3_h90-ena-h-hf-sp-anti-hae-4deg-6mo_20251022_v001.cdf"),
+            Path("imap_hi_l3_h90-ena-h-hf-sp-ram-hae-4deg-6mo_20250422_v001.cdf"),
+            Path("imap_hi_l3_h90-ena-h-hf-sp-anti-hae-4deg-6mo_20250422_v001.cdf"),
         ]
 
         expected_45_return_maps = [sentinel.read_data45_1,
@@ -66,14 +66,14 @@ class TestHiCombinedDependencies(unittest.TestCase):
         )
 
         downloaded_paths = [
-            Path("test_h45_l3_cdf1.cdf"),
-            Path("test_h45_l3_cdf2.cdf"),
-            Path("test_h45_l3_cdf3.cdf"),
-            Path("test_h45_l3_cdf4.cdf"),
-            Path("test_h90_l3_cdf5.cdf"),
-            Path("test_h90_l3_cdf6.cdf"),
-            Path("test_h90_l3_cdf7.cdf"),
-            Path("test_h90_l3_cdf8.cdf"),
+            Path("imap_hi_l3_h45-ena-h-hf-sp-ram-hae-4deg-6mo_20251022_v001.cdf"),
+            Path("imap_hi_l3_h45-ena-h-hf-sp-anti-hae-4deg-6mo_20251022_v001.cdf"),
+            Path("imap_hi_l3_h45-ena-h-hf-sp-ram-hae-4deg-6mo_20250422_v001.cdf"),
+            Path("imap_hi_l3_h45-ena-h-hf-sp-anti-hae-4deg-6mo_20250422_v001.cdf"),
+            Path("imap_hi_l3_h90-ena-h-hf-sp-ram-hae-4deg-6mo_20251022_v001.cdf"),
+            Path("imap_hi_l3_h90-ena-h-hf-sp-anti-hae-4deg-6mo_20251022_v001.cdf"),
+            Path("imap_hi_l3_h90-ena-h-hf-sp-ram-hae-4deg-6mo_20250422_v001.cdf"),
+            Path("imap_hi_l3_h90-ena-h-hf-sp-anti-hae-4deg-6mo_20250422_v001.cdf"),
         ]
         mock_download.side_effect = downloaded_paths
 
