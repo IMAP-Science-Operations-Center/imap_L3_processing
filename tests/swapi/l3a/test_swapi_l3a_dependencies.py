@@ -9,7 +9,7 @@ from imap_l3_processing.swapi.descriptors import SWAPI_L2_DESCRIPTOR, ALPHA_TEMP
     PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR, \
     INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR, DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR, \
     CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR, EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR, \
-    GEOMETRIC_FACTOR_PUI_LOOKUP_TABLE_DESCRIPTOR
+    GEOMETRIC_FACTOR_PUI_LOOKUP_TABLE_DESCRIPTOR, HYDROGEN_INFLOW_VECTOR_DESCRIPTOR, HELIUM_INFLOW_VECTOR_DESCRIPTOR
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
 
 
@@ -37,6 +37,8 @@ class TestSwapiL3ADependencies(unittest.TestCase):
             sentinel.geometric_factor_calibration_table,
             sentinel.instrument_response_table,
             sentinel.neutral_helium_table,
+            sentinel.hydrogen_vector,
+            sentinel.helium_vector,
         ]
 
         swapi_science_file_download_path = f"{mission}_{instrument}_{data_level}_{SWAPI_L2_DESCRIPTOR}_{start_date}_{version}.cdf"
@@ -47,6 +49,8 @@ class TestSwapiL3ADependencies(unittest.TestCase):
         swapi_geometric_factor_calibration_file_name = f"{mission}_{instrument}_{GEOMETRIC_FACTOR_PUI_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf"
         swapi_instrument_response_lookup_table_collection = f"{mission}_{instrument}_{INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf"
         swapi_density_of_neutral_helium_lookup = f"{mission}_{instrument}_{DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR}_{start_date}_{version}.cdf"
+        swapi_hydrogen_inflow_filename = f"{mission}_{instrument}_{HYDROGEN_INFLOW_VECTOR_DESCRIPTOR}_{start_date}_{version}.cdf"
+        swapi_helium_inflow_filename = f"{mission}_{instrument}_{HELIUM_INFLOW_VECTOR_DESCRIPTOR}_{start_date}_{version}.cdf"
 
         science_input = ScienceInput(swapi_science_file_download_path)
         clock_angle_calibration_ancillary = AncillaryInput(swapi_clock_angle_calibration_table_file_name)
@@ -57,12 +61,17 @@ class TestSwapiL3ADependencies(unittest.TestCase):
         geometric_factor_calibration_ancillary = AncillaryInput(swapi_geometric_factor_calibration_file_name)
         instrument_response_lookup_ancillary = AncillaryInput(swapi_instrument_response_lookup_table_collection)
         density_of_neutral_helium_ancillary = AncillaryInput(swapi_density_of_neutral_helium_lookup)
+        hydrogen_inflow_ancillary = AncillaryInput(swapi_hydrogen_inflow_filename)
+        helium_inflow_ancillary = AncillaryInput(swapi_helium_inflow_filename)
 
         input_collection.add(
             [science_input, clock_angle_calibration_ancillary, alpha_temp_density_calibration_ancillary,
              proton_temp_and_density_calibration_ancillary, efficiency_ancillary,
              geometric_factor_calibration_ancillary,
-             instrument_response_lookup_ancillary, density_of_neutral_helium_ancillary])
+             instrument_response_lookup_ancillary, density_of_neutral_helium_ancillary,
+             hydrogen_inflow_ancillary,
+             helium_inflow_ancillary,
+             ])
 
         actual_swapi_l3_dependencies = SwapiL3ADependencies.fetch_dependencies(input_collection)
 
@@ -77,6 +86,8 @@ class TestSwapiL3ADependencies(unittest.TestCase):
         expected_download_ancillary_path5 = ancillary_data_dir / swapi_geometric_factor_calibration_file_name
         expected_download_ancillary_path6 = ancillary_data_dir / swapi_instrument_response_lookup_table_collection
         expected_download_ancillary_path7 = ancillary_data_dir / swapi_density_of_neutral_helium_lookup
+        expected_download_ancillary_path8 = ancillary_data_dir / swapi_hydrogen_inflow_filename
+        expected_download_ancillary_path9 = ancillary_data_dir / swapi_helium_inflow_filename
 
         mock_download.assert_has_calls([
             call(expected_download_science_path),
@@ -87,6 +98,8 @@ class TestSwapiL3ADependencies(unittest.TestCase):
             call(expected_download_ancillary_path5),
             call(expected_download_ancillary_path6),
             call(expected_download_ancillary_path7),
+            call(expected_download_ancillary_path8),
+            call(expected_download_ancillary_path9),
         ])
 
         mock_from_file_paths.assert_called_with(
@@ -98,11 +111,14 @@ class TestSwapiL3ADependencies(unittest.TestCase):
             sentinel.geometric_factor_calibration_table,
             sentinel.instrument_response_table,
             sentinel.neutral_helium_table,
+            sentinel.hydrogen_vector,
+            sentinel.helium_vector,
         )
 
         self.assertEqual(mock_from_file_paths.return_value, actual_swapi_l3_dependencies)
 
     @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.CDF')
+    @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.InflowVector.from_file')
     @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.ProtonTemperatureAndDensityCalibrationTable.from_file')
     @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.AlphaTemperatureDensityCalibrationTable.from_file')
     @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.ClockAngleCalibrationTable.from_file')
@@ -114,7 +130,7 @@ class TestSwapiL3ADependencies(unittest.TestCase):
     def test_from_file_paths(self, mock_read_l2_swapi, mock_neutral_helium_from_file,
                              mock_instrument_from_file, mock_geometric_from_file, mock_efficiency_lookup_class,
                              mock_clock_angle_from_file, mock_alpha_temp_from_file,
-                             mock_proton_temp_from_file, mock_CDF):
+                             mock_proton_temp_from_file, mock_inflow_vector_from_file, mock_CDF):
         start_date = '20100105'
         mission = 'imap'
         instrument = 'swapi'
@@ -137,6 +153,10 @@ class TestSwapiL3ADependencies(unittest.TestCase):
             f"{mission}_{instrument}_{INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf")
         swapi_density_of_neutral_helium_lookup = Path(
             f"{mission}_{instrument}_{DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR}_{start_date}_{version}.cdf")
+        swapi_hydrogen_vector_path = Path(
+            f"{mission}_{instrument}_{HYDROGEN_INFLOW_VECTOR_DESCRIPTOR}_{start_date}_{version}.dat")
+        swapi_helium_vector_path = Path(
+            f"{mission}_{instrument}_{HELIUM_INFLOW_VECTOR_DESCRIPTOR}_{start_date}_{version}.dat")
 
         mock_read_l2_swapi.return_value = sentinel.swapi_l2_data
         mock_proton_temp_from_file.return_value = sentinel.proton_temp_data
@@ -146,6 +166,7 @@ class TestSwapiL3ADependencies(unittest.TestCase):
         mock_geometric_from_file.return_value = sentinel.geometric_data
         mock_instrument_from_file.return_value = sentinel.instrument_data
         mock_neutral_helium_from_file.return_value = sentinel.neutral_helium_data
+        mock_inflow_vector_from_file.side_effect = [sentinel.hydrogen_vector, sentinel.helium_vector]
 
         expected_dependencies = SwapiL3ADependencies(sentinel.swapi_l2_data,
                                                      sentinel.proton_temp_data,
@@ -154,7 +175,10 @@ class TestSwapiL3ADependencies(unittest.TestCase):
                                                      sentinel.efficiency_lookup,
                                                      sentinel.geometric_data,
                                                      sentinel.instrument_data,
-                                                     sentinel.neutral_helium_data)
+                                                     sentinel.neutral_helium_data,
+                                                     sentinel.hydrogen_vector,
+                                                     sentinel.helium_vector,
+                                                     )
 
         actual_dependencies = SwapiL3ADependencies.from_file_paths(
             swapi_science_file_download_path,
@@ -165,6 +189,8 @@ class TestSwapiL3ADependencies(unittest.TestCase):
             swapi_geometric_factor_calibration_file_name,
             swapi_instrument_response_lookup_table_collection,
             swapi_density_of_neutral_helium_lookup,
+            swapi_hydrogen_vector_path,
+            swapi_helium_vector_path,
         )
 
         mock_CDF.assert_called_once_with(str(swapi_science_file_download_path))
@@ -177,5 +203,7 @@ class TestSwapiL3ADependencies(unittest.TestCase):
         mock_geometric_from_file.assert_called_once_with(swapi_geometric_factor_calibration_file_name)
         mock_instrument_from_file.assert_called_once_with(swapi_instrument_response_lookup_table_collection)
         mock_neutral_helium_from_file.assert_called_once_with(swapi_density_of_neutral_helium_lookup)
+        mock_inflow_vector_from_file.assert_has_calls(
+            [call(swapi_hydrogen_vector_path), call(swapi_helium_vector_path)])
 
         self.assertEqual(expected_dependencies, actual_dependencies)
