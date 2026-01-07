@@ -74,6 +74,20 @@ def calculate_proton_solar_wind_temperature_and_density_for_one_sweep(coincident
     residual = abs(model(peak_energies_filtered, *values) - nominal_values(filtered_peak_count_rates))
     reduced_chisq = np.sum(np.square(residual / std_devs(filtered_peak_count_rates))) / (
             len(peak_energies_filtered) - 2)
+    fig, (ax1, ax2) = plt.subplots(2, 1)
+
+    ax1.errorbar(x=peak_energies_filtered, y=nominal_values(filtered_peak_count_rates),
+                 yerr=std_devs(filtered_peak_count_rates))
+
+    xs = np.geomspace(peak_energies_filtered[0], peak_energies_filtered[-1], 100)
+    label = f"reduced_chisq={reduced_chisq:.4g}\nd={values[0]:.4g},t={values[1]:.4g}\nspeed={nominal_values(initial_speed_guess)}"
+    ax1.text(0.8, 0.8, label,
+             transform=ax1.transAxes,
+             horizontalalignment='center',
+             verticalalignment='center')
+
+    ax1.plot(xs, model(xs, *values))
+    plt.show()
     if reduced_chisq > 10:
         raise DataQualityException(SWAPIDataQualityExceptionType.ProtonTempDensityFit,
                                    f"Failed to fit - chi-squared too large {reduced_chisq}")

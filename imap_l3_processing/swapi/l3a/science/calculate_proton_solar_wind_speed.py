@@ -120,8 +120,8 @@ def calculate_proton_solar_wind_speed(coincidence_count_rates, energies, epoch, 
 
     success, (a, phi, b), chisq = fit_energy_per_charge_peak_variations(energies_at_center_of_mass,
                                                                         spin_angles_at_center_of_mass)
-
-    if not success:
+    plot_sw_fits = False
+    if plot_sw_fits and not success:
         start_of_five_sweeps = TT2000_EPOCH + timedelta(seconds=epoch[0] / 1e9)
         end_of_five_sweeps = TT2000_EPOCH + timedelta(seconds=epoch[-1] / 1e9)
 
