@@ -444,3 +444,5 @@ class InputRectangularPointingSet:
     esa_energy_step: np.ndarray
     pointing_start_met: Optional[float]
     pointing_end_met: Optional[float]
+    hae_longitude: np.ndarray
+    hae_latitude: np.ndarray

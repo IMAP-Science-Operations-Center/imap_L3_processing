@@ -35,11 +35,16 @@ class TestUtils(unittest.TestCase):
                 repointing = 1111
                 exposure_times = rng.random((1, 9, 3600))
                 energy_step = rng.random((9))
+                hae_longitude = np.ones(3600).reshape((1, 3600))
+                hae_latitude = np.ones(3600).reshape((1, 3600))
 
                 cdf.new("epoch", epoch, type=pycdf.const.CDF_TIME_TT2000)
                 cdf["epoch_delta"] = epoch_delta
                 cdf[exposure_time_var_name] = exposure_times
                 cdf["esa_energy_step"] = energy_step
+                cdf['hae_longitude'] = hae_longitude
+                cdf['hae_latitude'] = hae_latitude
+
                 for var in cdf:
                     cdf[var].attrs['FILLVAL'] = 1000000
 
@@ -52,6 +57,8 @@ class TestUtils(unittest.TestCase):
                     self.assertEqual([43264184000000], result.epoch_j2000)
                     np.testing.assert_array_equal(exposure_times, result.exposure_times)
                     np.testing.assert_array_equal(energy_step, result.esa_energy_step)
+                    np.testing.assert_array_equal(hae_longitude, result.hae_longitude)
+                    np.testing.assert_array_equal(hae_latitude, result.hae_latitude)
 
             self.tearDown()
 

@@ -3,8 +3,7 @@ import xarray as xr
 from imap_processing.ena_maps.ena_maps import RectangularSkyMap, PointingSet
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.ena_maps.utils.corrections import apply_compton_getting_correction, add_spacecraft_velocity_to_pset
-from imap_processing.spice.geometry import SpiceFrame, frame_transform_az_el
-from imap_processing.spice.time import ttj2000ns_to_et
+from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.map_descriptors import Sensor, SpinPhase
 from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet
@@ -25,6 +24,7 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
     def __init__(self, l1c_dataset: InputRectangularPointingSet, sensor: Sensor, spin_phase: SpinPhase,
                  glows_dataset: GlowsL3eRectangularMapInputData, energies: np.ndarray, cg_corrected: bool = False):
         num_spin_angle_bins = l1c_dataset.exposure_times.shape[-1]
+
         deg_spacing = 360 / num_spin_angle_bins
         half_bin_width = deg_spacing / 2
         spin_angles = np.linspace(0, 360, num_spin_angle_bins,
@@ -34,8 +34,8 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
         sensor_angle = Sensor.get_sensor_angle(sensor)
         self.elevations = np.repeat(sensor_angle, num_spin_angle_bins)
 
-        spacecraft_az_el_points = xr.DataArray(
-            np.column_stack([self.azimuths, self.elevations]),
+        hae_az_el_points = xr.DataArray(
+            np.column_stack([l1c_dataset.hae_longitude[0], l1c_dataset.hae_latitude[0]]),
             dims=[CoordNames.GENERIC_PIXEL.value, CoordNames.AZ_EL_VECTOR.value],
         )
 
@@ -66,24 +66,14 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
             raise ValueError("Should not survival correct a full spin map!")
 
         if cg_corrected:
-            et = ttj2000ns_to_et(repointing_midpoint)
-
-            hae_az_el = frame_transform_az_el(
-                et=et,
-                az_el=spacecraft_az_el_points.values,
-                from_frame=SpiceFrame.IMAP_DPS,
-                to_frame=SpiceFrame.IMAP_HAE,
-                degrees=True
-            )
-
             initial_dataset['epoch'] = l1c_dataset.epoch_j2000
             initial_dataset['epoch_delta'] = l1c_dataset.epoch_delta
             initial_dataset['hae_longitude'] = xr.DataArray(
-                [hae_az_el[:, 0]],
+                l1c_dataset.hae_longitude,
                 dims=[CoordNames.TIME.value, "hae_longitude"],
             )
             initial_dataset['hae_latitude'] = xr.DataArray(
-                [hae_az_el[:, 1]],
+                l1c_dataset.hae_latitude,
                 dims=[CoordNames.TIME.value, "hae_latitude"],
             )
             initial_dataset['pointing_start_met'] = l1c_dataset.pointing_start_met
@@ -123,7 +113,7 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
 
         else:
             dataset = initial_dataset
-            self.az_el_points = spacecraft_az_el_points
+            self.az_el_points = hae_az_el_points
             exposure = l1c_dataset.exposure_times * exposure_mask
 
         if glows_dataset is not None:
@@ -173,7 +163,7 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
         )
         dataset["epoch"] = repointing_midpoint
 
-        frame = SpiceFrame.IMAP_HAE if cg_corrected else SpiceFrame.IMAP_DPS
+        frame = SpiceFrame.IMAP_HAE
         super().__init__(dataset, frame)
 
 

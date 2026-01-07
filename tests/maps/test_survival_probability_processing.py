@@ -123,10 +123,10 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
         t4 = datetime(2025, 5, 15, 12)
 
         l1c_psets = [
-            create_l1c_pset(epoch=t1, repointing=1),
-            create_l1c_pset(epoch=t2, repointing=2),
-            create_l1c_pset(epoch=t3, repointing=3),
-            create_l1c_pset(epoch=t4, repointing=4)
+            create_l1c_pset(epoch=t1, repointing=1, hae_longitude=(np.full((1, 3600), 304 + 2))),
+            create_l1c_pset(epoch=t2, repointing=2, hae_longitude=(np.full((1, 3600), 312 + 2))),
+            create_l1c_pset(epoch=t3, repointing=3, hae_longitude=(np.full((1, 3600), 316 + 2))),
+            create_l1c_pset(epoch=t4, repointing=4, hae_longitude=(np.full((1, 3600), 320 + 2)))
         ]
         l3e_psets = [
             create_l3e_pset(epoch=t1, repointing=1),
@@ -135,12 +135,14 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
         ]
         l2_intensity_map = create_rectangular_intensity_map_data()
 
-        descriptor = parse_map_descriptor("h90-ena-h-sf-nsp-ram-hae-4deg-3mo")
+        descriptor = parse_map_descriptor("h90-ena-h-sf-nsp-anti-hae-4deg-3mo")
         survival_dependencies = HiLoL3SurvivalDependencies(l2_intensity_map, l1c_psets, l3e_psets, descriptor,
                                                            l2_intensity_map.intensity_map_data.energy)
 
-        output_map = process_survival_probabilities(survival_dependencies, SpiceFrame.ECLIPJ2000)
-        np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 76, :], np.full(45, 2.0))
-        np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 78, :], np.full(45, 2.0))
+        expected_sky_strip = np.full(45, 2.0)
+
+        output_map = process_survival_probabilities(survival_dependencies, SpiceFrame.IMAP_HAE)
+        np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 76, :], expected_sky_strip)
+        np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 78, :], expected_sky_strip)
         np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 79, :], np.full(45, np.nan))
-        np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 80, :], np.full(45, 2.0))
+        np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 80, :], expected_sky_strip)

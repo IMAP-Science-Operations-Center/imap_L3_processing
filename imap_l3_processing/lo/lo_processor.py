@@ -44,7 +44,10 @@ class LoProcessor(MapProcessor):
 
     @staticmethod
     def _collapse_pset_dimension(pset: InputRectangularPointingSet) -> InputRectangularPointingSet:
-        return dataclasses.replace(pset, exposure_times=np.sum(pset.exposure_times, axis=3))
+        return dataclasses.replace(pset, exposure_times=np.sum(pset.exposure_times, axis=3),
+                                   hae_longitude=np.mean(pset.hae_longitude, axis=-1),
+                                   hae_latitude=np.mean(pset.hae_latitude, axis=-1))
+
 
 def perform_spectral_fit(data: RectangularIntensityMapData) -> RectangularSpectralIndexMapData:
     return RectangularSpectralIndexMapData(
