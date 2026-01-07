@@ -86,6 +86,8 @@ class TestLoProcessor(unittest.TestCase):
                         esa_energy_step=np.arange(7),
                         pointing_start_met=np.array([43200_000_000_000]),
                         pointing_end_met=np.array([43200_000_100_000]),
+                        hae_longitude=np.ones(3600).reshape((1, 3600)),
+                        hae_latitude=np.ones(3600).reshape((1, 3600))
                     )],
                     dependency_file_paths=[Path("folder/map"), Path("folder/l1c")]
                 )
@@ -133,4 +135,3 @@ class TestLoProcessor(unittest.TestCase):
                 with self.assertRaises(exception_class) as cm:
                     processor.process()
                 self.assertEqual(exception_args, cm.exception.args)
-
