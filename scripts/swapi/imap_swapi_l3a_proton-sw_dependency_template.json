@@ -1,15 +1,5 @@
 [
   {
-    "type": "spice",
-    "files": [
-    ]
-  },
-  {
-    "type": "science",
-    "files": [
-    ]
-  },
-  {
     "type": "ancillary",
     "files": [
       "imap_swapi_clock-angle-and-flow-deflection-lut_20240918_v002.dat"
