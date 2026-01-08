@@ -15,7 +15,7 @@ from imap_l3_processing.constants import METERS_PER_KILOMETER, ONE_SECOND_IN_NAN
 from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed, \
     get_peak_indices, find_peak_center_of_mass_index, interpolate_energy, fit_energy_per_charge_peak_variations, \
     calculate_sw_speed_h_plus, get_proton_peak_indices, interpolate_angle, get_angle, \
-    get_spin_angle_from_swapi_axis_in_despun_frame
+    get_spin_angle_from_swapi_axis_in_despun_frame, estimate_deflection_and_clock_angles
 from tests.spice_test_case import SpiceTestCase
 
 
@@ -31,13 +31,14 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
 
         times = [datetime(2025, 6, 6, 12, i) for i in range(5)]
         epochs_in_terrestrial_time = spiceypy.datetime2et(times) * ONE_SECOND_IN_NANOSECONDS
-        speed, a, phi, b = calculate_proton_solar_wind_speed(count_rates_with_uncertainties, energies,
+        speed, a, phi, b, chi_sq = calculate_proton_solar_wind_speed(count_rates_with_uncertainties, energies,
                                                              epochs_in_terrestrial_time)
 
         proton_charge = 1.602176634e-19
         proton_mass = 1.67262192595e-27
         expected_speed = math.sqrt(2 * 400 * proton_charge / proton_mass) / METERS_PER_KILOMETER
         self.assertAlmostEqual(expected_speed, speed.n, 0)
+        self.assertAlmostEqual(0, chi_sq)
 
     def test_calculate_solar_wind_speed_throws_exception_with_too_few_count_rates(self):
         energies = np.array([[0, 1000, 750, 500, 400, 300, 200, 100, 50]] * 5)
@@ -62,7 +63,7 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
             energy = cdf["esa_energy"][...]
             count_rate = cdf["swp_coin_rate"][...]
             count_rate_delta = cdf["swp_coin_unc"][...]
-        speed, a, phi, b = calculate_proton_solar_wind_speed(uarray(count_rate, count_rate_delta), energy,
+        speed, a, phi, b, chi_sq = calculate_proton_solar_wind_speed(uarray(count_rate, count_rate_delta), energy,
                                                              epoch)
 
         self.assertAlmostEqual(speed.n, 497.930, 3)
@@ -73,6 +74,7 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
         self.assertAlmostEqual(phi.s, 5.862, 2)
         self.assertAlmostEqual(b.n, 1294, 0)
         self.assertAlmostEqual(b.s, 2.4, 1)
+        self.assertAlmostEqual(chi_sq, 0.473, 1)
 
     def test_get_peak_indices(self):
         test_cases = [
@@ -228,7 +230,7 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
 
         for angles, energies, expected_initial_a, expected_initial_phi, expected_initial_b in test_cases:
             with self.subTest():
-                a, phi, b = fit_energy_per_charge_peak_variations(energies, angles)
+                (a, phi, b), chi_sq = fit_energy_per_charge_peak_variations(energies, angles)
 
                 curve_fit_parameters = mock_curve_fit.call_args.kwargs
 
@@ -246,42 +248,36 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
                 self.assertEqual(np.inf, phi_upper_bound)
                 self.assertEqual(np.inf, b_upper_bound)
 
-    def test_throws_error_when_reduced_chi_squared_greater_than_10(self):
+    def test_returns_when_reduced_chi_squared_greater_than_10(self):
         test_cases = [
-            ("throws error", [30, 60, 90, 120], uarray([1319, 1103, 1110, 1323], 1), True, 13.512723754922165),
-            ("doesn't throw error", [30, 60, 90, 120], uarray([975, 956, 950, 971], 1), False, 9.071796769724411),
+            ("less than 10 chi", [30, 60, 90, 120], uarray([1319, 1103, 1110, 1323], 1), True, 13.512723754922165),
+            ("greater than 10 chi", [30, 60, 90, 120], uarray([975, 956, 950, 971], 1), False, 9.071796769724411),
         ]
 
         for name, angles, energies, error_flag, expected_chi_squared in test_cases:
             with self.subTest(name):
-                try:
-                    fit_energy_per_charge_peak_variations(energies, angles)
-                    did_error = False
-                except ValueError as e:
-                    did_error = True
-                    exception = e
-                self.assertEqual(error_flag, did_error)
-                if did_error:
-                    self.assertEqual("Failed to fit - chi-squared too large", exception.args[0])
-                    self.assertAlmostEqual(expected_chi_squared, exception.args[1])
+                (a, phi, b), chi_squared = fit_energy_per_charge_peak_variations(energies, angles)
+                self.assertAlmostEqual(expected_chi_squared, chi_squared)
 
     def test_curve_fit(self):
         test_cases = [
-            (10, 500, 25, 120),
-            (30, 1000, 270, 2)
+            (10, 500, 25, 0, 120),
+            (30, 1000, 270, 0, 2)
         ]
 
-        for a, b, phi, initial_angle in test_cases:
+        for a, b, phi, expected_chi_sq, initial_angle in test_cases:
             with self.subTest():
                 angles = [initial_angle - 72 * i for i in range(5)]
                 centers_of_mass = [b + a * np.sin(np.deg2rad(phi - angle)) for angle in angles]
                 center_of_mass_uncertainties = np.full_like(centers_of_mass, 1e-6)
                 centers_of_mass = uarray(centers_of_mass, center_of_mass_uncertainties)
-                result_a, result_phi, result_b = fit_energy_per_charge_peak_variations(centers_of_mass, angles)
+                (result_a, result_phi, result_b), chi_sq = fit_energy_per_charge_peak_variations(centers_of_mass,
+                                                                                                 angles)
 
                 self.assertAlmostEqual(a, result_a.nominal_value)
                 self.assertAlmostEqual(phi, result_phi.nominal_value)
                 self.assertAlmostEqual(b, result_b.nominal_value)
+                self.assertAlmostEqual(expected_chi_sq, chi_sq)
 
     def test_converts_proton_energies_to_speeds(self):
         test_cases = [
@@ -366,3 +362,15 @@ class TestCalculateProtonSolarWindSpeed(SpiceTestCase):
             with self.subTest(swapi_axis):
                 self.assertAlmostEqual(expected_angle,
                                        get_spin_angle_from_swapi_axis_in_despun_frame(np.array(swapi_axis)))
+
+    def test_estimate_deflection_and_clock_angles(self):
+        cases = [
+            (29.78, 86, 270),
+            (400, 0.2696213, 270),
+            (800, 1.8666717, 90),
+        ]
+        for speed, expected_deflection, expected_clock in cases:
+            with self.subTest(speed):
+                deflection, clock = estimate_deflection_and_clock_angles(speed)
+                self.assertAlmostEqual(expected_deflection, deflection)
+                self.assertAlmostEqual(expected_clock, clock)

@@ -19,7 +19,8 @@ from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import calculate_
     calculate_pickup_ion_values, calculate_helium_pui_temperature, calculate_helium_pui_density
 from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_clock_and_deflection_angles import \
     calculate_deflection_angle, calculate_clock_angle
-from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed
+from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed, \
+    estimate_deflection_and_clock_angles
 from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_temperature_and_density import \
     calculate_proton_solar_wind_temperature_and_density
 from imap_l3_processing.swapi.l3a.science.speed_calculation import extract_coarse_sweep
@@ -34,6 +35,8 @@ from imap_l3_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependen
 from imap_l3_processing.utils import save_data
 
 logger=logging.getLogger(__name__)
+
+MAXIMUM_ALLOWED_PROTON_SW_FITTING_CHI_SQ = 10
 
 class SwapiProcessor(Processor):
     def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
@@ -74,13 +77,18 @@ class SwapiProcessor(Processor):
             try:
                 coincidence_count_rates_with_uncertainty = uarray(data_chunk.coincidence_count_rate,
                                                                   data_chunk.coincidence_count_rate_uncertainty)
-                proton_solar_wind_speed, a, phi, b = calculate_proton_solar_wind_speed(
+                proton_solar_wind_speed, a, phi, b, chi_sq = calculate_proton_solar_wind_speed(
                     coincidence_count_rates_with_uncertainty, data_chunk.energy, data_chunk.sci_start_time)
-                clock_angle = calculate_clock_angle(dependencies.clock_angle_and_flow_deflection_calibration_table,
-                                                    proton_solar_wind_speed, a, phi, b)
-                deflection_angle = calculate_deflection_angle(
-                    dependencies.clock_angle_and_flow_deflection_calibration_table,
-                    proton_solar_wind_speed, a, phi, b)
+                if chi_sq <= MAXIMUM_ALLOWED_PROTON_SW_FITTING_CHI_SQ:
+                    clock_angle = calculate_clock_angle(dependencies.clock_angle_and_flow_deflection_calibration_table,
+                                                        proton_solar_wind_speed, a, phi, b)
+                    deflection_angle = calculate_deflection_angle(
+                        dependencies.clock_angle_and_flow_deflection_calibration_table,
+                        proton_solar_wind_speed, a, phi, b)
+                else:
+                    deflection_angle, clock_angle = estimate_deflection_and_clock_angles(
+                        proton_solar_wind_speed.nominal_value)
+
             except Exception as e:
                 logger.info(f"Exception occurred at epoch {epoch}, continuing with fill value", exc_info=True)
             proton_solar_wind_speeds.append(proton_solar_wind_speed)
@@ -213,25 +221,33 @@ class SwapiProcessor(Processor):
                     raise ValueError("Fill values in input data")
                 coincidence_count_rates_with_uncertainty = uarray(data_chunk.coincidence_count_rate,
                                                                   data_chunk.coincidence_count_rate_uncertainty)
-                proton_solar_wind_speed, a, phi, b = calculate_proton_solar_wind_speed(
+                proton_solar_wind_speed, a, phi, b, chi_sq = calculate_proton_solar_wind_speed(
                     coincidence_count_rates_with_uncertainty, data_chunk.energy, data_chunk.sci_start_time)
 
-                clock_angle = calculate_clock_angle(dependencies.clock_angle_and_flow_deflection_calibration_table,
-                                                    proton_solar_wind_speed, a, phi, b)
+                if chi_sq <= MAXIMUM_ALLOWED_PROTON_SW_FITTING_CHI_SQ:
+                    clock_angle = calculate_clock_angle(dependencies.clock_angle_and_flow_deflection_calibration_table,
+                                                        proton_solar_wind_speed, a, phi, b)
 
-                deflection_angle = calculate_deflection_angle(
-                    dependencies.clock_angle_and_flow_deflection_calibration_table,
-                    proton_solar_wind_speed, a, phi, b)
+                    deflection_angle = calculate_deflection_angle(
+                        dependencies.clock_angle_and_flow_deflection_calibration_table,
+                        proton_solar_wind_speed, a, phi, b)
+
+                    clock_angle_for_density_calculation = clock_angle
+                    deflection_for_density_calculation = deflection_angle
+                else:
+                    deflection_for_density_calculation, clock_angle_for_density_calculation = estimate_deflection_and_clock_angles(
+                        proton_solar_wind_speed.nominal_value)
 
                 proton_temperature, proton_density = calculate_proton_solar_wind_temperature_and_density(
                     dependencies.proton_temperature_density_calibration_table,
                     proton_solar_wind_speed,
-                    deflection_angle,
-                    clock_angle,
+                    deflection_for_density_calculation,
+                    clock_angle_for_density_calculation,
                     coincidence_count_rates_with_uncertainty,
                     data_chunk.energy,
                     dependencies.efficiency_calibration_table.get_proton_efficiency_for(epoch_center_of_chunk)
                 )
+
             except Exception as e:
                 epoch = epoch_center_of_chunk
                 logger.info(f"Exception occurred at epoch {epoch}, continuing with fill value", exc_info=True)
