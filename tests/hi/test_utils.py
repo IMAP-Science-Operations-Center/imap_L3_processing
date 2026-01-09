@@ -36,7 +36,7 @@ class TestUtils(unittest.TestCase):
                 exposure_times = rng.random((1, 9, 3600))
                 energy_step = rng.random((9))
                 hae_longitude = np.ones(3600).reshape((1, 3600))
-                hae_latitude = np.ones(3600).reshape((1, 3600))
+                hae_latitude = np.ones(3600).reshape((1, 3600)) * 2
 
                 cdf.new("epoch", epoch, type=pycdf.const.CDF_TIME_TT2000)
                 cdf["epoch_delta"] = epoch_delta

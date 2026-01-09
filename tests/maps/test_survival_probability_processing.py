@@ -123,10 +123,18 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
         t4 = datetime(2025, 5, 15, 12)
 
         l1c_psets = [
-            create_l1c_pset(epoch=t1, repointing=1, hae_longitude=(np.full((1, 3600), 304 + 2))),
-            create_l1c_pset(epoch=t2, repointing=2, hae_longitude=(np.full((1, 3600), 312 + 2))),
-            create_l1c_pset(epoch=t3, repointing=3, hae_longitude=(np.full((1, 3600), 316 + 2))),
-            create_l1c_pset(epoch=t4, repointing=4, hae_longitude=(np.full((1, 3600), 320 + 2)))
+            create_l1c_pset(epoch=t1, repointing=1,
+                            hae_longitude=np.concat([np.full((1800), 304 + 2), np.full((1800), 124 + 2)])[np.newaxis,
+                                          :]),
+            create_l1c_pset(epoch=t2, repointing=2,
+                            hae_longitude=np.concat([np.full((1800), 312 + 2), np.full((1800), 132 + 2)])[np.newaxis,
+                                          :]),
+            create_l1c_pset(epoch=t3, repointing=3,
+                            hae_longitude=np.concat([np.full((1800), 316 + 2), np.full((1800), 136 + 2)])[np.newaxis,
+                                          :]),
+            create_l1c_pset(epoch=t4, repointing=4,
+                            hae_longitude=np.concat([np.full((1800), 320 + 2), np.full((1800), 140 + 2)])[np.newaxis,
+                                          :])
         ]
         l3e_psets = [
             create_l3e_pset(epoch=t1, repointing=1),
@@ -135,7 +143,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
         ]
         l2_intensity_map = create_rectangular_intensity_map_data()
 
-        descriptor = parse_map_descriptor("h90-ena-h-sf-nsp-anti-hae-4deg-3mo")
+        descriptor = parse_map_descriptor("h90-ena-h-sf-nsp-ram-hae-4deg-3mo")
         survival_dependencies = HiLoL3SurvivalDependencies(l2_intensity_map, l1c_psets, l3e_psets, descriptor,
                                                            l2_intensity_map.intensity_map_data.energy)
 
