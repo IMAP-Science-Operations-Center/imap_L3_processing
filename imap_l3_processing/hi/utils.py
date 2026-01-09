@@ -26,7 +26,7 @@ def read_l1c_rectangular_pointing_set_data(path: Union[Path, str]) -> InputRecta
                                            pointing_start_met=pointing_start_met,
                                            pointing_end_met=pointing_end_met,
                                            hae_longitude=cdf['hae_longitude'][...],
-                                           hae_latitude=cdf['hae_longitude'][...])
+                                           hae_latitude=cdf['hae_latitude'][...])
 
 
 def read_glows_l3e_data(cdf_path: Union[Path, str]) -> GlowsL3eRectangularMapInputData:

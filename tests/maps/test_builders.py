@@ -201,9 +201,9 @@ def create_l1c_pset(
 ) -> InputRectangularPointingSet:
     epoch_j2000 = np.array([spiceypy.datetime2et(epoch)]) * 1e9
     exposures = exposures if exposures is not None else np.full(shape=(1, energy_steps.shape[0], 3600), fill_value=1.)
-    anti_latitudes = np.linspace(-89.95, 89.95, 1800)
     ram_latitudes = np.linspace(89.95, -89.95, 1800)
-    full_rotation_latitudes = np.roll(np.concat([anti_latitudes, ram_latitudes]), -900)
+    anti_latitudes = np.linspace(-89.95, 89.95, 1800)
+    full_rotation_latitudes = np.concat([ram_latitudes, anti_latitudes])
     return InputRectangularPointingSet(epoch, epoch_delta, epoch_j2000, repointing, exposures, energy_steps,
                                        pointing_start_met, pointing_end_met,
                                        hae_longitude=hae_longitude if hae_longitude is not None else ((np.linspace(0,
