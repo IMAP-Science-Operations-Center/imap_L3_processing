@@ -22,6 +22,7 @@ from imap_l3_processing.swapi.l3a.models import SwapiL2Data, SwapiL3ProtonSolarW
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import FittingParameters
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SWAPI_L2_DESCRIPTOR, SwapiL3ADependencies
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_vdf import DeltaMinusPlus
+from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor, logger
 
 
@@ -570,7 +571,8 @@ class TestSwapiProcessor(TestCase):
 
         (actual_proton_metadata, actual_proton_epoch, actual_proton_sw_speed, actual_proton_sw_temperature,
          actual_proton_sw_density, actual_proton_sw_clock_angle,
-         actual_proton_sw_deflection_angle) = mock_proton_solar_wind_data_constructor.call_args.args
+         actual_proton_sw_deflection_angle,
+         actual_quality_flags) = mock_proton_solar_wind_data_constructor.call_args.args
 
         self.assertEqual(expected_proton_metadata, actual_proton_metadata)
 
@@ -586,6 +588,9 @@ class TestSwapiProcessor(TestCase):
                                       strict=True)
         np.testing.assert_array_equal(np.array([returned_proton_sw_deflection_angle]),
                                       actual_proton_sw_deflection_angle,
+                                      strict=True)
+        np.testing.assert_array_equal(np.array([SwapiL3Flags.NONE]),
+                                      actual_quality_flags,
                                       strict=True)
 
         mock_manager.add_global_attribute.assert_has_calls([call("Data_version", outgoing_version),
@@ -612,7 +617,7 @@ class TestSwapiProcessor(TestCase):
     @patch('imap_l3_processing.swapi.swapi_processor.estimate_deflection_and_clock_angles')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3ADependencies')
     @patch('imap_l3_processing.processor.spiceypy')
-    def test_process_l3a_proton_skips_angles_if_chisq_too_high(self, mock_spicepy,
+    def test_process_l3a_proton_estimates_angles_if_chisq_too_high(self, mock_spicepy,
                                                                mock_swapi_l3_dependencies_class,
                                                                mock_estimate_deflection_and_clock_angles,
                                                                mock_proton_calculate_temperature_and_density,
@@ -701,15 +706,19 @@ class TestSwapiProcessor(TestCase):
         self.assert_ufloat_equal(returned_proton_sw_speed,
                                  mock_proton_calculate_temperature_and_density.call_args_list[0].args[1])
         self.assertEqual(2,
-                         mock_proton_calculate_temperature_and_density.call_args_list[0].args[2])
+                         mock_proton_calculate_temperature_and_density.call_args_list[0].args[2].nominal_value)
+        np.testing.assert_equal(45,
+                                mock_proton_calculate_temperature_and_density.call_args_list[0].args[2].std_dev)
         self.assertEqual(270,
-                         mock_proton_calculate_temperature_and_density.call_args_list[0].args[3])
-
+                         mock_proton_calculate_temperature_and_density.call_args_list[0].args[3].nominal_value)
+        np.testing.assert_equal(180,
+                                mock_proton_calculate_temperature_and_density.call_args_list[0].args[3].std_dev)
         mock_estimate_deflection_and_clock_angles.assert_called_with(returned_proton_sw_speed.nominal_value)
 
         (actual_proton_metadata, actual_proton_epoch, actual_proton_sw_speed, actual_proton_sw_temperature,
          actual_proton_sw_density, actual_proton_sw_clock_angle,
-         actual_proton_sw_deflection_angle) = mock_proton_solar_wind_data_constructor.call_args.args
+         actual_proton_sw_deflection_angle,
+         actual_quality_flags) = mock_proton_solar_wind_data_constructor.call_args.args
 
         self.assertEqual(expected_proton_metadata, actual_proton_metadata)
 
@@ -722,11 +731,14 @@ class TestSwapiProcessor(TestCase):
         np.testing.assert_array_equal(np.array([returned_proton_sw_density]), actual_proton_sw_density,
                                       strict=True)
 
-        np.testing.assert_array_equal(nominal_values(actual_proton_sw_clock_angle), [np.nan])
-        np.testing.assert_array_equal(std_devs(actual_proton_sw_clock_angle), [np.nan])
+        np.testing.assert_array_equal(nominal_values(actual_proton_sw_clock_angle), [270])
+        np.testing.assert_array_equal(std_devs(actual_proton_sw_clock_angle), [180])
 
-        np.testing.assert_array_equal(nominal_values(actual_proton_sw_deflection_angle), [np.nan])
-        np.testing.assert_array_equal(std_devs(actual_proton_sw_deflection_angle), [np.nan])
+        np.testing.assert_array_equal(nominal_values(actual_proton_sw_deflection_angle), [2])
+        np.testing.assert_array_equal(std_devs(actual_proton_sw_deflection_angle), [45])
+
+        np.testing.assert_array_equal(np.array([SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED]), actual_quality_flags,
+                                      strict=True)
 
     def test_process_l3a_proton_outputs_fill_for_chunks_with_fill(self):
         instrument = 'swapi'
@@ -770,6 +782,8 @@ class TestSwapiProcessor(TestCase):
 
         np.testing.assert_array_equal(nominal_values(product.proton_sw_deflection_angle), [np.nan])
         np.testing.assert_array_equal(std_devs(product.proton_sw_deflection_angle), [np.nan])
+
+        np.testing.assert_array_equal(product.quality_flags, [SwapiL3Flags.NONE])
 
     def test_process_l3a_alpha_outputs_fill_for_chunks_with_fill(self):
         instrument = 'swapi'
