@@ -12,10 +12,15 @@ class DensityOfNeutralHeliumLookupTable:
 
         self.grid = (angle, distance)
         values_shape = tuple(len(x) for x in self.grid)
-
         self.densities = np.ascontiguousarray(
             calibration_table[:, 2].reshape(values_shape)
         )
+        if 360.0 not in angle:
+            assert angle[0] == 0.0, "expected table to start at angle 0"
+            angle_with_360 = np.append(angle, 360.0)
+            self.grid = (angle_with_360, distance)
+            self.densities = np.append(self.densities, self.densities[0:1], axis=0)
+
         self._interp = RegularGridInterpolator(self.grid, self.densities, bounds_error=False, fill_value=0,
                                                method='linear')
 

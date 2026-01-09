@@ -75,6 +75,28 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
         self.assertAlmostEqual(4 * 1.021, density.n)
         self.assertAlmostEqual(0.1 * 1.021, density.s)
 
+    def test_lookup_table_handles_data_that_does_not_extend_to_360_degrees(self):
+        speed_values = [250, 1000]
+        deflection_angle_values = [0, 6]
+        clock_angle_values = [0, 90, 180, 270]
+        density_values = [1, 10]
+        temperature_values = [1000, 100000]
+
+        lookup_table = self.generate_lookup_table(speed_values, deflection_angle_values, clock_angle_values,
+                                                  density_values, temperature_values)
+
+        temperature = lookup_table.calibrate_temperature(ufloat(450, 2), ufloat(3, 0.1),
+                                                         ufloat(350, 1), ufloat(4, 0.1),
+                                                         ufloat(50000, 10000))
+        density = lookup_table.calibrate_density(ufloat(450, 2), ufloat(3, 0.1), ufloat(350, 1),
+                                                 ufloat(4, 0.1), ufloat(50000, 10000))
+
+        self.assertAlmostEqual(50000 * 0.97561, temperature.n, 3)
+        self.assertAlmostEqual(10000 * 0.97561, temperature.s, 3)
+
+        self.assertAlmostEqual(4 * 1.021, density.n)
+        self.assertAlmostEqual(0.1 * 1.021, density.s)
+
     def test_density_temperature_lookup_table_works_with_clock_angles_outside_0_to_360(self):
         speed_values = [250, 1000]
         deflection_angle_values = [0, 6]
