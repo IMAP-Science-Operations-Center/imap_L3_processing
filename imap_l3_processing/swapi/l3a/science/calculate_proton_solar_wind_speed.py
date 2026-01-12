@@ -35,11 +35,9 @@ def fit_energy_per_charge_peak_variations(centers_of_mass, spin_phase_angles):
     residual = abs(sine_fit_function(np.array(nominal_spin_phase_angles), a, phi, b) - nominal_centers_of_mass)
     reduced_chisq = np.sum(np.square(residual / std_devs(centers_of_mass))) / (len(spin_phase_angles) - 3)
 
-    if reduced_chisq > 10:
-        raise ValueError("Failed to fit - chi-squared too large", reduced_chisq)
     phi = np.mod(phi, 360)
 
-    return correlated_values((a, phi, b), pcov)
+    return correlated_values((a, phi, b), pcov), reduced_chisq
 
 
 def get_proton_peak_indices(count_rates):
@@ -109,7 +107,19 @@ def calculate_proton_solar_wind_speed(coincidence_count_rates, energies, epoch):
     energies_at_center_of_mass, spin_angles_at_center_of_mass = calculate_proton_centers_of_mass(
         coincidence_count_rates, energies, epoch)
 
-    a, phi, b = fit_energy_per_charge_peak_variations(energies_at_center_of_mass, spin_angles_at_center_of_mass)
+    (a, phi, b), chi_sq = fit_energy_per_charge_peak_variations(energies_at_center_of_mass,
+                                                                spin_angles_at_center_of_mass)
 
     proton_sw_speed = calculate_sw_speed_h_plus(b)
-    return proton_sw_speed, a, phi, b
+    return proton_sw_speed, a, phi, b, chi_sq
+
+
+def estimate_deflection_and_clock_angles(speed) -> tuple[float, float]:
+    orbital_velocity = 29.78
+    spin_axis_offset = 4
+    raw_deflection = np.rad2deg(np.arcsin(orbital_velocity / speed)) - spin_axis_offset
+
+    if raw_deflection > 0:
+        return raw_deflection, 270
+    else:
+        return -raw_deflection, 90

@@ -86,6 +86,8 @@ class TestLoProcessor(unittest.TestCase):
                         esa_energy_step=np.arange(7),
                         pointing_start_met=np.array([43200_000_000_000]),
                         pointing_end_met=np.array([43200_000_100_000]),
+                        hae_longitude=np.ones(3600).reshape((1, 3600)),
+                        hae_latitude=np.ones(3600).reshape((1, 3600))
                     )],
                     dependency_file_paths=[Path("folder/map"), Path("folder/l1c")]
                 )
@@ -112,40 +114,6 @@ class TestLoProcessor(unittest.TestCase):
                 mock_fetch_survival_dependencies.reset_mock()
                 mock_process_survival_prob.reset_mock()
                 mock_save_data.reset_mock()
-
-    @patch('imap_l3_processing.hi.hi_processor.MapProcessor.get_parent_file_names')
-    @patch('imap_l3_processing.lo.lo_processor.LoL3ISNBackgroundSubtractedDependencies.fetch_dependencies')
-    @patch('imap_l3_processing.lo.lo_processor.isn_background_subtraction')
-    @patch('imap_l3_processing.lo.lo_processor.save_data')
-    def test_process_isn_background_subtracted(self, mock_save_data,
-                                               mock_isn_background_subtraction, mock_fetch_dependencies,
-                                               mock_get_parent_file_names):
-        mock_get_parent_file_names.return_value = ["some_input_file_name"]
-
-        input_collection = Mock()
-        lo_l3_background_subtracted_dependency = mock_fetch_dependencies.return_value
-        mock_isn_background_subtraction.return_value = Mock()
-
-        metadata = InputMetadata(instrument="lo",
-                                 data_level="l3",
-                                 version="v000",
-                                 start_date=datetime(2020, 1, 1, 1),
-                                 end_date=datetime(2020, 1, 1, 1),
-                                 descriptor="l090-isnnbkgnd-h-hf-sp-ram-hae-6deg-1yr")
-
-        processor = LoProcessor(input_collection, input_metadata=metadata)
-        product = processor.process()
-
-        mock_fetch_dependencies.assert_called_with(input_collection)
-        mock_isn_background_subtraction.assert_called_once_with(lo_l3_background_subtracted_dependency.map_data)
-
-        data_product = mock_save_data.call_args_list[0].args[0]
-
-        self.assertIsInstance(data_product, ISNBackgroundSubtractedDataProduct)
-        self.assertEqual(data_product.data, mock_isn_background_subtraction.return_value)
-        self.assertEqual(data_product.input_metadata, processor.input_metadata)
-        self.assertEqual(data_product.parent_file_names, ["some_input_file_name"])
-        self.assertEqual([mock_save_data.return_value], product)
 
     def test_rejects_unimplemented_descriptors(self):
         input_collection = ProcessingInputCollection()

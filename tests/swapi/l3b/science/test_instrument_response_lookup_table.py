@@ -8,6 +8,13 @@ from tests.test_helpers import get_test_data_path
 
 
 class TestInstrumentResponseLookupTable(unittest.TestCase):
+    def test_get_table_for_energy_bin_handles_mac_metadata(self):
+        lut_zip_path = get_test_data_path('swapi/truncated_swapi_response_with_mac_metadata.zip')
+        lut = InstrumentResponseLookupTableCollection.from_file(lut_zip_path)
+        energy_bin_index = 2
+        result = lut.get_table_for_energy_bin(energy_bin_index)
+        self.assertEqual(103.07800, result.energy[0])
+
     def test_get_table_for_energy_bin(self):
         lut_zip_path = get_test_data_path('swapi/truncated_swapi_response_simion_v1.zip')
         lut = InstrumentResponseLookupTableCollection.from_file(lut_zip_path)

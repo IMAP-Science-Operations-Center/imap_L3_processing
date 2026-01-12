@@ -19,7 +19,8 @@ from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import calculate_
     calculate_pickup_ion_values, calculate_helium_pui_temperature, calculate_helium_pui_density
 from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_clock_and_deflection_angles import \
     calculate_deflection_angle, calculate_clock_angle
-from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed
+from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_proton_solar_wind_speed, \
+    estimate_deflection_and_clock_angles
 from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_temperature_and_density import \
     calculate_proton_solar_wind_temperature_and_density
 from imap_l3_processing.swapi.l3a.science.speed_calculation import extract_coarse_sweep
@@ -31,9 +32,12 @@ from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_differential_flux
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_vdf import calculate_proton_solar_wind_vdf, \
     calculate_alpha_solar_wind_vdf, calculate_pui_solar_wind_vdf, calculate_delta_minus_plus
 from imap_l3_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
+from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.utils import save_data
 
 logger=logging.getLogger(__name__)
+
+MAXIMUM_ALLOWED_PROTON_SW_FITTING_CHI_SQ = 10
 
 class SwapiProcessor(Processor):
     def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
@@ -61,7 +65,7 @@ class SwapiProcessor(Processor):
             cdf_path = save_data(l3b_combined_vdf)
             return [cdf_path]
 
-    def process_l3a_pui(self, data, dependencies) -> SwapiL3PickupIonData:
+    def process_l3a_pui(self, data, dependencies: SwapiL3ADependencies) -> SwapiL3PickupIonData:
         proton_solar_wind_speeds = []
         proton_solar_wind_clock_angles = []
         proton_solar_wind_deflection_angles = []
@@ -74,13 +78,18 @@ class SwapiProcessor(Processor):
             try:
                 coincidence_count_rates_with_uncertainty = uarray(data_chunk.coincidence_count_rate,
                                                                   data_chunk.coincidence_count_rate_uncertainty)
-                proton_solar_wind_speed, a, phi, b = calculate_proton_solar_wind_speed(
+                proton_solar_wind_speed, a, phi, b, chi_sq = calculate_proton_solar_wind_speed(
                     coincidence_count_rates_with_uncertainty, data_chunk.energy, data_chunk.sci_start_time)
-                clock_angle = calculate_clock_angle(dependencies.clock_angle_and_flow_deflection_calibration_table,
-                                                    proton_solar_wind_speed, a, phi, b)
-                deflection_angle = calculate_deflection_angle(
-                    dependencies.clock_angle_and_flow_deflection_calibration_table,
-                    proton_solar_wind_speed, a, phi, b)
+                if chi_sq <= MAXIMUM_ALLOWED_PROTON_SW_FITTING_CHI_SQ:
+                    clock_angle = calculate_clock_angle(dependencies.clock_angle_and_flow_deflection_calibration_table,
+                                                        proton_solar_wind_speed, a, phi, b)
+                    deflection_angle = calculate_deflection_angle(
+                        dependencies.clock_angle_and_flow_deflection_calibration_table,
+                        proton_solar_wind_speed, a, phi, b)
+                else:
+                    deflection_angle, clock_angle = estimate_deflection_and_clock_angles(
+                        proton_solar_wind_speed.nominal_value)
+
             except Exception as e:
                 logger.info(f"Exception occurred at epoch {epoch}, continuing with fill value", exc_info=True)
             proton_solar_wind_speeds.append(proton_solar_wind_speed)
@@ -116,16 +125,20 @@ class SwapiProcessor(Processor):
                                                          epoch, 0.1,
                                                          sw_velocity,
                                                          dependencies.density_of_neutral_helium_calibration_table,
-                                                         dependencies.efficiency_calibration_table)
+                                                         dependencies.efficiency_calibration_table,
+                                                         dependencies.hydrogen_inflow_vector,
+                                                         dependencies.helium_inflow_vector)
                 cooling_index = fit_params.cooling_index
                 ionization_rate = fit_params.ionization_rate
                 cutoff_speed = fit_params.cutoff_speed
                 background_count_rate = fit_params.background_count_rate
 
                 density = calculate_helium_pui_density(
-                    epoch, sw_velocity, dependencies.density_of_neutral_helium_calibration_table, fit_params)
+                    epoch, sw_velocity, dependencies.density_of_neutral_helium_calibration_table, fit_params,
+                    dependencies.helium_inflow_vector)
                 temperature = calculate_helium_pui_temperature(
-                    epoch, sw_velocity, dependencies.density_of_neutral_helium_calibration_table, fit_params)
+                    epoch, sw_velocity, dependencies.density_of_neutral_helium_calibration_table, fit_params,
+                    dependencies.helium_inflow_vector)
             except Exception as e:
                 logger.info(f"Exception occurred at epoch {epoch}, continuing with fill value", exc_info=True)
             pui_epochs.append(epoch)
@@ -195,6 +208,7 @@ class SwapiProcessor(Processor):
         proton_solar_wind_density = []
         proton_solar_wind_clock_angles = []
         proton_solar_wind_deflection_angles = []
+        quality_flags = []
 
         for data_chunk in chunk_l2_data(data, 5):
             proton_solar_wind_speed = ufloat(np.nan, np.nan)
@@ -202,6 +216,7 @@ class SwapiProcessor(Processor):
             deflection_angle = ufloat(np.nan, np.nan)
             proton_density = ufloat(np.nan, np.nan)
             proton_temperature = ufloat(np.nan, np.nan)
+            quality_flag = SwapiL3Flags.NONE
 
             epoch_center_of_chunk = data_chunk.sci_start_time[0] + THIRTY_SECONDS_IN_NANOSECONDS
             try:
@@ -209,15 +224,22 @@ class SwapiProcessor(Processor):
                     raise ValueError("Fill values in input data")
                 coincidence_count_rates_with_uncertainty = uarray(data_chunk.coincidence_count_rate,
                                                                   data_chunk.coincidence_count_rate_uncertainty)
-                proton_solar_wind_speed, a, phi, b = calculate_proton_solar_wind_speed(
+                proton_solar_wind_speed, a, phi, b, chi_sq = calculate_proton_solar_wind_speed(
                     coincidence_count_rates_with_uncertainty, data_chunk.energy, data_chunk.sci_start_time)
 
-                clock_angle = calculate_clock_angle(dependencies.clock_angle_and_flow_deflection_calibration_table,
-                                                    proton_solar_wind_speed, a, phi, b)
+                if chi_sq <= MAXIMUM_ALLOWED_PROTON_SW_FITTING_CHI_SQ:
+                    clock_angle = calculate_clock_angle(dependencies.clock_angle_and_flow_deflection_calibration_table,
+                                                        proton_solar_wind_speed, a, phi, b)
 
-                deflection_angle = calculate_deflection_angle(
-                    dependencies.clock_angle_and_flow_deflection_calibration_table,
-                    proton_solar_wind_speed, a, phi, b)
+                    deflection_angle = calculate_deflection_angle(
+                        dependencies.clock_angle_and_flow_deflection_calibration_table,
+                        proton_solar_wind_speed, a, phi, b)
+                else:
+                    deflection_angle, clock_angle = estimate_deflection_and_clock_angles(
+                        proton_solar_wind_speed.nominal_value)
+                    quality_flag |= SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED
+                    deflection_angle = ufloat(deflection_angle, 45)
+                    clock_angle = ufloat(clock_angle, 180)
 
                 proton_temperature, proton_density = calculate_proton_solar_wind_temperature_and_density(
                     dependencies.proton_temperature_density_calibration_table,
@@ -228,6 +250,7 @@ class SwapiProcessor(Processor):
                     data_chunk.energy,
                     dependencies.efficiency_calibration_table.get_proton_efficiency_for(epoch_center_of_chunk)
                 )
+
             except Exception as e:
                 epoch = epoch_center_of_chunk
                 logger.info(f"Exception occurred at epoch {epoch}, continuing with fill value", exc_info=True)
@@ -238,6 +261,7 @@ class SwapiProcessor(Processor):
             proton_solar_wind_density.append(proton_density)
             proton_solar_wind_temperatures.append(proton_temperature)
             epochs.append(epoch_center_of_chunk)
+            quality_flags.append(quality_flag)
 
         proton_solar_wind_speed_metadata = replace(self.input_metadata, descriptor="proton-sw")
         proton_solar_wind_l3_data = SwapiL3ProtonSolarWindData(proton_solar_wind_speed_metadata, np.array(epochs),
@@ -245,7 +269,8 @@ class SwapiProcessor(Processor):
                                                                np.array(proton_solar_wind_temperatures),
                                                                np.array(proton_solar_wind_density),
                                                                np.array(proton_solar_wind_clock_angles),
-                                                               np.array(proton_solar_wind_deflection_angles))
+                                                               np.array(proton_solar_wind_deflection_angles),
+                                                               np.array(quality_flags))
 
         return proton_solar_wind_l3_data
 

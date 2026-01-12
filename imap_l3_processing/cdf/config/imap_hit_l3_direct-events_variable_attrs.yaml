@@ -46,7 +46,7 @@ charge:
   FIELDNAM: Charge
   FORMAT: F15.3
   LABLAXIS: Charge
-  UNITS: MeV
+  UNITS: ' '
   VALIDMIN: 0
   VALIDMAX: 200
   FILLVAL: -1.00E+31
