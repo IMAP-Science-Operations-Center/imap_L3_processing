@@ -32,6 +32,7 @@ from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_differential_flux
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_vdf import calculate_proton_solar_wind_vdf, \
     calculate_alpha_solar_wind_vdf, calculate_pui_solar_wind_vdf, calculate_delta_minus_plus
 from imap_l3_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
+from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.utils import save_data
 
 logger=logging.getLogger(__name__)
@@ -207,6 +208,7 @@ class SwapiProcessor(Processor):
         proton_solar_wind_density = []
         proton_solar_wind_clock_angles = []
         proton_solar_wind_deflection_angles = []
+        quality_flags = []
 
         for data_chunk in chunk_l2_data(data, 5):
             proton_solar_wind_speed = ufloat(np.nan, np.nan)
@@ -214,6 +216,7 @@ class SwapiProcessor(Processor):
             deflection_angle = ufloat(np.nan, np.nan)
             proton_density = ufloat(np.nan, np.nan)
             proton_temperature = ufloat(np.nan, np.nan)
+            quality_flag = SwapiL3Flags.NONE
 
             epoch_center_of_chunk = data_chunk.sci_start_time[0] + THIRTY_SECONDS_IN_NANOSECONDS
             try:
@@ -231,18 +234,18 @@ class SwapiProcessor(Processor):
                     deflection_angle = calculate_deflection_angle(
                         dependencies.clock_angle_and_flow_deflection_calibration_table,
                         proton_solar_wind_speed, a, phi, b)
-
-                    clock_angle_for_density_calculation = clock_angle
-                    deflection_for_density_calculation = deflection_angle
                 else:
-                    deflection_for_density_calculation, clock_angle_for_density_calculation = estimate_deflection_and_clock_angles(
+                    deflection_angle, clock_angle = estimate_deflection_and_clock_angles(
                         proton_solar_wind_speed.nominal_value)
+                    quality_flag |= SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED
+                    deflection_angle = ufloat(deflection_angle, 45)
+                    clock_angle = ufloat(clock_angle, 180)
 
                 proton_temperature, proton_density = calculate_proton_solar_wind_temperature_and_density(
                     dependencies.proton_temperature_density_calibration_table,
                     proton_solar_wind_speed,
-                    deflection_for_density_calculation,
-                    clock_angle_for_density_calculation,
+                    deflection_angle,
+                    clock_angle,
                     coincidence_count_rates_with_uncertainty,
                     data_chunk.energy,
                     dependencies.efficiency_calibration_table.get_proton_efficiency_for(epoch_center_of_chunk)
@@ -258,6 +261,7 @@ class SwapiProcessor(Processor):
             proton_solar_wind_density.append(proton_density)
             proton_solar_wind_temperatures.append(proton_temperature)
             epochs.append(epoch_center_of_chunk)
+            quality_flags.append(quality_flag)
 
         proton_solar_wind_speed_metadata = replace(self.input_metadata, descriptor="proton-sw")
         proton_solar_wind_l3_data = SwapiL3ProtonSolarWindData(proton_solar_wind_speed_metadata, np.array(epochs),
@@ -265,7 +269,8 @@ class SwapiProcessor(Processor):
                                                                np.array(proton_solar_wind_temperatures),
                                                                np.array(proton_solar_wind_density),
                                                                np.array(proton_solar_wind_clock_angles),
-                                                               np.array(proton_solar_wind_deflection_angles))
+                                                               np.array(proton_solar_wind_deflection_angles),
+                                                               np.array(quality_flags))
 
         return proton_solar_wind_l3_data
 
