@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 from typing import Union
 
@@ -13,7 +14,9 @@ def read_l2_hit_data(cdf_file_path: Union[str, Path]) -> HitL2Data:
         epoch = cdf["epoch"][...]
 
         half_epoch_diff = np.diff(epoch) / 2
-        assert np.all(half_epoch_diff == half_epoch_diff[0])
+        variance = np.max(half_epoch_diff) - np.min(half_epoch_diff)
+        assert variance < timedelta(milliseconds=1), \
+            "L2 epochs are not evenly spaced, failed to synthesize epoch deltas"
         fabricated_epoch_deltas = np.repeat(half_epoch_diff[0], len(epoch))
 
         return HitL2Data(

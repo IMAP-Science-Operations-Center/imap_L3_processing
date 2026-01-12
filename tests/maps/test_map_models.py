@@ -287,6 +287,8 @@ class TestMapModels(unittest.TestCase):
                 latitude=sentinel.latitude,
                 longitude=sentinel.longitude,
                 isn_rate_background_subtracted=sentinel.isn_rate_background_subtracted,
+                bg_subtracted_sys_uncertainty=sentinel.bg_subtracted_sys_uncertainty,
+                ena_count_rate_sys_uncert=sentinel.ena_count_rate_sys_uncert,
             )
         )
 
