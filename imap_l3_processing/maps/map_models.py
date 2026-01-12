@@ -189,8 +189,10 @@ class ISNBackgroundSubtractedData:
     bg_rates_stat_uncert: np.ndarray
     bg_rates_sys_err: np.ndarray
     bg_subtracted_stat_err: np.ndarray
+    bg_subtracted_sys_uncertainty: np.ndarray
     ena_count_rate: np.ndarray
     ena_count_rate_stat_uncert: np.ndarray
+    ena_count_rate_sys_uncert: np.ndarray
     latitude: np.ndarray
     longitude: np.ndarray
     isn_rate_background_subtracted: np.ndarray

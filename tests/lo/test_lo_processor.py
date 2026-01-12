@@ -197,7 +197,8 @@ class TestLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(actual.isn_rate_background_subtracted, np.ones((1, 7, 60, 30)) * 2)
         np.testing.assert_array_equal(actual.bg_rates_stat_uncert, np.ones((1, 7, 60, 30)) * 3)
         np.testing.assert_array_equal(actual.ena_count_rate_stat_uncert, np.ones((1, 7, 60, 30)) * 2)
-        np.testing.assert_array_equal(actual.bg_subtracted_stat_err, np.ones((1, 7, 60, 30)) * 13)
+        np.testing.assert_array_equal(actual.ena_count_rate_sys_uncert, np.zeros((1, 7, 60, 30)))
+        np.testing.assert_array_equal(actual.bg_subtracted_stat_err, np.ones((1, 7, 60, 30)) * np.sqrt(13))
 
         self.assertEqual(actual.epoch, sentinel.epoch)
         self.assertEqual(actual.counts, sentinel.counts)
@@ -213,3 +214,4 @@ class TestLoProcessor(unittest.TestCase):
         self.assertEqual(actual.bg_rates_sys_err, sentinel.bg_rates_sys_err)
         self.assertEqual(actual.latitude, sentinel.latitude)
         self.assertEqual(actual.longitude, sentinel.longitude)
+        self.assertEqual(actual.bg_subtracted_sys_uncertainty, sentinel.bg_rates_sys_err)

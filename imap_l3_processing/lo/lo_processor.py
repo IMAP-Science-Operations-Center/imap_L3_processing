@@ -82,9 +82,12 @@ def isn_background_subtraction(isn_rate_data: ISNRateData) -> ISNBackgroundSubtr
         bg_rates_sys_err=isn_rate_data.bg_rates_sys_err,
         ena_count_rate=isn_rate_data.ena_count_rate,
         ena_count_rate_stat_uncert=isn_rate_data.ena_count_rate_stat_uncert,
+        ena_count_rate_sys_uncert=np.zeros_like(isn_rate_data.ena_count_rate),
+        # ena count rate systematic uncertainty
         latitude=isn_rate_data.latitude,
         longitude=isn_rate_data.longitude,
         isn_rate_background_subtracted=isn_rate_background_subtracted,
-        bg_subtracted_stat_err=np.square(isn_rate_data.ena_count_rate_stat_uncert) + np.square(
-            isn_rate_data.bg_rates_stat_uncert)
+        bg_subtracted_stat_err=np.sqrt(np.square(isn_rate_data.ena_count_rate_stat_uncert) + np.square(
+            isn_rate_data.bg_rates_stat_uncert)),
+        bg_subtracted_sys_uncertainty=isn_rate_data.bg_rates_sys_err
     )
