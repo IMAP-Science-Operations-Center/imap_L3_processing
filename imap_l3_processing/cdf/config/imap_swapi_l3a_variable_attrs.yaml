@@ -537,3 +537,4 @@ swp_flags:
   VALIDMIN: 0
   VALIDMAX: 65534
   FILLVAL: 65535
+  LABLAXIS: Quality flags for SWAPI L3a
