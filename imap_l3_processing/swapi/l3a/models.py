@@ -108,6 +108,7 @@ class SwapiL3PickupIonData(DataProduct):
     background_rate: np.ndarray[float]
     density: np.ndarray[float]
     temperature: np.ndarray[float]
+    quality_flags: np.ndarray[SwapiL3Flags]
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -125,6 +126,7 @@ class SwapiL3PickupIonData(DataProduct):
             DataProductVariable(PUI_DENSITY_UNCERTAINTY_CDF_VAR_NAME, std_devs(self.density)),
             DataProductVariable(PUI_TEMPERATURE_CDF_VAR_NAME, nominal_values(self.temperature)),
             DataProductVariable(PUI_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME, std_devs(self.temperature)),
+            DataProductVariable(SWAPI_QUALITY_FLAGS_CDF_VAR_NAME, self.quality_flags),
         ]
 
 

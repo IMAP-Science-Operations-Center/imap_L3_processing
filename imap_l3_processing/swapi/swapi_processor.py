@@ -69,12 +69,14 @@ class SwapiProcessor(Processor):
         proton_solar_wind_speeds = []
         proton_solar_wind_clock_angles = []
         proton_solar_wind_deflection_angles = []
+        proton_quality_flags = []
 
         for data_chunk in chunk_l2_data(data, 5):
             epoch = data_chunk.sci_start_time[0] + THIRTY_SECONDS_IN_NANOSECONDS
             proton_solar_wind_speed = ufloat(np.nan, np.nan)
             clock_angle = ufloat(np.nan, np.nan)
             deflection_angle = ufloat(np.nan, np.nan)
+            quality_flag = SwapiL3Flags.NONE
             try:
                 coincidence_count_rates_with_uncertainty = uarray(data_chunk.coincidence_count_rate,
                                                                   data_chunk.coincidence_count_rate_uncertainty)
@@ -89,12 +91,14 @@ class SwapiProcessor(Processor):
                 else:
                     deflection_angle, clock_angle = estimate_deflection_and_clock_angles(
                         proton_solar_wind_speed.nominal_value)
+                    quality_flag |= SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED
 
             except Exception as e:
                 logger.info(f"Exception occurred at epoch {epoch}, continuing with fill value", exc_info=True)
             proton_solar_wind_speeds.append(proton_solar_wind_speed)
             proton_solar_wind_clock_angles.append(clock_angle)
             proton_solar_wind_deflection_angles.append(deflection_angle)
+            proton_quality_flags.append(quality_flag)
 
         ten_minute_solar_wind_velocities = calculate_ten_minute_velocities(
             nominal_values(proton_solar_wind_speeds),
@@ -153,7 +157,7 @@ class SwapiProcessor(Processor):
         pui_data = SwapiL3PickupIonData(pui_metadata, np.array(pui_epochs), np.array(pui_cooling_index),
                                         np.array(pui_ionization_rate),
                                         np.array(pui_cutoff_speed), np.array(pui_background_rate),
-                                        np.array(pui_density), np.array(pui_temperature))
+                                        np.array(pui_density), np.array(pui_temperature), np.array(quality_flags))
 
         return pui_data
 

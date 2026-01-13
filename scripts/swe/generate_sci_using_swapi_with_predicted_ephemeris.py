@@ -31,7 +31,7 @@ def generate_swe_for_given_day(day: datetime):
                                                end_date=day_as_string, version='latest', descriptor='norm-dsrf')[0][
         'file_path']
 
-    swapi_l3a_file_name = f'imap_swapi_l3a_proton-sw_{day_as_string}_v002.cdf'
+    swapi_l3a_file_name = f'imap_swapi_l3a_proton-sw_{day_as_string}_v003.cdf'
 
     swe_l1b_file_name = imap_data_access.query(instrument='swe', data_level='l1b', start_date=day_as_string,
                                                end_date=day_as_string, version='latest', descriptor='sci')[0][

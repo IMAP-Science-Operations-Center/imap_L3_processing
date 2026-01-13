@@ -127,11 +127,14 @@ class TestModels(CdfModelTestCase):
         expected_temperature_std_dev = np.arange(100, step=10.)
         expected_temperature = uarray(expected_temperature_nominal, expected_temperature_std_dev)
 
+        expected_quality_flags = np.full(20, 0)
+
         data = SwapiL3PickupIonData(Mock(), epoch_data, expected_cooling_index, expected_ionization_rate,
-                                    expected_cutoff_speed, expected_background, expected_density, expected_temperature)
+                                    expected_cutoff_speed, expected_background, expected_density, expected_temperature,
+                                    expected_quality_flags)
         variables = data.to_data_product_variables()
 
-        self.assertEqual(14, len(variables))
+        self.assertEqual(15, len(variables))
         self.assert_variable_attributes(variables[0], epoch_data, EPOCH_CDF_VAR_NAME)
         self.assert_variable_attributes(variables[1], expected_epoch_delta, EPOCH_DELTA_CDF_VAR_NAME)
         self.assert_variable_attributes(variables[2], expected_cooling_index_nominal,
@@ -158,3 +161,5 @@ class TestModels(CdfModelTestCase):
                                         PUI_TEMPERATURE_CDF_VAR_NAME)
         self.assert_variable_attributes(variables[13], expected_temperature_std_dev,
                                         PUI_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[14], expected_quality_flags,
+                                        SWAPI_QUALITY_FLAGS_CDF_VAR_NAME)

@@ -371,3 +371,6 @@ def calculate_ten_minute_velocities(speeds: ndarray, deflection_angle: ndarray, 
         chunked_velocities.append(np.mean(velocity_vector[left_slice:left_slice + 10], axis=0))
         left_slice += 10
     return np.array(chunked_velocities)
+
+    [v1, v2, v3], [flag1, flag2, flag3]
+    [(v1, flags1), (...)]

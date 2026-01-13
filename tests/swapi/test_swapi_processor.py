@@ -200,7 +200,8 @@ class TestSwapiProcessor(TestCase):
                                                             ])
 
         actual_pui_metadata, actual_pui_epoch, actual_pui_cooling_index, actual_pui_ionization_rate, \
-            actual_pui_cutoff_speed, actual_pui_background_rate, actual_pui_density, actual_pui_temperature = mock_pickup_ion_data_constructor.call_args.args
+            actual_pui_cutoff_speed, actual_pui_background_rate, actual_pui_density, actual_pui_temperature, \
+            actual_quality_flags = mock_pickup_ion_data_constructor.call_args.args
         self.assertEqual(expected_pickup_ion_metadata, actual_pui_metadata)
         np.testing.assert_array_equal(np.array([initial_epoch + FIVE_MINUTES_IN_NANOSECONDS]), actual_pui_epoch)
         np.testing.assert_array_equal(np.array([1]), actual_pui_cooling_index)
@@ -209,6 +210,7 @@ class TestSwapiProcessor(TestCase):
         np.testing.assert_array_equal(np.array([4]), actual_pui_background_rate)
         np.testing.assert_array_equal(np.array([5]), actual_pui_density)
         np.testing.assert_array_equal(np.array([6]), actual_pui_temperature)
+        np.testing.assert_array_equal(np.array([SwapiL3Flags.NONE]), actual_quality_flags)
 
         mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a", "pui-he")
 
@@ -399,7 +401,8 @@ class TestSwapiProcessor(TestCase):
                                                             ])
 
         actual_pui_metadata, actual_pui_epoch, actual_pui_cooling_index, actual_pui_ionization_rate, \
-            actual_pui_cutoff_speed, actual_pui_background_rate, actual_pui_density, actual_pui_temperature = mock_pickup_ion_data_constructor.call_args.args
+            actual_pui_cutoff_speed, actual_pui_background_rate, actual_pui_density, actual_pui_temperature, \
+            actual_quality_flags = mock_pickup_ion_data_constructor.call_args.args
         self.assertEqual(expected_pickup_ion_metadata, actual_pui_metadata)
         np.testing.assert_array_equal(np.array([initial_epoch + FIVE_MINUTES_IN_NANOSECONDS]), actual_pui_epoch)
         np.testing.assert_array_equal(np.array([1]), actual_pui_cooling_index)
@@ -408,6 +411,7 @@ class TestSwapiProcessor(TestCase):
         np.testing.assert_array_equal(np.array([4]), actual_pui_background_rate)
         np.testing.assert_array_equal(np.array([5]), actual_pui_density)
         np.testing.assert_array_equal(np.array([6]), actual_pui_temperature)
+        np.testing.assert_array_equal(np.array([SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED]), actual_quality_flags)
 
         mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a", "pui-he")
 
@@ -869,6 +873,8 @@ class TestSwapiProcessor(TestCase):
 
         np.testing.assert_array_equal(nominal_values(product.temperature), [np.nan])
         np.testing.assert_array_equal(std_devs(product.temperature), [np.nan])
+
+        np.testing.assert_array_equal(product.quality_flags, [SwapiL3Flags.NONE])
 
 
     @patch('imap_l3_processing.utils.ImapAttributeManager')

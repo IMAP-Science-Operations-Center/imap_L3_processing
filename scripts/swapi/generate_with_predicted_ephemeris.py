@@ -40,7 +40,7 @@ def generate_swapi_for_given_day(descriptor: str, day: datetime):
 
     input_collection.download_all_files()
 
-    dependency_file_name = f'imap_swapi_l3a_{descriptor}_{day_as_string}_v002.json'
+    dependency_file_name = f'imap_swapi_l3a_{descriptor}_{day_as_string}_v003.json'
     output_filepath = DependencyFilePath(dependency_file_name)
 
     fullpath = output_filepath.construct_path()
@@ -50,7 +50,7 @@ def generate_swapi_for_given_day(descriptor: str, day: datetime):
 
     args_string = (f"imap_l3_data_processor.py "
                    f"--instrument swapi --data-level l3a --descriptor {descriptor} "
-                   f"--start-date {day_as_string} --version v002 "
+                   f"--start-date {day_as_string} --version v003 "
                    f"--dependency {dependency_file_name}")
 
     return subprocess.Popen([sys.executable, *args_string.split(" ")])
