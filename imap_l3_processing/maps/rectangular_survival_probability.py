@@ -75,17 +75,14 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
         elif sensor in (Sensor.Lo90, Sensor.Lo):
             initial_dataset.attrs['Logical_source'] = 'imap_lo'
         dataset = add_spacecraft_velocity_to_pset(initial_dataset)
-        dataset = calculate_ram_mask(dataset)
-
-        if spin_phase == SpinPhase.RamOnly:
-            dataset["directional_mask"] = dataset["ram_mask"]
-        else:
-            dataset["directional_mask"] = ~dataset["ram_mask"]
 
         if cg_corrected:
             energy_in_ev = energies * 1000
 
-            dataset = apply_compton_getting_correction(dataset, xr.DataArray(energy_in_ev))
+            dataset = apply_compton_getting_correction(
+                dataset,
+                xr.DataArray(energy_in_ev, dims=[CoordNames.ENERGY_ULTRA_L1C.value])
+            )
             self.az_el_points = xr.DataArray(
                 np.stack([dataset['hae_longitude'].values[0], dataset['hae_latitude'].values[0]], axis=2),
                 dims=[CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.GENERIC_PIXEL.value, CoordNames.AZ_EL_VECTOR.value],
@@ -110,6 +107,13 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
         else:
             self.az_el_points = hae_az_el_points
             exposure = l1c_dataset.exposure_times
+
+        dataset = calculate_ram_mask(dataset)
+
+        if spin_phase == SpinPhase.RamOnly:
+            dataset["directional_mask"] = dataset["ram_mask"]
+        else:
+            dataset["directional_mask"] = ~dataset["ram_mask"]
 
         if glows_dataset is not None:
             if cg_corrected:
@@ -169,8 +173,6 @@ class RectangularSurvivalProbabilitySkyMap(RectangularSkyMap):
         for sp_pset in survival_probability_pointing_sets:
             value_keys = ["survival_probability_times_exposure", "exposure"]
             self.project_pset_values_to_map(sp_pset, value_keys, pset_valid_mask=sp_pset.data["directional_mask"])
-
-        self.debug = self.data_1d
 
         self.data_1d = xr.Dataset({
             "exposure_weighted_survival_probabilities": self.data_1d["survival_probability_times_exposure"] /
