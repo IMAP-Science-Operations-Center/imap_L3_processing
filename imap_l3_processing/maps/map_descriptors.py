@@ -84,7 +84,7 @@ sensor_mapping = [
 quantity_mapping = [
     ("spx", MapQuantity.SpectralIndex),
     ("ena", MapQuantity.Intensity),
-    ("isnnbkgnd", MapQuantity.ISNBackgroundSubtracted)
+    ("isn", MapQuantity.ISNBackgroundSubtracted)
 ]
 
 cg_correction_mapping = [
@@ -116,8 +116,8 @@ grid_size_mapping = [
 def parse_map_descriptor(descriptor: str) -> Optional[MapDescriptorParts]:
     descriptor_regex = """
         (?P<sensor>hic|h45|h90|l090|ulc|u45|u90|ilo)-
-        (?P<quantity>ena|spx|isnnbkgnd)(?P<quantity_suffix>[a-zA-Z]*)-
-        (?P<species>h)-
+        (?P<quantity>ena|spx|isn)(?P<quantity_suffix>[a-zA-Z]*)-
+        (?P<species>h|o)-
         (?P<frame>sf|hf|hk)-
         (?P<survival_corrected>sp|nsp)-
         (?P<spin_phase>ram|anti|full)-
