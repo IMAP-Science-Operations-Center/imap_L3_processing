@@ -3,7 +3,7 @@ from pathlib import Path
 from unittest.mock import patch, Mock
 
 import numpy as np
-from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection
+from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection, AncillaryInput
 
 from imap_l3_processing.hi.hi_spectral_fit_dependencies import HiSpectralIndexDependencies
 from imap_l3_processing.maps.map_models import RectangularIntensityMapData, IntensityMapData
@@ -28,8 +28,11 @@ class TestHiSpectralFitDependencies(unittest.TestCase):
         "imap_l3_processing.hi.hi_spectral_fit_dependencies.RectangularIntensityMapData.read_from_path")
     def test_fetch_dependencies(self, mock_read_from_path, mock_download):
         file_name = "imap_hi_l3_h90-spx-h-hf-sp-full-hae-4deg-6mo_20250422_v001.cdf"
+        ancillary_file = "imap_hi_ancillary_20250422_v001.dat"
         processing_input = ProcessingInputCollection(
-            ScienceInput(file_name))
+            ScienceInput(file_name),
+            AncillaryInput(ancillary_file)
+        )
 
         dependency = HiSpectralIndexDependencies.fetch_dependencies(processing_input)
 

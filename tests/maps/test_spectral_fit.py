@@ -270,7 +270,25 @@ class TestSpectralFit(unittest.TestCase):
                 uncertainty = np.array(errors).reshape(1, len(energies), *spacial_dimension_shape)
 
                 result, result_error = fit_arrays_to_power_law(flux, uncertainty, energies)
-                np.testing.assert_array_almost_equal(result, np.array(np.nan).reshape(1, 1, *spacial_dimension_shape))
+                np.testing.assert_array_almost_equal(result,
+                                                     np.array(np.nan).reshape(1, 1, *spacial_dimension_shape))
+                np.testing.assert_array_almost_equal(result_error,
+                                                     np.array(np.nan).reshape(1, 1, *spacial_dimension_shape))
+
+    def test_returns_nan_when_there_are_less_than_2_positive_fluxes(self):
+        energies = np.geomspace(1, 1e10, 5)
+
+        flux_data = np.full_like(energies, 0)
+        errors = np.full_like(flux_data, 2)
+
+        for name, spacial_dimension_shape in [("rectangular", (1, 1)), ("healpix", (1,))]:
+            with self.subTest(name):
+                flux = np.array(flux_data).reshape(1, len(energies), *spacial_dimension_shape)
+                uncertainty = np.array(errors).reshape(1, len(energies), *spacial_dimension_shape)
+
+                result, result_error = fit_arrays_to_power_law(flux, uncertainty, energies)
+                np.testing.assert_array_almost_equal(result,
+                                                     np.array(np.nan).reshape(1, 1, *spacial_dimension_shape))
                 np.testing.assert_array_almost_equal(result_error,
                                                      np.array(np.nan).reshape(1, 1, *spacial_dimension_shape))
 
