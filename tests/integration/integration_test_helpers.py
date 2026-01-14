@@ -129,9 +129,18 @@ class RequestsGetPatcher:
 class mock_imap_data_access:
     def __init__(self, data_dir: Path, input_files: list[Path]):
         self.data_dir = data_dir
-        self.input_files = input_files
 
-        spice_file_paths = [input_file for input_file in input_files if isinstance(generate_imap_file_path(input_file.name), SPICEFilePath)]
+        valid_files = []
+        spice_file_paths = []
+        for input_file in input_files:
+            try:
+                imap_input_file_path = generate_imap_file_path(input_file.name)
+                valid_files.append(input_file)
+                if isinstance(imap_input_file_path, SPICEFilePath):
+                    spice_file_paths.append(input_file)
+            except:
+                continue
+        self.input_files = valid_files
 
         self.data_dir_patcher = patch.dict(imap_data_access.config, {"DATA_DIR": self.data_dir})
         self.download_patcher = patch.object(imap_data_access, "download", new=fake_download)
@@ -148,9 +157,12 @@ class mock_imap_data_access:
         self.data_dir.mkdir(exist_ok=True, parents=True)
 
         for file_path in self.input_files:
-            paths_to_generate = generate_imap_file_path(file_path.name).construct_path()
-            paths_to_generate.parent.mkdir(exist_ok=True, parents=True)
-            shutil.copy(src=file_path, dst=paths_to_generate)
+            try:
+                paths_to_generate = generate_imap_file_path(file_path.name).construct_path()
+                paths_to_generate.parent.mkdir(exist_ok=True, parents=True)
+                shutil.copy(src=file_path, dst=paths_to_generate)
+            except:
+                pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.data_dir_patcher.stop()
