@@ -315,7 +315,7 @@ class TestMapIntegration(unittest.TestCase):
         ]
 
         processing_input_collection = ProcessingInputCollection(
-            ScienceInput('imap_lo_l2_l090-isn-o-h-sf-nsp-ram-hae-6deg-1yr_20250415_v001.cdf'),
+            ScienceInput('imap_lo_l2_l090-isn-h-sf-nsp-ram-hae-6deg-1yr_20250415_v001.cdf'),
         )
 
         with (mock_imap_data_access(lo_imap_data_dir, input_files)):
