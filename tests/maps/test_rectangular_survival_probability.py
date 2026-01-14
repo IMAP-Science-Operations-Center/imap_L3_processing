@@ -72,7 +72,8 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
 
         self.mock_calculate_ram_mask_patcher = patch(
             'imap_l3_processing.maps.rectangular_survival_probability.calculate_ram_mask')
-        self.mock_calculate_ram_mask_patcher.start().side_effect = _mock_calculate_ram_mask
+        self.mock_calculate_ram_mask = self.mock_calculate_ram_mask_patcher.start()
+        self.mock_calculate_ram_mask.side_effect = _mock_calculate_ram_mask
 
     def tearDown(self):
         self.mock_add_spacecraft_velocity_to_pset_patcher.stop()
@@ -223,9 +224,11 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
 
         pset_with_sc_velocity, actual_hf_energies = mock_cg_correction.call_args[0]
         self.assertEqual(pset_with_sc_velocity, self.mock_add_sc_velocity_to_pset.return_value)
+        self.mock_calculate_ram_mask.assert_called_once_with(mock_cg_correction.return_value)
 
         expected_energies_in_eV = hi_hf_energies * 1000
         np.testing.assert_array_equal(actual_hf_energies, expected_energies_in_eV)
+        self.assertEqual((CoordNames.ENERGY_ULTRA_L1C.value,), actual_hf_energies.dims)
 
         np.testing.assert_array_equal(cg_pointing_set.data['epoch'],
                                       self.l1c_hi_dataset.epoch_j2000 + (self.l1c_hi_dataset.epoch_delta / 2))
@@ -362,10 +365,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                     expected_mask
                 )
 
-    @patch("imap_l3_processing.maps.rectangular_survival_probability.add_spacecraft_velocity_to_pset")
-    @patch("imap_l3_processing.maps.rectangular_survival_probability.calculate_ram_mask")
-    def test_exposure_weighted_survivals_are_repeated_to_match_l1c_shape(self, mock_calculate_ram_mask,
-                                                                         mock_add_spacecraft_velocity_to_pset):
+    def test_exposure_weighted_survivals_are_repeated_to_match_l1c_shape(self):
         pointing_set = RectangularSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
                                                                  self.glows_data,
                                                                  self.hi_energies)
