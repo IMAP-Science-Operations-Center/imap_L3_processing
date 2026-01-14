@@ -373,9 +373,7 @@ def calculate_ten_minute_velocities(speeds: ndarray, deflection_angle: ndarray, 
     while left_slice < len(velocity_vector):
         ten_min_slice = slice(left_slice, left_slice + 10)
 
-        ten_min_quality_flag = SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED \
-            if any(qf != SwapiL3Flags.NONE for qf in quality_flags[ten_min_slice]) \
-            else SwapiL3Flags.NONE
+        ten_min_quality_flag = int(np.sum(np.unique(quality_flags[ten_min_slice])))
 
         chunked_velocities.append(np.mean(velocity_vector[ten_min_slice], axis=0))
         chunked_quality_flags.append(ten_min_quality_flag)

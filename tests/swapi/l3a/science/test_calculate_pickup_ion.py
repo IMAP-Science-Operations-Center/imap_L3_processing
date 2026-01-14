@@ -797,6 +797,44 @@ class TestCalculatePickupIon(SpiceTestCase):
         np.testing.assert_array_equal(averaged_velocities, expected_averaged_velocities)
         np.testing.assert_array_equal(actual_quality_flags, expected_quality_flags)
 
+    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_solar_wind_velocity_vector")
+    def test_calculate_ten_minute_velocities_with_multiple_quality_flag(self,
+                                                                        mock_calculate_solar_wind_velocity_vector):
+        x = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21])
+        y = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180,
+                      190, 200, 210])
+        z = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180,
+                      190, 200, 210])
+
+        OTHER_QUALITY_FLAG = 2 ** 3
+        one_min_quality_flags = np.repeat(SwapiL3Flags.NONE, 21)
+
+        one_min_quality_flags[13] = SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED
+        one_min_quality_flags[14] = OTHER_QUALITY_FLAG
+
+        mock_calculate_solar_wind_velocity_vector.return_value = np.transpose([x, y, z])
+
+        mock_speed = Mock()
+        mock_deflection_angles = Mock()
+        mock_clock_angles = Mock()
+        averaged_velocities, actual_quality_flags = calculate_ten_minute_velocities(mock_speed,
+                                                                                    mock_deflection_angles,
+                                                                                    mock_clock_angles,
+                                                                                    one_min_quality_flags)
+
+        expected_averaged_velocities = np.array([[5.5, 55, 55], [15.5, 155, 155], [21, 210, 210]])
+        expected_quality_flags = np.array([
+            SwapiL3Flags.NONE,
+            SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED | OTHER_QUALITY_FLAG,
+            SwapiL3Flags.NONE,
+        ])
+
+        mock_calculate_solar_wind_velocity_vector.assert_called_with(mock_speed, mock_deflection_angles,
+                                                                     mock_clock_angles)
+
+        np.testing.assert_array_equal(averaged_velocities, expected_averaged_velocities)
+        np.testing.assert_array_equal(actual_quality_flags, expected_quality_flags)
+
     def test_calculate_pickup_ion_velocities(self):
         speed = np.array([400, 390, 400, 410, 400])
         elevation = np.array([-90, 0, 0, 0, 90])
