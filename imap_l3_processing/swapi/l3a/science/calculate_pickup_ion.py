@@ -372,7 +372,7 @@ def calculate_ten_minute_velocities(speeds: ndarray, deflection_angle: ndarray, 
     chunked_quality_flags = []
     while left_slice < len(velocity_vector):
         ten_min_slice = slice(left_slice, left_slice + 10)
-        ten_min_quality_flag = np.bitwise_or.reduce(np.unique(quality_flags[ten_min_slice]))
+        ten_min_quality_flag = np.bitwise_or.reduce(quality_flags[ten_min_slice])
 
         chunked_velocities.append(np.mean(velocity_vector[ten_min_slice], axis=0))
         chunked_quality_flags.append(ten_min_quality_flag)
