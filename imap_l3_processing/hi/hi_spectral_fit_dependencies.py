@@ -15,7 +15,8 @@ class HiSpectralIndexDependencies(SpectralIndexDependencies):
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection) -> HiSpectralIndexDependencies:
-        input_map_filenames = dependencies.get_file_paths(source="hi")
+        input_map_filenames = dependencies.get_file_paths(source="hi", data_type="l2") + \
+                              dependencies.get_file_paths(source="hi", data_type="l3")
 
         if len(input_map_filenames) != 1:
             raise ValueError("Missing Hi dependency.")
