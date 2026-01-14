@@ -113,9 +113,9 @@ def fit_arrays_to_power_law(fluxes: np.ndarray, uncertainties: np.ndarray, energ
             uncertainty = uncertainty[~flux_or_error_is_invalid]
             filtered_energy = energy[~flux_or_error_is_invalid]
 
-            if len(flux) > 1:
+            positive_flux = flux > 0
+            if np.count_nonzero(positive_flux) > 1:
                 keywords = {'xval': filtered_energy, 'yval': flux, 'errval': uncertainty}
-                positive_flux = flux > 0
                 result = scipy.stats.linregress(np.log10(filtered_energy[positive_flux]), np.log10(flux[positive_flux]))
 
                 initial_parameters = (result.intercept, -result.slope)
