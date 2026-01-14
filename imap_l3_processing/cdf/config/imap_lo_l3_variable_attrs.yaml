@@ -520,29 +520,6 @@ bg_rate_sys_err:
   LABL_PTR_2: longitude_label
   LABL_PTR_3: latitude_label
   SCALETYP: linear
-bg_subtracted_stat_err:
-  NAME: bg_subtracted_stat_err
-  DATA_TYPE: CDF_REAL4
-  CATDESC: The statisical err of the background subtraction?
-  DEPEND_0: epoch
-  DEPEND_1: energy
-  DEPEND_2: longitude
-  DEPEND_3: latitude
-  VAR_TYPE: data
-  RECORD_VARYING: RV
-  DISPLAY_TYPE: map_image
-  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: BG subtracted stat err
-  FORMAT: F12.1
-  LABLAXIS: BG Statistical Error
-  UNITS: cm -2 s -1 sr -1 keV -1
-  VALIDMIN: 0.0
-  VALIDMAX: 1.00E+9
-  FILLVAL: -1.00E+31
-  LABL_PTR_1: energy_label
-  LABL_PTR_2: longitude_label
-  LABL_PTR_3: latitude_label
-  SCALETYP: linear
 ena_count_rate:
   NAME: ena_count_rate
   DATA_TYPE: CDF_REAL4
@@ -591,10 +568,10 @@ ena_count_rate_stat_uncert:
   LABL_PTR_2: longitude_label
   LABL_PTR_3: latitude_label
   SCALETYP: linear
-isn_bg_rate_subtracted:
-  NAME: isn_bg_rate_subtracted
+isn_rate_bg_subtracted:
+  NAME: isn_rate_bg_subtracted
   DATA_TYPE: CDF_REAL4
-  CATDESC: ISN Background rate.
+  CATDESC: ISN rate, background subtracted.
   DEPEND_0: epoch
   DEPEND_1: energy
   DEPEND_2: longitude
@@ -603,9 +580,35 @@ isn_bg_rate_subtracted:
   RECORD_VARYING: RV
   DISPLAY_TYPE: map_image
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Counts
+  FIELDNAM: ISN Rate bg sub
   FORMAT: F12.1
-  LABLAXIS: ISN BG Rate
+  LABLAXIS: ISN Rate
+  UNITS: count s-1
+  VALIDMIN: -1.00E+9
+  VALIDMAX: 1.00E+9
+  FILLVAL: -1.00E+31
+  LABL_PTR_1: energy_label
+  LABL_PTR_2: longitude_label
+  LABL_PTR_3: latitude_label
+  DELTA_PLUS_VAR: isn_rate_bg_subtracted_stat_uncert
+  DELTA_MINUS_VAR: isn_rate_bg_subtracted_stat_uncert
+  SCALETYP: linear
+  VAR_NOTE: Negative values indicate poor counting statistics and should not be ignored; average over time.
+isn_rate_bg_subtracted_stat_uncert:
+  NAME: isn_rate_bg_subtracted_stat_uncert
+  DATA_TYPE: CDF_REAL4
+  CATDESC: ISN rate, background subtracted statistical uncertainty.
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DEPEND_2: longitude
+  DEPEND_3: latitude
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: map_image
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: ISN rate bg sub stat unc
+  FORMAT: F12.1
+  LABLAXIS: Statistical Unc.
   UNITS: count s-1
   VALIDMIN: 0.0
   VALIDMAX: 1.00E+9
@@ -613,13 +616,11 @@ isn_bg_rate_subtracted:
   LABL_PTR_1: energy_label
   LABL_PTR_2: longitude_label
   LABL_PTR_3: latitude_label
-  DELTA_PLUS_VAR: isn_bg_rate_subtracted_stat_uncert
-  DELTA_MINUS_VAR: isn_bg_rate_subtracted_stat_uncert
   SCALETYP: linear
-isn_bg_rate_subtracted_stat_uncert:
-  NAME: isn_bg_rate_subtracted_stat_uncert
+isn_rate_bg_subtracted_sys_err:
+  NAME: isn_rate_bg_subtracted_sys_err
   DATA_TYPE: CDF_REAL4
-  CATDESC: ISN Background rate subtracted uncertainty.
+  CATDESC: ISN rate, background subtracted non-statistical error.
   DEPEND_0: epoch
   DEPEND_1: energy
   DEPEND_2: longitude
@@ -628,32 +629,9 @@ isn_bg_rate_subtracted_stat_uncert:
   RECORD_VARYING: RV
   DISPLAY_TYPE: map_image
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: ISN Background rate subtracted uncertainty
+  FIELDNAM: ISN rate bg sub sys err
   FORMAT: F12.1
-  LABLAXIS: ISN BG Subtracted Rate
-  UNITS: count s-1
-  VALIDMIN: 0.0
-  VALIDMAX: 1.00E+9
-  FILLVAL: -1.00E+31
-  LABL_PTR_1: energy_label
-  LABL_PTR_2: longitude_label
-  LABL_PTR_3: latitude_label
-  SCALETYP: linear
-isn_bg_rate_subtracted_sys_err:
-  NAME: isn_bg_rate_subtracted_sys_err
-  DATA_TYPE: CDF_REAL4
-  CATDESC: ISN Background rate systematic error
-  DEPEND_0: epoch
-  DEPEND_1: energy
-  DEPEND_2: longitude
-  DEPEND_3: latitude
-  VAR_TYPE: data
-  RECORD_VARYING: RV
-  DISPLAY_TYPE: map_image
-  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: ISN Background subtracted rate systematic error
-  FORMAT: F12.1
-  LABLAXIS: ISN BG Subtracted Rate Systematic Error
+  LABLAXIS: Non-statistical Error
   UNITS: count s-1
   VALIDMIN: 0.0
   VALIDMAX: 1.00E+9

@@ -117,10 +117,10 @@ def isn_background_subtraction(isn_rate_data: ISNRateData) -> ISNBackgroundSubtr
         ena_count_rate_stat_uncert=isn_rate_data.ena_count_rate_stat_uncert,
         latitude=isn_rate_data.latitude,
         longitude=isn_rate_data.longitude,
-        isn_bg_rate_subtracted=isn_rate_background_subtracted,
-        isn_bg_rate_subtracted_stat_uncert=np.sqrt(np.square(isn_rate_data.ena_count_rate_stat_uncert) + np.square(
+        isn_rate_bg_subtracted=isn_rate_background_subtracted,
+        isn_rate_bg_subtracted_stat_unc=np.sqrt(np.square(isn_rate_data.ena_count_rate_stat_uncert) + np.square(
             isn_rate_data.bg_rate_stat_uncert)),
-        isn_bg_rate_subtracted_sys_err=isn_rate_data.bg_rate_sys_err
+        isn_rate_bg_subtracted_sys_err=isn_rate_data.bg_rate_sys_err
     )
 
     return ISNBackgroundSubtractedMapData(isn_rate_map_data=map_data)
