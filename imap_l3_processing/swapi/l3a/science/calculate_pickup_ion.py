@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-
+from pathlib import Path
 import lmfit
 import numpy as np
 import scipy.optimize
@@ -9,6 +9,7 @@ import spiceypy
 import uncertainties
 from imap_processing.swapi.l2 import swapi_l2
 from lmfit import Parameters
+from matplotlib import pyplot as plt
 from numpy import ndarray
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray
@@ -16,6 +17,7 @@ from uncertainties.unumpy import uarray
 from imap_l3_processing.constants import PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, \
     HE_PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS, ONE_AU_IN_KM, \
     METERS_PER_KILOMETER, CENTIMETERS_PER_METER, ONE_SECOND_IN_NANOSECONDS, BOLTZMANN_CONSTANT_JOULES_PER_KELVIN
+from imap_l3_processing.maps.map_models import convert_tt2000_time_to_datetime
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_combined_sweeps
 from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import calculate_sw_speed
 from imap_l3_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table import \
@@ -88,6 +90,27 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
                             ])))
 
     if result.redchi > 10:
+        energies = [e for (i, e) in indices]
+        plt.loglog(energies, extracted_count_rates, label='Data')
+        parvals = result.params.valuesdict()
+
+        cooling_index = parvals["cooling_index"]
+        ionization_rate = parvals["ionization_rate"]
+        cutoff_speed = parvals["cutoff_speed"]
+        background_count_rate = parvals["background_count_rate"]
+
+        fit_params = FittingParameters(cooling_index, ionization_rate, cutoff_speed, background_count_rate)
+        modeled_rates = model_count_rate_calculator.model_count_rate(indices, fit_params, ephemeris_time)
+        plt.loglog(energies, modeled_rates, label='Model')
+        plt.legend()
+        plt.suptitle(f'Epoch {convert_tt2000_time_to_datetime(center_of_epoch).strftime('%Y%m%d %H:%M:%S')}')
+        plt.title(
+            f'Cool: {cooling_index:0.3E}, Ion: {ionization_rate:0.3E}, Cutoff: {cutoff_speed:0.3E}, Bg: {background_count_rate:0.3E}')
+
+        plt.figtext(0.99, 0.99, f"chisq_red = {result.redchi:.2g}", horizontalalignment='right', verticalalignment= 'top')
+        Path('pui_fittings').mkdir(exist_ok=True)
+        plt.savefig(f'pui_fittings/{convert_tt2000_time_to_datetime(center_of_epoch).strftime('%Y%m%d_%H%M%S')}.png')
+        plt.clf()
         raise Exception(f"Failed to fit - chi-squared too large {result.redchi}")
     param_vals = result.uvars
     if result.uvars is None:

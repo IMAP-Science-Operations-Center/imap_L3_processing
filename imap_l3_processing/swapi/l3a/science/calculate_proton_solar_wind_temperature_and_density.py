@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Callable
 
 import numpy as np
@@ -13,6 +14,7 @@ from uncertainties.unumpy import uarray, nominal_values, std_devs
 from imap_l3_processing import constants
 from imap_l3_processing.constants import PROTON_MASS_KG, BOLTZMANN_CONSTANT_JOULES_PER_KELVIN, METERS_PER_KILOMETER, \
     CENTIMETERS_PER_METER, SWAPI_EFFECTIVE_AREA_CM2
+from imap_l3_processing.maps.map_models import convert_tt2000_time_to_datetime
 from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import get_proton_peak_indices, \
     calculate_sw_speed_h_plus
 from imap_l3_processing.swapi.l3a.science.speed_calculation import find_peak_center_of_mass_index, interpolate_energy, \
@@ -45,7 +47,7 @@ def proton_count_rate_model(efficiency, ev_per_q, density_per_cm3, temperature, 
 
 
 def calculate_proton_solar_wind_temperature_and_density_for_one_sweep(coincident_count_rates: uarray, energy: ndarray,
-                                                                      efficiency: float):
+                                                                      efficiency: float, start_time):
     coincident_count_rates = extract_coarse_sweep(coincident_count_rates)
     energy = extract_coarse_sweep(energy)
     proton_peak_indices = get_proton_peak_indices(coincident_count_rates)
@@ -72,18 +74,35 @@ def calculate_proton_solar_wind_temperature_and_density_for_one_sweep(coincident
     residual = abs(model(peak_energies_filtered, *values) - nominal_values(filtered_peak_count_rates))
     reduced_chisq = np.sum(np.square(residual / std_devs(filtered_peak_count_rates))) / (len(peak_energies_filtered) - 2)
     if reduced_chisq > 10:
+        Path('proton_sw_fittings').mkdir(exist_ok=True)
+
+        plt.errorbar(x=peak_energies_filtered, y=nominal_values(filtered_peak_count_rates),
+                     yerr=std_devs(filtered_peak_count_rates), label="Data")
+        smooth_energies = np.geomspace(peak_energies_filtered[0], peak_energies_filtered[-1], 100)
+        plt.loglog(smooth_energies, model(smooth_energies, *values), label="Model")
+
+        plt.figtext(0.99, 0.99, f"chisq_red = {reduced_chisq:.2g}", horizontalalignment='right', verticalalignment= 'top')
+        plt.legend()
+        converted_epoch = convert_tt2000_time_to_datetime(start_time)
+        plt.suptitle(f'Epoch: {converted_epoch.strftime('%Y-%m-%d %H:%M:%S')}')
+        plt.title(f'Density: {values[0]:.4g}, Temperature: {values[1]:.4g}')
+        plt.yscale("log")
+        plt.xscale("log")
+        plt.savefig(f'proton_sw_fittings/{converted_epoch.strftime('%Y%m%dT%H%M%S')}.png')
+        plt.clf()
         raise ValueError("Failed to fit - chi-squared too large", reduced_chisq)
+
     density, temperature = correlated_values(values, covariance)
 
     return temperature, density
 
 
-def calculate_uncalibrated_proton_solar_wind_temperature_and_density(coincident_count_rates: uarray, energy: ndarray, efficiency: float):
+def calculate_uncalibrated_proton_solar_wind_temperature_and_density(coincident_count_rates: uarray, energy: ndarray, efficiency: float, datachunk_sci_start_time):
     temperatures_per_sweep = []
     densities_per_sweep = []
-    for sweep, single_energy in zip(coincident_count_rates, energy):
+    for sweep, single_energy, start_time in zip(coincident_count_rates, energy, datachunk_sci_start_time):
         temperature, density = calculate_proton_solar_wind_temperature_and_density_for_one_sweep(sweep, single_energy,
-                                                                                                 efficiency)
+                                                                                                 efficiency, start_time)
         temperatures_per_sweep.append(temperature)
         densities_per_sweep.append(density)
 
@@ -147,9 +166,9 @@ class ProtonTemperatureAndDensityCalibrationTable:
 def calculate_proton_solar_wind_temperature_and_density(lookup_table: ProtonTemperatureAndDensityCalibrationTable,
                                                         proton_solar_wind_speed, deflection_angle,
                                                         clock_angle, coincident_count_rates: uarray, energy: ndarray,
-                                                        efficiency: float):
+                                                        efficiency: float, datachunk_sci_start_time):
     temperature, density = calculate_uncalibrated_proton_solar_wind_temperature_and_density(coincident_count_rates,
-                                                                                            energy, efficiency)
+                                                                                            energy, efficiency, datachunk_sci_start_time)
     calibrated_temperature = lookup_table.calibrate_temperature(proton_solar_wind_speed, deflection_angle, clock_angle,
                                                                 density,
                                                                 temperature)

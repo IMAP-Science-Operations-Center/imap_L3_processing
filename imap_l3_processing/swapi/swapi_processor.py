@@ -248,7 +248,8 @@ class SwapiProcessor(Processor):
                     clock_angle,
                     coincidence_count_rates_with_uncertainty,
                     data_chunk.energy,
-                    dependencies.efficiency_calibration_table.get_proton_efficiency_for(epoch_center_of_chunk)
+                    dependencies.efficiency_calibration_table.get_proton_efficiency_for(epoch_center_of_chunk),
+                    data_chunk.sci_start_time
                 )
 
             except Exception as e:
