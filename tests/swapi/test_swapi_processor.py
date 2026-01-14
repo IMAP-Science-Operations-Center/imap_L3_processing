@@ -92,9 +92,7 @@ class TestSwapiProcessor(TestCase):
         mock_calculate_pickup_ion.return_value = expected_fitting_params
         mock_calculate_helium_pui_density.return_value = 5
         mock_calculate_helium_pui_temperature.return_value = 6
-        mock_calculate_ten_minute_velocities.return_value = np.array([
-            [17, 18, 19]
-        ])
+        mock_calculate_ten_minute_velocities.return_value = (np.array([[17, 18, 19]]), sentinel.quality_flags_none)
 
         science_input = ScienceInput(
             f'imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf')
@@ -187,9 +185,9 @@ class TestSwapiProcessor(TestCase):
         self.assertEqual(mock_helium_inflow_vector, helium_inflow_vector)
 
         mock_calculate_ten_minute_velocities.assert_called_with([returned_proton_sw_speed.nominal_value],
-                                                                [
-                                                                    returned_proton_sw_deflection_angle.nominal_value],
-                                                                [returned_proton_sw_clock_angle.nominal_value])
+                                                                [returned_proton_sw_deflection_angle.nominal_value],
+                                                                [returned_proton_sw_clock_angle.nominal_value],
+                                                                np.array([SwapiL3Flags.NONE]))
         mock_manager.add_global_attribute.assert_has_calls([call("Data_version", outgoing_version),
                                                             call("Generation_date",
                                                                  date.today().strftime("%Y%m%d")),
@@ -210,7 +208,7 @@ class TestSwapiProcessor(TestCase):
         np.testing.assert_array_equal(np.array([4]), actual_pui_background_rate)
         np.testing.assert_array_equal(np.array([5]), actual_pui_density)
         np.testing.assert_array_equal(np.array([6]), actual_pui_temperature)
-        np.testing.assert_array_equal(np.array([SwapiL3Flags.NONE]), actual_quality_flags)
+        self.assertEqual(sentinel.quality_flags_none, actual_quality_flags)
 
         mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a", "pui-he")
 
@@ -285,9 +283,8 @@ class TestSwapiProcessor(TestCase):
         mock_calculate_pickup_ion.return_value = expected_fitting_params
         mock_calculate_helium_pui_density.return_value = 5
         mock_calculate_helium_pui_temperature.return_value = 6
-        mock_calculate_ten_minute_velocities.return_value = np.array([
-            [17, 18, 19]
-        ])
+        mock_calculate_ten_minute_velocities.return_value = (np.array([[17, 18, 19]]),
+                                                             sentinel.quality_flags_angles_estimated)
 
         science_input = ScienceInput(
             f'imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf')
@@ -358,7 +355,8 @@ class TestSwapiProcessor(TestCase):
 
         mock_calculate_ten_minute_velocities.assert_called_with([returned_proton_sw_speed.nominal_value],
                                                                 [returned_proton_sw_deflection_angle],
-                                                                [returned_proton_sw_clock_angle])
+                                                                [returned_proton_sw_clock_angle],
+                                                                np.array([SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED]))
 
         instrument_response_lut, geometric_factor_lut, energies, count_rates, pui_epoch, background_rate_cutoff, \
             sw_velocity_vector, density_of_neutral_helium_lut, efficiency_lut, hydrogen_inflow_vector, helium_inflow_vector = mock_calculate_pickup_ion.call_args.args
@@ -411,7 +409,7 @@ class TestSwapiProcessor(TestCase):
         np.testing.assert_array_equal(np.array([4]), actual_pui_background_rate)
         np.testing.assert_array_equal(np.array([5]), actual_pui_density)
         np.testing.assert_array_equal(np.array([6]), actual_pui_temperature)
-        np.testing.assert_array_equal(np.array([SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED]), actual_quality_flags)
+        self.assertEqual(sentinel.quality_flags_angles_estimated, actual_quality_flags)
 
         mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a", "pui-he")
 
@@ -511,7 +509,6 @@ class TestSwapiProcessor(TestCase):
             [chunk_of_five],
         ]
 
-
         swapi_l3a_dependencies = create_swapi_l3a_dependencies_with_mocks()
         mock_swapi_l3_dependencies_class.fetch_dependencies.return_value = swapi_l3a_dependencies
 
@@ -571,7 +568,8 @@ class TestSwapiProcessor(TestCase):
         self.assertEqual(swapi_l3a_dependencies.efficiency_calibration_table.get_proton_efficiency_for.return_value,
                          mock_proton_calculate_temperature_and_density.call_args_list[0].args[6])
 
-        swapi_l3a_dependencies.efficiency_calibration_table.get_proton_efficiency_for.assert_called_once_with(initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS)
+        swapi_l3a_dependencies.efficiency_calibration_table.get_proton_efficiency_for.assert_called_once_with(
+            initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS)
 
         (actual_proton_metadata, actual_proton_epoch, actual_proton_sw_speed, actual_proton_sw_temperature,
          actual_proton_sw_density, actual_proton_sw_clock_angle,
@@ -622,14 +620,14 @@ class TestSwapiProcessor(TestCase):
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3ADependencies')
     @patch('imap_l3_processing.processor.spiceypy')
     def test_process_l3a_proton_estimates_angles_if_chisq_too_high(self, mock_spicepy,
-                                                               mock_swapi_l3_dependencies_class,
-                                                               mock_estimate_deflection_and_clock_angles,
-                                                               mock_proton_calculate_temperature_and_density,
-                                                               mock_calculate_proton_solar_wind_speed,
-                                                               mock_chunk_l2_data, mock_write_cdf,
-                                                               mock_proton_solar_wind_data_constructor,
-                                                               mock_imap_attribute_manager
-                                                               ):
+                                                                   mock_swapi_l3_dependencies_class,
+                                                                   mock_estimate_deflection_and_clock_angles,
+                                                                   mock_proton_calculate_temperature_and_density,
+                                                                   mock_calculate_proton_solar_wind_speed,
+                                                                   mock_chunk_l2_data, mock_write_cdf,
+                                                                   mock_proton_solar_wind_data_constructor,
+                                                                   mock_imap_attribute_manager
+                                                                   ):
         instrument = 'swapi'
         incoming_data_level = 'l2'
         dependency_start_date = datetime.strftime(datetime(2025, 1, 1), "%Y%m%d")
@@ -765,7 +763,6 @@ class TestSwapiProcessor(TestCase):
 
         input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date, input_version)
 
-
         swapi_processor = SwapiProcessor(
             Mock(), input_metadata)
         with self.assertLogs(logger) as log_context:
@@ -810,7 +807,6 @@ class TestSwapiProcessor(TestCase):
 
         input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date, input_version)
 
-
         swapi_processor = SwapiProcessor(
             Mock(), input_metadata)
         with self.assertLogs(logger) as log_context:
@@ -847,14 +843,13 @@ class TestSwapiProcessor(TestCase):
 
         input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date, input_version)
 
-
         swapi_processor = SwapiProcessor(
             Mock(), input_metadata)
         with self.assertLogs(logger) as log_context:
             product = swapi_processor.process_l3a_pui(data=chunk_of_five, dependencies=Mock())
 
         self.assertIsInstance(product, SwapiL3PickupIonData)
-        np.testing.assert_array_equal(product.epoch, initial_epoch+FIVE_MINUTES_IN_NANOSECONDS)
+        np.testing.assert_array_equal(product.epoch, initial_epoch + FIVE_MINUTES_IN_NANOSECONDS)
 
         np.testing.assert_array_equal(nominal_values(product.cooling_index), [np.nan])
         np.testing.assert_array_equal(std_devs(product.cooling_index), [np.nan])
@@ -875,7 +870,6 @@ class TestSwapiProcessor(TestCase):
         np.testing.assert_array_equal(std_devs(product.temperature), [np.nan])
 
         np.testing.assert_array_equal(product.quality_flags, [SwapiL3Flags.NONE])
-
 
     @patch('imap_l3_processing.utils.ImapAttributeManager')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3AlphaSolarWindData')
@@ -977,7 +971,8 @@ class TestSwapiProcessor(TestCase):
         self.assertEqual(swapi_l3a_dependencies.efficiency_calibration_table.get_alpha_efficiency_for.return_value,
                          mock_alpha_calculate_temperature_and_density.call_args_list[0].args[4])
 
-        swapi_l3a_dependencies.efficiency_calibration_table.get_alpha_efficiency_for.assert_called_once_with(initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS)
+        swapi_l3a_dependencies.efficiency_calibration_table.get_alpha_efficiency_for.assert_called_once_with(
+            initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS)
 
         mock_chunk_l2_data.assert_has_calls([call(sentinel.swapi_l2_data, 5)])
 

@@ -25,6 +25,7 @@ from imap_l3_processing.swapi.l3b.science.efficiency_calibration_table import Ef
 from imap_l3_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
 from imap_l3_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable, \
     InstrumentResponseLookupTableCollection
+from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 
 
 def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_factor_calibration_table,
@@ -363,14 +364,22 @@ def calculate_solar_wind_velocity_vector(speeds: ndarray, deflection_angle: ndar
     return calculate_velocity_vector(-speeds, elevation_angle, clock_angle)
 
 
-def calculate_ten_minute_velocities(speeds: ndarray, deflection_angle: ndarray, clock_angle: ndarray) -> ndarray:
+def calculate_ten_minute_velocities(speeds: ndarray, deflection_angle: ndarray, clock_angle: ndarray,
+                                    quality_flags: list[SwapiL3Flags]) -> (ndarray, ndarray):
     velocity_vector = calculate_solar_wind_velocity_vector(speeds, deflection_angle, clock_angle)
     left_slice = 0
     chunked_velocities = []
+    chunked_quality_flags = []
     while left_slice < len(velocity_vector):
-        chunked_velocities.append(np.mean(velocity_vector[left_slice:left_slice + 10], axis=0))
-        left_slice += 10
-    return np.array(chunked_velocities)
+        ten_min_slice = slice(left_slice, left_slice + 10)
 
-    [v1, v2, v3], [flag1, flag2, flag3]
-    [(v1, flags1), (...)]
+        ten_min_quality_flag = SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED \
+            if any(qf != SwapiL3Flags.NONE for qf in quality_flags[ten_min_slice]) \
+            else SwapiL3Flags.NONE
+
+        chunked_velocities.append(np.mean(velocity_vector[ten_min_slice], axis=0))
+        chunked_quality_flags.append(ten_min_quality_flag)
+
+        left_slice += 10
+
+    return np.array(chunked_velocities), np.array(chunked_quality_flags)

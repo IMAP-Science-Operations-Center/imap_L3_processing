@@ -35,9 +35,10 @@ from imap_l3_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependen
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.utils import save_data
 
-logger=logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 MAXIMUM_ALLOWED_PROTON_SW_FITTING_CHI_SQ = 10
+
 
 class SwapiProcessor(Processor):
     def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
@@ -100,10 +101,11 @@ class SwapiProcessor(Processor):
             proton_solar_wind_deflection_angles.append(deflection_angle)
             proton_quality_flags.append(quality_flag)
 
-        ten_minute_solar_wind_velocities = calculate_ten_minute_velocities(
+        ten_minute_solar_wind_velocities, pui_quality_flags = calculate_ten_minute_velocities(
             nominal_values(proton_solar_wind_speeds),
             nominal_values(proton_solar_wind_deflection_angles),
-            nominal_values(proton_solar_wind_clock_angles))
+            nominal_values(proton_solar_wind_clock_angles),
+            proton_quality_flags)
         pui_epochs = []
         pui_cooling_index = []
         pui_ionization_rate = []
@@ -124,7 +126,8 @@ class SwapiProcessor(Processor):
                         or np.any(np.isnan(sw_velocity))):
                     raise ValueError("Fill values in input data")
                 fit_params = calculate_pickup_ion_values(dependencies.instrument_response_calibration_table,
-                                                         dependencies.geometric_factor_calibration_table, data_chunk.energy,
+                                                         dependencies.geometric_factor_calibration_table,
+                                                         data_chunk.energy,
                                                          data_chunk.coincidence_count_rate,
                                                          epoch, 0.1,
                                                          sw_velocity,
@@ -157,7 +160,7 @@ class SwapiProcessor(Processor):
         pui_data = SwapiL3PickupIonData(pui_metadata, np.array(pui_epochs), np.array(pui_cooling_index),
                                         np.array(pui_ionization_rate),
                                         np.array(pui_cutoff_speed), np.array(pui_background_rate),
-                                        np.array(pui_density), np.array(pui_temperature), np.array(quality_flags))
+                                        np.array(pui_density), np.array(pui_temperature), pui_quality_flags)
 
         return pui_data
 
@@ -169,16 +172,15 @@ class SwapiProcessor(Processor):
         alpha_solar_wind_temperatures = []
 
         for data_chunk in chunk_l2_data(data, 5):
-            alpha_solar_wind_speed= ufloat(np.nan, np.nan)
-            alpha_density= ufloat(np.nan, np.nan)
-            alpha_temperature= ufloat(np.nan, np.nan)
+            alpha_solar_wind_speed = ufloat(np.nan, np.nan)
+            alpha_density = ufloat(np.nan, np.nan)
+            alpha_temperature = ufloat(np.nan, np.nan)
             epoch = data_chunk.sci_start_time[0] + THIRTY_SECONDS_IN_NANOSECONDS
             try:
                 if np.any(np.isnan(extract_coarse_sweep(data_chunk.coincidence_count_rate))):
                     raise ValueError("Fill values in input data")
                 coincidence_count_rates_with_uncertainty = uarray(data_chunk.coincidence_count_rate,
                                                                   data_chunk.coincidence_count_rate_uncertainty)
-
 
                 alpha_solar_wind_speed = calculate_alpha_solar_wind_speed(coincidence_count_rates_with_uncertainty,
                                                                           data_chunk.energy)
@@ -195,7 +197,6 @@ class SwapiProcessor(Processor):
                 alpha_solar_wind_speeds.append(alpha_solar_wind_speed)
                 alpha_solar_wind_densities.append(alpha_density)
                 alpha_solar_wind_temperatures.append(alpha_temperature)
-
 
         alpha_solar_wind_speed_metadata = replace(self.input_metadata, descriptor="alpha-sw")
         alpha_solar_wind_l3_data = SwapiL3AlphaSolarWindData(alpha_solar_wind_speed_metadata, np.array(epochs),
