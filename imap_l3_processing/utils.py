@@ -32,16 +32,16 @@ logger = logging.getLogger(__name__)
 
 
 class SpiceKernelTypes(enum.Enum):
-    Leapseconds = "leapseconds",
-    IMAPFrames = "imap_frames",
-    ScienceFrames = "science_frames",
-    EphemerisReconstructed = "ephemeris_reconstructed",
-    AttitudeHistory = "attitude_history",
-    PointingAttitude = "pointing_attitude",
-    PlanetaryEphemeris = "planetary_ephemeris",
-    SpacecraftClock = "spacecraft_clock",
-    EphemerisPredicted = "ephemeris_predicted",
-    PlanetaryConstants = "planetary_constants",
+    Leapseconds = "leapseconds"
+    IMAPFrames = "imap_frames"
+    ScienceFrames = "science_frames"
+    EphemerisReconstructed = "ephemeris_reconstructed"
+    AttitudeHistory = "attitude_history"
+    PointingAttitude = "pointing_attitude"
+    PlanetaryEphemeris = "planetary_ephemeris"
+    SpacecraftClock = "spacecraft_clock"
+    EphemerisPredicted = "ephemeris_predicted"
+    PlanetaryConstants = "planetary_constants"
 
 
 def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: Path = None,
@@ -271,7 +271,7 @@ def get_spice_kernels_file_names(start_date: datetime, end_date: datetime, kerne
     metakernel_url = urlparse(imap_data_access.config['DATA_ACCESS_URL'])._replace(path="metakernel").geturl()
 
     parameters: dict = {
-        'file_types': [kernel_type.value[0] for kernel_type in kernel_types],
+        'file_types': [kernel_type.value for kernel_type in kernel_types],
         'start_time': f"{int((start_date - datetime(2000, 1, 1, 12)).total_seconds())}",
         'end_time': f"{int((end_date - datetime(2000, 1, 1, 12)).total_seconds())}",
     }
@@ -288,7 +288,7 @@ def furnish_spice_metakernel(start_date: datetime, end_date: datetime, kernel_ty
 
     parameters: dict = {
         'spice_path': kernel_path,
-        'file_types': [kernel_type.value[0] for kernel_type in kernel_types],
+        'file_types': [kernel_type.value for kernel_type in kernel_types],
         'start_time': str(int((start_date - datetime(2000, 1, 1, 12)).total_seconds())),
         'end_time': str(int((end_date - datetime(2000, 1, 1, 12)).total_seconds())),
     }
