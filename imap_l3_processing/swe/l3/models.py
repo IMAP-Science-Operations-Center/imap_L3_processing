@@ -89,6 +89,7 @@ TOTAL_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME = "total_temperature_r
 CORE_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME = "core_temperature_tensor_integrated"
 HALO_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME = "halo_temperature_tensor_integrated"
 TOTAL_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME = "total_temperature_tensor_integrated"
+SWP_FLAGS_VAR_NAME = "swp_flags"
 INTEGRATED_LABEL = "integrated_label"
 TEMPERATURE_TENSOR_LABEL = "temperature_tensor_label"
 RTN_LABEL = "rtn_label"
@@ -116,6 +117,7 @@ class SwapiL3aProtonData:
     proton_sw_speed: np.ndarray[float]
     proton_sw_clock_angle: np.ndarray[float]
     proton_sw_deflection_angle: np.ndarray[float]
+    swp_flags: np.ndarray
 
 
 @dataclass
@@ -212,6 +214,8 @@ class SweL3Data(DataProduct):
     phase_space_density_outward: np.ndarray
     # fit moments
     moment_data: SweL3MomentData
+    # other
+    swp_flags: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -371,6 +375,7 @@ class SweL3Data(DataProduct):
                                 value=self.moment_data.halo_temperature_tensor_integrated),
             DataProductVariable(TOTAL_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME,
                                 value=self.moment_data.total_temperature_tensor_integrated),
+            DataProductVariable(SWP_FLAGS_VAR_NAME, value=self.swp_flags),
             DataProductVariable(ENERGY_LABEL,
                                 value=[f"Energy Label {str(i + 1)}" for i in range(len(self.energy))],
                                 ),

@@ -82,7 +82,7 @@ class SweProcessor(Processor):
             phase_space_density_by_pitch_angle, phase_space_density_by_pitch_angle_and_gyrophase,
             energy_spectrum, energy_spectrum_inbound, energy_spectrum_outbound,
             intensity_by_pitch_angle_and_gyrophase, intensity_by_pitch_angle,
-            uncertanties_by_pitch_angle_and_gyrophase, uncertanties_by_pitch_angle
+            uncertanties_by_pitch_angle_and_gyrophase, uncertanties_by_pitch_angle, swp_flags
         ) = self.calculate_pitch_angle_products(dependencies, corrected_energy_bins)
 
         return SweL3Data(
@@ -107,7 +107,8 @@ class SweProcessor(Processor):
             phase_space_density_1d=energy_spectrum,
             phase_space_density_inward=energy_spectrum_inbound,
             phase_space_density_outward=energy_spectrum_outbound,
-            moment_data=swe_l3_moments_data
+            moment_data=swe_l3_moments_data,
+            swp_flags=swp_flags
         )
 
     def calculate_moment_products(self, swe_l2_data: SweL2Data, swe_l1b_data: SweL1bData, rebinned_mag_data: np.ndarray,
@@ -475,22 +476,24 @@ class SweProcessor(Processor):
         config = dependencies.configuration
         mag_max_distance = np.timedelta64(int(config['max_mag_offset_in_minutes'] * 60e9), 'ns')
 
-        rebinned_mag_data = find_closest_neighbor(from_epoch=dependencies.mag_l1d_data.epoch,
+        rebinned_mag_data, indices = find_closest_neighbor(from_epoch=dependencies.mag_l1d_data.epoch,
                                                   from_data=dependencies.mag_l1d_data.mag_data,
                                                   to_epoch=swe_l2_data.acquisition_time,
                                                   maximum_distance=mag_max_distance,
                                                   )
 
-        swapi_l_a_proton_data = dependencies.swapi_l3a_proton_data
-        swapi_epoch = swapi_l_a_proton_data.epoch
-        solar_wind_vectors = calculate_solar_wind_velocity_vector(swapi_l_a_proton_data.proton_sw_speed,
-                                                                  swapi_l_a_proton_data.proton_sw_clock_angle,
-                                                                  swapi_l_a_proton_data.proton_sw_deflection_angle)
+        swapi_l3a_proton_data = dependencies.swapi_l3a_proton_data
+        swapi_epoch = swapi_l3a_proton_data.epoch
+        solar_wind_vectors = calculate_solar_wind_velocity_vector(swapi_l3a_proton_data.proton_sw_speed,
+                                                                  swapi_l3a_proton_data.proton_sw_clock_angle,
+                                                                  swapi_l3a_proton_data.proton_sw_deflection_angle)
         swapi_max_distance = np.timedelta64(int(config['max_swapi_offset_in_minutes'] * 60e9), 'ns')
-        rebinned_solar_wind_vectors = find_closest_neighbor(from_epoch=swapi_epoch,
+        rebinned_solar_wind_vectors, swapi_indices = find_closest_neighbor(from_epoch=swapi_epoch,
                                                             from_data=solar_wind_vectors,
                                                             to_epoch=swe_epoch,
                                                             maximum_distance=swapi_max_distance)
+
+        closest_flags = swapi_l3a_proton_data.swp_flags[swapi_indices].astype(int, copy=True)
 
         counts = dependencies.swe_l1b_data.count_rates * (swe_l2_data.acquisition_duration[..., np.newaxis] / 1e6)
 
@@ -558,4 +561,5 @@ class SweProcessor(Processor):
             np.array(rebinned_intensity_by_pa_and_gyro), \
             np.array(rebinned_intensity_by_pa), \
             np.array(uncertainties_by_pa_and_gyro), \
-            np.array(uncertainties_by_pa)
+            np.array(uncertainties_by_pa), \
+            closest_flags

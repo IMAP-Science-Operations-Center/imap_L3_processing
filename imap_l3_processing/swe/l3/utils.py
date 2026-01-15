@@ -55,12 +55,14 @@ def read_l3a_swapi_proton_data(swapi_l3a_data: Path) -> SwapiL3aProtonData:
         proton_sw_speed = read_numeric_variable(cdf["proton_sw_speed"])
         proton_sw_clock_angle = read_numeric_variable(cdf["proton_sw_clock_angle"])
         proton_sw_deflection_angle = read_numeric_variable(cdf["proton_sw_deflection_angle"])
+        swp_flags = read_numeric_variable(cdf["swp_flags"])
 
     return SwapiL3aProtonData(epoch=epoch,
                               epoch_delta=epoch_delta,
                               proton_sw_speed=proton_sw_speed,
                               proton_sw_clock_angle=proton_sw_clock_angle,
-                              proton_sw_deflection_angle=proton_sw_deflection_angle)
+                              proton_sw_deflection_angle=proton_sw_deflection_angle,
+                              swp_flags=swp_flags)
 
 
 def read_swe_config(swe_config: Path) -> SweConfiguration:
