@@ -27,7 +27,7 @@ def create_input_file(sensor: str, start: datetime, end: datetime) -> str:
 
     inputs.add([generate_imap_input(f) for f in static_files])
 
-    start_repointings = datetime(2025, 4, 16)
+    start_repointings = datetime(2025, 9, 29)
 
     date = start
     while date < end:
