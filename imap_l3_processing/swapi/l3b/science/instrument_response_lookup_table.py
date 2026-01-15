@@ -46,7 +46,7 @@ class InstrumentResponseLookupTableCollection:
         files = {}
         with zipfile.ZipFile(zip_path) as zip_file:
             for file_name in zip_file.namelist():
-                if match := re.search(r'response_ESA(\d*).dat', file_name):
+                if match := re.search(r'^response_ESA(\d*).dat$', Path(file_name).name):
                     number = int(match[1])
                     transposed = np.loadtxt(zip_file.open(file_name)).T
                     files[int(number)] = InstrumentResponseLookupTable(*transposed)

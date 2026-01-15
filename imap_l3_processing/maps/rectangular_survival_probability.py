@@ -2,9 +2,9 @@ import numpy as np
 import xarray as xr
 from imap_processing.ena_maps.ena_maps import RectangularSkyMap, PointingSet
 from imap_processing.ena_maps.utils.coordinates import CoordNames
-from imap_processing.ena_maps.utils.corrections import apply_compton_getting_correction, add_spacecraft_velocity_to_pset
-from imap_processing.spice.geometry import SpiceFrame, frame_transform_az_el
-from imap_processing.spice.time import ttj2000ns_to_et
+from imap_processing.ena_maps.utils.corrections import apply_compton_getting_correction, \
+    add_spacecraft_velocity_to_pset, calculate_ram_mask
+from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.map_descriptors import Sensor, SpinPhase
 from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet
@@ -25,17 +25,18 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
     def __init__(self, l1c_dataset: InputRectangularPointingSet, sensor: Sensor, spin_phase: SpinPhase,
                  glows_dataset: GlowsL3eRectangularMapInputData, energies: np.ndarray, cg_corrected: bool = False):
         num_spin_angle_bins = l1c_dataset.exposure_times.shape[-1]
+
         deg_spacing = 360 / num_spin_angle_bins
         half_bin_width = deg_spacing / 2
-        spin_angles = np.linspace(0, 360, num_spin_angle_bins,
-                                  endpoint=False) + half_bin_width
-        self.azimuths = np.mod(spin_angles + 90, 360)
+
+        self.azimuths = np.linspace(0, 360, num_spin_angle_bins,
+                                    endpoint=False) + half_bin_width
 
         sensor_angle = Sensor.get_sensor_angle(sensor)
         self.elevations = np.repeat(sensor_angle, num_spin_angle_bins)
 
-        spacecraft_az_el_points = xr.DataArray(
-            np.column_stack([self.azimuths, self.elevations]),
+        hae_az_el_points = xr.DataArray(
+            np.column_stack([l1c_dataset.hae_longitude[0], l1c_dataset.hae_latitude[0]]),
             dims=[CoordNames.GENERIC_PIXEL.value, CoordNames.AZ_EL_VECTOR.value],
         )
 
@@ -54,56 +55,40 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                                          CoordNames.AZIMUTH_L1C.value: self.azimuths,
                                      })
 
-        exposure_mask = np.full(num_spin_angle_bins, False)
-
         assert num_spin_angle_bins == 3600, "unexpected number of spin angles"
-        if spin_phase == SpinPhase.RamOnly:
-            exposure_mask[0:900] = True
-            exposure_mask[2700:3600] = True
-        elif spin_phase == SpinPhase.AntiRamOnly:
-            exposure_mask[900:2700] = True
-        else:
-            raise ValueError("Should not survival correct a full spin map!")
+
+        initial_dataset['epoch'] = l1c_dataset.epoch_j2000
+        initial_dataset['epoch_delta'] = l1c_dataset.epoch_delta
+        initial_dataset['hae_longitude'] = xr.DataArray(
+            l1c_dataset.hae_longitude,
+            dims=[CoordNames.TIME.value, CoordNames.AZIMUTH_L1C.value],
+        )
+        initial_dataset['hae_latitude'] = xr.DataArray(
+            l1c_dataset.hae_latitude,
+            dims=[CoordNames.TIME.value, CoordNames.AZIMUTH_L1C.value],
+        )
+        initial_dataset['pointing_start_met'] = l1c_dataset.pointing_start_met
+        initial_dataset['pointing_end_met'] = l1c_dataset.pointing_end_met
+
+        if sensor == Sensor.Hi90 or sensor == Sensor.Hi45:
+            initial_dataset.attrs['Logical_source'] = 'imap_hi'
+        elif sensor in (Sensor.Lo90, Sensor.Lo):
+            initial_dataset.attrs['Logical_source'] = 'imap_lo'
+        dataset = add_spacecraft_velocity_to_pset(initial_dataset)
 
         if cg_corrected:
-            et = ttj2000ns_to_et(repointing_midpoint)
-
-            hae_az_el = frame_transform_az_el(
-                et=et,
-                az_el=spacecraft_az_el_points.values,
-                from_frame=SpiceFrame.IMAP_DPS,
-                to_frame=SpiceFrame.IMAP_HAE,
-                degrees=True
-            )
-
-            initial_dataset['epoch'] = l1c_dataset.epoch_j2000
-            initial_dataset['epoch_delta'] = l1c_dataset.epoch_delta
-            initial_dataset['hae_longitude'] = xr.DataArray(
-                [hae_az_el[:, 0]],
-                dims=[CoordNames.TIME.value, "hae_longitude"],
-            )
-            initial_dataset['hae_latitude'] = xr.DataArray(
-                [hae_az_el[:, 1]],
-                dims=[CoordNames.TIME.value, "hae_latitude"],
-            )
-            initial_dataset['pointing_start_met'] = l1c_dataset.pointing_start_met
-            initial_dataset['pointing_end_met'] = l1c_dataset.pointing_end_met
-
             energy_in_ev = energies * 1000
 
-            if sensor == Sensor.Hi90 or sensor == Sensor.Hi45:
-                initial_dataset.attrs['Logical_source'] = 'imap_hi'
-            elif sensor in (Sensor.Lo90, Sensor.Lo):
-                initial_dataset.attrs['Logical_source'] = 'imap_lo'
-
-            dataset = add_spacecraft_velocity_to_pset(initial_dataset)
-            dataset = apply_compton_getting_correction(dataset, xr.DataArray(energy_in_ev))
+            dataset = apply_compton_getting_correction(
+                dataset,
+                xr.DataArray(energy_in_ev, dims=[CoordNames.ENERGY_ULTRA_L1C.value])
+            )
             self.az_el_points = xr.DataArray(
                 np.stack([dataset['hae_longitude'].values[0], dataset['hae_latitude'].values[0]], axis=2),
                 dims=[CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.GENERIC_PIXEL.value, CoordNames.AZ_EL_VECTOR.value],
             )
 
-            exposures = np.full_like(l1c_dataset.exposure_times, np.nan)
+            exposure = np.full_like(l1c_dataset.exposure_times, np.nan)
             best_match_energies = np.full_like(l1c_dataset.exposure_times, np.nan)
             for cg_energy_index, cg_energy in np.ndenumerate(dataset['energy_sc'].values[0]):
                 best_guess = np.inf
@@ -115,16 +100,20 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                         best_guess_index = e_i
                     if guess > best_guess:
                         break
-                exposures[0, cg_energy_index[0], cg_energy_index[1]] = l1c_dataset.exposure_times[
+                exposure[0, cg_energy_index[0], cg_energy_index[1]] = l1c_dataset.exposure_times[
                     0, best_guess_index, cg_energy_index[1]]
                 best_match_energies[0, cg_energy_index[0], cg_energy_index[1]] = energies[best_guess_index]
 
-            exposure = exposures * exposure_mask
-
         else:
-            dataset = initial_dataset
-            self.az_el_points = spacecraft_az_el_points
-            exposure = l1c_dataset.exposure_times * exposure_mask
+            self.az_el_points = hae_az_el_points
+            exposure = l1c_dataset.exposure_times
+
+        dataset = calculate_ram_mask(dataset)
+
+        if spin_phase == SpinPhase.RamOnly:
+            dataset["directional_mask"] = dataset["ram_mask"]
+        else:
+            dataset["directional_mask"] = ~dataset["ram_mask"]
 
         if glows_dataset is not None:
             if cg_corrected:
@@ -173,7 +162,7 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
         )
         dataset["epoch"] = repointing_midpoint
 
-        frame = SpiceFrame.IMAP_HAE if cg_corrected else SpiceFrame.IMAP_DPS
+        frame = SpiceFrame.IMAP_HAE
         super().__init__(dataset, frame)
 
 
@@ -182,7 +171,8 @@ class RectangularSurvivalProbabilitySkyMap(RectangularSkyMap):
                  spacing_degree: float, spice_frame: SpiceFrame):
         super().__init__(spacing_degree, spice_frame)
         for sp_pset in survival_probability_pointing_sets:
-            self.project_pset_values_to_map(sp_pset, ["survival_probability_times_exposure", "exposure"])
+            value_keys = ["survival_probability_times_exposure", "exposure"]
+            self.project_pset_values_to_map(sp_pset, value_keys, pset_valid_mask=sp_pset.data["directional_mask"])
 
         self.data_1d = xr.Dataset({
             "exposure_weighted_survival_probabilities": self.data_1d["survival_probability_times_exposure"] /

@@ -6,6 +6,7 @@ from uncertainties.unumpy import nominal_values, std_devs
 
 from imap_l3_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS, FIVE_MINUTES_IN_NANOSECONDS
 from imap_l3_processing.models import DataProduct, DataProductVariable
+from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 
 EPOCH_CDF_VAR_NAME = "epoch"
 EPOCH_DELTA_CDF_VAR_NAME = "epoch_delta"
@@ -42,6 +43,7 @@ PUI_BACKGROUND_COUNT_RATE_UNCERTAINTY_CDF_VAR_NAME = "pui_background_count_rate_
 PUI_DENSITY_UNCERTAINTY_CDF_VAR_NAME = "pui_density_uncert"
 PUI_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME = "pui_temperature_uncert"
 
+SWAPI_QUALITY_FLAGS_CDF_VAR_NAME = "swp_flags"
 
 @dataclass
 class SwapiL3ProtonSolarWindData(DataProduct):
@@ -51,6 +53,7 @@ class SwapiL3ProtonSolarWindData(DataProduct):
     proton_sw_density: np.ndarray[float]
     proton_sw_clock_angle: np.ndarray[float]
     proton_sw_deflection_angle: np.ndarray[float]
+    quality_flags: np.ndarray[SwapiL3Flags]
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -70,7 +73,8 @@ class SwapiL3ProtonSolarWindData(DataProduct):
             DataProductVariable(PROTON_SOLAR_WIND_DEFLECTION_ANGLE_CDF_VAR_NAME,
                                 nominal_values(self.proton_sw_deflection_angle)),
             DataProductVariable(PROTON_SOLAR_WIND_DEFLECTION_ANGLE_UNCERTAINTY_CDF_VAR_NAME,
-                                std_devs(self.proton_sw_deflection_angle))
+                                std_devs(self.proton_sw_deflection_angle)),
+            DataProductVariable(SWAPI_QUALITY_FLAGS_CDF_VAR_NAME, self.quality_flags)
         ]
 
 
@@ -104,6 +108,7 @@ class SwapiL3PickupIonData(DataProduct):
     background_rate: np.ndarray[float]
     density: np.ndarray[float]
     temperature: np.ndarray[float]
+    quality_flags: np.ndarray[SwapiL3Flags]
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -121,6 +126,7 @@ class SwapiL3PickupIonData(DataProduct):
             DataProductVariable(PUI_DENSITY_UNCERTAINTY_CDF_VAR_NAME, std_devs(self.density)),
             DataProductVariable(PUI_TEMPERATURE_CDF_VAR_NAME, nominal_values(self.temperature)),
             DataProductVariable(PUI_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME, std_devs(self.temperature)),
+            DataProductVariable(SWAPI_QUALITY_FLAGS_CDF_VAR_NAME, self.quality_flags),
         ]
 
 

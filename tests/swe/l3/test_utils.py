@@ -95,11 +95,13 @@ class TestUtils(SpiceTestCase):
         self.assertEqual(10, len(result.proton_sw_speed))
         self.assertEqual(10, len(result.proton_sw_clock_angle))
         self.assertEqual(10, len(result.proton_sw_deflection_angle))
+        self.assertEqual(10, len(result.swp_flags))
         self.assertEqual(datetime(2025, 1, 1), result.epoch[0])
         self.assertEqual(timedelta(seconds=30), result.epoch_delta[0])
         self.assertEqual(498.4245091006667, result.proton_sw_speed[0])
         self.assertEqual(82.53712019721974, result.proton_sw_clock_angle[0])
         self.assertEqual(5.553957246800335e-06, result.proton_sw_deflection_angle[0])
+        np.testing.assert_array_equal(np.array([1, 0, 0, 0, 0, 0, 0, 0, 0, 0]), result.swp_flags)
 
     def test_read_l3a_swapi_proton_data_with_fill_values(self):
         with tempfile.TemporaryDirectory() as tempdir:

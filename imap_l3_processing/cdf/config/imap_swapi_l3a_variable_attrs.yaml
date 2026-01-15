@@ -524,3 +524,17 @@ alpha_sw_density_uncert:
   VALIDMAX: 100
   FILLVAL: -1.000000e+31
   LABLAXIS: Alpha SW density uncertainty
+swp_flags:
+  NAME: swp_flags
+  DATA_TYPE: CDF_UINT2
+  CATDESC: Quality flags for SWAPI L3a
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: Quality Flags for SWAPI L3a
+  FORMAT: I5
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 65534
+  FILLVAL: 65535
+  LABLAXIS: Quality flags for SWAPI L3a

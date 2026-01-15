@@ -4,6 +4,7 @@ from datetime import timedelta
 from pathlib import Path
 from unittest.mock import patch, Mock
 
+from imap_data_access import ProcessingInputCollection, ScienceInput
 from imap_data_access import ScienceFilePath
 from spacepy.pycdf import CDF
 from spiceypy import spiceypy
@@ -27,7 +28,7 @@ class TestMapIntegration(unittest.TestCase):
         lo_multiple_arcs_test_data_dir = INTEGRATION_TEST_DATA_PATH / "lo/multiple_arcs"
         lo_imap_data_dir = get_run_local_data_path("lo/integration_data")
 
-        input_files = list(lo_multiple_arcs_test_data_dir.glob("*")) + [
+        input_files = list(lo_multiple_arcs_test_data_dir.glob("*.cdf")) + [
             INTEGRATION_TEST_DATA_PATH / "spice" / "naif020.tls",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_science_108.tf",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_sclk_008.tsc",
@@ -190,14 +191,21 @@ class TestMapIntegration(unittest.TestCase):
         hi_test_data_dir = INTEGRATION_TEST_DATA_PATH / "hi"
         hi_imap_data_dir = get_run_local_data_path("hi/integration_data")
 
-        files = [
-            'imap_hi_l3_h45-ena-h-hf-sp-full-hae-4deg-6mo_20250415_v001.cdf',
-            'imap_hi_l3_h45-ena-h-hf-sp-full-hae-4deg-6mo_20251015_v001.cdf',
-            'imap_hi_l3_h90-ena-h-hf-sp-full-hae-4deg-6mo_20250415_v001.cdf',
-            'imap_hi_l3_h90-ena-h-hf-sp-full-hae-4deg-6mo_20251015_v001.cdf',
+        sp_files = [
+            'imap_hi_l3_h45-ena-h-hf-sp-ram-hae-6deg-1yr_20250415_v001.cdf',
+            'imap_hi_l3_h45-ena-h-hf-sp-anti-hae-6deg-1yr_20250415_v001.cdf',
+            'imap_hi_l3_h90-ena-h-hf-sp-ram-hae-6deg-1yr_20250415_v001.cdf',
+            'imap_hi_l3_h90-ena-h-hf-sp-anti-hae-6deg-1yr_20250415_v001.cdf',
         ]
 
-        input_files = [hi_test_data_dir / 'combined' / f for f in files]
+        nsp_files = [
+            'imap_hi_l2_h45-ena-h-hf-nsp-anti-hae-6deg-1yr_20250415_v000.cdf',
+            'imap_hi_l2_h45-ena-h-hf-nsp-ram-hae-6deg-1yr_20250415_v000.cdf',
+            'imap_hi_l2_h90-ena-h-hf-nsp-anti-hae-6deg-1yr_20250415_v000.cdf',
+            'imap_hi_l2_h90-ena-h-hf-nsp-ram-hae-6deg-1yr_20250415_v000.cdf',
+        ]
+
+        input_files = [hi_test_data_dir / 'combined' / f for f in [*sp_files, *nsp_files]]
 
         with mock_imap_data_access(hi_imap_data_dir, input_files):
             logging.basicConfig(force=True, level=logging.INFO,
@@ -219,11 +227,18 @@ class TestMapIntegration(unittest.TestCase):
             imap_l3_data_processor.imap_l3_processor()
 
             expected_map_path = ScienceFilePath(
-                'imap_hi_l3_hic-ena-h-hf-sp-full-hae-4deg-1yr_20250415_v001.cdf').construct_path()
+                'imap_hi_l3_hic-ena-h-hf-sp-full-hae-6deg-1yr_20250415_v001.cdf').construct_path()
             self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
 
             with CDF(str(expected_map_path)) as cdf:
-                self.assertEqual(set(files), set(cdf.attrs["Parents"]))
+                self.assertEqual(set(sp_files), set(cdf.attrs["Parents"]))
+
+            expected_map_path = ScienceFilePath(
+                'imap_hi_l3_hic-ena-h-hf-nsp-full-hae-6deg-1yr_20250415_v001.cdf').construct_path()
+            self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
+
+            with CDF(str(expected_map_path)) as cdf:
+                self.assertEqual(set(nsp_files), set(cdf.attrs["Parents"]))
 
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_lo_all_sp_maps(self, mock_parse_cli_arguments):
@@ -289,6 +304,53 @@ class TestMapIntegration(unittest.TestCase):
                 self.assertEqual(expected_ena_parents, set(cdf.attrs["Parents"]))
             with CDF(str(expected_hf_ena_path)) as cdf:
                 self.assertEqual(expected_hf_ena_parents, set(cdf.attrs["Parents"]))
+
+    @patch("imap_l3_data_processor._parse_cli_arguments")
+    def test_lo_isn_maps(self, mock_parse_cli_arguments):
+        lo_test_data_dir = INTEGRATION_TEST_DATA_PATH / "lo"
+        lo_imap_data_dir = get_run_local_data_path("lo/integration_data")
+
+        input_files = [
+            lo_test_data_dir / "imap_lo_l2_l090-isn-h-sf-nsp-ram-hae-6deg-1yr_20250415_v001.cdf",
+        ]
+
+        processing_input_collection = ProcessingInputCollection(
+            ScienceInput('imap_lo_l2_l090-isn-h-sf-nsp-ram-hae-6deg-1yr_20250415_v001.cdf'),
+        )
+
+        with (mock_imap_data_access(lo_imap_data_dir, input_files)):
+            logging.basicConfig(
+                force=True,
+                level=logging.INFO,
+                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            )
+
+            mock_arguments = Mock()
+            mock_arguments.instrument = "lo"
+            mock_arguments.data_level = "l3"
+            mock_arguments.descriptor = "l090-isn-h-sf-nsp-ram-hae-6deg-1yr"
+            mock_arguments.start_date = "20260219"
+            mock_arguments.end_date = None
+            mock_arguments.repointing = None
+            mock_arguments.version = "v001"
+            mock_arguments.dependency = processing_input_collection.serialize()
+            mock_arguments.upload_to_sdc = False
+
+            mock_parse_cli_arguments.return_value = mock_arguments
+
+            imap_l3_data_processor.imap_l3_processor()
+
+            expected_ena_path = ScienceFilePath(
+                "imap_lo_l3_l090-isn-h-sf-nsp-ram-hae-6deg-1yr_20260219_v001.cdf").construct_path()
+
+            self.assertTrue(expected_ena_path.exists(), f"Expected file {expected_ena_path.name} not found")
+
+            expected_ena_parents = {
+                "imap_lo_l2_l090-isn-h-sf-nsp-ram-hae-6deg-1yr_20250415_v001.cdf",
+            }
+
+            with CDF(str(expected_ena_path)) as cdf:
+                self.assertEqual(expected_ena_parents, set(cdf.attrs["Parents"]))
 
     @run_periodically(timedelta(days=3))
     @patch("imap_l3_data_processor._parse_cli_arguments")

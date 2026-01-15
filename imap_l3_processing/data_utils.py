@@ -29,7 +29,7 @@ def rebin(from_epoch: np.ndarray[float], from_data: np.ndarray[float], to_epoch:
 
 def find_closest_neighbor(from_epoch: np.ndarray[datetime], from_data: np.ndarray[float],
                           to_epoch: np.ndarray[datetime],
-                          maximum_distance: timedelta) -> np.ndarray[float]:
+                          maximum_distance: timedelta) -> tuple[np.ndarray[float], np.ndarray[float]]:
     if len(from_data.shape) == 1:
         from_data = from_data.reshape(-1, 1)
     from_data_nan_mask = np.any(np.isnan(from_data), axis=1)
@@ -53,7 +53,7 @@ def find_closest_neighbor(from_epoch: np.ndarray[datetime], from_data: np.ndarra
     closest_data = only_valid_from_data[best_indices].astype(float, copy=True)
     closest_data[min_outside_range] = np.nan
 
-    return closest_data
+    return closest_data, best_indices
 
 
 def safe_divide(numerator: np.ndarray, denominator: np.ndarray) -> np.ndarray:

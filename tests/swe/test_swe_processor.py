@@ -89,6 +89,7 @@ class TestSweProcessor(unittest.TestCase):
             proton_sw_speed=np.array([]),
             proton_sw_clock_angle=np.array([]),
             proton_sw_deflection_angle=np.array([]),
+            swp_flags=np.array([]),
         )
         mock_average_over_look_directions.return_value = np.array([5, 10, 15])
 
@@ -116,7 +117,7 @@ class TestSweProcessor(unittest.TestCase):
             sentinel.expected_phase_space_density_by_pitch_angle_and_gyrophase, sentinel.expected_intensity,
             sentinel.expected_phase_space_density_inward, sentinel.expected_phase_space_density_outward,
             sentinel.intensity_by_pitch_angle_and_gyrophase, sentinel.intensity_by_pitch_angle,
-            sentinel.uncertainty_by_pitch_angle_and_gyrophase, sentinel.uncertainty_by_pitch_angle)
+            sentinel.uncertainty_by_pitch_angle_and_gyrophase, sentinel.uncertainty_by_pitch_angle, sentinel.swp_flags)
 
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
@@ -259,14 +260,15 @@ class TestSweProcessor(unittest.TestCase):
             proton_sw_speed=np.array([]),
             proton_sw_clock_angle=np.array([]),
             proton_sw_deflection_angle=np.array([]),
+            swp_flags=np.array([0, 1, 2]),
         )
         counts = swe_l1b_data.count_rates * swe_l2_data.acquisition_duration[:, :, np.newaxis] / 1e6
         mock_average_over_look_directions.return_value = np.array([5, 10, 15])
         closest_mag_data = np.arange(9).reshape(3, 3)
         closest_swapi_data = np.arange(8, 17).reshape(3, 3)
         mock_find_closest_neighbor.side_effect = [
-            closest_mag_data,
-            closest_swapi_data,
+            (closest_mag_data, sentinel.mag_best_indices),
+            (closest_swapi_data, np.array([1]))
         ]
 
         rebinned_by_pitch_list = [
@@ -328,7 +330,7 @@ class TestSweProcessor(unittest.TestCase):
         swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
 
         actual_phase_space_density_by_pitch_angle, actual_phase_space_density_by_pa_and_gyrophase, actual_energy_spectrum, actual_energy_spectrum_inbound, actual_energy_spectrum_outbound, \
-            actual_intensity_by_pa_and_gyro, actual_intensity_by_pa, actual_uncertainty_by_pa_and_gyro, actual_uncertainty_by_pa \
+            actual_intensity_by_pa_and_gyro, actual_intensity_by_pa, actual_uncertainty_by_pa_and_gyro, actual_uncertainty_by_pa, actual_swp_flags \
             = swe_processor.calculate_pitch_angle_products(swel3_dependency, corrected_energy_bins)
 
         self.assertEqual(3, mock_correct_and_rebin.call_count)
@@ -363,6 +365,8 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(actual_intensity_by_pa, expected_intensity_by_pa)
         np.testing.assert_array_equal(actual_uncertainty_by_pa_and_gyro, expected_uncertainty_by_pa_and_gyro)
         np.testing.assert_array_equal(actual_uncertainty_by_pa, expected_uncertainty_by_pa)
+        np.testing.assert_array_equal(actual_swp_flags, np.array([1]))
+
 
         def call_with_array_matchers(*args):
             return call(*[NumpyArrayMatcher(x) for x in args])
@@ -467,6 +471,7 @@ class TestSweProcessor(unittest.TestCase):
             proton_sw_speed=np.full(len(swapi_epochs), 400),
             proton_sw_clock_angle=np.full(len(swapi_epochs), 0),
             proton_sw_deflection_angle=np.full(len(swapi_epochs), 0),
+            swp_flags=np.full(len(swapi_epochs), 0)
         )
         geometric_fractions = [0.0697327, 0.138312, 0.175125, 0.181759,
                                0.204686, 0.151448, 0.0781351]
@@ -523,7 +528,8 @@ class TestSweProcessor(unittest.TestCase):
         epochs = np.array([datetime(2025, 3, 6)])
         mag_start_time = datetime(2025, 3, 6, 0, 1, 0)
         mag_epochs = np.array([mag_start_time + i * timedelta(seconds=1) for i in range(10)])
-        swapi_epochs = np.array([datetime(2025, 3, 6)])
+        swapi_epochs = np.array([datetime(2025, 3, 6), datetime(2025, 3, 10)])
+        swp_flags = np.array([1, 1])
 
         pitch_angle_bins = [70, 100, 130]
 
@@ -561,6 +567,7 @@ class TestSweProcessor(unittest.TestCase):
             proton_sw_speed=np.full(len(swapi_epochs), 400),
             proton_sw_clock_angle=np.full(len(swapi_epochs), 0),
             proton_sw_deflection_angle=np.full(len(swapi_epochs), 0),
+            swp_flags=swp_flags
         )
         geometric_fractions = [0.0697327, 0.138312, 0.175125, 0.181759,
                                0.204686, 0.151448, 0.0781351]
@@ -617,6 +624,7 @@ class TestSweProcessor(unittest.TestCase):
                                    np.array([0.000717, 0.000762]), atol=1e-6)
         np.testing.assert_allclose(swe_l3_data.intensity_uncertainty_by_pitch_angle_and_gyrophase[0, 0, 1:3, 2],
                                    np.array([0.000717, 0.000762]), atol=1e-6)
+        np.testing.assert_array_equal(swe_l3_data.swp_flags, np.array(swp_flags[0]))
 
     @patch('imap_l3_processing.swe.swe_processor.rotate_temperature_tensor_to_mag')
     @patch('imap_l3_processing.swe.swe_processor.calculate_primary_eigenvector')

@@ -22,7 +22,8 @@ from imap_l3_processing.constants import TT2000_EPOCH
 from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet, \
     RectangularSpectralIndexMapData, RectangularIntensityMapData, \
     HealPixIntensityMapData, HealPixSpectralIndexMapData, RectangularSpectralIndexDataProduct, \
-    RectangularIntensityDataProduct, HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct, MapDataProduct
+    RectangularIntensityDataProduct, HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct, MapDataProduct, \
+    ISNBackgroundSubtractedDataProduct, ISNBackgroundSubtractedMapData
 from imap_l3_processing.models import UpstreamDataDependency, DataProduct, MagL1dData, InputMetadata
 from imap_l3_processing.ultra.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.version import VERSION
@@ -31,16 +32,16 @@ logger = logging.getLogger(__name__)
 
 
 class SpiceKernelTypes(enum.Enum):
-    Leapseconds = "leapseconds",
-    IMAPFrames = "imap_frames",
-    ScienceFrames = "science_frames",
-    EphemerisReconstructed = "ephemeris_reconstructed",
-    AttitudeHistory = "attitude_history",
-    PointingAttitude = "pointing_attitude",
-    PlanetaryEphemeris = "planetary_ephemeris",
-    SpacecraftClock = "spacecraft_clock",
-    EphemerisPredicted = "ephemeris_predicted",
-    PlanetaryConstants = "planetary_constants",
+    Leapseconds = "leapseconds"
+    IMAPFrames = "imap_frames"
+    ScienceFrames = "science_frames"
+    EphemerisReconstructed = "ephemeris_reconstructed"
+    AttitudeHistory = "attitude_history"
+    PointingAttitude = "pointing_attitude"
+    PlanetaryEphemeris = "planetary_ephemeris"
+    SpacecraftClock = "spacecraft_clock"
+    EphemerisPredicted = "ephemeris_predicted"
+    PlanetaryConstants = "planetary_constants"
 
 
 def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: Path = None,
@@ -81,7 +82,8 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: P
     if data.input_metadata.instrument in map_instruments:
 
         if isinstance(data, (RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct,
-                             HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct)):
+                             HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct,
+                             ISNBackgroundSubtractedDataProduct)):
             attrs = generate_map_global_metadata(data)
             for key, value in attrs.items():
                 attribute_manager.add_global_attribute(key, value)
@@ -107,7 +109,8 @@ def generate_map_global_metadata(data_product: MapDataProduct) -> dict:
         RectangularSpectralIndexMapData(spectral_index_map_data=map_data) |
         HealPixSpectralIndexMapData(spectral_index_map_data=map_data) |
         RectangularIntensityMapData(intensity_map_data=map_data) |
-        HealPixIntensityMapData(intensity_map_data=map_data)
+        HealPixIntensityMapData(intensity_map_data=map_data) |
+        ISNBackgroundSubtractedMapData(isn_rate_map_data=map_data)
         ):
             [start_date] = map_data.epoch
             [epoch_delta] = map_data.epoch_delta
@@ -264,11 +267,11 @@ class FurnishMetakernelOutput:
 
 
 def get_spice_kernels_file_names(start_date: datetime, end_date: datetime, kernel_types: list[SpiceKernelTypes]) -> \
-list[str]:
+        list[str]:
     metakernel_url = urlparse(imap_data_access.config['DATA_ACCESS_URL'])._replace(path="metakernel").geturl()
 
     parameters: dict = {
-        'file_types': [kernel_type.value[0] for kernel_type in kernel_types],
+        'file_types': [kernel_type.value for kernel_type in kernel_types],
         'start_time': f"{int((start_date - datetime(2000, 1, 1, 12)).total_seconds())}",
         'end_time': f"{int((end_date - datetime(2000, 1, 1, 12)).total_seconds())}",
     }
@@ -285,7 +288,7 @@ def furnish_spice_metakernel(start_date: datetime, end_date: datetime, kernel_ty
 
     parameters: dict = {
         'spice_path': kernel_path,
-        'file_types': [kernel_type.value[0] for kernel_type in kernel_types],
+        'file_types': [kernel_type.value for kernel_type in kernel_types],
         'start_time': str(int((start_date - datetime(2000, 1, 1, 12)).total_seconds())),
         'end_time': str(int((end_date - datetime(2000, 1, 1, 12)).total_seconds())),
     }

@@ -42,7 +42,7 @@ from imap_l3_processing.swe.l3.models import SweL3Data, EPOCH_CDF_VAR_NAME, EPOC
     CORE_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME, \
     HALO_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME, TOTAL_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME, \
     CORE_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, HALO_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, \
-    TOTAL_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, TEMPERATURE_TENSOR_LABEL, TENSOR_ID
+    TOTAL_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, TEMPERATURE_TENSOR_LABEL, TENSOR_ID, SWP_FLAGS_VAR_NAME
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 
@@ -124,6 +124,7 @@ class TestModels(CdfModelTestCase):
         core_temperature_tensor_integrated = Mock()
         halo_temperature_tensor_integrated = Mock()
         total_temperature_tensor_integrated = Mock()
+        swp_flags = Mock()
 
         data = SweL3Data(epoch=epoch,
                          epoch_delta=epoch_delta,
@@ -203,6 +204,7 @@ class TestModels(CdfModelTestCase):
                              halo_temperature_tensor_integrated=halo_temperature_tensor_integrated,
                              total_temperature_tensor_integrated=total_temperature_tensor_integrated
                          ),
+                         swp_flags=swp_flags,
                          input_metadata=Mock())
 
         variables = data.to_data_product_variables()
@@ -252,7 +254,6 @@ class TestModels(CdfModelTestCase):
             next(variables), spacecraft_potential, SPACECRAFT_POTENTIAL_CDF_VAR_NAME)
         self.assert_variable_attributes(
             next(variables), core_halo_breakpoint, CORE_HALO_BREAKPOINT_CDF_VAR_NAME)
-
         self.assert_variable_attributes(
             next(variables), core_fit_num_points, CORE_FIT_NUM_POINTS_CDF_VAR_NAME)
         self.assert_variable_attributes(
@@ -380,6 +381,8 @@ class TestModels(CdfModelTestCase):
             next(variables), halo_temperature_tensor_integrated, HALO_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME)
         self.assert_variable_attributes(
             next(variables), total_temperature_tensor_integrated, TOTAL_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME)
+        self.assert_variable_attributes(
+            next(variables), swp_flags, SWP_FLAGS_VAR_NAME)
         self.assert_variable_attributes(
             next(variables), ["Energy Label 1", "Energy Label 2", "Energy Label 3"], ENERGY_LABEL)
         self.assert_variable_attributes(

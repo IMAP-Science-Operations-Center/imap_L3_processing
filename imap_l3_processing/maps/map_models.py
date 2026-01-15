@@ -49,6 +49,19 @@ BG_INTENSITY_SYS_ERR_VAR_NAME = "bg_intensity_sys_err"
 PIXEL_INDEX_VAR_NAME = "pixel_index"
 PIXEL_INDEX_LABEL_VAR_NAME = "pixel_index_label"
 
+COUNTS_VAR_NAME = "counts"
+ENERGY_STAT_UNCERT_VAR_NAME = "energy_stat_uncert"
+GEOMETRIC_FACTOR_VAR_NAME = "geometric_factor"
+GEOMETRIC_FACTOR_STAT_UNCERT_VAR_NAME = "geometric_factor_stat_uncert"
+BG_RATES_VAR_NAME = "bg_rates"
+BG_RATES_STAT_UNCERT_VAR_NAME = "bg_rates_stat_uncert"
+BG_RATES_SYS_ERR_VAR_NAME = "bg_rates_sys_err"
+ENA_COUNT_RATE_VAR_NAME = "ena_count_rate"
+ENA_COUNT_RATE_STAT_UNCERT_VAR_NAME = "ena_count_rate_stat_uncert"
+ISN_BG_RATE_SUBTRACTED_VAR_NAME = "isn_bg_rate_subtracted"
+ISN_BG_RATE_SUBTRACTED_STAT_ERR_VAR_NAME = "isn_bg_rate_subtracted_stat_err"
+ISN_BG_RATE_SUBTRACTED_VAR_SYS_UNCERT_NAME = "isn_bg_rate_subtracted_sys_uncert"
+
 
 @dataclass
 class MapData:
@@ -95,6 +108,26 @@ class IntensityMapData(MapData):
 
 
 @dataclass
+class ISNBackgroundSubtractedData(MapData):
+    counts: np.ndarray
+    ena_intensity: np.ndarray
+    ena_intensity_stat_uncert: np.ndarray
+    ena_intensity_sys_err: np.ndarray
+    energy_stat_uncert: np.ndarray
+    geometric_factor: np.ndarray
+    geometric_factor_stat_uncert: np.ndarray
+    bg_rates: np.ndarray
+    bg_rates_stat_uncert: np.ndarray
+    bg_rates_sys_err: np.ndarray
+    isn_bg_rate_subtracted_stat_err: np.ndarray
+    isn_bg_rate_subtracted_sys_uncert: np.ndarray
+    ena_count_rate: np.ndarray
+    ena_count_rate_stat_uncert: np.ndarray
+    ena_count_rate_sys_uncert: np.ndarray
+    isn_bg_rate_subtracted: np.ndarray
+
+
+@dataclass
 class SpectralIndexMapData(MapData):
     ena_spectral_index: np.ndarray
     ena_spectral_index_stat_uncert: np.ndarray
@@ -111,6 +144,84 @@ class RectangularIntensityMapData:
             return RectangularIntensityMapData(
                 intensity_map_data=_read_intensity_map_data_from_open_cdf(cdf),
                 coords=_read_rectangular_coords_from_open_cdf(cdf),
+            )
+
+
+@dataclass
+class ISNBackgroundSubtractedMapData:
+    isn_rate_map_data: ISNBackgroundSubtractedData
+
+
+@dataclass
+class ISNRateData:
+    epoch: np.ndarray
+    epoch_delta: np.ndarray
+    counts: np.ndarray
+    ena_intensity: np.ndarray
+    ena_intensity_stat_uncert: np.ndarray
+    ena_intensity_sys_err: np.ndarray
+    energy: np.ndarray
+    energy_delta_plus: np.ndarray
+    energy_delta_minus: np.ndarray
+    energy_label: np.ndarray
+    energy_stat_uncert: np.ndarray
+    exposure_factor: np.ndarray
+    geometric_factor: np.ndarray
+    geometric_factor_stat_uncert: np.ndarray
+    solid_angle: np.ndarray
+    bg_rates: np.ndarray
+    bg_rates_stat_uncert: np.ndarray
+    bg_rates_sys_err: np.ndarray
+    ena_count_rate: np.ndarray
+    ena_count_rate_stat_uncert: np.ndarray
+    latitude: np.ndarray
+    longitude: np.ndarray
+    obs_date: np.ndarray
+    obs_date_range: np.ndarray
+
+    @classmethod
+    def read_from_path(cls, cdf_path: Path | str) -> ISNRateData:
+
+        with CDF(str(cdf_path)) as cdf:
+            if "obs_date" in cdf and "obs_date_range" in cdf:
+                masked_obs_date = read_variable_and_mask_fill_values(cdf["obs_date"])
+                if np.issubdtype(cdf["obs_date"].dtype, np.number):
+                    obs_date = convert_tt2000_time_to_datetime(masked_obs_date.filled(0))
+                    masked_obs_date = np.ma.masked_array(data=obs_date, mask=masked_obs_date.mask)
+                obs_date_range = read_variable_and_mask_fill_values(cdf["obs_date_range"])
+            else:
+                obs_date_shape = cdf["bg_rates"].shape
+                all_mask_array = np.full(obs_date_shape, True)
+                masked_obs_date = np.ma.masked_array(np.full(obs_date_shape, TT2000_EPOCH), mask=all_mask_array)
+                obs_date_range = np.ma.masked_array(np.full(obs_date_shape, 0),
+                                                    mask=all_mask_array,
+                                                    dtype=np.int64)
+
+            return ISNRateData(
+                epoch=cdf['epoch'][...],
+                epoch_delta=read_variable_and_mask_fill_values(cdf['epoch_delta']),
+                obs_date=masked_obs_date,
+                obs_date_range=obs_date_range,
+                bg_rates=cdf['bg_rates'][...],
+                bg_rates_stat_uncert=cdf['bg_rates_stat_uncert'][...],
+                bg_rates_sys_err=cdf['bg_rates_sys_err'][...],
+                ena_count_rate=cdf['ena_count_rate'][...],
+                ena_count_rate_stat_uncert=cdf['ena_count_rate_stat_uncert'][...],
+                latitude=(cdf['latitude'][...]),
+                longitude=(cdf['longitude'][...]),
+                counts=(cdf['counts'][...]),
+                ena_intensity=read_numeric_variable(cdf['ena_intensity']),
+                ena_intensity_stat_uncert=read_numeric_variable(cdf['ena_intensity_stat_uncert']),
+                ena_intensity_sys_err=read_numeric_variable(cdf['ena_intensity_sys_err']),
+                energy=(cdf['energy'][...]),
+                energy_delta_plus=(cdf['energy_delta_plus'][...]),
+                energy_delta_minus=(cdf['energy_delta_minus'][...]),
+                energy_label=(cdf['energy_label'][...]),
+                energy_stat_uncert=(cdf['energy_stat_uncert'][...]),
+                exposure_factor=read_numeric_variable(cdf['exposure_factor']),
+                geometric_factor=(cdf['geometric_factor'][...]),
+                geometric_factor_stat_uncert=(cdf['geometric_factor_stat_uncert'][...]),
+                solid_angle=read_numeric_variable(cdf['solid_angle'])
             )
 
 
@@ -348,6 +459,42 @@ class RectangularIntensityDataProduct(MapDataProduct[RectangularIntensityMapData
             + _rectangular_coords_to_variables(self.data.coords)
 
 
+class ISNBackgroundSubtractedDataProduct(MapDataProduct[ISNBackgroundSubtractedMapData]):
+    data: ISNBackgroundSubtractedMapData
+
+    def to_data_product_variables(self) -> list[DataProductVariable]:
+        return [
+            DataProductVariable(EPOCH_VAR_NAME, self.data.isn_rate_map_data.epoch),
+            DataProductVariable(EPOCH_DELTA_VAR_NAME, self.data.isn_rate_map_data.epoch_delta),
+            DataProductVariable(COUNTS_VAR_NAME, self.data.isn_rate_map_data.counts),
+            DataProductVariable(ENA_INTENSITY_VAR_NAME, self.data.isn_rate_map_data.ena_intensity),
+            DataProductVariable(ENA_INTENSITY_STAT_UNCERT_VAR_NAME,
+                                self.data.isn_rate_map_data.ena_intensity_stat_uncert),
+            DataProductVariable(ENA_INTENSITY_SYS_ERR_VAR_NAME, self.data.isn_rate_map_data.ena_intensity_sys_err),
+            DataProductVariable(ENERGY_VAR_NAME, self.data.isn_rate_map_data.energy),
+            DataProductVariable(ENERGY_STAT_UNCERT_VAR_NAME, self.data.isn_rate_map_data.energy_stat_uncert),
+            DataProductVariable(EXPOSURE_FACTOR_VAR_NAME, self.data.isn_rate_map_data.exposure_factor),
+            DataProductVariable(GEOMETRIC_FACTOR_VAR_NAME, self.data.isn_rate_map_data.geometric_factor),
+            DataProductVariable(GEOMETRIC_FACTOR_STAT_UNCERT_VAR_NAME,
+                                self.data.isn_rate_map_data.geometric_factor_stat_uncert),
+            DataProductVariable(SOLID_ANGLE_VAR_NAME, self.data.isn_rate_map_data.solid_angle),
+            DataProductVariable(BG_RATES_VAR_NAME, self.data.isn_rate_map_data.bg_rates),
+            DataProductVariable(BG_RATES_STAT_UNCERT_VAR_NAME, self.data.isn_rate_map_data.bg_rates_stat_uncert),
+            DataProductVariable(BG_RATES_SYS_ERR_VAR_NAME, self.data.isn_rate_map_data.bg_rates_sys_err),
+            DataProductVariable(ENA_COUNT_RATE_VAR_NAME, self.data.isn_rate_map_data.ena_count_rate),
+            DataProductVariable(ENA_COUNT_RATE_STAT_UNCERT_VAR_NAME,
+                                self.data.isn_rate_map_data.ena_count_rate_stat_uncert),
+            DataProductVariable(LATITUDE_VAR_NAME, self.data.isn_rate_map_data.latitude),
+            DataProductVariable(LONGITUDE_VAR_NAME, self.data.isn_rate_map_data.longitude),
+            DataProductVariable(ISN_BG_RATE_SUBTRACTED_VAR_NAME,
+                                self.data.isn_rate_map_data.isn_bg_rate_subtracted),
+            DataProductVariable(ISN_BG_RATE_SUBTRACTED_VAR_SYS_UNCERT_NAME,
+                                self.data.isn_rate_map_data.isn_bg_rate_subtracted_sys_uncert),
+            DataProductVariable(ISN_BG_RATE_SUBTRACTED_STAT_ERR_VAR_NAME,
+                                self.data.isn_rate_map_data.isn_bg_rate_subtracted_stat_err)
+        ]
+
+
 def _map_data_to_variables(data: MapData) -> list[DataProductVariable]:
     return [
         DataProductVariable(EPOCH_VAR_NAME, data.epoch),
@@ -444,3 +591,5 @@ class InputRectangularPointingSet:
     esa_energy_step: np.ndarray
     pointing_start_met: Optional[float]
     pointing_end_met: Optional[float]
+    hae_longitude: np.ndarray
+    hae_latitude: np.ndarray

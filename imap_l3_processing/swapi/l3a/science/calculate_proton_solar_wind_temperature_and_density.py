@@ -113,6 +113,11 @@ class ProtonTemperatureAndDensityCalibrationTable:
         values_shape = (len(self.proton_sw_speed), len(self.deflection_angle), len(self.clock_angle))
         self.reshaped_lookup = lookup_table_array.reshape(*values_shape, -1, 7)
 
+        if 360.0 not in self.clock_angle:
+            assert self.clock_angle[0] == 0.0, "expected table to start at angle 0"
+            self.clock_angle = np.append(self.clock_angle, 360.0)
+            self.reshaped_lookup = np.append(self.reshaped_lookup, self.reshaped_lookup[:, :, 0:1], axis=2)
+
     @uncertainties.wrap
     def calibrate_density(self, solar_wind_speed, deflection_angle, clock_angle, fit_density, fit_temperature):
         interp = self.build_interpolator(solar_wind_speed, deflection_angle, clock_angle % 360)

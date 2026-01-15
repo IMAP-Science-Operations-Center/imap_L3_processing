@@ -54,6 +54,7 @@ class PixelSize(enum.IntEnum):
 class MapQuantity(enum.Enum):
     Intensity = "Intensity"
     SpectralIndex = "SpectralIndex"
+    ISNBackgroundSubtracted = "ISNBackgroundSubtracted"
 
 
 @dataclass
@@ -82,7 +83,8 @@ sensor_mapping = [
 
 quantity_mapping = [
     ("spx", MapQuantity.SpectralIndex),
-    ("ena", MapQuantity.Intensity)
+    ("ena", MapQuantity.Intensity),
+    ("isn", MapQuantity.ISNBackgroundSubtracted)
 ]
 
 cg_correction_mapping = [
@@ -114,8 +116,8 @@ grid_size_mapping = [
 def parse_map_descriptor(descriptor: str) -> Optional[MapDescriptorParts]:
     descriptor_regex = """
         (?P<sensor>hic|h45|h90|l090|ulc|u45|u90|ilo)-
-        (?P<quantity>ena|spx)(?P<quantity_suffix>[a-zA-Z]*)-
-        (?P<species>h)-
+        (?P<quantity>ena|spx|isn)(?P<quantity_suffix>[a-zA-Z]*)-
+        (?P<species>h|o)-
         (?P<frame>sf|hf|hk)-
         (?P<survival_corrected>sp|nsp)-
         (?P<spin_phase>ram|anti|full)-

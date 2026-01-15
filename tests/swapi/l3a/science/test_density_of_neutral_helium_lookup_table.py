@@ -23,6 +23,14 @@ class TestDensityOfNeutralHeliumLookupTable(TestCase):
 
         np.testing.assert_equal(0.0225, density, strict=True)
 
+    def test_neutral_helium_lookup_table_handles_table_that_does_not_extend_to_360(self):
+        lookup_table = DensityOfNeutralHeliumLookupTable(
+            np.array([[0.0, 0.1, .01], [0.0, 0.2, .02], [180, 0.1, .03], [180, 0.2, .04]]))
+
+        density = lookup_table.density(270.0, distance=.2)
+
+        np.testing.assert_equal(.03, density, strict=True)
+
     def test_get_minimum_distance(self):
         lookup_table = DensityOfNeutralHeliumLookupTable(
             np.array([[0.0, 0.1, .01], [0.0, 0.2, 0.02], [360, 0.1, .015], [360, 0.2, 0.025]]))

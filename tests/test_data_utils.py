@@ -137,26 +137,26 @@ class TestDataUtils(unittest.TestCase):
                                   datetime(2020, 4, 5),
                                   datetime(2020, 4, 6),
                                   datetime(2020, 4, 7)],
-             [[0, 0, 1], [0, 2, 0], [0, 0, 3], [4, 0, 0]]),
+             [[0, 0, 1], [0, 2, 0], [0, 0, 3], [4, 0, 0]], [0, 1, 2, 3]),
             ("to slower cadence", [datetime(2020, 4, 4),
                                    datetime(2020, 4, 6),
                                    datetime(2020, 4, 8)],
-             [[0, 0, 1], [0, 0, 3], [4, 0, 0]]),
+             [[0, 0, 1], [0, 0, 3], [4, 0, 0]], [0, 2, 3]),
             ("to faster cadence", [datetime(2020, 4, 4, hour=8),
                                    datetime(2020, 4, 5),
                                    datetime(2020, 4, 5, hour=16)],
-             [[0, 0, 1], [0, 2, 0], [0, 0, 3]]),
+             [[0, 0, 1], [0, 2, 0], [0, 0, 3]], [0, 1, 2]),
             ("outside range", [datetime(2020, 4, 2, hour=23),
                                datetime(2020, 4, 5),
                                datetime(2020, 4, 8, hour=1)],
-             [[np.nan, np.nan, np.nan], [0, 2, 0], [np.nan, np.nan, np.nan]]),
+             [[np.nan, np.nan, np.nan], [0, 2, 0], [np.nan, np.nan, np.nan]], [0, 1, 3]),
 
             ("ties round down", [datetime(2020, 4, 4, hour=12),
                                  datetime(2020, 4, 5, hour=12)],
-             [[0, 0, 1], [0, 2, 0], ]),
+             [[0, 0, 1], [0, 2, 0], ], [0, 1]),
         ]
 
-        for case, to_dates, expected_values in test_cases:
+        for case, to_dates, expected_values, expected_indices in test_cases:
             with self.subTest(case):
                 to_data_epoch = np.array(to_dates)
                 from_data = np.array([[0, 0, 1], [0, 2, 0], [0, 0, 3], [4, 0, 0]])
@@ -166,10 +166,12 @@ class TestDataUtils(unittest.TestCase):
                                             datetime(2020, 4, 7)
                                             ])
 
-                actual_neighbor_values = find_closest_neighbor(from_date_epoch, from_data, to_data_epoch,
+                actual_neighbor_values, actual_indices = find_closest_neighbor(from_date_epoch, from_data,
+                                                                               to_data_epoch,
                                                                timedelta(days=1))
 
                 np.testing.assert_array_equal(actual_neighbor_values, expected_values)
+                np.testing.assert_array_equal(actual_indices, expected_indices)
 
     def test_find_closest_neighbor_handles_large_dataset(self):
         to_epoch = np.array(
@@ -187,7 +189,7 @@ class TestDataUtils(unittest.TestCase):
         from_epoch = np.array([datetime(2020, 4, 4) + timedelta(seconds=0.5) * i for i in range(86400 * 2)])
 
         t0 = time.perf_counter()
-        actual_neighbor_values = find_closest_neighbor(from_epoch, from_data,
+        actual_neighbor_values, _ = find_closest_neighbor(from_epoch, from_data,
                                                        to_epoch.astype(np.datetime64),
                                                        timedelta(days=1))
         t1 = time.perf_counter()
@@ -200,6 +202,6 @@ class TestDataUtils(unittest.TestCase):
 
         from_data = np.array([np.nan, 2])
 
-        actual_neighbor_values = find_closest_neighbor(from_epoch, from_data, to_epoch, timedelta(minutes=1))
+        actual_neighbor_values, _ = find_closest_neighbor(from_epoch, from_data, to_epoch, timedelta(minutes=1))
 
         self.assertEqual(actual_neighbor_values, [2])

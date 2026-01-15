@@ -409,10 +409,19 @@ class TestHiProcessor(unittest.TestCase):
     @patch('imap_l3_processing.hi.hi_processor.save_data')
     @patch("imap_l3_processing.hi.hi_processor.HiL3CombinedMapDependencies.fetch_dependencies")
     @patch("imap_l3_processing.hi.hi_processor.ExposureWeightedCombination")
-    def test_process_combined_sensor_map(self, mock_exposure_weighted_combination_class, mock_fetch_dependencies,
+    @patch("imap_l3_processing.hi.hi_processor.UncertaintyWeightedCombination")
+    def test_process_combined_sensor_map(self, mock_uncertainty_weighted_combination_class,
+                                         mock_exposure_weighted_combination_class, mock_fetch_dependencies,
                                          mock_save_data, mock_get_parent_file_names):
-        mock_combination = Mock()
-        mock_exposure_weighted_combination_class.return_value = mock_combination
+        mock_exposure_combination = Mock()
+        mock_exposure_weighted_combination_class.return_value = mock_exposure_combination
+
+        mock_uncertainty_weighted_combination = Mock()
+
+        mock_uncertainty_weighted_combination_class.return_value = mock_uncertainty_weighted_combination
+
+        mock_uncertainty_weighted_combination.combine_rectangular_intensity_map_data.side_effect = [
+            sentinel.h45_full_spin, sentinel.h90_full_spin]
 
         parent_map_names = [
             "imap_hi_l2_h45-ena-h-hf-sp-full-hae-4deg-6mo_20250101_v000.cdf",
@@ -434,14 +443,20 @@ class TestHiProcessor(unittest.TestCase):
 
         mock_fetch_dependencies.assert_called_once_with(dependencies)
 
-        mock_combination.combine_rectangular_intensity_map_data.assert_called_once_with(
-            mock_fetch_dependencies.return_value.maps
-        )
+        mock_uncertainty_weighted_combination.combine_rectangular_intensity_map_data.assert_has_calls([
+            call(mock_fetch_dependencies.return_value.h45_maps),
+            call(mock_fetch_dependencies.return_value.h90_maps)
+        ])
+
+        mock_exposure_combination.combine_rectangular_intensity_map_data.assert_called_once_with([
+            sentinel.h45_full_spin,
+            sentinel.h90_full_spin
+        ])
 
         mock_save_data.assert_called_once_with(RectangularIntensityDataProduct(
             input_metadata=input_metadata,
             parent_file_names=parent_map_names,
-            data=mock_combination.combine_rectangular_intensity_map_data.return_value))
+            data=mock_exposure_combination.combine_rectangular_intensity_map_data.return_value))
 
         self.assertEqual([mock_save_data.return_value], data_product)
 
