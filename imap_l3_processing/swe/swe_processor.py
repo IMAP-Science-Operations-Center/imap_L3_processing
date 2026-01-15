@@ -70,7 +70,6 @@ class SweProcessor(Processor):
 
             spacecraft_potential_history = [*spacecraft_potential_history[1:], spacecraft_potential[i]]
             halo_core_history = [*halo_core_history[1:], halo_core[i]]
-            # corrected_energy_bins.append(swe_l2_data.energy)
             corrected_energy_bins.append(swe_l2_data.energy - spacecraft_potential[i])
 
         corrected_energy_bins = np.array(corrected_energy_bins)

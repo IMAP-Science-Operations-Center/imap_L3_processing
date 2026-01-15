@@ -402,8 +402,7 @@ class SweL3Data(DataProduct):
             DataProductVariable(TEMPERATURE_TENSOR_LABEL,
                                 value=["Tensor 1", "Tensor 2", "Tensor 3", "Tensor 4", "Tensor 5", "Tensor 6"],
                                 ),
-            DataProductVariable(TENSOR_ID, value=np.array([1, 2, 3, 4, 5, 6])),
-
+            DataProductVariable(TENSOR_ID, value=np.array([1, 2, 3, 4, 5, 6]))
         ]
 
 
