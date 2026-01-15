@@ -67,6 +67,10 @@ class TestSweProcessor(unittest.TestCase):
         ]
         expected_spacecraft_potential = [12, 16]
         expected_core_halo_breakpoint = [96, 86]
+        geometric_fractions = [1e7, 1e6, 1e4, 1e4, 1e3, 1e1, 1e1]
+        sum_geometric_fractions = np.sum(geometric_fractions)
+
+        psd_rebinned = np.array([4e-7, 4e-6, 4e-4, 4e-4, 4e-3, 4e-1, 4e-1]) * sum_geometric_fractions
 
         swe_l2_data = SweL2Data(
             epoch=epochs,
@@ -76,7 +80,8 @@ class TestSweProcessor(unittest.TestCase):
             inst_el=np.array([]),
             inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
             acquisition_time=np.array([]),
-            acquisition_duration=np.array([])
+            acquisition_duration=np.array([]),
+            phase_space_density_rebinned=np.broadcast_to(psd_rebinned[np.newaxis, np.newaxis, :], (2, 4, 7))
         )
 
         expected_corrected_energy_bins = np.array([[2 - 12, 4 - 12, 6 - 12], [2 - 16, 4 - 16, 6 - 16]])
@@ -93,8 +98,7 @@ class TestSweProcessor(unittest.TestCase):
         )
         mock_average_over_look_directions.return_value = np.array([5, 10, 15])
 
-        geometric_fractions = [0.0697327, 0.138312, 0.175125, 0.181759,
-                               0.204686, 0.151448, 0.0781351]
+
         swe_config = build_swe_configuration(
             geometric_fractions=geometric_fractions,
             pitch_angle_delta=[45, 45, 45],
@@ -203,6 +207,9 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(mock_moment_data, swe_l3_data.moment_data)
         self.assertEqual(sentinel.expected_phase_space_density_by_pitch_angle_and_gyrophase,
                          swe_l3_data.phase_space_density_by_pitch_angle_and_gyrophase)
+        np.testing.assert_array_equal(swe_l3_data.raw_psd_by_phi_rebinned, np.full((2, 4), 28))
+        np.testing.assert_array_equal(swe_l3_data.raw_1d_psd_rebinned, np.full((2,), 28))
+        np.testing.assert_array_equal(swe_l3_data.raw_psd_by_theta_rebinned, np.broadcast_to(psd_rebinned, (2,7)))
 
     @patch('imap_l3_processing.swe.swe_processor.swe_rebin_intensity_by_pitch_angle_and_gyrophase')
     @patch('imap_l3_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
@@ -240,7 +247,8 @@ class TestSweProcessor(unittest.TestCase):
             inst_el=np.array([]),
             inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
             acquisition_time=np.array([]),
-            acquisition_duration=(np.arange(9).reshape(3, 3) + 5) * 1e6
+            acquisition_duration=(np.arange(9).reshape(3, 3) + 5) * 1e6,
+            phase_space_density_rebinned=np.array([])
         )
 
         swe_l1b_data = SweL1bData(
@@ -451,7 +459,8 @@ class TestSweProcessor(unittest.TestCase):
             inst_az_spin_sector=np.arange(num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
             acquisition_time=np.linspace(datetime(2025, 3, 6), datetime(2025, 3, 6, 0, 1),
                                          num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
-            acquisition_duration=np.full((num_epochs, num_energies, 5), 80000)
+            acquisition_duration=np.full((num_epochs, num_energies, 5), 80000),
+            phase_space_density_rebinned=np.arange(0,392,7).reshape(2, 4, 7)
         )
 
         swe_l1b_data = SweL1bData(
@@ -545,7 +554,8 @@ class TestSweProcessor(unittest.TestCase):
             inst_az_spin_sector=np.arange(num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
             acquisition_time=np.linspace(datetime(2025, 3, 6), datetime(2025, 3, 6, 0, 1),
                                          num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
-            acquisition_duration=np.full((num_epochs, num_energies, 5), 80000)
+            acquisition_duration=np.full((num_epochs, num_energies, 5), 80000),
+            phase_space_density_rebinned=np.arange(0,392, 7).reshape(2, 4, 7)
         )
 
         swe_l1b_data = SweL1bData(
@@ -662,6 +672,7 @@ class TestSweProcessor(unittest.TestCase):
             inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
             acquisition_time=np.array([]),
             acquisition_duration=[1e7, 2e7, 3e7],
+            phase_space_density_rebinned=np.array([]),
         )
         expected_sin_theta = np.sin(np.deg2rad(90 - instrument_elevation))
         expected_cos_theta = np.cos(np.deg2rad(90 - instrument_elevation))
@@ -1209,6 +1220,7 @@ class TestSweProcessor(unittest.TestCase):
             inst_az_spin_sector=np.arange(16, 32).reshape(4, 4),
             acquisition_time=np.array([]),
             acquisition_duration=[2e7, 2e7, 2e7, 2e7],
+            phase_space_density_rebinned=np.array([])
         )
         swe_l1_data = SweL1bData(epoch=epochs,
                                  count_rates=[Mock(), Mock(), Mock(), Mock()],
@@ -1260,6 +1272,7 @@ class TestSweProcessor(unittest.TestCase):
             inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
             acquisition_time=np.array([]),
             acquisition_duration=np.full((1, 11, 3), 1e7),
+            phase_space_density_rebinned=np.array([])
         )
         swe_l1_data = SweL1bData(epoch=epochs,
                                  count_rates=np.full((1, 11, 3, 7), 10.5),
@@ -1351,6 +1364,7 @@ class TestSweProcessor(unittest.TestCase):
                     inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
                     acquisition_time=np.array([]),
                     acquisition_duration=[1e7, 2e7, 3e7],
+                    phase_space_density_rebinned=np.array([])
                 )
                 swe_l1_data = SweL1bData(epoch=epochs,
                                          count_rates=[sentinel.l1b_count_rates_1, sentinel.l1b_count_rates_2,

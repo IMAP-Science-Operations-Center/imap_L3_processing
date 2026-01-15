@@ -1573,68 +1573,6 @@ tensor_id:
   VALIDMAX: 255
   FILLVAL: 255
 
-raw_1d_psd:
-  NAME: raw_1d_psd
-  DATA_TYPE: CDF_REAL4
-  DEPEND_0: epoch
-  DEPEND_1: energy
-  CATDESC: Raw 1D PSD
-  VAR_TYPE: data
-  RECORD_VARYING: RV
-  FIELDNAM: Raw 1D PSD
-  FORMAT: F12.6
-  LABLAXIS: Raw 1D PSD
-  UNITS: ' '
-  DISPLAY_TYPE: spectrogram
-  VALIDMIN: 0
-  VALIDMAX: 1.00e-20
-  SCALEMIN: 1.00e-33
-  SCALEMAX: 1.00e-24
-  FILLVAL: -1.00E+31
-  SCALETYP: log
-
-raw_psd_by_phi:
-  NAME: raw_psd_by_phi
-  DATA_TYPE: CDF_REAL4
-  DEPEND_0: epoch
-  DEPEND_1: energy
-  DEPEND_2: inst_az
-  CATDESC: Raw PSD by phi
-  VAR_TYPE: data
-  RECORD_VARYING: RV
-  FIELDNAM: Raw PSD by phi
-  FORMAT: F12.6
-  LABLAXIS: Raw PSD by phi
-  UNITS: ' '
-  DISPLAY_TYPE: spectrogram
-  VALIDMIN: 0
-  VALIDMAX: 1.00e-20
-  SCALEMIN: 1.00e-33
-  SCALEMAX: 1.00e-24
-  FILLVAL: -1.00E+31
-  SCALETYP: log
-
-raw_psd_by_theta:
-  NAME: raw_psd_by_theta
-  DATA_TYPE: CDF_REAL4
-  DEPEND_0: epoch
-  DEPEND_1: energy
-  DEPEND_2: inst_el
-  CATDESC: Raw PSD by theta
-  VAR_TYPE: data
-  RECORD_VARYING: RV
-  FIELDNAM: Raw PSD by theta
-  FORMAT: F12.6
-  LABLAXIS: Raw PSD by theta
-  UNITS: ' '
-  DISPLAY_TYPE: spectrogram
-  VALIDMIN: 0
-  VALIDMAX: 1.00e-20
-  SCALEMIN: 1.00e-33
-  SCALEMAX: 1.00e-24
-  FILLVAL: -1.00E+31
-  SCALETYP: log
-
 raw_1d_psd_rebinned:
   NAME: raw_1d_psd_rebinned
   DATA_TYPE: CDF_REAL4
@@ -1642,6 +1580,7 @@ raw_1d_psd_rebinned:
   DEPEND_1: energy
   CATDESC: Raw 1D PSD from rebinned data
   VAR_TYPE: data
+  VARIABLE_PURPOSE: ''
   RECORD_VARYING: RV
   FIELDNAM: Raw 1D PSD
   FORMAT: F12.6
@@ -1663,6 +1602,7 @@ raw_psd_by_phi_rebinned:
   DEPEND_2: inst_az
   CATDESC: Raw PSD by phi from rebinned data
   VAR_TYPE: data
+  VARIABLE_PURPOSE: ''
   RECORD_VARYING: RV
   FIELDNAM: Raw PSD by phi
   FORMAT: F12.6
@@ -1684,6 +1624,7 @@ raw_psd_by_theta_rebinned:
   DEPEND_2: inst_el
   CATDESC: Raw PSD by theta from rebinned data
   VAR_TYPE: data
+  VARIABLE_PURPOSE: ''
   RECORD_VARYING: RV
   FIELDNAM: Raw PSD by theta
   FORMAT: F12.6
@@ -1701,7 +1642,7 @@ inst_el:
   NAME: inst_el
   CATDESC: Angle of each CEM detector
   FIELDNAM: Polar Angle
-  FILLVAL: -9223370000000000000
+  FILLVAL: -1.00E+31
   FORMAT: I4
   LABLAXIS: Degree
   SCALE_TYP: linear
@@ -1716,7 +1657,7 @@ inst_az:
   NAME: inst_az
   CATDESC: Spin angle in instrument frame. Angle resolution is 12 degree nominally
   FIELDNAM: Spin Angle
-  FILLVAL: -9223370000000000000
+  FILLVAL: -1.00E+31
   FORMAT: E10.4
   LABLAXIS: Degree
   SCALE_TYP: linear

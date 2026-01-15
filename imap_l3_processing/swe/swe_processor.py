@@ -87,15 +87,10 @@ class SweProcessor(Processor):
             uncertanties_by_pitch_angle_and_gyrophase, uncertanties_by_pitch_angle, swp_flags
         ) = self.calculate_pitch_angle_products(dependencies, corrected_energy_bins)
 
-        dist_by_phi = np.average(swe_l2_data.phase_space_density, weights=geometric_fractions, axis=-1)
-        dist_by_theta = np.average(swe_l2_data.phase_space_density, axis=-2)
-        dist_fun_1d = np.average(dist_by_phi, axis=-1)
-
-        rebinned_ma = np.ma.masked_invalid(swe_l2_data.phase_space_density_rebinned)
-
-        dist_by_phi_rebinned = np.ma.average(rebinned_ma, weights=geometric_fractions, axis=-1)
+        rebinned_mask = np.ma.masked_invalid(swe_l2_data.phase_space_density_rebinned)
+        dist_by_phi_rebinned = np.average(rebinned_mask, weights=geometric_fractions, axis=-1)
         dist_fun_1d_rebinned = np.ma.average(dist_by_phi_rebinned, axis=-1)
-        dist_by_theta_rebinned = np.ma.average(rebinned_ma, axis=-2)
+        dist_by_theta_rebinned = np.ma.average(rebinned_mask, axis=-2)
 
         return SweL3Data(
             input_metadata=replace(self.input_metadata, descriptor="sci"),
@@ -120,9 +115,6 @@ class SweProcessor(Processor):
             phase_space_density_inward=energy_spectrum_inbound,
             phase_space_density_outward=energy_spectrum_outbound,
             moment_data=swe_l3_moments_data,
-            raw_1d_psd=dist_fun_1d,
-            raw_psd_by_phi=dist_by_phi,
-            raw_psd_by_theta=dist_by_theta,
             phi=np.array([6., 18., 30., 42., 54., 66., 78., 90., 102., 114., 126.,
                           138., 150., 162., 174., 186., 198., 210., 222., 234., 246., 258.,
                           270., 282., 294., 306., 318., 330., 342., 354.], dtype=np.float32),
