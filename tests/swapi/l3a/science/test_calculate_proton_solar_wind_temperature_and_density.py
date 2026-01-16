@@ -5,7 +5,7 @@ from unittest import TestCase
 import numpy as np
 from spacepy.pycdf import CDF
 from uncertainties import ufloat
-from uncertainties.unumpy import uarray
+from uncertainties.unumpy import uarray, std_devs
 
 import imap_l3_processing
 from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_temperature_and_density import \
@@ -52,6 +52,61 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
         np.testing.assert_allclose(2348.265738, temperature.std_dev, rtol=1e-3)
         np.testing.assert_allclose(0.11530 / efficiency, density.nominal_value, rtol=1e-4)
         np.testing.assert_allclose(0.0018697 / efficiency, density.std_dev, rtol=1e-4)
+
+
+    def test_averages_successful_sweeps_if_at_least_three(self):
+        file_path = Path(
+            imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
+        with CDF(str(file_path)) as cdf:
+            energy = cdf["esa_energy"][...]
+            count_rate = cdf["swp_coin_rate"][...]
+            count_rate_delta = cdf["swp_coin_unc"][...]
+
+        count_rate_delta[1,:] = 1e-6
+        count_rate_delta[2,:] = 1e-6
+
+
+
+        efficiency = 0.8
+
+        valid_temp_1, valid_density_1 = calculate_proton_solar_wind_temperature_and_density_for_one_sweep(uarray(count_rate, count_rate_delta)[0,:], energy[0,:],
+                                                                          efficiency)
+        valid_temp_2, valid_density_2 = calculate_proton_solar_wind_temperature_and_density_for_one_sweep(uarray(count_rate, count_rate_delta)[3,:], energy[3,:],
+                                                                          efficiency)
+        valid_temp_3, valid_density_3 = calculate_proton_solar_wind_temperature_and_density_for_one_sweep(uarray(count_rate, count_rate_delta)[4,:], energy[4,:],
+                                                                          efficiency)
+
+        temps = [valid_temp_1, valid_temp_2, valid_temp_3]
+        densities = [valid_density_1, valid_density_2, valid_density_3]
+        expected_average_temp = np.average(temps, weights=1 / std_devs(temps) ** 2)
+        expected_average_density = np.average(densities, weights=1 / std_devs(densities) ** 2)
+
+        temperature, density = calculate_uncalibrated_proton_solar_wind_temperature_and_density(
+            uarray(count_rate, count_rate_delta), energy, efficiency)
+
+        np.testing.assert_allclose(temperature.nominal_value, expected_average_temp.nominal_value, rtol=1e-5)
+        np.testing.assert_allclose(temperature.std_dev, expected_average_temp.std_dev, rtol=1e-3)
+        np.testing.assert_allclose(density.nominal_value, expected_average_density.nominal_value, rtol=1e-4)
+        np.testing.assert_allclose(density.std_dev, expected_average_density.std_dev, rtol=1e-4)
+
+
+    def test_raises_error_when_fewer_than_three_sweeps_fit_successfully(self):
+        file_path = Path(
+            imap_l3_processing.__file__).parent.parent / 'tests' / 'test_data' / 'swapi' / 'imap_swapi_l2_fake-menlo-5-sweeps_20100101_v002.cdf'
+        with CDF(str(file_path)) as cdf:
+            energy = cdf["esa_energy"][...]
+            count_rate = cdf["swp_coin_rate"][...]
+            count_rate_delta = cdf["swp_coin_unc"][...]
+
+        count_rate_delta[0,:] = 1e-6
+        count_rate_delta[1,:] = 1e-6
+        count_rate_delta[2,:] = 1e-6
+
+        efficiency = 0.8
+
+        with self.assertRaises(ValueError):
+            temperature, density = calculate_uncalibrated_proton_solar_wind_temperature_and_density(
+            uarray(count_rate, count_rate_delta), energy, efficiency)
 
     def test_calibrate_density_and_temperature_using_lookup_table(self):
         speed_values = [250, 1000]

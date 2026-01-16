@@ -82,13 +82,18 @@ def calculate_uncalibrated_proton_solar_wind_temperature_and_density(coincident_
     temperatures_per_sweep = []
     densities_per_sweep = []
     for sweep, single_energy in zip(coincident_count_rates, energy):
-        temperature, density = calculate_proton_solar_wind_temperature_and_density_for_one_sweep(sweep, single_energy,
+        try:
+            temperature, density = calculate_proton_solar_wind_temperature_and_density_for_one_sweep(sweep, single_energy,
                                                                                                  efficiency)
-        temperatures_per_sweep.append(temperature)
-        densities_per_sweep.append(density)
-
-    average_temp = np.average(temperatures_per_sweep, weights=1 / std_devs(temperatures_per_sweep) ** 2)
-    average_density = np.average(densities_per_sweep, weights=1 / std_devs(densities_per_sweep) ** 2)
+            temperatures_per_sweep.append(temperature)
+            densities_per_sweep.append(density)
+        except ValueError as e:
+            continue
+    if len(temperatures_per_sweep) >= 3:
+        average_temp = np.average(temperatures_per_sweep, weights=1 / std_devs(temperatures_per_sweep) ** 2)
+        average_density = np.average(densities_per_sweep, weights=1 / std_devs(densities_per_sweep) ** 2)
+    else:
+        raise ValueError("Not enough successful fits")
 
     return average_temp, average_density
 
