@@ -1,1 +1,164 @@
-[{"type": "spice", "files": ["imap_sclk_0000.tsc"]}, {"type": "spice", "files": ["imap_sclk_0003.tsc"]}, {"type": "spice", "files": ["imap_sclk_0008.tsc"]}, {"type": "spice", "files": ["imap_sclk_0012.tsc"]}, {"type": "spice", "files": ["imap_sclk_0013.tsc"]}, {"type": "spice", "files": ["imap_sclk_0014.tsc"]}, {"type": "spice", "files": ["imap_sclk_0015.tsc"]}, {"type": "spice", "files": ["imap_sclk_0016.tsc"]}, {"type": "spice", "files": ["imap_sclk_0017.tsc"]}, {"type": "spice", "files": ["imap_sclk_0018.tsc"]}, {"type": "spice", "files": ["imap_sclk_0019.tsc"]}, {"type": "spice", "files": ["imap_sclk_0020.tsc"]}, {"type": "spice", "files": ["imap_sclk_0021.tsc"]}, {"type": "spice", "files": ["imap_sclk_0022.tsc"]}, {"type": "spice", "files": ["imap_sclk_0023.tsc"]}, {"type": "spice", "files": ["imap_sclk_0024.tsc"]}, {"type": "spice", "files": ["imap_sclk_0025.tsc"]}, {"type": "spice", "files": ["imap_sclk_0026.tsc"]}, {"type": "spice", "files": ["imap_sclk_0028.tsc"]}, {"type": "spice", "files": ["imap_sclk_0029.tsc"]}, {"type": "spice", "files": ["imap_sclk_0030.tsc"]}, {"type": "spice", "files": ["imap_sclk_0031.tsc"]}, {"type": "spice", "files": ["imap_sclk_0032.tsc"]}, {"type": "spice", "files": ["imap_sclk_0033.tsc"]}, {"type": "spice", "files": ["imap_sclk_0034.tsc"]}, {"type": "spice", "files": ["imap_sclk_0035.tsc"]}, {"type": "spice", "files": ["imap_sclk_0036.tsc"]}, {"type": "spice", "files": ["imap_sclk_0037.tsc"]}, {"type": "spice", "files": ["imap_sclk_0038.tsc"]}, {"type": "spice", "files": ["imap_sclk_0039.tsc"]}, {"type": "spice", "files": ["imap_sclk_0040.tsc"]}, {"type": "spice", "files": ["imap_sclk_0041.tsc"]}, {"type": "spice", "files": ["imap_sclk_0042.tsc"]}, {"type": "spice", "files": ["imap_sclk_0043.tsc"]}, {"type": "spice", "files": ["imap_sclk_0044.tsc"]}, {"type": "spice", "files": ["imap_sclk_0045.tsc"]}, {"type": "spice", "files": ["imap_sclk_0046.tsc"]}, {"type": "spice", "files": ["imap_sclk_0047.tsc"]}, {"type": "spice", "files": ["imap_sclk_0049.tsc"]}, {"type": "spice", "files": ["imap_sclk_0050.tsc"]}, {"type": "spice", "files": ["imap_sclk_0051.tsc"]}, {"type": "spice", "files": ["imap_sclk_0052.tsc"]}, {"type": "spice", "files": ["imap_sclk_0053.tsc"]}, {"type": "spice", "files": ["imap_sclk_0054.tsc"]}, {"type": "spice", "files": ["imap_sclk_0055.tsc"]}, {"type": "spice", "files": ["imap_sclk_0056.tsc"]}, {"type": "spice", "files": ["imap_sclk_0057.tsc"]}, {"type": "spice", "files": ["imap_sclk_0058.tsc"]}, {"type": "spice", "files": ["imap_sclk_0059.tsc"]}, {"type": "spice", "files": ["imap_sclk_0060.tsc"]}, {"type": "spice", "files": ["imap_sclk_0061.tsc"]}, {"type": "spice", "files": ["imap_sclk_0062.tsc"]}, {"type": "spice", "files": ["imap_sclk_0063.tsc"]}, {"type": "spice", "files": ["imap_sclk_0064.tsc"]}, {"type": "spice", "files": ["imap_sclk_0065.tsc"]}, {"type": "spice", "files": ["imap_sclk_0066.tsc"]}, {"type": "spice", "files": ["imap_sclk_0067.tsc"]}, {"type": "spice", "files": ["imap_sclk_0068.tsc"]}, {"type": "spice", "files": ["imap_sclk_0069.tsc"]}, {"type": "spice", "files": ["imap_sclk_0070.tsc"]}, {"type": "spice", "files": ["imap_sclk_0071.tsc"]}, {"type": "spice", "files": ["imap_sclk_0072.tsc"]}, {"type": "spice", "files": ["imap_sclk_0073.tsc"]}, {"type": "spice", "files": ["imap_sclk_0074.tsc"]}, {"type": "spice", "files": ["imap_sclk_0075.tsc"]}, {"type": "spice", "files": ["imap_sclk_0076.tsc"]}, {"type": "spice", "files": ["imap_sclk_0077.tsc"]}, {"type": "spice", "files": ["imap_sclk_0078.tsc"]}, {"type": "spice", "files": ["imap_sclk_0079.tsc"]}, {"type": "spice", "files": ["imap_sclk_0080.tsc"]}, {"type": "spice", "files": ["imap_sclk_0081.tsc"]}, {"type": "spice", "files": ["imap_sclk_0082.tsc"]}, {"type": "spice", "files": ["imap_sclk_0083.tsc"]}, {"type": "spice", "files": ["imap_sclk_0084.tsc"]}, {"type": "spice", "files": ["imap_sclk_0085.tsc"]}, {"type": "spice", "files": ["imap_sclk_0086.tsc"]}, {"type": "spice", "files": ["imap_sclk_0087.tsc"]}, {"type": "spice", "files": ["imap_sclk_0088.tsc"]}, {"type": "spice", "files": ["imap_sclk_0089.tsc"]}, {"type": "spice", "files": ["imap_sclk_0090.tsc"]}, {"type": "spice", "files": ["imap_sclk_0091.tsc"]}, {"type": "spice", "files": ["imap_sclk_0092.tsc"]}, {"type": "spice", "files": ["imap_sclk_0093.tsc"]}, {"type": "spice", "files": ["naif0012.tls"]}, {"type": "spice", "files": ["imap_100.tf"]}, {"type": "spice", "files": ["imap_120.tf"]}, {"type": "spice", "files": ["imap_130.tf"]}, {"type": "spice", "files": ["imap_dps_2025_272_2025_273_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_281_2025_282_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_270_2025_274_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_274_2025_287_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_287_2025_288_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_289_2025_290_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_288_2025_289_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_289_2025_291_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_292_2025_294_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_293_2025_296_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_293_2025_295_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_291_2025_292_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_296_2025_297_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_296_2025_299_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_296_2025_300_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_301_2025_302_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_300_2025_302_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_302_2025_303_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_303_2025_304_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_302_2025_304_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_304_2025_305_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_305_2025_306_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_304_2025_306_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_306_2025_307_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_305_2025_307_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_307_2025_308_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_306_2025_308_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_308_2025_309_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_307_2025_309_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_309_2025_310_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_308_2025_310_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_310_2025_311_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_311_2025_312_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_309_2025_311_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_310_2025_312_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_312_2025_313_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_311_2025_313_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_312_2025_314_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_313_2025_314_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_314_2025_315_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_313_2025_315_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_315_2025_316_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_314_2025_316_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_317_2025_318_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_316_2025_318_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_320_2025_321_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_321_2025_322_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_320_2025_322_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_318_2025_319_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_319_2025_320_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_322_2025_323_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_324_2025_325_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_323_2025_324_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_322_2025_324_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_323_2025_325_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_325_2025_326_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_324_2025_326_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_326_2025_327_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_325_2025_327_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_326_2025_328_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_327_2025_328_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_328_2025_329_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_327_2025_329_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_329_2025_330_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_328_2025_330_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_330_2025_331_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_331_2025_332_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_329_2025_331_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_330_2025_332_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_331_2025_333_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_332_2025_333_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_333_2025_334_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_332_2025_334_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_334_2025_335_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_333_2025_335_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_334_2025_336_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_335_2025_336_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_336_2025_337_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_335_2025_337_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_337_2025_338_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_338_2025_339_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_336_2025_338_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_337_2025_339_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_339_2025_340_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_338_2025_340_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_340_2025_341_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_339_2025_341_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_341_2025_342_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_340_2025_342_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_342_2025_343_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_343_2025_344_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_341_2025_343_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_342_2025_344_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_344_2025_345_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_343_2025_345_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_345_2025_346_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_344_2025_346_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_346_2025_347_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_347_2025_348_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_345_2025_347_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_346_2025_348_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_348_2025_349_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_350_2025_351_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_351_2025_352_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_350_2025_352_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_352_2025_353_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_351_2025_353_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_353_2025_354_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_352_2025_354_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_270_2025_279_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_280_2025_288_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_270_2025_354_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_354_2025_356_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_355_2025_357_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_356_2025_357_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_356_2025_358_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_357_2025_359_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_358_2025_360_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_360_2025_361_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_359_2025_361_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_361_2025_362_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_360_2025_362_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_362_2025_363_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_361_2025_363_001.ah.bc"]}, {"type": "spice", "files": ["imap_dps_2025_362_2025_364_001.ah.bc"]}, {"type": "spice", "files": ["imap_science_100.tf"]}, {"type": "spice", "files": ["imap_science_110.tf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251017-repoint00020_v003.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251018-repoint00021_v005.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251019-repoint00022_v006.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251020-repoint00023_v005.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251021-repoint00024_v006.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251022-repoint00025_v006.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251023-repoint00026_v005.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251024-repoint00027_v006.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251025-repoint00028_v006.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251026-repoint00029_v005.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251027-repoint00030_v004.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251028-repoint00031_v005.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251029-repoint00032_v005.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251030-repoint00033_v005.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251031-repoint00034_v005.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251101-repoint00035_v005.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251102-repoint00036_v005.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251103-repoint00037_v004.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251104-repoint00038_v006.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251105-repoint00039_v006.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251106-repoint00040_v004.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251107-repoint00041_v006.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251108-repoint00042_v006.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251109-repoint00043_v006.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251110-repoint00044_v006.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251111-repoint00045_v006.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251112-repoint00046_v004.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251113-repoint00047_v006.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251116-repoint00050_v007.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251117-repoint00051_v005.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251118-repoint00052_v007.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251119-repoint00053_v004.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251120-repoint00054_v007.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251121-repoint00055_v006.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251122-repoint00056_v006.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251123-repoint00057_v006.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251124-repoint00058_v004.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251125-repoint00059_v004.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251126-repoint00060_v002.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251127-repoint00061_v004.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251128-repoint00062_v005.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251129-repoint00063_v005.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251130-repoint00064_v006.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251201-repoint00065_v006.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251202-repoint00066_v005.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251203-repoint00067_v004.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251204-repoint00068_v005.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251205-repoint00069_v006.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251208-repoint00072_v003.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251210-repoint00074_v004.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251211-repoint00075_v003.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251212-repoint00076_v003.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251213-repoint00077_v002.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251214-repoint00078_v001.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251217-repoint00081_v006.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251218-repoint00082_v005.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251219-repoint00083_v002.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251220-repoint00084_v002.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251221-repoint00085_v004.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251222-repoint00086_v004.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251223-repoint00087_v003.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251224-repoint00088_v002.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251225-repoint00089_v004.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251226-repoint00090_v004.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251227-repoint00091_v005.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251228-repoint00092_v002.cdf"]}, {"type": "science", "files": ["imap_ultra_l1c_90sensor-heliopset_20251229-repoint00093_v004.cdf"]}]
+[
+ {
+    "type": "spice",
+    "files": [
+      "imap_sclk_0094.tsc"
+    ]
+  },
+  {
+    "type": "spice",
+    "files": [
+      "naif0012.tls"
+    ]
+  },
+  {
+    "type": "spice",
+    "files": [
+      "imap_130.tf"
+    ]
+  },
+  {
+    "type": "spice",
+    "files": [
+      "imap_dps_2025_270_2025_354_001.ah.bc"
+    ]
+  },
+  {
+    "type": "spice",
+    "files": [
+      "imap_science_110.tf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_ultra_l1c_90sensor-heliopset_20251018-repoint00021_v005.cdf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_ultra_l1c_90sensor-heliopset_20251019-repoint00022_v006.cdf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_ultra_l1c_90sensor-heliopset_20251020-repoint00023_v005.cdf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_ultra_l1c_90sensor-heliopset_20251021-repoint00024_v006.cdf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_ultra_l1c_90sensor-heliopset_20251022-repoint00025_v006.cdf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_ultra_l1c_90sensor-heliopset_20251023-repoint00026_v005.cdf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_ultra_l1c_90sensor-heliopset_20251024-repoint00027_v006.cdf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_ultra_l1c_90sensor-heliopset_20251025-repoint00028_v006.cdf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_ultra_l1c_90sensor-heliopset_20251028-repoint00031_v005.cdf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_ultra_l1c_90sensor-heliopset_20251029-repoint00032_v005.cdf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_ultra_l1c_90sensor-heliopset_20251117-repoint00051_v005.cdf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_ultra_l1c_90sensor-heliopset_20251118-repoint00052_v007.cdf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_ultra_l1c_90sensor-heliopset_20251119-repoint00053_v004.cdf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_ultra_l1c_90sensor-heliopset_20251120-repoint00054_v007.cdf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_ultra_l1c_90sensor-heliopset_20251121-repoint00055_v006.cdf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_ultra_l1c_90sensor-heliopset_20251122-repoint00056_v006.cdf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_ultra_l1c_90sensor-heliopset_20251123-repoint00057_v006.cdf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_ultra_l1c_90sensor-heliopset_20251128-repoint00062_v005.cdf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_ultra_l1c_90sensor-heliopset_20251129-repoint00063_v005.cdf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_ultra_l1c_90sensor-heliopset_20251130-repoint00064_v006.cdf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_ultra_l1c_90sensor-heliopset_20251201-repoint00065_v006.cdf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_ultra_l1c_90sensor-heliopset_20251202-repoint00066_v005.cdf"
+    ]
+  }
+]
