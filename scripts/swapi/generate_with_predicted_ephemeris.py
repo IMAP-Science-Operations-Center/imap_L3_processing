@@ -50,7 +50,7 @@ def generate_swapi_for_given_day(descriptor: str, day: datetime):
 
     args_string = (f"imap_l3_data_processor.py "
                    f"--instrument swapi --data-level l3a --descriptor {descriptor} "
-                   f"--start-date {day_as_string} --version v002 "
+                   f"--start-date {day_as_string} --version v003 "
                    f"--dependency {dependency_file_name}")
 
     return subprocess.Popen([sys.executable, *args_string.split(" ")])
@@ -64,7 +64,7 @@ if __name__ == '__main__':
                  datetime(2025, 12, 16),
                  datetime(2025, 12, 17),
                  datetime(2025, 12, 18)]
-    pids = [generate_swapi_for_given_day('proton-sw', date) for date in dates]
+    pids = [generate_swapi_for_given_day('pui-he', date) for date in dates]
 
     for pid in pids:
         pid.wait()

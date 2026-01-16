@@ -108,14 +108,16 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
             f'Cool: {cooling_index:0.3E}, Ion: {ionization_rate:0.3E}, Cutoff: {cutoff_speed:0.3E}, Bg: {background_count_rate:0.3E}')
 
         plt.figtext(0.99, 0.99, f"chisq_red = {result.redchi:.2g}", horizontalalignment='right', verticalalignment= 'top')
-        Path('pui_fittings').mkdir(exist_ok=True)
-        plt.savefig(f'pui_fittings/{convert_tt2000_time_to_datetime(center_of_epoch).strftime('%Y%m%d_%H%M%S')}.png')
+
+        output_path = Path('pui_fittings')
+        output_path.mkdir(exist_ok=True)
+        plt.savefig(output_path / f'{convert_tt2000_time_to_datetime(center_of_epoch).strftime('%Y%m%d_%H%M%S')}.png')
         plt.clf()
         raise Exception(f"Failed to fit - chi-squared too large {result.redchi}")
     param_vals = result.uvars
     if result.uvars is None:
         param_vals = {k: ufloat(v, np.inf) for k, v in result.params.valuesdict().items()}
-
+    print("successful fit", convert_tt2000_time_to_datetime(center_of_epoch).strftime('%Y%m%d %H:%M:%S'), param_vals)
     return FittingParameters(param_vals["cooling_index"], param_vals["ionization_rate"], param_vals["cutoff_speed"],
                              param_vals["background_count_rate"])
 
