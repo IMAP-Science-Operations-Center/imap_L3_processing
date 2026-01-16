@@ -311,11 +311,11 @@ class TestMapIntegration(unittest.TestCase):
         lo_imap_data_dir = get_run_local_data_path("lo/integration_data")
 
         input_files = [
-            lo_test_data_dir / "imap_lo_l2_l090-isn-h-sf-nsp-ram-hae-6deg-1yr_20250415_v001.cdf",
+            lo_test_data_dir / "imap_lo_l2_l090-ena-h-hf-nsp-ram-hae-6deg-1yr_20250415_v002.cdf",
         ]
 
         processing_input_collection = ProcessingInputCollection(
-            ScienceInput('imap_lo_l2_l090-isn-h-sf-nsp-ram-hae-6deg-1yr_20250415_v001.cdf'),
+            ScienceInput('imap_lo_l2_l090-ena-h-hf-nsp-ram-hae-6deg-1yr_20250415_v002.cdf'),
         )
 
         with (mock_imap_data_access(lo_imap_data_dir, input_files)):
@@ -346,7 +346,7 @@ class TestMapIntegration(unittest.TestCase):
             self.assertTrue(expected_ena_path.exists(), f"Expected file {expected_ena_path.name} not found")
 
             expected_ena_parents = {
-                "imap_lo_l2_l090-isn-h-sf-nsp-ram-hae-6deg-1yr_20250415_v001.cdf",
+                "imap_lo_l2_l090-ena-h-hf-nsp-ram-hae-6deg-1yr_20250415_v002.cdf",
             }
 
             with CDF(str(expected_ena_path)) as cdf:

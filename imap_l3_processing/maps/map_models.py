@@ -53,14 +53,13 @@ COUNTS_VAR_NAME = "counts"
 ENERGY_STAT_UNCERT_VAR_NAME = "energy_stat_uncert"
 GEOMETRIC_FACTOR_VAR_NAME = "geometric_factor"
 GEOMETRIC_FACTOR_STAT_UNCERT_VAR_NAME = "geometric_factor_stat_uncert"
-BG_RATES_VAR_NAME = "bg_rates"
-BG_RATES_STAT_UNCERT_VAR_NAME = "bg_rates_stat_uncert"
-BG_RATES_SYS_ERR_VAR_NAME = "bg_rates_sys_err"
+BG_RATE_VAR_NAME = "bg_rate"
+BG_RATE_UNCERT_VAR_NAME = "bg_rate_uncert"
 ENA_COUNT_RATE_VAR_NAME = "ena_count_rate"
 ENA_COUNT_RATE_STAT_UNCERT_VAR_NAME = "ena_count_rate_stat_uncert"
-ISN_BG_RATE_SUBTRACTED_VAR_NAME = "isn_bg_rate_subtracted"
-ISN_BG_RATE_SUBTRACTED_STAT_ERR_VAR_NAME = "isn_bg_rate_subtracted_stat_err"
-ISN_BG_RATE_SUBTRACTED_VAR_SYS_UNCERT_NAME = "isn_bg_rate_subtracted_sys_uncert"
+ISN_BG_RATE_SUBTRACTED_VAR_NAME = "isn_rate_bg_subtracted"
+ISN_BG_RATE_SUBTRACTED_STAT_UNC_VAR_NAME = "isn_rate_bg_subtracted_stat_unc"
+ISN_BG_RATE_SUBTRACTED_VAR_SYS_ERR_NAME = "isn_rate_bg_subtracted_sys_err"
 
 
 @dataclass
@@ -116,15 +115,14 @@ class ISNBackgroundSubtractedData(MapData):
     energy_stat_uncert: np.ndarray
     geometric_factor: np.ndarray
     geometric_factor_stat_uncert: np.ndarray
-    bg_rates: np.ndarray
-    bg_rates_stat_uncert: np.ndarray
-    bg_rates_sys_err: np.ndarray
-    isn_bg_rate_subtracted_stat_err: np.ndarray
-    isn_bg_rate_subtracted_sys_uncert: np.ndarray
+    bg_rate: np.ndarray
+    bg_rate_uncert: np.ndarray
+    isn_rate_bg_subtracted_sys_err: np.ndarray
+    isn_rate_bg_subtracted_stat_unc: np.ndarray
     ena_count_rate: np.ndarray
     ena_count_rate_stat_uncert: np.ndarray
     ena_count_rate_sys_uncert: np.ndarray
-    isn_bg_rate_subtracted: np.ndarray
+    isn_rate_bg_subtracted: np.ndarray
 
 
 @dataclass
@@ -169,9 +167,8 @@ class ISNRateData:
     geometric_factor: np.ndarray
     geometric_factor_stat_uncert: np.ndarray
     solid_angle: np.ndarray
-    bg_rates: np.ndarray
-    bg_rates_stat_uncert: np.ndarray
-    bg_rates_sys_err: np.ndarray
+    bg_rate: np.ndarray
+    bg_rate_uncert: np.ndarray
     ena_count_rate: np.ndarray
     ena_count_rate_stat_uncert: np.ndarray
     latitude: np.ndarray
@@ -190,7 +187,7 @@ class ISNRateData:
                     masked_obs_date = np.ma.masked_array(data=obs_date, mask=masked_obs_date.mask)
                 obs_date_range = read_variable_and_mask_fill_values(cdf["obs_date_range"])
             else:
-                obs_date_shape = cdf["bg_rates"].shape
+                obs_date_shape = cdf["bg_rate"].shape
                 all_mask_array = np.full(obs_date_shape, True)
                 masked_obs_date = np.ma.masked_array(np.full(obs_date_shape, TT2000_EPOCH), mask=all_mask_array)
                 obs_date_range = np.ma.masked_array(np.full(obs_date_shape, 0),
@@ -202,10 +199,9 @@ class ISNRateData:
                 epoch_delta=read_variable_and_mask_fill_values(cdf['epoch_delta']),
                 obs_date=masked_obs_date,
                 obs_date_range=obs_date_range,
-                bg_rates=cdf['bg_rates'][...],
-                bg_rates_stat_uncert=cdf['bg_rates_stat_uncert'][...],
-                bg_rates_sys_err=cdf['bg_rates_sys_err'][...],
-                ena_count_rate=cdf['ena_count_rate'][...],
+                bg_rate=read_numeric_variable(cdf['bg_rate']),
+                bg_rate_uncert=read_numeric_variable(cdf['bg_rate_uncert']),
+                ena_count_rate=read_numeric_variable(cdf['ena_count_rate']),
                 ena_count_rate_stat_uncert=cdf['ena_count_rate_stat_uncert'][...],
                 latitude=(cdf['latitude'][...]),
                 longitude=(cdf['longitude'][...]),
@@ -478,20 +474,19 @@ class ISNBackgroundSubtractedDataProduct(MapDataProduct[ISNBackgroundSubtractedM
             DataProductVariable(GEOMETRIC_FACTOR_STAT_UNCERT_VAR_NAME,
                                 self.data.isn_rate_map_data.geometric_factor_stat_uncert),
             DataProductVariable(SOLID_ANGLE_VAR_NAME, self.data.isn_rate_map_data.solid_angle),
-            DataProductVariable(BG_RATES_VAR_NAME, self.data.isn_rate_map_data.bg_rates),
-            DataProductVariable(BG_RATES_STAT_UNCERT_VAR_NAME, self.data.isn_rate_map_data.bg_rates_stat_uncert),
-            DataProductVariable(BG_RATES_SYS_ERR_VAR_NAME, self.data.isn_rate_map_data.bg_rates_sys_err),
+            DataProductVariable(BG_RATE_VAR_NAME, self.data.isn_rate_map_data.bg_rate),
+            DataProductVariable(BG_RATE_UNCERT_VAR_NAME, self.data.isn_rate_map_data.bg_rate_uncert),
             DataProductVariable(ENA_COUNT_RATE_VAR_NAME, self.data.isn_rate_map_data.ena_count_rate),
             DataProductVariable(ENA_COUNT_RATE_STAT_UNCERT_VAR_NAME,
                                 self.data.isn_rate_map_data.ena_count_rate_stat_uncert),
             DataProductVariable(LATITUDE_VAR_NAME, self.data.isn_rate_map_data.latitude),
             DataProductVariable(LONGITUDE_VAR_NAME, self.data.isn_rate_map_data.longitude),
             DataProductVariable(ISN_BG_RATE_SUBTRACTED_VAR_NAME,
-                                self.data.isn_rate_map_data.isn_bg_rate_subtracted),
-            DataProductVariable(ISN_BG_RATE_SUBTRACTED_VAR_SYS_UNCERT_NAME,
-                                self.data.isn_rate_map_data.isn_bg_rate_subtracted_sys_uncert),
-            DataProductVariable(ISN_BG_RATE_SUBTRACTED_STAT_ERR_VAR_NAME,
-                                self.data.isn_rate_map_data.isn_bg_rate_subtracted_stat_err)
+                                self.data.isn_rate_map_data.isn_rate_bg_subtracted),
+            DataProductVariable(ISN_BG_RATE_SUBTRACTED_STAT_UNC_VAR_NAME,
+                                self.data.isn_rate_map_data.isn_rate_bg_subtracted_stat_unc),
+            DataProductVariable(ISN_BG_RATE_SUBTRACTED_VAR_SYS_ERR_NAME,
+                                self.data.isn_rate_map_data.isn_rate_bg_subtracted_sys_err)
         ]
 
 

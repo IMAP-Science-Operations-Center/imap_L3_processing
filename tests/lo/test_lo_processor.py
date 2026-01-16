@@ -137,7 +137,6 @@ class TestLoProcessor(unittest.TestCase):
                 self.assertEqual(exception_args, cm.exception.args)
 
     def test_isn_background_subtraction(self):
-
         input_data: ISNRateData = ISNRateData(
             epoch=sentinel.epoch,
             geometric_factor=sentinel.geometric_factor,
@@ -158,23 +157,22 @@ class TestLoProcessor(unittest.TestCase):
             ena_intensity_sys_err=np.ones((1, 7, 60, 30)),
             ena_intensity_stat_uncert=np.ones((1, 7, 60, 30)),
             counts=np.ones((1, 7, 60, 30)),
-            bg_rates=np.ones((1, 7, 60, 30)) * 1,
-            bg_rates_stat_uncert=np.ones((1, 7, 60, 30)) * 3,
-            bg_rates_sys_err=np.ones((1, 7, 60, 30)),
+            bg_rate=np.ones((1, 7, 60, 30)) * 1,
+            bg_rate_uncert=np.ones((1, 7, 60, 30)) * 3,
             ena_count_rate=np.ones((1, 7, 60, 30)) * 3,
             ena_count_rate_stat_uncert=np.ones((1, 7, 60, 30)) * 2
         )
         actual_map_data: ISNBackgroundSubtractedMapData = isn_background_subtraction(input_data)
         actual_isn_rate_map_data: ISNBackgroundSubtractedData = actual_map_data.isn_rate_map_data
 
-        np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rates, np.ones((1, 4, 60, 30)))
+        np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rate, np.ones((1, 4, 60, 30)))
         np.testing.assert_array_equal(actual_isn_rate_map_data.ena_count_rate, np.ones((1, 4, 60, 30)) * 3)
-        np.testing.assert_array_equal(actual_isn_rate_map_data.isn_bg_rate_subtracted,
+        np.testing.assert_array_equal(actual_isn_rate_map_data.isn_rate_bg_subtracted,
                                       np.ones((1, 4, 60, 30)) * 2)
-        np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rates_stat_uncert, np.ones((1, 4, 60, 30)) * 3)
+        np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rate_uncert, np.ones((1, 4, 60, 30)) * 3)
         np.testing.assert_array_equal(actual_isn_rate_map_data.ena_count_rate_stat_uncert, np.ones((1, 4, 60, 30)) * 2)
         np.testing.assert_array_equal(actual_isn_rate_map_data.ena_count_rate_sys_uncert, np.zeros((1, 4, 60, 30)))
-        np.testing.assert_array_equal(actual_isn_rate_map_data.isn_bg_rate_subtracted_stat_err,
+        np.testing.assert_array_equal(actual_isn_rate_map_data.isn_rate_bg_subtracted_stat_unc,
                                       np.ones((1, 4, 60, 30)) * np.sqrt(13))
 
         np.testing.assert_array_equal(actual_isn_rate_map_data.energy, np.array([1, 2, 3, 4]))
@@ -188,8 +186,6 @@ class TestLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(actual_isn_rate_map_data.ena_intensity_sys_err, np.ones((1, 4, 60, 30)))
         np.testing.assert_array_equal(actual_isn_rate_map_data.ena_intensity_stat_uncert, np.ones((1, 4, 60, 30)))
         np.testing.assert_array_equal(actual_isn_rate_map_data.counts, np.ones((1, 4, 60, 30)))
-        np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rates, np.ones((1, 4, 60, 30)))
-        np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rates_sys_err, np.ones((1, 4, 60, 30)))
 
         self.assertEqual(actual_isn_rate_map_data.epoch, sentinel.epoch)
         self.assertEqual(actual_isn_rate_map_data.geometric_factor, sentinel.geometric_factor)
@@ -198,3 +194,42 @@ class TestLoProcessor(unittest.TestCase):
         self.assertEqual(actual_isn_rate_map_data.latitude, sentinel.latitude)
         self.assertEqual(actual_isn_rate_map_data.longitude, sentinel.longitude)
         self.assertEqual(actual_isn_rate_map_data.epoch_delta, sentinel.epoch_delta)
+
+    def test_isn_background_subtraction_handles_fill_values(self):
+        fill_values_4d = np.full((1, 7, 60, 30), np.nan)
+        expected_fill_values_4d = np.full((1, 4, 60, 30), np.nan)
+        input_data: ISNRateData = ISNRateData(
+            epoch=sentinel.epoch,
+            geometric_factor=sentinel.geometric_factor,
+            geometric_factor_stat_uncert=sentinel.geometric_factor_stat_uncert,
+            solid_angle=sentinel.solid_angle,
+            latitude=sentinel.latitude,
+            longitude=sentinel.longitude,
+            epoch_delta=sentinel.epoch_delta,
+            energy=np.array([1, 2, 3, 4, 5, 6, 7]),
+            energy_stat_uncert=np.ones(7),
+            energy_delta_plus=np.ones(7),
+            energy_delta_minus=np.ones(7),
+            energy_label=np.ones(7),
+            exposure_factor=np.copy(fill_values_4d),
+            obs_date=np.copy(fill_values_4d),
+            obs_date_range=np.copy(fill_values_4d),
+            ena_intensity=np.copy(fill_values_4d),
+            ena_intensity_sys_err=np.copy(fill_values_4d),
+            ena_intensity_stat_uncert=np.copy(fill_values_4d),
+            counts=np.copy(fill_values_4d),
+            bg_rate=np.copy(fill_values_4d),
+            bg_rate_uncert=np.copy(fill_values_4d),
+            ena_count_rate=np.copy(fill_values_4d),
+            ena_count_rate_stat_uncert=np.copy(fill_values_4d),
+        )
+
+        actual_map_data: ISNBackgroundSubtractedMapData = isn_background_subtraction(input_data)
+        actual_isn_rate_map_data: ISNBackgroundSubtractedData = actual_map_data.isn_rate_map_data
+
+        np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rate, expected_fill_values_4d)
+        np.testing.assert_array_equal(actual_isn_rate_map_data.ena_count_rate, expected_fill_values_4d)
+        np.testing.assert_array_equal(actual_isn_rate_map_data.isn_rate_bg_subtracted, expected_fill_values_4d)
+        np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rate_uncert, expected_fill_values_4d)
+        np.testing.assert_array_equal(actual_isn_rate_map_data.ena_count_rate_stat_uncert, expected_fill_values_4d)
+        np.testing.assert_array_equal(actual_isn_rate_map_data.isn_rate_bg_subtracted_stat_unc, expected_fill_values_4d)
