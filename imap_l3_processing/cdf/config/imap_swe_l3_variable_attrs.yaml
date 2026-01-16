@@ -1572,3 +1572,103 @@ tensor_id:
   VALIDMIN: 0
   VALIDMAX: 255
   FILLVAL: 255
+
+raw_1d_psd_rebinned:
+  NAME: raw_1d_psd_rebinned
+  DATA_TYPE: CDF_REAL4
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  CATDESC: Raw 1D PSD from rebinned data
+  VAR_TYPE: data
+  VARIABLE_PURPOSE: ''
+  RECORD_VARYING: RV
+  FIELDNAM: Raw 1D PSD
+  FORMAT: F12.6
+  LABLAXIS: Raw 1D PSD
+  UNITS: ' '
+  DISPLAY_TYPE: spectrogram
+  VALIDMIN: 0
+  VALIDMAX: 1.00e-20
+  SCALEMIN: 1.00e-33
+  SCALEMAX: 1.00e-24
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+
+raw_psd_by_phi_rebinned:
+  NAME: raw_psd_by_phi_rebinned
+  DATA_TYPE: CDF_REAL4
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DEPEND_2: inst_az
+  CATDESC: Raw PSD by phi from rebinned data
+  VAR_TYPE: data
+  VARIABLE_PURPOSE: ''
+  RECORD_VARYING: RV
+  FIELDNAM: Raw PSD by phi
+  FORMAT: F12.6
+  LABLAXIS: Raw PSD by phi
+  UNITS: ' '
+  DISPLAY_TYPE: spectrogram
+  VALIDMIN: 0
+  VALIDMAX: 1.00e-20
+  SCALEMIN: 1.00e-33
+  SCALEMAX: 1.00e-24
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+
+raw_psd_by_theta_rebinned:
+  NAME: raw_psd_by_theta_rebinned
+  DATA_TYPE: CDF_REAL4
+  DEPEND_0: epoch
+  DEPEND_1: energy
+  DEPEND_2: inst_el
+  CATDESC: Raw PSD by theta from rebinned data
+  VAR_TYPE: data
+  VARIABLE_PURPOSE: ''
+  RECORD_VARYING: RV
+  FIELDNAM: Raw PSD by theta
+  FORMAT: F12.6
+  LABLAXIS: Raw PSD by theta
+  UNITS: ' '
+  DISPLAY_TYPE: spectrogram
+  VALIDMIN: 0
+  VALIDMAX: 1.00e-20
+  SCALEMIN: 1.00e-33
+  SCALEMAX: 1.00e-24
+  FILLVAL: -1.00E+31
+  SCALETYP: log
+
+inst_el:
+  NAME: inst_el
+  CATDESC: Angle of each CEM detector
+  FIELDNAM: Polar Angle
+  FILLVAL: -1.00E+31
+  FORMAT: I4
+  LABLAXIS: Degree
+  SCALE_TYP: linear
+  UNITS: Degree
+  VALIDMAX: 65
+  VALIDMIN: -65
+  VAR_TYPE: support_data
+  DATA_TYPE: CDF_REAL4
+  RECORD_VARYING: NRV
+
+inst_az:
+  NAME: inst_az
+  CATDESC: Spin angle in instrument frame. Angle resolution is 12 degree nominally
+  FIELDNAM: Spin Angle
+  FILLVAL: -1.00E+31
+  FORMAT: E10.4
+  LABLAXIS: Degree
+  SCALE_TYP: linear
+  UNITS: Degree
+  VALIDMAX: 359.999
+  VALIDMIN: 0.00
+  VAR_TYPE: support_data
+  VAR_NOTES: >
+    Bin CENTERS  - Assuming 0.5 sec measurements and a spin starting
+    at Angle=0, these are the angles at the middle of each measurement
+    bin.
+  DATA_TYPE: CDF_REAL4
+  RECORD_VARYING: NRV
+

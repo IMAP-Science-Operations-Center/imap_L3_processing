@@ -125,6 +125,11 @@ class TestModels(CdfModelTestCase):
         halo_temperature_tensor_integrated = Mock()
         total_temperature_tensor_integrated = Mock()
         swp_flags = Mock()
+        raw_1d_psd_rebinned = Mock()
+        raw_psd_by_phi_rebinned = Mock()
+        raw_psd_by_theta_rebinned = Mock()
+        theta = Mock()
+        phi = Mock()
 
         data = SweL3Data(epoch=epoch,
                          epoch_delta=epoch_delta,
@@ -205,6 +210,11 @@ class TestModels(CdfModelTestCase):
                              total_temperature_tensor_integrated=total_temperature_tensor_integrated
                          ),
                          swp_flags=swp_flags,
+                         theta=theta,
+                         phi=phi,
+                         raw_1d_psd_rebinned=raw_1d_psd_rebinned,
+                         raw_psd_by_theta_rebinned=raw_psd_by_theta_rebinned,
+                         raw_psd_by_phi_rebinned=raw_psd_by_phi_rebinned,
                          input_metadata=Mock())
 
         variables = data.to_data_product_variables()
@@ -383,6 +393,16 @@ class TestModels(CdfModelTestCase):
             next(variables), total_temperature_tensor_integrated, TOTAL_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME)
         self.assert_variable_attributes(
             next(variables), swp_flags, SWP_FLAGS_VAR_NAME)
+        self.assert_variable_attributes(
+            next(variables), raw_1d_psd_rebinned, 'raw_1d_psd_rebinned')
+        self.assert_variable_attributes(
+            next(variables), raw_psd_by_theta_rebinned, 'raw_psd_by_theta_rebinned')
+        self.assert_variable_attributes(
+            next(variables), raw_psd_by_phi_rebinned, 'raw_psd_by_phi_rebinned')
+        self.assert_variable_attributes(
+            next(variables), theta, 'inst_el')
+        self.assert_variable_attributes(
+            next(variables), phi, 'inst_az')
         self.assert_variable_attributes(
             next(variables), ["Energy Label 1", "Energy Label 2", "Energy Label 3"], ENERGY_LABEL)
         self.assert_variable_attributes(

@@ -108,6 +108,7 @@ class SweL2Data:
     inst_az_spin_sector: np.ndarray
     acquisition_time: np.ndarray
     acquisition_duration: np.ndarray
+    phase_space_density_rebinned: np.ndarray
 
 
 @dataclass
@@ -214,6 +215,11 @@ class SweL3Data(DataProduct):
     phase_space_density_outward: np.ndarray
     # fit moments
     moment_data: SweL3MomentData
+    theta: np.ndarray
+    phi: np.ndarray
+    raw_1d_psd_rebinned: np.ndarray
+    raw_psd_by_phi_rebinned: np.ndarray
+    raw_psd_by_theta_rebinned: np.ndarray
     # other
     swp_flags: np.ndarray
 
@@ -376,6 +382,11 @@ class SweL3Data(DataProduct):
             DataProductVariable(TOTAL_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME,
                                 value=self.moment_data.total_temperature_tensor_integrated),
             DataProductVariable(SWP_FLAGS_VAR_NAME, value=self.swp_flags),
+            DataProductVariable("raw_1d_psd_rebinned", value=self.raw_1d_psd_rebinned),
+            DataProductVariable("raw_psd_by_theta_rebinned", value=self.raw_psd_by_theta_rebinned),
+            DataProductVariable("raw_psd_by_phi_rebinned", value=self.raw_psd_by_phi_rebinned),
+            DataProductVariable("inst_el", value=self.theta),
+            DataProductVariable("inst_az", value=self.phi),
             DataProductVariable(ENERGY_LABEL,
                                 value=[f"Energy Label {str(i + 1)}" for i in range(len(self.energy))],
                                 ),

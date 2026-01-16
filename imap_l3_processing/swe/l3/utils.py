@@ -24,6 +24,7 @@ def read_l2_swe_data(swe_l2_data: Path) -> SweL2Data:
         acquisition_time_dt64 = np.full(acquisition_time_in_MET.shape, np.datetime64("NaT", 'ns'))
         acquisition_time_dt64[valid_times_mask] = converted_valid_times
         acquisition_duration = cdf["acq_duration"][...]
+        phase_space_density_rebinned = read_numeric_variable(cdf["phase_space_density"])
     return SweL2Data(epoch=epoch,
                      phase_space_density=phase_space_density,
                      flux=flux,
@@ -31,7 +32,8 @@ def read_l2_swe_data(swe_l2_data: Path) -> SweL2Data:
                      inst_el=inst_el,
                      inst_az_spin_sector=inst_az_spin_sector,
                      acquisition_time=acquisition_time_dt64,
-                     acquisition_duration=acquisition_duration
+                     acquisition_duration=acquisition_duration,
+                     phase_space_density_rebinned=phase_space_density_rebinned
                      )
 
 
