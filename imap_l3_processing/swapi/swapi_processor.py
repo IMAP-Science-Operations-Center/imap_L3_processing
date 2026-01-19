@@ -7,6 +7,7 @@ from uncertainties import ufloat
 from uncertainties.unumpy import uarray, nominal_values
 
 from imap_l3_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS, FIVE_MINUTES_IN_NANOSECONDS
+from imap_l3_processing.maps.map_models import convert_tt2000_time_to_datetime
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, SwapiL3AlphaSolarWindData, \
@@ -89,6 +90,8 @@ class SwapiProcessor(Processor):
                 else:
                     deflection_angle, clock_angle = estimate_deflection_and_clock_angles(
                         proton_solar_wind_speed.nominal_value)
+                print(proton_solar_wind_speed, a, phi, b, chi_sq, clock_angle, deflection_angle)
+
 
             except Exception as e:
                 logger.info(f"Exception occurred at epoch {epoch}, continuing with fill value", exc_info=True)
@@ -109,6 +112,8 @@ class SwapiProcessor(Processor):
         pui_temperature = []
         for data_chunk, sw_velocity in zip(chunk_l2_data(data, 50), ten_minute_solar_wind_velocities):
             epoch = data_chunk.sci_start_time[0] + FIVE_MINUTES_IN_NANOSECONDS
+            print(convert_tt2000_time_to_datetime(epoch),sw_velocity)
+            continue
             cooling_index = ufloat(np.nan, np.nan)
             ionization_rate = ufloat(np.nan, np.nan)
             cutoff_speed = ufloat(np.nan, np.nan)
@@ -116,9 +121,10 @@ class SwapiProcessor(Processor):
             density = ufloat(np.nan, np.nan)
             temperature = ufloat(np.nan, np.nan)
             try:
-                if (np.any(np.isnan(extract_coarse_sweep(data_chunk.coincidence_count_rate)))
-                        or np.any(np.isnan(sw_velocity))):
+                if np.any(np.isnan(extract_coarse_sweep(data_chunk.coincidence_count_rate))):
                     raise ValueError("Fill values in input data")
+                if np.any(np.isnan(sw_velocity)):
+                    raise ValueError(f"Missing SW velocity at epoch {epoch}")
                 fit_params = calculate_pickup_ion_values(dependencies.instrument_response_calibration_table,
                                                          dependencies.geometric_factor_calibration_table, data_chunk.energy,
                                                          data_chunk.coincidence_count_rate,
@@ -149,6 +155,7 @@ class SwapiProcessor(Processor):
             pui_density.append(density)
             pui_temperature.append(temperature)
 
+        exit()
         pui_metadata = replace(self.input_metadata, descriptor="pui-he")
         pui_data = SwapiL3PickupIonData(pui_metadata, np.array(pui_epochs), np.array(pui_cooling_index),
                                         np.array(pui_ionization_rate),

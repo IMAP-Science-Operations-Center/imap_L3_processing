@@ -58,10 +58,10 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
 
     def make_parameters(cooling_index, ionization_rate, cutoff_speed, background_count_rate) -> Parameters:
         params = Parameters()
-        params.add('cooling_index', value=cooling_index, min=1.0, max=5.0)
-        params.add('ionization_rate', value=ionization_rate, min=0.6e-9, max=2.1e-7)
-        params.add('cutoff_speed', value=cutoff_speed, min=sw_velocity * .8, max=sw_velocity * 1.2)
-        params.add('background_count_rate', value=background_count_rate, min=0, max=0.2)
+        params.add('cooling_index', value=cooling_index, min=0.5, max=50.0)
+        params.add('ionization_rate', value=ionization_rate, min=0.6e-9, max=2.1e-6)
+        params.add('cutoff_speed', value=cutoff_speed, min=sw_velocity * .8, max=sw_velocity * 2.0)
+        params.add('background_count_rate', value=background_count_rate, min=0, max=1.0)
         return params
 
     params = make_parameters(1.50, 1e-7, sw_velocity, 0.1)
@@ -89,30 +89,33 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
                                 map_param_values_to_internal_values(1.5, 1e-7, sw_velocity, 0.2),
                             ])))
 
+    energies = [e for (i, e) in indices]
+    plt.loglog(energies, extracted_count_rates, label='Data')
+    parvals = result.params.valuesdict()
+
+    cooling_index = parvals["cooling_index"]
+    ionization_rate = parvals["ionization_rate"]
+    cutoff_speed = parvals["cutoff_speed"]
+    background_count_rate = parvals["background_count_rate"]
+
+    fit_params = FittingParameters(cooling_index, ionization_rate, cutoff_speed, background_count_rate)
+    modeled_rates = model_count_rate_calculator.model_count_rate(indices, fit_params, ephemeris_time)
+    plt.loglog(energies, modeled_rates, label='Model')
+    plt.legend()
+    plt.suptitle(f'Epoch {convert_tt2000_time_to_datetime(center_of_epoch).strftime('%Y%m%d %H:%M:%S')}')
+    plt.title(
+        f'Cool: {cooling_index:0.3E}, Ion: {ionization_rate:0.3E}, Cutoff: {cutoff_speed:0.3E}, Bg: {background_count_rate:0.3E}')
+
+    plt.figtext(0.99, 0.99, f"chisq_red = {result.redchi:.2g}", horizontalalignment='right', verticalalignment= 'top')
+
+    success_path = Path('pui_fittings/success')
+    failure_path = Path('pui_fittings/failure')
+    success_path.mkdir(exist_ok=True)
+    failure_path.mkdir(exist_ok=True)
+    output_path = success_path if result.redchi<= 10 else failure_path
+    plt.savefig(output_path / f'{convert_tt2000_time_to_datetime(center_of_epoch).strftime('%Y%m%d_%H%M%S')}.png')
+    plt.clf()
     if result.redchi > 10:
-        energies = [e for (i, e) in indices]
-        plt.loglog(energies, extracted_count_rates, label='Data')
-        parvals = result.params.valuesdict()
-
-        cooling_index = parvals["cooling_index"]
-        ionization_rate = parvals["ionization_rate"]
-        cutoff_speed = parvals["cutoff_speed"]
-        background_count_rate = parvals["background_count_rate"]
-
-        fit_params = FittingParameters(cooling_index, ionization_rate, cutoff_speed, background_count_rate)
-        modeled_rates = model_count_rate_calculator.model_count_rate(indices, fit_params, ephemeris_time)
-        plt.loglog(energies, modeled_rates, label='Model')
-        plt.legend()
-        plt.suptitle(f'Epoch {convert_tt2000_time_to_datetime(center_of_epoch).strftime('%Y%m%d %H:%M:%S')}')
-        plt.title(
-            f'Cool: {cooling_index:0.3E}, Ion: {ionization_rate:0.3E}, Cutoff: {cutoff_speed:0.3E}, Bg: {background_count_rate:0.3E}')
-
-        plt.figtext(0.99, 0.99, f"chisq_red = {result.redchi:.2g}", horizontalalignment='right', verticalalignment= 'top')
-
-        output_path = Path('pui_fittings')
-        output_path.mkdir(exist_ok=True)
-        plt.savefig(output_path / f'{convert_tt2000_time_to_datetime(center_of_epoch).strftime('%Y%m%d_%H%M%S')}.png')
-        plt.clf()
         raise Exception(f"Failed to fit - chi-squared too large {result.redchi}")
     param_vals = result.uvars
     if result.uvars is None:

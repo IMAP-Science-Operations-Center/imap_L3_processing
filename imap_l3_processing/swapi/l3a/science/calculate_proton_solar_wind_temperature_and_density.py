@@ -73,24 +73,24 @@ def calculate_proton_solar_wind_temperature_and_density_for_one_sweep(coincident
                                                   p0=initial_parameter_guess)
     residual = abs(model(peak_energies_filtered, *values) - nominal_values(filtered_peak_count_rates))
     reduced_chisq = np.sum(np.square(residual / std_devs(filtered_peak_count_rates))) / (len(peak_energies_filtered) - 2)
-    if reduced_chisq > 10:
-        Path('proton_sw_fittings').mkdir(exist_ok=True)
+    Path('proton_sw_fittings').mkdir(exist_ok=True)
 
-        plt.errorbar(x=peak_energies_filtered, y=nominal_values(filtered_peak_count_rates),
-                     yerr=std_devs(filtered_peak_count_rates), label="Data")
-        smooth_energies = np.geomspace(peak_energies_filtered[0], peak_energies_filtered[-1], 100)
-        plt.loglog(smooth_energies, model(smooth_energies, *values), label="Model")
+    plt.errorbar(x=peak_energies_filtered, y=nominal_values(filtered_peak_count_rates),
+                 yerr=std_devs(filtered_peak_count_rates), label="Data")
+    smooth_energies = np.geomspace(peak_energies_filtered[0], peak_energies_filtered[-1], 100)
+    plt.loglog(smooth_energies, model(smooth_energies, *values), label="Model")
 
-        plt.figtext(0.99, 0.99, f"chisq_red = {reduced_chisq:.2g}", horizontalalignment='right', verticalalignment= 'top')
-        plt.legend()
-        converted_epoch = convert_tt2000_time_to_datetime(start_time)
-        plt.suptitle(f'Epoch: {converted_epoch.strftime('%Y-%m-%d %H:%M:%S')}')
-        plt.title(f'Density: {values[0]:.4g}, Temperature: {values[1]:.4g}')
-        plt.yscale("log")
-        plt.xscale("log")
-        plt.savefig(f'proton_sw_fittings/{converted_epoch.strftime('%Y%m%dT%H%M%S')}.png')
-        plt.clf()
-        raise ValueError("Failed to fit - chi-squared too large", reduced_chisq)
+    plt.figtext(0.99, 0.99, f"chisq_red = {reduced_chisq:.2g}", horizontalalignment='right', verticalalignment= 'top')
+    plt.legend()
+    converted_epoch = convert_tt2000_time_to_datetime(start_time)
+    plt.suptitle(f'Epoch: {converted_epoch.strftime('%Y-%m-%d %H:%M:%S')}')
+    plt.title(f'Density: {values[0]:.4g}, Temperature: {values[1]:.4g}')
+    plt.yscale("log")
+    plt.xscale("log")
+    plt.savefig(f'proton_sw_fittings/{converted_epoch.strftime('%Y%m%dT%H%M%S')}.png')
+    plt.clf()
+    # if reduced_chisq > 10:
+    #     raise ValueError("Failed to fit - chi-squared too large", reduced_chisq)
 
     density, temperature = correlated_values(values, covariance)
 
