@@ -75,6 +75,7 @@ sensor_mapping = [
     ("h45", Sensor.Hi45),
     ("h90", Sensor.Hi90),
     ("l090", Sensor.Lo90),
+    ("l90", Sensor.Lo90),
     ("ilo", Sensor.Lo),
     ("ulc", Sensor.UltraCombined),
     ("u45", Sensor.Ultra45),
@@ -115,8 +116,8 @@ grid_size_mapping = [
 
 def parse_map_descriptor(descriptor: str) -> Optional[MapDescriptorParts]:
     descriptor_regex = """
-        (?P<sensor>hic|h45|h90|l090|ulc|u45|u90|ilo)-
-        (?P<quantity>ena|spx|isn)(?P<quantity_suffix>[a-zA-Z]*)-
+        (?P<sensor>hic|h45|h90|l090|l90|ulc|u45|u90|ilo)-
+        (?P<quantity>ena|spx|isn|enanbs)(?P<quantity_suffix>[a-zA-Z]*)-
         (?P<species>h|o)-
         (?P<frame>sf|hf|hk)-
         (?P<survival_corrected>sp|nsp)-
