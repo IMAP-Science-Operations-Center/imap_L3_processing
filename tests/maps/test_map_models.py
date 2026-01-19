@@ -822,10 +822,11 @@ class TestMapModels(unittest.TestCase):
                                           read_numeric_variable(expected['exposure_factor']))
             np.testing.assert_array_equal(actual.geometric_factor, expected['geometric_factor'][...])
             np.testing.assert_array_equal(actual.geometric_factor_stat_uncert,
-                                          read_numeric_variable(expected['geometric_factor_stat_uncert'][...]))
+                                          read_numeric_variable(expected['geometric_factor_stat_uncert']))
             np.testing.assert_array_equal(actual.latitude, expected['latitude'][...])
             np.testing.assert_array_equal(actual.longitude, expected['longitude'][...])
             np.testing.assert_array_equal(actual.solid_angle, read_numeric_variable(expected['solid_angle']))
+            np.testing.assert_array_equal(actual.bg_rates_sys_err, read_numeric_variable(expected['bg_rates_sys_err']))
 
 
 if __name__ == '__main__':

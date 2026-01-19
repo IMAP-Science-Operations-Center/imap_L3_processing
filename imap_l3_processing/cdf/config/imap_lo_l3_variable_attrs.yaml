@@ -656,12 +656,12 @@ isn_rate_bg_subtracted:
   LABL_PTR_1: energy_label
   LABL_PTR_2: longitude_label
   LABL_PTR_3: latitude_label
-  DELTA_PLUS_VAR: isn_rate_bg_subtracted_stat_uncert
-  DELTA_MINUS_VAR: isn_rate_bg_subtracted_stat_uncert
+  DELTA_PLUS_VAR: isn_rate_bg_subtracted_stat_unc
+  DELTA_MINUS_VAR: isn_rate_bg_subtracted_stat_unc
   SCALETYP: linear
   VAR_NOTE: Negative values indicate poor counting statistics and should not be ignored; average over time.
-isn_rate_bg_subtracted_stat_uncert:
-  NAME: isn_rate_bg_subtracted_stat_uncert
+isn_rate_bg_subtracted_stat_unc:
+  NAME: isn_rate_bg_subtracted_stat_unc
   DATA_TYPE: CDF_REAL4
   CATDESC: ISN rate, background subtracted statistical uncertainty.
   DEPEND_0: epoch

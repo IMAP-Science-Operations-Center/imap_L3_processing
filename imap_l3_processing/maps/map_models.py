@@ -117,6 +117,7 @@ class ISNBackgroundSubtractedData(MapData):
     geometric_factor_stat_uncert: np.ndarray
     bg_rate: np.ndarray
     bg_rate_uncert: np.ndarray
+    bg_rates_sys_err: np.ndarray
     isn_rate_bg_subtracted_sys_err: np.ndarray
     isn_rate_bg_subtracted_stat_unc: np.ndarray
     ena_count_rate: np.ndarray
@@ -175,6 +176,7 @@ class ISNRateData:
     longitude: np.ndarray
     obs_date: np.ndarray
     obs_date_range: np.ndarray
+    bg_rates_sys_err: np.ndarray
 
     @classmethod
     def read_from_path(cls, cdf_path: Path | str) -> ISNRateData:
@@ -202,7 +204,7 @@ class ISNRateData:
                 bg_rate=read_numeric_variable(cdf['bg_rate']),
                 bg_rate_uncert=read_numeric_variable(cdf['bg_rate_uncert']),
                 ena_count_rate=read_numeric_variable(cdf['ena_count_rate']),
-                ena_count_rate_stat_uncert=cdf['ena_count_rate_stat_uncert'][...],
+                ena_count_rate_stat_uncert=read_numeric_variable(cdf['ena_count_rate_stat_uncert']),
                 latitude=(cdf['latitude'][...]),
                 longitude=(cdf['longitude'][...]),
                 counts=(cdf['counts'][...]),
@@ -213,11 +215,12 @@ class ISNRateData:
                 energy_delta_plus=(cdf['energy_delta_plus'][...]),
                 energy_delta_minus=(cdf['energy_delta_minus'][...]),
                 energy_label=(cdf['energy_label'][...]),
-                energy_stat_uncert=(cdf['energy_stat_uncert'][...]),
+                energy_stat_uncert=(read_numeric_variable(cdf['energy_stat_uncert'])),
                 exposure_factor=read_numeric_variable(cdf['exposure_factor']),
                 geometric_factor=(cdf['geometric_factor'][...]),
-                geometric_factor_stat_uncert=(cdf['geometric_factor_stat_uncert'][...]),
-                solid_angle=read_numeric_variable(cdf['solid_angle'])
+                geometric_factor_stat_uncert=read_numeric_variable(cdf['geometric_factor_stat_uncert']),
+                solid_angle=read_numeric_variable(cdf['solid_angle']),
+                bg_rates_sys_err=read_numeric_variable(cdf['bg_rates_sys_err']),
             )
 
 

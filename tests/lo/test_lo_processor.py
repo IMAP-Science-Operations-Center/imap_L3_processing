@@ -160,7 +160,8 @@ class TestLoProcessor(unittest.TestCase):
             bg_rate=np.ones((1, 7, 60, 30)) * 1,
             bg_rate_uncert=np.ones((1, 7, 60, 30)) * 3,
             ena_count_rate=np.ones((1, 7, 60, 30)) * 3,
-            ena_count_rate_stat_uncert=np.ones((1, 7, 60, 30)) * 2
+            ena_count_rate_stat_uncert=np.ones((1, 7, 60, 30)) * 2,
+            bg_rates_sys_err=np.ones((1, 7, 60, 30)) * 2
         )
         actual_map_data: ISNBackgroundSubtractedMapData = isn_background_subtraction(input_data)
         actual_isn_rate_map_data: ISNBackgroundSubtractedData = actual_map_data.isn_rate_map_data
@@ -174,6 +175,7 @@ class TestLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(actual_isn_rate_map_data.ena_count_rate_sys_uncert, np.zeros((1, 4, 60, 30)))
         np.testing.assert_array_equal(actual_isn_rate_map_data.isn_rate_bg_subtracted_stat_unc,
                                       np.ones((1, 4, 60, 30)) * np.sqrt(13))
+        np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rates_sys_err, np.ones((1, 4, 60, 30)))
 
         np.testing.assert_array_equal(actual_isn_rate_map_data.energy, np.array([1, 2, 3, 4]))
         np.testing.assert_array_equal(actual_isn_rate_map_data.energy_delta_plus, np.ones(4))

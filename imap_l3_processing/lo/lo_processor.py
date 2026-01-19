@@ -118,7 +118,7 @@ def isn_background_subtraction(isn_rate_data: ISNRateData) -> ISNBackgroundSubtr
         isn_rate_bg_subtracted=isn_rate_background_subtracted,
         isn_rate_bg_subtracted_stat_unc=np.sqrt(np.square(isn_rate_data.ena_count_rate_stat_uncert) + np.square(
             isn_rate_data.bg_rate_uncert)),
-        isn_rate_bg_subtracted_sys_err=isn_rate_data.bg_rate_uncert
+        isn_rate_bg_subtracted_sys_err=isn_rate_data.bg_rates_sys_err
     )
 
     return ISNBackgroundSubtractedMapData(isn_rate_map_data=map_data)
