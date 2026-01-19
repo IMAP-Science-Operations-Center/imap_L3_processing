@@ -63,6 +63,45 @@ class TestMapIntegration(unittest.TestCase):
             self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
 
     @patch("imap_l3_data_processor._parse_cli_arguments")
+    def test_lo_l3_nbs(self, mock_parse_cli_arguments):
+        lo_nbs_test_data_dir = INTEGRATION_TEST_DATA_PATH / "lo/nbs"
+        lo_imap_data_dir = get_run_local_data_path("lo/integration_data")
+
+        input_files = list(lo_nbs_test_data_dir.glob("*.cdf")) + [
+            INTEGRATION_TEST_DATA_PATH / "spice" / "naif0012.tls",
+            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_science_101.tf",
+            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_sclk_0000.tsc",
+            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_dps_2025_105_2026_105_01.ah.bc",
+            INTEGRATION_TEST_DATA_PATH / "spice" / "de440.bsp",
+            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_recon_20250415_20260415_v01.bsp"]
+
+        with mock_imap_data_access(lo_imap_data_dir, input_files):
+            logging.basicConfig(force=True, level=logging.INFO,
+                                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+            mock_arguments = Mock()
+            mock_arguments.instrument = "lo"
+            mock_arguments.data_level = "l3"
+            mock_arguments.descriptor = "all-maps"
+            mock_arguments.start_date = "20260101"
+            mock_arguments.end_date = None
+            mock_arguments.repointing = None
+            mock_arguments.version = "v001"
+            mock_arguments.dependency = "[]"
+            mock_arguments.upload_to_sdc = False
+            mock_parse_cli_arguments.return_value = mock_arguments
+
+            imap_l3_data_processor.imap_l3_processor()
+
+            expected_map_path = ScienceFilePath(
+                'imap_lo_l3_l090-enanbs-h-sf-sp-ram-hae-6deg-1yr_20260101_v001.cdf').construct_path()
+            self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
+
+            expected_map_path = ScienceFilePath(
+                'imap_lo_l3_l090-enanbs-h-hf-sp-ram-hae-6deg-1yr_20260101_v001.cdf').construct_path()
+            self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
+
+    @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_hi_all_sp_maps_single_sensor(self, mock_parse_cli_arguments):
         hi_test_data_dir = INTEGRATION_TEST_DATA_PATH / "hi"
         hi_imap_data_dir = get_run_local_data_path("hi/integration_data")
