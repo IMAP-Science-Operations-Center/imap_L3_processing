@@ -60,6 +60,7 @@ energy_label:
   FIELDNAM: Energy Label
   FORMAT: A16
   FILLVAL: ' '
+  UNITS: ' '
 energy_delta_minus:
   NAME: energy_delta_minus
   DATA_TYPE: CDF_REAL4
@@ -116,6 +117,7 @@ latitude_label:
   FIELDNAM: Latitude Label
   FORMAT: A16
   FILLVAL: ' '
+  UNITS: ' '
 latitude_delta:
   NAME: latitude_delta
   DATA_TYPE: CDF_REAL4
@@ -157,6 +159,7 @@ longitude_label:
   FIELDNAM: Longitude label
   FORMAT: A16
   FILLVAL: ' '
+  UNITS: ' '
 longitude_delta:
   NAME: longitude_delta
   DATA_TYPE: CDF_REAL4
@@ -317,7 +320,7 @@ solid_angle:
   DEPEND_1: longitude
   DEPEND_2: latitude
   VAR_TYPE: support_data
-  RECORD_VARYING: NRV
+  RECORD_VARYING: RV
   DISPLAY_TYPE: no_plot
   FIELDNAM: Solid Angle
   VARIABLE_PURPOSE: ' '
