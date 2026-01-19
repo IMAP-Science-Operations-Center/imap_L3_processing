@@ -191,7 +191,7 @@ class CodiceLoProcessor(Processor):
                                  esa_energy_per_charge_lookup.num_bins, spin_angle_lut.num_bins), np.nan)
 
         try:
-            mass_per_charge = calculate_mass_per_charge(codice_direct_events.energy_step, codice_direct_events.tof)
+            mass_per_charge = calculate_mass_per_charge(codice_direct_events.apd_energy, codice_direct_events.tof)
             mass = calculate_mass(codice_direct_events.apd_energy, codice_direct_events.tof, mass_coefficient_lookup)
 
             spin_angle = (codice_direct_events.spin_angle + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360

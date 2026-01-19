@@ -58,14 +58,14 @@ class CodiceLoL3aDirectEventsDependencies:
         direct_events_downloaded_path = download(direct_events_path)
 
         mass_coefficients_file_downloaded_path = download(mass_coefficients_file_path.name)
-        energy_per_charge_lookup_donwloaded_path = download(energy_per_charge_file_path.name)
+        energy_per_charge_lookup_downloaded_path = download(energy_per_charge_file_path.name)
 
         return cls.from_file_paths(
             sw_priority_rates_downloaded_path,
             nsw_priority_rates_downloaded_path,
             direct_events_downloaded_path,
             mass_coefficients_file_downloaded_path,
-            energy_per_charge_lookup_donwloaded_path
+            energy_per_charge_lookup_downloaded_path
         )
 
     @classmethod

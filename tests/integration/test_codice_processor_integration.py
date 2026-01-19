@@ -20,7 +20,7 @@ class CodiceProcessorIntegration(unittest.TestCase):
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_codice_processor_integration(self, mock_parse_cli_arguments):
         energy_per_charge_path = get_test_data_path('codice/imap_codice_lo-energy-per-charge_20241110_v001.csv')
-        mass_coefficient_path = get_test_data_path('codice/imap_codice_mass-coefficient-lookup_20241110_v002.csv')
+        mass_coefficient_path = get_test_data_path('codice/imap_codice_mass-coefficient-lookup_20241110_v003.csv')
         input_files = [
             self.TEST_DATA_DIR / 'imap_codice_l2_lo-direct-events_20250814_v001.cdf',
             self.TEST_DATA_DIR / 'imap_codice_l1a_lo-nsw-priority_20250814_v001.cdf',
@@ -64,7 +64,7 @@ class CodiceProcessorIntegration(unittest.TestCase):
                                 'imap_codice_l1a_lo-nsw-priority_20250814_v001.cdf',
                                 'imap_codice_l1a_lo-sw-priority_20250814_v001.cdf',
                                 'imap_codice_lo-energy-per-charge_20241110_v001.csv',
-                                'imap_codice_mass-coefficient-lookup_20241110_v002.csv'}
+                                'imap_codice_mass-coefficient-lookup_20241110_v003.csv'}
 
             with CDF(str(expected_map_path)) as cdf:
                 self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))

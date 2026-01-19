@@ -75,7 +75,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
     def test_calculate_mass_per_charge(self):
         tof = np.array([[5], [6]])
-        energy_step = np.array([[1], [2]])
+        apd_energy = np.array([[1], [2]])
 
         POST_ACCELERATION_VOLTAGE_IN_KV = 15
         ENERGY_LOST_IN_CARBON_FOIL = 0
@@ -87,14 +87,14 @@ class TestCodiceLoCalculations(unittest.TestCase):
         mass_per_charge_2 = (2 + POST_ACCELERATION_VOLTAGE_IN_KV - ENERGY_LOST_IN_CARBON_FOIL) * (
                 6 ** 2) * CONVERSION_CONSTANT_K
 
-        actual_mass_per_charge = calculate_mass_per_charge(energy_step, tof)
+        actual_mass_per_charge = calculate_mass_per_charge(apd_energy, tof)
         np.testing.assert_array_equal(actual_mass_per_charge, np.array([[mass_per_charge_1], [mass_per_charge_2]]))
 
     def test_calculate_mass_per_charge_handles_fill_value(self):
         tof = np.ma.masked_array([[432, 234], [434, 347]], mask=[[False, True], [True, False]])
-        energy_step = np.array([[np.nan, 2342.2], [4324.8, np.nan]])
+        apd_energy = np.array([[np.nan, 2342.2], [4324.8, np.nan]])
 
-        actual_mass_per_charge = calculate_mass_per_charge(energy_step, tof)
+        actual_mass_per_charge = calculate_mass_per_charge(apd_energy, tof)
 
         self.assertIsInstance(actual_mass_per_charge, np.ma.masked_array)
         actual_filled_with_nan = np.ma.filled(actual_mass_per_charge, np.nan)
