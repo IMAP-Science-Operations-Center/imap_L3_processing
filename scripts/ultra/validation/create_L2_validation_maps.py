@@ -6,18 +6,18 @@ from imap_data_access.file_validation import generate_imap_file_path
 from imap_processing.cli import Ultra
 
 L2_DESCRIPTORS = [
-    'u90-ena-h-hf-nsp-full-hae-2deg-2mo',
-    'u90-ena-h-sf-nsp-full-hae-2deg-2mo',
-    'u45-ena-h-hf-nsp-full-hae-2deg-2mo',
-    'u45-ena-h-sf-nsp-full-hae-2deg-2mo',
-    'u90-ena-h-hf-nsp-full-hae-4deg-2mo',
-    'u90-ena-h-sf-nsp-full-hae-4deg-2mo',
-    'u45-ena-h-hf-nsp-full-hae-4deg-2mo',
-    'u45-ena-h-sf-nsp-full-hae-4deg-2mo',
-    'u90-ena-h-hf-nsp-full-hae-6deg-2mo',
-    'u90-ena-h-sf-nsp-full-hae-6deg-2mo',
-    'u45-ena-h-hf-nsp-full-hae-6deg-2mo',
-    'u45-ena-h-sf-nsp-full-hae-6deg-2mo',
+    'u90-ena-h-hf-nsp-full-hae-2deg-1mo',
+    'u90-ena-h-sf-nsp-full-hae-2deg-1mo',
+    'u45-ena-h-hf-nsp-full-hae-2deg-1mo',
+    'u45-ena-h-sf-nsp-full-hae-2deg-1mo',
+    'u90-ena-h-hf-nsp-full-hae-4deg-1mo',
+    'u90-ena-h-sf-nsp-full-hae-4deg-1mo',
+    'u45-ena-h-hf-nsp-full-hae-4deg-1mo',
+    'u45-ena-h-sf-nsp-full-hae-4deg-1mo',
+    'u90-ena-h-hf-nsp-full-hae-6deg-1mo',
+    'u90-ena-h-sf-nsp-full-hae-6deg-1mo',
+    'u45-ena-h-hf-nsp-full-hae-6deg-1mo',
+    'u45-ena-h-sf-nsp-full-hae-6deg-1mo',
 ]
 
 def generate_l2_files():
