@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
+
 import lmfit
 import numpy as np
 import scipy.optimize
@@ -41,14 +42,19 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
     sw_velocity = np.linalg.norm(sw_velocity_vector)
 
     energy_labels = range(62, 0, -1)
-    energy_cutoff = calculate_pui_energy_cutoff(ephemeris_time, sw_velocity_vector, hydrogen_inflow_vector)
+    lower_energy_cutoff = 1.25 * calculate_pui_energy_cutoff(ephemeris_time, sw_velocity_vector, hydrogen_inflow_vector,
+                                                             PROTON_MASS_KG)
+    upper_energy_cutoff = 1.20 * calculate_pui_energy_cutoff(ephemeris_time, sw_velocity_vector, helium_inflow_vector,
+                                                             HE_PUI_PARTICLE_MASS_KG)
+
     sweep_count = len(count_rates)
     average_count_rates, energies = calculate_combined_sweeps(count_rates, energy)
 
     extracted_energy_labels, extracted_energies, extracted_count_rates = extract_pui_energy_bins(energy_labels,
                                                                                                  energies,
                                                                                                  average_count_rates,
-                                                                                                 energy_cutoff,
+                                                                                                 lower_energy_cutoff,
+                                                                                                 upper_energy_cutoff,
                                                                                                  background_count_rate_cutoff)
     model_count_rate_calculator = ModelCountRateCalculator(instrument_response_lookup_table,
                                                            geometric_factor_calibration_table, sw_velocity_vector,
@@ -58,10 +64,10 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
 
     def make_parameters(cooling_index, ionization_rate, cutoff_speed, background_count_rate) -> Parameters:
         params = Parameters()
-        params.add('cooling_index', value=cooling_index, min=0.5, max=50.0)
-        params.add('ionization_rate', value=ionization_rate, min=0.6e-9, max=2.1e-6)
-        params.add('cutoff_speed', value=cutoff_speed, min=sw_velocity * .8, max=sw_velocity * 2.0)
-        params.add('background_count_rate', value=background_count_rate, min=0, max=1.0)
+        params.add('cooling_index', value=cooling_index, min=1.0, max=5.0)
+        params.add('ionization_rate', value=ionization_rate, min=0.6e-9, max=8.0e-7)
+        params.add('cutoff_speed', value=cutoff_speed, min=sw_velocity * .8, max=sw_velocity * 1.2)
+        params.add('background_count_rate', value=background_count_rate, min=0, max=0.2)
         return params
 
     params = make_parameters(1.50, 1e-7, sw_velocity, 0.1)
@@ -106,13 +112,13 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
     plt.title(
         f'Cool: {cooling_index:0.3E}, Ion: {ionization_rate:0.3E}, Cutoff: {cutoff_speed:0.3E}, Bg: {background_count_rate:0.3E}')
 
-    plt.figtext(0.99, 0.99, f"chisq_red = {result.redchi:.2g}", horizontalalignment='right', verticalalignment= 'top')
+    plt.figtext(0.99, 0.99, f"chisq_red = {result.redchi:.2g}", horizontalalignment='right', verticalalignment='top')
 
     success_path = Path('pui_fittings/success')
     failure_path = Path('pui_fittings/failure')
-    success_path.mkdir(exist_ok=True)
-    failure_path.mkdir(exist_ok=True)
-    output_path = success_path if result.redchi<= 10 else failure_path
+    success_path.mkdir(exist_ok=True, parents=True)
+    failure_path.mkdir(exist_ok=True, parents=True)
+    output_path = success_path if result.redchi <= 10 else failure_path
     plt.savefig(output_path / f'{convert_tt2000_time_to_datetime(center_of_epoch).strftime('%Y%m%d_%H%M%S')}.png')
     plt.clf()
     if result.redchi > 10:
@@ -358,27 +364,29 @@ def calculate_pui_velocity_vector(speed: ndarray, elevation: ndarray, azimuth: n
     return calculate_velocity_vector(-speed, elevation, y_axis_azimuth - azimuth)
 
 
-def calculate_pui_energy_cutoff(ephemeris_time: float, sw_velocity_in_imap_frame, hydrogen_inflow_vector: InflowVector):
+def calculate_pui_energy_cutoff(ephemeris_time: float, sw_velocity_in_imap_frame,
+                                particle_inflow_vector: InflowVector, particle_mass):
     imap_velocity = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")[0][
                     3:6]
     solar_wind_velocity = convert_velocity_relative_to_imap(
         sw_velocity_in_imap_frame, ephemeris_time, "IMAP_DPS", "ECLIPJ2000")
-    hydrogen_velocity = spiceypy.latrec(-hydrogen_inflow_vector.speed_km_per_s,
-                                        hydrogen_inflow_vector.longitude_deg_eclipj2000,
-                                        hydrogen_inflow_vector.latitude_deg_eclipj2000)
+    particle_velocity = spiceypy.latrec(-particle_inflow_vector.speed_km_per_s,
+                                        particle_inflow_vector.longitude_deg_eclipj2000,
+                                        particle_inflow_vector.latitude_deg_eclipj2000)
 
-    proton_velocity_cutoff_vector = solar_wind_velocity - hydrogen_velocity - imap_velocity
-    proton_speed_cutoff = np.linalg.norm(proton_velocity_cutoff_vector)
-    return 0.5 * (PROTON_MASS_KG / PROTON_CHARGE_COULOMBS) * (2 * proton_speed_cutoff * METERS_PER_KILOMETER) ** 2
+    particle_velocity_cutoff_vector = solar_wind_velocity - particle_velocity - imap_velocity
+    particle_speed_cutoff = np.linalg.norm(particle_velocity_cutoff_vector)
+    return (0.5 * (particle_mass / PROTON_CHARGE_COULOMBS) * (2 * particle_speed_cutoff * METERS_PER_KILOMETER) ** 2)
 
 
-def extract_pui_energy_bins(energy_bin_labels, energies, observed_count_rates, energy_cutoff, background_count_rate):
+def extract_pui_energy_bins(energy_bin_labels, energies, observed_count_rates, lower_energy_cutoff, upper_energy_cutoff,
+                            background_count_rate):
     extracted_energy_bins = []
     count_rates = []
     extracted_energy_bin_labels = []
 
     for label, energy, count_rate in zip(energy_bin_labels, energies, observed_count_rates):
-        if energy > energy_cutoff and count_rate > background_count_rate:
+        if energy > lower_energy_cutoff and energy < upper_energy_cutoff and count_rate > background_count_rate:
             extracted_energy_bins.append(energy)
             count_rates.append(count_rate)
             extracted_energy_bin_labels.append(label)

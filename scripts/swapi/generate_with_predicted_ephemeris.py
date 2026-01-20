@@ -64,7 +64,7 @@ if __name__ == '__main__':
                  datetime(2025, 12, 16),
                  datetime(2025, 12, 17),
                  datetime(2025, 12, 18)]
-    pids = [generate_swapi_for_given_day('proton-sw', date) for date in dates]
+    pids = [generate_swapi_for_given_day('pui-he', date) for date in dates]
 
     for pid in pids:
         pid.wait()

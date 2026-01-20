@@ -36,9 +36,10 @@ from imap_l3_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependen
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.utils import save_data
 
-logger=logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 MAXIMUM_ALLOWED_PROTON_SW_FITTING_CHI_SQ = 10
+
 
 class SwapiProcessor(Processor):
     def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
@@ -87,6 +88,13 @@ class SwapiProcessor(Processor):
                     deflection_angle = calculate_deflection_angle(
                         dependencies.clock_angle_and_flow_deflection_calibration_table,
                         proton_solar_wind_speed, a, phi, b)
+                    if deflection_angle is np.nan:
+                        deflection_angle = ufloat(5, 45)
+                    if clock_angle is np.nan:
+                        if deflection_angle > 0:
+                            clock_angle = 270
+                        else:
+                            clock_angle = 90
                 else:
                     deflection_angle, clock_angle = estimate_deflection_and_clock_angles(
                         proton_solar_wind_speed.nominal_value)
@@ -112,8 +120,7 @@ class SwapiProcessor(Processor):
         pui_temperature = []
         for data_chunk, sw_velocity in zip(chunk_l2_data(data, 50), ten_minute_solar_wind_velocities):
             epoch = data_chunk.sci_start_time[0] + FIVE_MINUTES_IN_NANOSECONDS
-            print(convert_tt2000_time_to_datetime(epoch),sw_velocity)
-            continue
+            print(convert_tt2000_time_to_datetime(epoch), sw_velocity)
             cooling_index = ufloat(np.nan, np.nan)
             ionization_rate = ufloat(np.nan, np.nan)
             cutoff_speed = ufloat(np.nan, np.nan)
@@ -126,7 +133,8 @@ class SwapiProcessor(Processor):
                 if np.any(np.isnan(sw_velocity)):
                     raise ValueError(f"Missing SW velocity at epoch {epoch}")
                 fit_params = calculate_pickup_ion_values(dependencies.instrument_response_calibration_table,
-                                                         dependencies.geometric_factor_calibration_table, data_chunk.energy,
+                                                         dependencies.geometric_factor_calibration_table,
+                                                         data_chunk.energy,
                                                          data_chunk.coincidence_count_rate,
                                                          epoch, 0.1,
                                                          sw_velocity,
@@ -172,16 +180,15 @@ class SwapiProcessor(Processor):
         alpha_solar_wind_temperatures = []
 
         for data_chunk in chunk_l2_data(data, 5):
-            alpha_solar_wind_speed= ufloat(np.nan, np.nan)
-            alpha_density= ufloat(np.nan, np.nan)
-            alpha_temperature= ufloat(np.nan, np.nan)
+            alpha_solar_wind_speed = ufloat(np.nan, np.nan)
+            alpha_density = ufloat(np.nan, np.nan)
+            alpha_temperature = ufloat(np.nan, np.nan)
             epoch = data_chunk.sci_start_time[0] + THIRTY_SECONDS_IN_NANOSECONDS
             try:
                 if np.any(np.isnan(extract_coarse_sweep(data_chunk.coincidence_count_rate))):
                     raise ValueError("Fill values in input data")
                 coincidence_count_rates_with_uncertainty = uarray(data_chunk.coincidence_count_rate,
                                                                   data_chunk.coincidence_count_rate_uncertainty)
-
 
                 alpha_solar_wind_speed = calculate_alpha_solar_wind_speed(coincidence_count_rates_with_uncertainty,
                                                                           data_chunk.energy)
@@ -198,7 +205,6 @@ class SwapiProcessor(Processor):
                 alpha_solar_wind_speeds.append(alpha_solar_wind_speed)
                 alpha_solar_wind_densities.append(alpha_density)
                 alpha_solar_wind_temperatures.append(alpha_temperature)
-
 
         alpha_solar_wind_speed_metadata = replace(self.input_metadata, descriptor="alpha-sw")
         alpha_solar_wind_l3_data = SwapiL3AlphaSolarWindData(alpha_solar_wind_speed_metadata, np.array(epochs),
