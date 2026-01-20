@@ -110,6 +110,16 @@ class TestMapDescriptors(unittest.TestCase):
                                                                       PixelSize.SixDegrees,
                                                                       "1yr",
                                                                       MapQuantity.ISNBackgroundSubtracted, "")),
+            ("l090-spxnbs-h-sf-nsp-ram-hae-6deg-1yr", MapDescriptorParts(Sensor.Lo90, ReferenceFrame.Spacecraft,
+                                                                      no_sp, SpinPhase.RamOnly, "hae",
+                                                                      PixelSize.SixDegrees,
+                                                                      "1yr",
+                                                                      MapQuantity.SpectralIndex, "nbs")),
+            ("l090-spxnbs-h-hk-nsp-ram-hae-6deg-1yr", MapDescriptorParts(Sensor.Lo90, ReferenceFrame.HeliosphericKinematic,
+                                                                         no_sp, SpinPhase.RamOnly, "hae",
+                                                                         PixelSize.SixDegrees,
+                                                                         "1yr",
+                                                                         MapQuantity.SpectralIndex, "nbs")),
         ]
 
         for descriptor, expected in test_cases:

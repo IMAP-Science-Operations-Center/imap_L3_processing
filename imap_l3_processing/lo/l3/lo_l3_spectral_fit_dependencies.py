@@ -18,7 +18,7 @@ class LoL3SpectralFitDependencies:
         if len(file_names) != 1:
             raise ValueError("Incorrect number of dependencies")
 
-        lo_l3_file = file_names[0].name
-        cdf = download(lo_l3_file)
+        lo_file = file_names[0].name
+        cdf = download(lo_file)
 
         return cls(RectangularIntensityMapData.read_from_path(cdf))
