@@ -806,13 +806,13 @@ class TestMapModels(unittest.TestCase):
         with CDF(str(path_to_cdf)) as expected:
             np.testing.assert_array_equal(actual.epoch, expected['epoch'][...])
 
-            np.testing.assert_array_equal(actual.bg_rates, expected['bg_rates'][...])
-            np.testing.assert_array_equal(actual.bg_rates_stat_uncert, expected['bg_rates_stat_uncert'][...])
-            np.testing.assert_array_equal(actual.bg_rates_sys_err, expected['bg_rates_sys_err'][...])
+            np.testing.assert_array_equal(actual.bg_rates, read_numeric_variable(expected['bg_rates']))
+            np.testing.assert_array_equal(actual.bg_rates_stat_uncert, read_numeric_variable(expected['bg_rates_stat_uncert']))
+            np.testing.assert_array_equal(actual.bg_rates_sys_err, read_numeric_variable(expected['bg_rates_sys_err']))
             np.testing.assert_array_equal(actual.counts, expected['counts'][...])
-            np.testing.assert_array_equal(actual.ena_count_rate, expected['ena_count_rate'][...])
+            np.testing.assert_array_equal(actual.ena_count_rate, read_numeric_variable(expected['ena_count_rate']))
             np.testing.assert_array_equal(actual.ena_count_rate_stat_uncert,
-                                          expected['ena_count_rate_stat_uncert'][...])
+                                          read_numeric_variable(expected['ena_count_rate_stat_uncert']))
             np.testing.assert_array_equal(actual.ena_intensity, read_numeric_variable(expected['ena_intensity']))
             np.testing.assert_array_equal(actual.ena_intensity_stat_uncert,
                                           read_numeric_variable(expected['ena_intensity_stat_uncert']))
