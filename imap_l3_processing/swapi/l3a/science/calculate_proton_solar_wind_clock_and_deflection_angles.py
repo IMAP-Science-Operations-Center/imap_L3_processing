@@ -1,6 +1,9 @@
 import numpy as np
 import uncertainties
 from scipy.interpolate import LinearNDInterpolator
+from uncertainties import ufloat
+
+from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_speed import estimate_deflection_and_clock_angles
 
 
 class ClockAngleCalibrationTable:
@@ -26,10 +29,18 @@ class ClockAngleCalibrationTable:
 def calculate_clock_angle(lookup_table: ClockAngleCalibrationTable, sw_speed, a, phi, b):
     a_over_b = a / b
     phi_offset = lookup_table.lookup_clock_offset(sw_speed, a_over_b)
-    return (phi - phi_offset) % 360
+
+    if np.isnan(phi_offset.nominal_value):
+        _, clock_angle = estimate_deflection_and_clock_angles(sw_speed)
+        return clock_angle
+    else:
+        return (phi - phi_offset) % 360
 
 
 def calculate_deflection_angle(lookup_table, sw_speed, a, phi, b):
     a_over_b = a / b
     deflection_angle = lookup_table.lookup_flow_deflection(sw_speed, a_over_b)
+
+    if np.isnan(deflection_angle.nominal_value):
+        return ufloat(5, 45)
     return deflection_angle

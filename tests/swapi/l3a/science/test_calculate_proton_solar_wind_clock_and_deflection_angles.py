@@ -1,5 +1,6 @@
 from pathlib import Path
 from unittest import TestCase
+from unittest.mock import patch, sentinel
 
 from uncertainties import ufloat
 
@@ -21,6 +22,20 @@ class TestCalculateProtonSolarWindClockAndDeflectionAngles(TestCase):
         clock_angle = calculate_clock_angle(self.lookup_table, proton_solar_wind_speed, a, phi, b)
         self.assertAlmostEqual(phi.n - 6.09, clock_angle.n, 4)
         self.assertAlmostEqual(0.1, clock_angle.s, 4)
+
+    @patch(
+        'imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_clock_and_deflection_angles.estimate_deflection_and_clock_angles')
+    def test_calculate_clock_angle_out_of_lut_range(self, mock_estimate_deflection_and_clock_angles):
+        proton_solar_wind_speed, a, phi, b = (ufloat(350, .1),
+                                              ufloat(500, .2),
+                                              ufloat(4.69, .2),
+                                              ufloat(1_000.0, .2))
+
+        mock_estimate_deflection_and_clock_angles.return_value = (sentinel.deflection_angle, sentinel.clock_angle)
+        clock_angle = calculate_clock_angle(self.lookup_table, proton_solar_wind_speed, a, phi, b)
+
+        mock_estimate_deflection_and_clock_angles.assert_called_with(proton_solar_wind_speed)
+        self.assertAlmostEqual(sentinel.clock_angle, clock_angle)
 
     def test_calculate_clock_angle_with_interpolation(self):
         proton_solar_wind_speed, a, phi, b = (ufloat(845.00, .1),
@@ -48,6 +63,17 @@ class TestCalculateProtonSolarWindClockAndDeflectionAngles(TestCase):
         deflection_angle = calculate_deflection_angle(self.lookup_table, proton_solar_wind_speed, a, phi, b)
         self.assertAlmostEqual(3.125, deflection_angle.n, 4)
         self.assertAlmostEqual(0.02, deflection_angle.s, 4)
+
+    def test_calculate_deflection_angle_out_of_lut_range(self):
+        proton_solar_wind_speed, a, phi, b = (ufloat(350, .1),
+                                              ufloat(500, .2),
+                                              ufloat(4.69, .2),
+                                              ufloat(1_000.0, .2))
+
+        actual_deflection_angle = calculate_deflection_angle(self.lookup_table, proton_solar_wind_speed, a, phi, b)
+
+        self.assertEqual(5.0, actual_deflection_angle.nominal_value)
+        self.assertEqual(45.0, actual_deflection_angle.std_dev)
 
     def test_clock_angle_calibration_table_from_file(self):
         file_path = Path(
