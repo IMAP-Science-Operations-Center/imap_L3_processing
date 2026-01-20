@@ -95,6 +95,7 @@ class CodiceLoL2DirectEventData:
     apd_id: ndarray
     data_quality: ndarray
     energy_step: ndarray
+    energy_per_charge: ndarray
     multi_flag: ndarray
     num_events: ndarray
     spin_angle: ndarray
@@ -120,6 +121,9 @@ class CodiceLoL2DirectEventData:
                              ...],
                 energy_step=read_variable_and_mask_fill_values(cdf["energy_step"])[:, :CODICE_LO_L2_NUM_PRIORITIES,
                             ...],
+                energy_per_charge=read_variable_and_mask_fill_values(cdf["energy_per_charge"])[:,
+                                  :CODICE_LO_L2_NUM_PRIORITIES,
+                                  ...],
                 multi_flag=read_variable_and_mask_fill_values(cdf["multi_flag"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
                 num_events=read_variable_and_mask_fill_values(cdf["num_events"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
                 spin_angle=read_variable_and_mask_fill_values(cdf["spin_angle"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],

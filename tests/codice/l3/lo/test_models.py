@@ -463,6 +463,7 @@ class TestModels(CdfModelTestCase):
             with CDF(str(test_cdf_path), masterpath=str(all_fill_l2_cdf_path)) as cdf:
                 cdf["apd_energy"] = rng.random(cdf["apd_energy"].shape)
                 cdf["energy_step"] = rng.random(cdf["energy_step"].shape)
+                cdf["energy_per_charge"] = rng.random(cdf["energy_per_charge"].shape)
                 cdf["spin_angle"] = rng.random(cdf["spin_angle"].shape)
                 cdf["spin_sector"] = rng.random(cdf["spin_sector"].shape)
                 cdf["elevation_angle"] = rng.random(cdf["elevation_angle"].shape)
@@ -473,6 +474,7 @@ class TestModels(CdfModelTestCase):
             with CDF(str(test_cdf_path)) as cdf:
                 np.testing.assert_array_equal(l2_direct_event.apd_energy, cdf["apd_energy"][:, :7, ...])
                 np.testing.assert_array_equal(l2_direct_event.energy_step, cdf["energy_step"][:, :7, ...])
+                np.testing.assert_array_equal(l2_direct_event.energy_per_charge, cdf["energy_per_charge"][:, :7, ...])
                 np.testing.assert_array_equal(l2_direct_event.spin_sector, cdf["spin_sector"][:, :7, ...])
                 np.testing.assert_array_equal(l2_direct_event.spin_angle, cdf["spin_angle"][:, :7, ...])
                 np.testing.assert_array_equal(l2_direct_event.elevation_angle, cdf["elevation_angle"][:, :7, ...])
@@ -488,6 +490,7 @@ class TestModels(CdfModelTestCase):
 
             np.testing.assert_array_equal(l2_direct_event.apd_energy, np.full((9, 7, 10000), np.nan))
             np.testing.assert_array_equal(l2_direct_event.energy_step, np.full((9, 7, 10000), np.nan))
+            np.testing.assert_array_equal(l2_direct_event.energy_per_charge, np.full((9, 7, 10000), np.nan))
             np.testing.assert_array_equal(l2_direct_event.spin_angle, np.full((9, 7, 10000), np.nan))
             np.testing.assert_array_equal(l2_direct_event.spin_sector, np.full((9, 7, 10000), np.nan))
             np.testing.assert_array_equal(l2_direct_event.elevation_angle, np.full((9, 7, 10000), np.nan))

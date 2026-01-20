@@ -485,6 +485,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         codice_l2_variables["data_quality"] = rng.random((len(epochs)))
         codice_l2_variables["num_events"] = rng.random((len(epochs)))
 
+        expected_energy_per_charge = codice_l2_variables["energy_per_charge"]
         expected_apd_energy = codice_l2_variables["apd_energy"]
         expected_apd_gain = codice_l2_variables["gain"]
         expected_apd_id = codice_l2_variables["apd_id"]
@@ -522,7 +523,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_equal(mock_calculate_mass.call_args.args[2], dependencies.mass_coefficient_lookup)
 
         self.assertEqual(1, mock_calculate_mass_per_charge.call_count)
-        np.testing.assert_equal(mock_calculate_mass_per_charge.call_args.args[0], expected_apd_energy)
+        np.testing.assert_equal(mock_calculate_mass_per_charge.call_args.args[0], expected_energy_per_charge)
         np.testing.assert_equal(mock_calculate_mass_per_charge.call_args.args[1], expected_tof)
 
         expected_spin_angles = (codice_l2_variables['spin_angle'] + 316) % 360

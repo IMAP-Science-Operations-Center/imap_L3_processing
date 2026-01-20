@@ -75,7 +75,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
     def test_calculate_mass_per_charge(self):
         tof = np.array([[5], [6]])
-        apd_energy = np.array([[1], [2]])
+        energy_per_charge = np.array([[1], [2]])
 
         POST_ACCELERATION_VOLTAGE_IN_KV = 15
         ENERGY_LOST_IN_CARBON_FOIL = 0
@@ -87,7 +87,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
         mass_per_charge_2 = (2 + POST_ACCELERATION_VOLTAGE_IN_KV - ENERGY_LOST_IN_CARBON_FOIL) * (
                 6 ** 2) * CONVERSION_CONSTANT_K
 
-        actual_mass_per_charge = calculate_mass_per_charge(apd_energy, tof)
+        actual_mass_per_charge = calculate_mass_per_charge(energy_per_charge, tof)
         np.testing.assert_array_equal(actual_mass_per_charge, np.array([[mass_per_charge_1], [mass_per_charge_2]]))
 
     def test_calculate_mass_per_charge_handles_fill_value(self):

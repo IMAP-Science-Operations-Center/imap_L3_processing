@@ -48,8 +48,8 @@ def calculate_mass(apd_energy: np.ndarray, tof: np.ndarray, mass_coefficients: M
     return np.e ** mass_calculation
 
 
-def calculate_mass_per_charge(energy_step: np.ndarray, tof: np.ndarray) -> np.ndarray:
-    return (energy_step + POST_ACCELERATION_VOLTAGE_IN_KV - ENERGY_LOST_IN_CARBON_FOIL) * (
+def calculate_mass_per_charge(energy_per_charge: np.ndarray, tof: np.ndarray) -> np.ndarray:
+    return (energy_per_charge + POST_ACCELERATION_VOLTAGE_IN_KV - ENERGY_LOST_IN_CARBON_FOIL) * (
             tof ** 2) * CONVERSION_CONSTANT_K
 
 
