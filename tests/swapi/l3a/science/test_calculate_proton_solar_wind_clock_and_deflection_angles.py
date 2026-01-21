@@ -34,7 +34,7 @@ class TestCalculateProtonSolarWindClockAndDeflectionAngles(TestCase):
         mock_estimate_deflection_and_clock_angles.return_value = (sentinel.deflection_angle, sentinel.clock_angle)
         clock_angle = calculate_clock_angle(self.lookup_table, proton_solar_wind_speed, a, phi, b)
 
-        mock_estimate_deflection_and_clock_angles.assert_called_with(proton_solar_wind_speed)
+        mock_estimate_deflection_and_clock_angles.assert_called_with(proton_solar_wind_speed.nominal_value)
         self.assertAlmostEqual(sentinel.clock_angle, clock_angle)
 
     def test_calculate_clock_angle_with_interpolation(self):

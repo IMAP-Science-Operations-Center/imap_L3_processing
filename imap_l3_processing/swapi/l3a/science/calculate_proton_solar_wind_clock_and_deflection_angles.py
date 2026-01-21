@@ -31,7 +31,7 @@ def calculate_clock_angle(lookup_table: ClockAngleCalibrationTable, sw_speed, a,
     phi_offset = lookup_table.lookup_clock_offset(sw_speed, a_over_b)
 
     if np.isnan(phi_offset.nominal_value):
-        _, clock_angle = estimate_deflection_and_clock_angles(sw_speed)
+        _, clock_angle = estimate_deflection_and_clock_angles(sw_speed.nominal_value)
         return clock_angle
     else:
         return (phi - phi_offset) % 360

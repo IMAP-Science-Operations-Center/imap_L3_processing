@@ -40,7 +40,7 @@ def generate_swapi_for_given_day(descriptor: str, day: datetime):
 
     input_collection.download_all_files()
 
-    dependency_file_name = f'imap_swapi_l3a_{descriptor}_{day_as_string}_v003.json'
+    dependency_file_name = f'imap_swapi_l3a_{descriptor}_{day_as_string}_v002.json'
     output_filepath = DependencyFilePath(dependency_file_name)
 
     fullpath = output_filepath.construct_path()
@@ -64,7 +64,7 @@ if __name__ == '__main__':
                  datetime(2025, 12, 16),
                  datetime(2025, 12, 17),
                  datetime(2025, 12, 18)]
-    pids = [generate_swapi_for_given_day('proton-sw', date) for date in dates]
+    pids = [generate_swapi_for_given_day('pui-he', date) for date in dates]
 
     for pid in pids:
         pid.wait()

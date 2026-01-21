@@ -61,47 +61,55 @@ class TestCalculatePickupIon(SpiceTestCase):
     @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.convert_velocity_relative_to_imap")
     @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
     def test_calculate_pickup_ion_energy_cutoff(self, mock_spice, mock_convert_velocity):
-        expected_ephemeris_time = 100000000
-        mock_light_time = 1233.002
-        mock_spice.spkezr.return_value = (np.array([0, 0, 0, 4, 0, 0]), mock_light_time)
-        mock_spice.latrec.return_value = np.array([0, 2, 0])
+        cases = [
+            PROTON_MASS_KG,
+            HE_PUI_PARTICLE_MASS_KG
+        ]
+        for particle_mass in cases:
+            with self.subTest(particle_mass):
+                expected_ephemeris_time = 100000000
+                mock_light_time = 1233.002
+                mock_spice.spkezr.return_value = (np.array([0, 0, 0, 4, 0, 0]), mock_light_time)
+                mock_spice.latrec.return_value = np.array([0, 2, 0])
 
-        expected_sw_velocity_in_eclipj2000_frame = np.array([1, 2, 4])
-        mock_convert_velocity.return_value = expected_sw_velocity_in_eclipj2000_frame
+                expected_sw_velocity_in_eclipj2000_frame = np.array([1, 2, 4])
+                mock_convert_velocity.return_value = expected_sw_velocity_in_eclipj2000_frame
 
-        solar_wind_velocity_in_imap_frame = np.array([22, 33, 44])
+                solar_wind_velocity_in_imap_frame = np.array([22, 33, 44])
 
-        h_inflow_speed = 102
-        hydrogen_inflow_vector = InflowVector(h_inflow_speed, sentinel.h_inflow_lon, sentinel.h_inflow_lat)
+                h_inflow_speed = 102
+                hydrogen_inflow_vector = InflowVector(h_inflow_speed, sentinel.h_inflow_lon, sentinel.h_inflow_lat)
 
-        energy_cutoff = calculate_pui_energy_cutoff(expected_ephemeris_time, solar_wind_velocity_in_imap_frame,
-                                                    hydrogen_inflow_vector)
+                energy_cutoff = calculate_pui_energy_cutoff(particle_mass, expected_ephemeris_time,
+                                                            solar_wind_velocity_in_imap_frame,
+                                                            hydrogen_inflow_vector)
 
-        mock_spice.spkezr.assert_called_with("IMAP", expected_ephemeris_time, "ECLIPJ2000", "NONE", "SUN")
-        mock_spice.latrec.assert_called_with(-h_inflow_speed,
-                                             sentinel.h_inflow_lon,
-                                             sentinel.h_inflow_lat)
-        mock_convert_velocity.assert_called_with(solar_wind_velocity_in_imap_frame, expected_ephemeris_time,
-                                                 "IMAP_DPS",
-                                                 "ECLIPJ2000")
+                mock_spice.spkezr.assert_called_with("IMAP", expected_ephemeris_time, "ECLIPJ2000", "NONE", "SUN")
+                mock_spice.latrec.assert_called_with(-h_inflow_speed,
+                                                     sentinel.h_inflow_lon,
+                                                     sentinel.h_inflow_lat)
+                mock_convert_velocity.assert_called_with(solar_wind_velocity_in_imap_frame, expected_ephemeris_time,
+                                                         "IMAP_DPS",
+                                                         "ECLIPJ2000")
 
-        velocity_cutoff_norm = 5
-        self.assertAlmostEqual(0.5 * (PROTON_MASS_KG / PROTON_CHARGE_COULOMBS) * (2 * velocity_cutoff_norm * 1000) ** 2,
-                               energy_cutoff)
+                velocity_cutoff_norm = 5
+                self.assertAlmostEqual(
+                    0.5 * (particle_mass / PROTON_CHARGE_COULOMBS) * (2 * velocity_cutoff_norm * 1000) ** 2,
+                    energy_cutoff)
 
     def test_extract_pui_energy_bins(self):
-        energies = np.array([100, 1000, 1500, 2000, 10000])
-        energy_indices = np.array([50, 40, 30, 20, 10])
-        observed_count_rates = np.array([1, 100, 100, 0.09, 200])
-        background_count_rate = 0.1
-        energy_cutoff = 1400
+        energies = np.array([100, 1000, 1500, 2000, 3000, 10000, 15000])
+        energy_indices = np.array([50, 40, 30, 20, 12, 10, 15])
+        observed_count_rates = np.array([1, 100, 100, 9, 0, 200, 300])
+        lower_energy_cutoff = 1400
+        upper_energy_cutoff = 11000
 
         extracted_energy_bin_labels, extracted_energy_bins, extracted_count_rates = extract_pui_energy_bins(
             energy_indices, energies, observed_count_rates,
-            energy_cutoff, background_count_rate)
-        np.testing.assert_array_equal(np.array([30, 10]), extracted_energy_bin_labels)
-        np.testing.assert_array_equal(np.array([1500, 10000]), extracted_energy_bins)
-        np.testing.assert_array_equal(np.array([100, 200]), extracted_count_rates)
+            lower_energy_cutoff, upper_energy_cutoff)
+        np.testing.assert_array_equal(extracted_energy_bin_labels, np.array([30, 20, 10]))
+        np.testing.assert_array_equal(extracted_energy_bins, np.array([1500, 2000, 10000]))
+        np.testing.assert_array_equal(extracted_count_rates, np.array([100, 9, 200]))
 
     @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
     def test_convert_velocity_relative_to_imap(self, mock_spice):
@@ -382,7 +390,7 @@ class TestCalculatePickupIon(SpiceTestCase):
 
             combined_counts, combined_energies = calculate_combined_sweeps(count_rate, energy)
             mock_calculate_combined_sweeps.return_value = combined_counts, combined_energies
-            extracted_counts = [1.9, 1.2, 0.4]
+            extracted_counts = [1.9, 1.2, 0]
             extracted_energies = [5000, 4000, 3000]
             extracted_indices = [4, 3, 2]
             expected_indices = [(4, 5000), (3, 4000), (2, 3000)]
@@ -401,8 +409,9 @@ class TestCalculatePickupIon(SpiceTestCase):
                                           "background_count_rate": 4}
             mock_minimize_result.redchi = 3
             mock_minimize.return_value = mock_minimize_result
-            energy_cutoff = 6000.0
-            mock_calculate_pui_energy_cutoff.return_value = energy_cutoff
+            lower_energy_cutoff = 6000.0
+            upper_energy_cutoff = 12000.0
+            mock_calculate_pui_energy_cutoff.side_effect = [lower_energy_cutoff, upper_energy_cutoff]
 
             efficiency_lut = EfficiencyCalibrationTable(
                 get_test_data_path("swapi/imap_swapi_efficiency-lut_20241020_v000.dat"))
@@ -419,12 +428,15 @@ class TestCalculatePickupIon(SpiceTestCase):
             mock_calculate_combined_sweeps.assert_called_once_with(count_rate, energy)
 
             mock_spice.unitim.assert_called_with(input_epochs / 1e9, "TT", "ET")
-            mock_calculate_pui_energy_cutoff.assert_called_with(ephemeris_time_for_epoch, sw_velocity, h_inflow_vector)
+            mock_calculate_pui_energy_cutoff.assert_has_calls([
+                call(PROTON_MASS_KG, ephemeris_time_for_epoch, sw_velocity, h_inflow_vector),
+                call(HE_PUI_PARTICLE_MASS_KG, ephemeris_time_for_epoch, sw_velocity, he_inflow_vector)])
             mock_extract_pui_energy_bins.assert_called_with(range(62, 0, -1),
                                                             combined_energies,
                                                             combined_counts,
-                                                            energy_cutoff,
-                                                            background_count_rate_cutoff)
+                                                            lower_energy_cutoff * 1.25,
+                                                            upper_energy_cutoff * 1.2,
+                                                            )
             actual_count_rates, indices, model_count_rates_calculator, ephemeris_time, sweep_count = \
                 mock_minimize.call_args.kwargs['args']
             self.assertEqual(calc_chi_squared_lm_fit, mock_minimize.call_args.args[0])
@@ -438,11 +450,12 @@ class TestCalculatePickupIon(SpiceTestCase):
                         actual_params["cutoff_speed"].from_internal(vertex[2]),
                         actual_params["background_count_rate"].from_internal(vertex[3])]
 
-            self.assertEqual([1.5, 1e-7, 500, 0.1], _transform_simplex_vertex(minimize_simplex[0]))
-            self.assertEqual([5.0, 1e-7, 500, 0.1], _transform_simplex_vertex(minimize_simplex[1]))
-            self.assertEqual([1.5, 2.1e-7, 500, 0.1], _transform_simplex_vertex(minimize_simplex[2]))
-            self.assertEqual([1.5, 1e-7, 600, 0.1], _transform_simplex_vertex(minimize_simplex[3]))
-            self.assertEqual([1.5, 1e-7, 500, 0.2], _transform_simplex_vertex(minimize_simplex[4]))
+            np.testing.assert_array_almost_equal([1.5, 1e-7, 500, 0.1], _transform_simplex_vertex(minimize_simplex[0]))
+            np.testing.assert_array_almost_equal([5.0, 1e-7, 500, 0.1], _transform_simplex_vertex(minimize_simplex[1]))
+            np.testing.assert_array_almost_equal([1.5, 2.1e-7, 500, 0.1],
+                                                 _transform_simplex_vertex(minimize_simplex[2]))
+            np.testing.assert_array_almost_equal([1.5, 1e-7, 600, 0.1], _transform_simplex_vertex(minimize_simplex[3]))
+            np.testing.assert_array_almost_equal([1.5, 1e-7, 500, 0.2], _transform_simplex_vertex(minimize_simplex[4]))
 
             self.assertEqual(1.5, actual_params["cooling_index"].value)
             self.assertEqual(1.0, actual_params["cooling_index"].min)
@@ -450,7 +463,7 @@ class TestCalculatePickupIon(SpiceTestCase):
 
             self.assertEqual(1e-7, actual_params["ionization_rate"].value)
             self.assertEqual(0.6e-9, actual_params["ionization_rate"].min)
-            self.assertEqual(2.1e-7, actual_params["ionization_rate"].max)
+            self.assertEqual(8.0e-7, actual_params["ionization_rate"].max)
 
             self.assertEqual(500, actual_params["cutoff_speed"].value)
             self.assertEqual(400, actual_params["cutoff_speed"].min)
