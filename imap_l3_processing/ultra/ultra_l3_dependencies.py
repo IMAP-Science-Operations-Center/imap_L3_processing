@@ -56,7 +56,7 @@ class UltraL3Dependencies:
         for file_path in glows_file_paths:
             glows_l3e_data.append(UltraGlowsL3eData.read_from_path(file_path))
         paths = [l2_map_path] + l1c_file_paths + glows_file_paths
-        l1c_paths_dict = {f"l1c_path_{index + 1}": path for index, path in enumerate(l1c_file_paths)}
+        l1c_paths_dict = {path.stem: path for path in l1c_file_paths}
         l2_healpix_datasets = ultra_l2(l1c_paths_dict)
         l2_healpix_map_data = HealPixIntensityMapData.read_from_xarray(l2_healpix_datasets[0])
         energy_bin_group_sizes = None
@@ -153,11 +153,11 @@ class UltraL3CombinedDependencies:
         for pset in glows_l3e_pset_paths:
             survival_probability_ul_pset.append(UltraGlowsL3eData.read_from_path(pset))
 
-        l1c_u45_paths_dict = {f"l1c_path_{index + 1}": path for index, path in enumerate(u45_pset_paths)}
+        l1c_u45_paths_dict = {path.stem: path for index, path in enumerate(u45_pset_paths)}
         l2_u45_maps = ultra_l2(l1c_u45_paths_dict)
         l2_u45_healpix_map_data = HealPixIntensityMapData.read_from_xarray(l2_u45_maps[0])
 
-        l1c_u90_paths_dict = {f"l1c_path_{index + 1}": path for index, path in enumerate(u90_pset_paths)}
+        l1c_u90_paths_dict = {path.stem: path for index, path in enumerate(u90_pset_paths)}
         l2_u90_maps = ultra_l2(l1c_u90_paths_dict)
         l2_u90_healpix_map_data = HealPixIntensityMapData.read_from_xarray(l2_u90_maps[0])
 

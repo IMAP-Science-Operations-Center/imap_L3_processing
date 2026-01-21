@@ -18,8 +18,9 @@ class TestUltraL3Dependencies(unittest.TestCase):
     @patch('imap_l3_processing.ultra.ultra_l3_dependencies.ultra_l2')
     def test_fetch_dependencies(self, mock_ultra_l2, mock_download, mock_read_xarray, mock_read_ultra_l1c,
                                 mock_read_glows):
-        l1c_input_paths = ["imap_ultra_l1c_pset_20251010_v001.cdf", "imap_ultra_l1c_pset_20251011_v001.cdf",
-                           "imap_ultra_l1c_pset_20251012_v001.cdf"]
+        l1c_input_paths = [Path("imap_ultra_l1c_45sensor-pset_20251010_v001.cdf"),
+                           Path("imap_ultra_l1c_45sensor-pset_20251011_v001.cdf"),
+                           Path("imap_ultra_l1c_45sensor-pset_20251012_v001.cdf")]
 
         glows_file_paths = [
             "imap_glows_l3e_survival-probability-ul-sf_20201001_v001.cdf",
@@ -38,7 +39,7 @@ class TestUltraL3Dependencies(unittest.TestCase):
             [l2_energy_bin_group_sizes]
         ]
 
-        returned_download_paths = [sentinel.l2_map_path, sentinel.l1c_path_1, sentinel.l1c_path_2, sentinel.l1c_path_3,
+        returned_download_paths = [sentinel.l2_map_path, l1c_input_paths[0], l1c_input_paths[1], l1c_input_paths[2],
                                    sentinel.glows_path_1, sentinel.glows_path_2, sentinel.glows_path_3,
                                    l2_energy_bin_group_sizes_path]
 
@@ -61,9 +62,9 @@ class TestUltraL3Dependencies(unittest.TestCase):
             call("glows"),
             call(data_type="ancillary", descriptor="l2-energy-bin-group-sizes")
         ])
-        expected_data_dictionary = {"l1c_path_1": sentinel.l1c_path_1,
-                                    "l1c_path_2": sentinel.l1c_path_2,
-                                    "l1c_path_3": sentinel.l1c_path_3}
+        expected_data_dictionary = {"imap_ultra_l1c_45sensor-pset_20251010_v001": l1c_input_paths[0],
+                                    "imap_ultra_l1c_45sensor-pset_20251011_v001": l1c_input_paths[1],
+                                    "imap_ultra_l1c_45sensor-pset_20251012_v001": l1c_input_paths[2]}
         mock_ultra_l2.assert_has_calls([call(expected_data_dictionary)])
 
         expected_parent_file_paths = [sentinel.l2_server_path, *l1c_input_paths, *glows_file_paths,
@@ -270,13 +271,13 @@ class TestUltraL3CombinedDependencies(unittest.TestCase):
             call(Path("imap_ultra_l1c_u90-pset_20251012_v001.cdf")),
         ])
 
-        expected_u45_l1c_dictionary = {"l1c_path_1": Path('imap_ultra_l1c_u45-pset_20251010_v001.cdf'),
-                                       "l1c_path_2": Path("imap_ultra_l1c_u45-pset_20251011_v001.cdf"),
-                                       "l1c_path_3": Path("imap_ultra_l1c_u45-pset_20251012_v001.cdf"), }
+        expected_u45_l1c_dictionary = {"imap_ultra_l1c_u45-pset_20251010_v001": Path('imap_ultra_l1c_u45-pset_20251010_v001.cdf'),
+                                       "imap_ultra_l1c_u45-pset_20251011_v001": Path("imap_ultra_l1c_u45-pset_20251011_v001.cdf"),
+                                       "imap_ultra_l1c_u45-pset_20251012_v001": Path("imap_ultra_l1c_u45-pset_20251012_v001.cdf"), }
 
-        expected_u90_l1c_dictionary = {"l1c_path_1": Path("imap_ultra_l1c_u90-pset_20251010_v001.cdf"),
-                                       "l1c_path_2": Path("imap_ultra_l1c_u90-pset_20251011_v001.cdf"),
-                                       "l1c_path_3": Path("imap_ultra_l1c_u90-pset_20251012_v001.cdf")}
+        expected_u90_l1c_dictionary = {"imap_ultra_l1c_u90-pset_20251010_v001": Path("imap_ultra_l1c_u90-pset_20251010_v001.cdf"),
+                                       "imap_ultra_l1c_u90-pset_20251011_v001": Path("imap_ultra_l1c_u90-pset_20251011_v001.cdf"),
+                                       "imap_ultra_l1c_u90-pset_20251012_v001": Path("imap_ultra_l1c_u90-pset_20251012_v001.cdf")}
 
         mock_ultra_l2.assert_has_calls([
             call(expected_u45_l1c_dictionary),
@@ -428,13 +429,13 @@ class TestUltraL3CombinedDependencies(unittest.TestCase):
                     call(Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251012_v001.cdf"))
                 ])
 
-                expected_u45_l1c_dictionary = {"l1c_path_1": Path('imap_ultra_l1c_u45-pset_20251010_v001.cdf'),
-                                               "l1c_path_2": Path("imap_ultra_l1c_u45-pset_20251011_v001.cdf"),
-                                               "l1c_path_3": Path("imap_ultra_l1c_u45-pset_20251012_v001.cdf"), }
+                expected_u45_l1c_dictionary = {"imap_ultra_l1c_u45-pset_20251010_v001": Path('imap_ultra_l1c_u45-pset_20251010_v001.cdf'),
+                                               "imap_ultra_l1c_u45-pset_20251011_v001": Path("imap_ultra_l1c_u45-pset_20251011_v001.cdf"),
+                                               "imap_ultra_l1c_u45-pset_20251012_v001": Path("imap_ultra_l1c_u45-pset_20251012_v001.cdf"), }
 
-                expected_u90_l1c_dictionary = {"l1c_path_1": Path("imap_ultra_l1c_u90-pset_20251010_v001.cdf"),
-                                               "l1c_path_2": Path("imap_ultra_l1c_u90-pset_20251011_v001.cdf"),
-                                               "l1c_path_3": Path("imap_ultra_l1c_u90-pset_20251012_v001.cdf")}
+                expected_u90_l1c_dictionary = {"imap_ultra_l1c_u90-pset_20251010_v001": Path("imap_ultra_l1c_u90-pset_20251010_v001.cdf"),
+                                               "imap_ultra_l1c_u90-pset_20251011_v001": Path("imap_ultra_l1c_u90-pset_20251011_v001.cdf"),
+                                               "imap_ultra_l1c_u90-pset_20251012_v001": Path("imap_ultra_l1c_u90-pset_20251012_v001.cdf")}
 
                 mock_ultra_l2.assert_has_calls([
                     call(expected_u45_l1c_dictionary),
@@ -475,15 +476,15 @@ class TestUltraL3CombinedDependencies(unittest.TestCase):
         glows_l3e_pset_paths = [sentinel.glows1, sentinel.glows2, sentinel.glows3]
 
         expected_u45_dict = {
-            'l1c_path_1': Path('u45_l1c_path_1'),
-            'l1c_path_2': Path('u45_l1c_path_2'),
-            'l1c_path_3': Path('u45_l1c_path_3'),
+            'u45_l1c_path_1': Path('u45_l1c_path_1'),
+            'u45_l1c_path_2': Path('u45_l1c_path_2'),
+            'u45_l1c_path_3': Path('u45_l1c_path_3'),
         }
 
         expected_u90_dict = {
-            'l1c_path_1': Path('u90_l1c_path_1'),
-            'l1c_path_2': Path('u90_l1c_path_2'),
-            'l1c_path_3': Path('u90_l1c_path_3'),
+            'u90_l1c_path_1': Path('u90_l1c_path_1'),
+            'u90_l1c_path_2': Path('u90_l1c_path_2'),
+            'u90_l1c_path_3': Path('u90_l1c_path_3'),
         }
 
         _ = UltraL3CombinedDependencies.from_file_paths(
