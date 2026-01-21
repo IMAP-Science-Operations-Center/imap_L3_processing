@@ -55,7 +55,8 @@ class TestHiProcessor(unittest.TestCase):
 
         expected_unc = np.full((1, 1, 3, 2), 1)
         expected_index = np.full_like(expected_unc, 2)
-        mock_spectral_fit.return_value = expected_index, expected_unc
+        expected_scalar = np.full_like(expected_unc, 3)
+        mock_spectral_fit.return_value = expected_scalar, expected_index, expected_unc
         processor = HiProcessor(upstream_dependencies, input_metadata)
         product = processor.process()
 
@@ -75,11 +76,11 @@ class TestHiProcessor(unittest.TestCase):
         expected_energy_delta_plus = np.array([12])
         expected_energy = np.array([4])
         expected_exposure = np.full((1, 1, 3, 2), 2)
-        np.testing.assert_array_equal(expected_energy_delta_minus, spectral_index_data.energy_delta_minus)
-        np.testing.assert_array_equal(expected_energy_delta_plus, spectral_index_data.energy_delta_plus)
-        np.testing.assert_array_equal(expected_index, spectral_index_data.ena_spectral_index)
-        np.testing.assert_array_equal(expected_unc,
-                                      spectral_index_data.ena_spectral_index_stat_uncert)
+        np.testing.assert_array_equal( spectral_index_data.energy_delta_minus,expected_energy_delta_minus)
+        np.testing.assert_array_equal(spectral_index_data.energy_delta_plus, expected_energy_delta_plus)
+        np.testing.assert_array_equal(spectral_index_data.ena_spectral_index,expected_index)
+        np.testing.assert_array_equal(spectral_index_data.ena_spectral_index_stat_uncert, expected_unc)
+        np.testing.assert_array_equal(spectral_index_data.ena_spectral_index_scalar_coefficient, expected_scalar)
         np.testing.assert_array_equal(spectral_index_data.energy, expected_energy)
         np.testing.assert_array_equal(spectral_index_data.latitude, intensity_data.latitude)
         np.testing.assert_array_equal(spectral_index_data.longitude, intensity_data.longitude)

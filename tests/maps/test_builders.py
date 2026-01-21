@@ -156,6 +156,7 @@ def create_rectangular_spectral_index_map_data(epoch=None, epoch_delta=None, lon
     spectral_index_stat_unc = spectral_index_stat_unc if spectral_index_stat_unc is not None else np.full(
         (len(epoch), len(energy), len(lon), len(lat)),
         fill_value=1)
+    ena_spectral_index_scalar_coefficient = np.full_like(spectral_index, 3)
 
     if isinstance(spectral_index, np.ndarray):
         more_real_flux = spectral_index
@@ -177,7 +178,8 @@ def create_rectangular_spectral_index_map_data(epoch=None, epoch_delta=None, lon
             obs_date_range=np.ma.array(np.full_like(more_real_flux, 0)),
             solid_angle=np.full_like(more_real_flux, 0),
             ena_spectral_index=spectral_index,
-            ena_spectral_index_stat_uncert=spectral_index_stat_unc
+            ena_spectral_index_stat_uncert=spectral_index_stat_unc,
+            ena_spectral_index_scalar_coefficient=ena_spectral_index_scalar_coefficient
         ),
         coords=RectangularCoords(
             latitude_delta=np.full_like(lat, 0),
