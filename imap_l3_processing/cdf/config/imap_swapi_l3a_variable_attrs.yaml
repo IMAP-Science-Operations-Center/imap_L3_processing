@@ -87,7 +87,7 @@ pui_ionization_rate:
   FILLVAL: -1.000000e+31
   SCALE_TYP: linear
   SCALEMIN: 0
-  SCALEMAX: 3.0e-7
+  SCALEMAX: 9.0e-7
   DELTA_PLUS_VAR: pui_ionization_rate_uncert
   DELTA_MINUS_VAR: pui_ionization_rate_uncert
 pui_ionization_rate_uncert:
