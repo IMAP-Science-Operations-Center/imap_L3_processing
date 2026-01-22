@@ -274,27 +274,22 @@ class TestMapModels(unittest.TestCase):
                 isn_rate_map_data=ISNBackgroundSubtractedData(
                     epoch=sentinel.epoch,
                     epoch_delta=sentinel.epoch_delta,
-                    counts=sentinel.counts,
                     ena_intensity=sentinel.ena_intensity,
                     ena_intensity_stat_uncert=sentinel.ena_intensity_stat_uncert,
                     ena_intensity_sys_err=sentinel.ena_intensity_sys_err,
                     energy=sentinel.energy,
-                    energy_stat_uncert=sentinel.energy_stat_uncert,
                     exposure_factor=sentinel.exposure_factor,
-                    geometric_factor=sentinel.geometric_factor,
-                    geometric_factor_stat_uncert=sentinel.geometric_factor_stat_uncert,
                     solid_angle=sentinel.solid_angle,
-                    bg_rates=sentinel.bg_rates,
-                    bg_rates_stat_uncert=sentinel.bg_rates_stat_uncert,
-                    bg_rates_sys_err=sentinel.bg_rates_sys_err,
+                    bg_rate=sentinel.bg_rate,
+                    bg_rate_stat_uncert=sentinel.bg_rate_stat_uncert,
+                    bg_rate_sys_err=sentinel.bg_rate_sys_err,
                     ena_count_rate=sentinel.ena_count_rate,
                     ena_count_rate_stat_uncert=sentinel.ena_count_rate_stat_uncert,
                     latitude=sentinel.latitude,
                     longitude=sentinel.longitude,
                     isn_bg_rate_subtracted=sentinel.isn_bg_rate_subtracted,
-                    isn_bg_rate_subtracted_sys_uncert=sentinel.isn_bg_rate_subtracted_sys_uncert,
-                    isn_bg_rate_subtracted_stat_err=sentinel.isn_bg_rate_subtracted_stat_err,
-                    ena_count_rate_sys_uncert=sentinel.ena_count_rate_sys_uncert,
+                    isn_bg_rate_subtracted_sys_err=sentinel.isn_bg_rate_subtracted_sys_err,
+                    isn_bg_rate_subtracted_stat_uncert=sentinel.isn_bg_rate_subtracted_stat_uncert,
                     energy_delta_plus=sentinel.energy_delta_plus,
                     energy_delta_minus=sentinel.energy_delta_minus,
                     energy_label=sentinel.energy_label,
@@ -309,30 +304,25 @@ class TestMapModels(unittest.TestCase):
         expected_variables = [
             DataProductVariable(map_models.EPOCH_VAR_NAME, sentinel.epoch),
             DataProductVariable(map_models.EPOCH_DELTA_VAR_NAME, sentinel.epoch_delta),
-            DataProductVariable(map_models.COUNTS_VAR_NAME, sentinel.counts),
             DataProductVariable(map_models.ENA_INTENSITY_VAR_NAME, sentinel.ena_intensity),
             DataProductVariable(map_models.ENA_INTENSITY_STAT_UNCERT_VAR_NAME, sentinel.ena_intensity_stat_uncert),
             DataProductVariable(map_models.ENA_INTENSITY_SYS_ERR_VAR_NAME, sentinel.ena_intensity_sys_err),
             DataProductVariable(map_models.ENERGY_VAR_NAME, sentinel.energy),
-            DataProductVariable(map_models.ENERGY_STAT_UNCERT_VAR_NAME, sentinel.energy_stat_uncert),
             DataProductVariable(map_models.EXPOSURE_FACTOR_VAR_NAME, sentinel.exposure_factor),
-            DataProductVariable(map_models.GEOMETRIC_FACTOR_VAR_NAME, sentinel.geometric_factor),
-            DataProductVariable(map_models.GEOMETRIC_FACTOR_STAT_UNCERT_VAR_NAME,
-                                sentinel.geometric_factor_stat_uncert),
             DataProductVariable(map_models.SOLID_ANGLE_VAR_NAME, sentinel.solid_angle),
-            DataProductVariable(map_models.BG_RATES_VAR_NAME, sentinel.bg_rates),
-            DataProductVariable(map_models.BG_RATES_STAT_UNCERT_VAR_NAME, sentinel.bg_rates_stat_uncert),
-            DataProductVariable(map_models.BG_RATES_SYS_ERR_VAR_NAME, sentinel.bg_rates_sys_err),
+            DataProductVariable(map_models.BG_RATE_VAR_NAME, sentinel.bg_rate),
+            DataProductVariable(map_models.BG_RATE_STAT_UNCERT_VAR_NAME, sentinel.bg_rate_stat_uncert),
+            DataProductVariable(map_models.BG_RATE_SYS_ERR_VAR_NAME, sentinel.bg_rate_sys_err),
             DataProductVariable(map_models.ENA_COUNT_RATE_VAR_NAME, sentinel.ena_count_rate),
             DataProductVariable(map_models.ENA_COUNT_RATE_STAT_UNCERT_VAR_NAME, sentinel.ena_count_rate_stat_uncert),
             DataProductVariable(map_models.LATITUDE_VAR_NAME, sentinel.latitude),
             DataProductVariable(map_models.LONGITUDE_VAR_NAME, sentinel.longitude),
             DataProductVariable(map_models.ISN_BG_RATE_SUBTRACTED_VAR_NAME,
                                 sentinel.isn_bg_rate_subtracted),
-            DataProductVariable(map_models.ISN_BG_RATE_SUBTRACTED_VAR_SYS_UNCERT_NAME,
-                                sentinel.isn_bg_rate_subtracted_sys_uncert),
-            DataProductVariable(map_models.ISN_BG_RATE_SUBTRACTED_STAT_ERR_VAR_NAME,
-                                sentinel.isn_bg_rate_subtracted_stat_err),
+            DataProductVariable(map_models.ISN_BG_RATE_SUBTRACTED_VAR_SYS_ERR_NAME,
+                                sentinel.isn_bg_rate_subtracted_sys_err),
+            DataProductVariable(map_models.ISN_BG_RATE_SUBTRACTED_STAT_UNCERT_VAR_NAME,
+                                sentinel.isn_bg_rate_subtracted_stat_uncert),
 
         ]
 
@@ -601,7 +591,6 @@ class TestMapModels(unittest.TestCase):
         path = get_test_data_folder() / 'hi' / 'fake_l2_maps' / 'l2_map_with_fill_values.cdf'
         result = RectangularIntensityMapData.read_from_path(path)
         map_data = result.intensity_map_data
-        coords = result.coords
 
         with CDF(str(path)) as cdf:
             np.testing.assert_array_equal(map_data.epoch, cdf["epoch"], )
@@ -807,17 +796,17 @@ class TestMapModels(unittest.TestCase):
         self.assertTrue(average_obs_date.mask[2])
 
     def test_lo_isn_data_read_from_path(self):
-        path_to_cdf = get_test_data_folder() / 'lo' / 'imap_lo_l2_l090-isn-h-sf-nsp-ram-hae-6deg-1yr_20250415_v001.cdf'
+        path_to_cdf = get_test_data_folder() / 'lo' / 'imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-1yr_20250415_v000'
 
         actual = ISNRateData.read_from_path(path_to_cdf)
 
         with CDF(str(path_to_cdf)) as expected:
             np.testing.assert_array_equal(actual.epoch, expected['epoch'][...])
 
-            np.testing.assert_array_equal(actual.bg_rates, read_numeric_variable(expected['bg_rates']))
-            np.testing.assert_array_equal(actual.bg_rates_stat_uncert, read_numeric_variable(expected['bg_rates_stat_uncert']))
-            np.testing.assert_array_equal(actual.bg_rates_sys_err, read_numeric_variable(expected['bg_rates_sys_err']))
-            np.testing.assert_array_equal(actual.counts, expected['counts'][...])
+            np.testing.assert_array_equal(actual.bg_rate, read_numeric_variable(expected['bg_rate']))
+            np.testing.assert_array_equal(actual.bg_rate_stat_uncert,
+                                          read_numeric_variable(expected['bg_rate_stat_uncert']))
+            np.testing.assert_array_equal(actual.bg_rate_sys_err, read_numeric_variable(expected['bg_rate_sys_err']))
             np.testing.assert_array_equal(actual.ena_count_rate, read_numeric_variable(expected['ena_count_rate']))
             np.testing.assert_array_equal(actual.ena_count_rate_stat_uncert,
                                           read_numeric_variable(expected['ena_count_rate_stat_uncert']))
@@ -827,12 +816,8 @@ class TestMapModels(unittest.TestCase):
             np.testing.assert_array_equal(actual.ena_intensity_sys_err,
                                           read_numeric_variable(expected['ena_intensity_sys_err']))
             np.testing.assert_array_equal(actual.energy, expected['energy'][...])
-            np.testing.assert_array_equal(actual.energy_stat_uncert, expected['energy_stat_uncert'][...])
             np.testing.assert_array_equal(actual.exposure_factor,
                                           read_numeric_variable(expected['exposure_factor']))
-            np.testing.assert_array_equal(actual.geometric_factor, expected['geometric_factor'][...])
-            np.testing.assert_array_equal(actual.geometric_factor_stat_uncert,
-                                          expected['geometric_factor_stat_uncert'][...])
             np.testing.assert_array_equal(actual.latitude, expected['latitude'][...])
             np.testing.assert_array_equal(actual.longitude, expected['longitude'][...])
             np.testing.assert_array_equal(actual.solid_angle, read_numeric_variable(expected['solid_angle']))

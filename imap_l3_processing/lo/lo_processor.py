@@ -78,10 +78,9 @@ def slice_energy_range(data: ISNRateData) -> ISNRateData:
                                ena_intensity=data.ena_intensity[:, energy_mask, :, :],
                                ena_intensity_sys_err=data.ena_intensity_sys_err[:, energy_mask, :, :],
                                ena_intensity_stat_uncert=data.ena_intensity_stat_uncert[:, energy_mask, :, :],
-                               counts=data.counts[:, energy_mask, :, :],
-                               bg_rates=data.bg_rates[:, energy_mask, :, :],
-                               bg_rates_stat_uncert=data.bg_rates_stat_uncert[:, energy_mask, :, :],
-                               bg_rates_sys_err=data.bg_rates_sys_err[:, energy_mask, :, :],
+                               bg_rate=data.bg_rate[:, energy_mask, :, :],
+                               bg_rate_stat_uncert=data.bg_rate_stat_uncert[:, energy_mask, :, :],
+                               bg_rate_sys_err=data.bg_rate_sys_err[:, energy_mask, :, :],
                                ena_count_rate=data.ena_count_rate[:, energy_mask, :, :],
                                ena_count_rate_stat_uncert=data.ena_count_rate_stat_uncert[:, energy_mask, :, :],
                                )
@@ -89,12 +88,11 @@ def slice_energy_range(data: ISNRateData) -> ISNRateData:
 
 def isn_background_subtraction(isn_rate_data: ISNRateData) -> ISNBackgroundSubtractedMapData:
     isn_rate_data = slice_energy_range(isn_rate_data)
-    isn_rate_background_subtracted = isn_rate_data.ena_count_rate - isn_rate_data.bg_rates
+    isn_rate_background_subtracted = isn_rate_data.ena_count_rate - isn_rate_data.bg_rate
 
     map_data = ISNBackgroundSubtractedData(
         epoch=isn_rate_data.epoch,
         epoch_delta=isn_rate_data.epoch_delta,
-        counts=isn_rate_data.counts,
         energy_delta_plus=isn_rate_data.energy_delta_plus,
         energy_delta_minus=isn_rate_data.energy_delta_minus,
         energy_label=isn_rate_data.energy_label,
@@ -104,23 +102,19 @@ def isn_background_subtraction(isn_rate_data: ISNRateData) -> ISNBackgroundSubtr
         ena_intensity_stat_uncert=isn_rate_data.ena_intensity_stat_uncert,
         ena_intensity_sys_err=isn_rate_data.ena_intensity_sys_err,
         energy=isn_rate_data.energy,
-        energy_stat_uncert=isn_rate_data.energy_stat_uncert,
         exposure_factor=isn_rate_data.exposure_factor,
-        geometric_factor=isn_rate_data.geometric_factor,
-        geometric_factor_stat_uncert=isn_rate_data.geometric_factor_stat_uncert,
         solid_angle=isn_rate_data.solid_angle,
-        bg_rates=isn_rate_data.bg_rates,
-        bg_rates_stat_uncert=isn_rate_data.bg_rates_stat_uncert,
-        bg_rates_sys_err=isn_rate_data.bg_rates_sys_err,
+        bg_rate=isn_rate_data.bg_rate,
+        bg_rate_stat_uncert=isn_rate_data.bg_rate_stat_uncert,
+        bg_rate_sys_err=isn_rate_data.bg_rate_sys_err,
         ena_count_rate=isn_rate_data.ena_count_rate,
         ena_count_rate_stat_uncert=isn_rate_data.ena_count_rate_stat_uncert,
-        ena_count_rate_sys_uncert=np.zeros_like(isn_rate_data.ena_count_rate),
         latitude=isn_rate_data.latitude,
         longitude=isn_rate_data.longitude,
         isn_bg_rate_subtracted=isn_rate_background_subtracted,
-        isn_bg_rate_subtracted_stat_err=np.sqrt(np.square(isn_rate_data.ena_count_rate_stat_uncert) + np.square(
-            isn_rate_data.bg_rates_stat_uncert)),
-        isn_bg_rate_subtracted_sys_uncert=isn_rate_data.bg_rates_sys_err
+        isn_bg_rate_subtracted_stat_uncert=np.sqrt(np.square(isn_rate_data.ena_count_rate_stat_uncert) + np.square(
+            isn_rate_data.bg_rate_stat_uncert)),
+        isn_bg_rate_subtracted_sys_err=isn_rate_data.bg_rate_sys_err
     )
 
     return ISNBackgroundSubtractedMapData(isn_rate_map_data=map_data)

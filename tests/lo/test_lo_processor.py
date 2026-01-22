@@ -140,61 +140,55 @@ class TestLoProcessor(unittest.TestCase):
 
         input_data: ISNRateData = ISNRateData(
             epoch=sentinel.epoch,
-            geometric_factor=sentinel.geometric_factor,
-            geometric_factor_stat_uncert=sentinel.geometric_factor_stat_uncert,
             solid_angle=sentinel.solid_angle,
             latitude=sentinel.latitude,
             longitude=sentinel.longitude,
             epoch_delta=sentinel.epoch_delta,
             energy=np.array([1, 2, 3, 4, 5, 6, 7]),
-            energy_stat_uncert=np.ones(7),
-            energy_delta_plus=np.ones(7),
-            energy_delta_minus=np.ones(7),
-            energy_label=np.ones(7),
-            exposure_factor=np.ones((1, 7, 60, 30)),
-            obs_date=np.ones((1, 7, 60, 30)),
-            obs_date_range=np.ones((1, 7, 60, 30)),
-            ena_intensity=np.ones((1, 7, 60, 30)),
-            ena_intensity_sys_err=np.ones((1, 7, 60, 30)),
-            ena_intensity_stat_uncert=np.ones((1, 7, 60, 30)),
-            counts=np.ones((1, 7, 60, 30)),
-            bg_rates=np.ones((1, 7, 60, 30)) * 1,
-            bg_rates_stat_uncert=np.ones((1, 7, 60, 30)) * 3,
-            bg_rates_sys_err=np.ones((1, 7, 60, 30)),
+            energy_delta_plus=np.ones(7) * 12,
+            energy_delta_minus=np.ones(7) * 13,
+            energy_label=np.ones(7) * 14,
+            exposure_factor=np.arange(1 * 7 * 60 * 30).reshape((1, 7, 60, 30)) * 4,
+            obs_date=np.arange(1 * 7 * 60 * 30).reshape((1, 7, 60, 30)) * 5,
+            obs_date_range=np.arange(1 * 7 * 60 * 30).reshape((1, 7, 60, 30)) * 6,
+            ena_intensity=np.arange(1 * 7 * 60 * 30).reshape((1, 7, 60, 30)) * 7,
+            ena_intensity_sys_err=np.arange(1 * 7 * 60 * 30).reshape((1, 7, 60, 30)) * 8,
+            ena_intensity_stat_uncert=np.arange(1 * 7 * 60 * 30).reshape((1, 7, 60, 30)) * 9,
+            bg_rate_sys_err=np.arange(1 * 7 * 60 * 30).reshape((1, 7, 60, 30)) * 11,
             ena_count_rate=np.ones((1, 7, 60, 30)) * 3,
-            ena_count_rate_stat_uncert=np.ones((1, 7, 60, 30)) * 2
+            bg_rate=np.ones((1, 7, 60, 30)),
+            bg_rate_stat_uncert=np.ones((1, 7, 60, 30)) * 3,
+            ena_count_rate_stat_uncert=np.ones((1, 7, 60, 30)) * 2,
         )
         actual_map_data: ISNBackgroundSubtractedMapData = isn_background_subtraction(input_data)
         actual_isn_rate_map_data: ISNBackgroundSubtractedData = actual_map_data.isn_rate_map_data
 
-        np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rates, np.ones((1, 4, 60, 30)))
         np.testing.assert_array_equal(actual_isn_rate_map_data.ena_count_rate, np.ones((1, 4, 60, 30)) * 3)
-        np.testing.assert_array_equal(actual_isn_rate_map_data.isn_bg_rate_subtracted,
-                                      np.ones((1, 4, 60, 30)) * 2)
-        np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rates_stat_uncert, np.ones((1, 4, 60, 30)) * 3)
+        np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rate, np.ones((1, 4, 60, 30)))
+        np.testing.assert_array_equal(actual_isn_rate_map_data.isn_bg_rate_subtracted, np.ones((1, 4, 60, 30)) * 2)
+
+        np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rate_stat_uncert, np.ones((1, 4, 60, 30)) * 3)
         np.testing.assert_array_equal(actual_isn_rate_map_data.ena_count_rate_stat_uncert, np.ones((1, 4, 60, 30)) * 2)
-        np.testing.assert_array_equal(actual_isn_rate_map_data.ena_count_rate_sys_uncert, np.zeros((1, 4, 60, 30)))
-        np.testing.assert_array_equal(actual_isn_rate_map_data.isn_bg_rate_subtracted_stat_err,
+        np.testing.assert_array_equal(actual_isn_rate_map_data.isn_bg_rate_subtracted_stat_uncert,
                                       np.ones((1, 4, 60, 30)) * np.sqrt(13))
 
         np.testing.assert_array_equal(actual_isn_rate_map_data.energy, np.array([1, 2, 3, 4]))
-        np.testing.assert_array_equal(actual_isn_rate_map_data.energy_delta_plus, np.ones(4))
-        np.testing.assert_array_equal(actual_isn_rate_map_data.energy_delta_minus, np.ones(4))
-        np.testing.assert_array_equal(actual_isn_rate_map_data.energy_label, np.ones(4))
-        np.testing.assert_array_equal(actual_isn_rate_map_data.exposure_factor, np.ones((1, 4, 60, 30)))
-        np.testing.assert_array_equal(actual_isn_rate_map_data.obs_date, np.ones((1, 4, 60, 30)))
-        np.testing.assert_array_equal(actual_isn_rate_map_data.obs_date_range, np.ones((1, 4, 60, 30)))
-        np.testing.assert_array_equal(actual_isn_rate_map_data.ena_intensity, np.ones((1, 4, 60, 30)))
-        np.testing.assert_array_equal(actual_isn_rate_map_data.ena_intensity_sys_err, np.ones((1, 4, 60, 30)))
-        np.testing.assert_array_equal(actual_isn_rate_map_data.ena_intensity_stat_uncert, np.ones((1, 4, 60, 30)))
-        np.testing.assert_array_equal(actual_isn_rate_map_data.counts, np.ones((1, 4, 60, 30)))
-        np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rates, np.ones((1, 4, 60, 30)))
-        np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rates_sys_err, np.ones((1, 4, 60, 30)))
+        np.testing.assert_array_equal(actual_isn_rate_map_data.energy_delta_plus, np.full(4, 12))
+        np.testing.assert_array_equal(actual_isn_rate_map_data.energy_delta_minus, np.full(4, 13))
+        np.testing.assert_array_equal(actual_isn_rate_map_data.energy_label, np.full(4, 14))
+        np.testing.assert_array_equal(actual_isn_rate_map_data.exposure_factor, input_data.exposure_factor[:, :4, ...])
+        np.testing.assert_array_equal(actual_isn_rate_map_data.obs_date, input_data.obs_date[:, :4, ...])
+        np.testing.assert_array_equal(actual_isn_rate_map_data.obs_date_range, input_data.obs_date_range[:, :4, ...])
+        np.testing.assert_array_equal(actual_isn_rate_map_data.ena_intensity, input_data.ena_intensity[:, :4, ...])
+        np.testing.assert_array_equal(actual_isn_rate_map_data.ena_intensity_stat_uncert,
+                                      input_data.ena_intensity_stat_uncert[:, :4, ...])
+        np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rate, input_data.bg_rate[:, :4, ...])
+        np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rate_sys_err, input_data.bg_rate_sys_err[:, :4, ...])
+        np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rate_sys_err,
+                                      actual_isn_rate_map_data.isn_bg_rate_subtracted_sys_err)
 
         self.assertEqual(actual_isn_rate_map_data.epoch, sentinel.epoch)
-        self.assertEqual(actual_isn_rate_map_data.geometric_factor, sentinel.geometric_factor)
         self.assertEqual(actual_isn_rate_map_data.solid_angle, sentinel.solid_angle)
-        self.assertEqual(actual_isn_rate_map_data.geometric_factor_stat_uncert, sentinel.geometric_factor_stat_uncert)
         self.assertEqual(actual_isn_rate_map_data.latitude, sentinel.latitude)
         self.assertEqual(actual_isn_rate_map_data.longitude, sentinel.longitude)
         self.assertEqual(actual_isn_rate_map_data.epoch_delta, sentinel.epoch_delta)
