@@ -91,14 +91,14 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
                                 map_param_values_to_internal_values(1.5, 1e-7, sw_velocity, 0.2),
                             ])))
 
-    if result.redchi > 10:
-        raise Exception(f"Failed to fit - chi-squared too large {result.redchi}")
+    bad_fit_flag = SwapiL3Flags.HI_CHI_SQ if result.redchi > 10 else SwapiL3Flags.NONE
+
     param_vals = result.uvars
     if result.uvars is None:
         param_vals = {k: ufloat(v, np.inf) for k, v in result.params.valuesdict().items()}
 
     return FittingParameters(param_vals["cooling_index"], param_vals["ionization_rate"], param_vals["cutoff_speed"],
-                             param_vals["background_count_rate"])
+                             param_vals["background_count_rate"], bad_fit_flag)
 
 
 def calculate_helium_pui_density(epoch: int,
@@ -171,6 +171,7 @@ class FittingParameters:
     ionization_rate: float
     cutoff_speed: float
     background_count_rate: float
+    bad_fit_flag: int = SwapiL3Flags.NONE
 
 
 @dataclass

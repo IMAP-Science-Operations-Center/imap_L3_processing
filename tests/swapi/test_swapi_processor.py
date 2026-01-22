@@ -92,7 +92,7 @@ class TestSwapiProcessor(TestCase):
         mock_calculate_pickup_ion.return_value = expected_fitting_params
         mock_calculate_helium_pui_density.return_value = 5
         mock_calculate_helium_pui_temperature.return_value = 6
-        mock_calculate_ten_minute_velocities.return_value = (np.array([[17, 18, 19]]), sentinel.quality_flags_none)
+        mock_calculate_ten_minute_velocities.return_value = (np.array([[17, 18, 19]]), np.array([SwapiL3Flags.NONE]))
 
         science_input = ScienceInput(
             f'imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf')
@@ -208,7 +208,7 @@ class TestSwapiProcessor(TestCase):
         np.testing.assert_array_equal(np.array([4]), actual_pui_background_rate)
         np.testing.assert_array_equal(np.array([5]), actual_pui_density)
         np.testing.assert_array_equal(np.array([6]), actual_pui_temperature)
-        self.assertEqual(sentinel.quality_flags_none, actual_quality_flags)
+        self.assertEqual([0], actual_quality_flags)
 
         mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a", "pui-he")
 
@@ -228,7 +228,8 @@ class TestSwapiProcessor(TestCase):
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_helium_pui_density')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_helium_pui_temperature')
     @patch('imap_l3_processing.processor.spiceypy')
-    def test_process_l3a_pui_proton_sw_fit_chisq_too_large(self, mock_spicepy, mock_calculate_helium_pui_temperature,
+    def test_process_l3a_pui_proton_sw_fit_chisq_too_large_with_pui_quality_flags(self, mock_spicepy,
+                                                                                  mock_calculate_helium_pui_temperature,
                                                            mock_calculate_helium_pui_density,
                                                            mock_calculate_ten_minute_velocities,
                                                            mock_calculate_pickup_ion,
@@ -279,12 +280,14 @@ class TestSwapiProcessor(TestCase):
         chunk_of_fifty = SwapiL2Data(epoch_for_fifty_sweeps, energy * 2, coincidence_count_rate * 2,
                                      coincidence_count_rate_uncertainty * 2)
 
-        expected_fitting_params = FittingParameters(1, 2, 3, 4)
+        expected_fitting_params = FittingParameters(1, 2, 3, 4, SwapiL3Flags.HI_CHI_SQ)
         mock_calculate_pickup_ion.return_value = expected_fitting_params
         mock_calculate_helium_pui_density.return_value = 5
         mock_calculate_helium_pui_temperature.return_value = 6
+
+        pui_quality_flags = [SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED]
         mock_calculate_ten_minute_velocities.return_value = (np.array([[17, 18, 19]]),
-                                                             sentinel.quality_flags_angles_estimated)
+                                                             pui_quality_flags)
 
         science_input = ScienceInput(
             f'imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf')
@@ -409,7 +412,9 @@ class TestSwapiProcessor(TestCase):
         np.testing.assert_array_equal(np.array([4]), actual_pui_background_rate)
         np.testing.assert_array_equal(np.array([5]), actual_pui_density)
         np.testing.assert_array_equal(np.array([6]), actual_pui_temperature)
-        self.assertEqual(sentinel.quality_flags_angles_estimated, actual_quality_flags)
+
+        expected_swapi_flag = SwapiL3Flags.HI_CHI_SQ | SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED
+        np.testing.assert_array_equal(actual_quality_flags, np.array(expected_swapi_flag))
 
         mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a", "pui-he")
 

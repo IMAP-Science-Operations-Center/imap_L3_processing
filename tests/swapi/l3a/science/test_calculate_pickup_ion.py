@@ -506,22 +506,25 @@ class TestCalculatePickupIon(SpiceTestCase):
         mock_minimize_result = Mock(redchi=11, uvars=fit_params)
         mock_minimize.return_value = mock_minimize_result
 
-        with self.assertRaises(Exception) as exc_ctx:
-            calculate_pickup_ion_values(
-                instrument_response_lookup_table=Mock(),
-                geometric_factor_calibration_table=Mock(),
-                energy=np.array([1]),
-                count_rates=np.array([1]),
-                center_of_epoch=1e9,
-                background_count_rate_cutoff=10,
-                sw_velocity_vector=np.array([1, 0, 0]),
-                density_of_neutral_helium_lookup_table=Mock(),
-                efficiency_table=Mock(),
-                hydrogen_inflow_vector=Mock(),
-                helium_inflow_vector=Mock(),
-            )
+        actual_fitting_params = calculate_pickup_ion_values(
+            instrument_response_lookup_table=Mock(),
+            geometric_factor_calibration_table=Mock(),
+            energy=np.array([1]),
+            count_rates=np.array([1]),
+            center_of_epoch=1e9,
+            background_count_rate_cutoff=10,
+            sw_velocity_vector=np.array([1, 0, 0]),
+            density_of_neutral_helium_lookup_table=Mock(),
+            efficiency_table=Mock(),
+            hydrogen_inflow_vector=Mock(),
+            helium_inflow_vector=Mock(),
+        )
 
-        self.assertEqual("Failed to fit - chi-squared too large 11", str(exc_ctx.exception))
+        self.assertEqual(actual_fitting_params.bad_fit_flag, SwapiL3Flags.HI_CHI_SQ)
+        self.assertEqual(actual_fitting_params.cooling_index, fit_params["cooling_index"])
+        self.assertEqual(actual_fitting_params.cutoff_speed, fit_params["cutoff_speed"])
+        self.assertEqual(actual_fitting_params.ionization_rate, fit_params["ionization_rate"])
+        self.assertEqual(actual_fitting_params.background_count_rate, fit_params["background_count_rate"])
 
     def test_calculate_pui_density(self):
         epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 6, 6, 12))
