@@ -11,6 +11,7 @@ from uncertainties.unumpy import uarray
 import imap_l3_processing
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaTemperatureDensityCalibrationTable, calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps
+from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from tests.test_helpers import get_test_data_path
 
 
@@ -45,14 +46,16 @@ class TestCalculateAlphaSolarWindTemperatureAndDensity(TestCase):
 
         efficiency = 0.08
 
-        actual_temperature, actual_density = calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
+        actual_alpha_sw_temp_and_density = calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
             self.calibration_table, speed,
             uarray(self.count_rate, self.count_rate_delta), self.energy, efficiency)
 
-        np.testing.assert_allclose(493916.041942, actual_temperature.nominal_value)
-        np.testing.assert_allclose(155210.29054, actual_temperature.std_dev)
-        np.testing.assert_allclose(3.8704e-3 / efficiency, actual_density.nominal_value, rtol=1e-4)
-        np.testing.assert_allclose(4.9177e-4 / efficiency, actual_density.std_dev, rtol=1e-4)
+        np.testing.assert_allclose(493916.041942, actual_alpha_sw_temp_and_density.temperature.nominal_value)
+        np.testing.assert_allclose(155210.29054, actual_alpha_sw_temp_and_density.temperature.std_dev)
+        np.testing.assert_allclose(3.8704e-3 / efficiency, actual_alpha_sw_temp_and_density.density.nominal_value,
+                                   rtol=1e-4)
+        np.testing.assert_allclose(4.9177e-4 / efficiency, actual_alpha_sw_temp_and_density.density.std_dev, rtol=1e-4)
+        self.assertEqual(SwapiL3Flags.NONE, actual_alpha_sw_temp_and_density.bad_fit_flag)
 
     @patch(
         'imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density.get_alpha_peak_indices')
@@ -72,13 +75,18 @@ class TestCalculateAlphaSolarWindTemperatureAndDensity(TestCase):
 
         mock_calculate_combine_sweeps.return_value = peak_coincidence_rates, peak_energies
         mock_get_alpha_peak_indices.return_value = slice(0, 5)
-        with self.assertRaises(ValueError) as e:
-            calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(self.calibration_table, speed,
-                                                                                   uarray(self.count_rate,
-                                                                                          self.count_rate_delta),
-                                                                                   self.energy, efficiency)
-        self.assertEqual(str(e.exception.args[0]), "Failed to fit - chi-squared too large")
-        self.assertAlmostEqual(e.exception.args[1], 11.018918806664246)
+
+        actual_alpha_sw_temp_and_density = calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
+            self.calibration_table, speed,
+            uarray(self.count_rate,
+                   self.count_rate_delta),
+            self.energy, efficiency)
+
+        np.isnan(actual_alpha_sw_temp_and_density.temperature.nominal_value)
+        np.isnan(actual_alpha_sw_temp_and_density.temperature.std_dev)
+        np.isnan(actual_alpha_sw_temp_and_density.density.nominal_value)
+        np.isnan(actual_alpha_sw_temp_and_density.density.std_dev)
+        self.assertEqual(SwapiL3Flags.HI_CHI_SQ, actual_alpha_sw_temp_and_density.bad_fit_flag)
 
     @patch(
         'imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density.get_alpha_peak_indices')

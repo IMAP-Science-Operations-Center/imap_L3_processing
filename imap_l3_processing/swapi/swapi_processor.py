@@ -175,12 +175,14 @@ class SwapiProcessor(Processor):
         alpha_solar_wind_speeds = []
         alpha_solar_wind_densities = []
         alpha_solar_wind_temperatures = []
+        alpha_solar_wind_bad_fit_flags = []
 
         for data_chunk in chunk_l2_data(data, 5):
             alpha_solar_wind_speed = ufloat(np.nan, np.nan)
             alpha_density = ufloat(np.nan, np.nan)
             alpha_temperature = ufloat(np.nan, np.nan)
             epoch = data_chunk.sci_start_time[0] + THIRTY_SECONDS_IN_NANOSECONDS
+            bad_fit_flag = SwapiL3Flags.NONE
             try:
                 if np.any(np.isnan(extract_coarse_sweep(data_chunk.coincidence_count_rate))):
                     raise ValueError("Fill values in input data")
@@ -190,10 +192,14 @@ class SwapiProcessor(Processor):
                 alpha_solar_wind_speed = calculate_alpha_solar_wind_speed(coincidence_count_rates_with_uncertainty,
                                                                           data_chunk.energy)
 
-                alpha_temperature, alpha_density = calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
+                alpha_temperature_density = calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
                     dependencies.alpha_temperature_density_calibration_table, alpha_solar_wind_speed,
                     coincidence_count_rates_with_uncertainty,
                     data_chunk.energy, dependencies.efficiency_calibration_table.get_alpha_efficiency_for(epoch))
+
+                alpha_density = alpha_temperature_density.density
+                alpha_temperature = alpha_temperature_density.temperature
+                bad_fit_flag = alpha_temperature_density.bad_fit_flag
 
             except Exception as e:
                 logger.info(f"Exception occurred at epoch {epoch}, continuing with fill value", exc_info=True)
@@ -202,12 +208,16 @@ class SwapiProcessor(Processor):
                 alpha_solar_wind_speeds.append(alpha_solar_wind_speed)
                 alpha_solar_wind_densities.append(alpha_density)
                 alpha_solar_wind_temperatures.append(alpha_temperature)
+                alpha_solar_wind_bad_fit_flags.append(bad_fit_flag)
 
         alpha_solar_wind_speed_metadata = replace(self.input_metadata, descriptor="alpha-sw")
-        alpha_solar_wind_l3_data = SwapiL3AlphaSolarWindData(alpha_solar_wind_speed_metadata, np.array(epochs),
+        alpha_solar_wind_l3_data = SwapiL3AlphaSolarWindData(alpha_solar_wind_speed_metadata,
+                                                             np.array(epochs),
                                                              np.array(alpha_solar_wind_speeds),
                                                              np.array(alpha_solar_wind_temperatures),
-                                                             np.array(alpha_solar_wind_densities))
+                                                             np.array(alpha_solar_wind_densities),
+                                                             np.array(alpha_solar_wind_bad_fit_flags),
+                                                             )
         return alpha_solar_wind_l3_data
 
     def process_l3a_proton(self, data, dependencies) -> SwapiL3ProtonSolarWindData:

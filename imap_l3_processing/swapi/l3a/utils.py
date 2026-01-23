@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Iterable
 
+import numpy as np
 from spacepy import pycdf
 from spacepy.pycdf import CDF
 from uncertainties.unumpy import uarray
@@ -9,7 +10,8 @@ from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data, SwapiL3AlphaSolarWindData, EPOCH_CDF_VAR_NAME, \
     ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME, ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME, \
     ALPHA_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME, ALPHA_SOLAR_WIND_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME, \
-    ALPHA_SOLAR_WIND_DENSITY_CDF_VAR_NAME, ALPHA_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME
+    ALPHA_SOLAR_WIND_DENSITY_CDF_VAR_NAME, ALPHA_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME, \
+    SWAPI_QUALITY_FLAGS_CDF_VAR_NAME
 
 
 def read_l2_swapi_data(cdf: CDF) -> SwapiL2Data:
@@ -28,11 +30,14 @@ def read_l3a_alpha_sw_swapi_data(cdf: CDF) -> SwapiL3AlphaSolarWindData:
                                   cdf[ALPHA_SOLAR_WIND_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME])
     alpha_sw_density = uarray(cdf[ALPHA_SOLAR_WIND_DENSITY_CDF_VAR_NAME],
                               cdf[ALPHA_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME])
+    alpha_sw_bad_fit_flag = np.array(cdf[SWAPI_QUALITY_FLAGS_CDF_VAR_NAME])
+
     return SwapiL3AlphaSolarWindData(None,
                                      epoch=cdf[EPOCH_CDF_VAR_NAME],
                                      alpha_sw_speed=alpha_sw_speed,
                                      alpha_sw_temperature=alpha_sw_temperature,
-                                     alpha_sw_density=alpha_sw_density)
+                                     alpha_sw_density=alpha_sw_density,
+                                     bad_fit_flag=alpha_sw_bad_fit_flag)
 
 
 def chunk_l2_data(data: SwapiL2Data, chunk_size: int) -> Iterable[SwapiL2Data]:

@@ -19,6 +19,8 @@ from imap_l3_processing.swapi.descriptors import PROTON_TEMPERATURE_DENSITY_LOOK
     GEOMETRIC_FACTOR_SW_LOOKUP_TABLE_DESCRIPTOR, GEOMETRIC_FACTOR_PUI_LOOKUP_TABLE_DESCRIPTOR
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data, SwapiL3ProtonSolarWindData, SwapiL3PickupIonData, \
     SwapiL3AlphaSolarWindData
+from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
+    AlphaSolarWindTemperatureAndDensity
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import FittingParameters
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SWAPI_L2_DESCRIPTOR, SwapiL3ADependencies
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_vdf import DeltaMinusPlus
@@ -230,15 +232,16 @@ class TestSwapiProcessor(TestCase):
     @patch('imap_l3_processing.processor.spiceypy')
     def test_process_l3a_pui_proton_sw_fit_chisq_too_large_with_pui_quality_flags(self, mock_spicepy,
                                                                                   mock_calculate_helium_pui_temperature,
-                                                           mock_calculate_helium_pui_density,
-                                                           mock_calculate_ten_minute_velocities,
-                                                           mock_calculate_pickup_ion,
-                                                           mock_swapi_l3_dependencies_class,
-                                                           mock_estimate_deflection_and_clock_angles,
-                                                           mock_calculate_proton_solar_wind_speed, mock_chunk_l2_data,
-                                                           mock_write_cdf,
-                                                           mock_pickup_ion_data_constructor,
-                                                           mock_imap_attribute_manager):
+                                                                                  mock_calculate_helium_pui_density,
+                                                                                  mock_calculate_ten_minute_velocities,
+                                                                                  mock_calculate_pickup_ion,
+                                                                                  mock_swapi_l3_dependencies_class,
+                                                                                  mock_estimate_deflection_and_clock_angles,
+                                                                                  mock_calculate_proton_solar_wind_speed,
+                                                                                  mock_chunk_l2_data,
+                                                                                  mock_write_cdf,
+                                                                                  mock_pickup_ion_data_constructor,
+                                                                                  mock_imap_attribute_manager):
         instrument = 'swapi'
         incoming_data_level = 'l2'
         dependency_start_date = datetime.strftime(datetime(2025, 1, 1), "%Y%m%d")
@@ -907,7 +910,9 @@ class TestSwapiProcessor(TestCase):
 
         returned_alpha_temperature = ufloat(400000, 2000)
         returned_alpha_density = ufloat(0.15, 0.01)
-        mock_alpha_calculate_temperature_and_density.return_value = (returned_alpha_temperature, returned_alpha_density)
+        returned_bad_flags = SwapiL3Flags.NONE
+        mock_alpha_calculate_temperature_and_density.return_value = AlphaSolarWindTemperatureAndDensity(
+            returned_alpha_temperature, returned_alpha_density, returned_bad_flags)
 
         returned_alpha_speed = ufloat(450000, 1000)
         mock_calculate_alpha_solar_wind_speed.return_value = ufloat(450000, 1000)
@@ -1015,17 +1020,20 @@ class TestSwapiProcessor(TestCase):
                                                                  f"imap_swapi_l3a_{descriptor_to_generate}_{start_date_as_str}_{input_version}"),
                                                             ])
 
-        actual_alpha_metadata, actual_alpha_epoch, actual_alpha_sw_speed, actual_alpha_sw_temperature, actual_alpha_sw_density = mock_alpha_solar_wind_data_constructor.call_args.args
+        actual_alpha_metadata, actual_alpha_epoch, actual_alpha_sw_speed, actual_alpha_sw_temperature, actual_alpha_sw_density, actual_bad_fit_flag = mock_alpha_solar_wind_data_constructor.call_args.args
         self.assertEqual(expected_alpha_metadata, actual_alpha_metadata)
 
         np.testing.assert_array_equal(np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]),
                                       actual_alpha_epoch)
         np.testing.assert_array_equal(np.array([mock_calculate_alpha_solar_wind_speed.return_value]),
                                       actual_alpha_sw_speed)
-        np.testing.assert_array_equal(np.array([mock_alpha_calculate_temperature_and_density.return_value[0]]),
+        np.testing.assert_array_equal(np.array([mock_alpha_calculate_temperature_and_density.return_value.temperature]),
                                       actual_alpha_sw_temperature)
-        np.testing.assert_array_equal(np.array([mock_alpha_calculate_temperature_and_density.return_value[1]]),
+        np.testing.assert_array_equal(np.array([mock_alpha_calculate_temperature_and_density.return_value.density]),
                                       actual_alpha_sw_density)
+        np.testing.assert_array_equal(
+            np.array([mock_alpha_calculate_temperature_and_density.return_value.bad_fit_flag]),
+            actual_bad_fit_flag)
 
         mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a", descriptor_to_generate)
 
