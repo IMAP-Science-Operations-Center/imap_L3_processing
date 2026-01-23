@@ -144,33 +144,49 @@ class TestUltraL3Dependencies(unittest.TestCase):
     @patch('imap_l3_processing.ultra.ultra_l3_dependencies.RectangularIntensityMapData.read_from_path')
     @patch('imap_l3_processing.ultra.ultra_l3_dependencies.imap_data_access.download')
     def test_spectral_index_fetch_dependencies(self, mock_download, mock_rectangular_read_from_path):
-        map_file_name = 'imap_ultra_l3_ultra-cool-descriptor_20250601_v000.cdf'
-        ancillary_file_name = 'imap_ultra_spx-energy-ranges_20250601_v000.cdf'
-        expected_energy_ranges = [[5, 15], [15, 50]]
-        map_input = ScienceInput(map_file_name)
-        ancillary_input = AncillaryInput(ancillary_file_name)
-        processing_input_collection = ProcessingInputCollection(map_input, ancillary_input)
 
-        mock_download.side_effect = [
-            "map_file",
-            get_test_data_path('ultra/imap_ultra_ulc-spx-energy-ranges_20250407_v000.dat')
-        ]
+        for input_data_type in ["l2", "l3"]:
+            mock_rectangular_read_from_path.reset_mock()
+            with self.subTest(input_data_type):
+                map_file_name = f'imap_ultra_{input_data_type}_ultra-cool-descriptor_20250601_v000.cdf'
+                ancillary_file_name = 'imap_ultra_spx-energy-ranges_20250601_v000.cdf'
+                pointing_set_file_name = 'imap_ultra_l1c_u90spacecraftpset_20250601-repoint00001_v000.cdf'
+                glows_file_name = 'imap_glows_l3e_survival-probability-ul-hf_20250601-repoint00001_v000.cdf'
+                expected_energy_ranges = [[5, 15], [15, 50]]
+                map_input = ScienceInput(map_file_name)
+                ancillary_input = AncillaryInput(ancillary_file_name)
+                extra_inputs_from_mapper = [ScienceInput(pointing_set_file_name), ScienceInput(glows_file_name)]
+                processing_input_collection = ProcessingInputCollection(map_input, ancillary_input, *extra_inputs_from_mapper)
 
-        ultra_l3_dependencies = UltraL3SpectralIndexDependencies.fetch_dependencies(processing_input_collection)
+                mock_download.side_effect = [
+                    "map_file",
+                    get_test_data_path('ultra/imap_ultra_ulc-spx-energy-ranges_20250407_v000.dat')
+                ]
 
-        mock_download.assert_has_calls([
-            call(map_file_name),
-            call(ancillary_file_name)
-        ])
-        mock_rectangular_read_from_path.assert_called_once_with("map_file")
-        self.assertEqual(ultra_l3_dependencies.map_data, mock_rectangular_read_from_path.return_value)
-        np.testing.assert_array_equal(ultra_l3_dependencies.fit_energy_ranges, expected_energy_ranges)
+                ultra_l3_dependencies = UltraL3SpectralIndexDependencies.fetch_dependencies(processing_input_collection)
 
-    def test_spectral_index_fetch_dependencies_raises_exception_on_missing_science_file(self):
+                mock_download.assert_has_calls([
+                    call(map_file_name),
+                    call(ancillary_file_name)
+                ])
+                mock_rectangular_read_from_path.assert_called_once_with("map_file")
+                self.assertEqual(ultra_l3_dependencies.map_data, mock_rectangular_read_from_path.return_value)
+                np.testing.assert_array_equal(ultra_l3_dependencies.fit_energy_ranges, expected_energy_ranges)
+
+    def test_spectral_index_fetch_dependencies_raises_exception_on_missing_map(self):
         ancillary_input = AncillaryInput('imap_ultra_spx-energy-ranges_20250601_v000.dat')
         with self.assertRaises(ValueError) as context:
             UltraL3SpectralIndexDependencies.fetch_dependencies(ProcessingInputCollection(ancillary_input))
-        self.assertEqual("Missing Ultra L3 file", str(context.exception))
+        self.assertEqual("Expected 1 input map, got 0: []", str(context.exception))
+
+    def test_spectral_index_fetch_dependencies_raises_exception_on_multiple_maps(self):
+        ancillary_input = AncillaryInput('imap_ultra_spx-energy-ranges_20250601_v000.dat')
+        science_input = ScienceInput('imap_ultra_l3_map_20250601_v000.cdf')
+
+        with self.assertRaises(ValueError) as context:
+            UltraL3SpectralIndexDependencies.fetch_dependencies(ProcessingInputCollection(ancillary_input, science_input, science_input))
+        expected_msg = "Expected 1 input map, got 2: [imap_ultra_l3_map_20250601_v000.cdf, imap_ultra_l3_map_20250601_v000.cdf]"
+        self.assertEqual(expected_msg, str(context.exception))
 
     def test_spectral_index_fetch_dependencies_raises_exception_on_missing_ancillary_file(self):
         science_input = ScienceInput('imap_ultra_l3_ultra-cool-descriptor_20250601_v000.cdf')

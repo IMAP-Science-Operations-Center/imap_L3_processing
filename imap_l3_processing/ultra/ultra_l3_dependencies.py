@@ -14,7 +14,6 @@ from imap_l3_processing.maps.map_models import HealPixIntensityMapData, Rectangu
 from imap_l3_processing.ultra.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.utils import get_dependency_paths_by_descriptor
 
-
 @dataclass
 class UltraL3Dependencies:
     ultra_l2_map: HealPixIntensityMapData
@@ -75,11 +74,10 @@ class UltraL3SpectralIndexDependencies(SpectralIndexDependencies):
     @classmethod
     def fetch_dependencies(cls, deps: ProcessingInputCollection) -> UltraL3SpectralIndexDependencies:
         energy_fit_ranges_ancillary_file_path = deps.get_file_paths(source="ultra", descriptor="spx-energy-ranges")
-        ultra_map_file_paths = [dep for dep in deps.get_file_paths(source="ultra") if
-                                dep not in energy_fit_ranges_ancillary_file_path]
+        ultra_map_file_paths = deps.get_file_paths(source="ultra", data_type="l3") + deps.get_file_paths(source="ultra", data_type="l2")
 
         if len(ultra_map_file_paths) != 1:
-            raise ValueError("Missing Ultra L3 file")
+            raise ValueError(f"Expected 1 input map, got {len(ultra_map_file_paths)}: [{', '.join(p.name for p in ultra_map_file_paths)}]")
 
         if len(energy_fit_ranges_ancillary_file_path) != 1:
             raise ValueError("Missing fit energy ranges ancillary file")
