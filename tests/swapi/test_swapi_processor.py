@@ -22,6 +22,8 @@ from imap_l3_processing.swapi.l3a.models import SwapiL2Data, SwapiL3ProtonSolarW
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
     AlphaSolarWindTemperatureAndDensity
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import FittingParameters
+from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_temperature_and_density import \
+    ProtonSolarWindTemperatureAndDensity
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SWAPI_L2_DESCRIPTOR, SwapiL3ADependencies
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_vdf import DeltaMinusPlus
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
@@ -463,8 +465,9 @@ class TestSwapiProcessor(TestCase):
 
         returned_proton_sw_temp = ufloat(99000, 1000)
         returned_proton_sw_density = ufloat(4.97, 0.25)
-        mock_proton_calculate_temperature_and_density.return_value = (
-            returned_proton_sw_temp, returned_proton_sw_density)
+
+        mock_proton_calculate_temperature_and_density.return_value = ProtonSolarWindTemperatureAndDensity(
+            temperature=returned_proton_sw_temp, density=returned_proton_sw_density, bad_fit_flag=SwapiL3Flags.NONE)
 
         returned_proton_sw_clock_angle = ufloat(200, 0.25)
         mock_calculate_clock_angle.return_value = returned_proton_sw_clock_angle
@@ -590,10 +593,11 @@ class TestSwapiProcessor(TestCase):
                                       actual_proton_epoch,
                                       strict=True)
         np.testing.assert_array_equal(np.array([returned_proton_sw_speed]), actual_proton_sw_speed, strict=True)
-        np.testing.assert_array_equal(np.array([returned_proton_sw_temp]), actual_proton_sw_temperature,
-                                      strict=True)
-        np.testing.assert_array_equal(np.array([returned_proton_sw_density]), actual_proton_sw_density,
-                                      strict=True)
+
+        self.assert_ufloat_array([returned_proton_sw_temp], actual_proton_sw_temperature, )
+
+        self.assert_ufloat_array([returned_proton_sw_density], actual_proton_sw_density)
+
         np.testing.assert_array_equal(np.array([returned_proton_sw_clock_angle]), actual_proton_sw_clock_angle,
                                       strict=True)
         np.testing.assert_array_equal(np.array([returned_proton_sw_deflection_angle]),
@@ -619,23 +623,24 @@ class TestSwapiProcessor(TestCase):
         self.assertEqual([expected_cdf_path], product)
 
     @patch('imap_l3_processing.utils.ImapAttributeManager')
-    @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3ProtonSolarWindData')
     @patch('imap_l3_processing.utils.write_cdf')
+    @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3ProtonSolarWindData')
     @patch('imap_l3_processing.swapi.swapi_processor.chunk_l2_data')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_proton_solar_wind_speed')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_proton_solar_wind_temperature_and_density')
     @patch('imap_l3_processing.swapi.swapi_processor.estimate_deflection_and_clock_angles')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3ADependencies')
     @patch('imap_l3_processing.processor.spiceypy')
-    def test_process_l3a_proton_estimates_angles_if_chisq_too_high(self, mock_spicepy,
-                                                                   mock_swapi_l3_dependencies_class,
-                                                                   mock_estimate_deflection_and_clock_angles,
-                                                                   mock_proton_calculate_temperature_and_density,
-                                                                   mock_calculate_proton_solar_wind_speed,
-                                                                   mock_chunk_l2_data, mock_write_cdf,
-                                                                   mock_proton_solar_wind_data_constructor,
-                                                                   mock_imap_attribute_manager
-                                                                   ):
+    def test_process_l3a_proton_estimates_angles_if_chisq_too_high_with_hi_chi_sq_flag(self, mock_spicepy,
+                                                                                       mock_swapi_l3_dependencies_class,
+                                                                                       mock_estimate_deflection_and_clock_angles,
+                                                                                       mock_proton_calculate_temperature_and_density,
+                                                                                       mock_calculate_proton_solar_wind_speed,
+                                                                                       mock_chunk_l2_data,
+                                                                                       mock_proton_solar_wind_data_constructor,
+                                                                                       _,
+                                                                                       __
+                                                                                       ):
         instrument = 'swapi'
         incoming_data_level = 'l2'
         dependency_start_date = datetime.strftime(datetime(2025, 1, 1), "%Y%m%d")
@@ -656,8 +661,8 @@ class TestSwapiProcessor(TestCase):
 
         returned_proton_sw_temp = ufloat(99000, 1000)
         returned_proton_sw_density = ufloat(4.97, 0.25)
-        mock_proton_calculate_temperature_and_density.return_value = (
-            returned_proton_sw_temp, returned_proton_sw_density)
+        mock_proton_calculate_temperature_and_density.return_value = ProtonSolarWindTemperatureAndDensity(
+            returned_proton_sw_temp, returned_proton_sw_density, SwapiL3Flags.HI_CHI_SQ)
 
         initial_epoch = 10
 
@@ -735,11 +740,9 @@ class TestSwapiProcessor(TestCase):
         np.testing.assert_array_equal(np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]),
                                       actual_proton_epoch,
                                       strict=True)
-        np.testing.assert_array_equal(np.array([returned_proton_sw_speed]), actual_proton_sw_speed, strict=True)
-        np.testing.assert_array_equal(np.array([returned_proton_sw_temp]), actual_proton_sw_temperature,
-                                      strict=True)
-        np.testing.assert_array_equal(np.array([returned_proton_sw_density]), actual_proton_sw_density,
-                                      strict=True)
+        self.assert_ufloat_array(np.array([returned_proton_sw_speed]), actual_proton_sw_speed)
+        self.assert_ufloat_array(np.array([returned_proton_sw_temp]), actual_proton_sw_temperature)
+        self.assert_ufloat_array(np.array([returned_proton_sw_density]), actual_proton_sw_density)
 
         np.testing.assert_array_equal(nominal_values(actual_proton_sw_clock_angle), [270])
         np.testing.assert_array_equal(std_devs(actual_proton_sw_clock_angle), [180])
@@ -747,7 +750,8 @@ class TestSwapiProcessor(TestCase):
         np.testing.assert_array_equal(nominal_values(actual_proton_sw_deflection_angle), [2])
         np.testing.assert_array_equal(std_devs(actual_proton_sw_deflection_angle), [45])
 
-        np.testing.assert_array_equal(np.array([SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED]), actual_quality_flags,
+        np.testing.assert_array_equal(np.array([SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED | SwapiL3Flags.HI_CHI_SQ]),
+                                      actual_quality_flags,
                                       strict=True)
 
     def test_process_l3a_proton_outputs_fill_for_chunks_with_fill(self):
@@ -1283,6 +1287,18 @@ class TestSwapiProcessor(TestCase):
     def assert_ufloat_equal(self, expected_ufloat, actual_ufloat):
         self.assertEqual(expected_ufloat.n, actual_ufloat.n)
         self.assertEqual(expected_ufloat.s, actual_ufloat.s)
+
+    def compare_ufloat_equal(self, expected_ufloat, actual_ufloat):
+        try:
+            self.assertEqual(expected_ufloat.n, actual_ufloat.n)
+            self.assertEqual(expected_ufloat.s, actual_ufloat.s)
+            return True
+        except AssertionError:
+            return False
+
+    def assert_ufloat_array(self, expected_array, actual_array):
+        self.assertTrue(all([self.compare_ufloat_equal(expected, actual) for expected, actual in
+                             zip(expected_array, actual_array)]))
 
 
 def create_swapi_l3a_dependencies_with_mocks():

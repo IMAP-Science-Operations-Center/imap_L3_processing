@@ -1,5 +1,5 @@
 import logging
-from dataclasses import replace
+from dataclasses import replace, astuple
 
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
@@ -261,15 +261,17 @@ class SwapiProcessor(Processor):
                     deflection_angle = ufloat(deflection_angle, 45)
                     clock_angle = ufloat(clock_angle, 180)
 
-                proton_temperature, proton_density = calculate_proton_solar_wind_temperature_and_density(
-                    dependencies.proton_temperature_density_calibration_table,
-                    proton_solar_wind_speed,
-                    deflection_angle,
-                    clock_angle,
-                    coincidence_count_rates_with_uncertainty,
-                    data_chunk.energy,
-                    dependencies.efficiency_calibration_table.get_proton_efficiency_for(epoch_center_of_chunk)
-                )
+                proton_temperature, proton_density, bad_fit_flag = astuple(
+                    calculate_proton_solar_wind_temperature_and_density(
+                        dependencies.proton_temperature_density_calibration_table,
+                        proton_solar_wind_speed,
+                        deflection_angle,
+                        clock_angle,
+                        coincidence_count_rates_with_uncertainty,
+                        data_chunk.energy,
+                        dependencies.efficiency_calibration_table.get_proton_efficiency_for(epoch_center_of_chunk)
+                    ))
+                quality_flag |= bad_fit_flag
 
             except Exception as e:
                 epoch = epoch_center_of_chunk
