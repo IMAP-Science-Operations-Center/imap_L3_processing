@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from typing import Optional
 
 import numpy as np
 from imap_processing.spice.geometry import SpiceFrame
@@ -13,7 +14,8 @@ from imap_l3_processing.maps.map_models import HealPixIntensityMapData, Intensit
     RectangularIntensityMapData, RectangularCoords, RectangularSpectralIndexDataProduct, \
     RectangularSpectralIndexMapData, SpectralIndexMapData
 from imap_l3_processing.maps.map_processor import MapProcessor
-from imap_l3_processing.maps.spectral_fit import calculate_spectral_index_for_multiple_ranges
+from imap_l3_processing.maps.spectral_fit import calculate_spectral_index_for_multiple_ranges, \
+    slice_energy_range_by_bin, fit_spectral_index_map
 from imap_l3_processing.ultra.science.ultra_survival_probability import UltraSurvivalProbabilitySkyMap, \
     UltraSurvivalProbability
 from imap_l3_processing.ultra.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies, \
@@ -31,9 +33,12 @@ class UltraProcessor(MapProcessor):
                                     grid=PixelSize.TwoDegrees | PixelSize.FourDegrees | PixelSize.SixDegrees):
                 ultra_l3_spectral_fit_dependencies = UltraL3SpectralIndexDependencies.fetch_dependencies(
                     self.dependencies)
-                healpix_spectral_index_map_data = self._process_spectral_index(ultra_l3_spectral_fit_dependencies)
+                spectral_index_map_data = self._process_spectral_index(
+                    ultra_l3_spectral_fit_dependencies,
+                    parsed_descriptor.spectral_index_energy_range
+                )
                 data_product = RectangularSpectralIndexDataProduct(input_metadata=self.input_metadata,
-                                                                   data=healpix_spectral_index_map_data)
+                                                                   data=spectral_index_map_data)
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
                                     sensor=Sensor.Ultra45 | Sensor.Ultra90,
                                     grid=PixelSize.TwoDegrees | PixelSize.FourDegrees | PixelSize.SixDegrees):
@@ -134,11 +139,18 @@ class UltraProcessor(MapProcessor):
         return healpix_map_data
 
     def _process_spectral_index(self,
-                                dependencies: UltraL3SpectralIndexDependencies) -> RectangularSpectralIndexMapData:
-        map_data = calculate_spectral_index_for_multiple_ranges(
-            dependencies.map_data.intensity_map_data,
-            dependencies.get_fit_energy_ranges()
-        )
+                                dependencies: UltraL3SpectralIndexDependencies,
+                                spectral_index_range: Optional[tuple[int, int]]
+                                ) -> RectangularSpectralIndexMapData:
+        if spectral_index_range is not None:
+            start, end = spectral_index_range
+            sliced = slice_energy_range_by_bin(dependencies.map_data.intensity_map_data, start, end)
+            map_data = fit_spectral_index_map(sliced)
+        else:
+            map_data = calculate_spectral_index_for_multiple_ranges(
+                dependencies.map_data.intensity_map_data,
+                dependencies.get_fit_energy_ranges()
+            )
         return RectangularSpectralIndexMapData(
             spectral_index_map_data=map_data,
             coords=dependencies.map_data.coords

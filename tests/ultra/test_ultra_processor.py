@@ -497,6 +497,44 @@ class TestUltraProcessor(unittest.TestCase):
                                                               sentinel.energy_ranges)
         self.assertEqual([mock_save_data.return_value], product)
 
+    @patch('imap_l3_processing.ultra.ultra_processor.save_data')
+    @patch('imap_l3_processing.processor.spiceypy')
+    @patch('imap_l3_processing.ultra.ultra_processor.calculate_spectral_index_for_multiple_ranges')
+    @patch('imap_l3_processing.ultra.ultra_processor.fit_spectral_index_map')
+    @patch('imap_l3_processing.ultra.ultra_processor.slice_energy_range_by_bin')
+    @patch('imap_l3_processing.ultra.ultra_processor.UltraL3SpectralIndexDependencies.fetch_dependencies')
+    def test_process_spectral_index_with_custom_energy_bin_range(self,
+                                     mock_fetch_dependencies, mock_slice_energy_range_by_bin, mock_fit_spectral_index_map,
+                                     mock_calculate_spectral_index_for_multiple_ranges, mock_spiceypy, mock_save_data
+                                     ):
+
+        mock_spiceypy.ktotal.return_value = 0
+
+        map_file_name = 'imap_ultra_l3_ultra-cool-descriptor_20250601_v000.cdf'
+        energy_range_file_name = 'imap_ultra_energy-range-descriptor_20250601_v000.dat'
+        input_deps = ProcessingInputCollection(ScienceInput(map_file_name), AncillaryInput(energy_range_file_name))
+
+        input_metadata = InputMetadata(instrument="ultra",
+                                       data_level="l3",
+                                       start_date=datetime.now(),
+                                       end_date=datetime.now() + timedelta(days=1),
+                                       version="v000",
+                                       descriptor=f"u90-spx0510-h-sf-sp-full-hae-4deg-6mo")
+        dependencies = mock_fetch_dependencies.return_value
+
+        processor = UltraProcessor(input_deps, input_metadata)
+        result = processor.process()
+
+        mock_slice_energy_range_by_bin.assert_called_once_with(dependencies.map_data.intensity_map_data, 5, 10)
+        mock_fit_spectral_index_map.assert_called_once_with(mock_slice_energy_range_by_bin.return_value)
+
+        mock_calculate_spectral_index_for_multiple_ranges.assert_not_called()
+        mock_save_data.assert_called_once()
+        [product] = mock_save_data.call_args.args
+        self.assertIsInstance(product, RectangularSpectralIndexDataProduct)
+
+        self.assertEqual(mock_fit_spectral_index_map.return_value, product.data.spectral_index_map_data)
+
     def test_process_raises_exception_when_generating_a_healpix_map(self):
         input_metadata = InputMetadata(instrument="ultra",
                                        data_level="l3",

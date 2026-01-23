@@ -50,6 +50,26 @@ def slice_energy_range(data: IntensityMapData, start: float, end: float) -> Inte
                                ena_intensity_stat_uncert=data.ena_intensity_stat_uncert[:, energy_mask]
                                )
 
+def slice_energy_range_by_bin(data: IntensityMapData, start_bin_id: int, end_bin_id: int) -> IntensityMapData:
+    max_bin_id = 1 + len(data.energy)
+    bin_ids_in_range =  (1 <= start_bin_id <= max_bin_id) and (1 <= end_bin_id <= max_bin_id)
+    bin_ids_valid = bin_ids_in_range and start_bin_id < end_bin_id
+    if not bin_ids_valid:
+        raise ValueError(f"Error slicing energy bins {start_bin_id},{end_bin_id}")
+
+    energy_slice = slice(start_bin_id-1,end_bin_id)
+    return dataclasses.replace(data,
+                               energy=data.energy[energy_slice],
+                               energy_delta_plus=data.energy_delta_plus[energy_slice],
+                               energy_delta_minus=data.energy_delta_minus[energy_slice],
+                               energy_label=data.energy_label[energy_slice],
+                               exposure_factor=data.exposure_factor[:, energy_slice],
+                               obs_date=data.obs_date[:, energy_slice],
+                               obs_date_range=data.obs_date_range[:, energy_slice],
+                               ena_intensity=data.ena_intensity[:, energy_slice],
+                               ena_intensity_sys_err=data.ena_intensity_sys_err[:, energy_slice],
+                               ena_intensity_stat_uncert=data.ena_intensity_stat_uncert[:, energy_slice]
+                               )
 
 def fit_spectral_index_map(intensity_data: IntensityMapData) -> SpectralIndexMapData:
     fluxes = intensity_data.ena_intensity
