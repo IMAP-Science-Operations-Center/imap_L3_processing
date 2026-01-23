@@ -17,6 +17,7 @@ from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, 
     RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
+from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.utils import format_time, download_dependency, read_l1d_mag_data, save_data, \
     download_external_dependency, download_dependency_with_repointing, \
     combine_glows_l3e_with_l1c_pointing, furnish_local_spice, get_spice_parent_file_names, furnish_spice_metakernel, \
@@ -54,7 +55,8 @@ class TestUtils(TestCase):
                                                  alpha_sw_speed=alpha_sw_speed,
                                                  alpha_sw_temperature=alpha_sw_temperature,
                                                  alpha_sw_density=alpha_sw_density,
-                                                 parent_file_names=sentinel.parent_files)
+                                                 parent_file_names=sentinel.parent_files,
+                                                 bad_fit_flag=sentinel.bad_fit_flag)
 
         mock_science_file_path = Mock()
         mock_science_file_path_class.generate_from_inputs.return_value = mock_science_file_path
@@ -169,11 +171,14 @@ class TestUtils(TestCase):
         alpha_sw_speed = np.array([4, 5, 6])
         alpha_sw_density = np.array([5, 5, 5])
         alpha_sw_temperature = np.array([4, 3, 5])
+        bad_fit_flag = np.repeat([SwapiL3Flags.NONE], 3)
 
-        data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata, epoch=epoch,
+        data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata,
+                                                 epoch=epoch,
                                                  alpha_sw_speed=alpha_sw_speed,
                                                  alpha_sw_temperature=alpha_sw_temperature,
-                                                 alpha_sw_density=alpha_sw_density)
+                                                 alpha_sw_density=alpha_sw_density,
+                                                 bad_fit_flag=bad_fit_flag)
         save_data(data_product)
 
         mock_write_cdf.assert_called_once()
@@ -199,11 +204,14 @@ class TestUtils(TestCase):
         alpha_sw_speed = np.array([4, 5, 6])
         alpha_sw_density = np.array([5, 5, 5])
         alpha_sw_temperature = np.array([4, 3, 5])
+        bad_fit_flag = np.repeat([SwapiL3Flags.NONE], 3)
 
-        data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata, epoch=epoch,
+        data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata,
+                                                 epoch=epoch,
                                                  alpha_sw_speed=alpha_sw_speed,
                                                  alpha_sw_temperature=alpha_sw_temperature,
-                                                 alpha_sw_density=alpha_sw_density)
+                                                 alpha_sw_density=alpha_sw_density,
+                                                 bad_fit_flag=bad_fit_flag)
 
         custom_path = TEMP_CDF_FOLDER_PATH / "fancy_path"
         returned_file_path = save_data(data_product, folder_path=custom_path)

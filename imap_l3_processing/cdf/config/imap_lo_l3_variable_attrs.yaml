@@ -450,100 +450,8 @@ bg_intensity_sys_err:
   LABL_PTR_2: longitude_label
   LABL_PTR_3: latitude_label
   SCALETYP: linear
-counts:
-  NAME: counts
-  DATA_TYPE: CDF_REAL4
-  CATDESC: Total counts of the specified calibration product observed in the pixel, makes sense only for uncombined calibration products
-  DEPEND_0: epoch
-  DEPEND_1: energy
-  DEPEND_2: longitude
-  DEPEND_3: latitude
-  VAR_TYPE: data
-  RECORD_VARYING: RV
-  DISPLAY_TYPE: map_image
-  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Counts
-  FORMAT: F4.3
-  LABLAXIS: Counts
-  UNITS: count
-  VALIDMIN: 0.0
-  VALIDMAX: 1.00E+9
-  FILLVAL: -1.00E+31
-  LABL_PTR_1: energy_label
-  LABL_PTR_2: longitude_label
-  LABL_PTR_3: latitude_label
-  SCALETYP: linear
-energy_stat_uncert:
-  NAME: energy_stat_uncert
-  DATA_TYPE: CDF_REAL4
-  CATDESC: Energy statistical uncertainty.
-  DEPEND_0: epoch
-  DEPEND_1: energy
-  DEPEND_2: longitude
-  DEPEND_3: latitude
-  VAR_TYPE: support_data
-  DISPLAY_TYPE: map_image
-  RECORD_VARYING: RV
-  FIELDNAM: Energy Unc
-  FORMAT: F6.3
-  LABLAXIS: Unc
-  UNITS: cm -2 s -1 sr -1 keV -1
-  VALIDMIN: 0.0
-  VALIDMAX: 1.00E+9
-  FILLVAL: -1.00E+31
-  LABL_PTR_1: energy_label
-  LABL_PTR_2: longitude_label
-  LABL_PTR_3: latitude_label
-  SCALETYP: linear
-geometric_factor:
-  NAME: geometric_factor
-  DATA_TYPE: CDF_REAL4
-  CATDESC: The geometric factor
-  DEPEND_0: epoch
-  DEPEND_1: energy
-  DEPEND_2: longitude
-  DEPEND_3: latitude
-  VAR_TYPE: data
-  RECORD_VARYING: RV
-  DISPLAY_TYPE: map_image
-  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Geometric factor
-  FORMAT: F12.1
-  LABLAXIS: Geometric factor
-  UNITS: cm -2 s -1 sr -1 keV -1
-  VALIDMIN: 0.0
-  VALIDMAX: 1.00E+9
-  FILLVAL: -1.00E+31
-  LABL_PTR_1: energy_label
-  LABL_PTR_2: longitude_label
-  LABL_PTR_3: latitude_label
-  DELTA_PLUS_VAR: geometric_factor_stat_uncert
-  DELTA_MINUS_VAR: geometric_factor_stat_uncert
-  SCALETYP: linear
-geometric_factor_stat_uncert:
-  NAME: geometric_factor_stat_uncert
-  DATA_TYPE: CDF_REAL4
-  CATDESC: Geometric factor statistical uncertainty.
-  DEPEND_0: epoch
-  DEPEND_1: energy
-  DEPEND_2: longitude
-  DEPEND_3: latitude
-  VAR_TYPE: support_data
-  DISPLAY_TYPE: map_image
-  RECORD_VARYING: RV
-  FIELDNAM: Energy Unc
-  FORMAT: F6.3
-  LABLAXIS: Unc
-  UNITS: cm -2 s -1 sr -1 keV -1
-  VALIDMIN: 0.0
-  VALIDMAX: 1.00E+9
-  FILLVAL: -1.00E+31
-  LABL_PTR_1: energy_label
-  LABL_PTR_2: longitude_label
-  LABL_PTR_3: latitude_label
-  SCALETYP: linear
-bg_rates:
-  NAME: bg_rates
+bg_rate:
+  NAME: bg_rate
   DATA_TYPE: CDF_REAL4
   CATDESC: Total background count rate from non-ENA (non-heliospheric) sources, as calculated by ground processing; makes sense only for "uncombined" calibration products.
   DEPEND_0: epoch
@@ -564,11 +472,11 @@ bg_rates:
   LABL_PTR_1: energy_label
   LABL_PTR_2: longitude_label
   LABL_PTR_3: latitude_label
-  DELTA_PLUS_VAR: bg_rates_stat_uncert
-  DELTA_MINUS_VAR: bg_rates_stat_uncert
+  DELTA_PLUS_VAR: bg_rate_stat_uncert
+  DELTA_MINUS_VAR: bg_rate_stat_uncert
   SCALETYP: linear
-bg_rates_stat_uncert:
-  NAME: bg_rates_stat_uncert
+bg_rate_stat_uncert:
+  NAME: bg_rate_stat_uncert
   DATA_TYPE: CDF_REAL4
   CATDESC: Uncertainty in total background count rate; some of this may be non-statistical, as opposed to just statistical.  Makes sense only for "uncombined" calibration products.
   DEPEND_0: epoch
@@ -589,8 +497,8 @@ bg_rates_stat_uncert:
   LABL_PTR_2: longitude_label
   LABL_PTR_3: latitude_label
   SCALETYP: linear
-bg_rates_sys_err:
-  NAME: bg_rates_sys_err
+bg_rate_sys_err:
+  NAME: bg_rate_sys_err
   DATA_TYPE: CDF_REAL4
   CATDESC: Background ENA intensity systematic error?
   DEPEND_0: epoch
@@ -705,13 +613,13 @@ isn_bg_rate_subtracted:
   LABL_PTR_1: energy_label
   LABL_PTR_2: longitude_label
   LABL_PTR_3: latitude_label
-  DELTA_PLUS_VAR: isn_bg_rate_subtracted_stat_err
-  DELTA_MINUS_VAR: isn_bg_rate_subtracted_stat_err
+  DELTA_PLUS_VAR: isn_bg_rate_subtracted_stat_uncert
+  DELTA_MINUS_VAR: isn_bg_rate_subtracted_stat_uncert
   SCALETYP: linear
-isn_bg_rate_subtracted_stat_err:
-  NAME: isn_bg_rate_subtracted_stat_err
+isn_bg_rate_subtracted_stat_uncert:
+  NAME: isn_bg_rate_subtracted_stat_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: ISN Background rate subtracted err.
+  CATDESC: ISN Background rate subtracted uncertainty.
   DEPEND_0: epoch
   DEPEND_1: energy
   DEPEND_2: longitude
@@ -720,7 +628,7 @@ isn_bg_rate_subtracted_stat_err:
   RECORD_VARYING: RV
   DISPLAY_TYPE: map_image
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: ISN Background rate subtracted error
+  FIELDNAM: ISN Background rate subtracted uncertainty
   FORMAT: F12.1
   LABLAXIS: ISN BG Subtracted Rate
   UNITS: count s-1
@@ -731,10 +639,10 @@ isn_bg_rate_subtracted_stat_err:
   LABL_PTR_2: longitude_label
   LABL_PTR_3: latitude_label
   SCALETYP: linear
-isn_bg_rate_subtracted_sys_uncert:
-  NAME: isn_bg_rate_subtracted_sys_uncert
+isn_bg_rate_subtracted_sys_err:
+  NAME: isn_bg_rate_subtracted_sys_err
   DATA_TYPE: CDF_REAL4
-  CATDESC: ISN Background rate systematic uncertainty
+  CATDESC: ISN Background rate systematic error
   DEPEND_0: epoch
   DEPEND_1: energy
   DEPEND_2: longitude
@@ -743,9 +651,9 @@ isn_bg_rate_subtracted_sys_uncert:
   RECORD_VARYING: RV
   DISPLAY_TYPE: map_image
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: ISN Background subtracted rate systematic uncertainty
+  FIELDNAM: ISN Background subtracted rate systematic error
   FORMAT: F12.1
-  LABLAXIS: ISN BG Subtracted Rate Systematic Uncertainty
+  LABLAXIS: ISN BG Subtracted Rate Systematic Error
   UNITS: count s-1
   VALIDMIN: 0.0
   VALIDMAX: 1.00E+9

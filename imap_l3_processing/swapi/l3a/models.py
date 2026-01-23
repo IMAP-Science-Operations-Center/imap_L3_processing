@@ -45,6 +45,7 @@ PUI_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME = "pui_temperature_uncert"
 
 SWAPI_QUALITY_FLAGS_CDF_VAR_NAME = "swp_flags"
 
+
 @dataclass
 class SwapiL3ProtonSolarWindData(DataProduct):
     epoch: np.ndarray[float]
@@ -81,9 +82,10 @@ class SwapiL3ProtonSolarWindData(DataProduct):
 @dataclass
 class SwapiL3AlphaSolarWindData(DataProduct):
     epoch: np.ndarray[datetime]
-    alpha_sw_speed: np.ndarray[float]
-    alpha_sw_temperature: np.ndarray[float]
-    alpha_sw_density: np.ndarray[float]
+    alpha_sw_speed: np.ndarray
+    alpha_sw_temperature: np.ndarray
+    alpha_sw_density: np.ndarray
+    bad_fit_flag: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -95,7 +97,8 @@ class SwapiL3AlphaSolarWindData(DataProduct):
             DataProductVariable(ALPHA_SOLAR_WIND_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME,
                                 std_devs(self.alpha_sw_temperature)),
             DataProductVariable(ALPHA_SOLAR_WIND_DENSITY_CDF_VAR_NAME, nominal_values(self.alpha_sw_density)),
-            DataProductVariable(ALPHA_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME, std_devs(self.alpha_sw_density))
+            DataProductVariable(ALPHA_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME, std_devs(self.alpha_sw_density)),
+            DataProductVariable(SWAPI_QUALITY_FLAGS_CDF_VAR_NAME, self.bad_fit_flag)
         ]
 
 

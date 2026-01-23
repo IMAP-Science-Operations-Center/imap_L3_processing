@@ -113,6 +113,7 @@ class SwapiProcessor(Processor):
         pui_background_rate = []
         pui_density = []
         pui_temperature = []
+        bad_fit_flags = []
         for data_chunk, sw_velocity in zip(chunk_l2_data(data, 50), ten_minute_solar_wind_velocities):
             epoch = data_chunk.sci_start_time[0] + FIVE_MINUTES_IN_NANOSECONDS
             cooling_index = ufloat(np.nan, np.nan)
@@ -121,6 +122,7 @@ class SwapiProcessor(Processor):
             background_count_rate = ufloat(np.nan, np.nan)
             density = ufloat(np.nan, np.nan)
             temperature = ufloat(np.nan, np.nan)
+            bad_fit_flag = SwapiL3Flags.NONE
             try:
                 if (np.any(np.isnan(extract_coarse_sweep(data_chunk.coincidence_count_rate)))
                         or np.any(np.isnan(sw_velocity))):
@@ -140,6 +142,8 @@ class SwapiProcessor(Processor):
                 cutoff_speed = fit_params.cutoff_speed
                 background_count_rate = fit_params.background_count_rate
 
+                bad_fit_flag |= fit_params.bad_fit_flag
+
                 density = calculate_helium_pui_density(
                     epoch, sw_velocity, dependencies.density_of_neutral_helium_calibration_table, fit_params,
                     dependencies.helium_inflow_vector)
@@ -155,12 +159,13 @@ class SwapiProcessor(Processor):
             pui_background_rate.append(background_count_rate)
             pui_density.append(density)
             pui_temperature.append(temperature)
-
+            bad_fit_flags.append(bad_fit_flag)
         pui_metadata = replace(self.input_metadata, descriptor="pui-he")
         pui_data = SwapiL3PickupIonData(pui_metadata, np.array(pui_epochs), np.array(pui_cooling_index),
                                         np.array(pui_ionization_rate),
                                         np.array(pui_cutoff_speed), np.array(pui_background_rate),
-                                        np.array(pui_density), np.array(pui_temperature), pui_quality_flags)
+                                        np.array(pui_density), np.array(pui_temperature),
+                                        np.bitwise_or(pui_quality_flags, bad_fit_flags))
 
         return pui_data
 
@@ -170,12 +175,14 @@ class SwapiProcessor(Processor):
         alpha_solar_wind_speeds = []
         alpha_solar_wind_densities = []
         alpha_solar_wind_temperatures = []
+        alpha_solar_wind_bad_fit_flags = []
 
         for data_chunk in chunk_l2_data(data, 5):
             alpha_solar_wind_speed = ufloat(np.nan, np.nan)
             alpha_density = ufloat(np.nan, np.nan)
             alpha_temperature = ufloat(np.nan, np.nan)
             epoch = data_chunk.sci_start_time[0] + THIRTY_SECONDS_IN_NANOSECONDS
+            bad_fit_flag = SwapiL3Flags.NONE
             try:
                 if np.any(np.isnan(extract_coarse_sweep(data_chunk.coincidence_count_rate))):
                     raise ValueError("Fill values in input data")
@@ -185,10 +192,14 @@ class SwapiProcessor(Processor):
                 alpha_solar_wind_speed = calculate_alpha_solar_wind_speed(coincidence_count_rates_with_uncertainty,
                                                                           data_chunk.energy)
 
-                alpha_temperature, alpha_density = calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
+                alpha_temperature_density = calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
                     dependencies.alpha_temperature_density_calibration_table, alpha_solar_wind_speed,
                     coincidence_count_rates_with_uncertainty,
                     data_chunk.energy, dependencies.efficiency_calibration_table.get_alpha_efficiency_for(epoch))
+
+                alpha_density = alpha_temperature_density.density
+                alpha_temperature = alpha_temperature_density.temperature
+                bad_fit_flag = alpha_temperature_density.bad_fit_flag
 
             except Exception as e:
                 logger.info(f"Exception occurred at epoch {epoch}, continuing with fill value", exc_info=True)
@@ -197,12 +208,16 @@ class SwapiProcessor(Processor):
                 alpha_solar_wind_speeds.append(alpha_solar_wind_speed)
                 alpha_solar_wind_densities.append(alpha_density)
                 alpha_solar_wind_temperatures.append(alpha_temperature)
+                alpha_solar_wind_bad_fit_flags.append(bad_fit_flag)
 
         alpha_solar_wind_speed_metadata = replace(self.input_metadata, descriptor="alpha-sw")
-        alpha_solar_wind_l3_data = SwapiL3AlphaSolarWindData(alpha_solar_wind_speed_metadata, np.array(epochs),
+        alpha_solar_wind_l3_data = SwapiL3AlphaSolarWindData(alpha_solar_wind_speed_metadata,
+                                                             np.array(epochs),
                                                              np.array(alpha_solar_wind_speeds),
                                                              np.array(alpha_solar_wind_temperatures),
-                                                             np.array(alpha_solar_wind_densities))
+                                                             np.array(alpha_solar_wind_densities),
+                                                             np.array(alpha_solar_wind_bad_fit_flags),
+                                                             )
         return alpha_solar_wind_l3_data
 
     def process_l3a_proton(self, data, dependencies) -> SwapiL3ProtonSolarWindData:

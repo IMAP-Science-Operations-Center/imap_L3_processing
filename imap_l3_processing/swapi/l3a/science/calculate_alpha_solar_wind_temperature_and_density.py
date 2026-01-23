@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
@@ -13,6 +14,7 @@ from imap_l3_processing.constants import BOLTZMANN_CONSTANT_JOULES_PER_KELVIN, M
     CENTIMETERS_PER_METER, ALPHA_PARTICLE_CHARGE_COULOMBS, ALPHA_PARTICLE_MASS_KG, SWAPI_EFFECTIVE_AREA_CM2
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_combined_sweeps, \
     get_alpha_peak_indices
+from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 
 
 class AlphaTemperatureDensityCalibrationTable:
@@ -79,8 +81,10 @@ def calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
     filtered_peak_energies = peak_energies[at_least_minimum]
 
     initial_parameter_guess = [0.15, 3.6e5]
+
     def model(ev_per_q, density, temperature):
-        return alpha_count_rate_model(efficiency, ev_per_q, density, temperature,  nominal_values(alpha_sw_speed))
+        return alpha_count_rate_model(efficiency, ev_per_q, density, temperature, nominal_values(alpha_sw_speed))
+
     values, covariance = scipy.optimize.curve_fit(model,
                                                   filtered_peak_energies,
                                                   nominal_values(filtered_peak_count_rates),
@@ -89,11 +93,20 @@ def calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
                                                   bounds=[[0, 0], [np.inf, np.inf]],
                                                   p0=initial_parameter_guess)
     residual = abs(model(filtered_peak_energies, *values) - nominal_values(filtered_peak_count_rates))
-    reduced_chisq = np.sum(np.square(residual / std_devs(filtered_peak_count_rates))) / (len(filtered_peak_energies) - 2)
+    reduced_chisq = np.sum(np.square(residual / std_devs(filtered_peak_count_rates))) / (
+            len(filtered_peak_energies) - 2)
+    bad_fit_flag = SwapiL3Flags.NONE
     if reduced_chisq > 10:
-        raise ValueError("Failed to fit - chi-squared too large", reduced_chisq)
+        bad_fit_flag = SwapiL3Flags.HI_CHI_SQ
     density, temperature = correlated_values(values, covariance)
     density = table.lookup_density(alpha_sw_speed, density, temperature)
     temperature = table.lookup_temperature(alpha_sw_speed, density, temperature)
 
-    return temperature, density
+    return AlphaSolarWindTemperatureAndDensity(temperature, density, bad_fit_flag)
+
+
+@dataclass
+class AlphaSolarWindTemperatureAndDensity:
+    temperature: ufloat
+    density: ufloat
+    bad_fit_flag: int = SwapiL3Flags.NONE

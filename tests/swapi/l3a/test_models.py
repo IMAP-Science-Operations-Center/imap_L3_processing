@@ -81,8 +81,12 @@ class TestModels(CdfModelTestCase):
         alpha_temperature = uarray(expected_temperature_nominal_values, expected_temperature_std_devs)
         expected_alpha_density_nominal_values = np.arange(2, step=.2)
         expected_alpha_density_std_devs = np.arange(1, step=0.1)
+        expected_flag_values = np.full_like(epoch_data, SwapiL3Flags.NONE)
+        expected_flag_values[:len(epoch_data) // 2] = SwapiL3Flags.HI_CHI_SQ
+
         alpha_density = uarray(expected_alpha_density_nominal_values, expected_alpha_density_std_devs)
-        data = SwapiL3AlphaSolarWindData(Mock(), epoch_data, alpha_speed, alpha_temperature, alpha_density)
+        data = SwapiL3AlphaSolarWindData(Mock(), epoch_data, alpha_speed, alpha_temperature, alpha_density,
+                                         expected_flag_values)
         variables = data.to_data_product_variables()
 
         self.assert_variable_attributes(variables[0], epoch_data, EPOCH_CDF_VAR_NAME)
@@ -99,6 +103,8 @@ class TestModels(CdfModelTestCase):
                                         "alpha_sw_density")
         self.assert_variable_attributes(variables[7], expected_alpha_density_std_devs,
                                         "alpha_sw_density_uncert")
+
+        self.assert_variable_attributes(variables[8], expected_flag_values, "swp_flags")
 
     def test_getting_pui_data_product_variables(self):
         epoch_data = np.arange(20, step=2)
