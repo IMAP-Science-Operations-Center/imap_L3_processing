@@ -94,7 +94,7 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                 best_guess = np.inf
                 best_guess_index = -1
                 for e_i, energy in enumerate(energy_in_ev):
-                    guess = np.abs(energy - cg_energy)
+                    guess = np.abs(np.log10(energy) - np.log10(cg_energy))
                     if guess < best_guess:
                         best_guess = guess
                         best_guess_index = e_i

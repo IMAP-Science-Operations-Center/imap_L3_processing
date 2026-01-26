@@ -172,7 +172,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
         energy_sc = np.ones((1, 3, 3600))
         energy_sc[0, 0, :1800] = 10
         energy_sc[0, 0, 1800:3600] = 100
-        energy_sc[0, 1, :1800] = 100
+        energy_sc[0, 1, :1800] = 25
         energy_sc[0, 1, 1800:3600] = 1000
         energy_sc[0, 2, :1800] = 1000
         energy_sc[0, 2, 1800:3600] = 2000
