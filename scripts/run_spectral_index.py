@@ -3,7 +3,7 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 
-from imap_data_access import ScienceFilePath, ProcessingInputCollection, ScienceInput
+from imap_data_access import ScienceFilePath, ProcessingInputCollection, ScienceInput, AncillaryInput
 
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.lo.lo_processor import LoProcessor
@@ -23,6 +23,7 @@ def run_spectral_index(input: Path):
     )
 
     dependencies = ProcessingInputCollection(ScienceInput(input.name))
+    dependencies.add(AncillaryInput("imap_ultra_ulc-spx-energy-ranges_20250407_v000.dat"))
 
     data_path = parsed.construct_path()
     data_path.parent.mkdir(parents=True, exist_ok=True)

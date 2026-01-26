@@ -120,6 +120,14 @@ class TestMapDescriptors(unittest.TestCase):
                                                                          PixelSize.SixDegrees,
                                                                          "1yr",
                                                                          MapQuantity.SpectralIndex, "nbs")),
+            ("h45-spx0607-h-hf-sp-full-hae-4deg-6mo", MapDescriptorParts(Sensor.Hi45, cg, sp, SpinPhase.FullSpin, "hae",
+                                                                     PixelSize.FourDegrees, "6mo",
+                                                                     MapQuantity.SpectralIndex, "", (6, 7))),
+            ("h45-spx1234customsuffix-h-hf-sp-full-hae-4deg-6mo", MapDescriptorParts(Sensor.Hi45, cg, sp, SpinPhase.FullSpin, "hae",
+                                                                     PixelSize.FourDegrees, "6mo",
+                                                                     MapQuantity.SpectralIndex, "customsuffix", (12, 34))),
+            ("h45-spx012-h-hf-sp-full-hae-4deg-6mo", None),
+            ("h45-spx12345-h-hf-sp-full-hae-4deg-6mo", None),
         ]
 
         for descriptor, expected in test_cases:

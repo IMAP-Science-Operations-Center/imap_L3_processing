@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 
 from imap_processing.spice.geometry import SpiceFrame
 
@@ -14,11 +15,10 @@ from imap_l3_processing.maps.map_descriptors import parse_map_descriptor, MapQua
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularSpectralIndexMapData, \
     RectangularIntensityMapData, RectangularIntensityDataProduct
 from imap_l3_processing.maps.map_processor import MapProcessor
-from imap_l3_processing.maps.spectral_fit import fit_spectral_index_map
+from imap_l3_processing.maps.spectral_fit import fit_spectral_index_map, slice_energy_range_by_bin
 from imap_l3_processing.maps.survival_probability_processing import process_survival_probabilities
 from imap_l3_processing.models import Instrument
 from imap_l3_processing.utils import save_data
-
 
 class HiProcessor(MapProcessor):
     def process(self, spice_frame_name: SpiceFrame = SpiceFrame.ECLIPJ2000) -> list[Path]:
@@ -28,7 +28,7 @@ class HiProcessor(MapProcessor):
         match parsed_descriptor:
             case MapDescriptorParts(quantity=MapQuantity.SpectralIndex):
                 hi_l3_spectral_fit_dependencies = HiSpectralIndexDependencies.fetch_dependencies(self.dependencies)
-                map_data = self.process_spectral_fit_index(hi_l3_spectral_fit_dependencies)
+                map_data = self.process_spectral_fit_index(hi_l3_spectral_fit_dependencies, parsed_descriptor.spectral_index_energy_range)
                 data_product = RectangularSpectralIndexDataProduct(
                     data=map_data,
                     input_metadata=self.input_metadata,
@@ -106,10 +106,13 @@ class HiProcessor(MapProcessor):
 
         return combination_strategy.combine_rectangular_intensity_map_data([ram_data_product, antiram_data_product])
 
-    def process_spectral_fit_index(self, hi_l3_spectral_fit_dependencies: HiSpectralIndexDependencies) \
+    def process_spectral_fit_index(self, hi_l3_spectral_fit_dependencies: HiSpectralIndexDependencies, spectral_index_energy_range: Optional[tuple[int,int]] = None) \
             -> RectangularSpectralIndexMapData:
-
+        intensity_map_data = hi_l3_spectral_fit_dependencies.map_data.intensity_map_data
+        if spectral_index_energy_range is not None:
+            start_bin, end_bin = spectral_index_energy_range
+            intensity_map_data = slice_energy_range_by_bin(intensity_map_data, start_bin, end_bin)
         return RectangularSpectralIndexMapData(
-            spectral_index_map_data=fit_spectral_index_map(hi_l3_spectral_fit_dependencies.map_data.intensity_map_data),
+            spectral_index_map_data=fit_spectral_index_map(intensity_map_data),
             coords=hi_l3_spectral_fit_dependencies.map_data.coords
         )

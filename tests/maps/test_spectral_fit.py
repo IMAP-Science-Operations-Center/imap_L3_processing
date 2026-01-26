@@ -1,6 +1,7 @@
+import dataclasses
 import unittest
 from datetime import datetime
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, sentinel
 
 import numpy as np
 from scipy.stats import linregress
@@ -8,7 +9,7 @@ from scipy.stats import linregress
 from imap_l3_processing.maps.map_models import IntensityMapData, RectangularIntensityMapData
 from imap_l3_processing.maps.mpfit import mpfit
 from imap_l3_processing.maps.spectral_fit import power_law, fit_arrays_to_power_law, fit_spectral_index_map, \
-    calculate_spectral_index_for_multiple_ranges
+    calculate_spectral_index_for_multiple_ranges, slice_energy_range_by_bin
 from tests.test_helpers import get_test_data_path
 
 
@@ -442,3 +443,105 @@ class TestSpectralFit(unittest.TestCase):
                                            expected_gamma_sigma, atol=1e-3)
                 np.testing.assert_allclose(output_data.ena_spectral_index_scalar_coefficient[0, 0],
                                            expected_a, atol=1e-3)
+
+    def test_slice_energy_range_by_bin(self):
+        def build_array(*values):
+            return np.array([
+                [
+                    [[a]] for a in values
+                ]
+            ])
+        input_data = IntensityMapData(
+            epoch=sentinel.epoch,
+            epoch_delta=sentinel.epoch_delta,
+            energy=np.array([1, 10, 100, 1000, 10000]),
+            energy_delta_plus=np.array([0.3, 3, 30, 300, 3000]),
+            energy_delta_minus=np.array([0.2, 2, 20, 200, 2000]),
+            energy_label=np.array(["1", "10", "100", "1000", "10000"]),
+            latitude=sentinel.latitude,
+            longitude=sentinel.longitude,
+            exposure_factor=build_array(1,2,3,4,5),
+            obs_date=build_array(datetime(2026, 1, 1),
+                                 datetime(2026, 1, 2),
+                                 datetime(2026, 1, 3),
+                                 datetime(2026, 1, 4),
+                                 datetime(2026, 1, 5),
+                                 ),
+            obs_date_range=build_array(1000,2000,3000,4000,5000),
+            solid_angle=sentinel.solid_angle,
+            ena_intensity=build_array(100,200,300,400,500),
+            ena_intensity_stat_uncert=build_array(11,12,13,14,15),
+            ena_intensity_sys_err=build_array(21,22,23,24,25),
+        )
+
+        expected_data = IntensityMapData(
+            epoch=sentinel.epoch,
+            epoch_delta=sentinel.epoch_delta,
+            energy=np.array([1, 10, 100]),
+            energy_delta_plus=np.array([0.3, 3, 30]),
+            energy_delta_minus=np.array([0.2, 2, 20]),
+            energy_label=np.array(["1", "10", "100"]),
+            latitude=sentinel.latitude,
+            longitude=sentinel.longitude,
+            exposure_factor=build_array(1,2,3),
+            obs_date=build_array(datetime(2026, 1, 1),
+                                 datetime(2026, 1, 2),
+                                 datetime(2026, 1, 3),
+                                 ),
+            obs_date_range=build_array(1000,2000,3000),
+            solid_angle=sentinel.solid_angle,
+            ena_intensity=build_array(100,200,300),
+            ena_intensity_stat_uncert=build_array(11,12,13),
+            ena_intensity_sys_err=build_array(21,22,23),
+        )
+
+        actual = slice_energy_range_by_bin(input_data, 1, 3)
+        self.assertIsInstance(actual, IntensityMapData)
+
+        for field in dataclasses.fields(expected_data):
+            np.testing.assert_equal(getattr(actual,field.name), getattr(expected_data, field.name))
+
+    def test_slice_energy_range_by_bin_raises_error(self):
+        def build_array(*values):
+            return np.array([
+                [
+                    [[a]] for a in values
+                ]
+            ])
+
+        input_data = IntensityMapData(
+            epoch=sentinel.epoch,
+            epoch_delta=sentinel.epoch_delta,
+            energy=np.array([1, 10, 100, 1000, 10000]),
+            energy_delta_plus=np.array([0.3, 3, 30, 300, 3000]),
+            energy_delta_minus=np.array([0.2, 2, 20, 200, 2000]),
+            energy_label=np.array(["1", "10", "100", "1000", "10000"]),
+            latitude=sentinel.latitude,
+            longitude=sentinel.longitude,
+            exposure_factor=build_array(1, 2, 3, 4, 5),
+            obs_date=build_array(datetime(2026, 1, 1),
+                                 datetime(2026, 1, 2),
+                                 datetime(2026, 1, 3),
+                                 datetime(2026, 1, 4),
+                                 datetime(2026, 1, 5),
+                                 ),
+            obs_date_range=build_array(1000, 2000, 3000, 4000, 5000),
+            solid_angle=sentinel.solid_angle,
+            ena_intensity=build_array(100, 200, 300, 400, 500),
+            ena_intensity_stat_uncert=build_array(11, 12, 13, 14, 15),
+            ena_intensity_sys_err=build_array(21, 22, 23, 24, 25),
+        )
+        cases = [
+            (1, 10),
+            (0, 3),
+            (3, 0),
+            (1,1),
+            (10, 3)
+        ]
+        for start_bin, end_bin in cases:
+            with self.subTest(f"{start_bin}-{end_bin}"):
+
+                with self.assertRaises(ValueError) as cm:
+                    slice_energy_range_by_bin(input_data, start_bin, end_bin)
+
+                self.assertEqual(str(cm.exception), f"Error slicing energy bins {start_bin},{end_bin}")

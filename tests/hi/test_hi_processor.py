@@ -478,3 +478,26 @@ class TestHiProcessor(unittest.TestCase):
                 processor = HiProcessor(ProcessingInputCollection(), input_metadata)
                 with self.assertRaises(NotImplementedError):
                     product = processor.process()
+
+    @patch('imap_l3_processing.hi.hi_processor.HiSpectralIndexDependencies.fetch_dependencies')
+    @patch('imap_l3_processing.hi.hi_processor.fit_spectral_index_map')
+    @patch('imap_l3_processing.hi.hi_processor.slice_energy_range_by_bin')
+    @patch('imap_l3_processing.hi.hi_processor.save_data')
+    def test_spectral_fit_with_energy_range(self, _, mock_slice_energy_range_by_bin,
+                                            mock_fit_spectral_index_map, mock_fetch_dependencies):
+        upstream_dependencies = ProcessingInputCollection()
+        dependencies = mock_fetch_dependencies.return_value
+
+        input_metadata = InputMetadata(instrument="hi",
+                                       data_level="",
+                                       start_date=datetime.now(),
+                                       end_date=datetime.now() + timedelta(days=1),
+                                       version="",
+                                       descriptor="h90-spx1020-h-hf-sp-full-hae-4deg-6mo",
+                                       )
+
+        processor = HiProcessor(upstream_dependencies, input_metadata)
+        processor.process()
+
+        mock_slice_energy_range_by_bin.assert_called_with(dependencies.map_data.intensity_map_data, 10, 20)
+        mock_fit_spectral_index_map.assert_called_with(mock_slice_energy_range_by_bin.return_value)

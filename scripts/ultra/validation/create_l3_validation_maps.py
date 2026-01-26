@@ -18,7 +18,7 @@ def run_all_maps(mock_parse_cli_arguments, *, output_dir, input_dir,):
     mock_arguments.start_date = "20251018"
     mock_arguments.end_date = None
     mock_arguments.repointing = None
-    mock_arguments.version = "v001"
+    mock_arguments.version = "v002"
     mock_arguments.dependency = "[]"
     mock_arguments.upload_to_sdc = False
     mock_parse_cli_arguments.return_value = mock_arguments
@@ -31,9 +31,6 @@ def run_all_maps(mock_parse_cli_arguments, *, output_dir, input_dir,):
         mock_arguments.descriptor = "u90-maps"
         imap_l3_data_processor.imap_l3_processor()
         spiceypy.kclear()
-
-    combined_dir = output_dir.parent / f"{output_dir.name}_combined"
-    with mock_imap_data_access(combined_dir, list(output_dir.rglob('*.*'))):
         mock_arguments.descriptor = "ulc-nsp-maps"
         imap_l3_data_processor.imap_l3_processor()
         spiceypy.kclear()
