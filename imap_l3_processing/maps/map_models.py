@@ -55,9 +55,9 @@ BG_RATE_STAT_UNCERT_VAR_NAME = "bg_rate_stat_uncert"
 BG_RATE_SYS_ERR_VAR_NAME = "bg_rate_sys_err"
 ENA_COUNT_RATE_VAR_NAME = "ena_count_rate"
 ENA_COUNT_RATE_STAT_UNCERT_VAR_NAME = "ena_count_rate_stat_uncert"
-ISN_BG_RATE_SUBTRACTED_VAR_NAME = "isn_bg_rate_subtracted"
-ISN_BG_RATE_SUBTRACTED_STAT_UNCERT_VAR_NAME = "isn_bg_rate_subtracted_stat_uncert"
-ISN_BG_RATE_SUBTRACTED_VAR_SYS_ERR_NAME = "isn_bg_rate_subtracted_sys_err"
+ISN_BG_RATE_SUBTRACTED_VAR_NAME = "isn_rate_bg_subtracted"
+ISN_BG_RATE_SUBTRACTED_STAT_UNCERT_VAR_NAME = "isn_rate_bg_subtracted_stat_uncert"
+ISN_BG_RATE_SUBTRACTED_VAR_SYS_ERR_NAME = "isn_rate_bg_subtracted_sys_err"
 
 
 @dataclass

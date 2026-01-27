@@ -70,20 +70,14 @@ def perform_spectral_fit(data: RectangularIntensityMapData, spectral_index_range
 
 
 def isn_background_subtraction(isn_rate_data: ISNRateData) -> ISNBackgroundSubtractedMapData:
-    energy_mask = np.logical_and(isn_rate_data.energy >= isn_rate_data.energy[0],
-                                 isn_rate_data.energy < isn_rate_data.energy[4])
+    isn_rate_background_subtracted = isn_rate_data.ena_count_rate.copy()
+    isn_bg_subtracted_stat_err = isn_rate_data.ena_count_rate_stat_uncert.copy()
 
-    isn_rate_background_subtracted = isn_rate_data.ena_count_rate
-    isn_bg_subtracted_stat_err = isn_rate_data.ena_count_rate_stat_uncert
+    isn_rate_background_subtracted[:, :4, ...] = np.subtract(isn_rate_data.ena_count_rate[:, :4, ...], isn_rate_data.bg_rate[:, :4, ...])
 
-    isn_rate_background_subtracted[:, energy_mask, :, :] = (
-            isn_rate_data.ena_count_rate[:, energy_mask, :, :] -
-            isn_rate_data.bg_rate[:, energy_mask, :, :]
-    )
-
-    isn_bg_subtracted_stat_err[:, energy_mask, :, :] = np.sqrt(
-        np.square(isn_rate_data.ena_count_rate_stat_uncert[:, energy_mask, :, :]) +
-        np.square(isn_rate_data.bg_rate_stat_uncert[:, energy_mask, :, :])
+    isn_bg_subtracted_stat_err[:, :4, ...] = np.sqrt(
+        np.square(isn_rate_data.ena_count_rate_stat_uncert[:, :4, ...]) +
+        np.square(isn_rate_data.bg_rate_stat_uncert[:, :4, ...])
     )
 
     map_data = ISNBackgroundSubtractedData(
