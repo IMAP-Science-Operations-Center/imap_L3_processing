@@ -1,3 +1,4 @@
+from dataclasses import dataclass, astuple
 from typing import Callable
 
 import numpy as np
@@ -7,7 +8,7 @@ from matplotlib import pyplot as plt
 from numpy import ndarray
 from scipy.interpolate import LinearNDInterpolator, interp1d
 from scipy.special import erf
-from uncertainties import correlated_values
+from uncertainties import correlated_values, ufloat
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 from imap_l3_processing import constants
@@ -17,6 +18,7 @@ from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_speed impo
     calculate_sw_speed_h_plus
 from imap_l3_processing.swapi.l3a.science.speed_calculation import find_peak_center_of_mass_index, interpolate_energy, \
     extract_coarse_sweep
+from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 
 
 def proton_count_rate_model(efficiency, ev_per_q, density_per_cm3, temperature, bulk_flow_speed_km_per_s):
@@ -59,8 +61,9 @@ def calculate_proton_solar_wind_temperature_and_density_for_one_sweep(coincident
     peak_energies_filtered = peak_energies[at_least_minimum]
 
     initial_parameter_guess = [5, 1e5]
+
     def model(ev_per_q: ndarray, density: float, temperature: float):
-        return proton_count_rate_model(efficiency, ev_per_q, density, temperature,  nominal_values(initial_speed_guess))
+        return proton_count_rate_model(efficiency, ev_per_q, density, temperature, nominal_values(initial_speed_guess))
 
     values, covariance = scipy.optimize.curve_fit(model,
                                                   peak_energies_filtered,
@@ -70,36 +73,58 @@ def calculate_proton_solar_wind_temperature_and_density_for_one_sweep(coincident
                                                   bounds=[[0, 0], [np.inf, np.inf]],
                                                   p0=initial_parameter_guess)
     residual = abs(model(peak_energies_filtered, *values) - nominal_values(filtered_peak_count_rates))
-    reduced_chisq = np.sum(np.square(residual / std_devs(filtered_peak_count_rates))) / (len(peak_energies_filtered) - 2)
+    reduced_chisq = np.sum(np.square(residual / std_devs(filtered_peak_count_rates))) / (
+            len(peak_energies_filtered) - 2)
+
+    bad_fit_flag = SwapiL3Flags.NONE
     if reduced_chisq > 10:
-        raise ValueError("Failed to fit - chi-squared too large", reduced_chisq)
+        bad_fit_flag = SwapiL3Flags.HI_CHI_SQ
+
     density, temperature = correlated_values(values, covariance)
 
-    return temperature, density
+    return ProtonSolarWindTemperatureAndDensity(temperature, density, bad_fit_flag)
 
 
-def calculate_uncalibrated_proton_solar_wind_temperature_and_density(coincident_count_rates: uarray, energy: ndarray, efficiency: float):
+def calculate_uncalibrated_proton_solar_wind_temperature_and_density(coincident_count_rates: uarray, energy: ndarray,
+                                                                     efficiency: float):
     temperatures_per_sweep = []
     densities_per_sweep = []
+    bad_temperatures = []
+    bad_densities = []
+
     for sweep, single_energy in zip(coincident_count_rates, energy):
         try:
-            temperature, density = calculate_proton_solar_wind_temperature_and_density_for_one_sweep(sweep, single_energy,
-                                                                                                 efficiency)
-            temperatures_per_sweep.append(temperature)
-            densities_per_sweep.append(density)
+            proton_temp_density = calculate_proton_solar_wind_temperature_and_density_for_one_sweep(sweep,
+                                                                                                    single_energy,
+                                                                                                    efficiency)
+            if proton_temp_density.bad_fit_flag == SwapiL3Flags.HI_CHI_SQ:
+                bad_temperatures.append(proton_temp_density.temperature)
+                bad_densities.append(proton_temp_density.density)
+            elif proton_temp_density.bad_fit_flag == SwapiL3Flags.NONE:
+                temperatures_per_sweep.append(proton_temp_density.temperature)
+                densities_per_sweep.append(proton_temp_density.density)
         except ValueError as e:
             continue
     if len(temperatures_per_sweep) >= 3:
+        bad_fit_flag = SwapiL3Flags.NONE
         average_temp = np.average(temperatures_per_sweep, weights=1 / std_devs(temperatures_per_sweep) ** 2)
         average_density = np.average(densities_per_sweep, weights=1 / std_devs(densities_per_sweep) ** 2)
     else:
-        raise ValueError("Not enough successful fits")
+        bad_fit_flag = SwapiL3Flags.HI_CHI_SQ
+        temperatures = temperatures_per_sweep + bad_temperatures
+        densities = densities_per_sweep + bad_densities
 
-    return average_temp, average_density
+        average_temp = np.average(temperatures,
+                                  weights=1 / std_devs(temperatures) ** 2)
+        average_density = np.average(densities,
+                                     weights=1 / std_devs(densities) ** 2)
+
+    return ProtonSolarWindTemperatureAndDensity(average_temp, average_density, bad_fit_flag)
 
 
 def calculate_proton_speed_from_one_sweep(coincident_count_rates, energy, proton_peak_indices):
-    center_of_mass_index = find_peak_center_of_mass_index(proton_peak_indices, coincident_count_rates, minimum_count_rate=13)
+    center_of_mass_index = find_peak_center_of_mass_index(proton_peak_indices, coincident_count_rates,
+                                                          minimum_count_rate=13)
     energy_at_com = interpolate_energy(center_of_mass_index, energy)
     initial_speed_guess = calculate_sw_speed_h_plus(energy_at_com)
     return initial_speed_guess
@@ -153,14 +178,16 @@ def calculate_proton_solar_wind_temperature_and_density(lookup_table: ProtonTemp
                                                         proton_solar_wind_speed, deflection_angle,
                                                         clock_angle, coincident_count_rates: uarray, energy: ndarray,
                                                         efficiency: float):
-    temperature, density = calculate_uncalibrated_proton_solar_wind_temperature_and_density(coincident_count_rates,
-                                                                                            energy, efficiency)
+    temperature, density, bad_fit_flag = astuple(calculate_uncalibrated_proton_solar_wind_temperature_and_density(
+        coincident_count_rates,
+        energy, efficiency))
     calibrated_temperature = lookup_table.calibrate_temperature(proton_solar_wind_speed, deflection_angle, clock_angle,
                                                                 density,
                                                                 temperature)
-    calibrated_density = lookup_table.calibrate_density(proton_solar_wind_speed, deflection_angle, clock_angle, density,
+    calibrated_density = lookup_table.calibrate_density(proton_solar_wind_speed, deflection_angle, clock_angle,
+                                                        density,
                                                         temperature)
-    return calibrated_temperature, calibrated_density
+    return ProtonSolarWindTemperatureAndDensity(calibrated_temperature, calibrated_density, bad_fit_flag)
 
 
 def demo(density=5.0, temp=1e5, speed=450):
@@ -170,3 +197,10 @@ def demo(density=5.0, temp=1e5, speed=450):
     plt.ylim(1e-3, 1e8)
 
     plt.show()
+
+
+@dataclass
+class ProtonSolarWindTemperatureAndDensity:
+    temperature: ufloat
+    density: ufloat
+    bad_fit_flag: int = SwapiL3Flags.NONE

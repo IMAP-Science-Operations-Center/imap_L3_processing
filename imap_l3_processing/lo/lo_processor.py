@@ -1,6 +1,5 @@
 import dataclasses
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 from imap_processing.spice.geometry import SpiceFrame
@@ -29,7 +28,11 @@ class LoProcessor(MapProcessor):
         match descriptor:
             case MapDescriptorParts(quantity=MapQuantity.SpectralIndex):
                 deps = LoL3SpectralFitDependencies.fetch_dependencies(self.dependencies)
-                spectral_fit_data = perform_spectral_fit(deps.map_data, descriptor.spectral_index_energy_range)
+                spectral_fit_data = perform_spectral_fit(deps.map_data, descriptor.spectral_index_energy_range or (4, 8))
+                data_product = RectangularSpectralIndexDataProduct(self.input_metadata, spectral_fit_data)
+            case MapDescriptorParts(quantity=MapQuantity.SpectralIndexNBS):
+                deps = LoL3SpectralFitDependencies.fetch_dependencies(self.dependencies)
+                spectral_fit_data = perform_spectral_fit(deps.map_data, descriptor.spectral_index_energy_range or (0, 8))
                 data_product = RectangularSpectralIndexDataProduct(self.input_metadata, spectral_fit_data)
             case MapDescriptorParts(quantity=MapQuantity.ISNBackgroundSubtracted):
                 deps = LoL3ISNBackgroundSubtractedDependencies.fetch_dependencies(self.dependencies)
@@ -58,43 +61,30 @@ class LoProcessor(MapProcessor):
                                    hae_latitude=np.mean(pset.hae_latitude, axis=-1))
 
 
-def perform_spectral_fit(data: RectangularIntensityMapData, spectral_index_range: Optional[tuple[int,int]]) -> RectangularSpectralIndexMapData:
-    if spectral_index_range is not None:
-        start, end = spectral_index_range
-        intensity_data = slice_energy_range_by_bin(data.intensity_map_data, start, end)
-    else:
-        intensity_data = data.intensity_map_data
+def perform_spectral_fit(data: RectangularIntensityMapData, spectral_index_range: tuple[int,int]) -> RectangularSpectralIndexMapData:
+    intensity_data = slice_energy_range_by_bin(data.intensity_map_data, spectral_index_range[0], spectral_index_range[1])
     return RectangularSpectralIndexMapData(
         spectral_index_map_data=fit_spectral_index_map(intensity_data),
         coords=data.coords
     )
 
 
-def slice_energy_range(data: ISNRateData) -> ISNRateData:
-    energy_mask = np.logical_and(data.energy >= data.energy[0], data.energy < data.energy[4])
-
-    return dataclasses.replace(data,
-                               energy=data.energy[energy_mask],
-                               energy_delta_plus=data.energy_delta_plus[energy_mask],
-                               energy_delta_minus=data.energy_delta_minus[energy_mask],
-                               energy_label=data.energy_label[energy_mask],
-                               exposure_factor=data.exposure_factor[:, energy_mask, :, :],
-                               obs_date=data.obs_date[:, energy_mask, :, :],
-                               obs_date_range=data.obs_date_range[:, energy_mask],
-                               ena_intensity=data.ena_intensity[:, energy_mask, :, :],
-                               ena_intensity_sys_err=data.ena_intensity_sys_err[:, energy_mask, :, :],
-                               ena_intensity_stat_uncert=data.ena_intensity_stat_uncert[:, energy_mask, :, :],
-                               bg_rate=data.bg_rate[:, energy_mask, :, :],
-                               bg_rate_stat_uncert=data.bg_rate_stat_uncert[:, energy_mask, :, :],
-                               bg_rate_sys_err=data.bg_rate_sys_err[:, energy_mask, :, :],
-                               ena_count_rate=data.ena_count_rate[:, energy_mask, :, :],
-                               ena_count_rate_stat_uncert=data.ena_count_rate_stat_uncert[:, energy_mask, :, :],
-                               )
-
-
 def isn_background_subtraction(isn_rate_data: ISNRateData) -> ISNBackgroundSubtractedMapData:
-    isn_rate_data = slice_energy_range(isn_rate_data)
-    isn_rate_background_subtracted = isn_rate_data.ena_count_rate - isn_rate_data.bg_rate
+    energy_mask = np.logical_and(isn_rate_data.energy >= isn_rate_data.energy[0],
+                                 isn_rate_data.energy < isn_rate_data.energy[4])
+
+    isn_rate_background_subtracted = isn_rate_data.ena_count_rate
+    isn_bg_subtracted_stat_err = isn_rate_data.ena_count_rate_stat_uncert
+
+    isn_rate_background_subtracted[:, energy_mask, :, :] = (
+            isn_rate_data.ena_count_rate[:, energy_mask, :, :] -
+            isn_rate_data.bg_rate[:, energy_mask, :, :]
+    )
+
+    isn_bg_subtracted_stat_err[:, energy_mask, :, :] = np.sqrt(
+        np.square(isn_rate_data.ena_count_rate_stat_uncert[:, energy_mask, :, :]) +
+        np.square(isn_rate_data.bg_rate_stat_uncert[:, energy_mask, :, :])
+    )
 
     map_data = ISNBackgroundSubtractedData(
         epoch=isn_rate_data.epoch,
@@ -117,10 +107,9 @@ def isn_background_subtraction(isn_rate_data: ISNRateData) -> ISNBackgroundSubtr
         ena_count_rate_stat_uncert=isn_rate_data.ena_count_rate_stat_uncert,
         latitude=isn_rate_data.latitude,
         longitude=isn_rate_data.longitude,
-        isn_rate_bg_subtracted=isn_rate_background_subtracted,
-        isn_rate_bg_subtracted_stat_unc=np.sqrt(np.square(isn_rate_data.ena_count_rate_stat_uncert) + np.square(
-            isn_rate_data.bg_rate_stat_uncert)),
-        isn_rate_bg_subtracted_sys_err=isn_rate_data.bg_rate_sys_err
+        isn_bg_rate_subtracted=isn_rate_background_subtracted,
+        isn_bg_rate_subtracted_stat_uncert=isn_bg_subtracted_stat_err,
+        isn_bg_rate_subtracted_sys_err=isn_rate_data.bg_rate_sys_err
     )
 
     return ISNBackgroundSubtractedMapData(isn_rate_map_data=map_data)

@@ -89,12 +89,12 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
             )
 
             exposure = np.full_like(l1c_dataset.exposure_times, np.nan)
-            best_match_energies = np.full_like(l1c_dataset.exposure_times, np.nan)
+            best_match_energies = np.full_like(l1c_dataset.exposure_times, np.nan, dtype=np.float64)
             for cg_energy_index, cg_energy in np.ndenumerate(dataset['energy_sc'].values[0]):
                 best_guess = np.inf
                 best_guess_index = -1
                 for e_i, energy in enumerate(energy_in_ev):
-                    guess = np.abs(energy - cg_energy)
+                    guess = np.abs(np.log10(energy) - np.log10(cg_energy))
                     if guess < best_guess:
                         best_guess = guess
                         best_guess_index = e_i
@@ -102,7 +102,10 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                         break
                 exposure[0, cg_energy_index[0], cg_energy_index[1]] = l1c_dataset.exposure_times[
                     0, best_guess_index, cg_energy_index[1]]
-                best_match_energies[0, cg_energy_index[0], cg_energy_index[1]] = energies[best_guess_index]
+                if sensor in [Sensor.Lo, Sensor.Lo90]:
+                    best_match_energies[0, cg_energy_index[0], cg_energy_index[1]] = cg_energy / 1000
+                else:
+                    best_match_energies[0, cg_energy_index[0], cg_energy_index[1]] = energies[best_guess_index]
 
         else:
             self.az_el_points = hae_az_el_points
