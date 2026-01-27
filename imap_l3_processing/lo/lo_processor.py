@@ -1,6 +1,5 @@
 import dataclasses
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 from imap_processing.spice.geometry import SpiceFrame
@@ -29,7 +28,11 @@ class LoProcessor(MapProcessor):
         match descriptor:
             case MapDescriptorParts(quantity=MapQuantity.SpectralIndex):
                 deps = LoL3SpectralFitDependencies.fetch_dependencies(self.dependencies)
-                spectral_fit_data = perform_spectral_fit(deps.map_data, descriptor.spectral_index_energy_range)
+                spectral_fit_data = perform_spectral_fit(deps.map_data, descriptor.spectral_index_energy_range or (4, 8))
+                data_product = RectangularSpectralIndexDataProduct(self.input_metadata, spectral_fit_data)
+            case MapDescriptorParts(quantity=MapQuantity.SpectralIndexNBS):
+                deps = LoL3SpectralFitDependencies.fetch_dependencies(self.dependencies)
+                spectral_fit_data = perform_spectral_fit(deps.map_data, descriptor.spectral_index_energy_range or (0, 8))
                 data_product = RectangularSpectralIndexDataProduct(self.input_metadata, spectral_fit_data)
             case MapDescriptorParts(quantity=MapQuantity.ISNBackgroundSubtracted):
                 deps = LoL3ISNBackgroundSubtractedDependencies.fetch_dependencies(self.dependencies)
@@ -58,12 +61,8 @@ class LoProcessor(MapProcessor):
                                    hae_latitude=np.mean(pset.hae_latitude, axis=-1))
 
 
-def perform_spectral_fit(data: RectangularIntensityMapData, spectral_index_range: Optional[tuple[int,int]]) -> RectangularSpectralIndexMapData:
-    if spectral_index_range is not None:
-        start, end = spectral_index_range
-        intensity_data = slice_energy_range_by_bin(data.intensity_map_data, start, end)
-    else:
-        intensity_data = data.intensity_map_data
+def perform_spectral_fit(data: RectangularIntensityMapData, spectral_index_range: tuple[int,int]) -> RectangularSpectralIndexMapData:
+    intensity_data = slice_energy_range_by_bin(data.intensity_map_data, spectral_index_range[0], spectral_index_range[1])
     return RectangularSpectralIndexMapData(
         spectral_index_map_data=fit_spectral_index_map(intensity_data),
         coords=data.coords
