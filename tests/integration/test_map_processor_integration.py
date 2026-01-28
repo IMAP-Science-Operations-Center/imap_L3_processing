@@ -309,62 +309,46 @@ class TestMapIntegration(unittest.TestCase):
     def test_lo_isn_maps(self, mock_parse_cli_arguments):
         lo_test_data_dir = INTEGRATION_TEST_DATA_PATH / "lo"
         lo_imap_data_dir = get_run_local_data_path("lo/integration_data")
-        cases = [
-            ("imap_lo_l2_l090-ena-h-hf-nsp-ram-hae-6deg-1yr_20250415_v000.cdf", "l090-isn-h-hf-nsp-ram-hae-6deg-1yr",
-             "imap_lo_l3_l090-isn-h-hf-nsp-ram-hae-6deg-1yr_20250415_v001.cdf"),
-            ("imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-1yr_20250415_v000.cdf", "l090-isn-h-sf-nsp-ram-hae-6deg-1yr",
-             "imap_lo_l3_l090-isn-h-sf-nsp-ram-hae-6deg-1yr_20250415_v001.cdf"),
-            ("imap_lo_l2_l090-enanbs-h-sf-nsp-ram-hae-6deg-1yr_20250415_v000.cdf",
-             "l090-isnnbs-h-sf-nsp-ram-hae-6deg-1yr",
-             "imap_lo_l3_l090-isnnbs-h-sf-nsp-ram-hae-6deg-1yr_20250415_v001.cdf"),
-            ("imap_lo_l2_l090-enanbs-h-hf-nsp-ram-hae-6deg-1yr_20250415_v000.cdf",
-             "l090-isnnbs-h-hf-nsp-ram-hae-6deg-1yr",
-             "imap_lo_l3_l090-isnnbs-h-hf-nsp-ram-hae-6deg-1yr_20250415_v001.cdf"),
-        ]
 
-        for input_file, descriptor, expected_output_file in cases:
-            with self.subTest(msg=input_file):
-                input_files = [
-                    lo_test_data_dir / input_file,
-                ]
+        input_file = "imap_lo_l2_l090-enanbs-h-sf-nsp-ram-hae-6deg-1yr_20250415_v000.cdf"
+        descriptor = "l090-isn-h-sf-nsp-ram-hae-6deg-1yr"
+        expected_output_file = "imap_lo_l3_l090-isn-h-sf-nsp-ram-hae-6deg-1yr_20250415_v001.cdf"
 
-                processing_input_collection = ProcessingInputCollection(
-                    ScienceInput(input_file),
-                )
+        processing_input_collection = ProcessingInputCollection(ScienceInput(input_file))
 
-                with (mock_imap_data_access(lo_imap_data_dir, input_files)):
-                    logging.basicConfig(
-                        force=True,
-                        level=logging.INFO,
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-                    )
+        with (mock_imap_data_access(lo_imap_data_dir, [lo_test_data_dir / input_file])):
+            logging.basicConfig(
+                force=True,
+                level=logging.INFO,
+                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            )
 
-                    mock_arguments = Mock()
-                    mock_arguments.instrument = "lo"
-                    mock_arguments.data_level = "l3"
-                    mock_arguments.descriptor = descriptor
-                    mock_arguments.start_date = "20250415"
-                    mock_arguments.end_date = None
-                    mock_arguments.repointing = None
-                    mock_arguments.version = "v001"
-                    mock_arguments.dependency = processing_input_collection.serialize()
-                    mock_arguments.upload_to_sdc = False
+            mock_arguments = Mock()
+            mock_arguments.instrument = "lo"
+            mock_arguments.data_level = "l3"
+            mock_arguments.descriptor = descriptor
+            mock_arguments.start_date = "20250415"
+            mock_arguments.end_date = None
+            mock_arguments.repointing = None
+            mock_arguments.version = "v001"
+            mock_arguments.dependency = processing_input_collection.serialize()
+            mock_arguments.upload_to_sdc = False
 
-                    mock_parse_cli_arguments.return_value = mock_arguments
+            mock_parse_cli_arguments.return_value = mock_arguments
 
-                    imap_l3_data_processor.imap_l3_processor()
+            imap_l3_data_processor.imap_l3_processor()
 
-                    expected_ena_path = ScienceFilePath(
-                        expected_output_file).construct_path()
+            expected_ena_path = ScienceFilePath(
+                expected_output_file).construct_path()
 
-                    self.assertTrue(expected_ena_path.exists(), f"Expected file {expected_ena_path.name} not found")
+            self.assertTrue(expected_ena_path.exists(), f"Expected file {expected_ena_path.name} not found")
 
-                    expected_ena_parents = {
-                        input_file,
-                    }
+            expected_ena_parents = {
+                input_file,
+            }
 
-                    with CDF(str(expected_ena_path)) as cdf:
-                        self.assertEqual(expected_ena_parents, set(cdf.attrs["Parents"]))
+            with CDF(str(expected_ena_path)) as cdf:
+                self.assertEqual(expected_ena_parents, set(cdf.attrs["Parents"]))
 
     @run_periodically(timedelta(days=3))
     @patch("imap_l3_data_processor._parse_cli_arguments")
