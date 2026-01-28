@@ -199,7 +199,7 @@ class TestLoProcessor(unittest.TestCase):
                 self.assertEqual(exception_args, cm.exception.args)
 
     def test_isn_background_subtraction(self):
-        input_data: ISNRateData = ISNRateData(
+        input_data = ISNRateData(
             epoch=sentinel.epoch,
             solid_angle=sentinel.solid_angle,
             latitude=sentinel.latitude,
@@ -224,15 +224,11 @@ class TestLoProcessor(unittest.TestCase):
         actual_map_data: ISNBackgroundSubtractedMapData = isn_background_subtraction(input_data)
         actual_isn_rate_map_data: ISNBackgroundSubtractedData = actual_map_data.isn_rate_map_data
 
-        np.testing.assert_array_equal(actual_isn_rate_map_data.ena_count_rate, input_data.ena_count_rate)
-
-        expected_isn_bg_rate_subtracted = np.concat(((np.ones((1, 4, 60, 30))), input_data.ena_count_rate[:, 4:, :,:]), axis=1)
-        expected_isn_bg_rate_subtracted_stat_uncert = np.concat((np.ones((1, 4, 60, 30)) * np.sqrt(13), input_data.ena_count_rate_stat_uncert[:, 4:, :, :]), axis=1)
+        expected_isn_bg_rate_subtracted = np.ones((1, 7, 60, 30))
+        expected_isn_bg_rate_subtracted_stat_uncert = np.ones((1, 7, 60, 30)) * np.sqrt(13)
 
         np.testing.assert_array_equal(actual_isn_rate_map_data.isn_bg_rate_subtracted, expected_isn_bg_rate_subtracted)
         np.testing.assert_array_equal(actual_isn_rate_map_data.isn_bg_rate_subtracted_stat_uncert, expected_isn_bg_rate_subtracted_stat_uncert)
-        np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rate_stat_uncert, input_data.bg_rate_stat_uncert)
-        np.testing.assert_array_equal(actual_isn_rate_map_data.ena_count_rate_stat_uncert, input_data.ena_count_rate_stat_uncert)
 
         np.testing.assert_array_equal(actual_isn_rate_map_data.energy, input_data.energy)
         np.testing.assert_array_equal(actual_isn_rate_map_data.energy_delta_plus, input_data.energy_delta_plus)
@@ -244,7 +240,11 @@ class TestLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(actual_isn_rate_map_data.ena_intensity, input_data.ena_intensity)
         np.testing.assert_array_equal(actual_isn_rate_map_data.ena_intensity_stat_uncert,
                                       input_data.ena_intensity_stat_uncert)
+        np.testing.assert_array_equal(actual_isn_rate_map_data.ena_count_rate, input_data.ena_count_rate)
+        np.testing.assert_array_equal(actual_isn_rate_map_data.ena_count_rate_stat_uncert,
+                                      input_data.ena_count_rate_stat_uncert)
         np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rate, input_data.bg_rate)
+        np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rate_stat_uncert, input_data.bg_rate_stat_uncert)
         np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rate_sys_err, input_data.bg_rate_sys_err)
         np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rate_sys_err,
                                       actual_isn_rate_map_data.isn_bg_rate_subtracted_sys_err)

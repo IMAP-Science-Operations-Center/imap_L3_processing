@@ -70,14 +70,9 @@ def perform_spectral_fit(data: RectangularIntensityMapData, spectral_index_range
 
 
 def isn_background_subtraction(isn_rate_data: ISNRateData) -> ISNBackgroundSubtractedMapData:
-    isn_rate_background_subtracted = isn_rate_data.ena_count_rate.copy()
-    isn_bg_subtracted_stat_err = isn_rate_data.ena_count_rate_stat_uncert.copy()
-
-    isn_rate_background_subtracted[:, :4, ...] = np.subtract(isn_rate_data.ena_count_rate[:, :4, ...], isn_rate_data.bg_rate[:, :4, ...])
-
-    isn_bg_subtracted_stat_err[:, :4, ...] = np.sqrt(
-        np.square(isn_rate_data.ena_count_rate_stat_uncert[:, :4, ...]) +
-        np.square(isn_rate_data.bg_rate_stat_uncert[:, :4, ...])
+    isn_rate_background_subtracted = isn_rate_data.ena_count_rate - isn_rate_data.bg_rate
+    isn_bg_subtracted_stat_err = np.sqrt(
+        np.square(isn_rate_data.ena_count_rate_stat_uncert) + np.square(isn_rate_data.bg_rate_stat_uncert)
     )
 
     map_data = ISNBackgroundSubtractedData(
