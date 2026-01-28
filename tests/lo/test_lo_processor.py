@@ -203,7 +203,9 @@ class TestLoProcessor(unittest.TestCase):
             epoch=sentinel.epoch,
             solid_angle=sentinel.solid_angle,
             latitude=sentinel.latitude,
+            latitude_label=sentinel.latitude_label,
             longitude=sentinel.longitude,
+            longitude_label=sentinel.longitude_label,
             epoch_delta=sentinel.epoch_delta,
             energy=np.array([1, 2, 3, 4, 5, 6, 7]),
             energy_delta_plus=np.ones(7) * 12,
@@ -237,12 +239,6 @@ class TestLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(actual_isn_rate_map_data.exposure_factor, input_data.exposure_factor)
         np.testing.assert_array_equal(actual_isn_rate_map_data.obs_date, input_data.obs_date)
         np.testing.assert_array_equal(actual_isn_rate_map_data.obs_date_range, input_data.obs_date_range)
-        np.testing.assert_array_equal(actual_isn_rate_map_data.ena_intensity, input_data.ena_intensity)
-        np.testing.assert_array_equal(actual_isn_rate_map_data.ena_intensity_stat_uncert,
-                                      input_data.ena_intensity_stat_uncert)
-        np.testing.assert_array_equal(actual_isn_rate_map_data.ena_count_rate, input_data.ena_count_rate)
-        np.testing.assert_array_equal(actual_isn_rate_map_data.ena_count_rate_stat_uncert,
-                                      input_data.ena_count_rate_stat_uncert)
         np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rate, input_data.bg_rate)
         np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rate_stat_uncert, input_data.bg_rate_stat_uncert)
         np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rate_sys_err, input_data.bg_rate_sys_err)
@@ -252,5 +248,7 @@ class TestLoProcessor(unittest.TestCase):
         self.assertEqual(actual_isn_rate_map_data.epoch, sentinel.epoch)
         self.assertEqual(actual_isn_rate_map_data.solid_angle, sentinel.solid_angle)
         self.assertEqual(actual_isn_rate_map_data.latitude, sentinel.latitude)
+        self.assertEqual(actual_isn_rate_map_data.latitude_label, sentinel.latitude_label)
         self.assertEqual(actual_isn_rate_map_data.longitude, sentinel.longitude)
+        self.assertEqual(actual_isn_rate_map_data.longitude_label, sentinel.longitude_label)
         self.assertEqual(actual_isn_rate_map_data.epoch_delta, sentinel.epoch_delta)

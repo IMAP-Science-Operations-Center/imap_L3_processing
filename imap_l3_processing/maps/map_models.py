@@ -106,17 +106,14 @@ class IntensityMapData(MapData):
 
 @dataclass
 class ISNBackgroundSubtractedData(MapData):
-    ena_intensity: np.ndarray
-    ena_intensity_stat_uncert: np.ndarray
-    ena_intensity_sys_err: np.ndarray
     bg_rate: np.ndarray
     bg_rate_stat_uncert: np.ndarray
     bg_rate_sys_err: np.ndarray
     isn_bg_rate_subtracted_stat_uncert: np.ndarray
     isn_bg_rate_subtracted_sys_err: np.ndarray
-    ena_count_rate: np.ndarray
-    ena_count_rate_stat_uncert: np.ndarray
     isn_bg_rate_subtracted: np.ndarray
+    latitude_label: np.ndarray
+    longitude_label: np.ndarray
 
 
 @dataclass
@@ -164,7 +161,9 @@ class ISNRateData:
     ena_count_rate: np.ndarray
     ena_count_rate_stat_uncert: np.ndarray
     latitude: np.ndarray
+    latitude_label: np.ndarray
     longitude: np.ndarray
+    longitude_label: np.ndarray
     obs_date: np.ndarray
     obs_date_range: np.ndarray
 
@@ -197,7 +196,9 @@ class ISNRateData:
                 ena_count_rate=read_numeric_variable(cdf['ena_count_rate']),
                 ena_count_rate_stat_uncert=read_numeric_variable(cdf['ena_count_rate_stat_uncert']),
                 latitude=(cdf['latitude'][...]),
+                latitude_label=(cdf['latitude_label'][...]),
                 longitude=(cdf['longitude'][...]),
+                longitude_label=(cdf['longitude_label'][...]),
                 ena_intensity=read_numeric_variable(cdf['ena_intensity']),
                 ena_intensity_stat_uncert=read_numeric_variable(cdf['ena_intensity_stat_uncert']),
                 ena_intensity_sys_err=read_numeric_variable(cdf['ena_intensity_sys_err']),
@@ -452,21 +453,19 @@ class ISNBackgroundSubtractedDataProduct(MapDataProduct[ISNBackgroundSubtractedM
         return [
             DataProductVariable(EPOCH_VAR_NAME, self.data.isn_rate_map_data.epoch),
             DataProductVariable(EPOCH_DELTA_VAR_NAME, self.data.isn_rate_map_data.epoch_delta),
-            DataProductVariable(ENA_INTENSITY_VAR_NAME, self.data.isn_rate_map_data.ena_intensity),
-            DataProductVariable(ENA_INTENSITY_STAT_UNCERT_VAR_NAME,
-                                self.data.isn_rate_map_data.ena_intensity_stat_uncert),
-            DataProductVariable(ENA_INTENSITY_SYS_ERR_VAR_NAME, self.data.isn_rate_map_data.ena_intensity_sys_err),
             DataProductVariable(ENERGY_VAR_NAME, self.data.isn_rate_map_data.energy),
+            DataProductVariable(ENERGY_DELTA_PLUS_VAR_NAME, self.data.isn_rate_map_data.energy_delta_plus),
+            DataProductVariable(ENERGY_DELTA_MINUS_VAR_NAME, self.data.isn_rate_map_data.energy_delta_minus),
+            DataProductVariable(ENERGY_LABEL_VAR_NAME, self.data.isn_rate_map_data.energy_label),
             DataProductVariable(EXPOSURE_FACTOR_VAR_NAME, self.data.isn_rate_map_data.exposure_factor),
             DataProductVariable(SOLID_ANGLE_VAR_NAME, self.data.isn_rate_map_data.solid_angle),
             DataProductVariable(BG_RATE_VAR_NAME, self.data.isn_rate_map_data.bg_rate),
             DataProductVariable(BG_RATE_STAT_UNCERT_VAR_NAME, self.data.isn_rate_map_data.bg_rate_stat_uncert),
             DataProductVariable(BG_RATE_SYS_ERR_VAR_NAME, self.data.isn_rate_map_data.bg_rate_sys_err),
-            DataProductVariable(ENA_COUNT_RATE_VAR_NAME, self.data.isn_rate_map_data.ena_count_rate),
-            DataProductVariable(ENA_COUNT_RATE_STAT_UNCERT_VAR_NAME,
-                                self.data.isn_rate_map_data.ena_count_rate_stat_uncert),
             DataProductVariable(LATITUDE_VAR_NAME, self.data.isn_rate_map_data.latitude),
+            DataProductVariable(LATITUDE_LABEL_VAR_NAME, self.data.isn_rate_map_data.latitude_label),
             DataProductVariable(LONGITUDE_VAR_NAME, self.data.isn_rate_map_data.longitude),
+            DataProductVariable(LONGITUDE_LABEL_VAR_NAME, self.data.isn_rate_map_data.longitude_label),
             DataProductVariable(ISN_BG_RATE_SUBTRACTED_VAR_NAME,
                                 self.data.isn_rate_map_data.isn_bg_rate_subtracted),
             DataProductVariable(ISN_BG_RATE_SUBTRACTED_VAR_SYS_ERR_NAME,
