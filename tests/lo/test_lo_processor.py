@@ -44,7 +44,7 @@ class TestLoProcessor(unittest.TestCase):
 
         mock_fetch_dependencies.assert_called_once_with(input_collection)
         mock_slice_energy_range_by_bin.assert_called_once_with(
-            lo_l3_spectral_fit_dependency.map_data.intensity_map_data, 4, 8)
+            lo_l3_spectral_fit_dependency.map_data.intensity_map_data, 4, 7)
         mock_fit_spectral_index_map.assert_called_once_with(mock_slice_energy_range_by_bin.return_value)
 
         data_product = mock_save_data.call_args_list[0].args[0]
@@ -68,8 +68,8 @@ class TestLoProcessor(unittest.TestCase):
         test_cases = [
             ("l090-spx0104-h-hf-sp-ram-hae-6deg-1yr", (1, 4)),
             ("l090-spxnbs0105-h-hf-sp-ram-hae-6deg-1yr", (1, 5)),
-            ("l090-spx-h-hf-sp-ram-hae-6deg-1yr", (4, 8)),
-            ("l090-spxnbs-h-hf-sp-ram-hae-6deg-1yr", (0, 8)),
+            ("l090-spx-h-hf-sp-ram-hae-6deg-1yr", (4, 7)),
+            ("l090-spxnbs-h-hf-sp-ram-hae-6deg-1yr", (1, 7)),
         ]
 
         for descriptor, (expected_energy_start, expected_energy_end) in test_cases:
@@ -226,13 +226,17 @@ class TestLoProcessor(unittest.TestCase):
 
         np.testing.assert_array_equal(actual_isn_rate_map_data.ena_count_rate, input_data.ena_count_rate)
 
-        expected_isn_bg_rate_subtracted = np.concat(((np.ones((1, 4, 60, 30))), input_data.ena_count_rate[:, 4:, :,:]), axis=1)
-        expected_isn_bg_rate_subtracted_stat_uncert = np.concat((np.ones((1, 4, 60, 30)) * np.sqrt(13), input_data.ena_count_rate_stat_uncert[:, 4:, :, :]), axis=1)
+        expected_isn_bg_rate_subtracted = np.concat(((np.ones((1, 4, 60, 30))), input_data.ena_count_rate[:, 4:, :, :]),
+                                                    axis=1)
+        expected_isn_bg_rate_subtracted_stat_uncert = np.concat(
+            (np.ones((1, 4, 60, 30)) * np.sqrt(13), input_data.ena_count_rate_stat_uncert[:, 4:, :, :]), axis=1)
 
         np.testing.assert_array_equal(actual_isn_rate_map_data.isn_bg_rate_subtracted, expected_isn_bg_rate_subtracted)
-        np.testing.assert_array_equal(actual_isn_rate_map_data.isn_bg_rate_subtracted_stat_uncert, expected_isn_bg_rate_subtracted_stat_uncert)
+        np.testing.assert_array_equal(actual_isn_rate_map_data.isn_bg_rate_subtracted_stat_uncert,
+                                      expected_isn_bg_rate_subtracted_stat_uncert)
         np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rate_stat_uncert, input_data.bg_rate_stat_uncert)
-        np.testing.assert_array_equal(actual_isn_rate_map_data.ena_count_rate_stat_uncert, input_data.ena_count_rate_stat_uncert)
+        np.testing.assert_array_equal(actual_isn_rate_map_data.ena_count_rate_stat_uncert,
+                                      input_data.ena_count_rate_stat_uncert)
 
         np.testing.assert_array_equal(actual_isn_rate_map_data.energy, input_data.energy)
         np.testing.assert_array_equal(actual_isn_rate_map_data.energy_delta_plus, input_data.energy_delta_plus)

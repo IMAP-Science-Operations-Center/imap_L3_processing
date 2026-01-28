@@ -28,11 +28,13 @@ class LoProcessor(MapProcessor):
         match descriptor:
             case MapDescriptorParts(quantity=MapQuantity.SpectralIndex):
                 deps = LoL3SpectralFitDependencies.fetch_dependencies(self.dependencies)
-                spectral_fit_data = perform_spectral_fit(deps.map_data, descriptor.spectral_index_energy_range or (4, 8))
+                spectral_fit_data = perform_spectral_fit(deps.map_data,
+                                                         descriptor.spectral_index_energy_range or (4, 7))
                 data_product = RectangularSpectralIndexDataProduct(self.input_metadata, spectral_fit_data)
             case MapDescriptorParts(quantity=MapQuantity.SpectralIndexNBS):
                 deps = LoL3SpectralFitDependencies.fetch_dependencies(self.dependencies)
-                spectral_fit_data = perform_spectral_fit(deps.map_data, descriptor.spectral_index_energy_range or (0, 8))
+                spectral_fit_data = perform_spectral_fit(deps.map_data,
+                                                         descriptor.spectral_index_energy_range or (1, 7))
                 data_product = RectangularSpectralIndexDataProduct(self.input_metadata, spectral_fit_data)
             case MapDescriptorParts(quantity=MapQuantity.ISNBackgroundSubtracted):
                 deps = LoL3ISNBackgroundSubtractedDependencies.fetch_dependencies(self.dependencies)
@@ -61,8 +63,10 @@ class LoProcessor(MapProcessor):
                                    hae_latitude=np.mean(pset.hae_latitude, axis=-1))
 
 
-def perform_spectral_fit(data: RectangularIntensityMapData, spectral_index_range: tuple[int,int]) -> RectangularSpectralIndexMapData:
-    intensity_data = slice_energy_range_by_bin(data.intensity_map_data, spectral_index_range[0], spectral_index_range[1])
+def perform_spectral_fit(data: RectangularIntensityMapData,
+                         spectral_index_range: tuple[int, int]) -> RectangularSpectralIndexMapData:
+    intensity_data = slice_energy_range_by_bin(data.intensity_map_data, spectral_index_range[0],
+                                               spectral_index_range[1])
     return RectangularSpectralIndexMapData(
         spectral_index_map_data=fit_spectral_index_map(intensity_data),
         coords=data.coords
@@ -73,7 +77,8 @@ def isn_background_subtraction(isn_rate_data: ISNRateData) -> ISNBackgroundSubtr
     isn_rate_background_subtracted = isn_rate_data.ena_count_rate.copy()
     isn_bg_subtracted_stat_err = isn_rate_data.ena_count_rate_stat_uncert.copy()
 
-    isn_rate_background_subtracted[:, :4, ...] = np.subtract(isn_rate_data.ena_count_rate[:, :4, ...], isn_rate_data.bg_rate[:, :4, ...])
+    isn_rate_background_subtracted[:, :4, ...] = np.subtract(isn_rate_data.ena_count_rate[:, :4, ...],
+                                                             isn_rate_data.bg_rate[:, :4, ...])
 
     isn_bg_subtracted_stat_err[:, :4, ...] = np.sqrt(
         np.square(isn_rate_data.ena_count_rate_stat_uncert[:, :4, ...]) +
