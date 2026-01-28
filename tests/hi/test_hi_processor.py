@@ -53,9 +53,9 @@ class TestHiProcessor(unittest.TestCase):
                                        descriptor="h90-spx-h-hf-sp-full-hae-4deg-6mo",
                                        )
 
-        expected_unc = np.full((1, 1, 3, 2), 1)
-        expected_index = np.full_like(expected_unc, 2)
-        expected_scalar = np.full_like(expected_unc, 3)
+        expected_unc = np.full((1, 1, 3, 2), 1.0)
+        expected_index = np.full_like(expected_unc, 2.0)
+        expected_scalar = np.full_like(expected_unc, 3.0)
         mock_spectral_fit.return_value = expected_scalar, expected_index, expected_unc
         processor = HiProcessor(upstream_dependencies, input_metadata)
         product = processor.process()
