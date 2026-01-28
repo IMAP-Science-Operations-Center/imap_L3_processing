@@ -45,7 +45,8 @@ class TestSpectralFit(unittest.TestCase):
                 uncertainty = np.array(errors).reshape(1, len(energies), *spacial_dimension_shape)
 
                 result_A, result_gamma, result_gamma_error = fit_arrays_to_power_law(flux, uncertainty, energies)
-                np.testing.assert_array_equal(result_gamma, np.array(true_gamma).reshape(1, 1, *spacial_dimension_shape))
+                np.testing.assert_array_equal(result_gamma,
+                                              np.array(true_gamma).reshape(1, 1, *spacial_dimension_shape))
                 np.testing.assert_array_almost_equal(result_gamma_error,
                                                      np.array([0.060068]).reshape(1, 1, *spacial_dimension_shape))
                 np.testing.assert_array_equal(result_A, np.array(true_A).reshape(1, 1, *spacial_dimension_shape))
@@ -173,7 +174,58 @@ class TestSpectralFit(unittest.TestCase):
 
                 scalar_coefficients, result, result_error = fit_arrays_to_power_law(flux, uncertainty, energies)
                 np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, *spacial_dimension_shape))
-                np.testing.assert_array_equal(scalar_coefficients, np.array(true_A).reshape(1, 1, *spacial_dimension_shape))
+                np.testing.assert_array_equal(scalar_coefficients,
+                                              np.array(true_A).reshape(1, 1, *spacial_dimension_shape))
+
+    def test_spectral_fit_map_negative_gammas(self):
+        epoch = np.array([datetime.now()])
+        energies = np.geomspace(1, 10, 10)
+        true_A, true_gamma = 2.0, -1.5
+        flux_data = true_A * np.power(energies, -true_gamma)
+        errors = 0.2 * np.abs(flux_data)
+        latitude = np.array([0])
+        longitude = np.array([0])
+        full_shape = (len(epoch), len(energies), len(longitude), len(latitude))
+
+        data = IntensityMapData(
+            epoch=epoch,
+            epoch_delta=np.array([]),
+            energy=energies,
+            energy_delta_plus=np.repeat(0.5, 23),
+            energy_delta_minus=np.repeat(0.5, 23),
+            energy_label=np.array([]),
+            latitude=latitude,
+            longitude=longitude,
+            exposure_factor=np.full(full_shape, 1.0),
+            obs_date=np.ma.array(np.full(full_shape, datetime(year=2010, month=1, day=1))),
+            obs_date_range=np.full(full_shape, 100000),
+            solid_angle=np.full(full_shape, 1.23),
+            ena_intensity=np.array(flux_data).reshape(full_shape),
+            ena_intensity_sys_err=np.array([]),
+            ena_intensity_stat_uncert=np.array(errors).reshape(full_shape)
+        )
+
+        spectral_intensity_map = fit_spectral_index_map(data)
+
+        expected_energy_midpoint = np.sqrt(0.5 * 10.5)
+        expected_energy_minus = expected_energy_midpoint - 0.5
+        expected_energy_plus = 10.5 - expected_energy_midpoint
+        expected_energy_label = f"0.5 - 10.5"
+        np.testing.assert_array_equal(spectral_intensity_map.ena_spectral_index_stat_uncert,
+                                      np.full(shape=(1, 1, 1, 1), fill_value=np.nan))
+        np.testing.assert_array_equal(spectral_intensity_map.ena_spectral_index_scalar_coefficient,
+                                      np.full(shape=(1, 1, 1, 1), fill_value=np.nan))
+        np.testing.assert_array_equal(spectral_intensity_map.ena_spectral_index,
+                                      np.full(shape=(1, 1, 1, 1), fill_value=np.nan))
+
+        np.testing.assert_array_almost_equal(spectral_intensity_map.energy, [expected_energy_midpoint])
+        np.testing.assert_array_almost_equal(spectral_intensity_map.energy_delta_minus, [expected_energy_minus])
+        np.testing.assert_array_almost_equal(spectral_intensity_map.energy_delta_plus, [expected_energy_plus])
+        np.testing.assert_equal(spectral_intensity_map.energy_label, [expected_energy_label])
+
+        np.testing.assert_array_almost_equal(spectral_intensity_map.longitude, data.longitude)
+        np.testing.assert_array_almost_equal(spectral_intensity_map.latitude, data.latitude)
+        np.testing.assert_array_almost_equal(spectral_intensity_map.solid_angle, data.solid_angle)
 
     def test_finds_best_fit_with_nan_in_uncertainty(self):
         energies = np.geomspace(1, 10, 23)
@@ -243,7 +295,7 @@ class TestSpectralFit(unittest.TestCase):
         np.testing.assert_array_almost_equal(result_error, np.array([[[[0.279224, 0.409522],
                                                                        [0.260374, 0.318162]]]]))
         np.testing.assert_array_almost_equal(scalar_coefficients, np.array([[[[81.921884, 44.822592],
-                                                                              [52.494673, 44.64706 ]]]]))
+                                                                              [52.494673, 44.64706]]]]))
 
     def test_finds_best_fit_with_zeros_in_flux_and_not_uncertainty(self):
         energies = np.geomspace(1, 1e10, 23)
@@ -347,8 +399,10 @@ class TestSpectralFit(unittest.TestCase):
         spectral_index_map_data = calculate_spectral_index_for_multiple_ranges(data, output_energies)
         np.testing.assert_array_equal(spectral_index_map_data.ena_spectral_index[0, 0, 0, 0], true_gamma_range_1)
         np.testing.assert_array_equal(spectral_index_map_data.ena_spectral_index[0, 1, 0, 0], true_gamma_range_2)
-        np.testing.assert_almost_equal(spectral_index_map_data.ena_spectral_index_scalar_coefficient[0, 0, 0, 0], true_A_range_1)
-        np.testing.assert_almost_equal(spectral_index_map_data.ena_spectral_index_scalar_coefficient[0, 1, 0, 0], true_A_range_2)
+        np.testing.assert_almost_equal(spectral_index_map_data.ena_spectral_index_scalar_coefficient[0, 0, 0, 0],
+                                       true_A_range_1)
+        np.testing.assert_almost_equal(spectral_index_map_data.ena_spectral_index_scalar_coefficient[0, 1, 0, 0],
+                                       true_A_range_2)
         np.testing.assert_array_almost_equal(spectral_index_map_data.ena_spectral_index_stat_uncert[0, 0, 0, 0],
                                              0.020704)
         np.testing.assert_array_almost_equal(spectral_index_map_data.ena_spectral_index_stat_uncert[0, 1, 0, 0],
@@ -451,6 +505,7 @@ class TestSpectralFit(unittest.TestCase):
                     [[a]] for a in values
                 ]
             ])
+
         input_data = IntensityMapData(
             epoch=sentinel.epoch,
             epoch_delta=sentinel.epoch_delta,
@@ -460,18 +515,18 @@ class TestSpectralFit(unittest.TestCase):
             energy_label=np.array(["1", "10", "100", "1000", "10000"]),
             latitude=sentinel.latitude,
             longitude=sentinel.longitude,
-            exposure_factor=build_array(1,2,3,4,5),
+            exposure_factor=build_array(1, 2, 3, 4, 5),
             obs_date=build_array(datetime(2026, 1, 1),
                                  datetime(2026, 1, 2),
                                  datetime(2026, 1, 3),
                                  datetime(2026, 1, 4),
                                  datetime(2026, 1, 5),
                                  ),
-            obs_date_range=build_array(1000,2000,3000,4000,5000),
+            obs_date_range=build_array(1000, 2000, 3000, 4000, 5000),
             solid_angle=sentinel.solid_angle,
-            ena_intensity=build_array(100,200,300,400,500),
-            ena_intensity_stat_uncert=build_array(11,12,13,14,15),
-            ena_intensity_sys_err=build_array(21,22,23,24,25),
+            ena_intensity=build_array(100, 200, 300, 400, 500),
+            ena_intensity_stat_uncert=build_array(11, 12, 13, 14, 15),
+            ena_intensity_sys_err=build_array(21, 22, 23, 24, 25),
         )
 
         expected_data = IntensityMapData(
@@ -483,23 +538,23 @@ class TestSpectralFit(unittest.TestCase):
             energy_label=np.array(["1", "10", "100"]),
             latitude=sentinel.latitude,
             longitude=sentinel.longitude,
-            exposure_factor=build_array(1,2,3),
+            exposure_factor=build_array(1, 2, 3),
             obs_date=build_array(datetime(2026, 1, 1),
                                  datetime(2026, 1, 2),
                                  datetime(2026, 1, 3),
                                  ),
-            obs_date_range=build_array(1000,2000,3000),
+            obs_date_range=build_array(1000, 2000, 3000),
             solid_angle=sentinel.solid_angle,
-            ena_intensity=build_array(100,200,300),
-            ena_intensity_stat_uncert=build_array(11,12,13),
-            ena_intensity_sys_err=build_array(21,22,23),
+            ena_intensity=build_array(100, 200, 300),
+            ena_intensity_stat_uncert=build_array(11, 12, 13),
+            ena_intensity_sys_err=build_array(21, 22, 23),
         )
 
         actual = slice_energy_range_by_bin(input_data, 1, 3)
         self.assertIsInstance(actual, IntensityMapData)
 
         for field in dataclasses.fields(expected_data):
-            np.testing.assert_equal(getattr(actual,field.name), getattr(expected_data, field.name))
+            np.testing.assert_equal(getattr(actual, field.name), getattr(expected_data, field.name))
 
     def test_slice_energy_range_by_bin_raises_error(self):
         def build_array(*values):
@@ -535,12 +590,11 @@ class TestSpectralFit(unittest.TestCase):
             (1, 10),
             (0, 3),
             (3, 0),
-            (1,1),
+            (1, 1),
             (10, 3)
         ]
         for start_bin, end_bin in cases:
             with self.subTest(f"{start_bin}-{end_bin}"):
-
                 with self.assertRaises(ValueError) as cm:
                     slice_energy_range_by_bin(input_data, start_bin, end_bin)
 

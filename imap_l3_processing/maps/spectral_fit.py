@@ -89,6 +89,11 @@ def fit_spectral_index_map(intensity_data: IntensityMapData) -> SpectralIndexMap
                                         axis=1,
                                         keepdims=True)
     total_exposure_factor = np.sum(intensity_data.exposure_factor, axis=1, keepdims=True)
+    positive_gammas = output_gammas < 0
+    output_gammas[positive_gammas] = np.nan
+    output_scalar_coefficients[positive_gammas] = np.nan
+    output_gamma_errors[positive_gammas] = np.nan
+
 
     return SpectralIndexMapData(
         epoch=intensity_data.epoch,
