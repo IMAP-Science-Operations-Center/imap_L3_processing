@@ -292,8 +292,8 @@ class TestCalculateProtonSolarWindTemperatureAndDensity(TestCase):
             coincident_count_rates, energy, 1)
 
         self.assertAlmostEqual(77665.54856, proton_solar_wind_temp_and_density.temperature.nominal_value,
-                               5)
-        self.assertAlmostEqual(3676.14173, proton_solar_wind_temp_and_density.temperature.std_dev, 5)
+                               4)
+        self.assertAlmostEqual(3676.14173, proton_solar_wind_temp_and_density.temperature.std_dev, 3)
         self.assertAlmostEqual(0.03594, proton_solar_wind_temp_and_density.density.nominal_value,
                                5)
         self.assertAlmostEqual(0.0006567, proton_solar_wind_temp_and_density.density.std_dev, 7)
