@@ -273,7 +273,7 @@ class CodiceHiL2SectoredIntensitiesData:
         with CDF(str(l2_sectored_intensities_cdf)) as cdf:
             return cls(epoch=cdf["epoch"][...],
                        epoch_delta_plus=np.array([timedelta(seconds=ns / 1e9) for ns in cdf["epoch_delta_plus"][...]]),
-                       spin_angles=cdf['spin_angles'][...],
+                       spin_angles=cdf['spin_angle'][...],
                        elevation_angle=cdf['elevation_angle'][...],
                        data_quality=cdf['data_quality'][...],
                        h_intensities=read_numeric_variable(cdf['h']),

@@ -187,15 +187,14 @@ class TestModels(unittest.TestCase):
                 np.testing.assert_array_equal(data_product_var.value, np.array([10 * 1e9]))
 
     def test_l2_sectored_intensities_read_from_sdc_cdf(self):
-        l2_path = get_test_instrument_team_data_path(
-            "codice/hi/imap_codice_l2_hi-sectored_20250814_v002.cdf")
+        l2_path = get_test_instrument_team_data_path("codice/hi/imap_codice_l2_hi-sectored_20251206_v002.cdf")
         l2_sectored_data = CodiceHiL2SectoredIntensitiesData.read_from_cdf(l2_path)
 
         with CDF(str(l2_path)) as cdf:
             np.testing.assert_array_equal(l2_sectored_data.epoch, cdf["epoch"])
             expected_epoch_delta = np.array([timedelta(seconds=ns / 1e9) for ns in cdf["epoch_delta_plus"][...]])
             np.testing.assert_array_equal(l2_sectored_data.epoch_delta_plus, expected_epoch_delta)
-            np.testing.assert_array_equal(l2_sectored_data.spin_angles, cdf['spin_angles'][...])
+            np.testing.assert_array_equal(l2_sectored_data.spin_angles, cdf['spin_angle'][...])
             np.testing.assert_array_equal(l2_sectored_data.elevation_angle, cdf['elevation_angle'])
 
             np.testing.assert_array_equal(l2_sectored_data.data_quality, cdf['data_quality'])
