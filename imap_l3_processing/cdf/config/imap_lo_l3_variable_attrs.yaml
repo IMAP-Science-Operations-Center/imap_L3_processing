@@ -317,6 +317,7 @@ solid_angle:
   NAME: solid_angle
   DATA_TYPE: CDF_REAL4
   CATDESC: Solid angle of subtended by each pixel
+  DEPEND_0: epoch
   DEPEND_1: longitude
   DEPEND_2: latitude
   VAR_TYPE: support_data

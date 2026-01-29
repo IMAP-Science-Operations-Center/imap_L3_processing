@@ -113,7 +113,9 @@ class ISNBackgroundSubtractedData(MapData):
     isn_bg_rate_subtracted_sys_err: np.ndarray
     isn_bg_rate_subtracted: np.ndarray
     latitude_label: np.ndarray
+    latitude_delta: np.ndarray
     longitude_label: np.ndarray
+    longitude_delta: np.ndarray
 
 
 @dataclass
@@ -161,8 +163,10 @@ class ISNRateData:
     ena_count_rate: np.ndarray
     ena_count_rate_stat_uncert: np.ndarray
     latitude: np.ndarray
+    latitude_delta: np.ndarray
     latitude_label: np.ndarray
     longitude: np.ndarray
+    longitude_delta: np.ndarray
     longitude_label: np.ndarray
     obs_date: np.ndarray
     obs_date_range: np.ndarray
@@ -196,8 +200,10 @@ class ISNRateData:
                 ena_count_rate=read_numeric_variable(cdf['ena_count_rate']),
                 ena_count_rate_stat_uncert=read_numeric_variable(cdf['ena_count_rate_stat_uncert']),
                 latitude=(cdf['latitude'][...]),
+                latitude_delta=(cdf['latitude_delta'][...]),
                 latitude_label=(cdf['latitude_label'][...]),
                 longitude=(cdf['longitude'][...]),
+                longitude_delta=(cdf['longitude_delta'][...]),
                 longitude_label=(cdf['longitude_label'][...]),
                 ena_intensity=read_numeric_variable(cdf['ena_intensity']),
                 ena_intensity_stat_uncert=read_numeric_variable(cdf['ena_intensity_stat_uncert']),
@@ -463,8 +469,10 @@ class ISNBackgroundSubtractedDataProduct(MapDataProduct[ISNBackgroundSubtractedM
             DataProductVariable(BG_RATE_STAT_UNCERT_VAR_NAME, self.data.isn_rate_map_data.bg_rate_stat_uncert),
             DataProductVariable(BG_RATE_SYS_ERR_VAR_NAME, self.data.isn_rate_map_data.bg_rate_sys_err),
             DataProductVariable(LATITUDE_VAR_NAME, self.data.isn_rate_map_data.latitude),
+            DataProductVariable(LATITUDE_DELTA_VAR_NAME, self.data.isn_rate_map_data.latitude_delta),
             DataProductVariable(LATITUDE_LABEL_VAR_NAME, self.data.isn_rate_map_data.latitude_label),
             DataProductVariable(LONGITUDE_VAR_NAME, self.data.isn_rate_map_data.longitude),
+            DataProductVariable(LONGITUDE_DELTA_VAR_NAME, self.data.isn_rate_map_data.longitude_delta),
             DataProductVariable(LONGITUDE_LABEL_VAR_NAME, self.data.isn_rate_map_data.longitude_label),
             DataProductVariable(ISN_BG_RATE_SUBTRACTED_VAR_NAME,
                                 self.data.isn_rate_map_data.isn_bg_rate_subtracted),

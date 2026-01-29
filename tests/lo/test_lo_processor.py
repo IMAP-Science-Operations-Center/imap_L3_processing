@@ -203,8 +203,10 @@ class TestLoProcessor(unittest.TestCase):
             epoch=sentinel.epoch,
             solid_angle=sentinel.solid_angle,
             latitude=sentinel.latitude,
+            latitude_delta=sentinel.latitude_delta,
             latitude_label=sentinel.latitude_label,
             longitude=sentinel.longitude,
+            longitude_delta=sentinel.longitude_delta,
             longitude_label=sentinel.longitude_label,
             epoch_delta=sentinel.epoch_delta,
             energy=np.array([1, 2, 3, 4, 5, 6, 7]),
@@ -248,7 +250,9 @@ class TestLoProcessor(unittest.TestCase):
         self.assertEqual(actual_isn_rate_map_data.epoch, sentinel.epoch)
         self.assertEqual(actual_isn_rate_map_data.solid_angle, sentinel.solid_angle)
         self.assertEqual(actual_isn_rate_map_data.latitude, sentinel.latitude)
+        self.assertEqual(actual_isn_rate_map_data.latitude_delta, sentinel.latitude_delta)
         self.assertEqual(actual_isn_rate_map_data.latitude_label, sentinel.latitude_label)
         self.assertEqual(actual_isn_rate_map_data.longitude, sentinel.longitude)
+        self.assertEqual(actual_isn_rate_map_data.longitude_delta, sentinel.longitude_delta)
         self.assertEqual(actual_isn_rate_map_data.longitude_label, sentinel.longitude_label)
         self.assertEqual(actual_isn_rate_map_data.epoch_delta, sentinel.epoch_delta)

@@ -281,8 +281,10 @@ class TestMapModels(unittest.TestCase):
                     bg_rate_stat_uncert=sentinel.bg_rate_stat_uncert,
                     bg_rate_sys_err=sentinel.bg_rate_sys_err,
                     latitude=sentinel.latitude,
+                    latitude_delta=sentinel.latitude_delta,
                     latitude_label=sentinel.latitude_label,
                     longitude=sentinel.longitude,
+                    longitude_delta=sentinel.longitude_delta,
                     longitude_label=sentinel.longitude_label,
                     isn_bg_rate_subtracted=sentinel.isn_bg_rate_subtracted,
                     isn_bg_rate_subtracted_sys_err=sentinel.isn_bg_rate_subtracted_sys_err,
@@ -311,8 +313,10 @@ class TestMapModels(unittest.TestCase):
             DataProductVariable(map_models.BG_RATE_STAT_UNCERT_VAR_NAME, sentinel.bg_rate_stat_uncert),
             DataProductVariable(map_models.BG_RATE_SYS_ERR_VAR_NAME, sentinel.bg_rate_sys_err),
             DataProductVariable(map_models.LATITUDE_VAR_NAME, sentinel.latitude),
+            DataProductVariable(map_models.LATITUDE_DELTA_VAR_NAME, sentinel.latitude_delta),
             DataProductVariable(map_models.LATITUDE_LABEL_VAR_NAME, sentinel.latitude_label),
             DataProductVariable(map_models.LONGITUDE_VAR_NAME, sentinel.longitude),
+            DataProductVariable(map_models.LONGITUDE_DELTA_VAR_NAME, sentinel.longitude_delta),
             DataProductVariable(map_models.LONGITUDE_LABEL_VAR_NAME, sentinel.longitude_label),
             DataProductVariable(map_models.ISN_BG_RATE_SUBTRACTED_VAR_NAME,
                                 sentinel.isn_bg_rate_subtracted),
@@ -815,7 +819,9 @@ class TestMapModels(unittest.TestCase):
             np.testing.assert_array_equal(actual.energy, expected['energy'][...])
             np.testing.assert_array_equal(actual.exposure_factor,
                                           read_numeric_variable(expected['exposure_factor']))
+            np.testing.assert_array_equal(actual.latitude_delta, expected['latitude_delta'][...])
             np.testing.assert_array_equal(actual.latitude, expected['latitude'][...])
+            np.testing.assert_array_equal(actual.longitude_delta, expected['longitude_delta'][...])
             np.testing.assert_array_equal(actual.longitude, expected['longitude'][...])
             np.testing.assert_array_equal(actual.solid_angle, read_numeric_variable(expected['solid_angle']))
 
