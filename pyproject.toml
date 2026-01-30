@@ -1,6 +1,10 @@
+[build-system]
+requires = ["hatchling", "uv-dynamic-versioning"]
+build-backend = "hatchling.build"
+
 [project]
 name = "imap_l3_processing"
-version = "2025.12.02"
+dynamic = ["version"]
 description = "This is a package for creating IMAP Level 3 data"
 requires-python = ">= 3.10"
 dependencies = [
@@ -22,6 +26,8 @@ dependencies = [
     "uncertainties==3.2.2",
     "xarray==2025.3.1",
     "imap-processing>=1.0.2",
+    "hatchling",
+    "uv-dynamic-versioning"
 ]
 
 [dependency-groups]
@@ -35,8 +41,8 @@ imap-processing = { git = "https://github.com/IMAP-Science-Operations-Center/ima
 [tool.setuptools]
 py-modules = ["imap_l3_processing"]
 
-[tool.hatch]
+[tool.uv-dynamic-versioning]
+fallback-version = "unknown"
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+[tool.hatch.version]
+source = "uv-dynamic-versioning"
