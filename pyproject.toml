@@ -42,7 +42,7 @@ imap-processing = { git = "https://github.com/IMAP-Science-Operations-Center/ima
 py-modules = ["imap_l3_processing"]
 
 [tool.uv-dynamic-versioning]
-fallback-version = "unknown"
+fallback-version = "v0.0.0"
 
 [tool.hatch.version]
 source = "uv-dynamic-versioning"
