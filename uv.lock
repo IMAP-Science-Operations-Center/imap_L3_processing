@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.12' and platform_machine == 'ARM64' and sys_platform == 'win32'",
@@ -763,8 +763,8 @@ dev = [{ name = "dotenv", specifier = ">=0.9.9" }]
 
 [[package]]
 name = "imap-processing"
-version = "1.0.10"
-source = { git = "https://github.com/IMAP-Science-Operations-Center/imap_processing#b5fd8cf40dd6e6e49c1fb10dc0fbae4cd8deef4c" }
+version = "1.0.16.post1.dev0+61d71db2"
+source = { git = "https://github.com/IMAP-Science-Operations-Center/imap_processing#61d71db2dfe32ca394673b3608014bf0a4824eb1" }
 dependencies = [
     { name = "astropy-healpix" },
     { name = "cdflib" },
