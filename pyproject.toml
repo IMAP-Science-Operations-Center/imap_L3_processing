@@ -25,7 +25,7 @@ dependencies = [
     "spiceypy==6.0.0",
     "uncertainties==3.2.2",
     "xarray==2025.3.1",
-    "imap-processing>=1.0.2",
+    "imap-processing>=1.0.17",
     "hatchling",
     "uv-dynamic-versioning"
 ]
@@ -34,9 +34,6 @@ dependencies = [
 dev = [
     "dotenv>=0.9.9",
 ]
-
-[tool.uv.sources]
-imap-processing = { git = "https://github.com/IMAP-Science-Operations-Center/imap_processing" }
 
 [tool.setuptools]
 py-modules = ["imap_l3_processing"]
