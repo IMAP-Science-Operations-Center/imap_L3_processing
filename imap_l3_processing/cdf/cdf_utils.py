@@ -4,6 +4,7 @@ import numpy as np
 from spacepy import pycdf
 from spacepy.pycdf import CDF
 
+from imap_processing.ena_maps.utils import naming
 from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_l3_processing.swapi.l3a.models import DataProduct
 
@@ -25,6 +26,19 @@ def write_cdf(file_path: str, data: DataProduct, attribute_manager: ImapAttribut
             variable_attributes = attribute_manager.get_variable_attributes(var_name)
             data_type = getattr(pycdf.const, variable_attributes["DATA_TYPE"])
             data_array = np.asanyarray(data_product.value)
+
+            possible_principal_data = (
+                "dust_rate",
+                "ena_intensity",
+                "ena_spectral_index",
+                "glows_rate",
+                "isn_rate",
+                "isn_rate_bg_subtracted",
+            )
+            if var_name in possible_principal_data:
+                descriptor = data.input_metadata.descriptor
+                catdesc = naming.MapDescriptor.from_string(descriptor).to_catdesc()
+                variable_attributes["CATDESC"] = catdesc
 
             record_varying = variable_attributes["RECORD_VARYING"].lower() == "rv"
             if record_varying:
