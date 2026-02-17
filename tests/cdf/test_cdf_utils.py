@@ -324,7 +324,7 @@ class TestCdfUtils(TempFileTestCase):
         )
 
         with pycdf.CDF(path) as actual_cdf:
-            self.assertEqual("IMAP Hi45 Inten H, HAE SC Frame, Surv Corr, Ram, 6 deg, 6 Mon",
+            self.assertEqual("IMAP Hi45 H Inten, HAE SC Frame, Surv Corr, Ram, 6 deg, 6 Mon",
                              actual_cdf['ena_intensity'].attrs['CATDESC'])
 
 
