@@ -38,14 +38,16 @@ class UltraProcessor(MapProcessor):
                     parsed_descriptor.spectral_index_energy_range
                 )
                 data_product = RectangularSpectralIndexDataProduct(input_metadata=self.input_metadata,
-                                                                   data=spectral_index_map_data)
+                                                                   data=spectral_index_map_data,
+                                                                   spice_frame_name=spice_frame_name)
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
                                     sensor=Sensor.Ultra45 | Sensor.Ultra90,
                                     grid=PixelSize.TwoDegrees | PixelSize.FourDegrees | PixelSize.SixDegrees):
                 deps = UltraL3Dependencies.fetch_dependencies(self.dependencies)
                 healpix_intensity_map_data = self._process_survival_probability(deps, spice_frame_name)
                 data_product = self._process_healpix_intensity_to_rectangular(healpix_intensity_map_data,
-                                                                              parsed_descriptor.grid)
+                                                                              parsed_descriptor.grid,
+                                                                              spice_frame_name=spice_frame_name)
                 data_product.add_paths_to_parents(deps.dependency_file_paths)
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
                                     sensor=Sensor.UltraCombined,
@@ -54,7 +56,8 @@ class UltraProcessor(MapProcessor):
                 combined_deps = UltraL3CombinedDependencies.fetch_dependencies(self.dependencies)
                 combined_data = self._process_combined_survival_probability(combined_deps, spice_frame_name)
 
-                data_product = self._process_healpix_intensity_to_rectangular(combined_data, parsed_descriptor.grid)
+                data_product = self._process_healpix_intensity_to_rectangular(combined_data, parsed_descriptor.grid,
+                                                                              spice_frame_name=spice_frame_name)
                 data_product.add_paths_to_parents(combined_deps.dependency_file_paths)
 
             case MapDescriptorParts(sensor=Sensor.UltraCombined,
@@ -67,7 +70,8 @@ class UltraProcessor(MapProcessor):
                 healpix_intensity_map_data = combination_strategy.combine_healpix_intensity_map_data(
                     [deps.u45_l2_map, deps.u90_l2_map])
                 data_product = self._process_healpix_intensity_to_rectangular(healpix_intensity_map_data,
-                                                                              parsed_descriptor.grid)
+                                                                              parsed_descriptor.grid,
+                                                                              spice_frame_name=spice_frame_name)
                 data_product.add_paths_to_parents(deps.dependency_file_paths)
             case _:
                 raise NotImplementedError
@@ -157,7 +161,8 @@ class UltraProcessor(MapProcessor):
         )
 
     def _process_healpix_intensity_to_rectangular(self, healpix_map_data: HealPixIntensityMapData,
-                                                  spacing_deg: int) -> RectangularIntensityDataProduct:
+                                                  spacing_deg: int,
+                                                  spice_frame_name: SpiceFrame) -> RectangularIntensityDataProduct:
         variables_to_convert_to_rectangular = [
             "exposure_factor",
             "ena_intensity",
@@ -201,7 +206,8 @@ class UltraProcessor(MapProcessor):
             longitude_label=intensity_map_data.longitude.astype(str),
         ))
 
-        return RectangularIntensityDataProduct(data=rect_intensity_map_data, input_metadata=self.input_metadata)
+        return RectangularIntensityDataProduct(data=rect_intensity_map_data, input_metadata=self.input_metadata,
+                                               spice_frame_name=spice_frame_name)
 
     def _process_healpix_spectral_index_to_rectangular(self, healpix_map_data: HealPixSpectralIndexMapData,
                                                        spacing_deg: int) -> RectangularSpectralIndexDataProduct:

@@ -414,6 +414,7 @@ class HealPixSpectralIndexMapData:
 @dataclass
 class MapDataProduct(DataProduct[D], Generic[D]):
     data: D
+    spice_frame_name: SpiceFrame
 
     @abc.abstractmethod
     def to_data_product_variables(self) -> list[DataProductVariable]:

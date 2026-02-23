@@ -41,7 +41,7 @@ from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDepen
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.hi.hi_processor import HiProcessor
-from imap_l3_processing.hi.l3.hi_l3_spectral_fit_dependencies import HiL3SpectralIndexDependencies
+from imap_l3_processing.hi.hi_spectral_fit_dependencies import HiSpectralIndexDependencies
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import HITL3SectoredDependencies
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.hit.l3.models import HitL1Data
@@ -75,9 +75,9 @@ from imap_l3_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependen
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
-from imap_l3_processing.ultra.l3.models import UltraL1CPSet, UltraGlowsL3eData
-from imap_l3_processing.ultra.l3.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
-from imap_l3_processing.ultra.l3.ultra_processor import UltraProcessor
+from imap_l3_processing.ultra.models import UltraL1CPSet, UltraGlowsL3eData
+from imap_l3_processing.ultra.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
+from imap_l3_processing.ultra.ultra_processor import UltraProcessor
 from imap_l3_processing.utils import save_data, read_l1d_mag_data, furnish_local_spice
 from scripts.codice.create_fake_efficiency_ancillary import create_efficiency_lookup
 from scripts.codice.create_more_accurate_l3a_direct_event import create_more_accurate_l3a_direct_events_cdf
@@ -381,7 +381,7 @@ def create_survival_corrected_full_spin_cdf(dependencies: HiL3SingleSensorFullSp
     return cdf_path
 
 
-def create_hi_spectral_index_cdf(dependencies: HiL3SpectralIndexDependencies) -> Path:
+def create_hi_spectral_index_cdf(dependencies: HiSpectralIndexDependencies) -> Path:
     input_metadata = InputMetadata(instrument="hi",
                                    data_level="l3",
                                    start_date=datetime.now(),
@@ -1122,7 +1122,7 @@ if __name__ == "__main__":
             create_hi_l3_survival_corrected_cdf(survival_dependencies, 4)
 
         if do_all or "spectral-index" in sys.argv:
-            dependencies = HiL3SpectralIndexDependencies.from_file_paths(
+            dependencies = HiSpectralIndexDependencies.from_file_paths(
                 get_test_data_path("hi/fake_l2_maps/hi45-zirnstein-mondel-6months.cdf")
             )
             print(create_hi_spectral_index_cdf(dependencies))
@@ -1228,7 +1228,8 @@ if __name__ == "__main__":
             healpix_sp_corrected_data = processor._process_survival_probability(deps=dependencies,
                                                                                 spice_frame_name=SpiceFrame.IMAP_HAE)
             rectangular_sp_data_product = processor._process_healpix_intensity_to_rectangular(healpix_sp_corrected_data,
-                                                                                              spacing_degree)
+                                                                                              spacing_degree,
+                                                                                              spice_frame_name=SpiceFrame.IMAP_HAE)
 
             rectangular_sp_corrected_path = save_data(rectangular_sp_data_product, delete_if_present=True)
             print(rectangular_sp_corrected_path)

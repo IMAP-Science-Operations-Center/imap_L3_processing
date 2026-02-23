@@ -9,6 +9,7 @@ import imap_data_access
 import numpy as np
 from imap_data_access import config
 from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection
+from imap_processing.spice.geometry import SpiceFrame
 from requests import RequestException
 from spacepy.pycdf import CDF
 
@@ -244,14 +245,16 @@ class TestUtils(TestCase):
                 rectangular_spectral_index_map_data = create_rectangular_spectral_index_map_data(epoch=epoch,
                                                                                                  epoch_delta=epoch_delta)
                 data_product = RectangularSpectralIndexDataProduct(input_metadata=input_metadata,
-                                                                   data=rectangular_spectral_index_map_data)
+                                                                   data=rectangular_spectral_index_map_data,
+                                                                   spice_frame_name=SpiceFrame.ECLIPJ2000)
 
                 save_data(data_product)
 
                 mock_add_global_attr.assert_has_calls([
                     call("start_date", "2025-01-01T00:00:00"),
-                    call("end_date", "2025-01-02T00:00:00")
-                ])
+                    call("end_date", "2025-01-02T00:00:00"),
+                    call("Spice_reference_frame", 'ECLIPJ2000')
+                ], any_order=True)
 
     @patch("imap_l3_processing.utils.ImapAttributeManager.add_instrument_attrs", autospec=True)
     @patch("imap_l3_processing.utils.write_cdf")
@@ -282,10 +285,12 @@ class TestUtils(TestCase):
                                       ("Logical_source_description", "Logical_source_description from file")]),
             (map_input_metadata,
              [("Data_level", "3b"), ("Data_type", "L3b_spx-map-descriptor>Level-3b Spectral Fit Index Map"),
-              ("Logical_source_description", "IMAP-hi Level-3b Spectral Fit Index Map")]),
+              ("Logical_source_description", "IMAP-hi Level-3b Spectral Fit Index Map"),
+              ("Spice_reference_frame", "ECLIPJ2000")]),
             (map_input_metadata_with_existing_global_attrs,
              [("Data_level", "Data_level from file"), ("Data_type", "Data_type from file"),
-              ("Logical_source_description", "Logical_source_description from file")]
+              ("Logical_source_description", "Logical_source_description from file"),
+              ("Spice_reference_frame", "ECLIPJ2000")]
              )
         ]
         for input_metadata, expected_global_metadata in cases:
@@ -293,7 +298,8 @@ class TestUtils(TestCase):
                 mock_write_cdf.reset_mock()
 
                 data_product = RectangularIntensityDataProduct(input_metadata=input_metadata,
-                                                               data=create_rectangular_intensity_map_data())
+                                                               data=create_rectangular_intensity_map_data(),
+                                                               spice_frame_name=SpiceFrame.ECLIPJ2000)
                 save_data(data_product)
 
                 mock_write_cdf.assert_called_once()
@@ -302,6 +308,7 @@ class TestUtils(TestCase):
 
                 global_metadata = attribute_manager.try_load_global_metadata(input_metadata.logical_source)
                 self.assertIsNotNone(global_metadata)
+
                 for metadata_field, metadata_value in expected_global_metadata:
                     self.assertEqual(metadata_value, global_metadata[metadata_field])
 

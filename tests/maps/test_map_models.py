@@ -10,6 +10,7 @@ import numpy as np
 from imap_processing.ena_maps.ena_maps import HealpixSkyMap
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.ena_maps.utils.spatial_utils import build_solid_angle_map
+from imap_processing.spice.geometry import SpiceFrame
 from spacepy.pycdf import CDF
 from xarray import Dataset
 
@@ -58,7 +59,8 @@ class TestMapModels(unittest.TestCase):
                     longitude_delta=sentinel.longitude_delta,
                     longitude_label=sentinel.longitude_label,
                 )
-            )
+            ),
+            spice_frame_name=SpiceFrame.ECLIPJ2000,
         )
 
         actual_variables = spectral_index_data_product.to_data_product_variables()
@@ -119,6 +121,7 @@ class TestMapModels(unittest.TestCase):
 
                 )
             ),
+            spice_frame_name=SpiceFrame.ECLIPJ2000,
         )
         actual_variables = data_product.to_data_product_variables()
 
@@ -180,6 +183,7 @@ class TestMapModels(unittest.TestCase):
 
                 )
             ),
+            spice_frame_name=SpiceFrame.ECLIPJ2000,
         )
         actual_variables = data_product.to_data_product_variables()
 
@@ -237,7 +241,8 @@ class TestMapModels(unittest.TestCase):
                     pixel_index=sentinel.pixel_index,
                     pixel_index_label=sentinel.pixel_index_label,
                 )
-            )
+            ),
+            spice_frame_name=SpiceFrame.ECLIPJ2000,
         )
 
         actual_variables = spectral_index_data_product.to_data_product_variables()
@@ -295,7 +300,8 @@ class TestMapModels(unittest.TestCase):
                     obs_date=sentinel.obs_date,
                     obs_date_range=sentinel.obs_date_range,
                 )
-            )
+            ),
+            spice_frame_name=SpiceFrame.ECLIPJ2000,
         )
 
         actual_variables = data_product.to_data_product_variables()
@@ -356,7 +362,8 @@ class TestMapModels(unittest.TestCase):
                     pixel_index=sentinel.pixel_index,
                     pixel_index_label=sentinel.pixel_index_label,
                 )
-            )
+            ),
+            spice_frame_name=SpiceFrame.ECLIPJ2000,
         )
 
         actual_variables = data_product.to_data_product_variables()

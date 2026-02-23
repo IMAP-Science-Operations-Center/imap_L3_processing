@@ -88,6 +88,7 @@ class TestHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(spectral_index_data.exposure_factor, expected_exposure)
         self.assertEqual(["l2_or_l3_map"], actual_hi_data_product.parent_file_names)
         self.assertEqual(hi_l3_data.coords, spectral_index_coords)
+        self.assertEqual(SpiceFrame.ECLIPJ2000, actual_hi_data_product.spice_frame_name)
 
         self.assertEqual([mock_save_data.return_value], product)
 
@@ -294,7 +295,9 @@ class TestHiProcessor(unittest.TestCase):
                 mock_save_data.assert_called_once_with(RectangularIntensityDataProduct(
                     input_metadata=input_metadata,
                     parent_file_names=["l1c", "map", "somewhere"],
-                    data=sentinel.survival_probabilities))
+                    data=sentinel.survival_probabilities,
+                    spice_frame_name=spice_frame_name,
+                ))
                 self.assertEqual([mock_save_data.return_value], product)
 
     @patch('imap_l3_processing.hi.hi_processor.MapProcessor.get_parent_file_names')
@@ -343,7 +346,9 @@ class TestHiProcessor(unittest.TestCase):
         mock_save_data.assert_called_once_with(RectangularIntensityDataProduct(
             input_metadata=input_metadata,
             parent_file_names=["antiram_map", "l1c", "ram_map"],
-            data=mock_unweighted_combination.combine_rectangular_intensity_map_data.return_value))
+            data=mock_unweighted_combination.combine_rectangular_intensity_map_data.return_value,
+            spice_frame_name=sentinel.spice_frame,
+        ))
         self.assertEqual([mock_save_data.return_value], product)
 
     @patch('imap_l3_processing.hi.hi_processor.MapProcessor.get_parent_file_names')
@@ -403,7 +408,9 @@ class TestHiProcessor(unittest.TestCase):
                 mock_save_data.assert_called_once_with(RectangularIntensityDataProduct(
                     input_metadata=input_metadata,
                     parent_file_names=["antiram_map", "l1c", "ram_map"],
-                    data=mock_combination.combine_rectangular_intensity_map_data.return_value))
+                    data=mock_combination.combine_rectangular_intensity_map_data.return_value,
+                    spice_frame_name=sentinel.spice_frame,
+                ))
                 self.assertEqual([mock_save_data.return_value], product)
 
     @patch('imap_l3_processing.hi.hi_processor.MapProcessor.get_parent_file_names')
@@ -457,7 +464,9 @@ class TestHiProcessor(unittest.TestCase):
         mock_save_data.assert_called_once_with(RectangularIntensityDataProduct(
             input_metadata=input_metadata,
             parent_file_names=parent_map_names,
-            data=mock_exposure_combination.combine_rectangular_intensity_map_data.return_value))
+            data=mock_exposure_combination.combine_rectangular_intensity_map_data.return_value,
+            spice_frame_name=SpiceFrame.ECLIPJ2000,
+        ))
 
         self.assertEqual([mock_save_data.return_value], data_product)
 

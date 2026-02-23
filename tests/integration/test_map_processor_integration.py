@@ -349,6 +349,7 @@ class TestMapIntegration(unittest.TestCase):
 
             with CDF(str(expected_ena_path)) as cdf:
                 self.assertEqual(expected_ena_parents, set(cdf.attrs["Parents"]))
+                self.assertEqual("ECLIPJ2000", str(cdf.attrs["Spice_reference_frame"]))
 
     @run_periodically(timedelta(days=3))
     @patch("imap_l3_data_processor._parse_cli_arguments")

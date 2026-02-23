@@ -30,23 +30,27 @@ class LoProcessor(MapProcessor):
                 deps = LoL3SpectralFitDependencies.fetch_dependencies(self.dependencies)
                 spectral_fit_data = perform_spectral_fit(deps.map_data,
                                                          descriptor.spectral_index_energy_range or (4, 7))
-                data_product = RectangularSpectralIndexDataProduct(self.input_metadata, spectral_fit_data)
+                data_product = RectangularSpectralIndexDataProduct(self.input_metadata, spectral_fit_data,
+                                                                   spice_frame_name=spice_frame_name)
             case MapDescriptorParts(quantity=MapQuantity.SpectralIndexNBS):
                 deps = LoL3SpectralFitDependencies.fetch_dependencies(self.dependencies)
                 spectral_fit_data = perform_spectral_fit(deps.map_data,
                                                          descriptor.spectral_index_energy_range or (1, 7))
-                data_product = RectangularSpectralIndexDataProduct(self.input_metadata, spectral_fit_data)
+                data_product = RectangularSpectralIndexDataProduct(self.input_metadata, spectral_fit_data,
+                                                                   spice_frame_name=spice_frame_name)
             case MapDescriptorParts(quantity=MapQuantity.ISNBackgroundSubtracted):
                 deps = LoL3ISNBackgroundSubtractedDependencies.fetch_dependencies(self.dependencies)
                 background_subtracted = isn_background_subtraction(deps.map_data)
-                data_product = ISNBackgroundSubtractedDataProduct(self.input_metadata, background_subtracted)
+                data_product = ISNBackgroundSubtractedDataProduct(self.input_metadata, background_subtracted,
+                                                                  spice_frame_name=spice_frame_name)
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
                                     reference_frame=ReferenceFrame.Spacecraft | ReferenceFrame.Heliospheric):
                 deps = HiLoL3SurvivalDependencies.fetch_dependencies(self.dependencies, Instrument.IMAP_LO)
                 deps.l1c_data = list(map(self._collapse_pset_dimension, deps.l1c_data))
                 data = process_survival_probabilities(deps, spice_frame_name)
 
-                data_product = RectangularIntensityDataProduct(self.input_metadata, data)
+                data_product = RectangularIntensityDataProduct(self.input_metadata, data,
+                                                               spice_frame_name=spice_frame_name)
                 set_of_parent_file_names.update(path.name for path in deps.dependency_file_paths)
             case None:
                 raise ValueError(f"Could not parse descriptor {self.input_metadata.descriptor}")

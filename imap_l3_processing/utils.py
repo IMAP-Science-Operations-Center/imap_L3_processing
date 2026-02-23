@@ -91,6 +91,8 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: P
             if attribute_manager.try_load_global_metadata(logical_source) is None:
                 logical_source_global_attrs = generate_global_metadata_for_undefined_logical_source(data.input_metadata)
                 attribute_manager.add_global_attribute(logical_source, logical_source_global_attrs)
+
+            attribute_manager.add_global_attribute("Spice_reference_frame", data.spice_frame_name.name)
         else:
             raise AssertionError(f"Found an unsupported map data product of type: {type(data)}")
     elif data.parent_file_names:

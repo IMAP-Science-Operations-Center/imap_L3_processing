@@ -40,7 +40,7 @@ class TestLoProcessor(unittest.TestCase):
                                  descriptor="l090-spx-h-hf-sp-ram-hae-6deg-1yr")
 
         processor = LoProcessor(input_collection, input_metadata=metadata)
-        product = processor.process()
+        product = processor.process(spice_frame_name=SpiceFrame.ECLIPJ2000)
 
         mock_fetch_dependencies.assert_called_once_with(input_collection)
         mock_slice_energy_range_by_bin.assert_called_once_with(
@@ -55,6 +55,7 @@ class TestLoProcessor(unittest.TestCase):
         self.assertEqual(data_product.data.coords, lo_l3_spectral_fit_dependency.map_data.coords)
         self.assertEqual(data_product.input_metadata, processor.input_metadata)
         self.assertEqual(data_product.parent_file_names, ["some_input_file_name"])
+        self.assertEqual(data_product.spice_frame_name, SpiceFrame.ECLIPJ2000)
         self.assertEqual([mock_save_data.return_value], product)
 
     @patch('imap_l3_processing.hi.hi_processor.MapProcessor.get_parent_file_names')
@@ -112,6 +113,7 @@ class TestLoProcessor(unittest.TestCase):
                                  mock_fit_spectral_index_map.return_value)
                 self.assertEqual(data_product.data.coords, lo_l3_spectral_fit_dependency.map_data.coords)
                 self.assertEqual(data_product.input_metadata, processor.input_metadata)
+                self.assertEqual(data_product.spice_frame_name, SpiceFrame.ECLIPJ2000)
                 self.assertEqual(data_product.parent_file_names, ["some_input_file_name"])
                 self.assertEqual([mock_save_data.return_value], product)
 
@@ -170,7 +172,9 @@ class TestLoProcessor(unittest.TestCase):
                 mock_save_data.assert_called_once_with(RectangularIntensityDataProduct(
                     input_metadata=input_metadata,
                     parent_file_names=["l1c", "map", "somewhere"],
-                    data=sentinel.survival_probabilities))
+                    data=sentinel.survival_probabilities,
+                    spice_frame_name=SpiceFrame.IMAP_DPS,
+                ))
                 self.assertEqual([mock_save_data.return_value], product)
 
                 mock_fetch_survival_dependencies.reset_mock()

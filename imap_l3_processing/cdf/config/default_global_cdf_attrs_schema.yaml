@@ -68,3 +68,8 @@ Ancillary_files:
   description: List of ancillary files, only used by maps
   default: null
   required: false
+
+Spice_reference_frame:
+  description: SPICE reference frame, only used by maps
+  default: null
+  required: false

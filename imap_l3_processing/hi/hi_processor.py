@@ -20,6 +20,7 @@ from imap_l3_processing.maps.survival_probability_processing import process_surv
 from imap_l3_processing.models import Instrument
 from imap_l3_processing.utils import save_data
 
+
 class HiProcessor(MapProcessor):
     def process(self, spice_frame_name: SpiceFrame = SpiceFrame.ECLIPJ2000) -> list[Path]:
         set_of_parent_file_names = set(self.get_parent_file_names())
@@ -32,6 +33,7 @@ class HiProcessor(MapProcessor):
                 data_product = RectangularSpectralIndexDataProduct(
                     data=map_data,
                     input_metadata=self.input_metadata,
+                    spice_frame_name=spice_frame_name
                 )
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
                                     sensor=Sensor.Hi90 | Sensor.Hi45,
@@ -41,6 +43,7 @@ class HiProcessor(MapProcessor):
                 data_product = RectangularIntensityDataProduct(
                     data=process_survival_probabilities(hi_l3_survival_probabilities_dependencies, spice_frame_name),
                     input_metadata=self.input_metadata,
+                    spice_frame_name=spice_frame_name
                 )
                 set_of_parent_file_names.update(
                     p.name for p in hi_l3_survival_probabilities_dependencies.dependency_file_paths)
@@ -55,7 +58,8 @@ class HiProcessor(MapProcessor):
                                                                     combination_strategy)
                 data_product = RectangularIntensityDataProduct(
                     data=combined_map,
-                    input_metadata=self.input_metadata
+                    input_metadata=self.input_metadata,
+                    spice_frame_name=spice_frame_name
                 )
                 set_of_parent_file_names.update(p.name for p in hi_l3_full_spin_dependencies.dependency_file_paths)
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
@@ -71,7 +75,8 @@ class HiProcessor(MapProcessor):
                                                                     spice_frame_name, combination_strategy)
                 data_product = RectangularIntensityDataProduct(
                     data=combined_map,
-                    input_metadata=self.input_metadata
+                    input_metadata=self.input_metadata,
+                    spice_frame_name=spice_frame_name
                 )
             case MapDescriptorParts(sensor=Sensor.HiCombined):
                 dependencies = HiL3CombinedMapDependencies.fetch_dependencies(self.dependencies)
@@ -85,7 +90,8 @@ class HiProcessor(MapProcessor):
 
                 data_product = RectangularIntensityDataProduct(
                     data=combined_map_data,
-                    input_metadata=self.input_metadata
+                    input_metadata=self.input_metadata,
+                    spice_frame_name=spice_frame_name
                 )
             case None:
                 raise ValueError(f"Could not parse descriptor {self.input_metadata.descriptor}")

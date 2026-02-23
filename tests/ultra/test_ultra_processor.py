@@ -208,6 +208,7 @@ class TestUltraProcessor(unittest.TestCase):
         self.assertEqual(4, len(actual_rectangular_data_product.parent_file_names))
         self.assertEqual({input_l2_map_name, fake_spice.name, input_l1c_pset_name, input_glows_l3e_name},
                          set(actual_rectangular_data_product.parent_file_names))
+        self.assertEqual(SpiceFrame.IMAP_GCS, actual_rectangular_data_product.spice_frame_name)
 
         actual_rectangular_data = actual_rectangular_data_product.data
 
@@ -277,7 +278,8 @@ class TestUltraProcessor(unittest.TestCase):
 
         mock_combine_maps_return_value = mock_exposure_weighted_combination.return_value.combine_healpix_intensity_map_data.return_value
 
-        mock_healpix_to_rectangular.assert_called_once_with(mock_combine_maps_return_value, degree_spacing)
+        mock_healpix_to_rectangular.assert_called_once_with(mock_combine_maps_return_value, degree_spacing,
+                                                            spice_frame_name=sentinel.spice_frame)
 
         mock_save_data.assert_called_once_with(mock_healpix_to_rectangular.return_value)
         self.assertEqual([mock_save_data.return_value], product)
@@ -341,7 +343,8 @@ class TestUltraProcessor(unittest.TestCase):
             [sentinel.u45_l2_survival_corrected_map, sentinel.u90_l2_survival_corrected_map])
 
         mock_healpix_to_rectangular.assert_called_once_with(
-            mock_combination_strategy.combine_healpix_intensity_map_data.return_value, degree_spacing)
+            mock_combination_strategy.combine_healpix_intensity_map_data.return_value, degree_spacing,
+            spice_frame_name=sentinel.spice_frame)
 
         mock_save_data.assert_called_once_with(mock_healpix_to_rectangular.return_value)
         self.assertEqual([mock_save_data.return_value], product)
@@ -484,6 +487,7 @@ class TestUltraProcessor(unittest.TestCase):
         self.assertIsInstance(actual_rectangular_data_product, RectangularSpectralIndexDataProduct)
         self.assertEqual(expected_parent_file_names, actual_rectangular_data_product.parent_file_names)
         self.assertEqual(processor.input_metadata, actual_rectangular_data_product.input_metadata)
+        self.assertEqual(SpiceFrame.ECLIPJ2000, actual_rectangular_data_product.spice_frame_name)
 
         self.assertIsInstance(actual_rectangular_data_product, RectangularSpectralIndexDataProduct)
 
