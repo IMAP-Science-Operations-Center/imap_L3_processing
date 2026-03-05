@@ -31,31 +31,31 @@ class TestModels(CdfModelTestCase):
                 epoch = np.array([datetime(2010, 1, 1), datetime(2010, 1, 2)])
                 epoch_delta_minus = rng.random(len(epoch))
                 epoch_delta_plus = rng.random(len(epoch))
-                energy_table = np.geomspace(2, 1000)
+                energy_per_charge = np.geomspace(2, 1000)
                 spin_sector = np.linspace(0, 360, 24)
-                hplus = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                heplus = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                heplusplus = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                ne = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                cplus4 = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                cplus5 = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                cplus6 = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                oplus5 = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                oplus6 = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                oplus7 = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                oplus8 = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                mg = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                si = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                cnoplus = rng.random((len(epoch), len(energy_table)))
-                fe_loq = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                fe_hiq = rng.random((len(epoch), len(energy_table), len(spin_sector)))
+                hplus = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                heplus = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                heplusplus = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                ne = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                cplus4 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                cplus5 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                cplus6 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                oplus5 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                oplus6 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                oplus7 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                oplus8 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                mg = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                si = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                cnoplus = rng.random((len(epoch), len(energy_per_charge)))
+                fe_loq = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                fe_hiq = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
                 data_quality = rng.random(len(epoch))
                 spin_sector_index = np.array([1])
 
                 cdf_file['epoch'] = epoch
                 cdf_file['epoch_delta_minus'] = epoch_delta_minus
                 cdf_file['epoch_delta_plus'] = epoch_delta_plus
-                cdf_file['energy_table'] = energy_table
+                cdf_file['energy_per_charge'] = energy_per_charge
                 cdf_file['spin_sector'] = spin_sector
                 cdf_file['hplus'] = hplus
                 cdf_file['heplusplus'] = heplusplus
@@ -79,7 +79,7 @@ class TestModels(CdfModelTestCase):
             np.testing.assert_array_equal(result.epoch, epoch)
             np.testing.assert_array_equal(result.epoch_delta_minus, epoch_delta_minus)
             np.testing.assert_array_equal(result.epoch_delta_plus, epoch_delta_plus)
-            np.testing.assert_array_equal(result.energy_table, energy_table)
+            np.testing.assert_array_equal(result.energy_per_charge, energy_per_charge)
             np.testing.assert_array_equal(result.hplus, hplus)
             np.testing.assert_array_equal(result.heplusplus, heplusplus)
             np.testing.assert_array_equal(result.heplus, heplus)

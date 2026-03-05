@@ -38,7 +38,7 @@ class CodiceLoL2SWSpeciesData:
     epoch: ndarray
     epoch_delta_minus: ndarray
     epoch_delta_plus: ndarray
-    energy_table: ndarray
+    energy_per_charge: ndarray
     hplus: ndarray
     heplusplus: ndarray
     heplus: ndarray
@@ -64,7 +64,7 @@ class CodiceLoL2SWSpeciesData:
                 epoch=cdf["epoch"][...],
                 epoch_delta_minus=cdf["epoch_delta_minus"][...],
                 epoch_delta_plus=cdf["epoch_delta_plus"][...],
-                energy_table=cdf["energy_table"][...],
+                energy_per_charge=cdf["energy_per_charge"][...],
                 hplus=cdf["hplus"][...],
                 heplusplus=cdf["heplusplus"][...],
                 heplus=cdf["heplus"][...],
