@@ -1,9 +1,9 @@
 {
-    "test_l3bcde_first_time_processing": "2026-01-12T15:52:36.971070",
+    "test_l3bcde_first_time_processing": "2026-03-05T09:59:10.392514",
     "test_spectral_fit_against_validation_data": "2026-01-23T10:39:49.234684",
-    "test_calculate_pickup_ions_with_minimize": "2026-02-17T10:39:20.005255",
+    "test_calculate_pickup_ions_with_minimize": "2026-03-05T13:18:02.645143",
     "test_ultra_all_sp_maps": "2026-01-26T13:05:08.238429",
     "test_ultra_combined_maps": null,
-    "test_ultra_combined_nsp_maps": "2026-01-30T09:39:41.617647",
+    "test_ultra_combined_nsp_maps": "2026-02-23T11:43:59.652375",
     "test_ultra_combined_sp_maps": "2026-02-23T11:28:29.222530"
 }
