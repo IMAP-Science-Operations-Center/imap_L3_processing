@@ -199,3 +199,29 @@ elongation_excluded:
   VALIDMAX: 0
   VALIDMIN: 180
   RECORD_VARYING: RV
+pixel_longitude:
+  NAME: pixel_longitude
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: longitude of the pixel in ecliptic coordinate
+  VAR_TYPE: metadata
+  FIELDNAM: Pixel longitude
+  LABLAXIS: longitude
+  RECORD_VARYING: RV
+  FORMAT: F9.3
+  FILLVAL: -1.0000E+31
+  UNITS: degrees
+  VALIDMIN: 0
+  VALIDMAX: 360
+pixel_latitude:
+  NAME: pixel_latitude
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: latitude of the pixel in ecliptic coordinate
+  VAR_TYPE: metadata
+  FIELDNAM: Pixel latitude
+  LABLAXIS: latitude
+  RECORD_VARYING: RV
+  FORMAT: F9.3
+  FILLVAL: -1.0000E+31
+  UNITS: degrees
+  VALIDMIN: -90
+  VALIDMAX: 90

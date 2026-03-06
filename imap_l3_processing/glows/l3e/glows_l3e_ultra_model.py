@@ -42,6 +42,7 @@ class GlowsL3EUltraData(DataProduct):
     spacecraft_velocity_y: np.ndarray
     spacecraft_velocity_z: np.ndarray
     elongation_excluded: np.ndarray
+    pixel_latitude: np.ndarray
 
     @classmethod
     def convert_dat_to_glows_l3e_ul_product(cls, input_metadata: InputMetadata, file_path: Path,
