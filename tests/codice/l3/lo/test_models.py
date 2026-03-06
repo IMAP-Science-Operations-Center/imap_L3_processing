@@ -21,7 +21,24 @@ from imap_l3_processing.utils import save_data
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path
 
-
+LO_L2_SW_SPECIES_DATA_VARS= [
+                  'hplus',
+                  'heplusplus',
+                  'heplus',
+                  'ne',
+                  'cplus4',
+                  'cplus5',
+                  'cplus6',
+                  'oplus5',
+                  'oplus6',
+                  'oplus7',
+                  'oplus8',
+                  'cnoplus',
+                  'mg',
+                  'si',
+                  'fe_loq',
+                  'fe_hiq',
+                ]
 class TestModels(CdfModelTestCase):
     def test_lo_l2_sw_species_read_from_cdf(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -50,7 +67,6 @@ class TestModels(CdfModelTestCase):
                 fe_loq = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
                 fe_hiq = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
                 data_quality = rng.random(len(epoch))
-                spin_sector_index = np.array([1])
 
                 cdf_file['epoch'] = epoch
                 cdf_file['epoch_delta_minus'] = epoch_delta_minus
@@ -75,6 +91,9 @@ class TestModels(CdfModelTestCase):
                 cdf_file['fe_hiq'] = fe_hiq
                 cdf_file['data_quality'] = data_quality
 
+                for var in LO_L2_SW_SPECIES_DATA_VARS:
+                    cdf_file[var].attrs["FILLVAL"] = -1e31
+
             result: CodiceLoL2SWSpeciesData = CodiceLoL2SWSpeciesData.read_from_cdf(cdf_file_path)
             np.testing.assert_array_equal(result.epoch, epoch)
             np.testing.assert_array_equal(result.epoch_delta_minus, epoch_delta_minus)
@@ -96,6 +115,57 @@ class TestModels(CdfModelTestCase):
             np.testing.assert_array_equal(result.si, si)
             np.testing.assert_array_equal(result.fe_loq, fe_loq)
             np.testing.assert_array_equal(result.fe_hiq, fe_hiq)
+            np.testing.assert_array_equal(result.data_quality, data_quality)
+
+    def test_lo_l2_sw_species_read_from_cdf_handles_fillval(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cdf_file_path = Path(tmpdir) / "test_fillval_cdf.cdf"
+            rng = np.random.default_rng()
+            with CDF(str(cdf_file_path), readonly=False, masterpath="") as cdf_file:
+
+                epoch = np.array([datetime(2010, 1, 1), datetime(2010, 1, 2)])
+                epoch_delta_minus = rng.random(len(epoch))
+                epoch_delta_plus = rng.random(len(epoch))
+                energy_per_charge = np.geomspace(2, 1000)
+                spin_sector = np.linspace(0, 360, 24)
+                fills = np.full((len(epoch), len(energy_per_charge), len(spin_sector)), -1e31)
+
+                data_quality = rng.random(len(epoch))
+
+                cdf_file['epoch'] = epoch
+                cdf_file['epoch_delta_minus'] = epoch_delta_minus
+                cdf_file['epoch_delta_plus'] = epoch_delta_plus
+                cdf_file['energy_per_charge'] = energy_per_charge
+                cdf_file['spin_sector'] = spin_sector
+                cdf_file['data_quality'] = data_quality
+
+                for var in LO_L2_SW_SPECIES_DATA_VARS:
+                    cdf_file[var] = fills
+                    cdf_file[var].attrs["FILLVAL"] = -1e31
+
+            nans = np.full((len(epoch), len(energy_per_charge), len(spin_sector)), np.nan)
+
+            result: CodiceLoL2SWSpeciesData = CodiceLoL2SWSpeciesData.read_from_cdf(cdf_file_path)
+            np.testing.assert_array_equal(result.epoch, epoch)
+            np.testing.assert_array_equal(result.epoch_delta_minus, epoch_delta_minus)
+            np.testing.assert_array_equal(result.epoch_delta_plus, epoch_delta_plus)
+            np.testing.assert_array_equal(result.energy_per_charge, energy_per_charge)
+            np.testing.assert_array_equal(result.hplus, nans)
+            np.testing.assert_array_equal(result.heplusplus, nans)
+            np.testing.assert_array_equal(result.heplus, nans)
+            np.testing.assert_array_equal(result.ne, nans)
+            np.testing.assert_array_equal(result.cplus4, nans)
+            np.testing.assert_array_equal(result.cplus5, nans)
+            np.testing.assert_array_equal(result.cplus6, nans)
+            np.testing.assert_array_equal(result.oplus5, nans)
+            np.testing.assert_array_equal(result.oplus6, nans)
+            np.testing.assert_array_equal(result.oplus7, nans)
+            np.testing.assert_array_equal(result.oplus8, nans)
+            np.testing.assert_array_equal(result.cnoplus, nans)
+            np.testing.assert_array_equal(result.mg, nans)
+            np.testing.assert_array_equal(result.si, nans)
+            np.testing.assert_array_equal(result.fe_loq, nans)
+            np.testing.assert_array_equal(result.fe_hiq, nans)
             np.testing.assert_array_equal(result.data_quality, data_quality)
 
     def test_codice_lo_l3a_partial_density_to_data_product(self):

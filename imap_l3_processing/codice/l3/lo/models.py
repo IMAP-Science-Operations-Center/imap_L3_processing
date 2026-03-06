@@ -58,29 +58,29 @@ class CodiceLoL2SWSpeciesData:
     data_quality: ndarray
 
     @classmethod
-    def read_from_cdf(cls, l2_sectored_intensities_cdf: Path):
-        with CDF(str(l2_sectored_intensities_cdf)) as cdf:
+    def read_from_cdf(cls, l2_lo_sw_species_cdf: Path):
+        with CDF(str(l2_lo_sw_species_cdf)) as cdf:
             return cls(
                 epoch=cdf["epoch"][...],
                 epoch_delta_minus=cdf["epoch_delta_minus"][...],
                 epoch_delta_plus=cdf["epoch_delta_plus"][...],
                 energy_per_charge=cdf["energy_per_charge"][...],
-                hplus=cdf["hplus"][...],
-                heplusplus=cdf["heplusplus"][...],
-                heplus=cdf["heplus"][...],
-                ne=cdf["ne"][...],
-                cplus4=cdf["cplus4"][...],
-                cplus5=cdf["cplus5"][...],
-                cplus6=cdf["cplus6"][...],
-                oplus5=cdf["oplus5"][...],
-                oplus6=cdf["oplus6"][...],
-                oplus7=cdf["oplus7"][...],
-                oplus8=cdf["oplus8"][...],
-                cnoplus=cdf["cnoplus"][...],
-                mg=cdf["mg"][...],
-                si=cdf["si"][...],
-                fe_loq=cdf["fe_loq"][...],
-                fe_hiq=cdf["fe_hiq"][...],
+                hplus=read_numeric_variable(cdf["hplus"]),
+                heplusplus=read_numeric_variable(cdf["heplusplus"]),
+                heplus=read_numeric_variable(cdf["heplus"]),
+                ne=read_numeric_variable(cdf["ne"]),
+                cplus4=read_numeric_variable(cdf["cplus4"]),
+                cplus5=read_numeric_variable(cdf["cplus5"]),
+                cplus6=read_numeric_variable(cdf["cplus6"]),
+                oplus5=read_numeric_variable(cdf["oplus5"]),
+                oplus6=read_numeric_variable(cdf["oplus6"]),
+                oplus7=read_numeric_variable(cdf["oplus7"]),
+                oplus8=read_numeric_variable(cdf["oplus8"]),
+                cnoplus=read_numeric_variable(cdf["cnoplus"]),
+                mg=read_numeric_variable(cdf["mg"]),
+                si=read_numeric_variable(cdf["si"]),
+                fe_loq=read_numeric_variable(cdf["fe_loq"]),
+                fe_hiq=read_numeric_variable(cdf["fe_hiq"]),
                 data_quality=cdf["data_quality"][...],
             )
 
