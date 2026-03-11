@@ -125,6 +125,7 @@ ssd_energy:
   FIELDNAM: SSD Energy
   LABLAXIS: SSD energy
   UNITS: MeV
+  SCALETYP: log
   SCALEMIN: 1.0e-2
   SCALEMAX: 1.0e+2
 
@@ -199,6 +200,9 @@ energy_per_nuc:
   FIELDNAM: Energy per nuc
   LABLAXIS: Energy per nuc
   UNITS: MeV/nuc
+  SCALEMIN: 1.0e-2
+  SCALEMAX: 1.0e+4
+  SCALETYP: log
 
 estimated_mass:
   <<: *per_event_data
