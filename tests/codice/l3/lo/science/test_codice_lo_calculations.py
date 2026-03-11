@@ -169,7 +169,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         mock_species_mass_range_lookup.get_species_index = mock_get_species_index
 
-        num_events = np.array([[3, 1], [3, 1]])
+        num_events = np.array([[3, 2], [3, 1]])
         num_events = np.ma.masked_array(num_events, mask=[[False, False], [False, True]])
 
         mock_energy_lookup = Mock(spec=EnergyLookup)
@@ -178,30 +178,30 @@ class TestCodiceLoCalculations(unittest.TestCase):
         mock_energy_lookup.bin_centers = Mock()
 
         spin_angle = np.array([
-            [[37.5, 22.5, 37.5, -9999], [7.5, np.nan, np.nan, np.nan]],
+            [[37.5, 22.5, 37.5, -9999], [7.5, 7.5, np.nan, np.nan]],
             [[37.5, 37.5, 37.5, np.nan], [7.5, np.nan, np.nan, np.nan]]
         ])
 
         position = np.ma.masked_array(data=np.array([
-            [[2, 4, 2, 255], [1, 255, 255, 255]],
+            [[2, 24, 2, 255], [1, 25, 255, 255]],
             [[9, 9, 9, 255], [1, 255, 255, 255]]
         ]), mask=np.array([
-            [[False, False, False, True], [False, True, True, True]],
+            [[False, False, False, True], [False, False, True, True]],
             [[False, True, False, True], [False, True, True, True]],
         ]))
 
         energy_step = np.array([
-            [[0.0, 1234.2, 0.0, np.nan], [0.0, np.nan, np.nan, np.nan]],
+            [[0.0, 1234.2, 0.0, np.nan], [0.0, 5555.0, np.nan, np.nan]],
             [[345.2, 345.2, 345.2, np.nan], [0.0, np.nan, np.nan, np.nan]]
         ])
 
         mass = np.array([
-            [[6, 5, 4, np.nan], [7, np.nan, np.nan, np.nan]],
+            [[6, 5, 4, np.nan], [7, 5, np.nan, np.nan]],
             [[3, 3, 3, np.nan], [7, np.nan, np.nan, np.nan]],
         ])
 
         mass_per_charge = np.array([
-            [[1, 2, 3, np.nan], [8, np.nan, np.nan, np.nan]],
+            [[1, 2, 3, np.nan], [8, 2, np.nan, np.nan]],
             [[4, 4, 4, np.nan], [9, np.nan, np.nan, np.nan]],
         ])
 
@@ -251,7 +251,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
         np.testing.assert_array_equal(actual_counts_3d_data.get_3d_distribution("He+"), expected_he_plus_counts)
 
         expected_fe_counts = np.zeros(rebinned_shape)
-        expected_fe_counts[0, 0, 3, 1, 100] = 1
+        expected_fe_counts[0, 0, 23, 1, 100] = 1
         np.testing.assert_array_equal(actual_counts_3d_data.get_3d_distribution("Fe"), expected_fe_counts)
 
         expected_mg_counts = np.zeros(rebinned_shape)

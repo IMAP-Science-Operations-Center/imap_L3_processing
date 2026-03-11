@@ -105,6 +105,11 @@ def rebin_to_counts_by_species_elevation_and_spin_sector(num_events: np.ndarray,
                     continue
 
                 position_of_event = int(position[indices_of_event])
+                assert 1 <= position[indices_of_event], f"Expected position to be greater than 0 for event {indices_of_event}"
+
+                if position_of_event > CODICE_LO_NUM_AZIMUTH_BINS:
+                    continue
+
                 species = mass_species_bin_lookup.get_species(mass[indices_of_event],
                                                               mass_per_charge[indices_of_event])
                 if species is not None:
