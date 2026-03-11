@@ -245,7 +245,7 @@ class CodiceLoProcessor(Processor):
         l3a_de_normalization = np.flip(dependencies.l3a_direct_event_data.normalization, axis=2)
         l3a_de_num_events = dependencies.l3a_direct_event_data.num_events
 
-        l1a_acquisition_time = dependencies.l1a_sw_data.acquisition_time_per_step
+        l1a_acquisition_time = dependencies.l1a_sw_data.acquisition_time_per_esa_step
         l1_sw_rgfo_half_spins = dependencies.l1a_sw_data.rgfo_half_spin
 
         mass_species_bin_lookup = dependencies.mass_species_bin_lookup

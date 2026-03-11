@@ -681,8 +681,9 @@ class TestCodiceLoProcessor(unittest.TestCase):
         )
 
         l1a_sw_data = Mock(
+            spec=CodiceLoL1aSWPriorityRates,
             energy_table=sentinel.l1a_energy_table,
-            acquisition_time_per_step=sentinel.l1a_acquisition_time,
+            acquisition_time_per_esa_step=sentinel.l1a_acquisition_time,
             rgfo_half_spin=sentinel.rgfo_half_spin,
         )
 
@@ -695,7 +696,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         dependencies = CodiceLoL3a3dDistributionsDependencies(
             l3a_direct_event_data=l3a_direct_event_data,
             l1a_sw_data=l1a_sw_data,
-            l1a_nsw_data=Mock(),
+            l1a_nsw_data=Mock(spec=CodiceLoL1aNSWPriorityRates),
             mass_species_bin_lookup=Mock(),
             geometric_factors_lookup=mock_geometric_factor_lut,
             efficiency_factors_lut=mock_efficiency_lut,
@@ -817,7 +818,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
                 "codice/imap_codice_l1a_lo-nsw-priority-all-fill_20250814_v001.cdf"),
             direct_event_path=get_test_data_path("codice/imap_codice_l2_lo-direct-events-all-fill_20250814_v001.cdf"),
             mass_coefficients_file_path=get_test_data_path(
-                "codice/imap_codice_mass-coefficient-lookup_20241110_v002.csv"),
+                "codice/imap_codice_mass-coefficient-lookup_20241110_v003.csv"),
             esa_to_energy_per_charge_file_path=get_test_data_path(
                 "codice/imap_codice_lo-energy-per-charge_20241110_v001.csv"
             )

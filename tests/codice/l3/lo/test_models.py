@@ -419,15 +419,15 @@ class TestModels(CdfModelTestCase):
 
     def test_codice_lo_l1a_sw_priority_read_from_instrument_team_cdf(self):
         instrument_team_cdf_path = get_test_instrument_team_data_path(
-            "codice/lo/imap_codice_l1a_lo-sw-priority_20250814_v001.cdf")
+            "codice/lo/imap_codice_l1a_lo-sw-priority_20260307_v003.cdf")
         actual_l1a_sw_priority_rates = CodiceLoL1aSWPriorityRates.read_from_cdf(instrument_team_cdf_path)
 
         with CDF(str(instrument_team_cdf_path)) as cdf:
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.epoch, cdf["epoch"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.epoch_delta_plus, cdf["epoch_delta_plus"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.epoch_delta_minus, cdf["epoch_delta_minus"][...])
-            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.acquisition_time_per_step,
-                                          cdf["acquisition_time_per_step"][...])
+            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.acquisition_time_per_esa_step,
+                                          cdf["acquisition_time_per_esa_step"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.spin_sector_index, cdf["spin_sector"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.rgfo_half_spin, cdf["rgfo_half_spin"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.nso_half_spin, cdf["nso_half_spin"][...])
@@ -443,7 +443,7 @@ class TestModels(CdfModelTestCase):
 
     def test_codice_lo_l1a_nsw_priority_read_from_instrument_team_cdf(self):
         instrument_team_cdf_path = get_test_instrument_team_data_path(
-            "codice/lo/imap_codice_l1a_lo-nsw-priority_20250814_v001.cdf")
+            "codice/lo/imap_codice_l1a_lo-nsw-priority_20260307_v003.cdf")
         actual_l1a_nsw_priority_rates = CodiceLoL1aNSWPriorityRates.read_from_cdf(instrument_team_cdf_path)
 
         with CDF(str(instrument_team_cdf_path)) as cdf:
@@ -451,8 +451,8 @@ class TestModels(CdfModelTestCase):
             np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.epoch_delta_plus, cdf["epoch_delta_plus"][...])
             np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.epoch_delta_minus,
                                           cdf["epoch_delta_minus"][...])
-            np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.acquisition_time_per_step,
-                                          cdf["acquisition_time_per_step"][...])
+            np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.acquisition_time_per_esa_step,
+                                          cdf["acquisition_time_per_esa_step"][...])
             np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.spin_sector_index,
                                           cdf["spin_sector"][...])
             np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.rgfo_half_spin, cdf["rgfo_half_spin"][...])

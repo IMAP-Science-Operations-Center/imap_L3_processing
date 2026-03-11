@@ -14,11 +14,12 @@ import imap_l3_data_processor
 import imap_l3_processing
 import tests
 from tests.integration.integration_test_helpers import mock_imap_data_access
-from tests.test_helpers import get_run_local_data_path, get_test_data_path
+from tests.test_helpers import get_run_local_data_path, get_test_data_path, get_test_instrument_team_data_path
 
 
 class CodiceProcessorIntegration(unittest.TestCase):
     TEST_DATA_DIR = Path(tests.integration.__file__).parent / 'test_data/codice'
+    INSTRUMENT_TEAM_DATA_DIR = get_test_instrument_team_data_path("codice/lo")
     OUTPUT_DATA_DIR = get_run_local_data_path('codice_lo_integration')
 
     @patch("imap_l3_data_processor._parse_cli_arguments")
@@ -26,9 +27,9 @@ class CodiceProcessorIntegration(unittest.TestCase):
         energy_per_charge_path = get_test_data_path('codice/imap_codice_lo-energy-per-charge_20241110_v001.csv')
         mass_coefficient_path = get_test_data_path('codice/imap_codice_mass-coefficient-lookup_20241110_v003.csv')
         input_files = [
-            self.TEST_DATA_DIR / 'imap_codice_l2_lo-direct-events_20250814_v001.cdf',
-            self.TEST_DATA_DIR / 'imap_codice_l1a_lo-nsw-priority_20250814_v001.cdf',
-            self.TEST_DATA_DIR / 'imap_codice_l1a_lo-sw-priority_20250814_v001.cdf',
+            self.INSTRUMENT_TEAM_DATA_DIR / 'imap_codice_l2_lo-direct-events_20260307_v003.cdf',
+            self.INSTRUMENT_TEAM_DATA_DIR / 'imap_codice_l1a_lo-nsw-priority_20260307_v003.cdf',
+            self.INSTRUMENT_TEAM_DATA_DIR / 'imap_codice_l1a_lo-sw-priority_20260307_v003.cdf',
             energy_per_charge_path,
             mass_coefficient_path,
         ]
@@ -38,9 +39,9 @@ class CodiceProcessorIntegration(unittest.TestCase):
                                 format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
             processing_input_collection = ProcessingInputCollection(
-                ScienceInput('imap_codice_l2_lo-direct-events_20250814_v001.cdf'),
-                ScienceInput('imap_codice_l1a_lo-nsw-priority_20250814_v001.cdf'),
-                ScienceInput('imap_codice_l1a_lo-sw-priority_20250814_v001.cdf'),
+                ScienceInput('imap_codice_l2_lo-direct-events_20260307_v003.cdf'),
+                ScienceInput('imap_codice_l1a_lo-nsw-priority_20260307_v003.cdf'),
+                ScienceInput('imap_codice_l1a_lo-sw-priority_20260307_v003.cdf'),
                 AncillaryInput(energy_per_charge_path.name),
                 AncillaryInput(mass_coefficient_path.name)
             )
@@ -64,9 +65,9 @@ class CodiceProcessorIntegration(unittest.TestCase):
                 'imap_codice_l3a_lo-direct-events_20250814_v001.cdf').construct_path()
             self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
 
-            expected_parents = {'imap_codice_l2_lo-direct-events_20250814_v001.cdf',
-                                'imap_codice_l1a_lo-nsw-priority_20250814_v001.cdf',
-                                'imap_codice_l1a_lo-sw-priority_20250814_v001.cdf',
+            expected_parents = {'imap_codice_l2_lo-direct-events_20260307_v003.cdf',
+                                'imap_codice_l1a_lo-nsw-priority_20260307_v003.cdf',
+                                'imap_codice_l1a_lo-sw-priority_20260307_v003.cdf',
                                 'imap_codice_lo-energy-per-charge_20241110_v001.csv',
                                 'imap_codice_mass-coefficient-lookup_20241110_v003.csv'}
 

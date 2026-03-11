@@ -141,7 +141,7 @@ class CodiceLoL1aSWPriorityRates:
     epoch: np.ndarray
     epoch_delta_plus: np.ndarray
     epoch_delta_minus: np.ndarray
-    acquisition_time_per_step: np.ndarray
+    acquisition_time_per_esa_step: np.ndarray
     spin_sector_index: np.ndarray
     rgfo_half_spin: np.ndarray
     nso_half_spin: np.ndarray
@@ -162,7 +162,7 @@ class CodiceLoL1aSWPriorityRates:
                 epoch=cdf["epoch"][...],
                 epoch_delta_plus=cdf["epoch_delta_plus"][...],
                 epoch_delta_minus=cdf["epoch_delta_minus"][...],
-                acquisition_time_per_step=cdf["acquisition_time_per_step"][...],
+                acquisition_time_per_esa_step=cdf["acquisition_time_per_esa_step"][...],
                 spin_sector_index=cdf["spin_sector"][...],
                 rgfo_half_spin=read_variable_and_mask_fill_values(cdf["rgfo_half_spin"]),
                 nso_half_spin=read_variable_and_mask_fill_values(cdf["nso_half_spin"]),
@@ -183,7 +183,7 @@ class CodiceLoL1aNSWPriorityRates:
     epoch: np.ndarray
     epoch_delta_plus: np.ndarray
     epoch_delta_minus: np.ndarray
-    acquisition_time_per_step: np.ndarray
+    acquisition_time_per_esa_step: np.ndarray
     spin_sector_index: np.ndarray
     rgfo_half_spin: np.ndarray
     data_quality: np.ndarray
@@ -201,7 +201,7 @@ class CodiceLoL1aNSWPriorityRates:
                 epoch=cdf["epoch"][...],
                 epoch_delta_plus=cdf["epoch_delta_plus"][...],
                 epoch_delta_minus=cdf["epoch_delta_minus"][...],
-                acquisition_time_per_step=cdf["acquisition_time_per_step"][...],
+                acquisition_time_per_esa_step=cdf["acquisition_time_per_esa_step"][...],
                 spin_sector_index=cdf["spin_sector"][...],
                 rgfo_half_spin=read_variable_and_mask_fill_values(cdf["rgfo_half_spin"]),
                 data_quality=read_variable_and_mask_fill_values(cdf["data_quality"]),
