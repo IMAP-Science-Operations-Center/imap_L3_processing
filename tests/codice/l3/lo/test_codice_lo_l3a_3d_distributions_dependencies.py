@@ -4,7 +4,8 @@ from unittest.mock import patch, sentinel, call
 from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput, AncillaryInput
 
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_3d_distributions_dependencies import \
-    CodiceLoL3a3dDistributionsDependencies, MASS_SPECIES_BIN_LOOKUP_DESCRIPTOR, GEOMETRIC_FACTOR_LOOKUP_DESCRIPTOR
+    CodiceLoL3a3dDistributionsDependencies, MASS_SPECIES_BIN_LOOKUP_DESCRIPTOR, GEOMETRIC_FACTOR_LOOKUP_DESCRIPTOR, \
+    EFFICIENCY_FACTOR_LOOKUP_DESCRIPTOR
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies import SW_PRIORITY_DESCRIPTOR, \
     NSW_PRIORITY_DESCRIPTOR
 from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import \
@@ -28,8 +29,8 @@ class TestCodiceLoL3a3dDistributions(unittest.TestCase):
         l1a_nsw_priority_name = f"imap_codice_l1a_{NSW_PRIORITY_DESCRIPTOR}_20100105_v010.cdf"
         mass_species_lut_name = f"imap_codice_{MASS_SPECIES_BIN_LOOKUP_DESCRIPTOR}_20100105_v010.csv"
         geometric_factors_lut_name = f"imap_codice_{GEOMETRIC_FACTOR_LOOKUP_DESCRIPTOR}_20100105_v010.csv"
-        efficiency_factors_lut_name = f"imap_codice_lo-{species}-efficiency_20100105_v010.csv"
-        energy_per_charge_lut_name = f"imap_codice_lo-{ESA_TO_ENERGY_PER_CHARGE_LOOKUP_DESCRIPTOR}_20100105_v010.csv"
+        efficiency_factors_lut_name = f"imap_codice_{EFFICIENCY_FACTOR_LOOKUP_DESCRIPTOR}_20100105_v010.csv"
+        energy_per_charge_lut_name = f"imap_codice_{ESA_TO_ENERGY_PER_CHARGE_LOOKUP_DESCRIPTOR}_20100105_v010.csv"
 
         unused_science_input = ScienceInput(f"imap_codice_l2_lo-direct-events_20100105_v010.cdf")
 
