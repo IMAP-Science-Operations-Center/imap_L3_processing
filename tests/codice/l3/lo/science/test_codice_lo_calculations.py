@@ -345,19 +345,19 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
     def test_convert_count_rate_to_intensity(self):
         num_epochs = 3
-        num_azimuth_bins = 4
+        num_position_bins = 4
         num_spin_angles = 5
         num_energies = 6
 
         rng = np.random.default_rng()
-        count_rates = rng.random((num_epochs, num_azimuth_bins, num_spin_angles, num_energies))
+        count_rates = rng.random((num_epochs, num_position_bins, num_spin_angles, num_energies))
         energy_per_charge = EnergyLookup(bin_centers=rng.random(num_energies),
                                          bin_edges=rng.random(num_energies),
                                          delta_plus=rng.random(num_energies),
                                          delta_minus=rng.random(num_energies))
-        geometric_factor = rng.random((num_epochs, num_energies))
+        geometric_factor = rng.random((num_epochs, num_position_bins, num_energies))
 
-        efficiency = rng.random((num_azimuth_bins, num_energies))
+        efficiency = rng.random((num_position_bins, num_energies))
 
         mock_efficiency_lookup = Mock()
         mock_efficiency_lookup.efficiency_data = efficiency
@@ -366,7 +366,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
                                                          geometric_factor)
 
         expected_denominator = (energy_per_charge.bin_centers
-                                * geometric_factor[:, np.newaxis, np.newaxis, :]
+                                * geometric_factor[:, :, np.newaxis, :]
                                 * efficiency[np.newaxis, :, np.newaxis, :])
 
         np.testing.assert_array_almost_equal(intensity_data * expected_denominator, count_rates)

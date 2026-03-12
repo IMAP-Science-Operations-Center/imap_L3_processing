@@ -164,7 +164,7 @@ def convert_count_rate_to_intensity(count_rates: np.ndarray,
                                     efficiency_lookup: EfficiencyLookup,
                                     geometric_factor: np.ndarray[(EPOCH, ENERGY)]) -> np.ndarray:
     reshaped_efficiency_data = efficiency_lookup.efficiency_data[np.newaxis, :, np.newaxis, :]
-    reshaped_geometric_factor = geometric_factor[:, np.newaxis, np.newaxis, :]
+    reshaped_geometric_factor = geometric_factor[:, :, np.newaxis, :]
     denominator = reshaped_geometric_factor * energy_per_charge.bin_centers * reshaped_efficiency_data
     intensities = count_rates / denominator
     return intensities
