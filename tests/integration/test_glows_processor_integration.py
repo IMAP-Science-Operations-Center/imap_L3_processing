@@ -52,7 +52,7 @@ def run_test_in_docker(test_to_run: Callable):
         else:
             l3_processing_dir = Path(tests.__file__).parent.parent
 
-            docker_build = subprocess.run(["docker", "build", "-q", "-f", "Dockerfile_glows_integration", "."],
+            docker_build = subprocess.run(["docker", "build", "--platform", "linux/amd64", "-q", "-f", "Dockerfile_glows_integration", "."],
                                           cwd=l3_processing_dir, capture_output=True)
             image_hash = docker_build.stdout.strip().decode('utf-8')
 
@@ -60,6 +60,7 @@ def run_test_in_docker(test_to_run: Callable):
 
             args = [
                 "docker", "run", "--rm",
+                "--platform", "linux/amd64",
                 "--mount", f'type=bind,src={l3_processing_dir}/temp_cdf_data,dst=/temp_cdf_data',
                 "--mount", f'type=bind,src={l3_processing_dir}/run_local_input_data,dst=/run_local_input_data',
                 image_hash, generate_test_function_import_path(test_to_run)
@@ -262,6 +263,103 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
 
             for file_path in expected_files:
                 self.assertTrue(file_path.construct_path().exists(), msg=str(file_path.construct_path()))
+
+    @run_periodically(timedelta(days=14))
+    @run_test_in_docker
+    def test_l3bcde_reprocessing(self):
+        original_datetime2et = spiceypy.datetime2et
+        original_get = requests.get
+        offset = (datetime(2025, 4, 15) - datetime(2010, 1, 1)).total_seconds()
+        jan_through_apr_offset = (datetime(2026, 1, 1) - datetime(2010, 1, 1)).total_seconds()
+        apr_through_dec_offset = (datetime(2025, 4, 15) - datetime(2010, 4, 15)).total_seconds()
+
+        def hijack_metakernel_params(url: str, *, params: dict = {}):
+            if 'start_time' in params and 'end_time' in params:
+                params['start_time'] = str(int(int(params['start_time']) + offset))
+                params['end_time'] = str(int(int(params['end_time']) + offset))
+            return original_get(url, params=params)
+
+        def determine_spice_offset(date: datetime):
+            if date.month < 4 or (date.month == 4 and date.day < 15):
+                return jan_through_apr_offset
+            else:
+                return apr_through_dec_offset
+
+        with (patch('spiceypy.datetime2et', side_effect=lambda x: original_datetime2et(x) + determine_spice_offset(x)),
+              patch('requests.get', side_effect=hijack_metakernel_params)):
+            l3bcde_input_files = [
+                GLOWS_TEST_DATA / "imap_glows_l3a_hist_20100104-repoint00152_v001.cdf",
+                GLOWS_TEST_DATA / "imap_glows_l3a_hist_20100128-repoint00176_v001.cdf",
+                GLOWS_TEST_DATA / "imap_glows_l3a_hist_20100424-repoint00262_v001.cdf",
+                GLOWS_TEST_DATA / "imap_glows_l3a_hist_20100518-repoint00286_v001.cdf",
+                GLOWS_TEST_DATA / "imap_glows_l3a_hist_20100520-repoint00288_v001.cdf",
+
+                GLOWS_TEST_DATA / "imap_glows_l3a_hist_20100105-repoint00153_v001.cdf", # new L3a file
+
+                GLOWS_TEST_DATA / "imap_glows_l3b_ion-rate-profile_20100103-cr02092_v001.cdf",
+                GLOWS_TEST_DATA / "imap_glows_l3b_ion-rate-profile_20100422-cr02096_v001.cdf",
+                GLOWS_TEST_DATA / "imap_glows_l3b_ion-rate-profile_20100519-cr02097_v001.cdf",
+                GLOWS_TEST_DATA / "imap_glows_l3c_sw-profile_20100103-cr02092_v001.cdf",
+                GLOWS_TEST_DATA / "imap_glows_l3c_sw-profile_20100422-cr02096_v001.cdf",
+                GLOWS_TEST_DATA / "imap_glows_l3c_sw-profile_20100519-cr02097_v001.cdf",
+
+                GLOWS_TEST_DATA / "imap_glows_l3d_solar-hist_19470303-cr02096_v001.cdf",
+
+                GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-1CR_20100101_v001.json",
+                GLOWS_TEST_DATA / "imap_glows_WawHelioIonMP_20100101_v001.json",
+                GLOWS_TEST_DATA / "imap_glows_bad-days-list_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_pipeline-settings-l3bcde_20100101_v003.json",
+                GLOWS_TEST_DATA / "imap_glows_plasma-speed-2010a_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_proton-density-2010a_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-2010a_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_photoion-2010a_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_lya-2010a_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_electron-density-2010a_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_ionization-files_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_energy-grid-lo_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_tess-xyz-8_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_lo_elongation-data_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_energy-grid-hi_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_energy-grid-ultra_20100101_v001.dat",
+                GLOWS_TEST_DATA / "imap_glows_tess-ang-16_20100101_v001.dat",
+                INTEGRATION_TEST_DATA / "spice" / "imap_2026_269_15.repoint",
+                INTEGRATION_TEST_DATA / "spice" / "imap_2025_105_2026_105_01.ah.bc",
+                INTEGRATION_TEST_DATA / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
+                INTEGRATION_TEST_DATA / "spice" / "imap_science_108.tf",
+                INTEGRATION_TEST_DATA / "spice" / "naif020.tls",
+                INTEGRATION_TEST_DATA / "spice" / "imap_sclk_008.tsc",
+                INTEGRATION_TEST_DATA / "spice" / "de440.bsp",
+                INTEGRATION_TEST_DATA / "spice" / "imap_recon_20250415_20260415_v01.bsp",
+            ]
+
+            logging.basicConfig(force=True, level=logging.INFO,
+                                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+            with mock_imap_data_access(get_run_local_data_path("glows_reprocessing"), l3bcde_input_files):
+                processing_input = ProcessingInputCollection(RepointInput("imap_2026_269_15.repoint"))
+                input_metadata = InputMetadata(instrument="glows", data_level="l3b", descriptor="ion-rate-profile",
+                                               version="v001", start_date=datetime(2000, 1, 1),
+                                               end_date=datetime(2000, 1, 1))
+
+                processor = GlowsProcessor(processing_input, input_metadata)
+                processor.process()
+
+                expected_files = [
+                    ScienceFilePath('imap_glows_l3b_ion-rate-profile_20100103-cr02092_v002.cdf'),
+
+                    ScienceFilePath('imap_glows_l3c_sw-profile_20100103-cr02092_v002.cdf'),
+
+                    ScienceFilePath('imap_glows_l3d_solar-hist_19470303-cr02096_v002.cdf'),
+                    AncillaryFilePath('imap_glows_uv-anis_19470303_20250509_v002.dat'),
+                    AncillaryFilePath('imap_glows_lya_19470303_20250509_v002.dat'),
+                    AncillaryFilePath('imap_glows_e-dens_19470303_20250509_v002.dat'),
+                    AncillaryFilePath('imap_glows_p-dens_19470303_20250509_v002.dat'),
+                    AncillaryFilePath('imap_glows_speed_19470303_20250509_v002.dat'),
+                    AncillaryFilePath('imap_glows_phion_19470303_20250509_v002.dat'),
+                ]
+
+                for file_path in expected_files:
+                    self.assertTrue(file_path.construct_path().exists(), msg=str(file_path.construct_path()))
 
     @skip("takes an hour to run")
     @run_test_in_docker
