@@ -21,7 +21,24 @@ from imap_l3_processing.utils import save_data
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path
 
-
+LO_L2_SW_SPECIES_DATA_VARS= [
+                  'hplus',
+                  'heplusplus',
+                  'heplus',
+                  'ne',
+                  'cplus4',
+                  'cplus5',
+                  'cplus6',
+                  'oplus5',
+                  'oplus6',
+                  'oplus7',
+                  'oplus8',
+                  'cnoplus',
+                  'mg',
+                  'si',
+                  'fe_loq',
+                  'fe_hiq',
+                ]
 class TestModels(CdfModelTestCase):
     def test_lo_l2_sw_species_read_from_cdf(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -31,31 +48,30 @@ class TestModels(CdfModelTestCase):
                 epoch = np.array([datetime(2010, 1, 1), datetime(2010, 1, 2)])
                 epoch_delta_minus = rng.random(len(epoch))
                 epoch_delta_plus = rng.random(len(epoch))
-                energy_table = np.geomspace(2, 1000)
+                energy_per_charge = np.geomspace(2, 1000)
                 spin_sector = np.linspace(0, 360, 24)
-                hplus = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                heplus = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                heplusplus = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                ne = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                cplus4 = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                cplus5 = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                cplus6 = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                oplus5 = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                oplus6 = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                oplus7 = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                oplus8 = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                mg = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                si = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                cnoplus = rng.random((len(epoch), len(energy_table)))
-                fe_loq = rng.random((len(epoch), len(energy_table), len(spin_sector)))
-                fe_hiq = rng.random((len(epoch), len(energy_table), len(spin_sector)))
+                hplus = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                heplus = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                heplusplus = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                ne = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                cplus4 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                cplus5 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                cplus6 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                oplus5 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                oplus6 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                oplus7 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                oplus8 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                mg = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                si = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                cnoplus = rng.random((len(epoch), len(energy_per_charge)))
+                fe_loq = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                fe_hiq = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
                 data_quality = rng.random(len(epoch))
-                spin_sector_index = np.array([1])
 
                 cdf_file['epoch'] = epoch
                 cdf_file['epoch_delta_minus'] = epoch_delta_minus
                 cdf_file['epoch_delta_plus'] = epoch_delta_plus
-                cdf_file['energy_table'] = energy_table
+                cdf_file['energy_per_charge'] = energy_per_charge
                 cdf_file['spin_sector'] = spin_sector
                 cdf_file['hplus'] = hplus
                 cdf_file['heplusplus'] = heplusplus
@@ -75,11 +91,14 @@ class TestModels(CdfModelTestCase):
                 cdf_file['fe_hiq'] = fe_hiq
                 cdf_file['data_quality'] = data_quality
 
+                for var in LO_L2_SW_SPECIES_DATA_VARS:
+                    cdf_file[var].attrs["FILLVAL"] = -1e31
+
             result: CodiceLoL2SWSpeciesData = CodiceLoL2SWSpeciesData.read_from_cdf(cdf_file_path)
             np.testing.assert_array_equal(result.epoch, epoch)
             np.testing.assert_array_equal(result.epoch_delta_minus, epoch_delta_minus)
             np.testing.assert_array_equal(result.epoch_delta_plus, epoch_delta_plus)
-            np.testing.assert_array_equal(result.energy_table, energy_table)
+            np.testing.assert_array_equal(result.energy_per_charge, energy_per_charge)
             np.testing.assert_array_equal(result.hplus, hplus)
             np.testing.assert_array_equal(result.heplusplus, heplusplus)
             np.testing.assert_array_equal(result.heplus, heplus)
@@ -96,6 +115,57 @@ class TestModels(CdfModelTestCase):
             np.testing.assert_array_equal(result.si, si)
             np.testing.assert_array_equal(result.fe_loq, fe_loq)
             np.testing.assert_array_equal(result.fe_hiq, fe_hiq)
+            np.testing.assert_array_equal(result.data_quality, data_quality)
+
+    def test_lo_l2_sw_species_read_from_cdf_handles_fillval(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cdf_file_path = Path(tmpdir) / "test_fillval_cdf.cdf"
+            rng = np.random.default_rng()
+            with CDF(str(cdf_file_path), readonly=False, masterpath="") as cdf_file:
+
+                epoch = np.array([datetime(2010, 1, 1), datetime(2010, 1, 2)])
+                epoch_delta_minus = rng.random(len(epoch))
+                epoch_delta_plus = rng.random(len(epoch))
+                energy_per_charge = np.geomspace(2, 1000)
+                spin_sector = np.linspace(0, 360, 24)
+                fills = np.full((len(epoch), len(energy_per_charge), len(spin_sector)), -1e31)
+
+                data_quality = rng.random(len(epoch))
+
+                cdf_file['epoch'] = epoch
+                cdf_file['epoch_delta_minus'] = epoch_delta_minus
+                cdf_file['epoch_delta_plus'] = epoch_delta_plus
+                cdf_file['energy_per_charge'] = energy_per_charge
+                cdf_file['spin_sector'] = spin_sector
+                cdf_file['data_quality'] = data_quality
+
+                for var in LO_L2_SW_SPECIES_DATA_VARS:
+                    cdf_file[var] = fills
+                    cdf_file[var].attrs["FILLVAL"] = -1e31
+
+            nans = np.full((len(epoch), len(energy_per_charge), len(spin_sector)), np.nan)
+
+            result: CodiceLoL2SWSpeciesData = CodiceLoL2SWSpeciesData.read_from_cdf(cdf_file_path)
+            np.testing.assert_array_equal(result.epoch, epoch)
+            np.testing.assert_array_equal(result.epoch_delta_minus, epoch_delta_minus)
+            np.testing.assert_array_equal(result.epoch_delta_plus, epoch_delta_plus)
+            np.testing.assert_array_equal(result.energy_per_charge, energy_per_charge)
+            np.testing.assert_array_equal(result.hplus, nans)
+            np.testing.assert_array_equal(result.heplusplus, nans)
+            np.testing.assert_array_equal(result.heplus, nans)
+            np.testing.assert_array_equal(result.ne, nans)
+            np.testing.assert_array_equal(result.cplus4, nans)
+            np.testing.assert_array_equal(result.cplus5, nans)
+            np.testing.assert_array_equal(result.cplus6, nans)
+            np.testing.assert_array_equal(result.oplus5, nans)
+            np.testing.assert_array_equal(result.oplus6, nans)
+            np.testing.assert_array_equal(result.oplus7, nans)
+            np.testing.assert_array_equal(result.oplus8, nans)
+            np.testing.assert_array_equal(result.cnoplus, nans)
+            np.testing.assert_array_equal(result.mg, nans)
+            np.testing.assert_array_equal(result.si, nans)
+            np.testing.assert_array_equal(result.fe_loq, nans)
+            np.testing.assert_array_equal(result.fe_hiq, nans)
             np.testing.assert_array_equal(result.data_quality, data_quality)
 
     def test_codice_lo_l3a_partial_density_to_data_product(self):
@@ -349,15 +419,15 @@ class TestModels(CdfModelTestCase):
 
     def test_codice_lo_l1a_sw_priority_read_from_instrument_team_cdf(self):
         instrument_team_cdf_path = get_test_instrument_team_data_path(
-            "codice/lo/imap_codice_l1a_lo-sw-priority_20250814_v001.cdf")
+            "codice/lo/imap_codice_l1a_lo-sw-priority_20260307_v003.cdf")
         actual_l1a_sw_priority_rates = CodiceLoL1aSWPriorityRates.read_from_cdf(instrument_team_cdf_path)
 
         with CDF(str(instrument_team_cdf_path)) as cdf:
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.epoch, cdf["epoch"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.epoch_delta_plus, cdf["epoch_delta_plus"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.epoch_delta_minus, cdf["epoch_delta_minus"][...])
-            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.acquisition_time_per_step,
-                                          cdf["acquisition_time_per_step"][...])
+            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.acquisition_time_per_esa_step,
+                                          cdf["acquisition_time_per_esa_step"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.spin_sector_index, cdf["spin_sector"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.rgfo_half_spin, cdf["rgfo_half_spin"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.nso_half_spin, cdf["nso_half_spin"][...])
@@ -373,7 +443,7 @@ class TestModels(CdfModelTestCase):
 
     def test_codice_lo_l1a_nsw_priority_read_from_instrument_team_cdf(self):
         instrument_team_cdf_path = get_test_instrument_team_data_path(
-            "codice/lo/imap_codice_l1a_lo-nsw-priority_20250814_v001.cdf")
+            "codice/lo/imap_codice_l1a_lo-nsw-priority_20260307_v003.cdf")
         actual_l1a_nsw_priority_rates = CodiceLoL1aNSWPriorityRates.read_from_cdf(instrument_team_cdf_path)
 
         with CDF(str(instrument_team_cdf_path)) as cdf:
@@ -381,8 +451,8 @@ class TestModels(CdfModelTestCase):
             np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.epoch_delta_plus, cdf["epoch_delta_plus"][...])
             np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.epoch_delta_minus,
                                           cdf["epoch_delta_minus"][...])
-            np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.acquisition_time_per_step,
-                                          cdf["acquisition_time_per_step"][...])
+            np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.acquisition_time_per_esa_step,
+                                          cdf["acquisition_time_per_esa_step"][...])
             np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.spin_sector_index,
                                           cdf["spin_sector"][...])
             np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.rgfo_half_spin, cdf["rgfo_half_spin"][...])

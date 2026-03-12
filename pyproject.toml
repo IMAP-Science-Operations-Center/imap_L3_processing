@@ -25,8 +25,7 @@ dependencies = [
     "spiceypy==6.0.0",
     "uncertainties==3.2.2",
     "xarray==2025.3.1",
-# Versioning is meh    
-#"imap-processing>=1.0.20",
+    "imap-processing>=1.0.22",
     "hatchling",
     "uv-dynamic-versioning"
 ]

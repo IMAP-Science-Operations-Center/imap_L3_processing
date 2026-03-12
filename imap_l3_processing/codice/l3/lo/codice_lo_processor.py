@@ -109,34 +109,37 @@ class CodiceLoProcessor(Processor):
     def process_l3a_partial_densities(self, dependencies: CodiceLoL3aPartialDensitiesDependencies):
         codice_lo_l2_data = dependencies.codice_l2_lo_data
         mass_per_charge_lookup = dependencies.mass_per_charge_lookup
-        h_plus_partial_density = calculate_partial_densities(codice_lo_l2_data.hplus, codice_lo_l2_data.energy_table,
-                                                             mass_per_charge_lookup.hplus)
+        h_plus_partial_density = calculate_partial_densities(
+            codice_lo_l2_data.hplus,
+            codice_lo_l2_data.energy_per_charge,
+            mass_per_charge_lookup.hplus,
+        )
         heplusplus_partial_density = calculate_partial_densities(codice_lo_l2_data.heplusplus,
-                                                                 codice_lo_l2_data.energy_table,
+                                                                 codice_lo_l2_data.energy_per_charge,
                                                                  mass_per_charge_lookup.heplusplus)
-        cplus4_partial_density = calculate_partial_densities(codice_lo_l2_data.cplus4, codice_lo_l2_data.energy_table,
+        cplus4_partial_density = calculate_partial_densities(codice_lo_l2_data.cplus4, codice_lo_l2_data.energy_per_charge,
                                                              mass_per_charge_lookup.cplus4)
-        cplus5_partial_density = calculate_partial_densities(codice_lo_l2_data.cplus5, codice_lo_l2_data.energy_table,
+        cplus5_partial_density = calculate_partial_densities(codice_lo_l2_data.cplus5, codice_lo_l2_data.energy_per_charge,
                                                              mass_per_charge_lookup.cplus5)
-        cplus6_partial_density = calculate_partial_densities(codice_lo_l2_data.cplus6, codice_lo_l2_data.energy_table,
+        cplus6_partial_density = calculate_partial_densities(codice_lo_l2_data.cplus6, codice_lo_l2_data.energy_per_charge,
                                                              mass_per_charge_lookup.cplus6)
-        oplus5_partial_density = calculate_partial_densities(codice_lo_l2_data.oplus5, codice_lo_l2_data.energy_table,
+        oplus5_partial_density = calculate_partial_densities(codice_lo_l2_data.oplus5, codice_lo_l2_data.energy_per_charge,
                                                              mass_per_charge_lookup.oplus5)
-        oplus6_partial_density = calculate_partial_densities(codice_lo_l2_data.oplus6, codice_lo_l2_data.energy_table,
+        oplus6_partial_density = calculate_partial_densities(codice_lo_l2_data.oplus6, codice_lo_l2_data.energy_per_charge,
                                                              mass_per_charge_lookup.oplus6)
-        oplus7_partial_density = calculate_partial_densities(codice_lo_l2_data.oplus7, codice_lo_l2_data.energy_table,
+        oplus7_partial_density = calculate_partial_densities(codice_lo_l2_data.oplus7, codice_lo_l2_data.energy_per_charge,
                                                              mass_per_charge_lookup.oplus7)
-        oplus8_partial_density = calculate_partial_densities(codice_lo_l2_data.oplus8, codice_lo_l2_data.energy_table,
+        oplus8_partial_density = calculate_partial_densities(codice_lo_l2_data.oplus8, codice_lo_l2_data.energy_per_charge,
                                                              mass_per_charge_lookup.oplus8)
-        ne_partial_density = calculate_partial_densities(codice_lo_l2_data.ne, codice_lo_l2_data.energy_table,
+        ne_partial_density = calculate_partial_densities(codice_lo_l2_data.ne, codice_lo_l2_data.energy_per_charge,
                                                          mass_per_charge_lookup.ne)
-        mg_partial_density = calculate_partial_densities(codice_lo_l2_data.mg, codice_lo_l2_data.energy_table,
+        mg_partial_density = calculate_partial_densities(codice_lo_l2_data.mg, codice_lo_l2_data.energy_per_charge,
                                                          mass_per_charge_lookup.mg)
-        si_partial_density = calculate_partial_densities(codice_lo_l2_data.si, codice_lo_l2_data.energy_table,
+        si_partial_density = calculate_partial_densities(codice_lo_l2_data.si, codice_lo_l2_data.energy_per_charge,
                                                          mass_per_charge_lookup.si)
-        fe_loq_partial_density = calculate_partial_densities(codice_lo_l2_data.fe_loq, codice_lo_l2_data.energy_table,
+        fe_loq_partial_density = calculate_partial_densities(codice_lo_l2_data.fe_loq, codice_lo_l2_data.energy_per_charge,
                                                              mass_per_charge_lookup.fe_loq)
-        fe_hiq_partial_density = calculate_partial_densities(codice_lo_l2_data.fe_hiq, codice_lo_l2_data.energy_table,
+        fe_hiq_partial_density = calculate_partial_densities(codice_lo_l2_data.fe_hiq, codice_lo_l2_data.energy_per_charge,
                                                              mass_per_charge_lookup.fe_hiq)
 
         return CodiceLoL3aPartialDensityDataProduct(
@@ -242,7 +245,7 @@ class CodiceLoProcessor(Processor):
         l3a_de_normalization = np.flip(dependencies.l3a_direct_event_data.normalization, axis=2)
         l3a_de_num_events = dependencies.l3a_direct_event_data.num_events
 
-        l1a_acquisition_time = dependencies.l1a_sw_data.acquisition_time_per_step
+        l1a_acquisition_time = dependencies.l1a_sw_data.acquisition_time_per_esa_step
         l1_sw_rgfo_half_spins = dependencies.l1a_sw_data.rgfo_half_spin
 
         mass_species_bin_lookup = dependencies.mass_species_bin_lookup

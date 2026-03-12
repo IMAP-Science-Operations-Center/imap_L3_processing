@@ -38,7 +38,7 @@ class CodiceLoL2SWSpeciesData:
     epoch: ndarray
     epoch_delta_minus: ndarray
     epoch_delta_plus: ndarray
-    energy_table: ndarray
+    energy_per_charge: ndarray
     hplus: ndarray
     heplusplus: ndarray
     heplus: ndarray
@@ -58,29 +58,29 @@ class CodiceLoL2SWSpeciesData:
     data_quality: ndarray
 
     @classmethod
-    def read_from_cdf(cls, l2_sectored_intensities_cdf: Path):
-        with CDF(str(l2_sectored_intensities_cdf)) as cdf:
+    def read_from_cdf(cls, l2_lo_sw_species_cdf: Path):
+        with CDF(str(l2_lo_sw_species_cdf)) as cdf:
             return cls(
                 epoch=cdf["epoch"][...],
                 epoch_delta_minus=cdf["epoch_delta_minus"][...],
                 epoch_delta_plus=cdf["epoch_delta_plus"][...],
-                energy_table=cdf["energy_table"][...],
-                hplus=cdf["hplus"][...],
-                heplusplus=cdf["heplusplus"][...],
-                heplus=cdf["heplus"][...],
-                ne=cdf["ne"][...],
-                cplus4=cdf["cplus4"][...],
-                cplus5=cdf["cplus5"][...],
-                cplus6=cdf["cplus6"][...],
-                oplus5=cdf["oplus5"][...],
-                oplus6=cdf["oplus6"][...],
-                oplus7=cdf["oplus7"][...],
-                oplus8=cdf["oplus8"][...],
-                cnoplus=cdf["cnoplus"][...],
-                mg=cdf["mg"][...],
-                si=cdf["si"][...],
-                fe_loq=cdf["fe_loq"][...],
-                fe_hiq=cdf["fe_hiq"][...],
+                energy_per_charge=cdf["energy_per_charge"][...],
+                hplus=read_numeric_variable(cdf["hplus"]),
+                heplusplus=read_numeric_variable(cdf["heplusplus"]),
+                heplus=read_numeric_variable(cdf["heplus"]),
+                ne=read_numeric_variable(cdf["ne"]),
+                cplus4=read_numeric_variable(cdf["cplus4"]),
+                cplus5=read_numeric_variable(cdf["cplus5"]),
+                cplus6=read_numeric_variable(cdf["cplus6"]),
+                oplus5=read_numeric_variable(cdf["oplus5"]),
+                oplus6=read_numeric_variable(cdf["oplus6"]),
+                oplus7=read_numeric_variable(cdf["oplus7"]),
+                oplus8=read_numeric_variable(cdf["oplus8"]),
+                cnoplus=read_numeric_variable(cdf["cnoplus"]),
+                mg=read_numeric_variable(cdf["mg"]),
+                si=read_numeric_variable(cdf["si"]),
+                fe_loq=read_numeric_variable(cdf["fe_loq"]),
+                fe_hiq=read_numeric_variable(cdf["fe_hiq"]),
                 data_quality=cdf["data_quality"][...],
             )
 
@@ -141,7 +141,7 @@ class CodiceLoL1aSWPriorityRates:
     epoch: np.ndarray
     epoch_delta_plus: np.ndarray
     epoch_delta_minus: np.ndarray
-    acquisition_time_per_step: np.ndarray
+    acquisition_time_per_esa_step: np.ndarray
     spin_sector_index: np.ndarray
     rgfo_half_spin: np.ndarray
     nso_half_spin: np.ndarray
@@ -162,7 +162,7 @@ class CodiceLoL1aSWPriorityRates:
                 epoch=cdf["epoch"][...],
                 epoch_delta_plus=cdf["epoch_delta_plus"][...],
                 epoch_delta_minus=cdf["epoch_delta_minus"][...],
-                acquisition_time_per_step=cdf["acquisition_time_per_step"][...],
+                acquisition_time_per_esa_step=cdf["acquisition_time_per_esa_step"][...],
                 spin_sector_index=cdf["spin_sector"][...],
                 rgfo_half_spin=read_variable_and_mask_fill_values(cdf["rgfo_half_spin"]),
                 nso_half_spin=read_variable_and_mask_fill_values(cdf["nso_half_spin"]),
@@ -183,7 +183,7 @@ class CodiceLoL1aNSWPriorityRates:
     epoch: np.ndarray
     epoch_delta_plus: np.ndarray
     epoch_delta_minus: np.ndarray
-    acquisition_time_per_step: np.ndarray
+    acquisition_time_per_esa_step: np.ndarray
     spin_sector_index: np.ndarray
     rgfo_half_spin: np.ndarray
     data_quality: np.ndarray
@@ -201,7 +201,7 @@ class CodiceLoL1aNSWPriorityRates:
                 epoch=cdf["epoch"][...],
                 epoch_delta_plus=cdf["epoch_delta_plus"][...],
                 epoch_delta_minus=cdf["epoch_delta_minus"][...],
-                acquisition_time_per_step=cdf["acquisition_time_per_step"][...],
+                acquisition_time_per_esa_step=cdf["acquisition_time_per_esa_step"][...],
                 spin_sector_index=cdf["spin_sector"][...],
                 rgfo_half_spin=read_variable_and_mask_fill_values(cdf["rgfo_half_spin"]),
                 data_quality=read_variable_and_mask_fill_values(cdf["data_quality"]),

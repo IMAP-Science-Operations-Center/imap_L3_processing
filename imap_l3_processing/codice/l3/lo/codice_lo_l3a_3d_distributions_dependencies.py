@@ -15,8 +15,8 @@ from imap_l3_processing.codice.l3.lo.models import CodiceLoDirectEventData, Codi
     CodiceLoL1aNSWPriorityRates
 
 MASS_SPECIES_BIN_LOOKUP_DESCRIPTOR = "lo-mass-species-bin-lookup"
-GEOMETRIC_FACTOR_LOOKUP_DESCRIPTOR = "lo-geometric-factors"
-EFFICIENCY_FACTOR_LOOKUP_DESCRIPTOR = "lo-efficiency-factors"
+GEOMETRIC_FACTOR_LOOKUP_DESCRIPTOR = "l2-lo-gfactor"
+EFFICIENCY_FACTOR_LOOKUP_DESCRIPTOR = "l2-lo-efficiency"
 
 
 @dataclass
@@ -50,14 +50,22 @@ class CodiceLoL3a3dDistributionsDependencies:
         [direct_events_path] = l3a_direct_event_paths
         [sw_priority_rates_path] = l1a_sw_paths
         [nsw_priority_rates_path] = l1a_nsw_paths
-        [mass_species_bin_path] = processing_input_collection.get_file_paths(source='codice',
-                                                                             descriptor=MASS_SPECIES_BIN_LOOKUP_DESCRIPTOR)
-        [geometric_factor_path] = processing_input_collection.get_file_paths(source='codice',
-                                                                             descriptor=GEOMETRIC_FACTOR_LOOKUP_DESCRIPTOR)
-        [efficiency_factor_path] = processing_input_collection.get_file_paths(source='codice',
-                                                                              descriptor=f"lo-{species}-efficiency")
-        [esa_to_energy_per_charge_path] = processing_input_collection.get_file_paths(source='codice',
-                                                                                     descriptor=ESA_TO_ENERGY_PER_CHARGE_LOOKUP_DESCRIPTOR)
+        [mass_species_bin_path] = processing_input_collection.get_file_paths(
+            source='codice',
+            descriptor=MASS_SPECIES_BIN_LOOKUP_DESCRIPTOR,
+        )
+        [geometric_factor_path] = processing_input_collection.get_file_paths(
+            source='codice',
+            descriptor=GEOMETRIC_FACTOR_LOOKUP_DESCRIPTOR,
+        )
+        [efficiency_factor_path] = processing_input_collection.get_file_paths(
+            source='codice',
+            descriptor=EFFICIENCY_FACTOR_LOOKUP_DESCRIPTOR,
+        )
+        [esa_to_energy_per_charge_path] = processing_input_collection.get_file_paths(
+            source='codice',
+            descriptor=ESA_TO_ENERGY_PER_CHARGE_LOOKUP_DESCRIPTOR,
+        )
 
         direct_events_downloaded_path = imap_data_access.download(direct_events_path)
         sw_priority_rates_downloaded_path = imap_data_access.download(sw_priority_rates_path)
@@ -92,7 +100,7 @@ class CodiceLoL3a3dDistributionsDependencies:
             l1a_nsw_data=CodiceLoL1aNSWPriorityRates.read_from_cdf(l1a_nsw_file_path),
             mass_species_bin_lookup=mass_species_bin_lookup,
             geometric_factors_lookup=GeometricFactorLookup.read_from_csv(geometric_factors_lut),
-            efficiency_factors_lut=EfficiencyLookup.read_from_csv(efficiency_factors_lut),
+            efficiency_factors_lut=EfficiencyLookup.read_from_csv(efficiency_factors_lut, species),
             energy_per_charge_lut=EnergyLookup.read_from_csv(energy_per_charge_lut),
             species=species
         )

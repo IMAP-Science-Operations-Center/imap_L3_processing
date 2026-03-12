@@ -210,13 +210,13 @@ class PeriodicallyRunTest:
 
 def run_periodically(frequency: timedelta):
     def run_periodically_decorator(test_item):
-        periodically_run_tests_path = Path(__file__).parent / "periodically_run_tests.json"
-        periodically_run_tests = json.loads(periodically_run_tests_path.read_text())
-
-        last_run = periodically_run_tests.get(test_item.__name__)
-
         @wraps(test_item)
         def test_thing(*args):
+            periodically_run_tests_path = Path(__file__).parent / "periodically_run_tests.json"
+            periodically_run_tests = json.loads(periodically_run_tests_path.read_text())
+
+            last_run = periodically_run_tests.get(test_item.__name__)
+
             if last_run is not None:
                 last_run_time = datetime.fromisoformat(last_run) + frequency
                 if datetime.now() < last_run_time:

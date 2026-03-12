@@ -1,0 +1,45 @@
+[
+  {
+    "type": "spice",
+    "files": [
+      "naif0012.tls",
+      "pck00011.tpc",
+      "imap_130.tf",
+      "imap_science_120.tf",
+      "imap_sclk_0123.tsc",
+      "de440.bsp",
+      "imap_recon_20250925_20260217_v01.bsp",
+      "imap_dps_2025_359_2026_058_002.ah.bc"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_swe_l1b_sci_20260120_v008.cdf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_swe_l2_sci_20260120_v008.cdf"
+    ]
+  },
+  {
+    "type": "ancillary",
+    "files": [
+      "imap_swe_config_20251119_v002.json"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_swapi_l3a_proton-sw_20260120_v003.cdf"
+    ]
+  },
+  {
+    "type": "science",
+    "files": [
+      "imap_mag_l1d_norm-dsrf_20260120_v002.cdf"
+    ]
+  }
+]

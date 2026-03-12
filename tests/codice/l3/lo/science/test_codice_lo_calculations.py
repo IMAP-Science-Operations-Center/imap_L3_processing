@@ -169,7 +169,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         mock_species_mass_range_lookup.get_species_index = mock_get_species_index
 
-        num_events = np.array([[3, 1], [3, 1]])
+        num_events = np.array([[3, 2], [3, 1]])
         num_events = np.ma.masked_array(num_events, mask=[[False, False], [False, True]])
 
         mock_energy_lookup = Mock(spec=EnergyLookup)
@@ -178,30 +178,30 @@ class TestCodiceLoCalculations(unittest.TestCase):
         mock_energy_lookup.bin_centers = Mock()
 
         spin_angle = np.array([
-            [[37.5, 22.5, 37.5, -9999], [7.5, np.nan, np.nan, np.nan]],
+            [[37.5, 22.5, 37.5, -9999], [7.5, 7.5, np.nan, np.nan]],
             [[37.5, 37.5, 37.5, np.nan], [7.5, np.nan, np.nan, np.nan]]
         ])
 
         position = np.ma.masked_array(data=np.array([
-            [[2, 4, 2, 255], [1, 255, 255, 255]],
+            [[2, 24, 2, 255], [1, 25, 255, 255]],
             [[9, 9, 9, 255], [1, 255, 255, 255]]
         ]), mask=np.array([
-            [[False, False, False, True], [False, True, True, True]],
+            [[False, False, False, True], [False, False, True, True]],
             [[False, True, False, True], [False, True, True, True]],
         ]))
 
         energy_step = np.array([
-            [[0.0, 1234.2, 0.0, np.nan], [0.0, np.nan, np.nan, np.nan]],
+            [[0.0, 1234.2, 0.0, np.nan], [0.0, 5555.0, np.nan, np.nan]],
             [[345.2, 345.2, 345.2, np.nan], [0.0, np.nan, np.nan, np.nan]]
         ])
 
         mass = np.array([
-            [[6, 5, 4, np.nan], [7, np.nan, np.nan, np.nan]],
+            [[6, 5, 4, np.nan], [7, 5, np.nan, np.nan]],
             [[3, 3, 3, np.nan], [7, np.nan, np.nan, np.nan]],
         ])
 
         mass_per_charge = np.array([
-            [[1, 2, 3, np.nan], [8, np.nan, np.nan, np.nan]],
+            [[1, 2, 3, np.nan], [8, 2, np.nan, np.nan]],
             [[4, 4, 4, np.nan], [9, np.nan, np.nan, np.nan]],
         ])
 
@@ -251,7 +251,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
         np.testing.assert_array_equal(actual_counts_3d_data.get_3d_distribution("He+"), expected_he_plus_counts)
 
         expected_fe_counts = np.zeros(rebinned_shape)
-        expected_fe_counts[0, 0, 3, 1, 100] = 1
+        expected_fe_counts[0, 0, 23, 1, 100] = 1
         np.testing.assert_array_equal(actual_counts_3d_data.get_3d_distribution("Fe"), expected_fe_counts)
 
         expected_mg_counts = np.zeros(rebinned_shape)
@@ -330,7 +330,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         counts = np.stack((priority_1, priority_2, priority_3), axis=1)
 
-        acquisition_durations_in_seconds = rng.random((num_energies,))
+        acquisition_durations_in_seconds = rng.random((num_epochs, num_energies,))
         acquisition_duration_in_microseconds = acquisition_durations_in_seconds * ONE_SECOND_IN_MICROSECONDS
 
         actual_count_rates = combine_priorities_and_convert_to_rate(counts, acquisition_duration_in_microseconds)
@@ -339,25 +339,26 @@ class TestCodiceLoCalculations(unittest.TestCase):
         self.assertEqual((num_epochs, num_azimuth_bins, num_spin_angles, num_energies),
                          actual_count_rates.shape)
 
-        for index, _ in np.ndenumerate(np.ones((num_epochs, num_azimuth_bins, num_spin_angles))):
+        for index in np.ndindex(num_epochs, num_azimuth_bins, num_spin_angles):
+            epoch, _pos, _spin = index
             np.testing.assert_array_almost_equal(actual_count_rates[index],
-                                                 expected_summed_counts[index] / acquisition_durations_in_seconds)
+                                                 expected_summed_counts[index] / acquisition_durations_in_seconds[epoch])
 
     def test_convert_count_rate_to_intensity(self):
         num_epochs = 3
-        num_azimuth_bins = 4
+        num_position_bins = 4
         num_spin_angles = 5
         num_energies = 6
 
         rng = np.random.default_rng()
-        count_rates = rng.random((num_epochs, num_azimuth_bins, num_spin_angles, num_energies))
+        count_rates = rng.random((num_epochs, num_position_bins, num_spin_angles, num_energies))
         energy_per_charge = EnergyLookup(bin_centers=rng.random(num_energies),
                                          bin_edges=rng.random(num_energies),
                                          delta_plus=rng.random(num_energies),
                                          delta_minus=rng.random(num_energies))
-        geometric_factor = rng.random((num_epochs, num_energies))
+        geometric_factor = rng.random((num_epochs, num_position_bins, num_energies))
 
-        efficiency = rng.random((num_azimuth_bins, num_energies))
+        efficiency = rng.random((num_position_bins, num_energies))
 
         mock_efficiency_lookup = Mock()
         mock_efficiency_lookup.efficiency_data = efficiency
@@ -366,7 +367,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
                                                          geometric_factor)
 
         expected_denominator = (energy_per_charge.bin_centers
-                                * geometric_factor[:, np.newaxis, np.newaxis, :]
+                                * geometric_factor[:, :, np.newaxis, :]
                                 * efficiency[np.newaxis, :, np.newaxis, :])
 
         np.testing.assert_array_almost_equal(intensity_data * expected_denominator, count_rates)

@@ -392,26 +392,89 @@ class TestCodiceLoProcessor(unittest.TestCase):
             fe_hiq_partial_density,
         ]
 
-        codice_lo_dependencies = CodiceLoL3aPartialDensitiesDependencies(codice_lo_l2_data, mass_per_charge_lookup)
-        result_data_product = processor.process_l3a_partial_densities(codice_lo_dependencies)
+        codice_lo_dependencies = CodiceLoL3aPartialDensitiesDependencies(
+            codice_lo_l2_data, mass_per_charge_lookup
+        )
+        result_data_product = processor.process_l3a_partial_densities(
+            codice_lo_dependencies
+        )
 
         self.assertEqual(num_species, mock_calculate_partial_densities.call_count)
 
         mock_calculate_partial_densities.assert_has_calls(
-            [call(codice_lo_l2_data.hplus, codice_lo_l2_data.energy_table, mass_per_charge_lookup.hplus),
-             call(codice_lo_l2_data.heplusplus, codice_lo_l2_data.energy_table, mass_per_charge_lookup.heplusplus),
-             call(codice_lo_l2_data.cplus4, codice_lo_l2_data.energy_table, mass_per_charge_lookup.cplus4),
-             call(codice_lo_l2_data.cplus5, codice_lo_l2_data.energy_table, mass_per_charge_lookup.cplus5),
-             call(codice_lo_l2_data.cplus6, codice_lo_l2_data.energy_table, mass_per_charge_lookup.cplus6),
-             call(codice_lo_l2_data.oplus5, codice_lo_l2_data.energy_table, mass_per_charge_lookup.oplus5),
-             call(codice_lo_l2_data.oplus6, codice_lo_l2_data.energy_table, mass_per_charge_lookup.oplus6),
-             call(codice_lo_l2_data.oplus7, codice_lo_l2_data.energy_table, mass_per_charge_lookup.oplus7),
-             call(codice_lo_l2_data.oplus8, codice_lo_l2_data.energy_table, mass_per_charge_lookup.oplus8),
-             call(codice_lo_l2_data.ne, codice_lo_l2_data.energy_table, mass_per_charge_lookup.ne),
-             call(codice_lo_l2_data.mg, codice_lo_l2_data.energy_table, mass_per_charge_lookup.mg),
-             call(codice_lo_l2_data.si, codice_lo_l2_data.energy_table, mass_per_charge_lookup.si),
-             call(codice_lo_l2_data.fe_loq, codice_lo_l2_data.energy_table, mass_per_charge_lookup.fe_loq),
-             call(codice_lo_l2_data.fe_hiq, codice_lo_l2_data.energy_table, mass_per_charge_lookup.fe_hiq)])
+            [
+                call(
+                    codice_lo_l2_data.hplus,
+                    codice_lo_l2_data.energy_per_charge,
+                    mass_per_charge_lookup.hplus,
+                ),
+                call(
+                    codice_lo_l2_data.heplusplus,
+                    codice_lo_l2_data.energy_per_charge,
+                    mass_per_charge_lookup.heplusplus,
+                ),
+                call(
+                    codice_lo_l2_data.cplus4,
+                    codice_lo_l2_data.energy_per_charge,
+                    mass_per_charge_lookup.cplus4,
+                ),
+                call(
+                    codice_lo_l2_data.cplus5,
+                    codice_lo_l2_data.energy_per_charge,
+                    mass_per_charge_lookup.cplus5,
+                ),
+                call(
+                    codice_lo_l2_data.cplus6,
+                    codice_lo_l2_data.energy_per_charge,
+                    mass_per_charge_lookup.cplus6,
+                ),
+                call(
+                    codice_lo_l2_data.oplus5,
+                    codice_lo_l2_data.energy_per_charge,
+                    mass_per_charge_lookup.oplus5,
+                ),
+                call(
+                    codice_lo_l2_data.oplus6,
+                    codice_lo_l2_data.energy_per_charge,
+                    mass_per_charge_lookup.oplus6,
+                ),
+                call(
+                    codice_lo_l2_data.oplus7,
+                    codice_lo_l2_data.energy_per_charge,
+                    mass_per_charge_lookup.oplus7,
+                ),
+                call(
+                    codice_lo_l2_data.oplus8,
+                    codice_lo_l2_data.energy_per_charge,
+                    mass_per_charge_lookup.oplus8,
+                ),
+                call(
+                    codice_lo_l2_data.ne,
+                    codice_lo_l2_data.energy_per_charge,
+                    mass_per_charge_lookup.ne,
+                ),
+                call(
+                    codice_lo_l2_data.mg,
+                    codice_lo_l2_data.energy_per_charge,
+                    mass_per_charge_lookup.mg,
+                ),
+                call(
+                    codice_lo_l2_data.si,
+                    codice_lo_l2_data.energy_per_charge,
+                    mass_per_charge_lookup.si,
+                ),
+                call(
+                    codice_lo_l2_data.fe_loq,
+                    codice_lo_l2_data.energy_per_charge,
+                    mass_per_charge_lookup.fe_loq,
+                ),
+                call(
+                    codice_lo_l2_data.fe_hiq,
+                    codice_lo_l2_data.energy_per_charge,
+                    mass_per_charge_lookup.fe_hiq,
+                ),
+            ]
+        )
 
         self.assertIsInstance(result_data_product, CodiceLoL3aPartialDensityDataProduct)
         self.assertEqual(input_metadata, result_data_product.input_metadata)
@@ -618,8 +681,9 @@ class TestCodiceLoProcessor(unittest.TestCase):
         )
 
         l1a_sw_data = Mock(
+            spec=CodiceLoL1aSWPriorityRates,
             energy_table=sentinel.l1a_energy_table,
-            acquisition_time_per_step=sentinel.l1a_acquisition_time,
+            acquisition_time_per_esa_step=sentinel.l1a_acquisition_time,
             rgfo_half_spin=sentinel.rgfo_half_spin,
         )
 
@@ -632,7 +696,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         dependencies = CodiceLoL3a3dDistributionsDependencies(
             l3a_direct_event_data=l3a_direct_event_data,
             l1a_sw_data=l1a_sw_data,
-            l1a_nsw_data=Mock(),
+            l1a_nsw_data=Mock(spec=CodiceLoL1aNSWPriorityRates),
             mass_species_bin_lookup=Mock(),
             geometric_factors_lookup=mock_geometric_factor_lut,
             efficiency_factors_lut=mock_efficiency_lut,
@@ -754,7 +818,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
                 "codice/imap_codice_l1a_lo-nsw-priority-all-fill_20250814_v001.cdf"),
             direct_event_path=get_test_data_path("codice/imap_codice_l2_lo-direct-events-all-fill_20250814_v001.cdf"),
             mass_coefficients_file_path=get_test_data_path(
-                "codice/imap_codice_mass-coefficient-lookup_20241110_v002.csv"),
+                "codice/imap_codice_mass-coefficient-lookup_20241110_v003.csv"),
             esa_to_energy_per_charge_file_path=get_test_data_path(
                 "codice/imap_codice_lo-energy-per-charge_20241110_v001.csv"
             )
