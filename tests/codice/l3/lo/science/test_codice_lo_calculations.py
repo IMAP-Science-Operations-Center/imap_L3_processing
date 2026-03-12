@@ -330,7 +330,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         counts = np.stack((priority_1, priority_2, priority_3), axis=1)
 
-        acquisition_durations_in_seconds = rng.random((num_energies,))
+        acquisition_durations_in_seconds = rng.random((num_epochs, num_energies,))
         acquisition_duration_in_microseconds = acquisition_durations_in_seconds * ONE_SECOND_IN_MICROSECONDS
 
         actual_count_rates = combine_priorities_and_convert_to_rate(counts, acquisition_duration_in_microseconds)
@@ -339,9 +339,10 @@ class TestCodiceLoCalculations(unittest.TestCase):
         self.assertEqual((num_epochs, num_azimuth_bins, num_spin_angles, num_energies),
                          actual_count_rates.shape)
 
-        for index, _ in np.ndenumerate(np.ones((num_epochs, num_azimuth_bins, num_spin_angles))):
+        for index in np.ndindex(num_epochs, num_azimuth_bins, num_spin_angles):
+            epoch, _pos, _spin = index
             np.testing.assert_array_almost_equal(actual_count_rates[index],
-                                                 expected_summed_counts[index] / acquisition_durations_in_seconds)
+                                                 expected_summed_counts[index] / acquisition_durations_in_seconds[epoch])
 
     def test_convert_count_rate_to_intensity(self):
         num_epochs = 3
