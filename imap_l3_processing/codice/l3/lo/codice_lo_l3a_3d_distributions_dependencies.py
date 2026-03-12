@@ -100,7 +100,7 @@ class CodiceLoL3a3dDistributionsDependencies:
             l1a_nsw_data=CodiceLoL1aNSWPriorityRates.read_from_cdf(l1a_nsw_file_path),
             mass_species_bin_lookup=mass_species_bin_lookup,
             geometric_factors_lookup=GeometricFactorLookup.read_from_csv(geometric_factors_lut),
-            efficiency_factors_lut=EfficiencyLookup.read_from_csv(efficiency_factors_lut),
+            efficiency_factors_lut=EfficiencyLookup.read_from_csv(efficiency_factors_lut, species),
             energy_per_charge_lut=EnergyLookup.read_from_csv(energy_per_charge_lut),
             species=species
         )

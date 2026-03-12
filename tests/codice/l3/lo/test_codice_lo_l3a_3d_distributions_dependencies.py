@@ -107,7 +107,7 @@ class TestCodiceLoL3a3dDistributions(unittest.TestCase):
         mock_l1a_sw_read_from_cdf.assert_called_once_with(sentinel.l1a_sw_path)
         mock_mass_species_from_csv.assert_called_once_with(sentinel.mass_species_path)
         mock_geometric_factor_from_csv.assert_called_once_with(sentinel.geometric_factor_path)
-        mock_efficiency_lut_read_from_csv.assert_called_once_with(sentinel.efficiency_factor_path)
+        mock_efficiency_lut_read_from_csv.assert_called_once_with(sentinel.efficiency_factor_path, "some-species")
         mock_energy_lookup_from_csv.assert_called_once_with(sentinel.energy_per_charge_path)
 
         expected_dependencies = CodiceLoL3a3dDistributionsDependencies(
