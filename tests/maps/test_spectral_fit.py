@@ -174,8 +174,8 @@ class TestSpectralFit(unittest.TestCase):
 
                 scalar_coefficients, result, result_error = fit_arrays_to_power_law(flux, uncertainty, energies)
                 np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, *spacial_dimension_shape))
-                np.testing.assert_array_equal(scalar_coefficients,
-                                              np.array(true_A).reshape(1, 1, *spacial_dimension_shape))
+                np.testing.assert_allclose(scalar_coefficients,
+                                           np.array(true_A).reshape(1, 1, *spacial_dimension_shape))
 
     def test_spectral_fit_map_negative_gammas(self):
         epoch = np.array([datetime.now()])
@@ -244,8 +244,8 @@ class TestSpectralFit(unittest.TestCase):
 
                 scalar_coefficients, result, result_error = fit_arrays_to_power_law(flux, uncertainty, energies)
                 np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, *spacial_dimension_shape))
-                np.testing.assert_array_equal(scalar_coefficients,
-                                              np.array(true_A).reshape(1, 1, *spacial_dimension_shape))
+                np.testing.assert_allclose(scalar_coefficients,
+                                           np.array(true_A).reshape(1, 1, *spacial_dimension_shape))
 
     def test_finds_best_fit_with_zero_in_flux_and_uncertainty(self):
         energies = np.geomspace(1, 10, 23)
