@@ -37,7 +37,8 @@ def convert_csv_to_yaml(file_path):
                 else:
                     required_variables = required_for_data
 
-                if "RECORD_VARYING" in header_to_index and row[header_to_index["RECORD_VARYING"]].lower() == "nrv":
+                if (("RECORD_VARYING" in required_variables or "RECORD_VARYING" in header_to_index)
+                   and row[header_to_index["RECORD_VARYING"]].lower() == "nrv"):
                     required_variables = [variable for variable in required_variables if
                                           variable != "DEPEND_0"]
 
