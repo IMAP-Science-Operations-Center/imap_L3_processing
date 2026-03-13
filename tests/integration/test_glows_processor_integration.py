@@ -304,6 +304,11 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
                 GLOWS_TEST_DATA / "imap_glows_l3c_sw-profile_20100519-cr02097_v001.cdf",
 
                 GLOWS_TEST_DATA / "imap_glows_l3d_solar-hist_19470303-cr02096_v001.cdf",
+                GLOWS_TEST_DATA / "imap_glows_l3e_survival-probability-hi-45_20100103-repoint00151_v001.cdf",
+                GLOWS_TEST_DATA / "imap_glows_l3e_survival-probability-hi-90_20100103-repoint00151_v001.cdf",
+                GLOWS_TEST_DATA / "imap_glows_l3e_survival-probability-lo_20100103-repoint00151_v001.cdf",
+                GLOWS_TEST_DATA / "imap_glows_l3e_survival-probability-ul-hf_20100103-repoint00151_v001.cdf",
+                GLOWS_TEST_DATA / "imap_glows_l3e_survival-probability-ul-sf_20100103-repoint00151_v001.cdf",
 
                 GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-1CR_20100101_v001.json",
                 GLOWS_TEST_DATA / "imap_glows_WawHelioIonMP_20100101_v001.json",
@@ -350,12 +355,18 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
                     ScienceFilePath('imap_glows_l3c_sw-profile_20100103-cr02092_v002.cdf'),
 
                     ScienceFilePath('imap_glows_l3d_solar-hist_19470303-cr02096_v002.cdf'),
-                    AncillaryFilePath('imap_glows_uv-anis_19470303_20250509_v002.dat'),
-                    AncillaryFilePath('imap_glows_lya_19470303_20250509_v002.dat'),
-                    AncillaryFilePath('imap_glows_e-dens_19470303_20250509_v002.dat'),
-                    AncillaryFilePath('imap_glows_p-dens_19470303_20250509_v002.dat'),
-                    AncillaryFilePath('imap_glows_speed_19470303_20250509_v002.dat'),
-                    AncillaryFilePath('imap_glows_phion_19470303_20250509_v002.dat'),
+                    AncillaryFilePath('imap_glows_uv-anis_19470303_20100506_v002.dat'),
+                    AncillaryFilePath('imap_glows_lya_19470303_20100506_v002.dat'),
+                    AncillaryFilePath('imap_glows_e-dens_19470303_20100506_v002.dat'),
+                    AncillaryFilePath('imap_glows_p-dens_19470303_20100506_v002.dat'),
+                    AncillaryFilePath('imap_glows_speed_19470303_20100506_v002.dat'),
+                    AncillaryFilePath('imap_glows_phion_19470303_20100506_v002.dat'),
+
+                    ScienceFilePath("imap_glows_l3e_survival-probability-hi-45_20100103-repoint00151_v002.cdf"),
+                    ScienceFilePath("imap_glows_l3e_survival-probability-hi-90_20100103-repoint00151_v002.cdf"),
+                    ScienceFilePath("imap_glows_l3e_survival-probability-lo_20100103-repoint00151_v002.cdf"),
+                    ScienceFilePath("imap_glows_l3e_survival-probability-ul-hf_20100103-repoint00151_v002.cdf"),
+                    ScienceFilePath("imap_glows_l3e_survival-probability-ul-sf_20100103-repoint00151_v002.cdf"),
                 ]
 
                 for file_path in expected_files:
