@@ -287,6 +287,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
 
         with (patch('spiceypy.datetime2et', side_effect=lambda x: original_datetime2et(x) + determine_spice_offset(x)),
               patch('requests.get', side_effect=hijack_metakernel_params)):
+            new_l3a_file = GLOWS_TEST_DATA / "imap_glows_l3a_hist_20100105-repoint00153_v001.cdf"
             l3bcde_input_files = [
                 GLOWS_TEST_DATA / "imap_glows_l3a_hist_20100104-repoint00152_v001.cdf",
                 GLOWS_TEST_DATA / "imap_glows_l3a_hist_20100128-repoint00176_v001.cdf",
@@ -294,7 +295,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
                 GLOWS_TEST_DATA / "imap_glows_l3a_hist_20100518-repoint00286_v001.cdf",
                 GLOWS_TEST_DATA / "imap_glows_l3a_hist_20100520-repoint00288_v001.cdf",
 
-                GLOWS_TEST_DATA / "imap_glows_l3a_hist_20100105-repoint00153_v001.cdf", # new L3a file
+                new_l3a_file,
 
                 GLOWS_TEST_DATA / "imap_glows_l3b_ion-rate-profile_20100103-cr02092_v001.cdf",
                 GLOWS_TEST_DATA / "imap_glows_l3b_ion-rate-profile_20100422-cr02096_v001.cdf",
