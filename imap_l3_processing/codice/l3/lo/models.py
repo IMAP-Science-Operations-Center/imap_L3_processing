@@ -154,6 +154,11 @@ class CodiceLoL1aSWPriorityRates:
     p2_heplusplus: np.ndarray
     p3_heavies: np.ndarray
     p4_dcrs: np.ndarray
+    half_spin_per_esa_step: np.ndarray
+    rgfo_spin_sector: np.ndarray
+    rgfo_esa_step: np.ndarray
+    nso_spin_sector: np.ndarray
+    nso_esa_step: np.ndarray
 
     @classmethod
     def read_from_cdf(cls, cdf_path: Path):
@@ -174,7 +179,12 @@ class CodiceLoL1aSWPriorityRates:
                 p1_hplus=read_variable_and_mask_fill_values(cdf["p1_hplus"]),
                 p2_heplusplus=read_variable_and_mask_fill_values(cdf["p2_heplusplus"]),
                 p3_heavies=read_variable_and_mask_fill_values(cdf["p3_heavies"]),
-                p4_dcrs=read_variable_and_mask_fill_values(cdf["p4_dcrs"])
+                p4_dcrs=read_variable_and_mask_fill_values(cdf["p4_dcrs"]),
+                half_spin_per_esa_step=read_variable_and_mask_fill_values(cdf["half_spin_per_esa_step"]),
+                rgfo_spin_sector=read_variable_and_mask_fill_values(cdf["rgfo_spin_sector"]),
+                rgfo_esa_step=read_variable_and_mask_fill_values(cdf["rgfo_esa_step"]),
+                nso_spin_sector=read_variable_and_mask_fill_values(cdf["nso_spin_sector"]),
+                nso_esa_step=read_variable_and_mask_fill_values(cdf["nso_esa_step"]),
             )
 
 
@@ -306,6 +316,11 @@ PRIORITY_INDEX_LABEL_VAR_NAME = "priority_index_label"
 EVENT_INDEX_LABEL_VAR_NAME = "event_index_label"
 ENERGY_BIN_LABEL_VAR_NAME = "energy_bin_label"
 SPIN_ANGLE_BIN_LABEL_VAR_NAME = "spin_angle_bin_label"
+HALF_SPIN_PER_ESA_STEP_VAR_NAME = "half_spin_per_esa_step"
+RGFO_SPIN_SECTOR_VAR_NAME = "rgfo_spin_sector"
+RGFO_ESA_STEP_VAR_NAME = "rgfo_esa_step"
+NSO_SPIN_SECTOR_VAR_NAME = "nso_spin_sector"
+NSO_ESA_STEP_VAR_NAME = "nso_esa_step"
 
 
 @dataclass
@@ -361,6 +376,11 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
     event_index_label: np.ndarray = field(init=False)
     energy_bin_label: np.ndarray = field(init=False)
     spin_angle_bin_label: np.ndarray = field(init=False)
+    half_spin_per_esa_step: np.ndarray
+    rgfo_spin_sector: np.ndarray
+    rgfo_esa_step: np.ndarray
+    nso_spin_sector: np.ndarray
+    nso_esa_step: np.ndarray
 
     def __post_init__(self):
         self.priority_index = np.arange(CODICE_LO_L2_NUM_PRIORITIES)
@@ -404,6 +424,11 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
             DataProductVariable(PRIORITY_INDEX_LABEL_VAR_NAME, self.priority_index_label),
             DataProductVariable(EVENT_INDEX_VAR_NAME, self.event_index),
             DataProductVariable(EVENT_INDEX_LABEL_VAR_NAME, self.event_index_label),
+            DataProductVariable(HALF_SPIN_PER_ESA_STEP_VAR_NAME, self.half_spin_per_esa_step),
+            DataProductVariable(RGFO_SPIN_SECTOR_VAR_NAME, self.rgfo_spin_sector),
+            DataProductVariable(RGFO_ESA_STEP_VAR_NAME, self.rgfo_esa_step),
+            DataProductVariable(NSO_SPIN_SECTOR_VAR_NAME, self.nso_spin_sector),
+            DataProductVariable(NSO_ESA_STEP_VAR_NAME, self.nso_esa_step),
         ]
 
 

@@ -232,7 +232,12 @@ class CodiceLoProcessor(Processor):
             energy_bin_delta_plus=np.flip(esa_energy_per_charge_lookup.delta_plus),
             energy_bin_delta_minus=np.flip(esa_energy_per_charge_lookup.delta_minus),
             spin_angle_bin=spin_angle_lut.bin_centers,
-            spin_angle_bin_delta=spin_angle_lut.bin_deltas
+            spin_angle_bin_delta=spin_angle_lut.bin_deltas,
+            half_spin_per_esa_step=codice_sw_priority_counts_l1a_data.half_spin_per_esa_step,
+            rgfo_spin_sector=codice_sw_priority_counts_l1a_data.rgfo_spin_sector,
+            rgfo_esa_step=codice_sw_priority_counts_l1a_data.rgfo_esa_step,
+            nso_spin_sector=codice_sw_priority_counts_l1a_data.nso_spin_sector,
+            nso_esa_step=codice_sw_priority_counts_l1a_data.nso_esa_step
         )
 
     def process_l3a_3d_distribution_product(self, dependencies: CodiceLoL3a3dDistributionsDependencies):
