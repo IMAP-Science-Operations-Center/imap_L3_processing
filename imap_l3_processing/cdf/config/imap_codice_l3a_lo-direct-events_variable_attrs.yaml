@@ -379,20 +379,22 @@ position:
   SCALETYP: linear
   FORMAT: I3
 
-#rgfo_half_spin:
-#    CATDESC: Half Spin When Reduced Gain Factor Operation (RGFO) was activated
-#    DEPEND_0: epoch
-#    DISPLAY_TYPE: time_series
-#    FIELDNAM: RGFO Half Spin
-#    FILLVAL: 255
-#    FORMAT: I3
-#    LABLAXIS: RGFO Half Spin
-#    SCALETYP: linear
-#    UNITS: half spin number
-#    VALIDMIN: 0
-#    VALIDMAX: 255
-#    VAR_NOTES: Indicates the half spin when Reduced Gain Factor Operation (RGFO) was activated. In RGFO, the Entrance ESA voltage is reduced in order to limit the number of ions that reach the detectors.
-#    VAR_TYPE: data
+half_spin_per_esa_step:
+  NAME: half_spin_per_esa_step
+  CATDESC: Half spin number for each step of energy
+  DEPEND_0: epoch
+  DEPEND_1: esa_step
+  FIELDNAM: Half Spin Number
+  DATA_TYPE: CDF_UINT1
+  FILLVAL: 255
+  FORMAT: I3
+  LABLAXIS: Half Spin Number
+  SCALETYP: linear
+  UNITS: half spin number
+  VALIDMIN: 0
+  VALIDMAX: 63
+  VAR_TYPE: support_data
+  VARIABLE_PURPOSE: ""
 
 rgfo_spin_sector:
   NAME: rgfo_spin_sector
