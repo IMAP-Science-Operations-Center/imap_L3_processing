@@ -205,7 +205,7 @@ pixel_longitude:
   DEPEND_0: epoch
   DEPEND_1: healpix_index
   DATA_TYPE: CDF_FLOAT
-  CATDESC: Pixel center longitude in HAE (ECLIPJ20000)
+  CATDESC: Pixel center longitude in HAE (ECLIPJ2000)
   VAR_NOTES: Reference frames are defined according to IMAP mission SPICE kernels.
   VAR_TYPE: metadata
   FIELDNAM: HAE longitude
@@ -221,7 +221,7 @@ pixel_latitude:
   DEPEND_0: epoch
   DEPEND_1: healpix_index
   DATA_TYPE: CDF_FLOAT
-  CATDESC: Pixel center latitude in HAE (ECLIPJ20000)
+  CATDESC: Pixel center latitude in HAE (ECLIPJ2000)
   VAR_NOTES: Reference frames are defined according to IMAP mission SPICE kernels.
   VAR_TYPE: metadata
   FIELDNAM: HAE latitude
