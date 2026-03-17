@@ -402,6 +402,7 @@ class TestModels(CdfModelTestCase):
             rgfo_esa_step=rng.random(len(epoch)),
             nso_spin_sector=rng.random(len(epoch)),
             nso_esa_step=rng.random(len(epoch)),
+            normalization_per_event=rng.random((len(epoch), len(priority), len(event_num)))
         )
 
         np.testing.assert_array_equal(direct_event.event_index, np.arange(len(event_num)))

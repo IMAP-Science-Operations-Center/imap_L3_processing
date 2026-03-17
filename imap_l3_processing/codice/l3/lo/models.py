@@ -299,6 +299,7 @@ ENERGY_BIN_DELTA_PLUS_VAR_NAME = "energy_bin_delta_plus"
 ENERGY_BIN_DELTA_MINUS_VAR_NAME = "energy_bin_delta_minus"
 PRIORITY_INDEX_VAR_NAME = "priority_index"
 NORMALIZATION_VAR_NAME = "normalization"
+NORMALIZATION_PER_EVENT_VAR_NAME = "normalization_per_event"
 MASS_PER_CHARGE_VAR_NAME = "mass_per_charge"
 MASS_VAR_NAME = "mass"
 APD_ENERGY_VAR_NAME = "apd_energy"
@@ -342,6 +343,7 @@ class CodiceLoDirectEventData:
     elevation: np.ndarray
     position: np.ndarray
 
+
     @classmethod
     def read_from_cdf(cls, cdf_path: Path | str):
         with CDF(str(cdf_path)) as cdf:
@@ -381,6 +383,9 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
     rgfo_esa_step: np.ndarray
     nso_spin_sector: np.ndarray
     nso_esa_step: np.ndarray
+    normalization_per_event: np.ndarray
+
+
 
     def __post_init__(self):
         self.priority_index = np.arange(CODICE_LO_L2_NUM_PRIORITIES)
@@ -396,6 +401,7 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
             DataProductVariable(EPOCH_DELTA_VAR_NAME, self.epoch_delta),
 
             DataProductVariable(NORMALIZATION_VAR_NAME, self.normalization),
+            DataProductVariable(NORMALIZATION_PER_EVENT_VAR_NAME, self.normalization_per_event),
 
             DataProductVariable(ENERGY_BIN_VAR_NAME, self.energy_bin),
             DataProductVariable(ENERGY_BIN_DELTA_MINUS_VAR_NAME, self.energy_bin_delta_minus),

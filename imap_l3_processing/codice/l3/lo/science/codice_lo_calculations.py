@@ -74,8 +74,10 @@ def rebin_counts_by_energy_and_spin_angle(num_events: np.ndarray, spin_angle: np
 
             spin_angle_indices = spin_angle_lookup.get_spin_angle_index(spin_angle_in_degrees)
             energy_indices = energy_lookup.get_energy_index(energy_in_keV)
+            spin_angle_indices_first_half = spin_angle_indices % (num_spin_bins//2)
 
-            np.add.at(rebinned_output[time_index, priority_index], (energy_indices, spin_angle_indices), 1)
+            np.add.at(rebinned_output[time_index, priority_index], (energy_indices, spin_angle_indices_first_half), 1)
+            np.add.at(rebinned_output[time_index, priority_index], (energy_indices, spin_angle_indices_first_half+(num_spin_bins//2)), 1)
     return rebinned_output
 
 

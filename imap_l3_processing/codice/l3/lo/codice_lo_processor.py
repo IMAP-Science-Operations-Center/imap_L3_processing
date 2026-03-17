@@ -237,7 +237,8 @@ class CodiceLoProcessor(Processor):
             rgfo_spin_sector=codice_sw_priority_counts_l1a_data.rgfo_spin_sector,
             rgfo_esa_step=codice_sw_priority_counts_l1a_data.rgfo_esa_step,
             nso_spin_sector=codice_sw_priority_counts_l1a_data.nso_spin_sector,
-            nso_esa_step=codice_sw_priority_counts_l1a_data.nso_esa_step
+            nso_esa_step=codice_sw_priority_counts_l1a_data.nso_esa_step,
+            normalization_per_event=1,
         )
 
     def process_l3a_3d_distribution_product(self, dependencies: CodiceLoL3a3dDistributionsDependencies):

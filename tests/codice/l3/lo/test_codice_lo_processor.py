@@ -510,6 +510,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         num_spin_angle_bins = 24
         num_energy_bins = 128
         event_buffer_size = 10
+        num_priorities = 7
 
         mock_spin_angle_lookup = create_dataclass_mock(SpinAngleLookup)
         mock_spin_angle_lookup.num_bins = num_spin_angle_bins
@@ -517,7 +518,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         epochs = np.array([datetime.now(), datetime.now() + timedelta(hours=1)])
 
-        priority_counts_variable_shape = (len(epochs), num_energy_bins, num_spin_angle_bins)
+        priority_counts_variable_shape = (len(epochs), num_energy_bins, num_spin_angle_bins//2)
         sw_priority_rates = create_dataclass_mock(CodiceLoL1aSWPriorityRates)
         sw_priority_rates.epoch = epochs
         sw_priority_rates.p0_tcrs = rng.random(priority_counts_variable_shape)
@@ -613,22 +614,21 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(expected_mass_per_charge, l3a_direct_event_data_product.mass_per_charge)
         np.testing.assert_array_equal(expected_mass, l3a_direct_event_data_product.mass)
 
-        p0_total_counts = np.sum(sw_priority_rates.p0_tcrs, axis=(1, 2), keepdims=True)
-        p1_total_counts = np.sum(sw_priority_rates.p1_hplus, axis=(1, 2), keepdims=True)
-        p2_total_counts = np.sum(sw_priority_rates.p2_heplusplus, axis=(1, 2), keepdims=True)
-        p3_total_counts = np.sum(sw_priority_rates.p3_heavies, axis=(1, 2), keepdims=True)
-        p4_total_counts = np.sum(sw_priority_rates.p4_dcrs, axis=(1, 2), keepdims=True)
-        p5_total_counts = np.sum(nsw_priority_rates.p5_heavies, axis=(1, 2), keepdims=True)
-        p6_total_counts = np.sum(nsw_priority_rates.p6_hplus_heplusplus, axis=(1, 2), keepdims=True)
-        expected_normalization = np.transpose([
-            p0_total_counts / counts_rebinned_by_energy_and_spin[:, 0, ..., ],
-            p1_total_counts / counts_rebinned_by_energy_and_spin[:, 1, ...],
-            p2_total_counts / counts_rebinned_by_energy_and_spin[:, 2, ...],
-            p3_total_counts / counts_rebinned_by_energy_and_spin[:, 3, ...],
-            p4_total_counts / counts_rebinned_by_energy_and_spin[:, 4, ...],
-            p5_total_counts / counts_rebinned_by_energy_and_spin[:, 5, ...],
-            p6_total_counts / counts_rebinned_by_energy_and_spin[:, 6, ...],
-        ], axes=(1, 0, 2, 3))
+        priority_rates = np.stack([
+            sw_priority_rates.p0_tcrs,
+            sw_priority_rates.p1_hplus,
+            sw_priority_rates.p2_heplusplus,
+            sw_priority_rates.p3_heavies,
+            sw_priority_rates.p4_dcrs,
+            nsw_priority_rates.p5_heavies,
+            nsw_priority_rates.p6_hplus_heplusplus,
+        ], axis=1)
+        expected_numerator = np.zeros((len(epochs), num_priorities, num_energy_bins, num_spin_angle_bins))
+        expected_numerator[:,:,:,:12] = priority_rates
+        expected_numerator[:,:,:,12:] = priority_rates
+        expected_normalization = expected_numerator / counts_rebinned_by_energy_and_spin
+
+
 
         np.testing.assert_array_equal(l3a_direct_event_data_product.normalization,
                                       np.flip(expected_normalization, axis=2))
