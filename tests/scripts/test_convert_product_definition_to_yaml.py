@@ -25,7 +25,8 @@ class TestConvertProductDefinitionToYamlTest(unittest.TestCase):
             "FILLVAL": ["-1.00E+31", "", ""],
             "LABL_PTR_1": ["energy_label", "", ""],
             "LABL_PTR_2": ["pitch_angle_label", "", ""],
-            "VARIABLE_PURPOSE": ["primary var, summary", "", ""]
+            "VARIABLE_PURPOSE": ["primary var, summary", "", ""],
+            "RECORD_VARYING": ["rv", "nrv", "nrv"]
         }
 
         rows = [
@@ -58,6 +59,7 @@ class TestConvertProductDefinitionToYamlTest(unittest.TestCase):
    LABL_PTR_1: energy_label
    LABL_PTR_2: pitch_angle_label
    VARIABLE_PURPOSE: primary var, summary
+   RECORD_VARYING: rv
 energy_label:
    NAME: energy_label
    DATA_TYPE: str
@@ -160,7 +162,8 @@ pitch_angle_label:
 
     def test_parse_required_for_data_epoch(self):
         required_for_data = ["NAME", "DATA_TYPE", "CATDESC", "VAR_TYPE", "DEPEND_0", "DISPLAY_TYPE",
-                             "FIELDNAM", "FORMAT", "LABLAXIS", "UNITS", "VALIDMIN", "VALIDMAX", "FILLVAL"]
+                             "FIELDNAM", "FORMAT", "LABLAXIS", "UNITS", "VALIDMIN", "VALIDMAX", "FILLVAL",
+                             "RECORD_VARYING"]
 
         test_csv_values = [
             "epoch",
@@ -175,7 +178,8 @@ pitch_angle_label:
             "",
             "",
             "",
-            "-1.00E+31"
+            "-1.00E+31",
+            "rv"
         ]
         filePath = "csv_test_file.csv"
         with open(filePath, "w", newline='') as csvfile:
@@ -193,7 +197,8 @@ pitch_angle_label:
    UNITS: ' '
    VALIDMIN: ' '
    VALIDMAX: ' '
-   FILLVAL: -1.00E+31"""
+   FILLVAL: -1.00E+31
+   RECORD_VARYING: rv"""
         actual_yaml = convert_csv_to_yaml(filePath)
         self.assertEqual(expected_yaml, actual_yaml)
 

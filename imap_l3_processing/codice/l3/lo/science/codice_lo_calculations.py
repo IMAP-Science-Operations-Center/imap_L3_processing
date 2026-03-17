@@ -105,6 +105,11 @@ def rebin_to_counts_by_species_elevation_and_spin_sector(num_events: np.ndarray,
                     continue
 
                 position_of_event = int(position[indices_of_event])
+                assert 1 <= position[indices_of_event], f"Expected position to be greater than 0 for event {indices_of_event}"
+
+                if position_of_event > CODICE_LO_NUM_AZIMUTH_BINS:
+                    continue
+
                 species = mass_species_bin_lookup.get_species(mass[indices_of_event],
                                                               mass_per_charge[indices_of_event])
                 if species is not None:
@@ -122,7 +127,7 @@ def rebin_to_counts_by_species_elevation_and_spin_sector(num_events: np.ndarray,
 EPOCH = TypeVar("EPOCH")
 PRIORITY = TypeVar("PRIORITY")
 SPECIES = TypeVar("SPECIES")
-AZIMUTH = TypeVar("AZIMUTH")
+POSITION = TypeVar("POSITION")
 SPIN_ANGLE = TypeVar("SPIN_ANGLE")
 ENERGY = TypeVar("ENERGY")
 
@@ -134,9 +139,9 @@ def normalize_counts(counts: np.ndarray,
     return reshaped_normalization_factor * counts
 
 
-def combine_priorities_and_convert_to_rate(counts: np.ndarray,
-                                           acquisition_times: np.ndarray[(ENERGY,)]) -> np.ndarray:
-    return np.sum(counts, axis=1) / (acquisition_times / ONE_SECOND_IN_MICROSECONDS)
+def combine_priorities_and_convert_to_rate(counts: np.ndarray[(EPOCH, PRIORITY, POSITION, SPIN_ANGLE, ENERGY)],
+                                           acquisition_times: np.ndarray[(EPOCH, ENERGY,)]) -> np.ndarray:
+    return np.sum(counts, axis=1) / (acquisition_times[:, np.newaxis, np.newaxis, :] / ONE_SECOND_IN_MICROSECONDS)
 
 
 def rebin_3d_distribution_azimuth_to_elevation(intensity_data: np.ndarray,
@@ -159,7 +164,7 @@ def convert_count_rate_to_intensity(count_rates: np.ndarray,
                                     efficiency_lookup: EfficiencyLookup,
                                     geometric_factor: np.ndarray[(EPOCH, ENERGY)]) -> np.ndarray:
     reshaped_efficiency_data = efficiency_lookup.efficiency_data[np.newaxis, :, np.newaxis, :]
-    reshaped_geometric_factor = geometric_factor[:, np.newaxis, np.newaxis, :]
+    reshaped_geometric_factor = geometric_factor[:, :, np.newaxis, :]
     denominator = reshaped_geometric_factor * energy_per_charge.bin_centers * reshaped_efficiency_data
     intensities = count_rates / denominator
     return intensities

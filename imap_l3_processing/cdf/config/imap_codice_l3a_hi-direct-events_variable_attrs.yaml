@@ -41,11 +41,11 @@ epoch:
   NAME: epoch
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
   VAR_TYPE: support_data
-  DISPLAY_TYPE: no_plot
   DATA_TYPE: CDF_TIME_TT2000
   FIELDNAM: Epoch
   RECORD_VARYING: RV
-  LABLAXIS: epoch
+  FORMAT: ' '
+  LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 2010-01-01T00:00:00.000000000
   VALIDMAX: 2099-12-31T00:00:00.000000000
@@ -61,22 +61,19 @@ epoch:
 
 epoch_delta:
   NAME: epoch_delta
-  VAR_TYPE: support_data
-  DISPLAY_TYPE: no_plot
-  RECORD_VARYING: RV
-  DEPEND_0: epoch
-  CATDESC: epoch_DELTA
-  FIELDNAM: epoch_delta
+  CATDESC: Epoch delta
+  FIELDNAM: Epoch Delta
   DATA_TYPE: CDF_INT8
-  FORMAT: I19
+  FORMAT: I15
   UNITS: ns
   VALIDMIN: 0
-  VALIDMAX: 86000000000000
+  VALIDMAX: 999999999999999
   FILLVAL: -9223372036854775808
   SCALETYP: linear
-  SCALEMIN: 0
-  SCALEMAX: 86000000000000
-  SI_CONVERSION: 1e-9>seconds
+  LABLAXIS: Epoch delta
+  DEPEND_0: epoch
+  RECORD_VARYING: RV
+  VAR_TYPE: support_data
 
 data_quality:
   <<: *per_priority_data
@@ -125,6 +122,7 @@ ssd_energy:
   FIELDNAM: SSD Energy
   LABLAXIS: SSD energy
   UNITS: MeV
+  SCALETYP: log
   SCALEMIN: 1.0e-2
   SCALEMAX: 1.0e+2
 
@@ -199,6 +197,9 @@ energy_per_nuc:
   FIELDNAM: Energy per nuc
   LABLAXIS: Energy per nuc
   UNITS: MeV/nuc
+  SCALEMIN: 1.0e-2
+  SCALEMAX: 1.0e+4
+  SCALETYP: log
 
 estimated_mass:
   <<: *per_event_data

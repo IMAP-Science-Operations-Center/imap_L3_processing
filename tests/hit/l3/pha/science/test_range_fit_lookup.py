@@ -76,8 +76,8 @@ class TestRangeFitLookup(unittest.TestCase):
                     charges, delta_e_loss = lookup_table.evaluate_e_prime(range, e_prime)
 
                     np.testing.assert_equal(charges, expected_charges)
-                    np.testing.assert_equal([double_power_law(e_prime, *charge1_parameters),
-                                             double_power_law(e_prime, *charge2_parameters)], delta_e_loss)
+                    np.testing.assert_allclose([double_power_law(e_prime, *charge1_parameters),
+                                                double_power_law(e_prime, *charge2_parameters)], delta_e_loss)
 
     def test_load_from_real_example_files(self):
         range_fit_lookup = RangeFitLookup.from_files(

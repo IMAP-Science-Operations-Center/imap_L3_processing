@@ -294,6 +294,39 @@ class TestCdfUtils(TempFileTestCase):
         np.testing.assert_equal(data, np.array([1, 2, np.nan, 4, 5]))
         np.testing.assert_equal(int_data, np.array([1, 2, 3, 4, np.nan]))
 
+    def test_write_map_cdf(self):
+        class TestMapDataProduct(DataProduct):
+            def __init__(self):
+                self.input_metadata = InputMetadata("hi", "l3", datetime(year=2025, month=1, day=1),
+                                                    datetime(year=2025, month=5, day=31), "v001",
+                                                    "h45-ena-h-sf-sp-ram-hae-6deg-6mo")
+                self.parent_file_names = []
+
+            def to_data_product_variables(self) -> list[DataProductVariable]:
+                return [
+                    DataProductVariable("ena_intensity", np.arange(0, 10)),
+                ]
+        path = str(self.temp_directory / "write_cdf.cdf")
+        data = TestMapDataProduct()
+        ena_intensity, = data.to_data_product_variables()
+        attribute_manager = Mock(spec=ImapAttributeManager)
+        attribute_manager.get_global_attributes.return_value = {"global1": "global_val1", "global2": "global_val2"}
+        attribute_manager.get_variable_attributes.side_effect = [
+            {"CATDESC": "This should be ignored", "DATA_TYPE": "CDF_REAL4", "FILLVAL": -1e31, "RECORD_VARYING": "rV"},
+        ]
+
+        write_cdf(path, data, attribute_manager)
+
+        expected_data_product_logical_source = "imap_hi_l3_h45-ena-h-sf-sp-ram-hae-6deg-6mo"
+        attribute_manager.get_global_attributes.assert_called_once_with(expected_data_product_logical_source)
+        attribute_manager.get_variable_attributes.assert_has_calls(
+            [call(var.name) for var in data.to_data_product_variables()]
+        )
+
+        with pycdf.CDF(path) as actual_cdf:
+            self.assertEqual("IMAP Hi45 H Inten, HAE SC Frame, Surv Corr, Ram, 6 deg, 6 Mon",
+                             actual_cdf['ena_intensity'].attrs['CATDESC'])
+
 
 class TestDataProduct(DataProduct):
     def __init__(self):

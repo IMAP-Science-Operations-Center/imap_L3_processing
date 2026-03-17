@@ -22,11 +22,11 @@ epoch:
   NAME: epoch
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
   VAR_TYPE: support_data
-  DISPLAY_TYPE: no_plot
   DATA_TYPE: CDF_TIME_TT2000
   FIELDNAM: Epoch
   RECORD_VARYING: RV
-  LABLAXIS: epoch
+  FORMAT: ' '
+  LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 2010-01-01T00:00:00.000000000
   VALIDMAX: 2099-12-31T00:00:00.000000000
@@ -41,21 +41,20 @@ epoch:
   SI_CONVERSION: 1e-9>seconds
 
 epoch_delta:
-  <<: *support_data
   NAME: epoch_delta
-  CATDESC: epoch_DELTA
-  RECORD_VARYING: RV
-  FIELDNAM: epoch_delta
+  CATDESC: Epoch delta
+  FIELDNAM: Epoch Delta
   DATA_TYPE: CDF_INT8
-  FORMAT: I19
+  FORMAT: I15
   UNITS: ns
   VALIDMIN: 0
-  VALIDMAX: 86000000000000
+  VALIDMAX: 999999999999999
   FILLVAL: -9223372036854775808
   SCALETYP: linear
-  SCALEMIN: 0
-  SCALEMAX: 86000000000000
-  SI_CONVERSION: 1e-9>seconds
+  LABLAXIS: Epoch delta
+  DEPEND_0: epoch
+  RECORD_VARYING: RV
+  VAR_TYPE: support_data
 
 energy_h:
   <<: *support_data
@@ -225,6 +224,9 @@ h_intensity_by_pitch_angle:
   UNITS: 1/(cm^2 s MeV/nuc sr)
   LABL_PTR_1: energy_h_label
   LABL_PTR_2: pitch_angle_label
+  SCALETYP: log
+  SCALEMIN: 1.0e-2
+  SCALEMAX: 1.0e4
 
 h_intensity_by_pitch_angle_and_gyrophase:
   <<: *primary_data_variable
@@ -240,6 +242,9 @@ h_intensity_by_pitch_angle_and_gyrophase:
   LABL_PTR_1: energy_h_label
   LABL_PTR_2: pitch_angle_label
   LABL_PTR_3: gyrophase_label
+  SCALETYP: log
+  SCALEMIN: 1.0e-2
+  SCALEMAX: 1.0e4
 
 he3he4_intensity_by_pitch_angle:
   <<: *primary_data_variable
@@ -253,6 +258,9 @@ he3he4_intensity_by_pitch_angle:
   UNITS: 1/(cm^2 s MeV/nuc sr)
   LABL_PTR_1: energy_he3he4_label
   LABL_PTR_2: pitch_angle_label
+  SCALETYP: log
+  SCALEMIN: 1.0e-2
+  SCALEMAX: 1.0e4
 
 he3he4_intensity_by_pitch_angle_and_gyrophase:
   <<: *primary_data_variable
@@ -268,6 +276,9 @@ he3he4_intensity_by_pitch_angle_and_gyrophase:
   LABL_PTR_1: energy_he3he4_label
   LABL_PTR_2: pitch_angle_label
   LABL_PTR_3: gyrophase_label
+  SCALETYP: log
+  SCALEMIN: 1.0e-2
+  SCALEMAX: 1.0e4
 
 cno_intensity_by_pitch_angle:
   <<: *primary_data_variable
@@ -281,6 +292,9 @@ cno_intensity_by_pitch_angle:
   UNITS: 1/(cm^2 s MeV/nuc sr)
   LABL_PTR_1: energy_cno_label
   LABL_PTR_2: pitch_angle_label
+  SCALETYP: log
+  SCALEMIN: 1.0e-2
+  SCALEMAX: 1.0e4
 
 cno_intensity_by_pitch_angle_and_gyrophase:
   <<: *primary_data_variable
@@ -296,6 +310,9 @@ cno_intensity_by_pitch_angle_and_gyrophase:
   LABL_PTR_1: energy_cno_label
   LABL_PTR_2: pitch_angle_label
   LABL_PTR_3: gyrophase_label
+  SCALETYP: log
+  SCALEMIN: 1.0e-2
+  SCALEMAX: 1.0e4
 
 fe_intensity_by_pitch_angle:
   <<: *primary_data_variable
@@ -309,6 +326,9 @@ fe_intensity_by_pitch_angle:
   UNITS: 1/(cm^2 s MeV/nuc sr)
   LABL_PTR_1: energy_fe_label
   LABL_PTR_2: pitch_angle_label
+  SCALETYP: log
+  SCALEMIN: 1.0e-2
+  SCALEMAX: 1.0e4
 
 fe_intensity_by_pitch_angle_and_gyrophase:
   <<: *primary_data_variable
@@ -324,6 +344,9 @@ fe_intensity_by_pitch_angle_and_gyrophase:
   LABL_PTR_1: energy_fe_label
   LABL_PTR_2: pitch_angle_label
   LABL_PTR_3: gyrophase_label
+  SCALETYP: log
+  SCALEMIN: 1.0e-2
+  SCALEMAX: 1.0e4
 
 energy_h_label:
   NAME: energy_h_label

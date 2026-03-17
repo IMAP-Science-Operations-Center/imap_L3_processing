@@ -22,11 +22,11 @@ epoch:
   NAME: epoch
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
   VAR_TYPE: support_data
-  DISPLAY_TYPE: no_plot
   DATA_TYPE: CDF_TIME_TT2000
   FIELDNAM: Epoch
   RECORD_VARYING: RV
-  LABLAXIS: epoch
+  FORMAT: ' '
+  LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 2010-01-01T00:00:00.000000000
   VALIDMAX: 2099-12-31T00:00:00.000000000
@@ -39,21 +39,22 @@ epoch:
   MONOTON: INCREASE
   REFERENCE_POSITION: Rotating Earth Geoid
   SI_CONVERSION: 1e-9>seconds
+
 epoch_delta:
-  <<: *support_data
   NAME: epoch_delta
   CATDESC: Epoch delta
   FIELDNAM: Epoch Delta
   DATA_TYPE: CDF_INT8
-  FORMAT: I19
+  FORMAT: I15
   UNITS: ns
   VALIDMIN: 0
-  VALIDMAX: 86000000000000
+  VALIDMAX: 999999999999999
   FILLVAL: -9223372036854775808
   SCALETYP: linear
-  SCALEMIN: 0
-  SCALEMAX: 86000000000000
-  SI_CONVERSION: 1e-9>seconds
+  LABLAXIS: Epoch delta
+  DEPEND_0: epoch
+  RECORD_VARYING: RV
+  VAR_TYPE: support_data
 hplus_partial_density:
   <<: *primary_data_variable
   <<: *float_data
@@ -63,7 +64,7 @@ hplus_partial_density:
   DATA_TYPE: CDF_REAL4
   LABLAXIS: H+ N
   SCALETYP: linear
-  UNITS: '?'
+  UNITS: '#/cm^3'
 heplusplus_partial_density:
   <<: *primary_data_variable
   <<: *float_data
@@ -73,7 +74,7 @@ heplusplus_partial_density:
   DATA_TYPE: CDF_REAL4
   LABLAXIS: He++ N
   SCALETYP: linear
-  UNITS: '?'
+  UNITS: '#/cm^3'
 cplus4_partial_density:
   <<: *primary_data_variable
   <<: *float_data
@@ -83,7 +84,7 @@ cplus4_partial_density:
   DATA_TYPE: CDF_REAL4
   LABLAXIS: C+4 N
   SCALETYP: linear
-  UNITS: '?'
+  UNITS: '#/cm^3'
 cplus5_partial_density:
   <<: *primary_data_variable
   <<: *float_data
@@ -93,7 +94,7 @@ cplus5_partial_density:
   DATA_TYPE: CDF_REAL4
   LABLAXIS: C+5 N
   SCALETYP: linear
-  UNITS: '?'
+  UNITS: '#/cm^3'
 cplus6_partial_density:
   <<: *primary_data_variable
   <<: *float_data
@@ -103,7 +104,7 @@ cplus6_partial_density:
   DATA_TYPE: CDF_REAL4
   LABLAXIS: C+6 N
   SCALETYP: linear
-  UNITS: '?'
+  UNITS: '#/cm^3'
 oplus5_partial_density:
   <<: *primary_data_variable
   <<: *float_data
@@ -113,7 +114,7 @@ oplus5_partial_density:
   DATA_TYPE: CDF_REAL4
   LABLAXIS: O+5 N
   SCALETYP: linear
-  UNITS: '?'
+  UNITS: '#/cm^3'
 oplus6_partial_density:
   <<: *primary_data_variable
   <<: *float_data
@@ -123,7 +124,7 @@ oplus6_partial_density:
   DATA_TYPE: CDF_REAL4
   LABLAXIS: O+6 N
   SCALETYP: linear
-  UNITS: '?'
+  UNITS: '#/cm^3'
 oplus7_partial_density:
   <<: *primary_data_variable
   <<: *float_data
@@ -133,7 +134,7 @@ oplus7_partial_density:
   DATA_TYPE: CDF_REAL4
   LABLAXIS: O+7 N
   SCALETYP: linear
-  UNITS: '?'
+  UNITS: '#/cm^3'
 oplus8_partial_density:
   <<: *primary_data_variable
   <<: *float_data
@@ -143,7 +144,7 @@ oplus8_partial_density:
   DATA_TYPE: CDF_REAL4
   LABLAXIS: O+8 N
   SCALETYP: linear
-  UNITS: '?'
+  UNITS: '#/cm^3'
 ne_partial_density:
   <<: *primary_data_variable
   <<: *float_data
@@ -153,7 +154,7 @@ ne_partial_density:
   DATA_TYPE: CDF_REAL4
   LABLAXIS: Ne N
   SCALETYP: linear
-  UNITS: '?'
+  UNITS: '#/cm^3'
 mg_partial_density:
   <<: *primary_data_variable
   <<: *float_data
@@ -163,7 +164,7 @@ mg_partial_density:
   DATA_TYPE: CDF_REAL4
   LABLAXIS: Mg N
   SCALETYP: linear
-  UNITS: '?'
+  UNITS: '#/cm^3'
 si_partial_density:
   <<: *primary_data_variable
   <<: *float_data
@@ -173,7 +174,7 @@ si_partial_density:
   DATA_TYPE: CDF_REAL4
   LABLAXIS: Si N
   SCALETYP: linear
-  UNITS: '?'
+  UNITS: '#/cm^3'
 fe_loq_partial_density:
   <<: *primary_data_variable
   <<: *float_data
@@ -183,7 +184,7 @@ fe_loq_partial_density:
   DATA_TYPE: CDF_REAL4
   LABLAXIS: Fe (low Q) N
   SCALETYP: linear
-  UNITS: '?'
+  UNITS: '#/cm^3'
 
 fe_hiq_partial_density:
   <<: *primary_data_variable
@@ -194,4 +195,4 @@ fe_hiq_partial_density:
   DATA_TYPE: CDF_REAL4
   LABLAXIS: Fe (high Q) N
   SCALETYP: linear
-  UNITS: '?'
+  UNITS: '#/cm^3'

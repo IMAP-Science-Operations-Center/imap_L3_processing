@@ -32,11 +32,11 @@ epoch:
   NAME: epoch
   CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
   VAR_TYPE: support_data
-  DISPLAY_TYPE: no_plot
   DATA_TYPE: CDF_TIME_TT2000
   FIELDNAM: Epoch
   RECORD_VARYING: RV
-  LABLAXIS: epoch
+  FORMAT: ' '
+  LABLAXIS: Epoch
   UNITS: ns
   VALIDMIN: 2010-01-01T00:00:00.000000000
   VALIDMAX: 2099-12-31T00:00:00.000000000
@@ -54,20 +54,17 @@ epoch_delta:
   NAME: epoch_delta
   CATDESC: Epoch delta
   FIELDNAM: Epoch Delta
-  VAR_TYPE: support_data
-  DISPLAY_TYPE: no_plot
-  RECORD_VARYING: RV
-  DEPEND_0: epoch
   DATA_TYPE: CDF_INT8
-  FORMAT: I19
+  FORMAT: I15
   UNITS: ns
   VALIDMIN: 0
-  VALIDMAX: 86000000000000
+  VALIDMAX: 999999999999999
   FILLVAL: -9223372036854775808
   SCALETYP: linear
-  SCALEMIN: 0
-  SCALEMAX: 86000000000000
-  SI_CONVERSION: 1e-9>seconds
+  LABLAXIS: Epoch delta
+  DEPEND_0: epoch
+  RECORD_VARYING: RV
+  VAR_TYPE: support_data
 
 event_index:
   <<: *support_data
@@ -381,3 +378,92 @@ position:
   FILLVAL: 255
   SCALETYP: linear
   FORMAT: I3
+
+half_spin_per_esa_step:
+  NAME: half_spin_per_esa_step
+  CATDESC: Half spin number for each step of energy
+  DEPEND_0: epoch
+  DEPEND_1: esa_step
+  FIELDNAM: Half Spin Number
+  DATA_TYPE: CDF_UINT1
+  FILLVAL: 255
+  FORMAT: I3
+  LABLAXIS: Half Spin Number
+  SCALETYP: linear
+  UNITS: half spin number
+  VALIDMIN: 0
+  VALIDMAX: 63
+  VAR_TYPE: support_data
+  VARIABLE_PURPOSE: ""
+
+rgfo_spin_sector:
+  NAME: rgfo_spin_sector
+  CATDESC: Spin Sector When Reduced Gain Factor Operation (RGFO) was activated
+  DEPEND_0: epoch
+  DISPLAY_TYPE: time_series
+  FIELDNAM: RGFO Spin Sector
+  DATA_TYPE: CDF_UINT1
+  FILLVAL: 255
+  FORMAT: I3
+  LABLAXIS: RGFO Spin Sector
+  SCALETYP: linear
+  UNITS:  spin sector
+  VALIDMIN: 0
+  VALIDMAX: 255
+  VAR_NOTES: Indicates the spin sector when Reduced Gain Factor Operation (RGFO) was activated. In RGFO, the Entrance ESA voltage is reduced in order to limit the number of ions that reach the detectors.
+  VAR_TYPE: data
+  VARIABLE_PURPOSE: ""
+
+rgfo_esa_step:
+  NAME: rgfo_esa_step
+  CATDESC: Energy Step When Reduced Gain Factor Operation (RGFO) was activated
+  DEPEND_0: epoch
+  DISPLAY_TYPE: time_series
+  FIELDNAM: RGFO Energy Step
+  DATA_TYPE: CDF_UINT1
+  FILLVAL: 255
+  FORMAT: I3
+  LABLAXIS: RGFO Energy Step
+  SCALETYP: linear
+  UNITS: energy step
+  VALIDMIN: 0
+  VALIDMAX: 255
+  VAR_NOTES: Indicates the energy step when Reduced Gain Factor Operation (RGFO) was activated. In RGFO, the Entrance ESA voltage is reduced in order to limit the number of ions that reach the detectors.
+  VAR_TYPE: data
+  VARIABLE_PURPOSE: ""
+
+nso_spin_sector:
+  NAME: nso_spin_sector
+  CATDESC: Spin Sector When No Scan Operation (NSO) was activated
+  DEPEND_0: epoch
+  DISPLAY_TYPE: time_series
+  FIELDNAM: NSO Spin Sector
+  DATA_TYPE: CDF_UINT1
+  FILLVAL: 255
+  FORMAT: I3
+  LABLAXIS: NSO Spin Sector
+  SCALETYP: linear
+  UNITS: spin sector
+  VALIDMIN: 0
+  VALIDMAX: 255
+  VAR_NOTES: Indicates the spin sector when No Scan Operation (NSO) was activated. In NSO, the ESA voltage is set to the first step in the scan and remains fixed until the next cycle boundary.
+  VAR_TYPE: data
+  VARIABLE_PURPOSE: ""
+
+nso_esa_step:
+  NAME: nso_esa_step
+  CATDESC: Energy Step When No Scan Operation (NSO) was activated
+  DEPEND_0: epoch
+  DISPLAY_TYPE: time_series
+  FIELDNAM: NSO Energy Step
+  DATA_TYPE: CDF_UINT1
+  FILLVAL: 255
+  FORMAT: I3
+  LABLAXIS: NSO Energy Step
+  SCALETYP: linear
+  UNITS: energy step
+  VALIDMIN: 0
+  VALIDMAX: 255
+  VAR_NOTES: Indicates the energy step when No Scan Operation (NSO) was activated. In NSO, the ESA voltage is set to the first step in the scan and remains fixed until the next cycle boundary.
+  VAR_TYPE: data
+  VARIABLE_PURPOSE: ""

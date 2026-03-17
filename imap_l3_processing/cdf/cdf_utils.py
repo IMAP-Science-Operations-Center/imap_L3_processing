@@ -4,6 +4,7 @@ import numpy as np
 from spacepy import pycdf
 from spacepy.pycdf import CDF
 
+from imap_processing.ena_maps.utils import naming
 from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_l3_processing.swapi.l3a.models import DataProduct
 
@@ -20,11 +21,23 @@ def write_cdf(file_path: str, data: DataProduct, attribute_manager: ImapAttribut
         for k, v in global_attrs.items():
             cdf.attrs[k] = v
 
+        map_descriptor = None
+        if data.input_metadata.instrument in ("lo", "hi", "ultra", "glows",):
+            try:
+                map_descriptor = naming.MapDescriptor.from_string(data.input_metadata.descriptor)
+            except ValueError:
+                # Assume this is not actually a map
+                pass
+
         for data_product in data.to_data_product_variables():
             var_name = data_product.name
             variable_attributes = attribute_manager.get_variable_attributes(var_name)
             data_type = getattr(pycdf.const, variable_attributes["DATA_TYPE"])
             data_array = np.asanyarray(data_product.value)
+
+            if (map_descriptor is not None
+                and var_name == map_descriptor.principal_data_var):
+                variable_attributes["CATDESC"] = map_descriptor.to_catdesc()
 
             record_varying = variable_attributes["RECORD_VARYING"].lower() == "rv"
             if record_varying:

@@ -232,7 +232,12 @@ class CodiceLoProcessor(Processor):
             energy_bin_delta_plus=np.flip(esa_energy_per_charge_lookup.delta_plus),
             energy_bin_delta_minus=np.flip(esa_energy_per_charge_lookup.delta_minus),
             spin_angle_bin=spin_angle_lut.bin_centers,
-            spin_angle_bin_delta=spin_angle_lut.bin_deltas
+            spin_angle_bin_delta=spin_angle_lut.bin_deltas,
+            half_spin_per_esa_step=codice_sw_priority_counts_l1a_data.half_spin_per_esa_step,
+            rgfo_spin_sector=codice_sw_priority_counts_l1a_data.rgfo_spin_sector,
+            rgfo_esa_step=codice_sw_priority_counts_l1a_data.rgfo_esa_step,
+            nso_spin_sector=codice_sw_priority_counts_l1a_data.nso_spin_sector,
+            nso_esa_step=codice_sw_priority_counts_l1a_data.nso_esa_step
         )
 
     def process_l3a_3d_distribution_product(self, dependencies: CodiceLoL3a3dDistributionsDependencies):
@@ -245,7 +250,7 @@ class CodiceLoProcessor(Processor):
         l3a_de_normalization = np.flip(dependencies.l3a_direct_event_data.normalization, axis=2)
         l3a_de_num_events = dependencies.l3a_direct_event_data.num_events
 
-        l1a_acquisition_time = dependencies.l1a_sw_data.acquisition_time_per_step
+        l1a_acquisition_time = dependencies.l1a_sw_data.acquisition_time_per_esa_step
         l1_sw_rgfo_half_spins = dependencies.l1a_sw_data.rgfo_half_spin
 
         mass_species_bin_lookup = dependencies.mass_species_bin_lookup
