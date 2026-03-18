@@ -499,11 +499,11 @@ class TestCodiceLoProcessor(unittest.TestCase):
         self.assertEqual(fe_hiq_partial_density, result_data.fe_hiq_partial_density),
 
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.SpinAngleLookup')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.rebin_counts_by_energy_and_spin_angle')
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.rebin_direct_events_for_normalization')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_mass_per_charge')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_mass')
     def test_process_l3a_direct_events(self, mock_calculate_mass, mock_calculate_mass_per_charge,
-                                       mock_rebin_counts_by_energy_and_spin,
+                                       mock_rebin_direct_events_for_normalization,
                                        mock_spin_angle_lookup_class):
         rng = np.random.default_rng()
 
@@ -539,7 +539,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         counts_rebinned_by_energy_and_spin = rng.random(
             (len(epochs), CODICE_LO_L2_NUM_PRIORITIES, num_energy_bins, num_spin_angle_bins))
-        mock_rebin_counts_by_energy_and_spin.return_value = np.array(counts_rebinned_by_energy_and_spin)
+        mock_rebin_direct_events_for_normalization.return_value = counts_rebinned_by_energy_and_spin
 
         mass_per_charge = rng.random((len(epochs), CODICE_LO_L2_NUM_PRIORITIES, event_buffer_size))
         mock_calculate_mass_per_charge.return_value = mass_per_charge
@@ -586,8 +586,6 @@ class TestCodiceLoProcessor(unittest.TestCase):
         processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
         l3a_direct_event_data_product = processor.process_l3a_direct_event_data_product(dependencies)
 
-        mock_spin_angle_lookup_class.assert_called_once()
-
         self.assertEqual(1, mock_calculate_mass.call_count)
         np.testing.assert_equal(mock_calculate_mass.call_args.args[0], expected_apd_energy)
         np.testing.assert_equal(mock_calculate_mass.call_args.args[1], expected_tof)
@@ -597,12 +595,12 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_equal(mock_calculate_mass_per_charge.call_args.args[0], expected_energy_per_charge)
         np.testing.assert_equal(mock_calculate_mass_per_charge.call_args.args[1], expected_tof)
 
-        self.assertEqual(1, mock_rebin_counts_by_energy_and_spin.call_count)
-        np.testing.assert_equal(mock_rebin_counts_by_energy_and_spin.call_args.args[0], expected_num_events)
-        np.testing.assert_equal(mock_rebin_counts_by_energy_and_spin.call_args.args[1], expected_spin_angle)
-        np.testing.assert_equal(mock_rebin_counts_by_energy_and_spin.call_args.args[2], expected_energy_step)
-        np.testing.assert_equal(mock_rebin_counts_by_energy_and_spin.call_args.args[3], mock_spin_angle_lookup)
-        np.testing.assert_equal(mock_rebin_counts_by_energy_and_spin.call_args.args[4], dependencies.energy_lookup)
+        self.assertEqual(1, mock_rebin_direct_events_for_normalization.call_count)
+        np.testing.assert_equal(mock_rebin_direct_events_for_normalization.call_args.args[0], expected_num_events)
+        np.testing.assert_equal(mock_rebin_direct_events_for_normalization.call_args.args[1], expected_spin_sector)
+        np.testing.assert_equal(mock_rebin_direct_events_for_normalization.call_args.args[2], expected_energy_step)
+        np.testing.assert_equal(mock_rebin_direct_events_for_normalization.call_args.args[3], num_spin_angle_bins)
+        np.testing.assert_equal(mock_rebin_direct_events_for_normalization.call_args.args[4], num_energy_bins)
 
         self.assertIsInstance(l3a_direct_event_data_product, CodiceLoL3aDirectEventDataProduct)
         self.assertEqual(input_metadata, l3a_direct_event_data_product.input_metadata)

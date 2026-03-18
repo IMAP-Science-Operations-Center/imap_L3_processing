@@ -53,15 +53,23 @@ def calculate_mass_per_charge(energy_per_charge: np.ndarray, tof: np.ndarray) ->
             tof ** 2) * CONVERSION_CONSTANT_K
 
 
-def rebin_counts_by_energy_and_spin_angle(num_events: np.ndarray, spin_angle: np.ndarray, energy_step: np.ndarray,
-                                          spin_angle_lookup: SpinAngleLookup,
-                                          energy_lookup: EnergyLookup) -> np.ndarray:
+def rebin_direct_events_for_normalization(num_events: np.ndarray, spin_angle: np.ndarray, energy_step: np.ndarray,
+                                          num_spin_sectors: int,
+                                          num_energies: int) -> np.ndarray:
+    base_counts = rebin_direct_events_by_energy_and_spin_sector(num_events, spin_angle, energy_step, num_spin_sectors, num_energies)
+    half_spin = num_spin_sectors//2
+    result = np.zeros_like(base_counts)
+    result[:,:,:,0:half_spin] = base_counts[:,:,:,0:half_spin] + base_counts[:,:,:,half_spin:num_spin_sectors]
+    result[:,:,:,half_spin:num_spin_sectors] = result[:,:,:,0:half_spin]
+    return result
+
+def rebin_direct_events_by_energy_and_spin_sector(num_events: np.ndarray, spin_sector: np.ndarray, energy_step: np.ndarray,
+                                                  num_spin_sectors: int,
+                                                  num_energies: int) -> np.ndarray:
     num_epochs = num_events.shape[0]
     num_priorities = num_events.shape[1]
-    num_energies = energy_lookup.num_bins
-    num_spin_bins = spin_angle_lookup.num_bins
 
-    rebinned_output = np.zeros((num_epochs, num_priorities, num_energies, num_spin_bins))
+    rebinned_output = np.zeros((num_epochs, num_priorities, num_energies, num_spin_sectors))
 
     for time_index in range(num_epochs):
         for priority_index in range(num_priorities):
@@ -69,15 +77,10 @@ def rebin_counts_by_energy_and_spin_angle(num_events: np.ndarray, spin_angle: np
             if events_at_index is np.ma.masked:
                 continue
 
-            spin_angle_in_degrees = spin_angle[time_index, priority_index, :events_at_index]
-            energy_in_keV = energy_step[time_index, priority_index, :events_at_index]
+            spin_sectors = spin_sector[time_index, priority_index, :events_at_index]
+            energy_indices = energy_step[time_index, priority_index, :events_at_index]
 
-            spin_angle_indices = spin_angle_lookup.get_spin_angle_index(spin_angle_in_degrees)
-            energy_indices = energy_lookup.get_energy_index(energy_in_keV)
-            spin_angle_indices_first_half = spin_angle_indices % (num_spin_bins//2)
-
-            np.add.at(rebinned_output[time_index, priority_index], (energy_indices, spin_angle_indices_first_half), 1)
-            np.add.at(rebinned_output[time_index, priority_index], (energy_indices, spin_angle_indices_first_half+(num_spin_bins//2)), 1)
+            np.add.at(rebinned_output[time_index, priority_index], (energy_indices, spin_sectors), 1)
     return rebinned_output
 
 

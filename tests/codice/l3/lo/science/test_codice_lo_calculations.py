@@ -12,9 +12,9 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_look
 from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, CodiceLo3dData
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
     calculate_total_number_of_events, calculate_normalization_ratio, calculate_mass, calculate_mass_per_charge, \
-    rebin_to_counts_by_species_elevation_and_spin_sector, rebin_counts_by_energy_and_spin_angle, \
+    rebin_to_counts_by_species_elevation_and_spin_sector, rebin_direct_events_by_energy_and_spin_sector, \
     CODICE_LO_NUM_AZIMUTH_BINS, normalize_counts, combine_priorities_and_convert_to_rate, \
-    rebin_3d_distribution_azimuth_to_elevation, convert_count_rate_to_intensity
+    rebin_3d_distribution_azimuth_to_elevation, convert_count_rate_to_intensity, rebin_direct_events_for_normalization
 from imap_l3_processing.constants import ONE_SECOND_IN_MICROSECONDS
 
 
@@ -262,33 +262,48 @@ class TestCodiceLoCalculations(unittest.TestCase):
         expected_o_counts[0, 1, 0, 0, 0] = 1
         np.testing.assert_array_equal(actual_counts_3d_data.get_3d_distribution("O+5"), expected_o_counts)
 
-    def test_rebin_counts_to_by_energy_and_spin_angle(self):
-        mock_energy_lookup = Mock(spec=EnergyLookup)
+    def test_rebin_direct_events_by_energy_and_spin_sector(self):
         num_energy_bins = 30
-        mock_energy_lookup.num_bins = num_energy_bins
-        mock_energy_lookup.get_energy_index.side_effect = [
-            np.array([7, 7]),
-            np.array([1, 3, 1, 4])
-        ]
-
-        mock_spin_angle_lookup = Mock(spec=SpinAngleLookup)
-        num_spin_angle_bins = 24
-        mock_spin_angle_lookup.num_bins = num_spin_angle_bins
-        mock_spin_angle_lookup.get_spin_angle_index.side_effect = [
-            np.array([3, 3+12]),
-            np.array([5, 6, 5, 7+12])
-        ]
-
-        rng = np.random.default_rng()
+        num_spin_angle_bins = 20
         num_priorities = 3
-        num_events = np.ma.masked_array(np.array([[2, 2, 4]]), mask=[[False, True, False]])
         num_epochs = 1
-        spin_angle = rng.random((num_epochs, num_priorities, 15))
-        energy_step = rng.random((num_epochs, num_priorities, 15))
-        result = rebin_counts_by_energy_and_spin_angle(num_events, spin_angle, energy_step, mock_spin_angle_lookup,
-                                                       mock_energy_lookup)
+        event_buffer_len = 15
+        num_events = np.ma.masked_array(np.array([[1, 2, 4]]), mask=[[False, True, False]])
+        spin_sector = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=np.uint8)
+        spin_sector[0,0,:1] = [3]
+        spin_sector[0,2,:4] = [5, 6, 5, 7]
+
+        energy_step = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=np.uint8)
+        energy_step[0,0,:1] = [7]
+        energy_step[0,2,:4] = [1, 3, 1, 4]
+
+        result = rebin_direct_events_by_energy_and_spin_sector(num_events, spin_sector, energy_step, num_spin_angle_bins, num_energy_bins)
 
         expected_rebinned_counts = np.zeros((num_epochs, num_priorities, num_energy_bins, num_spin_angle_bins))
+        expected_rebinned_counts[0, 0, 7, 3] = 1
+        expected_rebinned_counts[0, 2, 1, 5] = 2
+        expected_rebinned_counts[0, 2, 3, 6] = 1
+        expected_rebinned_counts[0, 2, 4, 7] = 1
+
+        np.testing.assert_array_equal(result, expected_rebinned_counts)
+
+    def test_rebin_direct_events_for_normalization(self):
+        num_energy_bins = 30
+        num_spin_sectors = 24
+        num_priorities = 3
+        num_epochs = 1
+        event_buffer_len = 15
+        num_events = np.ma.masked_array(np.array([[2, 2, 4]]), mask=[[False, True, False]])
+        spin_sector = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=np.uint8)
+        spin_sector[0,0,:2] = [3, 3+12]
+        spin_sector[0,2,:4] = [5, 6, 5, 7+12]
+
+        energy_step = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=np.uint8)
+        energy_step[0,0,:2] = [7, 7]
+        energy_step[0,2,:4] = [1, 3, 1, 4]
+        result = rebin_direct_events_for_normalization(num_events, spin_sector, energy_step, num_spin_sectors, num_energy_bins)
+
+        expected_rebinned_counts = np.zeros((num_epochs, num_priorities, num_energy_bins, num_spin_sectors))
         expected_rebinned_counts[0, 0, 7, 3] = 2
         expected_rebinned_counts[0, 2, 1, 5] = 2
         expected_rebinned_counts[0, 2, 3, 6] = 1
