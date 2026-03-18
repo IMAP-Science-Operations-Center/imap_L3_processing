@@ -53,10 +53,10 @@ def calculate_mass_per_charge(energy_per_charge: np.ndarray, tof: np.ndarray) ->
             tof ** 2) * CONVERSION_CONSTANT_K
 
 
-def rebin_direct_events_for_normalization(num_events: np.ndarray, spin_angle: np.ndarray, energy_step: np.ndarray,
+def rebin_direct_events_for_normalization(num_events: np.ndarray, spin_sector: np.ndarray, energy_step: np.ndarray,
                                           num_spin_sectors: int,
                                           num_energies: int) -> np.ndarray:
-    base_counts = rebin_direct_events_by_energy_and_spin_sector(num_events, spin_angle, energy_step, num_spin_sectors, num_energies)
+    base_counts = rebin_direct_events_by_energy_and_spin_sector(num_events, spin_sector, energy_step, num_spin_sectors, num_energies)
     half_spin = num_spin_sectors//2
     result = np.zeros_like(base_counts)
     result[:,:,:,0:half_spin] = base_counts[:,:,:,0:half_spin] + base_counts[:,:,:,half_spin:num_spin_sectors]
@@ -83,6 +83,20 @@ def rebin_direct_events_by_energy_and_spin_sector(num_events: np.ndarray, spin_s
             np.add.at(rebinned_output[time_index, priority_index], (energy_indices, spin_sectors), 1)
     return rebinned_output
 
+def calculate_normalization_factor(priority_counts: np.ndarray, num_events: np.ndarray, spin_sectors: np.ndarray, energy_steps: np.ndarray) -> np.ndarray:
+    numerator = np.concatenate((priority_counts, priority_counts), axis=3)
+    num_energies = priority_counts.shape[2]
+    num_spin_sectors = 2 * priority_counts.shape[3]
+    denominator = rebin_direct_events_for_normalization(num_events, spin_sectors, energy_steps, num_spin_sectors, num_energies)
+
+    division_result = np.zeros(numerator.shape, dtype=float)
+    np.divide(numerator, denominator, out=division_result, where=denominator!=0)
+
+    output = np.zeros_like(division_result)
+    output[denominator!=0] = np.maximum(1.0, division_result[denominator!=0])
+    output[(denominator==0)&(numerator==0)] = 0.0
+    output[(denominator==0)&(numerator!=0)] = np.nan
+    return output
 
 def rebin_to_counts_by_species_elevation_and_spin_sector(num_events: np.ndarray, mass: np.ndarray,
                                                          mass_per_charge: np.ndarray,

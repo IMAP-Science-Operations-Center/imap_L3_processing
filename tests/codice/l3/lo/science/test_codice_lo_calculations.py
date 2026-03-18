@@ -14,7 +14,8 @@ from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calcu
     calculate_total_number_of_events, calculate_normalization_ratio, calculate_mass, calculate_mass_per_charge, \
     rebin_to_counts_by_species_elevation_and_spin_sector, rebin_direct_events_by_energy_and_spin_sector, \
     CODICE_LO_NUM_AZIMUTH_BINS, normalize_counts, combine_priorities_and_convert_to_rate, \
-    rebin_3d_distribution_azimuth_to_elevation, convert_count_rate_to_intensity, rebin_direct_events_for_normalization
+    rebin_3d_distribution_azimuth_to_elevation, convert_count_rate_to_intensity, rebin_direct_events_for_normalization, \
+    calculate_normalization_factor
 from imap_l3_processing.constants import ONE_SECOND_IN_MICROSECONDS
 
 
@@ -315,6 +316,96 @@ class TestCodiceLoCalculations(unittest.TestCase):
         np.testing.assert_equal(result[0, 0, 7, 3], 2)
 
         np.testing.assert_array_equal(result, expected_rebinned_counts)
+
+    def test_calculate_normalization_factor(self):
+        num_epochs = 2
+        num_priorities = 7
+        num_esa_steps = 128
+        num_l1_spin_sectors = 12
+        num_l2_spin_sectors = 2*num_l1_spin_sectors
+        priority_counts = np.zeros((num_epochs, num_priorities, num_esa_steps, num_l1_spin_sectors))
+        priority_counts[0,0,0,0] = 4
+        priority_counts[0,0,0,2] = 20
+
+        event_buffer_len = 15
+        num_events = np.zeros((num_epochs, num_priorities), dtype=int)
+        spin_sectors = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=int)
+        energy_steps = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=int)
+
+        num_events[0, 0] = 3
+        spin_sectors[0, 0, :3] = [0, 2, 12]
+        energy_steps[0, 0, :3] = [0, 0, 0]
+
+        result = calculate_normalization_factor(priority_counts, num_events, spin_sectors, energy_steps)
+
+        expected_shape = (num_epochs, num_priorities, num_esa_steps, num_l2_spin_sectors)
+        expected = np.full(expected_shape, 0.0)
+        expected[0,0,0,0] = 4 / 2
+        expected[0,0,0,0+12] = 4 / 2
+        expected[0,0,0,2] = 20 / 1
+        expected[0,0,0,2+12] = 20 / 1
+
+        np.testing.assert_equal(result, expected)
+
+    def test_calculate_normalization_factor_floor_is_one(self):
+        num_epochs = 2
+        num_priorities = 7
+        num_esa_steps = 128
+        num_l1_spin_sectors = 12
+        num_l2_spin_sectors = 2*num_l1_spin_sectors
+        priority_counts = np.zeros((num_epochs, num_priorities, num_esa_steps, num_l1_spin_sectors))
+        priority_counts[0,0,0,0] = 1.
+        priority_counts[0,0,0,2] = 0.
+
+
+        event_buffer_len = 15
+        num_events = np.zeros((num_epochs, num_priorities), dtype=int)
+        spin_sectors = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=int)
+        energy_steps = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=int)
+
+        num_events[0, 0] = 3
+        spin_sectors[0, 0, :3] = [0, 12, 2]
+        energy_steps[0, 0, :3] = [0, 0, 0]
+
+        result = calculate_normalization_factor(priority_counts, num_events, spin_sectors, energy_steps)
+
+        expected_shape = (num_epochs, num_priorities, num_esa_steps, num_l2_spin_sectors)
+        expected = np.full(expected_shape, 0.0)
+        self.assertEqual(1.0, result[0,0,0,0])
+        self.assertEqual(1.0, result[0,0,0,0+12])
+        self.assertEqual(1.0, result[0,0,0,2])
+        self.assertEqual(1.0, result[0,0,0,2+12])
+
+        expected[0, 0, 0, (0, 2, 12, 14)] = 1.0
+        np.testing.assert_equal(result, expected)
+
+
+    def test_normalization_factor_is_fill_when_priority_nonzero_and_direct_zero(self):
+        num_epochs = 2
+        num_priorities = 7
+        num_esa_steps = 128
+        num_l1_spin_sectors = 12
+        num_l2_spin_sectors = 2*num_l1_spin_sectors
+        priority_counts = np.zeros((num_epochs, num_priorities, num_esa_steps, num_l1_spin_sectors))
+        priority_counts[0,0,0,0] = 1.
+        priority_counts[0,0,0,2] = 50.
+
+        event_buffer_len = 15
+        num_events = np.zeros((num_epochs, num_priorities), dtype=int)
+        spin_sectors = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=int)
+        energy_steps = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=int)
+
+        result = calculate_normalization_factor(priority_counts, num_events, spin_sectors, energy_steps)
+
+        expected_shape = (num_epochs, num_priorities, num_esa_steps, num_l2_spin_sectors)
+        expected = np.full(expected_shape, 0.0)
+        np.testing.assert_equal(result[0,0,0,0], np.nan)
+        np.testing.assert_equal(result[0,0,0,0+12], np.nan)
+        np.testing.assert_equal(result[0,0,0,2], np.nan)
+        np.testing.assert_equal(result[0,0,0,2+12], np.nan)
+
+        expected[0, 0, 0, (0, 2, 12, 14)] = np.nan
+        np.testing.assert_equal(result, expected)
 
     def test_normalize_counts(self):
         num_epochs = 2

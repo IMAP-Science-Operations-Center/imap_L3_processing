@@ -18,7 +18,7 @@ from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calcu
     calculate_mass, calculate_mass_per_charge, \
     rebin_to_counts_by_species_elevation_and_spin_sector, normalize_counts, \
     combine_priorities_and_convert_to_rate, rebin_3d_distribution_azimuth_to_elevation, convert_count_rate_to_intensity, \
-    rebin_direct_events_for_normalization
+    calculate_normalization_factor
 from imap_l3_processing.data_utils import safe_divide
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
@@ -186,30 +186,18 @@ class CodiceLoProcessor(Processor):
         ]
         num_priorities = len(priority_counts)
 
-        mass_per_charge = np.full((len(codice_direct_events.epoch), num_priorities, event_buffer),
-                                  np.nan)
-        mass = np.full((len(codice_direct_events.epoch), num_priorities, event_buffer), np.nan)
-
         spin_angle_lut = SpinAngleLookup()
-        normalization = np.full((len(codice_direct_events.epoch), num_priorities,
-                                 num_energies, num_spin_sectors), np.nan)
 
-        try:
-            mass_per_charge = calculate_mass_per_charge(codice_direct_events.energy_per_charge,
-                                                        codice_direct_events.tof)
-            mass = calculate_mass(codice_direct_events.apd_energy, codice_direct_events.tof, mass_coefficient_lookup)
-
-            direct_events_binned_by_energy_and_spin = rebin_direct_events_for_normalization(
-                codice_direct_events.num_events,
-                codice_direct_events.spin_sector,
-                codice_direct_events.energy_step,
-                num_spin_sectors,
-                num_energies)
-            stacked_priorities = np.stack(priority_counts, axis=1)
-            numerator = np.concatenate((stacked_priorities, stacked_priorities), axis=3)
-            normalization = numerator / direct_events_binned_by_energy_and_spin
-        except Exception as e:
-            print(e)
+        mass_per_charge = calculate_mass_per_charge(codice_direct_events.energy_per_charge,
+                                                    codice_direct_events.tof)
+        mass = calculate_mass(codice_direct_events.apd_energy, codice_direct_events.tof, mass_coefficient_lookup)
+        stacked_priorities = np.stack(priority_counts, axis=1)
+        normalization = calculate_normalization_factor(
+            stacked_priorities,
+            codice_direct_events.num_events,
+            codice_direct_events.spin_sector,
+            codice_direct_events.energy_step,
+        )
 
         return CodiceLoL3aDirectEventDataProduct(
             input_metadata=self.input_metadata,
