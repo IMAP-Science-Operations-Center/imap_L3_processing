@@ -547,7 +547,7 @@ class TestModels(CdfModelTestCase):
                 cdf["energy_step"] = rng.random(cdf["energy_step"].shape)
                 cdf["energy_per_charge"] = rng.random(cdf["energy_per_charge"].shape)
                 cdf["spin_angle"] = rng.random(cdf["spin_angle"].shape)
-                cdf["spin_sector"] = rng.random(cdf["spin_sector"].shape)
+                cdf["spin_sector"] =  rng.integers(0, 24, cdf["spin_sector"].shape)
                 cdf["elevation_angle"] = rng.random(cdf["elevation_angle"].shape)
                 cdf["position"] = rng.random(cdf["position"].shape)
 
@@ -560,6 +560,22 @@ class TestModels(CdfModelTestCase):
                 np.testing.assert_array_equal(l2_direct_event.spin_sector, cdf["spin_sector"][:, :7, ...])
                 np.testing.assert_array_equal(l2_direct_event.spin_angle, cdf["spin_angle"][:, :7, ...])
                 np.testing.assert_array_equal(l2_direct_event.elevation_angle, cdf["elevation_angle"][:, :7, ...])
+
+    def test_workaround_to_convert_float_spin_sector_to_int(self):
+        all_fill_l2_cdf_path = get_test_data_path('codice/imap_codice_l2_lo-direct-events_20260307_v003-all-fill.cdf')
+
+        rng = np.random.default_rng()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir = Path(tmpdir)
+
+            test_cdf_path = tmpdir / "test_cdf.cdf"
+            with CDF(str(test_cdf_path), masterpath=str(all_fill_l2_cdf_path)) as cdf:
+                expected_spin_sector = rng.integers(0, 24, cdf["spin_sector"].shape, dtype=int)
+                cdf["spin_sector"] = expected_spin_sector.astype(float)
+
+            l2_direct_event = CodiceLoL2DirectEventData.read_from_cdf(test_cdf_path)
+
+            np.testing.assert_array_equal(l2_direct_event.spin_sector, expected_spin_sector[:, :7, ...], strict=True)
 
     def test_codice_lo_l2_direct_events_read_from_cdf_handles_fill_value(self):
         all_fill_l2_cdf_path = get_test_data_path('codice/imap_codice_l2_lo-direct-events_20260307_v003-all-fill.cdf')

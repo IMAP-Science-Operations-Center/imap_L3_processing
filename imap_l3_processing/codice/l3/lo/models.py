@@ -128,7 +128,7 @@ class CodiceLoL2DirectEventData:
                 num_events=read_variable_and_mask_fill_values(cdf["num_events"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
                 spin_angle=read_variable_and_mask_fill_values(cdf["spin_angle"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
                 spin_sector=read_variable_and_mask_fill_values(cdf["spin_sector"])[:, :CODICE_LO_L2_NUM_PRIORITIES,
-                            ...],
+                            ...].astype(int),
                 elevation_angle=read_variable_and_mask_fill_values(cdf["elevation_angle"])[:,
                                 :CODICE_LO_L2_NUM_PRIORITIES, ...],
                 tof=read_variable_and_mask_fill_values(cdf["tof"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
