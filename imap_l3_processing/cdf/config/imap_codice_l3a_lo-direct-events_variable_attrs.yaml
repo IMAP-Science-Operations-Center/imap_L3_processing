@@ -162,8 +162,27 @@ normalization:
   LABLAXIS: Normalization
   UNITS: " "
   SCALETYP: linear
+  VALIDMIN: 0
+  VALIDMAX: 1000
   LABL_PTR_2: energy_bin_label
   LABL_PTR_3: spin_angle_bin_label
+  VARIABLE_PURPOSE: ""
+
+normalization_per_event:
+  <<: *per_event
+  NAME: normalization_per_event
+  VAR_TYPE: data
+  CATDESC: Normalization per event
+  FIELDNAM: Normalization factor
+  LABLAXIS: Normalization
+  UNITS: " "
+  SCALETYP: linear
+  VALIDMIN: 0
+  VALIDMAX: 1000
+  SCALEMIN: 0
+  SCALEMAX: 10
+  VARIABLE_PURPOSE: ""
+  DATA_TYPE: CDF_FLOAT
 
 mass_per_charge:
   <<: *per_event

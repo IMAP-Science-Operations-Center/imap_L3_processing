@@ -83,7 +83,8 @@ def rebin_direct_events_by_energy_and_spin_sector(num_events: np.ndarray, spin_s
             np.add.at(rebinned_output[time_index, priority_index], (energy_indices, spin_sectors), 1)
     return rebinned_output
 
-def calculate_normalization_factor(priority_counts: np.ndarray, num_events: np.ndarray, spin_sectors: np.ndarray, energy_steps: np.ndarray) -> np.ndarray:
+def calculate_normalization_factor(priority_counts: np.ndarray, num_events: np.ndarray, energy_steps: np.ndarray,
+                                   spin_sectors: np.ndarray) -> np.ndarray:
     numerator = np.concatenate((priority_counts, priority_counts), axis=3)
     num_energies = priority_counts.shape[2]
     num_spin_sectors = 2 * priority_counts.shape[3]
@@ -97,6 +98,16 @@ def calculate_normalization_factor(priority_counts: np.ndarray, num_events: np.n
     output[(denominator==0)&(numerator==0)] = 0.0
     output[(denominator==0)&(numerator!=0)] = np.nan
     return output
+
+def lookup_normalization_per_event(normalization: np.ndarray, num_events: np.ndarray, energy_steps: np.ndarray, spin_sectors: np.ndarray) -> np.ndarray:
+    results = np.full(spin_sectors.shape, np.nan)
+    for (epoch, priority), count in np.ma.ndenumerate(num_events, compressed=True):
+        energy_step = energy_steps[epoch, priority, :count]
+        spin_sector = spin_sectors[epoch, priority, :count]
+
+        assert 0 == np.ma.count_masked(energy_step) == np.ma.count_masked(spin_sector) , "Expected all events to have an energy_step and spin_sector!"
+        results[epoch, priority, :count] = normalization[epoch, priority, energy_step, spin_sector]
+    return results
 
 def rebin_to_counts_by_species_elevation_and_spin_sector(num_events: np.ndarray, mass: np.ndarray,
                                                          mass_per_charge: np.ndarray,

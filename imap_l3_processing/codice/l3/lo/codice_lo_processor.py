@@ -18,7 +18,7 @@ from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calcu
     calculate_mass, calculate_mass_per_charge, \
     rebin_to_counts_by_species_elevation_and_spin_sector, normalize_counts, \
     combine_priorities_and_convert_to_rate, rebin_3d_distribution_azimuth_to_elevation, convert_count_rate_to_intensity, \
-    calculate_normalization_factor
+    calculate_normalization_factor, lookup_normalization_per_event
 from imap_l3_processing.data_utils import safe_divide
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
@@ -192,11 +192,14 @@ class CodiceLoProcessor(Processor):
                                                     codice_direct_events.tof)
         mass = calculate_mass(codice_direct_events.apd_energy, codice_direct_events.tof, mass_coefficient_lookup)
         stacked_priorities = np.stack(priority_counts, axis=1)
-        normalization = calculate_normalization_factor(
-            stacked_priorities,
+        normalization = calculate_normalization_factor(stacked_priorities, codice_direct_events.num_events,
+                                                       codice_direct_events.energy_step,
+                                                       codice_direct_events.spin_sector)
+        normalization_per_event = lookup_normalization_per_event(
+            normalization,
             codice_direct_events.num_events,
-            codice_direct_events.spin_sector,
             codice_direct_events.energy_step,
+            codice_direct_events.spin_sector
         )
 
         return CodiceLoL3aDirectEventDataProduct(
@@ -227,7 +230,7 @@ class CodiceLoProcessor(Processor):
             rgfo_esa_step=codice_sw_priority_counts_l1a_data.rgfo_esa_step,
             nso_spin_sector=codice_sw_priority_counts_l1a_data.nso_spin_sector,
             nso_esa_step=codice_sw_priority_counts_l1a_data.nso_esa_step,
-            normalization_per_event=1,
+            normalization_per_event=normalization_per_event,
             spin_sector=codice_direct_events.spin_sector,
         )
 

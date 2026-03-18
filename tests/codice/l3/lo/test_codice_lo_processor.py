@@ -499,11 +499,13 @@ class TestCodiceLoProcessor(unittest.TestCase):
         self.assertEqual(fe_hiq_partial_density, result_data.fe_hiq_partial_density),
 
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.SpinAngleLookup')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_normalization_factor')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_mass_per_charge')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_mass')
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.lookup_normalization_per_event', autospec=True)
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_normalization_factor', autospec=True)
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_mass_per_charge', autospec=True)
+    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_mass', autospec=True)
     def test_process_l3a_direct_events(self, mock_calculate_mass, mock_calculate_mass_per_charge,
                                        mock_calculate_normalization_factor,
+                                       mock_lookup_normalization_per_event,
                                        mock_spin_angle_lookup_class):
         rng = np.random.default_rng()
 
@@ -607,9 +609,14 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_equal(actual_stacked_priorities[:, 6], nsw_priority_rates.p6_hplus_heplusplus)
 
         np.testing.assert_equal(mock_calculate_normalization_factor.call_args.args[1], expected_num_events)
-        np.testing.assert_equal(mock_calculate_normalization_factor.call_args.args[2], expected_spin_sector)
-        np.testing.assert_equal(mock_calculate_normalization_factor.call_args.args[3], expected_energy_step)
+        np.testing.assert_equal(mock_calculate_normalization_factor.call_args.args[2], expected_energy_step)
+        np.testing.assert_equal(mock_calculate_normalization_factor.call_args.args[3], expected_spin_sector)
 
+        self.assertEqual(1, mock_lookup_normalization_per_event.call_count)
+        np.testing.assert_equal(mock_lookup_normalization_per_event.call_args.args[0], expected_normalization)
+        np.testing.assert_equal(mock_lookup_normalization_per_event.call_args.args[1], expected_num_events)
+        np.testing.assert_equal(mock_lookup_normalization_per_event.call_args.args[2], expected_energy_step)
+        np.testing.assert_equal(mock_lookup_normalization_per_event.call_args.args[3], expected_spin_sector)
 
         self.assertIsInstance(l3a_direct_event_data_product, CodiceLoL3aDirectEventDataProduct)
         self.assertEqual(input_metadata, l3a_direct_event_data_product.input_metadata)
@@ -624,6 +631,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         np.testing.assert_array_equal(l3a_direct_event_data_product.normalization,
                                       np.flip(expected_normalization, axis=2))
+        self.assertEqual(l3a_direct_event_data_product.normalization_per_event, mock_lookup_normalization_per_event.return_value)
+
 
         np.testing.assert_array_equal(expected_spin_angle, l3a_direct_event_data_product.spin_angle)
         np.testing.assert_array_equal(expected_spin_sector, l3a_direct_event_data_product.spin_sector)
