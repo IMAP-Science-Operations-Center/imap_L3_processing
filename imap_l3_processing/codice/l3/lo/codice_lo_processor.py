@@ -9,7 +9,6 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies im
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencies import \
     CodiceLoL3aPartialDensitiesDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import CodiceLoL3aRatiosDependencies
-from imap_l3_processing.codice.l3.lo.constants import CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup, \
     PositionToElevationLookup
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, \
@@ -183,8 +182,6 @@ class CodiceLoProcessor(Processor):
             codice_nsw_priority_counts_l1a_data.p6_hplus_heplusplus
         ]
 
-        spin_angle = np.full((len(codice_direct_events.epoch), len(priority_counts_for_events), event_buffer),
-                             np.nan)
         mass_per_charge = np.full((len(codice_direct_events.epoch), len(priority_counts_for_events), event_buffer),
                                   np.nan)
         mass = np.full((len(codice_direct_events.epoch), len(priority_counts_for_events), event_buffer), np.nan)
@@ -198,10 +195,9 @@ class CodiceLoProcessor(Processor):
                                                         codice_direct_events.tof)
             mass = calculate_mass(codice_direct_events.apd_energy, codice_direct_events.tof, mass_coefficient_lookup)
 
-            spin_angle = (codice_direct_events.spin_angle + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360
             direct_events_binned_by_energy_and_spin = rebin_counts_by_energy_and_spin_angle(
                 codice_direct_events.num_events,
-                spin_angle,
+                codice_direct_events.spin_angle,
                 codice_direct_events.energy_step,
                 spin_angle_lut,
                 esa_energy_per_charge_lookup)
@@ -225,7 +221,7 @@ class CodiceLoProcessor(Processor):
             num_events=codice_direct_events.num_events,
             tof=codice_direct_events.tof,
             data_quality=codice_direct_events.data_quality,
-            spin_angle=spin_angle,
+            spin_angle=codice_direct_events.spin_angle,
             elevation=codice_direct_events.elevation_angle,
             position=codice_direct_events.position,
             energy_bin=np.flip(esa_energy_per_charge_lookup.bin_centers),
@@ -239,6 +235,7 @@ class CodiceLoProcessor(Processor):
             nso_spin_sector=codice_sw_priority_counts_l1a_data.nso_spin_sector,
             nso_esa_step=codice_sw_priority_counts_l1a_data.nso_esa_step,
             normalization_per_event=1,
+            spin_sector=codice_direct_events.spin_sector,
         )
 
     def process_l3a_3d_distribution_product(self, dependencies: CodiceLoL3a3dDistributionsDependencies):

@@ -567,6 +567,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
         expected_data_quality = codice_l2_variables["data_quality"]
         expected_num_events = codice_l2_variables["num_events"]
         expected_energy_step = codice_l2_variables["energy_step"]
+        expected_spin_angle = codice_l2_variables["spin_angle"]
+        expected_spin_sector = codice_l2_variables["spin_sector"]
 
         direct_events = CodiceLoL2DirectEventData(**codice_l2_variables)
 
@@ -595,10 +597,9 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_equal(mock_calculate_mass_per_charge.call_args.args[0], expected_energy_per_charge)
         np.testing.assert_equal(mock_calculate_mass_per_charge.call_args.args[1], expected_tof)
 
-        expected_spin_angles = (codice_l2_variables['spin_angle'] + 316) % 360
         self.assertEqual(1, mock_rebin_counts_by_energy_and_spin.call_count)
         np.testing.assert_equal(mock_rebin_counts_by_energy_and_spin.call_args.args[0], expected_num_events)
-        np.testing.assert_equal(mock_rebin_counts_by_energy_and_spin.call_args.args[1], expected_spin_angles)
+        np.testing.assert_equal(mock_rebin_counts_by_energy_and_spin.call_args.args[1], expected_spin_angle)
         np.testing.assert_equal(mock_rebin_counts_by_energy_and_spin.call_args.args[2], expected_energy_step)
         np.testing.assert_equal(mock_rebin_counts_by_energy_and_spin.call_args.args[3], mock_spin_angle_lookup)
         np.testing.assert_equal(mock_rebin_counts_by_energy_and_spin.call_args.args[4], dependencies.energy_lookup)
@@ -628,12 +629,11 @@ class TestCodiceLoProcessor(unittest.TestCase):
         expected_numerator[:,:,:,12:] = priority_rates
         expected_normalization = expected_numerator / counts_rebinned_by_energy_and_spin
 
-
-
         np.testing.assert_array_equal(l3a_direct_event_data_product.normalization,
                                       np.flip(expected_normalization, axis=2))
 
-        np.testing.assert_array_equal(expected_spin_angles, l3a_direct_event_data_product.spin_angle)
+        np.testing.assert_array_equal(expected_spin_angle, l3a_direct_event_data_product.spin_angle)
+        np.testing.assert_array_equal(expected_spin_sector, l3a_direct_event_data_product.spin_sector)
         np.testing.assert_array_equal(expected_elevation, l3a_direct_event_data_product.elevation)
         np.testing.assert_array_equal(expected_position, l3a_direct_event_data_product.position)
         np.testing.assert_array_equal(expected_apd_energy, l3a_direct_event_data_product.apd_energy)

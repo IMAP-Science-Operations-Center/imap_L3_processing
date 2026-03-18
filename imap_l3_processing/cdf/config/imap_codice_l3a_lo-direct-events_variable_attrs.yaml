@@ -209,16 +209,6 @@ energy_step:
   VAR_TYPE: data
   DATA_TYPE: CDF_UINT1
 
-event_spin_angle:
-  <<: *per_event
-  <<: *float_data
-  NAME: event_spin_angle
-  VAR_TYPE: data
-  CATDESC: Spin angle when event was observed
-  FIELDNAM: Spin angle
-  LABLAXIS: m
-  UNITS: degrees
-
 gain:
   <<: *per_event
   NAME: gain
@@ -349,6 +339,22 @@ spin_angle:
   SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 360
+
+spin_sector:
+  <<: *per_event
+  NAME: spin_sector
+  VAR_TYPE: support_data
+  CATDESC: Spin sector per event
+  FIELDNAM: Spin sector
+  LABLAXIS: Spin sector
+  DICT_KEY: SPASE>Support>SupportQuantity:Positional
+  UNITS: ' '
+  SCALETYP: linear
+  DATA_TYPE: CDF_UINT1
+  FORMAT: I2
+  VALIDMIN: 0
+  VALIDMAX: 23
+  FILLVAL: 255
 
 elevation:
   <<: *per_event

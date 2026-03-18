@@ -378,7 +378,7 @@ class TestModels(CdfModelTestCase):
             input_metadata=Mock(),
             epoch=epoch,
             epoch_delta=epoch_delta,
-            normalization=rng.random((len(epoch), len(priority), len(spin_angle), len(energy_step))),
+            normalization=rng.random((len(epoch), len(priority), len(energy_step), len(spin_angle))),
             mass_per_charge=rng.random((len(epoch), len(priority), len(event_num))),
             mass=rng.random((len(epoch), len(priority), len(event_num))),
             apd_energy=rng.random((len(epoch), len(priority), len(event_num))),
@@ -390,6 +390,7 @@ class TestModels(CdfModelTestCase):
             data_quality=rng.random((len(epoch), len(priority))),
             tof=rng.random((len(epoch), len(priority), len(event_num))),
             spin_angle=rng.random((len(epoch), len(priority), len(event_num))),
+            spin_sector=rng.random((len(epoch), len(priority), len(event_num))),
             elevation=rng.random((len(epoch), len(priority), len(event_num))),
             position=rng.random((len(epoch), len(priority), len(event_num))),
             spin_angle_bin=rng.random(24),
@@ -402,7 +403,7 @@ class TestModels(CdfModelTestCase):
             rgfo_esa_step=rng.random(len(epoch)),
             nso_spin_sector=rng.random(len(epoch)),
             nso_esa_step=rng.random(len(epoch)),
-            normalization_per_event=rng.random((len(epoch), len(priority), len(event_num)))
+            normalization_per_event=rng.random((len(epoch), len(priority), len(energy_step), len(spin_angle))),
         )
 
         np.testing.assert_array_equal(direct_event.event_index, np.arange(len(event_num)))

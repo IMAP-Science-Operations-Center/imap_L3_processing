@@ -311,6 +311,7 @@ NUM_EVENTS_VAR_NAME = "num_events"
 DATA_QUALITY_VAR_NAME = "data_quality"
 TOF_VAR_NAME = "tof"
 SPIN_ANGLE_VAR_NAME = "spin_angle"
+SPIN_SECTOR_VAR_NAME = "spin_sector"
 ELEVATION_VAR_NAME = "elevation"
 POSITION_VAR_NAME = "position"
 PRIORITY_INDEX_LABEL_VAR_NAME = "priority_index_label"
@@ -383,6 +384,7 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
     rgfo_esa_step: np.ndarray
     nso_spin_sector: np.ndarray
     nso_esa_step: np.ndarray
+    spin_sector: np.ndarray
     normalization_per_event: np.ndarray
 
 
@@ -424,6 +426,7 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
             DataProductVariable(ELEVATION_VAR_NAME, self.elevation),
             DataProductVariable(POSITION_VAR_NAME, self.position),
             DataProductVariable(SPIN_ANGLE_VAR_NAME, self.spin_angle),
+            DataProductVariable(SPIN_SECTOR_VAR_NAME, self.spin_sector),
             DataProductVariable(ENERGY_STEP_VAR_NAME, self.energy_step),
 
             DataProductVariable(PRIORITY_INDEX_VAR_NAME, self.priority_index),
