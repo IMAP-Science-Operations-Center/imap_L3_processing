@@ -102,10 +102,7 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                         break
                 exposure[0, cg_energy_index[0], cg_energy_index[1]] = l1c_dataset.exposure_times[
                     0, best_guess_index, cg_energy_index[1]]
-                if sensor in [Sensor.Lo, Sensor.Lo90]:
-                    best_match_energies[0, cg_energy_index[0], cg_energy_index[1]] = cg_energy / 1000
-                else:
-                    best_match_energies[0, cg_energy_index[0], cg_energy_index[1]] = energies[best_guess_index]
+                best_match_energies[0, cg_energy_index[0], cg_energy_index[1]] = cg_energy / 1000
 
         else:
             self.az_el_points = hae_az_el_points

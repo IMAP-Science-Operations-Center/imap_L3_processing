@@ -412,7 +412,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
     @patch("imap_l3_processing.maps.rectangular_survival_probability.apply_compton_getting_correction")
     def test_survivals_matched_with_corresponding_exposures_cg_corrected(self, mock_cg_correction, mock_interpolate):
         test_cases = [
-            (Sensor.Hi90, np.array([1, 2, 3])),
+            (Sensor.Hi90, np.array([1.25, 1.85, 3])),
             (Sensor.Lo, np.array([1.25, 1.85, 3])),
         ]
 
