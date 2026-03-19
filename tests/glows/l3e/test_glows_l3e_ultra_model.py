@@ -27,7 +27,9 @@ class TestL3eUltraModel(unittest.TestCase):
             sentinel.spacecraft_velocity_x,
             sentinel.spacecraft_velocity_y,
             sentinel.spacecraft_velocity_z,
-            sentinel.elongation_excluded
+            sentinel.elongation_excluded,
+            sentinel.pixel_latitude,
+            sentinel.pixel_longitude,
         )
 
         expected_energy_labels = ['Energy Label 1', 'Energy Label 2', 'Energy Label 3', 'Energy Label 4',
@@ -57,6 +59,8 @@ class TestL3eUltraModel(unittest.TestCase):
             DataProductVariable("spacecraft_velocity_y", sentinel.spacecraft_velocity_y),
             DataProductVariable("spacecraft_velocity_z", sentinel.spacecraft_velocity_z),
             DataProductVariable("elongation_excluded", sentinel.elongation_excluded),
+            DataProductVariable("pixel_latitude", sentinel.pixel_latitude),
+            DataProductVariable("pixel_longitude", sentinel.pixel_longitude),
         ]
 
         self.assertEqual(expected_data_products, data_products)
@@ -70,7 +74,7 @@ class TestL3eUltraModel(unittest.TestCase):
              25.4914514, 33.1831812, 43.1957952, 56.2295915, 73.1961745, 95.2822137, 124.0324417, 161.4576950,
              210.1755551, 273.5934261, 356.1468544])
 
-        row_1_probability_of_survival = np.array(
+        row_0_probability_of_survival = np.array(
             [0.84827693E+00, 0.86517360E+00, 0.88086645E+00, 0.89551288E+00, 0.90925039E+00, 0.92211605E+00,
              0.93428862E+00, 0.94576000E+00, 0.95660359E+00, 0.96660933E+00, 0.97533752E+00, 0.98226689E+00,
              0.98714107E+00, 0.99025210E+00, 0.99218849E+00, 0.99346478E+00, 0.99439230E+00, 0.99512632E+00,
@@ -123,7 +127,7 @@ class TestL3eUltraModel(unittest.TestCase):
         np.testing.assert_equal(expected_heal_pix, l3e_ul_product.healpix_index, strict=True)
         np.testing.assert_equal(expected_survival_probability_shape, l3e_ul_product.probability_of_survival.shape,
                                 strict=True)
-        np.testing.assert_equal(l3e_ul_product.probability_of_survival[0].T[0, :], row_1_probability_of_survival,
+        np.testing.assert_equal(l3e_ul_product.probability_of_survival[0].T[0, :], row_0_probability_of_survival,
                                 strict=True)
         np.testing.assert_equal(l3e_ul_product.probability_of_survival[0].T[804, :],
                                 row_804_probability_of_survival, strict=True)
@@ -144,3 +148,10 @@ class TestL3eUltraModel(unittest.TestCase):
         np.testing.assert_equal(np.array([2.3]), l3e_ul_product.spacecraft_velocity_z, strict=True)
 
         np.testing.assert_equal(np.array([30.0]), l3e_ul_product.elongation_excluded, strict=True)
+
+        np.testing.assert_equal(87.07582, l3e_ul_product.pixel_latitude[0])
+        np.testing.assert_equal(45.00000, l3e_ul_product.pixel_longitude[0])
+
+        np.testing.assert_equal(np.nan, l3e_ul_product.pixel_latitude[804])
+        np.testing.assert_equal(np.nan, l3e_ul_product.pixel_longitude[804])
+

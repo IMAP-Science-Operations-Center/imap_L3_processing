@@ -24,6 +24,8 @@ SPACECRAFT_VELOCITY_X_VAR_NAME = "spacecraft_velocity_x"
 SPACECRAFT_VELOCITY_Y_VAR_NAME = "spacecraft_velocity_y"
 SPACECRAFT_VELOCITY_Z_VAR_NAME = "spacecraft_velocity_z"
 ELONGATION_EXCLUDED_VAR_NAME = "elongation_excluded"
+PIXEL_LATITUDE_VAR_NAME = "pixel_latitude"
+PIXEL_LONGITUDE_VAR_NAME = "pixel_longitude"
 
 
 @dataclass
@@ -42,6 +44,8 @@ class GlowsL3EUltraData(DataProduct):
     spacecraft_velocity_y: np.ndarray
     spacecraft_velocity_z: np.ndarray
     elongation_excluded: np.ndarray
+    pixel_latitude: np.ndarray
+    pixel_longitude: np.ndarray
 
     @classmethod
     def convert_dat_to_glows_l3e_ul_product(cls, input_metadata: InputMetadata, file_path: Path,
@@ -62,11 +66,18 @@ class GlowsL3EUltraData(DataProduct):
 
         existing_healpix = data_table[:, 0]
         probability_of_survival = data_table[:, 3:]
+        pixel_latitude = data_table[:, 1]
+        pixel_longitude = data_table[:, 2]
+
 
         probability_of_survival_to_return = np.full((len(energies), len(healpix_indexes)), np.nan, dtype=float)
+        pixel_latitude_to_return = np.full(len(healpix_indexes), np.nan, dtype=float)
+        pixel_longitude_to_return = np.full(len(healpix_indexes), np.nan, dtype=float)
 
-        for healpix, prob_sur in zip(existing_healpix, probability_of_survival):
+        for healpix, prob_sur, pixel_lat, pixel_lon in zip(existing_healpix, probability_of_survival, pixel_latitude, pixel_longitude):
             probability_of_survival_to_return[:, int(healpix)] = prob_sur
+            pixel_latitude_to_return[int(healpix)] = pixel_lat
+            pixel_longitude_to_return[int(healpix)] = pixel_lon
 
         transposed_prob_sur = np.array([probability_of_survival_to_return])
 
@@ -86,6 +97,8 @@ class GlowsL3EUltraData(DataProduct):
             spacecraft_velocity_y=np.array([args.spacecraft_velocity_y]),
             spacecraft_velocity_z=np.array([args.spacecraft_velocity_z]),
             elongation_excluded=np.array([args.elongation]),
+            pixel_latitude=pixel_latitude_to_return,
+            pixel_longitude=pixel_longitude_to_return,
         )
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
@@ -108,4 +121,6 @@ class GlowsL3EUltraData(DataProduct):
             DataProductVariable(SPACECRAFT_VELOCITY_Y_VAR_NAME, self.spacecraft_velocity_y),
             DataProductVariable(SPACECRAFT_VELOCITY_Z_VAR_NAME, self.spacecraft_velocity_z),
             DataProductVariable(ELONGATION_EXCLUDED_VAR_NAME, self.elongation_excluded),
+            DataProductVariable(PIXEL_LATITUDE_VAR_NAME, self.pixel_latitude),
+            DataProductVariable(PIXEL_LONGITUDE_VAR_NAME, self.pixel_longitude),
         ]

@@ -199,3 +199,36 @@ elongation_excluded:
   VALIDMAX: 0
   VALIDMIN: 180
   RECORD_VARYING: RV
+
+pixel_longitude:
+  NAME: pixel_longitude
+  DEPEND_0: epoch
+  DEPEND_1: healpix_index
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Pixel center longitude in HAE (ECLIPJ2000)
+  VAR_NOTES: Reference frames are defined according to IMAP mission SPICE kernels.
+  VAR_TYPE: metadata
+  FIELDNAM: HAE longitude
+  LABLAXIS: Longitude
+  RECORD_VARYING: RV
+  FORMAT: F9.3
+  FILLVAL: -1.0000E+31
+  UNITS: degrees
+  VALIDMIN: 0
+  VALIDMAX: 360
+pixel_latitude:
+  NAME: pixel_latitude
+  DEPEND_0: epoch
+  DEPEND_1: healpix_index
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Pixel center latitude in HAE (ECLIPJ2000)
+  VAR_NOTES: Reference frames are defined according to IMAP mission SPICE kernels.
+  VAR_TYPE: metadata
+  FIELDNAM: HAE latitude
+  LABLAXIS: Latitude
+  RECORD_VARYING: RV
+  FORMAT: F9.3
+  FILLVAL: -1.0000E+31
+  UNITS: degrees
+  VALIDMIN: -90
+  VALIDMAX: 90
