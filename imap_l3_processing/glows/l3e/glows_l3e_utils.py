@@ -127,29 +127,20 @@ def find_first_updated_cr(new_l3d: Path, old_l3d: str) -> Optional[int]:
 
     return None
 
-@dataclass
-class LoL1bNHK:
-    epoch: np.ndarray
-    angle: np.ndarray
-
-    @classmethod
-    def read_from_cdf(cls, path: Path) -> LoL1bNHK:
-        with CDF(str(path)) as cdf:
-            epoch = cdf['epoch'][...]
-            angle = cdf['pcc_coarse_pot_pri'][...]
-        return cls(epoch, angle)
-
-    def get_pivot_angle(self) -> float:
-        if len(self.epoch) == 0:
-            return 90
-        t0 = self.epoch[0]
-        start = t0 + timedelta(hours=3)
-        end = t0 + timedelta(hours=15)
-        start_index, end_index = np.searchsorted(self.epoch, [start, end])
-        angles = self.angle[start_index:end_index]
-        if len(angles) == 0:
-            return 90
-        return np.round(np.median(angles))
+def get_lo_pivot_angle_from_l1b_file(path: Path) -> float:
+    with CDF(str(path)) as cdf:
+        epoch = cdf['epoch'][...]
+        angles = cdf['pcc_coarse_pot_pri'][...]
+    if len(epoch) == 0:
+        return 90
+    t0 = epoch[0]
+    start = t0 + timedelta(hours=3)
+    end = t0 + timedelta(hours=15)
+    start_index, end_index = np.searchsorted(epoch, [start, end])
+    angles_to_consider = angles[start_index:end_index]
+    if len(angles_to_consider) == 0:
+        return 90
+    return np.round(np.median(angles_to_consider))
 
 def get_lo_pivot_angles(repointings: list[int]) -> dict[int, float]:
     l1b_results = imap_data_access.query(
@@ -163,7 +154,7 @@ def get_lo_pivot_angles(repointings: list[int]) -> dict[int, float]:
     for repointing in repointings:
         if path := paths_by_repointing.get(repointing):
             downloaded_path = imap_data_access.download(path)
-            result[repointing] = LoL1bNHK.read_from_cdf(downloaded_path).get_pivot_angle()
+            result[repointing] = get_lo_pivot_angle_from_l1b_file(downloaded_path)
         else:
             result[repointing] = 90
     return result

@@ -1,13 +1,16 @@
+import tempfile
 import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch, Mock, call, sentinel
 
 import numpy as np
+from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, \
-    determine_l3e_files_to_produce, find_first_updated_cr, LoL1bNHK, get_lo_pivot_angles
+    determine_l3e_files_to_produce, find_first_updated_cr, get_lo_pivot_angles, \
+    get_lo_pivot_angle_from_l1b_file
 from tests.test_helpers import get_test_data_path, create_mock_query_results
 
 
@@ -207,12 +210,12 @@ class TestGlowsL3EUtils(unittest.TestCase):
 
                 self.assertEqual(actual_cr, expected)
 
-    def test_lo_l1b_nhk_get_pivot_angle_integration(self):
+    def test_get_lo_pivot_angle_from_l1b_file_real_cdf(self):
         l1b_file = get_test_data_path("glows/imap_lo_l1b_nhk_20260318-repoint00189_v003.cdf")
-        actual = LoL1bNHK.read_from_cdf(l1b_file).get_pivot_angle()
+        actual = get_lo_pivot_angle_from_l1b_file(l1b_file)
         self.assertEqual(90.0, actual)
 
-    def test_lo_l1b_nhk_get_pivot_angle(self):
+    def test_get_lo_pivot_angle_from_l1b_file_scenarios(self):
         first_three_hours = [
             datetime(2026, 3, 20, 0, 45),
             datetime(2026, 3, 20, 2, 45),
@@ -240,12 +243,17 @@ class TestGlowsL3EUtils(unittest.TestCase):
         ]
         for name, epochs, pivot_angles, expected in cases:
             with self.subTest(name):
-                actual = LoL1bNHK(epochs, pivot_angles).get_pivot_angle()
-                self.assertEqual(expected, actual)
+                with tempfile.TemporaryDirectory() as tmp_dir:
+                    cdf_path = Path(tmp_dir,"l1b.cdf")
+                    with CDF(str(cdf_path), create=True) as cdf:
+                        cdf["epoch"] = epochs
+                        cdf["pcc_coarse_pot_pri"] = pivot_angles
+                    actual = get_lo_pivot_angle_from_l1b_file(cdf_path)
+                    self.assertEqual(expected, actual)
 
-    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.LoL1bNHK')
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.get_lo_pivot_angle_from_l1b_file')
     @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access')
-    def test_get_lo_pivot_angles(self, mock_imap_data_access, mock_nhk_model):
+    def test_get_lo_pivot_angles(self, mock_imap_data_access, mock_get_pivot_angle_from_file):
         available_repointings = [1, 2, 3, 4, 5, 6]
         mock_imap_data_access.query.return_value = [
             {'file_path': f'file{i}.cdf', 'repointing': i}
@@ -261,10 +269,8 @@ class TestGlowsL3EUtils(unittest.TestCase):
             Path("local/path/to/file6.cdf"): 84,
         }
         def mock_read_from_cdf(path: Path):
-            result = Mock()
-            result.get_pivot_angle.return_value = pivot_angles_by_file_path[path]
-            return result
-        mock_nhk_model.read_from_cdf.side_effect = mock_read_from_cdf
+            return pivot_angles_by_file_path[path]
+        mock_get_pivot_angle_from_file.side_effect = mock_read_from_cdf
 
         result = get_lo_pivot_angles([3, 4, 6, 10])
 
