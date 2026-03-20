@@ -1028,13 +1028,16 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                         np.testing.assert_allclose(actual[0], first_line)
                         np.testing.assert_allclose(actual[-1], last_line)
 
+    @patch('imap_l3_processing.glows.glows_processor.get_lo_pivot_angles')
     @patch('imap_l3_processing.glows.glows_processor.get_pointing_date_range')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_hi')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_lo')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_ul_hf')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_ul_sf')
     def test_process_l3e(self, mock_process_ultra, mock_process_ultra_hf, mock_process_lo, mock_process_hi,
-                         mock_get_pointing_date_range):
+                         mock_get_pointing_date_range,
+                         mock_get_lo_pivot_angles,
+                         ):
         mock_process_hi.side_effect = [
             [Path('path/to/first_hi_l3e')],
             [Path('path/to/second_hi_l3e')],
@@ -1042,6 +1045,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         mock_process_lo.return_value = [Path('path/to/lo_l3e')]
         mock_process_ultra.return_value = [Path('path/to/ultra_l3e')]
         mock_process_ultra_hf.return_value = [Path('path/to/ultra_l3e_hf')]
+        mock_get_lo_pivot_angles.return_value = {25: 75}
 
         expected_l3e_products = [
             Path('path/to/lo_l3e'),
@@ -1055,7 +1059,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         epoch_delta = timedelta(hours=12)
         mock_get_pointing_date_range.return_value = (start_epoch, end_epoch)
 
-        mock_dependencies = Mock(elongation={"2020001": sentinel.elongation})
+        mock_dependencies = Mock()
 
         mock_dependencies.get_hi_parents.return_value = ["hi_ancillary.dat"]
         mock_dependencies.get_lo_parents.return_value = ["lo_ancillary.dat"]
@@ -1079,12 +1083,13 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             call(["hi_ancillary.dat"], 25, start_epoch, epoch_delta, 90, 1),
             call(["hi_ancillary.dat"], 25, start_epoch, epoch_delta, 135, 2)
         ])
-        mock_process_lo.assert_called_once_with(["lo_ancillary.dat"], 25, start_epoch, epoch_delta, sentinel.elongation,
+        mock_process_lo.assert_called_once_with(["lo_ancillary.dat"], 25, start_epoch, epoch_delta, 75,
                                                 3)
         mock_process_ultra.assert_called_once_with(["ul_ancillary.dat"], 25, start_epoch, epoch_delta, 4)
         mock_process_ultra_hf.assert_called_once_with(["ul_ancillary.dat"], 25, start_epoch, epoch_delta, 4)
 
         self.assertEqual(expected_l3e_products, actual_l3e_products)
+        mock_get_lo_pivot_angles.assert_called_once_with([25])
 
     @patch('imap_l3_processing.glows.glows_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
@@ -1390,13 +1395,15 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                 mock_convert_dat_to_glows_l3e_lo_product.reset_mock()
                 mock_save_data.reset_mock()
 
+    @patch('imap_l3_processing.glows.glows_processor.get_lo_pivot_angles')
     @patch('imap_l3_processing.glows.glows_processor.get_pointing_date_range')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_hi')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_lo')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_ul_hf')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_ul_sf')
     def test_process_l3e_skips_repointing_on_exception(self, mock_process_ultra, mock_process_ultra_hf, mock_process_lo,
-                                                       mock_process_hi, mock_get_pointing_date_range):
+                                                       mock_process_hi, mock_get_pointing_date_range,
+                                                       mock_get_lo_pivot_angles):
 
         mock_process_hi.side_effect = [
             ValueError("Failed to generate hi"), [Path('path/to/first_hi-45_l3e')],
@@ -1425,6 +1432,12 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             [Path('path/to/third_ultra_l3e_hf')],
             ValueError("Failed to generate ultra!")
         ]
+        mock_get_lo_pivot_angles.return_value = {
+            24: 124,
+            25: 125,
+            26: 126,
+            27: 127,
+        }
 
         expected_l3e_products = [
             Path('path/to/first_lo_l3e'),
@@ -1468,8 +1481,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             (start_epoch_4, end_epoch_4),
         ]
 
-        mock_dependencies = Mock(elongation={"2020001": sentinel.elongation_1, "2020002": sentinel.elongation_2,
-                                             "2020004": sentinel.elongation_3, "2020005": sentinel.elongation_4})
+        mock_dependencies = Mock()
 
         hi_parents = ["imap_glows_hi-ancillary_20100101_v001.dat"]
         mock_dependencies.get_hi_parents.return_value = hi_parents
@@ -1504,10 +1516,10 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             call(hi_parents, 27, start_epoch_4, epoch_delta_4, 135, 2)
         ])
         mock_process_lo.assert_has_calls([
-            call(lo_parents, 24, start_epoch_1, epoch_delta_1, sentinel.elongation_1, 3),
-            call(lo_parents, 25, start_epoch_2, epoch_delta_2, sentinel.elongation_2, 3),
-            call(lo_parents, 26, start_epoch_3, epoch_delta_3, sentinel.elongation_3, 3),
-            call(lo_parents, 27, start_epoch_4, epoch_delta_4, sentinel.elongation_4, 3),
+            call(lo_parents, 24, start_epoch_1, epoch_delta_1, 124, 3),
+            call(lo_parents, 25, start_epoch_2, epoch_delta_2, 125, 3),
+            call(lo_parents, 26, start_epoch_3, epoch_delta_3, 126, 3),
+            call(lo_parents, 27, start_epoch_4, epoch_delta_4, 127, 3),
         ])
 
         mock_process_ultra.assert_has_calls([
@@ -1525,59 +1537,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         ])
 
         self.assertEqual(expected_l3e_products, actual_l3e_products)
-
-    @patch('imap_l3_processing.glows.glows_processor.get_pointing_date_range')
-    @patch('imap_l3_processing.glows.glows_processor.process_l3e_hi')
-    @patch('imap_l3_processing.glows.glows_processor.process_l3e_lo')
-    @patch('imap_l3_processing.glows.glows_processor.process_l3e_ul_sf')
-    def test_process_l3e_missing_lo_elongation_skips_processing(self, mock_process_ultra, mock_process_lo,
-                                                                mock_process_hi, mock_get_pointing_date_range):
-        mock_process_hi.side_effect = [
-            [Path('path/to/first_hi_l3e')],
-            [Path('path/to/second_hi_l3e')],
-        ]
-        mock_process_ultra.return_value = [Path('path/to/ultra_l3e')]
-
-        expected_l3e_products = [
-            Path('path/to/first_hi_l3e'), Path('path/to/second_hi_l3e'),
-            Path('path/to/ultra_l3e')
-        ]
-
-        start_epoch = datetime(2020, 1, 1)
-        end_epoch = datetime(2020, 1, 2)
-        epoch_delta = timedelta(hours=12)
-        mock_get_pointing_date_range.return_value = (start_epoch, end_epoch)
-
-        mock_dependencies = Mock(elongation={})
-
-        mock_dependencies.get_hi_parents.return_value = ["hi_ancillary.dat"]
-        mock_dependencies.get_lo_parents.return_value = ["lo_ancillary.dat"]
-        mock_dependencies.get_ul_parents.return_value = ["ul_ancillary.dat"]
-
-        initializer_data = GlowsL3EInitializerOutput(
-            dependencies=mock_dependencies,
-            repointings=GlowsL3eRepointings(
-                repointing_numbers=[25],
-                hi_90_repointings={25: 1},
-                hi_45_repointings={25: 2},
-                lo_repointings={25: 3},
-                ultra_repointings={25: 4}
-            )
-        )
-
-        actual_l3e_products = process_l3e(initializer_data)
-
-        mock_get_pointing_date_range.assert_called_once_with(25)
-
-        mock_process_hi.assert_has_calls([
-            call(["hi_ancillary.dat"], 25, start_epoch, epoch_delta, 90, 1),
-            call(["hi_ancillary.dat"], 25, start_epoch, epoch_delta, 135, 2)
-        ])
-        mock_process_lo.assert_not_called()
-        mock_process_ultra.assert_called_once_with(["ul_ancillary.dat"], 25, start_epoch,
-                                                   epoch_delta, 4)
-
-        self.assertEqual(expected_l3e_products, actual_l3e_products)
+        mock_get_lo_pivot_angles.assert_called_once_with([24, 25, 26, 27])
 
     @patch("imap_l3_processing.glows.glows_processor.json")
     @patch("imap_l3_processing.glows.glows_processor.ZipFile")

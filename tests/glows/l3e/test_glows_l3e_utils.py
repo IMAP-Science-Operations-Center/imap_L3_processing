@@ -1,12 +1,13 @@
 import unittest
-from datetime import datetime
+from datetime import datetime, timedelta
+from pathlib import Path
 from unittest.mock import patch, Mock, call, sentinel
 
 import numpy as np
 
 from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, \
-    determine_l3e_files_to_produce, find_first_updated_cr
+    determine_l3e_files_to_produce, find_first_updated_cr, LoL1bNHK, get_lo_pivot_angles
 from tests.test_helpers import get_test_data_path, create_mock_query_results
 
 
@@ -205,3 +206,77 @@ class TestGlowsL3EUtils(unittest.TestCase):
                 ])
 
                 self.assertEqual(actual_cr, expected)
+
+    def test_lo_l1b_nhk_get_pivot_angle_integration(self):
+        l1b_file = get_test_data_path("glows/imap_lo_l1b_nhk_20260318-repoint00189_v003.cdf")
+        actual = LoL1bNHK.read_from_cdf(l1b_file).get_pivot_angle()
+        self.assertEqual(90.0, actual)
+
+    def test_lo_l1b_nhk_get_pivot_angle(self):
+        first_three_hours = [
+            datetime(2026, 3, 20, 0, 45),
+            datetime(2026, 3, 20, 2, 45),
+        ]
+        three_to_fifteen = [
+            datetime(2026, 3, 20, 4, 45),
+            datetime(2026, 3, 20, 8, 45),
+            datetime(2026, 3, 20, 10, 45),
+            datetime(2026, 3, 20, 12, 45),
+            datetime(2026, 3, 20, 14, 45),
+        ]
+        after_fifteen = [
+            datetime(2026, 3, 20, 16, 45),
+            datetime(2026, 3, 20, 20, 45),
+        ]
+        epochs = first_three_hours + three_to_fifteen + after_fifteen
+        shifted_epochs = [e + timedelta(hours=10) for e in epochs]
+        cases = [
+            ("realistic", epochs, [89.1, 89.9, 89.9, 89.9, 89.9, 89.9, 89.9, 89.9, 89.9], 90),
+            ("basic", epochs, [10, 20, 30, 40, 50, 60, 70, 80, 90], 50),
+            ("only uses data within 3-15 hours from first point", shifted_epochs, [999, 999, 30, 40, 50, 60, 70, 999, 999], 50),
+            ("uses median and rounds", epochs, [999, 999, 120.2, 34.4, 86.8, 50.9, 77.7, 999, 999], 78),
+            ("fallback to 90 if no points in interval", first_three_hours + after_fifteen, [10, 10, 10, 10], 90),
+            ("fallback to 90 if no points at all", [], [], 90),
+        ]
+        for name, epochs, pivot_angles, expected in cases:
+            with self.subTest(name):
+                actual = LoL1bNHK(epochs, pivot_angles).get_pivot_angle()
+                self.assertEqual(expected, actual)
+
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.LoL1bNHK')
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access')
+    def test_get_lo_pivot_angles(self, mock_imap_data_access, mock_nhk_model):
+        available_repointings = [1, 2, 3, 4, 5, 6]
+        mock_imap_data_access.query.return_value = [
+            {'file_path': f'file{i}.cdf', 'repointing': i}
+            for i in available_repointings
+        ]
+        mock_imap_data_access.download.side_effect = lambda name: Path("local/path/to", name)
+        pivot_angles_by_file_path = {
+            Path("local/path/to/file1.cdf"): 25,
+            Path("local/path/to/file2.cdf"): 75,
+            Path("local/path/to/file3.cdf"): 105,
+            Path("local/path/to/file4.cdf"): 90,
+            Path("local/path/to/file5.cdf"): 72,
+            Path("local/path/to/file6.cdf"): 84,
+        }
+        def mock_read_from_cdf(path: Path):
+            result = Mock()
+            result.get_pivot_angle.return_value = pivot_angles_by_file_path[path]
+            return result
+        mock_nhk_model.read_from_cdf.side_effect = mock_read_from_cdf
+
+        result = get_lo_pivot_angles([3, 4, 6, 10])
+
+        mock_imap_data_access.query.assert_called_once_with(
+            instrument="lo",
+            data_level="l1b",
+            descriptor="nhk",
+            version="latest",
+        )
+        mock_imap_data_access.download.assert_has_calls([
+            call("file3.cdf"),
+            call("file4.cdf"),
+            call("file6.cdf"),
+        ])
+        self.assertEqual({3: 105, 4: 90, 6: 84, 10: 90}, result)

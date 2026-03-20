@@ -1,5 +1,6 @@
+from __future__ import annotations
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import imap_data_access
@@ -125,3 +126,44 @@ def find_first_updated_cr(new_l3d: Path, old_l3d: str) -> Optional[int]:
         return int(old_l3d_cdf['cr_grid'][-1]) + 1
 
     return None
+
+@dataclass
+class LoL1bNHK:
+    epoch: np.ndarray
+    angle: np.ndarray
+
+    @classmethod
+    def read_from_cdf(cls, path: Path) -> LoL1bNHK:
+        with CDF(str(path)) as cdf:
+            epoch = cdf['epoch'][...]
+            angle = cdf['pcc_coarse_pot_pri'][...]
+        return cls(epoch, angle)
+
+    def get_pivot_angle(self) -> float:
+        if len(self.epoch) == 0:
+            return 90
+        t0 = self.epoch[0]
+        start = t0 + timedelta(hours=3)
+        end = t0 + timedelta(hours=15)
+        start_index, end_index = np.searchsorted(self.epoch, [start, end])
+        angles = self.angle[start_index:end_index]
+        if len(angles) == 0:
+            return 90
+        return np.round(np.median(angles))
+
+def get_lo_pivot_angles(repointings: list[int]) -> dict[int, float]:
+    l1b_results = imap_data_access.query(
+        instrument="lo",
+        data_level="l1b",
+        descriptor="nhk",
+        version="latest",
+    )
+    paths_by_repointing = {f["repointing"]:f["file_path"] for f in l1b_results}
+    result = {}
+    for repointing in repointings:
+        if path := paths_by_repointing.get(repointing):
+            downloaded_path = imap_data_access.download(path)
+            result[repointing] = LoL1bNHK.read_from_cdf(downloaded_path).get_pivot_angle()
+        else:
+            result[repointing] = 90
+    return result

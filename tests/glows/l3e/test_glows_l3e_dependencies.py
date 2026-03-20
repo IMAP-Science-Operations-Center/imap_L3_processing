@@ -26,14 +26,13 @@ class TestGlowsL3EDependencies(unittest.TestCase):
         mock_sw_eqtr_electrons = Path('sw_eqtr_electrons_sdc_path')
         ionization_files = Path('ionization_files_path')
         mock_pipeline_settings = Path('l3bcde_pipeline_settings.json')
-        mock_lo_elongation_file = Path('lo_elongation_data.dat')
         mock_tess_ang_16 = Path('tess_ang_16_path')
         mock_repoint_file = Path('repoint.csv')
 
         mock_processing_input_collection.get_file_paths.side_effect = [
             [mock_lya_series], [mock_solar_uv_anisotropy], [mock_speed_3d_sw], [mock_density_3d_sw],
             [mock_phion_hydrogen], [mock_sw_eqtr_electrons], [ionization_files], [mock_pipeline_settings],
-            [mock_tess_xyz_8], [mock_energy_grid_lo], [mock_lo_elongation_file],
+            [mock_tess_xyz_8], [mock_energy_grid_lo],
             [mock_energy_grid_hi],
             [mock_energy_grid_ultra], [mock_tess_ang_16],
             [mock_repoint_file]
@@ -50,7 +49,6 @@ class TestGlowsL3EDependencies(unittest.TestCase):
         mock_ionization_files_path = Mock()
         mock_energy_grid_lo_path = Mock()
         mock_tess_xyz_8_path = Mock()
-        mock_lo_elongation_path = get_test_data_path('glows/imap_lo_elongation-data_20100101_v001.dat')
         mock_energy_grid_hi_path = Mock()
         mock_energy_grid_ultra_path = Mock()
         mock_tess_ang_16_path = Mock()
@@ -59,7 +57,7 @@ class TestGlowsL3EDependencies(unittest.TestCase):
         mock_download.side_effect = [
             mock_lya_series_path, mock_solar_uv_anisotropy_path, mock_speed_3d_sw_path,
             mock_density_3d_sw_path, mock_phion_hydrogen_path, mock_sw_eqtr_electrons_path, mock_ionization_files_path,
-            fake_pipeline_settings_path, mock_energy_grid_lo_path, mock_tess_xyz_8_path, mock_lo_elongation_path,
+            fake_pipeline_settings_path, mock_energy_grid_lo_path, mock_tess_xyz_8_path,
             mock_energy_grid_hi_path,
             mock_energy_grid_ultra_path, mock_tess_ang_16_path,
             mock_downloaded_repoint_file,
@@ -67,7 +65,7 @@ class TestGlowsL3EDependencies(unittest.TestCase):
 
         actual_dependencies = GlowsL3EDependencies.fetch_dependencies(mock_processing_input_collection)
 
-        self.assertEqual(15, mock_processing_input_collection.get_file_paths.call_count)
+        self.assertEqual(14, mock_processing_input_collection.get_file_paths.call_count)
 
         mock_processing_input_collection.get_file_paths.assert_has_calls([
             call(source="glows", descriptor="lya"),
@@ -80,7 +78,6 @@ class TestGlowsL3EDependencies(unittest.TestCase):
             call(source="glows", descriptor="pipeline-settings-l3bcde"),
             call(source="glows", descriptor="energy-grid-lo"),
             call(source="glows", descriptor="tess-xyz-8"),
-            call(source="lo", descriptor="elongation-data"),
             call(source="glows", descriptor="energy-grid-hi"),
             call(source="glows", descriptor="energy-grid-ultra"),
             call(source="glows", descriptor="tess-ang-16"),
@@ -98,7 +95,6 @@ class TestGlowsL3EDependencies(unittest.TestCase):
             call(mock_pipeline_settings),
             call(mock_tess_xyz_8),
             call(mock_energy_grid_lo),
-            call(mock_lo_elongation_file),
             call(mock_energy_grid_hi),
             call(mock_energy_grid_ultra),
             call(mock_tess_ang_16),
@@ -135,12 +131,6 @@ class TestGlowsL3EDependencies(unittest.TestCase):
         self.assertEqual(mock_tess_xyz_8_path, actual_dependencies.tess_xyz_8)
         self.assertEqual(mock_tess_ang_16_path, actual_dependencies.tess_ang16)
         self.assertEqual(fake_pipeline_settings_path, actual_dependencies.pipeline_settings_file)
-        self.assertEqual(365, len(actual_dependencies.elongation))
-        first_dict_value = actual_dependencies.elongation['2010001']
-        last_dict_value = actual_dependencies.elongation['2010365']
-        self.assertEqual(mock_lo_elongation_path, actual_dependencies.elongation_file)
-        self.assertEqual(105, first_dict_value)
-        self.assertEqual(105, last_dict_value)
 
         self.assertEqual(mock_downloaded_repoint_file, actual_dependencies.repointing_file)
 
@@ -213,7 +203,6 @@ class TestGlowsL3EDependencies(unittest.TestCase):
             "ionization_files.dat",
             "pipeline_settings.json",
             "repointing_file.csv",
-            "elongation.csv"
         ]
 
         self.assertEqual(expected_parent_file_names, dependencies.get_lo_parents())
@@ -269,8 +258,6 @@ class TestGlowsL3EDependencies(unittest.TestCase):
                 }
             },
             Path("path/to/some/pipeline_settings_file.csv"),
-            {},
-            Path("path/to/some/elongation_file.csv"),
             Path("repoint.csv")
         )
 
@@ -358,7 +345,5 @@ class TestGlowsL3EDependencies(unittest.TestCase):
             ionization_files=Path("some/folder/ionization_files.dat"),
             pipeline_settings_file=Path("some/folder/pipeline_settings.json"),
             pipeline_settings={},
-            elongation_file=Path("some/folder/elongation.csv"),
-            elongation={},
             repointing_file=Path("some/folder/repointing_file.csv"),
         )
