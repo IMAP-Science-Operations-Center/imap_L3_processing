@@ -534,6 +534,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         sw_priority_rates.rgfo_esa_step = rng.random(num_epochs)
         sw_priority_rates.nso_spin_sector = rng.random(num_epochs)
         sw_priority_rates.nso_esa_step = rng.random(num_epochs)
+        sw_priority_rates.esa_step = np.arange(128)
 
         nsw_priority_rates = create_dataclass_mock(CodiceLoL1aNSWPriorityRates)
         nsw_priority_rates.epoch = epochs
@@ -659,6 +660,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(sw_priority_rates.rgfo_esa_step, l3a_direct_event_data_product.rgfo_esa_step)
         np.testing.assert_array_equal(sw_priority_rates.nso_spin_sector, l3a_direct_event_data_product.nso_spin_sector)
         np.testing.assert_array_equal(sw_priority_rates.nso_esa_step, l3a_direct_event_data_product.nso_esa_step)
+        np.testing.assert_array_equal(sw_priority_rates.esa_step, l3a_direct_event_data_product.esa_step)
 
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.convert_count_rate_to_intensity')
     @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.rebin_3d_distribution_azimuth_to_elevation')

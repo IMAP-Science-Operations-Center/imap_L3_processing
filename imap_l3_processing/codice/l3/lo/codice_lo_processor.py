@@ -171,9 +171,6 @@ class CodiceLoProcessor(Processor):
         codice_direct_events = dependencies.codice_l2_direct_events
         esa_energy_per_charge_lookup = dependencies.energy_lookup
 
-        event_buffer = codice_direct_events.tof[0].shape[-1]
-        num_energies = codice_sw_priority_counts_l1a_data.p0_tcrs.shape[1]
-        num_spin_sectors = 2*codice_sw_priority_counts_l1a_data.p0_tcrs.shape[2]
         mass_coefficient_lookup = dependencies.mass_coefficient_lookup
         priority_counts = [
             codice_sw_priority_counts_l1a_data.p0_tcrs,
@@ -184,7 +181,6 @@ class CodiceLoProcessor(Processor):
             codice_nsw_priority_counts_l1a_data.p5_heavies,
             codice_nsw_priority_counts_l1a_data.p6_hplus_heplusplus
         ]
-        num_priorities = len(priority_counts)
 
         spin_angle_lut = SpinAngleLookup()
 
@@ -232,6 +228,7 @@ class CodiceLoProcessor(Processor):
             nso_esa_step=codice_sw_priority_counts_l1a_data.nso_esa_step,
             normalization_per_event=normalization_per_event,
             spin_sector=codice_direct_events.spin_sector,
+            esa_step=codice_sw_priority_counts_l1a_data.esa_step,
         )
 
     def process_l3a_3d_distribution_product(self, dependencies: CodiceLoL3a3dDistributionsDependencies):

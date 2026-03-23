@@ -373,6 +373,7 @@ class TestModels(CdfModelTestCase):
         spin_angle = np.array([30, 60, 90])
         energy_step = np.array([5.5, 6.6, 7.7])
         priority = np.arange(CODICE_LO_L2_NUM_PRIORITIES)
+        esa_step = np.arange(128)
 
         direct_event = CodiceLoL3aDirectEventDataProduct(
             input_metadata=Mock(),
@@ -404,6 +405,7 @@ class TestModels(CdfModelTestCase):
             nso_spin_sector=rng.random(len(epoch)),
             nso_esa_step=rng.random(len(epoch)),
             normalization_per_event=rng.random((len(epoch), len(priority), len(energy_step), len(spin_angle))),
+            esa_step=esa_step,
         )
 
         np.testing.assert_array_equal(direct_event.event_index, np.arange(len(event_num)))
@@ -452,6 +454,7 @@ class TestModels(CdfModelTestCase):
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.rgfo_esa_step, cdf["rgfo_esa_step"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.nso_spin_sector, cdf["nso_spin_sector"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.nso_esa_step, cdf["nso_esa_step"][...])
+            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.esa_step, cdf["esa_step"][...])
 
     def test_codice_lo_l1a_nsw_priority_read_from_instrument_team_cdf(self):
         instrument_team_cdf_path = get_test_instrument_team_data_path(

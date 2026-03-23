@@ -506,3 +506,18 @@ nso_esa_step:
   VAR_TYPE: data
   VARIABLE_PURPOSE: ""
   RECORD_VARYING: RV
+
+esa_step:
+  NAME: esa_step
+  DATA_TYPE: CDF_UINT1
+  CATDESC: Energy per charge (E/q) sweeping step
+  FIELDNAM: Energy Index
+  FILLVAL: 255
+  FORMAT: I3
+  LABLAXIS: Energy Index
+  SCALETYP: linear
+  UNITS: " "
+  VALIDMIN: 0
+  VALIDMAX: 127
+  VAR_TYPE: support_data
+  RECORD_VARYING: NRV

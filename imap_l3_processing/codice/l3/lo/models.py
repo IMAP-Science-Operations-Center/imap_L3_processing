@@ -159,6 +159,7 @@ class CodiceLoL1aSWPriorityRates:
     rgfo_esa_step: np.ndarray
     nso_spin_sector: np.ndarray
     nso_esa_step: np.ndarray
+    esa_step: np.ndarray
 
     @classmethod
     def read_from_cdf(cls, cdf_path: Path):
@@ -185,6 +186,7 @@ class CodiceLoL1aSWPriorityRates:
                 rgfo_esa_step=read_variable_and_mask_fill_values(cdf["rgfo_esa_step"]),
                 nso_spin_sector=read_variable_and_mask_fill_values(cdf["nso_spin_sector"]),
                 nso_esa_step=read_variable_and_mask_fill_values(cdf["nso_esa_step"]),
+                esa_step=read_variable_and_mask_fill_values(cdf["esa_step"]),
             )
 
 
@@ -323,6 +325,7 @@ RGFO_SPIN_SECTOR_VAR_NAME = "rgfo_spin_sector"
 RGFO_ESA_STEP_VAR_NAME = "rgfo_esa_step"
 NSO_SPIN_SECTOR_VAR_NAME = "nso_spin_sector"
 NSO_ESA_STEP_VAR_NAME = "nso_esa_step"
+ESA_STEP_VAR_NAME = "esa_step"
 
 
 @dataclass
@@ -386,8 +389,7 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
     nso_esa_step: np.ndarray
     spin_sector: np.ndarray
     normalization_per_event: np.ndarray
-
-
+    esa_step: np.ndarray
 
     def __post_init__(self):
         self.priority_index = np.arange(CODICE_LO_L2_NUM_PRIORITIES)
@@ -438,6 +440,7 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
             DataProductVariable(RGFO_ESA_STEP_VAR_NAME, self.rgfo_esa_step),
             DataProductVariable(NSO_SPIN_SECTOR_VAR_NAME, self.nso_spin_sector),
             DataProductVariable(NSO_ESA_STEP_VAR_NAME, self.nso_esa_step),
+            DataProductVariable(ESA_STEP_VAR_NAME, self.esa_step),
         ]
 
 
