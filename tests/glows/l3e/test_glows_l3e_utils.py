@@ -10,7 +10,7 @@ from spacepy.pycdf import CDF
 from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, \
     determine_l3e_files_to_produce, find_first_updated_cr, get_lo_pivot_angles, \
-    get_lo_pivot_angle_from_l1b_file
+    get_lo_pivot_angle_from_l1b_file, LoPivotAngle
 from tests.test_helpers import get_test_data_path, create_mock_query_results
 
 
@@ -285,4 +285,9 @@ class TestGlowsL3EUtils(unittest.TestCase):
             call("file4.cdf"),
             call("file6.cdf"),
         ])
-        self.assertEqual({3: 105, 4: 90, 6: 84, 10: 90}, result)
+        self.assertEqual({
+            3: LoPivotAngle(parent_filename="file3.cdf", pivot_angle=105),
+            4: LoPivotAngle(parent_filename="file4.cdf", pivot_angle=90),
+            6: LoPivotAngle(parent_filename="file6.cdf", pivot_angle=84),
+            10: LoPivotAngle(parent_filename=None, pivot_angle=90),
+        }, result)

@@ -142,7 +142,12 @@ def get_lo_pivot_angle_from_l1b_file(path: Path) -> float:
         return 90
     return np.round(np.median(angles_to_consider))
 
-def get_lo_pivot_angles(repointings: list[int]) -> dict[int, float]:
+@dataclass
+class LoPivotAngle:
+    parent_filename: Optional[str]
+    pivot_angle: float
+
+def get_lo_pivot_angles(repointings: list[int]) -> dict[int, LoPivotAngle]:
     l1b_results = imap_data_access.query(
         instrument="lo",
         data_level="l1b",
@@ -154,7 +159,7 @@ def get_lo_pivot_angles(repointings: list[int]) -> dict[int, float]:
     for repointing in repointings:
         if path := paths_by_repointing.get(repointing):
             downloaded_path = imap_data_access.download(path)
-            result[repointing] = get_lo_pivot_angle_from_l1b_file(downloaded_path)
+            result[repointing] = LoPivotAngle(parent_filename=Path(path).name, pivot_angle=get_lo_pivot_angle_from_l1b_file(downloaded_path))
         else:
-            result[repointing] = 90
+            result[repointing] = LoPivotAngle(parent_filename=None, pivot_angle=90)
     return result

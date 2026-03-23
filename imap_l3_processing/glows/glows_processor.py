@@ -445,9 +445,11 @@ def process_l3e(initializer_data: GlowsL3EInitializerOutput):
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e lo for repointing {repointing}"):
                 lo_parent_file_names = initializer_data.dependencies.get_lo_parents()
-                lo_elongation = lo_pivot_angles[repointing]
+                pivot_info = lo_pivot_angles[repointing]
+                if pivot_info.parent_filename is not None:
+                    lo_parent_file_names = lo_parent_file_names + [pivot_info.parent_filename]
                 lo_version = initializer_data.repointings.lo_repointings[repointing]
-                products_list.extend(process_l3e_lo(lo_parent_file_names, repointing, start_repointing, epoch_delta, lo_elongation, lo_version))
+                products_list.extend(process_l3e_lo(lo_parent_file_names, repointing, start_repointing, epoch_delta, pivot_info.pivot_angle, lo_version))
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e hi-90 for repointing {repointing}"):
                 hi_parent_file_names = initializer_data.dependencies.get_hi_parents()

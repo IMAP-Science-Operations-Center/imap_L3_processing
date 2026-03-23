@@ -37,7 +37,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializerOutput
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
-from imap_l3_processing.glows.l3e.glows_l3e_utils import GlowsL3eRepointings
+from imap_l3_processing.glows.l3e.glows_l3e_utils import GlowsL3eRepointings, LoPivotAngle
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import save_data
 from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path, get_test_data_folder, \
@@ -1045,7 +1045,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         mock_process_lo.return_value = [Path('path/to/lo_l3e')]
         mock_process_ultra.return_value = [Path('path/to/ultra_l3e')]
         mock_process_ultra_hf.return_value = [Path('path/to/ultra_l3e_hf')]
-        mock_get_lo_pivot_angles.return_value = {25: 75}
+        mock_get_lo_pivot_angles.return_value = {25: LoPivotAngle("l1b_nhk.cdf",75)}
 
         expected_l3e_products = [
             Path('path/to/lo_l3e'),
@@ -1083,7 +1083,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             call(["hi_ancillary.dat"], 25, start_epoch, epoch_delta, 90, 1),
             call(["hi_ancillary.dat"], 25, start_epoch, epoch_delta, 135, 2)
         ])
-        mock_process_lo.assert_called_once_with(["lo_ancillary.dat"], 25, start_epoch, epoch_delta, 75,
+        mock_process_lo.assert_called_once_with(["lo_ancillary.dat", "l1b_nhk.cdf"], 25, start_epoch, epoch_delta, 75,
                                                 3)
         mock_process_ultra.assert_called_once_with(["ul_ancillary.dat"], 25, start_epoch, epoch_delta, 4)
         mock_process_ultra_hf.assert_called_once_with(["ul_ancillary.dat"], 25, start_epoch, epoch_delta, 4)
@@ -1433,10 +1433,10 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             ValueError("Failed to generate ultra!")
         ]
         mock_get_lo_pivot_angles.return_value = {
-            24: 124,
-            25: 125,
-            26: 126,
-            27: 127,
+            24: LoPivotAngle(parent_filename="l1b_nhk_24", pivot_angle=124),
+            25: LoPivotAngle(parent_filename="l1b_nhk_25", pivot_angle=125),
+            26: LoPivotAngle(parent_filename="l1b_nhk_26", pivot_angle=126),
+            27: LoPivotAngle(parent_filename=None, pivot_angle=90),
         }
 
         expected_l3e_products = [
@@ -1516,10 +1516,10 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             call(hi_parents, 27, start_epoch_4, epoch_delta_4, 135, 2)
         ])
         mock_process_lo.assert_has_calls([
-            call(lo_parents, 24, start_epoch_1, epoch_delta_1, 124, 3),
-            call(lo_parents, 25, start_epoch_2, epoch_delta_2, 125, 3),
-            call(lo_parents, 26, start_epoch_3, epoch_delta_3, 126, 3),
-            call(lo_parents, 27, start_epoch_4, epoch_delta_4, 127, 3),
+            call(lo_parents + ["l1b_nhk_24"], 24, start_epoch_1, epoch_delta_1, 124, 3),
+            call(lo_parents + ["l1b_nhk_25"], 25, start_epoch_2, epoch_delta_2, 125, 3),
+            call(lo_parents + ["l1b_nhk_26"], 26, start_epoch_3, epoch_delta_3, 126, 3),
+            call(lo_parents, 27, start_epoch_4, epoch_delta_4, 90, 3),
         ])
 
         mock_process_ultra.assert_has_calls([
