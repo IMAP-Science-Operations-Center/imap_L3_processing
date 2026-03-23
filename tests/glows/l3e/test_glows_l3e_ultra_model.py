@@ -149,9 +149,11 @@ class TestL3eUltraModel(unittest.TestCase):
 
         np.testing.assert_equal(np.array([30.0]), l3e_ul_product.elongation_excluded, strict=True)
 
-        np.testing.assert_equal(87.07582, l3e_ul_product.pixel_latitude[0])
-        np.testing.assert_equal(45.00000, l3e_ul_product.pixel_longitude[0])
+        np.testing.assert_equal((1, 3072), l3e_ul_product.pixel_latitude.shape, strict=True)
+        np.testing.assert_equal((1, 3072), l3e_ul_product.pixel_longitude.shape, strict=True)
+        np.testing.assert_equal(87.07582, l3e_ul_product.pixel_latitude[0, 0])
+        np.testing.assert_equal(45.00000, l3e_ul_product.pixel_longitude[0, 0])
 
-        np.testing.assert_equal(np.nan, l3e_ul_product.pixel_latitude[804])
-        np.testing.assert_equal(np.nan, l3e_ul_product.pixel_longitude[804])
+        np.testing.assert_equal(np.nan, l3e_ul_product.pixel_latitude[0, 804])
+        np.testing.assert_equal(np.nan, l3e_ul_product.pixel_longitude[0, 804])
 
