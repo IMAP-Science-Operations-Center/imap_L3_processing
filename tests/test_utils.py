@@ -57,7 +57,10 @@ class TestUtils(TestCase):
                                                  alpha_sw_temperature=alpha_sw_temperature,
                                                  alpha_sw_density=alpha_sw_density,
                                                  parent_file_names=sentinel.parent_files,
-                                                 bad_fit_flag=sentinel.bad_fit_flag)
+                                                 bad_fit_flag=sentinel.bad_fit_flag,
+                                                 alpha_sw_pre_lut_density=sentinel.alpha_sw_pre_lut_density,
+                                                 alpha_sw_pre_lut_temperature=sentinel.alpha_sw_pre_lut_temperature,
+                                                 )
 
         mock_science_file_path = Mock()
         mock_science_file_path_class.generate_from_inputs.return_value = mock_science_file_path
@@ -179,7 +182,10 @@ class TestUtils(TestCase):
                                                  alpha_sw_speed=alpha_sw_speed,
                                                  alpha_sw_temperature=alpha_sw_temperature,
                                                  alpha_sw_density=alpha_sw_density,
-                                                 bad_fit_flag=bad_fit_flag)
+                                                 bad_fit_flag=bad_fit_flag,
+                                                 alpha_sw_pre_lut_density=sentinel.alpha_sw_pre_lut_density,
+                                                 alpha_sw_pre_lut_temperature=sentinel.alpha_sw_pre_lut_temperature,
+                                                 )
         save_data(data_product)
 
         mock_write_cdf.assert_called_once()
@@ -212,7 +218,10 @@ class TestUtils(TestCase):
                                                  alpha_sw_speed=alpha_sw_speed,
                                                  alpha_sw_temperature=alpha_sw_temperature,
                                                  alpha_sw_density=alpha_sw_density,
-                                                 bad_fit_flag=bad_fit_flag)
+                                                 bad_fit_flag=bad_fit_flag,
+                                                 alpha_sw_pre_lut_density=sentinel.alpha_sw_pre_lut_density,
+                                                 alpha_sw_pre_lut_temperature=sentinel.alpha_sw_pre_lut_temperature,
+                                                 )
 
         custom_path = TEMP_CDF_FOLDER_PATH / "fancy_path"
         returned_file_path = save_data(data_product, folder_path=custom_path)

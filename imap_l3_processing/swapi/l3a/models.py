@@ -29,6 +29,8 @@ ALPHA_SOLAR_WIND_DENSITY_CDF_VAR_NAME = "alpha_sw_density"
 ALPHA_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME = "alpha_sw_density_uncert"
 ALPHA_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME = "alpha_sw_temperature"
 ALPHA_SOLAR_WIND_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME = "alpha_sw_temperature_uncert"
+ALPHA_SOLAR_WIND_PRE_LUT_DENSITY_CDF_VAR_NAME = "alpha_sw_pre_lut_density"
+ALPHA_SOLAR_WIND_PRE_LUT_TEMPERATURE_CDF_VAR_NAME = "alpha_sw_pre_lut_temperature"
 
 PUI_COOLING_INDEX_CDF_VAR_NAME = "pui_cooling_index"
 PUI_IONIZATION_RATE_CDF_VAR_NAME = "pui_ionization_rate"
@@ -86,6 +88,8 @@ class SwapiL3AlphaSolarWindData(DataProduct):
     alpha_sw_temperature: np.ndarray
     alpha_sw_density: np.ndarray
     bad_fit_flag: np.ndarray
+    alpha_sw_pre_lut_temperature: np.ndarray
+    alpha_sw_pre_lut_density: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -98,7 +102,9 @@ class SwapiL3AlphaSolarWindData(DataProduct):
                                 std_devs(self.alpha_sw_temperature)),
             DataProductVariable(ALPHA_SOLAR_WIND_DENSITY_CDF_VAR_NAME, nominal_values(self.alpha_sw_density)),
             DataProductVariable(ALPHA_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME, std_devs(self.alpha_sw_density)),
-            DataProductVariable(SWAPI_QUALITY_FLAGS_CDF_VAR_NAME, self.bad_fit_flag)
+            DataProductVariable(SWAPI_QUALITY_FLAGS_CDF_VAR_NAME, self.bad_fit_flag),
+            DataProductVariable(ALPHA_SOLAR_WIND_PRE_LUT_TEMPERATURE_CDF_VAR_NAME, nominal_values(self.alpha_sw_pre_lut_temperature)),
+            DataProductVariable(ALPHA_SOLAR_WIND_PRE_LUT_DENSITY_CDF_VAR_NAME, nominal_values(self.alpha_sw_pre_lut_density)),
         ]
 
 

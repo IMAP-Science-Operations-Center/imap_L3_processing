@@ -176,11 +176,15 @@ class SwapiProcessor(Processor):
         alpha_solar_wind_densities = []
         alpha_solar_wind_temperatures = []
         alpha_solar_wind_bad_fit_flags = []
+        alpha_solar_wind_pre_lut_densities = []
+        alpha_solar_wind_pre_lut_temperatures = []
 
         for data_chunk in chunk_l2_data(data, 5):
             alpha_solar_wind_speed = ufloat(np.nan, np.nan)
             alpha_density = ufloat(np.nan, np.nan)
             alpha_temperature = ufloat(np.nan, np.nan)
+            alpha_pre_lut_density = ufloat(np.nan, np.nan)
+            alpha_pre_lut_temperature = ufloat(np.nan, np.nan)
             epoch = data_chunk.sci_start_time[0] + THIRTY_SECONDS_IN_NANOSECONDS
             bad_fit_flag = SwapiL3Flags.NONE
             try:
@@ -200,6 +204,8 @@ class SwapiProcessor(Processor):
                 alpha_density = alpha_temperature_density.density
                 alpha_temperature = alpha_temperature_density.temperature
                 bad_fit_flag = alpha_temperature_density.bad_fit_flag
+                alpha_pre_lut_density = alpha_temperature_density.pre_lut_density
+                alpha_pre_lut_temperature = alpha_temperature_density.pre_lut_temperature
 
             except Exception as e:
                 logger.info(f"Exception occurred at epoch {epoch}, continuing with fill value", exc_info=True)
@@ -209,6 +215,8 @@ class SwapiProcessor(Processor):
                 alpha_solar_wind_densities.append(alpha_density)
                 alpha_solar_wind_temperatures.append(alpha_temperature)
                 alpha_solar_wind_bad_fit_flags.append(bad_fit_flag)
+                alpha_solar_wind_pre_lut_densities.append(alpha_pre_lut_density)
+                alpha_solar_wind_pre_lut_temperatures.append(alpha_pre_lut_temperature)
 
         alpha_solar_wind_speed_metadata = replace(self.input_metadata, descriptor="alpha-sw")
         alpha_solar_wind_l3_data = SwapiL3AlphaSolarWindData(alpha_solar_wind_speed_metadata,
@@ -217,6 +225,8 @@ class SwapiProcessor(Processor):
                                                              np.array(alpha_solar_wind_temperatures),
                                                              np.array(alpha_solar_wind_densities),
                                                              np.array(alpha_solar_wind_bad_fit_flags),
+                                                             np.array(alpha_solar_wind_pre_lut_temperatures),
+                                                             np.array(alpha_solar_wind_pre_lut_densities),
                                                              )
         return alpha_solar_wind_l3_data
 

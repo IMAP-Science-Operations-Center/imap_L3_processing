@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 import numpy as np
 from spacepy.pycdf import CDF
@@ -56,6 +56,30 @@ class TestCalculateAlphaSolarWindTemperatureAndDensity(TestCase):
                                    rtol=1e-4)
         np.testing.assert_allclose(4.9177e-4 / efficiency, actual_alpha_sw_temp_and_density.density.std_dev, rtol=1e-4)
         self.assertEqual(SwapiL3Flags.NONE, actual_alpha_sw_temp_and_density.bad_fit_flag)
+        np.testing.assert_allclose(411596.701618, actual_alpha_sw_temp_and_density.pre_lut_temperature.nominal_value)
+        np.testing.assert_allclose(129341.909538, actual_alpha_sw_temp_and_density.pre_lut_temperature.std_dev)
+        np.testing.assert_allclose(0.030238, actual_alpha_sw_temp_and_density.pre_lut_density.nominal_value,
+                                   rtol=1e-4)
+        np.testing.assert_allclose(0.003842, actual_alpha_sw_temp_and_density.pre_lut_density.std_dev, rtol=1e-4)
+
+    def test_calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps_returns_pre_lookup_values(self):
+        speed = ufloat(496.490, 2.811)
+
+        efficiency = 0.08
+        mock_calibration_table = Mock()
+
+        actual_alpha_sw_temp_and_density = calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
+            mock_calibration_table, speed,
+            uarray(self.count_rate, self.count_rate_delta), self.energy, efficiency)
+
+        self.assertEqual(mock_calibration_table.lookup_density.call_args.args[1],
+                         actual_alpha_sw_temp_and_density.pre_lut_density)
+        self.assertEqual(mock_calibration_table.lookup_density.call_args.args[2],
+                         actual_alpha_sw_temp_and_density.pre_lut_temperature)
+        self.assertEqual(mock_calibration_table.lookup_temperature.call_args.args[1],
+                         actual_alpha_sw_temp_and_density.pre_lut_density)
+        self.assertEqual(mock_calibration_table.lookup_temperature.call_args.args[2],
+                         actual_alpha_sw_temp_and_density.pre_lut_temperature)
 
     @patch(
         'imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density.get_alpha_peak_indices')

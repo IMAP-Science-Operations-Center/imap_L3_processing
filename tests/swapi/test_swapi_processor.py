@@ -914,9 +914,13 @@ class TestSwapiProcessor(TestCase):
 
         returned_alpha_temperature = ufloat(400000, 2000)
         returned_alpha_density = ufloat(0.15, 0.01)
+
+        returned_pre_lut_temp = ufloat(300000, 1000)
+        returned_pre_lut_density = ufloat(0.2, 0.02)
+
         returned_bad_flags = SwapiL3Flags.NONE
         mock_alpha_calculate_temperature_and_density.return_value = AlphaSolarWindTemperatureAndDensity(
-            returned_alpha_temperature, returned_alpha_density, returned_bad_flags)
+            returned_alpha_temperature, returned_alpha_density, returned_pre_lut_temp, returned_pre_lut_density, returned_bad_flags)
 
         returned_alpha_speed = ufloat(450000, 1000)
         mock_calculate_alpha_solar_wind_speed.return_value = ufloat(450000, 1000)
@@ -1024,7 +1028,8 @@ class TestSwapiProcessor(TestCase):
                                                                  f"imap_swapi_l3a_{descriptor_to_generate}_{start_date_as_str}_{input_version}"),
                                                             ])
 
-        actual_alpha_metadata, actual_alpha_epoch, actual_alpha_sw_speed, actual_alpha_sw_temperature, actual_alpha_sw_density, actual_bad_fit_flag = mock_alpha_solar_wind_data_constructor.call_args.args
+        actual_alpha_metadata, actual_alpha_epoch, actual_alpha_sw_speed, actual_alpha_sw_temperature, actual_alpha_sw_density, actual_bad_fit_flag,\
+            actual_pre_lut_temp, actual_pre_lut_density= mock_alpha_solar_wind_data_constructor.call_args.args
         self.assertEqual(expected_alpha_metadata, actual_alpha_metadata)
 
         np.testing.assert_array_equal(np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]),
@@ -1038,6 +1043,11 @@ class TestSwapiProcessor(TestCase):
         np.testing.assert_array_equal(
             np.array([mock_alpha_calculate_temperature_and_density.return_value.bad_fit_flag]),
             actual_bad_fit_flag)
+
+        np.testing.assert_array_equal(np.array([mock_alpha_calculate_temperature_and_density.return_value.pre_lut_temperature]),
+                                      actual_pre_lut_temp)
+        np.testing.assert_array_equal(np.array([mock_alpha_calculate_temperature_and_density.return_value.pre_lut_density]),
+                                      actual_pre_lut_density)
 
         mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a", descriptor_to_generate)
 

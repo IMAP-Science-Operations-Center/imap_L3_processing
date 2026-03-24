@@ -538,3 +538,43 @@ swp_flags:
   VALIDMAX: 65534
   FILLVAL: 65535
   LABLAXIS: Quality flags for SWAPI L3a
+
+alpha_sw_pre_lut_temperature:
+  NAME: alpha_sw_pre_lut_temperature
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Alpha solar wind temperature pre-LUT
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: DEBUG
+  FIELDNAM: Alpha Solar Wind Temperature
+  FORMAT: F19.3
+  LABLAXIS: Alpha SW temperature
+  UNITS: K
+  VALIDMIN: 0
+  VALIDMAX: 28000000
+  FILLVAL: -1.000000e+31
+  SCALETYP: log
+  SCALEMIN: 4000
+  SCALEMAX: 960000
+
+alpha_sw_pre_lut_density:
+  NAME: alpha_sw_pre_lut_density
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Alpha solar wind density pre-LUT
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: DEBUG
+  FIELDNAM: Alpha Solar Wind Density
+  FORMAT: F19.3
+  LABLAXIS: Alpha SW density
+  UNITS: cm!E-3!N
+  VALIDMIN: 0
+  VALIDMAX: 100
+  FILLVAL: -1.000000e+31
+  SCALETYP: log
+  SCALEMIN: 0.001
+  SCALEMAX: 5
