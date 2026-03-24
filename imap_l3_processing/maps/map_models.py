@@ -38,6 +38,7 @@ SOLID_ANGLE_VAR_NAME = "solid_angle"
 ENA_SPECTRAL_INDEX_VAR_NAME = "ena_spectral_index"
 ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME = "ena_spectral_index_stat_uncert"
 ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_VAR_NAME = "ena_spectral_scalar"
+ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_STAT_UNCERT_VAR_NAME = "ena_spectral_scalar_stat_uncert"
 
 ENA_INTENSITY_VAR_NAME = "ena_intensity"
 ENA_INTENSITY_STAT_UNCERT_VAR_NAME = "ena_intensity_stat_uncert"
@@ -123,6 +124,7 @@ class SpectralIndexMapData(MapData):
     ena_spectral_index: np.ndarray
     ena_spectral_index_stat_uncert: np.ndarray
     ena_spectral_index_scalar_coefficient: np.ndarray
+    ena_spectral_index_scalar_coefficient_stat_uncert: np.ndarray
 
 
 @dataclass
@@ -397,6 +399,8 @@ class HealPixSpectralIndexMapData:
                 "ena_spectral_index_stat_uncert": (
                     full_shape, self.spectral_index_map_data.ena_spectral_index_stat_uncert),
                 "ena_spectral_index_scalar_coefficient": (full_shape, self.spectral_index_map_data.ena_spectral_index_scalar_coefficient),
+                "ena_spectral_index_scalar_coefficient_stat_uncert": (full_shape,
+                                                          self.spectral_index_map_data.ena_spectral_index_scalar_coefficient_stat_uncert),
             },
             coords={
                 CoordNames.TIME.value: self.spectral_index_map_data.epoch,
@@ -506,6 +510,7 @@ def _spectral_index_data_variables(data: SpectralIndexMapData) -> list[DataProdu
         DataProductVariable(ENA_SPECTRAL_INDEX_VAR_NAME, data.ena_spectral_index),
         DataProductVariable(ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME, data.ena_spectral_index_stat_uncert),
         DataProductVariable(ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_VAR_NAME, data.ena_spectral_index_scalar_coefficient),
+        DataProductVariable(ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_STAT_UNCERT_VAR_NAME, data.ena_spectral_index_scalar_coefficient_stat_uncert),
     ]
 
 

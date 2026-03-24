@@ -32,6 +32,7 @@ def calculate_spectral_index_for_multiple_ranges(intensity_data: IntensityMapDat
         ena_spectral_index=np.concat([m.ena_spectral_index for m in spectral_maps], axis=1),
         ena_spectral_index_stat_uncert=np.concat([m.ena_spectral_index_stat_uncert for m in spectral_maps], axis=1),
         ena_spectral_index_scalar_coefficient=np.concat([m.ena_spectral_index_scalar_coefficient for m in spectral_maps], axis=1),
+        ena_spectral_index_scalar_coefficient_stat_uncert=np.concat([m.ena_spectral_index_scalar_coefficient_stat_uncert for m in spectral_maps], axis=1)
     )
 
 
@@ -81,7 +82,7 @@ def fit_spectral_index_map(intensity_data: IntensityMapData) -> SpectralIndexMap
     mean_energy = np.sqrt(min_energy * max_energy)
     new_energy_label = f"{min_energy} - {max_energy}"
 
-    output_scalar_coefficients, output_gammas, output_gamma_errors = fit_arrays_to_power_law(fluxes, uncertainty, energy)
+    output_scalar_coefficients, output_scalar_errors, output_gammas, output_gamma_errors = fit_arrays_to_power_law(fluxes, uncertainty, energy)
     mean_obs_date = calculate_datetime_weighted_average(intensity_data.obs_date,
                                                         weights=intensity_data.exposure_factor,
                                                         axis=1, keepdims=True)
@@ -110,12 +111,13 @@ def fit_spectral_index_map(intensity_data: IntensityMapData) -> SpectralIndexMap
         solid_angle=intensity_data.solid_angle,
         ena_spectral_index=output_gammas,
         ena_spectral_index_stat_uncert=output_gamma_errors,
-        ena_spectral_index_scalar_coefficient=output_scalar_coefficients
+        ena_spectral_index_scalar_coefficient=output_scalar_coefficients,
+        ena_spectral_index_scalar_coefficient_stat_uncert=output_scalar_errors,
     )
 
 
 def fit_arrays_to_power_law(fluxes: np.ndarray, uncertainties: np.ndarray, energy: np.ndarray) -> tuple[
-    np.ndarray, np.ndarray, np.ndarray]:
+    np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     par_info = [
         {'limits': [0.0, 1000.0]},
         {'limits': [0.0, 1000.0]},
@@ -125,6 +127,7 @@ def fit_arrays_to_power_law(fluxes: np.ndarray, uncertainties: np.ndarray, energ
     output_gammas = np.full(output_shape, np.nan, dtype=float)
     output_gamma_errors = np.full_like(output_gammas, np.nan)
     output_scalar_coefficients = np.full_like(output_gammas, np.nan)
+    output_scalar_coefficients_errors = np.full_like(output_gammas, np.nan)
 
     for epoch in range(fluxes.shape[0]):
         intensity = fluxes[epoch].reshape((fluxes[epoch].shape[0], -1))
@@ -133,6 +136,7 @@ def fit_arrays_to_power_law(fluxes: np.ndarray, uncertainties: np.ndarray, energ
         gammas = np.full(intensity.shape[-1], np.nan, dtype=float)
         gamma_errors = np.full_like(gammas, np.nan)
         scalar_coefficients = np.full(intensity.shape[-1], np.nan, dtype=float)
+        scalar_coefficient_errors = np.full(intensity.shape[-1], np.nan, dtype=float)
 
         for i in range(intensity.shape[-1]):
             flux = intensity[:, i]
@@ -158,10 +162,12 @@ def fit_arrays_to_power_law(fluxes: np.ndarray, uncertainties: np.ndarray, energ
                     gammas[i] = gamma
                     scalar_coefficients[i] = a
                     gamma_errors[i] = gamma_error
+                    scalar_coefficient_errors[i] = a_error
         output_gammas[epoch, 0] = gammas.reshape(fluxes.shape[2:])
         output_gamma_errors[epoch, 0] = gamma_errors.reshape(fluxes.shape[2:])
         output_scalar_coefficients[epoch, 0] = scalar_coefficients.reshape(fluxes.shape[2:])
-    return output_scalar_coefficients, output_gammas, output_gamma_errors
+        output_scalar_coefficients_errors[epoch, 0] = scalar_coefficient_errors.reshape(fluxes.shape[2:])
+    return output_scalar_coefficients, output_scalar_coefficients_errors, output_gammas, output_gamma_errors
 
 
 def power_law(params, **kwargs):

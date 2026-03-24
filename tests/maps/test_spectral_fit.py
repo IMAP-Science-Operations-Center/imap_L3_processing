@@ -44,12 +44,14 @@ class TestSpectralFit(unittest.TestCase):
                 flux = np.array(flux_data).reshape(1, len(energies), *spacial_dimension_shape)
                 uncertainty = np.array(errors).reshape(1, len(energies), *spacial_dimension_shape)
 
-                result_A, result_gamma, result_gamma_error = fit_arrays_to_power_law(flux, uncertainty, energies)
+                result_A, result_A_error, result_gamma, result_gamma_error, = fit_arrays_to_power_law(flux, uncertainty, energies)
                 np.testing.assert_array_equal(result_gamma,
                                               np.array(true_gamma).reshape(1, 1, *spacial_dimension_shape))
                 np.testing.assert_array_almost_equal(result_gamma_error,
                                                      np.array([0.060068]).reshape(1, 1, *spacial_dimension_shape))
                 np.testing.assert_array_equal(result_A, np.array(true_A).reshape(1, 1, *spacial_dimension_shape))
+                np.testing.assert_array_almost_equal(result_A_error,
+                                                     np.array([0.161515]).reshape(1, 1, *spacial_dimension_shape))
 
     def test_spectral_fit_map(self):
         epoch = np.array([datetime.now()])
@@ -90,6 +92,10 @@ class TestSpectralFit(unittest.TestCase):
 
         np.testing.assert_array_almost_equal(spectral_intensity_map.ena_spectral_index_stat_uncert,
                                              np.array([0.060068]).reshape(1, 1, 1, 1))
+
+        np.testing.assert_array_almost_equal(spectral_intensity_map.ena_spectral_index_scalar_coefficient_stat_uncert,
+                                             np.array([0.161515]).reshape(1, 1, 1, 1))
+
         np.testing.assert_array_almost_equal(spectral_intensity_map.energy, [expected_energy_midpoint])
         np.testing.assert_array_almost_equal(spectral_intensity_map.energy_delta_minus, [expected_energy_minus])
         np.testing.assert_array_almost_equal(spectral_intensity_map.energy_delta_plus, [expected_energy_plus])
@@ -172,7 +178,7 @@ class TestSpectralFit(unittest.TestCase):
                 flux = np.array(flux_data).reshape(1, len(energies), *spacial_dimension_shape)
                 uncertainty = np.array(errors).reshape(1, len(energies), *spacial_dimension_shape)
 
-                scalar_coefficients, result, result_error = fit_arrays_to_power_law(flux, uncertainty, energies)
+                scalar_coefficients, scalar_coefficient_error, result, result_error = fit_arrays_to_power_law(flux, uncertainty, energies)
                 np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, *spacial_dimension_shape))
                 np.testing.assert_allclose(scalar_coefficients,
                                            np.array(true_A).reshape(1, 1, *spacial_dimension_shape))
@@ -242,7 +248,7 @@ class TestSpectralFit(unittest.TestCase):
                 flux = np.array(flux_data).reshape(1, len(energies), *spacial_dimension_shape)
                 uncertainty = np.array(errors).reshape(1, len(energies), *spacial_dimension_shape)
 
-                scalar_coefficients, result, result_error = fit_arrays_to_power_law(flux, uncertainty, energies)
+                scalar_coefficients, scalar_coefficient_error, result, result_error = fit_arrays_to_power_law(flux, uncertainty, energies)
                 np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, *spacial_dimension_shape))
                 np.testing.assert_allclose(scalar_coefficients,
                                            np.array(true_A).reshape(1, 1, *spacial_dimension_shape))
@@ -261,7 +267,7 @@ class TestSpectralFit(unittest.TestCase):
                 flux = np.array(flux_data).reshape(1, len(energies), *spacial_dimension_shape)
                 uncertainty = np.array(errors).reshape(1, len(energies), *spacial_dimension_shape)
 
-                scalar_coefficients, result, result_error = fit_arrays_to_power_law(flux, uncertainty, energies)
+                scalar_coefficients, scalar_coefficient_error, result, result_error = fit_arrays_to_power_law(flux, uncertainty, energies)
                 np.testing.assert_array_equal(result, np.array(true_gamma).reshape(1, 1, *spacial_dimension_shape))
                 np.testing.assert_array_equal(scalar_coefficients,
                                               np.array(true_A).reshape(1, 1, *spacial_dimension_shape))
@@ -289,13 +295,15 @@ class TestSpectralFit(unittest.TestCase):
                             [[3.00438000e-01, 3.76740000e-01],
                              [2.15943000e-01, 3.76271000e-01]]]])
 
-        scalar_coefficients, result, result_error = fit_arrays_to_power_law(flux_data, errors, energies)
-        np.testing.assert_array_almost_equal(result, np.array([[[[1.811566, 1.489658],
+        scalar_coefficients, scalar_coefficient_errors, index, index_error = fit_arrays_to_power_law(flux_data, errors, energies)
+        np.testing.assert_array_almost_equal(index, np.array([[[[1.811566, 1.489658],
                                                                  [1.480259, 1.317993]]]]))
-        np.testing.assert_array_almost_equal(result_error, np.array([[[[0.279224, 0.409522],
+        np.testing.assert_array_almost_equal(index_error, np.array([[[[0.279224, 0.409522],
                                                                        [0.260374, 0.318162]]]]))
         np.testing.assert_array_almost_equal(scalar_coefficients, np.array([[[[81.921884, 44.822592],
                                                                               [52.494673, 44.64706]]]]))
+        np.testing.assert_array_almost_equal(scalar_coefficient_errors, np.array([[[[32.245348, 26.075043],
+         [19.584518, 20.080801]]]]))
 
     def test_finds_best_fit_with_zeros_in_flux_and_not_uncertainty(self):
         energies = np.geomspace(1, 1e10, 23)
@@ -311,7 +319,7 @@ class TestSpectralFit(unittest.TestCase):
                 flux = np.array(flux_data).reshape(1, len(energies), *spacial_dimension_shape)
                 uncertainty = np.array(errors).reshape(1, len(energies), *spacial_dimension_shape)
 
-                scalar_coefficients, result, result_error = fit_arrays_to_power_law(flux, uncertainty, energies)
+                scalar_coefficients, scalar_coefficient_error, result, result_error = fit_arrays_to_power_law(flux, uncertainty, energies)
                 np.testing.assert_array_almost_equal(result,
                                                      np.array([1.472697]).reshape(1, 1, *spacial_dimension_shape))
                 np.testing.assert_array_almost_equal(scalar_coefficients,
@@ -331,13 +339,15 @@ class TestSpectralFit(unittest.TestCase):
             with self.subTest(name):
                 flux = np.array(flux_data).reshape(1, len(energies), *spacial_dimension_shape)
                 uncertainty = np.array(errors).reshape(1, len(energies), *spacial_dimension_shape)
-                scalar_coefficients, result, result_error = fit_arrays_to_power_law(flux, uncertainty, energies)
+                scalar_coefficients, scalar_coefficient_error, result, result_error = fit_arrays_to_power_law(flux, uncertainty, energies)
 
                 np.testing.assert_array_almost_equal(result,
                                                      np.array(np.nan).reshape(1, 1, *spacial_dimension_shape))
                 np.testing.assert_array_almost_equal(result_error,
                                                      np.array(np.nan).reshape(1, 1, *spacial_dimension_shape))
                 np.testing.assert_array_equal(scalar_coefficients,
+                                              np.array(np.nan).reshape(1, 1, *spacial_dimension_shape))
+                np.testing.assert_array_equal(scalar_coefficient_error,
                                               np.array(np.nan).reshape(1, 1, *spacial_dimension_shape))
 
     def test_returns_nan_when_there_are_less_than_2_positive_fluxes(self):
@@ -351,12 +361,14 @@ class TestSpectralFit(unittest.TestCase):
                 flux = np.array(flux_data).reshape(1, len(energies), *spacial_dimension_shape)
                 uncertainty = np.array(errors).reshape(1, len(energies), *spacial_dimension_shape)
 
-                scalar_coefficients, result, result_error = fit_arrays_to_power_law(flux, uncertainty, energies)
+                scalar_coefficients, scalar_coefficient_error, result, result_error = fit_arrays_to_power_law(flux, uncertainty, energies)
                 np.testing.assert_array_almost_equal(result,
                                                      np.array(np.nan).reshape(1, 1, *spacial_dimension_shape))
                 np.testing.assert_array_almost_equal(result_error,
                                                      np.array(np.nan).reshape(1, 1, *spacial_dimension_shape))
                 np.testing.assert_array_almost_equal(scalar_coefficients,
+                                                     np.array(np.nan).reshape(1, 1, *spacial_dimension_shape))
+                np.testing.assert_array_almost_equal(scalar_coefficient_error,
                                                      np.array(np.nan).reshape(1, 1, *spacial_dimension_shape))
 
     def test_spectral_fit_can_fit_multiple_energy_ranges(self):
@@ -447,11 +459,12 @@ class TestSpectralFit(unittest.TestCase):
                     flux = np.array(flux_data).reshape(1, len(energies), *spacial_dimension_shape)
                     uncertainty = np.array(errors).reshape(1, len(energies), *spacial_dimension_shape)
 
-                    scalar, result, result_error = fit_arrays_to_power_law(flux, uncertainty, energies)
+                    scalar, scalar_error, result, result_error = fit_arrays_to_power_law(flux, uncertainty, energies)
                     expected_nan_result = np.full((1, 1, *spacial_dimension_shape), np.nan)
                     np.testing.assert_array_equal(result, expected_nan_result)
                     np.testing.assert_array_equal(result_error, expected_nan_result)
                     np.testing.assert_array_equal(scalar, expected_nan_result)
+                    np.testing.assert_array_equal(scalar_error, expected_nan_result)
 
     @patch('imap_l3_processing.maps.spectral_fit.mpfit', wraps=mpfit)
     @patch('imap_l3_processing.maps.spectral_fit.scipy.stats.linregress', wraps=linregress)
@@ -479,15 +492,17 @@ class TestSpectralFit(unittest.TestCase):
             ).intensity_map_data,
              "hi/validation/spectral_index/IMAP-Hi45_6months_4.0x4.0_fit_gam.csv",
              "hi/validation/spectral_index/IMAP-Hi45_6months_4.0x4.0_fit_gam_sig.csv",
-             "hi/validation/spectral_index/menlo-IMAP-Hi45_6months_4.0x4.0_fit_A0.csv")
+             "hi/validation/spectral_index/menlo-IMAP-Hi45_6months_4.0x4.0_fit_A0.csv",
+             "hi/validation/spectral_index/menlo-IMAP-Hi45_6months_4.0x4.0_fit_A0_sig.csv")
         ]
 
-        for name, input_data, expected_gamma_path, expected_sigma_path, expected_a_path in test_cases:
+        for name, input_data, expected_gamma_path, expected_sigma_path, expected_a_path, expected_a_sig_path in test_cases:
             with self.subTest(name):
                 expected_gamma = np.loadtxt(get_test_data_path(expected_gamma_path), delimiter=",", dtype=np.float64).T
                 expected_a = np.loadtxt(get_test_data_path(expected_a_path), delimiter=",", dtype=np.float64).T
                 expected_gamma_sigma = np.loadtxt(get_test_data_path(expected_sigma_path), delimiter=",",
                                                   dtype=np.float64).T
+                expected_a_sigma = np.loadtxt(get_test_data_path(expected_a_sig_path), delimiter=",", dtype=np.float64).T
 
                 output_data = calculate_spectral_index_for_multiple_ranges(input_data, [[0, np.inf]])
 
@@ -497,6 +512,8 @@ class TestSpectralFit(unittest.TestCase):
                                            expected_gamma_sigma, atol=1e-3)
                 np.testing.assert_allclose(output_data.ena_spectral_index_scalar_coefficient[0, 0],
                                            expected_a, atol=1e-3)
+                np.testing.assert_allclose(output_data.ena_spectral_index_scalar_coefficient_stat_uncert[0, 0],
+                                           expected_a_sigma, atol=1e-3)
 
     def test_slice_energy_range_by_bin(self):
         def build_array(*values):
