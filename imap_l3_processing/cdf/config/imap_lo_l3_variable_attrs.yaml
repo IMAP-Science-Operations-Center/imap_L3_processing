@@ -382,6 +382,7 @@ ena_spectral_index_stat_uncert:
   LABL_PTR_2: longitude_label
   LABL_PTR_3: latitude_label
   SCALETYP: linear
+  VAR_NOTES: Calculated by propagating ENA intensity statistical uncertainty through Levenberg-Marquardt fitting
 bg_intensity:
   NAME: bg_intensity
   DATA_TYPE: CDF_REAL4
@@ -689,3 +690,4 @@ ena_spectral_scalar_stat_uncert:
   LABL_PTR_2: longitude_label
   LABL_PTR_3: latitude_label
   SCALETYP: log
+  VAR_NOTES: Calculated by propagating ENA intensity statistical uncertainty through Levenberg-Marquardt fitting
