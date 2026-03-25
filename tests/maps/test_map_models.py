@@ -53,6 +53,7 @@ class TestMapModels(unittest.TestCase):
                     ena_spectral_index_stat_uncert=sentinel.ena_spectral_index_stat_uncert,
                     ena_spectral_index_scalar_coefficient=sentinel.ena_spectral_index_scalar_coefficient,
                     ena_spectral_index_scalar_coefficient_stat_uncert=sentinel.ena_spectral_index_scalar_coefficient_stat_uncert,
+                    ena_spectral_index_chisq=sentinel.ena_spectral_index_chisq,
                 ),
                 coords=RectangularCoords(
                     latitude_delta=sentinel.latitude_delta,
@@ -84,6 +85,7 @@ class TestMapModels(unittest.TestCase):
                                 sentinel.ena_spectral_index_stat_uncert),
             DataProductVariable(map_models.ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_VAR_NAME, sentinel.ena_spectral_index_scalar_coefficient),
             DataProductVariable(map_models.ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_STAT_UNCERT_VAR_NAME, sentinel.ena_spectral_index_scalar_coefficient_stat_uncert),
+            DataProductVariable(map_models.ENA_SPECTRAL_INDEX_CHISQ_VAR_NAME, sentinel.ena_spectral_index_chisq),
             DataProductVariable(map_models.LATITUDE_DELTA_VAR_NAME, sentinel.latitude_delta),
             DataProductVariable(map_models.LATITUDE_LABEL_VAR_NAME, sentinel.latitude_label),
             DataProductVariable(map_models.LONGITUDE_DELTA_VAR_NAME, sentinel.longitude_delta),
@@ -239,6 +241,7 @@ class TestMapModels(unittest.TestCase):
                     ena_spectral_index_stat_uncert=sentinel.ena_spectral_index_stat_uncert,
                     ena_spectral_index_scalar_coefficient=sentinel.ena_spectral_index_scalar_coefficient,
                     ena_spectral_index_scalar_coefficient_stat_uncert=sentinel.ena_spectral_index_scalar_coefficient_stat_uncert,
+                    ena_spectral_index_chisq=sentinel.ena_spectral_index_chisq,
                 ),
                 coords=HealPixCoords(
                     pixel_index=sentinel.pixel_index,
@@ -268,6 +271,7 @@ class TestMapModels(unittest.TestCase):
                                 sentinel.ena_spectral_index_stat_uncert),
             DataProductVariable(map_models.ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_VAR_NAME, sentinel.ena_spectral_index_scalar_coefficient),
             DataProductVariable(map_models.ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_STAT_UNCERT_VAR_NAME, sentinel.ena_spectral_index_scalar_coefficient_stat_uncert),
+            DataProductVariable(map_models.ENA_SPECTRAL_INDEX_CHISQ_VAR_NAME, sentinel.ena_spectral_index_chisq),
             DataProductVariable(map_models.PIXEL_INDEX_VAR_NAME, sentinel.pixel_index),
             DataProductVariable(map_models.PIXEL_INDEX_LABEL_VAR_NAME, sentinel.pixel_index_label),
         ]
@@ -726,6 +730,7 @@ class TestMapModels(unittest.TestCase):
             ena_spectral_index_stat_uncert=fake_data_per_energy_per_pixel * 2.3,
             ena_spectral_index_scalar_coefficient=fake_data_per_energy_per_pixel * 2.4,
             ena_spectral_index_scalar_coefficient_stat_uncert=fake_data_per_energy_per_pixel * 2.5,
+            ena_spectral_index_chisq=fake_data_per_energy_per_pixel * 2.6,
         )
 
         healpix_spectral_index_map_data = HealPixSpectralIndexMapData(
@@ -761,9 +766,11 @@ class TestMapModels(unittest.TestCase):
 
         np.testing.assert_array_equal(actual_dataset.data_vars["ena_spectral_index_scalar_coefficient"].values, spectral_index_map_data.ena_spectral_index_scalar_coefficient)
         np.testing.assert_array_equal(actual_dataset.data_vars["ena_spectral_index_scalar_coefficient_stat_uncert"].values, spectral_index_map_data.ena_spectral_index_scalar_coefficient_stat_uncert)
+        np.testing.assert_array_equal(actual_dataset.data_vars["ena_spectral_index_chisq"].values, spectral_index_map_data.ena_spectral_index_chisq)
 
         for key in [ "obs_date", "obs_date_range", "exposure_factor", "ena_spectral_index", "ena_spectral_index_stat_uncert",
-                     "ena_spectral_index_scalar_coefficient", "ena_spectral_index_scalar_coefficient_stat_uncert"  ]:
+                     "ena_spectral_index_scalar_coefficient", "ena_spectral_index_scalar_coefficient_stat_uncert",
+                     "ena_spectral_index_chisq" ]:
             self.assertEqual((CoordNames.TIME.value, CoordNames.ENERGY_L2.value, CoordNames.GENERIC_PIXEL.value), actual_dataset.data_vars[key].dims)
         for key in [ "latitude", "longitude", "solid_angle" ]:
             self.assertEqual((CoordNames.GENERIC_PIXEL.value,), actual_dataset.data_vars[key].dims)
