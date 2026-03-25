@@ -694,7 +694,7 @@ ena_spectral_scalar_stat_uncert:
 ena_spectral_index_chisq:
   NAME: ena_spectral_index_chisq
   DATA_TYPE: CDF_REAL4
-  CATDESC: ENA spectral index chi-squared
+  CATDESC: ENA spectral index reduced chi-squared
   DEPEND_0: epoch
   DEPEND_1: energy
   DEPEND_2: longitude

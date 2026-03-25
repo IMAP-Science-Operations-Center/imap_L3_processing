@@ -167,7 +167,7 @@ def fit_arrays_to_power_law(fluxes: np.ndarray, uncertainties: np.ndarray, energ
                     scalar_coefficients[i] = a
                     gamma_errors[i] = gamma_error
                     scalar_coefficient_errors[i] = a_error
-                    chisqs[i] = fit.fnorm
+                    chisqs[i] = fit.fnorm / fit.dof
         output_gammas[epoch, 0] = gammas.reshape(fluxes.shape[2:])
         output_gamma_errors[epoch, 0] = gamma_errors.reshape(fluxes.shape[2:])
         output_scalar_coefficients[epoch, 0] = scalar_coefficients.reshape(fluxes.shape[2:])

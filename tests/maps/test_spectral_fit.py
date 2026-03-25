@@ -55,9 +55,9 @@ class TestSpectralFit(unittest.TestCase):
                 np.testing.assert_array_almost_equal( result_chi_square ,np.zeros((1,1, *spacial_dimension_shape)))
 
     def test_finds_chi_squared_for_fit(self):
-        energies = np.array([1, 10, 100])
-        flux_data = np.array([99, 10, 1])
-        errors = np.array([1,1, 1e-3])
+        energies = np.array([1, 10, 30, 100])
+        flux_data = np.array([99, 10, 3, 1])
+        errors = np.array([1,1, 0.1, 1e-3])
 
         cases = [
             ("rectangular", (1, 1)),
@@ -73,7 +73,8 @@ class TestSpectralFit(unittest.TestCase):
                 fitted_flux = result_A * np.power(energies.reshape((-1,*spacial_dimension_shape)), -result_gamma)
                 residual = fitted_flux - flux
                 chisquared = np.sum(np.square(residual/uncertainty))
-                np.testing.assert_array_almost_equal(result_chi_square, chisquared)
+                reduced_chisquared = chisquared / (len(energies) - 2)
+                np.testing.assert_array_almost_equal(result_chi_square, reduced_chisquared)
 
     def test_spectral_fit_map(self):
         epoch = np.array([datetime.now()])
@@ -332,8 +333,8 @@ class TestSpectralFit(unittest.TestCase):
                                                                               [52.494673, 44.64706]]]]))
         np.testing.assert_array_almost_equal(scalar_coefficient_errors, np.array([[[[32.245348, 26.075043],
          [19.584518, 20.080801]]]]))
-        np.testing.assert_array_almost_equal(chisq, np.array([[[[1.33863 , 1.174914],
-         [1.034745, 1.426575]]]]))
+        np.testing.assert_array_almost_equal(chisq, np.array([[[[0.44621 , 0.391638],
+         [0.344915, 0.475525]]]]))
 
     def test_finds_best_fit_with_zeros_in_flux_and_not_uncertainty(self):
         energies = np.geomspace(1, 1e10, 23)
@@ -354,7 +355,7 @@ class TestSpectralFit(unittest.TestCase):
                                                      np.array([1.472697]).reshape(1, 1, *spacial_dimension_shape))
                 np.testing.assert_array_almost_equal(scalar_coefficients,
                                                      np.array([1.251819]).reshape(1, 1, *spacial_dimension_shape))
-                np.testing.assert_array_almost_equal(chisq, np.array([46.587911]).reshape(1, 1, *spacial_dimension_shape))
+                np.testing.assert_array_almost_equal(chisq, np.array([2.218472]).reshape(1, 1, *spacial_dimension_shape))
 
     def test_returns_nan_when_only_one_point_is_valid(self):
         energies = np.geomspace(1, 1e10, 5)
