@@ -63,7 +63,9 @@ oxygen_charge_state_distribution:
   DATA_TYPE: CDF_REAL4
   DEPEND_1: oxygen_charge_state
   LABLAXIS: O dist.
-  SCALETYP: linear
+  SCALEMAX: 3
+  SCALEMIN: 0.001
+  SCALETYP: log
   DISPLAY_TYPE: spectrogram
   UNITS: ' '
 
@@ -76,7 +78,9 @@ carbon_charge_state_distribution:
   DATA_TYPE: CDF_REAL4
   DEPEND_1: carbon_charge_state
   LABLAXIS: C dist.
-  SCALETYP: linear
+  SCALEMAX: 3
+  SCALEMIN: 0.001
+  SCALETYP: log
   DISPLAY_TYPE: spectrogram
   UNITS: ' '
 
