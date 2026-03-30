@@ -87,7 +87,7 @@ cplus4_partial_density:
   FIELDNAM: Partial density of C+4
   DATA_TYPE: CDF_REAL4
   LABLAXIS: C+4 N
-  SCALEMAX: 0.0001
+  SCALEMAX: 0.001
   SCALEMIN: 1.0E-6
   SCALETYP: log
   UNITS: '#/cm^3'
@@ -99,7 +99,7 @@ cplus5_partial_density:
   FIELDNAM: Partial density of C+5
   DATA_TYPE: CDF_REAL4
   LABLAXIS: C+5 N
-  SCALEMAX: 0.0001
+  SCALEMAX: 0.001
   SCALEMIN: 1.0E-6
   SCALETYP: log
   UNITS: '#/cm^3'
@@ -111,7 +111,7 @@ cplus6_partial_density:
   FIELDNAM: Partial density of C+6
   DATA_TYPE: CDF_REAL4
   LABLAXIS: C+6 N
-  SCALEMAX: 0.0001
+  SCALEMAX: 0.001
   SCALEMIN: 1.0E-6
   SCALETYP: log
   UNITS: '#/cm^3'
@@ -123,7 +123,7 @@ oplus5_partial_density:
   FIELDNAM: Partial density of O+5
   DATA_TYPE: CDF_REAL4
   LABLAXIS: O+5 N
-  SCALEMAX: 0.0001
+  SCALEMAX: 0.001
   SCALEMIN: 1.0E-6
   SCALETYP: log
   UNITS: '#/cm^3'
@@ -135,7 +135,7 @@ oplus6_partial_density:
   FIELDNAM: Partial density of O+6
   DATA_TYPE: CDF_REAL4
   LABLAXIS: O+6 N
-  SCALEMAX: 0.0001
+  SCALEMAX: 0.001
   SCALEMIN: 1.0E-6
   SCALETYP: log
   UNITS: '#/cm^3'
@@ -147,7 +147,7 @@ oplus7_partial_density:
   FIELDNAM: Partial density of O+7
   DATA_TYPE: CDF_REAL4
   LABLAXIS: O+7 N
-  SCALEMAX: 0.0001
+  SCALEMAX: 0.001
   SCALEMIN: 1.0E-6
   SCALETYP: log
   UNITS: '#/cm^3'
@@ -159,7 +159,7 @@ oplus8_partial_density:
   FIELDNAM: Partial density of O+8
   DATA_TYPE: CDF_REAL4
   LABLAXIS: O+8 N
-  SCALEMAX: 0.0001
+  SCALEMAX: 0.001
   SCALEMIN: 1.0E-6
   SCALETYP: log
   UNITS: '#/cm^3'
@@ -195,7 +195,7 @@ si_partial_density:
   FIELDNAM: Partial density of Si
   DATA_TYPE: CDF_REAL4
   LABLAXIS: Si N
-  SCALEMAX: 0.0001
+  SCALEMAX: 0.001
   SCALEMIN: 1.0E-5
   SCALETYP: log
   UNITS: '#/cm^3'
