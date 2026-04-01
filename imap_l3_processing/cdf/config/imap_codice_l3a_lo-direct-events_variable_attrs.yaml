@@ -1,9 +1,12 @@
-primary_data_variable: &primary_data_variable
+data_variable: &data_variable
   VAR_TYPE: data
-  VARIABLE_PURPOSE: primary var, summary
   DEPEND_0: epoch
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
+
+primary_data_variable: &primary_data_variable
+  <<: *data_variable
+  VARIABLE_PURPOSE: primary var, summary
 
 support_data: &support_data
   VAR_TYPE: support_data
@@ -22,6 +25,7 @@ per_priority: &per_priority
   DEPEND_1: priority_index
   SCALETYP: linear
   LABL_PTR_1: priority_index_label
+  DISPLAY_TYPE: spectrogram
 
 per_event: &per_event
   <<: *per_priority
@@ -162,8 +166,32 @@ normalization:
   LABLAXIS: Normalization
   UNITS: " "
   SCALETYP: linear
+  VALIDMIN: 0
+  VALIDMAX: 1000
+  SCALEMIN: 0
+  SCALEMAX: 10
   LABL_PTR_2: energy_bin_label
   LABL_PTR_3: spin_angle_bin_label
+  VARIABLE_PURPOSE: ""
+  DISPLAY_TYPE: spectrogram
+
+normalization_per_event:
+  <<: *per_event
+  <<: *float_data
+  NAME: normalization_per_event
+  VAR_TYPE: data
+  CATDESC: Normalization per event
+  FIELDNAM: Normalization factor
+  LABLAXIS: Normalization
+  UNITS: " "
+  SCALETYP: linear
+  VALIDMIN: 0
+  VALIDMAX: 1000
+  SCALEMIN: 0
+  SCALEMAX: 10
+  VARIABLE_PURPOSE: ""
+  DATA_TYPE: CDF_FLOAT
+  DISPLAY_TYPE: spectrogram
 
 mass_per_charge:
   <<: *per_event
@@ -208,16 +236,6 @@ energy_step:
   VALIDMIN: 0
   VAR_TYPE: data
   DATA_TYPE: CDF_UINT1
-
-event_spin_angle:
-  <<: *per_event
-  <<: *float_data
-  NAME: event_spin_angle
-  VAR_TYPE: data
-  CATDESC: Spin angle when event was observed
-  FIELDNAM: Spin angle
-  LABLAXIS: m
-  UNITS: degrees
 
 gain:
   <<: *per_event
@@ -350,6 +368,22 @@ spin_angle:
   SCALEMIN: 0
   SCALEMAX: 360
 
+spin_sector:
+  <<: *per_event
+  NAME: spin_sector
+  VAR_TYPE: support_data
+  CATDESC: Spin sector per event
+  FIELDNAM: Spin sector
+  LABLAXIS: Spin sector
+  DICT_KEY: SPASE>Support>SupportQuantity:Positional
+  UNITS: ' '
+  SCALETYP: linear
+  DATA_TYPE: CDF_UINT1
+  FORMAT: I2
+  VALIDMIN: 0
+  VALIDMAX: 23
+  FILLVAL: 255
+
 elevation:
   <<: *per_event
   <<: *float_data
@@ -395,6 +429,7 @@ half_spin_per_esa_step:
   VALIDMAX: 63
   VAR_TYPE: support_data
   VARIABLE_PURPOSE: ""
+  RECORD_VARYING: RV
 
 rgfo_spin_sector:
   NAME: rgfo_spin_sector
@@ -413,6 +448,7 @@ rgfo_spin_sector:
   VAR_NOTES: Indicates the spin sector when Reduced Gain Factor Operation (RGFO) was activated. In RGFO, the Entrance ESA voltage is reduced in order to limit the number of ions that reach the detectors.
   VAR_TYPE: data
   VARIABLE_PURPOSE: ""
+  RECORD_VARYING: RV
 
 rgfo_esa_step:
   NAME: rgfo_esa_step
@@ -431,6 +467,7 @@ rgfo_esa_step:
   VAR_NOTES: Indicates the energy step when Reduced Gain Factor Operation (RGFO) was activated. In RGFO, the Entrance ESA voltage is reduced in order to limit the number of ions that reach the detectors.
   VAR_TYPE: data
   VARIABLE_PURPOSE: ""
+  RECORD_VARYING: RV
 
 nso_spin_sector:
   NAME: nso_spin_sector
@@ -449,6 +486,7 @@ nso_spin_sector:
   VAR_NOTES: Indicates the spin sector when No Scan Operation (NSO) was activated. In NSO, the ESA voltage is set to the first step in the scan and remains fixed until the next cycle boundary.
   VAR_TYPE: data
   VARIABLE_PURPOSE: ""
+  RECORD_VARYING: RV
 
 nso_esa_step:
   NAME: nso_esa_step
@@ -467,3 +505,19 @@ nso_esa_step:
   VAR_NOTES: Indicates the energy step when No Scan Operation (NSO) was activated. In NSO, the ESA voltage is set to the first step in the scan and remains fixed until the next cycle boundary.
   VAR_TYPE: data
   VARIABLE_PURPOSE: ""
+  RECORD_VARYING: RV
+
+esa_step:
+  NAME: esa_step
+  DATA_TYPE: CDF_UINT1
+  CATDESC: Energy per charge (E/q) sweeping step
+  FIELDNAM: Energy Index
+  FILLVAL: 255
+  FORMAT: I3
+  LABLAXIS: Energy Index
+  SCALETYP: linear
+  UNITS: " "
+  VALIDMIN: 0
+  VALIDMAX: 127
+  VAR_TYPE: support_data
+  RECORD_VARYING: NRV

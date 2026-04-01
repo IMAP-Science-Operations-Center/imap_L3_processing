@@ -97,8 +97,8 @@ class GlowsL3EUltraData(DataProduct):
             spacecraft_velocity_y=np.array([args.spacecraft_velocity_y]),
             spacecraft_velocity_z=np.array([args.spacecraft_velocity_z]),
             elongation_excluded=np.array([args.elongation]),
-            pixel_latitude=pixel_latitude_to_return,
-            pixel_longitude=pixel_longitude_to_return,
+            pixel_latitude=np.array([pixel_latitude_to_return]),
+            pixel_longitude=np.array([pixel_longitude_to_return]),
         )
 
     def to_data_product_variables(self) -> list[DataProductVariable]:

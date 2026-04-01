@@ -38,7 +38,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializer, GlowsL3EInitializerOutput
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
-from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable
+from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, get_lo_pivot_angles
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
@@ -260,7 +260,7 @@ def process_l3e_lo(
         repointing: int,
         repointing_start: datetime,
         epoch_delta: timedelta,
-        elongation_value: int,
+        elongation_value: float,
         version: int
 ) -> list[Path]:
     repointing_midpoint = repointing_start + epoch_delta
@@ -437,6 +437,7 @@ def process_l3e_hi(parent_file_names: list[str], repointing: int, repointing_sta
 def process_l3e(initializer_data: GlowsL3EInitializerOutput):
     products_list = []
 
+    lo_pivot_angles = get_lo_pivot_angles(initializer_data.repointings.repointing_numbers)
     for repointing in initializer_data.repointings.repointing_numbers:
         with SwallowExceptionAndLog(f"Exception encountered when processing L3e for repointing {repointing}"):
             start_repointing, end_repointing = get_pointing_date_range(repointing)
@@ -444,13 +445,11 @@ def process_l3e(initializer_data: GlowsL3EInitializerOutput):
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e lo for repointing {repointing}"):
                 lo_parent_file_names = initializer_data.dependencies.get_lo_parents()
-                repointing_doy = start_repointing.timetuple().tm_yday
-                lo_elongation = initializer_data.dependencies.elongation.get(f"{start_repointing.year}{repointing_doy:03}")
-                if lo_elongation is not None:
-                    lo_version = initializer_data.repointings.lo_repointings[repointing]
-                    products_list.extend(process_l3e_lo(lo_parent_file_names, repointing, start_repointing, epoch_delta, lo_elongation, lo_version))
-                else:
-                    logger.warning(f"Skipping L3e Lo processing for {repointing=} because there is no elongation data")
+                pivot_info = lo_pivot_angles[repointing]
+                if pivot_info.parent_filename is not None:
+                    lo_parent_file_names = lo_parent_file_names + [pivot_info.parent_filename]
+                lo_version = initializer_data.repointings.lo_repointings[repointing]
+                products_list.extend(process_l3e_lo(lo_parent_file_names, repointing, start_repointing, epoch_delta, pivot_info.pivot_angle, lo_version))
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e hi-90 for repointing {repointing}"):
                 hi_parent_file_names = initializer_data.dependencies.get_hi_parents()

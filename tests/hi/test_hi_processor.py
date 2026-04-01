@@ -53,10 +53,12 @@ class TestHiProcessor(unittest.TestCase):
                                        descriptor="h90-spx-h-hf-sp-full-hae-4deg-6mo",
                                        )
 
-        expected_unc = np.full((1, 1, 3, 2), 1.0)
-        expected_index = np.full_like(expected_unc, 2.0)
-        expected_scalar = np.full_like(expected_unc, 3.0)
-        mock_spectral_fit.return_value = expected_scalar, expected_index, expected_unc
+        expected_index_unc = np.full((1, 1, 3, 2), 1.0)
+        expected_index = np.full_like(expected_index_unc, 2.0)
+        expected_scalar = np.full_like(expected_index_unc, 3.0)
+        expected_scalar_unc = np.full_like(expected_index_unc, 4.0)
+        expected_chisq = np.full_like(expected_index_unc, 5.0)
+        mock_spectral_fit.return_value = expected_scalar, expected_scalar_unc, expected_index, expected_index_unc, expected_chisq
         processor = HiProcessor(upstream_dependencies, input_metadata)
         product = processor.process()
 
@@ -79,8 +81,10 @@ class TestHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal( spectral_index_data.energy_delta_minus,expected_energy_delta_minus)
         np.testing.assert_array_equal(spectral_index_data.energy_delta_plus, expected_energy_delta_plus)
         np.testing.assert_array_equal(spectral_index_data.ena_spectral_index,expected_index)
-        np.testing.assert_array_equal(spectral_index_data.ena_spectral_index_stat_uncert, expected_unc)
+        np.testing.assert_array_equal(spectral_index_data.ena_spectral_index_stat_uncert, expected_index_unc)
         np.testing.assert_array_equal(spectral_index_data.ena_spectral_index_scalar_coefficient, expected_scalar)
+        np.testing.assert_array_equal(spectral_index_data.ena_spectral_index_scalar_coefficient_stat_uncert, expected_scalar_unc)
+        np.testing.assert_array_equal(spectral_index_data.ena_spectral_index_chisq, expected_chisq)
         np.testing.assert_array_equal(spectral_index_data.energy, expected_energy)
         np.testing.assert_array_equal(spectral_index_data.latitude, intensity_data.latitude)
         np.testing.assert_array_equal(spectral_index_data.longitude, intensity_data.longitude)

@@ -34,8 +34,6 @@ class GlowsL3EDependencies:
     ionization_files: Path
     pipeline_settings: dict
     pipeline_settings_file: Path
-    elongation: dict
-    elongation_file: Path
     repointing_file: Path
     spice_kernels: list[str] = field(default_factory=list)
 
@@ -62,16 +60,8 @@ class GlowsL3EDependencies:
 
         energy_grid_lo_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-lo')
         tess_xyz_dependency = dependencies.get_file_paths(source='glows', descriptor='tess-xyz-8')
-        elongation_dependency = dependencies.get_file_paths(source='lo', descriptor='elongation-data')
         energy_grid_lo_path = imap_data_access.download(energy_grid_lo_dependency[0])
         tess_xyz_path = imap_data_access.download(tess_xyz_dependency[0])
-        elongation_path = imap_data_access.download(elongation_dependency[0])
-        with open(elongation_path) as f:
-            elongation_data = {}
-            lines = [line.rstrip('\n') for line in f.readlines()]
-            for line in lines:
-                repointing, elongation = line.split('\t')
-                elongation_data[repointing] = int(elongation)
 
         energy_grid_hi_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-hi')
         energy_grid_hi_path = imap_data_access.download(energy_grid_hi_dependency[0])
@@ -102,8 +92,6 @@ class GlowsL3EDependencies:
             ionization_files_path,
             pipeline_settings,
             pipeline_settings_path,
-            elongation_data,
-            elongation_path,
             repoint_file_path
         )
 
@@ -163,7 +151,6 @@ class GlowsL3EDependencies:
             self.ionization_files.name,
             self.pipeline_settings_file.name,
             self.repointing_file.name,
-            self.elongation_file.name,
             *self.spice_kernels
         ]
 

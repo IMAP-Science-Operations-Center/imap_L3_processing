@@ -35,7 +35,6 @@ class GlowsL3EInitializer:
         pipeline_settings_l3bcde = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='pipeline-settings-l3bcde'))
         energy_grid_lo = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='energy-grid-lo'))
         tess_xyz_8 = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='tess-xyz-8'))
-        elongation_data = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='lo', descriptor='elongation-data'))
         energy_grid_hi = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='energy-grid-hi'))
         energy_grid_ultra = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='energy-grid-ultra'))
         tess_ang_16 = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='tess-ang-16'))
@@ -47,7 +46,6 @@ class GlowsL3EInitializer:
             AncillaryInput(str(pipeline_settings_l3bcde["file_path"])),
             AncillaryInput(str(energy_grid_lo["file_path"])),
             AncillaryInput(str(tess_xyz_8["file_path"])),
-            AncillaryInput(str(elongation_data["file_path"])),
             AncillaryInput(str(energy_grid_hi["file_path"])),
             AncillaryInput(str(energy_grid_ultra["file_path"])),
             AncillaryInput(str(tess_ang_16["file_path"])),

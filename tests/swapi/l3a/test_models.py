@@ -85,8 +85,16 @@ class TestModels(CdfModelTestCase):
         expected_flag_values[:len(epoch_data) // 2] = SwapiL3Flags.HI_CHI_SQ
 
         alpha_density = uarray(expected_alpha_density_nominal_values, expected_alpha_density_std_devs)
+
+        expected_pre_lut_temperature_nominal_values = np.arange(400000, step=40000.)
+        expected_pre_lut_temperature_std_devs = np.arange(20000, step=2000.)
+        alpha_pre_lut_temperature = uarray(expected_pre_lut_temperature_nominal_values, expected_pre_lut_temperature_std_devs)
+        expected_pre_lut_alpha_density_nominal_values = np.arange(2.4, step=.24)
+        expected_pre_lut_alpha_density_std_devs = np.arange(1.5, step=0.15)
+        alpha_pre_lut_density = uarray(expected_pre_lut_alpha_density_nominal_values, expected_pre_lut_alpha_density_std_devs)
+
         data = SwapiL3AlphaSolarWindData(Mock(), epoch_data, alpha_speed, alpha_temperature, alpha_density,
-                                         expected_flag_values)
+                                         expected_flag_values, alpha_pre_lut_temperature, alpha_pre_lut_density)
         variables = data.to_data_product_variables()
 
         self.assert_variable_attributes(variables[0], epoch_data, EPOCH_CDF_VAR_NAME)
@@ -105,6 +113,10 @@ class TestModels(CdfModelTestCase):
                                         "alpha_sw_density_uncert")
 
         self.assert_variable_attributes(variables[8], expected_flag_values, "swp_flags")
+
+        self.assert_variable_attributes(variables[9], expected_pre_lut_temperature_nominal_values, "alpha_sw_pre_lut_temperature")
+        self.assert_variable_attributes(variables[10], expected_pre_lut_alpha_density_nominal_values, "alpha_sw_pre_lut_density")
+
 
     def test_getting_pui_data_product_variables(self):
         epoch_data = np.arange(20, step=2)

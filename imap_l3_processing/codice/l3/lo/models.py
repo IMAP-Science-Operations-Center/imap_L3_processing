@@ -128,7 +128,7 @@ class CodiceLoL2DirectEventData:
                 num_events=read_variable_and_mask_fill_values(cdf["num_events"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
                 spin_angle=read_variable_and_mask_fill_values(cdf["spin_angle"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
                 spin_sector=read_variable_and_mask_fill_values(cdf["spin_sector"])[:, :CODICE_LO_L2_NUM_PRIORITIES,
-                            ...],
+                            ...].astype(int),
                 elevation_angle=read_variable_and_mask_fill_values(cdf["elevation_angle"])[:,
                                 :CODICE_LO_L2_NUM_PRIORITIES, ...],
                 tof=read_variable_and_mask_fill_values(cdf["tof"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
@@ -159,6 +159,7 @@ class CodiceLoL1aSWPriorityRates:
     rgfo_esa_step: np.ndarray
     nso_spin_sector: np.ndarray
     nso_esa_step: np.ndarray
+    esa_step: np.ndarray
 
     @classmethod
     def read_from_cdf(cls, cdf_path: Path):
@@ -185,6 +186,7 @@ class CodiceLoL1aSWPriorityRates:
                 rgfo_esa_step=read_variable_and_mask_fill_values(cdf["rgfo_esa_step"]),
                 nso_spin_sector=read_variable_and_mask_fill_values(cdf["nso_spin_sector"]),
                 nso_esa_step=read_variable_and_mask_fill_values(cdf["nso_esa_step"]),
+                esa_step=read_variable_and_mask_fill_values(cdf["esa_step"]),
             )
 
 
@@ -299,6 +301,7 @@ ENERGY_BIN_DELTA_PLUS_VAR_NAME = "energy_bin_delta_plus"
 ENERGY_BIN_DELTA_MINUS_VAR_NAME = "energy_bin_delta_minus"
 PRIORITY_INDEX_VAR_NAME = "priority_index"
 NORMALIZATION_VAR_NAME = "normalization"
+NORMALIZATION_PER_EVENT_VAR_NAME = "normalization_per_event"
 MASS_PER_CHARGE_VAR_NAME = "mass_per_charge"
 MASS_VAR_NAME = "mass"
 APD_ENERGY_VAR_NAME = "apd_energy"
@@ -310,6 +313,7 @@ NUM_EVENTS_VAR_NAME = "num_events"
 DATA_QUALITY_VAR_NAME = "data_quality"
 TOF_VAR_NAME = "tof"
 SPIN_ANGLE_VAR_NAME = "spin_angle"
+SPIN_SECTOR_VAR_NAME = "spin_sector"
 ELEVATION_VAR_NAME = "elevation"
 POSITION_VAR_NAME = "position"
 PRIORITY_INDEX_LABEL_VAR_NAME = "priority_index_label"
@@ -321,6 +325,7 @@ RGFO_SPIN_SECTOR_VAR_NAME = "rgfo_spin_sector"
 RGFO_ESA_STEP_VAR_NAME = "rgfo_esa_step"
 NSO_SPIN_SECTOR_VAR_NAME = "nso_spin_sector"
 NSO_ESA_STEP_VAR_NAME = "nso_esa_step"
+ESA_STEP_VAR_NAME = "esa_step"
 
 
 @dataclass
@@ -341,6 +346,7 @@ class CodiceLoDirectEventData:
     spin_angle: np.ndarray
     elevation: np.ndarray
     position: np.ndarray
+
 
     @classmethod
     def read_from_cdf(cls, cdf_path: Path | str):
@@ -381,6 +387,9 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
     rgfo_esa_step: np.ndarray
     nso_spin_sector: np.ndarray
     nso_esa_step: np.ndarray
+    spin_sector: np.ndarray
+    normalization_per_event: np.ndarray
+    esa_step: np.ndarray
 
     def __post_init__(self):
         self.priority_index = np.arange(CODICE_LO_L2_NUM_PRIORITIES)
@@ -396,6 +405,7 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
             DataProductVariable(EPOCH_DELTA_VAR_NAME, self.epoch_delta),
 
             DataProductVariable(NORMALIZATION_VAR_NAME, self.normalization),
+            DataProductVariable(NORMALIZATION_PER_EVENT_VAR_NAME, self.normalization_per_event),
 
             DataProductVariable(ENERGY_BIN_VAR_NAME, self.energy_bin),
             DataProductVariable(ENERGY_BIN_DELTA_MINUS_VAR_NAME, self.energy_bin_delta_minus),
@@ -418,6 +428,7 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
             DataProductVariable(ELEVATION_VAR_NAME, self.elevation),
             DataProductVariable(POSITION_VAR_NAME, self.position),
             DataProductVariable(SPIN_ANGLE_VAR_NAME, self.spin_angle),
+            DataProductVariable(SPIN_SECTOR_VAR_NAME, self.spin_sector),
             DataProductVariable(ENERGY_STEP_VAR_NAME, self.energy_step),
 
             DataProductVariable(PRIORITY_INDEX_VAR_NAME, self.priority_index),
@@ -429,6 +440,7 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
             DataProductVariable(RGFO_ESA_STEP_VAR_NAME, self.rgfo_esa_step),
             DataProductVariable(NSO_SPIN_SECTOR_VAR_NAME, self.nso_spin_sector),
             DataProductVariable(NSO_ESA_STEP_VAR_NAME, self.nso_esa_step),
+            DataProductVariable(ESA_STEP_VAR_NAME, self.esa_step),
         ]
 
 

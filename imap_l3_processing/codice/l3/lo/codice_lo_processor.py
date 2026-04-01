@@ -9,7 +9,6 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies im
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencies import \
     CodiceLoL3aPartialDensitiesDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import CodiceLoL3aRatiosDependencies
-from imap_l3_processing.codice.l3.lo.constants import CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup, \
     PositionToElevationLookup
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, \
@@ -17,8 +16,9 @@ from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityData
     CodiceLoL3ChargeStateDistributionsDataProduct, CodiceLoL3a3dDistributionDataProduct
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
     calculate_mass, calculate_mass_per_charge, \
-    rebin_counts_by_energy_and_spin_angle, rebin_to_counts_by_species_elevation_and_spin_sector, normalize_counts, \
-    combine_priorities_and_convert_to_rate, rebin_3d_distribution_azimuth_to_elevation, convert_count_rate_to_intensity
+    rebin_to_counts_by_species_elevation_and_spin_sector, normalize_counts, \
+    combine_priorities_and_convert_to_rate, rebin_3d_distribution_azimuth_to_elevation, convert_count_rate_to_intensity, \
+    calculate_normalization_factor, lookup_normalization_per_event
 from imap_l3_processing.data_utils import safe_divide
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
@@ -171,9 +171,8 @@ class CodiceLoProcessor(Processor):
         codice_direct_events = dependencies.codice_l2_direct_events
         esa_energy_per_charge_lookup = dependencies.energy_lookup
 
-        event_buffer = codice_direct_events.tof[0].shape[-1]
         mass_coefficient_lookup = dependencies.mass_coefficient_lookup
-        priority_counts_for_events = [
+        priority_counts = [
             codice_sw_priority_counts_l1a_data.p0_tcrs,
             codice_sw_priority_counts_l1a_data.p1_hplus,
             codice_sw_priority_counts_l1a_data.p2_heplusplus,
@@ -183,32 +182,21 @@ class CodiceLoProcessor(Processor):
             codice_nsw_priority_counts_l1a_data.p6_hplus_heplusplus
         ]
 
-        spin_angle = np.full((len(codice_direct_events.epoch), len(priority_counts_for_events), event_buffer),
-                             np.nan)
-        mass_per_charge = np.full((len(codice_direct_events.epoch), len(priority_counts_for_events), event_buffer),
-                                  np.nan)
-        mass = np.full((len(codice_direct_events.epoch), len(priority_counts_for_events), event_buffer), np.nan)
-
         spin_angle_lut = SpinAngleLookup()
-        normalization = np.full((len(codice_direct_events.epoch), len(priority_counts_for_events),
-                                 esa_energy_per_charge_lookup.num_bins, spin_angle_lut.num_bins), np.nan)
 
-        try:
-            mass_per_charge = calculate_mass_per_charge(codice_direct_events.energy_per_charge,
-                                                        codice_direct_events.tof)
-            mass = calculate_mass(codice_direct_events.apd_energy, codice_direct_events.tof, mass_coefficient_lookup)
-
-            spin_angle = (codice_direct_events.spin_angle + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360
-            direct_events_binned_by_energy_and_spin = rebin_counts_by_energy_and_spin_angle(
-                codice_direct_events.num_events,
-                spin_angle,
-                codice_direct_events.energy_step,
-                spin_angle_lut,
-                esa_energy_per_charge_lookup)
-            total_events_per_priority = np.sum(np.stack(priority_counts_for_events, axis=1), axis=(2, 3), keepdims=True)
-            normalization = total_events_per_priority / direct_events_binned_by_energy_and_spin
-        except Exception as e:
-            print(e)
+        mass_per_charge = calculate_mass_per_charge(codice_direct_events.energy_per_charge,
+                                                    codice_direct_events.tof)
+        mass = calculate_mass(codice_direct_events.apd_energy, codice_direct_events.tof, mass_coefficient_lookup)
+        stacked_priorities = np.stack(priority_counts, axis=1)
+        normalization = calculate_normalization_factor(stacked_priorities, codice_direct_events.num_events,
+                                                       codice_direct_events.energy_step,
+                                                       codice_direct_events.spin_sector)
+        normalization_per_event = lookup_normalization_per_event(
+            normalization,
+            codice_direct_events.num_events,
+            codice_direct_events.energy_step,
+            codice_direct_events.spin_sector
+        )
 
         return CodiceLoL3aDirectEventDataProduct(
             input_metadata=self.input_metadata,
@@ -225,7 +213,7 @@ class CodiceLoProcessor(Processor):
             num_events=codice_direct_events.num_events,
             tof=codice_direct_events.tof,
             data_quality=codice_direct_events.data_quality,
-            spin_angle=spin_angle,
+            spin_angle=codice_direct_events.spin_angle,
             elevation=codice_direct_events.elevation_angle,
             position=codice_direct_events.position,
             energy_bin=np.flip(esa_energy_per_charge_lookup.bin_centers),
@@ -237,7 +225,10 @@ class CodiceLoProcessor(Processor):
             rgfo_spin_sector=codice_sw_priority_counts_l1a_data.rgfo_spin_sector,
             rgfo_esa_step=codice_sw_priority_counts_l1a_data.rgfo_esa_step,
             nso_spin_sector=codice_sw_priority_counts_l1a_data.nso_spin_sector,
-            nso_esa_step=codice_sw_priority_counts_l1a_data.nso_esa_step
+            nso_esa_step=codice_sw_priority_counts_l1a_data.nso_esa_step,
+            normalization_per_event=normalization_per_event,
+            spin_sector=codice_direct_events.spin_sector,
+            esa_step=codice_sw_priority_counts_l1a_data.esa_step,
         )
 
     def process_l3a_3d_distribution_product(self, dependencies: CodiceLoL3a3dDistributionsDependencies):

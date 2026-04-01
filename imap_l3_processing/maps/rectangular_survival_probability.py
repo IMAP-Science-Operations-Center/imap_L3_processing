@@ -88,24 +88,14 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                 dims=[CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.GENERIC_PIXEL.value, CoordNames.AZ_EL_VECTOR.value],
             )
 
+            spacecraft_frame_energies_in_kev = dataset["energy_sc"].values / 1000.0
+
             exposure = np.full_like(l1c_dataset.exposure_times, np.nan)
-            best_match_energies = np.full_like(l1c_dataset.exposure_times, np.nan, dtype=np.float64)
-            for cg_energy_index, cg_energy in np.ndenumerate(dataset['energy_sc'].values[0]):
-                best_guess = np.inf
-                best_guess_index = -1
-                for e_i, energy in enumerate(energy_in_ev):
-                    guess = np.abs(np.log10(energy) - np.log10(cg_energy))
-                    if guess < best_guess:
-                        best_guess = guess
-                        best_guess_index = e_i
-                    if guess > best_guess:
-                        break
-                exposure[0, cg_energy_index[0], cg_energy_index[1]] = l1c_dataset.exposure_times[
-                    0, best_guess_index, cg_energy_index[1]]
-                if sensor in [Sensor.Lo, Sensor.Lo90]:
-                    best_match_energies[0, cg_energy_index[0], cg_energy_index[1]] = cg_energy / 1000
-                else:
-                    best_match_energies[0, cg_energy_index[0], cg_energy_index[1]] = energies[best_guess_index]
+            for (energy_i, spin_angle_i), cg_energy in np.ndenumerate(dataset['energy_sc'].values[0]):
+                distance_to_bins = np.abs(np.log10(energy_in_ev) - np.log10(cg_energy))
+                closest_energy_bin_index = np.argmin(distance_to_bins)
+
+                exposure[0, energy_i, spin_angle_i] = l1c_dataset.exposure_times[0, closest_energy_bin_index, spin_angle_i]
 
         else:
             self.az_el_points = hae_az_el_points
@@ -122,7 +112,7 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
             if cg_corrected:
                 sp_interpolated_to_pset_angles = interpolate_angular_data_to_nearest_neighbor(
                     self.azimuths, glows_dataset.spin_angle, glows_dataset.probability_of_survival[0])
-                log_sc_frame_energies = np.log10(best_match_energies[0])
+                log_sc_frame_energies = np.log10(spacecraft_frame_energies_in_kev[0])
 
                 sp_final = np.empty((1, len(energies), len(self.azimuths)))
                 for spin_angle_index in range(len(self.azimuths)):

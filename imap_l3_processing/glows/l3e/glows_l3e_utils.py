@@ -1,5 +1,6 @@
+from __future__ import annotations
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import imap_data_access
@@ -125,3 +126,40 @@ def find_first_updated_cr(new_l3d: Path, old_l3d: str) -> Optional[int]:
         return int(old_l3d_cdf['cr_grid'][-1]) + 1
 
     return None
+
+def get_lo_pivot_angle_from_l1b_file(path: Path) -> float:
+    with CDF(str(path)) as cdf:
+        epoch = cdf['epoch'][...]
+        angles = cdf['pcc_coarse_pot_pri'][...]
+    if len(epoch) == 0:
+        return 90
+    t0 = epoch[0]
+    start = t0 + timedelta(hours=3)
+    end = t0 + timedelta(hours=15)
+    start_index, end_index = np.searchsorted(epoch, [start, end])
+    angles_to_consider = angles[start_index:end_index]
+    if len(angles_to_consider) == 0:
+        return 90
+    return np.round(np.median(angles_to_consider))
+
+@dataclass
+class LoPivotAngle:
+    parent_filename: Optional[str]
+    pivot_angle: float
+
+def get_lo_pivot_angles(repointings: list[int]) -> dict[int, LoPivotAngle]:
+    l1b_results = imap_data_access.query(
+        instrument="lo",
+        data_level="l1b",
+        descriptor="nhk",
+        version="latest",
+    )
+    paths_by_repointing = {f["repointing"]:f["file_path"] for f in l1b_results}
+    result = {}
+    for repointing in repointings:
+        if path := paths_by_repointing.get(repointing):
+            downloaded_path = imap_data_access.download(path)
+            result[repointing] = LoPivotAngle(parent_filename=Path(path).name, pivot_angle=get_lo_pivot_angle_from_l1b_file(downloaded_path))
+        else:
+            result[repointing] = LoPivotAngle(parent_filename=None, pivot_angle=90)
+    return result

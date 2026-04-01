@@ -98,15 +98,17 @@ def calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
     bad_fit_flag = SwapiL3Flags.NONE
     if reduced_chisq > 10:
         bad_fit_flag = SwapiL3Flags.HI_CHI_SQ
-    density, temperature = correlated_values(values, covariance)
-    density = table.lookup_density(alpha_sw_speed, density, temperature)
-    temperature = table.lookup_temperature(alpha_sw_speed, density, temperature)
+    pre_lut_density, pre_lut_temperature = correlated_values(values, covariance)
+    density = table.lookup_density(alpha_sw_speed, pre_lut_density, pre_lut_temperature)
+    temperature = table.lookup_temperature(alpha_sw_speed, pre_lut_density, pre_lut_temperature)
 
-    return AlphaSolarWindTemperatureAndDensity(temperature, density, bad_fit_flag)
+    return AlphaSolarWindTemperatureAndDensity(temperature, density, pre_lut_temperature, pre_lut_density, bad_fit_flag)
 
 
 @dataclass
 class AlphaSolarWindTemperatureAndDensity:
     temperature: ufloat
     density: ufloat
+    pre_lut_temperature: ufloat
+    pre_lut_density: ufloat
     bad_fit_flag: int = SwapiL3Flags.NONE
