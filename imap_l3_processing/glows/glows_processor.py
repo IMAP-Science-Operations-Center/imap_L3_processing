@@ -94,13 +94,15 @@ class GlowsProcessor(Processor):
             for txt_file in process_l3d_result.l3d_text_file_paths:
                 logger.info(f"Saved L3d text file output to: {txt_file}")
 
-            l3e_initializer_output = GlowsL3EInitializer.get_repointings_to_process(process_l3d_result, old_l3d, l3bc_initializer_data.repoint_file_path)
+            l3e_initializer_output = GlowsL3EInitializer.get_repointings_to_process(process_l3d_result, old_l3d,
+                                                                                    l3bc_initializer_data.repoint_file_path)
             if l3e_initializer_output is not None:
                 logger.info(f"Processing L3e for repointings: {l3e_initializer_output.repointings.repointing_numbers}")
                 products_list.extend([*process_l3d_result.l3d_text_file_paths, process_l3d_result.l3d_cdf_file_path])
                 products_list.extend(process_l3e(l3e_initializer_output))
             else:
-                logger.info(f"There are no changes between: {old_l3d} and the newly produced L3d. Not uploading L3d or processing L3e!")
+                logger.info(
+                    f"There are no changes between: {old_l3d} and the newly produced L3d. Not uploading L3d or processing L3e!")
 
             return products_list
 
@@ -110,7 +112,8 @@ class GlowsProcessor(Processor):
         l3_data.process_l2_data_file(data)
         l3_data.generate_l3a_data(dependencies.ancillary_files)
         data_with_spin_angle = self.add_spin_angle_delta(l3_data.data, dependencies.ancillary_files)
-
+        print(l3_data.data)
+        l3_data.save_data_to_file()
         return create_glows_l3a_from_dictionary(data_with_spin_angle,
                                                 replace(self.input_metadata, descriptor=GLOWS_L3A_DESCRIPTOR))
 
@@ -148,6 +151,7 @@ class GlowsProcessor(Processor):
             file.writestr(json_filename, json_string)
         return zip_path
 
+
 def process_l3bc(processor, initializer_data: GlowsL3BCInitializerData):
     l3bs_by_cr = {}
     l3cs_by_cr = {}
@@ -160,7 +164,8 @@ def process_l3bc(processor, initializer_data: GlowsL3BCInitializerData):
 
         filtered_days = filter_l3a_files(dependency.l3a_data, dependency.ancillary_files['bad_days_list'],
                                          dependency.carrington_rotation_number)
-        with SwallowExceptionAndLog(f"Exception caught in L3BC science code, skipping CR {dependency.carrington_rotation_number}") as manager:
+        with SwallowExceptionAndLog(
+                f"Exception caught in L3BC science code, skipping CR {dependency.carrington_rotation_number}") as manager:
             l3b_data, l3c_data = generate_l3bc(replace(dependency, l3a_data=filtered_days))
         if manager.exception_caught:
             continue
@@ -193,8 +198,8 @@ def process_l3bc(processor, initializer_data: GlowsL3BCInitializerData):
         data_products=data_products
     )
 
-def process_l3d(dependencies: GlowsL3DDependencies, version: int) -> Optional[GlowsL3DProcessorOutput]:
 
+def process_l3d(dependencies: GlowsL3DDependencies, version: int) -> Optional[GlowsL3DProcessorOutput]:
     [create_glows_l3b_json_file_from_cdf(l3b) for l3b in dependencies.l3b_file_paths]
     [create_glows_l3c_json_file_from_cdf(l3c) for l3c in dependencies.l3c_file_paths]
 
@@ -255,6 +260,7 @@ def process_l3d(dependencies: GlowsL3DDependencies, version: int) -> Optional[Gl
         return GlowsL3DProcessorOutput(l3d_data_product_path, txt_files_with_correct_version, last_processed_cr)
     return None
 
+
 def process_l3e_lo(
         parent_file_names: list[str],
         repointing: int,
@@ -282,9 +288,10 @@ def process_l3e_lo(
     )
 
     elongation_in_filename = f"{elongation_value}."
-    elongation_in_filename += "0" * (5-len(elongation_in_filename))
+    elongation_in_filename += "0" * (5 - len(elongation_in_filename))
 
-    output_path = Path(f'probSur.Imap.Lo_{l3e_args.formatted_date}_{l3e_args.decimal_date[:8]}_{elongation_in_filename}.dat')
+    output_path = Path(
+        f'probSur.Imap.Lo_{l3e_args.formatted_date}_{l3e_args.decimal_date[:8]}_{elongation_in_filename}.dat')
     lo_data = GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product(input_metadata, output_path,
                                                                  repointing_midpoint, elongation_value, l3e_args)
 
@@ -396,7 +403,9 @@ def process_l3e_ul_hf(parent_file_names: list[str], repointing: int, repointing_
 
     return [ul_cdf, new_dat_path]
 
-def process_l3e_hi(parent_file_names: list[str], repointing: int, repointing_start: datetime, epoch_delta: timedelta, elongation: int, version: int) -> list[Path]:
+
+def process_l3e_hi(parent_file_names: list[str], repointing: int, repointing_start: datetime, epoch_delta: timedelta,
+                   elongation: int, version: int) -> list[Path]:
     repointing_midpoint = repointing_start + epoch_delta
     l3e_hi_args = determine_call_args_for_l3e_executable(repointing_start, repointing_midpoint, elongation)
     call_args = l3e_hi_args.to_argument_list()
@@ -405,8 +414,9 @@ def process_l3e_hi(parent_file_names: list[str], repointing: int, repointing_sta
 
     run(["./survProbHi"] + call_args)
 
-    input_metadata = InputMetadata(instrument='glows', descriptor=f'survival-probability-hi-{180-elongation}',
-                                   version=f'v{version:03}', start_date=repointing_start, end_date=repointing_start + epoch_delta * 2,
+    input_metadata = InputMetadata(instrument='glows', descriptor=f'survival-probability-hi-{180 - elongation}',
+                                   version=f'v{version:03}', start_date=repointing_start,
+                                   end_date=repointing_start + epoch_delta * 2,
                                    repointing=repointing, data_level='l3e')
 
     output_path = Path(f'probSur.Imap.Hi_{call_args[0]}_{call_args[1][:8]}_{call_args[-1][:5]}.dat')
@@ -434,6 +444,7 @@ def process_l3e_hi(parent_file_names: list[str], repointing: int, repointing_sta
 
     return [hi_cdf, new_dat_path]
 
+
 def process_l3e(initializer_data: GlowsL3EInitializerOutput):
     products_list = []
 
@@ -449,17 +460,20 @@ def process_l3e(initializer_data: GlowsL3EInitializerOutput):
                 if pivot_info.parent_filename is not None:
                     lo_parent_file_names = lo_parent_file_names + [pivot_info.parent_filename]
                 lo_version = initializer_data.repointings.lo_repointings[repointing]
-                products_list.extend(process_l3e_lo(lo_parent_file_names, repointing, start_repointing, epoch_delta, pivot_info.pivot_angle, lo_version))
+                products_list.extend(process_l3e_lo(lo_parent_file_names, repointing, start_repointing, epoch_delta,
+                                                    pivot_info.pivot_angle, lo_version))
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e hi-90 for repointing {repointing}"):
                 hi_parent_file_names = initializer_data.dependencies.get_hi_parents()
                 hi_90_version = initializer_data.repointings.hi_90_repointings[repointing]
-                products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, start_repointing, epoch_delta, 90, hi_90_version))
+                products_list.extend(
+                    process_l3e_hi(hi_parent_file_names, repointing, start_repointing, epoch_delta, 90, hi_90_version))
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e hi-45 for repointing {repointing}"):
                 hi_parent_file_names = initializer_data.dependencies.get_hi_parents()
                 hi_45_version = initializer_data.repointings.hi_45_repointings[repointing]
-                products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, start_repointing, epoch_delta, 135, hi_45_version))
+                products_list.extend(
+                    process_l3e_hi(hi_parent_file_names, repointing, start_repointing, epoch_delta, 135, hi_45_version))
 
             ul_parent_file_names = initializer_data.dependencies.get_ul_parents()
             ul_version = initializer_data.repointings.ultra_repointings[repointing]
@@ -475,6 +489,7 @@ def process_l3e(initializer_data: GlowsL3EInitializerOutput):
                     process_l3e_ul_hf(ul_parent_file_names, repointing, start_repointing, epoch_delta, ul_version))
 
     return products_list
+
 
 class SwallowExceptionAndLog:
     def __init__(self, message: str):

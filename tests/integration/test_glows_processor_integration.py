@@ -508,44 +508,44 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
                 try:
                     _ = processor.process()
                 except Exception as e:
-                    # print(f"Processing L3a day {start_date} failed! Reason: {e}")
-                    continue
-                # print(f"Successfully processed L3a day {start_date}!")
+                    print(f"Processing L3a day {start_date} failed! Reason: {e}")
+                    print(e.with_traceback())
 
-        # l3bcde_ancillary_inputs = [
-        #     GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-1CR_20100101_v001.json",
-        #     GLOWS_TEST_DATA / "imap_glows_WawHelioIonMP_20100101_v001.json",
-        #     GLOWS_TEST_DATA / "imap_glows_bad-days-list_20100101_v001.dat",
-        #     GLOWS_TEST_DATA / "imap_glows_pipeline-settings-l3bcde_20100101_v003.json",
-        #     GLOWS_TEST_DATA / "imap_glows_plasma-speed-2010a_20100101_v001.dat",
-        #     GLOWS_TEST_DATA / "imap_glows_proton-density-2010a_20100101_v001.dat",
-        #     GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-2010a_20100101_v001.dat",
-        #     GLOWS_TEST_DATA / "imap_glows_photoion-2010a_20100101_v001.dat",
-        #     GLOWS_TEST_DATA / "imap_glows_lya-2010a_20100101_v001.dat",
-        #     GLOWS_TEST_DATA / "imap_glows_electron-density-2010a_20100101_v001.dat",
-        #     GLOWS_TEST_DATA / "imap_glows_ionization-files_20100101_v001.dat",
-        #     GLOWS_TEST_DATA / "imap_glows_energy-grid-lo_20100101_v001.dat",
-        #     GLOWS_TEST_DATA / "imap_glows_tess-xyz-8_20100101_v001.dat",
-        #     GLOWS_TEST_DATA / "imap_lo_elongation-data_20100101_v001.dat",
-        #     GLOWS_TEST_DATA / "imap_glows_energy-grid-hi_20100101_v001.dat",
-        #     GLOWS_TEST_DATA / "imap_glows_energy-grid-ultra_20100101_v001.dat",
-        #     GLOWS_TEST_DATA / "imap_glows_tess-ang-16_20100101_v001.dat"
-        # ]
-        # l3a_inputs = list((l3a_integration_data_dir / "imap/glows/l3a").rglob("*.cdf"))
-        # prod_spice_inputs = list((prod_data_folder / "imap/spice").rglob("*"))
-        #
-        # logging.basicConfig(force=True, level=logging.INFO,
-        #                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        #
-        # input_paths = l3bcde_ancillary_inputs + l3a_inputs + prod_spice_inputs
-        # with mock_imap_data_access(get_run_local_data_path("test_glows_l3bcde_with_prod_l2"), input_paths):
-        #     processing_input = ProcessingInputCollection(RepointInput("imap_2026_269_15.repoint"))
-        #     input_metadata = InputMetadata(instrument="glows", data_level="l3b", descriptor="ion-rate-profile",
-        #                                    version="v001", start_date=datetime(2000, 1, 1),
-        #                                    end_date=datetime(2000, 1, 1))
-        #
-        #     processor = GlowsProcessor(processing_input, input_metadata)
-        #     processor.process()
+        l3bcde_ancillary_inputs = [
+            GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-1CR_20100101_v001.json",
+            GLOWS_TEST_DATA / "imap_glows_WawHelioIonMP_20100101_v001.json",
+            GLOWS_TEST_DATA / "imap_glows_bad-days-list_20100101_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_pipeline-settings-l3bcde_20100101_v003.json",
+            GLOWS_TEST_DATA / "imap_glows_plasma-speed-2010a_20100101_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_proton-density-2010a_20100101_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-2010a_20100101_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_photoion-2010a_20100101_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_lya-2010a_20100101_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_electron-density-2010a_20100101_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_ionization-files_20100101_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_energy-grid-lo_20100101_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_tess-xyz-8_20100101_v001.dat",
+            GLOWS_TEST_DATA / "imap_lo_elongation-data_20100101_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_energy-grid-hi_20100101_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_energy-grid-ultra_20100101_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_tess-ang-16_20100101_v001.dat",
+            GLOWS_TEST_DATA / "imap_2026_090_01.repoint"
+        ]
+        l3a_inputs = list((l3a_integration_data_dir / "imap/glows/l3a").rglob("*.cdf"))
+        prod_spice_inputs = list((prod_data_folder / "imap/spice/repoint").rglob("*"))
+
+        logging.basicConfig(force=True, level=logging.INFO,
+                            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+        input_paths = l3bcde_ancillary_inputs + l3a_inputs + prod_spice_inputs
+        with mock_imap_data_access(get_run_local_data_path("test_glows_l3bcde_with_prod_l2"), input_paths):
+            processing_input = ProcessingInputCollection(RepointInput("imap_2026_090_01.repoint"))
+            input_metadata = InputMetadata(instrument="glows", data_level="l3b", descriptor="ion-rate-profile",
+                                           version="v001", start_date=datetime(2000, 1, 1),
+                                           end_date=datetime(2000, 1, 1))
+
+            processor = GlowsProcessor(processing_input, input_metadata)
+            processor.process()
 
     @staticmethod
     def _fill_official_l2_cdf_with_json_values(output_folder: Path) -> Path:

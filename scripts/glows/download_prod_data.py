@@ -14,7 +14,7 @@ from tests.test_helpers import get_run_local_data_path
 GLOWS_L3E_REQUIRED_SPICE_KERNELS: list[SpiceKernelTypes] = [
     SpiceKernelTypes.ScienceFrames, SpiceKernelTypes.EphemerisReconstructed, SpiceKernelTypes.AttitudeHistory,
     SpiceKernelTypes.PointingAttitude, SpiceKernelTypes.PlanetaryEphemeris, SpiceKernelTypes.Leapseconds,
-    SpiceKernelTypes.SpacecraftClock
+    SpiceKernelTypes.SpacecraftClock, RepointFile
 ]
 
 

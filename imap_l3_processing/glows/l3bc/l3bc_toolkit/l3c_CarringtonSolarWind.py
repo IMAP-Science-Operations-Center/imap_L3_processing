@@ -4,16 +4,19 @@ Carrington solar wind class
 '''
 
 import json
+import logging
 from dataclasses import dataclass
+
+import astropy.constants as const
+import astropy.units as u
 import numpy as np
 from astropy.time import Time
-import astropy.units as u
-import astropy.constants as const
+
 from . import funcs as fun
 from .constants import VERSION, PHISICAL_CONSTANTS
 
-import logging
 logging.basicConfig(level=logging.ERROR)
+
 
 @dataclass
 class CarringtonSolarWind():
@@ -76,9 +79,9 @@ class CarringtonSolarWind():
         Class constructor
         """
 
-        self.header={
+        self.header = {
             'software_version': VERSION,
-            'filename' : None,
+            'filename': None,
             'ancillary_data_files': anc_input_from_instr_team,
             'external_dependeciens': None,
             'l3b_input_filename': None
@@ -88,23 +91,22 @@ class CarringtonSolarWind():
         self.settings = fun.read_json(anc_input_from_instr_team['pipeline_settings'])
 
         # All parameters will be read from L3b file or computed later on
-        self.cx_profile={}
-        self.cx_profile['rate']=None
-        self.cx_profile['uncert']=None
+        self.cx_profile = {}
+        self.cx_profile['rate'] = None
+        self.cx_profile['uncert'] = None
 
-        self.sw_ecliptic={}
-        self.sw_ecliptic['mean_speed']=None
-        self.sw_ecliptic['mean_proton_density']=None
-        self.sw_ecliptic['mean_alpha_abundance']=None
-        self.sw_ecliptic['invariant']=None
+        self.sw_ecliptic = {}
+        self.sw_ecliptic['mean_speed'] = None
+        self.sw_ecliptic['mean_proton_density'] = None
+        self.sw_ecliptic['mean_alpha_abundance'] = None
+        self.sw_ecliptic['invariant'] = None
 
-        self.sw_profile={}
-        self.sw_profile['date']=None
-        self.sw_profile['CR']=None
-        self.sw_profile['grid']=self.settings['solar_wind_grid']
-        self.sw_profile['plasma_speed']=None
-        self.sw_profile['proton_density']=None
-
+        self.sw_profile = {}
+        self.sw_profile['date'] = None
+        self.sw_profile['CR'] = None
+        self.sw_profile['grid'] = self.settings['solar_wind_grid']
+        self.sw_profile['plasma_speed'] = None
+        self.sw_profile['proton_density'] = None
 
     def calculate_sw_profile(self):
         '''
@@ -117,35 +119,36 @@ class CarringtonSolarWind():
 
         # initialization of the vectors that will be calculated later on
         # solar wind speed latitudinal profile
-        plasma_speed_profile=np.empty(len(self.settings['solar_wind_grid']))
+        plasma_speed_profile = np.empty(len(self.settings['solar_wind_grid']))
         # solar wind density latitudinal profile
-        proton_dens_profile=np.empty(len(self.settings['solar_wind_grid']))
+        proton_dens_profile = np.empty(len(self.settings['solar_wind_grid']))
 
+        invariant = self.sw_ecliptic['invariant']
+        p_alpha = self.sw_ecliptic['mean_alpha_abundance']
 
-        invariant=self.sw_ecliptic['invariant']
-        p_alpha=self.sw_ecliptic['mean_alpha_abundance']
-
-        v_grid=np.array(self.settings['plasma_speed_numerical_grid'])*u.km/u.s   # numerical grid to solve equations [km/s]
-        cs_grid=fun.cross_section_cx(fun.v2E(v_grid))             # cross section for charge exchange for speed grid [cm^2]
-        rho_grid=invariant/(const.m_p+p_alpha*PHISICAL_CONSTANTS['m_alpha'])/(0.5*v_grid**2+const.GM_sun/const.R_sun)
+        v_grid = np.array(
+            self.settings['plasma_speed_numerical_grid']) * u.km / u.s  # numerical grid to solve equations [km/s]
+        cs_grid = fun.cross_section_cx(fun.v2E(v_grid))  # cross section for charge exchange for speed grid [cm^2]
+        rho_grid = invariant / (const.m_p + p_alpha * PHISICAL_CONSTANTS['m_alpha']) / (
+                0.5 * v_grid ** 2 + const.GM_sun / const.R_sun)
 
         # calculation of the charge exchange rate for each speed in speed grid
-        cx_grid=(rho_grid*cs_grid).to('1/s')
+        cx_grid = (rho_grid * cs_grid).to('1/s')
 
+        print(self.cx_profile['rate'], "min", cx_grid.value.min())
         for i in np.arange(len(plasma_speed_profile)):
             # charge exchane rate obtained from lcrv
-            cx_obs=self.cx_profile['rate'][i]
-            if cx_obs<cx_grid.value.min():
-                logging.info('lat= %lf deg: observed cx rate is smaller than min of the cx_grid', self.sw_profile['grid'][i])
+            cx_obs = self.cx_profile['rate'][i]
+            if cx_obs < cx_grid.value.min():
+                logging.info('lat= %lf deg: observed cx rate is smaller than min of the cx_grid',
+                             self.sw_profile['grid'][i])
                 raise Exception('L3c not generated: observed cx rate is smaller than min of the cx_grid')
             # Searching for a measured charge exchange in the cx_grid. In that way we will find sw speed
-            idx=np.abs(cx_grid.value-cx_obs).argmin()
-            plasma_speed_profile[i]=v_grid[idx].to('km.s-1').value
-            proton_dens_profile[i]=(rho_grid[idx]/v_grid[idx]).to('cm-3').value
-        self.sw_profile['plasma_speed']=plasma_speed_profile
-        self.sw_profile['proton_density']=proton_dens_profile
-
-
+            idx = np.abs(cx_grid.value - cx_obs).argmin()
+            plasma_speed_profile[i] = v_grid[idx].to('km.s-1').value
+            proton_dens_profile[i] = (rho_grid[idx] / v_grid[idx]).to('cm-3').value
+        self.sw_profile['plasma_speed'] = plasma_speed_profile
+        self.sw_profile['proton_density'] = proton_dens_profile
 
     def read_l3b(self, data_l3b):
         '''
@@ -157,10 +160,10 @@ class CarringtonSolarWind():
             L3b data product
         '''
 
-        self.sw_profile['date']=Time(data_l3b['date'])    # do I really need it in astropy.time format?
-        self.sw_profile['CR']=data_l3b['CR']
-        self.cx_profile['rate']=data_l3b['ion_rate_profile']['cx_rate']
-        self.cx_profile['uncert']=data_l3b['ion_rate_profile']['cx_uncert']
+        self.sw_profile['date'] = Time(data_l3b['date'])  # do I really need it in astropy.time format?
+        self.sw_profile['CR'] = data_l3b['CR']
+        self.cx_profile['rate'] = data_l3b['ion_rate_profile']['cx_rate']
+        self.cx_profile['uncert'] = data_l3b['ion_rate_profile']['cx_uncert']
 
     def get_dict(self):
         # Dictionary with the solar wind speed and density profiles  that will be saved in json file
@@ -191,18 +194,18 @@ class CarringtonSolarWind():
         '''
 
         # Dictionary with the solar wind speed and density profiles  that will be saved in json file
-        output={}
-        output['header']=self.header
-        output['date']=self.sw_profile['date'].iso
-        output['CR']=self.sw_profile['CR']
-        output['solar_wind_ecliptic']={}
-        output['solar_wind_ecliptic']['plasma_speed']=self.sw_ecliptic['mean_speed']
-        output['solar_wind_ecliptic']['proton_density']=self.sw_ecliptic['mean_proton_density']
-        output['solar_wind_ecliptic']['alpha_abundance']=self.sw_ecliptic['mean_alpha_abundance']
-        output['solar_wind_profile']={}
-        output['solar_wind_profile']['lat_grid']=self.sw_profile['grid']
-        output['solar_wind_profile']['plasma_speed']=self.sw_profile['plasma_speed'].tolist()
-        output['solar_wind_profile']['proton_density']=self.sw_profile['proton_density'].tolist()
+        output = {}
+        output['header'] = self.header
+        output['date'] = self.sw_profile['date'].iso
+        output['CR'] = self.sw_profile['CR']
+        output['solar_wind_ecliptic'] = {}
+        output['solar_wind_ecliptic']['plasma_speed'] = self.sw_ecliptic['mean_speed']
+        output['solar_wind_ecliptic']['proton_density'] = self.sw_ecliptic['mean_proton_density']
+        output['solar_wind_ecliptic']['alpha_abundance'] = self.sw_ecliptic['mean_alpha_abundance']
+        output['solar_wind_profile'] = {}
+        output['solar_wind_profile']['lat_grid'] = self.sw_profile['grid']
+        output['solar_wind_profile']['plasma_speed'] = self.sw_profile['plasma_speed'].tolist()
+        output['solar_wind_profile']['proton_density'] = self.sw_profile['proton_density'].tolist()
 
         # Check validity of the data
         fun.check_nan(output['solar_wind_ecliptic'])
