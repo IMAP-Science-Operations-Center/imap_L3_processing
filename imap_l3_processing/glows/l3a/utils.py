@@ -5,7 +5,6 @@ from pathlib import Path
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.constants import TTJ2000_EPOCH
 from imap_l3_processing.glows.l3a.models import GlowsL2Data, GlowsL2LightCurve, GlowsLatLon, GlowsL3LightCurve, XYZ, \
     GlowsL2Header
 from imap_l3_processing.models import InputMetadata
@@ -14,10 +13,9 @@ from imap_l3_processing.models import InputMetadata
 def read_l2_glows_data(cdf: CDF) -> GlowsL2Data:
     assert 1 == cdf['photon_flux'].shape[0], "Level 2 file should have only one histogram"
 
-    flags = cdf['histogram_flag_array'][0]
     light_curve = GlowsL2LightCurve(photon_flux=cdf['photon_flux'][0],
                                     spin_angle=cdf['spin_angle'][0],
-                                    histogram_flag_array=flags,
+                                    histogram_flag_array=cdf['histogram_flag_array'][0],
                                     exposure_times=cdf['exposure_times'][0],
                                     flux_uncertainties=cdf['flux_uncertainties'][0],
                                     raw_histogram=cdf['raw_histograms'][0],
@@ -40,12 +38,9 @@ def read_l2_glows_data(cdf: CDF) -> GlowsL2Data:
                                       y=cdf['spacecraft_velocity_std_dev'][0, 1],
                                       z=cdf['spacecraft_velocity_std_dev'][0, 2], )
 
-    start_time = (TTJ2000_EPOCH + timedelta(seconds=cdf['start_time'][0] / 1e9))
-    end_time = (TTJ2000_EPOCH + timedelta(seconds=cdf['end_time'][0] / 1e9))
-
     return GlowsL2Data(identifier=cdf['identifier'][0],
-                       start_time=str(start_time),
-                       end_time=str(end_time),
+                       start_time=cdf['start_time'][0],
+                       end_time=cdf['end_time'][0],
                        daily_lightcurve=light_curve,
                        number_of_bins=cdf['number_of_bins'][...],
                        spin_axis_orientation_average=spin_axis_average,

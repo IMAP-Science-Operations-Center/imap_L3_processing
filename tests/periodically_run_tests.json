@@ -1,10 +1,11 @@
 {
-    "test_l3bcde_first_time_processing": "2026-03-19T13:31:57.152750",
-    "test_spectral_fit_against_validation_data": "2026-03-23T10:37:49.828951",
-    "test_calculate_pickup_ions_with_minimize": "2026-03-23T10:40:37.460017",
-    "test_ultra_all_sp_maps": "2026-03-23T10:39:56.176185",
+    "test_l3bcde_first_time_processing": "2026-04-06T11:46:43.319293",
+    "test_spectral_fit_against_validation_data": "2026-04-06T11:46:11.333215",
+    "test_calculate_pickup_ions_with_minimize": "2026-04-06T11:47:38.436058",
+    "test_ultra_all_sp_maps": "2026-04-06T11:47:00.156330",
     "test_ultra_combined_maps": null,
-    "test_ultra_combined_nsp_maps": "2026-03-20T14:32:30.413629",
-    "test_ultra_combined_sp_maps": "2026-03-20T14:33:10.459309",
-    "test_l3bcde_reprocessing": "2026-03-12T17:39:34.585134"
+    "test_ultra_combined_nsp_maps": "2026-04-06T11:47:10.063085",
+    "test_ultra_combined_sp_maps": "2026-04-06T11:47:22.601935",
+    "test_l3bcde_reprocessing": "2026-04-06T11:46:43.618159",
+    "test_glows_l3abcde_with_prod_l2": "2026-04-06T11:51:05.383052"
 }

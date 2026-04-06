@@ -15,44 +15,41 @@ from tests.test_helpers import get_test_data_path
 
 class TestUtils(unittest.TestCase):
     def test_reading_l2_glows_data_into_models(self):
-        cdf = CDF(str(get_test_data_path('glows/imap_glows_l2_hist_20130908-repoint01000_v001.cdf')))
+        cdf = CDF(str(get_test_data_path('glows/imap_glows_l2_hist_20251224-repoint00088_v001.cdf')))
 
         glows_l2_data: GlowsL2Data = read_l2_glows_data(cdf)
 
-        expected_start_time = datetime(2013, 9, 8, 8, 52, 14)
-        self.assertEqual(str(expected_start_time), glows_l2_data["start_time"])
-
-        expected_end_time = datetime(2013, 9, 9, 4, 58, 14)
-        self.assertEqual(str(expected_end_time), glows_l2_data["end_time"])
+        self.assertEqual("2025-12-24T11:36:21.588935256", glows_l2_data["start_time"])
+        self.assertEqual("2025-12-25T09:39:47.969074488", glows_l2_data["end_time"])
 
         self.assertEqual((3600,), glows_l2_data["daily_lightcurve"]["photon_flux"].shape)
-        self.assertEqual(681.6, glows_l2_data["daily_lightcurve"]["photon_flux"][0])
-        self.assertEqual(678.4, glows_l2_data["daily_lightcurve"]["photon_flux"][-1])
+        self.assertEqual(887.6062785692615, glows_l2_data["daily_lightcurve"]["photon_flux"][0])
+        self.assertEqual(872.260576384695, glows_l2_data["daily_lightcurve"]["photon_flux"][-1])
 
         self.assertEqual((3600,), glows_l2_data["daily_lightcurve"]["flux_uncertainties"].shape)
-        self.assertEqual(5.828, glows_l2_data["daily_lightcurve"]["flux_uncertainties"][0])
+        self.assertEqual(6.338751356172933, glows_l2_data["daily_lightcurve"]["flux_uncertainties"][0])
 
         self.assertEqual((3600,), glows_l2_data["daily_lightcurve"]["exposure_times"].shape)
-        self.assertEqual(2.007e+01, glows_l2_data["daily_lightcurve"]["exposure_times"][0])
+        self.assertEqual(22.090875733333327, glows_l2_data["daily_lightcurve"]["exposure_times"][0])
 
         self.assertEqual((3600,), glows_l2_data["daily_lightcurve"]["spin_angle"].shape)
-        self.assertEqual(0.072, glows_l2_data["daily_lightcurve"]["spin_angle"][0])
+        self.assertEqual(0.08840215463658296, glows_l2_data["daily_lightcurve"]["spin_angle"][0])
 
         self.assertEqual((3600,), glows_l2_data["daily_lightcurve"]["histogram_flag_array"].shape)
-        self.assertEqual(np.float64, glows_l2_data["daily_lightcurve"]["histogram_flag_array"].dtype)
-        self.assertEqual(np.uint8(4), glows_l2_data["daily_lightcurve"]["histogram_flag_array"][84])
+        self.assertEqual(np.int64, glows_l2_data["daily_lightcurve"]["histogram_flag_array"].dtype)
+        self.assertEqual(np.uint8(0), glows_l2_data["daily_lightcurve"]["histogram_flag_array"][84])
 
         self.assertEqual((3600,), glows_l2_data["daily_lightcurve"]["ecliptic_lat"].shape)
         self.assertEqual((3600,), glows_l2_data["daily_lightcurve"]["ecliptic_lon"].shape)
-        self.assertEqual(75.000, glows_l2_data["daily_lightcurve"]["ecliptic_lat"][0])
-        self.assertEqual(161.823, glows_l2_data["daily_lightcurve"]["ecliptic_lon"][0])
+        self.assertEqual(75.04420784333895, glows_l2_data["daily_lightcurve"]["ecliptic_lat"][0])
+        self.assertEqual(268.7416390634532, glows_l2_data["daily_lightcurve"]["ecliptic_lon"][0])
 
         self.assertEqual((3600,), glows_l2_data["daily_lightcurve"]["raw_histogram"].shape)
-        self.assertEqual(13677, glows_l2_data["daily_lightcurve"]["raw_histogram"][0])
+        self.assertEqual(19608, glows_l2_data["daily_lightcurve"]["raw_histogram"][0])
 
         self.assertEqual({
-            "lon": 162.092,
-            "lat": 0.000
+            "lon": -2.9634262485046428,
+            "lat": 0.06861815065029926
         }, glows_l2_data["spin_axis_orientation_average"])
 
         self.assertEqual(cdf['identifier'][0], glows_l2_data['identifier'])
@@ -68,7 +65,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(cdf['pulse_length_std_dev'][0], glows_l2_data['pulse_length_std_dev'])
         self.assertEqual(cdf['position_angle_offset_average'][0], glows_l2_data['position_angle_offset_average'])
         self.assertEqual(cdf['position_angle_offset_std_dev'][0], glows_l2_data['position_angle_offset_std_dev'])
-        self.assertEqual("imap_glows_l2_hist_20130908-repoint01000_v001.cdf", glows_l2_data['l2_file_name'])
+        self.assertEqual("imap_glows_l2_hist_20251224-repoint00088_v001.cdf", glows_l2_data['l2_file_name'])
 
         self.assert_equal_xyz(cdf, "spacecraft_location_average", glows_l2_data)
         self.assert_equal_xyz(cdf, "spacecraft_location_std_dev", glows_l2_data)
