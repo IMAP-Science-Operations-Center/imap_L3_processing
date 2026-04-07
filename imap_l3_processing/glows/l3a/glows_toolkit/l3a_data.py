@@ -118,9 +118,9 @@ class L3aData():
 
             # read L3a lightcurve start dates and array of corrections
             identifiers = np.loadtxt(anc_input_from_instr_team['time_dependent_bckgrd'], usecols=[0], dtype=str)
-            start_dates = np.loadtxt(anc_input_from_instr_team['time_dependent_bckgrd'], usecols=[1], dtype=str)
+            start_dates = np.loadtxt(anc_input_from_instr_team['time_dependent_bckgrd'], usecols=[1], dtype=str, ndmin=1)
             bckgrd_arrays = np.loadtxt(anc_input_from_instr_team['time_dependent_bckgrd'],
-                                       usecols=range(2, bckgrd_array_size + 2))
+                                       usecols=range(2, bckgrd_array_size + 2), ndmin=2)
             idx = np.nonzero(self.data['start_time'].replace(' ', 'T') == start_dates)[0]
             print(' tdbckgrd idx:', idx, '  ', end='')
             if idx.size == 0:
