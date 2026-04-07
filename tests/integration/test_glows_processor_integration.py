@@ -471,10 +471,10 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
     @run_periodically(timedelta(days=14))
     def test_glows_l3abcde_with_prod_l2(self):
         ancillary_file_paths = [
-            GLOWS_TEST_DATA / "imap_glows_calibration-data_20000101_v003.dat",
-            GLOWS_TEST_DATA / "imap_glows_map-of-extra-helio-bckgrd_20251112_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_l2-calibration_20251112_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_l3a-map-of-extra-helio-bckgrd_20251112_v001.dat",
             GLOWS_TEST_DATA / "imap_glows_pipeline-settings_20251112_v001.json",
-            GLOWS_TEST_DATA / "imap_glows_time-dep-bckgrd_20251112_v001.dat"
+            GLOWS_TEST_DATA / "imap_glows_l3a-time-dep-bckgrd_20251112_v001.dat"
         ]
 
         prod_data_folder = get_run_local_data_path("glows_prod_data")
