@@ -145,12 +145,13 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
 
         descriptor = parse_map_descriptor("h90-ena-h-sf-nsp-ram-hae-4deg-3mo")
         survival_dependencies = HiLoL3SurvivalDependencies(l2_intensity_map, l1c_psets, l3e_psets, descriptor,
-                                                           l2_intensity_map.intensity_map_data.energy)
+                                                           Mock())
 
         expected_sky_strip = np.full(45, 2.0)
+        default_sp_sky_strip = np.full(45, 1.0)
 
         output_map = process_survival_probabilities(survival_dependencies, SpiceFrame.IMAP_HAE)
         np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 76, :], expected_sky_strip)
         np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 78, :], expected_sky_strip)
-        np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 79, :], np.full(45, np.nan))
+        np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 79, :], default_sp_sky_strip)
         np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 80, :], expected_sky_strip)

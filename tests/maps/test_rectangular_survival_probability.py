@@ -365,6 +365,15 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                     expected_mask
                 )
 
+    def test_uses_default_survival_probability_of_one_when_glows_is_none(self):
+        pointing_set = RectangularSurvivalProbabilityPointingSet(
+            self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
+            glows_dataset=None, energies=self.hi_energies)
+
+        sp_times_exposure = pointing_set.data["survival_probability_times_exposure"].values
+        expected = np.ones((1, self.num_energies, 3600)) * self.l1c_hi_dataset.exposure_times
+        np.testing.assert_array_equal(sp_times_exposure, expected)
+
     def test_exposure_weighted_survivals_are_repeated_to_match_l1c_shape(self):
         pointing_set = RectangularSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
                                                                  self.glows_data,

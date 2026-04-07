@@ -15,35 +15,41 @@ from imap_l3_processing.ultra.models import UltraL1CPSet, UltraGlowsL3eData
 
 
 class UltraSurvivalProbability(UltraPointingSet):
-    def __init__(self, l1c_pset: UltraL1CPSet, l3e_glows: UltraGlowsL3eData, bin_groups: Optional[np.ndarray] = None):
+    def __init__(self, l1c_pset: UltraL1CPSet, l3e_glows: Optional[UltraGlowsL3eData],
+                 bin_groups: Optional[np.ndarray] = None):
         coarse_bins = bin_pset_energy_bins(l1c_pset.to_xarray(), bin_groups)
         super().__init__(coarse_bins, geometry.SpiceFrame.IMAP_DPS)
 
-        l1c_epoch_in_et = spiceypy.unitim(self.data.coords[CoordNames.TIME.value].values[0] / ONE_SECOND_IN_NANOSECONDS,
-                                          "TT", "ET")
-        rotated_az_el_points = geometry.frame_transform_az_el(l1c_epoch_in_et, self.az_el_points,
-                                                              geometry.SpiceFrame.IMAP_DPS,
-                                                              geometry.SpiceFrame.ECLIPJ2000)
-        glows_nside = npix_to_nside(len(l3e_glows.healpix_index))
-        glows_healpix = HEALPix(nside=glows_nside)
+        if l3e_glows is None:
+            num_pixels = len(l1c_pset.healpix_index)
+            num_energies = len(coarse_bins.energy_bin_geometric_mean)
+            energy_interpolated_sp = np.ones((num_energies, num_pixels))
+        else:
+            l1c_epoch_in_et = spiceypy.unitim(
+                self.data.coords[CoordNames.TIME.value].values[0] / ONE_SECOND_IN_NANOSECONDS, "TT", "ET")
+            rotated_az_el_points = geometry.frame_transform_az_el(l1c_epoch_in_et, self.az_el_points,
+                                                                  geometry.SpiceFrame.IMAP_DPS,
+                                                                  geometry.SpiceFrame.ECLIPJ2000)
+            glows_nside = npix_to_nside(len(l3e_glows.healpix_index))
+            glows_healpix = HEALPix(nside=glows_nside)
 
-        npixels = len(l1c_pset.healpix_index)
+            npixels = len(l1c_pset.healpix_index)
 
-        spatially_interpolated_sp = np.zeros((len(l3e_glows.energy), npixels))
+            spatially_interpolated_sp = np.zeros((len(l3e_glows.energy), npixels))
 
-        for energy_index in range(len(l3e_glows.energy)):
-            spatially_interpolated_sp[energy_index, :] = glows_healpix.interpolate_bilinear_lonlat(
-                Quantity(rotated_az_el_points[:, 0], unit='deg'),
-                Quantity(rotated_az_el_points[:, 1], unit='deg'),
-                l3e_glows.survival_probability[0, energy_index, :])
+            for energy_index in range(len(l3e_glows.energy)):
+                spatially_interpolated_sp[energy_index, :] = glows_healpix.interpolate_bilinear_lonlat(
+                    Quantity(rotated_az_el_points[:, 0], unit='deg'),
+                    Quantity(rotated_az_el_points[:, 1], unit='deg'),
+                    l3e_glows.survival_probability[0, energy_index, :])
 
-        energy_interpolated_sp = np.zeros((len(coarse_bins.energy_bin_geometric_mean), npixels))
-        for healpix_index in range(npixels):
-            energy_interpolated_sp[:, healpix_index] = np.interp(
-                np.log10(coarse_bins.energy_bin_geometric_mean),
-                np.log10(l3e_glows.energy),
-                spatially_interpolated_sp[:, healpix_index]
-            )
+            energy_interpolated_sp = np.zeros((len(coarse_bins.energy_bin_geometric_mean), npixels))
+            for healpix_index in range(npixels):
+                energy_interpolated_sp[:, healpix_index] = np.interp(
+                    np.log10(coarse_bins.energy_bin_geometric_mean),
+                    np.log10(l3e_glows.energy),
+                    spatially_interpolated_sp[:, healpix_index]
+                )
 
         self.data["survival_probability_times_exposure"] = (
             [

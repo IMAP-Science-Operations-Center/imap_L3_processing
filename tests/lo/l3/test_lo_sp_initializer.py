@@ -56,6 +56,16 @@ class TestLoSPInitializer(unittest.TestCase):
                 'imap_lo_l1c_pset_20100403-repoint00103_v001.cdf'
             ],
             [
+                'imap_lo_l1c_pset_20100701-repoint00201_v001.cdf',
+                'imap_lo_l1c_pset_20100702-repoint00202_v001.cdf',
+                'imap_lo_l1c_pset_20100703-repoint00203_v001.cdf'
+            ],
+            [
+                'imap_lo_l1c_pset_20101001-repoint00301_v001.cdf',
+                'imap_lo_l1c_pset_20101002-repoint00302_v001.cdf',
+                'imap_lo_l1c_pset_20101003-repoint00303_v001.cdf'
+            ],
+            [
                 'imap_glows_l3e_survival-probability-lo_20100101-repoint00001_v001.cdf',
                 'imap_glows_l3e_survival-probability-lo_20100102-repoint00002_v001.cdf',
                 'imap_glows_l3e_survival-probability-lo_20100103-repoint00003_v001.cdf',
@@ -87,6 +97,8 @@ class TestLoSPInitializer(unittest.TestCase):
         mock_read_cdf_parents.assert_has_calls([
             call('imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20100101_v001.cdf'),
             call('imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20100401_v001.cdf'),
+            call('imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20100701_v001.cdf'),
+            call('imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20101001_v001.cdf'),
 
             call('imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100101_v001.cdf'),
             call('imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100401_v001.cdf')
@@ -112,7 +124,8 @@ class TestLoSPInitializer(unittest.TestCase):
             }
         )
 
-        self.assertEqual([expected_possible_map_to_produce], actual_maps_to_produce)
+        self.assertIn(expected_possible_map_to_produce, actual_maps_to_produce)
+        self.assertEqual(3, len(actual_maps_to_produce))
 
     @patch('imap_l3_processing.lo.l3.lo_sp_initializer.furnish_spice_metakernel')
     def test_furnish_spice_dependencies(self, mock_furnish_metakernel):

@@ -1,3 +1,5 @@
+from typing import Optional
+
 import numpy as np
 import xarray as xr
 from imap_processing.ena_maps.ena_maps import RectangularSkyMap, PointingSet
@@ -23,7 +25,7 @@ def interpolate_angular_data_to_nearest_neighbor(input_azimuths: np.array, glows
 
 class RectangularSurvivalProbabilityPointingSet(PointingSet):
     def __init__(self, l1c_dataset: InputRectangularPointingSet, sensor: Sensor, spin_phase: SpinPhase,
-                 glows_dataset: GlowsL3eRectangularMapInputData, energies: np.ndarray, cg_corrected: bool = False):
+                 glows_dataset: GlowsL3eRectangularMapInputData | None, energies: np.ndarray, cg_corrected: bool = False):
         num_spin_angle_bins = l1c_dataset.exposure_times.shape[-1]
 
         deg_spacing = 360 / num_spin_angle_bins
@@ -135,7 +137,7 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                     self.azimuths, glows_dataset.spin_angle, sp_interpolated_to_hi_energies)
                 sp_final = sp_interpolated_to_pset_angles
         else:
-            sp_final = np.full((1, len(energies), 3600), np.nan)
+            sp_final = np.ones((1, len(energies), 3600))
 
         dataset["survival_probability_times_exposure"] = xr.DataArray(
             sp_final * exposure,

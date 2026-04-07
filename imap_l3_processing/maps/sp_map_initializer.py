@@ -34,11 +34,10 @@ class SPMapInitializer(MapInitializer):
         map_duration = get_duration_from_map_descriptor(l3_descriptor_parts)
 
         glows_file_by_repointing = self._collect_glows_psets_by_repoint(l3_descriptor_parts)
+
         if len(glows_file_by_repointing) == 0:
-            logger.info(f"No GLOWS data available for descriptor {l3_descriptor}, no maps will be produced!")
-            return []
-        glows_start_dates = [ScienceFilePath(glows_path).start_date for glows_path in glows_file_by_repointing.values()]
-        glows_data_end_date = datetime.strptime(max(glows_start_dates), "%Y%m%d")
+            logger.info(f"No GLOWS data available for descriptor {l3_descriptor}. "
+                        f"Processing will use default survival probability of 1.0.")
 
         l2_descriptors = self._get_l2_dependencies(l3_descriptor_parts)
         l2_descriptor_strs = [map_descriptor_parts_to_string(parts) for parts in l2_descriptors]
@@ -51,9 +50,6 @@ class SPMapInitializer(MapInitializer):
         possible_maps = []
         for str_start_date in sorted(list(possible_start_dates)):
             start_date = datetime.strptime(str_start_date, "%Y%m%d")
-            if start_date + map_duration > glows_data_end_date:
-                logger.info(f"Not enough GLOWS data to produce map {l3_descriptor} {str_start_date}")
-                continue
 
             l2_file_paths = []
             for l2_descriptor in l2_descriptor_strs:
@@ -83,14 +79,13 @@ class SPMapInitializer(MapInitializer):
             glows_files = [glows_file_by_repointing[repoint] for repoint in l1c_repointings if
                            repoint in glows_file_by_repointing]
 
-            if len(glows_files) > 0:
-                input_metadata = InputMetadata(instrument=self.instrument, data_level='l3', start_date=start_date,
-                                               end_date=start_date + map_duration, version='v001',
-                                               descriptor=l3_descriptor)
+            input_metadata = InputMetadata(instrument=self.instrument, data_level='l3', start_date=start_date,
+                                           end_date=start_date + map_duration, version='v001',
+                                           descriptor=l3_descriptor)
 
-                possible_map_to_produce = PossibleMapToProduce(
-                    input_files=set(l2_file_paths + glows_files + l1c_names + self._get_ancillary_files()),
-                    input_metadata=input_metadata
-                )
-                possible_maps.append(possible_map_to_produce)
+            possible_map_to_produce = PossibleMapToProduce(
+                input_files=set(l2_file_paths + glows_files + l1c_names + self._get_ancillary_files()),
+                input_metadata=input_metadata
+            )
+            possible_maps.append(possible_map_to_produce)
         return possible_maps

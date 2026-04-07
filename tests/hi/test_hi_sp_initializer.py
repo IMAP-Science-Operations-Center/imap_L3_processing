@@ -83,7 +83,40 @@ class TestHiSPInitializer(unittest.TestCase):
                     version="v001",
                     descriptor='h45-ena-h-sf-sp-anti-hae-4deg-3mo',
                 )
-            )
+            ),
+            PossibleMapToProduce(
+                input_files={
+                    'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100701_v001.cdf',
+                    'imap_glows_l3e_survival-probability-hi-45_20100702-repoint00202_v001.cdf',
+                    'imap_hi_l1c_45sensor-pset_20100401-repoint00201_v001.cdf',
+                    'imap_hi_l1c_45sensor-pset_20100402-repoint00202_v001.cdf',
+                    'imap_hi_l1c_45sensor-pset_20100403-repoint00203_v001.cdf',
+                },
+                input_metadata=InputMetadata(
+                    instrument="hi",
+                    data_level="l3",
+                    start_date=datetime(2010, 7, 1),
+                    end_date=datetime(2010, 9, 30, 7, 30),
+                    version="v001",
+                    descriptor='h45-ena-h-sf-sp-anti-hae-4deg-3mo',
+                )
+            ),
+            PossibleMapToProduce(
+                input_files={
+                    'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20101001_v001.cdf',
+                    'imap_hi_l1c_45sensor-pset_20101001-repoint00301_v001.cdf',
+                    'imap_hi_l1c_45sensor-pset_20101002-repoint00302_v001.cdf',
+                    'imap_hi_l1c_45sensor-pset_20101003-repoint00303_v001.cdf',
+                },
+                input_metadata=InputMetadata(
+                    instrument="hi",
+                    data_level="l3",
+                    start_date=datetime(2010, 10, 1),
+                    end_date=datetime(2010, 12, 31, 7, 30),
+                    version="v001",
+                    descriptor='h45-ena-h-sf-sp-anti-hae-4deg-3mo',
+                )
+            ),
         ]
 
         initializer = HiSPInitializer()
@@ -100,9 +133,38 @@ class TestHiSPInitializer(unittest.TestCase):
         mock_read_cdf_parents.assert_has_calls([
             call('imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf'),
             call('imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100401_v001.cdf'),
+            call('imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100701_v001.cdf'),
+            call('imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20101001_v001.cdf'),
         ], any_order=True)
 
         self.assertEqual(expected_possible_maps, actual_possible_maps)
+
+    @patch('imap_l3_processing.maps.map_initializer.read_cdf_parents')
+    def test_get_maps_that_can_be_produced_with_no_glows_data(self, mock_read_cdf_parents):
+        self.mock_query.side_effect = [
+            create_mock_query_results([]),
+            create_mock_query_results([]),
+            create_mock_query_results([
+                'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf',
+                'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100401_v001.cdf',
+            ]),
+            create_mock_query_results([])
+        ]
+
+        mock_read_cdf_parents.side_effect = self.create_fake_read_cdf_parents("45")
+
+        initializer = HiSPInitializer()
+
+        actual_possible_maps = initializer.get_maps_that_can_be_produced('h45-ena-h-sf-sp-anti-hae-4deg-3mo')
+
+        self.assertEqual(2, len(actual_possible_maps))
+        for possible_map in actual_possible_maps:
+            glows_files = [f for f in possible_map.input_files if 'glows' in f]
+            self.assertEqual([], glows_files)
+            l2_files = [f for f in possible_map.input_files if '_l2_' in f]
+            self.assertGreater(len(l2_files), 0)
+            l1c_files = [f for f in possible_map.input_files if '_l1c_' in f]
+            self.assertGreater(len(l1c_files), 0)
 
     @patch('imap_l3_processing.maps.map_initializer.read_cdf_parents')
     def test_get_maps_that_can_be_produced_full_spin_descriptor(self, mock_read_cdf_parents):
@@ -275,7 +337,40 @@ class TestHiSPInitializer(unittest.TestCase):
                     version="v002",
                     descriptor='h90-ena-h-sf-sp-anti-hae-4deg-3mo',
                 )
-            )
+            ),
+            PossibleMapToProduce(
+                input_files={
+                    'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100701_v001.cdf',
+                    'imap_glows_l3e_survival-probability-hi-90_20100702-repoint00201_v001.cdf',
+                    'imap_hi_l1c_90sensor-pset_20100401-repoint00201_v001.cdf',
+                    'imap_hi_l1c_90sensor-pset_20100402-repoint00202_v001.cdf',
+                    'imap_hi_l1c_90sensor-pset_20100403-repoint00203_v001.cdf',
+                },
+                input_metadata=InputMetadata(
+                    instrument="hi",
+                    data_level="l3",
+                    start_date=datetime(2010, 7, 1),
+                    end_date=datetime(2010, 9, 30, 7, 30),
+                    version="v001",
+                    descriptor='h90-ena-h-sf-sp-anti-hae-4deg-3mo',
+                )
+            ),
+            PossibleMapToProduce(
+                input_files={
+                    'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20101001_v001.cdf',
+                    'imap_hi_l1c_90sensor-pset_20101001-repoint00301_v001.cdf',
+                    'imap_hi_l1c_90sensor-pset_20101002-repoint00302_v001.cdf',
+                    'imap_hi_l1c_90sensor-pset_20101003-repoint00303_v001.cdf',
+                },
+                input_metadata=InputMetadata(
+                    instrument="hi",
+                    data_level="l3",
+                    start_date=datetime(2010, 10, 1),
+                    end_date=datetime(2010, 12, 31, 7, 30),
+                    version="v001",
+                    descriptor='h90-ena-h-sf-sp-anti-hae-4deg-3mo',
+                )
+            ),
         ]
 
         initializer = HiSPInitializer()
@@ -292,6 +387,8 @@ class TestHiSPInitializer(unittest.TestCase):
         mock_read_cdf_parents.assert_has_calls([
             call(f'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf'),
             call(f'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100401_v001.cdf'),
+            call(f'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100701_v001.cdf'),
+            call(f'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20101001_v001.cdf'),
 
             call(f'imap_hi_l3_h90-ena-h-sf-sp-anti-hae-4deg-3mo_20100101_v001.cdf'),
             call(f'imap_hi_l3_h90-ena-h-sf-sp-anti-hae-4deg-3mo_20100401_v001.cdf'),
