@@ -17,6 +17,7 @@ HI_SP_SPICE_KERNELS: list[SpiceKernelTypes] = [
     SpiceKernelTypes.PointingAttitude,
     SpiceKernelTypes.SpacecraftClock,
     SpiceKernelTypes.EphemerisReconstructed,
+    SpiceKernelTypes.EphemerisPredicted,
     SpiceKernelTypes.PlanetaryEphemeris,
 ]
 

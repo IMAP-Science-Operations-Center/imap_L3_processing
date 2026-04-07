@@ -14,6 +14,7 @@ LO_SP_MAP_KERNELS = [
     SpiceKernelTypes.PointingAttitude,
     SpiceKernelTypes.SpacecraftClock,
     SpiceKernelTypes.EphemerisReconstructed,
+    SpiceKernelTypes.EphemerisPredicted,
     SpiceKernelTypes.PlanetaryEphemeris,
 ]
 
