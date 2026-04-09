@@ -3,13 +3,14 @@ from unittest.mock import Mock, patch, ANY, call, sentinel
 
 import numpy as np
 
-from imap_l3_processing.swe.l3.science.pitch_calculations import find_breakpoints, \
+from imap_l3_processing.swe.l3.science.pitch_calculations import find_breakpoints, mec_breakpoint_finder, \
     average_over_look_directions, calculate_velocity_in_dsp_frame_km_s, calculate_look_directions, rebin_by_pitch_angle, \
     correct_and_rebin, calculate_energy_in_ev_from_velocity_in_km_per_second, integrate_distribution_to_get_1d_spectrum, \
     integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, try_curve_fit_until_valid, \
     rebin_by_pitch_angle_and_gyrophase, swe_rebin_intensity_by_pitch_angle_and_gyrophase, ls_fit
 from tests.test_helpers import build_swe_configuration, NumpyArrayMatcher
 
+from imap_l3_processing.swe.quality_flags import SweL3Flags
 
 class TestPitchCalculations(unittest.TestCase):
     def test_average_flux(self):
@@ -125,6 +126,25 @@ class TestPitchCalculations(unittest.TestCase):
         np.testing.assert_almost_equal(calculated_energy[0], energy[0])
         np.testing.assert_almost_equal(calculated_energy[1], energy[1])
         self.assertEqual((24, 30, 7, 3), velocity.shape)
+
+    def test_mec_breakpoint_finder(self):
+        average_psd = np.asarray([3.86611617e-05, 1.75927552e-05, 6.06703495e-06, 1.47614412e-06,
+       2.46270751e-07, 4.97864654e-08, 3.90323281e-08, 4.21037028e-08,
+       4.07355835e-08, 3.45166807e-08, 2.52075419e-08, 1.54987172e-08,
+       7.84932795e-09, 3.32903783e-09, 1.40908421e-09, 8.53206391e-10,
+       7.21564216e-10, 6.31903627e-10, 5.07238502e-10, 3.58827457e-10])
+        energies = np.asarray([  2.66      ,   3.37852249,   4.29113316,   5.45025936,
+         6.92249015,   8.79240175,  11.16741618,  14.18397245,
+        18.01536462,  22.88169719,  29.06252952,  36.91293593,
+        46.88390382,  59.54824189,  75.63348661,  96.06369752,
+       122.01254227, 154.97072104, 196.83160382, 250.        ])
+
+        sc_pot_to_test, ch_break_to_test, quality_flag_to_test = mec_breakpoint_finder(energies, average_psd)
+        expected_values = [np.float64(8.79240175),np.float64(75.63348660999998)]
+        self.assertAlmostEqual(expected_values[0], sc_pot_to_test)
+        self.assertAlmostEqual(expected_values[1], ch_break_to_test)
+        self.assertEqual(SweL3Flags.NONE, quality_flag_to_test)
+
 
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.try_curve_fit_until_valid')
     def test_find_breakpoints_determines_b_deltas_correctly(self, mock_try_curve_fit_until_valid):
