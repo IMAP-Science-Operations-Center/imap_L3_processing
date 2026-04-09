@@ -19,7 +19,7 @@ def piece_wise_model(x: np.ndarray, b0: float, b1: float,
                                    lambda x: b0 * np.exp(b2 * (b3 - b1)) * np.exp(b4 * (b5 - b3)) * np.exp(-b5 * x),
                                ]))
 
-def mec_breakpoint_finder(energies: np.ndarray, averaged_psd: np.ndarray) -> tuple[float, float, int]:
+def mec_breakpoint_finder(energies: np.ndarray, averaged_psd: np.ndarray) -> tuple[float, float, SweL3Flags]:
     """
     Input:
         energies - energy bins
@@ -43,11 +43,9 @@ def mec_breakpoint_finder(energies: np.ndarray, averaged_psd: np.ndarray) -> tup
     myodr.set_job(fit_type=2)
     myoutput= myodr.run()
     if myoutput.res_var <= 0.01:
-        linear_flag = 1
         FALLBACK_POTENTIAL_ESTIMATE = SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE
         return_value = 2.5
     else:
-        linear_flag = 0
         FALLBACK_POTENTIAL_ESTIMATE = SweL3Flags.NONE
     
     # Use a smoothed spline on log_psd for spectral break finding routine as a fall back only!
@@ -164,7 +162,7 @@ def mec_breakpoint_finder(energies: np.ndarray, averaged_psd: np.ndarray) -> tup
         # Fit did not converge
         BREAKPOINT_FIT_UNCONVERGED = SweL3Flags.BREAKPOINT_FIT_UNCONVERGED
         ch_break_output = ch_break
-    return sc_pot_output, ch_break_output, FALLBACK_POTENTIAL_ESTIMATE, BACKUP_SPLINE_UNRESOLVED, POTENTIAL_FIT_UNCONVERGED, BREAKPOINT_FIT_UNCONVERGED
+    return sc_pot_output, ch_break_output, FALLBACK_POTENTIAL_ESTIMATE | BACKUP_SPLINE_UNRESOLVED | POTENTIAL_FIT_UNCONVERGED | BREAKPOINT_FIT_UNCONVERGED
 
 
 def find_breakpoints(energies: np.ndarray, averaged_psd: np.ndarray, latest_spacecraft_potentials: list[float],

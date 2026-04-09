@@ -10,6 +10,7 @@ from imap_l3_processing.swe.l3.science.pitch_calculations import find_breakpoint
     rebin_by_pitch_angle_and_gyrophase, swe_rebin_intensity_by_pitch_angle_and_gyrophase, ls_fit
 from tests.test_helpers import build_swe_configuration, NumpyArrayMatcher
 
+from imap_l3_processing.swe.quality_flags import SweL3Flags
 
 class TestPitchCalculations(unittest.TestCase):
     def test_average_flux(self):
@@ -138,10 +139,11 @@ class TestPitchCalculations(unittest.TestCase):
         46.88390382,  59.54824189,  75.63348661,  96.06369752,
        122.01254227, 154.97072104, 196.83160382, 250.        ])
 
-        sc_pot_to_test, ch_break_to_test, _,_,_,_ = mec_breakpoint_finder(energies, average_psd)
+        sc_pot_to_test, ch_break_to_test, quality_flag_to_test = mec_breakpoint_finder(energies, average_psd)
         expected_values = [np.float64(8.79240175),np.float64(75.63348660999998)]
         self.assertAlmostEqual(expected_values[0], sc_pot_to_test)
         self.assertAlmostEqual(expected_values[1], ch_break_to_test)
+        self.assertEqual(SweL3Flags.NONE, quality_flag_to_test)
 
 
     @patch('imap_l3_processing.swe.l3.science.pitch_calculations.try_curve_fit_until_valid')

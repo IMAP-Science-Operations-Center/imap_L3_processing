@@ -78,15 +78,13 @@ class SweProcessor(Processor):
             #                                                         config)
             # FLAG_UPDATE is a placeholder to be replaced when formal swe_flags are generated
             (
-                    spacecraft_potential[i], halo_core[i], 
-                    FALLBACK_POTENTIAL_ESTIMATE, BACKUP_SPLINE_UNRESOLVED, 
-                    POTENTIAL_FIT_UNCONVERGED, BREAKPOINT_FIT_UNCONVERGED
+                    spacecraft_potential[i], halo_core[i], breakpoint_quality_flag
             ) = mec_breakpoint_finder(swe_l2_data.energy, average_psd[i])
 
             spacecraft_potential_history = [*spacecraft_potential_history[1:], spacecraft_potential[i]]
             halo_core_history = [*halo_core_history[1:], halo_core[i]]
             corrected_energy_bins.append(swe_l2_data.energy - spacecraft_potential[i])
-            swe_quality_flags.append(FALLBACK_POTENTIAL_ESTIMATE | BACKUP_SPLINE_UNRESOLVED | POTENTIAL_FIT_UNCONVERGED | BREAKPOINT_FIT_UNCONVERGED)
+            swe_quality_flags.append(breakpoint_quality_flag)
 
         
         corrected_energy_bins = np.array(corrected_energy_bins)
