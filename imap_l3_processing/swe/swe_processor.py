@@ -16,13 +16,14 @@ from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwel
     integrate, scale_core_density, scale_halo_density, rotate_vector_to_rtn_spherical_coordinates, \
     calculate_primary_eigenvector, \
     ScaleDensityOutput, rotate_temperature_tensor_to_mag
-from imap_l3_processing.swe.l3.science.pitch_calculations import average_over_look_directions, find_breakpoints, \
+from imap_l3_processing.swe.l3.science.pitch_calculations import average_over_look_directions, find_breakpoints, mec_breakpoint_finder, \
     correct_and_rebin, \
     integrate_distribution_to_get_1d_spectrum, integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, \
     calculate_velocity_in_dsp_frame_km_s, swe_rebin_intensity_by_pitch_angle_and_gyrophase
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.l3.utils import compute_epoch_delta_in_ns
 from imap_l3_processing.utils import save_data
+from imap_l3_processing.swe.quality_flags import SweL3Flags
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,7 @@ class SweProcessor(Processor):
         halo_core_history = [config["core_halo_breakpoint_initial_guess"] for _ in range(3)]
 
         average_psd = []
+        swe_quality_flags = []
         spacecraft_potential: np.ndarray[np.float64] = np.empty_like(swe_epoch, dtype=np.float64)
         halo_core: np.ndarray[np.float64] = np.empty_like(swe_epoch, dtype=np.float64)
         corrected_energy_bins = []
@@ -59,19 +61,34 @@ class SweProcessor(Processor):
 
         geometric_fractions = np.array(config["geometric_fractions"])
         for i in range(len(swe_epoch)):
-            average_psd.append(average_over_look_directions(swe_l2_data.phase_space_density[i],
+            # average PSDs in time smoothed by 7 samples centered to help with break point finder
+            # edges will have less than 7 samples
+            npts = 7//2
+            left_idx = 0 if i-npts < 0 else i-npts
+            right_idx = i + (i-left_idx+1)
+            time_avg_psd = np.nanmean(swe_l2_data.phase_space_density[left_idx:right_idx], axis=0)
+            
+            average_psd.append(average_over_look_directions(time_avg_psd,
                                                             geometric_fractions,
                                                             config["minimum_phase_space_density_value"]))
 
-            spacecraft_potential[i], halo_core[i] = find_breakpoints(swe_l2_data.energy, average_psd[i],
-                                                                     spacecraft_potential_history,
-                                                                     halo_core_history,
-                                                                     config)
+            #spacecraft_potential[i], halo_core[i] = find_breakpoints(swe_l2_data.energy, average_psd[i],
+            #                                                         spacecraft_potential_history,
+            #                                                         halo_core_history,
+            #                                                         config)
+            # FLAG_UPDATE is a placeholder to be replaced when formal swe_flags are generated
+            (
+                    spacecraft_potential[i], halo_core[i], 
+                    FALLBACK_POTENTIAL_ESTIMATE, BACKUP_SPLINE_UNRESOLVED, 
+                    POTENTIAL_FIT_UNCONVERGED, BREAKPOINT_FIT_UNCONVERGED
+            ) = mec_breakpoint_finder(swe_l2_data.energy, average_psd[i])
 
             spacecraft_potential_history = [*spacecraft_potential_history[1:], spacecraft_potential[i]]
             halo_core_history = [*halo_core_history[1:], halo_core[i]]
             corrected_energy_bins.append(swe_l2_data.energy - spacecraft_potential[i])
+            swe_quality_flags.append(FALLBACK_POTENTIAL_ESTIMATE | BACKUP_SPLINE_UNRESOLVED | POTENTIAL_FIT_UNCONVERGED | BREAKPOINT_FIT_UNCONVERGED)
 
+        
         corrected_energy_bins = np.array(corrected_energy_bins)
 
         swe_l3_moments_data = self.calculate_moment_products(swe_l2_data, dependencies.swe_l1b_data,
@@ -191,8 +208,7 @@ class SweProcessor(Processor):
                     swe_l2_data.inst_az_spin_sector[i])
 
                 weights: np.ndarray[float] = compute_maxwellian_weight_factors(swe_l1b_data.count_rates[i],
-                                                                               swe_l2_data.acquisition_duration[
-                                                                                   i] / 1e6)
+                                                                               swe_l2_data.acquisition_duration[i] / 1e6)
                 ifit = next(
                     index for index, energy in enumerate(swe_l2_data.energy) if energy >= spacecraft_potential[i])
                 jbreak = next(index for index, energy in enumerate(swe_l2_data.energy) if energy >= halo_core[i])
@@ -286,7 +302,8 @@ class SweProcessor(Processor):
                                                                         core_t_perpendicular_to_mag_ratio]
 
                             total_integration_output = integrate(ifit + 1,
-                                                                 len(corrected_energy_bins[i]) - 1,
+                                                                 # MEC: Changed 1 to 6 in next line
+                                                                 len(corrected_energy_bins[i]) - 6,
                                                                  corrected_energy_bins[i],
                                                                  sin_theta,
                                                                  cos_theta, config['aperture_field_of_view_radians'],
@@ -365,7 +382,9 @@ class SweProcessor(Processor):
                     halo_temp_phi_rtns[i] = halo_temp_phi_rtn
                     halo_temp_avg = (2 * halo_moment.t_perpendicular + halo_moment.t_parallel) / 3
                     if 1e4 < halo_temp_avg < 1e8:
-                        halo_integrate_result = integrate(jbreak, len(corrected_energy_bins[i]) - 1,
+                        halo_integrate_result = integrate(jbreak,
+                                                          # MEC: Changed 1 to 6 in next line
+                                                          len(corrected_energy_bins[i]) - 6,
                                                           corrected_energy_bins[i],
                                                           sin_theta, cos_theta,
                                                           config['aperture_field_of_view_radians'],

@@ -3,11 +3,12 @@ from __future__ import annotations
 from typing import TypeVar
 
 import numpy as np
+import scipy
 
 from imap_l3_processing.constants import ELECTRON_MASS_KG, PROTON_CHARGE_COULOMBS, METERS_PER_KILOMETER
 from imap_l3_processing.pitch_angles import calculate_pitch_angle, calculate_unit_vector, calculate_gyrophase
 from imap_l3_processing.swe.l3.models import SweConfiguration
-
+from imap_l3_processing.swe.quality_flags import SweL3Flags
 
 def piece_wise_model(x: np.ndarray, b0: float, b1: float,
                      b2: float, b3: float, b4: float, b5: float) -> np.ndarray:
@@ -17,6 +18,153 @@ def piece_wise_model(x: np.ndarray, b0: float, b1: float,
                                    lambda x: b0 * np.exp(b2 * (b3 - b1)) * np.exp(-b3 * x),
                                    lambda x: b0 * np.exp(b2 * (b3 - b1)) * np.exp(b4 * (b5 - b3)) * np.exp(-b5 * x),
                                ]))
+
+def mec_breakpoint_finder(energies: np.ndarray, averaged_psd: np.ndarray) -> tuple[float, float, int]:
+    """
+    Input:
+        energies - energy bins
+        averaged_psd - phase space density, either averaged over all CEMs or individual CEMs
+    Output:
+        sc_pot_output, ch_break_output, total_flag - tuple for spacecraft potential, core-halo break point, and all flags thrown
+    """
+    log_energy = np.log(energies)
+    log_psd = np.log(averaged_psd)
+
+    # Check to see if first 4 points are nearly linear
+    # If True, then potential is likely less than 2.7 V (lower than first energy bin)
+    def line_model(params, x):
+        return params[0] + params[1] * x
+    from scipy import odr
+    odr_model = odr.Model(line_model)
+    x = log_energy[:4]
+    y = log_psd[:4]
+    mydata = odr.RealData(x=x,y=y)
+    myodr = odr.ODR(mydata, odr_model, beta0=[y.max(),-5])
+    myodr.set_job(fit_type=2)
+    myoutput= myodr.run()
+    if myoutput.res_var <= 0.01:
+        linear_flag = 1
+        FALLBACK_POTENTIAL_ESTIMATE = SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE
+        return_value = 2.5
+    else:
+        linear_flag = 0
+        FALLBACK_POTENTIAL_ESTIMATE = SweL3Flags.NONE
+    
+    # Use a smoothed spline on log_psd for spectral break finding routine as a fall back only!
+    # Mirror real point as fake point to left of first energy bin to improve spline concavity
+    ewidth = np.nanmean(log_energy[1:] - log_energy[:-1])
+    from scipy.interpolate import UnivariateSpline as uspline
+    spline = uspline(np.concatenate([[log_energy[0]-ewidth],log_energy]), 
+                     np.concatenate([[log_psd[2]],log_psd]), s=.25)
+    spline_energies = np.geomspace(energies.min()*np.exp(-ewidth), energies.max(), 100)
+    spline_derivative = spline.derivative(2)
+    curvature = spline_derivative(np.log(spline_energies))
+    try:
+        peaks = scipy.signal.find_peaks(curvature)[0]
+        sc_pot = spline_energies[peaks[0]]
+        ch_break = spline_energies[peaks[1]]
+        BACKUP_SPLINE_UNRESOLVED = SweL3Flags.NONE
+    except:
+        # Spline peak finder did not work
+        BACKUP_SPLINE_UNRESOLVED = SweL3Flags.BACKUP_SPLINE_UNRESOLVED
+        sc_pot = np.nan
+        ch_break = np.nan
+
+    def piece_wise_model_mec(x, b0, b1, b2, b3):
+        """
+        Modified Piecewise to fit Potential and Core-Halo Break separately
+        The breakpoint is b2
+        """
+        return np.piecewise(x, [x<=b2, x>b2], 
+                               [lambda x: b0 - b1*x, lambda x: b0 + b2*(b3-b1) - b3*x])
+
+    def refine_breakpoint_value(energy, psd, breakpoint_value, num_points):
+        """
+        Function to use lines from num_points to left and right to find intersection
+        energy at which the lines intersect is the refined_breakpoint
+        """
+        # Find Nearest energy bin to breakpoint_value
+        nearest_energy_idx = np.argmin(np.abs(energy-breakpoint_value))
+        if np.abs(breakpoint_value - energy[nearest_energy_idx])/energy[nearest_energy_idx] <= .075:
+            # Breakpoint_value was within FWHM of nearest energy bin
+            # return that energy bin as refined_breakpoint
+            return energy[nearest_energy_idx]
+        # Get left and right spectrum of breakpoint_value
+        e_left = energy[energy < breakpoint_value]
+        e_right = energy[energy > breakpoint_value]
+        psd_left = psd[energy < breakpoint_value]
+        psd_right = psd[energy > breakpoint_value]
+        if len(e_left) < num_points:
+            # Not enough points to the left (really only possible for s/c potential)
+            return breakpoint_value
+        # Fit a line to the num_points left and right of breakpoint_value
+        z_left = np.polyfit(e_left[-num_points:], psd_left[-num_points:], 1)
+        z_right = np.polyfit(e_right[:num_points], psd_right[:num_points], 1)
+        # Determine energy of their intersection
+        refined_breakpoint = (z_left[1]-z_right[1]) / (z_right[0]-z_left[0])
+        if (refined_breakpoint < z_left[-1]) | (refined_breakpoint > z_right[0]):
+            # Refined breakpoint lies outside of expected range
+            return breakpoint_value
+        return refined_breakpoint
+    
+    # Prepare masking for the two separate fits
+    mask_sc = log_energy <= np.log(30)
+    mask_ch = (log_energy > np.log(30)) & (log_energy < np.log(400))
+
+    log_energy_sc = log_energy[mask_sc]; log_psd_sc = log_psd[mask_sc]
+    log_energy_ch = log_energy[mask_ch]; log_psd_ch = log_psd[mask_ch]
+
+    fitting_model = piece_wise_model_mec
+    # Try Spacecraft Potential Fit
+    POTENTIAL_FIT_UNCONVERGED = SweL3Flags.NONE
+    if FALLBACK_POTENTIAL_ESTIMATE == SweL3Flags.NONE:
+        try:
+            initial_guess = [log_psd[0],1,7,1]
+            z, cov = scipy.optimize.curve_fit(fitting_model, np.exp(log_energy_sc), log_psd_sc, p0=initial_guess)
+            # Make sure the fit converged
+            if ((z[0] == initial_guess[0]) | (z[1] == initial_guess[1]) 
+                | (z[2] == initial_guess[2]) | (z[3] == initial_guess[3])):
+                # Fall back on Spline method
+                # Fit did not converge
+                POTENTIAL_FIT_UNCONVERGED = SweL3Flags.POTENTIAL_FIT_UNCONVERGED
+                sc_pot_output = sc_pot
+            else:
+                # Fit worked
+                # Check whether breakpoint has two points to left and right
+                # If so, then find intersection of linear fits to each side
+                sc_pot_output = refine_breakpoint_value(np.exp(log_energy_sc), log_psd_sc, z[2], 2)
+                # spline not used
+                BACKUP_SPLINE_UNRESOLVED = SweL3Flags.NONE
+        except:
+            # Fall back on Spline method
+            # Fit did not converge
+            BACKUP_SPLINE_UNRESOLVED = SweL3Flags.BACKUP_SPLINE_UNRESOLVED
+            sc_pot_output = sc_pot
+    else:
+        sc_pot_output = return_value
+    # Try Core-Halo Breakpoint Fit
+    BREAKPOINT_FIT_UNCONVERGED = SweL3Flags.NONE
+    try:
+        initial_guess = [log_psd_ch[0],1,65,1]
+        z, cov = scipy.optimize.curve_fit(fitting_model, np.exp(log_energy_ch), log_psd_ch, p0=initial_guess)
+        # Make sure the fit converged
+        if ((z[0] == initial_guess[0]) & (z[1] == initial_guess[1]) 
+            & (z[2] == initial_guess[2]) & (z[3] == initial_guess[3])):
+            # Fall back on Spline method
+            # Fit did not converge
+            BREAKPOINT_FIT_UNCONVERGED = SweL3Flags.BREAKPOINT_FIT_UNCONVERGED
+            ch_break_output = ch_break
+        else:
+            # Fit worked
+            # Check whether breakpoint has three points to left and right
+            # If so, then find intersection of linear fits to each side
+            ch_break_output = refine_breakpoint_value(np.exp(log_energy_ch), log_psd_ch, z[2], 3)
+    except:
+        # Fall back on Spline method
+        # Fit did not converge
+        BREAKPOINT_FIT_UNCONVERGED = SweL3Flags.BREAKPOINT_FIT_UNCONVERGED
+        ch_break_output = ch_break
+    return sc_pot_output, ch_break_output, FALLBACK_POTENTIAL_ESTIMATE, BACKUP_SPLINE_UNRESOLVED, POTENTIAL_FIT_UNCONVERGED, BREAKPOINT_FIT_UNCONVERGED
 
 
 def find_breakpoints(energies: np.ndarray, averaged_psd: np.ndarray, latest_spacecraft_potentials: list[float],
