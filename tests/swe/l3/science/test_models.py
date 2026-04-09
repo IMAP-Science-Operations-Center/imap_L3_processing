@@ -42,7 +42,7 @@ from imap_l3_processing.swe.l3.models import SweL3Data, EPOCH_CDF_VAR_NAME, EPOC
     CORE_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME, \
     HALO_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME, TOTAL_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME, \
     CORE_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, HALO_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, \
-    TOTAL_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, TEMPERATURE_TENSOR_LABEL, TENSOR_ID, SWP_FLAGS_VAR_NAME
+    TOTAL_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, TEMPERATURE_TENSOR_LABEL, TENSOR_ID, SWE_FLAGS_VAR_NAME
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 
@@ -209,7 +209,7 @@ class TestModels(CdfModelTestCase):
                              halo_temperature_tensor_integrated=halo_temperature_tensor_integrated,
                              total_temperature_tensor_integrated=total_temperature_tensor_integrated
                          ),
-                         swp_flags=swp_flags,
+                         swe_flags=swp_flags,
                          theta=theta,
                          phi=phi,
                          raw_1d_psd_rebinned=raw_1d_psd_rebinned,
@@ -392,7 +392,7 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(
             next(variables), total_temperature_tensor_integrated, TOTAL_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME)
         self.assert_variable_attributes(
-            next(variables), swp_flags, SWP_FLAGS_VAR_NAME)
+            next(variables), swp_flags, SWE_FLAGS_VAR_NAME)
         self.assert_variable_attributes(
             next(variables), raw_1d_psd_rebinned, 'raw_1d_psd_rebinned')
         self.assert_variable_attributes(
