@@ -76,6 +76,25 @@ class TestSpectralFit(unittest.TestCase):
                 reduced_chisquared = chisquared / (len(energies) - 2)
                 np.testing.assert_array_almost_equal(result_chi_square, reduced_chisquared)
 
+    def test_handles_small_fluxes(self):
+        energies = np.array([5.65826829,  8.45453724, 12.70203527])
+        flux_data = np.array([0.12815728, 0.00414464, 0.0383057])
+        errors = np.array([0.12532869, 0.00414464, 0.02755597])
+
+        cases = [
+            ("rectangular", (1, 1)),
+            ("healpix", (1,))
+        ]
+
+        for name, spacial_dimension_shape in cases:
+            with self.subTest(name):
+                flux = np.array(flux_data).reshape(1, len(energies), *spacial_dimension_shape)
+                uncertainty = np.array(errors).reshape(1, len(energies), *spacial_dimension_shape)
+
+                result_a, result_a_error, result_gamma, result_gamma_error, result_chi_square = fit_arrays_to_power_law(flux, uncertainty, energies)
+                fitted_flux = result_a * np.power(energies.reshape((-1,*spacial_dimension_shape)), -result_gamma)
+                self.assertGreater(result_a, 0)
+
     def test_spectral_fit_map(self):
         epoch = np.array([datetime.now()])
         energies = np.geomspace(1, 10, 23)
@@ -329,10 +348,10 @@ class TestSpectralFit(unittest.TestCase):
                                                                  [1.480259, 1.317993]]]]))
         np.testing.assert_array_almost_equal(index_error, np.array([[[[0.279224, 0.409522],
                                                                        [0.260374, 0.318162]]]]))
-        np.testing.assert_array_almost_equal(scalar_coefficients, np.array([[[[81.921884, 44.822592],
-                                                                              [52.494673, 44.64706]]]]))
-        np.testing.assert_array_almost_equal(scalar_coefficient_errors, np.array([[[[32.245348, 26.075043],
-         [19.584518, 20.080801]]]]))
+        np.testing.assert_array_almost_equal(scalar_coefficients, np.array([[[[81.92187 , 44.822599],
+                                                                            [52.494651, 44.647085]]]]))
+        np.testing.assert_array_almost_equal(scalar_coefficient_errors, np.array([[[[32.245376, 26.075033],
+         [19.584559, 20.080747]]]]))
         np.testing.assert_array_almost_equal(chisq, np.array([[[[0.44621 , 0.391638],
          [0.344915, 0.475525]]]]))
 
@@ -518,7 +537,7 @@ class TestSpectralFit(unittest.TestCase):
         input_energies, input_flux = mock_linregress.call_args[0]
         np.testing.assert_array_equal(input_energies, np.log10(energies))
         np.testing.assert_array_equal(input_flux, np.log10(flux_data))
-        self.assertEqual((5, -3), mock_mpfit.call_args.args[1])
+        self.assertEqual((100000, -3), mock_mpfit.call_args.args[1])
 
     def test_spectral_fit_against_validation_data(self):
         test_cases = [
