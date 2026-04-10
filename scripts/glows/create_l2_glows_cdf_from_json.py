@@ -1,5 +1,6 @@
 import json
 import math
+import re
 import shutil
 import traceback
 from datetime import datetime, timedelta
@@ -14,33 +15,25 @@ from imap_l3_processing.constants import TTJ2000_EPOCH
 from tests.test_helpers import get_test_data_path
 
 
-def fill_official_l2_cdf_with_json_values(output_folder: Path, input_path: Path,
-                                          timeshift: Optional[timedelta] = None) -> Path:
-    official_l2_path = get_test_data_path("glows/imap_glows_l2_hist_20130908-repoint01000_v001.cdf")
+def fill_official_l2_cdf_with_json_values(output_folder: Path, input_path: Path) -> Path:
+    official_l2_path = get_test_data_path("glows/imap_glows_l2_hist_20260323-repoint00194_v002.cdf")
 
     with open(input_path) as f:
         instrument_data = json.load(f)
 
         start_of_epoch_window = datetime.fromisoformat(instrument_data["start_time"])
         end_of_epoch_window = datetime.fromisoformat(instrument_data["end_time"])
-        if timeshift is not None:
-            start_of_epoch_window += timeshift
-            end_of_epoch_window += timeshift
 
         epoch_window = end_of_epoch_window - start_of_epoch_window
         epoch = start_of_epoch_window + epoch_window / 2
 
-        if timeshift is None:
-            repoint_id = math.floor(149 + (epoch - datetime(2010, 1, 1)) / timedelta(days=1))
-        else:
-            repoint_id = math.floor(896 + (epoch - datetime(2025, 1, 1)) / timedelta(days=1))
-
+        repoint_id = int(re.search(r'repoint(\d{5})', input_path.name)[1])
         new_name = ScienceFilePath.generate_from_inputs(
             instrument="glows",
             data_level="l2",
             descriptor="hist",
             start_time=start_of_epoch_window.strftime("%Y%m%d"),
-            version="v001",
+            version="v004",
             extension="cdf",
             repointing=repoint_id
         ).filename
@@ -106,7 +99,7 @@ def fill_official_l2_cdf_with_json_values(output_folder: Path, input_path: Path,
 
 if __name__ == "__main__":
     json_directory = Path(
-        r'/Users/harrison/Downloads/data_products_cbk_implementation_2024-12-31_1year/data_l2_histograms')
+        r'/Users/harrison/Downloads/data_l2_histograms/')
     output_directory = Path(r'/Users/harrison/Downloads/l2_cdfs')
     shutil.rmtree(output_directory, ignore_errors=True)
     output_directory.mkdir(parents=True, exist_ok=True)
