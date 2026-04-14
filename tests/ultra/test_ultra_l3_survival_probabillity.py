@@ -23,7 +23,8 @@ class TestUltraSurvivalProbability(unittest.TestCase):
     def test_ultra_survival_probability_uses_default_when_glows_is_none(self, mock_unitim,
                                                                         mock_frame_transform_az_el):
         glows_energies = np.array([1])
-        input_l1c_pset = _create_ultra_l1c_pset(glows_energies, np.full((1, 1, 12), 3.0))
+        epoch_delta = 12345
+        input_l1c_pset = _create_ultra_l1c_pset(glows_energies, np.full((1, 1, 12), 3.0), epoch_delta=epoch_delta)
 
         prod = UltraSurvivalProbability(input_l1c_pset, l3e_glows=None, bin_groups=np.array([0, 1]))
 
@@ -35,6 +36,7 @@ class TestUltraSurvivalProbability(unittest.TestCase):
         np.testing.assert_array_equal(
             prod.data['survival_probability_times_exposure'].values,
             expected_sp_times_exposure)
+        np.testing.assert_array_equal(prod.data["epoch_delta"].values, [epoch_delta], strict=True)
 
     @patch('imap_l3_processing.ultra.science.ultra_survival_probability.geometry.frame_transform_az_el')
     @patch('imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim')
