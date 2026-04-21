@@ -107,10 +107,9 @@ def calculate_pickup_ions_with_minimize_on_random_synth_data(mock_spice):
         count_rate[:, 1:17] = modeled_count_rates
         plt.errorbar(energy[1:17], modeled_count_rates,
                      yerr=modeled_count_rates / np.sqrt(modeled_count_rates * 50 / 6))
-        actual_fitting_parameters = calculate_pickup_ion_values(
-            instrument_response_collection, geometric_factor_lut, energy,
-            count_rate, epoch, background_count_rate_cutoff, sw_velocity_vector,
-            density_of_neutral_helium_lookup_table)
+        actual_fitting_parameters = calculate_pickup_ion_values(instrument_response_collection, geometric_factor_lut,
+                                                                energy, count_rate, epoch, sw_velocity_vector,
+                                                                density_of_neutral_helium_lookup_table)
 
         actual_fit_without_uncert = FittingParameters(
             actual_fitting_parameters.cooling_index.n,

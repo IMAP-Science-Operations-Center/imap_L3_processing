@@ -40,6 +40,7 @@ FAKE_ROTATION_MATRIX_FROM_PSP = np.array(
      [-1.56457525e-06, -1.16063465e-06, -1.21809529e-07, 5.94803234e-01, -8.03675802e-01, 1.77289947e-02],
      [1.26218156e-07, 5.29395592e-23, 3.76211978e-09, -2.97932551e-02, 0.00000000e+00, 9.99556082e-01]])
 
+MODULE = "imap_l3_processing.swapi.l3a.science.calculate_pickup_ion"
 
 class TestCalculatePickupIon(SpiceTestCase):
     instrument_response_collection = None
@@ -58,8 +59,8 @@ class TestCalculatePickupIon(SpiceTestCase):
                 response_lut_path)
         return TestCalculatePickupIon.instrument_response_collection
 
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.convert_velocity_relative_to_imap")
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
+    @patch(f"{MODULE}.convert_velocity_relative_to_imap")
+    @patch(f"{MODULE}.spiceypy")
     def test_calculate_pickup_ion_energy_cutoff(self, mock_spice, mock_convert_velocity):
         cases = [
             PROTON_MASS_KG,
@@ -111,7 +112,7 @@ class TestCalculatePickupIon(SpiceTestCase):
         np.testing.assert_array_equal(extracted_energy_bins, np.array([1500, 2000, 10000]))
         np.testing.assert_array_equal(extracted_count_rates, np.array([100, 9, 200]))
 
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
+    @patch(f"{MODULE}.spiceypy")
     def test_convert_velocity_relative_to_imap(self, mock_spice):
         mock_spice.sxform.return_value = FAKE_ROTATION_MATRIX_FROM_PSP
         mock_light_time = 12.459
@@ -139,7 +140,7 @@ class TestCalculatePickupIon(SpiceTestCase):
                                          [-10.43947, -59.205178, 0.734523]])
         np.testing.assert_array_almost_equal(actual_pui_vector, expected_pui_vectors)
 
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
+    @patch(f"{MODULE}.spiceypy")
     def test_convert_velocity_to_reference_frame(self, mock_spice):
         input_vector = np.array([[1, 2, 3], [1, 2, 3]])
         ephemeris_time = 10000000
@@ -159,8 +160,8 @@ class TestCalculatePickupIon(SpiceTestCase):
         result = convert_velocity_to_reference_frame(input_vector[0], ephemeris_time, "FROM", "TO")
         np.testing.assert_array_almost_equal(expected_result, result)
 
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.convert_velocity_relative_to_imap")
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_pui_velocity_vector")
+    @patch(f"{MODULE}.convert_velocity_relative_to_imap")
+    @patch(f"{MODULE}.calculate_pui_velocity_vector")
     def test_get_speed_grid(self, mock_calculate_pui_velocity_vector, mock_convert_velocity,
                             ):
 
@@ -223,8 +224,8 @@ class TestCalculatePickupIon(SpiceTestCase):
                  "ECLIPJ2000"),
         ])
 
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.convert_velocity_relative_to_imap")
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_pui_velocity_vector")
+    @patch(f"{MODULE}.convert_velocity_relative_to_imap")
+    @patch(f"{MODULE}.calculate_pui_velocity_vector")
     def test_get_speed_grid_caches_results(self, mock_calculate_pui_velocity_vector, mock_convert_velocity,
                                            ):
 
@@ -289,7 +290,7 @@ class TestCalculatePickupIon(SpiceTestCase):
         self.assertEqual(3, mock_calculate_pui_velocity_vector.call_count)
         self.assertEqual(6, mock_convert_velocity.call_count)
 
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.DensityOfNeutralHeliumLookupTable.density")
+    @patch(f"{MODULE}.DensityOfNeutralHeliumLookupTable.density")
     def test_forward_model_f(self, mock_helium_density):
         mock_helium_density.return_value = 1
 
@@ -328,7 +329,7 @@ class TestCalculatePickupIon(SpiceTestCase):
                 distance_km / ONE_AU_IN_KM * (speed_grid / 500) ** 0.1,
             ))
 
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.ForwardModel")
+    @patch(f"{MODULE}.ForwardModel")
     @patch("imap_l3_processing.swapi.l3b.science.instrument_response_lookup_table.calculate_sw_speed")
     def test_model_count_rate_integral(self, mock_calculate_speed, mock_forward_model):
         expected_speed_row_1 = 421
@@ -366,12 +367,12 @@ class TestCalculatePickupIon(SpiceTestCase):
 
         mock_forward_model.return_value.f.assert_called_with(speed_grid)
 
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.extract_pui_energy_bins")
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_pui_energy_cutoff")
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.lmfit.minimize")
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_combined_sweeps")
-    def test_calculate_pickup_ions_with_minimize_mocked(self, mock_calculate_combined_sweeps, mock_spice, mock_minimize,
+    @patch(f"{MODULE}.extract_pui_energy_bins")
+    @patch(f"{MODULE}.calculate_pui_energy_cutoff")
+    @patch(f"{MODULE}.lmfit.Minimizer")
+    @patch(f"{MODULE}.spiceypy")
+    @patch(f"{MODULE}.calculate_combined_sweeps")
+    def test_calculate_pickup_ions_with_minimize_mocked(self, mock_calculate_combined_sweeps, mock_spice, mock_minimizer_constructor,
                                                         mock_calculate_pui_energy_cutoff, mock_extract_pui_energy_bins):
         ephemeris_time_for_epoch = 100000
         mock_spice.unitim.return_value = ephemeris_time_for_epoch
@@ -400,10 +401,10 @@ class TestCalculatePickupIon(SpiceTestCase):
             geometric_factor_lut_path = get_test_data_path('swapi/imap_swapi_energy-gf-pui-lut_20100101_v001.csv')
 
             geometric_factor_lut = GeometricFactorCalibrationTable.from_file(geometric_factor_lut_path)
-            background_count_rate_cutoff = 0.1
             input_epochs = 123456789000000000
             sw_velocity = np.array([300, 400, 0])
 
+            mock_minimize = mock_minimizer_constructor.return_value.minimize
             mock_minimize_result = Mock()
             mock_minimize_result.uvars = {"cooling_index": 1, "ionization_rate": 2, "cutoff_speed": 3,
                                           "background_count_rate": 4}
@@ -420,10 +421,11 @@ class TestCalculatePickupIon(SpiceTestCase):
             he_inflow_vector = InflowVector.from_file(
                 get_test_data_path("swapi/imap_swapi_helium-inflow-vector_20100101_v001.dat"))
 
-            actual_fitting_parameters = calculate_pickup_ion_values(
-                self.get_response_lookup_table_collection(), geometric_factor_lut, energy,
-                count_rate, input_epochs, background_count_rate_cutoff, sw_velocity,
-                self.density_of_neutral_helium_lookup_table, efficiency_lut, h_inflow_vector, he_inflow_vector)
+            actual_fitting_parameters = calculate_pickup_ion_values(self.get_response_lookup_table_collection(),
+                                                                    geometric_factor_lut, energy, count_rate,
+                                                                    input_epochs, sw_velocity,
+                                                                    self.density_of_neutral_helium_lookup_table,
+                                                                    efficiency_lut, h_inflow_vector, he_inflow_vector)
 
             mock_calculate_combined_sweeps.assert_called_once_with(count_rate, energy)
 
@@ -438,11 +440,12 @@ class TestCalculatePickupIon(SpiceTestCase):
                                                             upper_energy_cutoff * 1.2,
                                                             )
             actual_count_rates, indices, model_count_rates_calculator, ephemeris_time, sweep_count = \
-                mock_minimize.call_args.kwargs['args']
-            self.assertEqual(calc_chi_squared_lm_fit, mock_minimize.call_args.args[0])
-            actual_params: Parameters = mock_minimize.call_args.args[1]
+                mock_minimizer_constructor.call_args.kwargs['fcn_args']
+            self.assertEqual(calc_chi_squared_lm_fit, mock_minimizer_constructor.call_args.args[0])
+            self.assertFalse(mock_minimizer_constructor.call_args.kwargs['scale_covar'])
+            actual_params: Parameters = mock_minimizer_constructor.call_args.args[1]
 
-            minimize_simplex = mock_minimize.call_args.kwargs["options"]["initial_simplex"]
+            minimize_simplex = mock_minimizer_constructor.call_args.kwargs["options"]["initial_simplex"]
 
             def _transform_simplex_vertex(vertex):
                 return [actual_params["cooling_index"].from_internal(vertex[0]),
@@ -480,17 +483,16 @@ class TestCalculatePickupIon(SpiceTestCase):
             self.assertEqual(50, sweep_count)
 
             self.assertEqual('nelder', mock_minimize.call_args.kwargs['method'])
-            self.assertFalse(mock_minimize.call_args.kwargs['scale_covar'])
 
             expected_fitting_params = FittingParameters(1, 2, 3, 4)
             self.assertEqual(expected_fitting_params, actual_fitting_parameters)
 
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_pui_energy_cutoff")
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.extract_pui_energy_bins")
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.lmfit.minimize")
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_combined_sweeps")
-    def test_calculate_pickup_ion_bad_fit(self, mock_calculate_combined_sweeps, mock_minimize,
+    @patch(f"{MODULE}.spiceypy")
+    @patch(f"{MODULE}.calculate_pui_energy_cutoff")
+    @patch(f"{MODULE}.extract_pui_energy_bins")
+    @patch(f"{MODULE}.lmfit.Minimizer")
+    @patch(f"{MODULE}.calculate_combined_sweeps")
+    def test_calculate_pickup_ion_bad_fit(self, mock_calculate_combined_sweeps, mock_minimizer_class,
                                           mock_extract_pui_energy_bins, _, __):
 
         mock_calculate_combined_sweeps.return_value = (np.array([1]), np.array([1]))
@@ -504,23 +506,18 @@ class TestCalculatePickupIon(SpiceTestCase):
         }
 
         mock_minimize_result = Mock(redchi=11, uvars=fit_params)
+        mock_minimize = mock_minimizer_class.return_value.minimize
         mock_minimize.return_value = mock_minimize_result
 
-        actual_fitting_params = calculate_pickup_ion_values(
-            instrument_response_lookup_table=Mock(),
-            geometric_factor_calibration_table=Mock(),
-            energy=np.array([1]),
-            count_rates=np.array([1]),
-            center_of_epoch=1e9,
-            background_count_rate_cutoff=10,
-            sw_velocity_vector=np.array([1, 0, 0]),
-            density_of_neutral_helium_lookup_table=Mock(),
-            efficiency_table=Mock(),
-            hydrogen_inflow_vector=Mock(),
-            helium_inflow_vector=Mock(),
-        )
+        actual_fitting_params = calculate_pickup_ion_values(instrument_response_lookup_table=Mock(),
+                                                            geometric_factor_calibration_table=Mock(),
+                                                            energy=np.array([1]), count_rates=np.array([1]),
+                                                            center_of_epoch=1e9, sw_velocity_vector=np.array([1, 0, 0]),
+                                                            density_of_neutral_helium_lookup_table=Mock(),
+                                                            efficiency_table=Mock(), hydrogen_inflow_vector=Mock(),
+                                                            helium_inflow_vector=Mock())
 
-        self.assertEqual(actual_fitting_params.bad_fit_flag, SwapiL3Flags.HI_CHI_SQ)
+        self.assertEqual(actual_fitting_params.flags, SwapiL3Flags.HI_CHI_SQ)
         self.assertEqual(actual_fitting_params.cooling_index, fit_params["cooling_index"])
         self.assertEqual(actual_fitting_params.cutoff_speed, fit_params["cutoff_speed"])
         self.assertEqual(actual_fitting_params.ionization_rate, fit_params["ionization_rate"])
@@ -648,7 +645,7 @@ class TestCalculatePickupIon(SpiceTestCase):
         np.testing.assert_allclose(824377.0631439432, result.s, rtol=1e-8)
 
     @run_periodically(timedelta(days=7))
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
+    @patch(f"{MODULE}.spiceypy")
     def test_calculate_pickup_ions_with_minimize(self, mock_spice):
         ephemeris_time_for_epoch = int(100000 * 1e9)
         mock_spice.unitim.return_value = ephemeris_time_for_epoch
@@ -692,11 +689,11 @@ class TestCalculatePickupIon(SpiceTestCase):
             he_inflow_vector = InflowVector.from_file(
                 get_test_data_path("swapi/imap_swapi_helium-inflow-vector_20100101_v001.dat"))
 
-            actual_fitting_parameters = calculate_pickup_ion_values(
-                self.get_response_lookup_table_collection(), geometric_factor_lut, energy,
-                count_rate, epoch, background_count_rate_cutoff, sw_velocity_vector,
-                self.density_of_neutral_helium_lookup_table, efficiency_lut, h_inflow_vector,
-                he_inflow_vector)
+            actual_fitting_parameters = calculate_pickup_ion_values(self.get_response_lookup_table_collection(),
+                                                                    geometric_factor_lut, energy, count_rate, epoch,
+                                                                    sw_velocity_vector,
+                                                                    self.density_of_neutral_helium_lookup_table,
+                                                                    efficiency_lut, h_inflow_vector, he_inflow_vector)
 
             mock_spice.unitim.assert_called_with(epoch / ONE_SECOND_IN_NANOSECONDS,
                                                  "TT", "ET")
@@ -751,7 +748,7 @@ class TestCalculatePickupIon(SpiceTestCase):
                                            0.6198514811899901, 0.5685065780319507, 0.5197560948020243],
                                    rtol=1e-12)
 
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_solar_wind_velocity_vector")
+    @patch(f"{MODULE}.calculate_solar_wind_velocity_vector")
     def test_calculate_ten_minute_velocities(self, mock_calculate_solar_wind_velocity_vector):
         x = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21])
         y = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180,
@@ -780,7 +777,7 @@ class TestCalculatePickupIon(SpiceTestCase):
         np.testing.assert_array_equal(averaged_velocities, expected_averaged_velocities)
         np.testing.assert_array_equal(actual_quality_flags, expected_quality_flags)
 
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_solar_wind_velocity_vector")
+    @patch(f"{MODULE}.calculate_solar_wind_velocity_vector")
     def test_calculate_ten_minute_velocities_with_swapi_quality_flag(self, mock_calculate_solar_wind_velocity_vector):
         x = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21])
         y = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180,
@@ -813,7 +810,7 @@ class TestCalculatePickupIon(SpiceTestCase):
         np.testing.assert_array_equal(averaged_velocities, expected_averaged_velocities)
         np.testing.assert_array_equal(actual_quality_flags, expected_quality_flags)
 
-    @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.calculate_solar_wind_velocity_vector")
+    @patch(f"{MODULE}.calculate_solar_wind_velocity_vector")
     def test_calculate_ten_minute_velocities_with_multiple_quality_flag(self,
                                                                         mock_calculate_solar_wind_velocity_vector):
         x = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21])
@@ -886,3 +883,155 @@ class TestCalculatePickupIon(SpiceTestCase):
         np.testing.assert_almost_equal(
             np.square(residual_array),
             sweep_count * swapi_l2.SWAPI_LIVETIME * chi_squared_formula)
+
+
+    @patch(f"{MODULE}.inv")
+    @patch(f"{MODULE}.ndt.Hessian")
+    @patch(f"{MODULE}.spiceypy")
+    @patch(f"{MODULE}.calculate_pui_energy_cutoff")
+    @patch(f"{MODULE}.extract_pui_energy_bins")
+    @patch(f"{MODULE}.lmfit.Minimizer")
+    @patch(f"{MODULE}.calculate_combined_sweeps")
+    def test_calculate_pickup_ion_computes_partial_uncertainties(
+            self, mock_calculate_combined_sweeps, mock_minimizer_class,
+                                          mock_extract_pui_energy_bins, _, __,
+            mock_hessian, mock_inv,
+    ):
+
+        mock_calculate_combined_sweeps.return_value = (np.array([1]), np.array([1]))
+        mock_extract_pui_energy_bins.return_value = (np.array([1]), np.array([1]), np.array([1]))
+
+        fit_params = {
+            "cooling_index": -1,
+            "ionization_rate": -1,
+            "cutoff_speed": -1,
+            "imaginary_non_varying_param": 0,
+            "background_count_rate": -1,
+        }
+
+        mock_params = Mock()
+        mock_params.valuesdict.return_value = fit_params
+        mock_minimize_result = Mock(
+            redchi=1, 
+            uvars=None, 
+            var_names=[ "cooling_index",
+            "ionization_rate",
+            "cutoff_speed",
+            "background_count_rate",],
+            params=mock_params)
+        mock_minimizer = mock_minimizer_class.return_value
+        (mock_minimizer.minimize).return_value = mock_minimize_result
+
+        mock_inv.return_value = np.array([
+            [-1,0,0,0],
+            [0,-2,0,0],
+            [0, 0, 3,0],
+            [0,0,0, 4],
+        ])
+
+        mock_minimizer._int2ext_cov_x.return_value = np.array([
+            [-1,0,0,0],
+            [0,-2,0,0],
+            [0, 0, 4,0],
+            [0,0,0, 25],
+        ])
+
+        actual_fitting_params = calculate_pickup_ion_values(instrument_response_lookup_table=Mock(),
+                                                            geometric_factor_calibration_table=Mock(),
+                                                            energy=np.array([1]), count_rates=np.array([1]),
+                                                            center_of_epoch=1e9, sw_velocity_vector=np.array([1, 0, 0]),
+                                                            density_of_neutral_helium_lookup_table=Mock(),
+                                                            efficiency_table=Mock(), hydrogen_inflow_vector=Mock(),
+                                                            helium_inflow_vector=Mock())
+
+        mock_hessian.assert_called_with(mock_minimizer.penalty, step=1e-4)
+        mock_hfun = mock_hessian.return_value
+        mock_hfun.assert_called_with(mock_minimize_result.x)
+        mock_inv.assert_called_with(mock_hfun.return_value)
+        mock_minimizer._int2ext_cov_x.assert_called_with(
+            NumpyArrayMatcher(2*mock_inv.return_value),
+            mock_minimize_result.x,
+        )
+
+        self.assertTrue(np.isnan(actual_fitting_params.cooling_index.std_dev))
+        self.assertTrue(np.isnan(actual_fitting_params.ionization_rate.std_dev))
+        self.assertEqual(2,actual_fitting_params.cutoff_speed.std_dev)
+        self.assertEqual(5,actual_fitting_params.background_count_rate.std_dev)
+        self.assertEqual(SwapiL3Flags.PUI_FIT_MISSING_UNCERTAINTY, actual_fitting_params.flags)
+
+    @patch(f"{MODULE}.inv")
+    @patch(f"{MODULE}.ndt.Hessian")
+    @patch(f"{MODULE}.spiceypy")
+    @patch(f"{MODULE}.calculate_pui_energy_cutoff")
+    @patch(f"{MODULE}.extract_pui_energy_bins")
+    @patch(f"{MODULE}.lmfit.Minimizer")
+    @patch(f"{MODULE}.calculate_combined_sweeps")
+    def test_returns_nominal_values_when_uncertainty_fallback_fails(
+            self, mock_calculate_combined_sweeps, mock_minimizer_class,
+                                          mock_extract_pui_energy_bins, _, __,
+            mock_hessian, mock_inv,
+    ):
+
+        mock_calculate_combined_sweeps.return_value = (np.array([1]), np.array([1]))
+        mock_extract_pui_energy_bins.return_value = (np.array([1]), np.array([1]), np.array([1]))
+
+        fit_params = {
+            "cooling_index": -1,
+            "ionization_rate": -1,
+            "cutoff_speed": -1,
+            "imaginary_non_varying_param": 0,
+            "background_count_rate": -1,
+        }
+
+        mock_params = Mock()
+        mock_params.valuesdict.return_value = fit_params
+        mock_minimize_result = Mock(
+            redchi=1,
+            uvars=None,
+            var_names=[ "cooling_index",
+            "ionization_rate",
+            "cutoff_speed",
+            "background_count_rate",],
+            params=mock_params)
+        mock_minimizer = mock_minimizer_class.return_value
+        (mock_minimizer.minimize).return_value = mock_minimize_result
+
+        good_inv = np.array([
+            [-1,0,0,0],
+            [0,-2,0,0],
+            [0, 0, 3,0],
+            [0,0,0, 4],
+        ])
+
+        mock_minimizer._int2ext_cov_x.return_value = np.array([
+            [-1,0,0,0],
+            [0,-2,0,0],
+            [0, 0, 4,0],
+            [0,0,0, 25],
+        ])
+        cases = [
+            ("hessian raises exception", Exception("bad matrix"), [good_inv] ),
+            ("inv raises exception", [Mock()], Exception("not invertible") ),
+            ]
+
+        for name, hessian, inv in cases:
+            with self.subTest(name):
+                mock_hessian.return_value.side_effect = hessian
+                mock_inv.side_effect = inv
+
+                actual_fitting_params = calculate_pickup_ion_values(instrument_response_lookup_table=Mock(),
+                                                                    geometric_factor_calibration_table=Mock(),
+                                                                    energy=np.array([1]), count_rates=np.array([1]),
+                                                                    center_of_epoch=1e9,
+                                                                    sw_velocity_vector=np.array([1, 0, 0]),
+                                                                    density_of_neutral_helium_lookup_table=Mock(),
+                                                                    efficiency_table=Mock(),
+                                                                    hydrogen_inflow_vector=Mock(),
+                                                                    helium_inflow_vector=Mock())
+
+                self.assertIsInstance(actual_fitting_params, FittingParameters)
+                self.assertTrue(np.isnan(actual_fitting_params.cooling_index.std_dev))
+                self.assertTrue(np.isnan(actual_fitting_params.ionization_rate.std_dev))
+                self.assertTrue(np.isnan(actual_fitting_params.cutoff_speed.std_dev))
+                self.assertTrue(np.isnan(actual_fitting_params.background_count_rate.std_dev))
+                self.assertEqual(SwapiL3Flags.PUI_FIT_MISSING_UNCERTAINTY, actual_fitting_params.flags)
