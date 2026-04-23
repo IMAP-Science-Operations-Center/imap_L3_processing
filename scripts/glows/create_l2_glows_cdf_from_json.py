@@ -108,6 +108,9 @@ def fill_official_l2_cdf_with_json_values(output_folder: Path, input_path: Path)
             cdf["total_l1b_inputs"][0] = instrument_data["header"][
                 "number_of_all_l1b_files"
             ]
+            cdf.attrs["pkts_file_name"] = instrument_data["header"]["pkts_file_name"]
+            cdf.attrs["ancillary_data_files"] = instrument_data["header"]["ancillary_data_files"]
+            cdf.attrs["flight_software_version"] = instrument_data["header"]["flight_software_version"]
 
 
 if __name__ == "__main__":

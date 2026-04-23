@@ -73,3 +73,18 @@ Spice_reference_frame:
   description: SPICE reference frame, only used by maps
   default: null
   required: false
+
+flight_software_version:
+  description: Flight software version, only used by GLOWS L3a
+  default: null
+  required: false
+
+ancillary_data_files:
+  description: List of ancillary file inputs, only used by GLOWS L3a
+  default: null
+  required: false
+
+pkts_file_name:
+  description: Name of inputs pkts file, only used by GLOWS L3a
+  default: null
+  required: false

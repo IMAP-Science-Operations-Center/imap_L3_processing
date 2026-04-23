@@ -99,6 +99,30 @@ class TestUtils(TestCase):
 
         self.assertEqual(expected_file_path, returned_file_path)
 
+
+    @patch("imap_l3_processing.utils.ImapAttributeManager")
+    @patch("imap_l3_processing.utils.date")
+    @patch("imap_l3_processing.utils.write_cdf")
+    def test_save_data_adds_global_attrs_if_present(self, _, mock_today, mock_attribute_manager):
+        mock_today.today.return_value = date(2024, 9, 16)
+        data_product = TestDataProduct()
+        data_product.global_metadata_attrs = {
+            "flight_software_version": 131848,
+            "ground_software_version": "0.3",
+        }
+        _ = save_data(data_product)
+
+        mock_attribute_manager.return_value.add_global_attribute.assert_has_calls([
+            call("Data_version", "003"),
+            call("Generation_date", "20240916"),
+            call("Logical_source", "imap_glows_l3_descriptor"),
+            call("Logical_file_id",
+                 f"imap_glows_l3_descriptor_20250510_v003"),
+            call("ground_software_version", VERSION),
+            call("flight_software_version", 131848),
+            call("ground_software_version", "0.3"),
+        ])
+
     @patch("imap_l3_processing.utils.ImapAttributeManager")
     @patch("imap_l3_processing.utils.date")
     @patch("imap_l3_processing.utils.write_cdf")

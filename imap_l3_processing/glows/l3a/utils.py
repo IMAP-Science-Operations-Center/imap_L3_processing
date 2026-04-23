@@ -62,9 +62,9 @@ def read_l2_glows_data(cdf: CDF) -> GlowsL2Data:
                        spacecraft_velocity_average=spacecraft_velocity_average,
                        spacecraft_velocity_std_dev=spacecraft_velocity_std_dev,
                        header=GlowsL2Header(
-                           flight_software_version=-1,
-                           pkts_file_name="",
-                           ancillary_data_files=[],
+                           flight_software_version=cdf.attrs["flight_software_version"][0],
+                           pkts_file_name=cdf.attrs["pkts_file_name"][0],
+                           ancillary_data_files=cdf.attrs["ancillary_data_files"][...],
                        ),
                        l2_file_name=Path(cdf.pathname.decode('utf-8')).name
                        )
@@ -80,6 +80,7 @@ def create_glows_l3a_from_dictionary(data: dict, input_metadata: InputMetadata) 
     total_time = end_time - start_time
     epoch = start_time + total_time / 2
     return GlowsL3LightCurve(
+        global_metadata_attrs=data["header"],
         input_metadata=input_metadata,
         identifier=input_metadata.repointing,
         epoch=np.array([epoch]),

@@ -330,9 +330,11 @@ class TestCdfUtils(TempFileTestCase):
 
 class TestDataProduct(DataProduct):
     def __init__(self):
-        self.input_metadata = InputMetadata("glows", "l3", datetime(year=2025, month=5, day=10),
-                                            datetime(year=2025, month=5, day=12), "v003", "descriptor")
-        self.parent_file_names = []
+        super().__init__(
+            input_metadata=InputMetadata("glows", "l3", datetime(year=2025, month=5, day=10),
+                                            datetime(year=2025, month=5, day=12), "v003", "descriptor"),
+            parent_file_names=[]
+        )
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [

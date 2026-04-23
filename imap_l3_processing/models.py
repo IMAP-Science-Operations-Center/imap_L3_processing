@@ -48,8 +48,8 @@ D = TypeVar("D")
 @dataclass
 class DataProduct(abc.ABC, Generic[D]):
     input_metadata: InputMetadata
-
     parent_file_names: list[str] = field(default_factory=list, kw_only=True)
+    global_metadata_attrs: dict[str, str] = field(default_factory=dict, kw_only=True)
 
     @abc.abstractmethod
     def to_data_product_variables(self) -> list[DataProductVariable]:

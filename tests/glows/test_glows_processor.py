@@ -131,6 +131,24 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         mock_processing_input_collection = Mock()
         parent_file_path = Path("test/parent_path")
         expected_parent_file_names = ['parent_path']
+        expected_global_metadata_attrs = {
+            "flight_software_version": 131848,
+            "ground_software_version": "0.3",
+            "pkts_file_name": "data_l0/imap_l0_sci_glows_20241018_mockByGlowsTeam051_v00.pkts",
+            "ancillary_data_files": [
+                "data_ancillary/imap_glows_conversion_table_for_anc_data_v002.json",
+                "data_ancillary/imap_glows_calibration_data_v002.dat",
+                "data_ancillary/imap_glows_pipeline_settings_v002.json",
+                "data_ancillary/imap_glows_map_of_uv_sources_v002.dat",
+                "data_ancillary/imap_glows_map_of_excluded_regions_v002.dat",
+                "data_ancillary/imap_glows_exclusions_by_instr_team_v002.dat",
+                "data_ancillary/imap_glows_suspected_transients_v002.dat",
+                "data_ancillary/imap_glows_map_of_extra_helio_bckgrd_v001.dat",
+                "data_ancillary/imap_glows_time_dep_bckgrd_v001.dat",
+                "data_ancillary/imap_l1_anc_sc_Merged_2010-2030_mockByGlowsTeam001.csv"
+            ],
+            "l2_input_file_name": "data_l2_histograms/imap_glows_l2_20130908085214_orbX_modX_p_v00.json"
+        }
         mock_processing_input_collection.get_file_paths.return_value = [parent_file_path]
 
         processor = GlowsProcessor(dependencies=mock_processing_input_collection, input_metadata=input_metadata)
@@ -144,7 +162,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         expected_data_to_save.parent_file_names = expected_parent_file_names
         actual_data = mock_save_data.call_args.args[0]
         self.assertEqual(expected_parent_file_names, actual_data.parent_file_names)
-        assert_dataclass_fields(expected_data_to_save, actual_data)
+        self.assertEqual(expected_global_metadata_attrs, actual_data.global_metadata_attrs)
+        assert_dataclass_fields(expected_data_to_save, actual_data, omit=["global_metadata_attrs"])
         self.assertEqual([mock_cdf_path], products)
 
     @patch('imap_l3_processing.glows.glows_processor.create_glows_l3a_from_dictionary')

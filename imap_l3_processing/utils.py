@@ -98,6 +98,10 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: P
     elif data.parent_file_names:
         attribute_manager.add_global_attribute("Parents", data.parent_file_names)
 
+    if data.global_metadata_attrs:
+        for key, value in data.global_metadata_attrs.items():
+            attribute_manager.add_global_attribute(key, value)
+
     file_path_str = str(file_path)
     write_cdf(file_path_str, data, attribute_manager)
     return file_path

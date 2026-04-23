@@ -73,9 +73,12 @@ class TestUtils(unittest.TestCase):
         self.assert_equal_xyz(cdf, "spacecraft_velocity_std_dev", glows_l2_data)
 
         expected_header = GlowsL2Header(
-            flight_software_version=-1,
-            pkts_file_name="",
-            ancillary_data_files=[],
+            flight_software_version=123456,
+            pkts_file_name="data_l0/repointings/imap_glows_l0_raw_20251224-repoint00088_v000.pkts",
+            ancillary_data_files=[
+                "imap_glows_pipeline-settings_20251112_v001.json",
+                "imap_glows_l2-calibration_20251112_v002.dat"
+            ],
         )
         self.assertEqual(expected_header, glows_l2_data["header"])
 

@@ -125,7 +125,7 @@ def assert_dict_close(x, y, rtol=1e-7, path=None):
 
 def assert_dataclass_fields(expected_obj, actual_obj, omit=None):
     omit = omit or []
-    for field in [f for f in fields(actual_obj) if f not in omit]:
+    for field in [f for f in fields(actual_obj) if f.name not in omit]:
         expected = getattr(expected_obj, field.name)
         actual = getattr(actual_obj, field.name)
         if isinstance(actual, (list, np.ndarray, float)):
