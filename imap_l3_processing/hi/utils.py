@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Union
 
 from imap_data_access import ScienceFilePath
+from imap_processing.spice.time import met_to_ttj2000ns
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
@@ -14,9 +15,14 @@ def read_l1c_rectangular_pointing_set_data(path: Union[Path, str]) -> InputRecta
     repointing = ScienceFilePath(path).repointing
     with CDF(str(path)) as cdf:
         exposure_time_variable = cdf['exposure_time'] if 'exposure_time' in cdf else cdf['exposure_times']
-        epoch_delta = cdf["epoch_delta"][...] if "epoch_delta" in cdf else None
+
+        assert ("epoch_delta" in cdf) or (
+                "pointing_start_met" in cdf and "pointing_end_met" in cdf), "Expected the pset to have either epoch_delta or pointing_start_met and pointing_end_met defined"
+
         pointing_start_met = cdf["pointing_start_met"][...] if "pointing_start_met" in cdf else None
         pointing_end_met = cdf["pointing_end_met"][...] if "pointing_end_met" in cdf else None
+        epoch_delta = cdf["epoch_delta"][...] if "epoch_delta" in cdf else met_to_ttj2000ns(
+            pointing_end_met) - met_to_ttj2000ns(pointing_start_met)
         return InputRectangularPointingSet(epoch=cdf["epoch"][0],
                                            epoch_delta=epoch_delta,
                                            epoch_j2000=cdf.raw_var("epoch")[...],

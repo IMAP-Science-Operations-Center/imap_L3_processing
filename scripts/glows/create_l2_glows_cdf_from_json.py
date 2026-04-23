@@ -1,11 +1,9 @@
 import json
-import math
 import re
 import shutil
 import traceback
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 from imap_data_access import ScienceFilePath
@@ -13,12 +11,9 @@ from spacepy.pycdf import CDF
 
 from tests.test_helpers import get_test_data_path
 
-REPOINT_MATCHER = re.compile(r"repoint(\d{5})")
 
 
-def fill_official_l2_cdf_with_json_values(
-    output_folder: Path, input_path: Path, timeshift: Optional[timedelta] = None
-) -> Path:
+def fill_official_l2_cdf_with_json_values(output_folder: Path, input_path: Path) -> None:
     official_l2_path = get_test_data_path(
         "glows/imap_glows_l2_hist_20260323-repoint00194_v005.cdf"
     )
@@ -28,26 +23,17 @@ def fill_official_l2_cdf_with_json_values(
 
         start_of_epoch_window = datetime.fromisoformat(instrument_data["start_time"])
         end_of_epoch_window = datetime.fromisoformat(instrument_data["end_time"])
-        if timeshift is not None:
-            start_of_epoch_window += timeshift
-            end_of_epoch_window += timeshift
 
         epoch_window = end_of_epoch_window - start_of_epoch_window
         epoch = start_of_epoch_window + epoch_window / 2
 
-        if timeshift is None:
-            repoint_id = int(REPOINT_MATCHER.search(input_path.name).group(1))
-        else:
-            repoint_id = math.floor(
-                896 + (epoch - datetime(2025, 1, 1)) / timedelta(days=1)
-            )
-
+        repoint_id = int(re.search(r'repoint(\d{5})', input_path.name)[1])
         new_name = ScienceFilePath.generate_from_inputs(
             instrument="glows",
             data_level="l2",
             descriptor="hist",
             start_time=start_of_epoch_window.strftime("%Y%m%d"),
-            version="v001",
+            version="v004",
             extension="cdf",
             repointing=repoint_id,
         ).filename

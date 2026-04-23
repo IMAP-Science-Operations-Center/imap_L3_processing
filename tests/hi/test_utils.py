@@ -2,6 +2,7 @@ import os
 import unittest
 from datetime import datetime
 from pathlib import Path
+from unittest.mock import patch, call
 
 import numpy as np
 from spacepy import pycdf
@@ -52,7 +53,7 @@ class TestUtils(unittest.TestCase):
                 with self.subTest(path=path, exposure_time_var_name=exposure_time_var_name):
                     result = read_l1c_rectangular_pointing_set_data(path)
                     self.assertEqual(epoch[0], result.epoch)
-                    self.assertEqual(epoch_delta, result.epoch_delta)
+                    np.testing.assert_array_equal(result.epoch_delta, epoch_delta, strict=True)
                     self.assertEqual(repointing, result.repointing)
                     self.assertEqual([43264184000000], result.epoch_j2000)
                     np.testing.assert_array_equal(exposure_times, result.exposure_times)
@@ -68,18 +69,31 @@ class TestUtils(unittest.TestCase):
 
         with CDF(str(path)) as cdf:
             self.assertEqual(cdf['epoch'][0], result.epoch)
-            self.assertEqual(cdf['epoch_delta'][0], result.epoch_delta)
+            np.testing.assert_array_equal(result.epoch_delta, cdf['epoch_delta'], strict=True)
             self.assertEqual(1, result.repointing)
             np.testing.assert_array_equal(result.esa_energy_step, cdf['esa_energy_step'])
             np.testing.assert_array_equal(result.exposure_times, np.full_like(cdf['exposure_times'], np.nan))
 
-    def test_read_lo_l1c(self):
+    @patch("imap_l3_processing.hi.utils.met_to_ttj2000ns")
+    def test_read_lo_l1c(self, mock_met_to_ttj2000ns):
         path = get_test_data_folder() / 'lo' / 'imap_lo_l1c_pset_20260101-repoint01261_v001.cdf'
+
+        mock_met_to_ttj2000ns.side_effect = [
+            np.array([3]),
+            np.array([2])
+        ]
+
         result = read_l1c_rectangular_pointing_set_data(path)
 
         with CDF(str(path)) as cdf:
+            mock_met_to_ttj2000ns.assert_has_calls([
+                call(cdf['pointing_end_met']),
+                call(cdf['pointing_start_met'])
+            ])
+
             self.assertEqual(cdf['epoch'][0], result.epoch)
-            self.assertEqual(None, result.epoch_delta)
+            self.assertEqual((1,), result.epoch_delta.shape)
+            np.testing.assert_array_almost_equal(result.epoch_delta, [1])
             self.assertEqual(1261, result.repointing)
             np.testing.assert_array_equal(result.esa_energy_step, cdf['esa_energy_step'])
             np.testing.assert_array_equal(result.exposure_times, cdf['exposure_time'][...])

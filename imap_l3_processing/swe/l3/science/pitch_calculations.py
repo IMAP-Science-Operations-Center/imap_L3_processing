@@ -3,115 +3,157 @@ from __future__ import annotations
 from typing import TypeVar
 
 import numpy as np
+import scipy
 
 from imap_l3_processing.constants import ELECTRON_MASS_KG, PROTON_CHARGE_COULOMBS, METERS_PER_KILOMETER
 from imap_l3_processing.pitch_angles import calculate_pitch_angle, calculate_unit_vector, calculate_gyrophase
 from imap_l3_processing.swe.l3.models import SweConfiguration
+from imap_l3_processing.swe.quality_flags import SweL3Flags
 
-
-def piece_wise_model(x: np.ndarray, b0: float, b1: float,
-                     b2: float, b3: float, b4: float, b5: float) -> np.ndarray:
-    return np.log(np.piecewise(x, [x <= b2, (x > b2) & (x <= b4), x > b4],
-                               [
-                                   lambda x: b0 * np.exp(-b1 * x),
-                                   lambda x: b0 * np.exp(b2 * (b3 - b1)) * np.exp(-b3 * x),
-                                   lambda x: b0 * np.exp(b2 * (b3 - b1)) * np.exp(b4 * (b5 - b3)) * np.exp(-b5 * x),
-                               ]))
-
-
-def find_breakpoints(energies: np.ndarray, averaged_psd: np.ndarray, latest_spacecraft_potentials: list[float],
-                     latest_core_halo_break_points: list[float],
-                     config: SweConfiguration) -> tuple[
-    float, float]:
+def mec_breakpoint_finder(energies: np.ndarray, averaged_psd: np.ndarray) -> tuple[float, float, SweL3Flags]:
+    """
+    Input:
+        energies - energy bins
+        averaged_psd - phase space density, either averaged over all CEMs or individual CEMs
+    Output:
+        sc_pot_output, ch_break_output, total_flag - tuple for spacecraft potential, core-halo break point, and all flags thrown
+    """
+    log_energy = np.log(energies)
     log_psd = np.log(averaged_psd)
-    slopes = -np.diff(log_psd) / np.diff(energies)
-    slope_ratios = slopes[1:] / slopes[:-1]
-    numb = np.max(np.nonzero(slope_ratios > config['slope_ratio_cutoff_for_potential_calc']), initial=0)
 
-    if not numb:
-        return latest_spacecraft_potentials[-1], latest_core_halo_break_points[-1]
-
-    energies = energies[:numb]
-    log_psd = log_psd[:numb]
-    b1: float = slopes[0]
-    core_index = np.searchsorted(energies, config["core_energy_for_slope_guess"]) - 1
-    halo_index = np.searchsorted(energies, config["halo_energy_for_slope_guess"]) - 1
-    b3: float = slopes[core_index]
-    b5: float = slopes[halo_index]
-    b0: float = np.exp(log_psd[0] + b1 * energies[0])
-    initial_guesses = (
-        b0, b1, np.average(latest_spacecraft_potentials), b3, np.average(latest_core_halo_break_points), b5)
-
-    first_min_index = 0
-    for i in range(1, len(slope_ratios) - 1):
-        if slope_ratios[i - 1] > slope_ratios[i] < slope_ratios[i + 1]:
-            first_min_index = i
-            break
-
-    last_max_index = 0
-    for i in reversed(range(1 + first_min_index, len(slopes) - 1)):
-        if slopes[i - 1] < slopes[i] > slopes[i + 1]:
-            last_max_index = i
-            break
-
-    if last_max_index < config["refit_core_halo_breakpoint_index"]:
-        delta_b2 = -1.5
-        delta_b4 = -10
+    # Check to see if first 4 points are nearly linear
+    # If True, then potential is likely less than 2.7 V (lower than first energy bin)
+    def line_model(params, x):
+        return params[0] + params[1] * x
+    from scipy import odr
+    odr_model = odr.Model(line_model)
+    x = log_energy[:4]
+    y = log_psd[:4]
+    mydata = odr.RealData(x=x,y=y)
+    myodr = odr.ODR(mydata, odr_model, beta0=[y.max(),-5])
+    myodr.set_job(fit_type=2)
+    myoutput= myodr.run()
+    if myoutput.res_var <= 0.01:
+        FALLBACK_POTENTIAL_ESTIMATE = SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE
+        return_value = 2.5
     else:
-        delta_b2 = -1.0
-        delta_b4 = 10
-    return try_curve_fit_until_valid(energies, log_psd, initial_guesses, latest_spacecraft_potentials[-1],
-                                     latest_core_halo_break_points[-1], delta_b2, delta_b4)
+        FALLBACK_POTENTIAL_ESTIMATE = SweL3Flags.NONE
+    
+    # Use a smoothed spline on log_psd for spectral break finding routine as a fall back only!
+    # Mirror real point as fake point to left of first energy bin to improve spline concavity
+    ewidth = np.nanmean(log_energy[1:] - log_energy[:-1])
+    from scipy.interpolate import UnivariateSpline as uspline
+    spline = uspline(np.concatenate([[log_energy[0]-ewidth],log_energy]), 
+                     np.concatenate([[log_psd[2]],log_psd]), s=.25)
+    spline_energies = np.geomspace(energies.min()*np.exp(-ewidth), energies.max(), 100)
+    spline_derivative = spline.derivative(2)
+    curvature = spline_derivative(np.log(spline_energies))
+    try:
+        peaks = scipy.signal.find_peaks(curvature)[0]
+        sc_pot = spline_energies[peaks[0]]
+        ch_break = spline_energies[peaks[1]]
+        BACKUP_SPLINE_UNRESOLVED = SweL3Flags.NONE
+    except:
+        # Spline peak finder did not work
+        BACKUP_SPLINE_UNRESOLVED = SweL3Flags.BACKUP_SPLINE_UNRESOLVED
+        sc_pot = np.nan
+        ch_break = np.nan
 
+    def piece_wise_model_mec(x, b0, b1, b2, b3):
+        """
+        Modified Piecewise to fit Potential and Core-Halo Break separately
+        The breakpoint is b2
+        """
+        return np.piecewise(x, [x<=b2, x>b2], 
+                               [lambda x: b0 - b1*x, lambda x: b0 + b2*(b3-b1) - b3*x])
 
-def ls_fit(x, y, initial_b):
-    b = np.copy(initial_b)
-    flamda = 0.01
-    deltaa = 0.05 * np.abs(b)
-    nloops = 14
-    prev_chisqr = 0.0
-    sigmay = None
-    nterms = len(b)
-    yfit = np.zeros(len(x))
-    sigmaa = np.zeros(nterms)
+    def refine_breakpoint_value(energy, psd, breakpoint_value, num_points):
+        """
+        Function to use lines from num_points to left and right to find intersection
+        energy at which the lines intersect is the refined_breakpoint
+        """
+        # Find Nearest energy bin to breakpoint_value
+        nearest_energy_idx = np.argmin(np.abs(energy-breakpoint_value))
+        if np.abs(breakpoint_value - energy[nearest_energy_idx])/energy[nearest_energy_idx] <= .075:
+            # Breakpoint_value was within FWHM of nearest energy bin
+            # return that energy bin as refined_breakpoint
+            return energy[nearest_energy_idx]
+        # Get left and right spectrum of breakpoint_value
+        e_left = energy[energy < breakpoint_value]
+        e_right = energy[energy > breakpoint_value]
+        psd_left = psd[energy < breakpoint_value]
+        psd_right = psd[energy > breakpoint_value]
+        if len(e_left) < num_points:
+            # Not enough points to the left (really only possible for s/c potential)
+            return breakpoint_value
+        # Fit a line to the num_points left and right of breakpoint_value
+        z_left = np.polyfit(e_left[-num_points:], psd_left[-num_points:], 1)
+        z_right = np.polyfit(e_right[:num_points], psd_right[:num_points], 1)
+        # Determine energy of their intersection
+        refined_breakpoint = (z_left[1]-z_right[1]) / (z_right[0]-z_left[0])
+        if (refined_breakpoint < z_left[-1]) | (refined_breakpoint > z_right[0]):
+            # Refined breakpoint lies outside of expected range
+            return breakpoint_value
+        return refined_breakpoint
+    
+    # Prepare masking for the two separate fits
+    mask_sc = log_energy <= np.log(30)
+    mask_ch = (log_energy > np.log(30)) & (log_energy < np.log(400))
 
-    for k in range(nloops):
-        chisqr = curve_fit(6, len(x), x, y, sigmay, b, deltaa, flamda, sigmaa, yfit)
-        delta_chisqr = np.abs(prev_chisqr - chisqr)
-        if delta_chisqr < 0.001:
-            break
-        prev_chisqr = chisqr
-    return b
+    log_energy_sc = log_energy[mask_sc]; log_psd_sc = log_psd[mask_sc]
+    log_energy_ch = log_energy[mask_ch]; log_psd_ch = log_psd[mask_ch]
 
-
-def try_curve_fit_until_valid(energies: np.ndarray, log_psd: np.ndarray, initial_guesses: tuple[float, ...],
-                              latest_spacecraft_potential: float, latest_core_halo_breakpoint: float,
-                              delta_b2: float, delta_b4: float) -> tuple[float, float]:
-    b = ls_fit(energies, log_psd, initial_guesses)
-
-    def bad_fit(b):
-        return (b[1] <= 0 or
-                b[3] <= 0 or
-                b[5] <= 0 or
-                b[2] >= b[4] or
-                b[4] <= 15 or
-                b[2] <= energies[0] or
-                b[2] >= 20 or
-                b[2] >= 2 * latest_spacecraft_potential)
-
-    attempt_count = 0
-
-    modified_guesses = list(initial_guesses)
-    while bad_fit(b):
-        if attempt_count < 3:
-            modified_guesses[2] += delta_b2
-            modified_guesses[4] += delta_b4
-            b = ls_fit(energies, log_psd, modified_guesses)
-            attempt_count += 1
+    fitting_model = piece_wise_model_mec
+    # Try Spacecraft Potential Fit
+    POTENTIAL_FIT_UNCONVERGED = SweL3Flags.NONE
+    if FALLBACK_POTENTIAL_ESTIMATE == SweL3Flags.NONE:
+        try:
+            initial_guess = [log_psd[0],1,7,1]
+            z, cov = scipy.optimize.curve_fit(fitting_model, np.exp(log_energy_sc), log_psd_sc, p0=initial_guess)
+            # Make sure the fit converged
+            if ((z[0] == initial_guess[0]) | (z[1] == initial_guess[1]) 
+                | (z[2] == initial_guess[2]) | (z[3] == initial_guess[3])):
+                # Fall back on Spline method
+                # Fit did not converge
+                POTENTIAL_FIT_UNCONVERGED = SweL3Flags.POTENTIAL_FIT_UNCONVERGED
+                sc_pot_output = sc_pot
+            else:
+                # Fit worked
+                # Check whether breakpoint has two points to left and right
+                # If so, then find intersection of linear fits to each side
+                sc_pot_output = refine_breakpoint_value(np.exp(log_energy_sc), log_psd_sc, z[2], 2)
+                # spline not used
+                BACKUP_SPLINE_UNRESOLVED = SweL3Flags.NONE
+        except:
+            # Fall back on Spline method
+            # Fit did not converge
+            BACKUP_SPLINE_UNRESOLVED = SweL3Flags.BACKUP_SPLINE_UNRESOLVED
+            sc_pot_output = sc_pot
+    else:
+        sc_pot_output = return_value
+    # Try Core-Halo Breakpoint Fit
+    BREAKPOINT_FIT_UNCONVERGED = SweL3Flags.NONE
+    try:
+        initial_guess = [log_psd_ch[0],1,65,1]
+        z, cov = scipy.optimize.curve_fit(fitting_model, np.exp(log_energy_ch), log_psd_ch, p0=initial_guess)
+        # Make sure the fit converged
+        if ((z[0] == initial_guess[0]) & (z[1] == initial_guess[1]) 
+            & (z[2] == initial_guess[2]) & (z[3] == initial_guess[3])):
+            # Fall back on Spline method
+            # Fit did not converge
+            BREAKPOINT_FIT_UNCONVERGED = SweL3Flags.BREAKPOINT_FIT_UNCONVERGED
+            ch_break_output = ch_break
         else:
-            return latest_spacecraft_potential, latest_core_halo_breakpoint
-
-    return b[2], b[4]
+            # Fit worked
+            # Check whether breakpoint has three points to left and right
+            # If so, then find intersection of linear fits to each side
+            ch_break_output = refine_breakpoint_value(np.exp(log_energy_ch), log_psd_ch, z[2], 3)
+    except:
+        # Fall back on Spline method
+        # Fit did not converge
+        BREAKPOINT_FIT_UNCONVERGED = SweL3Flags.BREAKPOINT_FIT_UNCONVERGED
+        ch_break_output = ch_break
+    return sc_pot_output, ch_break_output, FALLBACK_POTENTIAL_ESTIMATE | BACKUP_SPLINE_UNRESOLVED | POTENTIAL_FIT_UNCONVERGED | BREAKPOINT_FIT_UNCONVERGED
 
 
 def average_over_look_directions(phase_space_density: np.ndarray, geometric_weights: np.ndarray,
@@ -384,101 +426,3 @@ def swe_rebin_intensity_by_pitch_angle_and_gyrophase(intensity_data: np.ndarray[
         averaged_rebinned_intensity_by_pa_and_gyro, averaged_rebinned_intensity_by_pa_only,
         uncertainties_by_pa_and_gyro,
         uncertainties_by_pa_only)
-
-
-def curve_fit(nterms: int, npts: int, x, y, sigmay, b, deltaa, flamda, sigmaa, yfit):
-    nfree = npts - nterms
-    ngoes = 1
-    alpha = np.zeros((nterms, nterms))
-    weights = np.ones(npts)
-    beta = np.zeros(nterms)
-    b2 = np.zeros(nterms)
-    array = np.full_like(alpha, np.nan)
-    invarray = np.full_like(array, np.nan)
-
-    if nfree <= 0:
-        chisqr = 0.0
-        return chisqr
-
-    for i in range(npts):
-
-        deriv = fderiv(nterms, x[i], b, deltaa)
-
-        for j in range(nterms):
-            beta[j] += weights[i] * (y[i] - functn(nterms, x[i], b)) * deriv[j]
-
-            for k in range(nterms):
-                alpha[j][k] += weights[i] * deriv[j] * deriv[k]
-
-    for i in range(npts):
-        yfit[i] = functn(nterms, x[i], b)
-
-    chisq1 = fchisqr(npts, y, weights, nfree, yfit)
-    chisqr = np.inf
-
-    while ((chisq1 - chisqr < 0.0) and (ngoes <= 5)):
-        for j in range(nterms):
-            for k in range(nterms):
-                array[j][k] = alpha[j][k] / np.sqrt(alpha[j][j] * alpha[k][k])
-            array[j][j] = 1 + flamda
-
-        invarray = np.linalg.inv(array)
-
-        for j in range(nterms):
-            b2[j] = b[j]
-
-            for k in range(nterms):
-                b2[j] += beta[k] * invarray[j][k] / np.sqrt(alpha[j][j] * alpha[k][k])
-
-        for i in range(npts):
-            yfit[i] = functn(nterms, x[i], b2)
-
-        chisqr = fchisqr(npts, y, weights, nfree, yfit)
-        ngoes += 1
-        flamda *= 10.0
-
-    for j in range(nterms):
-        b[j] = b2[j]
-        sigmaa[j] = np.sqrt(invarray[j][j] / alpha[j][j])
-
-    flamda /= 10.0
-    return chisqr
-
-
-def fderiv(nterms, x, b, deltaa):
-    b2 = np.copy(b)
-    deriv = np.full(nterms, np.nan)
-
-    for j in range(nterms):
-        b2[j] = b[j]
-
-    for j in range(nterms):
-        bj = b2[j]
-        delta = deltaa[j]
-
-        b2[j] = bj + delta
-        yfit1 = functn(nterms, x, b2)
-
-        b2[j] = bj - delta
-        yfit2 = functn(nterms, x, b2)
-
-        deriv[j] = (yfit1 - yfit2) / (2 * delta)
-
-        b2[j] = bj
-
-    return deriv
-
-
-def functn(nterms, x, b):
-    assert nterms == len(b)
-    return piece_wise_model(x, *b)
-
-
-def fchisqr(npts, y, weights, free, yfit):
-    chisq = 0
-    if free <= 0:
-        return 0.0
-    for i in range(npts):
-        chisq += weights[i] * (y[i] - yfit[i]) * (y[i] - yfit[i])
-
-    return chisq / free

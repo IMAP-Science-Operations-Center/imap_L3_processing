@@ -60,6 +60,8 @@ class UltraSurvivalProbability(UltraPointingSet):
             np.array([energy_interpolated_sp] * coarse_bins.exposure_factor)
         )
 
+        self.data["epoch_delta"] = [l1c_pset.epoch_delta]
+
 
 class UltraSurvivalProbabilitySkyMap(HealpixSkyMap):
     def __init__(self, sp: list[UltraSurvivalProbability], spice_frame: geometry.SpiceFrame, nside: int):

@@ -10,6 +10,7 @@ import uncertainties
 from imap_processing.swapi.l2 import swapi_l2
 from lmfit import Parameters
 from numpy import ndarray
+from scipy.linalg import inv
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray
 
@@ -26,15 +27,14 @@ from imap_l3_processing.swapi.l3b.science.geometric_factor_calibration_table imp
 from imap_l3_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable, \
     InstrumentResponseLookupTableCollection
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
+import numdifftools as ndt
 
 
 def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_factor_calibration_table,
-                                energy: np.ndarray[float],
-                                count_rates: uarray, center_of_epoch: int,
-                                background_count_rate_cutoff: float, sw_velocity_vector: ndarray,
+                                energy: np.ndarray[float], count_rates: uarray, center_of_epoch: int,
+                                sw_velocity_vector: ndarray,
                                 density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable,
-                                efficiency_table: EfficiencyCalibrationTable,
-                                hydrogen_inflow_vector: InflowVector,
+                                efficiency_table: EfficiencyCalibrationTable, hydrogen_inflow_vector: InflowVector,
                                 helium_inflow_vector: InflowVector) -> FittingParameters:
     ephemeris_time = spiceypy.unitim(center_of_epoch / ONE_SECOND_IN_NANOSECONDS, "TT", "ET")
     sw_velocity = np.linalg.norm(sw_velocity_vector)
@@ -79,26 +79,45 @@ def calculate_pickup_ion_values(instrument_response_lookup_table, geometric_fact
             map_to_internal(bcr, params['background_count_rate']),
         ]
 
-    result = lmfit.minimize(calc_chi_squared_lm_fit, params, method="nelder", scale_covar=False,
-                            args=(
-                                extracted_count_rates, indices, model_count_rate_calculator, ephemeris_time,
+    initial_simplex=np.array([
+        map_param_values_to_internal_values(1.5, 1e-7, sw_velocity, 0.1),
+        map_param_values_to_internal_values(5.0, 1e-7, sw_velocity, 0.1),
+        map_param_values_to_internal_values(1.5, 2.1e-7, sw_velocity, 0.1),
+        map_param_values_to_internal_values(1.5, 1e-7, sw_velocity * 1.2, 0.1),
+        map_param_values_to_internal_values(1.5, 1e-7, sw_velocity, 0.2),
+    ])
+    minimizer = lmfit.Minimizer(
+        calc_chi_squared_lm_fit, params,
+                                fcn_args=(extracted_count_rates, indices, model_count_rate_calculator, ephemeris_time,
                                 sweep_count),
-                            options=dict(initial_simplex=np.array([
-                                map_param_values_to_internal_values(1.5, 1e-7, sw_velocity, 0.1),
-                                map_param_values_to_internal_values(5.0, 1e-7, sw_velocity, 0.1),
-                                map_param_values_to_internal_values(1.5, 2.1e-7, sw_velocity, 0.1),
-                                map_param_values_to_internal_values(1.5, 1e-7, sw_velocity * 1.2, 0.1),
-                                map_param_values_to_internal_values(1.5, 1e-7, sw_velocity, 0.2),
-                            ])))
-
-    bad_fit_flag = SwapiL3Flags.HI_CHI_SQ if result.redchi > 10 else SwapiL3Flags.NONE
+                                scale_covar=False,
+                                options=dict(initial_simplex=initial_simplex),
+                                )
+    result = minimizer.minimize(method="nelder")
+    flags = SwapiL3Flags.NONE
+    if result.redchi > 10:
+        flags |= SwapiL3Flags.HI_CHI_SQ
 
     param_vals = result.uvars
     if result.uvars is None:
-        param_vals = {k: ufloat(v, np.inf) for k, v in result.params.valuesdict().items()}
+        flags |= SwapiL3Flags.PUI_FIT_MISSING_UNCERTAINTY
+        Hfun = ndt.Hessian(minimizer.penalty, step=1.e-4)
+        try:
+            hessian_ndt = Hfun(result.x)
+            cov_x = inv(hessian_ndt) * 2.0
+            scaled_cov = minimizer._int2ext_cov_x(cov_x, result.x)
+            uncertainties = np.sqrt(np.diag(scaled_cov))
+            param_vals = {}
+
+            nominal_value_by_param_name = result.params.valuesdict()
+            for var_name, uncertainty in zip(result.var_names, uncertainties):
+                param_vals[var_name] = ufloat(nominal_value_by_param_name[var_name], uncertainty)
+        except:
+            param_vals = {k: ufloat(v, np.nan) for k, v in result.params.valuesdict().items()}
+
 
     return FittingParameters(param_vals["cooling_index"], param_vals["ionization_rate"], param_vals["cutoff_speed"],
-                             param_vals["background_count_rate"], bad_fit_flag)
+                             param_vals["background_count_rate"], flags)
 
 
 def calculate_helium_pui_density(epoch: int,
@@ -171,7 +190,7 @@ class FittingParameters:
     ionization_rate: float
     cutoff_speed: float
     background_count_rate: float
-    bad_fit_flag: int = SwapiL3Flags.NONE
+    flags: int = SwapiL3Flags.NONE
 
 
 @dataclass

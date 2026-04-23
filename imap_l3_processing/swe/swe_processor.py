@@ -9,6 +9,7 @@ from imap_l3_processing.data_utils import find_closest_neighbor
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import calculate_solar_wind_velocity_vector
+from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swe.l3.models import SweL3Data, SweL1bData, SweL2Data, SweL3MomentData, SweConfiguration
 from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
     rotate_temperature, \
@@ -16,12 +17,13 @@ from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwel
     integrate, scale_core_density, scale_halo_density, rotate_vector_to_rtn_spherical_coordinates, \
     calculate_primary_eigenvector, \
     ScaleDensityOutput, rotate_temperature_tensor_to_mag
-from imap_l3_processing.swe.l3.science.pitch_calculations import average_over_look_directions, find_breakpoints, \
+from imap_l3_processing.swe.l3.science.pitch_calculations import average_over_look_directions, mec_breakpoint_finder, \
     correct_and_rebin, \
     integrate_distribution_to_get_1d_spectrum, integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, \
     calculate_velocity_in_dsp_frame_km_s, swe_rebin_intensity_by_pitch_angle_and_gyrophase
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.l3.utils import compute_epoch_delta_in_ns
+from imap_l3_processing.swe.quality_flags import SweL3Flags
 from imap_l3_processing.utils import save_data
 
 logger = logging.getLogger(__name__)
@@ -45,31 +47,30 @@ class SweProcessor(Processor):
                                                 dependencies.swe_l1b_data.settle_duration)
         config = dependencies.configuration
 
-        spacecraft_potential_history = [config["spacecraft_potential_initial_guess"] for _ in
-                                        range(3)]
-        halo_core_history = [config["core_halo_breakpoint_initial_guess"] for _ in range(3)]
-
         average_psd = []
+        swe_quality_flags = np.empty_like(swe_epoch, dtype=np.int64)
         spacecraft_potential: np.ndarray[np.float64] = np.empty_like(swe_epoch, dtype=np.float64)
         halo_core: np.ndarray[np.float64] = np.empty_like(swe_epoch, dtype=np.float64)
         corrected_energy_bins = []
         rebinned_mag_data = dependencies.mag_l1d_data.rebin_to(swe_epoch,
-                                                               [datetime.timedelta(seconds=delta / 1e9) for delta in
-                                                                epoch_delta])
+                                                               [datetime.timedelta(seconds=delta / 1e9)
+                                                                for delta
+                                                                in epoch_delta])
 
         geometric_fractions = np.array(config["geometric_fractions"])
         for i in range(len(swe_epoch)):
-            average_psd.append(average_over_look_directions(swe_l2_data.phase_space_density[i],
+            npts = 7 // 2
+            left_idx = 0 if i - npts < 0 else i - npts
+            right_idx = i + (i - left_idx + 1)
+            time_avg_psd = np.nanmean(swe_l2_data.phase_space_density[left_idx:right_idx], axis=0)
+
+            average_psd.append(average_over_look_directions(time_avg_psd,
                                                             geometric_fractions,
                                                             config["minimum_phase_space_density_value"]))
 
-            spacecraft_potential[i], halo_core[i] = find_breakpoints(swe_l2_data.energy, average_psd[i],
-                                                                     spacecraft_potential_history,
-                                                                     halo_core_history,
-                                                                     config)
+            spacecraft_potential[i], halo_core[i], swe_quality_flags[i] = mec_breakpoint_finder(swe_l2_data.energy,
+                                                                                                   average_psd[i])
 
-            spacecraft_potential_history = [*spacecraft_potential_history[1:], spacecraft_potential[i]]
-            halo_core_history = [*halo_core_history[1:], halo_core[i]]
             corrected_energy_bins.append(swe_l2_data.energy - spacecraft_potential[i])
 
         corrected_energy_bins = np.array(corrected_energy_bins)
@@ -83,8 +84,10 @@ class SweProcessor(Processor):
             phase_space_density_by_pitch_angle, phase_space_density_by_pitch_angle_and_gyrophase,
             energy_spectrum, energy_spectrum_inbound, energy_spectrum_outbound,
             intensity_by_pitch_angle_and_gyrophase, intensity_by_pitch_angle,
-            uncertanties_by_pitch_angle_and_gyrophase, uncertanties_by_pitch_angle, swp_flags
+            uncertanties_by_pitch_angle_and_gyrophase, uncertanties_by_pitch_angle, pitch_angle_flags
         ) = self.calculate_pitch_angle_products(dependencies, corrected_energy_bins)
+
+        swe_quality_flags |= pitch_angle_flags
 
         rebinned_mask = np.ma.masked_invalid(swe_l2_data.phase_space_density_rebinned)
         dist_by_phi_rebinned = np.average(rebinned_mask, weights=geometric_fractions, axis=-1)
@@ -123,7 +126,7 @@ class SweProcessor(Processor):
             raw_1d_psd_rebinned=dist_fun_1d_rebinned,
             raw_psd_by_phi_rebinned=dist_by_phi_rebinned,
             raw_psd_by_theta_rebinned=dist_by_theta_rebinned,
-            swp_flags=swp_flags
+            swe_flags=swe_quality_flags
         )
 
     def calculate_moment_products(self, swe_l2_data: SweL2Data, swe_l1b_data: SweL1bData, rebinned_mag_data: np.ndarray,
@@ -286,7 +289,7 @@ class SweProcessor(Processor):
                                                                         core_t_perpendicular_to_mag_ratio]
 
                             total_integration_output = integrate(ifit + 1,
-                                                                 len(corrected_energy_bins[i]) - 1,
+                                                                 len(corrected_energy_bins[i]) - 6,
                                                                  corrected_energy_bins[i],
                                                                  sin_theta,
                                                                  cos_theta, config['aperture_field_of_view_radians'],
@@ -365,7 +368,8 @@ class SweProcessor(Processor):
                     halo_temp_phi_rtns[i] = halo_temp_phi_rtn
                     halo_temp_avg = (2 * halo_moment.t_perpendicular + halo_moment.t_parallel) / 3
                     if 1e4 < halo_temp_avg < 1e8:
-                        halo_integrate_result = integrate(jbreak, len(corrected_energy_bins[i]) - 1,
+                        halo_integrate_result = integrate(jbreak,
+                                                          len(corrected_energy_bins[i]) - 6,
                                                           corrected_energy_bins[i],
                                                           sin_theta, cos_theta,
                                                           config['aperture_field_of_view_radians'],
@@ -492,10 +496,10 @@ class SweProcessor(Processor):
         mag_max_distance = np.timedelta64(int(config['max_mag_offset_in_minutes'] * 60e9), 'ns')
 
         rebinned_mag_data, indices = find_closest_neighbor(from_epoch=dependencies.mag_l1d_data.epoch,
-                                                  from_data=dependencies.mag_l1d_data.mag_data,
-                                                  to_epoch=swe_l2_data.acquisition_time,
-                                                  maximum_distance=mag_max_distance,
-                                                  )
+                                                           from_data=dependencies.mag_l1d_data.mag_data,
+                                                           to_epoch=swe_l2_data.acquisition_time,
+                                                           maximum_distance=mag_max_distance,
+                                                           )
 
         swapi_l3a_proton_data = dependencies.swapi_l3a_proton_data
         swapi_epoch = swapi_l3a_proton_data.epoch
@@ -504,11 +508,12 @@ class SweProcessor(Processor):
                                                                   swapi_l3a_proton_data.proton_sw_deflection_angle)
         swapi_max_distance = np.timedelta64(int(config['max_swapi_offset_in_minutes'] * 60e9), 'ns')
         rebinned_solar_wind_vectors, swapi_indices = find_closest_neighbor(from_epoch=swapi_epoch,
-                                                            from_data=solar_wind_vectors,
-                                                            to_epoch=swe_epoch,
-                                                            maximum_distance=swapi_max_distance)
+                                                                           from_data=solar_wind_vectors,
+                                                                           to_epoch=swe_epoch,
+                                                                           maximum_distance=swapi_max_distance)
 
         closest_flags = swapi_l3a_proton_data.swp_flags[swapi_indices].astype(int, copy=True)
+        swe_flags = np.where(closest_flags & SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED, SweL3Flags.FALLBACK_SWAPI_SPEED, SweL3Flags.NONE)
 
         counts = dependencies.swe_l1b_data.count_rates * (swe_l2_data.acquisition_duration[..., np.newaxis] / 1e6)
 
@@ -577,4 +582,4 @@ class SweProcessor(Processor):
             np.array(rebinned_intensity_by_pa), \
             np.array(uncertainties_by_pa_and_gyro), \
             np.array(uncertainties_by_pa), \
-            closest_flags
+            swe_flags

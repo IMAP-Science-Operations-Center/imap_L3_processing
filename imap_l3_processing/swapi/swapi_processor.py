@@ -101,7 +101,7 @@ class SwapiProcessor(Processor):
             proton_solar_wind_deflection_angles.append(deflection_angle)
             proton_quality_flags.append(quality_flag)
 
-        ten_minute_solar_wind_velocities, pui_quality_flags = calculate_ten_minute_velocities(
+        ten_minute_solar_wind_velocities, proton_sw_quality_flags = calculate_ten_minute_velocities(
             nominal_values(proton_solar_wind_speeds),
             nominal_values(proton_solar_wind_deflection_angles),
             nominal_values(proton_solar_wind_clock_angles),
@@ -129,9 +129,7 @@ class SwapiProcessor(Processor):
                     raise ValueError("Fill values in input data")
                 fit_params = calculate_pickup_ion_values(dependencies.instrument_response_calibration_table,
                                                          dependencies.geometric_factor_calibration_table,
-                                                         data_chunk.energy,
-                                                         data_chunk.coincidence_count_rate,
-                                                         epoch, 0.1,
+                                                         data_chunk.energy, data_chunk.coincidence_count_rate, epoch,
                                                          sw_velocity,
                                                          dependencies.density_of_neutral_helium_calibration_table,
                                                          dependencies.efficiency_calibration_table,
@@ -142,7 +140,7 @@ class SwapiProcessor(Processor):
                 cutoff_speed = fit_params.cutoff_speed
                 background_count_rate = fit_params.background_count_rate
 
-                bad_fit_flag |= fit_params.bad_fit_flag
+                bad_fit_flag |= fit_params.flags
 
                 density = calculate_helium_pui_density(
                     epoch, sw_velocity, dependencies.density_of_neutral_helium_calibration_table, fit_params,
@@ -165,7 +163,7 @@ class SwapiProcessor(Processor):
                                         np.array(pui_ionization_rate),
                                         np.array(pui_cutoff_speed), np.array(pui_background_rate),
                                         np.array(pui_density), np.array(pui_temperature),
-                                        np.bitwise_or(pui_quality_flags, bad_fit_flags))
+                                        np.bitwise_or(proton_sw_quality_flags, bad_fit_flags))
 
         return pui_data
 

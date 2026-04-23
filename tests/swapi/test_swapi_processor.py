@@ -157,7 +157,7 @@ class TestSwapiProcessor(TestCase):
         mock_chunk_l2_data.assert_has_calls([call(sentinel.swapi_l2_data, 5),
                                              call(sentinel.swapi_l2_data, 50)])
 
-        instrument_response_lut, geometric_factor_lut, energies, count_rates, pui_epoch, background_rate_cutoff, \
+        instrument_response_lut, geometric_factor_lut, energies, count_rates, pui_epoch, \
             sw_velocity_vector, density_of_neutral_helium_lut, efficiency_lut, hydrogen_inflow_vector, helium_inflow_vector = mock_calculate_pickup_ion.call_args.args
 
         self.assertEqual(mock_instrument_response_calibration_table, instrument_response_lut)
@@ -167,7 +167,6 @@ class TestSwapiProcessor(TestCase):
         np.testing.assert_array_equal(chunk_of_fifty.energy, energies)
         np.testing.assert_array_equal(chunk_of_fifty.coincidence_count_rate, count_rates)
         self.assertEqual(chunk_of_fifty.sci_start_time[0] + FIVE_MINUTES_IN_NANOSECONDS, pui_epoch)
-        self.assertEqual(0.1, background_rate_cutoff)
         self.assertEqual(mock_hydrogen_inflow_vector, hydrogen_inflow_vector)
         self.assertEqual(mock_helium_inflow_vector, helium_inflow_vector)
         np.testing.assert_array_equal([17, 18, 19], sw_velocity_vector)
@@ -366,7 +365,7 @@ class TestSwapiProcessor(TestCase):
                                                                 [returned_proton_sw_clock_angle],
                                                                 np.array([SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED]))
 
-        instrument_response_lut, geometric_factor_lut, energies, count_rates, pui_epoch, background_rate_cutoff, \
+        instrument_response_lut, geometric_factor_lut, energies, count_rates, pui_epoch, \
             sw_velocity_vector, density_of_neutral_helium_lut, efficiency_lut, hydrogen_inflow_vector, helium_inflow_vector = mock_calculate_pickup_ion.call_args.args
 
         self.assertEqual(mock_instrument_response_calibration_table, instrument_response_lut)
@@ -376,7 +375,6 @@ class TestSwapiProcessor(TestCase):
         np.testing.assert_array_equal(chunk_of_fifty.energy, energies)
         np.testing.assert_array_equal(chunk_of_fifty.coincidence_count_rate, count_rates)
         self.assertEqual(chunk_of_fifty.sci_start_time[0] + FIVE_MINUTES_IN_NANOSECONDS, pui_epoch)
-        self.assertEqual(0.1, background_rate_cutoff)
         self.assertEqual(mock_hydrogen_inflow_vector, hydrogen_inflow_vector)
         self.assertEqual(mock_helium_inflow_vector, helium_inflow_vector)
         np.testing.assert_array_equal([17, 18, 19], sw_velocity_vector)

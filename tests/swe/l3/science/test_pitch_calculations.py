@@ -1,15 +1,16 @@
 import unittest
-from unittest.mock import Mock, patch, ANY, call, sentinel
+from unittest.mock import Mock, patch, call, sentinel
 
 import numpy as np
 
-from imap_l3_processing.swe.l3.science.pitch_calculations import find_breakpoints, \
+from imap_l3_processing.swe.l3.science.pitch_calculations import mec_breakpoint_finder, \
     average_over_look_directions, calculate_velocity_in_dsp_frame_km_s, calculate_look_directions, rebin_by_pitch_angle, \
     correct_and_rebin, calculate_energy_in_ev_from_velocity_in_km_per_second, integrate_distribution_to_get_1d_spectrum, \
-    integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, try_curve_fit_until_valid, \
-    rebin_by_pitch_angle_and_gyrophase, swe_rebin_intensity_by_pitch_angle_and_gyrophase, ls_fit
+    integrate_distribution_to_get_inbound_and_outbound_1d_spectrum, \
+    rebin_by_pitch_angle_and_gyrophase, swe_rebin_intensity_by_pitch_angle_and_gyrophase
 from tests.test_helpers import build_swe_configuration, NumpyArrayMatcher
 
+from imap_l3_processing.swe.quality_flags import SweL3Flags
 
 class TestPitchCalculations(unittest.TestCase):
     def test_average_flux(self):
@@ -126,189 +127,23 @@ class TestPitchCalculations(unittest.TestCase):
         np.testing.assert_almost_equal(calculated_energy[1], energy[1])
         self.assertEqual((24, 30, 7, 3), velocity.shape)
 
-    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.try_curve_fit_until_valid')
-    def test_find_breakpoints_determines_b_deltas_correctly(self, mock_try_curve_fit_until_valid):
-        config = build_swe_configuration(refit_core_halo_breakpoint_index=4, slope_ratio_cutoff_for_potential_calc=0)
+    def test_mec_breakpoint_finder(self):
+        average_psd = np.asarray([3.86611617e-05, 1.75927552e-05, 6.06703495e-06, 1.47614412e-06,
+       2.46270751e-07, 4.97864654e-08, 3.90323281e-08, 4.21037028e-08,
+       4.07355835e-08, 3.45166807e-08, 2.52075419e-08, 1.54987172e-08,
+       7.84932795e-09, 3.32903783e-09, 1.40908421e-09, 8.53206391e-10,
+       7.21564216e-10, 6.31903627e-10, 5.07238502e-10, 3.58827457e-10])
+        energies = np.asarray([  2.66      ,   3.37852249,   4.29113316,   5.45025936,
+         6.92249015,   8.79240175,  11.16741618,  14.18397245,
+        18.01536462,  22.88169719,  29.06252952,  36.91293593,
+        46.88390382,  59.54824189,  75.63348661,  96.06369752,
+       122.01254227, 154.97072104, 196.83160382, 250.        ])
 
-        cases = [
-            ("slope local max is on left side of data", [0.1, 0.2, 0.15, 0.1, 0.08, 0.06, 0.04, 0.03], -1.5, -10),
-            ("slope local max in on right side of data", [0.1, 0.18, 0.15, 0.1, 0.09, 0.08, 0.12, 0.1], -1, 10),
-            ("leftmost slope ratio local min > rightmost slope local max", [0.5, 0.6, 0.7, 0.8, 0.9, 0.75, 0.4, 0.35],
-             -1.5, -10),
-            ("no local min ratio or local max", [.8, .7, .6, .5, .4, .3, .2, .1], -1.5, -10),
-            ("no local min ratio or local max", [.1, .2, .3, .4, .5, .6, .7, .8], -1.5, -10)
-        ]
-        for name, slopes, expected_b2_delta, expected_b4_delta in cases:
-            with self.subTest(name):
-                xs = np.array([1, 10, 20, 30, 40, 50, 60, 70, 80])
-                energy_deltas = np.diff(xs)
-                initial = 10000
-
-                diff_log_flux = -np.array(slopes) * energy_deltas
-                log_flux = np.cumsum(np.append(np.log(initial), diff_log_flux))
-                avg_flux = np.exp(log_flux)
-
-                result = find_breakpoints(
-                    xs, avg_flux, [10, 10, 10], [80, 80, 80], config)
-                mock_try_curve_fit_until_valid.assert_called_with(ANY, ANY, ANY, 10, 80, expected_b2_delta,
-                                                                  expected_b4_delta)
-
-                self.assertEqual(mock_try_curve_fit_until_valid.return_value, result)
-
-    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.ls_fit')
-    def test_find_breakpoints_uses_config_for_slope_guesses(self, ls_fit):
-        ls_fit.return_value = [1, 3, 10, 2, 80, 1]
-
-        cases = [
-            (20, 100, 0.2, 0.3, 0.2),
-            (100, 400, 0.2, 0.2, 0.15),
-        ]
-        for case in cases:
-            with self.subTest(case):
-                core_energy, halo_energy, b1, b3, b5 = case
-                config = build_swe_configuration(
-                    core_energy_for_slope_guess=core_energy,
-                    halo_energy_for_slope_guess=halo_energy,
-                )
-
-                xs = np.array([1, 10, 50, 200, 800, 2400, 7200])
-                slopes = np.array([0.2, 0.3, 0.2, 0.15, 0.1, 0.08])
-                energy_deltas = np.diff(xs)
-                initial = 10000
-
-                diff_log_flux = -slopes * energy_deltas
-                log_flux = np.cumsum(np.append(np.log(initial), diff_log_flux))
-
-                avg_flux = np.exp(log_flux)
-
-                spacecraft_potential, core_halo_breakpoint = find_breakpoints(
-                    xs, avg_flux, [10, 10, 10], [80, 80, 80],
-                    config)
-
-                expected_guesses = [ANY, b1, 10, b3, 80, b5]
-                rounded_actuals = [round(x, 6) for x in ls_fit.call_args.args[2]]
-                self.assertEqual(expected_guesses, rounded_actuals)
-
-    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.ls_fit')
-    def test_find_breakpoints_uses_config_for_slope_ratio(self, mock_ls_fit):
-        mock_ls_fit.return_value = [1, 2, 3, 4, 5, 6]
-        cases = [
-            (0.55, 4),
-            (0.45, 5),
-            (0.35, 6),
-        ]
-        for case in cases:
-            with self.subTest(case):
-                cutoff, data_length = case
-                config = build_swe_configuration(
-                    slope_ratio_cutoff_for_potential_calc=cutoff
-                )
-
-                xs = np.arange(10)
-                slope_ratios = np.array([1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3])
-                slopes = np.cumprod(np.append(0.1, slope_ratios))
-                energy_deltas = np.diff(xs)
-                initial = 10000
-                diff_log_flux = -slopes * energy_deltas
-                log_flux = np.cumsum(np.append(np.log(initial), diff_log_flux))
-                avg_flux = np.exp(log_flux)
-
-                spacecraft_potential, core_halo_breakpoint = find_breakpoints(
-                    xs, avg_flux, [10, 10, 10], [80, 80, 80], config)
-
-                np.testing.assert_almost_equal(mock_ls_fit.call_args.args[0], xs[:data_length])
-                np.testing.assert_almost_equal(mock_ls_fit.call_args.args[1], log_flux[:data_length])
-
-    def test_find_breakpoints_handles_losing_all_points_to_slope_ratio_cutoff(self):
-        config = build_swe_configuration(slope_ratio_cutoff_for_potential_calc=0.5)
-
-        xs = np.arange(10)
-
-        slope_ratios = np.array([0.51, 0.4, 0.3, 0.2, 0.1, 0.1, 0.1, 0.1])
-        slopes = np.cumprod(np.append(0.1, slope_ratios))
-        energy_deltas = np.diff(xs)
-        initial = 10000
-        diff_log_flux = -slopes * energy_deltas
-        log_flux = np.cumsum(np.append(np.log(initial), diff_log_flux))
-        avg_flux = np.exp(log_flux)
-        spacecraft_potential, core_halo_breakpoint = find_breakpoints(
-            xs, avg_flux, [10, 10, 11], [80, 80, 82], config)
-
-        self.assertEqual(11, spacecraft_potential)
-        self.assertEqual(82, core_halo_breakpoint)
-
-    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.ls_fit')
-    def test_try_curve_fit_until_valid(self, mock_ls_fit):
-        cases = [
-            ("happy case", [1, 3, 10, 2, 80, 1], 1, 15),
-            ("b[1] <= 0", [1, -1, 10, 2, 80, 3], 2, 15),
-            ("b[3] <= 0", [1, 3, 10, -1, 80, 3], 2, 15),
-            ("b[5] <= 0", [1, 3, 10, 2, 80, -1], 2, 15),
-            ("b[2] >= b[4]", [1, 15, 18, 30, 16, 100], 2, 15),
-            ("b[4] <= 15", [1, 3, 10, 2, 12, 1], 2, 15),
-            ("b[2] <= energies[0]", [1, 3, 0.8, 2, 80, 1], 2, 15),
-            ("b[2] >= 20", [1, 3, 25, 2, 80, 1], 2, 15),
-            ("b[2] >= 2x spacecraft potential", [1, 3, 15, 2, 80, 1], 2, 6),
-        ]
-
-        for name, curve_fit_first_result, call_count, latest_spacecraft_potential in cases:
-            with self.subTest(name):
-                mock_ls_fit.reset_mock()
-                mock_ls_fit.side_effect = [
-                    curve_fit_first_result,
-                    [1, 3, 10, 2, 80, 1]
-                ]
-                energies = [1, 10, 20, 50, 100, 250]
-                log_flux = [.1, 1, 10, 100, 1000, 10000]
-                initial_guesses = (0, 1, 2, 3, 4, 5)
-                latest_core_halo_breakpoint = 10
-                delta_b2 = -1
-                delta_b4 = 10
-
-                returned_fit = try_curve_fit_until_valid(energies, log_flux, initial_guesses,
-                                                         latest_spacecraft_potential, latest_core_halo_breakpoint,
-                                                         delta_b2,
-                                                         delta_b4)
-                self.assertEqual(call_count, mock_ls_fit.call_count)
-                self.assertEqual(call(energies, log_flux, initial_guesses),
-                                 mock_ls_fit.call_args_list[0])
-                if call_count > 1:
-                    modified_guesses = [0, 1, 2 + delta_b2, 3, 4 + delta_b4, 5]
-                    self.assertEqual(call(energies, log_flux, modified_guesses),
-                                     mock_ls_fit.call_args_list[1])
-                self.assertEqual((10, 80), returned_fit)
-
-    @patch('imap_l3_processing.swe.l3.science.pitch_calculations.ls_fit')
-    def test_try_curve_fit_until_valid_tries_up_to_3_times(self, mock_ls_fit):
-        good_fit = ([1, 3, 10, 2, 80, 1])
-        bad_fit = ([1, 3, -20, 2, 80, 1])
-        cases = [
-            ("passes without changing b values", 1, [good_fit], 2, 4, (10, 80)),
-            ("passes after 1 loop", 2, [bad_fit, good_fit], 1, 14, (10, 80)),
-            ("passes after 2 loop", 3, [bad_fit, bad_fit, good_fit], 0, 24, (10, 80)),
-            ("passes after 3 loop", 4, [bad_fit, bad_fit, bad_fit, good_fit], -1, 34, (10, 80)),
-            ("does not pass after 3 loops", 4, [bad_fit, bad_fit, bad_fit, bad_fit], -1, 34, (15, 75)),
-        ]
-        for name, call_count, curve_fit_return_values, \
-                expected_last_b2_guess, expected_last_b4_guess, \
-                expected_result in cases:
-            with self.subTest(name):
-                mock_ls_fit.reset_mock()
-                mock_ls_fit.side_effect = curve_fit_return_values
-                energies = [1, 10, 20, 50, 100, 250]
-                log_flux = [.1, 1, 10, 100, 1000, 10000]
-                initial_guesses = (0, 1, 2, 3, 4, 5)
-                delta_b2 = -1
-                delta_b4 = 10
-
-                result = try_curve_fit_until_valid(energies, log_flux, initial_guesses,
-                                                   15, 75, delta_b2,
-                                                   delta_b4)
-                self.assertEqual(call_count, mock_ls_fit.call_count)
-                last_guesses = mock_ls_fit.call_args.args[2]
-                self.assertEqual(last_guesses[2], expected_last_b2_guess)
-                self.assertEqual(last_guesses[4], expected_last_b4_guess)
-                self.assertEqual(expected_result, result)
+        sc_pot_to_test, ch_break_to_test, quality_flag_to_test = mec_breakpoint_finder(energies, average_psd)
+        expected_values = [np.float64(8.79240175),np.float64(75.63348660999998)]
+        self.assertAlmostEqual(expected_values[0], sc_pot_to_test)
+        self.assertAlmostEqual(expected_values[1], ch_break_to_test)
+        self.assertEqual(SweL3Flags.NONE, quality_flag_to_test)
 
     def test_rebin_by_pitch_angle(self):
         flux = np.array([1000, 10, 32, 256])
@@ -768,112 +603,6 @@ class TestPitchCalculations(unittest.TestCase):
         np.testing.assert_array_almost_equal(actual_intensity_uncertainty_by_pa_and_gyro,
                                              expected_uncertainty_by_pa_gyro)
         np.testing.assert_array_almost_equal(actual_intensity_uncertainty_by_pa, expected_uncertainty_by_pa)
-
-    def test_lsfit(self):
-
-        initial_guess = [np.float64(4.473391704937145e-25), np.float64(0.19096020638749855),
-                         np.float64(6.063340103406818), np.float64(0.12037186161346533), np.float64(83.52704460466526),
-                         np.float64(0.040282464591878904)]
-
-        energies = np.array(
-            [2.55714286, 3.65142857, 5.16, 7.30571429, 10.32857143, 14.34285714, 19.95714286, 27.42857143, 38.37142857,
-             52.82857143, 73.32857143, 102.0, 142.14285714, 196.57142857, 272.0])
-
-        psd = np.array(
-            [-56.55479296157507, -56.76375798660356, -57.53496465790231, -58.00961908572603, -58.14254928568969,
-             -58.368814265394995, -58.95578128605549, -59.85513105193842, -61.139029802796635, -62.73189593308678,
-             -64.31852773524902, -65.47348354141863, -66.51468253177605, -67.62939966827234, -68.79150149983676])
-
-        expected_fit = np.array(
-            [6.71476597e-25, 3.42058474e-01, 6.00716325e+00, 1.01128559e-01, 8.01148311e+01, 1.92992352e-02])
-
-        fit = ls_fit(energies, psd, initial_guess)
-
-        np.testing.assert_array_almost_equal(fit, expected_fit)
-
-    def test_try_curve_fit_until_valid_gives_up_after_4_bad_fits(self):
-        initial_bad_guess = [5.925797921175077e-25, 0.18724903118073213, 4.112440864015557,
-                             0.15397363076239517, 74.23743613506248, 0.029443756322633966]
-        energies = np.array(
-            [2.55714286, 3.65142857, 5.16, 7.30571429, 10.32857143, 14.34285714, 19.95714286, 27.42857143,
-             38.37142857, 52.82857143, 73.32857143, 102.0, 142.14285714, 196.57142857, 272.0, 372.71428571])
-
-        psd = np.array(
-            [-56.26413449978238, -56.4690384388148, -56.77314225747658, -56.988215330802944, -57.25856400334476,
-             -57.5797875237785, -58.318166428419275, -59.468569412324065, -61.17996364351136, -63.27412512536183,
-             -64.63723959633855, -65.48143415257543, -66.35949432020823, -67.38274526815847, -68.50579882255904, -
-             69.64891974378229])
-
-        spacecraft_potential, halo_breakpoint = try_curve_fit_until_valid(energies, psd, initial_bad_guess, 3, 100,
-                                                                          -1.5, -10)
-        self.assertEqual(spacecraft_potential, 3)
-        self.assertEqual(halo_breakpoint, 100)
-
-    def test_try_curve_fit_until_valid_attempts_again(self):
-
-        initial_guess = [np.float64(3.1393252613729137e-24), np.float64(0.43616983124497205),
-                         np.float64(14.194616719775487), np.float64(0.04172457075833008), np.float64(91.99702053644349),
-                         np.float64(0.040856710760706225)]
-
-        energies = np.array(
-            [2.55714286, 3.65142857, 5.16, 7.30571429, 10.32857143, 14.34285714, 19.95714286, 27.42857143, 38.37142857,
-             52.82857143, 73.32857143, 102.0, 142.14285714, 196.57142857, 272.0, 372.71428571])
-
-        psd = np.array(
-            [-55.23338290965658, -55.71067732312106, -56.318756521655594, -56.82755277520815, -57.23748711228458,
-             -58.78220038027476, -59.01645404205638, -59.45473432132905, -60.235106156756885, -61.354895453684456,
-             -62.71973274071986, -63.8911530049006, -64.9940700713914, -66.19502869267995, -67.43704033083272, -
-             68.78958034891963])
-
-        latest_spacecraft_potential = 14.129395820280818
-        latest_core_halo_breakpoint = 94.53406293103626
-        spacecraft_potential, halo_breakpoint = try_curve_fit_until_valid(energies, psd, initial_guess,
-                                                                          latest_spacecraft_potential,
-                                                                          latest_core_halo_breakpoint, -1.5, -10)
-
-        self.assertAlmostEqual(spacecraft_potential, 14.874387243851425)
-        self.assertAlmostEqual(halo_breakpoint, 109.85461635815749)
-
-    def test_spacecraft_potential_matches_heritage_code(self):
-        energies = np.array([2.55714286, 3.65142857, 5.16, 7.30571429, 10.32857143, 14.34285714, 19.95714286,
-                             27.42857143, 38.37142857, 52.82857143, 73.32857143, 102.0, 142.14285714,
-                             196.57142857, 272.0, 372.71428571, 519.0, 712.57142857, 987.14285714, 1370.0])
-
-        cases = [
-            (
-                [3.23283052e-25, 2.55480962e-25, 1.26704353e-25, 7.55743191e-26,
-                 6.16583651e-26, 5.01600338e-26, 2.86150808e-26, 1.18947338e-26,
-                 3.29208997e-27, 6.79583049e-28, 1.46010436e-28, 4.61815072e-29,
-                 1.64616022e-29, 5.33855137e-30, 1.62662108e-30, 4.93599290e-31,
-                 1.41154820e-31, 4.10384322e-32, 1.49581193e-32, 1.00498754e-32],
-                [10],
-                [80],
-                6.37612093296215,
-                82.6628354261301,
-            ),
-            (
-                [3.813903545692864e-25, 3.006442020782414e-25,
-                 1.3129686941831112e-25, 9.668812518532953e-26, 7.15914007349482e-26,
-                 5.730862490659475e-26, 3.235795236983263e-26, 1.295168689217677e-26,
-                 3.435681475566846e-27, 7.548450205282862e-28, 2.0195915946797056e-28,
-                 7.29483542198608e-29, 2.7293948869964095e-29, 8.84074868812542e-30,
-                 2.636133339901512e-30, 7.457543785597129e-31, 1.7351203177626105e-31,
-                 3.7391585374572035e-32, 1.1503823740807066e-32, 1.0000418721498402e-32],
-                [5.429858684539795, 5.5335798263549805, 5.422885417938232],
-                [80.37294006347656, 80.40635681152344, 80.59530639648438],
-                5.30492403628744,
-                66.7688700186013,
-            )
-        ]
-
-        config = build_swe_configuration()
-        for index, (psd_list, latest_potentials, latest_breaks, expected_potential, expected_break) in enumerate(cases):
-            with self.subTest(index):
-                psd = np.array(psd_list)
-
-                potential, core_halo_break = find_breakpoints(energies, psd, latest_potentials, latest_breaks, config)
-                np.testing.assert_allclose(expected_potential, potential, rtol=1e-12)
-                np.testing.assert_allclose(expected_break, core_halo_break, rtol=1e-12)
 
 
 if __name__ == '__main__':

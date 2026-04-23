@@ -156,7 +156,7 @@ def fit_arrays_to_power_law(fluxes: np.ndarray, uncertainties: np.ndarray, energ
                 keywords = {'xval': filtered_energy, 'yval': flux, 'errval': uncertainty}
                 result = scipy.stats.linregress(np.log10(filtered_energy[positive_flux]), np.log10(flux[positive_flux]))
 
-                initial_parameters = (result.intercept, -result.slope)
+                initial_parameters = (10**result.intercept, -result.slope)
 
                 fit = mpfit(power_law, initial_parameters, keywords, par_info, nprint=0)
 
