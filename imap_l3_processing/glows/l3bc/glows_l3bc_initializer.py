@@ -9,6 +9,8 @@ from imap_data_access import ScienceFilePath, ProcessingInputCollection, Repoint
 from imap_processing.spice.repoint import set_global_repoint_table_paths
 from spacepy.pycdf import CDF
 
+from imap_l3_processing.glows.descriptors import BAD_DAYS_LIST_DESCRIPTOR, WAW_HELIOION_DESCRIPTOR, \
+    UV_ANISOTROPY_1CR_DESCRIPTOR, PIPELINE_SETTINGS_L3BCDE_DESCRIPTOR, GLOWS_L3B_DESCRIPTOR, GLOWS_L3C_DESCRIPTOR
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.models import CRToProcess, ExternalDependencies
 from imap_l3_processing.glows.l3bc.utils import get_date_range_of_cr, get_best_ancillary, \
@@ -46,21 +48,21 @@ class GlowsL3BCInitializer:
         cr_to_l3a_file_names = GlowsL3BCInitializer.group_l3a_by_cr(l3a_files_names)
 
         l3b_query_result = imap_data_access.query(instrument="glows", data_level="l3b",
-                                                  descriptor="ion-rate-profile", version="latest")
-        l3c_query_result = imap_data_access.query(instrument="glows", data_level="l3c", descriptor="sw-profile",
+                                                  descriptor=GLOWS_L3B_DESCRIPTOR, version="latest")
+        l3c_query_result = imap_data_access.query(instrument="glows", data_level="l3c", descriptor=GLOWS_L3C_DESCRIPTOR,
                                                   version="latest")
 
         l3bs_by_cr = {int(result['cr']): Path(result["file_path"]).name for result in l3b_query_result}
         l3cs_by_cr = {int(result['cr']): Path(result["file_path"]).name for result in l3c_query_result}
 
         uv_anisotropy_query_result = imap_data_access.query(table="ancillary", instrument="glows",
-                                                            descriptor="uv-anisotropy-1CR")
+                                                            descriptor=UV_ANISOTROPY_1CR_DESCRIPTOR)
         waw_helio_ion_mp_query_result = imap_data_access.query(table="ancillary", instrument="glows",
-                                                               descriptor="WawHelioIonMP")
+                                                               descriptor=WAW_HELIOION_DESCRIPTOR)
         bad_days_list_query_result = imap_data_access.query(table="ancillary", instrument="glows",
-                                                            descriptor="bad-days-list")
+                                                            descriptor=BAD_DAYS_LIST_DESCRIPTOR)
         pipeline_settings_query_result = imap_data_access.query(table="ancillary", instrument="glows",
-                                                                descriptor="pipeline-settings-l3bcde")
+                                                                descriptor=PIPELINE_SETTINGS_L3BCDE_DESCRIPTOR)
 
         logger.info("Downloading external dependencies...")
 
@@ -105,11 +107,8 @@ class GlowsL3BCInitializer:
                     cr_number
                 )
 
-                print(f"{cr_candidate=}")
-
                 if version := GlowsL3BCInitializer.should_process_cr_candidate(cr_candidate, l3bs_by_cr,
                                                                                external_dependencies):
-                    print(f"{version=}")
                     l3bc_dependencies = GlowsL3BCDependencies.download_from_cr_to_process(cr_candidate, version,
                                                                                           external_dependencies,
                                                                                           repoint_downloaded_path)

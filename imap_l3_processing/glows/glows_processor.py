@@ -17,7 +17,7 @@ from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR, GLOWS_L3E_ULTRA_SF_DESCRIPTOR, \
-    GLOWS_L3E_ULTRA_HF_DESCRIPTOR
+    GLOWS_L3E_ULTRA_HF_DESCRIPTOR, GLOWS_L3D_DESCRIPTOR, GLOWS_L3B_DESCRIPTOR, GLOWS_L3C_DESCRIPTOR
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.glows_toolkit.l3a_data import L3aData
 from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve
@@ -166,9 +166,9 @@ def process_l3bc(processor, initializer_data: GlowsL3BCInitializerData):
             continue
 
         l3b_metadata = InputMetadata("glows", "l3b", dependency.start_date, dependency.end_date,
-                                     f"v{dependency.version:03}", "ion-rate-profile")
+                                     f"v{dependency.version:03}", GLOWS_L3B_DESCRIPTOR)
         l3c_metadata = InputMetadata("glows", "l3c", dependency.start_date, dependency.end_date,
-                                     f"v{dependency.version:03}", "sw-profile")
+                                     f"v{dependency.version:03}", GLOWS_L3C_DESCRIPTOR)
 
         l3b_data_product = GlowsL3BIonizationRate.from_instrument_team_dictionary(l3b_data, l3b_metadata)
         l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data, l3c_metadata)
@@ -244,7 +244,7 @@ def process_l3d(dependencies: GlowsL3DDependencies, version: int) -> Optional[Gl
         file_name = f'imap_glows_l3d_solar-params-history_19470303-cr0{last_processed_cr}_v00.json'
 
         start_date = datetime(1947, 3, 3)
-        data_product_metadata = InputMetadata(instrument="glows", data_level="l3d", descriptor="solar-hist",
+        data_product_metadata = InputMetadata(instrument="glows", data_level="l3d", descriptor=GLOWS_L3D_DESCRIPTOR,
                                               start_date=start_date, end_date=start_date, version=formatted_version)
         parent_file_names = get_parent_file_names_from_l3d_json(PATH_TO_L3D_TOOLKIT / 'data_l3d')
 
@@ -462,17 +462,18 @@ def process_l3e(initializer_data: GlowsL3EInitializerOutput):
                 products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, start_repointing, epoch_delta, 135, hi_45_version))
 
             ul_parent_file_names = initializer_data.dependencies.get_ul_parents()
-            ul_version = initializer_data.repointings.ultra_repointings[repointing]
+            ul_sf_version = initializer_data.repointings.ultra_sf_repointings[repointing]
+            ul_hf_version = initializer_data.repointings.ultra_hf_repointings[repointing]
 
             with SwallowExceptionAndLog(
                     f"Exception encountered when processing L3e ultra SF for repointing {repointing}"):
                 products_list.extend(
-                    process_l3e_ul_sf(ul_parent_file_names, repointing, start_repointing, epoch_delta, ul_version))
+                    process_l3e_ul_sf(ul_parent_file_names, repointing, start_repointing, epoch_delta, ul_sf_version))
 
             with SwallowExceptionAndLog(
                     f"Exception encountered when processing L3e ultra HF for repointing {repointing}"):
                 products_list.extend(
-                    process_l3e_ul_hf(ul_parent_file_names, repointing, start_repointing, epoch_delta, ul_version))
+                    process_l3e_ul_hf(ul_parent_file_names, repointing, start_repointing, epoch_delta, ul_hf_version))
 
     return products_list
 

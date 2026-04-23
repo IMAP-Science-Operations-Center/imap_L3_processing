@@ -5,7 +5,24 @@ GLOWS_EXTRA_HELIOSPHERIC_BACKGROUND_DESCRIPTOR = "l3a-map-of-extra-helio-bckgrd"
 GLOWS_PIPELINE_SETTINGS_DESCRIPTOR = "pipeline-settings"
 
 GLOWS_L3A_DESCRIPTOR = "hist"
+GLOWS_L3B_DESCRIPTOR = "ion-rate-profile"
+GLOWS_L3C_DESCRIPTOR = "sw-profile"
 GLOWS_L3D_DESCRIPTOR = 'solar-hist'
 
+WAW_HELIOION_DESCRIPTOR = "WawHelioIonMP"
+BAD_DAYS_LIST_DESCRIPTOR = "bad-days-list"
+UV_ANISOTROPY_1CR_DESCRIPTOR = "uv-anisotropy-1CR"
+
+PLASMA_SPEED_DESCRIPTOR = 'plasma-speed-2026a'
+PROTON_DENSITY_DESCRIPTOR = "proton-density-2026a"
+UV_ANISOTROPY_DESCRIPTOR = "uv-anisotropy-2026a"
+PHOTOION_DESCRIPTOR = "photoion-2026a"
+LYA_DESCRIPTOR = "lya-2026a"
+ELECTRON_DENSITY_DESCRIPTOR = "electron-density-2026a"
+PIPELINE_SETTINGS_L3BCDE_DESCRIPTOR = "pipeline-settings-l3bcde"
+
+GLOWS_L3E_HI_45_DESCRIPTOR = 'survival-probability-hi-45'
+GLOWS_L3E_HI_90_DESCRIPTOR = 'survival-probability-hi-90'
+GLOWS_L3E_LO_DESCRIPTOR = 'survival-probability-lo'
 GLOWS_L3E_ULTRA_SF_DESCRIPTOR = 'survival-probability-ul-sf'
 GLOWS_L3E_ULTRA_HF_DESCRIPTOR = 'survival-probability-ul-hf'

@@ -5,6 +5,9 @@ from typing import Optional
 import imap_data_access
 from imap_data_access import ProcessingInputCollection, ScienceInput, AncillaryInput, ScienceFilePath
 
+from imap_l3_processing.glows.descriptors import PLASMA_SPEED_DESCRIPTOR, PROTON_DENSITY_DESCRIPTOR, \
+    UV_ANISOTROPY_DESCRIPTOR, PHOTOION_DESCRIPTOR, LYA_DESCRIPTOR, ELECTRON_DENSITY_DESCRIPTOR, \
+    PIPELINE_SETTINGS_L3BCDE_DESCRIPTOR, GLOWS_L3D_DESCRIPTOR
 from imap_l3_processing.glows.l3bc.models import ExternalDependencies, read_pipeline_settings
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3d.utils import query_for_most_recent_l3d
@@ -22,17 +25,49 @@ class GlowsL3DInitializer:
             logger.info("Found no L3b and L3c files!")
             return None
 
-        most_recent_l3d = query_for_most_recent_l3d("solar-hist")
+        most_recent_l3d = query_for_most_recent_l3d(GLOWS_L3D_DESCRIPTOR)
 
-        # @formatter:off
-        [plasma_speed_2010a] = imap_data_access.query(table='ancillary', instrument='glows', descriptor='plasma-speed-2010a', version='latest')
-        [proton_density_2010a] = imap_data_access.query(table='ancillary', instrument='glows', descriptor='proton-density-2010a', version='latest')
-        [uv_anisotropy_2010a] = imap_data_access.query(table='ancillary', instrument='glows', descriptor='uv-anisotropy-2010a', version='latest')
-        [photoion_2010a] = imap_data_access.query(table='ancillary', instrument='glows', descriptor='photoion-2010a', version='latest')
-        [lya_2010a] = imap_data_access.query(table='ancillary', instrument='glows', descriptor='lya-2010a', version='latest')
-        [electron_density_2010a] = imap_data_access.query(table='ancillary', instrument='glows', descriptor='electron-density-2010a', version='latest')
-        [pipeline_settings_l3bcde] = imap_data_access.query(table='ancillary', instrument='glows', descriptor='pipeline-settings-l3bcde', version='latest')
-        # @formatter:on
+        [plasma_speed_2026a] = imap_data_access.query(
+            table='ancillary',
+            instrument='glows',
+            descriptor=PLASMA_SPEED_DESCRIPTOR,
+            version='latest'
+        )
+        [proton_density_2026a] = imap_data_access.query(
+            table='ancillary',
+            instrument='glows',
+            descriptor=PROTON_DENSITY_DESCRIPTOR,
+            version='latest'
+        )
+        [uv_anisotropy_2026a] = imap_data_access.query(
+            table='ancillary',
+            instrument='glows',
+            descriptor=UV_ANISOTROPY_DESCRIPTOR,
+            version='latest')
+        [photoion_2026a] = imap_data_access.query(
+            table='ancillary',
+            instrument='glows',
+            descriptor=PHOTOION_DESCRIPTOR,
+            version='latest'
+        )
+        [lya_2026a] = imap_data_access.query(
+            table='ancillary',
+            instrument='glows',
+            descriptor=LYA_DESCRIPTOR,
+            version='latest'
+        )
+        [electron_density_2026a] = imap_data_access.query(
+            table='ancillary',
+            instrument='glows',
+            descriptor=ELECTRON_DENSITY_DESCRIPTOR,
+            version='latest'
+        )
+        [pipeline_settings_l3bcde] = imap_data_access.query(
+            table='ancillary',
+            instrument='glows',
+            descriptor=PIPELINE_SETTINGS_L3BCDE_DESCRIPTOR,
+            version='latest'
+        )
 
         pipeline_settings_filename = Path(pipeline_settings_l3bcde["file_path"]).name
         pipeline_settings = read_pipeline_settings(imap_data_access.download(pipeline_settings_filename))
@@ -46,24 +81,24 @@ class GlowsL3DInitializer:
 
         processing_input_collection = ProcessingInputCollection(
             *[ScienceInput(science_file) for science_file in l3bs + l3cs],
-            AncillaryInput(plasma_speed_2010a["file_path"]),
-            AncillaryInput(proton_density_2010a["file_path"]),
-            AncillaryInput(uv_anisotropy_2010a["file_path"]),
-            AncillaryInput(photoion_2010a["file_path"]),
-            AncillaryInput(lya_2010a["file_path"]),
-            AncillaryInput(electron_density_2010a["file_path"]),
+            AncillaryInput(plasma_speed_2026a["file_path"]),
+            AncillaryInput(proton_density_2026a["file_path"]),
+            AncillaryInput(uv_anisotropy_2026a["file_path"]),
+            AncillaryInput(photoion_2026a["file_path"]),
+            AncillaryInput(lya_2026a["file_path"]),
+            AncillaryInput(electron_density_2026a["file_path"]),
             AncillaryInput(pipeline_settings_l3bcde["file_path"]),
         )
 
         updated_input_files = {
             *l3bs,
             *l3cs,
-            Path(plasma_speed_2010a['file_path']).name,
-            Path(proton_density_2010a['file_path']).name,
-            Path(uv_anisotropy_2010a['file_path']).name,
-            Path(photoion_2010a['file_path']).name,
-            Path(lya_2010a['file_path']).name,
-            Path(electron_density_2010a['file_path']).name,
+            Path(plasma_speed_2026a['file_path']).name,
+            Path(proton_density_2026a['file_path']).name,
+            Path(uv_anisotropy_2026a['file_path']).name,
+            Path(photoion_2026a['file_path']).name,
+            Path(lya_2026a['file_path']).name,
+            Path(electron_density_2026a['file_path']).name,
         }
 
         if most_recent_l3d is not None:

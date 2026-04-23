@@ -4,6 +4,9 @@ from pathlib import Path
 import imap_data_access
 from imap_data_access.processing_input import ProcessingInputCollection
 
+from imap_l3_processing.glows.descriptors import PROTON_DENSITY_DESCRIPTOR, PLASMA_SPEED_DESCRIPTOR, \
+    UV_ANISOTROPY_DESCRIPTOR, PHOTOION_DESCRIPTOR, LYA_DESCRIPTOR, ELECTRON_DENSITY_DESCRIPTOR, \
+    PIPELINE_SETTINGS_L3BCDE_DESCRIPTOR, GLOWS_L3B_DESCRIPTOR, GLOWS_L3C_DESCRIPTOR
 from imap_l3_processing.glows.l3bc.models import ExternalDependencies
 
 
@@ -16,13 +19,13 @@ class GlowsL3DDependencies:
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection, external_dependencies: ExternalDependencies):
-        plasma_speed_legendre_path = dependencies.get_file_paths(source='glows', descriptor='plasma-speed-2010a')
-        proton_density_legendre_path = dependencies.get_file_paths(source='glows', descriptor='proton-density-2010a')
-        uv_anisotropy_path = dependencies.get_file_paths(source='glows', descriptor='uv-anisotropy-2010a')
-        photoion_path = dependencies.get_file_paths(source='glows', descriptor='photoion-2010a')
-        lya_path = dependencies.get_file_paths(source='glows', descriptor='lya-2010a')
-        electron_density_path = dependencies.get_file_paths(source='glows', descriptor='electron-density-2010a')
-        pipeline_settings_l3bc_path = dependencies.get_file_paths(source='glows', descriptor='pipeline-settings-l3bcde')
+        plasma_speed_legendre_path = dependencies.get_file_paths(source='glows', descriptor=PLASMA_SPEED_DESCRIPTOR)
+        proton_density_legendre_path = dependencies.get_file_paths(source='glows', descriptor=PROTON_DENSITY_DESCRIPTOR)
+        uv_anisotropy_path = dependencies.get_file_paths(source='glows', descriptor=UV_ANISOTROPY_DESCRIPTOR)
+        photoion_path = dependencies.get_file_paths(source='glows', descriptor=PHOTOION_DESCRIPTOR)
+        lya_path = dependencies.get_file_paths(source='glows', descriptor=LYA_DESCRIPTOR)
+        electron_density_path = dependencies.get_file_paths(source='glows', descriptor=ELECTRON_DENSITY_DESCRIPTOR)
+        pipeline_settings_l3bc_path = dependencies.get_file_paths(source='glows', descriptor=PIPELINE_SETTINGS_L3BCDE_DESCRIPTOR)
 
         plasma_speed_legendre = imap_data_access.download(str(plasma_speed_legendre_path[0]))
         proton_density_legendre = imap_data_access.download(str(proton_density_legendre_path[0]))
@@ -32,8 +35,8 @@ class GlowsL3DDependencies:
         electron_density = imap_data_access.download(str(electron_density_path[0]))
         pipeline_settings_l3bc = imap_data_access.download(str(pipeline_settings_l3bc_path[0]))
 
-        l3b_file_names = dependencies.get_file_paths(source="glows", descriptor="ion-rate-profile")
-        l3c_file_names = dependencies.get_file_paths(source="glows", descriptor="sw-profile")
+        l3b_file_names = dependencies.get_file_paths(source="glows", descriptor=GLOWS_L3B_DESCRIPTOR)
+        l3c_file_names = dependencies.get_file_paths(source="glows", descriptor=GLOWS_L3C_DESCRIPTOR)
 
         l3b_file_paths = [imap_data_access.download(l3b) for l3b in l3b_file_names]
         l3c_file_paths = [imap_data_access.download(l3c) for l3c in l3c_file_names]

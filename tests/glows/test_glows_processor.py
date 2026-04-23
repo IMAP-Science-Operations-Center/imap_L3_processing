@@ -88,7 +88,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                 hi_90_repointings={},
                 hi_45_repointings={},
                 lo_repointings={},
-                ultra_repointings={},
+                ultra_sf_repointings={},
+                ultra_hf_repointings={},
             )
         )
 
@@ -1072,7 +1073,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                 hi_90_repointings={25: 1},
                 hi_45_repointings={25: 2},
                 lo_repointings={25: 3},
-                ultra_repointings={25: 4}
+                ultra_sf_repointings={25: 4},
+                ultra_hf_repointings={25: 4},
             )
         )
 
@@ -1401,7 +1403,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_lo')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_ul_hf')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_ul_sf')
-    def test_process_l3e_skips_repointing_on_exception(self, mock_process_ultra, mock_process_ultra_hf, mock_process_lo,
+    def test_process_l3e_skips_repointing_on_exception(self, mock_process_ultra_sf, mock_process_ultra_hf, mock_process_lo,
                                                        mock_process_hi, mock_get_pointing_date_range,
                                                        mock_get_lo_pivot_angles):
 
@@ -1419,7 +1421,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             [Path('path/to/fourth_lo_l3e')],
         ]
 
-        mock_process_ultra.side_effect = [
+        mock_process_ultra_sf.side_effect = [
             [Path('path/to/first_ultra_l3e')],
             [Path('path/to/second_ultra_l3e')],
             ValueError("Failed to generate ultra!"),
@@ -1497,7 +1499,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                 hi_90_repointings={24: 1, 25: 1, 26: 1, 27: 1},
                 hi_45_repointings={24: 2, 25: 2, 26: 2, 27: 2},
                 lo_repointings={24: 3, 25: 3, 26: 3, 27: 3},
-                ultra_repointings={24: 4, 25: 4, 26: 4, 27: 4},
+                ultra_hf_repointings={24: 4, 25: 4, 26: 4, 27: 4},
+                ultra_sf_repointings={24: 4, 25: 4, 26: 4, 27: 4},
             )
         )
 
@@ -1522,7 +1525,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             call(lo_parents, 27, start_epoch_4, epoch_delta_4, 90, 3),
         ])
 
-        mock_process_ultra.assert_has_calls([
+        mock_process_ultra_sf.assert_has_calls([
             call(ultra_parents, 24, start_epoch_1, epoch_delta_1, 4),
             call(ultra_parents, 25, start_epoch_2, epoch_delta_2, 4),
             call(ultra_parents, 26, start_epoch_3, epoch_delta_3, 4),

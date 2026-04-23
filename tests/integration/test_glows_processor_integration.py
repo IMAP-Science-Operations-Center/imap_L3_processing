@@ -34,7 +34,7 @@ from tests.test_helpers import get_test_data_path, get_test_instrument_team_data
 
 GLOWS_L3E_INTEGRATION_DATA_DIR = get_run_local_data_path("glows_l3bcde_integration_data_dir")
 INTEGRATION_TEST_DATA = Path(__file__).parent / "test_data"
-GLOWS_TEST_DATA = INTEGRATION_TEST_DATA / "glows"
+GLOWS_TEST_DATA = get_test_data_path("glows")
 
 
 def generate_test_function_import_path(fn: Callable) -> str:
@@ -163,36 +163,32 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
 
         self.assertEqual(actual_dict['input_metadata'], expected_dict['input_metadata'])
 
-    @run_periodically(timedelta(days=14))
-    @run_test_in_docker
+    # @run_periodically(timedelta(days=14))
+    # @run_test_in_docker
     def test_l3bcde_first_time_processing(self):
         input_files = [
-            GLOWS_TEST_DATA / "imap_glows_l3a_hist_20250428-repoint01013_v001.cdf",
-            GLOWS_TEST_DATA / "imap_glows_l3a_hist_20250429-repoint01014_v001.cdf",
-            GLOWS_TEST_DATA / "imap_glows_l3a_hist_20250510-repoint01025_v001.cdf",
-            GLOWS_TEST_DATA / "imap_glows_l3a_hist_20250511-repoint01026_v001.cdf",
-            GLOWS_TEST_DATA / "imap_glows_l3a_hist_20250525-repoint01040_v001.cdf",
-            GLOWS_TEST_DATA / "imap_glows_l3a_hist_20250526-repoint01041_v001.cdf",
-            GLOWS_TEST_DATA / "imap_glows_l3a_hist_20250606-repoint01053_v001.cdf",
-            GLOWS_TEST_DATA / "imap_glows_l3a_hist_20250607-repoint01054_v001.cdf",
+            GLOWS_TEST_DATA / "imap_glows_l3a_hist_20251113-repoint00047_v001.cdf",
+            GLOWS_TEST_DATA / "imap_glows_l3a_hist_20251129-repoint00063_v001.cdf",
+            GLOWS_TEST_DATA / "imap_glows_l3a_hist_20251201-repoint00065_v001.cdf",
+            GLOWS_TEST_DATA / "imap_glows_l3a_hist_20251226-repoint00090_v001.cdf",
 
-            GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-1CR_20100101_v001.json",
-            GLOWS_TEST_DATA / "imap_glows_WawHelioIonMP_20100101_v001.json",
-            GLOWS_TEST_DATA / "imap_glows_bad-days-list_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_pipeline-settings-l3bcde_20100101_v003.json",
-            GLOWS_TEST_DATA / "imap_glows_plasma-speed-2010a_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_proton-density-2010a_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-2010a_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_photoion-2010a_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_lya-2010a_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_electron-density-2010a_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_ionization-files_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_energy-grid-lo_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_tess-xyz-8_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_energy-grid-hi_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_energy-grid-ultra_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_tess-ang-16_20100101_v001.dat",
-            INTEGRATION_TEST_DATA / "spice" / "imap_2026_269_05.repoint.csv",
+            GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-1CR_20251113_v002.json",
+            GLOWS_TEST_DATA / "imap_glows_WawHelioIonMP_20251113_v007.json",
+            GLOWS_TEST_DATA / "imap_glows_bad-days-list_20251113_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_pipeline-settings-l3bcde_20251113_v004.json",
+            GLOWS_TEST_DATA / "imap_glows_plasma-speed-2026a_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_proton-density-2026a_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-2026a_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_photoion-2026a_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_lya-2026a_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_electron-density-2026a_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_tess-ang-16_20251113_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_tess-xyz-8_20251113_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_energy-grid-lo_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_energy-grid-hi_20251113_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_energy-grid-ultra_20251113_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_ionization-files_20251113_v002.dat",
+            INTEGRATION_TEST_DATA / "spice" / "imap_2026_090_01.repoint",
             INTEGRATION_TEST_DATA / "spice" / "imap_2025_105_2026_105_01.ah.bc",
             INTEGRATION_TEST_DATA / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
             INTEGRATION_TEST_DATA / "spice" / "imap_science_108.tf",
@@ -211,7 +207,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
                 if path.exists():
                     shutil.rmtree(path)
 
-            processing_input = ProcessingInputCollection(RepointInput("imap_2026_269_05.repoint.csv"))
+            processing_input = ProcessingInputCollection(RepointInput("imap_2026_090_01.repoint"))
             input_metadata = InputMetadata(instrument="glows", data_level="l3b", descriptor="ion-rate-profile",
                                            version="v001", start_date=datetime(2000, 1, 1),
                                            end_date=datetime(2000, 1, 1))
@@ -220,256 +216,137 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             processor.process()
 
             expected_files = [
-                ScienceFilePath('imap_glows_l3b_ion-rate-profile_20250425-cr02297_v001.cdf'),
-                ScienceFilePath('imap_glows_l3b_ion-rate-profile_20250523-cr02298_v001.cdf'),
+                ScienceFilePath('imap_glows_l3b_ion-rate-profile_20251102-cr02304_v001.cdf'),
+                ScienceFilePath('imap_glows_l3b_ion-rate-profile_20251130-cr02305_v001.cdf'),
 
-                ScienceFilePath('imap_glows_l3c_sw-profile_20250425-cr02297_v001.cdf'),
-                ScienceFilePath('imap_glows_l3c_sw-profile_20250523-cr02298_v001.cdf'),
+                ScienceFilePath('imap_glows_l3c_sw-profile_20251102-cr02304_v001.cdf'),
+                ScienceFilePath('imap_glows_l3c_sw-profile_20251130-cr02305_v001.cdf'),
 
-                ScienceFilePath('imap_glows_l3d_solar-hist_19470303-cr02297_v001.cdf'),
-                AncillaryFilePath('imap_glows_uv-anis_19470303_20250509_v001.dat'),
-                AncillaryFilePath('imap_glows_lya_19470303_20250509_v001.dat'),
-                AncillaryFilePath('imap_glows_e-dens_19470303_20250509_v001.dat'),
-                AncillaryFilePath('imap_glows_p-dens_19470303_20250509_v001.dat'),
-                AncillaryFilePath('imap_glows_speed_19470303_20250509_v001.dat'),
-                AncillaryFilePath('imap_glows_phion_19470303_20250509_v001.dat'),
+                ScienceFilePath('imap_glows_l3d_solar-hist_19470303-cr02304_v001.cdf'),
+                AncillaryFilePath('imap_glows_uv-anis_19470303_20251116_v001.dat'),
+                AncillaryFilePath('imap_glows_lya_19470303_20251116_v001.dat'),
+                AncillaryFilePath('imap_glows_e-dens_19470303_20251116_v001.dat'),
+                AncillaryFilePath('imap_glows_p-dens_19470303_20251116_v001.dat'),
+                AncillaryFilePath('imap_glows_speed_19470303_20251116_v001.dat'),
+                AncillaryFilePath('imap_glows_phion_19470303_20251116_v001.dat'),
 
-                ScienceFilePath('imap_glows_l3e_survival-probability-ul-sf_20250425-repoint01010_v001.cdf'),
-                ScienceFilePath('imap_glows_l3e_survival-probability-ul-sf_20250426-repoint01011_v001.cdf'),
-                AncillaryFilePath('imap_glows_survival-probability-ul-sf-raw_20250425_v001.dat'),
-                AncillaryFilePath('imap_glows_survival-probability-ul-sf-raw_20250426_v001.dat'),
+                ScienceFilePath('imap_glows_l3e_survival-probability-ul-sf_20251102-repoint00036_v001.cdf'),
+                ScienceFilePath('imap_glows_l3e_survival-probability-ul-sf_20251115-repoint00049_v001.cdf'),
+                AncillaryFilePath('imap_glows_survival-probability-ul-sf-raw_20251102_v001.dat'),
+                AncillaryFilePath('imap_glows_survival-probability-ul-sf-raw_20251115_v001.dat'),
 
-                ScienceFilePath('imap_glows_l3e_survival-probability-ul-hf_20250425-repoint01010_v001.cdf'),
-                ScienceFilePath('imap_glows_l3e_survival-probability-ul-hf_20250426-repoint01011_v001.cdf'),
-                AncillaryFilePath('imap_glows_survival-probability-ul-hf-raw_20250425_v001.dat'),
-                AncillaryFilePath('imap_glows_survival-probability-ul-hf-raw_20250426_v001.dat'),
+                ScienceFilePath('imap_glows_l3e_survival-probability-ul-hf_20251102-repoint00036_v001.cdf'),
+                ScienceFilePath('imap_glows_l3e_survival-probability-ul-hf_20251115-repoint00049_v001.cdf'),
+                AncillaryFilePath('imap_glows_survival-probability-ul-hf-raw_20251102_v001.dat'),
+                AncillaryFilePath('imap_glows_survival-probability-ul-hf-raw_20251115_v001.dat'),
 
-                ScienceFilePath('imap_glows_l3e_survival-probability-hi-45_20250425-repoint01010_v001.cdf'),
-                ScienceFilePath('imap_glows_l3e_survival-probability-hi-45_20250426-repoint01011_v001.cdf'),
-                AncillaryFilePath('imap_glows_survival-probability-hi-45-raw_20250425_v001.dat'),
-                AncillaryFilePath('imap_glows_survival-probability-hi-45-raw_20250426_v001.dat'),
+                ScienceFilePath('imap_glows_l3e_survival-probability-hi-45_20251102-repoint00036_v001.cdf'),
+                ScienceFilePath('imap_glows_l3e_survival-probability-hi-45_20251115-repoint00049_v001.cdf'),
+                AncillaryFilePath('imap_glows_survival-probability-hi-45-raw_20251102_v001.dat'),
+                AncillaryFilePath('imap_glows_survival-probability-hi-45-raw_20251115_v001.dat'),
 
-                ScienceFilePath('imap_glows_l3e_survival-probability-hi-90_20250425-repoint01010_v001.cdf'),
-                ScienceFilePath('imap_glows_l3e_survival-probability-hi-90_20250426-repoint01011_v001.cdf'),
-                AncillaryFilePath('imap_glows_survival-probability-hi-90-raw_20250425_v001.dat'),
-                AncillaryFilePath('imap_glows_survival-probability-hi-90-raw_20250426_v001.dat'),
+                ScienceFilePath('imap_glows_l3e_survival-probability-hi-90_20251102-repoint00036_v001.cdf'),
+                ScienceFilePath('imap_glows_l3e_survival-probability-hi-90_20251115-repoint00049_v001.cdf'),
+                AncillaryFilePath('imap_glows_survival-probability-hi-90-raw_20251102_v001.dat'),
+                AncillaryFilePath('imap_glows_survival-probability-hi-90-raw_20251115_v001.dat'),
 
-                ScienceFilePath('imap_glows_l3e_survival-probability-lo_20250425-repoint01010_v001.cdf'),
-                ScienceFilePath('imap_glows_l3e_survival-probability-lo_20250426-repoint01011_v001.cdf'),
-                AncillaryFilePath('imap_glows_survival-probability-lo-raw_20250425_v001.dat'),
-                AncillaryFilePath('imap_glows_survival-probability-lo-raw_20250426_v001.dat'),
+                ScienceFilePath('imap_glows_l3e_survival-probability-lo_20251102-repoint00036_v001.cdf'),
+                ScienceFilePath('imap_glows_l3e_survival-probability-lo_20251115-repoint00049_v001.cdf'),
+                AncillaryFilePath('imap_glows_survival-probability-lo-raw_20251102_v001.dat'),
+                AncillaryFilePath('imap_glows_survival-probability-lo-raw_20251115_v001.dat'),
             ]
 
             for file_path in expected_files:
                 self.assertTrue(file_path.construct_path().exists(), msg=str(file_path.construct_path()))
 
-    @run_periodically(timedelta(days=14))
+    # @run_periodically(timedelta(days=14))
     @run_test_in_docker
     def test_l3bcde_reprocessing(self):
-        original_datetime2et = spiceypy.datetime2et
-        original_get = requests.get
-        offset = (datetime(2025, 4, 15) - datetime(2010, 1, 1)).total_seconds()
-        jan_through_apr_offset = (datetime(2026, 1, 1) - datetime(2010, 1, 1)).total_seconds()
-        apr_through_dec_offset = (datetime(2025, 4, 15) - datetime(2010, 4, 15)).total_seconds()
+        new_l3a_file = GLOWS_TEST_DATA / "imap_glows_l3a_hist_20251118-repoint00052_v001.cdf"
+        l3bcde_input_files = [
+            GLOWS_TEST_DATA / "imap_glows_l3a_hist_20251113-repoint00047_v001.cdf",
+            GLOWS_TEST_DATA / "imap_glows_l3a_hist_20251129-repoint00063_v001.cdf",
+            GLOWS_TEST_DATA / "imap_glows_l3a_hist_20251201-repoint00065_v001.cdf",
+            GLOWS_TEST_DATA / "imap_glows_l3a_hist_20251226-repoint00090_v001.cdf",
 
-        def hijack_metakernel_params(url: str, *, params: dict = {}):
-            if 'start_time' in params and 'end_time' in params:
-                params['start_time'] = str(int(int(params['start_time']) + offset))
-                params['end_time'] = str(int(int(params['end_time']) + offset))
-            return original_get(url, params=params)
+            new_l3a_file,
 
-        def determine_spice_offset(date: datetime):
-            if date.month < 4 or (date.month == 4 and date.day < 15):
-                return jan_through_apr_offset
-            else:
-                return apr_through_dec_offset
+            GLOWS_TEST_DATA / "imap_glows_l3b_ion-rate-profile_20251102-cr02304_v001.cdf",
+            GLOWS_TEST_DATA / "imap_glows_l3b_ion-rate-profile_20251130-cr02305_v001.cdf",
+            GLOWS_TEST_DATA / "imap_glows_l3c_sw-profile_20251102-cr02304_v001.cdf",
+            GLOWS_TEST_DATA / "imap_glows_l3c_sw-profile_20251130-cr02305_v001.cdf",
 
-        with (patch('spiceypy.datetime2et', side_effect=lambda x: original_datetime2et(x) + determine_spice_offset(x)),
-              patch('requests.get', side_effect=hijack_metakernel_params)):
-            new_l3a_file = GLOWS_TEST_DATA / "imap_glows_l3a_hist_20100105-repoint00153_v001.cdf"
-            l3bcde_input_files = [
-                GLOWS_TEST_DATA / "imap_glows_l3a_hist_20100104-repoint00152_v001.cdf",
-                GLOWS_TEST_DATA / "imap_glows_l3a_hist_20100128-repoint00176_v001.cdf",
-                GLOWS_TEST_DATA / "imap_glows_l3a_hist_20100424-repoint00262_v001.cdf",
-                GLOWS_TEST_DATA / "imap_glows_l3a_hist_20100518-repoint00286_v001.cdf",
-                GLOWS_TEST_DATA / "imap_glows_l3a_hist_20100520-repoint00288_v001.cdf",
+            GLOWS_TEST_DATA / "imap_glows_l3d_solar-hist_19470303-cr02304_v001.cdf",
+            GLOWS_TEST_DATA / "imap_glows_l3e_survival-probability-hi-45_20251102-repoint00036_v001.cdf",
+            GLOWS_TEST_DATA / "imap_glows_l3e_survival-probability-hi-90_20251102-repoint00036_v001.cdf",
+            GLOWS_TEST_DATA / "imap_glows_l3e_survival-probability-lo_20251102-repoint00036_v001.cdf",
+            GLOWS_TEST_DATA / "imap_glows_l3e_survival-probability-ul-hf_20251102-repoint00036_v001.cdf",
+            GLOWS_TEST_DATA / "imap_glows_l3e_survival-probability-ul-sf_20251102-repoint00036_v001.cdf",
 
-                new_l3a_file,
+            GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-1CR_20251113_v002.json",
+            GLOWS_TEST_DATA / "imap_glows_WawHelioIonMP_20251113_v007.json",
+            GLOWS_TEST_DATA / "imap_glows_bad-days-list_20251113_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_pipeline-settings-l3bcde_20251113_v004.json",
+            GLOWS_TEST_DATA / "imap_glows_plasma-speed-2026a_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_proton-density-2026a_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-2026a_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_photoion-2026a_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_lya-2026a_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_electron-density-2026a_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_tess-ang-16_20251113_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_tess-xyz-8_20251113_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_energy-grid-lo_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_energy-grid-hi_20251113_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_energy-grid-ultra_20251113_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_ionization-files_20251113_v002.dat",
+            INTEGRATION_TEST_DATA / "spice" / "imap_2026_090_01.repoint",
+            INTEGRATION_TEST_DATA / "spice" / "imap_2025_105_2026_105_01.ah.bc",
+            INTEGRATION_TEST_DATA / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
+            INTEGRATION_TEST_DATA / "spice" / "imap_science_108.tf",
+            INTEGRATION_TEST_DATA / "spice" / "naif020.tls",
+            INTEGRATION_TEST_DATA / "spice" / "imap_sclk_008.tsc",
+            INTEGRATION_TEST_DATA / "spice" / "de440.bsp",
+            INTEGRATION_TEST_DATA / "spice" / "imap_recon_20250415_20260415_v01.bsp",
+        ]
 
-                GLOWS_TEST_DATA / "imap_glows_l3b_ion-rate-profile_20100103-cr02092_v001.cdf",
-                GLOWS_TEST_DATA / "imap_glows_l3b_ion-rate-profile_20100422-cr02096_v001.cdf",
-                GLOWS_TEST_DATA / "imap_glows_l3b_ion-rate-profile_20100519-cr02097_v001.cdf",
-                GLOWS_TEST_DATA / "imap_glows_l3c_sw-profile_20100103-cr02092_v001.cdf",
-                GLOWS_TEST_DATA / "imap_glows_l3c_sw-profile_20100422-cr02096_v001.cdf",
-                GLOWS_TEST_DATA / "imap_glows_l3c_sw-profile_20100519-cr02097_v001.cdf",
+        logging.basicConfig(force=True, level=logging.INFO,
+                            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-                GLOWS_TEST_DATA / "imap_glows_l3d_solar-hist_19470303-cr02096_v001.cdf",
-                GLOWS_TEST_DATA / "imap_glows_l3e_survival-probability-hi-45_20100103-repoint00151_v001.cdf",
-                GLOWS_TEST_DATA / "imap_glows_l3e_survival-probability-hi-90_20100103-repoint00151_v001.cdf",
-                GLOWS_TEST_DATA / "imap_glows_l3e_survival-probability-lo_20100103-repoint00151_v001.cdf",
-                GLOWS_TEST_DATA / "imap_glows_l3e_survival-probability-ul-hf_20100103-repoint00151_v001.cdf",
-                GLOWS_TEST_DATA / "imap_glows_l3e_survival-probability-ul-sf_20100103-repoint00151_v001.cdf",
+        with mock_imap_data_access(get_run_local_data_path("glows_reprocessing"), l3bcde_input_files):
+            processing_input = ProcessingInputCollection(RepointInput("imap_2026_090_01.repoint"))
+            input_metadata = InputMetadata(instrument="glows", data_level="l3b", descriptor="ion-rate-profile",
+                                           version="v001", start_date=datetime(2000, 1, 1),
+                                           end_date=datetime(2000, 1, 1))
 
-                GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-1CR_20100101_v001.json",
-                GLOWS_TEST_DATA / "imap_glows_WawHelioIonMP_20100101_v001.json",
-                GLOWS_TEST_DATA / "imap_glows_bad-days-list_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_pipeline-settings-l3bcde_20100101_v003.json",
-                GLOWS_TEST_DATA / "imap_glows_plasma-speed-2010a_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_proton-density-2010a_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-2010a_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_photoion-2010a_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_lya-2010a_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_electron-density-2010a_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_ionization-files_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_energy-grid-lo_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_tess-xyz-8_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_energy-grid-hi_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_energy-grid-ultra_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_tess-ang-16_20100101_v001.dat",
-                INTEGRATION_TEST_DATA / "spice" / "imap_2026_269_15.repoint",
-                INTEGRATION_TEST_DATA / "spice" / "imap_2025_105_2026_105_01.ah.bc",
-                INTEGRATION_TEST_DATA / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
-                INTEGRATION_TEST_DATA / "spice" / "imap_science_108.tf",
-                INTEGRATION_TEST_DATA / "spice" / "naif020.tls",
-                INTEGRATION_TEST_DATA / "spice" / "imap_sclk_008.tsc",
-                INTEGRATION_TEST_DATA / "spice" / "de440.bsp",
-                INTEGRATION_TEST_DATA / "spice" / "imap_recon_20250415_20260415_v01.bsp",
+            processor = GlowsProcessor(processing_input, input_metadata)
+            processor.process()
+
+            expected_files = [
+                ScienceFilePath('imap_glows_l3b_ion-rate-profile_20251102-cr02304_v002.cdf'),
+
+                ScienceFilePath('imap_glows_l3c_sw-profile_20251102-cr02304_v002.cdf'),
+
+                ScienceFilePath('imap_glows_l3d_solar-hist_19470303-cr02304_v002.cdf'),
+                AncillaryFilePath('imap_glows_uv-anis_19470303_20251116_v002.dat'),
+                AncillaryFilePath('imap_glows_lya_19470303_20251116_v002.dat'),
+                AncillaryFilePath('imap_glows_e-dens_19470303_20251116_v002.dat'),
+                AncillaryFilePath('imap_glows_p-dens_19470303_20251116_v002.dat'),
+                AncillaryFilePath('imap_glows_speed_19470303_20251116_v002.dat'),
+                AncillaryFilePath('imap_glows_phion_19470303_20251116_v002.dat'),
+
+                ScienceFilePath("imap_glows_l3e_survival-probability-hi-45_20251102-repoint00036_v002.cdf"),
+                ScienceFilePath("imap_glows_l3e_survival-probability-hi-90_20251102-repoint00036_v002.cdf"),
+                ScienceFilePath("imap_glows_l3e_survival-probability-lo_20251102-repoint00036_v002.cdf"),
+                ScienceFilePath("imap_glows_l3e_survival-probability-ul-hf_20251102-repoint00036_v002.cdf"),
+                ScienceFilePath("imap_glows_l3e_survival-probability-ul-sf_20251102-repoint00036_v002.cdf"),
             ]
 
-            logging.basicConfig(force=True, level=logging.INFO,
-                                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            for file_path in expected_files:
+                self.assertTrue(file_path.construct_path().exists(), msg=str(file_path.construct_path()))
 
-            with mock_imap_data_access(get_run_local_data_path("glows_reprocessing"), l3bcde_input_files):
-                processing_input = ProcessingInputCollection(RepointInput("imap_2026_269_15.repoint"))
-                input_metadata = InputMetadata(instrument="glows", data_level="l3b", descriptor="ion-rate-profile",
-                                               version="v001", start_date=datetime(2000, 1, 1),
-                                               end_date=datetime(2000, 1, 1))
-
-                processor = GlowsProcessor(processing_input, input_metadata)
-                processor.process()
-
-                expected_files = [
-                    ScienceFilePath('imap_glows_l3b_ion-rate-profile_20100103-cr02092_v002.cdf'),
-
-                    ScienceFilePath('imap_glows_l3c_sw-profile_20100103-cr02092_v002.cdf'),
-
-                    ScienceFilePath('imap_glows_l3d_solar-hist_19470303-cr02096_v002.cdf'),
-                    AncillaryFilePath('imap_glows_uv-anis_19470303_20100506_v002.dat'),
-                    AncillaryFilePath('imap_glows_lya_19470303_20100506_v002.dat'),
-                    AncillaryFilePath('imap_glows_e-dens_19470303_20100506_v002.dat'),
-                    AncillaryFilePath('imap_glows_p-dens_19470303_20100506_v002.dat'),
-                    AncillaryFilePath('imap_glows_speed_19470303_20100506_v002.dat'),
-                    AncillaryFilePath('imap_glows_phion_19470303_20100506_v002.dat'),
-
-                    ScienceFilePath("imap_glows_l3e_survival-probability-hi-45_20100103-repoint00151_v002.cdf"),
-                    ScienceFilePath("imap_glows_l3e_survival-probability-hi-90_20100103-repoint00151_v002.cdf"),
-                    ScienceFilePath("imap_glows_l3e_survival-probability-lo_20100103-repoint00151_v002.cdf"),
-                    ScienceFilePath("imap_glows_l3e_survival-probability-ul-hf_20100103-repoint00151_v002.cdf"),
-                    ScienceFilePath("imap_glows_l3e_survival-probability-ul-sf_20100103-repoint00151_v002.cdf"),
-                ]
-
-                for file_path in expected_files:
-                    self.assertTrue(file_path.construct_path().exists(), msg=str(file_path.construct_path()))
-
-    @skip("takes an hour to run")
+    # @run_periodically(timedelta(days=14))
     @run_test_in_docker
-    def test_local_integration(self):
-        original_datetime2et = spiceypy.datetime2et
-        original_get = requests.get
-        offset = (datetime(2025, 4, 15) - datetime(2010, 1, 1)).total_seconds()
-        jan_through_apr_offset = (datetime(2026, 1, 1) - datetime(2010, 1, 1)).total_seconds()
-        apr_through_dec_offset = (datetime(2025, 4, 15) - datetime(2010, 4, 15)).total_seconds()
-
-        def hijack_metakernel_params(url: str, *, params: dict = {}):
-            if 'start_time' in params and 'end_time' in params:
-                params['start_time'] = str(int(int(params['start_time']) + offset))
-                params['end_time'] = str(int(int(params['end_time']) + offset))
-            return original_get(url, params=params)
-
-        def determine_spice_offset(date: datetime):
-            if date.month < 4 or (date.month == 4 and date.day < 15):
-                return jan_through_apr_offset
-            else:
-                return apr_through_dec_offset
-
-        with (patch('spiceypy.datetime2et', side_effect=lambda x: original_datetime2et(x) + determine_spice_offset(x)),
-              patch('requests.get', side_effect=hijack_metakernel_params)):
-
-            ancillary_file_paths = [
-                GLOWS_TEST_DATA / "imap_glows_calibration-data_20000101_v003.dat",
-                GLOWS_TEST_DATA / "imap_glows_map-of-extra-helio-bckgrd_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_pipeline-settings_20100101_v003.json",
-                GLOWS_TEST_DATA / "imap_glows_time-dep-bckgrd_20100101_v001.dat"
-            ]
-            l2_paths = list(get_run_local_data_path("glows_l2_cdfs").iterdir())
-            input_files = l2_paths + ancillary_file_paths
-
-            l3a_integration_data_dir = get_run_local_data_path("glows_local_integration_l3a")
-
-            with (mock_imap_data_access(l3a_integration_data_dir, input_files)):
-                for i, l2_path in enumerate(l2_paths):
-                    l2_science_file_path = ScienceFilePath(l2_path)
-                    l2_science_input = ScienceInput(l2_path.name)
-                    input_files.extend(ancillary_file_paths)
-
-                    input_metadata = InputMetadata(
-                        instrument="glows",
-                        data_level="l3a",
-                        start_date=l2_science_input.get_time_range()[0],
-                        end_date=l2_science_input.get_time_range()[1],
-                        version="v001",
-                        descriptor="hist",
-                        repointing=l2_science_file_path.repointing,
-                    )
-
-                    processingInputs = [AncillaryInput(ancillary.name) for ancillary in ancillary_file_paths] + \
-                                       [l2_science_input]
-                    processor = GlowsProcessor(ProcessingInputCollection(*processingInputs), input_metadata)
-                    _ = processor.process()
-
-            l3bcde_input_files = [
-                GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-1CR_20100101_v001.json",
-                GLOWS_TEST_DATA / "imap_glows_WawHelioIonMP_20100101_v001.json",
-                GLOWS_TEST_DATA / "imap_glows_bad-days-list_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_pipeline-settings-l3bcde_20100101_v003.json",
-                GLOWS_TEST_DATA / "imap_glows_plasma-speed-2010a_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_proton-density-2010a_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-2010a_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_photoion-2010a_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_lya-2010a_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_electron-density-2010a_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_ionization-files_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_energy-grid-lo_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_tess-xyz-8_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_energy-grid-hi_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_energy-grid-ultra_20100101_v001.dat",
-                GLOWS_TEST_DATA / "imap_glows_tess-ang-16_20100101_v001.dat",
-                INTEGRATION_TEST_DATA / "spice" / "imap_2026_269_15.repoint",
-                INTEGRATION_TEST_DATA / "spice" / "imap_2025_105_2026_105_01.ah.bc",
-                INTEGRATION_TEST_DATA / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
-                INTEGRATION_TEST_DATA / "spice" / "imap_science_108.tf",
-                INTEGRATION_TEST_DATA / "spice" / "naif020.tls",
-                INTEGRATION_TEST_DATA / "spice" / "imap_sclk_008.tsc",
-                INTEGRATION_TEST_DATA / "spice" / "de440.bsp",
-                INTEGRATION_TEST_DATA / "spice" / "imap_recon_20250415_20260415_v01.bsp",
-            ]
-            l3a_inputs = list((l3a_integration_data_dir / "imap/glows/l3a").rglob("*.cdf"))
-
-            logging.basicConfig(force=True, level=logging.INFO,
-                                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-            with mock_imap_data_access(get_run_local_data_path("glows_local_integration_l3bcde"),
-                                       l3bcde_input_files + l3a_inputs):
-                processing_input = ProcessingInputCollection(RepointInput("imap_2026_269_15.repoint"))
-                input_metadata = InputMetadata(instrument="glows", data_level="l3b", descriptor="ion-rate-profile",
-                                               version="v001", start_date=datetime(2000, 1, 1),
-                                               end_date=datetime(2000, 1, 1))
-
-                processor = GlowsProcessor(processing_input, input_metadata)
-                processor.process()
-
-    @run_periodically(timedelta(days=14))
-    def test_glows_l3abcde_with_prod_l2(self):
+    def test_glows_l3abcde_from_l2(self):
         ancillary_file_paths = [
             GLOWS_TEST_DATA / "imap_glows_l2-calibration_20251112_v001.dat",
             GLOWS_TEST_DATA / "imap_glows_l3a-map-of-extra-helio-bckgrd_20251112_v001.dat",
@@ -477,12 +354,12 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             GLOWS_TEST_DATA / "imap_glows_l3a-time-dep-bckgrd_20251112_v001.dat"
         ]
 
-        prod_data_folder = get_run_local_data_path("glows_prod_data")
+        prod_data_folder = get_run_local_data_path("glows_l2_from_json")
 
-        l2_paths = list((prod_data_folder / "imap/glows/l2").rglob("*.cdf"))
+        l2_paths = list(prod_data_folder.rglob("*.cdf"))
         input_files = l2_paths + ancillary_file_paths
 
-        l3a_integration_data_dir = get_run_local_data_path("test_glows_l3a_with_prod_l2")
+        l3a_integration_data_dir = get_run_local_data_path("glows_l3a_with_prod_l2")
         with (mock_imap_data_access(l3a_integration_data_dir, input_files)):
             for i, l2_path in enumerate(l2_paths):
                 l2_science_file_path = ScienceFilePath(l2_path)
@@ -511,33 +388,44 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
                     print(f"Processing L3a day {start_date} failed! Reason: {e}")
 
         l3bcde_ancillary_inputs = [
-            GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-1CR_20100101_v001.json",
-            GLOWS_TEST_DATA / "imap_glows_WawHelioIonMP_20100101_v001.json",
-            GLOWS_TEST_DATA / "imap_glows_bad-days-list_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_pipeline-settings-l3bcde_20100101_v003.json",
-            GLOWS_TEST_DATA / "imap_glows_plasma-speed-2010a_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_proton-density-2010a_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-2010a_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_photoion-2010a_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_lya-2010a_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_electron-density-2010a_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_ionization-files_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_energy-grid-lo_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_tess-xyz-8_20100101_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_WawHelioIonMP_20251113_v007.json",
+            GLOWS_TEST_DATA / "imap_glows_bad-days-list_20251113_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_electron-density-2026a_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_energy-grid-hi_20251113_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_energy-grid-lo_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_energy-grid-ultra_20251113_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_ionization-files_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_lya-2026a_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_photoion-2026a_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_pipeline-settings-l3bcde_20251113_v004.json",
+            GLOWS_TEST_DATA / "imap_glows_plasma-speed-2026a_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_proton-density-2026a_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_tess-ang-16_20251113_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_tess-xyz-8_20251113_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-1CR_20251113_v002.json",
+            GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-2026a_20251113_v002.dat",
             GLOWS_TEST_DATA / "imap_lo_elongation-data_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_energy-grid-hi_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_energy-grid-ultra_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_tess-ang-16_20100101_v001.dat",
-            GLOWS_TEST_DATA / "imap_2026_090_01.repoint"
+            GLOWS_TEST_DATA / "imap_2026_090_01.repoint",
+            INTEGRATION_TEST_DATA / "spice" / "imap_2025_105_2026_105_01.ah.bc",
+            INTEGRATION_TEST_DATA / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
+            INTEGRATION_TEST_DATA / "spice" / "imap_science_108.tf",
+            INTEGRATION_TEST_DATA / "spice" / "naif020.tls",
+            INTEGRATION_TEST_DATA / "spice" / "imap_sclk_008.tsc",
+            INTEGRATION_TEST_DATA / "spice" / "de440.bsp",
+            INTEGRATION_TEST_DATA / "spice" / "imap_recon_20250415_20260415_v01.bsp",
         ]
+
+        lo_l1b_folder = Path("/Users/harrison/Development/imap_L3_processing/data/imap/lo/l1b")
+        lo_l1b_inputs = list(lo_l1b_folder.rglob("*.cdf"))
+
         l3a_inputs = list((l3a_integration_data_dir / "imap/glows/l3a").rglob("*.cdf"))
         prod_spice_inputs = list((prod_data_folder / "imap/spice/repoint").rglob("*"))
 
         logging.basicConfig(force=True, level=logging.INFO,
                             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-        input_paths = l3bcde_ancillary_inputs + l3a_inputs + prod_spice_inputs
-        with mock_imap_data_access(get_run_local_data_path("test_glows_l3bcde_with_prod_l2"), input_paths):
+        input_paths = l3bcde_ancillary_inputs + l3a_inputs + prod_spice_inputs + lo_l1b_inputs
+        with mock_imap_data_access(get_run_local_data_path("glows_l3bcde_with_prod_l2"), input_paths):
             processing_input = ProcessingInputCollection(RepointInput("imap_2026_090_01.repoint"))
             input_metadata = InputMetadata(instrument="glows", data_level="l3b", descriptor="ion-rate-profile",
                                            version="v001", start_date=datetime(2000, 1, 1),

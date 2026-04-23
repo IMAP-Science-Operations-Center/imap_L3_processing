@@ -44,12 +44,12 @@ class TestGlowsL3DInitializer(unittest.TestCase):
             'imap_glows_l3c_sw-profile_20200101-cr00001_v000.cdf',
             'imap_glows_l3c_sw-profile_20200201-cr00002_v000.cdf',
             'imap_glows_l3c_sw-profile_20200301-cr00003_v000.cdf',
-            'imap_glows_plasma-speed-2010a_19470301_v001.dat',
-            'imap_glows_proton-density-2010a_19470301_v000.dat',
-            'imap_glows_uv-anisotropy-2010a_19470301_v000.dat',
-            'imap_glows_photoion-2010a_19470301_v000.dat',
-            'imap_glows_lya-2010a_19470301_v000.dat',
-            'imap_glows_electron-density-2010a_19470301_v000.dat',
+            'imap_glows_plasma-speed-2026a_19470301_v001.dat',
+            'imap_glows_proton-density-2026a_19470301_v000.dat',
+            'imap_glows_uv-anisotropy-2026a_19470301_v000.dat',
+            'imap_glows_photoion-2026a_19470301_v000.dat',
+            'imap_glows_lya-2026a_19470301_v000.dat',
+            'imap_glows_electron-density-2026a_19470301_v000.dat',
             'lyman-alpha-composite.nc'
         }
 
@@ -63,12 +63,12 @@ class TestGlowsL3DInitializer(unittest.TestCase):
 
         mock_query.assert_has_calls([
             call(instrument='glows', data_level="l3d", descriptor="solar-hist"),
-            call(table='ancillary', instrument='glows', descriptor='plasma-speed-2010a', version='latest'),
-            call(table='ancillary', instrument='glows', descriptor='proton-density-2010a', version='latest'),
-            call(table='ancillary', instrument='glows', descriptor='uv-anisotropy-2010a', version='latest'),
-            call(table='ancillary', instrument='glows', descriptor='photoion-2010a', version='latest'),
-            call(table='ancillary', instrument='glows', descriptor='lya-2010a', version='latest'),
-            call(table='ancillary', instrument='glows', descriptor='electron-density-2010a', version='latest'),
+            call(table='ancillary', instrument='glows', descriptor='plasma-speed-2026a', version='latest'),
+            call(table='ancillary', instrument='glows', descriptor='proton-density-2026a', version='latest'),
+            call(table='ancillary', instrument='glows', descriptor='uv-anisotropy-2026a', version='latest'),
+            call(table='ancillary', instrument='glows', descriptor='photoion-2026a', version='latest'),
+            call(table='ancillary', instrument='glows', descriptor='lya-2026a', version='latest'),
+            call(table='ancillary', instrument='glows', descriptor='electron-density-2026a', version='latest'),
             call(table='ancillary', instrument='glows', descriptor='pipeline-settings-l3bcde', version='latest'),
         ])
 
@@ -88,12 +88,12 @@ class TestGlowsL3DInitializer(unittest.TestCase):
             'imap_glows_l3c_sw-profile_20200101-cr00001_v000.cdf',
             'imap_glows_l3c_sw-profile_20200201-cr00002_v001.cdf',
             'imap_glows_l3c_sw-profile_20200301-cr00003_v000.cdf',
-            'imap_glows_plasma-speed-2010a_19470301_v001.dat',
-            'imap_glows_proton-density-2010a_19470301_v000.dat',
-            'imap_glows_uv-anisotropy-2010a_19470301_v000.dat',
-            'imap_glows_photoion-2010a_19470301_v000.dat',
-            'imap_glows_lya-2010a_19470301_v000.dat',
-            'imap_glows_electron-density-2010a_19470301_v000.dat',
+            'imap_glows_plasma-speed-2026a_19470301_v001.dat',
+            'imap_glows_proton-density-2026a_19470301_v000.dat',
+            'imap_glows_uv-anisotropy-2026a_19470301_v000.dat',
+            'imap_glows_photoion-2026a_19470301_v000.dat',
+            'imap_glows_lya-2026a_19470301_v000.dat',
+            'imap_glows_electron-density-2026a_19470301_v000.dat',
             'imap_glows_pipeline-settings-l3bcde_19470301_v000.json'
         ], pipeline_l3d_input_filenames)
 
@@ -146,12 +146,12 @@ class TestGlowsL3DInitializer(unittest.TestCase):
         mock_read_cdf_parents.return_value = {
             'imap_glows_l3b_ion-rate-profile_20200101-cr00001_v000.cdf',
             'imap_glows_l3c_sw-profile_20200101-cr00001_v000.cdf',
-            'imap_glows_plasma-speed-2010a_19470301_v001.dat',
-            'imap_glows_proton-density-2010a_19470301_v000.dat',
-            'imap_glows_uv-anisotropy-2010a_19470301_v000.dat',
-            'imap_glows_photoion-2010a_19470301_v000.dat',
-            'imap_glows_lya-2010a_19470301_v000.dat',
-            'imap_glows_electron-density-2010a_19470301_v000.dat',
+            'imap_glows_plasma-speed-2026a_19470301_v001.dat',
+            'imap_glows_proton-density-2026a_19470301_v000.dat',
+            'imap_glows_uv-anisotropy-2026a_19470301_v000.dat',
+            'imap_glows_photoion-2026a_19470301_v000.dat',
+            'imap_glows_lya-2026a_19470301_v000.dat',
+            'imap_glows_electron-density-2026a_19470301_v000.dat',
             'lyman-alpha-composite.nc'
         }
 
@@ -194,11 +194,11 @@ class TestGlowsL3DInitializer(unittest.TestCase):
     def _create_ancillary_query_results(self, l3d_query_result):
         return [
             create_mock_query_results(l3d_query_result),
-            create_mock_query_results(['imap_glows_plasma-speed-2010a_19470301_v001.dat']),
-            create_mock_query_results(['imap_glows_proton-density-2010a_19470301_v000.dat']),
-            create_mock_query_results(['imap_glows_uv-anisotropy-2010a_19470301_v000.dat']),
-            create_mock_query_results(['imap_glows_photoion-2010a_19470301_v000.dat']),
-            create_mock_query_results(['imap_glows_lya-2010a_19470301_v000.dat']),
-            create_mock_query_results(['imap_glows_electron-density-2010a_19470301_v000.dat']),
+            create_mock_query_results(['imap_glows_plasma-speed-2026a_19470301_v001.dat']),
+            create_mock_query_results(['imap_glows_proton-density-2026a_19470301_v000.dat']),
+            create_mock_query_results(['imap_glows_uv-anisotropy-2026a_19470301_v000.dat']),
+            create_mock_query_results(['imap_glows_photoion-2026a_19470301_v000.dat']),
+            create_mock_query_results(['imap_glows_lya-2026a_19470301_v000.dat']),
+            create_mock_query_results(['imap_glows_electron-density-2026a_19470301_v000.dat']),
             create_mock_query_results(['imap_glows_pipeline-settings-l3bcde_19470301_v000.json']),
         ]

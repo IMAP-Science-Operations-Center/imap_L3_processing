@@ -111,11 +111,18 @@ class TestGlowsL3EUtils(unittest.TestCase):
                 'imap_glows_l3e_survival-probability-lo_20250101-repoint03688_v007.cdf',
             ]),
             create_mock_query_results([
-                'imap_glows_l3e_survival-probability-ultra_20250101-repoint03685_v004.cdf',
-                'imap_glows_l3e_survival-probability-ultra_20250101-repoint03686_v005.cdf',
-                'imap_glows_l3e_survival-probability-ultra_20250101-repoint03687_v006.cdf',
-                'imap_glows_l3e_survival-probability-ultra_20250101-repoint03688_v007.cdf',
-                'imap_glows_l3e_survival-probability-ultra_20250101-repoint03689_v008.cdf',
+                'imap_glows_l3e_survival-probability-ul-sf_20250101-repoint03685_v004.cdf',
+                'imap_glows_l3e_survival-probability-ul-sf_20250101-repoint03686_v005.cdf',
+                'imap_glows_l3e_survival-probability-ul-sf_20250101-repoint03687_v006.cdf',
+                'imap_glows_l3e_survival-probability-ul-sf_20250101-repoint03688_v007.cdf',
+                'imap_glows_l3e_survival-probability-ul-sf_20250101-repoint03689_v008.cdf',
+            ]),
+            create_mock_query_results([
+                'imap_glows_l3e_survival-probability-ul-hf_20250101-repoint03685_v004.cdf',
+                'imap_glows_l3e_survival-probability-ul-hf_20250101-repoint03686_v005.cdf',
+                'imap_glows_l3e_survival-probability-ul-hf_20250101-repoint03687_v006.cdf',
+                'imap_glows_l3e_survival-probability-ul-hf_20250101-repoint03688_v007.cdf',
+                'imap_glows_l3e_survival-probability-ul-hf_20250101-repoint03689_v008.cdf',
             ]),
         ]
 
@@ -124,13 +131,15 @@ class TestGlowsL3EUtils(unittest.TestCase):
             call(instrument="glows", data_level="l3e", version='latest', descriptor='survival-probability-hi-90'),
             call(instrument="glows", data_level="l3e", version='latest', descriptor='survival-probability-hi-45'),
             call(instrument="glows", data_level="l3e", version='latest', descriptor='survival-probability-lo'),
-            call(instrument="glows", data_level="l3e", version='latest', descriptor='survival-probability-ul'),
+            call(instrument="glows", data_level="l3e", version='latest', descriptor='survival-probability-ul-sf'),
+            call(instrument="glows", data_level="l3e", version='latest', descriptor='survival-probability-ul-hf'),
         ])
 
         self.assertEqual(expected_hi_90_repointing_to_version, repointings.hi_90_repointings)
         self.assertEqual(expected_hi_45_repointing_to_version, repointings.hi_45_repointings)
         self.assertEqual(expected_lo_repointing_to_version, repointings.lo_repointings)
-        self.assertEqual(expected_ultra_repointing_to_version, repointings.ultra_repointings)
+        self.assertEqual(expected_ultra_repointing_to_version, repointings.ultra_sf_repointings)
+        self.assertEqual(expected_ultra_repointing_to_version, repointings.ultra_hf_repointings)
         self.assertEqual(expected_repointings, repointings.repointing_numbers)
 
     @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access.download')

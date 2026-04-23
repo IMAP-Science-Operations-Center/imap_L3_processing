@@ -13,6 +13,8 @@ from spacepy.pycdf import CDF
 from typing import Optional
 
 from imap_l3_processing.constants import ONE_AU_IN_KM, TT2000_EPOCH, ONE_SECOND_IN_NANOSECONDS
+from imap_l3_processing.glows.descriptors import GLOWS_L3E_ULTRA_HF_DESCRIPTOR, GLOWS_L3E_ULTRA_SF_DESCRIPTOR, \
+    GLOWS_L3E_LO_DESCRIPTOR, GLOWS_L3E_HI_45_DESCRIPTOR, GLOWS_L3E_HI_90_DESCRIPTOR
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import jd_fm_Carrington
 from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
 
@@ -60,12 +62,19 @@ class GlowsL3eRepointings:
     hi_90_repointings: dict[int, int]
     hi_45_repointings: dict[int, int]
     lo_repointings: dict[int, int]
-    ultra_repointings: dict[int, int]
+    ultra_sf_repointings: dict[int, int]
+    ultra_hf_repointings: dict[int, int]
 
 
 def determine_l3e_files_to_produce(first_cr_processed: int, last_processed_cr: int,
                                    repointing_path: Path) -> GlowsL3eRepointings:
-    descriptors = ['survival-probability-hi-90','survival-probability-hi-45','survival-probability-lo','survival-probability-ul']
+    descriptors = [
+        GLOWS_L3E_HI_90_DESCRIPTOR,
+        GLOWS_L3E_HI_45_DESCRIPTOR,
+        GLOWS_L3E_LO_DESCRIPTOR,
+        GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
+        GLOWS_L3E_ULTRA_HF_DESCRIPTOR,
+    ]
 
     set_global_repoint_table_paths([repointing_path])
     repointing_data = get_repoint_data()

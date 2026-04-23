@@ -62,7 +62,8 @@ class TestGlowsL3EInitializer(unittest.TestCase):
             hi_90_repointings=expected_hi_90,
             hi_45_repointings=expected_hi_45,
             lo_repointings=expected_lo,
-            ultra_repointings=expected_ultra
+            ultra_hf_repointings=expected_ultra,
+            ultra_sf_repointings=expected_ultra,
         )
 
         expected_initializer_data = GlowsL3EInitializerOutput(
@@ -170,10 +171,14 @@ class TestGlowsL3EInitializer(unittest.TestCase):
             create_mock_query_results(['imap_glows_energy-grid-ultra_20200101_v000.cdf'])[0],
             create_mock_query_results(['imap_glows_tess-ang-16_20200101_v000.cdf'])[0],
         ]
-        mock_determine_l3e_files_to_produce.return_value = GlowsL3eRepointings(repointing_numbers=[],
-                                                                               ultra_repointings={},
-                                                                               hi_45_repointings={}, lo_repointings={},
-                                                                               hi_90_repointings={})
+        mock_determine_l3e_files_to_produce.return_value = GlowsL3eRepointings(
+            repointing_numbers=[],
+            ultra_sf_repointings={},
+            ultra_hf_repointings={},
+            lo_repointings={},
+            hi_45_repointings={},
+            hi_90_repointings={}
+        )
 
         updated_l3d = Path('path/to/imap_glows_l3d_solar-hist_19470303-cr02091_v000.cdf')
         glows_l3d_processor_output = GlowsL3DProcessorOutput(updated_l3d, [], 2091)
