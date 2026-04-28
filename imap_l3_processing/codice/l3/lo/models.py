@@ -362,7 +362,7 @@ class CodiceLoDirectEventData:
                 epoch_delta=cdf[EPOCH_DELTA_VAR_NAME][...],
                 apd_energy=read_numeric_variable(cdf[APD_ENERGY_VAR_NAME]),
                 apd_id=read_variable_and_mask_fill_values(cdf[APD_ID_VAR_NAME]),
-                data_quality=cdf[DATA_QUALITY_VAR_NAME],
+                data_quality=cdf[DATA_QUALITY_VAR_NAME][...],
                 elevation=read_numeric_variable(cdf[ELEVATION_VAR_NAME]),
                 energy_per_charge=read_numeric_variable(cdf[ENERGY_PER_CHARGE_VAR_NAME]),
                 energy_step=read_numeric_variable(cdf[ENERGY_STEP_VAR_NAME]),
