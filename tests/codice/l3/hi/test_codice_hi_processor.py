@@ -262,7 +262,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
             epoch_delta_plus=epoch_delta,
             data_quality=sentinel.data_quality,
             elevation_angle=(np.array([270, 15])),
-            spin_angles=(np.array([15, 45, 75, 105, 135, 165])),
+            spin_angles=(np.array([[15, 45], [75, 105], [135, 165]])),
             h_intensities=h_intensity,
             energy_h=(np.array([1.11, 1.17])),
             energy_h_plus=(np.repeat(1.6, len(np.array([1.11, 1.17])))),
@@ -332,7 +332,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
 
         mock_get_sector_unit_vectors.assert_called_once_with(
             codice_l2_data.elevation_angle,
-            NumpyArrayMatcher((codice_l2_data.spin_angles + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360))
+            NumpyArrayMatcher((codice_l2_data.spin_angles.T + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360))
         mock_calculate_unit_vector.assert_has_calls(
             [call(NumpyArrayMatcher(rebinned_mag_data)), call(mock_get_sector_unit_vectors.return_value)])
 
