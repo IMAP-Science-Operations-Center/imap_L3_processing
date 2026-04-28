@@ -154,6 +154,20 @@ energy_bin_delta_minus:
   UNITS: keV/e
   SCALETYP: log
 
+energy_per_charge:
+  <<: *per_event
+  <<: *float_data
+  NAME: energy_per_charge
+  CATDESC: Energy per Charge
+  FIELDNAM: Energy per Charge
+  FORMAT: F12.4
+  LABLAXIS: Energy per Charge
+  SCALETYP: linear
+  UNITS: keV/q
+  VALIDMAX: 200.0
+  VALIDMIN: 0.0
+
+
 normalization:
   <<: *per_priority
   <<: *float_data
@@ -521,3 +535,17 @@ esa_step:
   VALIDMAX: 127
   VAR_TYPE: support_data
   RECORD_VARYING: NRV
+
+type:
+  <<: *per_event
+  NAME: type
+  CATDESC: Event Type
+  FIELDNAM: Type
+  LABLAXIS: Type
+  SCALETYP: linear
+  UNITS: " "
+  DATA_TYPE: CDF_UINT1
+  VALIDMAX: 4
+  VALIDMIN: 0
+  FORMAT: I1
+  FILLVAL: 255

@@ -90,22 +90,23 @@ EnergyAndSpinAngle = namedtuple(typename="EnergyAndSpinAngle", field_names=["ene
 
 @dataclass
 class CodiceLoL2DirectEventData:
-    apd_energy: ndarray
-    gain: ndarray
-    apd_id: ndarray
-    data_quality: ndarray
-    energy_step: ndarray
-    energy_per_charge: ndarray
-    multi_flag: ndarray
-    num_events: ndarray
-    spin_angle: ndarray
-    spin_sector: ndarray
-    elevation_angle: ndarray
-    tof: ndarray
-    position: ndarray
     epoch: ndarray
     epoch_delta_plus: ndarray
     epoch_delta_minus: ndarray
+    apd_energy: ndarray
+    apd_id: ndarray
+    data_quality: ndarray
+    elevation_angle: ndarray
+    energy_step: ndarray
+    energy_per_charge: ndarray
+    gain: ndarray
+    multi_flag: ndarray
+    num_events: ndarray
+    position: ndarray
+    spin_angle: ndarray
+    spin_sector: ndarray
+    tof: ndarray
+    type: ndarray
 
     @classmethod
     def read_from_cdf(cls, l2_direct_event_cdf: Path):
@@ -132,6 +133,7 @@ class CodiceLoL2DirectEventData:
                 elevation_angle=read_variable_and_mask_fill_values(cdf["elevation_angle"])[:,
                                 :CODICE_LO_L2_NUM_PRIORITIES, ...],
                 tof=read_variable_and_mask_fill_values(cdf["tof"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
+                type=read_variable_and_mask_fill_values(cdf["type"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
                 position=read_variable_and_mask_fill_values(cdf["position"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
             )
 
@@ -326,47 +328,55 @@ RGFO_ESA_STEP_VAR_NAME = "rgfo_esa_step"
 NSO_SPIN_SECTOR_VAR_NAME = "nso_spin_sector"
 NSO_ESA_STEP_VAR_NAME = "nso_esa_step"
 ESA_STEP_VAR_NAME = "esa_step"
+ENERGY_PER_CHARGE_VAR_NAME = "energy_per_charge"
+TYPE_VAR_NAME = "type"
 
 
 @dataclass
 class CodiceLoDirectEventData:
     epoch: ndarray
     epoch_delta: ndarray
-    normalization: ndarray
+    apd_energy: np.ndarray
+    apd_id: np.ndarray
+    data_quality: np.ndarray
+    energy_per_charge: np.ndarray
+    energy_step: np.ndarray
+    elevation: np.ndarray
+    gain: np.ndarray
     mass_per_charge: np.ndarray
     mass: np.ndarray
-    apd_energy: np.ndarray
-    energy_step: np.ndarray
-    gain: np.ndarray
-    apd_id: np.ndarray
     multi_flag: np.ndarray
+    normalization: ndarray
     num_events: np.ndarray
-    data_quality: np.ndarray
-    tof: np.ndarray
-    spin_angle: np.ndarray
-    elevation: np.ndarray
     position: np.ndarray
+    spin_angle: np.ndarray
+    tof: np.ndarray
+    type: np.ndarray
 
 
     @classmethod
     def read_from_cdf(cls, cdf_path: Path | str):
         with CDF(str(cdf_path)) as cdf:
-            return cls(epoch=cdf[EPOCH_VAR_NAME][...],
-                       epoch_delta=cdf[EPOCH_DELTA_VAR_NAME][...],
-                       normalization=read_numeric_variable(cdf[NORMALIZATION_VAR_NAME]),
-                       mass_per_charge=read_numeric_variable(cdf[MASS_PER_CHARGE_VAR_NAME]),
-                       mass=read_numeric_variable(cdf[MASS_VAR_NAME]),
-                       apd_energy=read_numeric_variable(cdf[APD_ENERGY_VAR_NAME]),
-                       energy_step=read_numeric_variable(cdf[ENERGY_STEP_VAR_NAME]),
-                       gain=read_variable_and_mask_fill_values(cdf[GAIN_VAR_NAME]),
-                       apd_id=read_variable_and_mask_fill_values(cdf[APD_ID_VAR_NAME]),
-                       multi_flag=read_variable_and_mask_fill_values(cdf[MULTI_FLAG_VAR_NAME]),
-                       num_events=read_variable_and_mask_fill_values(cdf[NUM_EVENTS_VAR_NAME]),
-                       data_quality=read_variable_and_mask_fill_values(cdf[DATA_QUALITY_VAR_NAME]),
-                       tof=read_variable_and_mask_fill_values(cdf[TOF_VAR_NAME]),
-                       spin_angle=read_numeric_variable(cdf[SPIN_ANGLE_VAR_NAME]),
-                       elevation=read_numeric_variable(cdf[ELEVATION_VAR_NAME]),
-                       position=read_variable_and_mask_fill_values(cdf[POSITION_VAR_NAME]), )
+            return cls(
+                epoch=cdf[EPOCH_VAR_NAME][...],
+                epoch_delta=cdf[EPOCH_DELTA_VAR_NAME][...],
+                apd_energy=read_numeric_variable(cdf[APD_ENERGY_VAR_NAME]),
+                apd_id=read_variable_and_mask_fill_values(cdf[APD_ID_VAR_NAME]),
+                data_quality=cdf[DATA_QUALITY_VAR_NAME],
+                elevation=read_numeric_variable(cdf[ELEVATION_VAR_NAME]),
+                energy_per_charge=read_numeric_variable(cdf[ENERGY_PER_CHARGE_VAR_NAME]),
+                energy_step=read_numeric_variable(cdf[ENERGY_STEP_VAR_NAME]),
+                gain=read_variable_and_mask_fill_values(cdf[GAIN_VAR_NAME]),
+                mass=read_numeric_variable(cdf[MASS_VAR_NAME]),
+                mass_per_charge=read_numeric_variable(cdf[MASS_PER_CHARGE_VAR_NAME]),
+                multi_flag=read_variable_and_mask_fill_values(cdf[MULTI_FLAG_VAR_NAME]),
+                normalization=read_numeric_variable(cdf[NORMALIZATION_VAR_NAME]),
+                num_events=read_variable_and_mask_fill_values(cdf[NUM_EVENTS_VAR_NAME]),
+                position=read_variable_and_mask_fill_values(cdf[POSITION_VAR_NAME]),
+                spin_angle=read_numeric_variable(cdf[SPIN_ANGLE_VAR_NAME]),
+                tof=read_variable_and_mask_fill_values(cdf[TOF_VAR_NAME]),
+                type=read_variable_and_mask_fill_values(cdf[TYPE_VAR_NAME]),
+            )
 
 
 @dataclass
@@ -404,43 +414,41 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
             DataProductVariable(EPOCH_VAR_NAME, self.epoch),
             DataProductVariable(EPOCH_DELTA_VAR_NAME, self.epoch_delta),
 
-            DataProductVariable(NORMALIZATION_VAR_NAME, self.normalization),
-            DataProductVariable(NORMALIZATION_PER_EVENT_VAR_NAME, self.normalization_per_event),
-
+            DataProductVariable(APD_ENERGY_VAR_NAME, self.apd_energy),
+            DataProductVariable(APD_ID_VAR_NAME, self.apd_id),
+            DataProductVariable(DATA_QUALITY_VAR_NAME, self.data_quality),
+            DataProductVariable(ELEVATION_VAR_NAME, self.elevation),
             DataProductVariable(ENERGY_BIN_VAR_NAME, self.energy_bin),
             DataProductVariable(ENERGY_BIN_DELTA_MINUS_VAR_NAME, self.energy_bin_delta_minus),
             DataProductVariable(ENERGY_BIN_DELTA_PLUS_VAR_NAME, self.energy_bin_delta_plus),
             DataProductVariable(ENERGY_BIN_LABEL_VAR_NAME, self.energy_bin_label),
-
+            DataProductVariable(ENERGY_PER_CHARGE_VAR_NAME, self.energy_per_charge),
+            DataProductVariable(ENERGY_STEP_VAR_NAME, self.energy_step),
+            DataProductVariable(ESA_STEP_VAR_NAME, self.esa_step),
+            DataProductVariable(EVENT_INDEX_VAR_NAME, self.event_index),
+            DataProductVariable(EVENT_INDEX_LABEL_VAR_NAME, self.event_index_label),
+            DataProductVariable(GAIN_VAR_NAME, self.gain),
+            DataProductVariable(HALF_SPIN_PER_ESA_STEP_VAR_NAME, self.half_spin_per_esa_step),
+            DataProductVariable(MASS_VAR_NAME, self.mass),
+            DataProductVariable(MASS_PER_CHARGE_VAR_NAME, self.mass_per_charge),
+            DataProductVariable(MULTI_FLAG_VAR_NAME, self.multi_flag),
+            DataProductVariable(NORMALIZATION_VAR_NAME, self.normalization),
+            DataProductVariable(NORMALIZATION_PER_EVENT_VAR_NAME, self.normalization_per_event),
+            DataProductVariable(NSO_ESA_STEP_VAR_NAME, self.nso_esa_step),
+            DataProductVariable(NSO_SPIN_SECTOR_VAR_NAME, self.nso_spin_sector),
+            DataProductVariable(NUM_EVENTS_VAR_NAME, self.num_events),
+            DataProductVariable(POSITION_VAR_NAME, self.position),
+            DataProductVariable(PRIORITY_INDEX_VAR_NAME, self.priority_index),
+            DataProductVariable(PRIORITY_INDEX_LABEL_VAR_NAME, self.priority_index_label),
+            DataProductVariable(RGFO_ESA_STEP_VAR_NAME, self.rgfo_esa_step),
+            DataProductVariable(RGFO_SPIN_SECTOR_VAR_NAME, self.rgfo_spin_sector),
+            DataProductVariable(SPIN_ANGLE_VAR_NAME, self.spin_angle),
             DataProductVariable(SPIN_ANGLE_BIN_VAR_NAME, self.spin_angle_bin),
             DataProductVariable(SPIN_ANGLE_DELTA_BIN_VAR_NAME, self.spin_angle_bin_delta),
             DataProductVariable(SPIN_ANGLE_BIN_LABEL_VAR_NAME, self.spin_angle_bin_label),
-
-            DataProductVariable(MASS_PER_CHARGE_VAR_NAME, self.mass_per_charge),
-            DataProductVariable(APD_ENERGY_VAR_NAME, self.apd_energy),
-            DataProductVariable(MASS_VAR_NAME, self.mass),
-            DataProductVariable(GAIN_VAR_NAME, self.gain),
-            DataProductVariable(APD_ID_VAR_NAME, self.apd_id),
-            DataProductVariable(MULTI_FLAG_VAR_NAME, self.multi_flag),
-            DataProductVariable(NUM_EVENTS_VAR_NAME, self.num_events),
-            DataProductVariable(DATA_QUALITY_VAR_NAME, self.data_quality),
-            DataProductVariable(TOF_VAR_NAME, self.tof),
-            DataProductVariable(ELEVATION_VAR_NAME, self.elevation),
-            DataProductVariable(POSITION_VAR_NAME, self.position),
-            DataProductVariable(SPIN_ANGLE_VAR_NAME, self.spin_angle),
             DataProductVariable(SPIN_SECTOR_VAR_NAME, self.spin_sector),
-            DataProductVariable(ENERGY_STEP_VAR_NAME, self.energy_step),
-
-            DataProductVariable(PRIORITY_INDEX_VAR_NAME, self.priority_index),
-            DataProductVariable(PRIORITY_INDEX_LABEL_VAR_NAME, self.priority_index_label),
-            DataProductVariable(EVENT_INDEX_VAR_NAME, self.event_index),
-            DataProductVariable(EVENT_INDEX_LABEL_VAR_NAME, self.event_index_label),
-            DataProductVariable(HALF_SPIN_PER_ESA_STEP_VAR_NAME, self.half_spin_per_esa_step),
-            DataProductVariable(RGFO_SPIN_SECTOR_VAR_NAME, self.rgfo_spin_sector),
-            DataProductVariable(RGFO_ESA_STEP_VAR_NAME, self.rgfo_esa_step),
-            DataProductVariable(NSO_SPIN_SECTOR_VAR_NAME, self.nso_spin_sector),
-            DataProductVariable(NSO_ESA_STEP_VAR_NAME, self.nso_esa_step),
-            DataProductVariable(ESA_STEP_VAR_NAME, self.esa_step),
+            DataProductVariable(TOF_VAR_NAME, self.tof),
+            DataProductVariable(TYPE_VAR_NAME, self.type),
         ]
 
 

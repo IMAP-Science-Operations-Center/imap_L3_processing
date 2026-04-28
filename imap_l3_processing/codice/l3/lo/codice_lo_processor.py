@@ -164,8 +164,10 @@ class CodiceLoProcessor(Processor):
             )
         )
 
-    def process_l3a_direct_event_data_product(self, dependencies: CodiceLoL3aDirectEventsDependencies) \
-            -> CodiceLoL3aDirectEventDataProduct:
+    def process_l3a_direct_event_data_product(
+        self,
+        dependencies: CodiceLoL3aDirectEventsDependencies
+    ) -> CodiceLoL3aDirectEventDataProduct:
         codice_sw_priority_counts_l1a_data = dependencies.codice_lo_l1a_sw_priority_rates
         codice_nsw_priority_counts_l1a_data = dependencies.codice_lo_l1a_nsw_priority_rates
         codice_direct_events = dependencies.codice_l2_direct_events
@@ -179,60 +181,63 @@ class CodiceLoProcessor(Processor):
             codice_sw_priority_counts_l1a_data.p3_heavies,
             codice_sw_priority_counts_l1a_data.p4_dcrs,
             codice_nsw_priority_counts_l1a_data.p5_heavies,
-            codice_nsw_priority_counts_l1a_data.p6_hplus_heplusplus
+            codice_nsw_priority_counts_l1a_data.p6_hplus_heplusplus,
         ]
 
         spin_angle_lut = SpinAngleLookup()
 
-        mass_per_charge = calculate_mass_per_charge(codice_direct_events.energy_per_charge,
-                                                    codice_direct_events.tof)
+        mass_per_charge = calculate_mass_per_charge(codice_direct_events.energy_per_charge, codice_direct_events.tof)
         mass = calculate_mass(codice_direct_events.apd_energy, codice_direct_events.tof, mass_coefficient_lookup)
         stacked_priorities = np.stack(priority_counts, axis=1)
-        normalization = calculate_normalization_factor(stacked_priorities, codice_direct_events.num_events,
-                                                       codice_direct_events.energy_step,
-                                                       codice_direct_events.spin_sector)
+        normalization = calculate_normalization_factor(
+            stacked_priorities,
+            codice_direct_events.num_events,
+            codice_direct_events.energy_step,
+            codice_direct_events.spin_sector,
+        )
         normalization_per_event = lookup_normalization_per_event(
             normalization,
             codice_direct_events.num_events,
             codice_direct_events.energy_step,
-            codice_direct_events.spin_sector
+            codice_direct_events.spin_sector,
         )
 
         return CodiceLoL3aDirectEventDataProduct(
             input_metadata=self.input_metadata,
             epoch=codice_direct_events.epoch,
             epoch_delta=codice_direct_events.epoch_delta_plus,
-            normalization=np.flip(normalization, axis=2),
+            apd_energy=codice_direct_events.apd_energy,
+            apd_id=codice_direct_events.apd_id,
+            data_quality=codice_direct_events.data_quality,
+            elevation=codice_direct_events.elevation_angle,
+            energy_bin=np.flip(esa_energy_per_charge_lookup.bin_centers),
+            energy_bin_delta_minus=np.flip(esa_energy_per_charge_lookup.delta_minus),
+            energy_bin_delta_plus=np.flip(esa_energy_per_charge_lookup.delta_plus),
+            energy_per_charge=codice_direct_events.energy_per_charge,
+            energy_step=codice_direct_events.energy_step,
+            esa_step=codice_sw_priority_counts_l1a_data.esa_step,
+            gain=codice_direct_events.gain,
+            half_spin_per_esa_step=codice_sw_priority_counts_l1a_data.half_spin_per_esa_step,
+            multi_flag=codice_direct_events.multi_flag,
+            nso_esa_step=codice_sw_priority_counts_l1a_data.nso_esa_step,
+            nso_spin_sector=codice_sw_priority_counts_l1a_data.nso_spin_sector,
+            num_events=codice_direct_events.num_events,
+            position=codice_direct_events.position,
             mass_per_charge=mass_per_charge,
             mass=mass,
-            apd_energy=codice_direct_events.apd_energy,
-            energy_step=codice_direct_events.energy_step,
-            gain=codice_direct_events.gain,
-            apd_id=codice_direct_events.apd_id,
-            multi_flag=codice_direct_events.multi_flag,
-            num_events=codice_direct_events.num_events,
-            tof=codice_direct_events.tof,
-            data_quality=codice_direct_events.data_quality,
+            normalization=np.flip(normalization, axis=2),
+            normalization_per_event=normalization_per_event,
+            rgfo_esa_step=codice_sw_priority_counts_l1a_data.rgfo_esa_step,
+            rgfo_spin_sector=codice_sw_priority_counts_l1a_data.rgfo_spin_sector,
             spin_angle=codice_direct_events.spin_angle,
-            elevation=codice_direct_events.elevation_angle,
-            position=codice_direct_events.position,
-            energy_bin=np.flip(esa_energy_per_charge_lookup.bin_centers),
-            energy_bin_delta_plus=np.flip(esa_energy_per_charge_lookup.delta_plus),
-            energy_bin_delta_minus=np.flip(esa_energy_per_charge_lookup.delta_minus),
             spin_angle_bin=spin_angle_lut.bin_centers,
             spin_angle_bin_delta=spin_angle_lut.bin_deltas,
-            half_spin_per_esa_step=codice_sw_priority_counts_l1a_data.half_spin_per_esa_step,
-            rgfo_spin_sector=codice_sw_priority_counts_l1a_data.rgfo_spin_sector,
-            rgfo_esa_step=codice_sw_priority_counts_l1a_data.rgfo_esa_step,
-            nso_spin_sector=codice_sw_priority_counts_l1a_data.nso_spin_sector,
-            nso_esa_step=codice_sw_priority_counts_l1a_data.nso_esa_step,
-            normalization_per_event=normalization_per_event,
             spin_sector=codice_direct_events.spin_sector,
-            esa_step=codice_sw_priority_counts_l1a_data.esa_step,
+            tof=codice_direct_events.tof,
+            type=codice_direct_events.type,
         )
 
     def process_l3a_3d_distribution_product(self, dependencies: CodiceLoL3a3dDistributionsDependencies):
-
         l3a_de_mass = dependencies.l3a_direct_event_data.mass
         l3a_de_mass_per_charge = dependencies.l3a_direct_event_data.mass_per_charge
         l3a_de_energy = dependencies.l3a_direct_event_data.energy_step

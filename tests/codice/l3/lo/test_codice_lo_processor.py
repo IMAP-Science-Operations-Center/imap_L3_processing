@@ -29,15 +29,16 @@ from imap_l3_processing.processor import Processor
 from tests.test_helpers import create_dataclass_mock, get_test_data_path, NumpyArrayMatcher
 
 
+MODULE = "imap_l3_processing.codice.l3.lo.codice_lo_processor"
+
 class TestCodiceLoProcessor(unittest.TestCase):
     def test_implements_processor(self):
         processor = CodiceLoProcessor(Mock(), Mock())
         self.assertIsInstance(processor, Processor)
 
-    @patch(
-        'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoL3aPartialDensitiesDependencies.fetch_dependencies')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor.process_l3a_partial_densities')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.save_data')
+    @patch(f'{MODULE}.CodiceLoL3aPartialDensitiesDependencies.fetch_dependencies')
+    @patch(f'{MODULE}.CodiceLoProcessor.process_l3a_partial_densities')
+    @patch(f'{MODULE}.save_data')
     @patch('imap_l3_processing.processor.spiceypy')
     def test_process_partial_densities(self, mock_spiceypy, mock_save_data, mock_process_l3a_partial_densities,
                                        mock_fetch_dependencies):
@@ -63,10 +64,9 @@ class TestCodiceLoProcessor(unittest.TestCase):
                          mock_process_l3a_partial_densities.return_value.parent_file_names)
         self.assertEqual([mock_save_data.return_value], product)
 
-    @patch(
-        'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoL3aRatiosDependencies.fetch_dependencies')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor.process_l3a_ratios')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.save_data')
+    @patch(f'{MODULE}.CodiceLoL3aRatiosDependencies.fetch_dependencies')
+    @patch(f'{MODULE}.CodiceLoProcessor.process_l3a_ratios')
+    @patch(f'{MODULE}.save_data')
     @patch('imap_l3_processing.processor.spiceypy')
     def test_process_ratios(self, mock_spiceypy, mock_save_data, mock_process_l3a_ratios,
                             mock_fetch_dependencies):
@@ -92,12 +92,10 @@ class TestCodiceLoProcessor(unittest.TestCase):
                          mock_process_l3a_ratios.return_value.parent_file_names)
         self.assertEqual([mock_save_data.return_value], product)
 
-    @patch(
-        'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoL3aRatiosDependencies.fetch_dependencies')
-    @patch(
-        'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor.process_l3a_charge_state_distributions')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.save_data')
-    @patch('imap_l3_processing.processor.spiceypy')
+    @patch(f'{MODULE}.CodiceLoL3aRatiosDependencies.fetch_dependencies')
+    @patch(f'{MODULE}.CodiceLoProcessor.process_l3a_charge_state_distributions')
+    @patch(f'{MODULE}.save_data')
+    @patch(f'imap_l3_processing.processor.spiceypy')
     def test_process_abundances(self, mock_spiceypy, mock_save_data, mock_process_l3a_abundances,
                                 mock_fetch_dependencies):
         input_collection = MagicMock()
@@ -311,11 +309,10 @@ class TestCodiceLoProcessor(unittest.TestCase):
                                                  ]
                                              ))
 
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoL3aDirectEventsDependencies.fetch_dependencies')
-    @patch(
-        'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor.process_l3a_direct_event_data_product')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.save_data')
-    @patch('imap_l3_processing.processor.spiceypy')
+    @patch(f'{MODULE}.CodiceLoL3aDirectEventsDependencies.fetch_dependencies')
+    @patch(f'{MODULE}.CodiceLoProcessor.process_l3a_direct_event_data_product')
+    @patch(f'{MODULE}.save_data')
+    @patch(f'imap_l3_processing.processor.spiceypy')
     def test_process_direct_events(self, mock_spiceypy, mock_save_data, mock_process_direct_event,
                                    mock_fetch_dependencies):
         input_collection = MagicMock()
@@ -346,7 +343,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             processor.process()
         self.assertEqual("Unknown data level and descriptor for CoDICE: L2a, bad-descriptor", str(context.exception))
 
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_partial_densities')
+    @patch(f'{MODULE}.calculate_partial_densities')
     def test_process_l3a_partial_densities(self, mock_calculate_partial_densities):
         input_collection = ProcessingInputCollection()
         input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02',
@@ -498,11 +495,11 @@ class TestCodiceLoProcessor(unittest.TestCase):
         self.assertEqual(fe_loq_partial_density, result_data.fe_loq_partial_density),
         self.assertEqual(fe_hiq_partial_density, result_data.fe_hiq_partial_density),
 
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.SpinAngleLookup')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.lookup_normalization_per_event', autospec=True)
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_normalization_factor', autospec=True)
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_mass_per_charge', autospec=True)
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.calculate_mass', autospec=True)
+    @patch(f'{MODULE}.SpinAngleLookup')
+    @patch(f'{MODULE}.lookup_normalization_per_event', autospec=True)
+    @patch(f'{MODULE}.calculate_normalization_factor', autospec=True)
+    @patch(f'{MODULE}.calculate_mass_per_charge', autospec=True)
+    @patch(f'{MODULE}.calculate_mass', autospec=True)
     def test_process_l3a_direct_events(self, mock_calculate_mass, mock_calculate_mass_per_charge,
                                        mock_calculate_normalization_factor,
                                        mock_lookup_normalization_per_event,
@@ -556,19 +553,20 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         expected_energy_per_charge = codice_l2_variables["energy_per_charge"]
         expected_apd_energy = codice_l2_variables["apd_energy"]
-        expected_apd_gain = codice_l2_variables["gain"]
         expected_apd_id = codice_l2_variables["apd_id"]
+        expected_data_quality = codice_l2_variables["data_quality"]
+        expected_energy_step = codice_l2_variables["energy_step"]
+        expected_apd_gain = codice_l2_variables["gain"]
         expected_multi_flag = codice_l2_variables["multi_flag"]
-        expected_tof = codice_l2_variables["tof"]
         expected_elevation = codice_l2_variables["elevation_angle"]
         expected_position = codice_l2_variables["position"]
         expected_mass = mass
         expected_mass_per_charge = mass_per_charge
-        expected_data_quality = codice_l2_variables["data_quality"]
         expected_num_events = codice_l2_variables["num_events"]
-        expected_energy_step = codice_l2_variables["energy_step"]
         expected_spin_angle = codice_l2_variables["spin_angle"]
         expected_spin_sector = codice_l2_variables["spin_sector"]
+        expected_tof = codice_l2_variables["tof"]
+        expected_type = codice_l2_variables["type"]
 
         direct_events = CodiceLoL2DirectEventData(**codice_l2_variables)
 
@@ -625,28 +623,32 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(l3a_direct_event_data_product.epoch, epochs)
         np.testing.assert_array_equal(l3a_direct_event_data_product.epoch_delta, direct_events.epoch_delta_plus)
 
-        np.testing.assert_array_equal(np.arange(CODICE_LO_L2_NUM_PRIORITIES),
-                                      l3a_direct_event_data_product.priority_index)
+        np.testing.assert_array_equal(
+            np.arange(CODICE_LO_L2_NUM_PRIORITIES), l3a_direct_event_data_product.priority_index
+        )
         np.testing.assert_array_equal(expected_mass_per_charge, l3a_direct_event_data_product.mass_per_charge)
         np.testing.assert_array_equal(expected_mass, l3a_direct_event_data_product.mass)
 
-        np.testing.assert_array_equal(l3a_direct_event_data_product.normalization,
-                                      np.flip(expected_normalization, axis=2))
+        np.testing.assert_array_equal(
+            l3a_direct_event_data_product.normalization, np.flip(expected_normalization, axis=2)
+        )
         self.assertEqual(l3a_direct_event_data_product.normalization_per_event, mock_lookup_normalization_per_event.return_value)
 
 
-        np.testing.assert_array_equal(expected_spin_angle, l3a_direct_event_data_product.spin_angle)
-        np.testing.assert_array_equal(expected_spin_sector, l3a_direct_event_data_product.spin_sector)
-        np.testing.assert_array_equal(expected_elevation, l3a_direct_event_data_product.elevation)
-        np.testing.assert_array_equal(expected_position, l3a_direct_event_data_product.position)
         np.testing.assert_array_equal(expected_apd_energy, l3a_direct_event_data_product.apd_energy)
-        np.testing.assert_array_equal(expected_energy_step, l3a_direct_event_data_product.energy_step)
         np.testing.assert_array_equal(expected_apd_gain, l3a_direct_event_data_product.gain)
         np.testing.assert_array_equal(expected_apd_id, l3a_direct_event_data_product.apd_id)
+        np.testing.assert_array_equal(expected_data_quality, l3a_direct_event_data_product.data_quality)
+        np.testing.assert_array_equal(expected_elevation, l3a_direct_event_data_product.elevation)
+        np.testing.assert_array_equal(expected_energy_per_charge, l3a_direct_event_data_product.energy_per_charge)
+        np.testing.assert_array_equal(expected_energy_step, l3a_direct_event_data_product.energy_step)
         np.testing.assert_array_equal(expected_multi_flag, l3a_direct_event_data_product.multi_flag)
         np.testing.assert_array_equal(expected_num_events, l3a_direct_event_data_product.num_events)
-        np.testing.assert_array_equal(expected_data_quality, l3a_direct_event_data_product.data_quality)
+        np.testing.assert_array_equal(expected_position, l3a_direct_event_data_product.position)
+        np.testing.assert_array_equal(expected_spin_angle, l3a_direct_event_data_product.spin_angle)
+        np.testing.assert_array_equal(expected_spin_sector, l3a_direct_event_data_product.spin_sector)
         np.testing.assert_array_equal(expected_tof, l3a_direct_event_data_product.tof)
+        np.testing.assert_array_equal(expected_type, l3a_direct_event_data_product.type)
 
         np.testing.assert_array_equal(np.flip(mock_energy_lookup.bin_centers), l3a_direct_event_data_product.energy_bin)
         np.testing.assert_array_equal(np.flip(mock_energy_lookup.delta_plus),
@@ -662,13 +664,13 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(sw_priority_rates.nso_esa_step, l3a_direct_event_data_product.nso_esa_step)
         np.testing.assert_array_equal(sw_priority_rates.esa_step, l3a_direct_event_data_product.esa_step)
 
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.convert_count_rate_to_intensity')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.rebin_3d_distribution_azimuth_to_elevation')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.combine_priorities_and_convert_to_rate')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.normalize_counts')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.PositionToElevationLookup')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.SpinAngleLookup')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.rebin_to_counts_by_species_elevation_and_spin_sector')
+    @patch(f'{MODULE}.convert_count_rate_to_intensity')
+    @patch(f'{MODULE}.rebin_3d_distribution_azimuth_to_elevation')
+    @patch(f'{MODULE}.combine_priorities_and_convert_to_rate')
+    @patch(f'{MODULE}.normalize_counts')
+    @patch(f'{MODULE}.PositionToElevationLookup')
+    @patch(f'{MODULE}.SpinAngleLookup')
+    @patch(f'{MODULE}.rebin_to_counts_by_species_elevation_and_spin_sector')
     def test_process_l3a_3d_distributions(self, mock_rebin,
                                           mock_spin_angle_lookup_class, mock_elevation_angle_lookup_class,
                                           mock_normalize_counts, mock_convert_to_rate, mock_rebin_to_elevation,
@@ -785,10 +787,9 @@ class TestCodiceLoProcessor(unittest.TestCase):
             with self.subTest(species=species):
                 self._test_process_3d_distributions_save(species)
 
-    @patch(
-        'imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoL3a3dDistributionsDependencies.fetch_dependencies')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.CodiceLoProcessor.process_l3a_3d_distribution_product')
-    @patch('imap_l3_processing.codice.l3.lo.codice_lo_processor.save_data')
+    @patch(f'{MODULE}.CodiceLoL3a3dDistributionsDependencies.fetch_dependencies')
+    @patch(f'{MODULE}.CodiceLoProcessor.process_l3a_3d_distribution_product')
+    @patch(f'{MODULE}.save_data')
     @patch('imap_l3_processing.processor.spiceypy')
     def _test_process_3d_distributions_save(self, species, mock_spiceypy, mock_save_data,
                                             mock_process_l3a_3d_distribution_product,

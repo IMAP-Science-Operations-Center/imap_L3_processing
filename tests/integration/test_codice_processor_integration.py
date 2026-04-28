@@ -18,39 +18,42 @@ from tests.test_helpers import get_run_local_data_path, get_test_data_path, get_
 
 
 class CodiceProcessorIntegration(unittest.TestCase):
-    TEST_DATA_DIR = Path(tests.integration.__file__).parent / 'test_data/codice'
+    TEST_DATA_DIR = Path(tests.integration.__file__).parent / "test_data/codice"
     INSTRUMENT_TEAM_DATA_DIR = get_test_instrument_team_data_path("codice/lo")
-    OUTPUT_DATA_DIR = get_run_local_data_path('codice_lo_integration')
+    OUTPUT_DATA_DIR = get_run_local_data_path("codice_lo_integration")
 
     @patch("imap_l3_data_processor._parse_cli_arguments")
-    def test_codice_processor_integration_lo_direct_events(self, mock_parse_cli_arguments):
-        energy_per_charge_path = get_test_data_path('codice/imap_codice_lo-energy-per-charge_20241110_v001.csv')
-        mass_coefficient_path = get_test_data_path('codice/imap_codice_mass-coefficient-lookup_20241110_v003.csv')
+    def test_codice_lo_direct_events(self, mock_parse_cli_arguments):
+        energy_per_charge_path = get_test_data_path("codice/imap_codice_lo-energy-per-charge_20241110_v001.csv")
+        mass_coefficient_path = get_test_data_path("codice/imap_codice_mass-coefficient-lookup_20241110_v003.csv")
         input_files = [
-            self.INSTRUMENT_TEAM_DATA_DIR / 'imap_codice_l2_lo-direct-events_20260307_v003.cdf',
-            self.INSTRUMENT_TEAM_DATA_DIR / 'imap_codice_l1a_lo-nsw-priority_20260307_v003.cdf',
-            self.INSTRUMENT_TEAM_DATA_DIR / 'imap_codice_l1a_lo-sw-priority_20260307_v003.cdf',
+            self.INSTRUMENT_TEAM_DATA_DIR / "imap_codice_l2_lo-direct-events_20260307_v003.cdf",
+            self.INSTRUMENT_TEAM_DATA_DIR / "imap_codice_l1a_lo-nsw-priority_20260307_v003.cdf",
+            self.INSTRUMENT_TEAM_DATA_DIR / "imap_codice_l1a_lo-sw-priority_20260307_v003.cdf",
             energy_per_charge_path,
             mass_coefficient_path,
         ]
 
         with mock_imap_data_access(self.OUTPUT_DATA_DIR, input_files):
-            logging.basicConfig(force=True, level=logging.INFO,
-                                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            logging.basicConfig(
+                force=True,
+                level=logging.INFO,
+                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            )
 
             processing_input_collection = ProcessingInputCollection(
-                ScienceInput('imap_codice_l2_lo-direct-events_20260307_v003.cdf'),
-                ScienceInput('imap_codice_l1a_lo-nsw-priority_20260307_v003.cdf'),
-                ScienceInput('imap_codice_l1a_lo-sw-priority_20260307_v003.cdf'),
+                ScienceInput("imap_codice_l2_lo-direct-events_20260307_v003.cdf"),
+                ScienceInput("imap_codice_l1a_lo-nsw-priority_20260307_v003.cdf"),
+                ScienceInput("imap_codice_l1a_lo-sw-priority_20260307_v003.cdf"),
                 AncillaryInput(energy_per_charge_path.name),
-                AncillaryInput(mass_coefficient_path.name)
+                AncillaryInput(mass_coefficient_path.name),
             )
 
             mock_arguments = Mock()
             mock_arguments.instrument = "codice"
             mock_arguments.data_level = "l3a"
             mock_arguments.descriptor = "lo-direct-events"
-            mock_arguments.start_date = "20250814"
+            mock_arguments.start_date = "20260307"
             mock_arguments.end_date = None
             mock_arguments.repointing = None
             mock_arguments.version = "v001"
@@ -61,15 +64,16 @@ class CodiceProcessorIntegration(unittest.TestCase):
 
             imap_l3_data_processor.imap_l3_processor()
 
-            expected_map_path = ScienceFilePath(
-                'imap_codice_l3a_lo-direct-events_20250814_v001.cdf').construct_path()
+            expected_map_path = ScienceFilePath("imap_codice_l3a_lo-direct-events_20260307_v001.cdf").construct_path()
             self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
 
-            expected_parents = {'imap_codice_l2_lo-direct-events_20260307_v003.cdf',
-                                'imap_codice_l1a_lo-nsw-priority_20260307_v003.cdf',
-                                'imap_codice_l1a_lo-sw-priority_20260307_v003.cdf',
-                                'imap_codice_lo-energy-per-charge_20241110_v001.csv',
-                                'imap_codice_mass-coefficient-lookup_20241110_v003.csv'}
+            expected_parents = {
+                "imap_codice_l2_lo-direct-events_20260307_v003.cdf",
+                "imap_codice_l1a_lo-nsw-priority_20260307_v003.cdf",
+                "imap_codice_l1a_lo-sw-priority_20260307_v003.cdf",
+                "imap_codice_lo-energy-per-charge_20241110_v001.csv",
+                "imap_codice_mass-coefficient-lookup_20241110_v003.csv",
+            }
 
             with CDF(str(expected_map_path)) as cdf:
                 self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))

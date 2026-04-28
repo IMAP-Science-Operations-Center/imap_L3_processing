@@ -233,7 +233,7 @@ class TestModels(CdfModelTestCase):
             np.testing.assert_array_equal(actual_data_product_variable.value, getattr(data_product, input_name))
             self.assertEqual(input_name, actual_data_product_variable.name)
 
-    def test_codice_lo_l3a_ratios_read_from_cdf(self):
+    def test_codice_lo_l3a_partial_density_read_from_cdf(self):
         rng = np.random.default_rng()
         epoch = [datetime.now(), datetime.now() + timedelta(days=1)]
         density_data = CodiceLoPartialDensityData(epoch=np.array(epoch), epoch_delta=np.array([2, 2]),
@@ -294,7 +294,7 @@ class TestModels(CdfModelTestCase):
         self.assertEqual("carbon_charge_state", carbon_charge_states.name)
 
     def test_codice_lo_l3a_direct_event_read_from_cdf_reads_from_correct_float_variable(self):
-        all_fill_l3a_cdf_path = get_test_data_path("codice/imap_codice_l3a_lo-direct-events_20241110_v000-all-fill.cdf")
+        all_fill_l3a_cdf_path = get_test_data_path("codice/imap_codice_l3a_lo-direct-events_20260307_v001.cdf")
 
         rng = np.random.default_rng()
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -302,42 +302,44 @@ class TestModels(CdfModelTestCase):
 
             test_l3a_direct_event = tmpdir / "test_l3a_cdf.cdf"
             with CDF(str(test_l3a_direct_event), masterpath=str(all_fill_l3a_cdf_path)) as cdf:
-                cdf["normalization"] = rng.random(cdf["normalization"].shape)
-                cdf["mass_per_charge"] = rng.random(cdf["mass_per_charge"].shape)
-                cdf["mass"] = rng.random(cdf["mass"].shape)
                 cdf["apd_energy"] = rng.random(cdf["apd_energy"].shape)
-                cdf["energy_step"] = rng.random(cdf["energy_step"].shape)
-                cdf["spin_angle"] = rng.random(cdf["spin_angle"].shape)
                 cdf["elevation"] = rng.random(cdf["elevation"].shape)
+                cdf["energy_per_charge"] = rng.random(cdf["energy_per_charge"].shape)
+                cdf["energy_step"] = rng.random(cdf["energy_step"].shape)
+                cdf["mass"] = rng.random(cdf["mass"].shape)
+                cdf["mass_per_charge"] = rng.random(cdf["mass_per_charge"].shape)
+                cdf["normalization"] = rng.random(cdf["normalization"].shape)
+                cdf["spin_angle"] = rng.random(cdf["spin_angle"].shape)
+                cdf["type"] = rng.integers(0, 5, cdf["type"].shape)
 
             actual_event_data = CodiceLoDirectEventData.read_from_cdf(test_l3a_direct_event)
 
             with CDF(str(test_l3a_direct_event)) as cdf:
-                np.testing.assert_array_equal(actual_event_data.normalization, cdf["normalization"])
-                np.testing.assert_array_equal(actual_event_data.mass_per_charge, cdf["mass_per_charge"])
-                np.testing.assert_array_equal(actual_event_data.mass, cdf["mass"])
                 np.testing.assert_array_equal(actual_event_data.apd_energy, cdf["apd_energy"])
-                np.testing.assert_array_equal(actual_event_data.energy_step, cdf["energy_step"])
-                np.testing.assert_array_equal(actual_event_data.spin_angle, cdf["spin_angle"])
                 np.testing.assert_array_equal(actual_event_data.elevation, cdf["elevation"])
+                np.testing.assert_array_equal(actual_event_data.energy_per_charge, cdf["energy_per_charge"])
+                np.testing.assert_array_equal(actual_event_data.energy_step, cdf["energy_step"])
+                np.testing.assert_array_equal(actual_event_data.mass, cdf["mass"])
+                np.testing.assert_array_equal(actual_event_data.mass_per_charge, cdf["mass_per_charge"])
+                np.testing.assert_array_equal(actual_event_data.normalization, cdf["normalization"])
+                np.testing.assert_array_equal(actual_event_data.spin_angle, cdf["spin_angle"])
+                np.testing.assert_array_equal(actual_event_data.type, cdf["type"])
 
     def test_codice_lo_l3a_direct_event_read_from_cdf_handles_fill_value(self):
-        all_fill_l3a_cdf_path = get_test_data_path("codice/imap_codice_l3a_lo-direct-events_20241110_v000-all-fill.cdf")
+        all_fill_l3a_cdf_path = get_test_data_path("codice/imap_codice_l3a_lo-direct-events_20260307_v001-all-fill.cdf")
         actual_event_data = CodiceLoDirectEventData.read_from_cdf(all_fill_l3a_cdf_path)
 
         with CDF(str(all_fill_l3a_cdf_path)) as cdf:
             # @formatter:off
-            np.testing.assert_array_equal(actual_event_data.normalization, np.full_like(cdf["normalization"][...], np.nan))
-            np.testing.assert_array_equal(actual_event_data.mass_per_charge, np.full_like(cdf["mass_per_charge"][...], np.nan))
-            np.testing.assert_array_equal(actual_event_data.mass, np.full_like(cdf["mass"][...], np.nan))
             np.testing.assert_array_equal(actual_event_data.apd_energy, np.full_like(cdf["apd_energy"][...], np.nan))
-            np.testing.assert_array_equal(actual_event_data.energy_step, np.full_like(cdf["energy_step"][...], np.nan))
-            np.testing.assert_array_equal(actual_event_data.spin_angle, np.full_like(cdf["spin_angle"][...], np.nan))
+            np.testing.assert_array_equal(actual_event_data.data_quality, cdf["data_quality"])
             np.testing.assert_array_equal(actual_event_data.elevation, np.full_like(cdf["elevation"][...], np.nan))
-
-            self.assertIsInstance(actual_event_data.position, np.ma.masked_array)
-            np.testing.assert_array_equal(actual_event_data.position.data, cdf["position"])
-            self.assertTrue(np.all(actual_event_data.position.mask))
+            np.testing.assert_array_equal(actual_event_data.energy_per_charge, np.full_like(cdf["energy_per_charge"][...], np.nan))
+            np.testing.assert_array_equal(actual_event_data.energy_step, np.full(cdf["energy_step"].shape, np.nan))
+            np.testing.assert_array_equal(actual_event_data.mass, np.full_like(cdf["mass"][...], np.nan))
+            np.testing.assert_array_equal(actual_event_data.mass_per_charge, np.full_like(cdf["mass_per_charge"][...], np.nan))
+            np.testing.assert_array_equal(actual_event_data.normalization, np.full_like(cdf["normalization"][...], np.nan))
+            np.testing.assert_array_equal(actual_event_data.spin_angle, np.full_like(cdf["spin_angle"][...], np.nan))
 
             self.assertIsInstance(actual_event_data.apd_id, np.ma.masked_array)
             np.testing.assert_array_equal(actual_event_data.apd_id.data, cdf["apd_id"])
@@ -355,13 +357,17 @@ class TestModels(CdfModelTestCase):
             np.testing.assert_array_equal(actual_event_data.num_events.data, cdf["num_events"])
             self.assertTrue(np.all(actual_event_data.num_events.mask))
 
-            self.assertIsInstance(actual_event_data.data_quality, np.ma.masked_array)
-            np.testing.assert_array_equal(actual_event_data.data_quality.data, cdf["data_quality"])
-            self.assertTrue(np.all(actual_event_data.data_quality.mask))
+            self.assertIsInstance(actual_event_data.position, np.ma.masked_array)
+            np.testing.assert_array_equal(actual_event_data.position.data, cdf["position"])
+            self.assertTrue(np.all(actual_event_data.position.mask))
 
             self.assertIsInstance(actual_event_data.tof, np.ma.masked_array)
             np.testing.assert_array_equal(actual_event_data.tof.data, cdf["tof"])
             self.assertTrue(np.all(actual_event_data.tof.mask))
+
+            self.assertIsInstance(actual_event_data.type, np.ma.masked_array)
+            np.testing.assert_array_equal(actual_event_data.type.data, cdf["type"])
+            self.assertTrue(np.all(actual_event_data.type.mask))
             # @formatter:on
 
     def test_codice_lo_l3a_direct_event_to_data_product(self):
@@ -406,6 +412,8 @@ class TestModels(CdfModelTestCase):
             nso_esa_step=rng.random(len(epoch)),
             normalization_per_event=rng.random((len(epoch), len(priority), len(energy_step), len(spin_angle))),
             esa_step=esa_step,
+            energy_per_charge=rng.random((len(epoch), len(priority), len(event_num))),
+            type=rng.integers(0, 5, (len(epoch), len(priority), len(event_num))),
         )
 
         np.testing.assert_array_equal(direct_event.event_index, np.arange(len(event_num)))
@@ -548,21 +556,23 @@ class TestModels(CdfModelTestCase):
             with CDF(str(test_cdf_path), masterpath=str(all_fill_l2_cdf_path)) as cdf:
                 cdf["apd_energy"] = rng.random(cdf["apd_energy"].shape)
                 cdf["energy_step"] = rng.random(cdf["energy_step"].shape)
+                cdf["elevation_angle"] = rng.random(cdf["elevation_angle"].shape)
                 cdf["energy_per_charge"] = rng.random(cdf["energy_per_charge"].shape)
+                cdf["position"] = rng.random(cdf["position"].shape)
                 cdf["spin_angle"] = rng.random(cdf["spin_angle"].shape)
                 cdf["spin_sector"] =  rng.integers(0, 24, cdf["spin_sector"].shape)
-                cdf["elevation_angle"] = rng.random(cdf["elevation_angle"].shape)
-                cdf["position"] = rng.random(cdf["position"].shape)
+                cdf["type"] = rng.integers(0, 5, cdf["type"].shape)
 
             l2_direct_event = CodiceLoL2DirectEventData.read_from_cdf(test_cdf_path)
 
             with CDF(str(test_cdf_path)) as cdf:
                 np.testing.assert_array_equal(l2_direct_event.apd_energy, cdf["apd_energy"][:, :7, ...])
+                np.testing.assert_array_equal(l2_direct_event.elevation_angle, cdf["elevation_angle"][:, :7, ...])
                 np.testing.assert_array_equal(l2_direct_event.energy_step, cdf["energy_step"][:, :7, ...])
                 np.testing.assert_array_equal(l2_direct_event.energy_per_charge, cdf["energy_per_charge"][:, :7, ...])
                 np.testing.assert_array_equal(l2_direct_event.spin_sector, cdf["spin_sector"][:, :7, ...])
                 np.testing.assert_array_equal(l2_direct_event.spin_angle, cdf["spin_angle"][:, :7, ...])
-                np.testing.assert_array_equal(l2_direct_event.elevation_angle, cdf["elevation_angle"][:, :7, ...])
+                np.testing.assert_array_equal(l2_direct_event.type, cdf["type"][:, :7, ...])
 
     def test_workaround_to_convert_float_spin_sector_to_int(self):
         all_fill_l2_cdf_path = get_test_data_path('codice/imap_codice_l2_lo-direct-events_20260307_v003-all-fill.cdf')
