@@ -226,7 +226,7 @@ h_intensity_by_pitch_angle:
   LABL_PTR_2: pitch_angle_label
   SCALETYP: log
   SCALEMIN: 1.0e-2
-  SCALEMAX: 1.0e4
+  SCALEMAX: 1.0e+4
 
 h_intensity_by_pitch_angle_and_gyrophase:
   <<: *primary_data_variable
@@ -244,7 +244,7 @@ h_intensity_by_pitch_angle_and_gyrophase:
   LABL_PTR_3: gyrophase_label
   SCALETYP: log
   SCALEMIN: 1.0e-2
-  SCALEMAX: 1.0e4
+  SCALEMAX: 1.0e+4
 
 he3he4_intensity_by_pitch_angle:
   <<: *primary_data_variable
@@ -260,7 +260,7 @@ he3he4_intensity_by_pitch_angle:
   LABL_PTR_2: pitch_angle_label
   SCALETYP: log
   SCALEMIN: 1.0e-2
-  SCALEMAX: 1.0e4
+  SCALEMAX: 1.0e+4
 
 he3he4_intensity_by_pitch_angle_and_gyrophase:
   <<: *primary_data_variable
@@ -278,7 +278,7 @@ he3he4_intensity_by_pitch_angle_and_gyrophase:
   LABL_PTR_3: gyrophase_label
   SCALETYP: log
   SCALEMIN: 1.0e-2
-  SCALEMAX: 1.0e4
+  SCALEMAX: 1.0e+4
 
 cno_intensity_by_pitch_angle:
   <<: *primary_data_variable
@@ -294,7 +294,7 @@ cno_intensity_by_pitch_angle:
   LABL_PTR_2: pitch_angle_label
   SCALETYP: log
   SCALEMIN: 1.0e-2
-  SCALEMAX: 1.0e4
+  SCALEMAX: 1.0e+4
 
 cno_intensity_by_pitch_angle_and_gyrophase:
   <<: *primary_data_variable
@@ -312,7 +312,7 @@ cno_intensity_by_pitch_angle_and_gyrophase:
   LABL_PTR_3: gyrophase_label
   SCALETYP: log
   SCALEMIN: 1.0e-2
-  SCALEMAX: 1.0e4
+  SCALEMAX: 1.0e+4
 
 fe_intensity_by_pitch_angle:
   <<: *primary_data_variable
@@ -328,7 +328,7 @@ fe_intensity_by_pitch_angle:
   LABL_PTR_2: pitch_angle_label
   SCALETYP: log
   SCALEMIN: 1.0e-2
-  SCALEMAX: 1.0e4
+  SCALEMAX: 1.0e+4
 
 fe_intensity_by_pitch_angle_and_gyrophase:
   <<: *primary_data_variable
@@ -346,7 +346,7 @@ fe_intensity_by_pitch_angle_and_gyrophase:
   LABL_PTR_3: gyrophase_label
   SCALETYP: log
   SCALEMIN: 1.0e-2
-  SCALEMAX: 1.0e4
+  SCALEMAX: 1.0e+4
 
 energy_h_label:
   NAME: energy_h_label
