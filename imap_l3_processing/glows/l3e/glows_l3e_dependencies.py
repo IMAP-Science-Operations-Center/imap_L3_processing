@@ -31,7 +31,6 @@ class GlowsL3EDependencies:
     density_3d_sw: Path
     phion_hydrogen: Path
     sw_eqtr_electrons: Path
-    ionization_files: Path
     pipeline_settings: dict
     pipeline_settings_file: Path
     repointing_file: Path
@@ -46,8 +45,14 @@ class GlowsL3EDependencies:
         phion_hydrogen_dependency = dependencies.get_file_paths(source='glows', descriptor='phion')
         sw_eqtr_electrons_dependency = dependencies.get_file_paths(source='glows', descriptor='e-dens')
 
-        ionization_files_dependency = dependencies.get_file_paths(source='glows', descriptor='ionization-files')
         pipeline_settings_dependency = dependencies.get_file_paths(source='glows', descriptor='pipeline-settings-l3bcde')
+
+        tess_xyz_dependency = dependencies.get_file_paths(source='glows', descriptor='tess-xyz-8')
+        tess_ang_dependency = dependencies.get_file_paths(source='glows', descriptor='tess-ang-16')
+
+        energy_grid_lo_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-lo')
+        energy_grid_hi_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-hi')
+        energy_grid_ultra_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-ultra')
 
         lya_series_path = imap_data_access.download(lya_series_dependency[0])
         solar_uv_anisotropy_path = imap_data_access.download(solar_uv_anisotropy_dependency[0])
@@ -55,21 +60,15 @@ class GlowsL3EDependencies:
         density_3d_path = imap_data_access.download(density_3d_dependency[0])
         phion_hydrogen_path = imap_data_access.download(phion_hydrogen_dependency[0])
         sw_eqtr_electrons_path = imap_data_access.download(sw_eqtr_electrons_dependency[0])
-        ionization_files_path = imap_data_access.download(ionization_files_dependency[0])
+
         pipeline_settings_path = imap_data_access.download(pipeline_settings_dependency[0])
 
-        energy_grid_lo_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-lo')
-        tess_xyz_dependency = dependencies.get_file_paths(source='glows', descriptor='tess-xyz-8')
-        energy_grid_lo_path = imap_data_access.download(energy_grid_lo_dependency[0])
         tess_xyz_path = imap_data_access.download(tess_xyz_dependency[0])
-
-        energy_grid_hi_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-hi')
-        energy_grid_hi_path = imap_data_access.download(energy_grid_hi_dependency[0])
-
-        energy_grid_ultra_dependency = dependencies.get_file_paths(source='glows', descriptor='energy-grid-ultra')
-        tess_ang_dependency = dependencies.get_file_paths(source='glows', descriptor='tess-ang-16')
-        energy_grid_ultra_path = imap_data_access.download(energy_grid_ultra_dependency[0])
         tess_ang_path = imap_data_access.download(tess_ang_dependency[0])
+
+        energy_grid_lo_path = imap_data_access.download(energy_grid_lo_dependency[0])
+        energy_grid_hi_path = imap_data_access.download(energy_grid_hi_dependency[0])
+        energy_grid_ultra_path = imap_data_access.download(energy_grid_ultra_dependency[0])
 
         with open(pipeline_settings_path) as f:
             pipeline_settings = json.load(f)
@@ -78,21 +77,20 @@ class GlowsL3EDependencies:
         repoint_file_path = imap_data_access.download(repoint_file_dependency[0])
 
         return cls(
-            energy_grid_lo_path,
-            energy_grid_hi_path,
-            energy_grid_ultra_path,
-            tess_xyz_path,
-            tess_ang_path,
-            lya_series_path,
-            solar_uv_anisotropy_path,
-            speed_3d_path,
-            density_3d_path,
-            phion_hydrogen_path,
-            sw_eqtr_electrons_path,
-            ionization_files_path,
-            pipeline_settings,
-            pipeline_settings_path,
-            repoint_file_path
+            energy_grid_lo=energy_grid_lo_path,
+            energy_grid_hi=energy_grid_hi_path,
+            energy_grid_ultra=energy_grid_ultra_path,
+            tess_xyz_8=tess_xyz_path,
+            tess_ang16=tess_ang_path,
+            lya_series=lya_series_path,
+            solar_uv_anisotropy=solar_uv_anisotropy_path,
+            speed_3d_sw=speed_3d_path,
+            density_3d_sw=density_3d_path,
+            phion_hydrogen=phion_hydrogen_path,
+            sw_eqtr_electrons=sw_eqtr_electrons_path,
+            pipeline_settings=pipeline_settings,
+            pipeline_settings_file=pipeline_settings_path,
+            repointing_file=repoint_file_path,
         )
 
     def furnish_spice_dependencies(self, start_date: datetime, end_date: datetime):
@@ -113,15 +111,22 @@ class GlowsL3EDependencies:
             shutil.copy(self.tess_xyz_8, self.pipeline_settings['executable_dependency_paths']['tess-xyz-8'])
         if self.tess_ang16 is not None:
             shutil.copy(self.tess_ang16, self.pipeline_settings['executable_dependency_paths']['tess-ang-16'])
+        shutil.copy(self.lya_series, self.lya_series.name)
+        shutil.copy(self.solar_uv_anisotropy, self.solar_uv_anisotropy.name)
+        shutil.copy(self.speed_3d_sw, self.speed_3d_sw.name)
+        shutil.copy(self.density_3d_sw, self.density_3d_sw.name)
+        shutil.copy(self.phion_hydrogen, self.phion_hydrogen.name)
+        shutil.copy(self.sw_eqtr_electrons, self.sw_eqtr_electrons.name)
 
-        shutil.copy(self.lya_series, self.pipeline_settings['executable_dependency_paths']['lya-series'])
-        shutil.copy(self.solar_uv_anisotropy,
-                    self.pipeline_settings['executable_dependency_paths']['solar-uv-anisotropy'])
-        shutil.copy(self.speed_3d_sw, self.pipeline_settings['executable_dependency_paths']['speed-3d'])
-        shutil.copy(self.density_3d_sw, self.pipeline_settings['executable_dependency_paths']['density-3d'])
-        shutil.copy(self.phion_hydrogen, self.pipeline_settings['executable_dependency_paths']['phion-hydrogen'])
-        shutil.copy(self.sw_eqtr_electrons, self.pipeline_settings['executable_dependency_paths']['sw-eqtr-electrons'])
-        shutil.copy(self.ionization_files, self.pipeline_settings['executable_dependency_paths']['ionization-files'])
+        with open("ionization.files.dat", 'w') as ionization_file:
+            ionization_file.write("\n".join([
+                self.lya_series.name,
+                self.solar_uv_anisotropy.name,
+                self.speed_3d_sw.name,
+                self.density_3d_sw.name,
+                self.phion_hydrogen.name,
+                self.sw_eqtr_electrons.name,
+            ]) + "\n")
 
     def get_hi_parents(self):
         return [
@@ -132,7 +137,6 @@ class GlowsL3EDependencies:
             self.density_3d_sw.name,
             self.phion_hydrogen.name,
             self.sw_eqtr_electrons.name,
-            self.ionization_files.name,
             self.pipeline_settings_file.name,
             self.repointing_file.name,
             *self.spice_kernels
@@ -148,7 +152,6 @@ class GlowsL3EDependencies:
             self.density_3d_sw.name,
             self.phion_hydrogen.name,
             self.sw_eqtr_electrons.name,
-            self.ionization_files.name,
             self.pipeline_settings_file.name,
             self.repointing_file.name,
             *self.spice_kernels
@@ -164,7 +167,6 @@ class GlowsL3EDependencies:
             self.density_3d_sw.name,
             self.phion_hydrogen.name,
             self.sw_eqtr_electrons.name,
-            self.ionization_files.name,
             self.pipeline_settings_file.name,
             self.repointing_file.name,
             *self.spice_kernels

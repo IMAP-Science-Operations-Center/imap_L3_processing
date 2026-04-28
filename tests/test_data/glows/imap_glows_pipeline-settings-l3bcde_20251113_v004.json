@@ -972,12 +972,6 @@
     "energy-grid-ultra": "EnGridUltra.dat",
     "tess-xyz-8": "tessXYZ8.dat",
     "tess-ang-16": "tessAng16.dat",
-    "lya-series": "lyaSeriesV4.dat",
-    "solar-uv-anisotropy": "solar_uv_anisotropy.dat",
-    "speed-3d": "speed3D.dat",
-    "density-3d": "density3D.dat",
-    "phion-hydrogen": "phion_Hydrogen.dat",
-    "ionization-files": "ionization.files.dat",
-    "sw-eqtr-electrons": "swEqtrElectrons5.dat"
+    "ionization-files": "ionization.files.dat"
   }
 }

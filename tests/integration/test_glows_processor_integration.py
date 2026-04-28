@@ -344,7 +344,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             for file_path in expected_files:
                 self.assertTrue(file_path.construct_path().exists(), msg=str(file_path.construct_path()))
 
-    @run_periodically(timedelta(days=14))
+    # @run_periodically(timedelta(days=14))
     @run_test_in_docker
     def test_glows_l3abcde_from_l2(self):
         ancillary_file_paths = [
@@ -430,8 +430,8 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
                                            version="v001", start_date=datetime(2000, 1, 1),
                                            end_date=datetime(2000, 1, 1))
 
-            # processor = GlowsProcessor(processing_input, input_metadata)
-            # processor.process()
+            processor = GlowsProcessor(processing_input, input_metadata)
+            processor.process()
 
     @staticmethod
     def _fill_official_l2_cdf_with_json_values(output_folder: Path) -> Path:
