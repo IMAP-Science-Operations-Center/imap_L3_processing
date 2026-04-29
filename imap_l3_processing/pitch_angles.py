@@ -72,6 +72,7 @@ def rebin_by_pitch_angle_and_gyrophase(intensity_data: np.array,
     rebinned_count_by_pa_and_gyro = np.zeros(shape=output_shape_pa_and_gyro)
     rebinned_count_pa_only = np.zeros(shape=output_shape_pa_only)
 
+    assert intensity_data.shape[-2:] == pitch_angles.shape
     for i in range(intensity_data.shape[0]):
         for pitch_angle, gyrophase, intensity_with_plus, intensity_with_minus in zip(
                 np.ravel(pitch_angles),
