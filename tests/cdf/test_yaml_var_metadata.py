@@ -45,6 +45,16 @@ class TestCdfUtils(TestCase):
                 if "epoch_delta" in yaml_data.keys():
                     self._epoch_delta_meets_schema(yaml_data)
 
+    def test_type_of_min_max_attributes(self):
+        for filename, yaml_data, variable_key, variable in self.test_cases_variable:
+            for attr in ("SCALEMIN", "SCALEMAX", "VALIDMIN", "VALIDMAX"):
+                if value := variable.get(attr):
+                    with self.subTest(msg=f"{filename}:{variable_key}"):
+                        if variable["DATA_TYPE"] == "CDF_TIME_TT2000":
+                            self.assertEqual(datetime, type(value))
+                        else:
+                            self.assertIn(type(value), (int, float))
+
     def test_delta_vars_have_same_units(self):
         for filename, yaml_data, variable_key, variable in self.test_cases_variable:
             with self.subTest(msg=f"{filename}:{variable_key}"):
