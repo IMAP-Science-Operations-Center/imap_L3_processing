@@ -174,7 +174,6 @@ class TestCodiceLoCalculations(unittest.TestCase):
         num_events = np.ma.masked_array(num_events, mask=[[False, False], [False, True]])
 
         mock_energy_lookup = Mock(spec=EnergyLookup)
-        mock_energy_lookup.get_energy_index.side_effect = [0, 100, 0, 0, 127, 127, 0]
         mock_energy_lookup.num_bins = num_esa_steps
         mock_energy_lookup.bin_centers = Mock()
 
@@ -191,10 +190,13 @@ class TestCodiceLoCalculations(unittest.TestCase):
             [[False, True, False, True], [False, True, True, True]],
         ]))
 
-        energy_step = np.array([
-            [[0.0, 1234.2, 0.0, np.nan], [0.0, 5555.0, np.nan, np.nan]],
-            [[345.2, 345.2, 345.2, np.nan], [0.0, np.nan, np.nan, np.nan]]
-        ])
+        energy_step = np.ma.masked_array(data=np.array([
+            [[0, 100, 0, 255], [0, 255, 255, 255]],
+            [[127, 255, 127, 255], [0, 255, 255, 255]]
+        ]), mask=np.array([
+            [[False, False, False, True], [False, True, True, True]],
+            [[False, True, False, True], [False, True, True, True]],
+        ]))
 
         mass = np.array([
             [[6, 5, 4, np.nan], [7, 5, np.nan, np.nan]],
@@ -208,13 +210,17 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         spin_angle_lut = SpinAngleLookup()
 
-        actual_counts_3d_data = rebin_to_counts_by_species_elevation_and_spin_sector(num_events, mass, mass_per_charge,
-                                                                                     energy_step,
-                                                                                     spin_angle,
-                                                                                     position,
-                                                                                     mock_species_mass_range_lookup,
-                                                                                     spin_angle_lut,
-                                                                                     mock_energy_lookup)
+        actual_counts_3d_data = rebin_to_counts_by_species_elevation_and_spin_sector(
+            num_events,
+            mass,
+            mass_per_charge,
+            energy_step,
+            spin_angle,
+            position,
+            mock_species_mass_range_lookup,
+            spin_angle_lut,
+            mock_energy_lookup
+        )
 
         mock_species_mass_range_lookup.get_species.assert_has_calls([
             call(mass[0, 0, 0], mass_per_charge[0, 0, 0]),
@@ -225,14 +231,6 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
             call(mass[1, 0, 0], mass_per_charge[1, 0, 0]),
             call(mass[1, 0, 2], mass_per_charge[1, 0, 2]),
-        ])
-
-        mock_energy_lookup.get_energy_index.assert_has_calls([
-            call(0.0),
-            call(1234.2),
-            call(0.0),
-            call(0.0),
-            call(345.2),
         ])
 
         self.assertIsInstance(actual_counts_3d_data, CodiceLo3dData)
@@ -517,7 +515,6 @@ class TestCodiceLoCalculations(unittest.TestCase):
         rng = np.random.default_rng()
         count_rates = rng.random((num_epochs, num_position_bins, num_spin_angles, num_energies))
         energy_per_charge = EnergyLookup(bin_centers=rng.random(num_energies),
-                                         bin_edges=rng.random(num_energies),
                                          delta_plus=rng.random(num_energies),
                                          delta_minus=rng.random(num_energies))
         geometric_factor = rng.random((num_epochs, num_position_bins, num_energies))

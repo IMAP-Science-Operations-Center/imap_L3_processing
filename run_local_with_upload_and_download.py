@@ -191,7 +191,7 @@ if __name__ == "__main__":
                  '{"type": "science", "files": ["imap_codice_l1a_lo-nsw-priority_20241110_v003.cdf"]},'
                  '{"type": "science", "files": ["imap_codice_l2_lo-direct-events_20241110_v006.cdf"]},'
                  '{"type": "ancillary", "files": ["imap_codice_mass-coefficient-lookup_20241110_v002.csv"]},'
-                 '{"type": "ancillary", "files": ["imap_codice_lo-energy-per-charge_20241110_v001.csv"]}]'
+                 '{"type": "ancillary", "files": ["imap_codice_lo-energy-per-charge_20241110_v002.csv"]}]'
                  ])
         case "codice", ("lo-partial-densities" | "partial-densities"):
             subprocess.run(
@@ -254,7 +254,7 @@ if __name__ == "__main__":
                  '{"type": "science", "files": ["imap_codice_l3a_lo-direct-events_20241110_v005.cdf"]},'
                  '{"type": "ancillary", "files": ["imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv"]},'
                  '{"type": "ancillary", "files": ["imap_codice_lo-geometric-factors_20241110_v001.csv"]},'
-                 '{"type": "ancillary", "files": ["imap_codice_lo-energy-per-charge_20241110_v001.csv"]},'
+                 '{"type": "ancillary", "files": ["imap_codice_lo-energy-per-charge_20241110_v002.csv"]},'
                  f'{{"type": "ancillary", "files": ["imap_codice_lo-{species}-efficiency_20241110_v001.csv"]}}'
                  ']'
                  ])

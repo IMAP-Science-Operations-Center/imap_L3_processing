@@ -14,7 +14,7 @@ def create_more_accurate_l3a_direct_events_cdf(template_cdf: Path):
     mass_species_bin_lookup = MassSpeciesBinLookup.read_from_csv(mass_species_path)
 
     energy_lookup = EnergyLookup.read_from_csv(
-        get_test_data_path('codice/imap_codice_lo-energy-per-charge_20241110_v001.csv'))
+        get_test_data_path('codice/imap_codice_lo-energy-per-charge_20241110_v002.csv'))
     energies = energy_lookup.bin_centers
 
     spin_angle_lut = SpinAngleLookup()

@@ -8,12 +8,12 @@ from tests.test_helpers import get_test_data_path
 
 class TestMassSpeciesBinLookup(unittest.TestCase):
     def test_read_csv(self):
-        csv_path = get_test_data_path('codice/imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv')
+        csv_path = get_test_data_path("codice/imap_codice_lo-mass-species-bin-lookup_20250309_v003.csv")
         mass_species_bin_lookup = MassSpeciesBinLookup.read_from_csv(csv_path)
 
-        expected_species = ["hplus", "heplus2", "oplus6", "heplus"]
-        expected_mass_per_charge = [(0.7, 1.2), (1.5, 2.5), (2.4, 3.0), (3.5, 5.0)]
-        expected_mass_range = [(0.0, 1.5), (2.5, 5.0), (14.0, 18.0), (2.5, 5.0)]
+        expected_species = ["hplus", "heplusplus", "oplus6", "heplus"]
+        expected_mass_per_charge = [(0.7, 1.2), (1.7, 2.4), (2.4, 3.0), (3.8, 4.6)]
+        expected_mass_range = [(0.5, 1.5), (2.0, 7.5), (14.0, 18.0), (1.0, 7.5)]
 
         np.testing.assert_array_equal(mass_species_bin_lookup.species, expected_species)
         np.testing.assert_array_equal(mass_species_bin_lookup.mass_per_charge, expected_mass_per_charge)
@@ -36,12 +36,12 @@ class TestMassSpeciesBinLookup(unittest.TestCase):
         self.assertEqual(4, lookup.get_num_species())
 
     def test_get_species_index(self):
-        csv_path = get_test_data_path('codice/imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv')
+        csv_path = get_test_data_path("codice/imap_codice_lo-mass-species-bin-lookup_20250309_v003.csv")
         mass_species_bin_lookup = MassSpeciesBinLookup.read_from_csv(csv_path)
 
         test_cases = [
             ("hplus", 0),
-            ("heplus2", 1),
+            ("heplusplus", 1),
             ("oplus6", 2),
             ("heplus", 3)
         ]

@@ -7,19 +7,37 @@ from unittest.mock import Mock, sentinel
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData, CodiceLoL3aPartialDensityDataProduct, \
-    CodiceLoL2DirectEventData, \
-    CodiceLoL3aDirectEventDataProduct, \
-    CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates, CodiceLo3dData, CODICE_LO_L2_NUM_PRIORITIES, \
-    CodiceLoL3aRatiosDataProduct, CodiceLoPartialDensityData, CodiceLoL3ChargeStateDistributionsDataProduct, \
-    CodiceLoDirectEventData, EPOCH_VAR_NAME, EPOCH_DELTA_VAR_NAME, ELEVATION_VAR_NAME, SPIN_ANGLE_VAR_NAME, \
-    ENERGY_VAR_NAME, SPIN_ANGLE_DELTA_VAR_NAME, ELEVATION_DELTA_VAR_NAME, \
-    CodiceLoL3a3dDistributionDataProduct, ENERGY_DELTA_PLUS_VAR_NAME, ENERGY_DELTA_MINUS_VAR_NAME, \
-    ELEVATION_ANGLE_LABEL_VAR_NAME, SPIN_ANGLE_LABEL_VAR_NAME, ENERGY_LABEL_VAR_NAME
+from imap_l3_processing.codice.l3.lo.models import (
+    CodiceLoL2SWSpeciesData,
+    CodiceLoL3aPartialDensityDataProduct,
+    CodiceLoL2DirectEventData,
+    CodiceLoL3aDirectEventDataProduct,
+    CodiceLoL1aSWPriorityRates,
+    CodiceLoL1aNSWPriorityRates,
+    CodiceLo3dData,
+    CODICE_LO_L2_NUM_PRIORITIES,
+    CodiceLoL3aRatiosDataProduct,
+    CodiceLoPartialDensityData,
+    CodiceLoL3ChargeStateDistributionsDataProduct,
+    CodiceLoDirectEventData,
+    EPOCH_VAR_NAME,
+    EPOCH_DELTA_VAR_NAME,
+    ELEVATION_VAR_NAME,
+    SPIN_ANGLE_VAR_NAME,
+    ENERGY_VAR_NAME,
+    SPIN_ANGLE_DELTA_VAR_NAME,
+    ELEVATION_DELTA_VAR_NAME,
+    CodiceLoL3a3dDistributionDataProduct,
+    ENERGY_DELTA_PLUS_VAR_NAME,
+    ENERGY_DELTA_MINUS_VAR_NAME,
+    ELEVATION_ANGLE_LABEL_VAR_NAME,
+    SPIN_ANGLE_LABEL_VAR_NAME,
+    ENERGY_LABEL_VAR_NAME,
+)
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import save_data
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
-from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path
+from tests.test_helpers import get_test_data_path
 
 LO_L2_SW_SPECIES_DATA_VARS= [
                   'hplus',
@@ -335,40 +353,29 @@ class TestModels(CdfModelTestCase):
             np.testing.assert_array_equal(actual_event_data.data_quality, cdf["data_quality"])
             np.testing.assert_array_equal(actual_event_data.elevation, np.full_like(cdf["elevation"][...], np.nan))
             np.testing.assert_array_equal(actual_event_data.energy_per_charge, np.full_like(cdf["energy_per_charge"][...], np.nan))
-            np.testing.assert_array_equal(actual_event_data.energy_step, np.full(cdf["energy_step"].shape, np.nan))
             np.testing.assert_array_equal(actual_event_data.mass, np.full_like(cdf["mass"][...], np.nan))
             np.testing.assert_array_equal(actual_event_data.mass_per_charge, np.full_like(cdf["mass_per_charge"][...], np.nan))
             np.testing.assert_array_equal(actual_event_data.normalization, np.full_like(cdf["normalization"][...], np.nan))
             np.testing.assert_array_equal(actual_event_data.spin_angle, np.full_like(cdf["spin_angle"][...], np.nan))
-
-            self.assertIsInstance(actual_event_data.apd_id, np.ma.masked_array)
-            np.testing.assert_array_equal(actual_event_data.apd_id.data, cdf["apd_id"])
-            self.assertTrue(np.all(actual_event_data.apd_id.mask))
-
-            self.assertIsInstance(actual_event_data.gain, np.ma.masked_array)
-            np.testing.assert_array_equal(actual_event_data.gain.data, cdf["gain"])
-            self.assertTrue(np.all(actual_event_data.gain.mask))
-
-            self.assertIsInstance(actual_event_data.multi_flag, np.ma.masked_array)
-            np.testing.assert_array_equal(actual_event_data.multi_flag.data, cdf["multi_flag"])
-            self.assertTrue(np.all(actual_event_data.multi_flag.mask))
-
-            self.assertIsInstance(actual_event_data.num_events, np.ma.masked_array)
-            np.testing.assert_array_equal(actual_event_data.num_events.data, cdf["num_events"])
-            self.assertTrue(np.all(actual_event_data.num_events.mask))
-
-            self.assertIsInstance(actual_event_data.position, np.ma.masked_array)
-            np.testing.assert_array_equal(actual_event_data.position.data, cdf["position"])
-            self.assertTrue(np.all(actual_event_data.position.mask))
-
-            self.assertIsInstance(actual_event_data.tof, np.ma.masked_array)
-            np.testing.assert_array_equal(actual_event_data.tof.data, cdf["tof"])
-            self.assertTrue(np.all(actual_event_data.tof.mask))
-
-            self.assertIsInstance(actual_event_data.type, np.ma.masked_array)
-            np.testing.assert_array_equal(actual_event_data.type.data, cdf["type"])
-            self.assertTrue(np.all(actual_event_data.type.mask))
             # @formatter:on
+
+            masked_variables = [
+                "energy_step",
+                "apd_id",
+                "gain",
+                "multi_flag",
+                "num_events",
+                "position",
+                "tof",
+                "type"
+            ]
+
+            for var in masked_variables:
+                actual_data = getattr(actual_event_data, var)
+
+                self.assertIsInstance(actual_data, np.ma.masked_array)
+                np.testing.assert_array_equal(actual_data.data, cdf[var])
+                self.assertTrue(np.all(actual_data.mask))
 
     def test_codice_lo_l3a_direct_event_to_data_product(self):
         rng = np.random.default_rng()
@@ -434,12 +441,11 @@ class TestModels(CdfModelTestCase):
         for data_product in data_products:
             np.testing.assert_array_equal(getattr(direct_event, data_product.name), data_product.value)
 
-    def test_codice_lo_l1a_sw_priority_read_from_instrument_team_cdf(self):
-        instrument_team_cdf_path = get_test_instrument_team_data_path(
-            "codice/lo/imap_codice_l1a_lo-sw-priority_20260307_v003.cdf")
-        actual_l1a_sw_priority_rates = CodiceLoL1aSWPriorityRates.read_from_cdf(instrument_team_cdf_path)
+    def test_codice_lo_l1a_sw_priority_read_from_cdf(self):
+        cdf_path = get_test_data_path("codice/imap_codice_l1a_lo-sw-priority_20260307_v004.cdf")
+        actual_l1a_sw_priority_rates = CodiceLoL1aSWPriorityRates.read_from_cdf(cdf_path)
 
-        with CDF(str(instrument_team_cdf_path)) as cdf:
+        with CDF(str(cdf_path)) as cdf:
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.epoch, cdf["epoch"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.epoch_delta_plus, cdf["epoch_delta_plus"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.epoch_delta_minus, cdf["epoch_delta_minus"][...])
@@ -464,12 +470,11 @@ class TestModels(CdfModelTestCase):
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.nso_esa_step, cdf["nso_esa_step"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.esa_step, cdf["esa_step"][...])
 
-    def test_codice_lo_l1a_nsw_priority_read_from_instrument_team_cdf(self):
-        instrument_team_cdf_path = get_test_instrument_team_data_path(
-            "codice/lo/imap_codice_l1a_lo-nsw-priority_20260307_v003.cdf")
-        actual_l1a_nsw_priority_rates = CodiceLoL1aNSWPriorityRates.read_from_cdf(instrument_team_cdf_path)
+    def test_codice_lo_l1a_nsw_priority_read_from_cdf(self):
+        cdf_path = get_test_data_path("codice/imap_codice_l1a_lo-nsw-priority_20260307_v004.cdf")
+        actual_l1a_nsw_priority_rates = CodiceLoL1aNSWPriorityRates.read_from_cdf(cdf_path)
 
-        with CDF(str(instrument_team_cdf_path)) as cdf:
+        with CDF(str(cdf_path)) as cdf:
             np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.epoch, cdf["epoch"][...])
             np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.epoch_delta_plus, cdf["epoch_delta_plus"][...])
             np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.epoch_delta_minus,

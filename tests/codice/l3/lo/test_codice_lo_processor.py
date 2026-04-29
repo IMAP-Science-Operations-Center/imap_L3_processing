@@ -730,7 +730,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         mock_rebin.assert_called_once_with(
             mass=sentinel.l3a_de_mass,
             mass_per_charge=sentinel.l3a_de_mass_per_charge,
-            energy=sentinel.l3a_de_energy_step,
+            energy_step=sentinel.l3a_de_energy_step,
             spin_angle=sentinel.l3a_de_spin_angle,
             position=sentinel.l3a_de_position,
             mass_species_bin_lookup=dependencies.mass_species_bin_lookup,
@@ -835,7 +835,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             mass_coefficients_file_path=get_test_data_path(
                 "codice/imap_codice_mass-coefficient-lookup_20241110_v003.csv"),
             esa_to_energy_per_charge_file_path=get_test_data_path(
-                "codice/imap_codice_lo-energy-per-charge_20241110_v001.csv"
+                "codice/imap_codice_lo-energy-per-charge_20241110_v002.csv"
             )
         )
 

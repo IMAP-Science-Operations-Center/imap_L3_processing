@@ -1,31 +1,34 @@
 import logging
 import unittest
+from datetime import timedelta
 from pathlib import Path
 from unittest.mock import Mock, patch
 
 from imap_data_access import ProcessingInputCollection, ScienceInput, AncillaryInput
 from imap_data_access.file_validation import ScienceFilePath
+from imap_data_access.processing_input import ProcessingInput, generate_imap_input
 from spacepy.pycdf import CDF
 
 import imap_l3_data_processor
 import tests
 from tests.integration.integration_test_helpers import mock_imap_data_access
-from tests.test_helpers import get_run_local_data_path, get_test_data_path, get_test_instrument_team_data_path
+from tests.test_helpers import get_run_local_data_path, get_test_data_path, get_test_instrument_team_data_path, \
+    run_periodically
 
 INTEGRATION_DATA_DIR = Path(tests.integration.__file__).parent / "test_data/codice"
-INSTRUMENT_TEAM_DATA_DIR = get_test_instrument_team_data_path("codice/lo")
+CODICE_TEST_DATA_DIR = get_test_data_path("codice")
 OUTPUT_DIR = get_run_local_data_path("codice_integration")
 
 
 class CodiceProcessorIntegration(unittest.TestCase):
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_codice_lo_direct_events(self, mock_parse_cli_arguments):
-        energy_per_charge_path = get_test_data_path("codice/imap_codice_lo-energy-per-charge_20241110_v001.csv")
-        mass_coefficient_path = get_test_data_path("codice/imap_codice_mass-coefficient-lookup_20241110_v003.csv")
+        energy_per_charge_path = CODICE_TEST_DATA_DIR / "imap_codice_lo-energy-per-charge_20241110_v002.csv"
+        mass_coefficient_path = CODICE_TEST_DATA_DIR / "imap_codice_mass-coefficient-lookup_20241110_v003.csv"
         input_files = [
-            INSTRUMENT_TEAM_DATA_DIR / "imap_codice_l2_lo-direct-events_20260307_v003.cdf",
-            INSTRUMENT_TEAM_DATA_DIR / "imap_codice_l1a_lo-nsw-priority_20260307_v003.cdf",
-            INSTRUMENT_TEAM_DATA_DIR / "imap_codice_l1a_lo-sw-priority_20260307_v003.cdf",
+            CODICE_TEST_DATA_DIR / "imap_codice_l2_lo-direct-events_20260307_v004.cdf",
+            CODICE_TEST_DATA_DIR / "imap_codice_l1a_lo-nsw-priority_20260307_v004.cdf",
+            CODICE_TEST_DATA_DIR / "imap_codice_l1a_lo-sw-priority_20260307_v004.cdf",
             energy_per_charge_path,
             mass_coefficient_path,
         ]
@@ -37,13 +40,7 @@ class CodiceProcessorIntegration(unittest.TestCase):
                 format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
             )
 
-            processing_input_collection = ProcessingInputCollection(
-                ScienceInput("imap_codice_l2_lo-direct-events_20260307_v003.cdf"),
-                ScienceInput("imap_codice_l1a_lo-nsw-priority_20260307_v003.cdf"),
-                ScienceInput("imap_codice_l1a_lo-sw-priority_20260307_v003.cdf"),
-                AncillaryInput(energy_per_charge_path.name),
-                AncillaryInput(mass_coefficient_path.name),
-            )
+            processing_input_collection = ProcessingInputCollection(*(generate_imap_input(f.name) for f in input_files))
 
             mock_arguments = Mock()
             mock_arguments.instrument = "codice"
@@ -64,10 +61,10 @@ class CodiceProcessorIntegration(unittest.TestCase):
             self.assertTrue(expected_output_path.exists(), f"Expected file {expected_output_path.name} not found")
 
             expected_parents = {
-                "imap_codice_l2_lo-direct-events_20260307_v003.cdf",
-                "imap_codice_l1a_lo-nsw-priority_20260307_v003.cdf",
-                "imap_codice_l1a_lo-sw-priority_20260307_v003.cdf",
-                "imap_codice_lo-energy-per-charge_20241110_v001.csv",
+                "imap_codice_l2_lo-direct-events_20260307_v004.cdf",
+                "imap_codice_l1a_lo-nsw-priority_20260307_v004.cdf",
+                "imap_codice_l1a_lo-sw-priority_20260307_v004.cdf",
+                "imap_codice_lo-energy-per-charge_20241110_v002.csv",
                 "imap_codice_mass-coefficient-lookup_20241110_v003.csv",
             }
 
@@ -123,6 +120,45 @@ class CodiceProcessorIntegration(unittest.TestCase):
                 "imap_codice_l3a_lo-sw-charge-state-distributions_20260301_v001.cdf"
             ).construct_path()
             self.assertTrue(expected_sw_csd_file_path.exists())
+
+    @run_periodically(timedelta(days=14))
+    @patch("imap_l3_data_processor._parse_cli_arguments")
+    def test_codice_lo_3d_distributions(self, mock_parse_cli_arguments):
+        input_files = [
+            CODICE_TEST_DATA_DIR / "imap_codice_l3a_lo-direct-events_20260307_v001.cdf",
+            CODICE_TEST_DATA_DIR / "imap_codice_l1a_lo-nsw-priority_20260307_v004.cdf",
+            CODICE_TEST_DATA_DIR / "imap_codice_l1a_lo-sw-priority_20260307_v004.cdf",
+            CODICE_TEST_DATA_DIR / "imap_codice_lo-energy-per-charge_20241110_v002.csv",
+            CODICE_TEST_DATA_DIR / "imap_codice_l2-lo-efficiency_20251008_v003.csv",
+            CODICE_TEST_DATA_DIR / "imap_codice_l2-lo-gfactor_20251212_v003.csv",
+            CODICE_TEST_DATA_DIR / "imap_codice_lo-mass-species-bin-lookup_20250309_v003.csv",
+        ]
+
+        processing_input = ProcessingInputCollection(*(generate_imap_input(f.name) for f in input_files))
+        dependency_json = processing_input.serialize()
+
+        with mock_imap_data_access(OUTPUT_DIR, input_files):
+            for species in ("hplus", "heplus", "heplusplus", "oplus6"):
+                with self.subTest(species=species):
+                    descriptor = f"lo-{species}-3d-distribution"
+
+                    mock_arguments = Mock()
+                    mock_arguments.instrument = "codice"
+                    mock_arguments.data_level = "l3a"
+                    mock_arguments.descriptor = descriptor
+                    mock_arguments.start_date = "20260307"
+                    mock_arguments.end_date = None
+                    mock_arguments.repointing = None
+                    mock_arguments.version = "v001"
+                    mock_arguments.dependency = dependency_json
+                    mock_arguments.upload_to_sdc = False
+                    mock_parse_cli_arguments.return_value = mock_arguments
+                    imap_l3_data_processor.imap_l3_processor()
+
+                    expected_output_path = ScienceFilePath(
+                        f"imap_codice_l3a_{descriptor}_20260307_v001.cdf"
+                    ).construct_path()
+                    self.assertTrue(expected_output_path.exists())
 
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_codice_hi_direct_events(self, mock_parse_cli_arguments):

@@ -365,7 +365,7 @@ class CodiceLoDirectEventData:
                 data_quality=cdf[DATA_QUALITY_VAR_NAME][...],
                 elevation=read_numeric_variable(cdf[ELEVATION_VAR_NAME]),
                 energy_per_charge=read_numeric_variable(cdf[ENERGY_PER_CHARGE_VAR_NAME]),
-                energy_step=read_numeric_variable(cdf[ENERGY_STEP_VAR_NAME]),
+                energy_step=read_variable_and_mask_fill_values(cdf[ENERGY_STEP_VAR_NAME]),
                 gain=read_variable_and_mask_fill_values(cdf[GAIN_VAR_NAME]),
                 mass=read_numeric_variable(cdf[MASS_VAR_NAME]),
                 mass_per_charge=read_numeric_variable(cdf[MASS_PER_CHARGE_VAR_NAME]),

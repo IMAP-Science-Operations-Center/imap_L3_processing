@@ -240,7 +240,7 @@ class CodiceLoProcessor(Processor):
     def process_l3a_3d_distribution_product(self, dependencies: CodiceLoL3a3dDistributionsDependencies):
         l3a_de_mass = dependencies.l3a_direct_event_data.mass
         l3a_de_mass_per_charge = dependencies.l3a_direct_event_data.mass_per_charge
-        l3a_de_energy = dependencies.l3a_direct_event_data.energy_step
+        l3a_de_energy_step = dependencies.l3a_direct_event_data.energy_step
         l3a_de_spin_angle = dependencies.l3a_direct_event_data.spin_angle
         l3a_de_position = dependencies.l3a_direct_event_data.position
         l3a_de_normalization = np.flip(dependencies.l3a_direct_event_data.normalization, axis=2)
@@ -258,7 +258,7 @@ class CodiceLoProcessor(Processor):
         counts_3d_data = rebin_to_counts_by_species_elevation_and_spin_sector(
             mass=l3a_de_mass,
             mass_per_charge=l3a_de_mass_per_charge,
-            energy=l3a_de_energy,
+            energy_step=l3a_de_energy_step,
             spin_angle=l3a_de_spin_angle,
             position=l3a_de_position,
             mass_species_bin_lookup=mass_species_bin_lookup,

@@ -1,36 +1,19 @@
-import csv
-import tempfile
 import unittest
-from pathlib import Path
 
 import numpy as np
 
 from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup
+from tests.test_helpers import get_test_data_path
 
 
 class TestEnergyLookup(unittest.TestCase):
     def test_read_from_csv(self):
-        with (tempfile.TemporaryDirectory() as tmpdir):
-            tmpdir = Path(tmpdir)
+        input_file = get_test_data_path("codice") / "imap_codice_lo-energy-per-charge_20241110_v002.csv"
+        actual_energy_lookup = EnergyLookup.read_from_csv(input_file)
 
-            output_path = tmpdir / "test_energy_lookup.csv"
-            with open(output_path, "a") as test_energy_lookup_csv:
-                csv_writer = csv.writer(test_energy_lookup_csv)
-
-                csv_writer.writerow(["ESA Step", "Energy Bin Lower", "Energy Center", "Energy Bin Upper"])
-                csv_writer.writerows([
-                    [0, 1, 2, 3],
-                    [1, 3, 5, 8],
-                    [2, 8, 12, 15]
-                ])
-
-            actual_energy_lookup = EnergyLookup.read_from_csv(output_path)
-
-            np.testing.assert_array_equal(actual_energy_lookup.bin_centers, np.array([2, 5, 12]))
-            np.testing.assert_array_equal(actual_energy_lookup.bin_centers - actual_energy_lookup.delta_minus,
-                                          np.array([1, 3, 8]))
-            np.testing.assert_array_equal(actual_energy_lookup.bin_centers + actual_energy_lookup.delta_plus,
-                                          np.array([3, 8, 15]))
-
-            actual_energy_indices = actual_energy_lookup.get_energy_index([1, 2, 3, 4, 6, 7, 8, 9, 10])
-            np.testing.assert_array_equal(actual_energy_indices, np.array([0, 0, 1, 1, 1, 1, 2, 2, 2]))
+        np.testing.assert_array_equal(actual_energy_lookup.bin_centers[0], 81.216)
+        np.testing.assert_array_equal(actual_energy_lookup.bin_centers[127], 0.507357072)
+        np.testing.assert_array_equal(actual_energy_lookup.delta_minus[0], 81.216 - 79.60339125)
+        np.testing.assert_array_equal(actual_energy_lookup.delta_minus[127], 0.507357072 - 0.497319345)
+        np.testing.assert_array_equal(actual_energy_lookup.delta_plus[0], 82.855305 - 81.216)
+        np.testing.assert_array_equal(actual_energy_lookup.delta_plus[127], 0.517446956 - 0.507357072)

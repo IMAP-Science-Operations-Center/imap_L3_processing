@@ -28,9 +28,9 @@ imap_codice_l3a_lo-heplus-3d-distribution:
   Data_type: L3A_lo-heplus-3d-distribution>Level-3A He+ 3d distribution
   Logical_source_description: IMAP Mission CoDICE Lo He+ 3d Instrument Frame Distributions
 
-imap_codice_l3a_lo-heplus2-3d-distribution:
+imap_codice_l3a_lo-heplusplus-3d-distribution:
   Data_level: "3a"
-  Data_type: L3A_lo-heplus2-3d-distribution>Level-3A He++ 3d distribution
+  Data_type: L3A_lo-heplusplus-3d-distribution>Level-3A He++ 3d distribution
   Logical_source_description: IMAP Mission CoDICE Lo He++ 3d Instrument Frame Distributions
 
 imap_codice_l3a_lo-oplus6-3d-distribution:

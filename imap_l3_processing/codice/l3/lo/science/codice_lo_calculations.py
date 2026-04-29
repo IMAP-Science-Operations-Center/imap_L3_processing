@@ -6,7 +6,7 @@ import numpy as np
 
 from imap_l3_processing.codice.l3.lo.constants import AZIMUTH_STEP_SIZE, ELEVATION_STEP_SIZE, ENERGY_STEP_SIZE, \
     ENERGY_LOST_IN_CARBON_FOIL, POST_ACCELERATION_VOLTAGE_IN_KV, CONVERSION_CONSTANT_K, CODICE_LO_NUM_AZIMUTH_BINS, \
-    CONSTANT_C_FROM_INSTRUMENT_TEAM
+    CONSTANT_C_FROM_INSTRUMENT_TEAM, CODICE_LO_NUM_ESA_STEPS
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup, \
     PositionToElevationLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.efficiency_lookup import EfficiencyLookup
@@ -111,7 +111,7 @@ def lookup_normalization_per_event(normalization: np.ndarray, num_events: np.nda
 
 def rebin_to_counts_by_species_elevation_and_spin_sector(num_events: np.ndarray, mass: np.ndarray,
                                                          mass_per_charge: np.ndarray,
-                                                         energy: np.ndarray,
+                                                         energy_step: np.ndarray,
                                                          spin_angle: np.ndarray,
                                                          position: np.ma.masked_array,
                                                          mass_species_bin_lookup: MassSpeciesBinLookup,
@@ -121,7 +121,7 @@ def rebin_to_counts_by_species_elevation_and_spin_sector(num_events: np.ndarray,
     num_priorities = mass.shape[1]
 
     output = np.full((mass_species_bin_lookup.get_num_species(), num_epochs, num_priorities,
-                      CODICE_LO_NUM_AZIMUTH_BINS, spin_angle_lut.num_bins, energy_lut.num_bins), 0)
+                      CODICE_LO_NUM_AZIMUTH_BINS, spin_angle_lut.num_bins, CODICE_LO_NUM_ESA_STEPS), 0)
 
     for epoch_i in range(num_epochs):
         for priority_i in range(num_priorities):
@@ -130,7 +130,7 @@ def rebin_to_counts_by_species_elevation_and_spin_sector(num_events: np.ndarray,
 
             for event_i in range(num_events[epoch_i, priority_i]):
                 indices_of_event = epoch_i, priority_i, event_i
-                if (np.isnan(energy[indices_of_event]) or np.isnan(spin_angle[indices_of_event]) or
+                if (energy_step[indices_of_event] is np.ma.masked or np.isnan(spin_angle[indices_of_event]) or
                         position[indices_of_event] is np.ma.masked):
                     continue
 
@@ -143,15 +143,19 @@ def rebin_to_counts_by_species_elevation_and_spin_sector(num_events: np.ndarray,
                 species = mass_species_bin_lookup.get_species(mass[indices_of_event],
                                                               mass_per_charge[indices_of_event])
                 if species is not None:
-                    energy_i = energy_lut.get_energy_index(energy[indices_of_event])
+                    energy_i = energy_step[indices_of_event]
                     species_i = mass_species_bin_lookup.get_species_index(species)
                     spin_angle_i = spin_angle_lut.get_spin_angle_index(spin_angle[indices_of_event])
                     position_i = position_of_event - 1
                     output[species_i, epoch_i, priority_i, position_i, spin_angle_i, energy_i] += 1
 
-    return CodiceLo3dData(data_in_3d_bins=output, mass_bin_lookup=mass_species_bin_lookup,
-                          energy_per_charge=energy_lut.bin_centers, spin_angle=spin_angle_lut.bin_centers,
-                          azimuth_or_elevation=np.arange(1, CODICE_LO_NUM_AZIMUTH_BINS + 1))
+    return CodiceLo3dData(
+        data_in_3d_bins=output,
+        mass_bin_lookup=mass_species_bin_lookup,
+        energy_per_charge=energy_lut.bin_centers,
+        spin_angle=spin_angle_lut.bin_centers,
+        azimuth_or_elevation=np.arange(1, CODICE_LO_NUM_AZIMUTH_BINS + 1),
+    )
 
 
 EPOCH = TypeVar("EPOCH")
