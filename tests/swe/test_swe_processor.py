@@ -16,7 +16,7 @@ from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.quality_flags import SweL3Flags
 from imap_l3_processing.swe.swe_processor import SweProcessor, logger
 from tests.test_helpers import NumpyArrayMatcher, build_swe_configuration, create_dataclass_mock, build_moments, \
-    build_moment_fit_results
+    build_moment_fit_results, build_swe_moment_data
 
 
 class TestSweProcessor(unittest.TestCase):
@@ -128,7 +128,7 @@ class TestSweProcessor(unittest.TestCase):
             gyrophase_delta=[90, 90, 90]
         )
 
-        mock_moment_data = create_dataclass_mock(SweL3MomentData)
+        mock_moment_data = build_swe_moment_data(len(epochs))
         mock_calculate_moment_products.return_value = mock_moment_data
 
         calculate_pitch_angle_flags = np.array([SweL3Flags.NONE] * len(epochs))
@@ -484,7 +484,7 @@ class TestSweProcessor(unittest.TestCase):
         ])
 
     @patch("imap_l3_processing.swe.swe_processor.SweProcessor.calculate_moment_products")
-    def test_calculate_pitch_angle_products_makes_nan_if_no_mag_close_enough(self, _):
+    def test_calculate_pitch_angle_products_makes_nan_if_no_mag_close_enough(self, mock_calculate_moments):
         epochs = np.array([datetime(2025, 3, 6)])
         mag_epochs = np.array([
             datetime(2025, 3, 6, 0, 1, 30),
@@ -506,6 +506,8 @@ class TestSweProcessor(unittest.TestCase):
 
         num_energies = 9
         num_epochs = 1
+        mock_calculate_moments.return_value = build_swe_moment_data(num_epochs)
+
         swe_l2_data = SweL2Data(
             epoch=epochs,
             phase_space_density=np.arange(num_epochs * num_energies * 5 * 7).reshape(num_epochs, num_energies, 5,
@@ -590,13 +592,13 @@ class TestSweProcessor(unittest.TestCase):
                                               np.nan))
 
     @patch("imap_l3_processing.swe.swe_processor.SweProcessor.calculate_moment_products")
-    def test_calculate_pitch_angle_products_without_mocks(self, _):
+    def test_calculate_pitch_angle_products_without_mocks(self, mock_calculate_moments):
         epochs = np.array([datetime(2025, 3, 6)])
         mag_start_time = datetime(2025, 3, 6, 0, 1, 0)
         mag_epochs = np.array([mag_start_time + i * timedelta(seconds=1) for i in range(10)])
         swapi_epochs = np.array([datetime(2025, 3, 6), datetime(2025, 3, 10)])
         swp_flags = np.array([SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED, SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED])
-
+        mock_calculate_moments.return_value = build_swe_moment_data(len(epochs))
         pitch_angle_bins = [70, 100, 130]
 
         num_energies = 9

@@ -16,7 +16,7 @@ from imap_data_access.file_validation import generate_imap_file_path
 
 import imap_l3_processing
 import tests
-from imap_l3_processing.swe.l3.models import SweConfiguration
+from imap_l3_processing.swe.l3.models import SweConfiguration, SweL3MomentData
 from imap_l3_processing.swe.l3.science.moment_calculations import Moments, MomentFitResults
 
 run_local_data_path = Path(tests.__file__).parent.parent / "run_local_input_data"
@@ -80,6 +80,18 @@ def build_moment_fit_results(moments: Moments = None, chisq: float = 1, number_o
         regress_result = np.ndarray([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     return MomentFitResults(moments=moments, chisq=chisq, number_of_points=number_of_points,
                             regress_result=regress_result)
+
+def build_swe_moment_data(epoch_len):
+    mock_moment_data = create_dataclass_mock(SweL3MomentData)
+    mock_moment_data.core_t_parallel_integrated = np.arange(epoch_len)
+    mock_moment_data.core_t_parallel_fit = np.arange(epoch_len)
+    mock_moment_data.core_t_perpendicular_integrated = np.arange(epoch_len * 2).reshape((-1, 2))
+    mock_moment_data.core_t_perpendicular_fit = np.arange(epoch_len)
+    mock_moment_data.halo_t_parallel_integrated = np.arange(epoch_len)
+    mock_moment_data.halo_t_parallel_fit = np.arange(epoch_len)
+    mock_moment_data.halo_t_perpendicular_integrated = np.arange(epoch_len * 2).reshape((-1, 2))
+    mock_moment_data.halo_t_perpendicular_fit = np.arange(epoch_len)
+    return mock_moment_data
 
 
 T = TypeVar('T')
