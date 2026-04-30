@@ -129,7 +129,6 @@ class SweProcessor(Processor):
                                                              corrected_energy_bins, config)
         # Check Temperature Outlier Flags and add to swe_quality_flags
         # each temperature variable needs checked
-        # I HAVE NO IDEA WHY THE CORE AND HALO PERP INTEGRATED ARRAYS ARE 2D, AND ALL OTHERS ARE 1D
         swe_quality_flags = swe_quality_flags.astype(int).astype(SweL3Flags)
         temperature_outlier_flags = check_temperature_outlier_flag(swe_l3_moments_data.core_t_parallel_integrated)
         swe_quality_flags |= temperature_outlier_flags
