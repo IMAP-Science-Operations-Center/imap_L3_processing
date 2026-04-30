@@ -258,7 +258,7 @@ class TestModels(unittest.TestCase):
             old_label_attrs = expanded_cdf["priority_label"].attrs
             del expanded_cdf["priority_label"]
             expanded_cdf["priority_label"] = [f"Priority {i}" for i in range(8)]
-            expanded_cdf["priority_label"] = old_label_attrs
+            expanded_cdf["priority_label"].attrs = old_label_attrs
 
             event_based_vars = [
                 "data_quality",
