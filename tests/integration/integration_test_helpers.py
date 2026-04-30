@@ -133,6 +133,8 @@ class mock_imap_data_access:
         valid_files = []
         spice_file_paths = []
         for input_file in input_files:
+            if not input_file.exists():
+                raise Exception(f"Could not find file {input_file}")
             try:
                 imap_input_file_path = generate_imap_file_path(input_file.name)
                 valid_files.append(input_file)
