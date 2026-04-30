@@ -20,6 +20,7 @@ from imap_l3_processing.utils import save_data
 
 logger = logging.getLogger(__name__)
 
+
 class HitProcessor(Processor):
     def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
         super().__init__(dependencies, input_metadata)
@@ -160,7 +161,7 @@ class HitProcessor(Processor):
         number_of_pitch_angle_bins = 8
         number_of_gyrophase_bins = 15
 
-        mag_data = dependencies.mag_l1d_data
+        mag_data = dependencies.mag_data
 
         hit_data = transform_to_10_minute_chunks(dependencies.data)
 

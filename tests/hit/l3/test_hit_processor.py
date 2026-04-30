@@ -69,7 +69,7 @@ class TestHitProcessor(TestCase):
         mock_mag_data = create_dataclass_mock(MagData)
         mock_mag_data.rebin_to = Mock()
         mock_mag_data.rebin_to.return_value = averaged_mag_vectors
-        mock_dependencies.mag_l1d_data = mock_mag_data
+        mock_dependencies.mag_data = mock_mag_data
         mock_hit_data = create_dataclass_mock(HitL2Data)
         mock_hit_data.epoch = epochs
         mock_hit_data.epoch_delta = epoch_deltas

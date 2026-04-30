@@ -961,6 +961,7 @@ def create_lo_l3_survival_corrected_cdf(survival_dependencies: HiLoL3SurvivalDep
     processor = LoProcessor(processing_input_collection, input_metadata)
     print(processor.process())
 
+
 def create_codice_hi_l3a_direct_events_cdf():
     codice_hi_de_dependencies = CodiceHiL3aDirectEventsDependencies.from_file_paths(
         tof_lookup_path=get_test_instrument_team_data_path("codice/hi/imap_codice_tof-lookup_20241110_v002.csv"),
@@ -1074,7 +1075,7 @@ if __name__ == "__main__":
                 r"C:\Users\Petty\Downloads\HIT Validation-20250922T131655Z-1-001\HIT Validation\imap_mag_l1d_norm-dsrf_20100106_v001.cdf")
             hit_data = read_l2_hit_data(
                 r"C:\Users\Petty\Downloads\HIT Validation-20250922T131655Z-1-001\HIT Validation\imap_hit_l2_macropixel-intensity_20100106_v001.cdf")
-            dependencies = HITL3SectoredDependencies(mag_l1d_data=mag_data, data=hit_data)
+            dependencies = HITL3SectoredDependencies(mag_data=mag_data, data=hit_data)
             print(f"hit macropixel data product: {create_hit_sectored_cdf(dependencies)}")
 
     if "swe" in sys.argv:
@@ -1105,10 +1106,14 @@ if __name__ == "__main__":
         glows_l3_paths = list(glows_l3e_folder.iterdir())
         glows_l3_paths = glows_l3_paths[:len(glows_l3_paths) // 4]
 
-        l2_antiram_90_map_path = get_test_data_path("hi/validation/l2_maps/imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-1yr_20250415_v001.cdf")
-        l2_ram_90_map_path = get_test_data_path("hi/validation/l2_maps/imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-1yr_20250415_v001.cdf")
-        l2_antiram_45_map_path = get_test_data_path("hi/validation/l2_maps/imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-1yr_20250415_v001.cdf")
-        l2_ram_45_map_path = get_test_data_path("hi/validation/l2_maps/imap_hi_l2_h45-ena-h-sf-nsp-ram-hae-4deg-1yr_20250415_v001.cdf")
+        l2_antiram_90_map_path = get_test_data_path(
+            "hi/validation/l2_maps/imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-1yr_20250415_v001.cdf")
+        l2_ram_90_map_path = get_test_data_path(
+            "hi/validation/l2_maps/imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-1yr_20250415_v001.cdf")
+        l2_antiram_45_map_path = get_test_data_path(
+            "hi/validation/l2_maps/imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-1yr_20250415_v001.cdf")
+        l2_ram_45_map_path = get_test_data_path(
+            "hi/validation/l2_maps/imap_hi_l2_h45-ena-h-sf-nsp-ram-hae-4deg-1yr_20250415_v001.cdf")
 
         l1c_paths = list((get_imap_data_dir_path() / "hi" / "l1c").rglob("*.cdf"))
 
