@@ -29,6 +29,54 @@ from imap_l3_processing.utils import save_data
 logger = logging.getLogger(__name__)
 
 
+# Temperature Outlier Flag Algorithm
+def check_temperature_outlier_flag(data: np.ndarray):
+    # Define window duration that is centered, so best to use an odd number
+    window = 61 # 61 is about 1 hour
+    # Initiate Temperature Outliers to be all NONE value
+    TEMPERATURE_OUTLIER = np.zeros(len(data))
+    TEMPERATURE_OUTLIER[:] = SweL3Flags.NONE
+    for i in np.arange(len(data)):
+        # Get left and right index accounting for edges
+        left_idx = 0 if i - window//2 < 0 else i - window//2
+        right_idx = i + window//2 + 1
+        # Loop check the current value while removing every point from the window on each iteration
+        for k in np.arange(len(data[left_idx:right_idx])):
+            temp_data = data[left_idx:right_idx]
+            temp_data = np.delete(temp_data, k)
+            # Check if current value is beyond 3-sigma of median from data
+            median = np.nanmedian(temp_data)
+            deviation = np.nanstd(temp_data)
+            if np.abs(median - data[i]) >= deviation*3:
+                TEMPERATURE_OUTLIER[i] = SweL3Flags.TEMPERATURE_OUTLIER
+                # Break since we already know the current index i is an outlier
+                break
+    # Copy outlier flags to use as reference when overwriting
+    tof_copy = TEMPERATURE_OUTLIER.copy()
+    for i in np.arange(len(data)):
+        # Don't do this is the current value is already an outlier
+        if TEMPERATURE_OUTLIER[i] == SweL3Flags.NONE:
+            # Get left and right index accounting for edges
+            left_idx = 0 if i - window//2 < 0 else i - window//2
+            right_idx = i + window//2 + 1
+            # Loop check the current value while removing every point from the window on each iteration
+            # This time around, we conditionally slice to avoid including already known outliers from
+            #   median and standard devation calculations
+            for k in np.arange(len(data[left_idx:right_idx])):
+                if tof_copy[left_idx:right_idx][k] == 1:
+                    continue
+                temp_data = data[left_idx:right_idx]
+                # Check if current value is beyond 3-sigma of median from data
+                median = np.nanmedian(np.delete(temp_data,k)[np.delete(tof_copy[left_idx:right_idx],k)==0])
+                deviation = np.nanstd(np.delete(temp_data,k)[np.delete(tof_copy[left_idx:right_idx],k)==0])
+                if np.abs(median - data[i]) >= deviation * 3.:
+                    TEMPERATURE_OUTLIER[i] = SweL3Flags.TEMPERATURE_OUTLIER
+                    # Break since we already know the current index i is an outlier
+                    break
+    TEMPERATURE_OUTLIER = TEMPERATURE_OUTLIER.astype(int).astype(SweL3Flags)
+    return TEMPERATURE_OUTLIER
+
+
 class SweProcessor(Processor):
     def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
         super().__init__(dependencies, input_metadata)
@@ -79,6 +127,26 @@ class SweProcessor(Processor):
                                                              rebinned_mag_data,
                                                              spacecraft_potential, halo_core,
                                                              corrected_energy_bins, config)
+        # Check Temperature Outlier Flags and add to swe_quality_flags
+        # each temperature variable needs checked
+        # I HAVE NO IDEA WHY THE CORE AND HALO PERP INTEGRATED ARRAYS ARE 2D, AND ALL OTHERS ARE 1D
+        swe_quality_flags = swe_quality_flags.astype(int).astype(SweL3Flags)
+        temperature_outlier_flags = check_temperature_outlier_flag(swe_l3_moments_data.core_t_parallel_integrated)
+        swe_quality_flags |= temperature_outlier_flags
+        temperature_outlier_flags = check_temperature_outlier_flag(swe_l3_moments_data.core_t_parallel_fit)
+        swe_quality_flags |= temperature_outlier_flags
+        temperature_outlier_flags = check_temperature_outlier_flag(swe_l3_moments_data.core_t_perpendicular_integrated[:,0])
+        swe_quality_flags |= temperature_outlier_flags
+        temperature_outlier_flags = check_temperature_outlier_flag(swe_l3_moments_data.core_t_perpendicular_fit)
+        swe_quality_flags |= temperature_outlier_flags
+        temperature_outlier_flags = check_temperature_outlier_flag(swe_l3_moments_data.halo_t_parallel_integrated)
+        swe_quality_flags |= temperature_outlier_flags
+        temperature_outlier_flags = check_temperature_outlier_flag(swe_l3_moments_data.halo_t_parallel_fit)
+        swe_quality_flags |= temperature_outlier_flags
+        temperature_outlier_flags = check_temperature_outlier_flag(swe_l3_moments_data.halo_t_perpendicular_integrated[:,0])
+        swe_quality_flags |= temperature_outlier_flags
+        temperature_outlier_flags = check_temperature_outlier_flag(swe_l3_moments_data.halo_t_perpendicular_fit)
+        swe_quality_flags |= temperature_outlier_flags
 
         (
             phase_space_density_by_pitch_angle, phase_space_density_by_pitch_angle_and_gyrophase,

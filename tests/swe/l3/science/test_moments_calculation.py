@@ -15,6 +15,8 @@ from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwel
     calculate_primary_eigenvector, rotation_matrix_builder, rotate_temperature_tensor_to_mag, MomentFitResults
 from tests.test_helpers import create_dataclass_mock
 from tests.test_helpers import get_test_data_path
+from imap_l3_processing.swe.swe_processor import check_temperature_outlier_flag
+from imap_l3_processing.swe.quality_flags import SweL3Flags
 
 
 class TestMomentsCalculation(unittest.TestCase):
@@ -909,3 +911,40 @@ class TestMomentsCalculation(unittest.TestCase):
         self.assertEqual(expected_t_par, t_parallel)
         self.assertEqual(expected_t_perp, t_perp_average)
         self.assertEqual(expected_ratio, t_perp_ratio)
+
+
+    def test_check_temperature_outlier_flag(self):
+        # Make sure to replace temperatures with an array of the actual temperatures!!
+        temperatures = np.asarray([115994.66 , 116026.59 , 118674.664,  81440.03 ,  64882.246,
+        81693.66 ,  97943.58 , 106707.7  , 110098.68 , 118224.14 ,
+       114332.87 ,  72112.38 , 112917.73 , 114900.66 , 111031.34 ,
+       101084.9  , 104621.27 , 105482.9  , 111774.54 , 117124.625,
+       115963.13 , 116497.22 , 117109.44 , 116067.71 , 112034.125,
+       115428.125, 112301.64 , 114308.836, 112778.016, 112792.6  ,
+       112106.82 , 113119.766, 113032.69 , 113007.12 , 112749.11 ,
+       114590.734, 155481.47 , 117895.46 , 117952.94 , 115017.12 ,
+       110511.68 , 112724.29 , 111804.49 , 111790.33 , 110265.12 ,
+       111288.8  , 113818.85 , 113016.04 , 112490.38 , 113095.38 ,
+       112651.984, 113292.79 , 114452.2  , 113125.41 , 107491.9  ,
+       116490.92 , 114905.55 , 119953.88 , 123044.64 , 121589.14 ,
+       127217.89 , 124885.76 , 126984.54 , 126696.9  , 132537.52 ,
+       130044.89 , 203212.89 , 126546.88 , 129790.25 , 130226.16 ,
+       128036.91 , 123267.95 , 132878.33 , 133391.45 , 132277.88 ,
+       130638.78 , 131021.56 , 130341.88 , 132855.5  , 133775.25 ,
+       130266.41 , 126470.85 , 124299.48 , 126457.62 , 125728.02 ,
+       132413.53 , 125549.89 , 127563.04 , 133693.   , 125295.82 ,
+       130699.61 , 125014.195, 126216.7  , 131265.03 , 133390.77 ,
+       130349.43 , 130807.32 , 129782.42 , 129749.54 , 128326.375])
+        expected_values = np.asarray([0., 0., 0., 1., 1., 1., 0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0.,
+       0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+       0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+       0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., 0.,
+       0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+       0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
+        expected_values = expected_values.astype(int).astype(SweL3Flags)
+        expected_values[expected_values == 0] = SweL3Flags.NONE
+        expected_values[expected_values == 1] = SweL3Flags.TEMPERATURE_OUTLIER
+        
+        tof_flags = check_temperature_outlier_flag(temperatures)
+        for i in np.arange(len(tof_flags)):
+            self.assertEqual(expected_values[i], tof_flags[i])
