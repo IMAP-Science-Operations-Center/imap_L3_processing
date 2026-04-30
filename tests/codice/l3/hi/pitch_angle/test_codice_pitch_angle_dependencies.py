@@ -11,20 +11,49 @@ class TestCodicePitchAngleDependencies(unittest.TestCase):
 
     @patch(
         "imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies.CodicePitchAngleDependencies.from_file_paths")
-    @patch("imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies.download")
+    @patch("imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies.imap_data_access.download")
     def test_fetch_dependencies(self, mock_download, mock_from_files):
         expected_codice_science_file_download_path = "imap/codice/l2/2010/01/imap_codice_l2_hi-sectored_20100105_v010.cdf"
-        codice_sectored_intensities_input_file_name = "imap_codice_l2_hi-sectored_20100105_v010.cdf"
-
         expected_mag_download_path = "imap/mag/l1d/2010/01/imap_mag_l1d_norm-dsrf_20100105_v010.cdf"
-        mag_input_file_name = "imap_mag_l1d_norm-dsrf_20100105_v010.cdf"
 
-        science_input_codice_l2 = ScienceInput(codice_sectored_intensities_input_file_name)
-        science_input_mag_l1d = ScienceInput(mag_input_file_name)
+        science_input_codice_l2 = ScienceInput("imap_codice_l2_hi-sectored_20100105_v010.cdf")
+        science_input_mag_l1d = ScienceInput("imap_mag_l1d_norm-dsrf_20100105_v010.cdf")
 
         process_input_collection = ProcessingInputCollection()
         process_input_collection.add(science_input_codice_l2)
         process_input_collection.add(science_input_mag_l1d)
+
+        dependencies = CodicePitchAngleDependencies.fetch_dependencies(process_input_collection)
+
+        data_dir = imap_data_access.config["DATA_DIR"]
+
+        expected_codice_science_file_path = data_dir / expected_codice_science_file_download_path
+        expected_mag_science_file_path = data_dir / expected_mag_download_path
+
+        mock_download.assert_has_calls([
+            call(expected_codice_science_file_path),
+            call(expected_mag_science_file_path)
+        ])
+
+        mock_from_files.assert_called_with(expected_mag_science_file_path, expected_codice_science_file_path)
+        self.assertEqual(mock_from_files.return_value, dependencies)
+
+    @patch(
+        "imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies.CodicePitchAngleDependencies.from_file_paths")
+    @patch("imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies.imap_data_access.download")
+    def test_fetch_dependencies_uses_mag_l2_if_available(self, mock_download, mock_from_files):
+        expected_codice_science_file_download_path = "imap/codice/l2/2010/01/imap_codice_l2_hi-sectored_20100105_v010.cdf"
+        expected_mag_download_path = "imap/mag/l2/2010/01/imap_mag_l2_norm-dsrf_20100105_v010.cdf"
+
+        science_input_codice_l2 = ScienceInput("imap_codice_l2_hi-sectored_20100105_v010.cdf")
+        science_input_mag_l2 = ScienceInput("imap_mag_l2_norm-dsrf_20100105_v010.cdf")
+        science_input_mag_l1d = ScienceInput("imap_mag_l1d_norm-dsrf_20100105_v010.cdf")
+
+        process_input_collection = ProcessingInputCollection(
+            science_input_codice_l2,
+            science_input_mag_l1d,
+            science_input_mag_l2,
+        )
 
         dependencies = CodicePitchAngleDependencies.fetch_dependencies(process_input_collection)
 
@@ -53,4 +82,4 @@ class TestCodicePitchAngleDependencies(unittest.TestCase):
         mock_read_mag_data.assert_called_once_with(mag_file_path)
 
         self.assertEqual(mock_codice_l2_data.return_value, dependencies.codice_sectored_intensities_data)
-        self.assertEqual(mock_read_mag_data.return_value, dependencies.mag_l1d_data)
+        self.assertEqual(mock_read_mag_data.return_value, dependencies.mag_data)

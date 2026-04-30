@@ -4,16 +4,15 @@ from datetime import timedelta
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from imap_data_access import ProcessingInputCollection, ScienceInput, AncillaryInput
+from imap_data_access import ProcessingInputCollection
 from imap_data_access.file_validation import ScienceFilePath
-from imap_data_access.processing_input import ProcessingInput, generate_imap_input
+from imap_data_access.processing_input import generate_imap_input
 from spacepy.pycdf import CDF
 
 import imap_l3_data_processor
 import tests
 from tests.integration.integration_test_helpers import mock_imap_data_access
-from tests.test_helpers import get_run_local_data_path, get_test_data_path, get_test_instrument_team_data_path, \
-    run_periodically
+from tests.test_helpers import get_run_local_data_path, get_test_data_path, run_periodically
 
 INTEGRATION_DATA_DIR = Path(tests.integration.__file__).parent / "test_data/codice"
 CODICE_TEST_DATA_DIR = get_test_data_path("codice")
@@ -57,7 +56,8 @@ class CodiceProcessorIntegration(unittest.TestCase):
 
             imap_l3_data_processor.imap_l3_processor()
 
-            expected_output_path = ScienceFilePath("imap_codice_l3a_lo-direct-events_20260307_v001.cdf").construct_path()
+            expected_output_path = ScienceFilePath(
+                "imap_codice_l3a_lo-direct-events_20260307_v001.cdf").construct_path()
             self.assertTrue(expected_output_path.exists(), f"Expected file {expected_output_path.name} not found")
 
             expected_parents = {
@@ -191,7 +191,7 @@ class CodiceProcessorIntegration(unittest.TestCase):
         input_files = [
             INTEGRATION_DATA_DIR / "imap_codice_l2_hi-sectored_20260120_v003.cdf",
             INTEGRATION_DATA_DIR / "imap_mag_l1d_norm-dsrf_20260120_v002.cdf",
-            INTEGRATION_DATA_DIR / "imap_codice_l3b_hi-pitch-angle-25ccf871_20260120_v001.json",
+            INTEGRATION_DATA_DIR / "imap_mag_l2_norm-dsrf_20260120_v002.cdf",
         ]
         with mock_imap_data_access(OUTPUT_DIR, input_files):
             mock_arguments = Mock()
@@ -202,7 +202,8 @@ class CodiceProcessorIntegration(unittest.TestCase):
             mock_arguments.end_date = None
             mock_arguments.repointing = None
             mock_arguments.version = "v001"
-            mock_arguments.dependency = "imap_codice_l3b_hi-pitch-angle-25ccf871_20260120_v001.json"
+            processing_input = ProcessingInputCollection(*[generate_imap_input(f.name) for f in input_files])
+            mock_arguments.dependency = processing_input.serialize()
             mock_arguments.upload_to_sdc = False
             mock_parse_cli_arguments.return_value = mock_arguments
 

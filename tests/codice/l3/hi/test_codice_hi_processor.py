@@ -228,7 +228,6 @@ class TestCodiceHiProcessor(unittest.TestCase):
             processor.process()
         self.assertEqual("Unknown data level for CoDICE: L2a", str(context.exception))
 
-
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.calculate_unit_vector")
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.get_sector_unit_vectors")
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.calculate_pitch_angle")
@@ -281,7 +280,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
             energy_he3he4_minus=(np.repeat(1.6, len(np.array([1.11, 1.17])))),
         )
 
-        dependencies = CodicePitchAngleDependencies(mag_l1d_data=mag_l1d_data,
+        dependencies = CodicePitchAngleDependencies(mag_data=mag_l1d_data,
                                                     codice_sectored_intensities_data=codice_l2_data)
 
         expected_pitch_angles = np.linspace(15, 165, 6)
@@ -441,4 +440,3 @@ class TestCodiceHiProcessor(unittest.TestCase):
             processor.process_l3a_direct_event(codice_hi_dependencies)
         except Exception as e:
             self.fail(e)
-
