@@ -62,7 +62,7 @@ surv_prob:
   VALIDMAX: 1
   FILLVAL: -1.0000E+31
   LABL_PTR_1: energy_label
-  LABL_PTR_2: HEALPix_index_label
+  LABL_PTR_2: healpix_index_label
 spin_axis_latitude:
   NAME: spin_axis_latitude
   DATA_TYPE: CDF_FLOAT

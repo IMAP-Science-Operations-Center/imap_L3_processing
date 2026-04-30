@@ -108,6 +108,19 @@ class TestCdfUtils(TestCase):
                     self.assertIn("RECORD_VARYING", variable)
                     self.assertEqual("RV", variable["RECORD_VARYING"])
 
+    def test_attrs_that_point_to_another_var_actually_point_to_something(self):
+        def _is_pointer_attr(attr: str) -> bool:
+            return attr.startswith("DEPEND_") or \
+                attr.startswith("LABL_PTR_") or \
+                attr in ["DELTA_PLUS_VAR", "DELTA_MINUS_VAR"]
+
+        for filename, yaml_data, variable_key, variable in self.test_cases_variable:
+            with self.subTest(f"{filename}:{variable_key}"):
+                pointed_to_vars = [(attr, variable[attr]) for attr in variable if _is_pointer_attr(attr)]
+                for attr, pointed_to_var in pointed_to_vars:
+                    self.assertIn(pointed_to_var, yaml_data.keys(),
+                                  f"{pointed_to_var} is the {attr} of {variable_key} but does not exist!")
+
     def test_variable_fill_value_matches_data_type(self):
         for filename, yaml_data, variable_key, variable in self.test_cases_variable:
             with self.subTest(f"{filename}:{variable_key}"):

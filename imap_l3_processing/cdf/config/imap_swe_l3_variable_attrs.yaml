@@ -151,21 +151,6 @@ gyrophase_delta:
   FILLVAL: -1.00E+31
   SCALETYP: linear
   SI_CONVERSION: 1.745329e-2>radians
-temperature_tensor_component:
-  NAME: temperature_tensor_component
-  DATA_TYPE: CDF_INT1
-  CATDESC: Temperature tensor component index, 6 values
-  DEPEND_0: ' '
-  VAR_TYPE: support_data
-  RECORD_VARYING: RV
-  FIELDNAM: Tensor component index
-  FORMAT: I1
-  LABLAXIS: Temperature tensor component
-  UNITS: ' '
-  VALIDMIN: 0
-  VALIDMAX: 9
-  FILLVAL: -128
-  SCALETYP: linear
 intensity_by_pitch_angle:
   NAME: intensity_by_pitch_angle
   DATA_TYPE: CDF_REAL4
