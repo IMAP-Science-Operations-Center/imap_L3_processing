@@ -76,9 +76,6 @@ class TestModels(unittest.TestCase):
                     np.testing.assert_array_equal(l2_direct_event_data.spin_sector.data, cdf["spin_sector"])
                     # @formatter:on
 
-    def test_read_codice_hi_l2_truncates_priority_axis_to_6(self):
-        pass
-
     def test_codice_l3_hi_direct_event_data_products(self):
         rng = np.random.default_rng()
 
