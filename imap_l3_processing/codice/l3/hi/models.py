@@ -10,18 +10,9 @@ from imap_l3_processing.models import DataProduct, DataProductVariable
 
 CODICE_HI_NUM_L2_PRIORITIES = 6
 
-
-@dataclass
-class PriorityEventL2:
-    data_quality: ndarray
-    multi_flag: ndarray
-    number_of_events: ndarray
-    ssd_energy: ndarray
-    ssd_id: ndarray
-    spin_angle: ndarray
-    spin_number: ndarray
-    time_of_flight: ndarray
-    type: ndarray
+ELEVATION_ANGLE_VAR_NAME = "elevation_angle"
+GAIN_VAR_NAME = "gain"
+SPIN_SECTOR_VAR_NAME = "spin_sector"
 
 
 @dataclass
@@ -38,25 +29,32 @@ class CodiceL2HiDirectEventData:
     time_of_flight: ndarray
     type: ndarray
     energy_per_nuc: ndarray
+    elevation_angle: ndarray
+    gain: ndarray
+    spin_sector: ndarray
 
     @classmethod
     def read_from_cdf(cls, filename):
+        # @formatter:off
         with CDF(str(filename)) as cdf:
-            epoch = cdf["epoch"][...]
-            epoch_delta_plus = cdf['epoch_delta_plus'][...]
-            data_quality = read_variable_and_mask_fill_values(cdf["data_quality"])
-            multi_flag = read_variable_and_mask_fill_values(cdf["multi_flag"])
-            number_of_events = read_variable_and_mask_fill_values(cdf["num_events"])
-            ssd_energy = read_variable_and_mask_fill_values(cdf["ssd_energy"])
-            ssd_id = read_variable_and_mask_fill_values(cdf["ssd_id"])
-            spin_angle = read_numeric_variable(cdf["spin_angle"])
-            spin_number = read_variable_and_mask_fill_values(cdf["spin_number"])
-            time_of_flight = read_numeric_variable(cdf["tof"])
-            type = read_variable_and_mask_fill_values(cdf["type"])
-            energy_per_nuc = read_numeric_variable(cdf["energy_per_nuc"])
-
-            return cls(epoch, epoch_delta_plus, data_quality, multi_flag, number_of_events, ssd_energy, ssd_id,
-                       spin_angle, spin_number, time_of_flight, type, energy_per_nuc)
+            return cls(
+                epoch=cdf["epoch"][...],
+                epoch_delta_plus=cdf['epoch_delta_plus'][...],
+                data_quality=read_variable_and_mask_fill_values(cdf["data_quality"])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
+                multi_flag=read_variable_and_mask_fill_values(cdf["multi_flag"])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
+                number_of_events=read_variable_and_mask_fill_values(cdf["num_events"])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
+                ssd_energy=read_variable_and_mask_fill_values(cdf["ssd_energy"])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
+                ssd_id=read_variable_and_mask_fill_values(cdf["ssd_id"])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
+                spin_angle=read_numeric_variable(cdf["spin_angle"])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
+                spin_number=read_variable_and_mask_fill_values(cdf["spin_number"])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
+                time_of_flight=read_numeric_variable(cdf["tof"])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
+                type=read_variable_and_mask_fill_values(cdf["type"])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
+                energy_per_nuc=read_numeric_variable(cdf["energy_per_nuc"])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
+                elevation_angle=read_numeric_variable(cdf[ELEVATION_ANGLE_VAR_NAME])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
+                gain=read_variable_and_mask_fill_values(cdf[GAIN_VAR_NAME])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
+                spin_sector=read_variable_and_mask_fill_values(cdf[SPIN_SECTOR_VAR_NAME])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
+            )
+        # @formatter:on
 
 
 EPOCH_VAR_NAME = "epoch"
@@ -126,6 +124,9 @@ class CodiceL3HiDirectEvents(DataProduct):
     type: ndarray
     energy_per_nuc: ndarray
     estimated_mass: ndarray
+    elevation_angle: ndarray
+    gain: ndarray
+    spin_sector: ndarray
     priority_index: ndarray = field(init=False)
     event_index: ndarray = field(init=False)
     priority_index_label: ndarray = field(init=False)
@@ -152,6 +153,9 @@ class CodiceL3HiDirectEvents(DataProduct):
             DataProductVariable(TYPE_VAR_NAME, self.type),
             DataProductVariable(ENERGY_PER_NUC_VAR_NAME, self.energy_per_nuc),
             DataProductVariable(ESTIMATED_MASS_VAR_NAME, self.estimated_mass),
+            DataProductVariable(ELEVATION_ANGLE_VAR_NAME, self.elevation_angle),
+            DataProductVariable(GAIN_VAR_NAME, self.gain),
+            DataProductVariable(SPIN_SECTOR_VAR_NAME, self.spin_sector),
             DataProductVariable(PRIORITY_INDEX_VAR_NAME, self.priority_index),
             DataProductVariable(EVENT_INDEX_VAR_NAME, self.event_index),
             DataProductVariable(PRIORITY_INDEX_LABEL_VAR_NAME, self.priority_index_label),

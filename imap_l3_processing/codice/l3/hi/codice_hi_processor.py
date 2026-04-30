@@ -58,7 +58,10 @@ class CodiceHiProcessor(Processor):
             tof=l2_data.time_of_flight,
             type=l2_data.type,
             energy_per_nuc=l2_data.energy_per_nuc,
-            estimated_mass=estimated_mass
+            estimated_mass=estimated_mass,
+            elevation_angle=l2_data.elevation_angle,
+            gain=l2_data.gain,
+            spin_sector=l2_data.spin_sector,
         )
 
     def process_l3b(self, dependencies: CodicePitchAngleDependencies) -> CodiceHiL3PitchAngleDataProduct:
@@ -72,7 +75,7 @@ class CodiceHiProcessor(Processor):
         rebinned_mag_data = mag_data.rebin_to(sectored_intensities.epoch, sectored_intensities.epoch_delta_plus)
 
         spin_angles_in_dps_elevation_by_spin_angle = (
-                                                                 sectored_intensities.spin_angles.T + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360
+                                                             sectored_intensities.spin_angles.T + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360
 
         mag_unit_vectors = calculate_unit_vector(rebinned_mag_data)
         sector_unit = get_sector_unit_vectors(sectored_intensities.elevation_angle,

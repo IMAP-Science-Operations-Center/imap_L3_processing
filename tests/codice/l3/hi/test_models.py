@@ -2,6 +2,7 @@ import os
 import unittest
 from dataclasses import fields
 from datetime import datetime, timedelta
+from pathlib import Path
 from unittest.mock import Mock
 
 import numpy as np
@@ -9,7 +10,7 @@ from spacepy.pycdf import CDF
 
 from imap_l3_processing.codice.l3.hi.models import CodiceL2HiDirectEventData, CodiceL3HiDirectEvents, \
     CodiceHiL2SectoredIntensitiesData, CodiceHiL3PitchAngleDataProduct
-from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path
+from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path, with_tempdir
 
 
 class TestModels(unittest.TestCase):
@@ -21,40 +22,62 @@ class TestModels(unittest.TestCase):
         if os.path.exists('test_cdf.cdf'):
             os.remove('test_cdf.cdf')
 
-    def test_codice_hi_l2_data_read_from_instrument_team_cdf(self):
-        l2_path = get_test_instrument_team_data_path(
-            "codice/hi/imap_codice_l2_hi-direct-events_20250814_v001.cdf")
-        l2_direct_event_data = CodiceL2HiDirectEventData.read_from_cdf(l2_path)
+    @with_tempdir
+    def test_codice_hi_l2_data_read_from_instrument_team_cdf(self, tempdir):
+        l2_path = get_test_data_path("codice/imap_codice_l2_hi-direct-events_20250814_v001.cdf")
+        expanded_l2_path = TestModels._create_expanded_l2_hi_de_dataset(l2_path, tempdir)
 
-        with CDF(str(l2_path)) as cdf:
-            # @formatter:off
-            np.testing.assert_array_equal(l2_direct_event_data.epoch, cdf["epoch"])
-            np.testing.assert_array_equal(l2_direct_event_data.epoch_delta_plus, cdf["epoch_delta_plus"])
-            np.testing.assert_array_equal(l2_direct_event_data.ssd_energy, cdf[f"ssd_energy"])
-            expected_ssd_id = cdf["ssd_id"][...]
-            np.testing.assert_array_equal(l2_direct_event_data.ssd_id, expected_ssd_id)
+        test_cases = [
+            ("6 priorities", l2_path),
+            ("8 priorities", expanded_l2_path),
+        ]
 
-            expected_energy_per_nuc = cdf["energy_per_nuc"][...]
-            expected_energy_per_nuc[expected_energy_per_nuc==-1e31] = np.nan
-            np.testing.assert_array_equal(l2_direct_event_data.energy_per_nuc, expected_energy_per_nuc)
-            
-            expected_spin_angle = cdf["spin_angle"][...]
-            expected_spin_angle[expected_spin_angle==-1e31] = np.nan
-            np.testing.assert_array_equal(l2_direct_event_data.spin_angle, expected_spin_angle)
+        for name, input_path in test_cases:
+            with self.subTest(name):
+                l2_direct_event_data = CodiceL2HiDirectEventData.read_from_cdf(input_path)
 
-            expected_spin_number = cdf["spin_number"][...]
-            np.testing.assert_array_equal(l2_direct_event_data.spin_number, expected_spin_number)
+                with CDF(str(l2_path)) as cdf:
+                    # @formatter:off
+                    np.testing.assert_array_equal(l2_direct_event_data.epoch, cdf["epoch"])
+                    np.testing.assert_array_equal(l2_direct_event_data.epoch_delta_plus, cdf["epoch_delta_plus"])
+                    np.testing.assert_array_equal(l2_direct_event_data.ssd_energy, cdf[f"ssd_energy"])
+                    expected_ssd_id = cdf["ssd_id"][...]
+                    np.testing.assert_array_equal(l2_direct_event_data.ssd_id, expected_ssd_id)
 
-            expected_time_of_flight = cdf["tof"][...]
-            expected_time_of_flight[expected_time_of_flight==-1e31] = np.nan
-            np.testing.assert_array_equal(l2_direct_event_data.time_of_flight, expected_time_of_flight)
+                    expected_energy_per_nuc = cdf["energy_per_nuc"][...]
+                    expected_energy_per_nuc[expected_energy_per_nuc==-1e31] = np.nan
+                    np.testing.assert_array_equal(l2_direct_event_data.energy_per_nuc, expected_energy_per_nuc)
 
-            np.testing.assert_array_equal(l2_direct_event_data.number_of_events, cdf[f"num_events"])
-            np.testing.assert_array_equal(l2_direct_event_data.data_quality, cdf[f"data_quality"])
-            np.testing.assert_array_equal(l2_direct_event_data.multi_flag, cdf[f"multi_flag"])
+                    expected_spin_angle = cdf["spin_angle"][...]
+                    expected_spin_angle[expected_spin_angle==-1e31] = np.nan
+                    np.testing.assert_array_equal(l2_direct_event_data.spin_angle, expected_spin_angle)
 
-            np.testing.assert_array_equal(l2_direct_event_data.type, cdf[f"type"])
-            # @formatter:on
+                    expected_spin_number = cdf["spin_number"][...]
+                    np.testing.assert_array_equal(l2_direct_event_data.spin_number, expected_spin_number)
+
+                    expected_time_of_flight = cdf["tof"][...]
+                    expected_time_of_flight[expected_time_of_flight==-1e31] = np.nan
+                    np.testing.assert_array_equal(l2_direct_event_data.time_of_flight, expected_time_of_flight)
+
+                    np.testing.assert_array_equal(l2_direct_event_data.number_of_events, cdf["num_events"])
+                    np.testing.assert_array_equal(l2_direct_event_data.data_quality, cdf["data_quality"])
+                    np.testing.assert_array_equal(l2_direct_event_data.multi_flag, cdf["multi_flag"])
+
+                    np.testing.assert_array_equal(l2_direct_event_data.type, cdf[f"type"])
+
+                    expected_elevation_angle = cdf["elevation_angle"][...]
+                    expected_elevation_angle[expected_elevation_angle == -1e31] = np.nan
+                    np.testing.assert_array_equal(l2_direct_event_data.elevation_angle, expected_elevation_angle)
+
+                    self.assertIsInstance(l2_direct_event_data.gain, np.ma.masked_array)
+                    np.testing.assert_array_equal(l2_direct_event_data.gain.data, cdf["gain"])
+
+                    self.assertIsInstance(l2_direct_event_data.spin_sector, np.ma.masked_array)
+                    np.testing.assert_array_equal(l2_direct_event_data.spin_sector.data, cdf["spin_sector"])
+                    # @formatter:on
+
+    def test_read_codice_hi_l2_truncates_priority_axis_to_6(self):
+        pass
 
     def test_codice_l3_hi_direct_event_data_products(self):
         rng = np.random.default_rng()
@@ -64,37 +87,32 @@ class TestModels(unittest.TestCase):
         number_of_priority_events = 6
         event_buffer_size = 3
 
-        (expected_data_quality,
-         expected_multi_flag,
-         expected_num_events,
-         expected_ssd_energy,
-         expected_ssd_id,
-         expected_spin_angle,
-         expected_spin_number,
-         expected_tof,
-         expected_type,
-         expected_energy_per_nuc,
-         expected_estimated_mass) = \
-            [rng.random((len(expected_epoch), number_of_priority_events, event_buffer_size)) for _ in range(11)]
+        event_data_shape = (len(expected_epoch), number_of_priority_events, event_buffer_size)
 
         expected_priority_index = np.arange(number_of_priority_events)
         expected_event_index = np.arange(event_buffer_size)
         expected_priority_index_label = np.array([str(i) for i in range(number_of_priority_events)])
         expected_event_index_label = np.array([str(i) for i in range(event_buffer_size)])
 
-        l3_data_product = CodiceL3HiDirectEvents(Mock(), expected_epoch,
-                                                 expected_epoch_delta,
-                                                 expected_data_quality,
-                                                 expected_multi_flag,
-                                                 expected_num_events,
-                                                 expected_ssd_energy,
-                                                 expected_ssd_id,
-                                                 expected_spin_angle,
-                                                 expected_spin_number,
-                                                 expected_tof,
-                                                 expected_type,
-                                                 expected_energy_per_nuc,
-                                                 expected_estimated_mass)
+        l3_data_product = CodiceL3HiDirectEvents(
+            Mock(),
+            expected_epoch,
+            expected_epoch_delta,
+            data_quality=rng.random(event_data_shape),
+            multi_flag=rng.random(event_data_shape),
+            num_events=rng.random(event_data_shape),
+            ssd_energy=rng.random(event_data_shape),
+            ssd_id=rng.random(event_data_shape),
+            spin_angle=rng.random(event_data_shape),
+            spin_number=rng.random(event_data_shape),
+            tof=rng.random(event_data_shape),
+            type=rng.random(event_data_shape),
+            energy_per_nuc=rng.random(event_data_shape),
+            estimated_mass=rng.random(event_data_shape),
+            elevation_angle=rng.random(event_data_shape),
+            gain=rng.random(event_data_shape),
+            spin_sector=rng.random(event_data_shape),
+        )
 
         data_product_variables = l3_data_product.to_data_product_variables()
         non_parent_fields = [f for f in fields(CodiceL3HiDirectEvents) if
@@ -147,7 +165,7 @@ class TestModels(unittest.TestCase):
             "h_intensity_by_pitch_angle_and_gyrophase": np.arange(pitch_angle_and_gyrophase_size).reshape(
                 len(epoch_data), len(energy_data), len(pitch_angle), len(gyrophase)) + 2,
             "he3he4_intensity_by_pitch_angle": np.arange(pitch_angle_size).reshape(len(epoch_data), len(energy_data),
-                                                                                len(pitch_angle)),
+                                                                                   len(pitch_angle)),
             "he3he4_intensity_by_pitch_angle_and_gyrophase": np.arange(pitch_angle_and_gyrophase_size).reshape(
                 len(epoch_data), len(energy_data), len(pitch_angle), len(gyrophase)) + 3,
             "cno_intensity_by_pitch_angle": np.arange(pitch_angle_size).reshape(len(epoch_data), len(energy_data),
@@ -229,3 +247,47 @@ class TestModels(unittest.TestCase):
             np.testing.assert_array_equal(l2_sectored_intensities.h_intensities, np.full_like(cdf['h'], np.nan))
             np.testing.assert_array_equal(l2_sectored_intensities.he3he4_intensities,
                                           np.full_like(cdf['he3he4'], np.nan))
+
+    @staticmethod
+    def _create_expanded_l2_hi_de_dataset(unexpanded_cdf: Path, tempdir: Path) -> Path:
+        expanded_cdf_path = tempdir / "expanded_hi_l2_direct_events.cdf"
+
+        with CDF(str(expanded_cdf_path), masterpath=str(unexpanded_cdf), readonly=False) as expanded_cdf:
+            old_priority_attrs = expanded_cdf["priority"].attrs
+            del expanded_cdf["priority"]
+            expanded_cdf["priority"] = np.arange(8)
+            expanded_cdf["priority"].attrs = old_priority_attrs
+
+            old_label_attrs = expanded_cdf["priority_label"].attrs
+            del expanded_cdf["priority_label"]
+            expanded_cdf["priority_label"] = [f"Priority {i}" for i in range(8)]
+            expanded_cdf["priority_label"] = old_label_attrs
+
+            event_based_vars = [
+                "data_quality",
+                "num_events",
+                "elevation_angle",
+                "energy_per_nuc",
+                "gain",
+                "multi_flag",
+                "spin_angle",
+                "spin_number",
+                "spin_sector",
+                "ssd_energy",
+                "ssd_id",
+                "tof",
+                "type"
+            ]
+
+            for var in event_based_vars:
+                old_data = expanded_cdf[var][...]
+                old_attrs = dict(expanded_cdf[var].attrs)
+                del expanded_cdf[var]
+
+                expanded_shape = [*old_data.shape]
+                expanded_shape[1] = 8
+                expanded_cdf[var] = np.zeros(expanded_shape)
+                expanded_cdf[var][:, 0:6, ...] = old_data
+                expanded_cdf[var].attrs = old_attrs
+
+        return expanded_cdf_path

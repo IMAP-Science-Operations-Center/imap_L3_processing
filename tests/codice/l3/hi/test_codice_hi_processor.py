@@ -14,7 +14,7 @@ from imap_l3_processing.codice.l3.hi.models import CodiceL2HiDirectEventData, Co
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
 from imap_l3_processing.codice.l3.lo.constants import CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM
 from imap_l3_processing.models import InputMetadata
-from tests.test_helpers import NumpyArrayMatcher, get_test_instrument_team_data_path
+from tests.test_helpers import NumpyArrayMatcher, get_test_data_path
 
 
 class TestCodiceHiProcessor(unittest.TestCase):
@@ -84,6 +84,9 @@ class TestCodiceHiProcessor(unittest.TestCase):
             time_of_flight=sentinel.expected_time_of_flight,
             type=sentinel.expected_type,
             energy_per_nuc=expected_energy_per_nuc,
+            elevation_angle=sentinel.l2_elevation_angle,
+            gain=sentinel.l2_gain,
+            spin_sector=sentinel.l2_spin_sector,
         )
         dependencies = CodiceHiL3aDirectEventsDependencies(
             codice_l2_hi_data=l2_data
@@ -111,7 +114,10 @@ class TestCodiceHiProcessor(unittest.TestCase):
                     [1 / 11, 2 / 12, 3 / 13, 4 / 14],
                     [5 / 15, 6 / 16, 2 / 12, np.nan]
                 ]
-            ])
+            ]),
+            elevation_angle=sentinel.l2_elevation_angle,
+            gain=sentinel.l2_gain,
+            spin_sector=sentinel.l2_spin_sector,
         )
 
         actual_output = codice_hi_processor.process_l3a_direct_event(dependencies=dependencies)
@@ -162,6 +168,9 @@ class TestCodiceHiProcessor(unittest.TestCase):
             time_of_flight=sentinel.expected_time_of_flight,
             type=sentinel.expected_type,
             energy_per_nuc=expected_energy_per_nuc,
+            elevation_angle=sentinel.l2_elevation_angle,
+            gain=sentinel.l2_gain,
+            spin_sector=sentinel.l2_spin_sector,
         )
         dependencies = CodiceHiL3aDirectEventsDependencies(
             codice_l2_hi_data=l2_data
@@ -189,7 +198,10 @@ class TestCodiceHiProcessor(unittest.TestCase):
                     [1 / 11, 2 / 12, 3 / 13, 4 / 14],
                     [5 / 15, 6 / 16, 2 / 12, np.nan]
                 ]
-            ])
+            ]),
+            elevation_angle=sentinel.l2_elevation_angle,
+            gain=sentinel.l2_gain,
+            spin_sector=sentinel.l2_spin_sector,
         )
 
         actual_output = codice_hi_processor.process_l3a_direct_event(dependencies=dependencies)
@@ -423,8 +435,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(codice_hi_data_product.parent_file_names, expected_parents)
 
     def test_integration_test(self):
-        l2_direct_event_sci_path = get_test_instrument_team_data_path(
-            "codice/hi/imap_codice_l2_hi-direct-events_20250814_v001.cdf")
+        l2_direct_event_sci_path = get_test_data_path("codice/imap_codice_l2_hi-direct-events_20250814_v001.cdf")
 
         codice_hi_dependencies = CodiceHiL3aDirectEventsDependencies.from_file_paths(l2_direct_event_sci_path)
 

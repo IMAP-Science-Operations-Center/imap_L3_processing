@@ -212,6 +212,66 @@ estimated_mass:
   SCALEMIN: 1.0e-1
   SCALEMAX: 1.0e+2
 
+elevation_angle:
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Elevation Angle
+  FIELDNAM: Elevation Angle
+  DEPEND_0: epoch
+  DEPEND_1: priority
+  DEPEND_2: event_num
+  LABL_PTR_1: priority_label
+  LABL_PTR_2: event_num_label
+  FORMAT: F8.2
+  FILLVAL: -1.000000E+31
+  LABLAXIS: Elevation Angle
+  SCALETYP: linear
+  UNITS: degrees
+  VALIDMAX: 180.0
+  VALIDMIN: 0.0
+  VAR_TYPE: data
+  DICT_KEY: SPASE>Particle>ParticleType:Ion,ParticleQuantity:ArrivalDirection,Qualifier:DirectionAngle.ElevationAngle
+  RECORD_VARYING: RV
+
+gain:
+  DATA_TYPE: CDF_UINT1
+  CATDESC: Gain Setting
+  DEPEND_0: epoch
+  DEPEND_1: priority
+  DEPEND_2: event_num
+  FIELDNAM: Gain
+  FILLVAL: 255
+  FORMAT: I1
+  LABLAXIS: Gain
+  LABL_PTR_1: priority_label
+  LABL_PTR_2: event_num_label
+  SCALETYP: linear
+  UNITS: " "
+  VALIDMAX: 1
+  VALIDMIN: 0
+  VAR_TYPE: data
+  DICT_KEY: SPASE>Support>SupportQuantity:Other
+  RECORD_VARYING: RV
+
+spin_sector:
+  DATA_TYPE: CDF_UINT1
+  CATDESC: Spin Sector Index
+  FIELDNAM: Spin Sector Index
+  DEPEND_0: epoch
+  DEPEND_1: priority
+  DEPEND_2: event_num
+  LABL_PTR_1: priority_label
+  LABL_PTR_2: event_num_label
+  FILLVAL: 255
+  FORMAT: I2
+  LABLAXIS: Spin Sector
+  SCALETYP: linear
+  UNITS: " "
+  VALIDMIN: 0
+  VALIDMAX: 23
+  VAR_TYPE: support_data
+  DICT_KEY: SPASE>Support>SupportQuantity:Positional
+  RECORD_VARYING: RV
+
 event_index:
   <<: *support_data
   NAME: event_index
