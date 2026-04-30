@@ -213,6 +213,7 @@ estimated_mass:
   SCALEMAX: 1.0e+2
 
 elevation_angle:
+  NAME: elevation_angle
   DATA_TYPE: CDF_FLOAT
   CATDESC: Elevation Angle
   FIELDNAM: Elevation Angle
@@ -231,8 +232,11 @@ elevation_angle:
   VAR_TYPE: data
   DICT_KEY: SPASE>Particle>ParticleType:Ion,ParticleQuantity:ArrivalDirection,Qualifier:DirectionAngle.ElevationAngle
   RECORD_VARYING: RV
+  DISPLAY_TYPE: no_plot
+  VARIABLE_PURPOSE: ' '
 
 gain:
+  NAME: gain
   DATA_TYPE: CDF_UINT1
   CATDESC: Gain Setting
   DEPEND_0: epoch
@@ -251,8 +255,11 @@ gain:
   VAR_TYPE: data
   DICT_KEY: SPASE>Support>SupportQuantity:Other
   RECORD_VARYING: RV
+  DISPLAY_TYPE: no_plot
+  VARIABLE_PURPOSE: ' '
 
 spin_sector:
+  NAME: spin_sector
   DATA_TYPE: CDF_UINT1
   CATDESC: Spin Sector Index
   FIELDNAM: Spin Sector Index

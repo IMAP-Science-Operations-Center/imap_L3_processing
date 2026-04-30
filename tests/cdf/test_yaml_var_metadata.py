@@ -101,6 +101,13 @@ class TestCdfUtils(TestCase):
                     self.assertIn("UNITS", variable.keys(), f'{variable_key}: Expected units for angle variable ')
                     self.assertEqual("degrees", variable["UNITS"])
 
+    def test_variables_that_depend_on_epoch_are_record_varying(self):
+        for filename, yaml_data, variable_key, variable in self.test_cases_variable:
+            if variable.get("DEPEND_0") == "epoch":
+                with self.subTest(f"{filename}:{variable_key}"):
+                    self.assertIn("RECORD_VARYING", variable)
+                    self.assertEqual("RV", variable["RECORD_VARYING"])
+
     def test_variable_fill_value_matches_data_type(self):
         for filename, yaml_data, variable_key, variable in self.test_cases_variable:
             with self.subTest(f"{filename}:{variable_key}"):
@@ -146,7 +153,7 @@ class TestCdfUtils(TestCase):
         self.assertEqual('RV', yaml_data['epoch']['RECORD_VARYING'],
                          "epoch RECORD_VARYING should be RV")
         self.assertIn(yaml_data['epoch']['FIELDNAM'], ['Epoch', 'J2000 Nanoseconds'],
-                         "epoch FIELDNAM should be Epoch")
+                      "epoch FIELDNAM should be Epoch")
         self.assertEqual(' ', yaml_data['epoch']['FORMAT'],
                          "epoch FORMAT should be ' '")
         self.assertEqual('Epoch', yaml_data['epoch']['LABLAXIS'],
@@ -185,7 +192,7 @@ class TestCdfUtils(TestCase):
         self.assertEqual('Epoch Delta', yaml_data['epoch_delta']['FIELDNAM'],
                          "epoch_delta FIELDNAM should be 'Epoch Delta'")
         self.assertIn(yaml_data['epoch_delta']['FORMAT'], ['I19', 'I15'],
-                         "epoch_delta FORMAT should be 'I19'")
+                      "epoch_delta FORMAT should be 'I19'")
         self.assertEqual('Epoch delta', yaml_data['epoch_delta']['LABLAXIS'],
                          "epoch_delta LABLAXIS should be 'Epoch delta'")
         self.assertEqual('ns', yaml_data['epoch_delta']['UNITS'],
