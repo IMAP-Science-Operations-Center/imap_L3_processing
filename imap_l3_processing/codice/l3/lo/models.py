@@ -111,7 +111,7 @@ class CodiceLoL2DirectEventData:
     @classmethod
     def read_from_cdf(cls, l2_direct_event_cdf: Path):
         with CDF(str(l2_direct_event_cdf)) as cdf:
-            return cls(
+            result = cls(
                 epoch=cdf["epoch"][...],
                 epoch_delta_plus=cdf["epoch_delta_plus"][...],
                 epoch_delta_minus=cdf["epoch_delta_minus"][...],
@@ -136,6 +136,8 @@ class CodiceLoL2DirectEventData:
                 type=read_variable_and_mask_fill_values(cdf["type"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
                 position=read_variable_and_mask_fill_values(cdf["position"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
             )
+            result.tof = np.ma.masked_less(result.tof, 0)
+            return result
 
 
 @dataclass

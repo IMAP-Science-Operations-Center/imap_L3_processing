@@ -639,6 +639,27 @@ class TestModels(CdfModelTestCase):
             np.testing.assert_array_equal(l2_direct_event.tof.data, cdf["tof"][:, :7, ...])
             self.assertTrue(np.all(l2_direct_event.tof.mask))
 
+    def test_codice_lo_l2_direct_events_read_from_cdf_masks_negative_tof_values(self):
+        all_fill_l2_cdf_path = get_test_data_path('codice/imap_codice_l2_lo-direct-events_20260307_v003-all-fill.cdf')
+
+        rng = np.random.default_rng()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir = Path(tmpdir)
+
+            test_cdf_path = tmpdir / "test_cdf.cdf"
+            with CDF(str(test_cdf_path), masterpath=str(all_fill_l2_cdf_path)) as cdf:
+                tof = rng.uniform(-100, 100, cdf["tof"].shape).astype(np.float32)
+                tof[0, 0, 0] = 0.0
+                cdf["tof"] = tof
+
+            l2_direct_event = CodiceLoL2DirectEventData.read_from_cdf(test_cdf_path)
+
+            expected_truncated_tof = tof[:, :CODICE_LO_L2_NUM_PRIORITIES, ...]
+            expected_mask = expected_truncated_tof < 0
+
+            np.testing.assert_array_equal(l2_direct_event.tof.data, expected_truncated_tof)
+            np.testing.assert_array_equal(l2_direct_event.tof.mask, expected_mask)
+
     def test_codice_lo_l1a_sw_priority_read_from_cdf_handles_fill_value(self):
         l1a_sw_all_fill_path = get_test_data_path("codice/imap_codice_l1a_lo-sw-priority_20260307_v003-all-fill.cdf")
         l1a_sw = CodiceLoL1aSWPriorityRates.read_from_cdf(l1a_sw_all_fill_path)
