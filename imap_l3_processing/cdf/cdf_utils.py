@@ -73,7 +73,7 @@ def write_cdf(file_path: str, data: DataProduct, attribute_manager: ImapAttribut
                     compress=compress,
                     compress_param=compress_param)
             for k, v in variable_attributes.items():
-                if k == 'DEPEND_0' and v == '':
+                if v == '':
                     continue
                 if k in ['DATA_TYPE', 'RECORD_VARYING']:
                     continue

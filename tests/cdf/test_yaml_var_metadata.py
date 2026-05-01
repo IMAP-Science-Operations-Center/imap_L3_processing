@@ -82,11 +82,17 @@ class TestCdfUtils(TestCase):
                     self.assertIn('DISPLAY_TYPE', variable.keys(),
                                   f'DISPLAY_TYPE should exist for data variables {variable_key}')
 
-    def test_variable_purpose_exists_for_data_variables_and_empty_for_others(self):
+    def test_units_exists_for_data_and_support_data_variables(self):
         for filename, yaml_data, variable_key, variable in self.test_cases_variable:
             with self.subTest(f"{filename}:{variable_key}"):
-                if variable['VAR_TYPE'] == 'data':
-                    self.assertIn('VARIABLE_PURPOSE', variable.keys())
+                if variable['VAR_TYPE'] in ("data", "support_data"):
+                    self.assertIn("UNITS", variable.keys())
+
+    def test_metadata_never_has_empty_string_as_value(self):
+        for filename, yaml_data, variable_key, variable in self.test_cases_variable:
+            with self.subTest(f"{filename}:{variable_key}"):
+                for attr in variable.values():
+                    self.assertNotEqual("", attr)
 
     def test_each_variable_has_data_type_and_fill_value(self):
         for filename, yaml_data, variable_key, variable in self.test_cases_variable:

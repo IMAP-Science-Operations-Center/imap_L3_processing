@@ -97,6 +97,7 @@ carbon_charge_state:
   FILLVAL: -128
   RECORD_VARYING: NRV
   SCALETYP: linear
+  UNITS: ' '
 
 oxygen_charge_state:
   NAME: oxygen_charge_state
@@ -111,3 +112,4 @@ oxygen_charge_state:
   FILLVAL: -128
   RECORD_VARYING: NRV
   SCALETYP: linear
+  UNITS: ' '

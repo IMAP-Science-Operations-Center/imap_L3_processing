@@ -186,7 +186,6 @@ normalization:
   SCALEMAX: 10
   LABL_PTR_2: energy_bin_label
   LABL_PTR_3: spin_angle_bin_label
-  VARIABLE_PURPOSE: ""
   DISPLAY_TYPE: spectrogram
 
 normalization_per_event:
@@ -203,7 +202,6 @@ normalization_per_event:
   VALIDMAX: 1000
   SCALEMIN: 0
   SCALEMAX: 10
-  VARIABLE_PURPOSE: ""
   DATA_TYPE: CDF_FLOAT
   DISPLAY_TYPE: spectrogram
 
@@ -263,6 +261,7 @@ gain:
   VALIDMIN: 0
   VALIDMAX: 1
   FILLVAL: 255
+  UNITS: " "
 
 apd_id:
   <<: *per_event
@@ -442,7 +441,6 @@ half_spin_per_esa_step:
   VALIDMIN: 0
   VALIDMAX: 63
   VAR_TYPE: support_data
-  VARIABLE_PURPOSE: ""
   RECORD_VARYING: RV
 
 rgfo_spin_sector:
@@ -461,7 +459,6 @@ rgfo_spin_sector:
   VALIDMAX: 255
   VAR_NOTES: Indicates the spin sector when Reduced Gain Factor Operation (RGFO) was activated. In RGFO, the Entrance ESA voltage is reduced in order to limit the number of ions that reach the detectors.
   VAR_TYPE: data
-  VARIABLE_PURPOSE: ""
   RECORD_VARYING: RV
 
 rgfo_esa_step:
@@ -480,7 +477,6 @@ rgfo_esa_step:
   VALIDMAX: 255
   VAR_NOTES: Indicates the energy step when Reduced Gain Factor Operation (RGFO) was activated. In RGFO, the Entrance ESA voltage is reduced in order to limit the number of ions that reach the detectors.
   VAR_TYPE: data
-  VARIABLE_PURPOSE: ""
   RECORD_VARYING: RV
 
 nso_spin_sector:
@@ -499,7 +495,6 @@ nso_spin_sector:
   VALIDMAX: 255
   VAR_NOTES: Indicates the spin sector when No Scan Operation (NSO) was activated. In NSO, the ESA voltage is set to the first step in the scan and remains fixed until the next cycle boundary.
   VAR_TYPE: data
-  VARIABLE_PURPOSE: ""
   RECORD_VARYING: RV
 
 nso_esa_step:
@@ -518,7 +513,6 @@ nso_esa_step:
   VALIDMAX: 255
   VAR_NOTES: Indicates the energy step when No Scan Operation (NSO) was activated. In NSO, the ESA voltage is set to the first step in the scan and remains fixed until the next cycle boundary.
   VAR_TYPE: data
-  VARIABLE_PURPOSE: ""
   RECORD_VARYING: RV
 
 esa_step:

@@ -1565,7 +1565,6 @@ raw_1d_psd_rebinned:
   DEPEND_1: energy
   CATDESC: Raw 1D PSD from rebinned data
   VAR_TYPE: data
-  VARIABLE_PURPOSE: ''
   RECORD_VARYING: RV
   FIELDNAM: Raw 1D PSD
   FORMAT: F12.6
@@ -1587,7 +1586,6 @@ raw_psd_by_phi_rebinned:
   DEPEND_2: inst_az
   CATDESC: Raw PSD by phi from rebinned data
   VAR_TYPE: data
-  VARIABLE_PURPOSE: ''
   RECORD_VARYING: RV
   FIELDNAM: Raw PSD by phi
   FORMAT: F12.6
@@ -1609,7 +1607,6 @@ raw_psd_by_theta_rebinned:
   DEPEND_2: inst_el
   CATDESC: Raw PSD by theta from rebinned data
   VAR_TYPE: data
-  VARIABLE_PURPOSE: ''
   RECORD_VARYING: RV
   FIELDNAM: Raw PSD by theta
   FORMAT: F12.6

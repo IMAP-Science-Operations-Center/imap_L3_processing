@@ -77,7 +77,7 @@ start_time:
   DATA_TYPE: CDF_CHAR
   FORMAT: A26
   FILLVAL: ' '
-  UNITS: ''
+  UNITS: ' '
 end_time:
   <<: *support_data
   NAME: end_time
@@ -87,7 +87,7 @@ end_time:
   DATA_TYPE: CDF_CHAR
   FORMAT: A26
   FILLVAL: ' '
-  UNITS: ''
+  UNITS: ' '
 photon_flux:
   <<: *primary_data_variable
   NAME: photon_flux
