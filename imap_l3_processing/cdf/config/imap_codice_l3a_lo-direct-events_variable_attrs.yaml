@@ -275,7 +275,7 @@ apd_id:
   FORMAT: I3
   UNITS: " "
   VALIDMIN: 0
-  VALIDMAX: 24
+  VALIDMAX: 31
   FILLVAL: 255
 
 multi_flag:
@@ -422,7 +422,7 @@ position:
   DATA_TYPE: CDF_UINT1
   UNITS: " "
   VALIDMIN: 1
-  VALIDMAX: 24
+  VALIDMAX: 31
   FILLVAL: 255
   SCALETYP: linear
   FORMAT: I3
