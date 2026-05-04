@@ -3,7 +3,7 @@ primary_data_variable: &primary_data_variable
   VARIABLE_PURPOSE: primary var, summary
   DEPEND_0: epoch
   RECORD_VARYING: RV
-  DISPLAY_TYPE: time_series
+  DISPLAY_TYPE: spectrogram
 
 support_data: &support_data
   VAR_TYPE: support_data
@@ -250,7 +250,7 @@ gain:
   LABL_PTR_2: event_index_label
   SCALETYP: linear
   UNITS: " "
-  VALIDMAX: 1
+  VALIDMAX: 3
   VALIDMIN: 0
   VAR_TYPE: data
   DICT_KEY: SPASE>Support>SupportQuantity:Other
