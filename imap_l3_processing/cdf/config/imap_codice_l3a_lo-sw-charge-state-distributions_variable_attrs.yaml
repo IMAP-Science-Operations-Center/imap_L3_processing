@@ -86,8 +86,8 @@ carbon_charge_state_distribution:
 
 carbon_charge_state:
   NAME: carbon_charge_state
+  CATDESC: Carbon charge state
   VAR_TYPE: support_data
-  DISPLAY_TYPE: no_plot
   DATA_TYPE: CDF_INT1
   FIELDNAM: C Charge
   LABLAXIS: C Charge
@@ -101,8 +101,8 @@ carbon_charge_state:
 
 oxygen_charge_state:
   NAME: oxygen_charge_state
+  CATDESC: Oxygen charge state
   VAR_TYPE: support_data
-  DISPLAY_TYPE: no_plot
   DATA_TYPE: CDF_INT1
   FIELDNAM: O Charge
   LABLAXIS: O Charge
