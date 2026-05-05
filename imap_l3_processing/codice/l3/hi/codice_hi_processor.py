@@ -79,7 +79,7 @@ class CodiceHiProcessor(Processor):
 
         mag_unit_vectors = calculate_unit_vector(rebinned_mag_data)
         sector_unit = get_sector_unit_vectors(sectored_intensities.elevation_angle,
-                                              spin_angles_in_dps_elevation_by_spin_angle)
+                                              spin_angles_in_dps_elevation_by_spin_angle).transpose(1,0,2)
         sector_unit_vectors = calculate_unit_vector(sector_unit)
         particle_unit_vectors = -1 * sector_unit_vectors
 

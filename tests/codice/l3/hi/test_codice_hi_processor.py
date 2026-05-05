@@ -300,10 +300,11 @@ class TestCodiceHiProcessor(unittest.TestCase):
 
         expected_pitch_angle_delta = np.repeat(15, 6)
         expected_gyrophase_delta = np.repeat(15, 12)
-
-        sector_unit_vectors = rng.random((2, 6, 3))
+        sector_vectors = rng.random((2,6,3))
+        sector_unit_vectors = rng.random((6, 2, 3))
         mag_unit_vectors = rng.random((2, 3))
         mock_calculate_unit_vector.side_effect = [mag_unit_vectors, sector_unit_vectors]
+        mock_get_sector_unit_vectors.return_value = sector_vectors
 
         mock_calculate_gyrophases.side_effect = [
             sentinel.epoch1_gyrophase,
@@ -345,7 +346,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
             codice_l2_data.elevation_angle,
             NumpyArrayMatcher((codice_l2_data.spin_angles.T + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360))
         mock_calculate_unit_vector.assert_has_calls(
-            [call(NumpyArrayMatcher(rebinned_mag_data)), call(mock_get_sector_unit_vectors.return_value)])
+            [call(NumpyArrayMatcher(rebinned_mag_data)), call(NumpyArrayMatcher(sector_vectors.transpose(1,0,2)))])
 
         mock_calculate_pitch_angles.assert_has_calls([
             call(NumpyArrayMatcher(-1 * sector_unit_vectors), NumpyArrayMatcher(mag_unit_vectors[0])),
