@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 import numpy as np
+from astropy_healpix import healpix_to_xyz
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.constants import TT2000_EPOCH
@@ -46,6 +47,7 @@ class UltraProcessor(MapProcessor):
                 deps = UltraL3Dependencies.fetch_dependencies(self.dependencies)
                 healpix_intensity_map_data = self._process_survival_probability(deps, spice_frame_name)
                 data_product = self._process_healpix_intensity_to_rectangular(healpix_intensity_map_data,
+                                                                              deps.ultra_l2_rectangular_map,
                                                                               parsed_descriptor.grid,
                                                                               spice_frame_name=spice_frame_name)
                 data_product.add_paths_to_parents(deps.dependency_file_paths)
@@ -56,7 +58,8 @@ class UltraProcessor(MapProcessor):
                 combined_deps = UltraL3CombinedDependencies.fetch_dependencies(self.dependencies)
                 combined_data = self._process_combined_survival_probability(combined_deps, spice_frame_name)
 
-                data_product = self._process_healpix_intensity_to_rectangular(combined_data, parsed_descriptor.grid,
+                data_product = self._process_healpix_intensity_to_rectangular(combined_data, combined_deps.ultra_l2_rectangular_map,
+                                                                              parsed_descriptor.grid,
                                                                               spice_frame_name=spice_frame_name)
                 data_product.add_paths_to_parents(combined_deps.dependency_file_paths)
 
@@ -68,7 +71,7 @@ class UltraProcessor(MapProcessor):
                 combination_strategy = ExposureWeightedCombination()
 
                 healpix_intensity_map_data = combination_strategy.combine_healpix_intensity_map_data(
-                    [deps.u45_l2_map, deps.u90_l2_map])
+                    [deps.u45_l2_healpix_map, deps.u90_l2_healpix_map])
                 data_product = self._process_healpix_intensity_to_rectangular(healpix_intensity_map_data,
                                                                               parsed_descriptor.grid,
                                                                               spice_frame_name=spice_frame_name)
@@ -81,14 +84,16 @@ class UltraProcessor(MapProcessor):
 
     def _process_combined_survival_probability(self, deps: UltraL3CombinedDependencies, spice_frame_name: SpiceFrame):
         u45_dep = UltraL3Dependencies(
-            ultra_l2_map=deps.u45_l2_map,
+            ultra_l2_healpix_map=deps.u45_l2_healpix_map,
+            ultra_l2_rectangular_map=deps.u45_l2_rectangular_map,
             ultra_l1c_pset=deps.u45_l1c_psets,
             glows_l3e_sp=deps.glows_l3e_psets,
             dependency_file_paths=deps.dependency_file_paths,
             energy_bin_group_sizes=deps.energy_bin_group_sizes,
         )
         u90_dep = UltraL3Dependencies(
-            ultra_l2_map=deps.u90_l2_map,
+            ultra_l2_healpix_map=deps.u90_l2_healpix_map,
+            ultra_l2_rectangular_map=deps.u90_l2_rectangular_map,
             ultra_l1c_pset=deps.u90_l1c_psets,
             glows_l3e_sp=deps.glows_l3e_psets,
             dependency_file_paths=deps.dependency_file_paths,
@@ -108,32 +113,33 @@ class UltraProcessor(MapProcessor):
                                       _l1c, _l3e in
                                       combined_psets]
 
-        intensity_data = deps.ultra_l2_map.intensity_map_data
-        coords = deps.ultra_l2_map.coords
+        healpix_intensity_data = deps.ultra_l2_healpix_map.intensity_map_data
+        rectangular_intensity_data = deps.ultra_l2_rectangular_map.intensity_map_data
+        coords = deps.ultra_l2_healpix_map.coords
         corrected_skymap = UltraSurvivalProbabilitySkyMap(survival_probability_psets, spice_frame_name, coords.nside)
         survival_probability_map = corrected_skymap.to_dataset()["exposure_weighted_survival_probabilities"].values
 
-        corrected_intensity = intensity_data.ena_intensity / survival_probability_map
-        corrected_stat_uncert = intensity_data.ena_intensity_stat_uncert / survival_probability_map
-        corrected_sys_unc = intensity_data.ena_intensity_sys_err / survival_probability_map
+        corrected_intensity = healpix_intensity_data.ena_intensity / survival_probability_map
+        corrected_stat_uncert = healpix_intensity_data.ena_intensity_stat_uncert / survival_probability_map
+        corrected_sys_unc = healpix_intensity_data.ena_intensity_sys_err / survival_probability_map
 
         healpix_map_data = HealPixIntensityMapData(
             intensity_map_data=IntensityMapData(
                 ena_intensity_stat_uncert=corrected_stat_uncert,
                 ena_intensity_sys_err=corrected_sys_unc,
                 ena_intensity=corrected_intensity,
-                epoch=intensity_data.epoch,
-                epoch_delta=intensity_data.epoch_delta,
-                energy=intensity_data.energy,
-                energy_delta_plus=intensity_data.energy_delta_plus,
-                energy_delta_minus=intensity_data.energy_delta_minus,
-                energy_label=intensity_data.energy_label,
-                latitude=intensity_data.latitude,
-                longitude=intensity_data.longitude,
-                exposure_factor=intensity_data.exposure_factor,
-                obs_date=intensity_data.obs_date,
-                obs_date_range=intensity_data.obs_date_range,
-                solid_angle=intensity_data.solid_angle,
+                epoch=rectangular_intensity_data.epoch,
+                epoch_delta=rectangular_intensity_data.epoch_delta,
+                energy=rectangular_intensity_data.energy,
+                energy_delta_plus=rectangular_intensity_data.energy_delta_plus,
+                energy_delta_minus=rectangular_intensity_data.energy_delta_minus,
+                energy_label=rectangular_intensity_data.energy_label,
+                latitude=rectangular_intensity_data.latitude,
+                longitude=rectangular_intensity_data.longitude,
+                exposure_factor=rectangular_intensity_data.exposure_factor,
+                obs_date=rectangular_intensity_data.obs_date,
+                obs_date_range=rectangular_intensity_data.obs_date_range,
+                solid_angle=rectangular_intensity_data.solid_angle,
             ),
             coords=HealPixCoords(
                 pixel_index=coords.pixel_index,
@@ -161,24 +167,23 @@ class UltraProcessor(MapProcessor):
         )
 
     def _process_healpix_intensity_to_rectangular(self, healpix_map_data: HealPixIntensityMapData,
+                                                  rectangular_map_data: RectangularIntensityMapData,
                                                   spacing_deg: int,
                                                   spice_frame_name: SpiceFrame) -> RectangularIntensityDataProduct:
         variables_to_convert_to_rectangular = [
-            "exposure_factor",
             "ena_intensity",
             "ena_intensity_stat_uncert",
             "ena_intensity_sys_err",
-            "obs_date",
-            "obs_date_range",
         ]
         healpix_map = healpix_map_data.to_healpix_skymap()
         rectangular_map, _ = healpix_map.to_rectangular_skymap(spacing_deg, variables_to_convert_to_rectangular)
         rectangular_map_xarray_dataset = rectangular_map.to_dataset()
 
-        obs_date_seconds = np.ma.masked_invalid(
-            rectangular_map_xarray_dataset["obs_date"].values / 1e9)
-        obs_date_seconds.data[np.ma.getmask(obs_date_seconds)] = 0
-        obs_date = TT2000_EPOCH + timedelta(seconds=1) * obs_date_seconds
+        # bringing rectangular intensity data into this method for coords
+        # in the combined case, we can either:
+            # 1. combine the two rectangular maps and bring them into this method for coords
+            # 2. don't bring the rectangular maps into this method and instead use the calculated coords from the healpix
+            #    for both combined and not combined cases
 
         input_map_intensity_data = healpix_map_data.intensity_map_data
         intensity_map_data = IntensityMapData(
@@ -188,23 +193,30 @@ class UltraProcessor(MapProcessor):
             energy_delta_plus=input_map_intensity_data.energy_delta_plus,
             energy_delta_minus=input_map_intensity_data.energy_delta_minus,
             energy_label=input_map_intensity_data.energy_label,
-            latitude=rectangular_map.sky_grid.el_bin_midpoints,
-            longitude=rectangular_map.sky_grid.az_bin_midpoints,
-            obs_date=obs_date,
-            obs_date_range=rectangular_map_xarray_dataset["obs_date_range"].values,
-            solid_angle=rectangular_map.solid_angle_grid.T,
-            exposure_factor=rectangular_map_xarray_dataset["exposure_factor"].values,
+            latitude=rectangular_map_data.intensity_map_data.latitude,
+            longitude=rectangular_map_data.intensity_map_data.longitude,
+            obs_date=input_map_intensity_data.obs_date,
+            obs_date_range=input_map_intensity_data.obs_date_range,
+            solid_angle=input_map_intensity_data.solid_angle,
+            exposure_factor=input_map_intensity_data.exposure_factor,
             ena_intensity=rectangular_map_xarray_dataset["ena_intensity"].values,
             ena_intensity_stat_uncert=rectangular_map_xarray_dataset["ena_intensity_stat_uncert"].values,
             ena_intensity_sys_err=rectangular_map_xarray_dataset["ena_intensity_sys_err"].values,
         )
-        rect_intensity_map_data = RectangularIntensityMapData(intensity_map_data, coords=RectangularCoords(
-            latitude_delta=(rectangular_map.sky_grid.el_bin_midpoints - rectangular_map.sky_grid.el_bin_edges[:-1]),
-            latitude_label=intensity_map_data.latitude.astype(str),
-            longitude_delta=(rectangular_map.sky_grid.az_bin_midpoints - rectangular_map.sky_grid.az_bin_edges[
-                                                                         :-1]),
-            longitude_label=intensity_map_data.longitude.astype(str),
-        ))
+        rect_intensity_map_data = RectangularIntensityMapData(intensity_map_data, coords=rectangular_map_data.coords)
+
+        #TODO: if the calculated latitude/latitude delta and longitude/longitude delta are not equal to input rectangular cdf values, do not proceed
+        # old source for these:
+        # latitude = rectangular_map.sky_grid.el_bin_midpoints,
+        # longitude = rectangular_map.sky_grid.az_bin_midpoints,
+        # rect_intensity_map_data = RectangularIntensityMapData(intensity_map_data, coords=RectangularCoords(
+        #     latitude_delta=(rectangular_map.sky_grid.el_bin_midpoints - rectangular_map.sky_grid.el_bin_edges[:-1]),
+        #     latitude_label=intensity_map_data.latitude.astype(str),
+        #     longitude_delta=(rectangular_map.sky_grid.az_bin_midpoints - rectangular_map.sky_grid.az_bin_edges[
+        #                                                                  :-1]),
+        #     longitude_label=intensity_map_data.longitude.astype(str),
+        # )
+
 
         return RectangularIntensityDataProduct(data=rect_intensity_map_data, input_metadata=self.input_metadata,
                                                spice_frame_name=spice_frame_name)

@@ -18,6 +18,7 @@ from imap_l3_processing.maps.map_models import HealPixIntensityMapData, Intensit
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.ultra.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
 from imap_l3_processing.ultra.ultra_processor import UltraProcessor
+from tests.maps.test_builders import create_rectangular_intensity_map_data
 from tests.test_helpers import get_test_data_path
 
 
@@ -56,51 +57,44 @@ class TestUltraProcessor(unittest.TestCase):
                                            mock_save_data, mock_spiceypy,
                                            mock_healpix_intensity_map_data_class):
         healpix_intensity_map_data = mock_healpix_intensity_map_data_class.return_value
-
         rng = np.random.default_rng()
         healpix_indices = np.arange(12)
-        input_map_flux = rng.random((1, 9, 12))
-        epoch = datetime.now()
-
         mock_spiceypy.ktotal.return_value = 1
-
         fake_spice = Path("path/to/fake/spice.tls")
         mock_spiceypy.kdata.return_value = [fake_spice]
 
-        input_l2_map = _create_ultra_l2_data(epoch=[epoch], flux=input_map_flux, healpix_indices=healpix_indices)
-
-        input_l2_map.intensity_map_data.energy = sentinel.ultra_l2_energies
+        input_map_flux = rng.random((1, 9, 12))
+        epoch = datetime.now()
+        input_l2_healpix_map = _create_ultra_l2_healpix_data(epoch=[epoch], flux=input_map_flux, healpix_indices=healpix_indices)
+        input_l2_healpix_map.intensity_map_data.energy = sentinel.ultra_l2_energies
+        input_l2_rectangular_map = create_rectangular_intensity_map_data()
 
         input_l2_map_name = "imap_ultra_l2_a-map-descriptor_20250601_v000.cdf"
         input_l1c_pset_name = "imap_ultra_l1c_a-pset-descriptor_20250601_v000.cdf"
         input_glows_l3e_name = "imap_glows_l3e_a-glows-descriptor_20250601_v000.cdf"
-
         input_deps = ProcessingInputCollection(ScienceInput(input_l2_map_name))
+        input_metadata = InputMetadata(instrument="ultra",
+                                       data_level="l3",
+                                       start_date=datetime.now(),
+                                       end_date=datetime.now() + timedelta(days=1),
+                                       version="",
+                                       descriptor=f"u90-ena-h-sf-sp-full-hae-{degree_spacing}deg-6mo")
 
         mock_fetch_dependencies.return_value = UltraL3Dependencies(
-            ultra_l2_map=input_l2_map,
+            ultra_l2_healpix_map=input_l2_healpix_map,
+            ultra_l2_rectangular_map=input_l2_rectangular_map,
             ultra_l1c_pset=sentinel.ultra_l1c_pset,
             glows_l3e_sp=sentinel.glows_l3e_sp,
             dependency_file_paths=[Path(input_l2_map_name), Path(input_l1c_pset_name), Path(input_glows_l3e_name)],
             energy_bin_group_sizes=sentinel.bin_groups,
         )
 
+        # mock survival probability computation
         mock_combine_glows_l3e_with_l1c_pointing.return_value = [(sentinel.ultra_l1c_1, sentinel.glows_l3e_1),
                                                                  (sentinel.ultra_l1c_2, sentinel.glows_l3e_2),
                                                                  (sentinel.ultra_l1c_3, sentinel.glows_l3e_3)]
-
         mock_survival_probability_pointing_set.side_effect = [sentinel.pset_1, sentinel.pset_2, sentinel.pset_3]
-
-        input_metadata = InputMetadata(instrument="ultra",
-                                       data_level="l3",
-                                       start_date=datetime.now(),
-                                       end_date=datetime.now() + timedelta(days=1),
-                                       version="",
-                                       descriptor=f"u90-ena-h-sf-sp-full-hae-{degree_spacing}deg-6mo"
-                                       )
-
         computed_survival_probabilities = rng.random((1, 9, healpix_indices.shape[0]))
-
         mock_survival_skymap.return_value.to_dataset.return_value = xr.Dataset({
             "exposure_weighted_survival_probabilities": (
                 [
@@ -117,54 +111,39 @@ class TestUltraProcessor(unittest.TestCase):
                 CoordNames.HEALPIX_INDEX.value: healpix_indices,
             })
 
+        #mock healpix to rectangular
         mock_healpix_skymap = Mock()
         healpix_intensity_map_data.to_healpix_skymap = Mock(return_value=mock_healpix_skymap)
-
-        observation_date_as_float = np.arange(90 * 45).reshape(90, 45) * 3600 * 1e9
-
-        expected_converted_datetimes = TT2000_EPOCH + timedelta(hours=1) * np.arange(
-            90 * 45).reshape(90, 45)
-
         mock_rectangular_map_dataset = {
-            "obs_date": Mock(values=observation_date_as_float),
-            "obs_date_range": Mock(values=sentinel.rectangular_obs_date_range),
-            "exposure_factor": Mock(values=sentinel.rectangular_exposure_factor),
             "ena_intensity": Mock(values=sentinel.rectangular_ena_intensity),
             "ena_intensity_stat_uncert": Mock(values=sentinel.rectangular_ena_intensity_stat_uncert),
             "ena_intensity_sys_err": Mock(values=sentinel.rectangular_ena_intensity_sys_err),
         }
-
-        solid_angle_computed_by_rectangular_skymap = np.array([[1, 2], [3, 4], [5, 6]])
-        expected_output_solid_angle = np.array([[1, 3, 5], [2, 4, 6]])
-
         mock_rectangular_sky_map = Mock(spec=RectangularSkyMap)
         mock_rectangular_sky_map.sky_grid = AzElSkyGrid(degree_spacing)
-        mock_rectangular_sky_map.solid_angle_grid = solid_angle_computed_by_rectangular_skymap
         mock_rectangular_sky_map.to_dataset.return_value = mock_rectangular_map_dataset
         mock_healpix_skymap.to_rectangular_skymap.return_value = mock_rectangular_sky_map, 0
 
         processor = UltraProcessor(input_deps, input_metadata)
         product = processor.process(SpiceFrame.IMAP_GCS)
 
+        #assert survival probability pipeline was invoked correctly
         mock_fetch_dependencies.assert_called_once_with(input_deps)
-
         mock_combine_glows_l3e_with_l1c_pointing.assert_called_once_with(sentinel.glows_l3e_sp, sentinel.ultra_l1c_pset)
-
         mock_survival_probability_pointing_set.assert_has_calls([
             call(sentinel.ultra_l1c_1, sentinel.glows_l3e_1, bin_groups=sentinel.bin_groups),
             call(sentinel.ultra_l1c_2, sentinel.glows_l3e_2, bin_groups=sentinel.bin_groups),
             call(sentinel.ultra_l1c_3, sentinel.glows_l3e_3, bin_groups=sentinel.bin_groups)
         ])
-        intensity_data = input_l2_map.intensity_map_data
         mock_survival_skymap.assert_called_once_with([sentinel.pset_1, sentinel.pset_2, sentinel.pset_3],
-                                                     SpiceFrame.IMAP_GCS, input_l2_map.coords.nside)
-
+                                                     SpiceFrame.IMAP_GCS, input_l2_healpix_map.coords.nside)
         mock_survival_skymap.return_value.to_dataset.assert_called_once_with()
 
+        #assert HealPixIntensityMapData was built with intensities from healpix
         mock_healpix_intensity_map_data_class.assert_called_once()
         healpix_intensity_map_data_kwargs = mock_healpix_intensity_map_data_class.call_args_list[0].kwargs
-
         actual_intensity_map_data = healpix_intensity_map_data_kwargs["intensity_map_data"]
+        intensity_data = input_l2_healpix_map.intensity_map_data
 
         np.testing.assert_array_equal(actual_intensity_map_data.ena_intensity,
                                       intensity_data.ena_intensity / computed_survival_probabilities)
@@ -173,76 +152,75 @@ class TestUltraProcessor(unittest.TestCase):
         np.testing.assert_array_equal(actual_intensity_map_data.ena_intensity_sys_err,
                                       intensity_data.ena_intensity_sys_err / computed_survival_probabilities)
 
-        np.testing.assert_array_equal(actual_intensity_map_data.epoch, intensity_data.epoch)
-        np.testing.assert_array_equal(actual_intensity_map_data.epoch_delta, intensity_data.epoch_delta)
-        np.testing.assert_array_equal(actual_intensity_map_data.energy, intensity_data.energy)
-        np.testing.assert_array_equal(actual_intensity_map_data.energy_delta_plus, intensity_data.energy_delta_plus)
+        #assert HealPixIntensityMapData was built with non-intensity fields from rectangular L2 cdf input
+        rect_intensity_data = input_l2_rectangular_map.intensity_map_data
+        np.testing.assert_array_equal(actual_intensity_map_data.epoch, rect_intensity_data.epoch)
+        np.testing.assert_array_equal(actual_intensity_map_data.epoch_delta, rect_intensity_data.epoch_delta)
+        np.testing.assert_array_equal(actual_intensity_map_data.energy, rect_intensity_data.energy)
+        np.testing.assert_array_equal(actual_intensity_map_data.energy_delta_plus, rect_intensity_data.energy_delta_plus)
         np.testing.assert_array_equal(actual_intensity_map_data.energy_delta_minus,
-                                      intensity_data.energy_delta_minus)
-        np.testing.assert_array_equal(actual_intensity_map_data.energy_label, intensity_data.energy_label)
-        np.testing.assert_array_equal(actual_intensity_map_data.latitude, intensity_data.latitude)
-        np.testing.assert_array_equal(actual_intensity_map_data.longitude, intensity_data.longitude)
-        np.testing.assert_array_equal(actual_intensity_map_data.exposure_factor, intensity_data.exposure_factor)
-        np.testing.assert_array_equal(actual_intensity_map_data.obs_date, intensity_data.obs_date)
-        np.testing.assert_array_equal(actual_intensity_map_data.obs_date_range, intensity_data.obs_date_range)
-        np.testing.assert_array_equal(actual_intensity_map_data.solid_angle, intensity_data.solid_angle)
+                                      rect_intensity_data.energy_delta_minus)
+        np.testing.assert_array_equal(actual_intensity_map_data.energy_label, rect_intensity_data.energy_label)
+        np.testing.assert_array_equal(actual_intensity_map_data.latitude, rect_intensity_data.latitude)
+        np.testing.assert_array_equal(actual_intensity_map_data.longitude, rect_intensity_data.longitude)
+        np.testing.assert_array_equal(actual_intensity_map_data.exposure_factor, rect_intensity_data.exposure_factor)
+        np.testing.assert_array_equal(actual_intensity_map_data.obs_date, rect_intensity_data.obs_date)
+        np.testing.assert_array_equal(actual_intensity_map_data.obs_date_range, rect_intensity_data.obs_date_range)
+        np.testing.assert_array_equal(actual_intensity_map_data.solid_angle, rect_intensity_data.solid_angle)
 
+        #assert only intensity fields were converted from healpix to rectangular
         healpix_intensity_map_data.to_healpix_skymap.assert_called_once()
-
-        expected_value_keys = [
-            "exposure_factor",
+        mock_healpix_skymap.to_rectangular_skymap.assert_called_once_with(degree_spacing, [
             "ena_intensity",
             "ena_intensity_stat_uncert",
             "ena_intensity_sys_err",
-            "obs_date",
-            "obs_date_range",
-        ]
+        ])
 
-        mock_healpix_skymap.to_rectangular_skymap.assert_called_once_with(degree_spacing, expected_value_keys)
-
+        #assert final rectangular product has correct metadata and parent files
         mock_save_data.assert_called_once()
         actual_rectangular_data_product = mock_save_data.call_args_list[0].args[0]
-
         self.assertIsInstance(actual_rectangular_data_product, RectangularIntensityDataProduct)
-
         self.assertEqual(4, len(actual_rectangular_data_product.parent_file_names))
         self.assertEqual({input_l2_map_name, fake_spice.name, input_l1c_pset_name, input_glows_l3e_name},
                          set(actual_rectangular_data_product.parent_file_names))
         self.assertEqual(SpiceFrame.IMAP_GCS, actual_rectangular_data_product.spice_frame_name)
-
         actual_rectangular_data = actual_rectangular_data_product.data
-
         self.assertIsInstance(actual_rectangular_data.intensity_map_data, IntensityMapData)
 
+        #assert intensity fields on output come from the rectangular skymap conversion
         # @formatter:off
-        expected_healpix_map_data = healpix_intensity_map_data.intensity_map_data
-        self.assertEqual(expected_healpix_map_data.epoch, actual_rectangular_data.intensity_map_data.epoch)
-        self.assertEqual(expected_healpix_map_data.epoch_delta, actual_rectangular_data.intensity_map_data.epoch_delta)
-        self.assertEqual(expected_healpix_map_data.energy, actual_rectangular_data.intensity_map_data.energy)
-        self.assertEqual(expected_healpix_map_data.energy_delta_plus, actual_rectangular_data.intensity_map_data.energy_delta_plus)
-        self.assertEqual(expected_healpix_map_data.energy_delta_minus, actual_rectangular_data.intensity_map_data.energy_delta_minus)
-        self.assertEqual(expected_healpix_map_data.energy_label, actual_rectangular_data.intensity_map_data.energy_label)
+        self.assertEqual(sentinel.rectangular_ena_intensity, actual_rectangular_data.intensity_map_data.ena_intensity)
+        self.assertEqual(sentinel.rectangular_ena_intensity_stat_uncert, actual_rectangular_data.intensity_map_data.ena_intensity_stat_uncert)
+        self.assertEqual(sentinel.rectangular_ena_intensity_sys_err, actual_rectangular_data.intensity_map_data.ena_intensity_sys_err)
 
-        self.assertEqual(actual_rectangular_data.intensity_map_data.exposure_factor, sentinel.rectangular_exposure_factor)
-        self.assertEqual(actual_rectangular_data.intensity_map_data.ena_intensity, sentinel.rectangular_ena_intensity)
-        self.assertEqual(actual_rectangular_data.intensity_map_data.ena_intensity_stat_uncert, sentinel.rectangular_ena_intensity_stat_uncert)
-        self.assertEqual(actual_rectangular_data.intensity_map_data.ena_intensity_sys_err, sentinel.rectangular_ena_intensity_sys_err)
-        np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.obs_date.data, expected_converted_datetimes)
-        np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.obs_date.mask, np.ma.getmask(expected_converted_datetimes))
-        self.assertEqual(actual_rectangular_data.intensity_map_data.obs_date_range, sentinel.rectangular_obs_date_range)
-        np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.solid_angle, expected_output_solid_angle)
+        #assert non-intensity fields on output are passed through from the HealPixIntensityMapData
+        expected_passthrough = healpix_intensity_map_data.intensity_map_data
+        self.assertIs(expected_passthrough.epoch, actual_rectangular_data.intensity_map_data.epoch)
+        self.assertIs(expected_passthrough.epoch_delta, actual_rectangular_data.intensity_map_data.epoch_delta)
+        self.assertIs(expected_passthrough.energy, actual_rectangular_data.intensity_map_data.energy)
+        self.assertIs(expected_passthrough.energy_delta_plus, actual_rectangular_data.intensity_map_data.energy_delta_plus)
+        self.assertIs(expected_passthrough.energy_delta_minus, actual_rectangular_data.intensity_map_data.energy_delta_minus)
+        self.assertIs(expected_passthrough.energy_label, actual_rectangular_data.intensity_map_data.energy_label)
+        self.assertIs(expected_passthrough.exposure_factor, actual_rectangular_data.intensity_map_data.exposure_factor)
+        self.assertIs(expected_passthrough.obs_date, actual_rectangular_data.intensity_map_data.obs_date)
+        self.assertIs(expected_passthrough.obs_date_range, actual_rectangular_data.intensity_map_data.obs_date_range)
+        self.assertIs(expected_passthrough.solid_angle, actual_rectangular_data.intensity_map_data.solid_angle)
 
-        np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.latitude, mock_rectangular_sky_map.sky_grid.el_bin_midpoints)
-        np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.longitude, mock_rectangular_sky_map.sky_grid.az_bin_midpoints)
-        np.testing.assert_array_equal(actual_rectangular_data.coords.latitude_label, mock_rectangular_sky_map.sky_grid.el_bin_midpoints.astype(str))
-        np.testing.assert_array_equal(actual_rectangular_data.coords.longitude_label, mock_rectangular_sky_map.sky_grid.az_bin_midpoints.astype(str))
+        #assert lat/lon and coords come from the input l2 cdf
+        np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.latitude, rect_intensity_data.latitude)
+        np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.longitude, rect_intensity_data.longitude)
+        np.testing.assert_array_equal(actual_rectangular_data.coords.latitude_label, input_l2_rectangular_map.coords.latitude_label)
+        np.testing.assert_array_equal(actual_rectangular_data.coords.longitude_label, input_l2_rectangular_map.coords.longitude_label)
         # @formatter:on
+        np.testing.assert_array_equal(actual_rectangular_data.coords.longitude_delta, input_l2_rectangular_map.coords.longitude_delta)
+        np.testing.assert_array_equal(actual_rectangular_data.coords.latitude_delta, input_l2_rectangular_map.coords.latitude_delta)
 
-        self.assertEqual((int(360 / degree_spacing),), actual_rectangular_data.coords.longitude_delta.shape)
-        self.assertTrue(np.all(degree_spacing / 2 == actual_rectangular_data.coords.longitude_delta))
+        #TODO: test that if the calculated longitude / latidude and deltas don't match the L2 cdf input, don't proceed with processing
 
-        self.assertEqual((int(180 / degree_spacing),), actual_rectangular_data.coords.latitude_delta.shape)
-        self.assertTrue(np.all(degree_spacing / 2 == actual_rectangular_data.coords.latitude_delta))
+        # self.assertEqual((int(360 / degree_spacing),), actual_rectangular_data.coords.longitude_delta.shape)
+        # self.assertTrue(np.all(degree_spacing / 2 == actual_rectangular_data.coords.longitude_delta))
+        # self.assertEqual((int(180 / degree_spacing),), actual_rectangular_data.coords.latitude_delta.shape)
+        # self.assertTrue(np.all(degree_spacing / 2 == actual_rectangular_data.coords.latitude_delta))
 
         self.assertEqual([mock_save_data.return_value], product)
 
@@ -303,8 +281,10 @@ class TestUltraProcessor(unittest.TestCase):
                                        descriptor=f"ulc-ena-h-sf-sp-full-hae-{degree_spacing}deg-6mo",
                                        )
         mock_dependencies = Mock()
-        mock_dependencies.u45_l2_map = sentinel.u45_l2_map
-        mock_dependencies.u90_l2_map = sentinel.u90_l2_map
+        mock_dependencies.u45_l2_healpix_map = sentinel.u45_l2_healpix_map
+        mock_dependencies.u90_l2_healpix_map = sentinel.u90_l2_healpix_map
+        mock_dependencies.u45_l2_rectangular_map = sentinel.u45_l2_rectangular_map
+        mock_dependencies.u90_l2_rectangular_map = sentinel.u90_l2_rectangular_map
         mock_dependencies.u45_l1c_psets = [sentinel.u45_l1c_1, sentinel.u45_l1c_2, sentinel.u45_l1c_3]
         mock_dependencies.u90_l1c_psets = [sentinel.u90_l1c_1, sentinel.u90_l1c_2, sentinel.u90_l1c_3]
         mock_dependencies.glows_l3e_psets = [sentinel.glows_pset_1, sentinel.glows_pset_2, sentinel.glows_pset_3]
@@ -316,7 +296,8 @@ class TestUltraProcessor(unittest.TestCase):
         mock_uncertainty_weighted_combination.return_value = mock_combination_strategy
 
         expected_u45_dependency = UltraL3Dependencies(
-            ultra_l2_map=mock_dependencies.u45_l2_map,
+            ultra_l2_healpix_map=mock_dependencies.u45_l2_healpix_map,
+            ultra_l2_rectangular_map=mock_dependencies.u45_l2_rectangular_map,
             ultra_l1c_pset=mock_dependencies.u45_l1c_psets,
             glows_l3e_sp=mock_dependencies.glows_l3e_psets,
             dependency_file_paths=mock_dependencies.dependency_file_paths,
@@ -324,7 +305,8 @@ class TestUltraProcessor(unittest.TestCase):
         )
 
         expected_u90_dependency = UltraL3Dependencies(
-            ultra_l2_map=mock_dependencies.u90_l2_map,
+            ultra_l2_healpix_map=mock_dependencies.u90_l2_healpix_map,
+            ultra_l2_rectangular_map=mock_dependencies.u90_l2_rectangular_map,
             ultra_l1c_pset=mock_dependencies.u90_l1c_psets,
             glows_l3e_sp=mock_dependencies.glows_l3e_psets,
             dependency_file_paths=mock_dependencies.dependency_file_paths,
@@ -343,7 +325,8 @@ class TestUltraProcessor(unittest.TestCase):
             [sentinel.u45_l2_survival_corrected_map, sentinel.u90_l2_survival_corrected_map])
 
         mock_healpix_to_rectangular.assert_called_once_with(
-            mock_combination_strategy.combine_healpix_intensity_map_data.return_value, degree_spacing,
+            mock_combination_strategy.combine_healpix_intensity_map_data.return_value,
+            degree_spacing,
             spice_frame_name=sentinel.spice_frame)
 
         mock_save_data.assert_called_once_with(mock_healpix_to_rectangular.return_value)
@@ -378,7 +361,8 @@ class TestUltraProcessor(unittest.TestCase):
         fake_spice = Path("path/to/fake/spice.tls")
         mock_spiceypy.kdata.return_value = [fake_spice]
 
-        input_l2_map = _create_ultra_l2_data(epoch=[epoch], flux=input_map_flux, healpix_indices=healpix_indices)
+        input_l2_map = _create_ultra_l2_healpix_data(epoch=[epoch], flux=input_map_flux, healpix_indices=healpix_indices)
+        input_l2_rectangular_map = create_rectangular_intensity_map_data()
 
         input_l2_map.intensity_map_data.energy = sentinel.ultra_l2_energies
 
@@ -389,7 +373,8 @@ class TestUltraProcessor(unittest.TestCase):
         input_deps = ProcessingInputCollection(ScienceInput(input_l2_map_name))
 
         mock_fetch_dependencies.return_value = UltraL3Dependencies(
-            ultra_l2_map=input_l2_map,
+            ultra_l2_healpix_map=input_l2_map,
+            ultra_l2_rectangular_map=input_l2_rectangular_map,
             ultra_l1c_pset=sentinel.ultra_l1c_pset,
             glows_l3e_sp=sentinel.glows_l3e_sp,
             dependency_file_paths=[Path(input_l2_map_name), Path(input_l1c_pset_name), Path(input_glows_l3e_name)],
@@ -579,8 +564,8 @@ class TestUltraProcessor(unittest.TestCase):
         self.assertEqual([mock_save_data.return_value], product)
 
 
-def _create_ultra_l2_data(epoch=None, lon=None, lat=None, energy=None, energy_delta=None, flux=None,
-                          intensity_stat_unc=None, healpix_indices=None) -> HealPixIntensityMapData:
+def _create_ultra_l2_healpix_data(epoch=None, lon=None, lat=None, energy=None, energy_delta=None, flux=None,
+                                  intensity_stat_unc=None, healpix_indices=None) -> HealPixIntensityMapData:
     epoch = epoch if epoch is not None else np.array([datetime.now()])
     lon = lon if lon is not None else np.array([1.0])
     lat = lat if lat is not None else np.array([1.0])
