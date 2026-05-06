@@ -10,7 +10,6 @@ primary_data_variable: &primary_data_variable
 
 support_data: &support_data
   VAR_TYPE: support_data
-  DISPLAY_TYPE: no_plot
   RECORD_VARYING: NRV
 
 float_data: &float_data
