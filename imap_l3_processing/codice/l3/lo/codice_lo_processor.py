@@ -117,19 +117,26 @@ class CodiceLoProcessor(Processor):
         heplusplus_partial_density = calculate_partial_densities(codice_lo_l2_data.heplusplus,
                                                                  codice_lo_l2_data.energy_per_charge,
                                                                  mass_per_charge_lookup.heplusplus)
-        cplus4_partial_density = calculate_partial_densities(codice_lo_l2_data.cplus4, codice_lo_l2_data.energy_per_charge,
+        cplus4_partial_density = calculate_partial_densities(codice_lo_l2_data.cplus4,
+                                                             codice_lo_l2_data.energy_per_charge,
                                                              mass_per_charge_lookup.cplus4)
-        cplus5_partial_density = calculate_partial_densities(codice_lo_l2_data.cplus5, codice_lo_l2_data.energy_per_charge,
+        cplus5_partial_density = calculate_partial_densities(codice_lo_l2_data.cplus5,
+                                                             codice_lo_l2_data.energy_per_charge,
                                                              mass_per_charge_lookup.cplus5)
-        cplus6_partial_density = calculate_partial_densities(codice_lo_l2_data.cplus6, codice_lo_l2_data.energy_per_charge,
+        cplus6_partial_density = calculate_partial_densities(codice_lo_l2_data.cplus6,
+                                                             codice_lo_l2_data.energy_per_charge,
                                                              mass_per_charge_lookup.cplus6)
-        oplus5_partial_density = calculate_partial_densities(codice_lo_l2_data.oplus5, codice_lo_l2_data.energy_per_charge,
+        oplus5_partial_density = calculate_partial_densities(codice_lo_l2_data.oplus5,
+                                                             codice_lo_l2_data.energy_per_charge,
                                                              mass_per_charge_lookup.oplus5)
-        oplus6_partial_density = calculate_partial_densities(codice_lo_l2_data.oplus6, codice_lo_l2_data.energy_per_charge,
+        oplus6_partial_density = calculate_partial_densities(codice_lo_l2_data.oplus6,
+                                                             codice_lo_l2_data.energy_per_charge,
                                                              mass_per_charge_lookup.oplus6)
-        oplus7_partial_density = calculate_partial_densities(codice_lo_l2_data.oplus7, codice_lo_l2_data.energy_per_charge,
+        oplus7_partial_density = calculate_partial_densities(codice_lo_l2_data.oplus7,
+                                                             codice_lo_l2_data.energy_per_charge,
                                                              mass_per_charge_lookup.oplus7)
-        oplus8_partial_density = calculate_partial_densities(codice_lo_l2_data.oplus8, codice_lo_l2_data.energy_per_charge,
+        oplus8_partial_density = calculate_partial_densities(codice_lo_l2_data.oplus8,
+                                                             codice_lo_l2_data.energy_per_charge,
                                                              mass_per_charge_lookup.oplus8)
         ne_partial_density = calculate_partial_densities(codice_lo_l2_data.ne, codice_lo_l2_data.energy_per_charge,
                                                          mass_per_charge_lookup.ne)
@@ -137,9 +144,11 @@ class CodiceLoProcessor(Processor):
                                                          mass_per_charge_lookup.mg)
         si_partial_density = calculate_partial_densities(codice_lo_l2_data.si, codice_lo_l2_data.energy_per_charge,
                                                          mass_per_charge_lookup.si)
-        fe_loq_partial_density = calculate_partial_densities(codice_lo_l2_data.fe_loq, codice_lo_l2_data.energy_per_charge,
+        fe_loq_partial_density = calculate_partial_densities(codice_lo_l2_data.fe_loq,
+                                                             codice_lo_l2_data.energy_per_charge,
                                                              mass_per_charge_lookup.fe_loq)
-        fe_hiq_partial_density = calculate_partial_densities(codice_lo_l2_data.fe_hiq, codice_lo_l2_data.energy_per_charge,
+        fe_hiq_partial_density = calculate_partial_densities(codice_lo_l2_data.fe_hiq,
+                                                             codice_lo_l2_data.energy_per_charge,
                                                              mass_per_charge_lookup.fe_hiq)
 
         return CodiceLoL3aPartialDensityDataProduct(
@@ -165,8 +174,8 @@ class CodiceLoProcessor(Processor):
         )
 
     def process_l3a_direct_event_data_product(
-        self,
-        dependencies: CodiceLoL3aDirectEventsDependencies
+            self,
+            dependencies: CodiceLoL3aDirectEventsDependencies
     ) -> CodiceLoL3aDirectEventDataProduct:
         codice_sw_priority_counts_l1a_data = dependencies.codice_lo_l1a_sw_priority_rates
         codice_nsw_priority_counts_l1a_data = dependencies.codice_lo_l1a_nsw_priority_rates
@@ -206,6 +215,7 @@ class CodiceLoProcessor(Processor):
             input_metadata=self.input_metadata,
             epoch=codice_direct_events.epoch,
             epoch_delta=codice_direct_events.epoch_delta_plus,
+            acquisition_time_per_esa_step=codice_sw_priority_counts_l1a_data.acquisition_time_per_esa_step,
             apd_energy=codice_direct_events.apd_energy,
             apd_id=codice_direct_events.apd_id,
             data_quality=codice_direct_events.data_quality,
@@ -221,6 +231,7 @@ class CodiceLoProcessor(Processor):
             multi_flag=codice_direct_events.multi_flag,
             nso_esa_step=codice_sw_priority_counts_l1a_data.nso_esa_step,
             nso_spin_sector=codice_sw_priority_counts_l1a_data.nso_spin_sector,
+            nso_half_spin=codice_sw_priority_counts_l1a_data.nso_half_spin,
             num_events=codice_direct_events.num_events,
             position=codice_direct_events.position,
             mass_per_charge=mass_per_charge,
@@ -229,6 +240,7 @@ class CodiceLoProcessor(Processor):
             normalization_per_event=normalization_per_event,
             rgfo_esa_step=codice_sw_priority_counts_l1a_data.rgfo_esa_step,
             rgfo_spin_sector=codice_sw_priority_counts_l1a_data.rgfo_spin_sector,
+            rgfo_half_spin=codice_sw_priority_counts_l1a_data.rgfo_half_spin,
             spin_angle=codice_direct_events.spin_angle,
             spin_angle_bin=spin_angle_lut.bin_centers,
             spin_angle_bin_delta=spin_angle_lut.bin_deltas,

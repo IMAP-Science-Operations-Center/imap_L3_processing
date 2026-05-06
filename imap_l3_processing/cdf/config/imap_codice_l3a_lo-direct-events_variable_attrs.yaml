@@ -70,6 +70,23 @@ epoch_delta:
   RECORD_VARYING: RV
   VAR_TYPE: support_data
 
+acquisition_time_per_esa_step:
+  NAME: acquisition_time_per_esa_step
+  CATDESC: Acquisition time for each step of energy
+  DEPEND_0: epoch
+  DEPEND_1: esa_step
+  FIELDNAM: Acquisition Time
+  DATA_TYPE: CDF_DOUBLE
+  FILLVAL: -1.0e+31
+  FORMAT: F10.3
+  LABLAXIS: Acquisition Time
+  SCALETYP: linear
+  UNITS: ms
+  VALIDMAX: 625.0
+  VALIDMIN: 0.0
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+
 event_index:
   <<: *support_data
   NAME: event_index
@@ -454,12 +471,27 @@ rgfo_spin_sector:
   FORMAT: I3
   LABLAXIS: RGFO Spin Sector
   SCALETYP: linear
-  UNITS:  spin sector
+  UNITS: spin sector
   VALIDMIN: 0
   VALIDMAX: 255
   VAR_NOTES: Indicates the spin sector when Reduced Gain Factor Operation (RGFO) was activated. In RGFO, the Entrance ESA voltage is reduced in order to limit the number of ions that reach the detectors.
   VAR_TYPE: data
   RECORD_VARYING: RV
+
+rgfo_half_spin:
+  <<: *data_variable
+  NAME: rgfo_half_spin
+  CATDESC: Half Spin When Reduced Gain Factor Operation (RGFO) was activated
+  FIELDNAM: RGFO Half Spin
+  DATA_TYPE: CDF_UINT1
+  FILLVAL: 255
+  FORMAT: I3
+  LABLAXIS: RGFO Half Spin
+  SCALETYP: linear
+  UNITS: half spin number
+  VALIDMAX: 255
+  VALIDMIN: 0
+  VAR_NOTES: Indicates the half spin when Reduced Gain Factor Operation (RGFO) was activated. In RGFO, the Entrance ESA voltage is reduced in order to limit the number of ions that reach the detectors.
 
 rgfo_esa_step:
   NAME: rgfo_esa_step
@@ -496,6 +528,21 @@ nso_spin_sector:
   VAR_NOTES: Indicates the spin sector when No Scan Operation (NSO) was activated. In NSO, the ESA voltage is set to the first step in the scan and remains fixed until the next cycle boundary.
   VAR_TYPE: data
   RECORD_VARYING: RV
+
+nso_half_spin:
+  <<: *data_variable
+  NAME: nso_half_spin
+  CATDESC: When No Scan Operation (NSO) was activated
+  FIELDNAM: NSO Half Spin
+  DATA_TYPE: CDF_UINT1
+  FILLVAL: 255
+  FORMAT: I3
+  LABLAXIS: NSO Half Spin
+  SCALETYP: linear
+  UNITS: half spin number
+  VALIDMAX: 255
+  VALIDMIN: 0
+  VAR_NOTES: Indicates the half spin when No Scan Operation (NSO) was activated. In NSO, the ESA voltage is set to the first step in the scan and remains fixed until the next cycle boundary.
 
 nso_esa_step:
   NAME: nso_esa_step
