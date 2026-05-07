@@ -12,6 +12,7 @@ from imap_l3_processing.hit.l3.pha.science.calculate_pha import process_pha_even
 from imap_l3_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
 from imap_l3_processing.hit.l3.sectored_products.science.sectored_products_algorithms import get_sector_unit_vectors, \
     get_hit_bin_polar_coordinates, transform_to_10_minute_chunks
+from imap_l3_processing.hit.quality_flags import HitL3Flags
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.pitch_angles import calculate_unit_vector, calculate_pitch_angle, calculate_gyrophase, \
     rotate_particle_vectors_from_hit_despun_to_imap_despun, rebin_by_pitch_angle_and_gyrophase
@@ -208,6 +209,9 @@ class HitProcessor(Processor):
             number_of_pitch_angle_bins, number_of_gyrophase_bins)
 
         averaged_mag_data = mag_data.rebin_to(hit_data.epoch, hit_data.epoch_delta)
+        hit_flags = np.full(len(hit_data.epoch), HitL3Flags.NONE).astype(int).astype(HitL3Flags)
+        if dependencies.mag_is_preliminary:
+            hit_flags |= HitL3Flags.PRELIMINARY_MAG
         measurement_pitch_angle = []
         measurement_gyrophase = []
         for time_index, average_mag_vector in enumerate(averaged_mag_data):
@@ -287,7 +291,8 @@ class HitProcessor(Processor):
                                         np.array(measurement_pitch_angle),
                                         np.array(measurement_gyrophase),
                                         azimuth=hit_data.azimuth,
-                                        zenith=hit_data.zenith)
+                                        zenith=hit_data.zenith,
+                                        hit_flags=hit_flags)
 
     @staticmethod
     def _create_nan_array(shape) -> tuple[np.array, np.array, np.array]:

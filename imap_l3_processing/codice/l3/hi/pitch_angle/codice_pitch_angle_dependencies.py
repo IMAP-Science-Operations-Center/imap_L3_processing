@@ -12,23 +12,24 @@ from imap_l3_processing.utils import read_mag_data
 class CodicePitchAngleDependencies:
     mag_data: MagData
     codice_sectored_intensities_data: CodiceHiL2SectoredIntensitiesData
+    mag_is_preliminary: bool = False
 
     @classmethod
     def fetch_dependencies(cls, input_collection: ProcessingInputCollection):
         codice_file_paths = input_collection.get_file_paths("codice", "hi-sectored")
-        mag_dependency = [
-            *input_collection.get_file_paths("mag", data_type="l2", descriptor="norm-dsrf"),
-            *input_collection.get_file_paths("mag", data_type="l1d", descriptor="norm-dsrf")
-        ][0]
+        mag_l2_paths = input_collection.get_file_paths("mag", data_type="l2", descriptor="norm-dsrf")
+        mag_l1d_paths = input_collection.get_file_paths("mag", data_type="l1d", descriptor="norm-dsrf")
+        mag_dependency = [*mag_l2_paths, *mag_l1d_paths][0]
+        mag_is_preliminary = len(mag_l2_paths) == 0
 
         for download_location_file_path in [*codice_file_paths, mag_dependency]:
             imap_data_access.download(download_location_file_path)
 
-        return cls.from_file_paths(mag_dependency, codice_file_paths[0])
+        return cls.from_file_paths(mag_dependency, codice_file_paths[0], mag_is_preliminary=mag_is_preliminary)
 
     @classmethod
-    def from_file_paths(cls, mag_file_path, codice_l2_sectored_intensities_path):
+    def from_file_paths(cls, mag_file_path, codice_l2_sectored_intensities_path, mag_is_preliminary: bool = False):
         mag_data = read_mag_data(mag_file_path)
         sectored_intensities = CodiceHiL2SectoredIntensitiesData.read_from_cdf(codice_l2_sectored_intensities_path)
 
-        return cls(mag_data, sectored_intensities)
+        return cls(mag_data, sectored_intensities, mag_is_preliminary=mag_is_preliminary)

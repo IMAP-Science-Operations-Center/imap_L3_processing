@@ -107,6 +107,7 @@ ENERGY_FE_LABEL_VAR_NAME = "energy_fe_label"
 ENERGY_HE3HE4_LABEL_VAR_NAME = "energy_he3he4_label"
 PITCH_ANGLE_LABEL_VAR_NAME = "pitch_angle_label"
 GYROPHASE_LABEL_VAR_NAME = "gyrophase_label"
+CODICE_FLAGS_VAR_NAME = "codice_flags"
 
 
 @dataclass
@@ -191,6 +192,7 @@ class CodiceHiL3PitchAngleDataProduct(DataProduct):
     cno_intensity_by_pitch_angle_and_gyrophase: ndarray
     fe_intensity_by_pitch_angle: ndarray
     fe_intensity_by_pitch_angle_and_gyrophase: ndarray
+    codice_flags: ndarray
 
     energy_h_label: ndarray = field(init=False)
     energy_cno_label: ndarray = field(init=False)
@@ -245,6 +247,7 @@ class CodiceHiL3PitchAngleDataProduct(DataProduct):
             DataProductVariable(ENERGY_HE3HE4_LABEL_VAR_NAME, self.energy_he3he4_label),
             DataProductVariable(PITCH_ANGLE_LABEL_VAR_NAME, self.pitch_angle_label),
             DataProductVariable(GYROPHASE_LABEL_VAR_NAME, self.gyrophase_label),
+            DataProductVariable(CODICE_FLAGS_VAR_NAME, self.codice_flags),
         ]
 
 

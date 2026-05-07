@@ -156,6 +156,9 @@ class SweProcessor(Processor):
 
         swe_quality_flags |= pitch_angle_flags
 
+        if dependencies.mag_is_preliminary:
+            swe_quality_flags |= SweL3Flags.PRELIMINARY_MAG
+
         rebinned_mask = np.ma.masked_invalid(swe_l2_data.phase_space_density_rebinned)
         dist_by_phi_rebinned = np.average(rebinned_mask, weights=geometric_fractions, axis=-1)
         dist_fun_1d_rebinned = np.ma.average(dist_by_phi_rebinned, axis=-1)
