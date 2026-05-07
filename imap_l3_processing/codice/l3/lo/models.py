@@ -297,6 +297,7 @@ class CodiceLoL3aPartialDensityDataProduct(DataProduct):
         ]
 
 
+ACQUISITION_TIME_PER_ESA_STEP_NAME = 'acquisition_time_per_esa_step'
 EVENT_INDEX_VAR_NAME = "event_index"
 SPIN_ANGLE_DELTA_BIN_VAR_NAME = "spin_angle_bin_delta"
 SPIN_ANGLE_BIN_VAR_NAME = "spin_angle_bin"
@@ -327,8 +328,10 @@ SPIN_ANGLE_BIN_LABEL_VAR_NAME = "spin_angle_bin_label"
 HALF_SPIN_PER_ESA_STEP_VAR_NAME = "half_spin_per_esa_step"
 RGFO_SPIN_SECTOR_VAR_NAME = "rgfo_spin_sector"
 RGFO_ESA_STEP_VAR_NAME = "rgfo_esa_step"
+NSO_HALF_SPIN_NAME = 'nso_half_spin'
 NSO_SPIN_SECTOR_VAR_NAME = "nso_spin_sector"
 NSO_ESA_STEP_VAR_NAME = "nso_esa_step"
+RGFO_HALF_SPIN_NAME = 'rgfo_half_spin'
 ESA_STEP_VAR_NAME = "esa_step"
 ENERGY_PER_CHARGE_VAR_NAME = "energy_per_charge"
 TYPE_VAR_NAME = "type"
@@ -383,6 +386,7 @@ class CodiceLoDirectEventData:
 
 @dataclass
 class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
+    acquisition_time_per_esa_step: np.ndarray
     energy_bin: np.ndarray
     energy_bin_delta_plus: np.ndarray
     energy_bin_delta_minus: np.ndarray
@@ -395,8 +399,10 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
     energy_bin_label: np.ndarray = field(init=False)
     spin_angle_bin_label: np.ndarray = field(init=False)
     half_spin_per_esa_step: np.ndarray
+    rgfo_half_spin: np.ndarray
     rgfo_spin_sector: np.ndarray
     rgfo_esa_step: np.ndarray
+    nso_half_spin: np.ndarray
     nso_spin_sector: np.ndarray
     nso_esa_step: np.ndarray
     spin_sector: np.ndarray
@@ -415,7 +421,7 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
         return [
             DataProductVariable(EPOCH_VAR_NAME, self.epoch),
             DataProductVariable(EPOCH_DELTA_VAR_NAME, self.epoch_delta),
-
+            DataProductVariable(ACQUISITION_TIME_PER_ESA_STEP_NAME, self.acquisition_time_per_esa_step),
             DataProductVariable(APD_ENERGY_VAR_NAME, self.apd_energy),
             DataProductVariable(APD_ID_VAR_NAME, self.apd_id),
             DataProductVariable(DATA_QUALITY_VAR_NAME, self.data_quality),
@@ -438,12 +444,14 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
             DataProductVariable(NORMALIZATION_PER_EVENT_VAR_NAME, self.normalization_per_event),
             DataProductVariable(NSO_ESA_STEP_VAR_NAME, self.nso_esa_step),
             DataProductVariable(NSO_SPIN_SECTOR_VAR_NAME, self.nso_spin_sector),
+            DataProductVariable(NSO_HALF_SPIN_NAME, self.nso_half_spin),
             DataProductVariable(NUM_EVENTS_VAR_NAME, self.num_events),
             DataProductVariable(POSITION_VAR_NAME, self.position),
             DataProductVariable(PRIORITY_INDEX_VAR_NAME, self.priority_index),
             DataProductVariable(PRIORITY_INDEX_LABEL_VAR_NAME, self.priority_index_label),
             DataProductVariable(RGFO_ESA_STEP_VAR_NAME, self.rgfo_esa_step),
             DataProductVariable(RGFO_SPIN_SECTOR_VAR_NAME, self.rgfo_spin_sector),
+            DataProductVariable(RGFO_HALF_SPIN_NAME, self.rgfo_half_spin),
             DataProductVariable(SPIN_ANGLE_VAR_NAME, self.spin_angle),
             DataProductVariable(SPIN_ANGLE_BIN_VAR_NAME, self.spin_angle_bin),
             DataProductVariable(SPIN_ANGLE_DELTA_BIN_VAR_NAME, self.spin_angle_bin_delta),

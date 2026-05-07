@@ -28,8 +28,8 @@ from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from tests.test_helpers import create_dataclass_mock, get_test_data_path, NumpyArrayMatcher
 
-
 MODULE = "imap_l3_processing.codice.l3.lo.codice_lo_processor"
+
 
 class TestCodiceLoProcessor(unittest.TestCase):
     def test_implements_processor(self):
@@ -532,6 +532,9 @@ class TestCodiceLoProcessor(unittest.TestCase):
         sw_priority_rates.nso_spin_sector = rng.random(num_epochs)
         sw_priority_rates.nso_esa_step = rng.random(num_epochs)
         sw_priority_rates.esa_step = np.arange(128)
+        sw_priority_rates.rgfo_half_spin = rng.random(num_epochs)
+        sw_priority_rates.nso_half_spin = rng.random(num_epochs)
+        sw_priority_rates.acquisition_time_per_esa_step = rng.random((num_epochs, num_energy_bins))
 
         nsw_priority_rates = create_dataclass_mock(CodiceLoL1aNSWPriorityRates)
         nsw_priority_rates.epoch = epochs
@@ -632,8 +635,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(
             l3a_direct_event_data_product.normalization, np.flip(expected_normalization, axis=2)
         )
-        self.assertEqual(l3a_direct_event_data_product.normalization_per_event, mock_lookup_normalization_per_event.return_value)
-
+        self.assertEqual(l3a_direct_event_data_product.normalization_per_event,
+                         mock_lookup_normalization_per_event.return_value)
 
         np.testing.assert_array_equal(expected_apd_energy, l3a_direct_event_data_product.apd_energy)
         np.testing.assert_array_equal(expected_apd_gain, l3a_direct_event_data_product.gain)
@@ -657,12 +660,18 @@ class TestCodiceLoProcessor(unittest.TestCase):
                                       l3a_direct_event_data_product.energy_bin_delta_minus)
         self.assertEqual(mock_spin_angle_lookup.bin_centers, l3a_direct_event_data_product.spin_angle_bin)
         self.assertEqual(mock_spin_angle_lookup.bin_deltas, l3a_direct_event_data_product.spin_angle_bin_delta)
-        np.testing.assert_array_equal(sw_priority_rates.half_spin_per_esa_step, l3a_direct_event_data_product.half_spin_per_esa_step)
-        np.testing.assert_array_equal(sw_priority_rates.rgfo_spin_sector, l3a_direct_event_data_product.rgfo_spin_sector)
+        np.testing.assert_array_equal(sw_priority_rates.half_spin_per_esa_step,
+                                      l3a_direct_event_data_product.half_spin_per_esa_step)
+        np.testing.assert_array_equal(sw_priority_rates.rgfo_spin_sector,
+                                      l3a_direct_event_data_product.rgfo_spin_sector)
         np.testing.assert_array_equal(sw_priority_rates.rgfo_esa_step, l3a_direct_event_data_product.rgfo_esa_step)
         np.testing.assert_array_equal(sw_priority_rates.nso_spin_sector, l3a_direct_event_data_product.nso_spin_sector)
         np.testing.assert_array_equal(sw_priority_rates.nso_esa_step, l3a_direct_event_data_product.nso_esa_step)
         np.testing.assert_array_equal(sw_priority_rates.esa_step, l3a_direct_event_data_product.esa_step)
+        np.testing.assert_array_equal(sw_priority_rates.rgfo_half_spin, l3a_direct_event_data_product.rgfo_half_spin)
+        np.testing.assert_array_equal(sw_priority_rates.nso_half_spin, l3a_direct_event_data_product.nso_half_spin)
+        np.testing.assert_array_equal(sw_priority_rates.acquisition_time_per_esa_step,
+                                      l3a_direct_event_data_product.acquisition_time_per_esa_step)
 
     @patch(f'{MODULE}.convert_count_rate_to_intensity')
     @patch(f'{MODULE}.rebin_3d_distribution_azimuth_to_elevation')

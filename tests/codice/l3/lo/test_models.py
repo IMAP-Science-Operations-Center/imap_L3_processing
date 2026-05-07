@@ -390,6 +390,7 @@ class TestModels(CdfModelTestCase):
 
         direct_event = CodiceLoL3aDirectEventDataProduct(
             input_metadata=Mock(),
+            acquisition_time_per_esa_step=rng.random((len(epoch),len(energy_step))),
             epoch=epoch,
             epoch_delta=epoch_delta,
             normalization=rng.random((len(epoch), len(priority), len(energy_step), len(spin_angle))),
@@ -413,8 +414,10 @@ class TestModels(CdfModelTestCase):
             energy_bin_delta_plus=rng.random(len(energy_step)),
             energy_bin_delta_minus=rng.random(len(energy_step)),
             half_spin_per_esa_step=rng.random((len(epoch), len(energy_step))),
+            rgfo_half_spin=rng.random(len(epoch)),
             rgfo_spin_sector=rng.random(len(epoch)),
             rgfo_esa_step=rng.random(len(epoch)),
+            nso_half_spin=rng.random(len(epoch)),
             nso_spin_sector=rng.random(len(epoch)),
             nso_esa_step=rng.random(len(epoch)),
             normalization_per_event=rng.random((len(epoch), len(priority), len(energy_step), len(spin_angle))),

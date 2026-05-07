@@ -1,10 +1,10 @@
 import re
 
 import numpy as np
+from imap_processing.ena_maps.utils import naming
 from spacepy import pycdf
 from spacepy.pycdf import CDF
 
-from imap_processing.ena_maps.utils import naming
 from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_l3_processing.swapi.l3a.models import DataProduct
 
@@ -36,7 +36,7 @@ def write_cdf(file_path: str, data: DataProduct, attribute_manager: ImapAttribut
             data_array = np.asanyarray(data_product.value)
 
             if (map_descriptor is not None
-                and var_name == map_descriptor.principal_data_var):
+                    and var_name == map_descriptor.principal_data_var):
                 variable_attributes["CATDESC"] = map_descriptor.to_catdesc()
 
             record_varying = variable_attributes["RECORD_VARYING"].lower() == "rv"
