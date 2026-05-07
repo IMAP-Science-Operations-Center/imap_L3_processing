@@ -206,31 +206,26 @@ class TestUltraProcessor(unittest.TestCase):
         self.assertIs(expected_passthrough.obs_date_range, actual_rectangular_data.intensity_map_data.obs_date_range)
         self.assertIs(expected_passthrough.solid_angle, actual_rectangular_data.intensity_map_data.solid_angle)
 
-        #assert lat/lon and coords come from the input l2 cdf
-        np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.latitude, rect_intensity_data.latitude)
-        np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.longitude, rect_intensity_data.longitude)
-        np.testing.assert_array_equal(actual_rectangular_data.coords.latitude_label, input_l2_rectangular_map.coords.latitude_label)
-        np.testing.assert_array_equal(actual_rectangular_data.coords.longitude_label, input_l2_rectangular_map.coords.longitude_label)
+        #assert lat/lon and coords come from transformed map
         # @formatter:on
-        np.testing.assert_array_equal(actual_rectangular_data.coords.longitude_delta, input_l2_rectangular_map.coords.longitude_delta)
-        np.testing.assert_array_equal(actual_rectangular_data.coords.latitude_delta, input_l2_rectangular_map.coords.latitude_delta)
-
-        #TODO: test that if the calculated longitude / latidude and deltas don't match the L2 cdf input, don't proceed with processing
-
-        # self.assertEqual((int(360 / degree_spacing),), actual_rectangular_data.coords.longitude_delta.shape)
-        # self.assertTrue(np.all(degree_spacing / 2 == actual_rectangular_data.coords.longitude_delta))
-        # self.assertEqual((int(180 / degree_spacing),), actual_rectangular_data.coords.latitude_delta.shape)
-        # self.assertTrue(np.all(degree_spacing / 2 == actual_rectangular_data.coords.latitude_delta))
+        np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.latitude, mock_rectangular_sky_map.sky_grid.el_bin_midpoints)
+        np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.longitude, mock_rectangular_sky_map.sky_grid.az_bin_midpoints)
+        self.assertEqual((int(360 / degree_spacing),), actual_rectangular_data.coords.longitude_delta.shape)
+        self.assertTrue(np.all(degree_spacing / 2 == actual_rectangular_data.coords.longitude_delta))
+        self.assertEqual((int(180 / degree_spacing),), actual_rectangular_data.coords.latitude_delta.shape)
+        self.assertTrue(np.all(degree_spacing / 2 == actual_rectangular_data.coords.latitude_delta))
 
         self.assertEqual([mock_save_data.return_value], product)
 
     @patch('imap_l3_processing.ultra.ultra_processor.MapProcessor.get_parent_file_names')
     @patch('imap_l3_processing.ultra.ultra_processor.UltraProcessor._process_healpix_intensity_to_rectangular')
+    @patch('imap_l3_processing.ultra.ultra_processor.map_combined_rectangular_quantities_to_healpix_intensity_map')
     @patch("imap_l3_processing.ultra.ultra_processor.ExposureWeightedCombination")
     @patch('imap_l3_processing.ultra.ultra_processor.save_data')
     @patch('imap_l3_processing.ultra.ultra_processor.UltraL3CombinedDependencies.fetch_dependencies')
     def _test_process_combined_sensor(self, degree_spacing, mock_fetch_dependencies, mock_save_data,
                                       mock_exposure_weighted_combination,
+                                      mock_map_combined_rectangular_quantities_to_healpix_intensity_map,
                                       mock_healpix_to_rectangular, _):
         input_metadata = InputMetadata(instrument="ultra",
                                        data_level="l3",
@@ -241,10 +236,15 @@ class TestUltraProcessor(unittest.TestCase):
                                        )
 
         combined_dependencies = mock_fetch_dependencies.return_value
-        combined_dependencies.u90_l2_map = sentinel.u90_l2_map
-        combined_dependencies.u45_l2_map = sentinel.u45_l2_map
+        combined_dependencies.u90_l2_healpix_map = sentinel.u90_l2_healpix_map
+        combined_dependencies.u45_l2_healpix_map = sentinel.u45_l2_healpix_map
+        combined_dependencies.u45_l2_rectangular_map = sentinel.u45_l2_rectangular_map
+        combined_dependencies.u90_l2_rectangular_map = sentinel.u90_l2_rectangular_map
         combined_dependencies.dependency_file_paths = [
             Path("folder/u45_map", Path("folder/u90_map"), Path("folder/u45_l1c"), Path("folder/u90_l1c"))]
+
+        healpix_combination_return_value = mock_exposure_weighted_combination.return_value.combine_healpix_intensity_map_data.return_value
+        rectangular_combination_return_value = mock_exposure_weighted_combination.return_value.combine_rectangular_intensity_map_data.return_value
 
         processor = UltraProcessor(sentinel.dependencies, input_metadata)
         product = processor.process(spice_frame_name=sentinel.spice_frame)
@@ -252,11 +252,15 @@ class TestUltraProcessor(unittest.TestCase):
         mock_fetch_dependencies.assert_called_once_with(sentinel.dependencies)
 
         mock_exposure_weighted_combination.return_value.combine_healpix_intensity_map_data.assert_called_once_with(
-            [sentinel.u45_l2_map, sentinel.u90_l2_map])
+            [sentinel.u45_l2_healpix_map, sentinel.u90_l2_healpix_map])
 
-        mock_combine_maps_return_value = mock_exposure_weighted_combination.return_value.combine_healpix_intensity_map_data.return_value
+        mock_exposure_weighted_combination.return_value.combine_rectangular_intensity_map_data.assert_called_once_with(
+            [sentinel.u45_l2_rectangular_map, sentinel.u90_l2_rectangular_map])
 
-        mock_healpix_to_rectangular.assert_called_once_with(mock_combine_maps_return_value, degree_spacing,
+        mock_map_combined_rectangular_quantities_to_healpix_intensity_map.assert_called_once_with(healpix_combination_return_value, rectangular_combination_return_value)
+        healpix_map_to_process_to_rectangular = mock_map_combined_rectangular_quantities_to_healpix_intensity_map.return_value
+
+        mock_healpix_to_rectangular.assert_called_once_with(healpix_map_to_process_to_rectangular, degree_spacing,
                                                             spice_frame_name=sentinel.spice_frame)
 
         mock_save_data.assert_called_once_with(mock_healpix_to_rectangular.return_value)
@@ -562,7 +566,6 @@ class TestUltraProcessor(unittest.TestCase):
         np.testing.assert_array_almost_equal(actual_data_product.data.spectral_index_map_data.ena_spectral_index,
                                              expected_ena_spectral_index)
         self.assertEqual([mock_save_data.return_value], product)
-
 
 def _create_ultra_l2_healpix_data(epoch=None, lon=None, lat=None, energy=None, energy_delta=None, flux=None,
                                   intensity_stat_unc=None, healpix_indices=None) -> HealPixIntensityMapData:
