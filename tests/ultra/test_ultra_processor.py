@@ -89,7 +89,6 @@ class TestUltraProcessor(unittest.TestCase):
             energy_bin_group_sizes=sentinel.bin_groups,
         )
 
-        # mock survival probability computation
         mock_combine_glows_l3e_with_l1c_pointing.return_value = [(sentinel.ultra_l1c_1, sentinel.glows_l3e_1),
                                                                  (sentinel.ultra_l1c_2, sentinel.glows_l3e_2),
                                                                  (sentinel.ultra_l1c_3, sentinel.glows_l3e_3)]
@@ -111,7 +110,6 @@ class TestUltraProcessor(unittest.TestCase):
                 CoordNames.HEALPIX_INDEX.value: healpix_indices,
             })
 
-        #mock healpix to rectangular
         mock_healpix_skymap = Mock()
         healpix_intensity_map_data.to_healpix_skymap = Mock(return_value=mock_healpix_skymap)
         mock_rectangular_map_dataset = {
@@ -119,7 +117,11 @@ class TestUltraProcessor(unittest.TestCase):
             "ena_intensity_stat_uncert": Mock(values=sentinel.rectangular_ena_intensity_stat_uncert),
             "ena_intensity_sys_err": Mock(values=sentinel.rectangular_ena_intensity_sys_err),
         }
+
         mock_rectangular_sky_map = Mock(spec=RectangularSkyMap)
+        solid_angle_computed_by_rectangular_skymap = np.array([[1, 2], [3, 4], [5, 6]])
+        expected_output_solid_angle = np.array([[1, 3, 5], [2, 4, 6]])
+        mock_rectangular_sky_map.solid_angle_grid = solid_angle_computed_by_rectangular_skymap
         mock_rectangular_sky_map.sky_grid = AzElSkyGrid(degree_spacing)
         mock_rectangular_sky_map.to_dataset.return_value = mock_rectangular_map_dataset
         mock_healpix_skymap.to_rectangular_skymap.return_value = mock_rectangular_sky_map, 0
@@ -127,7 +129,6 @@ class TestUltraProcessor(unittest.TestCase):
         processor = UltraProcessor(input_deps, input_metadata)
         product = processor.process(SpiceFrame.IMAP_GCS)
 
-        #assert survival probability pipeline was invoked correctly
         mock_fetch_dependencies.assert_called_once_with(input_deps)
         mock_combine_glows_l3e_with_l1c_pointing.assert_called_once_with(sentinel.glows_l3e_sp, sentinel.ultra_l1c_pset)
         mock_survival_probability_pointing_set.assert_has_calls([
@@ -139,7 +140,6 @@ class TestUltraProcessor(unittest.TestCase):
                                                      SpiceFrame.IMAP_GCS, input_l2_healpix_map.coords.nside)
         mock_survival_skymap.return_value.to_dataset.assert_called_once_with()
 
-        #assert HealPixIntensityMapData was built with intensities from healpix
         mock_healpix_intensity_map_data_class.assert_called_once()
         healpix_intensity_map_data_kwargs = mock_healpix_intensity_map_data_class.call_args_list[0].kwargs
         actual_intensity_map_data = healpix_intensity_map_data_kwargs["intensity_map_data"]
@@ -152,7 +152,6 @@ class TestUltraProcessor(unittest.TestCase):
         np.testing.assert_array_equal(actual_intensity_map_data.ena_intensity_sys_err,
                                       intensity_data.ena_intensity_sys_err / computed_survival_probabilities)
 
-        #assert HealPixIntensityMapData was built with non-intensity fields from rectangular L2 cdf input
         rect_intensity_data = input_l2_rectangular_map.intensity_map_data
         np.testing.assert_array_equal(actual_intensity_map_data.epoch, rect_intensity_data.epoch)
         np.testing.assert_array_equal(actual_intensity_map_data.epoch_delta, rect_intensity_data.epoch_delta)
@@ -168,7 +167,6 @@ class TestUltraProcessor(unittest.TestCase):
         np.testing.assert_array_equal(actual_intensity_map_data.obs_date_range, rect_intensity_data.obs_date_range)
         np.testing.assert_array_equal(actual_intensity_map_data.solid_angle, rect_intensity_data.solid_angle)
 
-        #assert only intensity fields were converted from healpix to rectangular
         healpix_intensity_map_data.to_healpix_skymap.assert_called_once()
         mock_healpix_skymap.to_rectangular_skymap.assert_called_once_with(degree_spacing, [
             "ena_intensity",
@@ -176,7 +174,6 @@ class TestUltraProcessor(unittest.TestCase):
             "ena_intensity_sys_err",
         ])
 
-        #assert final rectangular product has correct metadata and parent files
         mock_save_data.assert_called_once()
         actual_rectangular_data_product = mock_save_data.call_args_list[0].args[0]
         self.assertIsInstance(actual_rectangular_data_product, RectangularIntensityDataProduct)
@@ -187,13 +184,11 @@ class TestUltraProcessor(unittest.TestCase):
         actual_rectangular_data = actual_rectangular_data_product.data
         self.assertIsInstance(actual_rectangular_data.intensity_map_data, IntensityMapData)
 
-        #assert intensity fields on output come from the rectangular skymap conversion
         # @formatter:off
         self.assertEqual(sentinel.rectangular_ena_intensity, actual_rectangular_data.intensity_map_data.ena_intensity)
         self.assertEqual(sentinel.rectangular_ena_intensity_stat_uncert, actual_rectangular_data.intensity_map_data.ena_intensity_stat_uncert)
         self.assertEqual(sentinel.rectangular_ena_intensity_sys_err, actual_rectangular_data.intensity_map_data.ena_intensity_sys_err)
 
-        #assert non-intensity fields on output are passed through from the HealPixIntensityMapData
         expected_passthrough = healpix_intensity_map_data.intensity_map_data
         self.assertIs(expected_passthrough.epoch, actual_rectangular_data.intensity_map_data.epoch)
         self.assertIs(expected_passthrough.epoch_delta, actual_rectangular_data.intensity_map_data.epoch_delta)
@@ -204,9 +199,8 @@ class TestUltraProcessor(unittest.TestCase):
         self.assertIs(expected_passthrough.exposure_factor, actual_rectangular_data.intensity_map_data.exposure_factor)
         self.assertIs(expected_passthrough.obs_date, actual_rectangular_data.intensity_map_data.obs_date)
         self.assertIs(expected_passthrough.obs_date_range, actual_rectangular_data.intensity_map_data.obs_date_range)
-        self.assertIs(expected_passthrough.solid_angle, actual_rectangular_data.intensity_map_data.solid_angle)
+        np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.solid_angle, expected_output_solid_angle)
 
-        #assert lat/lon and coords come from transformed map
         # @formatter:on
         np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.latitude, mock_rectangular_sky_map.sky_grid.el_bin_midpoints)
         np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.longitude, mock_rectangular_sky_map.sky_grid.az_bin_midpoints)
