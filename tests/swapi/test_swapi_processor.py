@@ -18,11 +18,7 @@ from imap_l3_processing.swapi.descriptors import DENSITY_OF_NEUTRAL_HELIUM_DESCR
     GEOMETRIC_FACTOR_SW_LOOKUP_TABLE_DESCRIPTOR, GEOMETRIC_FACTOR_PUI_LOOKUP_TABLE_DESCRIPTOR
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data, SwapiL3ProtonSolarWindData, SwapiL3PickupIonData, \
     SwapiL3AlphaSolarWindData
-from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import \
-    AlphaSolarWindTemperatureAndDensity
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import FittingParameters
-from imap_l3_processing.swapi.l3a.science.calculate_proton_solar_wind_temperature_and_density import \
-    ProtonSolarWindTemperatureAndDensity
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SWAPI_L2_DESCRIPTOR, SwapiL3ADependencies
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_vdf import DeltaMinusPlus
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
