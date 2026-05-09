@@ -109,7 +109,7 @@ class SwapiResponse:
         Calling with a voltage already in the cache is a no-op.
         """
         for v in np.unique(np.asarray(esa_voltages, dtype=float).ravel()):
-            key = float(v)
+            key = self._cache_key(v)
             if np.isfinite(v) and key not in self._grid_cache:
                 self._grid_cache[key] = self._build_passband_grid(key)
 
@@ -126,11 +126,11 @@ class SwapiResponse:
         """
         from imap_l3_processing.swapi.response.response_grid import ResponseGrid
 
-        cache_key = (
+        cache_key = (self._cache_key(x) for x in (
             float(esa_voltage),
             float(mass_per_charge_m_p_per_e),
             float(central_effective_area_scale),
-        )
+        ))
         cached = self._response_grid_cache.get(cache_key)
         if cached is not None:
             return cached
@@ -155,7 +155,7 @@ class SwapiResponse:
         Raises KeyError if `warm_cache` was not called for this voltage. The cache must
         be populated before any call to this method — call `warm_cache(voltages)` first.
         """
-        cache_key = float(esa_voltage)
+        cache_key = self._cache_key(esa_voltage)
         try:
             return self._grid_cache[cache_key]
         except KeyError:
@@ -177,3 +177,6 @@ class SwapiResponse:
         coeffs = self.passband_fit_coefficients.xs(region, level="region")
         values = np.exp(np.polyval(coeffs.values.T, log_beam_energy))
         return pd.DataFrame(values, index=coeffs.index, columns=["value"])
+
+    def _cache_key(self, x) -> float:
+        return round(float(x), 3)
