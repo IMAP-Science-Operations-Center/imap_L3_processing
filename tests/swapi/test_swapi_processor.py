@@ -15,7 +15,10 @@ from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.descriptors import DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR, INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR, \
     EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR, \
     ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR, \
-    GEOMETRIC_FACTOR_SW_LOOKUP_TABLE_DESCRIPTOR, GEOMETRIC_FACTOR_PUI_LOOKUP_TABLE_DESCRIPTOR
+    GEOMETRIC_FACTOR_SW_LOOKUP_TABLE_DESCRIPTOR, GEOMETRIC_FACTOR_PUI_LOOKUP_TABLE_DESCRIPTOR, \
+    HYDROGEN_INFLOW_VECTOR_DESCRIPTOR, HELIUM_INFLOW_VECTOR_DESCRIPTOR, \
+    AZIMUTHAL_TRANSMISSION_DESCRIPTOR, CENTRAL_EFFECTIVE_AREA_DESCRIPTOR, \
+    PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data, SwapiL3ProtonSolarWindData, SwapiL3PickupIonData, \
     SwapiL3AlphaSolarWindData
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import FittingParameters
@@ -423,21 +426,17 @@ class TestSwapiProcessor(TestCase):
     @patch('imap_l3_processing.utils.ImapAttributeManager')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3ProtonSolarWindData')
     @patch('imap_l3_processing.utils.write_cdf')
+    @patch('imap_l3_processing.swapi.swapi_processor.ParallelChunkRunner')
     @patch('imap_l3_processing.swapi.swapi_processor.chunk_l2_data')
-    @patch('imap_l3_processing.swapi.swapi_processor.calculate_proton_solar_wind_speed')
-    @patch('imap_l3_processing.swapi.swapi_processor.calculate_proton_solar_wind_temperature_and_density')
-    @patch('imap_l3_processing.swapi.swapi_processor.calculate_clock_angle')
-    @patch('imap_l3_processing.swapi.swapi_processor.calculate_deflection_angle')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3ADependencies')
     @patch('imap_l3_processing.processor.spiceypy')
     def test_process_l3a_proton(self, mock_spicepy,
-                                mock_swapi_l3_dependencies_class, mock_calculate_deflection_angle,
-                                mock_calculate_clock_angle,
-                                mock_proton_calculate_temperature_and_density,
-                                mock_calculate_proton_solar_wind_speed, mock_chunk_l2_data, mock_write_cdf,
+                                mock_swapi_l3_dependencies_class,
+                                mock_chunk_l2_data,
+                                mock_parallel_chunk_runner_class,
+                                mock_write_cdf,
                                 mock_proton_solar_wind_data_constructor,
-                                mock_imap_attribute_manager
-                                ):
+                                mock_imap_attribute_manager):
         instrument = 'swapi'
         incoming_data_level = 'l2'
         dependency_start_date = datetime.strftime(datetime(2025, 1, 1), "%Y%m%d")
@@ -450,23 +449,6 @@ class TestSwapiProcessor(TestCase):
         start_date_as_str = datetime.strftime(start_date, "%Y%m%d")
 
         mock_spicepy.ktotal.return_value = 0
-
-        returned_proton_sw_speed = ufloat(400000, 2)
-        returned_chi_sq = 5
-        mock_calculate_proton_solar_wind_speed.return_value = (
-            returned_proton_sw_speed, sentinel.a, sentinel.phi, sentinel.b, returned_chi_sq)
-
-        returned_proton_sw_temp = ufloat(99000, 1000)
-        returned_proton_sw_density = ufloat(4.97, 0.25)
-
-        mock_proton_calculate_temperature_and_density.return_value = ProtonSolarWindTemperatureAndDensity(
-            temperature=returned_proton_sw_temp, density=returned_proton_sw_density, bad_fit_flag=SwapiL3Flags.NONE)
-
-        returned_proton_sw_clock_angle = ufloat(200, 0.25)
-        mock_calculate_clock_angle.return_value = returned_proton_sw_clock_angle
-
-        returned_proton_sw_deflection_angle = ufloat(5, 0.001)
-        mock_calculate_deflection_angle.return_value = returned_proton_sw_deflection_angle
 
         initial_epoch = 10
 
@@ -484,14 +466,40 @@ class TestSwapiProcessor(TestCase):
         science_input = ScienceInput(
             f'imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf')
 
+        runner_result = dict(
+            epoch=np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]),
+            proton_sw_speed=np.array([400000.0]),
+            proton_sw_speed_uncert=np.array([2.0]),
+            proton_sw_speed_sun=np.array([401000.0]),
+            proton_sw_speed_sun_uncert=np.array([2.5]),
+            proton_sw_temperature=np.array([99000.0]),
+            proton_sw_temperature_uncert=np.array([1000.0]),
+            proton_sw_density=np.array([4.97]),
+            proton_sw_density_uncert=np.array([0.25]),
+            proton_sw_clock_angle=np.array([200.0]),
+            proton_sw_clock_angle_uncert=np.array([0.25]),
+            proton_sw_deflection_angle=np.array([5.0]),
+            proton_sw_deflection_angle_uncert=np.array([0.001]),
+            proton_sw_bulk_velocity_rtn_sun=np.array([[400.0, 10.0, 5.0]]),
+            proton_sw_bulk_velocity_rtn_sun_covariance=np.array([np.eye(3)]),
+            proton_sw_bulk_velocity_rtn_sc=np.array([[370.0, 10.0, 5.0]]),
+            proton_sw_bulk_velocity_rtn_sc_covariance=np.array([np.eye(3)]),
+            quality_flags=np.array([SwapiL3Flags.NONE]),
+        )
+        mock_runner = mock_parallel_chunk_runner_class.return_value
+        mock_runner.run.return_value = runner_result
+
         input_file_names = [
             f'imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{GEOMETRIC_FACTOR_SW_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{GEOMETRIC_FACTOR_PUI_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{HYDROGEN_INFLOW_VECTOR_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{HELIUM_INFLOW_VECTOR_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{AZIMUTHAL_TRANSMISSION_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{CENTRAL_EFFECTIVE_AREA_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_{PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
         ]
 
         ancillary_inputs = [AncillaryInput(file_name) for file_name in input_file_names[1:]]
@@ -509,96 +517,34 @@ class TestSwapiProcessor(TestCase):
         expected_cdf_path = (config["DATA_DIR"] / "imap" / "swapi" / "l3a" / "2025" / "06" /
                              f"imap_swapi_l3a_proton-sw_{start_date_as_str}_{input_version}.cdf")
 
-        mock_chunk_l2_data.side_effect = [
-            [chunk_of_five],
-        ]
+        mock_chunk_l2_data.return_value = [chunk_of_five]
 
         swapi_l3a_dependencies = create_swapi_l3a_dependencies_with_mocks()
+        swapi_l3a_dependencies.data = Mock(energy=energy)
         mock_swapi_l3_dependencies_class.fetch_dependencies.return_value = swapi_l3a_dependencies
 
         mock_manager = mock_imap_attribute_manager.return_value
 
-        swapi_processor = SwapiProcessor(
-            dependencies, input_metadata)
+        swapi_processor = SwapiProcessor(dependencies, input_metadata)
         product = swapi_processor.process()
-
-        actual_science_input = swapi_processor.dependencies.get_science_inputs()[0]
-        self.assertEqual(actual_science_input.get_time_range()[0].strftime("%Y%m%d"), dependency_start_date)
 
         mock_swapi_l3_dependencies_class.fetch_dependencies.assert_called_once_with(dependencies)
 
-        mock_proton_temperature_density_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.proton_temperature_density_calibration_table
-        mock_clock_angle_and_flow_deflection_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.clock_angle_and_flow_deflection_calibration_table
+        swapi_l3a_dependencies.swapi_response.warm_cache.assert_called_once()
 
-        mock_chunk_l2_data.assert_has_calls([call(swapi_l3a_dependencies.data, 5)])
+        mock_parallel_chunk_runner_class.assert_called_once_with(
+            swapi_l3a_dependencies.swapi_response,
+            swapi_l3a_dependencies.efficiency_calibration_table,
+        )
+        mock_runner.run.assert_called_once()
+        actual_chunks = mock_runner.run.call_args.args[0]
+        self.assertEqual([chunk_of_five], actual_chunks)
 
-        expected_count_rate_with_uncertainties = uarray(coincidence_count_rate,
-                                                        coincidence_count_rate_uncertainty)
-        np.testing.assert_array_equal(nominal_values(expected_count_rate_with_uncertainties),
-                                      nominal_values(
-                                          mock_calculate_proton_solar_wind_speed.call_args_list[0].args[0]))
-        np.testing.assert_array_equal(std_devs(expected_count_rate_with_uncertainties),
-                                      std_devs(
-                                          mock_calculate_proton_solar_wind_speed.call_args_list[0].args[0]))
-        np.testing.assert_array_equal(energy, mock_calculate_proton_solar_wind_speed.call_args_list[0].args[1])
-        np.testing.assert_array_equal(epoch, mock_calculate_proton_solar_wind_speed.call_args_list[0].args[2])
-
-        self.assertEqual(
-            call(mock_clock_angle_and_flow_deflection_calibration_table, returned_proton_sw_speed, sentinel.a,
-                 sentinel.phi, sentinel.b), mock_calculate_clock_angle.call_args)
-
-        self.assertEqual(
-            call(mock_clock_angle_and_flow_deflection_calibration_table, returned_proton_sw_speed, sentinel.a,
-                 sentinel.phi, sentinel.b), mock_calculate_deflection_angle.call_args)
-
-        self.assertEqual(mock_proton_temperature_density_calibration_table,
-                         mock_proton_calculate_temperature_and_density.call_args_list[0].args[0])
-        self.assert_ufloat_equal(returned_proton_sw_speed,
-                                 mock_proton_calculate_temperature_and_density.call_args_list[0].args[1])
-        self.assert_ufloat_equal(returned_proton_sw_deflection_angle,
-                                 mock_proton_calculate_temperature_and_density.call_args_list[0].args[2])
-        self.assertEqual(returned_proton_sw_clock_angle,
-                         mock_proton_calculate_temperature_and_density.call_args_list[0].args[3])
-        np.testing.assert_array_equal(nominal_values(expected_count_rate_with_uncertainties),
-                                      nominal_values(
-                                          mock_proton_calculate_temperature_and_density.call_args_list[0].args[
-                                              4]))
-        np.testing.assert_array_equal(std_devs(expected_count_rate_with_uncertainties),
-                                      std_devs(
-                                          mock_proton_calculate_temperature_and_density.call_args_list[0].args[
-                                              4]))
-        np.testing.assert_array_equal(energy,
-                                      mock_proton_calculate_temperature_and_density.call_args_list[0].args[5])
-        self.assertEqual(swapi_l3a_dependencies.efficiency_calibration_table.get_proton_efficiency_for.return_value,
-                         mock_proton_calculate_temperature_and_density.call_args_list[0].args[6])
-
-        swapi_l3a_dependencies.efficiency_calibration_table.get_proton_efficiency_for.assert_called_once_with(
-            initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS)
-
-        (actual_proton_metadata, actual_proton_epoch, actual_proton_sw_speed, actual_proton_sw_temperature,
-         actual_proton_sw_density, actual_proton_sw_clock_angle,
-         actual_proton_sw_deflection_angle,
-         actual_quality_flags) = mock_proton_solar_wind_data_constructor.call_args.args
-
-        self.assertEqual(expected_proton_metadata, actual_proton_metadata)
-
-        np.testing.assert_array_equal(np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]),
-                                      actual_proton_epoch,
-                                      strict=True)
-        np.testing.assert_array_equal(np.array([returned_proton_sw_speed]), actual_proton_sw_speed, strict=True)
-
-        self.assert_ufloat_array([returned_proton_sw_temp], actual_proton_sw_temperature, )
-
-        self.assert_ufloat_array([returned_proton_sw_density], actual_proton_sw_density)
-
-        np.testing.assert_array_equal(np.array([returned_proton_sw_clock_angle]), actual_proton_sw_clock_angle,
-                                      strict=True)
-        np.testing.assert_array_equal(np.array([returned_proton_sw_deflection_angle]),
-                                      actual_proton_sw_deflection_angle,
-                                      strict=True)
-        np.testing.assert_array_equal(np.array([SwapiL3Flags.NONE]),
-                                      actual_quality_flags,
-                                      strict=True)
+        actual_kwargs = mock_proton_solar_wind_data_constructor.call_args.kwargs
+        actual_positional = mock_proton_solar_wind_data_constructor.call_args.args
+        self.assertEqual(expected_proton_metadata, actual_positional[0])
+        for key, expected_val in runner_result.items():
+            np.testing.assert_array_equal(expected_val, actual_kwargs[key])
 
         mock_manager.add_global_attribute.assert_has_calls([call("Data_version", outgoing_version),
                                                             call("Generation_date",
@@ -614,182 +560,6 @@ class TestSwapiProcessor(TestCase):
         self.assertEqual(input_file_names, proton_solar_wind_data.parent_file_names)
         mock_write_cdf.assert_called_once_with(str(expected_cdf_path), proton_solar_wind_data, mock_manager)
         self.assertEqual([expected_cdf_path], product)
-
-    @patch('imap_l3_processing.utils.ImapAttributeManager')
-    @patch('imap_l3_processing.utils.write_cdf')
-    @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3ProtonSolarWindData')
-    @patch('imap_l3_processing.swapi.swapi_processor.chunk_l2_data')
-    @patch('imap_l3_processing.swapi.swapi_processor.calculate_proton_solar_wind_speed')
-    @patch('imap_l3_processing.swapi.swapi_processor.calculate_proton_solar_wind_temperature_and_density')
-    @patch('imap_l3_processing.swapi.swapi_processor.estimate_deflection_and_clock_angles')
-    @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3ADependencies')
-    @patch('imap_l3_processing.processor.spiceypy')
-    def test_process_l3a_proton_estimates_angles_if_chisq_too_high_with_hi_chi_sq_flag(self, mock_spicepy,
-                                                                                       mock_swapi_l3_dependencies_class,
-                                                                                       mock_estimate_deflection_and_clock_angles,
-                                                                                       mock_proton_calculate_temperature_and_density,
-                                                                                       mock_calculate_proton_solar_wind_speed,
-                                                                                       mock_chunk_l2_data,
-                                                                                       mock_proton_solar_wind_data_constructor,
-                                                                                       _,
-                                                                                       __
-                                                                                       ):
-        instrument = 'swapi'
-        incoming_data_level = 'l2'
-        dependency_start_date = datetime.strftime(datetime(2025, 1, 1), "%Y%m%d")
-        version = 'v001'
-        end_date = datetime(2025, 6, 13)
-        outgoing_data_level = "l3a"
-        start_date = datetime(2025, 6, 12)
-        input_version = "v123"
-
-        mock_spicepy.ktotal.return_value = 0
-
-        returned_proton_sw_speed = ufloat(400000, 2)
-        returned_chi_sq = 15
-        mock_calculate_proton_solar_wind_speed.return_value = (
-            returned_proton_sw_speed, sentinel.a, sentinel.phi, sentinel.b, returned_chi_sq)
-
-        mock_estimate_deflection_and_clock_angles.return_value = (2, 270)
-
-        returned_proton_sw_temp = ufloat(99000, 1000)
-        returned_proton_sw_density = ufloat(4.97, 0.25)
-        mock_proton_calculate_temperature_and_density.return_value = ProtonSolarWindTemperatureAndDensity(
-            returned_proton_sw_temp, returned_proton_sw_density, SwapiL3Flags.HI_CHI_SQ)
-
-        initial_epoch = 10
-
-        epoch = np.array([initial_epoch, 11, 12, 13])
-        energy = np.array([15000, 16000, 17000, 18000, 19000])
-        coincidence_count_rate = np.array(
-            [[4, 5, 6, 7, 8], [9, 10, 11, 12, 13], [14, 15, 16, 17, 18], [19, 20, 21, 22, 23]])
-        coincidence_count_rate_uncertainty = np.array(
-            [[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5],
-             [0.1, 0.2, 0.3, 0.4, 0.5]])
-
-        chunk_of_five = SwapiL2Data(epoch, energy, coincidence_count_rate,
-                                    coincidence_count_rate_uncertainty)
-
-        science_input = ScienceInput(
-            f'imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf')
-
-        input_file_names = [
-            f'imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{PROTON_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{CLOCK_ANGLE_AND_FLOW_DEFLECTION_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{GEOMETRIC_FACTOR_SW_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-        ]
-
-        ancillary_inputs = [AncillaryInput(file_name) for file_name in input_file_names[1:]]
-
-        dependencies = ProcessingInputCollection(science_input, *ancillary_inputs)
-
-        input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date, input_version)
-
-        proton_solar_wind_data = mock_proton_solar_wind_data_constructor.return_value
-        expected_proton_metadata = replace(input_metadata, descriptor="proton-sw")
-        proton_solar_wind_data.input_metadata = expected_proton_metadata
-
-        input_metadata.descriptor = "proton-sw"
-
-        mock_chunk_l2_data.side_effect = [
-            [chunk_of_five],
-        ]
-
-        swapi_l3a_dependencies = create_swapi_l3a_dependencies_with_mocks()
-        mock_swapi_l3_dependencies_class.fetch_dependencies.return_value = swapi_l3a_dependencies
-
-        swapi_processor = SwapiProcessor(
-            dependencies, input_metadata)
-        product = swapi_processor.process()
-
-        mock_proton_temperature_density_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.proton_temperature_density_calibration_table
-        mock_clock_angle_and_flow_deflection_calibration_table = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value.clock_angle_and_flow_deflection_calibration_table
-
-        self.assertEqual(mock_proton_temperature_density_calibration_table,
-                         mock_proton_calculate_temperature_and_density.call_args_list[0].args[0])
-        self.assert_ufloat_equal(returned_proton_sw_speed,
-                                 mock_proton_calculate_temperature_and_density.call_args_list[0].args[1])
-        self.assertEqual(2,
-                         mock_proton_calculate_temperature_and_density.call_args_list[0].args[2].nominal_value)
-        np.testing.assert_equal(45,
-                                mock_proton_calculate_temperature_and_density.call_args_list[0].args[2].std_dev)
-        self.assertEqual(270,
-                         mock_proton_calculate_temperature_and_density.call_args_list[0].args[3].nominal_value)
-        np.testing.assert_equal(180,
-                                mock_proton_calculate_temperature_and_density.call_args_list[0].args[3].std_dev)
-        mock_estimate_deflection_and_clock_angles.assert_called_with(returned_proton_sw_speed.nominal_value)
-
-        (actual_proton_metadata, actual_proton_epoch, actual_proton_sw_speed, actual_proton_sw_temperature,
-         actual_proton_sw_density, actual_proton_sw_clock_angle,
-         actual_proton_sw_deflection_angle,
-         actual_quality_flags) = mock_proton_solar_wind_data_constructor.call_args.args
-
-        self.assertEqual(expected_proton_metadata, actual_proton_metadata)
-
-        np.testing.assert_array_equal(np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]),
-                                      actual_proton_epoch,
-                                      strict=True)
-        self.assert_ufloat_array(np.array([returned_proton_sw_speed]), actual_proton_sw_speed)
-        self.assert_ufloat_array(np.array([returned_proton_sw_temp]), actual_proton_sw_temperature)
-        self.assert_ufloat_array(np.array([returned_proton_sw_density]), actual_proton_sw_density)
-
-        np.testing.assert_array_equal(nominal_values(actual_proton_sw_clock_angle), [270])
-        np.testing.assert_array_equal(std_devs(actual_proton_sw_clock_angle), [180])
-
-        np.testing.assert_array_equal(nominal_values(actual_proton_sw_deflection_angle), [2])
-        np.testing.assert_array_equal(std_devs(actual_proton_sw_deflection_angle), [45])
-
-        np.testing.assert_array_equal(np.array([SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED | SwapiL3Flags.HI_CHI_SQ]),
-                                      actual_quality_flags,
-                                      strict=True)
-
-    def test_process_l3a_proton_outputs_fill_for_chunks_with_fill(self):
-        instrument = 'swapi'
-        end_date = datetime(2025, 6, 13)
-        outgoing_data_level = "l3a"
-        start_date = datetime(2025, 6, 12)
-        input_version = "v123"
-        initial_epoch = 10
-
-        epoch = np.array([initial_epoch, 11, 12, 13])
-        energy = np.array([15000, 16000, 17000, 18000, 19000])
-        coincidence_count_rate = np.array(
-            [[4, 5, 6, 7, 8], [9, 10, 11, np.nan, 13], [14, 15, 16, 17, 18], [19, 20, 21, 22, 23]])
-        coincidence_count_rate_uncertainty = np.array(
-            [[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5],
-             [0.1, 0.2, 0.3, 0.4, 0.5]])
-
-        chunk_of_five = SwapiL2Data(epoch, energy, coincidence_count_rate,
-                                    coincidence_count_rate_uncertainty)
-
-        input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date, input_version)
-
-        swapi_processor = SwapiProcessor(
-            Mock(), input_metadata)
-        with self.assertLogs(logger) as log_context:
-            product = swapi_processor.process_l3a_proton(data=chunk_of_five, dependencies=Mock())
-
-        self.assertIsInstance(product, SwapiL3ProtonSolarWindData)
-        np.testing.assert_array_equal(nominal_values(product.proton_sw_speed), [np.nan])
-        np.testing.assert_array_equal(std_devs(product.proton_sw_speed), [np.nan])
-
-        np.testing.assert_array_equal(nominal_values(product.proton_sw_temperature), [np.nan])
-        np.testing.assert_array_equal(std_devs(product.proton_sw_temperature), [np.nan])
-
-        np.testing.assert_array_equal(nominal_values(product.proton_sw_density), [np.nan])
-        np.testing.assert_array_equal(std_devs(product.proton_sw_density), [np.nan])
-
-        np.testing.assert_array_equal(nominal_values(product.proton_sw_clock_angle), [np.nan])
-        np.testing.assert_array_equal(std_devs(product.proton_sw_clock_angle), [np.nan])
-
-        np.testing.assert_array_equal(nominal_values(product.proton_sw_deflection_angle), [np.nan])
-        np.testing.assert_array_equal(std_devs(product.proton_sw_deflection_angle), [np.nan])
-
-        np.testing.assert_array_equal(product.quality_flags, [SwapiL3Flags.NONE])
 
     def test_process_l3a_alpha_outputs_fill_for_chunks_with_fill(self):
         instrument = 'swapi'
@@ -1305,23 +1075,13 @@ class TestSwapiProcessor(TestCase):
 
 
 def create_swapi_l3a_dependencies_with_mocks():
-    data = Mock()
-    proton_temperature_density_calibration_table = Mock()
-    alpha_temperature_density_calibration_table = Mock()
-    clock_angle_and_flow_deflection_calibration_table = Mock()
-    efficiency_calibration_table = Mock()
-    geometric_factor_calibration_table = Mock()
-    instrument_response_calibration_table = Mock()
-    density_of_neutral_helium_calibration_table = Mock()
     return SwapiL3ADependencies(
-        data=data,
-        proton_temperature_density_calibration_table=proton_temperature_density_calibration_table,
-        alpha_temperature_density_calibration_table=alpha_temperature_density_calibration_table,
-        clock_angle_and_flow_deflection_calibration_table=clock_angle_and_flow_deflection_calibration_table,
-        efficiency_calibration_table=efficiency_calibration_table,
-        geometric_factor_calibration_table=geometric_factor_calibration_table,
-        instrument_response_calibration_table=instrument_response_calibration_table,
-        density_of_neutral_helium_calibration_table=density_of_neutral_helium_calibration_table,
+        data=Mock(),
+        efficiency_calibration_table=Mock(),
+        geometric_factor_calibration_table=Mock(),
+        instrument_response_calibration_table=Mock(),
+        density_of_neutral_helium_calibration_table=Mock(),
         hydrogen_inflow_vector=Mock(),
         helium_inflow_vector=Mock(),
+        swapi_response=Mock(),
     )
