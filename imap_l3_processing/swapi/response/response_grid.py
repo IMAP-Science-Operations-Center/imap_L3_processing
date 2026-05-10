@@ -35,13 +35,9 @@ def interpolate_azimuthal_transmission(
     i_upper = i_lower + 1
 
     n = len(azimuthal_transmission)
-    if i_lower < 0:
-        i_lower = 0
-    elif i_lower >= n:
+    if i_lower >= n:
         i_lower = n - 1
-    if i_upper < 0:
-        i_upper = 0
-    elif i_upper >= n:
+    if i_upper >= n:
         i_upper = n - 1
 
     weight_lower = float(i_upper) - i_float
