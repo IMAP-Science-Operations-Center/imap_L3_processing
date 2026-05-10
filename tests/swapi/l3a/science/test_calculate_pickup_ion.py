@@ -13,7 +13,7 @@ import imap_l3_processing
 from imap_l3_processing.constants import PROTON_MASS_KG, \
     PROTON_CHARGE_COULOMBS, ONE_AU_IN_KM, ONE_SECOND_IN_NANOSECONDS, \
     HE_PUI_PARTICLE_MASS_KG, BOLTZMANN_CONSTANT_JOULES_PER_KELVIN
-from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import calculate_combined_sweeps
+from imap_l3_processing.swapi.response.speed_calculation import calculate_combined_sweeps
 from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import calculate_pui_energy_cutoff, \
     extract_pui_energy_bins, \
     convert_velocity_relative_to_imap, calculate_velocity_vector, FittingParameters, \
@@ -786,7 +786,7 @@ class TestCalculatePickupIon(SpiceTestCase):
                       190, 200, 210])
 
         one_min_quality_flags = np.repeat(SwapiL3Flags.NONE, 21)
-        one_min_quality_flags[13] = SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED
+        one_min_quality_flags[13] = SwapiL3Flags.EPHEMERIS_GAP
 
         mock_calculate_solar_wind_velocity_vector.return_value = np.transpose([x, y, z])
 
@@ -800,7 +800,7 @@ class TestCalculatePickupIon(SpiceTestCase):
         expected_averaged_velocities = np.array([[5.5, 55, 55], [15.5, 155, 155], [21, 210, 210]])
         expected_quality_flags = np.array([
             SwapiL3Flags.NONE,
-            SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED,
+            SwapiL3Flags.EPHEMERIS_GAP,
             SwapiL3Flags.NONE,
         ])
 
@@ -822,7 +822,7 @@ class TestCalculatePickupIon(SpiceTestCase):
         OTHER_QUALITY_FLAG = 2 ** 3
         one_min_quality_flags = np.repeat(SwapiL3Flags.NONE, 21)
 
-        one_min_quality_flags[13] = SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED
+        one_min_quality_flags[13] = SwapiL3Flags.EPHEMERIS_GAP
         one_min_quality_flags[14] = OTHER_QUALITY_FLAG
 
         mock_calculate_solar_wind_velocity_vector.return_value = np.transpose([x, y, z])
@@ -838,7 +838,7 @@ class TestCalculatePickupIon(SpiceTestCase):
         expected_averaged_velocities = np.array([[5.5, 55, 55], [15.5, 155, 155], [21, 210, 210]])
         expected_quality_flags = np.array([
             SwapiL3Flags.NONE,
-            SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED | OTHER_QUALITY_FLAG,
+            SwapiL3Flags.EPHEMERIS_GAP | OTHER_QUALITY_FLAG,
             SwapiL3Flags.NONE,
         ])
 
