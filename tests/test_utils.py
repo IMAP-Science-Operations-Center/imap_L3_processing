@@ -22,35 +22,11 @@ from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.utils import format_time, download_dependency, read_mag_data, save_data, \
     download_external_dependency, download_dependency_with_repointing, \
     combine_glows_l3e_with_l1c_pointing, furnish_local_spice, get_spice_parent_file_names, furnish_spice_metakernel, \
-    SpiceKernelTypes, FurnishMetakernelOutput, read_cdf_parents, get_dependency_paths_by_descriptor, select_mag_path
+    SpiceKernelTypes, FurnishMetakernelOutput, read_cdf_parents, get_dependency_paths_by_descriptor
 from imap_l3_processing.version import VERSION
 from tests.cdf.test_cdf_utils import TestDataProduct
 from tests.maps.test_builders import create_rectangular_spectral_index_map_data, create_rectangular_intensity_map_data
 from tests.test_helpers import get_spice_data_path, with_tempdir, create_dataclass_mock
-
-
-def _make_alpha_sw_data(input_metadata, epoch, *, parent_file_names=None, bad_fit_flag=None):
-    n = len(epoch)
-    kwargs = dict(
-        input_metadata=input_metadata,
-        epoch=epoch,
-        alpha_sw_density=np.zeros(n),
-        alpha_sw_density_uncert=np.zeros(n),
-        alpha_sw_temperature=np.zeros(n),
-        alpha_sw_temperature_uncert=np.zeros(n),
-        alpha_sw_velocity_rtn=np.zeros((n, 3)),
-        alpha_sw_velocity_covariance_rtn=np.zeros((n, 3, 3)),
-        alpha_sw_delta_v=np.zeros(n),
-        alpha_sw_delta_v_uncert=np.zeros(n),
-        alpha_sw_b_hat_rtn=np.zeros((n, 3)),
-        alpha_sw_reference_proton_density=np.zeros(n),
-        alpha_sw_reference_proton_temperature=np.zeros(n),
-        alpha_sw_reference_proton_velocity_rtn=np.zeros((n, 3)),
-        bad_fit_flag=bad_fit_flag if bad_fit_flag is not None else np.zeros(n),
-    )
-    if parent_file_names is not None:
-        kwargs["parent_file_names"] = parent_file_names
-    return SwapiL3AlphaSolarWindData(**kwargs)
 
 
 class TestUtils(TestCase):
@@ -72,10 +48,19 @@ class TestUtils(TestCase):
         input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
                                        "descriptor", repointing=None)
         epoch = np.array([1, 2, 3])
+        alpha_sw_speed = np.array([4, 5, 6])
+        alpha_sw_density = np.array([5, 5, 5])
+        alpha_sw_temperature = np.array([4, 3, 5])
 
-        data_product = _make_alpha_sw_data(input_metadata, epoch,
-                                           parent_file_names=sentinel.parent_files,
-                                           bad_fit_flag=sentinel.bad_fit_flag)
+        data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata, epoch=epoch,
+                                                 alpha_sw_speed=alpha_sw_speed,
+                                                 alpha_sw_temperature=alpha_sw_temperature,
+                                                 alpha_sw_density=alpha_sw_density,
+                                                 parent_file_names=sentinel.parent_files,
+                                                 bad_fit_flag=sentinel.bad_fit_flag,
+                                                 alpha_sw_pre_lut_density=sentinel.alpha_sw_pre_lut_density,
+                                                 alpha_sw_pre_lut_temperature=sentinel.alpha_sw_pre_lut_temperature,
+                                                 )
 
         mock_science_file_path = Mock()
         mock_science_file_path_class.generate_from_inputs.return_value = mock_science_file_path
@@ -211,9 +196,20 @@ class TestUtils(TestCase):
         input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
                                        "descriptor")
         epoch = np.array([1, 2, 3])
+        alpha_sw_speed = np.array([4, 5, 6])
+        alpha_sw_density = np.array([5, 5, 5])
+        alpha_sw_temperature = np.array([4, 3, 5])
         bad_fit_flag = np.repeat([SwapiL3Flags.NONE], 3)
 
-        data_product = _make_alpha_sw_data(input_metadata, epoch, bad_fit_flag=bad_fit_flag)
+        data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata,
+                                                 epoch=epoch,
+                                                 alpha_sw_speed=alpha_sw_speed,
+                                                 alpha_sw_temperature=alpha_sw_temperature,
+                                                 alpha_sw_density=alpha_sw_density,
+                                                 bad_fit_flag=bad_fit_flag,
+                                                 alpha_sw_pre_lut_density=sentinel.alpha_sw_pre_lut_density,
+                                                 alpha_sw_pre_lut_temperature=sentinel.alpha_sw_pre_lut_temperature,
+                                                 )
         save_data(data_product)
 
         mock_write_cdf.assert_called_once()
@@ -236,9 +232,20 @@ class TestUtils(TestCase):
         input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
                                        "descriptor")
         epoch = np.array([1, 2, 3])
+        alpha_sw_speed = np.array([4, 5, 6])
+        alpha_sw_density = np.array([5, 5, 5])
+        alpha_sw_temperature = np.array([4, 3, 5])
         bad_fit_flag = np.repeat([SwapiL3Flags.NONE], 3)
 
-        data_product = _make_alpha_sw_data(input_metadata, epoch, bad_fit_flag=bad_fit_flag)
+        data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata,
+                                                 epoch=epoch,
+                                                 alpha_sw_speed=alpha_sw_speed,
+                                                 alpha_sw_temperature=alpha_sw_temperature,
+                                                 alpha_sw_density=alpha_sw_density,
+                                                 bad_fit_flag=bad_fit_flag,
+                                                 alpha_sw_pre_lut_density=sentinel.alpha_sw_pre_lut_density,
+                                                 alpha_sw_pre_lut_temperature=sentinel.alpha_sw_pre_lut_temperature,
+                                                 )
 
         custom_path = TEMP_CDF_FOLDER_PATH / "fancy_path"
         returned_file_path = save_data(data_product, folder_path=custom_path)
@@ -456,7 +463,7 @@ class TestUtils(TestCase):
                     f"{expected_files_to_download}. Expected one file to download, found {case}.",
                     str(cm.exception))
 
-    def test_read_mag_data(self):
+    def test_read_l1d_mag_data(self):
         file_name_as_str = "test_cdf.cdf"
         file_name_as_path = Path(file_name_as_str)
 
@@ -647,47 +654,6 @@ class TestUtils(TestCase):
                     self.assertEqual(sorted(expected_output[output_key]),
                                      sorted(actual_output[output_key]), f"output not equal for key {output_key}" + \
                                      f", expected: {sorted(expected_output[output_key])} actual {sorted(actual_output[output_key])}")
-
-    @patch("imap_l3_processing.utils.download")
-    def test_select_mag_path_returns_none_when_no_mag_present(self, mock_download):
-        collection = ProcessingInputCollection(
-            ScienceInput("imap_swapi_l2_sci_20100105_v010.cdf"),
-        )
-        path, level = select_mag_path(collection, "norm-rtn")
-        self.assertIsNone(path)
-        self.assertIsNone(level)
-        mock_download.assert_not_called()
-
-    @patch("imap_l3_processing.utils.download")
-    def test_select_mag_path_returns_l2_when_present(self, mock_download):
-        mock_download.return_value = Path("/tmp/mag_l2.cdf")
-        collection = ProcessingInputCollection(
-            ScienceInput("imap_mag_l2_norm-rtn_20100105_v010.cdf"),
-        )
-        path, level = select_mag_path(collection, "norm-rtn")
-        self.assertEqual(Path("/tmp/mag_l2.cdf"), path)
-        self.assertEqual("l2", level)
-
-    @patch("imap_l3_processing.utils.download")
-    def test_select_mag_path_prefers_l2_over_l1d(self, mock_download):
-        mock_download.return_value = Path("/tmp/mag_l2.cdf")
-        collection = ProcessingInputCollection(
-            ScienceInput("imap_mag_l1d_norm-rtn_20100105_v010.cdf"),
-            ScienceInput("imap_mag_l2_norm-rtn_20100105_v010.cdf"),
-        )
-        path, level = select_mag_path(collection, "norm-rtn")
-        self.assertEqual("l2", level)
-        self.assertEqual(Path("/tmp/mag_l2.cdf"), path)
-
-    @patch("imap_l3_processing.utils.download")
-    def test_select_mag_path_returns_l1d_when_only_l1d_present(self, mock_download):
-        mock_download.return_value = Path("/tmp/mag_l1d.cdf")
-        collection = ProcessingInputCollection(
-            ScienceInput("imap_mag_l1d_norm-rtn_20100105_v010.cdf"),
-        )
-        path, level = select_mag_path(collection, "norm-rtn")
-        self.assertEqual("l1d", level)
-        self.assertEqual(Path("/tmp/mag_l1d.cdf"), path)
 
     @patch("imap_l3_processing.glows.l3bc.utils.imap_data_access.download")
     @with_tempdir
