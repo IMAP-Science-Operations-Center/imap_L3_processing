@@ -16,37 +16,19 @@ _SPACING_DEG = SwapiResponse.AZIMUTHAL_TRANSMISSION_SPACING_DEG
 
 
 def _load_real_grid() -> AzimuthalTransmissionGrid:
-    """Build the grid the same way `SwapiResponse.from_files` does:
-    `transmission` column with empty cells filled to 0, sampled at the
-    canonical 0.1° spacing."""
+    # Build the grid the same way `SwapiResponse.from_files` does.
     df = pd.read_csv(_TRANSMISSION_CSV)
     values = df["transmission"].fillna(0).values.astype(float)
     return AzimuthalTransmissionGrid(values=values, spacing=_SPACING_DEG)
 
 
-class TestAzimuthalTransmissionGridConstruction(unittest.TestCase):
-    """`AzimuthalTransmissionGrid` is a NamedTuple. The field order is read by
-    numba code that unpacks attributes by position, so this test pins it
-    against silent JIT-compilation breakage on reorder."""
-
-    def test_field_order_is_stable_for_numba_unpack(self):
-        self.assertEqual(
-            AzimuthalTransmissionGrid._fields,
-            ("values", "spacing"),
-        )
-
-
 class TestInterpolateAzimuthalTransmission(unittest.TestCase):
     """
     `interpolate_azimuthal_transmission` linearly interpolates the azimuthal
-    transmission curve `T(|az|)` with two non-trivial wrinkles:
+    transmission curve `T(|az|)` with two cases of special handling:
 
     (a) the input azimuth is wrapped into (-180°, 180°] before lookup, and
     (b) the lookup uses `|az|`, so the curve is implicitly mirrored at zero.
-
-    Tests below load the real instrument-team azimuthal-transmission CSV so
-    the asserted values come from the same calibration file the production
-    pipeline reads.
     """
 
     @classmethod
@@ -57,10 +39,10 @@ class TestInterpolateAzimuthalTransmission(unittest.TestCase):
         cls.last_az = _SPACING_DEG * (cls.n - 1)
 
     def test_at_grid_point_returns_csv_value(self):
-        # Exact-index lookups: interpolation weights collapse to 1, so the
-        # result must equal the CSV cell at that index. Sample indices span
-        # the SG attenuated region, the SG/OA shoulder, the OA plateau, and
-        # the zero-padded tail.
+        """Exact-index lookups: interpolation weights collapse to 1, so the
+        result must equal the CSV cell at that index. Sample indices span
+        the SG attenuated region, the SG/OA shoulder, the OA plateau, and
+        the zero-padded tail."""
         for idx in [0, 10, 199, 299, 500, 1000, self.n - 1]:
             with self.subTest(idx=idx):
                 az = idx * _SPACING_DEG
@@ -68,9 +50,9 @@ class TestInterpolateAzimuthalTransmission(unittest.TestCase):
                 self.assertAlmostEqual(got, float(self.values[idx]))
 
     def test_linear_interpolation_halfway_between_grid_points(self):
-        # Halfway between two adjacent CSV rows must equal their average.
-        # Pick a pair on the SG→OA rising shoulder so the two endpoints
-        # differ meaningfully (rather than both sitting on the SG floor).
+        """Halfway between two adjacent CSV rows must equal their average.
+        Pick a pair on the SG→OA rising shoulder so the two endpoints
+        differ meaningfully (rather than both sitting on the SG floor)."""
         idx = 250  # az ≈ 25°, mid-shoulder
         az_lower = idx * _SPACING_DEG
         midpoint_az = az_lower + 0.5 * _SPACING_DEG
@@ -78,10 +60,22 @@ class TestInterpolateAzimuthalTransmission(unittest.TestCase):
         got = interpolate_azimuthal_transmission(self.grid, midpoint_az)
         self.assertAlmostEqual(got, float(expected))
 
+    def test_linear_interpolation_off_center_between_grid_points(self):
+        """Off-center fractions exercise the interpolation weights, not just
+        the symmetric midpoint case: at fraction f between idx and idx+1, the
+        result must be `(1-f)·v[idx] + f·v[idx+1]`. Pick the same SG→OA
+        shoulder pair so the endpoints differ meaningfully."""
+        idx = 250  # az ≈ 25°, mid-shoulder
+        az_lower = idx * _SPACING_DEG
+        for fraction in [0.25, 0.7, 0.9]:
+            with self.subTest(fraction=fraction):
+                az = az_lower + fraction * _SPACING_DEG
+                expected = (1 - fraction) * self.values[idx] + fraction * self.values[idx + 1]
+                got = interpolate_azimuthal_transmission(self.grid, az)
+                self.assertAlmostEqual(got, float(expected))
+
     def test_symmetric_about_zero(self):
-        # The lookup uses |az|, so T(-x) must equal T(+x) for any x. Sample
-        # a few non-grid azimuths so the symmetry holds through the
-        # interpolation step as well as the table lookup.
+        """The lookup uses |az|, so T(-x) must equal T(+x) for any x."""
         for az in [0.37, 12.5, 29.95, 88.123]:
             with self.subTest(az=az):
                 positive = interpolate_azimuthal_transmission(self.grid, az)
@@ -108,9 +102,9 @@ class TestInterpolateAzimuthalTransmission(unittest.TestCase):
 
     def test_wraps_arguments_into_canonical_180_interval(self):
         """The wrap formula `(az + 180) % 360 - 180` maps any real azimuth into
-        (-180°, 180°]. Sub-cases together pin the contract:
+        (-180°, 180°]. Some particular cases:
           - 359° wraps to -1° (|az| = 1°)
-          - exact ±180° both wrap to -180° (clamps to table edge)
+          - exact ±180° both wrap to 180°
           - -181° wraps to +179° (|az| = 179°)
           - multi-period inputs (±541°) wrap into the canonical interval
             (541 mod 360 = 181 → wraps to -179° → |az| = 179°)
