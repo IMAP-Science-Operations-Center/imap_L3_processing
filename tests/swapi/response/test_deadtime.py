@@ -27,13 +27,16 @@ class TestDeadtimeFactor(unittest.TestCase):
         factors = np.array([deadtime_factor(float(r)) for r in rates])
         self.assertTrue(np.all(np.diff(factors) < 0))
 
-    def test_recovers_documentation_example(self):
+    def test_226_hz_loss_at_35000_hz_measured_rate(self):
+        # SWAPI calibration documents that a 35.000 kHz *measured* rate
+        # corresponds to a 35.226 kHz *true* rate (i.e. ~226 Hz lost to
+        # deadtime). Source: SWAPI deadtime calibration documentation.
         true_rate_hz = 35_226
         measured_rate_hz = true_rate_hz * deadtime_factor(true_rate_hz)
         np.testing.assert_allclose(measured_rate_hz, 35_000, rtol=1e-4)
 
-    def test_special_rate_matches_closed_form(self):
-        # At R = 1 / tau, the factor must equal exactly 0.5 (formula 1/(1+1)).
+    def test_factor_is_half_when_rate_equals_one_over_tau(self):
+        # 1 / (1 + tau · (1/tau)) = 1/2.
         rate = 1.0 / SWAPI_DEADTIME_S
         np.testing.assert_allclose(deadtime_factor(rate), 0.5, rtol=1e-12)
 

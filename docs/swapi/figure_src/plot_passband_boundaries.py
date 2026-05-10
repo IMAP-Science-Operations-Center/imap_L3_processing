@@ -9,11 +9,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from imap_l3_processing.swapi.response.passband_grid import (
-    PassbandGrid,
-    eval_boundary_max,
-    eval_boundary_min,
-)
+from imap_l3_processing.swapi.response.passband_grid import PassbandGrid
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 from figure_utils import load_swapi_response
 
@@ -37,10 +33,12 @@ def main():
 
     last_image = None
     for column, esa_voltage in enumerate(esa_voltages):
-        grid = swapi_response.create_passband_grid(esa_voltage)
         central_speed = swapi_response.central_speed(esa_voltage, 1.0)
 
         for row, region in enumerate(["open_aperture", "sunglasses"]):
+            grid = swapi_response.create_passband_grid(
+                esa_voltage, "OA" if region == "open_aperture" else "SG"
+            )
             axis = axes[row, column]
             last_image = plot_region_panel(
                 axis, grid, region, esa_voltage, central_speed
@@ -74,27 +72,22 @@ def plot_region_panel(
     esa_voltage: float,
     central_speed: float,
 ):
-    if region == "open_aperture":
-        label = "Open Aperture (OA)"
-        transmission_values = grid.values_open_aperture
-        lower_boundary = grid.min_OA_boundary
-        upper_boundary = grid.max_OA_boundary
-    elif region == "sunglasses":
-        label = "Sunglasses (SG)"
-        transmission_values = grid.values_sunglasses
-        lower_boundary = grid.min_SG_boundary
-        upper_boundary = grid.max_SG_boundary
+    label = "Open Aperture (OA)" if region == "open_aperture" else "Sunglasses (SG)"
 
-    elevations, speed_ratios = grid_axis_coordinates(grid, transmission_values)
+    elevations, speed_ratios = grid_axis_coordinates(grid, grid.values)
 
     active_elevations = np.linspace(
-        lower_boundary[0, 0], lower_boundary[0, -1], ACTIVE_ELEVATION_SAMPLE_COUNT
+        grid.elevation_range[0], grid.elevation_range[1], ACTIVE_ELEVATION_SAMPLE_COUNT
     )
-    lower_speed_ratios = eval_boundary_min(lower_boundary, active_elevations)
-    upper_speed_ratios = eval_boundary_max(upper_boundary, active_elevations)
+    lower_speed_ratios = _vectorized_bracket(
+        grid, grid.min_boundary, active_elevations, np.minimum
+    )
+    upper_speed_ratios = _vectorized_bracket(
+        grid, grid.max_boundary, active_elevations, np.maximum
+    )
 
     image = draw_transmission_heatmap(
-        axis, transmission_values, elevations, speed_ratios
+        axis, grid.values, elevations, speed_ratios
     )
     draw_integration_window_outline(
         axis, active_elevations, lower_speed_ratios, upper_speed_ratios
@@ -132,6 +125,21 @@ def draw_transmission_heatmap(
         cmap="gist_heat",
         interpolation="nearest",
     )
+
+
+def _vectorized_bracket(
+    grid: PassbandGrid, boundary: np.ndarray, elevations: np.ndarray, combine
+) -> np.ndarray:
+    """Per-elevation speed-ratio boundary as `combine` (np.minimum or np.maximum)
+    of the two grid rows whose elevations bracket each query. Boundaries are
+    indexed on the grid's uniform elevation axis (same as `interpolate_passband`);
+    off-grid queries clamp to row 0 / row n-1."""
+    n_rows = boundary.shape[0]
+    last = n_rows - 1
+    i_float = (elevations - grid.min_elevation) / grid.elevation_spacing
+    lower = np.clip(np.floor(i_float).astype(int), 0, last)
+    upper = np.clip(lower + 1, 0, last)
+    return combine(boundary[lower], boundary[upper])
 
 
 def draw_integration_window_outline(

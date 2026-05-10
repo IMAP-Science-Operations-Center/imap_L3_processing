@@ -8,7 +8,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
     SolarWindParams,
     thermal_speed,
 )
-from imap_l3_processing.swapi.response.response_grid import ResponseGrid
+from imap_l3_processing.swapi.response.swapi_response import ResponseGrid
 
 
 def average_spin_axis_rtn(rotation_matrices: ndarray) -> ndarray:

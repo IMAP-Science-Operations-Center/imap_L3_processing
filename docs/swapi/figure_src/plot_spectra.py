@@ -39,7 +39,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.state import SolarWindParams
 from imap_l3_processing.swapi.response.speed_calculation import SWAPI_K_FACTOR
-from tests.swapi.l3a.science.reference_integral import reference_integral_fixed_limits
+from scripts.swapi.reference_integral import reference_integral_fixed_limits
 from figure_utils import load_swapi_response
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -122,8 +122,6 @@ def main():
     fig, axes = plt.subplots(2, 3, figsize=(15, 8))
 
     rotation_matrix = np.eye(3)
-    az_trans = np.asarray(swapi_response.azimuthal_transmission, dtype=float)
-    az_trans_spacing = float(swapi_response.AZIMUTHAL_TRANSMISSION_SPACING_DEG)
 
     handles_for_legend = None
     for ax, (label, v_b, T_k, az, el, density) in zip(axes.flat, CASES):
@@ -145,13 +143,10 @@ def main():
             response_grid = swapi_response.create_response_grid(
                 float(v), PROTON_MASS_PER_CHARGE_M_P_PER_E, 1.0
             )
-            grid = response_grid.passband_grid
-            cs = response_grid.central_speed
-            ca = response_grid.central_effective_area
             rate, _ = calculate_integral(sw, response_grid, rotation_matrix)
             optimized[i] = rate
             reference[i] = reference_integral_fixed_limits(
-                grid, sw, rotation_matrix, cs, ca, az_trans, az_trans_spacing
+                response_grid, sw, rotation_matrix
             )
 
         (h_ref,) = ax.plot(

@@ -1,14 +1,11 @@
 import numpy as np
 import uncertainties
 from numpy.typing import ArrayLike
-from uncertainties import umath, unumpy, wrap
-from uncertainties.unumpy import nominal_values
+from uncertainties import umath, unumpy
 
 from imap_l3_processing.constants import (
     PROTON_CHARGE_COULOMBS,
     PROTON_MASS_KG,
-    ALPHA_PARTICLE_CHARGE_COULOMBS,
-    ALPHA_PARTICLE_MASS_KG,
     METERS_PER_KILOMETER,
 )
 
@@ -44,48 +41,6 @@ def esa_voltage_to_proton_speed(esa_voltage: ArrayLike) -> np.ndarray:
     )
 
 
-def esa_voltage_to_alpha_speed(esa_voltage: ArrayLike) -> np.ndarray:
-    return (
-        np.sqrt(
-            2
-            * SWAPI_K_FACTOR
-            * ALPHA_PARTICLE_CHARGE_COULOMBS
-            * np.abs(esa_voltage)
-            / ALPHA_PARTICLE_MASS_KG
-        )
-        / METERS_PER_KILOMETER
-    )
-
-
-def find_peak_center_of_mass_index(
-    peak_slice, count_rates, minimum_count_rate=0, minimum_bin_count=0
-):
-    count_rates = np.asarray(count_rates)
-    indices = np.arange(len(count_rates))
-    peak_indices = indices[peak_slice]
-    peak_counts = count_rates[peak_slice]
-    at_least_minimum = nominal_values(peak_counts) >= minimum_count_rate
-
-    filtered_peak_indices = peak_indices[at_least_minimum]
-
-    if len(filtered_peak_indices) < minimum_bin_count:
-        raise Exception("Too few bins after removing low count rates")
-
-    filtered_peak_counts = peak_counts[at_least_minimum]
-    center_of_mass_index = np.sum(
-        filtered_peak_indices * filtered_peak_counts
-    ) / np.sum(filtered_peak_counts)
-    return center_of_mass_index
-
-
-def interpolate_energy(center_of_mass_index, energies):
-    interpolate_lambda = lambda x: np.exp(
-        np.interp(x, np.arange(len(energies)), np.log(energies))
-    )
-    interpolate = wrap(interpolate_lambda)
-    return interpolate(center_of_mass_index)
-
-
 def times_for_sweep(start_time):
     time_step_per_bin = 12 / 72
     return start_time + time_step_per_bin * np.arange(72)
@@ -105,34 +60,6 @@ def calculate_combined_sweeps(coincidence_count_rates, energies):
         coincidence_count_rates
     )
     return average_coin_rates, energies
-
-
-def get_alpha_peak_indices(residuals, energies, proton_peak_index) -> slice:
-    energies = np.asarray(energies)
-    assert np.all(energies[:-1] >= energies[1:]), "Energies must be decreasing"
-
-    min_energy = 1.5 * energies[proton_peak_index]
-    max_energy = 4.0 * energies[proton_peak_index]
-
-    def find_start_of_alpha_particle_peak():
-        start_bin = None
-        for i in reversed(range(proton_peak_index)):
-            if energies[i] >= min_energy:
-                start_bin = i
-                break
-        if start_bin is None:
-            return None
-        for i in reversed(range(start_bin + 1)):
-            if residuals[i] > residuals[i + 1] and residuals[i - 1] > residuals[i]:
-                return i
-        return None
-
-    start_of_alpha_peak = find_start_of_alpha_particle_peak()
-    if start_of_alpha_peak is None:
-        raise Exception("Alpha peak not found")
-
-    end_of_alpha_peak = np.searchsorted(-energies, -max_energy)
-    return slice(int(end_of_alpha_peak), start_of_alpha_peak + 1)
 
 
 def calculate_sw_speed(particle_mass, particle_charge, energy):

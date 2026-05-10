@@ -1,0 +1,368 @@
+"""End-to-end and orchestration tests for `fit_solar_wind_proton_model`."""
+
+import unittest
+from unittest.mock import patch
+
+import numpy as np
+
+from imap_l3_processing.constants import (
+    PROTON_MASS_KG,
+    PROTON_MASS_PER_CHARGE_M_P_PER_E,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
+    build_solar_wind_fit_context,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
+    model_solar_wind_ideal_coincidence_rates,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.optimizer import (
+    OptimizeSolarWindParamsResult,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
+    fit_solar_wind_proton_model,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
+    N_STATE,
+    SolarWindParams,
+)
+from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
+from imap_l3_processing.swapi.response.deadtime import deadtime_factor
+from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
+from tests.test_helpers import get_test_instrument_team_data_path
+
+# Mean SWAPI L2 coarse-sweep voltages (V), descending — a 62-bin sweep that
+# covers the proton speed range densely. Identical to the set used by
+# `docs/swapi/figure_src/plot_fit_accuracy.py`.
+_VOLTAGES_PER_SWEEP = np.array(
+    [
+        9895.52, 9088.69, 8348.80, 7667.55, 7042.16, 6469.31, 5941.77, 5457.31,
+        5013.22, 4603.65, 4230.77, 3886.92, 3569.16, 3278.72, 3011.13, 2766.25,
+        2539.54, 2333.83, 2144.24, 1969.31, 1808.74, 1660.86, 1525.75, 1401.82,
+        1287.58, 1182.24, 1085.15, 995.55, 914.31, 839.94, 771.70, 709.46,
+        651.59, 598.47, 549.91, 505.12, 463.89, 425.92, 391.18, 359.35, 329.94,
+        303.02, 278.25, 255.55, 234.77, 215.61, 197.95, 181.82, 167.04, 153.46,
+        140.91, 129.50, 118.91, 109.20, 100.30, 92.11, 84.61, 77.73, 71.40,
+        65.59, 60.23, 55.34,
+    ]
+)
+_N_BINS_PER_SWEEP = len(_VOLTAGES_PER_SWEEP)
+_N_SWEEPS = 5
+_SWEEP_DURATION_S = 12.0
+_SAMPLE_TIME_PER_BIN_S = _SWEEP_DURATION_S / 72
+# Typical IMAP spin period; matches `docs/swapi/figure_src/plot_fit_accuracy.py`.
+_SPIN_PERIOD_S = 15.13
+
+# Anchor SWAPI→RTN rotation matrix near 2026-01-01, lifted from
+# `docs/swapi/figure_src/plot_fit_accuracy.py`. The literal block is in
+# RTN→SWAPI orientation; transposing converts to SWAPI→RTN. Per-bin matrices
+# are produced by spinning this anchor about its own +Y column (the spin axis
+# in RTN) at the SWAPI spin period.
+_ANCHOR_ROTATION_MATRIX = np.array(
+    [
+        [+0.0705, +0.9157, +0.3955],
+        [-0.9968, +0.0792, -0.0057],
+        [-0.0365, -0.3939, +0.9184],
+    ]
+).T
+_ANCHOR_TIME_S = 0.5 * _SWEEP_DURATION_S
+# Negative sign chosen so R(t) = anchor @ Rot(δφ, spin_axis_RTN) reproduces
+# independent SPICE-derived sweep midpoints over a 5-sweep cycle (see
+# `docs/swapi/figure_src/plot_fit_accuracy.py`).
+_SPIN_OMEGA_RAD_S = -2.0 * np.pi / _SPIN_PERIOD_S
+
+# The +Y column of `_ANCHOR_ROTATION_MATRIX` is the SWAPI spin axis expressed
+# in RTN. For a proper rotation matrix it must be unit-norm; assert that here
+# so the bulk-velocity construction below can use it directly.
+assert np.isclose(
+    np.linalg.norm(_ANCHOR_ROTATION_MATRIX[:, 1]), 1.0, atol=1e-3
+), "expected +Y column of anchor rotation to be unit-norm"
+
+# Ground-truth solar-wind parameters used for the parameter-recovery test.
+# Moderate-speed slow-stream proton population — well inside the SWAPI energy
+# range, well within the SG passband elevation, and warm enough that the LM
+# fit is not numerically marginal.
+#
+# The bulk velocity is anti-parallel to the synthetic spin axis (the +Y column
+# of `_ANCHOR_ROTATION_MATRIX`, which lies near -R̂_RTN). This puts the wind
+# *into* the SWAPI aperture; using arbitrary RTN-frame velocity components
+# would point the wind at the back of the instrument and zero the synthetic
+# count rates.
+_TRUE_DENSITY_CM3 = 5.0
+_TRUE_TEMPERATURE_K = 1.0e5
+_TRUE_BULK_SPEED_KM_S = 450.0
+_TRUE_BULK_VELOCITY_RTN_KM_S = (
+    -_TRUE_BULK_SPEED_KM_S * _ANCHOR_ROTATION_MATRIX[:, 1]
+)
+
+
+def _per_bin_rotation_matrices() -> np.ndarray:
+    """Synthesize plausible per-bin SWAPI→RTN matrices for `_N_SWEEPS` sweeps;
+    details don't affect what's being tested."""
+    sweep_index = np.repeat(
+        np.arange(_N_SWEEPS), _N_BINS_PER_SWEEP
+    )
+    bin_index_in_sweep = np.tile(
+        np.arange(1, _N_BINS_PER_SWEEP + 1), _N_SWEEPS
+    )
+    sample_times_s = (
+        sweep_index * _SWEEP_DURATION_S
+        + bin_index_in_sweep * _SAMPLE_TIME_PER_BIN_S
+    )
+
+    spin_axis = _ANCHOR_ROTATION_MATRIX[:, 1] / np.linalg.norm(
+        _ANCHOR_ROTATION_MATRIX[:, 1]
+    )
+    delta_phi = _SPIN_OMEGA_RAD_S * (sample_times_s - _ANCHOR_TIME_S)
+
+    ax, ay, az = spin_axis
+    K = np.array([[0.0, -az, ay], [az, 0.0, -ax], [-ay, ax, 0.0]])
+    sin_dp = np.sin(delta_phi)[:, None, None]
+    one_minus_cos = (1.0 - np.cos(delta_phi))[:, None, None]
+    rot = np.eye(3) + sin_dp * K + one_minus_cos * (K @ K)
+    return rot @ _ANCHOR_ROTATION_MATRIX
+
+
+def _load_swapi_response() -> SwapiResponse:
+    return SwapiResponse.from_files(
+        get_test_instrument_team_data_path(
+            "swapi/imap_swapi_azimuthal-transmission_20260425_v001.csv"
+        ),
+        get_test_instrument_team_data_path(
+            "swapi/imap_swapi_central-effective-area_20260425_v001.csv"
+        ),
+        get_test_instrument_team_data_path(
+            "swapi/imap_swapi_passband-fit-coefficients_20260425_v001.csv"
+        ),
+    )
+
+
+def _build_context(count_rate, esa_voltage, swapi_response, rotation_matrices):
+    return build_solar_wind_fit_context(
+        count_rate=count_rate,
+        esa_voltage=esa_voltage,
+        swapi_response=swapi_response,
+        central_effective_area_scale=1.0,
+        rotation_matrices=rotation_matrices,
+        mass_kg=PROTON_MASS_KG,
+        mass_per_charge_m_p_per_e=PROTON_MASS_PER_CHARGE_M_P_PER_E,
+    )
+
+
+def _synthesize_count_rates(ctx, sw_params: SolarWindParams) -> np.ndarray:
+    """Forward-model deadtime-applied coincidence count rates from `sw_params`
+    using the same model the fitter inverts. No Poisson noise — the
+    parameter-recovery test exercises orchestration, not the noise budget."""
+    ideal, _ = model_solar_wind_ideal_coincidence_rates(sw_params, ctx)
+    return ideal * deadtime_factor(ideal)
+
+
+def _build_synthetic_fit_context(truth_params: SolarWindParams):
+    """Build a SwapiResponse, per-bin rotation matrices, and a populated
+    `SolarWindFitContext` whose count rates are forward-modelled from
+    `truth_params`. Returns `(swapi_response, rotation_matrices, fit_ctx)`."""
+    swapi_response = _load_swapi_response()
+    all_voltages = np.tile(_VOLTAGES_PER_SWEEP, _N_SWEEPS)
+    swapi_response.warm_cache(all_voltages)
+    rotation_matrices = _per_bin_rotation_matrices()
+
+    # Build a context with placeholder rates first, then forward-model the
+    # synthetic rates at the truth, then rebuild the context with those rates.
+    # Two-step pattern keeps the rotation-matrix / response-grid wiring
+    # identical between forward-model and fit.
+    placeholder_ctx = _build_context(
+        count_rate=np.ones_like(all_voltages),
+        esa_voltage=all_voltages,
+        swapi_response=swapi_response,
+        rotation_matrices=rotation_matrices,
+    )
+    synthesized_rates = _synthesize_count_rates(placeholder_ctx, truth_params)
+    fit_ctx = _build_context(
+        count_rate=synthesized_rates,
+        esa_voltage=all_voltages,
+        swapi_response=swapi_response,
+        rotation_matrices=rotation_matrices,
+    )
+    return swapi_response, rotation_matrices, fit_ctx
+
+
+def _truth_params() -> SolarWindParams:
+    return SolarWindParams(
+        density=_TRUE_DENSITY_CM3,
+        bulk_velocity_rtn=_TRUE_BULK_VELOCITY_RTN_KM_S.copy(),
+        temperature=_TRUE_TEMPERATURE_K,
+        mass=PROTON_MASS_KG,
+    )
+
+
+class _ProtonFitFixture(unittest.TestCase):
+    """Loads the SwapiResponse and a populated `SolarWindFitContext` with
+    forward-modelled count rates for the moderate-speed truth case, then runs
+    the fitter once and stores `cls.result`."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.truth_params = _truth_params()
+        (
+            cls.swapi_response,
+            cls.rotation_matrices,
+            cls.fit_ctx,
+        ) = _build_synthetic_fit_context(truth_params=cls.truth_params)
+        cls.result = fit_solar_wind_proton_model(cls.fit_ctx)
+
+
+class TestFitSolarWindProtonModelEndToEnd(_ProtonFitFixture):
+    """Run the full pipeline on noise-free, deadtime-applied count rates
+    synthesized from a known `SolarWindParams`. The fit should converge to
+    truth within the WIND/SWE-validated accuracy reported in
+    `docs/swapi/solar-wind-moments.md` §Fitting Algorithm Validation."""
+
+    def test_recovers_density(self):
+        self.assertAlmostEqual(
+            self.result.density.nominal_value,
+            _TRUE_DENSITY_CM3,
+            delta=0.01 * _TRUE_DENSITY_CM3,
+        )
+
+    def test_recovers_temperature(self):
+        self.assertAlmostEqual(
+            self.result.temperature.nominal_value,
+            _TRUE_TEMPERATURE_K,
+            delta=0.01 * _TRUE_TEMPERATURE_K,
+        )
+
+    def test_recovers_bulk_velocity_components(self):
+        nominal = self.result.bulk_velocity_rtn_nominal()
+        np.testing.assert_allclose(
+            nominal, _TRUE_BULK_VELOCITY_RTN_KM_S, atol=1.0
+        )
+
+    def test_bad_fit_flag_is_none_on_successful_convergence(self):
+        self.assertEqual(self.result.bad_fit_flag, SwapiL3Flags.NONE)
+
+
+class TestProtonSolarWindFitResultPublicAPI(_ProtonFitFixture):
+    """The `ProtonSolarWindFitResult` exposes nominal-vector and covariance-
+    matrix accessors derived from the correlated UFloat triple stored in
+    `bulk_velocity_rtn`."""
+
+    def test_bulk_velocity_rtn_nominal_is_three_component_vector(self):
+        nominal = self.result.bulk_velocity_rtn_nominal()
+        self.assertEqual(nominal.shape, (3,))
+
+    def test_bulk_velocity_rtn_nominal_matches_per_component_nominal_values(
+        self,
+    ):
+        per_component = np.array(
+            [v.nominal_value for v in self.result.bulk_velocity_rtn]
+        )
+        np.testing.assert_array_equal(
+            self.result.bulk_velocity_rtn_nominal(), per_component
+        )
+
+    def test_bulk_velocity_rtn_covariance_is_three_by_three(self):
+        covariance = self.result.bulk_velocity_rtn_covariance()
+        self.assertEqual(covariance.shape, (3, 3))
+
+    def test_bulk_velocity_rtn_covariance_is_symmetric(self):
+        covariance = self.result.bulk_velocity_rtn_covariance()
+        np.testing.assert_allclose(covariance, covariance.T, atol=1e-12)
+
+    def test_bulk_velocity_rtn_covariance_is_positive_semidefinite(self):
+        covariance = self.result.bulk_velocity_rtn_covariance()
+        eigenvalues = np.linalg.eigvalsh(covariance)
+        self.assertGreaterEqual(eigenvalues.min(), -1e-9)
+
+    def test_covariance_diagonal_matches_per_component_variance(self):
+        covariance = self.result.bulk_velocity_rtn_covariance()
+        for i, ufloat_value in enumerate(self.result.bulk_velocity_rtn):
+            self.assertAlmostEqual(
+                covariance[i, i], ufloat_value.std_dev ** 2, places=10
+            )
+
+
+class TestBadFitFlag(unittest.TestCase):
+    """`bad_fit_flag` is `SwapiL3Flags.NONE` when LM converges and
+    `SwapiL3Flags.FIT_FAILED` when it does not."""
+
+    def _patch_optimizer_to_return_failed_result(self):
+        """Replace `optimize_solar_wind_params` inside `proton.fit_model` with
+        one that returns `success=False`. Synthetic placeholder values for the
+        params, residuals, and Jacobian keep `derive_uncertainties` happy
+        without changing the flag-under-test."""
+        failed_result = OptimizeSolarWindParamsResult(
+            sw_params=SolarWindParams(
+                density=1.0,
+                bulk_velocity_rtn=np.array([-1.0, 0.0, 0.0]),
+                temperature=1.0,
+                mass=PROTON_MASS_KG,
+            ),
+            residuals=np.zeros(_N_BINS_PER_SWEEP * _N_SWEEPS),
+            jacobian=np.zeros(
+                (_N_BINS_PER_SWEEP * _N_SWEEPS, N_STATE)
+            ),
+            success=False,
+        )
+        return patch(
+            "imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model.optimize_solar_wind_params",
+            return_value=failed_result,
+        )
+
+    @classmethod
+    def setUpClass(cls):
+        _, _, cls.fit_ctx = _build_synthetic_fit_context(
+            truth_params=_truth_params()
+        )
+
+    def test_fit_failed_flag_when_optimizer_reports_failure(self):
+        with self._patch_optimizer_to_return_failed_result():
+            result = fit_solar_wind_proton_model(self.fit_ctx)
+        self.assertEqual(result.bad_fit_flag, SwapiL3Flags.FIT_FAILED)
+
+
+class TestPipelineOrder(unittest.TestCase):
+    """The returned result reflects post-basin parameters when basin hopping
+    changes them, not the LM-1 result."""
+
+    @classmethod
+    def setUpClass(cls):
+        _, _, cls.fit_ctx = _build_synthetic_fit_context(
+            truth_params=_truth_params()
+        )
+
+    def test_construct_fit_result_uses_post_basin_hopping_result(self):
+        # Synthetic post-basin density chosen well above _TRUE_DENSITY_CM3=5.0
+        # so the round-tripped density is unambiguously the patched value.
+        # Velocity is far from the truth bulk velocity for the same reason.
+        post_basin_density = 50.0
+        post_basin_velocity = np.array([-321.0, 0.0, 0.0])
+        post_basin_temperature = 2.5e5
+
+        post_basin_result = OptimizeSolarWindParamsResult(
+            sw_params=SolarWindParams(
+                density=post_basin_density,
+                bulk_velocity_rtn=post_basin_velocity,
+                temperature=post_basin_temperature,
+                mass=PROTON_MASS_KG,
+            ),
+            residuals=np.zeros(_N_BINS_PER_SWEEP * _N_SWEEPS),
+            jacobian=np.zeros(
+                (_N_BINS_PER_SWEEP * _N_SWEEPS, N_STATE)
+            ),
+            success=True,
+        )
+
+        with patch(
+            "imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model.escape_local_minimum",
+            return_value=post_basin_result,
+        ):
+            result = fit_solar_wind_proton_model(self.fit_ctx)
+
+        # density alone is decisive: it, temperature, and bulk_velocity_rtn
+        # propagate together from the same OptimizeSolarWindParamsResult.
+        self.assertAlmostEqual(
+            result.density.nominal_value, post_basin_density
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()

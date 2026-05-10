@@ -9,70 +9,100 @@ from imap_l3_processing.swapi.response.speed_calculation import SWAPI_K_FACTOR
 
 _TARGET_ELEVATIONS = np.arange(-15, 15 + 0.5, 0.5)
 _TARGET_SPEED_RATIOS = np.linspace(0.9, 1.1, 101)
-# Fraction of the global grid max at which the integration window terminates
-# (per-elevation speed-ratio bounds in `_passband_boundaries`, elevation range
-# in `_elevation_range`). The polynomial response is strictly positive
-# everywhere it is defined, so without a relative cutoff the boundary would be
-# V-independent (set only by CSV coverage). With this cutoff the integration
-# tightens around the physically significant region and varies with V.
 _PASSBAND_BOUNDARY_THRESHOLD = 1e-2
 
 
 class PassbandGrid(NamedTuple):
-    """V-only passband geometry. Species- and time-dependent quantities (central speed,
-    central effective area, azimuthal transmission) are tracked separately on
-    `SWAPIResponse` and passed alongside this grid into `calculate_integral`."""
-
     min_elevation: float
     elevation_spacing: float
     min_speed_ratio: float
     speed_ratio_spacing: float
-    values_sunglasses: NDArray  # normalized so on-axis peak = 1
-    values_open_aperture: NDArray  # normalized so on-axis peak = 1
-    min_OA_boundary: (
-        NDArray  # shape (2, n): row 0 = elevations, row 1 = min speed ratios
+    values: NDArray
+    min_boundary: NDArray
+    max_boundary: NDArray
+    elevation_range: tuple
+
+
+def build_passband_grid(values_df: pd.DataFrame) -> PassbandGrid:
+    grid_values = _build_passband_array(
+        values_df, _TARGET_ELEVATIONS, _TARGET_SPEED_RATIOS
     )
-    max_OA_boundary: (
-        NDArray  # shape (2, n): row 0 = elevations, row 1 = max speed ratios
+    min_boundary, max_boundary = _passband_boundaries(grid_values, _TARGET_SPEED_RATIOS)
+    elevation_range = _elevation_range(grid_values, _TARGET_ELEVATIONS)
+
+    return PassbandGrid(
+        min_elevation=float(_TARGET_ELEVATIONS[0]),
+        elevation_spacing=float(_TARGET_ELEVATIONS[1] - _TARGET_ELEVATIONS[0]),
+        min_speed_ratio=float(_TARGET_SPEED_RATIOS[0]),
+        speed_ratio_spacing=float(_TARGET_SPEED_RATIOS[1] - _TARGET_SPEED_RATIOS[0]),
+        values=grid_values,
+        min_boundary=min_boundary,
+        max_boundary=max_boundary,
+        elevation_range=elevation_range,
     )
-    min_SG_boundary: NDArray
-    max_SG_boundary: NDArray
-    # V-dependent elevation range per region (min, max). Bound at the
-    # linear-interp threshold-crossing elevation between the outermost active row
-    # (max passband > 1% of grid max) and its inactive neighbor.
-    oa_elevation_range: tuple
-    sg_elevation_range: tuple
 
 
 @numba.njit
-def min_speed_ratio_at_elevation(grid, is_sunglasses, elevation: float) -> float:
-    """Lower speed-ratio bound of the active passband at the given elevation."""
-    boundary = grid.min_SG_boundary if is_sunglasses else grid.min_OA_boundary
-    a, b = _bracketing_boundary_values(boundary, elevation)
-    return a if a < b else b
-
-
-@numba.njit
-def max_speed_ratio_at_elevation(grid, is_sunglasses, elevation: float) -> float:
-    """Upper speed-ratio bound of the active passband at the given elevation."""
-    boundary = grid.max_SG_boundary if is_sunglasses else grid.max_OA_boundary
-    a, b = _bracketing_boundary_values(boundary, elevation)
-    return a if a > b else b
-
-
-@numba.njit
-def interpolate_passband(
-    grid, is_sunglasses: bool, elevation: float, speed_ratio: float
-) -> float:
-    """Bilinear lookup of the passband transmission at (elevation, speed_ratio).
-    Returns 0 outside the grid, matching the physical "no transmission" extension."""
-    grid_values = grid.values_sunglasses if is_sunglasses else grid.values_open_aperture
-
+def speed_ratio_range_at_elevation(grid, elevation: float):
+    n_elevations = grid.min_boundary.shape[0]
     i_float = (elevation - grid.min_elevation) / grid.elevation_spacing
-    if i_float < 0 or i_float + 1 >= grid_values.shape[0]:
+    if i_float < 0.0:
+        lower_row = 0
+    elif i_float >= n_elevations - 1:
+        lower_row = n_elevations - 1
+    else:
+        lower_row = int(i_float)
+    upper_row = lower_row + 1 if lower_row + 1 < n_elevations else n_elevations - 1
+
+    lower_min = grid.min_boundary[lower_row]
+    upper_min = grid.min_boundary[upper_row]
+    lower_max = grid.max_boundary[lower_row]
+    upper_max = grid.max_boundary[upper_row]
+    # If only one bracketing row is below the active-range cutoff (NaN), drop
+    # it — the union is just the valid row's interval. If both are NaN the
+    # caller queried outside the active range and failed to gate on
+    # `elevation_range`.
+    lower_is_nan = np.isnan(lower_min) or np.isnan(lower_max)
+    upper_is_nan = np.isnan(upper_min) or np.isnan(upper_max)
+    if lower_is_nan and upper_is_nan:
+        raise ValueError("Elevation out of range.")
+    if lower_is_nan:
+        return upper_min, upper_max
+    if upper_is_nan:
+        return lower_min, lower_max
+    lo = lower_min if lower_min < upper_min else upper_min
+    hi = lower_max if lower_max > upper_max else upper_max
+    return lo, hi
+
+
+@numba.njit
+def interpolate_passband(grid, elevation: float, speed_ratio: float) -> float:
+    return _bilinear_interpolate(
+        values=grid.values,
+        x0=grid.min_speed_ratio,
+        dx=grid.speed_ratio_spacing,
+        y0=grid.min_elevation,
+        dy=grid.elevation_spacing,
+        x=speed_ratio,
+        y=elevation,
+    )
+
+
+@numba.njit
+def _bilinear_interpolate(
+    values: NDArray,
+    x0: float,
+    dx: float,
+    y0: float,
+    dy: float,
+    x: float,
+    y: float,
+) -> float:
+    i_float = (y - y0) / dy
+    if i_float < 0 or i_float + 1 >= values.shape[0]:
         return 0.0
-    j_float = (speed_ratio - grid.min_speed_ratio) / grid.speed_ratio_spacing
-    if j_float < 0 or j_float + 1 >= grid_values.shape[1]:
+    j_float = (x - x0) / dx
+    if j_float < 0 or j_float + 1 >= values.shape[1]:
         return 0.0
 
     i_lower = int(i_float)
@@ -83,85 +113,9 @@ def interpolate_passband(
     j_weight = j_float - j_lower
 
     return (1 - i_weight) * (
-        (1 - j_weight) * grid_values[i_lower, j_lower]
-        + j_weight * grid_values[i_lower, j_upper]
+        (1 - j_weight) * values[i_lower, j_lower] + j_weight * values[i_lower, j_upper]
     ) + i_weight * (
-        (1 - j_weight) * grid_values[i_upper, j_lower]
-        + j_weight * grid_values[i_upper, j_upper]
-    )
-
-
-@numba.njit
-def _bracketing_boundary_values(boundary, elevation: float):
-    elevs = boundary[0]
-    vals = boundary[1]
-    n = elevs.shape[0]
-    idx = 0
-    for i in range(n):
-        if elevs[i] <= elevation:
-            idx = i
-        else:
-            break
-    idx_next = idx + 1 if idx + 1 < n else n - 1
-    return vals[idx], vals[idx_next]
-
-
-def eval_boundary_min(boundary: NDArray, elevations: NDArray) -> NDArray:
-    """Evaluate the min (left) speed-ratio boundary at each elevation using the most
-    expansive of the two nearest stored grid points — guaranteed to bracket the
-    active passband speed range."""
-    idx = np.clip(
-        np.searchsorted(boundary[0], elevations, side="right") - 1,
-        0,
-        boundary.shape[1] - 1,
-    )
-    idx_next = np.clip(idx + 1, 0, boundary.shape[1] - 1)
-    return np.minimum(boundary[1][idx], boundary[1][idx_next])
-
-
-def eval_boundary_max(boundary: NDArray, elevations: NDArray) -> NDArray:
-    """Evaluate the max (right) speed-ratio boundary at each elevation using the most
-    expansive of the two nearest stored grid points — guaranteed to bracket the
-    active passband speed range."""
-    idx = np.clip(
-        np.searchsorted(boundary[0], elevations, side="right") - 1,
-        0,
-        boundary.shape[1] - 1,
-    )
-    idx_next = np.clip(idx + 1, 0, boundary.shape[1] - 1)
-    return np.maximum(boundary[1][idx], boundary[1][idx_next])
-
-
-def build_passband_grid(
-    oa_values: pd.DataFrame, sg_values: pd.DataFrame
-) -> PassbandGrid:
-    """Build a PassbandGrid from per-region passband-value DataFrames (as returned by
-    `SWAPIResponse.get_passband_values`)."""
-    oa_grid = _build_passband_array(oa_values, _TARGET_ELEVATIONS, _TARGET_SPEED_RATIOS)
-    sg_grid = _build_passband_array(sg_values, _TARGET_ELEVATIONS, _TARGET_SPEED_RATIOS)
-
-    min_OA_boundary, max_OA_boundary = _passband_boundaries(
-        oa_grid, _TARGET_ELEVATIONS, _TARGET_SPEED_RATIOS
-    )
-    min_SG_boundary, max_SG_boundary = _passband_boundaries(
-        sg_grid, _TARGET_ELEVATIONS, _TARGET_SPEED_RATIOS
-    )
-    oa_elevation_range = _elevation_range(oa_grid, _TARGET_ELEVATIONS)
-    sg_elevation_range = _elevation_range(sg_grid, _TARGET_ELEVATIONS)
-
-    return PassbandGrid(
-        min_elevation=float(_TARGET_ELEVATIONS[0]),
-        elevation_spacing=float(_TARGET_ELEVATIONS[1] - _TARGET_ELEVATIONS[0]),
-        min_speed_ratio=float(_TARGET_SPEED_RATIOS[0]),
-        speed_ratio_spacing=float(_TARGET_SPEED_RATIOS[1] - _TARGET_SPEED_RATIOS[0]),
-        values_open_aperture=oa_grid,
-        values_sunglasses=sg_grid,
-        min_OA_boundary=min_OA_boundary,
-        max_OA_boundary=max_OA_boundary,
-        min_SG_boundary=min_SG_boundary,
-        max_SG_boundary=max_SG_boundary,
-        oa_elevation_range=oa_elevation_range,
-        sg_elevation_range=sg_elevation_range,
+        (1 - j_weight) * values[i_upper, j_lower] + j_weight * values[i_upper, j_upper]
     )
 
 
@@ -188,73 +142,64 @@ def _build_passband_array(
                 left=0.0,
                 right=0.0,
             )
+
+    # Normalize so the central value (elevation=0, speed_ratio=1) is 1.
+    central_value = _bilinear_interpolate(
+        values=result,
+        x0=target_speed_ratios[0],
+        dx=target_speed_ratios[1] - target_speed_ratios[0],
+        y0=target_elevations[0],
+        dy=target_elevations[1] - target_elevations[0],
+        x=1.0,
+        y=0.0,
+    )
+    result = result / central_value
     return result.copy(order="C")
 
 
 def _passband_boundaries(
-    grid_values: NDArray, target_elevations: NDArray, target_speed_ratios: NDArray
+    grid_values: NDArray, target_speed_ratios: NDArray
 ) -> tuple[NDArray, NDArray]:
-    """Return (min_boundary, max_boundary) each shape (2, n_active):
-    row 0 = elevation values, row 1 = the first speed-ratio pixel at or below
-    `_PASSBAND_BOUNDARY_THRESHOLD * max(grid)` outside the active row. Falls back
-    to the edge cell's speed ratio when the active region touches the grid edge."""
-    cutoff = _PASSBAND_BOUNDARY_THRESHOLD * float(grid_values.max())
-    n_speed = grid_values.shape[1]
-    active_elevations, min_ratios, max_ratios = [], [], []
-    for elev, row in zip(target_elevations, grid_values):
-        above_idx = np.where(row > cutoff)[0]
-        if len(above_idx) == 0:
+    cutoff = _cutoff_value(grid_values)
+    n_elevations = grid_values.shape[0]
+    mins = np.full(n_elevations, np.nan)
+    maxs = np.full(n_elevations, np.nan)
+    for i in range(n_elevations):
+        above = np.flatnonzero(grid_values[i] >= cutoff)
+        if above.size == 0:
             continue
-        i_lo = int(above_idx[0])
-        i_hi = int(above_idx[-1])
-        active_elevations.append(float(elev))
-        if i_lo > 0:
-            min_ratios.append(float(target_speed_ratios[i_lo - 1]))
-        else:
-            min_ratios.append(float(target_speed_ratios[i_lo]))
-        if i_hi < n_speed - 1:
-            max_ratios.append(float(target_speed_ratios[i_hi + 1]))
-        else:
-            max_ratios.append(float(target_speed_ratios[i_hi]))
-    elevs = np.array(active_elevations)
-    return np.vstack([elevs, np.array(min_ratios)]), np.vstack(
-        [elevs, np.array(max_ratios)]
-    )
+        mins[i] = _interp_cutoff_crossing(
+            target_speed_ratios, grid_values[i], cutoff, above[0], above[0] - 1
+        )
+        maxs[i] = _interp_cutoff_crossing(
+            target_speed_ratios, grid_values[i], cutoff, above[-1], above[-1] + 1
+        )
+    return mins, maxs
 
 
 def _elevation_range(grid_values: NDArray, target_elevations: NDArray) -> tuple:
-    """Elevation range bracketing the rows whose max passband exceeds
-    `_PASSBAND_BOUNDARY_THRESHOLD * max(grid)`, with the outer bounds at the linear-
-    interp threshold-crossing elevation between the outermost active row (with
-    row-max `M_a > cutoff`) and its inactive neighbor (`M_b ≤ cutoff`):
-    `θ_threshold = θ_a ± spacing · (M_a - cutoff) / (M_a - M_b)`. Approximates the
-    max-over-speed of the bilinear interp by the linear interp of per-row maxes,
-    which is exact when the max-cell index aligns between the two rows (true for
-    the unimodal SWAPI passband). Falls back to the edge row's elevation when the
-    active region touches the grid edge."""
-    cutoff = _PASSBAND_BOUNDARY_THRESHOLD * float(grid_values.max())
+    cutoff = _cutoff_value(grid_values)
     row_max = grid_values.max(axis=1)
-    active_idx = np.where(row_max > cutoff)[0]
-    if len(active_idx) == 0:
-        return (float(target_elevations[0]), float(target_elevations[0]))
-    target_spacing = float(target_elevations[1] - target_elevations[0])
-    n_el = len(target_elevations)
-    i_lo = int(active_idx[0])
-    i_hi = int(active_idx[-1])
-    M_lo = float(row_max[i_lo])
-    M_hi = float(row_max[i_hi])
-    if i_lo > 0:
-        M_lo_minus = float(row_max[i_lo - 1])
-        lo = float(target_elevations[i_lo]) - target_spacing * (M_lo - cutoff) / (
-            M_lo - M_lo_minus
-        )
-    else:
-        lo = float(target_elevations[i_lo])
-    if i_hi < n_el - 1:
-        M_hi_plus = float(row_max[i_hi + 1])
-        hi = float(target_elevations[i_hi]) + target_spacing * (M_hi - cutoff) / (
-            M_hi - M_hi_plus
-        )
-    else:
-        hi = float(target_elevations[i_hi])
-    return (lo, hi)
+    above = np.flatnonzero(row_max >= cutoff)
+
+    lo = _interp_cutoff_crossing(
+        target_elevations, row_max, cutoff, above[0], above[0] - 1
+    )
+    hi = _interp_cutoff_crossing(
+        target_elevations, row_max, cutoff, above[-1], above[-1] + 1
+    )
+    return (float(lo), float(hi))
+
+
+def _interp_cutoff_crossing(
+    x: NDArray, y: NDArray, cutoff: float, i_inside: int, i_outside: int
+) -> float:
+    """Linear interpolation of `x` where `y` crosses `cutoff`, given that
+    `y[i_inside] >= cutoff` and `y[i_outside] < cutoff`."""
+    return x[i_inside] + (cutoff - y[i_inside]) / (y[i_outside] - y[i_inside]) * (
+        x[i_outside] - x[i_inside]
+    )
+
+
+def _cutoff_value(grid_values):
+    return _PASSBAND_BOUNDARY_THRESHOLD * float(grid_values.max())

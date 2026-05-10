@@ -19,7 +19,7 @@ Solar wind parameter ranges (10000 samples, seed=42):
   bulk_elevation:  -20 to 20 deg   (uniform)
   density:         1–100 cm⁻³      (uniform)
 
-Output: tests/swapi/l3a/science/reference_integrals.csv
+Output: tests/test_data/swapi/reference_integrals.csv
 Usage:  python scripts/swapi/generate_reference_integrals.py
 """
 
@@ -36,16 +36,17 @@ from imap_l3_processing.constants import (
     METERS_PER_KILOMETER,
     PROTON_CHARGE_COULOMBS,
     PROTON_MASS_KG,
+    PROTON_MASS_PER_CHARGE_M_P_PER_E,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.state import SolarWindParams
 from imap_l3_processing.swapi.response.speed_calculation import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
-from tests.swapi.l3a.science.reference_integral import reference_integrals_batch
+from scripts.swapi.reference_integral import reference_integrals_batch
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _INSTRUMENT_DATA = _REPO_ROOT / "instrument_team_data" / "swapi"
 _OUTPUT_PATH = (
-    _REPO_ROOT / "tests" / "swapi" / "l3a" / "science" / "reference_integrals.csv"
+    _REPO_ROOT / "tests" / "test_data" / "swapi" / "reference_integrals.csv"
 )
 
 _N_SAMPLES = 10000
@@ -89,13 +90,16 @@ def main():
     )
 
     rng = np.random.default_rng(_RNG_SEED)
-    bulk_speeds = rng.uniform(*_SPEED_RANGE, _N_SAMPLES)
-    temperatures_ev = np.exp(
-        rng.uniform(np.log(_TEMP_RANGE[0]), np.log(_TEMP_RANGE[1]), _N_SAMPLES)
+    bulk_speeds = np.round(rng.uniform(*_SPEED_RANGE, _N_SAMPLES), 1)
+    temperatures_ev = np.round(
+        np.exp(
+            rng.uniform(np.log(_TEMP_RANGE[0]), np.log(_TEMP_RANGE[1]), _N_SAMPLES)
+        ),
+        1,
     )
-    bulk_azimuths = rng.uniform(*_AZ_RANGE, _N_SAMPLES)
-    bulk_elevations = rng.uniform(*_EL_RANGE, _N_SAMPLES)
-    densities = rng.uniform(*_DENSITY_RANGE, _N_SAMPLES)
+    bulk_azimuths = np.round(rng.uniform(*_AZ_RANGE, _N_SAMPLES), 1)
+    bulk_elevations = np.round(rng.uniform(*_EL_RANGE, _N_SAMPLES), 1)
+    densities = np.round(rng.uniform(*_DENSITY_RANGE, _N_SAMPLES), 1)
 
     print(f"Building grids and SWParams for {_N_SAMPLES} samples...")
     sws = [
@@ -107,29 +111,20 @@ def main():
                 float(bulk_elevations[i]),
             ),
             temperature=float(temperatures_ev[i]) * EV_TO_KELVIN,
-            mass_kg=PROTON_MASS_KG,
+            mass=PROTON_MASS_KG,
         )
         for i in range(_N_SAMPLES)
     ]
     rotation_matrices = np.broadcast_to(np.eye(3), (_N_SAMPLES, 3, 3))
     voltages = [_peak_voltage(float(v)) for v in bulk_speeds]
     swapi_response.warm_cache(voltages)
-    grids = [swapi_response.create_passband_grid(v) for v in voltages]
-    central_speeds = [swapi_response.central_speed(v, 1.0) for v in voltages]
-    central_effective_areas = [
-        swapi_response.get_central_effective_area(v) for v in voltages
+    response_grids = [
+        swapi_response.create_response_grid(v, PROTON_MASS_PER_CHARGE_M_P_PER_E)
+        for v in voltages
     ]
 
     print(f"Computing {_N_SAMPLES} reference integrals (JIT-parallel, fixed limits)...")
-    integrals = reference_integrals_batch(
-        grids,
-        sws,
-        rotation_matrices,
-        central_speeds,
-        central_effective_areas,
-        swapi_response.azimuthal_transmission,
-        swapi_response.AZIMUTHAL_TRANSMISSION_SPACING_DEG,
-    )
+    integrals = reference_integrals_batch(response_grids, sws, rotation_matrices)
 
     df = pd.DataFrame(
         {
@@ -138,7 +133,7 @@ def main():
             "bulk_azimuth": bulk_azimuths,
             "bulk_elevation": bulk_elevations,
             "density": densities,
-            "integral": integrals,
+            "integral": np.round(integrals, 2),
         }
     )
     df.to_csv(_OUTPUT_PATH, index=False)

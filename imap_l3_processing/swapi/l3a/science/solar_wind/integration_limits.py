@@ -15,15 +15,14 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
     bulk_speed,
     thermal_speed,
 )
-from imap_l3_processing.swapi.response.passband_grid import (
-    interpolate_passband,
-    max_speed_ratio_at_elevation,
-    min_speed_ratio_at_elevation,
-)
-from imap_l3_processing.swapi.response.response_grid import (
-    ResponseGrid,
+from imap_l3_processing.swapi.response.azimuthal_transmission import (
     interpolate_azimuthal_transmission,
 )
+from imap_l3_processing.swapi.response.passband_grid import (
+    interpolate_passband,
+    speed_ratio_range_at_elevation,
+)
+from imap_l3_processing.swapi.response.swapi_response import ResponseGrid
 
 
 class AngularQuadrature(NamedTuple):
@@ -69,17 +68,12 @@ def speed_window_misses_passband(
     sw_window_lo = speed - SPEED_HALF_WIDTH_VTH * sigma
     sw_window_hi = speed + SPEED_HALF_WIDTH_VTH * sigma
 
-    grid = response_grid.passband_grid
     central_speed = response_grid.central_speed
     # union of SG and OA passband speed ranges, evaluated on-axis (elevation=0)
-    passband_lo = central_speed * min(
-        min_speed_ratio_at_elevation(grid, True, 0.0),
-        min_speed_ratio_at_elevation(grid, False, 0.0),
-    )
-    passband_hi = central_speed * max(
-        max_speed_ratio_at_elevation(grid, True, 0.0),
-        max_speed_ratio_at_elevation(grid, False, 0.0),
-    )
+    sg_lo, sg_hi = speed_ratio_range_at_elevation(response_grid.sg_passband, 0.0)
+    oa_lo, oa_hi = speed_ratio_range_at_elevation(response_grid.oa_passband, 0.0)
+    passband_lo = central_speed * min(sg_lo, oa_lo)
+    passband_hi = central_speed * max(sg_hi, oa_hi)
     return sw_window_hi < passband_lo or sw_window_lo > passband_hi
 
 
@@ -127,9 +121,7 @@ def get_angular_quadrature(
     transmission_azimuth = np.array(
         [
             interpolate_azimuthal_transmission(
-                response_grid.azimuthal_transmission,
-                response_grid.azimuthal_transmission_spacing,
-                az,
+                response_grid.azimuthal_transmission, az
             )
             for az in azimuth_points
         ]
@@ -154,18 +146,17 @@ def get_speed_quadrature(
     region: Region,
     elevation: float,
 ):
-    grid = response_grid.passband_grid
+    passband = (
+        response_grid.sg_passband if region.is_sunglasses else response_grid.oa_passband
+    )
     central_speed = response_grid.central_speed
     sigma = thermal_speed(sw_params)
     bulk_v = bulk_speed(sw_params)
 
     # `bulk_v ± k·σ` Maxwellian window intersected with the region's passband at this elevation
-    passband_lo = central_speed * min_speed_ratio_at_elevation(
-        grid, region.is_sunglasses, elevation
-    )
-    passband_hi = central_speed * max_speed_ratio_at_elevation(
-        grid, region.is_sunglasses, elevation
-    )
+    ratio_lo, ratio_hi = speed_ratio_range_at_elevation(passband, elevation)
+    passband_lo = central_speed * ratio_lo
+    passband_hi = central_speed * ratio_hi
     min_speed = max(bulk_v - SPEED_HALF_WIDTH_VTH * sigma, passband_lo)
     max_speed = min(bulk_v + SPEED_HALF_WIDTH_VTH * sigma, passband_hi)
     if max_speed <= min_speed:
@@ -176,15 +167,10 @@ def get_speed_quadrature(
     points = mid + half * _GL_NODES_SPEED
     weights = half * _GL_WEIGHTS_SPEED
 
-    on_axis_passband_peak = interpolate_passband(grid, region.is_sunglasses, 0, 1.0)
     speed_cubed_times_passband = np.empty_like(points)
     for i, v in enumerate(points):
-        speed_cubed_times_passband[i] = (
-            v**3
-            * interpolate_passband(
-                grid, region.is_sunglasses, elevation, v / central_speed
-            )
-            / on_axis_passband_peak
+        speed_cubed_times_passband[i] = v**3 * interpolate_passband(
+            passband, elevation, v / central_speed
         )
 
     return False, SpeedQuadrature(points, weights, speed_cubed_times_passband)
@@ -197,17 +183,16 @@ def _angular_limits(
     region: Region,
     response_grid: ResponseGrid,
 ):
-    grid = response_grid.passband_grid
     half_width = _maxwellian_angular_extent(
         sw_params, response_grid.central_speed, EPSILON
     )
     bulk_az, bulk_el = bulk_angles_in_instrument_frame(sw_params, rotation_matrix)
 
     if region.is_sunglasses:
-        el_lo, el_hi = grid.sg_elevation_range
+        el_lo, el_hi = response_grid.sg_passband.elevation_range
         az_lo, az_hi = -20.0, 20.0
     else:
-        el_lo, el_hi = grid.oa_elevation_range
+        el_lo, el_hi = response_grid.oa_passband.elevation_range
         az_lo, az_hi = 20.0, 150.0
         if region.azimuth_sign < 0:
             az_lo, az_hi = -az_hi, -az_lo

@@ -2,7 +2,7 @@
 """Generate the integrator-validation table in `docs/swapi/solar-wind-moments.md`.
 
 Computes |ratio - 1| where ratio = optimized / reference for the 10000
-configurations in `tests/swapi/l3a/science/reference_integrals.csv`,
+configurations in `tests/test_data/swapi/reference_integrals.csv`,
 stratifies by reference count rate, and reports median / 95th / 99th / max
 per band. Writes the markdown table in-place between the
 `BEGIN: validation_table` and `END: validation_table` HTML comment markers
@@ -36,7 +36,7 @@ from figure_utils import load_swapi_response
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _REFERENCE_INTEGRALS_PATH = (
-    _REPO_ROOT / "tests" / "swapi" / "l3a" / "science" / "reference_integrals.csv"
+    _REPO_ROOT / "tests" / "test_data" / "swapi" / "reference_integrals.csv"
 )
 _DOC_PATH = _REPO_ROOT / "docs" / "swapi" / "solar-wind-moments.md"
 _TABLE_BEGIN = "<!-- BEGIN: validation_table"

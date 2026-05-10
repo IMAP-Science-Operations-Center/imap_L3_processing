@@ -34,7 +34,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
     bulk_speed,
     thermal_speed,
 )
-from imap_l3_processing.swapi.response.response_grid import ResponseGrid
+from imap_l3_processing.swapi.response.swapi_response import ResponseGrid
 
 
 @numba.njit
@@ -52,7 +52,7 @@ def model_solar_wind_ideal_coincidence_rates(
     return rates, jacobian
 
 
-@numba.njit(fastmath=True, cache=True)
+@numba.njit(fastmath=True)
 def calculate_integral(
     sw_params: SolarWindParams,
     response_grid: ResponseGrid,

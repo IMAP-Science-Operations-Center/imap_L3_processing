@@ -11,14 +11,13 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.utils import (
     count_rate_conversion_factor,
 )
-from imap_l3_processing.swapi.response.passband_grid import (
-    max_speed_ratio_at_elevation,
-    min_speed_ratio_at_elevation,
-)
-from imap_l3_processing.swapi.response.response_grid import (
-    ResponseGrid,
+from imap_l3_processing.swapi.response.azimuthal_transmission import (
     interpolate_azimuthal_transmission,
 )
+from imap_l3_processing.swapi.response.passband_grid import (
+    speed_ratio_range_at_elevation,
+)
+from imap_l3_processing.swapi.response.swapi_response import ResponseGrid
 
 
 # OA azimuth-trim parameters (`trim_oa_azimuth_by_integrand`).
@@ -116,7 +115,6 @@ def _evaluate_oa_integrand_along_azimuth(
     for i in range(scan_azimuths.shape[0]):
         maxwellian[i] *= interpolate_azimuthal_transmission(
             response_grid.azimuthal_transmission,
-            response_grid.azimuthal_transmission_spacing,
             scan_azimuths[i],
         )
 
@@ -131,13 +129,10 @@ def _oa_rate_upper_bound(
     min_elevation: float,
     max_elevation: float,
 ) -> float:
-    grid = response_grid.passband_grid
     central_speed = response_grid.central_speed
     delta_theta_deg = max_elevation - min_elevation
-    delta_v = central_speed * (
-        max_speed_ratio_at_elevation(grid, False, 0.0)
-        - min_speed_ratio_at_elevation(grid, False, 0.0)
-    )
+    ratio_lo, ratio_hi = speed_ratio_range_at_elevation(response_grid.oa_passband, 0.0)
+    delta_v = central_speed * (ratio_hi - ratio_lo)
     return (
             count_rate_conversion_factor(sw_params, response_grid)
             * central_speed ** 3

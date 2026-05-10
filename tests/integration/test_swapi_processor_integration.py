@@ -134,17 +134,15 @@ class SwapiProcessorIntegration(unittest.TestCase):
             'proton_sw_bulk_velocity_rtn_sun',
             'proton_sw_bulk_velocity_rtn_sc',
         }
-        bulk_speed_atol = 0.01 * float(expected_values['proton_sw_speed'])
+        bulk_speed_atol = 1e-3 * float(expected_values['proton_sw_speed'])
 
         with CDF(str(expected_file_path)) as cdf:
             for key in expected_values.keys():
                 actual_value = cdf[key][0]
                 if key in VELOCITY_VECTOR_FIELDS:
-                    rtol, atol = 0.01, bulk_speed_atol
-                elif key in UNCERTAINTY_FIELDS:
-                    rtol, atol = 0.10, 0.0
+                    rtol, atol = 1e-3, bulk_speed_atol
                 else:
-                    rtol, atol = 0.01, 0.0
+                    rtol, atol = 1e-3, 0.0
                 try:
                     numpy.testing.assert_allclose(
                         actual_value, expected_values[key], rtol=rtol, atol=atol, err_msg=key
