@@ -825,6 +825,68 @@ class TestSwapiProcessor(TestCase):
         self.assertEqual([mock_save_data.return_value], product)
 
 
+    @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3ADependencies')
+    @patch('imap_l3_processing.processor.spiceypy')
+    def test_process_l3a_raises_for_unknown_descriptor(self, mock_spicepy,
+                                                       mock_swapi_l3_dependencies_class):
+        mock_spicepy.ktotal.return_value = 0
+        mock_swapi_l3_dependencies_class.fetch_dependencies.return_value = create_swapi_l3a_dependencies_with_mocks()
+
+        input_metadata = InputMetadata('swapi', 'l3a', datetime(2025, 6, 12), datetime(2025, 6, 13), 'v123')
+        input_metadata.descriptor = "not-a-real-descriptor"
+
+        swapi_processor = SwapiProcessor(Mock(), input_metadata)
+        with self.assertRaises(NotImplementedError) as cm:
+            swapi_processor.process()
+        self.assertEqual(("unknown descriptor", "not-a-real-descriptor"), cm.exception.args)
+
+    def test_process_l3a_alpha_raises_when_mag_data_missing(self):
+        input_metadata = InputMetadata('swapi', 'l3a', datetime(2025, 8, 28), datetime(2025, 8, 29), 'v123')
+        input_metadata.descriptor = "alpha-sw"
+
+        dependencies = create_swapi_l3a_dependencies_with_mocks()
+        dependencies.mag_data = None
+
+        swapi_processor = SwapiProcessor(Mock(), input_metadata)
+        with self.assertRaises(ValueError) as cm:
+            swapi_processor.process_l3a_alpha(dependencies.data, dependencies)
+        self.assertIn("alpha-sw requires MAG RTN data", str(cm.exception))
+
+    @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3AlphaSolarWindData')
+    @patch('imap_l3_processing.swapi.swapi_processor.ParallelChunkRunner')
+    @patch('imap_l3_processing.swapi.swapi_processor.chunk_l2_data')
+    def test_process_l3a_alpha_ors_preliminary_mag_flag_when_mag_is_preliminary(
+            self, mock_chunk_l2_data, mock_parallel_chunk_runner_class,
+            mock_alpha_solar_wind_data_constructor):
+        existing_flag = int(SwapiL3Flags.HI_CHI_SQ)
+        runner_result = dict(
+            epoch=np.array([10]),
+            alpha_sw_density=np.array([0.15]),
+            alpha_sw_temperature=np.array([400000.0]),
+            alpha_sw_velocity_rtn=np.array([[450.0, 5.0, 1.0]]),
+            bad_fit_flag=np.array([existing_flag]),
+        )
+        mock_parallel_chunk_runner_class.return_value.run.return_value = runner_result
+        mock_chunk_l2_data.return_value = []
+
+        dependencies = create_swapi_l3a_dependencies_with_mocks()
+        dependencies.data = Mock(energy=np.array([15000, 16000, 17000]))
+        dependencies.mag_data = Mock()
+        dependencies.mag_is_preliminary = True
+
+        input_metadata = InputMetadata('swapi', 'l3a', datetime(2025, 8, 28), datetime(2025, 8, 29), 'v123')
+        input_metadata.descriptor = "alpha-sw"
+
+        swapi_processor = SwapiProcessor(Mock(), input_metadata)
+        swapi_processor.process_l3a_alpha(dependencies.data, dependencies)
+
+        actual_kwargs = mock_alpha_solar_wind_data_constructor.call_args.kwargs
+        np.testing.assert_array_equal(
+            actual_kwargs["bad_fit_flag"],
+            np.array([existing_flag | int(SwapiL3Flags.PRELIMINARY_MAG)]),
+        )
+
+
 def create_swapi_l3a_dependencies_with_mocks():
     return SwapiL3ADependencies(
         data=Mock(),
