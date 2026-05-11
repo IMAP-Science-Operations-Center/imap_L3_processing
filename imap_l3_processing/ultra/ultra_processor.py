@@ -195,7 +195,7 @@ class UltraProcessor(MapProcessor):
             longitude=rectangular_map.sky_grid.az_bin_midpoints,
             obs_date=input_map_intensity_data.obs_date,
             obs_date_range=input_map_intensity_data.obs_date_range,
-            solid_angle=rectangular_map.solid_angle_grid.T,
+            solid_angle=input_map_intensity_data.solid_angle,
             exposure_factor=input_map_intensity_data.exposure_factor,
             ena_intensity=rectangular_map_xarray_dataset["ena_intensity"].values,
             ena_intensity_stat_uncert=rectangular_map_xarray_dataset["ena_intensity_stat_uncert"].values,

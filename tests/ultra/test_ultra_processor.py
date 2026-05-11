@@ -119,9 +119,6 @@ class TestUltraProcessor(unittest.TestCase):
         }
 
         mock_rectangular_sky_map = Mock(spec=RectangularSkyMap)
-        solid_angle_computed_by_rectangular_skymap = np.array([[1, 2], [3, 4], [5, 6]])
-        expected_output_solid_angle = np.array([[1, 3, 5], [2, 4, 6]])
-        mock_rectangular_sky_map.solid_angle_grid = solid_angle_computed_by_rectangular_skymap
         mock_rectangular_sky_map.sky_grid = AzElSkyGrid(degree_spacing)
         mock_rectangular_sky_map.to_dataset.return_value = mock_rectangular_map_dataset
         mock_healpix_skymap.to_rectangular_skymap.return_value = mock_rectangular_sky_map, 0
@@ -199,7 +196,8 @@ class TestUltraProcessor(unittest.TestCase):
         self.assertIs(expected_passthrough.exposure_factor, actual_rectangular_data.intensity_map_data.exposure_factor)
         self.assertIs(expected_passthrough.obs_date, actual_rectangular_data.intensity_map_data.obs_date)
         self.assertIs(expected_passthrough.obs_date_range, actual_rectangular_data.intensity_map_data.obs_date_range)
-        np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.solid_angle, expected_output_solid_angle)
+        self.assertIs(expected_passthrough.obs_date_range, actual_rectangular_data.intensity_map_data.obs_date_range)
+        self.assertIs(expected_passthrough.solid_angle, actual_rectangular_data.intensity_map_data.solid_angle)
 
         # @formatter:on
         np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.latitude, mock_rectangular_sky_map.sky_grid.el_bin_midpoints)
