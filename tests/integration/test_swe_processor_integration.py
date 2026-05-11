@@ -12,7 +12,7 @@ from imap_data_access import (
 
 import imap_l3_processing
 from tests.integration.integration_test_helpers import mock_imap_data_access
-from tests.test_helpers import get_test_data_path, get_run_local_data_path
+from tests.test_helpers import get_run_local_data_path
 
 
 class SweProcessorIntegration(unittest.TestCase):

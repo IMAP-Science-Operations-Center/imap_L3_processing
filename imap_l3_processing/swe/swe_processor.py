@@ -34,7 +34,7 @@ def check_temperature_outlier_flag(data: np.ndarray):
     # Define window duration that is centered, so best to use an odd number
     window = 61 # 61 is about 1 hour
     # Initiate Temperature Outliers to be all NONE value
-    TEMPERATURE_OUTLIER = np.zeros(len(data))
+    TEMPERATURE_OUTLIER = np.zeros(len(data), dtype=np.uint16)
     TEMPERATURE_OUTLIER[:] = SweL3Flags.NONE
     for i in np.arange(len(data)):
         # Get left and right index accounting for edges
@@ -73,7 +73,6 @@ def check_temperature_outlier_flag(data: np.ndarray):
                     TEMPERATURE_OUTLIER[i] = SweL3Flags.TEMPERATURE_OUTLIER
                     # Break since we already know the current index i is an outlier
                     break
-    TEMPERATURE_OUTLIER = TEMPERATURE_OUTLIER.astype(int).astype(SweL3Flags)
     return TEMPERATURE_OUTLIER
 
 
@@ -96,7 +95,7 @@ class SweProcessor(Processor):
         config = dependencies.configuration
 
         average_psd = []
-        swe_quality_flags = np.empty_like(swe_epoch, dtype=np.int64)
+        swe_quality_flags = np.empty_like(swe_epoch, dtype=np.uint16)
         spacecraft_potential: np.ndarray[np.float64] = np.empty_like(swe_epoch, dtype=np.float64)
         halo_core: np.ndarray[np.float64] = np.empty_like(swe_epoch, dtype=np.float64)
         corrected_energy_bins = []
@@ -129,7 +128,6 @@ class SweProcessor(Processor):
                                                              corrected_energy_bins, config)
         # Check Temperature Outlier Flags and add to swe_quality_flags
         # each temperature variable needs checked
-        swe_quality_flags = swe_quality_flags.astype(int).astype(SweL3Flags)
         temperature_outlier_flags = check_temperature_outlier_flag(swe_l3_moments_data.core_t_parallel_integrated)
         swe_quality_flags |= temperature_outlier_flags
         temperature_outlier_flags = check_temperature_outlier_flag(swe_l3_moments_data.core_t_parallel_fit)
@@ -579,8 +577,10 @@ class SweProcessor(Processor):
                                                                            to_epoch=swe_epoch,
                                                                            maximum_distance=swapi_max_distance)
 
-        closest_flags = swapi_l3a_proton_data.swp_flags[swapi_indices].astype(int, copy=True)
-        swe_flags = np.where(closest_flags & SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED, SweL3Flags.FALLBACK_SWAPI_SPEED, SweL3Flags.NONE)
+        closest_flags = swapi_l3a_proton_data.swp_flags[swapi_indices]
+        swe_flags = np.full(len(swe_epoch), SweL3Flags.NONE, dtype=np.uint16)
+        estimated_angles = (closest_flags & SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED) > 0
+        swe_flags[estimated_angles] = SweL3Flags.FALLBACK_SWAPI_SPEED
 
         counts = dependencies.swe_l1b_data.count_rates * (swe_l2_data.acquisition_duration[..., np.newaxis] / 1e6)
 

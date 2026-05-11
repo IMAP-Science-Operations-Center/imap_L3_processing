@@ -402,20 +402,6 @@ core_halo_breakpoint:
   SCALEMIN: 15
   SCALEMAX: 100
   SI_CONVERSION: 1.602176634e-19>joules
-quality_flag:
-  NAME: quality_flag
-  DATA_TYPE: CDF_UINT1
-  CATDESC: Quality flags
-  DEPEND_0: epoch
-  VAR_TYPE: support_data
-  RECORD_VARYING: RV
-  FIELDNAM: Quality Flags
-  FORMAT: I4
-  LABLAXIS: Flags
-  UNITS:
-  VALIDMIN: 0
-  VALIDMAX: 255
-  FILLVAL: 255
 core_fit_num_points:
   NAME: core_fit_num_points
   DATA_TYPE: CDF_INT4
