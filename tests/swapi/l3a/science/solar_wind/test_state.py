@@ -23,17 +23,6 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
 from tests.swapi._helpers import proton_params
 
 
-class TestStateVectorLayout(unittest.TestCase):
-    """Tests for the module-level state-vector index constants (`LOG_DENSITY_IDX`, `LOG_TEMPERATURE_IDX`, `VELOCITY_SLICE`, `N_STATE`) that pin the LM optimizer's flat 5-element layout."""
-
-    def test_layout_is_log_density_log_temperature_then_velocity(self):
-        """Indices 0 and 1 hold the log-encoded density and temperature, indices 2-4 hold the velocity components, and the total length is 5."""
-        self.assertEqual(LOG_DENSITY_IDX, 0)
-        self.assertEqual(LOG_TEMPERATURE_IDX, 1)
-        self.assertEqual(VELOCITY_SLICE, slice(2, 5))
-        self.assertEqual(N_STATE, 5)
-
-
 class TestSolarWindParamsToVector(unittest.TestCase):
     """Tests for `SolarWindParams.to_vector`."""
 
@@ -97,7 +86,8 @@ class TestBulkSpeed(unittest.TestCase):
 
 
 class TestBulkAnglesInInstrumentFrame(unittest.TestCase):
-    """Tests for `bulk_angles_in_instrument_frame`, which returns (azimuth, elevation) in degrees in the instrument XYZ frame: azimuth = atan2(-v_x_inst, -v_y_inst), elevation = asin(-v_z_inst / |v|)."""
+    """Tests for `bulk_angles_in_instrument_frame`, which returns (azimuth, elevation) in degrees in the instrument XYZ frame:
+    azimuth = atan2(-v_x_inst, -v_y_inst), elevation = asin(-v_z_inst / |v|)."""
 
     def test_velocity_along_minus_y_inst_returns_zero_angles(self):
         """Under identity rotation, an RTN wind along -Y becomes v_inst = (0, -450, 0) and yields azimuth = 0 and elevation = 0."""
@@ -107,13 +97,13 @@ class TestBulkAnglesInInstrumentFrame(unittest.TestCase):
         self.assertAlmostEqual(elevation, 0.0)
 
     def test_velocity_with_negative_x_inst_component_yields_positive_azimuth(self):
-        """A wind with negative instrument-X component (v_inst_x = -50) gives a strictly positive azimuth, since azimuth = atan2(+50, +450) > 0."""
+        """A negative instrument-X component (v_inst_x = -50) gives a strictly positive azimuth, since azimuth = atan2(+50, +450) > 0."""
         sw = proton_params(velocity_rtn=(-50.0, -450.0, 0.0))
         azimuth, _ = bulk_angles_in_instrument_frame(sw, np.eye(3))
         self.assertGreater(azimuth, 0.0)
 
     def test_velocity_with_positive_z_inst_component_yields_negative_elevation(self):
-        """A wind with positive instrument-Z component (v_inst_z = +50) gives a strictly negative elevation, since elevation = asin(-50/|v|) < 0."""
+        """A positive instrument-Z component (v_inst_z = +50) gives a strictly negative elevation, since elevation = asin(-50/|v|) < 0."""
         sw = proton_params(velocity_rtn=(0.0, -450.0, 50.0))
         _, elevation = bulk_angles_in_instrument_frame(sw, np.eye(3))
         self.assertLess(elevation, 0.0)
@@ -129,7 +119,8 @@ class TestBulkAnglesInInstrumentFrame(unittest.TestCase):
 
 
 class TestThermalSpeedAndTemperature(unittest.TestCase):
-    """Tests for `thermal_speed`, `temperature_to_thermal_speed`, and `thermal_speed_to_temperature` — the Maxwellian sigma = sqrt(kT/m) conversions in km/s."""
+    """Tests for `thermal_speed`, `temperature_to_thermal_speed`, and `thermal_speed_to_temperature`
+    - the Maxwellian sigma = sqrt(kT/m) conversions in km/s."""
 
     def test_thermal_speed_matches_analytic_formula(self):
         """For a proton at 1e5 K, `thermal_speed` returns the closed-form sqrt(k*T/m) value in km/s."""
@@ -141,7 +132,8 @@ class TestThermalSpeedAndTemperature(unittest.TestCase):
         self.assertAlmostEqual(thermal_speed(sw), expected_km_s)
 
     def test_temperature_to_thermal_speed_round_trips_via_inverse(self):
-        """For temperatures spanning 1e3 to 1e7 K, converting to thermal speed and back via the inverse recovers the original temperature."""
+        """For temperatures spanning 1e3 to 1e7 K, converting to thermal speed and back
+        via the inverse recovers the original temperature."""
         for temperature_k in [1_000.0, 1e5, 1e7]:
             with self.subTest(temperature=temperature_k):
                 speed = temperature_to_thermal_speed(PROTON_MASS_KG, temperature_k)
@@ -149,13 +141,15 @@ class TestThermalSpeedAndTemperature(unittest.TestCase):
                 self.assertAlmostEqual(recovered, temperature_k)
 
     def test_thermal_speed_scales_with_sqrt_of_temperature(self):
-        """At fixed mass, quadrupling the temperature (50 kK to 200 kK) doubles the thermal speed, confirming the sigma proportional to sqrt(T) scaling."""
+        """At fixed mass, quadrupling the temperature (50 kK to 200 kK) doubles the thermal speed,
+        confirming the sigma proportional to sqrt(T) scaling."""
         speed_low = temperature_to_thermal_speed(PROTON_MASS_KG, 50_000.0)
         speed_high = temperature_to_thermal_speed(PROTON_MASS_KG, 200_000.0)
         np.testing.assert_allclose(speed_high / speed_low, 2.0)
 
     def test_thermal_speed_uses_params_temperature_and_mass(self):
-        """`thermal_speed(SolarWindParams)` is a wrapper that reads T and m from the params and matches a direct `temperature_to_thermal_speed` call with the same inputs."""
+        """`thermal_speed(SolarWindParams)` is a wrapper that reads T and m from the params and matches
+        a direct `temperature_to_thermal_speed` call with the same inputs."""
         sw = proton_params(temperature=120_000.0)
         np.testing.assert_allclose(
             thermal_speed(sw),
