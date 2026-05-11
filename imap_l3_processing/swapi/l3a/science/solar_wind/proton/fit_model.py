@@ -16,7 +16,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.optimizer import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.basin_hopping import (
     escape_local_minimum,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.uncertainties import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.uncertainties import (
     derive_uncertainties,
     make_correlated_velocity,
 )

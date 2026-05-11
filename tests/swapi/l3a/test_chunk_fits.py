@@ -29,7 +29,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import SolarWindParams
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_l3_processing.swapi.l3a.utils import get_swapi_geometry, rotate_rtn_to_dps
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor

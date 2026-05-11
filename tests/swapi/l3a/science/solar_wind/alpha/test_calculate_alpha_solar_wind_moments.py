@@ -31,7 +31,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
     ProtonSolarWindFitResult,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import SolarWindParams
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
@@ -548,7 +548,7 @@ class TestAlphaSolarWindMomentsAccessors(unittest.TestCase):
         # would require reconstructing the same covariance the alpha
         # pipeline produces; building the UFloat triple directly is enough
         # to exercise the accessors.
-        from imap_l3_processing.swapi.l3a.science.solar_wind.proton.uncertainties import (
+        from imap_l3_processing.swapi.l3a.science.solar_wind.uncertainties import (
             make_correlated_velocity,
         )
 
@@ -862,7 +862,7 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
         _assert_moments_are_nan_filled(self, result)
 
     def test_empty_count_rate_and_voltage_returns_fit_failed(self):
-        """Empty input arrays trigger the `n_meas == 0` guard inside `_alpha_initial_guess` and the fitter returns a `FIT_FAILED` NaN-filled result."""
+        """Empty input arrays return a `FIT_FAILED` NaN-filled result."""
         result = self._call(
             count_rate=np.zeros(0),
             esa_voltage=np.zeros(0),

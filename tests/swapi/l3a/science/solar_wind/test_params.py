@@ -8,7 +8,7 @@ from imap_l3_processing.constants import (
     METERS_PER_KILOMETER,
     PROTON_MASS_KG,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     LOG_DENSITY_IDX,
     LOG_TEMPERATURE_IDX,
     N_STATE,

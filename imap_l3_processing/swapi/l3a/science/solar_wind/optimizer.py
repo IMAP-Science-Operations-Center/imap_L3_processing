@@ -11,7 +11,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
 )
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import SolarWindParams
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 
 
 @dataclass

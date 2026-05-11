@@ -3,7 +3,7 @@ import math
 import numba
 import numpy as np
 
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     SolarWindParams,
     bulk_angles_in_instrument_frame,
     bulk_speed, thermal_speed,

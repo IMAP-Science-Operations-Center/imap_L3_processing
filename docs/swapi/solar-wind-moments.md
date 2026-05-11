@@ -653,8 +653,10 @@ Like the proton wrong-basin check, this is a single forward-model evaluation at 
 
 ### Uncertainty propagation
 
+For alphas, we apply the same approach that we applied for the proton fit:
+
 ```math
-\Sigma_{\text{stage 2}} = s^{2}\thinspace (J^{\top} J)^+\quad\text{(3×3, in } (\log n_{\alpha}, \log T_{\alpha}, \Delta v) \text{ space)}, \qquad s^{2} = \frac{\sum_{i} r_{i}^{2}}{N - p}
+\Sigma_{\text{stage 2}} = (J^{\top} J)^+ \thinspace  \bigl(J^{\top} W J\bigr) \thinspace  (J^{\top} J)^+ \quad\text{(3×3, in } (\log n_{\alpha}, \log T_{\alpha}, \Delta v) \text{ space)}, \qquad W_{ii} = \frac{r_{i}^{2}}{(1 - h_{ii})^{2}}
 ```
 ```math
 \sigma_{n_{\alpha}} = n_{\alpha} \sqrt{\Sigma_{\text{stage 2}}[0,0]}, \qquad \sigma_{T_{\alpha}} = T_{\alpha} \sqrt{\Sigma_{\text{stage 2}}[1,1]}, \qquad \sigma_{\Delta v} = \sqrt{\Sigma_{\text{stage 2}}[2,2]}
@@ -662,6 +664,8 @@ Like the proton wrong-basin check, this is a single forward-model evaluation at 
 ```math
 \Sigma_{\mathbf{v}_{\alpha}} = \Sigma_{\mathbf{v}_{p}} + \sigma_{\Delta v}^{2} \thinspace  \hat{\mathbf{B}}\hat{\mathbf{B}}^{\top}
 ```
+
+
 This **ignores proton-parameter uncertainty's effect on Stage 2 residuals**, so $`\sigma_{n_{\alpha}}, \sigma_{T_{\alpha}}`$ are lower bounds.
 
 ### Quality flags (alpha-specific)
@@ -671,15 +675,6 @@ This **ignores proton-parameter uncertainty's effect on Stage 2 residuals**, so 
 - `EPHEMERIS_GAP` (= 4): SPICE could not provide rotation matrices for the chunk's measurement times. The chunk is fill-valued without attempting a fit.
 - `MAG_GAP` (= 128): SPICE geometry was available but MAG data is missing or contains fill values across the chunk window. The alpha fit is skipped and moments are fill-valued.
 - `PRELIMINARY_MAG` (= 64): MAG L1D was used as the source for this run (L2 was unavailable). Set on every chunk in the run. The product is a candidate for reprocessing once MAG L2 covers the time range.
-
-### Known limitations
-
-- **Alpha species correction unproven**: $`\mathcal{A}_{0}^{\alpha}(V_{\text{lab}}) / \mathcal{A}_{0}^{p}(V_{\text{lab}}) = \varepsilon_{\alpha}/\varepsilon_{p}`$ is the natural-default extension because separate alpha ABM measurements weren't taken. Validate against OMNI alpha density.
-- **Voltage-independent species efficiency ratio**: `EfficiencyCalibrationTable` stores scalar-per-species-per-time; the V-dependence of $`\varepsilon_{\alpha}/\varepsilon_{p}`$ is not modeled.
-- **Frozen-proton uncertainty propagation**: alpha $`n, T`$ error bars from Stage 2 do not include proton-parameter uncertainty.
-- **Alpha contamination of proton fit**: Stage 2 holds protons fixed, so their fit absorbs whatever bias the alpha bump caused in Stage 1. A future joint refit will address this.
-- **Field-aligned-only drift**: transient non-field-aligned drifts (e.g. during CME shocks) will be fit as $`\Delta v \approx 0`$ plus elevated $`\chi^{2}`$.
-- **Step-axis split**: Stage 1 inside the alpha processor uses 62 coarse steps, while the per-sweep proton L3A uses 71. Reference proton moments in the alpha product will differ slightly from the per-sweep L3A — compare per-chunk-mean of L3A vs `reference_proton_*` as a sanity diagnostic.
 
 ## References
 

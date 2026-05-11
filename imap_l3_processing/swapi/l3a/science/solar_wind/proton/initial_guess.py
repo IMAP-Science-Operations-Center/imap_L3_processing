@@ -18,7 +18,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
 )
 from imap_l3_processing.swapi.l3a.utils import optimal_density_scale
 from imap_l3_processing.swapi.l3a.science.solar_wind.utils import average_spin_axis_rtn
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import SolarWindParams, temperature_to_thermal_speed, \
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams, temperature_to_thermal_speed, \
     thermal_speed_to_temperature
 
 

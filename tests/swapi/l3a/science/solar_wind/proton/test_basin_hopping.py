@@ -16,7 +16,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.proton.basin_hopping import
     _ROTATED_RMSE_RATIO_THRESHOLD,
     escape_local_minimum,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import SolarWindParams
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from tests.swapi._helpers import proton_params as _shared_proton_params
 
 

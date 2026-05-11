@@ -49,7 +49,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
     fit_solar_wind_proton_model,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import SolarWindParams
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.utils import (
     esa_voltage_to_alpha_speed,

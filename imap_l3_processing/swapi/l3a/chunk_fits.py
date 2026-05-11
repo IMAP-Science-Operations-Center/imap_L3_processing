@@ -19,7 +19,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
     ProtonSolarWindFitResult,
     fit_solar_wind_proton_model,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.uncertainties import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.uncertainties import (
     derive_velocity_angles,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (

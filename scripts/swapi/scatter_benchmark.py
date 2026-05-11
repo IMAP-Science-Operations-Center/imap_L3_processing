@@ -14,7 +14,7 @@ Usage:  python scripts/swapi/scatter_benchmark.py
 import sys
 from pathlib import Path
 
-from imap_l3_processing.swapi.l3a.science.solar_wind import state
+from imap_l3_processing.swapi.l3a.science.solar_wind import params
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 

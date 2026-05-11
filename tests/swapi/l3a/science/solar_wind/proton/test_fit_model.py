@@ -16,7 +16,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.optimizer import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
     fit_solar_wind_proton_model,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     N_STATE,
     SolarWindParams,
 )

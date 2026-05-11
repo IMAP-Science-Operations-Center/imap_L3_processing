@@ -14,7 +14,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     calculate_integral,
     model_solar_wind_ideal_coincidence_rates,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     LOG_DENSITY_IDX,
     LOG_TEMPERATURE_IDX,
     N_STATE,

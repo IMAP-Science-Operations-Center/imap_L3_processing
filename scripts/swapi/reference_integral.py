@@ -26,7 +26,7 @@ import numpy as np
 from numba import njit, prange
 
 from imap_l3_processing.swapi.l3a.science.solar_wind import state
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import bulk_speed
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import bulk_speed
 from imap_l3_processing.swapi.response.swapi_response import ResponseGrid
 
 _EL = np.linspace(-15.0, 15.0, 601)

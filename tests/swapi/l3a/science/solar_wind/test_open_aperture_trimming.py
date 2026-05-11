@@ -7,7 +7,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.open_aperture_trimming impo
     OA_SCAN_RESOLUTION,
     trim_oa_azimuth_by_integrand,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     SolarWindParams,
 )
 from imap_l3_processing.swapi.response.azimuthal_transmission import (

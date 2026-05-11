@@ -18,7 +18,7 @@ from imap_l3_processing.constants import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     calculate_integral,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import SolarWindParams
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 
 from figure_utils import (
     REPO_ROOT,

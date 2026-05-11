@@ -5,12 +5,13 @@ import numpy as np
 from uncertainties import correlated_values, covariance_matrix, ufloat
 
 from imap_l3_processing.constants import PROTON_MASS_KG
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.uncertainties import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.uncertainties import (
+    compute_hc3_parameter_covariance,
     derive_uncertainties,
     derive_velocity_angles,
     make_correlated_velocity,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     LOG_DENSITY_IDX,
     N_STATE,
     SolarWindParams,
@@ -56,6 +57,52 @@ def _identity_rotate_rtn_to_dps(vector_rtn, _epoch_tt2000_ns):
     """Stand-in for the SPICE-driven rotation: returns the input unchanged.
     Lets tests reason about angles in the RTN basis directly."""
     return vector_rtn
+
+
+class TestComputeHc3ParameterCovariance(unittest.TestCase):
+    """Tests for `compute_hc3_parameter_covariance`: the parameter-space-agnostic sandwich estimator shared by the proton and alpha fitters."""
+
+    def test_returns_p_by_p_symmetric_matrix_for_full_rank_jacobian(self):
+        """A full-rank (n×p) Jacobian with non-zero residuals returns a finite, symmetric (p×p) covariance."""
+        rng = np.random.default_rng(0)
+        jacobian = rng.normal(size=(30, 4))
+        residuals = rng.normal(size=30) * 0.1
+
+        cov = compute_hc3_parameter_covariance(jacobian, residuals)
+
+        self.assertEqual(cov.shape, (4, 4))
+        self.assertTrue(np.all(np.isfinite(cov)))
+        np.testing.assert_allclose(cov, cov.T, rtol=0, atol=1e-12)
+
+    def test_high_leverage_row_inflates_corresponding_diagonal(self):
+        """A single row with leverage near 1 in column j produces a much larger diagonal cov[j,j] than the same fit without the leverage spike."""
+        n_bins = 20
+        p = 3
+        # Baseline: rank-3 jacobian with no high-leverage row; uniform contribution.
+        baseline_jacobian = np.zeros((n_bins, p))
+        for i in range(n_bins):
+            baseline_jacobian[i, i % p] = 1.0
+        residuals = np.zeros(n_bins)
+        residuals[0] = 0.1
+
+        cov_baseline = compute_hc3_parameter_covariance(baseline_jacobian, residuals)
+
+        # High-leverage variant: column 0 of row 0 dominates the JᵀJ for column 0.
+        leveraged_jacobian = baseline_jacobian.copy()
+        leveraged_jacobian[0, 0] = 1000.0
+        cov_leveraged = compute_hc3_parameter_covariance(leveraged_jacobian, residuals)
+
+        self.assertGreater(cov_leveraged[0, 0], cov_baseline[0, 0] * 1e3)
+
+    def test_returns_all_nan_matrix_for_nan_jacobian(self):
+        """An all-NaN Jacobian triggers the `LinAlgError` fallback and returns a (p×p) all-NaN matrix."""
+        jacobian = np.full((20, 5), np.nan)
+        residuals = np.zeros(20)
+
+        cov = compute_hc3_parameter_covariance(jacobian, residuals)
+
+        self.assertEqual(cov.shape, (5, 5))
+        self.assertTrue(np.all(np.isnan(cov)))
 
 
 class TestDeriveUncertaintiesScalings(unittest.TestCase):

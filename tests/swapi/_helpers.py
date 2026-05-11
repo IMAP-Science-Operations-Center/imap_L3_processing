@@ -13,7 +13,7 @@ from imap_l3_processing.constants import PROTON_MASS_KG
 from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import SolarWindParams
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 from tests.test_helpers import get_test_instrument_team_data_path

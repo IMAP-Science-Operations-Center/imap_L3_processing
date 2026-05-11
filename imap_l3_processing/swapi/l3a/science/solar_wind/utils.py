@@ -4,7 +4,7 @@ import numba
 import numpy as np
 from numpy import ndarray
 
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     SolarWindParams,
     thermal_speed,
 )

@@ -15,7 +15,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.optimizer import (
     OptimizeSolarWindParamsResult,
     optimize_solar_wind_params,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     N_STATE,
     SolarWindParams,
 )

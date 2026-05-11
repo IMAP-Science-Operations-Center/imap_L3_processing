@@ -63,7 +63,7 @@ from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import SolarWindParams
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 
 _N_SWEEPS = 5
 _N_BINS = len(COARSE_SWEEP_VOLTAGES_MEAN_V)

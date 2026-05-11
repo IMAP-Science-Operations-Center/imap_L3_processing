@@ -14,7 +14,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.optimizer import (
     OptimizeSolarWindParamsResult,
     optimize_solar_wind_params,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import SolarWindParams
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 
 
 _MAX_BASIN_REFINE_ITERS = 6

@@ -8,7 +8,7 @@ from uncertainties import UFloat, correlated_values, covariance_matrix, ufloat
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     SolarWindFitContext,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     LOG_DENSITY_IDX,
     LOG_TEMPERATURE_IDX,
     VELOCITY_SLICE,
@@ -21,46 +21,75 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.optimizer import (
 N_VELOCITY_ANGLE_MC_SAMPLES = 100
 
 
+def compute_hc3_parameter_covariance(
+    jacobian: ndarray, residuals: ndarray
+) -> ndarray:
+    """HC3 sandwich estimator of the (p×p) parameter covariance for an
+    unweighted least-squares fit.
+
+    Computes ``(JᵀJ)⁺ · (Jᵀ W J) · (JᵀJ)⁺`` with the HC3 inner weights
+    ``W = diag(r_i² / (1 − h_ii)²)``, where ``h_ii = J_i · (JᵀJ)⁺ · J_iᵀ``
+    are the hat-matrix diagonals. The ``(1 − h_ii)⁻²`` reweight corrects the
+    finite-sample bias that the LM stationarity condition (``Jᵀ r = 0``)
+    induces on ``r_i²`` at high-leverage rows — typically a small set of bins
+    near the peak that carry most of the parameter information, so HC0
+    understates σ by ~10–25% on SWAPI fits. Hayes & Cai (2007) recommends
+    HC3 for small effective N.
+
+    Parameters
+    ----------
+    jacobian : ndarray, shape (n_residuals, n_params)
+        Analytic residual Jacobian at the converged solution.
+    residuals : ndarray, shape (n_residuals,)
+        Per-bin residuals ``pred − obs`` at the converged solution.
+
+    Returns
+    -------
+    ndarray, shape (n_params, n_params)
+        Sandwich covariance. Returns an all-NaN matrix of the same shape if
+        ``JᵀJ`` is rank-deficient (``np.linalg.LinAlgError``).
+    """
+    n_params = jacobian.shape[1]
+    try:
+        JT_J_pseudoinverse = np.linalg.pinv(jacobian.T @ jacobian)
+        leverage = np.einsum(
+            "ki,ij,kj->k",
+            jacobian,
+            JT_J_pseudoinverse,
+            jacobian,
+        )
+        leverage_clipped = np.clip(leverage, 0.0, 0.9999)
+        hc3_weights = (residuals / (1.0 - leverage_clipped)) ** 2
+        sandwich_middle = np.einsum(
+            "ki,k,kj->ij", jacobian, hc3_weights, jacobian
+        )
+        return JT_J_pseudoinverse @ sandwich_middle @ JT_J_pseudoinverse
+    except np.linalg.LinAlgError:
+        return np.full((n_params, n_params), np.nan)
+
+
 def derive_uncertainties(
     result: OptimizeSolarWindParamsResult,
     ctx: SolarWindFitContext,
 ) -> tuple[float, float, ndarray]:
-    residual_jacobian = result.jacobian
-    try:
-        JT_J_pseudoinverse = np.linalg.pinv(residual_jacobian.T @ residual_jacobian)
-        # HC3 inner factor: r_i^2 / (1 - h_ii)^2 where h_ii are hat-matrix
-        # diagonals. The (1 - h_ii)^-2 reweight corrects for the finite-sample
-        # bias that LM constraints (J^T r = 0) induce on r_i^2 at high-leverage
-        # bins — a few bins at the proton peak carry most of the parameter
-        # information, so their leverage is large and HC0 understates by ~20%.
-        # Hayes & Cai (2007) recommends HC3 for small effective N.
-        leverage = np.einsum(
-            "ki,ij,kj->k",
-            residual_jacobian,
-            JT_J_pseudoinverse,
-            residual_jacobian,
-        )
-        leverage_clipped = np.clip(leverage, 0.0, 0.9999)
-        hc3_weights = (result.residuals / (1.0 - leverage_clipped)) ** 2
-        sandwich_middle = np.einsum(
-            "ki,k,kj->ij", residual_jacobian, hc3_weights, residual_jacobian
-        )
-        parameter_covariance = JT_J_pseudoinverse @ sandwich_middle @ JT_J_pseudoinverse
-
-        log_density_variance = parameter_covariance[LOG_DENSITY_IDX, LOG_DENSITY_IDX]
-        log_temperature_variance = parameter_covariance[
-            LOG_TEMPERATURE_IDX, LOG_TEMPERATURE_IDX
-        ]
-
-        density_error = float(
-            result.sw_params.density * np.sqrt(max(log_density_variance, 0.0))
-        )
-        temperature_error = float(
-            result.sw_params.temperature * np.sqrt(max(log_temperature_variance, 0.0))
-        )
-        velocity_covariance = parameter_covariance[VELOCITY_SLICE, VELOCITY_SLICE]
-    except np.linalg.LinAlgError:
+    parameter_covariance = compute_hc3_parameter_covariance(
+        result.jacobian, result.residuals
+    )
+    if not np.all(np.isfinite(parameter_covariance)):
         return np.nan, np.nan, np.full((3, 3), np.nan)
+
+    log_density_variance = parameter_covariance[LOG_DENSITY_IDX, LOG_DENSITY_IDX]
+    log_temperature_variance = parameter_covariance[
+        LOG_TEMPERATURE_IDX, LOG_TEMPERATURE_IDX
+    ]
+
+    density_error = float(
+        result.sw_params.density * np.sqrt(max(log_density_variance, 0.0))
+    )
+    temperature_error = float(
+        result.sw_params.temperature * np.sqrt(max(log_temperature_variance, 0.0))
+    )
+    velocity_covariance = parameter_covariance[VELOCITY_SLICE, VELOCITY_SLICE]
 
     return (
         density_error,

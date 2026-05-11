@@ -54,7 +54,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
     fit_solar_wind_proton_model,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import SolarWindParams
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_l3_processing.swapi.l3a.utils import (
     get_spacecraft_velocity_rtn,
     get_swapi_geometry,

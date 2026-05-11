@@ -19,7 +19,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.proton.initial_guess import
     INITIAL_TEMPERATURE_FLOOR_K,
     calculate_initial_guess,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     SolarWindParams,
 )
 from imap_l3_processing.swapi.l3a.utils import optimal_density_scale

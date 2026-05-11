@@ -23,13 +23,14 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     SolarWindFitContext,
     build_solar_wind_fit_context,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     LOG_DENSITY_IDX,
     LOG_TEMPERATURE_IDX,
     SolarWindParams,
     VELOCITY_SLICE,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.uncertainties import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.uncertainties import (
+    compute_hc3_parameter_covariance,
     make_correlated_velocity,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.utils import (
@@ -148,6 +149,9 @@ def fit_solar_wind_alpha_moments(
     if int(proton_moments.bad_fit_flag) != int(SwapiL3Flags.NONE):
         return _nan_alpha_moments(SwapiL3Flags.STALE_PROTON)
 
+    if len(esa_voltage) == 0:
+        return _nan_alpha_moments(SwapiL3Flags.FIT_FAILED)
+
     proton_bulk_rtn = proton_moments.bulk_velocity_rtn_nominal()
     bad_fit_flag = SwapiL3Flags.NONE
 
@@ -252,10 +256,10 @@ def fit_solar_wind_alpha_moments(
     if not result.success:
         bad_fit_flag |= SwapiL3Flags.FIT_FAILED
 
-    # Covariance in (log n, log T, Δv) space, scaled by residual variance s² = Σr²/(N−p).
-    n_data, n_params = len(result.fun), len(result.x)
-    residual_variance = float(np.sum(result.fun**2)) / max(n_data - n_params, 1)
-    cov_x = residual_variance * np.linalg.pinv(result.jac.T @ result.jac)
+    # HC3 sandwich covariance in (log n, log T, Δv) space — same estimator
+    # the proton fit uses (see `solar_wind/uncertainties.py`); leverage-
+    # corrected because alpha-peak bins dominate parameter information.
+    cov_x = compute_hc3_parameter_covariance(result.jac, result.fun)
     density_sigma = float(n_a_fit * np.sqrt(max(cov_x[0, 0], 0.0)))
     temperature_sigma = float(T_a_fit * np.sqrt(max(cov_x[1, 1], 0.0)))
     delta_v_sigma = float(np.sqrt(max(cov_x[2, 2], 0.0)))

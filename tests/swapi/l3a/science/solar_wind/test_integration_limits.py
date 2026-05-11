@@ -14,7 +14,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.integration_limits import (
     get_speed_quadrature,
     speed_window_misses_passband,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     SolarWindParams,
     bulk_speed,
     thermal_speed,

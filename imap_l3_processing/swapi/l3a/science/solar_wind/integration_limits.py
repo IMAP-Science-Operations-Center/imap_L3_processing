@@ -9,7 +9,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.azimuthal_regions import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.open_aperture_trimming import (
     trim_oa_azimuth_by_integrand,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     SolarWindParams,
     bulk_angles_in_instrument_frame,
     bulk_speed,
