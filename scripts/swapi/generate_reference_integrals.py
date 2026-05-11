@@ -119,7 +119,7 @@ def main():
     voltages = [_peak_voltage(float(v)) for v in bulk_speeds]
     swapi_response.warm_cache(voltages)
     response_grids = [
-        swapi_response.create_response_grid(v, PROTON_MASS_PER_CHARGE_M_P_PER_E)
+        swapi_response.get_response_grid(v, PROTON_MASS_PER_CHARGE_M_P_PER_E)
         for v in voltages
     ]
 

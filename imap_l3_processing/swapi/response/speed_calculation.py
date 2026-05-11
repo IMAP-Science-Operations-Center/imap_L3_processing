@@ -41,27 +41,6 @@ def esa_voltage_to_proton_speed(esa_voltage: ArrayLike) -> np.ndarray:
     )
 
 
-def times_for_sweep(start_time):
-    time_step_per_bin = 12 / 72
-    return start_time + time_step_per_bin * np.arange(72)
-
-
-def extract_coarse_sweep(data: np.ndarray):
-    if data.ndim > 1:
-        return data[:, 1:63]
-    else:
-        return data[1:63]
-
-
-def calculate_combined_sweeps(coincidence_count_rates, energies):
-    energies = np.mean(extract_coarse_sweep(energies), axis=0)
-    coincidence_count_rates = extract_coarse_sweep(coincidence_count_rates)
-    average_coin_rates = np.sum(coincidence_count_rates, axis=0) / len(
-        coincidence_count_rates
-    )
-    return average_coin_rates, energies
-
-
 def calculate_sw_speed(particle_mass, particle_charge, energy):
     """Energy-per-charge → speed for an ion of given mass/charge. Handles scalars,
     arrays, and uncertainties.UFloat values."""

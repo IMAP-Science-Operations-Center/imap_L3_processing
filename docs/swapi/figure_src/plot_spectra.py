@@ -140,7 +140,7 @@ def main():
         reference = np.empty(n_voltages)
         swapi_response.warm_cache(esa_voltages)
         for i, v in enumerate(esa_voltages):
-            response_grid = swapi_response.create_response_grid(
+            response_grid = swapi_response.get_response_grid(
                 float(v), PROTON_MASS_PER_CHARGE_M_P_PER_E, 1.0
             )
             rate, _ = calculate_integral(sw, response_grid, rotation_matrix)

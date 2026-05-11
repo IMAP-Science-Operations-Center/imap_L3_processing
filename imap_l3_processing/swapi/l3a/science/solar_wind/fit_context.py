@@ -40,7 +40,7 @@ def build_solar_wind_fit_context(
 
     response_grids = numba.typed.List(
         [
-            swapi_response.create_response_grid(
+            swapi_response.get_response_grid(
                 v, mass_per_charge_m_p_per_e, central_effective_area_scale
             )
             for v in esa_voltage

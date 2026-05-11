@@ -26,7 +26,7 @@ from imap_l3_processing.constants import (
     BOLTZMANN_CONSTANT_JOULES_PER_KELVIN,
 )
 from imap_l3_processing.swapi.response.speed_calculation import (
-    calculate_combined_sweeps,
+    SWAPI_COARSE_SWEEP_BINS,
     calculate_sw_speed,
 )
 from imap_l3_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table import (
@@ -75,7 +75,8 @@ def calculate_pickup_ion_values(
         helium_inflow_vector,
     )
     sweep_count = len(count_rates)
-    average_count_rates, energies = calculate_combined_sweeps(count_rates, energy)
+    average_count_rates = np.mean(count_rates[:, SWAPI_COARSE_SWEEP_BINS], axis=0)
+    energies = np.mean(energy[:, SWAPI_COARSE_SWEEP_BINS], axis=0)
 
     extracted_energy_labels, extracted_energies, extracted_count_rates = (
         extract_pui_energy_bins(

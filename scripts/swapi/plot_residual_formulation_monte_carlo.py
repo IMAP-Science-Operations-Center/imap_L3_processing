@@ -87,10 +87,11 @@ def _load_swapi_response():
 def _build_proton_arrays(sr, voltages):
     sr.warm_cache(voltages)
     grids = numba.typed.List([sr.create_passband_grid(v) for v in voltages])
-    cs = np.array(
-        [sr.central_speed(v, PROTON_MASS_PER_CHARGE_M_P_PER_E) for v in voltages]
-    )
-    cea = np.array([sr.get_central_effective_area(v) for v in voltages])
+    response_grids = [
+        sr.create_response_grid(v, PROTON_MASS_PER_CHARGE_M_P_PER_E) for v in voltages
+    ]
+    cs = np.array([rg.central_speed for rg in response_grids])
+    cea = np.array([rg.central_effective_area for rg in response_grids])
     at = np.asarray(sr.azimuthal_transmission, dtype=float)
     ats = float(sr.AZIMUTHAL_TRANSMISSION_SPACING_DEG)
     return grids, cs, cea, at, ats
@@ -141,10 +142,11 @@ def _apply_mask(sr, voltages, noisy_rates, clean_rates, rot):
     rot_m = rot[keep]
     sr.warm_cache(v_m)
     grids_m = numba.typed.List([sr.create_passband_grid(v) for v in v_m])
-    cs_m = np.array(
-        [sr.central_speed(v, PROTON_MASS_PER_CHARGE_M_P_PER_E) for v in v_m]
-    )
-    cea_m = np.array([sr.get_central_effective_area(v) for v in v_m])
+    response_grids_m = [
+        sr.create_response_grid(v, PROTON_MASS_PER_CHARGE_M_P_PER_E) for v in v_m
+    ]
+    cs_m = np.array([rg.central_speed for rg in response_grids_m])
+    cea_m = np.array([rg.central_effective_area for rg in response_grids_m])
     at = np.asarray(sr.azimuthal_transmission, dtype=float)
     ats = float(sr.AZIMUTHAL_TRANSMISSION_SPACING_DEG)
     return v_m, nr_m, cr_m, rot_m, grids_m, cs_m, cea_m, at, ats

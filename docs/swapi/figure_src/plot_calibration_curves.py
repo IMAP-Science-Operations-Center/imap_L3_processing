@@ -30,7 +30,7 @@ def main():
     voltages = swapi_response.central_effective_area_voltage
     eff_area = swapi_response.central_effective_area
 
-    transmission = swapi_response.azimuthal_transmission
+    transmission = swapi_response._azimuthal_transmission
     azimuths = (
         np.arange(len(transmission)) * SwapiResponse.AZIMUTHAL_TRANSMISSION_SPACING_DEG
     )

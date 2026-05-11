@@ -588,7 +588,6 @@ class TestSwapiProcessor(TestCase):
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_delta_minus_plus')
     @patch('imap_l3_processing.swapi.swapi_processor.save_data')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3BCombinedVDF')
-    @patch('imap_l3_processing.swapi.swapi_processor.calculate_combined_sweeps')
     @patch('imap_l3_processing.swapi.swapi_processor.chunk_l2_data')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3BDependencies')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_alpha_solar_wind_vdf')
@@ -602,7 +601,7 @@ class TestSwapiProcessor(TestCase):
                          mock_calculate_alpha_solar_wind_vdf,
                          mock_swapi_l3b_dependencies_class,
                          mock_chunk_l2_data,
-                         mock_calculate_combined_sweeps, mock_combined_vdf_data,
+                         mock_combined_vdf_data,
                          mock_save_data,
                          mock_calculate_delta_minus_plus):
         instrument = 'swapi'
@@ -646,30 +645,35 @@ class TestSwapiProcessor(TestCase):
             DeltaMinusPlus(sentinel.energy_delta_minus2, sentinel.energy_delta_plus2),
         ]
 
-        energy = np.array([15000, 16000, 17000, 18000, 19000])
-        coincidence_count_rate = np.array(
-            [[4, 5, 6, 7, 8], [9, 10, 11, 12, 13], [14, 15, 16, 17, 18], [19, 20, 21, 22, 23]])
-        average_coincident_count_rates = [14, 15, 16, 17, 18]
+        n_sweeps, n_bins = 4, 72
+        coarse_count_rates = np.linspace(14.0, 75.0, 62)
+        coarse_count_rate_uncertainties = np.linspace(0.1, 6.2, 62)
+        coarse_energies = np.linspace(15000.0, 76000.0, 62)
 
-        coincidence_count_rate_uncertainty = np.array(
-            [[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5],
-             [0.1, 0.2, 0.3, 0.4, 0.5]])
-        average_coincident_count_rate_uncertainties = [0.1, 0.2, 0.3, 0.4, 0.5]
+        # All sweeps identical so the per-bin mean across sweeps equals the per-bin pattern.
+        coincidence_count_rate = np.zeros((n_sweeps, n_bins))
+        coincidence_count_rate[:, 1:63] = coarse_count_rates
+        coincidence_count_rate_uncertainty = np.zeros((n_sweeps, n_bins))
+        coincidence_count_rate_uncertainty[:, 1:63] = coarse_count_rate_uncertainties
+        energy_per_sweep = np.zeros((n_sweeps, n_bins))
+        energy_per_sweep[:, 1:63] = coarse_energies
+
+        average_coincident_count_rates = coarse_count_rates
+        # σ propagation through Σ/N over n independent sweeps shrinks the per-sweep σ by √n.
+        average_coincident_count_rate_uncertainties = coarse_count_rate_uncertainties / np.sqrt(n_sweeps)
+        energy = coarse_energies
 
         first_chunk_initial_epoch = 10
-        first_l2_data_chunk = SwapiL2Data(np.array([first_chunk_initial_epoch, 11, 12, 13]), sentinel.energies,
+        first_l2_data_chunk = SwapiL2Data(np.array([first_chunk_initial_epoch, 11, 12, 13]), energy_per_sweep,
                                           coincidence_count_rate,
                                           coincidence_count_rate_uncertainty)
 
         second_chunk_initial_epoch = 60
-        second_l2_data_chunk = SwapiL2Data(np.array([second_chunk_initial_epoch, 11, 12, 13]), sentinel.energies,
+        second_l2_data_chunk = SwapiL2Data(np.array([second_chunk_initial_epoch, 11, 12, 13]), energy_per_sweep,
                                            coincidence_count_rate,
                                            coincidence_count_rate_uncertainty)
 
         mock_chunk_l2_data.return_value = [first_l2_data_chunk, second_l2_data_chunk]
-
-        mock_calculate_combined_sweeps.return_value = [
-            uarray(average_coincident_count_rates, average_coincident_count_rate_uncertainties), energy]
 
         input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date,
                                        outgoing_version)
@@ -696,12 +700,6 @@ class TestSwapiProcessor(TestCase):
         mock_chunk_l2_data.assert_called_with(mock_swapi_l3b_dependencies_class.fetch_dependencies.return_value.data,
                                               50)
 
-        np.testing.assert_array_equal(coincidence_count_rate,
-                                      nominal_values(mock_calculate_combined_sweeps.call_args_list[0].args[0]))
-        np.testing.assert_array_equal(coincidence_count_rate_uncertainty,
-                                      std_devs(mock_calculate_combined_sweeps.call_args_list[0].args[0]))
-        self.assertEqual(sentinel.energies,
-                         mock_calculate_combined_sweeps.call_args_list[0].args[1])
         mock_efficiency_table.get_proton_efficiency_for.assert_has_calls(
             [call(first_chunk_initial_epoch + FIVE_MINUTES_IN_NANOSECONDS),
              call(second_chunk_initial_epoch + FIVE_MINUTES_IN_NANOSECONDS)])
@@ -753,16 +751,15 @@ class TestSwapiProcessor(TestCase):
                          mock_calculate_combined_solar_wind_differential_flux.call_args_list[0].args[2])
         self.assertEqual(mock_geometric_factor_calibration_table,
                          mock_calculate_combined_solar_wind_differential_flux.call_args_list[0].args[3])
-        mock_calculate_delta_minus_plus.assert_has_calls([
-            call(sentinel.proton_calculated_velocities1),
-            call(sentinel.alpha_calculated_velocities1),
-            call(sentinel.pui_calculated_velocities1),
-            call(energy),
-            call(sentinel.proton_calculated_velocities2),
-            call(sentinel.alpha_calculated_velocities2),
-            call(sentinel.pui_calculated_velocities2),
-            call(energy),
-        ])
+        delta_calls = mock_calculate_delta_minus_plus.call_args_list
+        self.assertEqual(sentinel.proton_calculated_velocities1, delta_calls[0].args[0])
+        self.assertEqual(sentinel.alpha_calculated_velocities1, delta_calls[1].args[0])
+        self.assertEqual(sentinel.pui_calculated_velocities1, delta_calls[2].args[0])
+        np.testing.assert_array_equal(energy, delta_calls[3].args[0])
+        self.assertEqual(sentinel.proton_calculated_velocities2, delta_calls[4].args[0])
+        self.assertEqual(sentinel.alpha_calculated_velocities2, delta_calls[5].args[0])
+        self.assertEqual(sentinel.pui_calculated_velocities2, delta_calls[6].args[0])
+        np.testing.assert_array_equal(energy, delta_calls[7].args[0])
 
         expected_combined_metadata = InputMetadata(descriptor="combined", data_level=outgoing_data_level,
                                                    start_date=start_date, end_date=end_date, instrument=instrument,

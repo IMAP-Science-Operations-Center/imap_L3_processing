@@ -225,7 +225,7 @@ class TestSpeedWindowMissesPassband(unittest.TestCase):
     def setUpClass(cls):
         cls.response = _load_response()
         cls.response.warm_cache([_ESA_VOLTAGE])
-        cls.response_grid = cls.response.create_response_grid(_ESA_VOLTAGE, 1.0)
+        cls.response_grid = cls.response.get_response_grid(_ESA_VOLTAGE, 1.0)
 
     def test_returns_false_when_bulk_speed_sits_in_passband(self):
         # 450 km/s ± 6·σ trivially overlaps the on-axis passband ≈ [417, 455]
@@ -288,7 +288,7 @@ class TestGetAngularQuadratureSunglassesRegion(unittest.TestCase):
     def setUpClass(cls):
         cls.response = _load_response()
         cls.response.warm_cache([_ESA_VOLTAGE])
-        cls.response_grid = cls.response.create_response_grid(_ESA_VOLTAGE, 1.0)
+        cls.response_grid = cls.response.get_response_grid(_ESA_VOLTAGE, 1.0)
         cls.identity = np.eye(3)
 
     def test_sg_region_is_active_for_sun_pointed_bulk(self):
@@ -389,7 +389,7 @@ class TestGetAngularQuadratureOpenAperturePositive(unittest.TestCase):
     def setUpClass(cls):
         cls.response = _load_response()
         cls.response.warm_cache([_ESA_VOLTAGE])
-        cls.response_grid = cls.response.create_response_grid(_ESA_VOLTAGE, 1.0)
+        cls.response_grid = cls.response.get_response_grid(_ESA_VOLTAGE, 1.0)
         cls.identity = np.eye(3)
         # Bulk pointed at az=+90°: identity rotation makes v_inst = (-v, 0, 0),
         # giving azimuth = atan2(v, 0) = 90° and elevation = 0°.
@@ -448,7 +448,7 @@ class TestGetAngularQuadratureOpenApertureNegative(unittest.TestCase):
     def setUpClass(cls):
         cls.response = _load_response()
         cls.response.warm_cache([_ESA_VOLTAGE])
-        cls.response_grid = cls.response.create_response_grid(_ESA_VOLTAGE, 1.0)
+        cls.response_grid = cls.response.get_response_grid(_ESA_VOLTAGE, 1.0)
         cls.identity = np.eye(3)
         # Bulk at az=-90°: v_inst = (+v, 0, 0) ⇒ az = atan2(-v, 0) = -90°.
         cls.sw_bulk_at_minus_90 = _proton_params(
@@ -504,7 +504,7 @@ class TestGetSpeedQuadrature(unittest.TestCase):
     def setUpClass(cls):
         cls.response = _load_response()
         cls.response.warm_cache([_ESA_VOLTAGE])
-        cls.response_grid = cls.response.create_response_grid(_ESA_VOLTAGE, 1.0)
+        cls.response_grid = cls.response.get_response_grid(_ESA_VOLTAGE, 1.0)
 
     def test_speed_window_lies_inside_per_elevation_passband(self):
         # For warm plasma the passband is the binding constraint at on-axis

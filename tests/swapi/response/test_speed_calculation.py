@@ -15,22 +15,21 @@ from imap_l3_processing.swapi.response.speed_calculation import (
     SWAPI_K_FACTOR,
     SWAPI_L2_K_FACTOR,
     SWAPI_SCIENCE_BINS,
-    calculate_combined_sweeps,
     calculate_sw_speed,
     calculate_sw_speed_h_plus,
     esa_voltage_to_proton_speed,
-    extract_coarse_sweep,
-    times_for_sweep,
 )
 
-
-def _analytic_speed_km_per_s(
-    voltage: float, mass_kg: float, charge_c: float
-) -> float:
-    return float(
-        np.sqrt(2 * SWAPI_K_FACTOR * charge_c * abs(voltage) / mass_kg)
-        / METERS_PER_KILOMETER
-    )
+# Independent reference values for v = sqrt(2 · K · e · V / m_p) at K = 1.89,
+# computed with astropy units + CODATA constants.
+# Astropy used CODATA 2018 m_p (1.67262192369e-27 kg) vs the repo's CODATA 2022
+# value (1.67262192595e-27 kg); the resulting ~7e-10 relative drift sets rtol below.
+_REFERENCE_PROTON_SPEEDS_KM_PER_S = {
+    100.0: 190.283970237818,
+    500.0: 425.487892480309,
+    1000.0: 601.730748171198,
+    4000.0: 1203.4614963424,
+}
 
 
 class TestConstants(unittest.TestCase):
@@ -64,14 +63,16 @@ class TestConstants(unittest.TestCase):
 
 
 class TestEsaVoltageToProtonSpeed(unittest.TestCase):
-    def test_matches_analytical_formula_for_typical_solar_wind(self):
-        # 1000 V → ~570 km/s for protons in the SWAPI ESA.
-        for V in [100.0, 500.0, 1000.0, 4000.0]:
+    def test_matches_independent_reference_for_typical_solar_wind(self):
+        # 1000 V → ~602 km/s for protons in the SWAPI ESA. Reference values were
+        # computed independently with astropy units; the 1e-8 tolerance absorbs
+        # the CODATA 2018 vs 2022 m_p drift between astropy and this repo.
+        for V, expected_km_per_s in _REFERENCE_PROTON_SPEEDS_KM_PER_S.items():
             with self.subTest(voltage=V):
                 np.testing.assert_allclose(
                     esa_voltage_to_proton_speed(V),
-                    _analytic_speed_km_per_s(V, PROTON_MASS_KG, PROTON_CHARGE_COULOMBS),
-                    rtol=1e-12,
+                    expected_km_per_s,
+                    rtol=1e-8,
                 )
 
     def test_handles_negative_voltage_via_absolute_value(self):
@@ -82,63 +83,11 @@ class TestEsaVoltageToProtonSpeed(unittest.TestCase):
 
     def test_array_input_returns_elementwise_speeds(self):
         voltages = np.array([100.0, 1000.0, 4000.0])
-        result = esa_voltage_to_proton_speed(voltages)
         expected = np.array(
-            [
-                _analytic_speed_km_per_s(v, PROTON_MASS_KG, PROTON_CHARGE_COULOMBS)
-                for v in voltages
-            ]
+            [_REFERENCE_PROTON_SPEEDS_KM_PER_S[v] for v in voltages.tolist()]
         )
-        np.testing.assert_allclose(result, expected, rtol=1e-12)
-
-
-class TestTimesForSweep(unittest.TestCase):
-    def test_returns_72_entries_with_uniform_step(self):
-        start = 1234.5
-        times = times_for_sweep(start)
-        self.assertEqual(len(times), 72)
-        # Each bin is 12 s / 72 = 1/6 s wide.
-        np.testing.assert_allclose(times[0], start)
-        np.testing.assert_allclose(np.diff(times), 1.0 / 6.0, rtol=1e-12)
-
-    def test_total_sweep_duration_just_under_12_s(self):
-        times = times_for_sweep(0.0)
-        self.assertAlmostEqual(times[-1] - times[0], 71.0 / 6.0)
-
-
-class TestExtractCoarseSweep(unittest.TestCase):
-    def test_2d_input_returns_columns_1_to_63(self):
-        data = np.arange(72 * 5, dtype=float).reshape(5, 72)
-        result = extract_coarse_sweep(data)
-        np.testing.assert_array_equal(result, data[:, 1:63])
-        self.assertEqual(result.shape, (5, 62))
-
-    def test_1d_input_returns_indices_1_to_63(self):
-        data = np.arange(72, dtype=float)
-        result = extract_coarse_sweep(data)
-        np.testing.assert_array_equal(result, data[1:63])
-        self.assertEqual(result.shape, (62,))
-
-
-class TestCalculateCombinedSweeps(unittest.TestCase):
-    def test_returns_average_count_rate_and_mean_energy_over_coarse_bins(self):
-        n_sweeps, n_bins = 5, 72
-        rng = np.random.default_rng(seed=0)
-        rates = rng.uniform(50.0, 200.0, size=(n_sweeps, n_bins))
-        per_sweep_energy = np.logspace(np.log10(20_000.0), np.log10(50.0), n_bins)
-        # Per-sweep energies vary slightly so the column mean is a meaningful test.
-        energies = per_sweep_energy * (
-            1.0 + 0.001 * rng.standard_normal((n_sweeps, n_bins))
-        )
-
-        avg_rate, avg_energy = calculate_combined_sweeps(rates, energies)
-
-        self.assertEqual(avg_rate.shape, (62,))
-        self.assertEqual(avg_energy.shape, (62,))
-        np.testing.assert_allclose(avg_rate, rates[:, 1:63].mean(axis=0), rtol=1e-12)
-        np.testing.assert_allclose(
-            avg_energy, energies[:, 1:63].mean(axis=0), rtol=1e-12
-        )
+        result = esa_voltage_to_proton_speed(voltages)
+        np.testing.assert_allclose(result, expected, rtol=1e-8)
 
 
 class TestCalculateSwSpeed(unittest.TestCase):

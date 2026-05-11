@@ -29,7 +29,6 @@ from imap_l3_processing.swapi.response.speed_calculation import (
     SWAPI_COARSE_SWEEP_BINS,
     SWAPI_L2_K_FACTOR,
     SWAPI_SCIENCE_BINS,
-    extract_coarse_sweep,
 )
 from imap_l3_processing.swapi.l3a.utils import (
     chunk_epoch,
@@ -128,7 +127,7 @@ class ProtonChunkFitter(ChunkFitter):
                 quality_flag |= SwapiL3Flags.EPHEMERIS_GAP
                 raise ValueError("Missing spacecraft velocity")
             if np.any(
-                np.isnan(extract_coarse_sweep(data_chunk.coincidence_count_rate))
+                np.isnan(data_chunk.coincidence_count_rate[:, SWAPI_COARSE_SWEEP_BINS])
             ):
                 raise ValueError("Fill values in input data")
             result = _fit_proton(
@@ -229,7 +228,7 @@ class AlphaChunkFitter(ChunkFitter):
                 bad_fit_flag = int(SwapiL3Flags.MAG_GAP)
                 raise ValueError("Missing or non-finite magnetic_field_direction")
             if np.any(
-                np.isnan(extract_coarse_sweep(data_chunk.coincidence_count_rate))
+                np.isnan(data_chunk.coincidence_count_rate[:, SWAPI_COARSE_SWEEP_BINS])
             ):
                 raise ValueError("Fill values in input data")
             proton_moments = _fit_proton(
@@ -307,7 +306,7 @@ class PuiProtonChunkFitter(ChunkFitter):
                 quality_flag |= SwapiL3Flags.EPHEMERIS_GAP
                 raise ValueError("Missing rotation matrices")
             if np.any(
-                np.isnan(extract_coarse_sweep(data_chunk.coincidence_count_rate))
+                np.isnan(data_chunk.coincidence_count_rate[:, SWAPI_COARSE_SWEEP_BINS])
             ):
                 raise ValueError("Fill values in input data")
             result = _fit_proton(

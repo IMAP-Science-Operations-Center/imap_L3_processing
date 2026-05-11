@@ -135,7 +135,7 @@ def main():
             temperature=float(row.temperature_ev) * EV_TO_KELVIN,
             mass=PROTON_MASS_KG,
         )
-        response_grid = swapi_response.create_response_grid(
+        response_grid = swapi_response.get_response_grid(
             peak_voltages[i], PROTON_MASS_PER_CHARGE_M_P_PER_E
         )
         optimized[i] = calculate_integral(sw, response_grid, rotation_matrix)[0]

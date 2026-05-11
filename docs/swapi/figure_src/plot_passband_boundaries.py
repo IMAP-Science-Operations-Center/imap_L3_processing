@@ -33,11 +33,14 @@ def main():
 
     last_image = None
     for column, esa_voltage in enumerate(esa_voltages):
-        central_speed = swapi_response.central_speed(esa_voltage, 1.0)
+        response_grid = swapi_response.get_response_grid(esa_voltage, 1.0)
+        central_speed = response_grid.central_speed
 
         for row, region in enumerate(["open_aperture", "sunglasses"]):
-            grid = swapi_response.create_passband_grid(
-                esa_voltage, "OA" if region == "open_aperture" else "SG"
+            grid = (
+                response_grid.oa_passband
+                if region == "open_aperture"
+                else response_grid.sg_passband
             )
             axis = axes[row, column]
             last_image = plot_region_panel(
@@ -58,7 +61,7 @@ def main():
 
 def representative_esa_voltages(swapi_response: SwapiResponse) -> list[float]:
     # min/max across both regions and geometric mean
-    voltage_limits = swapi_response.passband_esa_voltage_limits
+    voltage_limits = swapi_response._passband_esa_voltage_limits
     voltage_minimum = min(low for low, _ in voltage_limits.values())
     voltage_maximum = max(high for _, high in voltage_limits.values())
     voltage_geometric_mean = float(np.sqrt(voltage_minimum * voltage_maximum))

@@ -27,8 +27,7 @@ from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import (
     calculate_helium_pui_density,
 )
 from imap_l3_processing.swapi.response.speed_calculation import (
-    calculate_combined_sweeps,
-    extract_coarse_sweep,
+    SWAPI_COARSE_SWEEP_BINS,
     SWAPI_L2_K_FACTOR,
 )
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
@@ -157,7 +156,7 @@ class SwapiProcessor(Processor):
             bad_fit_flag = SwapiL3Flags.NONE
             try:
                 if np.any(
-                    np.isnan(extract_coarse_sweep(data_chunk.coincidence_count_rate))
+                    np.isnan(data_chunk.coincidence_count_rate[:, SWAPI_COARSE_SWEEP_BINS])
                 ) or np.any(np.isnan(sw_velocity)):
                     raise ValueError("Fill values in input data")
                 fit_params = calculate_pickup_ion_values(
@@ -242,9 +241,9 @@ class SwapiProcessor(Processor):
                 data_chunk.coincidence_count_rate,
                 data_chunk.coincidence_count_rate_uncertainty,
             )
-            average_coincident_count_rates, energies = calculate_combined_sweeps(
-                coincidence_count_rates_with_uncertainty, data_chunk.energy
-            )
+            coarse_rates = coincidence_count_rates_with_uncertainty[:, SWAPI_COARSE_SWEEP_BINS]
+            average_coincident_count_rates = np.sum(coarse_rates, axis=0) / len(coarse_rates)
+            energies = np.mean(data_chunk.energy[:, SWAPI_COARSE_SWEEP_BINS], axis=0)
             proton_velocities, proton_probabilities = calculate_proton_solar_wind_vdf(
                 energies,
                 average_coincident_count_rates,

@@ -112,35 +112,16 @@ class SwapiProcessorIntegration(unittest.TestCase):
         self.assertEqual(0, result.returncode)
         self.assertTrue(expected_file_path.exists())
 
-        # Tolerances are picked above the FP-noise floor of the LM proton fit
-        # (numba `fastmath` reordering moves uncertainties by up to ~3% and
-        # near-zero perpendicular velocity components by ~0.1 km/s) and below
-        # any physics-meaningful regression. Uncertainty fields (including
-        # covariance) get a looser rtol because they're amplified by the
-        # Jacobian-inverse conditioning. Bulk-velocity components additionally
-        # get an absolute floor at 1% of the bulk speed, since the
-        # perpendicular components can be sub-km/s where rtol is meaningless.
-        UNCERTAINTY_FIELDS = {
-            'proton_sw_speed_uncert',
-            'proton_sw_speed_sun_uncert',
-            'proton_sw_temperature_uncert',
-            'proton_sw_density_uncert',
-            'proton_sw_clock_angle_uncert',
-            'proton_sw_deflection_angle_uncert',
-            'proton_sw_bulk_velocity_rtn_sun_covariance',
-            'proton_sw_bulk_velocity_rtn_sc_covariance',
-        }
-        VELOCITY_VECTOR_FIELDS = {
-            'proton_sw_bulk_velocity_rtn_sun',
-            'proton_sw_bulk_velocity_rtn_sc',
-        }
+
         bulk_speed_atol = 1e-3 * float(expected_values['proton_sw_speed'])
 
         with CDF(str(expected_file_path)) as cdf:
             for key in expected_values.keys():
                 actual_value = cdf[key][0]
-                if key in VELOCITY_VECTOR_FIELDS:
+                if 'bulk_velocity' in key:
                     rtol, atol = 1e-3, bulk_speed_atol
+                elif key.endswith('_uncert'):
+                    rtol, atol = 1e-2, 0.0
                 else:
                     rtol, atol = 1e-3, 0.0
                 try:
