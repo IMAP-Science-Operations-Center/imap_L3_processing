@@ -42,7 +42,8 @@ def build_passband_grid(values_df: pd.DataFrame) -> PassbandGrid:
     )
 
 
-@numba.njit
+# without the explicit override `fastmath=False`, there was an issue with isnan()
+@numba.njit(fastmath=False)
 def speed_ratio_range_at_elevation(grid, elevation: float):
     n_elevations = grid.min_boundary.shape[0]
     i_float = (elevation - grid.min_elevation) / grid.elevation_spacing
