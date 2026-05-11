@@ -1,8 +1,10 @@
 import os
+from datetime import datetime
 from pathlib import Path
 from unittest import TestCase
 
 import numpy as np
+import spacepy.pycdf
 from spacepy.pycdf import CDF
 from uncertainties import UFloat, ufloat
 
@@ -15,8 +17,13 @@ from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.utils import (
     calculate_sw_speed,
     chunk_l2_data,
+    get_spacecraft_velocity_rtn,
+    get_swapi_geometry,
     read_l2_swapi_data,
+    read_mag_rtn_data,
+    rotate_rtn_to_dps,
 )
+from tests.spice_test_case import SpiceTestCase
 
 
 class TestUtils(TestCase):
@@ -143,3 +150,80 @@ class TestCalculateSwSpeed(TestCase):
             self.assertAlmostEqual(
                 r.std_dev, expected_nom * E.std_dev / (2 * E.nominal_value)
             )
+
+
+class TestReadMagRtnData(TestCase):
+    def setUp(self) -> None:
+        self.cdf_path = Path('temp_mag_cdf.cdf')
+        if self.cdf_path.exists():
+            os.remove(self.cdf_path)
+
+    def tearDown(self) -> None:
+        if self.cdf_path.exists():
+            os.remove(self.cdf_path)
+
+    def test_reads_b_rtn_and_epoch_into_mag_data(self):
+        epochs = np.array([datetime(2026, 1, 1, 0, 0, 0),
+                           datetime(2026, 1, 1, 0, 0, 1)])
+        b_rtn = np.array(
+            [[1.0, 2.0, 3.0, 0.0],
+             [4.0, 5.0, 6.0, 0.0]],
+        )
+        cdf = CDF(str(self.cdf_path.with_suffix("")), '')
+        cdf["epoch"] = epochs
+        cdf["b_rtn"] = b_rtn
+        cdf["b_rtn"].attrs["FILLVAL"] = -1e31
+        cdf.close()
+
+        result = read_mag_rtn_data(self.cdf_path)
+
+        expected_epoch_tt2000 = spacepy.pycdf.lib.v_datetime_to_tt2000(epochs)
+        np.testing.assert_array_equal(result.epoch, expected_epoch_tt2000)
+        np.testing.assert_array_equal(
+            result.mag_data, np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+        )
+
+
+class TestSwapiSpiceHelpers(SpiceTestCase):
+    # 2025-06-06 12:00 UTC — inside the IMAP SPK and attitude coverage windows
+    # used by the shipped `spice_kernels/` set.
+    _EPOCH_TT2000_NS = spacepy.pycdf.lib.datetime_to_tt2000(
+        datetime(2025, 6, 6, 12, 0, 0)
+    )
+
+    def test_get_swapi_geometry_returns_orthonormal_rotation_per_time(self):
+        # Three TT2000 ns samples spanning ~30 s.
+        # IMAP's spin period is 15 s,
+        # so these should produce distinct rotations.
+        times = self._EPOCH_TT2000_NS + np.array([0, 10_000_000_000, 20_000_000_000])
+
+        rotation_matrices = get_swapi_geometry(times)
+
+        self.assertEqual(rotation_matrices.shape, (3, 3, 3))
+        for matrix in rotation_matrices:
+            np.testing.assert_allclose(matrix @ matrix.T, np.eye(3), atol=1e-10)
+            self.assertAlmostEqual(float(np.linalg.det(matrix)), 1.0, places=10)
+
+    def test_rotate_rtn_to_dps_preserves_vector_magnitude(self):
+        vector_rtn = np.array([100.0, -50.0, 25.0])
+
+        rotated = rotate_rtn_to_dps(vector_rtn, self._EPOCH_TT2000_NS)
+
+        self.assertEqual(rotated.shape, (3,))
+        self.assertAlmostEqual(
+            float(np.linalg.norm(rotated)),
+            float(np.linalg.norm(vector_rtn)),
+            places=8,
+        )
+
+    def test_get_spacecraft_velocity_rtn_returns_finite_orbital_velocity(self):
+        velocity_rtn = get_spacecraft_velocity_rtn(self._EPOCH_TT2000_NS)
+
+        self.assertEqual(velocity_rtn.shape, (3,))
+        self.assertTrue(np.all(np.isfinite(velocity_rtn)))
+        # IMAP sits near L1; its barycentric speed is dominated by Earth's
+        # ~30 km/s orbital motion. A loose bound rules out unit-conversion
+        # mistakes (m/s vs km/s) without pinning a frame-specific value.
+        speed = float(np.linalg.norm(velocity_rtn))
+        self.assertGreater(speed, 10.0)
+        self.assertLess(speed, 60.0)
