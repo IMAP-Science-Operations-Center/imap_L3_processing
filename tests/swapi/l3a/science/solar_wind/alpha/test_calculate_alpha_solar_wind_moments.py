@@ -29,9 +29,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.alpha import (
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.calculate_alpha_solar_wind_moments import (
     AlphaSolarWindMoments,
-    _alpha_initial_guess,
-    _infer_sweep_layout,
-    _nan_alpha_moments,
+    _AlphaEvaluator,
     fit_solar_wind_alpha_moments,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
@@ -165,23 +163,6 @@ def _build_proton_fit_result(
     )
 
 
-def _build_empty_alpha_ctx() -> SolarWindFitContext:
-    """Build a zero-measurement `SolarWindFitContext` with the alpha mass.
-
-    `build_solar_wind_fit_context` would happily build this since it only
-    drops invalid voltages, but we want to also exercise the
-    `len(esa_voltage) == 0` short-circuit explicitly."""
-    return SolarWindFitContext(
-        count_rate=np.array([], dtype=float),
-        esa_voltage=np.array([], dtype=float),
-        # Empty typed list — element type is irrelevant since no iteration
-        # happens before the n_meas==0 short-circuit.
-        response_grids=numba.typed.List.empty_list(item_type=numba.types.int64),
-        rotation_matrices=np.zeros((0, 3, 3)),
-        mass_kg=ALPHA_PARTICLE_MASS_KG,
-    )
-
-
 def _assert_moments_are_nan_filled(test, result) -> None:
     """Assert that every moment field on an `AlphaSolarWindMoments`
     fill-valued result is NaN. Used by the two pre-fit guard branches
@@ -213,7 +194,7 @@ def _synthesize_proton_plus_alpha_count_rate(
     Returns the observed count rate, the (pre-deadtime) proton-only true
     rate, and the alpha velocity v_α = v_p + Δv·B̂. The proton true rate is
     the same Stage-2 calls "frozen proton model rate" — useful for
-    `_alpha_initial_guess` tests as well."""
+    initial-guess setup as well."""
     proton_params = SolarWindParams(
         density=proton_density,
         bulk_velocity_rtn=np.asarray(proton_velocity_rtn, dtype=float),
@@ -276,198 +257,14 @@ class _SyntheticAlphaSpectrumFixture:
         cls.alpha_velocity_rtn = alpha_v
 
 
-# ----- _infer_sweep_layout --------------------------------------------------
-
-
-class TestInferSweepLayout(unittest.TestCase):
-    """`_infer_sweep_layout(esa_voltage)` is the heuristic used by Stage-2 to
-    reshape flat per-measurement arrays into `(n_sweeps, n_bins)` for the
-    sweep-averaged peak-finder."""
-
-    def test_clean_5_sweep_pattern_returns_5_and_per_sweep_bin_count(self):
-        # 4 unique voltages tiled 5 times — the pipeline's canonical Stage-2
-        # layout. `5` is tried first so this is the expected return.
-        one_sweep = np.array([100.0, 200.0, 300.0, 400.0])
-        five_sweeps = np.tile(one_sweep, 5)
-        n_sweeps, n_bins = _infer_sweep_layout(five_sweeps)
-        self.assertEqual(n_sweeps, 5)
-        self.assertEqual(n_bins, 4)
-
-    def test_non_5_sweep_pattern_returns_single_sweep(self):
-        # For any non-5-tiled array, the search hits `n_sweeps=1` before any
-        # other divisor, since 1 is checked second and always passes the
-        # trivial reshape-equality test. So a genuine 2-sweep tile is
-        # reported as `(1, n_meas)`, not `(2, n_meas/2)`.
-        two_sweeps = np.array([100.0, 200.0, 300.0, 400.0, 100.0, 200.0, 300.0, 400.0])
-        n_sweeps, n_bins = _infer_sweep_layout(two_sweeps)
-        self.assertEqual(n_sweeps, 1)
-        self.assertEqual(n_bins, 8)
-
-    def test_non_periodic_input_returns_single_sweep(self):
-        # `n_sweeps=1, n_bins=n_meas` trivially satisfies the
-        # reshape-equality check, so non-periodic inputs land on the
-        # single-sweep layout.
-        irregular = np.array([100.0, 200.0, 300.0, 110.0, 210.0, 305.0, 99.0])
-        n_sweeps, n_bins = _infer_sweep_layout(irregular)
-        self.assertEqual(n_sweeps, 1)
-        self.assertEqual(n_bins, 7)
-
-    def test_5_sweep_search_order_beats_1(self):
-        # Both `5×N` and `1×5N` would satisfy the check on a 5-tiled axis.
-        # The function tries 5 first, so the canonical Stage-2 axis returns
-        # 5 sweeps even though 1 would also match.
-        five_sweeps = np.tile(np.array([100.0, 200.0, 300.0]), 5)
-        n_sweeps, n_bins = _infer_sweep_layout(five_sweeps)
-        self.assertEqual(n_sweeps, 5)
-        self.assertEqual(n_bins, 3)
-
-
-# ----- _alpha_initial_guess -------------------------------------------------
-
-
-class TestAlphaInitialGuessRecoversAlphaBump(
-    _SyntheticAlphaSpectrumFixture, unittest.TestCase
-):
-    """`_alpha_initial_guess` should locate the alpha bump on a clean
-    (proton + alpha) spectrum and return a (n_α, T_α, Δv=0, peak_indices)
-    seed that brackets the truth.
-
-    Doc § Alpha § Initial guess — the residual is `max(0, mean_obs − 2·deadtime(proton_true))`
-    averaged across sweeps, the peak is found by `get_alpha_peak_indices`,
-    and density is scaled from a unit-density alpha forward model at Δv=0.
-    """
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        # Build an alpha-only fit context and inject the *observed* count
-        # rate so `_alpha_initial_guess` can read sweep-averaged counts off
-        # `alpha_ctx.count_rate`.
-        alpha_ctx = build_solar_wind_fit_context(
-            count_rate=cls.observed_count_rate,
-            esa_voltage=cls.voltage,
-            swapi_response=cls.response,
-            central_effective_area_scale=1.0,
-            rotation_matrices=cls.rotation_matrices,
-            mass_kg=ALPHA_PARTICLE_MASS_KG,
-            mass_per_charge_m_p_per_e=ALPHA_MASS_PER_CHARGE_M_P_PER_E,
-        )
-        cls.alpha_ctx = alpha_ctx
-        cls.guess = _alpha_initial_guess(
-            proton_true_rate=cls.proton_true_rate,
-            proton_temperature=_TRUE_PROTON_TEMPERATURE_K,
-            alpha_ctx=alpha_ctx,
-            proton_bulk_velocity_rtn=_TRUE_PROTON_VELOCITY_RTN,
-            magnetic_field_direction=_B_HAT_RTN,
-        )
-
-    def test_returns_seed_when_spectrum_has_alpha_bump(self):
-        self.assertEqual(len(self.guess or ()), 4)
-
-    def test_density_seed_brackets_truth(self):
-        # The seed is `mean(residual_peak) / mean(unit_density_alpha_peak)`
-        # averaged across sweeps; the doc only requires it as a starting
-        # point for LM, not high accuracy. The factor-of-2 tolerance below
-        # is a smoke test, not a contract — empirically it lands within
-        # ±50% of truth on a clean spectrum.
-        n_alpha_seed, _, _, _ = self.guess
-        ratio = n_alpha_seed / _TRUE_ALPHA_DENSITY_CM3
-        self.assertGreater(ratio, 0.5)
-        self.assertLess(ratio, 2.0)
-
-    def test_temperature_seed_equals_proton_temperature(self):
-        # Doc § Alpha § Initial guess step 5: the alpha thermal width is fit
-        # by LM in Stage 2 — the seed is just T_α = T_p*.
-        _, t_alpha_seed, _, _ = self.guess
-        self.assertEqual(t_alpha_seed, _TRUE_PROTON_TEMPERATURE_K)
-
-    def test_delta_v_seed_is_zero(self):
-        # Doc § Alpha § Initial guess step 7: Δv=0 starts the optimizer and
-        # the wrong-basin flip handles sign ambiguity afterward.
-        _, _, dv_seed, _ = self.guess
-        self.assertEqual(dv_seed, 0.0)
-
-    def test_peak_indices_have_at_least_three_bins(self):
-        # Doc § Alpha § Initial guess step 4: guard requires ≥3 bins in the
-        # detected peak.
-        _, _, _, peak_indices = self.guess
-        self.assertGreaterEqual(len(peak_indices), 3)
-
-    def test_peak_indices_bracket_true_alpha_voltage(self):
-        # The alpha bump should appear at the ESA voltage `_ALPHA_PEAK_VOLTAGE`
-        # (≈ 1264 V) derived from the proton truth velocity, m/q ratio, and
-        # SWAPI k-factor — verify the peak window encloses it.
-        _, _, _, peak_indices = self.guess
-        peak_voltage = _ONE_SWEEP_VOLTAGE[peak_indices]
-        # Voltages are decreasing in `peak_indices` (which is increasing)
-        # — high V at low index, low V at high index.
-        self.assertGreater(peak_voltage.max(), _ALPHA_PEAK_VOLTAGE)
-        self.assertLess(peak_voltage.min(), _ALPHA_PEAK_VOLTAGE)
-
-
-class TestAlphaInitialGuessFailureBranches(unittest.TestCase):
-    """Failure paths in `_alpha_initial_guess` — every guard must return
-    `None` (not raise) so the alpha fitter can downgrade cleanly to
-    `FIT_FAILED` instead of crashing the chunk."""
-
-    def test_returns_none_when_alpha_ctx_is_empty(self):
-        # `_alpha_initial_guess` short-circuits when there are zero
-        # measurements.
-        empty_ctx = _build_empty_alpha_ctx()
-        guess = _alpha_initial_guess(
-            proton_true_rate=np.array([]),
-            proton_temperature=1.0e5,
-            alpha_ctx=empty_ctx,
-            proton_bulk_velocity_rtn=_TRUE_PROTON_VELOCITY_RTN,
-            magnetic_field_direction=_B_HAT_RTN,
-        )
-        self.assertIsNone(guess)
-
-    def test_returns_none_when_residual_has_no_alpha_bump(self):
-        # If the spectrum is proton-only (no alpha bump), the residual
-        # `max(0, mean_obs − 2·proton_obs)` collapses to ~0 across every
-        # bin, `get_alpha_peak_indices` cannot find a local minimum that
-        # bounds the alpha peak on the proton side, and the function
-        # returns `None` (the underlying `Exception` is caught).
-        response = _load_swapi_response_with_warm_cache()
-        rotations = _identity_rotation_matrices()
-        proton_only_obs, proton_true, _ = _synthesize_proton_plus_alpha_count_rate(
-            response=response,
-            voltage=_FIVE_SWEEP_VOLTAGE,
-            rotation_matrices=rotations,
-            alpha_density=0.0,
-        )
-        alpha_ctx = build_solar_wind_fit_context(
-            count_rate=proton_only_obs,
-            esa_voltage=_FIVE_SWEEP_VOLTAGE,
-            swapi_response=response,
-            central_effective_area_scale=1.0,
-            rotation_matrices=rotations,
-            mass_kg=ALPHA_PARTICLE_MASS_KG,
-            mass_per_charge_m_p_per_e=ALPHA_MASS_PER_CHARGE_M_P_PER_E,
-        )
-        guess = _alpha_initial_guess(
-            proton_true_rate=proton_true,
-            proton_temperature=_TRUE_PROTON_TEMPERATURE_K,
-            alpha_ctx=alpha_ctx,
-            proton_bulk_velocity_rtn=_TRUE_PROTON_VELOCITY_RTN,
-            magnetic_field_direction=_B_HAT_RTN,
-        )
-        self.assertIsNone(guess)
-
-
 # ----- fit_solar_wind_alpha_moments — guard conditions ---------------------
 
 
 class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
-    """`fit_solar_wind_alpha_moments` has two pre-fit guards (Stage-1
-    failure and missing/non-finite MAG B̂) that must short-circuit before
-    any forward-model evaluation, returning a NaN-filled
-    `AlphaSolarWindMoments` with the correct quality flag set."""
+    """Tests for `fit_solar_wind_alpha_moments` — pre-fit guard branches (Stage-1 failure, missing/non-finite MAG B̂) must short-circuit to a NaN-filled moments result with the correct quality flag before any forward-model evaluation."""
 
     def test_stale_proton_flag_when_stage1_proton_fit_failed(self):
-        # Doc § Alpha § Quality flags: STALE_PROTON (=32) is set when the
-        # Stage-1 proton fit failed (proton `bad_fit_flag != NONE`).
+        """When Stage-1 proton `bad_fit_flag` is `FIT_FAILED`, the alpha result must carry the `STALE_PROTON` flag rather than attempting a Stage-2 fit on an untrustworthy v_p*."""
         proton_moments = _build_proton_fit_result(
             bad_fit_flag=int(SwapiL3Flags.FIT_FAILED)
         )
@@ -487,6 +284,7 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
         self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.STALE_PROTON))
 
     def test_stale_proton_returns_nan_filled_moments(self):
+        """When Stage-1 fails, every alpha moment field is filled with NaN so downstream consumers can distinguish "no fit attempted" from "fit succeeded with degenerate values"."""
         proton_moments = _build_proton_fit_result(
             bad_fit_flag=int(SwapiL3Flags.FIT_FAILED)
         )
@@ -504,11 +302,7 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
         _assert_moments_are_nan_filled(self, result)
 
     def test_fit_failed_flag_when_magnetic_field_direction_has_nans(self):
-        # Doc § Alpha § Quality flags / Two-stage strategy: MAG is required;
-        # per-chunk gaps (NaN B̂) must short-circuit to a fill-valued
-        # result. The source uses `FIT_FAILED` for this branch (the
-        # `MAG_GAP` flag is set higher up in chunk_fits.py before this
-        # function is called).
+        """A NaN component in `magnetic_field_direction` marks a MAG gap; Stage-2 has no field-aligned constraint to apply, so the fitter short-circuits with `FIT_FAILED` (the upstream `MAG_GAP` flag is set by the chunk fitter, not here)."""
         proton_moments = _build_proton_fit_result()
         nan_b_hat = np.array([np.nan, 0.0, 0.0])
         result = fit_solar_wind_alpha_moments(
@@ -525,6 +319,7 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
         self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.FIT_FAILED))
 
     def test_nan_magnetic_field_direction_returns_nan_filled_moments(self):
+        """A NaN B̂ short-circuits before any forward-model call and every moment field is filled with NaN, mirroring the Stage-1-failure guard."""
         proton_moments = _build_proton_fit_result()
         nan_b_hat = np.array([np.nan, 0.0, 0.0])
         result = fit_solar_wind_alpha_moments(
@@ -545,16 +340,7 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
 
 
 class TestFitAlphaMomentsContextConstruction(unittest.TestCase):
-    """`fit_solar_wind_alpha_moments` must build *two* fit contexts: one
-    for the frozen proton background (carrying the proton mass-per-charge
-    and proton effective-area scale) and one for the alpha bump (carrying
-    the alpha mass-per-charge and alpha effective-area scale).
-
-    Doc § Alpha § Species-dependent pieces requires `mass_per_charge =
-    ALPHA_MASS_PER_CHARGE_M_P_PER_E` for the alpha grid; doc § Effective-
-    area scaling requires the alpha CEM-efficiency scale to flow through
-    to `central_effective_area_scale` for the alpha context (and the
-    proton scale for the proton context)."""
+    """Tests for `fit_solar_wind_alpha_moments` — verifies it builds two separate fit contexts (proton background and alpha bump) with the correct species mass / mass-per-charge / effective-area scale routed to each."""
 
     def setUp(self):
         self.proton_moments = _build_proton_fit_result()
@@ -600,51 +386,47 @@ class TestFitAlphaMomentsContextConstruction(unittest.TestCase):
         self.alpha_call_kwargs = self.mock_build_ctx.call_args_list[1].kwargs
 
     def test_two_contexts_are_built(self):
-        # One call for the proton context, one for the alpha context.
+        """The fitter constructs exactly one context for the frozen proton background and one for the alpha bump."""
         self.assertEqual(self.mock_build_ctx.call_count, 2)
 
     def test_proton_context_uses_proton_mass_per_charge(self):
+        """The proton-background context receives `PROTON_MASS_PER_CHARGE_M_P_PER_E`, so its speed→voltage mapping matches the proton species."""
         self.assertEqual(
             self.proton_call_kwargs["mass_per_charge_m_p_per_e"],
             PROTON_MASS_PER_CHARGE_M_P_PER_E,
         )
 
     def test_alpha_context_uses_alpha_mass_per_charge(self):
-        # Doc § Alpha § Species-dependent pieces — the alpha grid must use
-        # mass_per_charge = ALPHA_MASS_PER_CHARGE_M_P_PER_E (≈2 m_p/e), not
-        # the proton 1.0.
+        """The alpha-bump context receives `ALPHA_MASS_PER_CHARGE_M_P_PER_E` (≈2), guarding against a regression that reuses the proton 1.0."""
         self.assertEqual(
             self.alpha_call_kwargs["mass_per_charge_m_p_per_e"],
             ALPHA_MASS_PER_CHARGE_M_P_PER_E,
         )
 
     def test_proton_context_uses_proton_mass_kg(self):
+        """The proton-background context receives `PROTON_MASS_KG` so the Maxwellian thermal-speed scale matches the proton species."""
         self.assertEqual(self.proton_call_kwargs["mass_kg"], PROTON_MASS_KG)
 
     def test_alpha_context_uses_alpha_mass_kg(self):
+        """The alpha-bump context receives `ALPHA_PARTICLE_MASS_KG` so the Maxwellian thermal-speed scale matches the alpha species."""
         self.assertEqual(self.alpha_call_kwargs["mass_kg"], ALPHA_PARTICLE_MASS_KG)
 
     def test_proton_context_uses_proton_effective_area_scale(self):
-        # Doc § Alpha § Effective-area scaling — proton EA scale flows to
-        # the proton context's `central_effective_area_scale`.
+        """The proton-background context receives the caller-supplied proton EA scale on `central_effective_area_scale`."""
         self.assertEqual(
             self.proton_call_kwargs["central_effective_area_scale"],
             self.proton_eff_scale,
         )
 
     def test_alpha_context_uses_alpha_effective_area_scale(self):
-        # Doc § Alpha § Effective-area scaling — alpha EA scale (which folds
-        # the alpha species correction A_α/A_p with alpha time drift into a
-        # single ratio) flows to the alpha context's
-        # `central_effective_area_scale`.
+        """The alpha-bump context receives the caller-supplied alpha EA scale (which folds A_α/A_p species correction and alpha time drift into one ratio) on `central_effective_area_scale`."""
         self.assertEqual(
             self.alpha_call_kwargs["central_effective_area_scale"],
             self.alpha_eff_scale,
         )
 
     def test_alpha_and_proton_effective_area_scales_are_distinct_values(self):
-        # Sanity: the two species use different scales — guards against a
-        # regression that wires both contexts to the same EA scale.
+        """The two species use different EA scales — guards against a regression that wires both contexts to the same scalar."""
         self.assertNotEqual(
             self.alpha_call_kwargs["central_effective_area_scale"],
             self.proton_call_kwargs["central_effective_area_scale"],
@@ -657,16 +439,7 @@ class TestFitAlphaMomentsContextConstruction(unittest.TestCase):
 class TestFitAlphaMomentsRecoversTruth(
     _SyntheticAlphaSpectrumFixture, unittest.TestCase
 ):
-    """End-to-end Stage-2 fit: synthesize a proton+alpha spectrum from
-    known truth, hand the fitter the *exact* proton moments (so Stage-2's
-    "frozen proton" assumption matches the synthesis), and verify the
-    fitter recovers the alpha moments and Δv.
-
-    This pins:
-    * Two-stage strategy (frozen proton, Stage-2 fits only alpha).
-    * Field-aligned alpha drift constraint v_α = v_p + Δv·B̂.
-    * Wrong-basin flip — exact recovery of |Δv|, sign included.
-    """
+    """Tests for `fit_solar_wind_alpha_moments` — end-to-end Stage-2 recovery: synthesize a proton+alpha spectrum from known truth, hand the fitter the exact proton moments, and verify it recovers (n_α, T_α, Δv) and the field-aligned alpha velocity."""
 
     @classmethod
     def setUpClass(cls):
@@ -685,11 +458,11 @@ class TestFitAlphaMomentsRecoversTruth(
         )
 
     def test_fit_succeeds_with_no_quality_flags(self):
+        """A clean synthetic spectrum + exact proton moments must yield `bad_fit_flag == NONE` — no LM convergence issues, no missing inputs."""
         self.assertEqual(self.result.bad_fit_flag, int(SwapiL3Flags.NONE))
 
     def test_recovers_alpha_density(self):
-        # Forward-model synthesis means the fit is exact to LM tolerance.
-        # Allow ~1% to absorb rounding through deadtime + LM termination.
+        """The fitted alpha density matches the synthesis truth to ~1% (LM termination + deadtime rounding)."""
         np.testing.assert_allclose(
             self.result.density.nominal_value,
             _TRUE_ALPHA_DENSITY_CM3,
@@ -697,6 +470,7 @@ class TestFitAlphaMomentsRecoversTruth(
         )
 
     def test_recovers_alpha_temperature(self):
+        """The fitted alpha temperature matches the synthesis truth to ~1%."""
         np.testing.assert_allclose(
             self.result.temperature.nominal_value,
             _TRUE_ALPHA_TEMPERATURE_K,
@@ -704,20 +478,13 @@ class TestFitAlphaMomentsRecoversTruth(
         )
 
     def test_recovers_signed_delta_v(self):
-        # The wrong-basin flip means a positive truth Δv can converge from
-        # either basin — this checks both magnitude and sign are recovered.
-        # `atol=0.5 km/s` (~1.7% of the 30 km/s truth) is a loose bound on
-        # LM termination + deadtime rounding; the empirical residual is
-        # well below this.
+        """The fitted Δv matches the truth in magnitude and sign — pins the wrong-basin flip's ability to recover the correct basin from a Δv=0 seed."""
         np.testing.assert_allclose(
             self.result.delta_v.nominal_value, _TRUE_DELTA_V_KM_S, atol=0.5
         )
 
     def test_alpha_velocity_equals_proton_velocity_plus_delta_v_along_bhat(self):
-        # Doc § Alpha: v_α = v_p* + Δv·B̂. The dataclass stores `bulk_velocity_rtn`
-        # as the post-fit alpha velocity in RTN; verify it matches the
-        # field-aligned constraint exactly (not approximately — this is an
-        # algebraic identity, not a fit residual).
+        """The post-fit `bulk_velocity_rtn` satisfies the algebraic identity v_α = v_p* + Δv·B̂ exactly (not approximately) — the dataclass stores the constraint, not a free vector."""
         v_alpha = self.result.bulk_velocity_rtn_nominal()
         expected = (
             _TRUE_PROTON_VELOCITY_RTN
@@ -726,11 +493,7 @@ class TestFitAlphaMomentsRecoversTruth(
         np.testing.assert_allclose(v_alpha, expected, atol=1e-9)
 
     def test_alpha_velocity_recovers_truth(self):
-        # Combination of the above two: the alpha velocity vector matches
-        # the synthesis truth to LM tolerance. `atol=1.0 km/s` (~0.2% of
-        # the 480 km/s alpha speed) is the same scale as the Δv tolerance
-        # above; tighter than the per-component contribution from
-        # `_STAGE1_PROTON_VELOCITY_SIGMA_KM_S`.
+        """The recovered alpha velocity vector matches the synthesis truth (≈480 km/s) within ~1 km/s — combines Δv recovery + field-aligned constraint."""
         np.testing.assert_allclose(
             self.result.bulk_velocity_rtn_nominal(),
             self.alpha_velocity_rtn,
@@ -739,10 +502,7 @@ class TestFitAlphaMomentsRecoversTruth(
 
 
 class TestFitAlphaMomentsAlphaVelocityFollowsBHat(unittest.TestCase):
-    """The field-aligned drift constraint v_α = v_p + Δv·B̂ must hold for any
-    B̂ direction, not just B̂ ∥ -R̂. Synthesize a fit using a tilted B̂ and
-    verify the recovered alpha velocity sits on the line through v_p along
-    that B̂."""
+    """Tests for `fit_solar_wind_alpha_moments` — the field-aligned drift constraint v_α = v_p + Δv·B̂ must hold for any B̂ direction, including B̂ not parallel to -R̂."""
 
     @classmethod
     def setUpClass(cls):
@@ -778,15 +538,14 @@ class TestFitAlphaMomentsAlphaVelocityFollowsBHat(unittest.TestCase):
         )
 
     def test_alpha_velocity_minus_proton_velocity_is_parallel_to_bhat(self):
-        # `v_α − v_p` must lie along ±B̂, so `(v_α − v_p) × B̂` must be
-        # zero up to numerical noise.
+        """For a tilted B̂, the recovered (v_α − v_p) lies along ±B̂ — equivalently, the cross product (v_α − v_p) × B̂ is zero up to numerical noise."""
         delta = (
             self.result.bulk_velocity_rtn_nominal() - self.proton_velocity_rtn
         )
         np.testing.assert_allclose(np.cross(delta, self.b_hat), 0.0, atol=1e-9)
 
     def test_recovered_delta_v_matches_dot_product_of_velocity_offset(self):
-        # `Δv = (v_α − v_p)·B̂` since B̂ is unit-normed.
+        """The stored `delta_v` equals (v_α − v_p)·B̂ since B̂ is unit-normed — the scalar matches the projection of the vector offset onto the field."""
         delta_along = float(
             np.dot(
                 self.result.bulk_velocity_rtn_nominal() - self.proton_velocity_rtn,
@@ -798,6 +557,7 @@ class TestFitAlphaMomentsAlphaVelocityFollowsBHat(unittest.TestCase):
         )
 
     def test_alpha_velocity_recovers_truth_under_tilted_bhat(self):
+        """With a 10° tilted B̂, the recovered alpha velocity matches the synthesis truth vector to ~1 km/s."""
         np.testing.assert_allclose(
             self.result.bulk_velocity_rtn_nominal(),
             self.alpha_velocity_truth,
@@ -809,10 +569,7 @@ class TestFitAlphaMomentsAlphaVelocityFollowsBHat(unittest.TestCase):
 
 
 class TestAlphaSolarWindMomentsAccessors(unittest.TestCase):
-    """`AlphaSolarWindMoments.bulk_velocity_rtn_nominal` and
-    `bulk_velocity_rtn_covariance` extract the nominal vector and covariance
-    matrix from the correlated UFloat triple stored in `bulk_velocity_rtn`.
-    Mirrors the equivalent accessors on `ProtonSolarWindFitResult`."""
+    """Tests for `AlphaSolarWindMoments.bulk_velocity_rtn_nominal` and `bulk_velocity_rtn_covariance` — accessors that extract the nominal vector and covariance matrix from the correlated UFloat triple."""
 
     def setUp(self):
         # Build moments from a known correlated velocity covariance so the
@@ -845,18 +602,18 @@ class TestAlphaSolarWindMomentsAccessors(unittest.TestCase):
         )
 
     def test_bulk_velocity_rtn_nominal_returns_per_component_nominals(self):
+        """The nominal-vector accessor returns the per-component nominal_values as a length-3 ndarray."""
         np.testing.assert_array_equal(
             self.moments.bulk_velocity_rtn_nominal(), self.expected_nominal
         )
 
     def test_bulk_velocity_rtn_covariance_is_three_by_three(self):
+        """The covariance accessor returns a 3×3 matrix matching the RTN velocity dimensionality."""
         covariance = self.moments.bulk_velocity_rtn_covariance()
         self.assertEqual(covariance.shape, (3, 3))
 
     def test_bulk_velocity_rtn_covariance_matches_input_covariance(self):
-        # `correlated_values` round-trips the covariance through the UFloat
-        # triple, so the accessor returns the same matrix that was passed
-        # to `make_correlated_velocity`.
+        """The covariance accessor round-trips: a UFloat triple built from a known PSD covariance returns that same matrix to machine precision."""
         np.testing.assert_allclose(
             self.moments.bulk_velocity_rtn_covariance(),
             self.expected_covariance,
@@ -868,20 +625,12 @@ class TestAlphaSolarWindMomentsAccessors(unittest.TestCase):
 
 
 class TestFitAlphaMomentsGeometryFallback(unittest.TestCase):
-    """When `rotation_matrices` is `None`, `fit_solar_wind_alpha_moments`
-    must resolve SWAPI→RTN geometry from `measurement_time` via SPICE
-    (`get_swapi_geometry`). The Stage-1 caller normally precomputes
-    geometry and shares it across stages — the `None` branch is the
-    standalone-callable fallback (used by tests and ad-hoc scripts)."""
+    """Tests for `fit_solar_wind_alpha_moments` — when `rotation_matrices` is omitted, SWAPI→RTN geometry is resolved from `measurement_time` via SPICE (`get_swapi_geometry`); the Stage-1 caller normally precomputes geometry and shares it, but the standalone-callable fallback path must also work."""
 
     def test_fetches_geometry_from_measurement_time_when_rotation_matrices_omitted(
         self,
     ):
-        # Mock `get_swapi_geometry` so the test does not require SPICE
-        # kernels. Patch by string to match the lazy-import inside the
-        # function body. The downstream forward-model and initial-guess
-        # paths are also mocked so the test isolates only the geometry
-        # branch.
+        """Calling the fitter without `rotation_matrices` triggers `get_swapi_geometry(measurement_time)` and reaches the initial-guess step rather than crashing on missing geometry."""
         proton_moments = _build_proton_fit_result()
         rotation_matrices_from_geometry = _identity_rotation_matrices()
         measurement_time = np.arange(_N_MEAS, dtype=float)
@@ -906,12 +655,11 @@ class TestFitAlphaMomentsGeometryFallback(unittest.TestCase):
                 rotation_matrices=None,
             )
 
-        # `get_swapi_geometry` was called with the measurement time array.
         mock_get_geometry.assert_called_once()
         np.testing.assert_array_equal(
             mock_get_geometry.call_args.args[0], measurement_time
         )
-        # The mocked `_alpha_initial_guess` returned `None`, so the fitter
+        # The mocked initial guess returned `None`, so the fitter
         # short-circuited to a FIT_FAILED moments result — proving it
         # reached the initial-guess step (i.e. did not crash on geometry).
         self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.FIT_FAILED))
@@ -923,20 +671,18 @@ class TestFitAlphaMomentsGeometryFallback(unittest.TestCase):
 class TestFitAlphaMomentsPeakBinFiltering(
     _SyntheticAlphaSpectrumFixture, unittest.TestCase
 ):
-    """The Stage-2 fit subsets per-measurement arrays to the alpha-peak
-    indices repeated across sweeps. Bins with `count_rate <= 0` (e.g. a
-    drop-out flagged at L2) inside that subset must be filtered out so the
-    LM residual axis only includes physically meaningful bins. Otherwise,
-    deadtime correction can divide by zero on a 0-count bin."""
+    """Tests for `fit_solar_wind_alpha_moments` — peak-bin subsetting plus zero-count filtering: Stage-2 keeps only the alpha-peak bins across sweeps, then drops any with `count_rate <= 0` so deadtime correction never divides by zero."""
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        # Zero out a single peak-region bin in every sweep — `_alpha_initial_guess`
-        # will still find a peak (the rest of the bump is intact), but the
-        # zeroed bins must be dropped from the LM residual axis.
-        # Use `_alpha_initial_guess` to identify which bins are in the peak,
-        # then zero one of them.
+        # Zero out a single peak-region bin in every sweep — the initial
+        # guess will still find a peak (the rest of the bump is intact), but
+        # the zeroed bins must be dropped from the LM residual axis.
+        from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.calculate_alpha_solar_wind_moments import (
+            _alpha_initial_guess,
+        )
+
         alpha_ctx_full = build_solar_wind_fit_context(
             count_rate=cls.observed_count_rate,
             esa_voltage=cls.voltage,
@@ -954,8 +700,6 @@ class TestFitAlphaMomentsPeakBinFiltering(
             magnetic_field_direction=_B_HAT_RTN,
         )
         _, _, _, peak_bin_idx = guess
-        # Zero out the central peak bin in every sweep on a copy of the
-        # observed count-rate array.
         zeroed_observed = cls.observed_count_rate.copy()
         target_bin = int(peak_bin_idx[len(peak_bin_idx) // 2])
         for s in range(_N_SWEEPS):
@@ -977,14 +721,11 @@ class TestFitAlphaMomentsPeakBinFiltering(
         )
 
     def test_fit_completes_when_some_peak_bins_are_zeroed(self):
-        # The pipeline filters zero-count bins out of the LM residual axis
-        # rather than crashing on them. With most of the alpha bump still
-        # intact, the fit should still flag NONE.
+        """Zeroing one peak-region bin per sweep does not crash the fitter and still flags NONE — the zeroed bins are filtered out of the LM residual axis before deadtime correction runs on them."""
         self.assertEqual(self.result.bad_fit_flag, int(SwapiL3Flags.NONE))
 
     def test_recovers_alpha_density_within_loose_bound_after_zeroing(self):
-        # Zeroing one bin per sweep removes ~5/(5·n_peak_bins) of the
-        # signal — recovery should still be within ~10% of truth.
+        """Density recovery is within ~10% of truth after losing one bin per sweep — the residual peak still carries most of the alpha signal."""
         np.testing.assert_allclose(
             self.result.density.nominal_value,
             _TRUE_ALPHA_DENSITY_CM3,
@@ -996,21 +737,10 @@ class TestFitAlphaMomentsPeakBinFiltering(
 
 
 class TestFitAlphaMomentsWrongBasinFlip(unittest.TestCase):
-    """The `Δv` parameter has a 1-DOF basin ambiguity along B̂: LM can
-    converge to a local minimum at the sign-flipped Δv if the initial
-    guess is biased toward the wrong basin. After LM-1, the fitter
-    evaluates the residual at `−Δv` and runs LM-2 from the flipped seed
-    if the flipped MSE is strictly smaller. The final result is whichever
-    converged."""
+    """Tests for `fit_solar_wind_alpha_moments` — wrong-basin flip: after LM-1, the fitter evaluates residuals at `−Δv` and reruns LM from the flipped seed if the flipped MSE is strictly smaller; the final result is whichever converged."""
 
     def test_lm_runs_a_second_time_when_flipped_residual_is_lower(self):
-        # Mock `least_squares` to drive the wrong-basin path:
-        # * LM-1 returns a converged result with Δv = +30, but a fake
-        #   residual vector designed so the flipped Δv = -30 evaluation
-        #   has a smaller squared norm.
-        # * LM-2 returns a result at Δv = -30 with a smaller residual.
-        # The dummy `_alpha_residuals_njit` is also patched so the flipped
-        # MSE (the test's controlled trigger) is below the LM-1 MSE.
+        """When the residual at the sign-flipped Δv is smaller than LM-1's MSE, the fitter calls `least_squares` a second time from the flipped seed and reports the LM-2 result (here, Δv = -30 after LM-1 converged to +30)."""
         proton_moments = _build_proton_fit_result()
 
         # LM-1 result: Δv = +30, residual norm² / N = 100.0.
@@ -1039,19 +769,19 @@ class TestFitAlphaMomentsWrongBasinFlip(unittest.TestCase):
         lm2_result.jac = lm2_jac
         lm2_result.success = True
 
-        # Patch the dummy residual function so the flipped-residual MSE
-        # check (called between LM-1 and LM-2) returns a smaller MSE than
-        # LM-1's own residual norm.
-        # The function under test computes `mse_flipped = mean(residuals(x_flipped)**2)`.
-        # We control this via a residual function that returns 1.0 for any
+        # Patch the evaluator's residuals method so the flipped-residual
+        # MSE check (called between LM-1 and LM-2) returns a smaller MSE
+        # than LM-1's own residual norm. The function under test computes
+        # `mse_flipped = mean(evaluator.residuals(x_flipped)**2)`. We
+        # control this via a residual function that returns 1.0 for any
         # call (so squared-mean is 1.0 < 100.0).
         with patch.object(
             alpha_module,
             "_alpha_initial_guess",
             return_value=(0.2, 4.0e5, 0.0, np.array([10, 11, 12])),
         ), patch.object(
-            alpha_module,
-            "_alpha_residuals_njit",
+            alpha_module._AlphaEvaluator,
+            "residuals",
             return_value=np.full(_N_MEAS, 1.0),
         ), patch.object(
             alpha_module.scipy.optimize,
@@ -1070,12 +800,9 @@ class TestFitAlphaMomentsWrongBasinFlip(unittest.TestCase):
                 rotation_matrices=_identity_rotation_matrices(),
             )
 
-        # LM ran twice — once for LM-1, once from the flipped seed.
         self.assertEqual(mock_lm.call_count, 2)
-        # The second call's `x0` is the LM-1 result with Δv sign flipped.
         lm2_x0 = mock_lm.call_args_list[1].args[1]
         self.assertEqual(lm2_x0[2], -30.0)
-        # The final Δv comes from LM-2 (which was given the flipped seed).
         self.assertAlmostEqual(result.delta_v.nominal_value, -30.0, places=10)
 
 
@@ -1083,16 +810,12 @@ class TestFitAlphaMomentsWrongBasinFlip(unittest.TestCase):
 
 
 class TestFitAlphaMomentsLMFailureFlag(unittest.TestCase):
-    """When the Stage-2 LM run does not converge, `result.success=False`
-    must add `FIT_FAILED` to the moments quality flag — the moments
-    themselves still carry whatever LM produced (so downstream consumers
-    can inspect them), but the flag indicates the fit was not trusted."""
+    """Tests for `fit_solar_wind_alpha_moments` — when LM does not converge (`result.success=False`), the moments still carry LM's best-effort values but `FIT_FAILED` is added to the quality flag so downstream consumers can distrust them."""
 
     def test_fit_failed_flag_set_when_least_squares_does_not_converge(self):
+        """A non-converged LM result sets `FIT_FAILED` on the output but still populates the moments (density not NaN) so downstream code can inspect what LM produced."""
         proton_moments = _build_proton_fit_result()
 
-        # Build an LM result that doesn't converge (`success=False`) but is
-        # otherwise structurally valid so the rest of the function runs.
         x_fit = np.array([np.log(0.2), np.log(4.0e5), 30.0])
         residual_norm = np.full(_N_MEAS, 1.0)
         jac = np.zeros((_N_MEAS, 3))
@@ -1114,8 +837,8 @@ class TestFitAlphaMomentsLMFailureFlag(unittest.TestCase):
             "_alpha_initial_guess",
             return_value=(0.2, 4.0e5, 0.0, np.array([10, 11, 12])),
         ), patch.object(
-            alpha_module,
-            "_alpha_residuals_njit",
+            alpha_module._AlphaEvaluator,
+            "residuals",
             return_value=np.full(_N_MEAS, 1.0),
         ), patch.object(
             alpha_module.scipy.optimize,
@@ -1134,102 +857,122 @@ class TestFitAlphaMomentsLMFailureFlag(unittest.TestCase):
                 rotation_matrices=_identity_rotation_matrices(),
             )
 
-        # `FIT_FAILED` set; non-converged LM moments still populated (not NaN).
         self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.FIT_FAILED))
         self.assertFalse(np.isnan(result.density.nominal_value))
 
 
-# ----- _alpha_initial_guess — additional failure branches ------------------
+# ----- fit_solar_wind_alpha_moments — initial-guess failure branches -------
 
 
-class TestAlphaInitialGuessAdditionalFailureBranches(unittest.TestCase):
-    """Failure paths in `_alpha_initial_guess` reached by mocking the
-    helpers it delegates to. Each must return `None` so the fitter can
-    downgrade to `FIT_FAILED` rather than crashing."""
+class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
+    """Tests for `fit_solar_wind_alpha_moments` — failure branches inside `_alpha_initial_guess` and `_infer_sweep_layout` that return None, causing the public function to short-circuit to a `FIT_FAILED` NaN-filled result."""
 
-    def _build_alpha_ctx_for_synthetic_spectrum(self):
-        response = _load_swapi_response_with_warm_cache()
-        rotations = _identity_rotation_matrices()
-        observed, proton_true, _ = _synthesize_proton_plus_alpha_count_rate(
-            response=response,
-            voltage=_FIVE_SWEEP_VOLTAGE,
-            rotation_matrices=rotations,
+    def _call(self, *, count_rate, esa_voltage, rotation_matrices=None):
+        if rotation_matrices is None:
+            rotation_matrices = np.broadcast_to(
+                np.eye(3), (len(esa_voltage), 3, 3)
+            ).copy()
+        response = SwapiResponse.from_files(
+            _AZIMUTHAL_TRANSMISSION_PATH,
+            _CENTRAL_EFFECTIVE_AREA_PATH,
+            _PASSBAND_FIT_COEFFICIENTS_PATH,
         )
-        alpha_ctx = build_solar_wind_fit_context(
-            count_rate=observed,
-            esa_voltage=_FIVE_SWEEP_VOLTAGE,
+        if len(esa_voltage) > 0:
+            response.warm_cache(esa_voltage)
+        return fit_solar_wind_alpha_moments(
+            count_rate=count_rate,
+            esa_voltage=esa_voltage,
+            measurement_time=np.zeros(len(esa_voltage)),
             swapi_response=response,
-            central_effective_area_scale=1.0,
-            rotation_matrices=rotations,
-            mass_kg=ALPHA_PARTICLE_MASS_KG,
-            mass_per_charge_m_p_per_e=ALPHA_MASS_PER_CHARGE_M_P_PER_E,
+            proton_moments=_build_proton_fit_result(),
+            magnetic_field_direction=_B_HAT_RTN,
+            alpha_effective_area_scale=1.0,
+            proton_effective_area_scale=1.0,
+            rotation_matrices=rotation_matrices,
         )
-        return alpha_ctx, proton_true
 
-    def test_returns_none_when_alpha_peak_window_is_too_narrow(self):
-        # If `get_alpha_peak_indices` returns a slice of length < 3, the
-        # peak window is too narrow to fit a Gaussian seed and the helper
-        # returns `None`. Patch `get_alpha_peak_indices` to a 2-bin slice.
-        alpha_ctx, proton_true = self._build_alpha_ctx_for_synthetic_spectrum()
-        with patch(
-            "imap_l3_processing.swapi.l3a.science.solar_wind.alpha."
-            "calculate_alpha_solar_wind_moments.get_alpha_peak_indices",
-            return_value=slice(20, 22),
-        ):
-            guess = _alpha_initial_guess(
-                proton_true_rate=proton_true,
-                proton_temperature=_TRUE_PROTON_TEMPERATURE_K,
-                alpha_ctx=alpha_ctx,
-                proton_bulk_velocity_rtn=_TRUE_PROTON_VELOCITY_RTN,
-                magnetic_field_direction=_B_HAT_RTN,
-            )
-        self.assertIsNone(guess)
+    def _assert_fit_failed_nan(self, result):
+        self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.FIT_FAILED))
+        _assert_moments_are_nan_filled(self, result)
 
-    def test_returns_none_when_residual_at_peak_indices_is_all_nonpositive(self):
-        # If `get_alpha_peak_indices` returns indices in a region where the
-        # `max(0, mean_obs − 2·proton_obs)` residual is identically zero,
-        # the alpha-density seed step (which divides by the mean residual)
-        # would be 0 → LM seed `n_alpha=0`. The helper guards by returning
-        # `None` whenever the residual at peak indices is not strictly
-        # positive anywhere.
-        alpha_ctx, proton_true = self._build_alpha_ctx_for_synthetic_spectrum()
-        # Choose indices in the proton-dominated region where the residual
-        # is clamped to zero by `np.maximum(0, ...)`.
-        with patch(
-            "imap_l3_processing.swapi.l3a.science.solar_wind.alpha."
-            "calculate_alpha_solar_wind_moments.get_alpha_peak_indices",
-            return_value=slice(_N_BINS_PER_SWEEP - 5, _N_BINS_PER_SWEEP - 1),
-        ):
-            guess = _alpha_initial_guess(
-                proton_true_rate=proton_true,
-                proton_temperature=_TRUE_PROTON_TEMPERATURE_K,
-                alpha_ctx=alpha_ctx,
-                proton_bulk_velocity_rtn=_TRUE_PROTON_VELOCITY_RTN,
-                magnetic_field_direction=_B_HAT_RTN,
-            )
-        self.assertIsNone(guess)
+    def test_empty_count_rate_and_voltage_returns_fit_failed(self):
+        """Empty input arrays trigger the `n_meas == 0` guard inside `_alpha_initial_guess` and the fitter returns a `FIT_FAILED` NaN-filled result."""
+        result = self._call(
+            count_rate=np.zeros(0),
+            esa_voltage=np.zeros(0),
+            rotation_matrices=np.zeros((0, 3, 3)),
+        )
+        self._assert_fit_failed_nan(result)
 
-    def test_returns_none_when_unit_density_alpha_rates_are_zero(self):
-        # The density seed is `mean(residual_peak) / mean(unit_alpha_peak)`.
-        # If the unit-density alpha forward model evaluates to zero at the
-        # peak bins (e.g. the peak window falls outside any bin where
-        # alpha rate is nonzero), `denom == 0` and the helper returns
-        # `None` rather than dividing by zero.
-        alpha_ctx, proton_true = self._build_alpha_ctx_for_synthetic_spectrum()
-        n_meas = len(alpha_ctx.esa_voltage)
-        with patch(
-            "imap_l3_processing.swapi.l3a.science.solar_wind.alpha."
-            "calculate_alpha_solar_wind_moments.model_solar_wind_ideal_coincidence_rates",
-            return_value=(np.zeros(n_meas), np.zeros((n_meas, 5))),
+    def test_non_periodic_voltage_axis_returns_fit_failed(self):
+        """When `_infer_sweep_layout` cannot find an `n_sweeps` such that the voltage axis is periodic (e.g. 310 distinct strictly-decreasing values), it returns `(None, None)` and the fitter short-circuits to `FIT_FAILED`."""
+        voltage = np.logspace(np.log10(3500.0), np.log10(140.0), _N_MEAS)
+        result = self._call(
+            count_rate=np.zeros(_N_MEAS),
+            esa_voltage=voltage,
+        )
+        self._assert_fit_failed_nan(result)
+
+    def test_non_monotonic_voltage_raises_in_peak_finder_and_returns_fit_failed(self):
+        """A non-monotonic per-sweep voltage axis violates `get_alpha_peak_indices`'s decreasing-energies assertion; the `try/except Exception` in `_alpha_initial_guess` catches it and the fitter returns `FIT_FAILED`."""
+        one_sweep = _ONE_SWEEP_VOLTAGE.copy()
+        # Swap two adjacent bins to break monotonicity while keeping
+        # periodicity (the same swap is tiled across all sweeps).
+        one_sweep[10], one_sweep[11] = one_sweep[11], one_sweep[10]
+        voltage = np.tile(one_sweep, _N_SWEEPS)
+        result = self._call(
+            count_rate=np.ones(_N_MEAS),
+            esa_voltage=voltage,
+        )
+        self._assert_fit_failed_nan(result)
+
+    def test_short_peak_window_returns_fit_failed(self):
+        """When `get_alpha_peak_indices` returns a slice with fewer than 3 bins, `_alpha_initial_guess` returns `None` and the fitter reports `FIT_FAILED`."""
+        with patch.object(
+            alpha_module,
+            "get_alpha_peak_indices",
+            return_value=slice(10, 12),
         ):
-            guess = _alpha_initial_guess(
-                proton_true_rate=proton_true,
-                proton_temperature=_TRUE_PROTON_TEMPERATURE_K,
-                alpha_ctx=alpha_ctx,
-                proton_bulk_velocity_rtn=_TRUE_PROTON_VELOCITY_RTN,
-                magnetic_field_direction=_B_HAT_RTN,
+            result = self._call(
+                count_rate=np.ones(_N_MEAS),
+                esa_voltage=_FIVE_SWEEP_VOLTAGE,
             )
-        self.assertIsNone(guess)
+        self._assert_fit_failed_nan(result)
+
+    def test_no_positive_residual_at_peak_returns_fit_failed(self):
+        """When the residual `count_avg − 2·proton_bg_avg` has no positive entry inside the peak window (e.g. count_rate=0 everywhere), `_alpha_initial_guess` returns `None`."""
+        with patch.object(
+            alpha_module,
+            "get_alpha_peak_indices",
+            return_value=slice(10, 20),
+        ):
+            result = self._call(
+                count_rate=np.zeros(_N_MEAS),
+                esa_voltage=_FIVE_SWEEP_VOLTAGE,
+            )
+        self._assert_fit_failed_nan(result)
+
+    def test_non_positive_unit_alpha_denominator_returns_fit_failed(self):
+        """When the unit-density alpha forward model evaluates to ~0 at every peak bin (peak slice placed in the highest-voltage bins, far above the alpha resonance), `denom <= 0` and `_alpha_initial_guess` returns `None`."""
+        # Inject a positive residual at the chosen peak bins by overriding
+        # count_rate at those locations, then place the peak slice in the
+        # high-voltage tail where unit_alpha ~ 0 (alpha truth voltage is
+        # ~1264 V, voltage bin 0 is 3500 V).
+        count_rate = np.zeros(_N_MEAS)
+        peak_slice = slice(0, 3)
+        for s in range(_N_SWEEPS):
+            count_rate[s * _N_BINS_PER_SWEEP + peak_slice.start :
+                       s * _N_BINS_PER_SWEEP + peak_slice.stop] = 1.0e3
+        with patch.object(
+            alpha_module,
+            "get_alpha_peak_indices",
+            return_value=peak_slice,
+        ):
+            result = self._call(
+                count_rate=count_rate,
+                esa_voltage=_FIVE_SWEEP_VOLTAGE,
+            )
+        self._assert_fit_failed_nan(result)
 
 
 # Doc contracts intentionally not pinned here: upstream-set quality flags
@@ -1238,14 +981,218 @@ class TestAlphaInitialGuessAdditionalFailureBranches(unittest.TestCase):
 # `σ_Δv`) plus the `Σ_v_α = Σ_v_p + σ_Δv²·B̂B̂ᵀ` covariance update would
 # require an independent numerical reference to pin without coupling to
 # scipy version drift.
-#
-# Defensive branches in `_infer_sweep_layout` (line 297, `return None, None`)
-# and the matching `if n_sweeps is None: return None` guard in
-# `_alpha_initial_guess` (line 244) are unreachable in practice. The loop
-# always passes when `n_sweeps=1` because `n_meas % 1 == 0` and
-# `np.allclose(arr.reshape(1, n_meas), arr[:n_meas])` is trivially True
-# for any array (including the empty array). These lines remain as
-# safety rails but cannot be hit by any real input.
+
+
+# ----- _AlphaEvaluator analytic Jacobian -----------------------------------
+
+
+class TestAlphaEvaluatorAnalyticJacobianMatchesFiniteDifference(
+    _SyntheticAlphaSpectrumFixture, unittest.TestCase
+):
+    """Tests for `_AlphaEvaluator.jacobian` — verifies the analytic 3-column Jacobian (∂residuals/∂[log n_α, log T_α, Δv]) matches a central-difference numerical Jacobian within the same tolerance used for the proton-fit forward-model Jacobian (5% rtol). The small mismatch comes from the dynamic-quadrature limits shifting when the state is perturbed for finite differences, per `docs/swapi/solar-wind-moments.md` § Boundary terms."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.alpha_ctx = build_solar_wind_fit_context(
+            count_rate=cls.observed_count_rate,
+            esa_voltage=cls.voltage,
+            swapi_response=cls.response,
+            central_effective_area_scale=1.0,
+            rotation_matrices=cls.rotation_matrices,
+            mass_kg=ALPHA_PARTICLE_MASS_KG,
+            mass_per_charge_m_p_per_e=ALPHA_MASS_PER_CHARGE_M_P_PER_E,
+        )
+        cls.evaluator = _AlphaEvaluator(
+            proton_bulk=_TRUE_PROTON_VELOCITY_RTN,
+            magnetic_field_direction=_B_HAT_RTN,
+            proton_true_rate=cls.proton_true_rate,
+            alpha_ctx=cls.alpha_ctx,
+        )
+        cls.x0 = np.array(
+            [
+                np.log(_TRUE_ALPHA_DENSITY_CM3),
+                np.log(_TRUE_ALPHA_TEMPERATURE_K),
+                _TRUE_DELTA_V_KM_S,
+            ]
+        )
+        cls.analytic_jacobian = cls.evaluator.jacobian(cls.x0).copy()
+        steps = np.array([1.0e-5, 1.0e-5, 1.0e-3])
+        n_residuals = cls.analytic_jacobian.shape[0]
+        cls.numerical_jacobian = np.empty((n_residuals, 3))
+        for j in range(3):
+            x_plus = cls.x0.copy()
+            x_minus = cls.x0.copy()
+            x_plus[j] += steps[j]
+            x_minus[j] -= steps[j]
+            r_plus = cls.evaluator.residuals(x_plus).copy()
+            r_minus = cls.evaluator.residuals(x_minus).copy()
+            cls.numerical_jacobian[:, j] = (r_plus - r_minus) / (2.0 * steps[j])
+
+    def test_jacobian_shape_is_n_residuals_by_three(self):
+        """The analytic Jacobian has shape (N_residuals, 3) — one row per measurement bin, one column per fit parameter (log n_α, log T_α, Δv)."""
+        self.assertEqual(self.analytic_jacobian.shape, (self.alpha_ctx.count_rate.size, 3))
+
+    def test_log_density_column_equals_alpha_only_rate_times_deadtime_squared(self):
+        """Because the rate is linear in n_α, the analytic ∂(observable)/∂(log n_α) column equals 𝒟²(R_total) · R_α exactly with no quadrature slack — an identity check independent of finite-difference noise."""
+        from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
+            model_solar_wind_ideal_coincidence_rates,
+        )
+        alpha_only_params = SolarWindParams(
+            density=_TRUE_ALPHA_DENSITY_CM3,
+            bulk_velocity_rtn=_TRUE_PROTON_VELOCITY_RTN + _TRUE_DELTA_V_KM_S * _B_HAT_RTN,
+            temperature=_TRUE_ALPHA_TEMPERATURE_K,
+            mass=ALPHA_PARTICLE_MASS_KG,
+        )
+        alpha_rate, _ = model_solar_wind_ideal_coincidence_rates(
+            alpha_only_params, self.alpha_ctx
+        )
+        total_rate = self.proton_true_rate + alpha_rate
+        deadtime_squared = deadtime_factor(total_rate) ** 2
+        np.testing.assert_allclose(
+            self.analytic_jacobian[:, 0],
+            deadtime_squared * alpha_rate,
+            rtol=1.0e-12,
+            atol=0.0,
+        )
+
+    def test_log_temperature_column_matches_finite_difference(self):
+        """The analytic ∂residuals/∂(log T_α) column matches central differences within 5% — the threshold matches the proton forward-model Jacobian tolerance."""
+        np.testing.assert_allclose(
+            self.analytic_jacobian[:, 1],
+            self.numerical_jacobian[:, 1],
+            rtol=5.0e-2,
+            atol=1.0e-3,
+        )
+
+    def test_delta_v_column_matches_finite_difference(self):
+        """The analytic ∂residuals/∂(Δv) column matches central differences within 5% — derived from the 5-D forward-model Jacobian projected onto B̂, inherits the same boundary-term residual."""
+        np.testing.assert_allclose(
+            self.analytic_jacobian[:, 2],
+            self.numerical_jacobian[:, 2],
+            rtol=5.0e-2,
+            atol=1.0e-3,
+        )
+
+
+class TestAlphaEvaluatorCachesEvaluation(
+    _SyntheticAlphaSpectrumFixture, unittest.TestCase
+):
+    """Tests for `_AlphaEvaluator._refresh` — caches the last (residuals, jacobian) so scipy.least_squares' separate `fun` and `jac` callbacks share one forward-model evaluation per state."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.alpha_ctx = build_solar_wind_fit_context(
+            count_rate=cls.observed_count_rate,
+            esa_voltage=cls.voltage,
+            swapi_response=cls.response,
+            central_effective_area_scale=1.0,
+            rotation_matrices=cls.rotation_matrices,
+            mass_kg=ALPHA_PARTICLE_MASS_KG,
+            mass_per_charge_m_p_per_e=ALPHA_MASS_PER_CHARGE_M_P_PER_E,
+        )
+        cls.x0 = np.array(
+            [
+                np.log(_TRUE_ALPHA_DENSITY_CM3),
+                np.log(_TRUE_ALPHA_TEMPERATURE_K),
+                _TRUE_DELTA_V_KM_S,
+            ]
+        )
+
+    def test_residuals_then_jacobian_at_same_state_share_one_forward_model_call(self):
+        """Calling residuals(x) and then jacobian(x) at the same x triggers exactly one underlying forward-model call — the second call hits the cache."""
+        evaluator = _AlphaEvaluator(
+            proton_bulk=_TRUE_PROTON_VELOCITY_RTN,
+            magnetic_field_direction=_B_HAT_RTN,
+            proton_true_rate=self.proton_true_rate,
+            alpha_ctx=self.alpha_ctx,
+        )
+        with patch.object(
+            alpha_module,
+            "model_solar_wind_ideal_coincidence_rates",
+            wraps=alpha_module.model_solar_wind_ideal_coincidence_rates,
+        ) as wrapped:
+            evaluator.residuals(self.x0)
+            evaluator.jacobian(self.x0)
+        self.assertEqual(wrapped.call_count, 1)
+
+    def test_residuals_at_different_states_each_trigger_forward_model_call(self):
+        """Calling residuals at two distinct states triggers two forward-model calls — the cache is keyed on the exact state vector."""
+        evaluator = _AlphaEvaluator(
+            proton_bulk=_TRUE_PROTON_VELOCITY_RTN,
+            magnetic_field_direction=_B_HAT_RTN,
+            proton_true_rate=self.proton_true_rate,
+            alpha_ctx=self.alpha_ctx,
+        )
+        x1 = self.x0.copy()
+        x2 = self.x0.copy()
+        x2[2] += 1.0
+        with patch.object(
+            alpha_module,
+            "model_solar_wind_ideal_coincidence_rates",
+            wraps=alpha_module.model_solar_wind_ideal_coincidence_rates,
+        ) as wrapped:
+            evaluator.residuals(x1)
+            evaluator.residuals(x2)
+        self.assertEqual(wrapped.call_count, 2)
+
+
+# ----- LM call wiring: analytic Jacobian passed to scipy -------------------
+
+
+class TestFitAlphaMomentsPassesAnalyticJacobianToLM(
+    _SyntheticAlphaSpectrumFixture, unittest.TestCase
+):
+    """Tests for `fit_solar_wind_alpha_moments` — verifies scipy.optimize.least_squares is invoked with `jac=...` (rather than the previous finite-difference `diff_step=...` path)."""
+
+    def test_least_squares_receives_jac_callable_and_no_diff_step(self):
+        """LM is called with a `jac` callable (the evaluator's analytic Jacobian) and without `diff_step` — finite-difference Jacobian estimation is no longer needed."""
+        proton_moments = _build_proton_fit_result()
+
+        mock_result = MagicMock()
+        mock_result.x = np.array(
+            [np.log(_TRUE_ALPHA_DENSITY_CM3), np.log(_TRUE_ALPHA_TEMPERATURE_K), 0.0]
+        )
+        mock_result.fun = np.zeros(_N_MEAS)
+        mock_result.jac = np.zeros((_N_MEAS, 3))
+        mock_result.success = True
+
+        with patch.object(
+            alpha_module,
+            "_alpha_initial_guess",
+            return_value=(
+                _TRUE_ALPHA_DENSITY_CM3,
+                _TRUE_ALPHA_TEMPERATURE_K,
+                0.0,
+                np.array([10, 11, 12]),
+            ),
+        ), patch.object(
+            alpha_module._AlphaEvaluator,
+            "residuals",
+            return_value=np.zeros(_N_MEAS),
+        ), patch.object(
+            alpha_module.scipy.optimize,
+            "least_squares",
+            return_value=mock_result,
+        ) as mock_lm:
+            fit_solar_wind_alpha_moments(
+                count_rate=self.observed_count_rate,
+                esa_voltage=self.voltage,
+                measurement_time=np.zeros(_N_MEAS),
+                swapi_response=self.response,
+                proton_moments=proton_moments,
+                magnetic_field_direction=_B_HAT_RTN,
+                alpha_effective_area_scale=1.0,
+                proton_effective_area_scale=1.0,
+                rotation_matrices=self.rotation_matrices,
+            )
+
+        kwargs = mock_lm.call_args.kwargs
+        self.assertIn("jac", kwargs)
+        self.assertTrue(callable(kwargs["jac"]))
+        self.assertNotIn("diff_step", kwargs)
+        self.assertEqual(kwargs["method"], "lm")
 
 
 if __name__ == "__main__":

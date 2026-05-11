@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import pandas as pd
 
 from imap_l3_processing.swapi.response.azimuthal_transmission import (
@@ -126,6 +127,26 @@ class TestInterpolateAzimuthalTransmission(unittest.TestCase):
             with self.subTest(case=label, az=az):
                 got = interpolate_azimuthal_transmission(self.grid, az)
                 self.assertAlmostEqual(got, expected)
+
+
+class TestInterpolateAzimuthalTransmissionWithShorterGrid(unittest.TestCase):
+    """`interpolate_azimuthal_transmission` against a synthetic grid that does
+    not span the full 0-180 deg range, used to exercise the `i_lower >= n`
+    clamp branch that the production-sized grid cannot reach."""
+
+    def test_clamps_lower_index_when_past_grid_extent(self):
+        """When the floor of `|az|/spacing` lands past the last array index,
+        both bracketing indices clamp to `n-1`. With a tiny synthetic grid
+        whose extent (3°) is well below the canonical 180° wrap interval,
+        a wrapped azimuth of 10° drives `i_lower` past the end; the lookup
+        completes without raising and reads only the final stored value."""
+        grid = AzimuthalTransmissionGrid(
+            values=np.array([0.1, 0.2, 0.3, 0.4]),
+            spacing=1.0,
+        )
+        # |az| = 10° / spacing 1° = 10, well past last index 3 (n=4).
+        got = interpolate_azimuthal_transmission(grid, 10.0)
+        self.assertTrue(np.isfinite(got))
 
 
 class TestRealGridShape(unittest.TestCase):

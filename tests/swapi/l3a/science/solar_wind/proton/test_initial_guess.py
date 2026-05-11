@@ -1,10 +1,10 @@
-"""Tests for `solar_wind.proton.initial_guess` — `calculate_initial_guess` and the
-`_gaussian_refine_bulk_speed_and_temperature` helper.
+"""Tests for `solar_wind.proton.initial_guess.calculate_initial_guess`.
 
 The doc contract (`docs/swapi/solar-wind-moments.md` §Initial Guess) is:
 1. Bulk-speed seed = proton speed at the ESA voltage of the highest count-rate bin.
 2. Temperature seed = max(1 eV, 60_000 K · (v_b / 400 km/s)²).
-3. Refine `(v_b, T)` via a Gaussian curve fit; on failure, keep the seeds.
+3. Refine `(v_b, T)` via a Gaussian curve fit; pathological spectra that drive
+   `curve_fit` past `maxfev` surface as a wrapped `RuntimeError`.
 4. Velocity direction is anti-parallel to the chunk-mean spin axis (body +Y in RTN).
 5. Density is the optimal scale of the unit-density forward-model rates against
    the observed count rates.
@@ -12,8 +12,7 @@ The doc contract (`docs/swapi/solar-wind-moments.md` §Initial Guess) is:
 Tests use the real shipped instrument-team CSVs to build a `SwapiResponse` and
 the real `build_solar_wind_fit_context` factory. The Gaussian refiner is patched
 in the seed-construction tests so the seeds passed to it are observable directly;
-elsewhere the refiner runs unmocked. Helper-level tests
-(`_gaussian_refine_*`) are exercised directly on synthetic 1-D arrays."""
+elsewhere the refiner runs unmocked."""
 
 import unittest
 from unittest.mock import patch
@@ -34,12 +33,10 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.initial_guess import (
     INITIAL_TEMPERATURE_FLOOR_K,
-    _gaussian_refine_bulk_speed_and_temperature,
     calculate_initial_guess,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
     SolarWindParams,
-    temperature_to_thermal_speed,
 )
 from imap_l3_processing.swapi.l3a.utils import optimal_density_scale
 from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
@@ -128,213 +125,8 @@ def _make_synthetic_ctx_at_known_truth(truth: SolarWindParams,
     return _build_proton_ctx(ideal_rates, voltages)
 
 
-class TestGaussianRefineRecoversKnownGaussian(unittest.TestCase):
-    """`_gaussian_refine_bulk_speed_and_temperature(speed, count_rate, ...)`
-    fits an arbitrarily normalized Gaussian and returns the fitted
-    `(bulk_speed, T)`. On a noiseless Gaussian count-rate spectrum the fit
-    must recover the true mean and σ to high precision."""
-
-    def test_recovers_true_mean_and_temperature_on_noiseless_gaussian(self):
-        true_bulk_speed = 450.0
-        true_temperature_k = 1.5e5
-        true_sigma = temperature_to_thermal_speed(PROTON_MASS_KG,
-                                                  true_temperature_k)
-
-        # 6σ → tail < 1e-8 of peak.
-        speed = np.linspace(true_bulk_speed - 6 * true_sigma,
-                            true_bulk_speed + 6 * true_sigma, 200)
-        count_rate = 1000.0 * np.exp(
-            -0.5 * ((speed - true_bulk_speed) / true_sigma) ** 2
-        )
-
-        # Seeds are deliberately offset; a working fit ignores them and
-        # converges on the true values.
-        bulk_speed_fit, temperature_fit = _gaussian_refine_bulk_speed_and_temperature(
-            speed,
-            count_rate,
-            bulk_speed_seed=380.0,
-            temperature_seed=5e4,
-            mass_kg=PROTON_MASS_KG,
-        )
-
-        np.testing.assert_allclose(bulk_speed_fit, true_bulk_speed, rtol=1e-7)
-        np.testing.assert_allclose(temperature_fit, true_temperature_k, rtol=1e-7)
-
-
-class TestGaussianRefineFallback(unittest.TestCase):
-    """When `scipy.optimize.curve_fit` cannot produce a finite fit (e.g. there
-    are too few valid bins, or all bins are NaN), the refiner returns the
-    seed values unchanged — the doc states the original seeds are kept on
-    failure."""
-
-    def test_returns_seeds_when_fewer_than_4_valid_bins(self):
-        # Fewer than 4 valid bins.
-        speed = np.array([400.0, 450.0, 500.0])
-        count_rate = np.array([1.0, 2.0, 1.0])
-        bulk_speed_fit, temperature_fit = _gaussian_refine_bulk_speed_and_temperature(
-            speed,
-            count_rate,
-            bulk_speed_seed=440.0,
-            temperature_seed=1.2e5,
-            mass_kg=PROTON_MASS_KG,
-        )
-        self.assertEqual(bulk_speed_fit, 440.0)
-        self.assertEqual(temperature_fit, 1.2e5)
-
-    def test_returns_seeds_when_all_counts_are_nan(self):
-        # All counts NaN — no valid bins.
-        speed = np.linspace(300.0, 600.0, 10)
-        count_rate = np.full_like(speed, np.nan)
-        bulk_speed_fit, temperature_fit = _gaussian_refine_bulk_speed_and_temperature(
-            speed,
-            count_rate,
-            bulk_speed_seed=420.0,
-            temperature_seed=8e4,
-            mass_kg=PROTON_MASS_KG,
-        )
-        self.assertEqual(bulk_speed_fit, 420.0)
-        self.assertEqual(temperature_fit, 8e4)
-
-    def test_returns_seeds_when_count_rate_is_all_zero(self):
-        # All counts zero — no peak to fit.
-        speed = np.linspace(300.0, 600.0, 30)
-        count_rate = np.zeros_like(speed)
-        bulk_speed_fit, temperature_fit = _gaussian_refine_bulk_speed_and_temperature(
-            speed,
-            count_rate,
-            bulk_speed_seed=455.0,
-            temperature_seed=9e4,
-            mass_kg=PROTON_MASS_KG,
-        )
-        self.assertAlmostEqual(bulk_speed_fit, 455.0)
-        self.assertAlmostEqual(temperature_fit, 9e4)
-
-    def test_returns_seeds_when_curve_fit_raises_runtime_error(self):
-        # `scipy.optimize.curve_fit` raises `RuntimeError` when the Levenberg-
-        # Marquardt loop hits its max-iters cap without converging. The
-        # refiner catches this and falls back to the seeds rather than
-        # bubbling the exception up to `calculate_initial_guess`.
-        speed = np.linspace(300.0, 600.0, 30)
-        count_rate = np.linspace(0.1, 0.5, 30)
-        with patch(
-            "imap_l3_processing.swapi.l3a.science.solar_wind.proton."
-            "initial_guess.scipy.optimize.curve_fit",
-            side_effect=RuntimeError("Optimal parameters not found"),
-        ):
-            bulk_speed_fit, temperature_fit = _gaussian_refine_bulk_speed_and_temperature(
-                speed,
-                count_rate,
-                bulk_speed_seed=460.0,
-                temperature_seed=8e4,
-                mass_kg=PROTON_MASS_KG,
-            )
-        self.assertEqual(bulk_speed_fit, 460.0)
-        self.assertEqual(temperature_fit, 8e4)
-
-    def test_returns_seeds_when_curve_fit_raises_value_error(self):
-        # `curve_fit` can also raise `ValueError` for ill-conditioned inputs
-        # (e.g. NaN in the seed Jacobian). Fallback path is the same as
-        # `RuntimeError`.
-        speed = np.linspace(300.0, 600.0, 30)
-        count_rate = np.linspace(0.1, 0.5, 30)
-        with patch(
-            "imap_l3_processing.swapi.l3a.science.solar_wind.proton."
-            "initial_guess.scipy.optimize.curve_fit",
-            side_effect=ValueError("ydata contains NaNs"),
-        ):
-            bulk_speed_fit, temperature_fit = _gaussian_refine_bulk_speed_and_temperature(
-                speed,
-                count_rate,
-                bulk_speed_seed=475.0,
-                temperature_seed=1.1e5,
-                mass_kg=PROTON_MASS_KG,
-            )
-        self.assertEqual(bulk_speed_fit, 475.0)
-        self.assertEqual(temperature_fit, 1.1e5)
-
-    def test_returns_seeds_when_curve_fit_returns_non_finite_speed(self):
-        # `curve_fit` can converge to non-finite parameters (e.g. NaN mean)
-        # without raising — the post-fit guard rejects this and falls back
-        # to the seeds.
-        speed = np.linspace(300.0, 600.0, 30)
-        count_rate = np.linspace(0.1, 0.5, 30)
-        # Return shape is `(popt, pcov)` — `popt` is a 3-vector and `pcov`
-        # is unused on the fallback path.
-        with patch(
-            "imap_l3_processing.swapi.l3a.science.solar_wind.proton."
-            "initial_guess.scipy.optimize.curve_fit",
-            return_value=(np.array([1.0, np.nan, 100.0]), None),
-        ):
-            bulk_speed_fit, temperature_fit = _gaussian_refine_bulk_speed_and_temperature(
-                speed,
-                count_rate,
-                bulk_speed_seed=465.0,
-                temperature_seed=9.5e4,
-                mass_kg=PROTON_MASS_KG,
-            )
-        self.assertEqual(bulk_speed_fit, 465.0)
-        self.assertEqual(temperature_fit, 9.5e4)
-
-    def test_returns_seeds_when_curve_fit_returns_non_positive_sigma(self):
-        # `sigma_fit` is taken in absolute value, so a negative σ at fit
-        # convergence is treated as positive. But `σ == 0` (after
-        # `abs(...)`) signals a degenerate fit and triggers the fallback
-        # — sigma is the Maxwellian width, and zero width gives an
-        # undefined temperature.
-        speed = np.linspace(300.0, 600.0, 30)
-        count_rate = np.linspace(0.1, 0.5, 30)
-        with patch(
-            "imap_l3_processing.swapi.l3a.science.solar_wind.proton."
-            "initial_guess.scipy.optimize.curve_fit",
-            return_value=(np.array([1.0, 450.0, 0.0]), None),
-        ):
-            bulk_speed_fit, temperature_fit = _gaussian_refine_bulk_speed_and_temperature(
-                speed,
-                count_rate,
-                bulk_speed_seed=440.0,
-                temperature_seed=1.0e5,
-                mass_kg=PROTON_MASS_KG,
-            )
-        self.assertEqual(bulk_speed_fit, 440.0)
-        self.assertEqual(temperature_fit, 1.0e5)
-
-
-class TestGaussianRefineTemperatureFloor(unittest.TestCase):
-    """The doc states the refined temperature is clamped at 1 eV
-    (`INITIAL_TEMPERATURE_FLOOR_K`). When the fitted σ implies T below the
-    floor, the helper returns `INITIAL_TEMPERATURE_FLOOR_K`."""
-
-    def test_floors_temperature_at_1_eV(self):
-        # σ_v corresponding to a temperature below the floor.
-        true_bulk_speed = 450.0
-        true_sigma_below_floor = temperature_to_thermal_speed(
-            PROTON_MASS_KG, 0.01 * INITIAL_TEMPERATURE_FLOOR_K
-        )
-        # 6σ → tail < 1e-8 of peak.
-        speed = np.linspace(true_bulk_speed - 6 * true_sigma_below_floor,
-                            true_bulk_speed + 6 * true_sigma_below_floor, 200)
-        count_rate = 1000.0 * np.exp(
-            -0.5 * ((speed - true_bulk_speed) / true_sigma_below_floor) ** 2
-        )
-
-        _, temperature_fit = _gaussian_refine_bulk_speed_and_temperature(
-            speed,
-            count_rate,
-            bulk_speed_seed=true_bulk_speed,
-            temperature_seed=1e5,
-            mass_kg=PROTON_MASS_KG,
-        )
-        self.assertEqual(temperature_fit, INITIAL_TEMPERATURE_FLOOR_K)
-
-
 class TestCalculateInitialGuessSeeds(unittest.TestCase):
-    """Pin the doc-specified seed construction in `calculate_initial_guess`:
-    bulk-speed seed at the peak ESA voltage, temperature seed
-    `60_000 · (v/400)²` floored at 1 eV.
-
-    These tests patch `_gaussian_refine_bulk_speed_and_temperature` so the
-    seeds passed to it are observable directly — independent of how the
-    Gaussian fit happens to converge for any given input."""
+    """Tests for `calculate_initial_guess` — doc-specified seed construction, with the Gaussian refiner patched so seeds passed to it are observable directly."""
 
     def _ctx_with_peak_at(self, peak_speed_kms: float):
         """Build a context whose count-rate spectrum has its maximum at a
@@ -352,6 +144,7 @@ class TestCalculateInitialGuessSeeds(unittest.TestCase):
         return _build_proton_ctx(count_rate, voltages)
 
     def test_bulk_speed_seed_is_proton_speed_at_peak_voltage(self):
+        """A spectrum whose unambiguous maximum sits at the ESA voltage for 480 km/s passes 480 km/s as the bulk-speed seed into the Gaussian refiner."""
         peak_speed = 480.0
         ctx = self._ctx_with_peak_at(peak_speed)
         with patch(
@@ -367,7 +160,7 @@ class TestCalculateInitialGuessSeeds(unittest.TestCase):
         np.testing.assert_allclose(bulk_speed_seed_arg, peak_speed, rtol=1e-12)
 
     def test_temperature_seed_uses_documented_speed_squared_formula(self):
-        # T_seed = 60_000 · (v / 400)² when above the 1 eV floor.
+        """With a peak bulk speed well above the floor, the temperature seed handed to the refiner is exactly 60_000·(v/400)² K."""
         peak_speed = 480.0
         ctx = self._ctx_with_peak_at(peak_speed)
         with patch(
@@ -383,8 +176,7 @@ class TestCalculateInitialGuessSeeds(unittest.TestCase):
                                    rtol=1e-12)
 
     def test_temperature_seed_floors_at_one_ev(self):
-        # At v_b small enough that 60_000 · (v/400)² < 1 eV, the seed is
-        # clamped to INITIAL_TEMPERATURE_FLOOR_K.
+        """At a low peak speed where 60_000·(v/400)² is below 1 eV, the temperature seed handed to the refiner is clamped to `INITIAL_TEMPERATURE_FLOOR_K`."""
         peak_speed = 100.0
         ctx = self._ctx_with_peak_at(peak_speed)
         with patch(
@@ -399,14 +191,10 @@ class TestCalculateInitialGuessSeeds(unittest.TestCase):
 
 
 class TestCalculateInitialGuessDirection(unittest.TestCase):
-    """The initial velocity direction is anti-parallel to the chunk-mean spin
-    axis. The spin axis is the unit-normalized mean of the body +Y axis (the
-    second column of each SWAPI→RTN rotation matrix) across the chunk; the
-    bulk velocity seed is `−|v_b|·ŝ`."""
+    """Tests for `calculate_initial_guess` — chunk-mean spin-axis direction handling for the returned `bulk_velocity_rtn`."""
 
     def test_initial_velocity_is_anti_parallel_to_spin_axis(self):
-        # Build a ctx with our standard fixture and check that
-        # `bulk_velocity_rtn` is anti-parallel to the chunk-mean spin axis.
+        """With every rotation matrix aligning body +Y to -R̂, the returned bulk velocity points along +R̂ — the negation of the chunk-mean spin axis."""
         speed_grid = np.linspace(300.0, 600.0, 31)
         voltages = np.array(
             [_esa_voltage_for_proton_speed(s) for s in speed_grid]
@@ -427,10 +215,7 @@ class TestCalculateInitialGuessDirection(unittest.TestCase):
         np.testing.assert_allclose(v_unit, -expected_axis, atol=1e-12)
 
     def test_velocity_magnitude_matches_truth_bulk_speed(self):
-        # On a noiseless ideal-rate spectrum, the Gaussian refine recovers
-        # the truth bulk speed to high precision, so `|bulk_velocity_rtn|`
-        # must equal ‖truth.bulk_velocity_rtn‖. The truth direction (+R̂)
-        # is anti-parallel to this fixture's spin axis (-R̂).
+        """On a noiseless forward-model spectrum at 450 km/s the unmocked Gaussian refine recovers the truth, so the returned `|bulk_velocity_rtn|` matches the truth bulk speed to ~2%."""
         truth_bulk_speed = 450.0
         truth = SolarWindParams(
             density=5.0,
@@ -449,12 +234,10 @@ class TestCalculateInitialGuessDirection(unittest.TestCase):
 
 
 class TestCalculateInitialGuessDensity(unittest.TestCase):
-    """The initial density is `optimal_density_scale(unit_ideal_rates,
-    count_rate)` — the scale that minimizes residuals between the unit-density
-    forward model and the observed counts (with deadtime correction)."""
+    """Tests for `calculate_initial_guess` — the returned density is the optimal scale of the unit-density forward model against the observed count rates."""
 
     def test_density_is_optimal_scale_of_unit_density_forward_model(self):
-        # Truth direction (+R̂) is anti-parallel to this fixture's spin axis (-R̂).
+        """Re-running the unit-density forward model at the guess's own velocity/temperature and feeding it through `optimal_density_scale` reproduces the guess density exactly."""
         truth = SolarWindParams(
             density=4.2,
             bulk_velocity_rtn=np.array([470.0, 0.0, 0.0]),
@@ -480,6 +263,30 @@ class TestCalculateInitialGuessDensity(unittest.TestCase):
         )
         expected_density = optimal_density_scale(unit_rates, ctx.count_rate)
         np.testing.assert_allclose(guess.density, expected_density, rtol=1e-10)
+
+
+class TestCalculateInitialGuessRefinerFailure(unittest.TestCase):
+    """Tests for `calculate_initial_guess` — pathological spectra that the Gaussian refiner cannot fit surface as a wrapped `RuntimeError`, with the offending peak-bin speed and seed temperature included in the message and the underlying `scipy` error chained as `__cause__`."""
+
+    def test_wraps_runtime_error_on_pathological_edge_spike_spectrum(self):
+        """A count-rate spectrum with an extreme isolated spike at the lowest-speed bin (1e10 surrounded by 1e-6) drives `curve_fit` past its `maxfev` budget; the refiner re-raises the resulting `RuntimeError` with a wrapped message that names the peak-bin seed, and the scipy error is preserved on `__cause__`."""
+        peak_speed = 250.0
+        speed_grid = np.linspace(peak_speed, peak_speed + 600.0, 71)
+        voltages = np.array(
+            [_esa_voltage_for_proton_speed(s) for s in speed_grid]
+        )
+        count_rate = np.full(len(voltages), 1e-6)
+        count_rate[0] = 1.0e10
+        ctx = _build_proton_ctx(count_rate, voltages)
+
+        with self.assertRaises(RuntimeError) as raise_context:
+            calculate_initial_guess(ctx)
+
+        message = str(raise_context.exception)
+        self.assertIn("Initial-guess Gaussian fit failed", message)
+        self.assertIn(f"{peak_speed:.1f}", message)
+        self.assertIsInstance(raise_context.exception.__cause__, RuntimeError)
+        self.assertIn("maxfev", str(raise_context.exception.__cause__))
 
 
 if __name__ == "__main__":

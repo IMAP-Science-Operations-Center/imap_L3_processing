@@ -84,10 +84,6 @@ def _gaussian_refine_bulk_speed_and_temperature(
     temperature_seed: float,
     mass_kg: float,
 ) -> tuple[float, float]:
-    valid = np.isfinite(speed) & np.isfinite(count_rate)
-    if valid.sum() < 4:
-        return bulk_speed_seed, temperature_seed
-
     def gaussian(v, amplitude, mean, sigma):
         return amplitude * np.exp(-0.5 * ((v - mean) / sigma) ** 2)
 
@@ -99,17 +95,18 @@ def _gaussian_refine_bulk_speed_and_temperature(
     try:
         (_, bulk_speed_fit, sigma_fit), _ = scipy.optimize.curve_fit(
             gaussian,
-            speed[valid],
-            count_rate[valid],
+            speed,
+            count_rate,
             p0=p0,
         )
-    except (RuntimeError, ValueError):
-        return bulk_speed_seed, temperature_seed
+    except RuntimeError as e:
+        raise RuntimeError(
+            f"Initial-guess Gaussian fit failed for spectrum with peak-bin "
+            f"speed {bulk_speed_seed:.1f} km/s and seed temperature "
+            f"{temperature_seed:.0f} K."
+        ) from e
 
     sigma_fit = abs(float(sigma_fit))
-    if not np.isfinite(bulk_speed_fit) or sigma_fit <= 0.0:
-        return bulk_speed_seed, temperature_seed
-
     temperature_fit = max(
         thermal_speed_to_temperature(sigma_fit, mass_kg),
         INITIAL_TEMPERATURE_FLOOR_K,

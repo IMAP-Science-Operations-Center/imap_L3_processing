@@ -1,9 +1,9 @@
-"""End-to-end subprocess integration test for the SWAPI L3a proton-sw processor.
+"""End-to-end subprocess integration tests for the SWAPI L3a processors.
 
 Mirrors test_swe_processor_integration.py: runs ``imap_l3_data_processor.py`` as
 a subprocess against staged test data, exercising the full real path —
 dependency manifest deserialization → SPICE furnishing → SwapiL3ADependencies
-loading of all 13 ancillaries → SwapiProcessor.process() → process_l3a_proton
+loading of all 13 ancillaries → SwapiProcessor.process() → process_l3a_*
 → save_data → CDF written to disk.
 
 SWAPI-specific inputs live in ``tests/integration/test_data/swapi/``. SPICE
@@ -33,7 +33,7 @@ import imap_l3_processing
 
 class SwapiProcessorIntegration(unittest.TestCase):
     @skipUnless(os.environ.get("IMAP_API_KEY"), "requires production API key")
-    def test_swapi_processor_with_production_data(self):
+    def test_proton_sw_with_production_data(self):
         """
         With real data and with full dependency setup, validate that the CDF output
         matches hardcoded expected values to check for unexpected changes
@@ -131,6 +131,96 @@ class SwapiProcessorIntegration(unittest.TestCase):
                 except TypeError:
                     self.assertEqual(expected_values[key], actual_value, msg=key)
 
+
+
+    @skipUnless(os.environ.get("IMAP_API_KEY"), "requires production API key")
+    def test_alpha_sw_with_production_data(self):
+        """
+        With real data and with full dependency setup, validate that the alpha-sw
+        CDF output matches hardcoded expected values to check for unexpected changes.
+        Unlike proton-sw, alpha-sw requires a MAG RTN science input (L2 preferred,
+        L1D fallback) for the field-aligned drift constraint.
+        """
+
+        # TODO: replace placeholders with values captured from a real run, matching
+        # the proton-sw pattern. Until then the test still guards subprocess success,
+        # CDF creation, and presence + finiteness of every alpha-sw variable.
+        expected_keys = [
+            'epoch',
+            'epoch_delta',
+            'alpha_sw_density',
+            'alpha_sw_density_uncert',
+            'alpha_sw_temperature',
+            'alpha_sw_temperature_uncert',
+            'alpha_sw_velocity_rtn',
+            'alpha_sw_velocity_covariance_rtn',
+            'alpha_sw_delta_v',
+            'alpha_sw_delta_v_uncert',
+            'alpha_sw_b_hat_rtn',
+            'alpha_sw_reference_proton_density',
+            'alpha_sw_reference_proton_temperature',
+            'alpha_sw_reference_proton_velocity_rtn',
+            'swp_flags',
+        ]
+
+        root_dir = Path(imap_l3_processing.__file__).parent.parent
+        os.chdir(root_dir)
+        imap_data_access.config["DATA_DIR"] = root_dir / "data"
+
+        anc_dir = root_dir / "data" / "imap" / "ancillary" / "swapi"
+        anc_dir.mkdir(parents=True, exist_ok=True)
+        for name in [
+            "imap_swapi_azimuthal-transmission_20260425_v001.csv",
+            "imap_swapi_central-effective-area_20260425_v001.csv",
+            "imap_swapi_passband-fit-coefficients_20260425_v001.csv",
+        ]:
+            dest = anc_dir / name
+            if not dest.exists():
+                shutil.copy(root_dir / "instrument_team_data" / "swapi" / name, dest)
+
+        expected_file_path = ScienceFilePath(
+            "imap_swapi_l3a_alpha-sw_20260101_v001.cdf"
+        ).construct_path()
+        if expected_file_path.parent.exists():
+            expected_file_path.unlink(missing_ok=True)
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                "imap_l3_data_processor.py",
+                "--instrument",
+                "swapi",
+                "--data-level",
+                "l3a",
+                "--descriptor",
+                "alpha-sw",
+                "--start-date",
+                "20260101",
+                "--version",
+                "v001",
+                "--dependency",
+                # TODO switch to dependency file
+                """
+                [{"type":"science","files":["imap_swapi_l2_sci_20260101_v001.cdf"]},{"type":"science","files":["imap_mag_l2_norm-rtn_20260101_v001.cdf"]},{"type":"ancillary","files":["imap_swapi_alpha-density-temperature-lut_20250125_v001.dat"]},{"type":"ancillary","files":["imap_swapi_efficiency-lut_20241020_v001.dat"]},{"type":"ancillary","files":["imap_swapi_energy-gf-pui-lut_20100101_v003.csv"]},{"type":"ancillary","files":["imap_swapi_instrument-response-lut_20241023_v001.zip"]},{"type":"ancillary","files":["imap_swapi_density-of-neutral-helium-lut_20241023_v002.dat"]},{"type":"ancillary","files":["imap_swapi_hydrogen-inflow-vector_20100101_v001.dat"]},{"type":"ancillary","files":["imap_swapi_helium-inflow-vector_20100101_v001.dat"]},{"type":"ancillary","files":["imap_swapi_azimuthal-transmission_20260425_v001.csv"]},{"type":"ancillary","files":["imap_swapi_central-effective-area_20260425_v001.csv"]},{"type":"ancillary","files":["imap_swapi_passband-fit-coefficients_20260425_v001.csv"]},{"type":"spice","files":["naif0012.tls","pck00011.tpc","imap_130.tf","imap_science_120.tf","imap_sclk_0161.tsc","de440.bsp","imap_recon_20250925_20260420_v01.bsp","imap_2025_358_2026_085_004.ah.bc","imap_dps_2025_363_2025_365_001.ah.bc","imap_dps_2025_359_2026_115_002.ah.bc"]}]
+                """,
+            ]
+        )
+
+        self.assertEqual(0, result.returncode)
+        self.assertTrue(expected_file_path.exists())
+
+        with CDF(str(expected_file_path)) as cdf:
+            for key in expected_keys:
+                self.assertIn(key, cdf, msg=f"missing variable {key}")
+                value = cdf[key][0]
+                if isinstance(value, datetime.datetime):
+                    continue
+                arr = np.asarray(value)
+                if np.issubdtype(arr.dtype, np.floating):
+                    self.assertTrue(
+                        np.all(np.isfinite(arr)),
+                        msg=f"{key} contains non-finite values: {arr}",
+                    )
 
 
 if __name__ == "__main__":

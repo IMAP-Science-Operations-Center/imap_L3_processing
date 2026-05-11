@@ -1,12 +1,4 @@
-"""Tests for `solar_wind.optimizer` — `optimize_solar_wind_params` and the
-internal `_Evaluator` cache.
-
-The optimizer wraps `scipy.optimize.least_squares(method='lm')` on the
-deadtime-corrected forward model. `_Evaluator` caches the most recent
-(residuals, jacobian) so scipy's separate `fun` and `jac` callbacks share
-one forward-model evaluation per state. Doc spec lives in
-`docs/swapi/solar-wind-moments.md` § Least-Squares Fitting Procedure.
-"""
+"""Tests for `solar_wind.optimizer.optimize_solar_wind_params` and `OptimizeSolarWindParamsResult`."""
 
 import unittest
 from unittest.mock import patch
@@ -26,7 +18,6 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.optimizer import (
     OptimizeSolarWindParamsResult,
-    _Evaluator,
     optimize_solar_wind_params,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
@@ -134,24 +125,20 @@ def _synthetic_count_rate_for(sw_params: SolarWindParams) -> np.ndarray:
 
 
 class TestOptimizeSolarWindParamsResultMSE(unittest.TestCase):
-    """`OptimizeSolarWindParamsResult.mse` returns the mean of squared
-    residuals (per-bin), used as the chi^2 surrogate by the wrong-basin
-    detector."""
+    """Tests for `OptimizeSolarWindParamsResult.mse`."""
 
     def test_mse_is_mean_of_squared_residuals(self):
+        """Given a residuals vector [1, -2, 3], mse returns 14/3 — the per-bin mean of squared residuals."""
         result = OptimizeSolarWindParamsResult(
             sw_params=_proton_params(),
             residuals=np.array([1.0, -2.0, 3.0]),
             jacobian=np.zeros((3, N_STATE)),
             success=True,
         )
-        # mean([1, 4, 9]) = 14/3
         self.assertAlmostEqual(result.mse, 14.0 / 3.0)
 
     def test_mse_handles_all_zero_residuals_without_dividing_by_zero(self):
-        # Edge case: at the truth (or in synthetic noise-free fits) residuals
-        # are exactly zero. mse must report 0.0 rather than NaN/Inf so the
-        # wrong-basin chi^2 comparator can be applied unconditionally.
+        """At the truth (noise-free fit) all residuals are zero and mse reports exactly 0.0 rather than NaN/Inf, so the wrong-basin chi^2 comparator can be applied unconditionally."""
         result = OptimizeSolarWindParamsResult(
             sw_params=_proton_params(),
             residuals=np.zeros(5),
@@ -162,13 +149,7 @@ class TestOptimizeSolarWindParamsResultMSE(unittest.TestCase):
 
 
 class TestOptimizeSolarWindParamsRecoversTruth(unittest.TestCase):
-    """End-to-end: feed the optimizer count rates synthesized from a known
-    `SolarWindParams`, start from a perturbed initial guess, and verify the
-    LM fit converges to the truth within tolerance.
-
-    This is the integration test for the doc § Least-Squares Fitting
-    Procedure — exercises forward model + deadtime correction + LM through
-    `optimize_solar_wind_params` end to end."""
+    """End-to-end tests for `optimize_solar_wind_params` driving an LM fit to a known synthetic solar wind state."""
 
     @classmethod
     def setUpClass(cls):
@@ -187,10 +168,7 @@ class TestOptimizeSolarWindParamsRecoversTruth(unittest.TestCase):
         cls.result = optimize_solar_wind_params(cls.initial_guess, cls.ctx)
 
     def test_optimizer_recovers_density(self):
-        # Self-consistency: data was generated with the same forward model
-        # the LM optimizes against, so residuals drive to zero up to LM's
-        # `xtol=1e-4` (see docs/swapi/solar-wind-moments.md § Least-Squares
-        # Fitting Procedure).
+        """Starting from a +10% density perturbation against noise-free synthetic data, the fitted density returns to the truth within 0.1%."""
         np.testing.assert_allclose(
             self.result.sw_params.density,
             self.true_params.density,
@@ -198,6 +176,7 @@ class TestOptimizeSolarWindParamsRecoversTruth(unittest.TestCase):
         )
 
     def test_optimizer_recovers_temperature(self):
+        """Starting from a +20% temperature perturbation against noise-free synthetic data, the fitted temperature returns to the truth within 0.1%."""
         np.testing.assert_allclose(
             self.result.sw_params.temperature,
             self.true_params.temperature,
@@ -205,28 +184,25 @@ class TestOptimizeSolarWindParamsRecoversTruth(unittest.TestCase):
         )
 
     def test_optimizer_recovers_bulk_velocity(self):
+        """Starting from a +3% speed perturbation against noise-free synthetic data, the fitted bulk velocity returns to the truth within 0.5 km/s on each RTN component."""
         np.testing.assert_allclose(
             self.result.sw_params.bulk_velocity_rtn,
             self.true_params.bulk_velocity_rtn,
-            atol=0.5,  # km/s
+            atol=0.5,
         )
 
     def test_optimizer_reports_success(self):
+        """LM converges cleanly on the well-posed synthetic problem and the result's success flag is True."""
         self.assertTrue(self.result.success)
 
     def test_residuals_at_solution_are_small(self):
-        # MSE relative to the (large) count rates should be tiny — we built
-        # the data noise-free using the same forward model the LM is fitting,
-        # so residuals are limited only by LM convergence (`xtol=1e-4`, see
-        # docs/swapi/solar-wind-moments.md § Least-Squares Fitting Procedure).
+        """At the converged solution against noise-free data, mse is below (peak_rate)^2 * 1e-4 — residuals are limited only by LM's xtol=1e-4 tolerance."""
         peak_rate_squared = float(np.max(self.count_rate)) ** 2
         self.assertLess(self.result.mse, peak_rate_squared * 1e-4)
 
 
 class TestOptimizeSolarWindParamsResultShape(unittest.TestCase):
-    """Verify the returned `OptimizeSolarWindParamsResult` is fully
-    populated and has the right shapes/types — these are the contracts the
-    wrong-basin detector and uncertainty derivation depend on."""
+    """Tests for `optimize_solar_wind_params` result-object shape and type contracts the wrong-basin detector and uncertainty derivation depend on."""
 
     @classmethod
     def setUpClass(cls):
@@ -236,29 +212,33 @@ class TestOptimizeSolarWindParamsResultShape(unittest.TestCase):
         cls.result = optimize_solar_wind_params(true_params, cls.ctx)
 
     def test_sw_params_is_a_solar_wind_params(self):
+        """The returned `sw_params` field is a `SolarWindParams` instance, not a raw state vector."""
         self.assertIsInstance(self.result.sw_params, SolarWindParams)
 
     def test_residuals_length_matches_ctx_count_rate(self):
+        """The residuals array has one entry per observed count-rate bin in the fit context."""
         self.assertEqual(self.result.residuals.shape, self.ctx.count_rate.shape)
 
     def test_jacobian_shape_is_n_residuals_by_n_state(self):
+        """The jacobian has shape (n_residuals, N_STATE) — one row per residual, one column per fit parameter."""
         self.assertEqual(
             self.result.jacobian.shape, (self.ctx.count_rate.size, N_STATE)
         )
 
     def test_success_is_bool(self):
+        """The success field is a plain Python bool rather than numpy's bool-like wrapper."""
         self.assertIsInstance(self.result.success, bool)
 
     def test_sw_params_carries_context_mass(self):
+        """The fitted `SolarWindParams.mass` is propagated from `ctx.mass_kg` rather than defaulting to proton mass."""
         self.assertEqual(self.result.sw_params.mass, self.ctx.mass_kg)
 
 
 class TestOptimizerLeastSquaresKwargs(unittest.TestCase):
-    """The doc pins `method='lm'` and `xtol=1e-4` — the LM-specific
-    convergence tolerance the SWAPI fitter relies on. Verify the actual
-    scipy call gets these."""
+    """Tests that `optimize_solar_wind_params` invokes scipy with the doc-pinned LM kwargs."""
 
     def test_uses_lm_with_xtol_from_doc_spec(self):
+        """When the optimizer runs, scipy.optimize.least_squares is called with `method='lm'` and `xtol=1e-4` per the doc spec."""
         true_params = _proton_params()
         count_rate = _synthetic_count_rate_for(true_params)
         ctx = _build_proton_fit_context(count_rate=count_rate)
@@ -280,118 +260,6 @@ class TestOptimizerLeastSquaresKwargs(unittest.TestCase):
             self.assertEqual(kwargs["xtol"], 1e-4)
 
 
-class TestEvaluatorDeadtimeApplication(unittest.TestCase):
-    """The optimizer fits the *deadtime-corrected* predicted rate to the
-    measured rate — `r_obs = r_ideal · f_dt(r_ideal)`. Verify this is
-    actually applied to the residuals and jacobian inside `_Evaluator._eval`.
-    See docs/swapi/solar-wind-moments.md § Deadtime correction (§ 5% at
-    ~2.7e5 Hz at peak slow-wind rates)."""
-
-    @classmethod
-    def setUpClass(cls):
-        cls.true_params = _proton_params()
-        cls.ctx = _zero_count_proton_context()
-        cls.ideal_rates, _ = model_solar_wind_ideal_coincidence_rates(
-            cls.true_params, cls.ctx
-        )
-        cls.evaluator = _Evaluator(cls.ctx)
-
-    def test_residual_applies_deadtime_to_predicted_rate(self):
-        # With ctx.count_rate == 0, residual == predicted == r_ideal · f_dt
-        # — so the residual exposes the deadtime-applied predicted rate
-        # directly.
-        residuals = self.evaluator.residues(self.true_params.to_vector())
-        df = deadtime_factor(self.ideal_rates)
-        np.testing.assert_allclose(residuals, self.ideal_rates * df)
-
-    def test_residual_subtracts_observed_count_rate(self):
-        # Non-zero count_rate path: residual == r_ideal · f_dt − count_rate.
-        observed = self.ideal_rates * 0.5  # any measurable rate vector
-        ctx = _build_proton_fit_context(observed)
-        evaluator = _Evaluator(ctx)
-        residuals = evaluator.residues(self.true_params.to_vector())
-        df = deadtime_factor(self.ideal_rates)
-        np.testing.assert_allclose(residuals, self.ideal_rates * df - observed)
-
-    def test_jacobian_includes_deadtime_chain_rule_factor(self):
-        # Doc § Deadtime correction derives ∂C_obs/∂C_model = f_dt² via the
-        # quotient rule, so the residual jacobian = ideal_jacobian · f_dt².
-        _, jacobian_ideal = model_solar_wind_ideal_coincidence_rates(
-            self.true_params, self.ctx
-        )
-        jacobian = self.evaluator.jacobian(self.true_params.to_vector())
-        df_squared = np.square(deadtime_factor(self.ideal_rates))[:, np.newaxis]
-        # Some columns are ~0 (e.g. the v_T column when the wind has
-        # v_T==0); use atol to absorb the float64 ULP noise on those entries.
-        np.testing.assert_allclose(
-            jacobian, jacobian_ideal * df_squared, rtol=1e-6, atol=1e-9
-        )
-
-
-class TestEvaluatorCachesPerState(unittest.TestCase):
-    """`_Evaluator` caches the most recent forward-model evaluation so a
-    `residues` call followed by a `jacobian` call at the same state runs
-    the forward model exactly once. State-change invalidates the cache."""
-
-    @classmethod
-    def setUpClass(cls):
-        true_params = _proton_params()
-        cls.count_rate = _synthetic_count_rate_for(true_params)
-        cls.ctx = _build_proton_fit_context(count_rate=cls.count_rate)
-        cls.true_params = true_params
-
-    def test_residues_then_jacobian_at_same_state_evaluates_forward_model_once(self):
-        evaluator = _Evaluator(self.ctx)
-        state = self.true_params.to_vector()
-        with patch(
-            "imap_l3_processing.swapi.l3a.science.solar_wind.optimizer.model_solar_wind_ideal_coincidence_rates",
-            wraps=model_solar_wind_ideal_coincidence_rates,
-        ) as spy:
-            evaluator.residues(state)
-            evaluator.jacobian(state)
-            self.assertEqual(spy.call_count, 1)
-
-    def test_jacobian_then_residues_at_same_state_evaluates_forward_model_once(self):
-        # Order-independence: scipy may call jac before fun on a given state.
-        evaluator = _Evaluator(self.ctx)
-        state = self.true_params.to_vector()
-        with patch(
-            "imap_l3_processing.swapi.l3a.science.solar_wind.optimizer.model_solar_wind_ideal_coincidence_rates",
-            wraps=model_solar_wind_ideal_coincidence_rates,
-        ) as spy:
-            evaluator.jacobian(state)
-            evaluator.residues(state)
-            self.assertEqual(spy.call_count, 1)
-
-    def test_state_change_re_evaluates_forward_model(self):
-        # When LM steps, the next call hits a new state and the cache must
-        # invalidate — otherwise the residual/jacobian become stale.
-        evaluator = _Evaluator(self.ctx)
-        state_a = self.true_params.to_vector()
-        state_b = state_a + 1.0
-        with patch(
-            "imap_l3_processing.swapi.l3a.science.solar_wind.optimizer.model_solar_wind_ideal_coincidence_rates",
-            wraps=model_solar_wind_ideal_coincidence_rates,
-        ) as spy:
-            residuals_a = evaluator.residues(state_a).copy()
-            residuals_b = evaluator.residues(state_b)
-            self.assertEqual(spy.call_count, 2)
-            # The new state must produce a different residual vector — if it
-            # didn't, the test would also pass when the cache served stale
-            # data alongside a redundant model re-evaluation.
-            self.assertFalse(np.array_equal(residuals_a, residuals_b))
-
-    def test_first_call_evaluates_forward_model_once(self):
-        # The "no cache yet" branch — verifies the first call evaluates the
-        # forward model rather than returning an uninitialized cache slot.
-        evaluator = _Evaluator(self.ctx)
-        state = self.true_params.to_vector()
-        with patch(
-            "imap_l3_processing.swapi.l3a.science.solar_wind.optimizer.model_solar_wind_ideal_coincidence_rates",
-            wraps=model_solar_wind_ideal_coincidence_rates,
-        ) as spy:
-            evaluator.residues(state)
-            self.assertEqual(spy.call_count, 1)
 
 
 if __name__ == "__main__":

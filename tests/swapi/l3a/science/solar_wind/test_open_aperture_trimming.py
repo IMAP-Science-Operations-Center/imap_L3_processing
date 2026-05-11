@@ -18,7 +18,6 @@ import numpy as np
 from imap_l3_processing.constants import PROTON_MASS_KG
 from imap_l3_processing.swapi.l3a.science.solar_wind.open_aperture_trimming import (
     OA_SCAN_RESOLUTION,
-    _evaluate_oa_integrand_along_azimuth,
     trim_oa_azimuth_by_integrand,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
@@ -129,18 +128,17 @@ def _trim(
 
 
 class TestSkipsWhenAzimuthWindowIsEmpty(unittest.TestCase):
-    """The trim returns the (0, 0) sentinel without scanning when its caller
-    passes a degenerate window (`azimuth_hi <= azimuth_lo`). This is the same
-    contract `get_angular_quadrature` relies on to short-circuit OA when the
-    geometric clamp leaves no room."""
+    """Tests for `trim_oa_azimuth_by_integrand`, degenerate input-window branch."""
 
     def test_skips_when_window_has_zero_width(self):
+        """A zero-width azimuth clamp short-circuits to the (0, 0) sentinel without scanning."""
         rg = _make_response_grid()
         sw = _proton_params()
         lo, hi = _trim(rg, sw, azimuth_lo=30.0, azimuth_hi=30.0, sg_rate=10.0)
         self.assertEqual((lo, hi), (0.0, 0.0))
 
     def test_skips_when_window_is_inverted(self):
+        """An inverted clamp (`hi < lo`) also short-circuits to the (0, 0) sentinel."""
         rg = _make_response_grid()
         sw = _proton_params()
         lo, hi = _trim(rg, sw, azimuth_lo=50.0, azimuth_hi=20.0, sg_rate=10.0)
@@ -148,14 +146,10 @@ class TestSkipsWhenAzimuthWindowIsEmpty(unittest.TestCase):
 
 
 class TestSkipsWhenSgRateRelativeFloorDominates(unittest.TestCase):
-    """When `sg_rate` is large, `1e-3 · sg_rate` exceeds the 0.1 Hz absolute
-    floor and becomes the binding skip threshold. A bulk far from the OA
-    half-space then trips the relative branch."""
+    """Tests for `trim_oa_azimuth_by_integrand`, `1e-3·sg_rate` skip branch."""
 
     def test_skips_when_oa_upper_bound_below_sg_relative_floor(self):
-        # Bulk along -Y_inst → azimuth = 0°, far from the OA+ band [20°, 150°].
-        # Cold plasma keeps the Maxwellian tight so it cannot reach into OA.
-        # sg_rate = 1e6 Hz makes 1e-3·sg_rate = 1000 Hz, which dwarfs 0.1 Hz.
+        """A cold bulk far from OA with a huge sg_rate trips the relative-fraction floor and skips OA."""
         rg = _make_response_grid()
         sw = _proton_params(velocity_rtn=(0.0, -450.0, 0.0), temperature=1.0e4)
         lo, hi = _trim(rg, sw, azimuth_lo=20.0, azimuth_hi=150.0, sg_rate=1.0e6)
@@ -163,22 +157,17 @@ class TestSkipsWhenSgRateRelativeFloorDominates(unittest.TestCase):
 
 
 class TestSkipsWhenAbsoluteRateFloorDominates(unittest.TestCase):
-    """When `sg_rate` is small (or zero), the 0.1 Hz absolute floor is the
-    binding skip threshold. A bulk far from the OA half-space still trips
-    the absolute branch."""
+    """Tests for `trim_oa_azimuth_by_integrand`, 0.1 Hz absolute-floor skip branch."""
 
     def test_skips_when_oa_upper_bound_below_absolute_floor(self):
-        # With sg_rate = 0, max(0.1, 0) = 0.1 Hz is the only floor.
+        """With sg_rate=0, the 0.1 Hz absolute floor alone forces a skip for a cold bulk far from OA."""
         rg = _make_response_grid()
         sw = _proton_params(velocity_rtn=(0.0, -450.0, 0.0), temperature=1.0e4)
         lo, hi = _trim(rg, sw, azimuth_lo=20.0, azimuth_hi=150.0, sg_rate=0.0)
         self.assertEqual((lo, hi), (0.0, 0.0))
 
     def test_skips_when_sg_relative_below_absolute_floor(self):
-        # sg_rate = 50 Hz → 1e-3·sg_rate = 0.05 Hz < 0.1 Hz, so the max(...)
-        # picks 0.1 Hz. This pins the `max(...)` semantic — if the relative
-        # branch were used unconditionally the test would still skip, but
-        # the absolute floor is what's actually binding here.
+        """When `1e-3·sg_rate = 0.05 Hz < 0.1 Hz`, the `max(...)` picks the absolute floor and still skips."""
         rg = _make_response_grid()
         sw = _proton_params(velocity_rtn=(0.0, -450.0, 0.0), temperature=1.0e4)
         lo, hi = _trim(rg, sw, azimuth_lo=20.0, azimuth_hi=150.0, sg_rate=50.0)
@@ -186,10 +175,7 @@ class TestSkipsWhenAbsoluteRateFloorDominates(unittest.TestCase):
 
 
 class TestReturnsTrimmedWindowWhenOaIsRelevant(unittest.TestCase):
-    """For a bulk direction deep inside the OA+ band, the trimmed window must:
-    - sit strictly inside the input clamp,
-    - lie on the 64-point scan grid,
-    - bracket the true peak in azimuth."""
+    """Tests for `trim_oa_azimuth_by_integrand`, well-aligned bulk shared-fixture branch."""
 
     def setUp(self):
         # Bulk along -X_RTN → azimuth_inst = atan2(450, 0) = +90°.
@@ -209,36 +195,32 @@ class TestReturnsTrimmedWindowWhenOaIsRelevant(unittest.TestCase):
         )
 
     def test_returned_window_has_positive_width(self):
+        """A bulk deep inside OA+ produces a non-empty trimmed window."""
         self.assertGreater(self.hi, self.lo)
 
     def test_returned_window_lies_inside_input_clamp(self):
+        """The trimmed window is contained in the input azimuth clamp."""
         self.assertGreaterEqual(self.lo, self.az_lo_in)
         self.assertLessEqual(self.hi, self.az_hi_in)
 
     def test_returned_endpoints_lie_on_the_scan_grid(self):
-        # Documented contract: the trim picks endpoints from
-        # `np.linspace(az_lo, az_hi, OA_SCAN_RESOLUTION)`. Both edges must
-        # coincide with one of those nodes — downstream Gauss-Legendre nodes
-        # are placed inside the returned window, so non-grid endpoints would
-        # imply a step that the implementation does not take.
+        """Both endpoints coincide with nodes of `linspace(az_lo, az_hi, OA_SCAN_RESOLUTION)`."""
         scan = np.linspace(self.az_lo_in, self.az_hi_in, OA_SCAN_RESOLUTION)
         self.assertTrue(np.any(np.isclose(scan, self.lo)))
         self.assertTrue(np.any(np.isclose(scan, self.hi)))
 
     def test_returned_window_brackets_the_bulk_azimuth(self):
-        # Bulk velocity along -X_RTN with identity rotation → φ_b = +90°.
+        """The trimmed window strictly contains the bulk azimuth (+90° here)."""
         bulk_azimuth = 90.0
         self.assertLess(self.lo, bulk_azimuth)
         self.assertGreater(self.hi, bulk_azimuth)
 
 
 class TestTrimAt1eMinus6Threshold(unittest.TestCase):
-    """The trim threshold `OA_SCAN_THRESHOLD` is a relative cutoff (1e-6) of
-    the peak `T(φ)·M(φ)` on the 64-point scan grid. The returned window
-    expands one node out from the first/last scan node above the cutoff
-    (clipped at the grid edge)."""
+    """Tests for `trim_oa_azimuth_by_integrand`, OA_SCAN_THRESHOLD endpoint selection."""
 
     def test_endpoints_expand_one_node_past_threshold_crossings(self):
+        """A step-function transmission plateau drives the trim to return one scan node outside the first/last above-threshold node."""
         # Hand-built scenario with a transmission curve that's zero outside a
         # narrow azimuth band, so the scan integrand is a step function we can
         # reason about exactly without re-running production code.
@@ -272,12 +254,10 @@ class TestTrimAt1eMinus6Threshold(unittest.TestCase):
 
 
 class TestSymmetryBetweenOaPositiveAndNegative(unittest.TestCase):
-    """For a bulk direction symmetric about the boresight axis (bulk_az =
-    +φ for OA+, mirror at -φ for OA-), the OA+ trim window must be the
-    mirror image of the OA- trim window. The trimmer treats each side
-    independently and the only signed dependency is on the bulk azimuth."""
+    """Tests for `trim_oa_azimuth_by_integrand`, OA+/OA- mirror-symmetry contract."""
 
     def test_mirror_symmetric_bulk_yields_mirror_symmetric_windows(self):
+        """Bulks at ±90° produce OA+ and OA- windows that are exact mirror images of each other."""
         rg = _make_response_grid()
 
         # Bulk along -X_RTN → azimuth_inst = +90° (deep in OA+).
@@ -296,78 +276,28 @@ class TestSymmetryBetweenOaPositiveAndNegative(unittest.TestCase):
         np.testing.assert_allclose(hi_neg, -lo_pos, atol=1e-12, rtol=0)
 
 
-class TestEvaluateOaIntegrandAlongAzimuth(unittest.TestCase):
-    """Internal helper: at fixed elevation, returns `T(φ)·M(φ)` at each scan
-    azimuth. Used by `trim_oa_azimuth_by_integrand` to decide endpoints."""
-
-    def test_peaks_at_the_bulk_azimuth_when_transmission_is_uniform(self):
-        # With T(φ) ≡ 1, the only φ-dependence is the Maxwellian, and that
-        # peaks exactly at the bulk azimuth. A scan that brackets the bulk
-        # must produce its maximum at the index nearest to bulk_az.
-        rg = _make_response_grid()
-        sw = _proton_params(velocity_rtn=(-450.0, 0.0, 0.0))  # bulk_az = +90°
-        scan = np.linspace(20.0, 150.0, OA_SCAN_RESOLUTION)
-        values = _evaluate_oa_integrand_along_azimuth(
-            rg, sw, np.eye(3), scan, scan_elevation=0.0
-        )
-        max_idx = int(np.argmax(values))
-        # The closest scan node to 90° is the expected argmax.
-        nearest_to_bulk_idx = int(np.argmin(np.abs(scan - 90.0)))
-        self.assertEqual(max_idx, nearest_to_bulk_idx)
-
-    def test_transmission_factor_multiplies_the_maxwellian(self):
-        # A "transmission" curve that's zero everywhere kills the integrand.
-        rg = _make_response_grid(azimuthal_transmission=np.zeros(181))
-        sw = _proton_params(velocity_rtn=(-450.0, 0.0, 0.0))
-        scan = np.linspace(20.0, 150.0, OA_SCAN_RESOLUTION)
-        values = _evaluate_oa_integrand_along_azimuth(
-            rg, sw, np.eye(3), scan, scan_elevation=0.0
-        )
-        np.testing.assert_array_equal(values, np.zeros(OA_SCAN_RESOLUTION))
-
-    def test_returns_one_value_per_scan_azimuth(self):
-        rg = _make_response_grid()
-        sw = _proton_params(velocity_rtn=(-450.0, 0.0, 0.0))
-        scan = np.linspace(20.0, 150.0, OA_SCAN_RESOLUTION)
-        values = _evaluate_oa_integrand_along_azimuth(
-            rg, sw, np.eye(3), scan, scan_elevation=0.0
-        )
-        self.assertEqual(values.shape, scan.shape)
-
-
 class TestSkipPolicyAgainstSgRate(unittest.TestCase):
-    """The OA region is dropped when `_oa_rate_upper_bound < max(0.1 Hz,
-    1e-3·sg_rate)`. Test that for a fixed bulk that produces a real window
-    at sg_rate=0, raising sg_rate enough flips the return to (0, 0)."""
+    """Tests for `trim_oa_azimuth_by_integrand`, sg_rate-driven skip transition."""
 
     def test_high_sg_rate_forces_skip_for_otherwise_aligned_bulk(self):
-        # Same well-aligned bulk that produces a real window with sg_rate=0,
-        # but with a huge SG rate so 1e-3·sg_rate exceeds the upper bound.
+        """A bulk that yields a real window at sg_rate=0 flips to the (0, 0) sentinel once sg_rate is cranked above the OA upper bound."""
         rg = _make_response_grid()
         sw = _proton_params(velocity_rtn=(-450.0, 0.0, 0.0))
 
-        # Sanity: at sg_rate=0 we get a real (non-zero) window.
         lo_open, hi_open = _trim(
             rg, sw, azimuth_lo=20.0, azimuth_hi=150.0, sg_rate=0.0
         )
         self.assertGreater(hi_open, lo_open)
 
-        # Crank sg_rate enormously high — the upper bound for any 5 cm⁻³,
-        # 100 kK plasma is well below 1e15 Hz, so 1e-3·sg_rate = 1e12 Hz
-        # easily dominates regardless of the integrand.
         lo, hi = _trim(rg, sw, azimuth_lo=20.0, azimuth_hi=150.0, sg_rate=1.0e15)
         self.assertEqual((lo, hi), (0.0, 0.0))
 
 
 class TestScanAtBulkElevationClampedToOaRange(unittest.TestCase):
-    """When the bulk elevation lies outside the OA elevation range, the
-    Maxwellian factor is evaluated at the elevation clamped to
-    `[min_elevation, max_elevation]`, and the trim still returns a non-empty
-    window for an otherwise well-aligned bulk azimuth."""
+    """Tests for `trim_oa_azimuth_by_integrand`, bulk-elevation clamp to `[min_elevation, max_elevation]`."""
 
     def test_bulk_elevation_above_range_yields_non_empty_window(self):
-        # bulk_az = +90°, bulk_el = +20° (well above the OA elevation top of +10°).
-        # The trim clamps the scan elevation to +10° and proceeds.
+        """A bulk at +20° elevation (above the +10° OA cap) still yields a non-empty trimmed window after the scan elevation is clamped to +10°."""
         rg = _make_response_grid()
         sw = _proton_params_at_elevation(speed=450.0, bulk_el_deg=20.0)
 

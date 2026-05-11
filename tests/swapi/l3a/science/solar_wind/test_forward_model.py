@@ -166,10 +166,10 @@ class _ForwardModelFixture(unittest.TestCase):
 
 
 class TestModelSolarWindIdealCoincidenceRatesShape(_ForwardModelFixture):
-    """`model_solar_wind_ideal_coincidence_rates` must return one rate per
-    sweep and a `(N_sweeps, N_STATE)` Jacobian."""
+    """Tests for `model_solar_wind_ideal_coincidence_rates`, output-shape contract."""
 
     def test_returns_one_rate_and_one_jacobian_row_per_sweep(self):
+        """Given three sweeps spanning the passband-center voltage, the model returns a length-3 rate vector and a (3, N_STATE) Jacobian."""
         ctx = _build_fit_context_for_voltages(
             self.response,
             np.array(
@@ -188,7 +188,7 @@ class TestModelSolarWindIdealCoincidenceRatesShape(_ForwardModelFixture):
 
 
 class TestCalculateIntegralRateBehavior(_ForwardModelFixture):
-    """Behavior of the rate value (independent of the Jacobian)."""
+    """Tests for `calculate_integral`, rate-value behavior (Jacobian asserted elsewhere)."""
 
     def setUp(self):
         self.ctx = _build_fit_context_for_voltages(
@@ -198,17 +198,14 @@ class TestCalculateIntegralRateBehavior(_ForwardModelFixture):
         self.rotation_matrix = self.ctx.rotation_matrices[0]
 
     def test_rate_is_positive_when_bulk_velocity_aligns_with_boresight(self):
-        """With the bulk speed at the passband center and the bulk direction
-        along boresight, the rate must be strictly positive."""
+        """With bulk speed at the passband center and the flow aimed along boresight, the predicted rate is strictly positive."""
         rate, _ = calculate_integral(
             _proton_params(), self.response_grid, self.rotation_matrix
         )
         self.assertGreater(rate, 0.0)
 
     def test_rate_is_linear_in_density(self):
-        """The forward-model count rate is `n × (passband-weighted Maxwellian
-        integral)`. Doubling density at fixed temperature and geometry must
-        double the rate exactly (no quadrature dependence)."""
+        """Doubling the proton density at fixed temperature and geometry doubles the predicted rate exactly, since the rate is linear in `n`."""
         rate_at_5, _ = calculate_integral(
             _proton_params(density=5.0),
             self.response_grid,
@@ -222,10 +219,7 @@ class TestCalculateIntegralRateBehavior(_ForwardModelFixture):
         np.testing.assert_allclose(rate_at_10, 2.0 * rate_at_5, rtol=1e-12)
 
     def test_returns_zero_rate_and_jacobian_when_bulk_speed_misses_passband_above(self):
-        """When the bulk-speed dynamic window lies entirely above the passband
-        at this voltage (passband centered at 450 km/s, half-width ≲35 km/s;
-        bulk at 2000 km/s is hundreds of σ away), the model returns rate=0
-        and a zero Jacobian row."""
+        """When the bulk speed (2000 km/s) sits hundreds of sigma above the passband at this voltage, the model short-circuits to rate=0 and a zero Jacobian row."""
         very_fast = _proton_params(velocity_rtn=np.array([0.0, -2000.0, 0.0]))
         rate, jacobian_row = calculate_integral(
             very_fast, self.response_grid, self.rotation_matrix
@@ -234,9 +228,7 @@ class TestCalculateIntegralRateBehavior(_ForwardModelFixture):
         np.testing.assert_array_equal(jacobian_row, np.zeros(N_STATE))
 
     def test_returns_zero_rate_and_jacobian_when_bulk_speed_misses_passband_below(self):
-        """Mirror of the above on the low side: the passband at this voltage
-        spans roughly [418, 482] km/s; a bulk of 50 km/s is many σ below the
-        lower edge so rate=0 with a zero Jacobian row."""
+        """Mirror of the above on the low side: a 50 km/s bulk sits far below the passband at this voltage, so rate=0 and the Jacobian row is zero."""
         very_slow = _proton_params(velocity_rtn=np.array([0.0, -50.0, 0.0]))
         rate, jacobian_row = calculate_integral(
             very_slow, self.response_grid, self.rotation_matrix
@@ -246,13 +238,10 @@ class TestCalculateIntegralRateBehavior(_ForwardModelFixture):
 
 
 class TestAnalyticJacobianIdentities(_ForwardModelFixture):
-    """The `solar-wind-moments.md` derivation gives one closed-form identity
-    that holds independent of the quadrature — `∂C/∂(ln n) = C`. Pin it."""
+    """Tests for `model_solar_wind_ideal_coincidence_rates`, exact closed-form Jacobian identities that hold independent of quadrature."""
 
     def test_log_density_jacobian_column_equals_the_rate(self):
-        """`f_p` is linear in `n`, so `∂f_p/∂(ln n) = f_p`. The integral
-        inherits the identity: the log-density Jacobian column is exactly
-        the rate, with no quadrature error."""
+        """Because the rate is linear in `n`, the analytic log-density Jacobian column equals the rate vector exactly with no quadrature slack."""
         ctx = _build_fit_context_for_voltages(
             self.response,
             np.array(
@@ -288,11 +277,7 @@ def _finite_difference_jacobian_column(state: np.ndarray, ctx, j: int) -> np.nda
 
 
 class TestAnalyticJacobianAgainstFiniteDifferences(_ForwardModelFixture):
-    """The headline contract from `docs/swapi/solar-wind-moments.md` §Analytic
-    Jacobian: the per-column analytic derivatives must agree with central
-    finite differences of the rate. The numerical agreement is bounded by GL
-    quadrature noise that's the same for both — so the relative difference
-    should be a few tenths of a percent for typical solar-wind cases."""
+    """Tests for `model_solar_wind_ideal_coincidence_rates`, analytic Jacobian columns vs. central finite differences."""
 
     def setUp(self):
         # Two-sweep context with a small voltage gradient so each sweep
@@ -313,8 +298,7 @@ class TestAnalyticJacobianAgainstFiniteDifferences(_ForwardModelFixture):
         self.state = self.sw.to_vector()
 
     def test_log_temperature_jacobian_is_correct(self):
-        """`∂C/∂(ln T) = ∫ f_p · (|v − v_b|² / (2 v_th²) − 3/2) ...` per the
-        derivation in §Temperature."""
+        """At an off-axis bulk state, the analytic log-temperature Jacobian column matches a central finite difference of the rate to within GL quadrature noise."""
         _, analytic_jacobian = model_solar_wind_ideal_coincidence_rates(
             self.sw, self.ctx
         )
@@ -329,8 +313,7 @@ class TestAnalyticJacobianAgainstFiniteDifferences(_ForwardModelFixture):
         )
 
     def test_velocity_r_jacobian_is_correct(self):
-        """`∂C/∂v_R = ∫ (f_p / v_th²)(v · d̂_R − v_R) ...` per §Bulk velocity
-        components."""
+        """At an off-axis bulk state, the analytic v_R Jacobian column matches a central finite difference of the rate to within GL quadrature noise."""
         _, analytic_jacobian = model_solar_wind_ideal_coincidence_rates(
             self.sw, self.ctx
         )
@@ -345,7 +328,7 @@ class TestAnalyticJacobianAgainstFiniteDifferences(_ForwardModelFixture):
         )
 
     def test_velocity_t_jacobian_is_correct(self):
-        """Analogous to vR for the T component."""
+        """At an off-axis bulk state, the analytic v_T Jacobian column matches a central finite difference of the rate to within GL quadrature noise."""
         _, analytic_jacobian = model_solar_wind_ideal_coincidence_rates(
             self.sw, self.ctx
         )
@@ -360,7 +343,7 @@ class TestAnalyticJacobianAgainstFiniteDifferences(_ForwardModelFixture):
         )
 
     def test_velocity_n_jacobian_is_correct(self):
-        """Analogous to vR for the N component."""
+        """At an off-axis bulk state, the analytic v_N Jacobian column matches a central finite difference of the rate to within GL quadrature noise."""
         _, analytic_jacobian = model_solar_wind_ideal_coincidence_rates(
             self.sw, self.ctx
         )
@@ -376,15 +359,10 @@ class TestAnalyticJacobianAgainstFiniteDifferences(_ForwardModelFixture):
 
 
 class TestNonIdentityRotation(_ForwardModelFixture):
-    """The forward model is invariant under a joint rotation of the bulk
-    velocity and the SWAPI→RTN matrix: rotating both by the same matrix
-    leaves the rate unchanged because the integrand only sees the bulk
-    direction relative to the look direction in the instrument frame."""
+    """Tests for `calculate_integral`, invariance under joint rotation of bulk velocity and SWAPI->RTN matrix."""
 
     def test_rate_is_invariant_under_joint_rotation_of_bulk_and_response(self):
-        """Apply the same rotation `Q` to both the bulk velocity (in RTN) and
-        the SWAPI→RTN matrix; the rate must match the identity-rotation
-        baseline."""
+        """Rotating both the bulk velocity (in RTN) and the SWAPI->RTN matrix by the same 30 degree rotation reproduces the identity-rotation baseline rate."""
         baseline_ctx = _build_fit_context_for_voltages(
             self.response, np.array([_ESA_VOLTAGE_AT_REF_SPEED_V])
         )

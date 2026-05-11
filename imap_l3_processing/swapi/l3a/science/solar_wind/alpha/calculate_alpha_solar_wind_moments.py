@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional
 
-import numba
 import numpy as np
 import scipy.optimize
 from numpy import ndarray
@@ -24,7 +23,12 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     SolarWindFitContext,
     build_solar_wind_fit_context,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.state import SolarWindParams
+from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
+    LOG_DENSITY_IDX,
+    LOG_TEMPERATURE_IDX,
+    SolarWindParams,
+    VELOCITY_SLICE,
+)
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.uncertainties import (
     make_correlated_velocity,
 )
@@ -64,24 +68,69 @@ def _nan_alpha_moments(flag: int) -> AlphaSolarWindMoments:
     )
 
 
-@numba.njit
-def _alpha_residuals_njit(
-    x,
-    proton_bulk,
-    magnetic_field_direction,
-    proton_true_rate,
-    alpha_ctx,
-):
-    n_a = np.exp(x[0])
-    T_a = np.exp(x[1])
-    dv = x[2]
-    v_a_rtn = proton_bulk + dv * magnetic_field_direction
-    alpha_true, _ = model_solar_wind_ideal_coincidence_rates(
-        SolarWindParams(n_a, v_a_rtn, T_a, alpha_ctx.mass_kg),
-        alpha_ctx,
-    )
-    total_true = proton_true_rate + alpha_true
-    return total_true * deadtime_factor(total_true) - alpha_ctx.count_rate
+class _AlphaEvaluator:
+    """Computes Stage-2 residuals and the analytic 3-column Jacobian in
+    (log n_α, log T_α, Δv) space from a single forward-model evaluation,
+    caching the last (residuals, jacobian) so scipy's separate `fun` and
+    `jac` callbacks share one call per state.
+
+    Builds the 3-D Jacobian from the 5-D forward-model Jacobian
+    (∂R_α/∂[log n_α, log T_α, v_R, v_T, v_N]) by the chain rule on
+    v_α = v_p + Δv·B̂, then folds the deadtime chain factor 𝒟² for the
+    summed proton+alpha observable (see `docs/swapi/solar-wind-moments.md`
+    § Deadtime correction)."""
+
+    def __init__(
+        self,
+        proton_bulk: ndarray,
+        magnetic_field_direction: ndarray,
+        proton_true_rate: ndarray,
+        alpha_ctx: SolarWindFitContext,
+    ):
+        self.proton_bulk = proton_bulk
+        self.magnetic_field_direction = magnetic_field_direction
+        self.proton_true_rate = proton_true_rate
+        self.alpha_ctx = alpha_ctx
+        self._last_state: Optional[ndarray] = None
+        self._last_residuals: Optional[ndarray] = None
+        self._last_jacobian: Optional[ndarray] = None
+
+    def _eval(self, x: ndarray) -> None:
+        n_a = float(np.exp(x[0]))
+        T_a = float(np.exp(x[1]))
+        delta_v = float(x[2])
+        v_a_rtn = self.proton_bulk + delta_v * self.magnetic_field_direction
+        alpha_true, jacobian_alpha_5d = model_solar_wind_ideal_coincidence_rates(
+            SolarWindParams(n_a, v_a_rtn, T_a, self.alpha_ctx.mass_kg),
+            self.alpha_ctx,
+        )
+        total_true = self.proton_true_rate + alpha_true
+        deadtime = deadtime_factor(total_true)
+        residuals = total_true * deadtime - self.alpha_ctx.count_rate
+
+        deadtime_squared = deadtime * deadtime
+        jacobian = np.empty((alpha_true.size, 3))
+        jacobian[:, 0] = deadtime_squared * jacobian_alpha_5d[:, LOG_DENSITY_IDX]
+        jacobian[:, 1] = deadtime_squared * jacobian_alpha_5d[:, LOG_TEMPERATURE_IDX]
+        jacobian[:, 2] = deadtime_squared * (
+            jacobian_alpha_5d[:, VELOCITY_SLICE] @ self.magnetic_field_direction
+        )
+
+        self._last_state = x.copy()
+        self._last_residuals = residuals
+        self._last_jacobian = jacobian
+
+    def _refresh(self, x: ndarray) -> None:
+        if self._last_state is None or not np.array_equal(x, self._last_state):
+            self._eval(x)
+
+    def residuals(self, x: ndarray) -> ndarray:
+        self._refresh(x)
+        return self._last_residuals
+
+    def jacobian(self, x: ndarray) -> ndarray:
+        self._refresh(x)
+        return self._last_jacobian
 
 
 def fit_solar_wind_alpha_moments(
@@ -171,26 +220,29 @@ def fit_solar_wind_alpha_moments(
     proton_true_rate_peak = proton_true_rate[peak_flat_idx]
     alpha_ctx_peak = alpha_ctx.subset(peak_flat_idx)
 
-    def residuals(x):
-        return _alpha_residuals_njit(
-            x,
-            proton_bulk,
-            magnetic_field_direction,
-            proton_true_rate_peak,
-            alpha_ctx_peak,
-        )
+    evaluator = _AlphaEvaluator(
+        proton_bulk=proton_bulk,
+        magnetic_field_direction=magnetic_field_direction,
+        proton_true_rate=proton_true_rate_peak,
+        alpha_ctx=alpha_ctx_peak,
+    )
 
     x0 = np.array([np.log(max(n0, 1e-3)), np.log(max(T0, 1e-3)), dv0])
-    result = scipy.optimize.least_squares(residuals, x0, method="lm", diff_step=1e-4)
+    result = scipy.optimize.least_squares(
+        evaluator.residuals, x0, jac=evaluator.jacobian, method="lm"
+    )
 
     # Wrong-basin: signed-Δv flip (1-DOF basin ambiguity along B̂).
     mse = float(np.mean(result.fun**2))
     x_flipped = result.x.copy()
     x_flipped[2] = -x_flipped[2]
-    mse_flipped = float(np.mean(residuals(x_flipped) ** 2))
+    mse_flipped = float(np.mean(evaluator.residuals(x_flipped) ** 2))
     if mse_flipped < mse:
         result = scipy.optimize.least_squares(
-            residuals, x_flipped, method="lm", diff_step=1e-4
+            evaluator.residuals,
+            x_flipped,
+            jac=evaluator.jacobian,
+            method="lm",
         )
 
     n_a_fit = float(np.exp(result.x[0]))

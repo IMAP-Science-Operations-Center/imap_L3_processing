@@ -64,8 +64,6 @@ def _flipped_seed(
         ctx,
     )
     flipped_density = optimal_density_scale(unit_ideal_rates, ctx.count_rate)
-    if flipped_density <= 0 or not np.isfinite(flipped_density):
-        flipped_density = sw.density
 
     # Same forward model as LM-1's residuals, evaluated self-consistently at
     # `flipped_density` so the basin-check ratio compares apples to apples.

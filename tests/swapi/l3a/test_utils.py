@@ -26,12 +26,11 @@ from imap_l3_processing.swapi.l3a.utils import (
 from tests.spice_test_case import SpiceTestCase
 
 
-class TestUtils(TestCase):
-    def tearDown(self) -> None:
-        if os.path.exists('temp_cdf.cdf'):
-            os.remove('temp_cdf.cdf')
+class TestChunkL2Data(TestCase):
+    """Tests for `chunk_l2_data`."""
 
     def test_chunk_l2_data(self):
+        """chunk_l2_data splits a 4-sweep L2 dataset into two 2-sweep chunks, copying epoch, energy, count rate, and uncertainty into each chunk."""
         epoch = np.array([0, 1, 2, 3])
         energy = np.array([[15000, 16000, 17000, 18000, 19000],
                            [25000, 26000, 27000, 28000, 29000],
@@ -71,7 +70,29 @@ class TestUtils(TestCase):
         np.testing.assert_array_equal(expected_count_rate_uncertainty_chunk_2,
                                       second_chunk.coincidence_count_rate_uncertainty)
 
+    def test_chunk_l2_data_partial_trailing_chunk_is_dropped(self):
+        """When the sweep count is not a multiple of the chunk size, the trailing partial chunk is dropped rather than yielded short."""
+        rates = np.arange(7 * 4, dtype=float).reshape(7, 4)
+        data = SwapiL2Data(
+            sci_start_time=np.arange(7, dtype=np.int64),
+            energy=rates.copy(),
+            coincidence_count_rate=rates.copy(),
+            coincidence_count_rate_uncertainty=rates.copy(),
+        )
+        chunks = list(chunk_l2_data(data, 5))
+        self.assertEqual(len(chunks), 1)
+        np.testing.assert_array_equal(chunks[0].sci_start_time, np.arange(5))
+
+
+class TestReadL2SwapiData(TestCase):
+    """Tests for `read_l2_swapi_data`."""
+
+    def tearDown(self) -> None:
+        if os.path.exists('temp_cdf.cdf'):
+            os.remove('temp_cdf.cdf')
+
     def test_reading_l2_data_into_model(self):
+        """read_l2_swapi_data parses a CDF into SwapiL2Data, decoding the start time to TT2000 and replacing each variable's FILLVAL entries with NaN."""
         path = Path('temp_cdf.cdf')
         if path.exists():
             os.remove(path)
@@ -100,7 +121,10 @@ class TestUtils(TestCase):
 
 
 class TestCalculateSwSpeed(TestCase):
+    """Tests for `calculate_sw_speed`."""
+
     def test_2d_array_matches_analytic_formula_per_element(self):
+        """calculate_sw_speed on a 2D energy array matches the analytic v = sqrt(2qE/m) (in km/s) element-by-element."""
         E = np.array([[1.0e-16, 2.0e-16], [4.0e-16, 8.0e-16]])
         expected = (
             np.sqrt(2 * E * PROTON_CHARGE_COULOMBS / PROTON_MASS_KG)
@@ -110,17 +134,20 @@ class TestCalculateSwSpeed(TestCase):
         np.testing.assert_allclose(result, expected)
 
     def test_2d_array_input_preserves_shape(self):
+        """calculate_sw_speed preserves the input array shape (no flattening or broadcasting collapse)."""
         E = np.array([[1.0e-16, 2.0e-16], [4.0e-16, 8.0e-16]])
         result = calculate_sw_speed(PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, E)
         self.assertEqual(result.shape, E.shape)
 
     def test_empty_array_input_returns_empty_array(self):
+        """calculate_sw_speed returns an empty array when given one, without errors."""
         result = calculate_sw_speed(
             PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, np.array([])
         )
         self.assertEqual(result.size, 0)
 
     def test_ufloat_scalar_propagates_uncertainty(self):
+        """A scalar ufloat energy returns a ufloat speed with uncertainty σ_v = v · σ_E / (2E) per first-order error propagation."""
         E = ufloat(1.0e-16, 1.0e-18)
         result = calculate_sw_speed(PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, E)
         self.assertIsInstance(result, UFloat)
@@ -134,6 +161,7 @@ class TestCalculateSwSpeed(TestCase):
         self.assertAlmostEqual(result.std_dev, expected_sigma)
 
     def test_ufloat_array_input_propagates_uncertainty_per_element(self):
+        """A numpy array of UFloat energies returns per-element UFloat speeds with each element's own σ_E correctly propagated."""
         # Array of UFloat scalars takes the `unumpy.sqrt` branch — different
         # code path from the float-array branch above. Each element should
         # propagate its own σ_E.
@@ -153,6 +181,8 @@ class TestCalculateSwSpeed(TestCase):
 
 
 class TestReadMagRtnData(TestCase):
+    """Tests for `read_mag_rtn_data`."""
+
     def setUp(self) -> None:
         self.cdf_path = Path('temp_mag_cdf.cdf')
         if self.cdf_path.exists():
@@ -163,6 +193,7 @@ class TestReadMagRtnData(TestCase):
             os.remove(self.cdf_path)
 
     def test_reads_b_rtn_and_epoch_into_mag_data(self):
+        """read_mag_rtn_data converts CDF epochs to TT2000 and keeps only the leading three vector components of b_rtn (dropping the magnitude column)."""
         epochs = np.array([datetime(2026, 1, 1, 0, 0, 0),
                            datetime(2026, 1, 1, 0, 0, 1)])
         b_rtn = np.array(
@@ -185,6 +216,8 @@ class TestReadMagRtnData(TestCase):
 
 
 class TestSwapiSpiceHelpers(SpiceTestCase):
+    """Tests for the SPICE helpers `get_swapi_geometry`, `rotate_rtn_to_dps`, and `get_spacecraft_velocity_rtn`."""
+
     # 2025-06-06 12:00 UTC — inside the IMAP SPK and attitude coverage windows
     # used by the shipped `spice_kernels/` set.
     _EPOCH_TT2000_NS = spacepy.pycdf.lib.datetime_to_tt2000(
@@ -192,6 +225,7 @@ class TestSwapiSpiceHelpers(SpiceTestCase):
     )
 
     def test_get_swapi_geometry_returns_orthonormal_rotation_per_time(self):
+        """get_swapi_geometry returns one proper-orthogonal (right-handed) rotation matrix per input time across a 30 s window."""
         # Three TT2000 ns samples spanning ~30 s.
         # IMAP's spin period is 15 s,
         # so these should produce distinct rotations.
@@ -205,6 +239,7 @@ class TestSwapiSpiceHelpers(SpiceTestCase):
             self.assertAlmostEqual(float(np.linalg.det(matrix)), 1.0, places=10)
 
     def test_rotate_rtn_to_dps_preserves_vector_magnitude(self):
+        """rotate_rtn_to_dps applies a pure rotation, so the magnitude of the output vector equals the input magnitude."""
         vector_rtn = np.array([100.0, -50.0, 25.0])
 
         rotated = rotate_rtn_to_dps(vector_rtn, self._EPOCH_TT2000_NS)
@@ -217,6 +252,7 @@ class TestSwapiSpiceHelpers(SpiceTestCase):
         )
 
     def test_get_spacecraft_velocity_rtn_returns_finite_orbital_velocity(self):
+        """get_spacecraft_velocity_rtn returns a finite 3-vector with magnitude in the 10–60 km/s band, ruling out unit-conversion mistakes for IMAP near L1."""
         velocity_rtn = get_spacecraft_velocity_rtn(self._EPOCH_TT2000_NS)
 
         self.assertEqual(velocity_rtn.shape, (3,))

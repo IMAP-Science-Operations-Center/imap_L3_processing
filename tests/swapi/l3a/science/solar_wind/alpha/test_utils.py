@@ -24,7 +24,10 @@ def _analytic_speed_km_per_s(
 
 
 class TestEsaVoltageToAlphaSpeed(unittest.TestCase):
+    """Tests for `esa_voltage_to_alpha_speed`."""
+
     def test_matches_analytical_formula(self):
+        """A sweep of representative ESA voltages reproduces the closed-form `sqrt(2 K q V / m)` alpha speed to machine precision."""
         for V in [200.0, 1000.0, 4000.0]:
             with self.subTest(voltage=V):
                 np.testing.assert_allclose(
@@ -36,16 +39,14 @@ class TestEsaVoltageToAlphaSpeed(unittest.TestCase):
                 )
 
     def test_handles_negative_voltage(self):
+        """A negative ESA voltage yields the same alpha speed as its positive counterpart, since the conversion depends on magnitude."""
         np.testing.assert_allclose(
             esa_voltage_to_alpha_speed(-1000.0), esa_voltage_to_alpha_speed(1000.0)
         )
 
 
 class TestGetAlphaPeakIndices(unittest.TestCase):
-    """SWAPI energies decrease with index, so "low index" = "high energy".
-    `get_alpha_peak_indices` returns a slice into the ascending-index axis
-    that contains the alpha bump (which sits at higher energies than the
-    proton peak — i.e., at *lower* indices)."""
+    """Tests for `get_alpha_peak_indices`; SWAPI energies decrease with index so the alpha bump sits at *lower* indices than the proton peak, and the returned slice indexes into that ascending-index axis."""
 
     PROTON_PEAK_INDEX = 50
     ALPHA_PEAK_INDEX = 30
@@ -60,6 +61,7 @@ class TestGetAlphaPeakIndices(unittest.TestCase):
         return energies, n_alpha
 
     def test_returns_slice_containing_alpha_peak(self):
+        """Given a clean Gaussian alpha bump above the proton peak, the returned slice brackets the bump's center index."""
         energies, residuals = self._decreasing_energy_grid_with_alpha_bump()
         peak_slice = get_alpha_peak_indices(
             residuals, energies, proton_peak_index=self.PROTON_PEAK_INDEX
@@ -68,9 +70,7 @@ class TestGetAlphaPeakIndices(unittest.TestCase):
         self.assertGreater(peak_slice.stop, self.ALPHA_PEAK_INDEX)
 
     def test_slice_low_index_edge_sits_at_4x_proton_energy(self):
-        # The high-energy edge of the alpha window is the first index whose
-        # energy is ≤ 4× the proton peak's energy. Energies decrease with
-        # index, so this edge is `slice.start` (the lowest index in the slice).
+        """The slice's low-index (high-energy) edge is anchored to the first bin at or below 4x the proton-peak energy, with the bin one index lower exceeding that cap."""
         energies, residuals = self._decreasing_energy_grid_with_alpha_bump()
         peak_slice = get_alpha_peak_indices(
             residuals, energies, proton_peak_index=self.PROTON_PEAK_INDEX
@@ -79,22 +79,17 @@ class TestGetAlphaPeakIndices(unittest.TestCase):
 
         self.assertLessEqual(energies[peak_slice.start], max_alpha_energy)
         if peak_slice.start > 0:
-            # The neighbor one index lower (one cell *higher* in energy) must
-            # be above the cap — i.e. start sits exactly on the boundary.
             self.assertGreater(energies[peak_slice.start - 1], max_alpha_energy)
 
     def test_raises_when_proton_peak_at_high_energy_edge(self):
-        # When the proton peak sits at index 0, there are no higher-energy bins
-        # at all — the alpha bump can't exist anywhere. The function refuses
-        # rather than returning a degenerate slice.
+        """When the proton peak is at index 0 there are no higher-energy bins for the alpha bump to occupy, and the function raises rather than returning a degenerate slice."""
         energies, residuals = self._decreasing_energy_grid_with_alpha_bump()
         with self.assertRaises(Exception) as ctx:
             get_alpha_peak_indices(residuals, energies, proton_peak_index=0)
         self.assertIn("Alpha peak not found", str(ctx.exception))
 
     def test_raises_when_residuals_are_monotonic_in_high_energy_region(self):
-        # Without a local maximum at higher energies than the proton peak,
-        # there is no alpha bump to locate — the function refuses.
+        """Residuals that increase monotonically with energy have no local maximum above the proton peak, so the function raises instead of locating a fake bump."""
         energies = np.linspace(20_000.0, 50.0, 72)
         monotonic_residuals = np.linspace(1.0, 100.0, 72)
         with self.assertRaises(Exception) as ctx:
@@ -104,9 +99,7 @@ class TestGetAlphaPeakIndices(unittest.TestCase):
         self.assertIn("Alpha peak not found", str(ctx.exception))
 
     def test_rejects_ascending_energy_grid(self):
-        # SWAPI ESA energies are strictly decreasing with index. Passing an
-        # L1B-style ascending grid is a calling-convention error, caught at
-        # the top of the function rather than producing a wrong result.
+        """An L1B-style ascending energy axis violates the SWAPI calling convention and is rejected at the top of the function with an AssertionError."""
         ascending_energies = np.linspace(50.0, 20_000.0, 72)
         residuals = np.zeros(72)
         with self.assertRaises(AssertionError):

@@ -211,12 +211,10 @@ class _ProtonFitFixture(unittest.TestCase):
 
 
 class TestFitSolarWindProtonModelEndToEnd(_ProtonFitFixture):
-    """Run the full pipeline on noise-free, deadtime-applied count rates
-    synthesized from a known `SolarWindParams`. The fit should converge to
-    truth within the WIND/SWE-validated accuracy reported in
-    `docs/swapi/solar-wind-moments.md` §Fitting Algorithm Validation."""
+    """Tests for `fit_solar_wind_proton_model`; noise-free parameter-recovery sanity check against truth."""
 
     def test_recovers_density(self):
+        """Fitting noise-free synthesized rates recovers the truth density within 1%."""
         self.assertAlmostEqual(
             self.result.density.nominal_value,
             _TRUE_DENSITY_CM3,
@@ -224,6 +222,7 @@ class TestFitSolarWindProtonModelEndToEnd(_ProtonFitFixture):
         )
 
     def test_recovers_temperature(self):
+        """Fitting noise-free synthesized rates recovers the truth temperature within 1%."""
         self.assertAlmostEqual(
             self.result.temperature.nominal_value,
             _TRUE_TEMPERATURE_K,
@@ -231,27 +230,29 @@ class TestFitSolarWindProtonModelEndToEnd(_ProtonFitFixture):
         )
 
     def test_recovers_bulk_velocity_components(self):
+        """Fitting noise-free synthesized rates recovers all three RTN bulk-velocity components within 1 km/s."""
         nominal = self.result.bulk_velocity_rtn_nominal()
         np.testing.assert_allclose(
             nominal, _TRUE_BULK_VELOCITY_RTN_KM_S, atol=1.0
         )
 
     def test_bad_fit_flag_is_none_on_successful_convergence(self):
+        """A clean LM convergence on noise-free data leaves the bad-fit flag cleared (`SwapiL3Flags.NONE`)."""
         self.assertEqual(self.result.bad_fit_flag, SwapiL3Flags.NONE)
 
 
 class TestProtonSolarWindFitResultPublicAPI(_ProtonFitFixture):
-    """The `ProtonSolarWindFitResult` exposes nominal-vector and covariance-
-    matrix accessors derived from the correlated UFloat triple stored in
-    `bulk_velocity_rtn`."""
+    """Tests for `ProtonSolarWindFitResult.bulk_velocity_rtn_nominal` and `bulk_velocity_rtn_covariance` accessors."""
 
     def test_bulk_velocity_rtn_nominal_is_three_component_vector(self):
+        """The nominal-velocity accessor returns a length-3 RTN vector."""
         nominal = self.result.bulk_velocity_rtn_nominal()
         self.assertEqual(nominal.shape, (3,))
 
     def test_bulk_velocity_rtn_nominal_matches_per_component_nominal_values(
         self,
     ):
+        """The nominal-velocity vector matches the per-component `.nominal_value` of the stored UFloat triple."""
         per_component = np.array(
             [v.nominal_value for v in self.result.bulk_velocity_rtn]
         )
@@ -260,19 +261,23 @@ class TestProtonSolarWindFitResultPublicAPI(_ProtonFitFixture):
         )
 
     def test_bulk_velocity_rtn_covariance_is_three_by_three(self):
+        """The covariance accessor returns a 3x3 matrix matching the RTN component count."""
         covariance = self.result.bulk_velocity_rtn_covariance()
         self.assertEqual(covariance.shape, (3, 3))
 
     def test_bulk_velocity_rtn_covariance_is_symmetric(self):
+        """The returned velocity covariance matrix is symmetric to numerical tolerance."""
         covariance = self.result.bulk_velocity_rtn_covariance()
         np.testing.assert_allclose(covariance, covariance.T, atol=1e-12)
 
     def test_bulk_velocity_rtn_covariance_is_positive_semidefinite(self):
+        """The returned velocity covariance matrix is positive semidefinite (all eigenvalues non-negative)."""
         covariance = self.result.bulk_velocity_rtn_covariance()
         eigenvalues = np.linalg.eigvalsh(covariance)
         self.assertGreaterEqual(eigenvalues.min(), -1e-9)
 
     def test_covariance_diagonal_matches_per_component_variance(self):
+        """Each diagonal entry of the velocity covariance equals the square of the corresponding UFloat `std_dev`."""
         covariance = self.result.bulk_velocity_rtn_covariance()
         for i, ufloat_value in enumerate(self.result.bulk_velocity_rtn):
             self.assertAlmostEqual(
@@ -281,14 +286,9 @@ class TestProtonSolarWindFitResultPublicAPI(_ProtonFitFixture):
 
 
 class TestBadFitFlag(unittest.TestCase):
-    """`bad_fit_flag` is `SwapiL3Flags.NONE` when LM converges and
-    `SwapiL3Flags.FIT_FAILED` when it does not."""
+    """Tests for `fit_solar_wind_proton_model`; bad-fit-flag branch when the optimizer reports failure."""
 
     def _patch_optimizer_to_return_failed_result(self):
-        """Replace `optimize_solar_wind_params` inside `proton.fit_model` with
-        one that returns `success=False`. Synthetic placeholder values for the
-        params, residuals, and Jacobian keep `derive_uncertainties` happy
-        without changing the flag-under-test."""
         failed_result = OptimizeSolarWindParamsResult(
             sw_params=SolarWindParams(
                 density=1.0,
@@ -314,14 +314,14 @@ class TestBadFitFlag(unittest.TestCase):
         )
 
     def test_fit_failed_flag_when_optimizer_reports_failure(self):
+        """When the underlying optimizer returns `success=False`, the result's bad-fit flag is `SwapiL3Flags.FIT_FAILED`."""
         with self._patch_optimizer_to_return_failed_result():
             result = fit_solar_wind_proton_model(self.fit_ctx)
         self.assertEqual(result.bad_fit_flag, SwapiL3Flags.FIT_FAILED)
 
 
 class TestPipelineOrder(unittest.TestCase):
-    """The returned result reflects post-basin parameters when basin hopping
-    changes them, not the LM-1 result."""
+    """Tests for `fit_solar_wind_proton_model`; verifies basin-hopping output supersedes the LM-1 result."""
 
     @classmethod
     def setUpClass(cls):
@@ -330,6 +330,7 @@ class TestPipelineOrder(unittest.TestCase):
         )
 
     def test_construct_fit_result_uses_post_basin_hopping_result(self):
+        """When basin hopping returns a result distinct from LM-1, the final fit result carries the post-basin parameters."""
         # Synthetic post-basin density chosen well above _TRUE_DENSITY_CM3=5.0
         # so the round-tripped density is unambiguously the patched value.
         # Velocity is far from the truth bulk velocity for the same reason.

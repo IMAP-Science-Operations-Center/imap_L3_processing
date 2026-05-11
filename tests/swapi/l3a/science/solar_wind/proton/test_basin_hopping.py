@@ -16,8 +16,6 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.proton import basin_hopping
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.basin_hopping import (
     _MAX_BASIN_REFINE_ITERS,
     _ROTATED_RMSE_RATIO_THRESHOLD,
-    _flip_vector_about_axis,
-    _flipped_seed,
     escape_local_minimum,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.state import SolarWindParams
@@ -64,59 +62,8 @@ def _result(sw: SolarWindParams, mse: float) -> OptimizeSolarWindParamsResult:
     return mock
 
 
-class TestFlipVectorAboutAxis(unittest.TestCase):
-    """`_flip_vector_about_axis(v, axis)` is the Householder reflection
-    `2 axis (axis·v) − v` — i.e. the 180° rotation of `v` about `axis`. The
-    component of `v` parallel to `axis` is preserved; the perpendicular
-    component is inverted."""
-
-    def test_perpendicular_component_is_inverted(self):
-        # axis = +Y, v = +X (purely perpendicular) → flip = -X.
-        v = np.array([1.0, 0.0, 0.0])
-        axis = np.array([0.0, 1.0, 0.0])
-        np.testing.assert_allclose(
-            _flip_vector_about_axis(v, axis), [-1.0, 0.0, 0.0]
-        )
-
-    def test_parallel_component_is_preserved(self):
-        # v = +Y (purely parallel to axis) → 180° rotation is a no-op.
-        v = np.array([0.0, 3.0, 0.0])
-        axis = np.array([0.0, 1.0, 0.0])
-        np.testing.assert_allclose(_flip_vector_about_axis(v, axis), v)
-
-    def test_mixed_vector_inverts_only_perpendicular_part(self):
-        # v = (1, 2, -3), axis = +Y.
-        # Parallel part: (0, 2, 0) — preserved.
-        # Perpendicular part: (1, 0, -3) — inverted to (-1, 0, 3).
-        # Sum: (-1, 2, 3).
-        v = np.array([1.0, 2.0, -3.0])
-        axis = np.array([0.0, 1.0, 0.0])
-        np.testing.assert_allclose(
-            _flip_vector_about_axis(v, axis), [-1.0, 2.0, 3.0]
-        )
-
-    def test_flip_is_its_own_inverse(self):
-        v = np.array([-450.0, 7.0, -3.0])
-        axis = np.array([0.0, 1.0, 0.0])
-        once = _flip_vector_about_axis(v, axis)
-        twice = _flip_vector_about_axis(once, axis)
-        np.testing.assert_allclose(twice, v)
-
-    def test_flip_preserves_magnitude(self):
-        # Householder reflection is an isometry: |flip(v)| == |v|.
-        v = np.array([-450.0, 50.0, -20.0])
-        axis = np.array([0.1, 0.99, 0.0])
-        axis = axis / np.linalg.norm(axis)
-        np.testing.assert_allclose(
-            np.linalg.norm(_flip_vector_about_axis(v, axis)),
-            np.linalg.norm(v),
-        )
-
-
 class TestEscapeLocalMinimum(unittest.TestCase):
-    """Tests for the post-LM-1 wrong-basin detector. Mocks `_flipped_seed`
-    and `optimize_solar_wind_params` so the cheap-gate / acceptance / cap
-    logic is exercised in isolation from the forward model and optimizer."""
+    """Tests for `escape_local_minimum`; mocks `_flipped_seed` and `optimize_solar_wind_params` so cheap-gate, acceptance, and iteration-cap logic are exercised in isolation from the forward model."""
 
     # The cheap-gate condition is `flipped_mse >= threshold² × current.mse`;
     # squaring threshold compares MSE against an RMSE ratio.
@@ -125,6 +72,7 @@ class TestEscapeLocalMinimum(unittest.TestCase):
     # ---- Cheap-gate early exit: no LM-2 call when flipped seed is too bad ----
 
     def test_returns_lm1_unchanged_when_flipped_seed_far_worse(self):
+        """A flipped seed whose MSE is well past the threshold²×current gate bails out immediately, leaving LM-1 as the returned result without ever invoking the LM-2 optimizer."""
         ctx = _single_sweep_ctx()
         lm1 = _result(_proton_params(), mse=1.0)
         flipped_mse_far_above_gate = lm1.mse * self._GATE_FACTOR * 10.0
@@ -146,7 +94,7 @@ class TestEscapeLocalMinimum(unittest.TestCase):
         mock_opt.assert_not_called()
 
     def test_returns_lm1_unchanged_when_flipped_seed_exactly_at_gate(self):
-        # Gate is `>=`: equality also triggers the early exit.
+        """A flipped seed whose MSE exactly equals the gate threshold also short-circuits, because the gate comparison is `>=` rather than strictly greater than."""
         ctx = _single_sweep_ctx()
         lm1 = _result(_proton_params(), mse=1.0)
         flipped_mse_at_gate = lm1.mse * self._GATE_FACTOR
@@ -163,15 +111,10 @@ class TestEscapeLocalMinimum(unittest.TestCase):
         self.assertIs(out, lm1)
         mock_opt.assert_not_called()
 
-    # The acceptance condition is `flipped_result.mse > current.mse` → reject;
-    # so equality is *accepted* (i.e. not strictly less). We don't pin this case
-    # because the production code path treats an exactly-equal LM-2 fit as a
-    # no-op replacement (same numerical state) — the next iteration will
-    # re-flip from the same basin and either improve or bail at the gate.
-
     # ---- LM-2 accepted when it lands at strictly lower MSE ----
 
     def test_returns_lm2_when_lm2_mse_is_lower(self):
+        """When the flipped seed clears the cheap gate and LM-2 converges to a strictly lower MSE than LM-1, the function adopts the LM-2 result and continues iterating until the next gate check bails out."""
         ctx = _single_sweep_ctx()
         lm1 = _result(_proton_params(), mse=10.0)
         better_params = _proton_params(velocity_rtn=(450.0, 0.0, 0.0))
@@ -206,6 +149,7 @@ class TestEscapeLocalMinimum(unittest.TestCase):
     # ---- LM-2 rejected when it converges to higher MSE ----
 
     def test_returns_lm1_when_lm2_mse_is_higher(self):
+        """When LM-2 clears the cheap gate but converges to a higher MSE than LM-1, the function rejects the flipped basin and returns the original LM-1 result."""
         ctx = _single_sweep_ctx()
         lm1 = _result(_proton_params(), mse=1.0)
         worse_params = _proton_params(velocity_rtn=(450.0, 0.0, 0.0))
@@ -230,6 +174,7 @@ class TestEscapeLocalMinimum(unittest.TestCase):
     # ---- Iteration cap: at most _MAX_BASIN_REFINE_ITERS LM-2 calls ----
 
     def test_runs_at_most_max_basin_refine_iters_lm2_calls(self):
+        """Feeding a strictly-decreasing MSE chain that would otherwise accept indefinitely confirms the loop is hard-bounded at `_MAX_BASIN_REFINE_ITERS` LM-2 calls and returns the result accepted in the final allowed iteration."""
         ctx = _single_sweep_ctx()
         # Strictly-decreasing MSE chain so every iteration accepts the LM-2
         # result. If the loop weren't bounded, this would never terminate.
@@ -263,80 +208,6 @@ class TestEscapeLocalMinimum(unittest.TestCase):
         self.assertEqual(mock_opt.call_count, _MAX_BASIN_REFINE_ITERS)
         # Returns the LM-2 result accepted in the final allowed iteration.
         self.assertIs(out, results[_MAX_BASIN_REFINE_ITERS])
-
-
-class TestFlippedSeedDensityFallback(unittest.TestCase):
-    """`_flipped_seed` builds a candidate `SolarWindParams` at the spin-axis-
-    flipped velocity and rescales its density via `optimal_density_scale`. If
-    that scale comes back non-positive or non-finite (e.g. the flipped
-    velocity points the bulk away from the aperture, so unit-density forward-
-    model rates are all zero and the curve-fit collapses), passing it through
-    to LM as `n=0` would silently corrupt the next basin-hop attempt. The
-    helper instead falls back to LM-1's converged density so the basin-check
-    MSE is still evaluated on a sane parameter set."""
-
-    def _ctx_and_lm1(self):
-        ctx = _single_sweep_ctx()
-        lm1 = _result(_proton_params(density=7.5), mse=1.0)
-        return ctx, lm1
-
-    def test_returns_lm1_density_when_optimal_scale_is_zero(self):
-        # Mock the forward model + the density rescale so no real numerical
-        # path is required. `optimal_density_scale=0.0` simulates a flipped-
-        # velocity geometry that produces all-zero unit-density rates.
-        ctx, lm1 = self._ctx_and_lm1()
-        with patch.object(
-            basin_hopping,
-            "model_solar_wind_ideal_coincidence_rates",
-            return_value=(np.zeros_like(ctx.count_rate), None),
-        ), patch.object(
-            basin_hopping,
-            "optimal_density_scale",
-            return_value=0.0,
-        ):
-            _, flipped_params = _flipped_seed(
-                lm1, ctx, np.array([0.0, 1.0, 0.0])
-            )
-
-        self.assertEqual(flipped_params.density, lm1.sw_params.density)
-
-    def test_returns_lm1_density_when_optimal_scale_is_negative(self):
-        # `<= 0` covers both zero (no rates anywhere) and negative (curve_fit
-        # converged onto a negative density to minimize residuals).
-        ctx, lm1 = self._ctx_and_lm1()
-        with patch.object(
-            basin_hopping,
-            "model_solar_wind_ideal_coincidence_rates",
-            return_value=(np.zeros_like(ctx.count_rate), None),
-        ), patch.object(
-            basin_hopping,
-            "optimal_density_scale",
-            return_value=-2.0,
-        ):
-            _, flipped_params = _flipped_seed(
-                lm1, ctx, np.array([0.0, 1.0, 0.0])
-            )
-
-        self.assertEqual(flipped_params.density, lm1.sw_params.density)
-
-    def test_returns_lm1_density_when_optimal_scale_is_nan(self):
-        # `optimal_density_scale` can return NaN when curve_fit fails to
-        # converge — the fallback also catches non-finite results.
-        ctx, lm1 = self._ctx_and_lm1()
-        with patch.object(
-            basin_hopping,
-            "model_solar_wind_ideal_coincidence_rates",
-            return_value=(np.zeros_like(ctx.count_rate), None),
-        ), patch.object(
-            basin_hopping,
-            "optimal_density_scale",
-            return_value=float("nan"),
-        ):
-            _, flipped_params = _flipped_seed(
-                lm1, ctx, np.array([0.0, 1.0, 0.0])
-            )
-
-        self.assertEqual(flipped_params.density, lm1.sw_params.density)
 
 
 if __name__ == "__main__":
