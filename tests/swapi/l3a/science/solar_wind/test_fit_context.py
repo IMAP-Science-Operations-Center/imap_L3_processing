@@ -22,7 +22,7 @@ from imap_l3_processing.swapi.response.swapi_response import ResponseGrid
 
 
 def _swapi_response_returning_per_voltage_response_grid():
-    """Mock SwapiResponse whose `create_response_grid(v, ...)` returns a real
+    """Mock SwapiResponse whose `get_response_grid(v, ...)` returns a real
     `ResponseGrid` NamedTuple tagged with the voltage in its `central_speed`
     field — lets tests assert on order and per-sweep identity without fighting
     numba's typed-list element-type inference (which rejects MagicMock)."""
@@ -42,7 +42,7 @@ def _swapi_response_returning_per_voltage_response_grid():
             ),
         )
 
-    response.create_response_grid.side_effect = _build_response_grid
+    response.get_response_grid.side_effect = _build_response_grid
     return response
 
 
@@ -160,7 +160,7 @@ class TestBuildSolarWindFitContext(unittest.TestCase):
         ctx, response = self._call_factory(
             count_rate=count_rate, esa_voltage=esa_voltage
         )
-        self.assertEqual(response.create_response_grid.call_count, 2)
+        self.assertEqual(response.get_response_grid.call_count, 2)
         # Each ResponseGrid is tagged with its voltage by the mock factory;
         # verify the order matches the per-sweep voltage order.
         self.assertEqual(ctx.response_grids[0].central_speed, 100.0)
@@ -191,8 +191,8 @@ class TestBuildSolarWindFitContext(unittest.TestCase):
         )
         # The factory may pass species and EA scale positionally or as kwargs;
         # match on `mock.call.args + kwargs` content rather than fixing one form.
-        self.assertEqual(response.create_response_grid.call_count, 1)
-        call = response.create_response_grid.call_args
+        self.assertEqual(response.get_response_grid.call_count, 1)
+        call = response.get_response_grid.call_args
         all_args = list(call.args) + list(call.kwargs.values())
         self.assertIn(100.0, all_args)
         self.assertIn(2.0, all_args)
