@@ -57,8 +57,6 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                                          CoordNames.AZIMUTH_L1C.value: self.azimuths,
                                      })
 
-        assert num_spin_angle_bins == 3600, "unexpected number of spin angles"
-
         initial_dataset['epoch'] = l1c_dataset.epoch_j2000
         initial_dataset['epoch_delta'] = l1c_dataset.epoch_delta
         initial_dataset['hae_longitude'] = xr.DataArray(
@@ -116,8 +114,8 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                     self.azimuths, glows_dataset.spin_angle, glows_dataset.probability_of_survival[0])
                 log_sc_frame_energies = np.log10(spacecraft_frame_energies_in_kev[0])
 
-                sp_final = np.empty((1, len(energies), len(self.azimuths)))
-                for spin_angle_index in range(len(self.azimuths)):
+                sp_final = np.empty((1, len(energies), num_spin_angle_bins))
+                for spin_angle_index in range(num_spin_angle_bins):
                     sp_final[0, :, spin_angle_index] = np.interp(
                         log_sc_frame_energies[:, spin_angle_index],
                         np.log10(glows_dataset.energy),
@@ -132,7 +130,7 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                         np.log10(glows_dataset.energy),
                         glows_dataset.probability_of_survival[0, :, spin_angle_index])
 
-                sp_interpolated_to_pset_angles = np.zeros((1, len(energies), 3600))
+                sp_interpolated_to_pset_angles = np.zeros((1, len(energies), num_spin_angle_bins))
                 sp_interpolated_to_pset_angles[0] = interpolate_angular_data_to_nearest_neighbor(
                     self.azimuths, glows_dataset.spin_angle, sp_interpolated_to_hi_energies)
                 sp_final = sp_interpolated_to_pset_angles
