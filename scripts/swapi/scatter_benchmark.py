@@ -72,7 +72,7 @@ def main():
     truths = truths + 1e-1
 
     peak_voltages = [
-        _peak_voltage(float(state.bulk_speed)) for row in df.itertuples(index=False)
+        _peak_voltage(float(params.bulk_speed)) for row in df.itertuples(index=False)
     ]
     swapi_response.warm_cache(peak_voltages)
 
@@ -84,12 +84,12 @@ def main():
         )
         sw = SolarWindParams(
             density=float(row.density),
-            bulk_speed=float(state.bulk_speed),
+            bulk_speed=float(params.bulk_speed),
             bulk_azimuth=float(row.bulk_azimuth),
             bulk_elevation=float(row.bulk_elevation),
             thermal_speed=thermal_speed,
         )
-        grid = swapi_response.create_passband_grid(_peak_voltage(float(state.bulk_speed)))
+        grid = swapi_response.create_passband_grid(_peak_voltage(float(params.bulk_speed)))
         optimized[i] = calculate_integral(grid, sw)
         if (i + 1) % 100 == 0:
             print(f"  {i + 1}/{len(df)}", flush=True)

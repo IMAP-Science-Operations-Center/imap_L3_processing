@@ -25,7 +25,7 @@ import math
 import numpy as np
 from numba import njit, prange
 
-from imap_l3_processing.swapi.l3a.science.solar_wind import state
+from imap_l3_processing.swapi.l3a.science.solar_wind import params
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import bulk_speed
 from imap_l3_processing.swapi.response.swapi_response import ResponseGrid
 
@@ -316,7 +316,7 @@ def reference_integrals_batch(response_grids, sws, rotation_matrices):
         central_effective_areas[i] = rg.central_effective_area
         bulk_velocities_rtn[i] = sws[i].bulk_velocity_rtn
         bulk_speeds[i] = bulk_speed(sws[i])
-        thermal_speeds[i] = state.thermal_speed(sws[i])
+        thermal_speeds[i] = params.thermal_speed(sws[i])
         densities[i] = sws[i].density
     transmission = np.ascontiguousarray(
         first_grid.azimuthal_transmission.values, dtype=np.float64
