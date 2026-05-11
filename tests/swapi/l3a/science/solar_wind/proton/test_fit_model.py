@@ -1,5 +1,3 @@
-"""End-to-end and orchestration tests for `fit_solar_wind_proton_model`."""
-
 import unittest
 from unittest.mock import patch
 
@@ -12,9 +10,6 @@ from imap_l3_processing.constants import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
-    model_solar_wind_ideal_coincidence_rates,
-)
 from imap_l3_processing.swapi.l3a.science.solar_wind.optimizer import (
     OptimizeSolarWindParamsResult,
 )
@@ -26,9 +21,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
     SolarWindParams,
 )
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
-from imap_l3_processing.swapi.response.deadtime import deadtime_factor
-from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
-from tests.test_helpers import get_test_instrument_team_data_path
+from tests.swapi._helpers import load_swapi_response, synthesize_count_rates
 
 # Mean SWAPI L2 coarse-sweep voltages (V), descending — a 62-bin sweep that
 # covers the proton speed range densely. Identical to the set used by
@@ -122,20 +115,6 @@ def _per_bin_rotation_matrices() -> np.ndarray:
     return rot @ _ANCHOR_ROTATION_MATRIX
 
 
-def _load_swapi_response() -> SwapiResponse:
-    return SwapiResponse.from_files(
-        get_test_instrument_team_data_path(
-            "swapi/imap_swapi_azimuthal-transmission_20260425_v001.csv"
-        ),
-        get_test_instrument_team_data_path(
-            "swapi/imap_swapi_central-effective-area_20260425_v001.csv"
-        ),
-        get_test_instrument_team_data_path(
-            "swapi/imap_swapi_passband-fit-coefficients_20260425_v001.csv"
-        ),
-    )
-
-
 def _build_context(count_rate, esa_voltage, swapi_response, rotation_matrices):
     return build_solar_wind_fit_context(
         count_rate=count_rate,
@@ -148,21 +127,12 @@ def _build_context(count_rate, esa_voltage, swapi_response, rotation_matrices):
     )
 
 
-def _synthesize_count_rates(ctx, sw_params: SolarWindParams) -> np.ndarray:
-    """Forward-model deadtime-applied coincidence count rates from `sw_params`
-    using the same model the fitter inverts. No Poisson noise — the
-    parameter-recovery test exercises orchestration, not the noise budget."""
-    ideal, _ = model_solar_wind_ideal_coincidence_rates(sw_params, ctx)
-    return ideal * deadtime_factor(ideal)
-
-
 def _build_synthetic_fit_context(truth_params: SolarWindParams):
     """Build a SwapiResponse, per-bin rotation matrices, and a populated
     `SolarWindFitContext` whose count rates are forward-modelled from
     `truth_params`. Returns `(swapi_response, rotation_matrices, fit_ctx)`."""
-    swapi_response = _load_swapi_response()
     all_voltages = np.tile(_VOLTAGES_PER_SWEEP, _N_SWEEPS)
-    swapi_response.warm_cache(all_voltages)
+    swapi_response = load_swapi_response(warm_cache_voltages=all_voltages)
     rotation_matrices = _per_bin_rotation_matrices()
 
     # Build a context with placeholder rates first, then forward-model the
@@ -175,7 +145,7 @@ def _build_synthetic_fit_context(truth_params: SolarWindParams):
         swapi_response=swapi_response,
         rotation_matrices=rotation_matrices,
     )
-    synthesized_rates = _synthesize_count_rates(placeholder_ctx, truth_params)
+    synthesized_rates = synthesize_count_rates(placeholder_ctx, truth_params)
     fit_ctx = _build_context(
         count_rate=synthesized_rates,
         esa_voltage=all_voltages,

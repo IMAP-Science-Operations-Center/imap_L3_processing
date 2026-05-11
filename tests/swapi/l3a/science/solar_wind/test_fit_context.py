@@ -1,10 +1,3 @@
-"""Tests for `solar_wind.fit_context` — the `SolarWindFitContext` NamedTuple
-and its `build_solar_wind_fit_context` factory.
-
-The factory drops invalid sweeps (zero/negative/non-finite ESA voltage) from
-the count-rate, voltage, and rotation-matrix arrays in lockstep, then asks the
-SwapiResponse to materialize a per-sweep ResponseGrid for each kept voltage."""
-
 import unittest
 from unittest.mock import MagicMock
 

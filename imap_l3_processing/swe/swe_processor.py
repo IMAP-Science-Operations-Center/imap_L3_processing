@@ -8,9 +8,6 @@ from imap_data_access.processing_input import ProcessingInputCollection
 from imap_l3_processing.data_utils import find_closest_neighbor
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
-from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import (
-    calculate_solar_wind_velocity_vector,
-)
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swe.l3.models import (
     SweL3Data,
@@ -23,6 +20,7 @@ from imap_l3_processing.swe.l3.science.moment_calculations import (
     compute_maxwellian_weight_factors,
     rotate_temperature,
     rotate_dps_vector_to_rtn,
+    rotate_rtn_vectors_to_dps,
     core_fit_moments_retrying_on_failure,
     halo_fit_moments_retrying_on_failure,
     Moments,
@@ -834,10 +832,9 @@ class SweProcessor(Processor):
 
         swapi_l3a_proton_data = dependencies.swapi_l3a_proton_data
         swapi_epoch = swapi_l3a_proton_data.epoch
-        solar_wind_vectors = calculate_solar_wind_velocity_vector(
-            swapi_l3a_proton_data.proton_sw_speed,
-            swapi_l3a_proton_data.proton_sw_clock_angle,
-            swapi_l3a_proton_data.proton_sw_deflection_angle,
+        solar_wind_vectors = rotate_rtn_vectors_to_dps(
+            swapi_epoch,
+            swapi_l3a_proton_data.proton_sw_velocity_rtn,
         )
         swapi_max_distance = np.timedelta64(
             int(config["max_swapi_offset_in_minutes"] * 60e9), "ns"

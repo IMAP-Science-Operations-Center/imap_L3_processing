@@ -1,14 +1,3 @@
-"""Tests for `solar_wind.alpha.calculate_alpha_solar_wind_moments` — the
-Stage-2 alpha moments fitter.
-
-Behavior spec lives in `docs/swapi/solar-wind-moments.md` § Alpha Particle
-Moments. Stage-1 (the proton refit on coarse-only bins) is run by the
-chunk-fits caller and passed into `fit_solar_wind_alpha_moments` as a
-`ProtonSolarWindFitResult`; the function under test does **not** refit
-protons, it only consumes them. Stage-2 fits `(n_α, T_α, Δv)` where
-`v_α = v_p* + Δv·B̂`.
-"""
-
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -47,22 +36,10 @@ from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
-from tests.test_helpers import get_test_instrument_team_data_path
+from tests.swapi._helpers import load_swapi_response
 
 
 # ----- module-level fixture constants --------------------------------------
-
-# Calibration CSVs shipped with the repo. Loading the full SwapiResponse
-# triggers the same code path the production pipeline uses.
-_AZIMUTHAL_TRANSMISSION_PATH = get_test_instrument_team_data_path(
-    "swapi/imap_swapi_azimuthal-transmission_20260425_v001.csv"
-)
-_CENTRAL_EFFECTIVE_AREA_PATH = get_test_instrument_team_data_path(
-    "swapi/imap_swapi_central-effective-area_20260425_v001.csv"
-)
-_PASSBAND_FIT_COEFFICIENTS_PATH = get_test_instrument_team_data_path(
-    "swapi/imap_swapi_passband-fit-coefficients_20260425_v001.csv"
-)
 
 # 5-sweep coarse-only voltage axis: 62 bins/sweep × 5 sweeps = 310 measurements,
 # matching the Stage-2 axis described in the doc. The voltage values themselves
@@ -122,13 +99,7 @@ def _load_swapi_response_with_warm_cache() -> SwapiResponse:
     `create_response_grid` raises if the passband cache isn't warm for the
     requested voltage, so callers building a fit context off this response
     must warm it first."""
-    response = SwapiResponse.from_files(
-        _AZIMUTHAL_TRANSMISSION_PATH,
-        _CENTRAL_EFFECTIVE_AREA_PATH,
-        _PASSBAND_FIT_COEFFICIENTS_PATH,
-    )
-    response.warm_cache(_FIVE_SWEEP_VOLTAGE)
-    return response
+    return load_swapi_response(warm_cache_voltages=_FIVE_SWEEP_VOLTAGE)
 
 
 def _identity_rotation_matrices(n: int = _N_MEAS) -> np.ndarray:
@@ -872,13 +843,8 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
             rotation_matrices = np.broadcast_to(
                 np.eye(3), (len(esa_voltage), 3, 3)
             ).copy()
-        response = SwapiResponse.from_files(
-            _AZIMUTHAL_TRANSMISSION_PATH,
-            _CENTRAL_EFFECTIVE_AREA_PATH,
-            _PASSBAND_FIT_COEFFICIENTS_PATH,
-        )
-        if len(esa_voltage) > 0:
-            response.warm_cache(esa_voltage)
+        warm_voltages = esa_voltage if len(esa_voltage) > 0 else None
+        response = load_swapi_response(warm_cache_voltages=warm_voltages)
         return fit_solar_wind_alpha_moments(
             count_rate=count_rate,
             esa_voltage=esa_voltage,

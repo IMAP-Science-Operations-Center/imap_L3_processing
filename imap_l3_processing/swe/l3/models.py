@@ -115,9 +115,7 @@ class SweL2Data:
 class SwapiL3aProtonData:
     epoch: np.ndarray
     epoch_delta: np.ndarray
-    proton_sw_speed: np.ndarray[float]
-    proton_sw_clock_angle: np.ndarray[float]
-    proton_sw_deflection_angle: np.ndarray[float]
+    proton_sw_velocity_rtn: np.ndarray[float]
     swp_flags: np.ndarray
 
 

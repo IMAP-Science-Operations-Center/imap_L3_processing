@@ -1,21 +1,3 @@
-"""Direct tests for `solar_wind.forward_model` — the JIT-compiled solar-wind
-forward model and its analytic Jacobian.
-
-The contract under test is taken from `docs/swapi/solar-wind-moments.md`:
-- `model_solar_wind_ideal_coincidence_rates(sw_params, ctx)` returns one
-  predicted count rate (Hz) and one Jacobian row of shape `(N_STATE,)` per
-  sweep in the fit context.
-- `calculate_integral(sw_params, response_grid, rotation_matrix)` evaluates
-  the same model for one sweep.
-- The Jacobian columns are the analytic derivatives of the rate with respect
-  to the LM state vector `(ln n, ln T, v_R, v_T, v_N)`. The density column is
-  the rate itself; the log-temperature and velocity columns must agree with
-  finite differences of the rate.
-
-These tests build a real `SwapiResponse` from the shipped instrument-team CSVs
-and a real `SolarWindFitContext` so that the JIT integrand and quadrature run
-end-to-end."""
-
 import math
 import unittest
 
@@ -41,22 +23,13 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
 )
 from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
+from tests.swapi._helpers import proton_params
 from tests.test_helpers import get_test_instrument_team_data_path
 
 
-# Reference state used by every test in this module — typical slow solar wind:
-# 5 cm⁻³, 100 kK protons, bulk velocity along the boresight in the instrument
-# frame (which is +T_RTN under identity rotation, since boresight is body +Y
-# and Y_inst = T_RTN at the identity).
-_REF_DENSITY_CM3 = 5.0
-_REF_TEMPERATURE_K = 100_000.0
+# Reference bulk speed for the slow-wind fixture state shared by every test
+# in this module (5 cm⁻³, 100 kK protons under the default `proton_params`).
 _REF_BULK_SPEED_KM_S = 450.0
-
-# The flow direction in instrument XYZ at (theta=0, phi=0) is `(0, -1, 0)`
-# (look-direction convention). With identity rotation that maps to -T_RTN, so
-# a bulk velocity of (0, -450, 0) RTN points right at the boresight — gives a
-# maximum-rate, easy-to-reason-about geometry.
-_BORESIGHT_BULK_VELOCITY_RTN = np.array([0.0, -_REF_BULK_SPEED_KM_S, 0.0])
 
 # Off-axis bulk velocity used for the velocity-component Jacobian tests.
 # Adding small components in R and N breaks the symmetry that makes vR/vN
@@ -108,20 +81,6 @@ _JACOBIAN_RTOL = 0.05
 _JACOBIAN_ATOL = 1e-3
 
 
-def _proton_params(
-    density: float = _REF_DENSITY_CM3,
-    velocity_rtn=_BORESIGHT_BULK_VELOCITY_RTN,
-    temperature: float = _REF_TEMPERATURE_K,
-) -> SolarWindParams:
-    """Solar-wind proton state at typical slow-wind values, parameterizable
-    so individual tests can perturb a single field. Signature mirrors
-    `tests/swapi/l3a/science/solar_wind/test_state.py::_proton_params`."""
-    return SolarWindParams(
-        density=density,
-        bulk_velocity_rtn=np.asarray(velocity_rtn, dtype=float),
-        temperature=temperature,
-        mass=PROTON_MASS_KG,
-    )
 
 
 def _build_fit_context_for_voltages(
@@ -181,7 +140,7 @@ class TestModelSolarWindIdealCoincidenceRatesShape(_ForwardModelFixture):
             ),
         )
         rates, jacobian = model_solar_wind_ideal_coincidence_rates(
-            _proton_params(), ctx
+            proton_params(), ctx
         )
         self.assertEqual(rates.shape, (3,))
         self.assertEqual(jacobian.shape, (3, N_STATE))
@@ -200,19 +159,19 @@ class TestCalculateIntegralRateBehavior(_ForwardModelFixture):
     def test_rate_is_positive_when_bulk_velocity_aligns_with_boresight(self):
         """With bulk speed at the passband center and the flow aimed along boresight, the predicted rate is strictly positive."""
         rate, _ = calculate_integral(
-            _proton_params(), self.response_grid, self.rotation_matrix
+            proton_params(), self.response_grid, self.rotation_matrix
         )
         self.assertGreater(rate, 0.0)
 
     def test_rate_is_linear_in_density(self):
         """Doubling the proton density at fixed temperature and geometry doubles the predicted rate exactly, since the rate is linear in `n`."""
         rate_at_5, _ = calculate_integral(
-            _proton_params(density=5.0),
+            proton_params(density=5.0),
             self.response_grid,
             self.rotation_matrix,
         )
         rate_at_10, _ = calculate_integral(
-            _proton_params(density=10.0),
+            proton_params(density=10.0),
             self.response_grid,
             self.rotation_matrix,
         )
@@ -220,7 +179,7 @@ class TestCalculateIntegralRateBehavior(_ForwardModelFixture):
 
     def test_returns_zero_rate_and_jacobian_when_bulk_speed_misses_passband_above(self):
         """When the bulk speed (2000 km/s) sits hundreds of sigma above the passband at this voltage, the model short-circuits to rate=0 and a zero Jacobian row."""
-        very_fast = _proton_params(velocity_rtn=np.array([0.0, -2000.0, 0.0]))
+        very_fast = proton_params(velocity_rtn=np.array([0.0, -2000.0, 0.0]))
         rate, jacobian_row = calculate_integral(
             very_fast, self.response_grid, self.rotation_matrix
         )
@@ -229,7 +188,7 @@ class TestCalculateIntegralRateBehavior(_ForwardModelFixture):
 
     def test_returns_zero_rate_and_jacobian_when_bulk_speed_misses_passband_below(self):
         """Mirror of the above on the low side: a 50 km/s bulk sits far below the passband at this voltage, so rate=0 and the Jacobian row is zero."""
-        very_slow = _proton_params(velocity_rtn=np.array([0.0, -50.0, 0.0]))
+        very_slow = proton_params(velocity_rtn=np.array([0.0, -50.0, 0.0]))
         rate, jacobian_row = calculate_integral(
             very_slow, self.response_grid, self.rotation_matrix
         )
@@ -253,7 +212,7 @@ class TestAnalyticJacobianIdentities(_ForwardModelFixture):
             ),
         )
         rates, jacobian = model_solar_wind_ideal_coincidence_rates(
-            _proton_params(velocity_rtn=_OFF_AXIS_BULK_VELOCITY_RTN),
+            proton_params(velocity_rtn=_OFF_AXIS_BULK_VELOCITY_RTN),
             ctx,
         )
         np.testing.assert_array_equal(jacobian[:, LOG_DENSITY_IDX], rates)
@@ -294,7 +253,7 @@ class TestAnalyticJacobianAgainstFiniteDifferences(_ForwardModelFixture):
         # Off-axis bulk velocity so all three velocity components produce
         # nonzero Jacobian entries (boresight-aligned bulk has vR/vN ≈ 0
         # by symmetry, and the FD signal-to-noise on those columns is poor).
-        self.sw = _proton_params(velocity_rtn=_OFF_AXIS_BULK_VELOCITY_RTN)
+        self.sw = proton_params(velocity_rtn=_OFF_AXIS_BULK_VELOCITY_RTN)
         self.state = self.sw.to_vector()
 
     def test_log_temperature_jacobian_is_correct(self):
@@ -367,7 +326,7 @@ class TestNonIdentityRotation(_ForwardModelFixture):
             self.response, np.array([_ESA_VOLTAGE_AT_REF_SPEED_V])
         )
         baseline_rate, _ = calculate_integral(
-            _proton_params(velocity_rtn=_OFF_AXIS_BULK_VELOCITY_RTN),
+            proton_params(velocity_rtn=_OFF_AXIS_BULK_VELOCITY_RTN),
             baseline_ctx.response_grids[0],
             baseline_ctx.rotation_matrices[0],
         )
@@ -391,7 +350,7 @@ class TestNonIdentityRotation(_ForwardModelFixture):
             rotation_matrices=np.stack([rotated_xyz_to_rtn]),
         )
         rotated_rate, _ = calculate_integral(
-            _proton_params(velocity_rtn=rotated_velocity_rtn),
+            proton_params(velocity_rtn=rotated_velocity_rtn),
             rotated_ctx.response_grids[0],
             rotated_ctx.rotation_matrices[0],
         )

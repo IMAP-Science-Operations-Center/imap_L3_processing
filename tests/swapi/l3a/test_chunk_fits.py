@@ -5,6 +5,7 @@ import numpy as np
 from imap_l3_processing.constants import (
     ALPHA_MASS_PER_CHARGE_M_P_PER_E,
     ALPHA_PARTICLE_MASS_KG,
+    ONE_SECOND_IN_NANOSECONDS,
     PROTON_MASS_KG,
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
     THIRTY_SECONDS_IN_NANOSECONDS,
@@ -29,7 +30,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.state import SolarWindParams
-from imap_l3_processing.swapi.l3a.utils import rotate_rtn_to_dps
+from imap_l3_processing.swapi.l3a.utils import get_swapi_geometry, rotate_rtn_to_dps
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 from imap_l3_processing.swapi.constants import (
@@ -39,7 +40,7 @@ from imap_l3_processing.swapi.constants import (
 )
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 from tests.spice_test_case import SpiceTestCase
-from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path
+from tests.test_helpers import get_test_instrument_team_data_path
 
 
 _N_SWEEPS = 5
@@ -49,18 +50,9 @@ _FINE_V = np.logspace(np.log10(1000.0), np.log10(500.0), 9)
 _SCIENCE_V = np.concatenate([_COARSE_V, _FINE_V])
 _FULL_ENERGY = np.concatenate([[1.0e4], _SCIENCE_V]) * SWAPI_L2_K_FACTOR
 
-_ANCHOR_RTN_TO_SWAPI = np.array([
-    [+0.0705, +0.9157, +0.3955],
-    [-0.9968, +0.0792, -0.0057],
-    [-0.0365, -0.3939, +0.9184],
-]).T
-_SPIN_OMEGA = -2.0 * np.pi / 15.13
-
 _TRUE_DENSITY = 5.0
 _TRUE_TEMPERATURE_K = 1.0e5
 _TRUE_BULK_SPEED = 450.0
-# Anti-parallel to spin axis ⇒ wind enters the aperture.
-_TRUE_VELOCITY_RTN = -_TRUE_BULK_SPEED * _ANCHOR_RTN_TO_SWAPI[:, 1]
 # Sunward Parker spiral, off-nominal: 55° from -R toward +T (vs. nominal
 # 45° from +R toward -T), tilted 10° out of the ecliptic toward +N.
 _B_HAT_RTN = np.array([
@@ -71,10 +63,10 @@ _B_HAT_RTN = np.array([
 _TRUE_ALPHA_DENSITY = 0.2
 _TRUE_ALPHA_TEMPERATURE_K = 4.0e5
 _TRUE_DELTA_V_KM_S = 30.0
-_TRUE_ALPHA_VELOCITY_RTN = _TRUE_VELOCITY_RTN + _TRUE_DELTA_V_KM_S * _B_HAT_RTN
 _SC_VELOCITY_RTN = np.array([0.0, 30.0, 0.0])
 _EPOCH_TT2000 = 800_000_000_000_000_000
 _CHUNK_EPOCH = _EPOCH_TT2000 + THIRTY_SECONDS_IN_NANOSECONDS
+_SCI_START_TIME = _EPOCH_TT2000 + np.arange(_N_SWEEPS, dtype=np.int64) * 12_000_000_000
 
 # Every non-flag, non-epoch field must NaN-fill on short-circuit branches.
 _PROTON_SCALAR_KEYS = [
@@ -111,32 +103,47 @@ def _swapi_response_with_warm_cache(voltages):
     return resp
 
 
-def _per_bin_rotations(n_bins_per_sweep):
-    """SWAPI→RTN matrices spun from `_ANCHOR_ROT` about its +Y axis at the
-    SWAPI spin rate. Identity rotations would collapse the LM into a
-    spin-axis-mirror basin; spinning resolves the angular spread."""
-    sweep = np.repeat(np.arange(_N_SWEEPS), n_bins_per_sweep)
-    bin_in_sweep = np.tile(np.arange(1, n_bins_per_sweep + 1), _N_SWEEPS)
-    t = sweep * 12.0 + bin_in_sweep * (12.0 / 72)
-    axis = _ANCHOR_RTN_TO_SWAPI[:, 1] / np.linalg.norm(_ANCHOR_RTN_TO_SWAPI[:, 1])
-    dphi = _SPIN_OMEGA * (t - 6.0)
-    ax, ay, az = axis
-    K = np.array([[0.0, -az, ay], [az, 0.0, -ax], [-ay, ax, 0.0]])
-    sin_dp = np.sin(dphi)[:, None, None]
-    one_minus_cos = (1.0 - np.cos(dphi))[:, None, None]
-    return (np.eye(3) + sin_dp * K + one_minus_cos * (K @ K)) @ _ANCHOR_RTN_TO_SWAPI
+def _spice_rotations(bin_slice):
+    """SPICE-derived SWAPI→RTN rotations at the synthetic chunk's measurement
+    times over `bin_slice`."""
+    bin_indices = np.arange(bin_slice.start, bin_slice.stop)
+    measurement_times = (
+        _SCI_START_TIME[:, np.newaxis]
+        + bin_indices * (12 / 72 * ONE_SECOND_IN_NANOSECONDS)
+    ).flatten()
+    return get_swapi_geometry(measurement_times)
+
+
+def _truth_velocity_rtn(rotations):
+    """Truth wind vector: `_TRUE_BULK_SPEED` km/s anti-parallel-ish to the SWAPI
+    boresight (column 1 of the SWAPI→RTN rotation at the chunk's first bin),
+    tilted 5° toward a stable in-plane direction. The deflection lifts the
+    wind off the spin axis so clock-angle assertions are non-degenerate."""
+    spin_axis_rtn = rotations[0, :, 1]
+    perpendicular = np.cross(spin_axis_rtn, [1.0, 0.0, 0.0])
+    perpendicular /= np.linalg.norm(perpendicular)
+    deflection = np.radians(5.0)
+    direction = -spin_axis_rtn * np.cos(deflection) + perpendicular * np.sin(deflection)
+    return _TRUE_BULK_SPEED * direction
 
 
 def _efficiency_table():
-    """Real `EfficiencyCalibrationTable` loaded from the shipped test LUT.
-
-    At `_EPOCH_TT2000` (≈ 2025-05) all three relevant efficiencies in this
-    LUT are within 0.04% of each other, so the proton/alpha effective-area
-    scales are ≈1.0 — close enough to the prior 1.0/1.0 mocked values that
-    the existing fit-tolerance bands hold without recalibration."""
-    return EfficiencyCalibrationTable(
-        get_test_data_path("swapi/imap_swapi_efficiency-lut_20241020_v004.dat")
+    """Synthetic `EfficiencyCalibrationTable` with realistic in-flight proton
+    (0.12) and alpha (0.15) efficiencies and a lab-cal proton efficiency of 0.12."""
+    table = EfficiencyCalibrationTable.__new__(EfficiencyCalibrationTable)
+    table.data = np.array(
+        [
+            (np.datetime64("2024-01-01", "ns"), 0, 0.12, 0.15),
+            (np.datetime64("2025-11-01", "ns"), 0, 0.12, 0.15),
+        ],
+        dtype=[
+            ("time", "M8[ns]"),
+            ("MET", "i8"),
+            ("proton efficiency", "f8"),
+            ("alpha efficiency", "f8"),
+        ],
     )
+    return table
 
 
 def _populate_shared(response, table):
@@ -147,23 +154,18 @@ def _clear_shared():
     chunk_fits._shared.clear()
 
 
-def _synthesize_chunk(*, response):
+def _synthesize_chunk(*, response, rotations, proton_velocity_rtn, alpha_velocity_rtn, efficiency_table):
     """Forward-model a 5-sweep proton + alpha chunk at the truth params over
-    the full 71-bin science axis.
-
-    Proton and alpha ideal rates are summed pre-deadtime so the test fixture
-    matches the real instrument response (deadtime is a single nonlinear
-    correction applied to total counts, not per species).
-    """
+    the full 71-bin science axis. Per-species effective-area scales come from
+    `efficiency_table` so synthesis and the fitter share the same calibration."""
     n = SWAPI_SCIENCE_BINS.stop - SWAPI_SCIENCE_BINS.start
     voltages = np.tile(_SCIENCE_V, _N_SWEEPS)
-    rotations = _per_bin_rotations(n)
 
     proton_ctx = build_solar_wind_fit_context(
         count_rate=np.zeros(len(voltages)),
         esa_voltage=voltages,
         swapi_response=response,
-        central_effective_area_scale=1.0,
+        central_effective_area_scale=chunk_fits._eff_scale(efficiency_table, _CHUNK_EPOCH, "proton"),
         rotation_matrices=rotations,
         mass_kg=PROTON_MASS_KG,
         mass_per_charge_m_p_per_e=PROTON_MASS_PER_CHARGE_M_P_PER_E,
@@ -172,20 +174,20 @@ def _synthesize_chunk(*, response):
         count_rate=np.zeros(len(voltages)),
         esa_voltage=voltages,
         swapi_response=response,
-        central_effective_area_scale=1.0,
+        central_effective_area_scale=chunk_fits._eff_scale(efficiency_table, _CHUNK_EPOCH, "alpha"),
         rotation_matrices=rotations,
         mass_kg=ALPHA_PARTICLE_MASS_KG,
         mass_per_charge_m_p_per_e=ALPHA_MASS_PER_CHARGE_M_P_PER_E,
     )
     proton_truth = SolarWindParams(
         density=_TRUE_DENSITY,
-        bulk_velocity_rtn=_TRUE_VELOCITY_RTN.copy(),
+        bulk_velocity_rtn=proton_velocity_rtn.copy(),
         temperature=_TRUE_TEMPERATURE_K,
         mass=PROTON_MASS_KG,
     )
     alpha_truth = SolarWindParams(
         density=_TRUE_ALPHA_DENSITY,
-        bulk_velocity_rtn=_TRUE_ALPHA_VELOCITY_RTN.copy(),
+        bulk_velocity_rtn=alpha_velocity_rtn.copy(),
         temperature=_TRUE_ALPHA_TEMPERATURE_K,
         mass=ALPHA_PARTICLE_MASS_KG,
     )
@@ -196,12 +198,30 @@ def _synthesize_chunk(*, response):
     full_rates = np.zeros((_N_SWEEPS, _N_BINS))
     full_rates[:, SWAPI_SCIENCE_BINS] = flat_rates.reshape(_N_SWEEPS, n)
     chunk = SwapiL2Data(
-        sci_start_time=_EPOCH_TT2000 + np.arange(_N_SWEEPS, dtype=np.int64) * 12_000_000_000,
+        sci_start_time=_SCI_START_TIME.copy(),
         energy=np.tile(_FULL_ENERGY, (_N_SWEEPS, 1)),
         coincidence_count_rate=full_rates,
         coincidence_count_rate_uncertainty=np.full_like(full_rates, 0.1),
     )
     return chunk
+
+
+def _build_truth_chunk(response, efficiency_table):
+    """Forward-model a clean proton+alpha chunk from `response` over the science
+    bin range, returning the chunk plus the rotations and truth velocities used
+    to synthesize it. The alpha truth velocity is constructed here so all three
+    fitter test classes share the same proton-to-alpha relationship."""
+    science_rotations = _spice_rotations(SWAPI_SCIENCE_BINS)
+    proton_velocity_rtn = _truth_velocity_rtn(science_rotations)
+    alpha_velocity_rtn = proton_velocity_rtn + _TRUE_DELTA_V_KM_S * _B_HAT_RTN
+    chunk = _synthesize_chunk(
+        response=response,
+        rotations=science_rotations,
+        proton_velocity_rtn=proton_velocity_rtn,
+        alpha_velocity_rtn=alpha_velocity_rtn,
+        efficiency_table=efficiency_table,
+    )
+    return chunk, science_rotations, proton_velocity_rtn, alpha_velocity_rtn
 
 
 def _with_nan_at(chunk, sweep, bin_):
@@ -249,10 +269,7 @@ def _out_of_coverage_chunk():
 
 
 class TestProtonChunkFitterPrecomputeGeometry(SpiceTestCase):
-    """Tests for `ProtonChunkFitter.precompute_geometry` against real SPICE
-    kernels — SPICE-value correctness (orthonormality, SC speed) is covered
-    by `TestSwapiSpiceHelpers`, so these tests only assert the wrapper
-    contract."""
+    """Tests for `ProtonChunkFitter.precompute_geometry` with real SPICE kernels."""
 
     def test_success_returns_epoch_rotations_and_sc_velocity(self):
         """At an in-coverage chunk, precompute_geometry returns the chunk midpoint epoch, a per-bin rotation array of the right shape, and a 3-vector spacecraft velocity."""
@@ -280,9 +297,9 @@ class TestProtonChunkFitterFitChunk(SpiceTestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.response = _swapi_response_with_warm_cache(np.tile(_SCIENCE_V, _N_SWEEPS))
-        _populate_shared(cls.response, _efficiency_table())
-        cls.chunk = _synthesize_chunk(response=cls.response)
-        cls.rotations = _per_bin_rotations(SWAPI_SCIENCE_BINS.stop - SWAPI_SCIENCE_BINS.start)
+        efficiency_table = _efficiency_table()
+        _populate_shared(cls.response, efficiency_table)
+        cls.chunk, cls.rotations, cls.true_proton_velocity_rtn, _ = _build_truth_chunk(cls.response, efficiency_table)
         cls.result = ProtonChunkFitter().fit_chunk(
             cls.chunk, _CHUNK_EPOCH, cls.rotations, _SC_VELOCITY_RTN.copy()
         )
@@ -308,7 +325,7 @@ class TestProtonChunkFitterFitChunk(SpiceTestCase):
             delta=0.05 * _TRUE_TEMPERATURE_K,
         )
         np.testing.assert_allclose(
-            self.result["proton_sw_bulk_velocity_rtn_sc"], _TRUE_VELOCITY_RTN, atol=5.0
+            self.result["proton_sw_bulk_velocity_rtn_sc"], self.true_proton_velocity_rtn, atol=5.0
         )
 
     def test_uncertainties_are_strictly_positive(self):
@@ -385,9 +402,7 @@ class TestProtonChunkFitterFitChunk(SpiceTestCase):
 
 
 class TestAlphaChunkFitterPrecomputeGeometry(SpiceTestCase):
-    """Tests for `AlphaChunkFitter.precompute_geometry` against real SPICE
-    kernels — wrapper-contract only (SPICE-value correctness is covered by
-    `TestSwapiSpiceHelpers`)."""
+    """Tests for `AlphaChunkFitter.precompute_geometry` with real SPICE kernels."""
 
     def _mag_centered_on(self, epoch_ns):
         offsets = np.array([-1_000_000_000, 0, 1_000_000_000], dtype=np.int64)
@@ -425,17 +440,19 @@ class TestAlphaChunkFitterPrecomputeGeometry(SpiceTestCase):
         self.assertTrue(np.all(np.isnan(b_hat)))
 
 
-class TestAlphaChunkFitterFitChunk(unittest.TestCase):
+class TestAlphaChunkFitterFitChunk(SpiceTestCase):
     """Tests for `AlphaChunkFitter.fit_chunk` — stage ordering plus fill-value branches in the alpha fit."""
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         cls.response = _swapi_response_with_warm_cache(np.tile(_SCIENCE_V, _N_SWEEPS))
-        _populate_shared(cls.response, _efficiency_table())
-        cls.chunk = _synthesize_chunk(response=cls.response)
+        efficiency_table = _efficiency_table()
+        _populate_shared(cls.response, efficiency_table)
+        cls.chunk, _, cls.true_proton_velocity_rtn, cls.true_alpha_velocity_rtn = _build_truth_chunk(cls.response, efficiency_table)
         # AlphaChunkFitter slices `SWAPI_COARSE_SWEEP_BINS` from the chunk, so
         # the rotations passed in must be coarse-bin-aligned.
-        cls.rotations = _per_bin_rotations(SWAPI_COARSE_SWEEP_BINS.stop - SWAPI_COARSE_SWEEP_BINS.start)
+        cls.rotations = _spice_rotations(SWAPI_COARSE_SWEEP_BINS)
         cls.fitter = AlphaChunkFitter(mag_data=None)
         cls.happy_result = cls.fitter.fit_chunk(
             cls.chunk, _CHUNK_EPOCH, cls.rotations, _B_HAT_RTN
@@ -444,6 +461,7 @@ class TestAlphaChunkFitterFitChunk(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         _clear_shared()
+        super().tearDownClass()
 
     def _assert_flag_and_all_nan(self, result, flag):
         self.assertEqual(int(result["bad_fit_flag"]), int(flag))
@@ -465,7 +483,7 @@ class TestAlphaChunkFitterFitChunk(unittest.TestCase):
             self.happy_result["alpha_sw_delta_v"], _TRUE_DELTA_V_KM_S, delta=2.0
         )
         np.testing.assert_allclose(
-            self.happy_result["alpha_sw_velocity_rtn"], _TRUE_ALPHA_VELOCITY_RTN, atol=5.0
+            self.happy_result["alpha_sw_velocity_rtn"], self.true_alpha_velocity_rtn, atol=5.0
         )
 
     def test_reference_proton_moments_propagate_from_stage_1(self):
@@ -482,7 +500,7 @@ class TestAlphaChunkFitterFitChunk(unittest.TestCase):
         )
         np.testing.assert_allclose(
             self.happy_result["alpha_sw_reference_proton_velocity_rtn"],
-            _TRUE_VELOCITY_RTN,
+            self.true_proton_velocity_rtn,
             atol=5.0,
         )
 
@@ -525,9 +543,7 @@ class TestAlphaChunkFitterFitChunk(unittest.TestCase):
 
 
 class TestPuiProtonChunkFitterPrecomputeGeometry(SpiceTestCase):
-    """Tests for `PuiProtonChunkFitter.precompute_geometry` against real SPICE
-    kernels — wrapper-contract only (SPICE-value correctness is covered by
-    `TestSwapiSpiceHelpers`)."""
+    """Tests for `PuiProtonChunkFitter.precompute_geometry` with real SPICE kernels."""
 
     def test_success_returns_epoch_and_rotations(self):
         """At an in-coverage chunk, PUI precompute_geometry returns the chunk midpoint epoch and a per-bin rotation array of the right shape (no spacecraft velocity for PUI)."""
@@ -550,9 +566,9 @@ class TestPuiProtonChunkFitterFitChunk(SpiceTestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.response = _swapi_response_with_warm_cache(np.tile(_SCIENCE_V, _N_SWEEPS))
-        _populate_shared(cls.response, _efficiency_table())
-        cls.chunk = _synthesize_chunk(response=cls.response)
-        cls.rotations = _per_bin_rotations(SWAPI_SCIENCE_BINS.stop - SWAPI_SCIENCE_BINS.start)
+        efficiency_table = _efficiency_table()
+        _populate_shared(cls.response, efficiency_table)
+        cls.chunk, cls.rotations, cls.true_proton_velocity_rtn, _ = _build_truth_chunk(cls.response, efficiency_table)
 
     @classmethod
     def tearDownClass(cls):
@@ -572,7 +588,7 @@ class TestPuiProtonChunkFitterFitChunk(SpiceTestCase):
         self.assertAlmostEqual(
             result["proton_sw_speed"].nominal_value, _TRUE_BULK_SPEED, delta=5.0
         )
-        velocity_dps_truth = rotate_rtn_to_dps(_TRUE_VELOCITY_RTN, _CHUNK_EPOCH)
+        velocity_dps_truth = rotate_rtn_to_dps(self.true_proton_velocity_rtn, _CHUNK_EPOCH)
         expected_clock = (
             np.degrees(np.arctan2(-velocity_dps_truth[1], -velocity_dps_truth[0])) % 360
         )

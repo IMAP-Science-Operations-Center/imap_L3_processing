@@ -1,7 +1,3 @@
-"""Tests for `solar_wind.proton.uncertainties`: the HC3 sandwich covariance
-estimator, the correlated-velocity wrapper, and the DPS-frame angle/sigma
-derivation. See `docs/swapi/solar-wind-moments.md` for the contracts."""
-
 import unittest
 from unittest.mock import MagicMock, patch
 

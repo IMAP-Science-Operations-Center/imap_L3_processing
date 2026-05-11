@@ -1,5 +1,3 @@
-"""Tests for the `Region` constants in `solar_wind.azimuthal_regions`."""
-
 import unittest
 
 from imap_l3_processing.swapi.l3a.science.solar_wind.azimuthal_regions import (

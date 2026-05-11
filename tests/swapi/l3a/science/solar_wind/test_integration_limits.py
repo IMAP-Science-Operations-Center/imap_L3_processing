@@ -1,26 +1,3 @@
-"""Tests for `solar_wind.integration_limits` — the per-region quadrature
-builders that bound the (elevation, azimuth, speed) integration windows fed
-to the forward model.
-
-The behavior under test is described in `docs/swapi/solar-wind-moments.md`
-under "Integration Method" — specifically the "Angular limits" and
-"Speed limits" subsections. The two big rules are:
-
-1. The angular window is the rectangular envelope of the Maxwellian's
-   angular falloff (from on-axis to the EPSILON cutoff), expressed in the
-   instrument frame around the bulk direction, then clamped to each
-   region's elevation range and azimuth band:
-     SG    : az ∈ [-20°, +20°]
-     OA-   : az ∈ [-150°, -20°]
-     OA+   : az ∈ [+20°, +150°]
-   If either dimension collapses to zero width the region is skipped.
-
-2. The speed window is the intersection of `bulk_speed ± k·vth`
-   (with k = SPEED_HALF_WIDTH_VTH = 6) and the per-elevation passband
-   speed range `[r_min(θ)·v0, r_max(θ)·v0]`. For cold plasma the
-   first interval narrows the window inside the passband; for warm
-   plasma it's the passband bounds that bind."""
-
 import unittest
 
 import numpy as np
@@ -48,8 +25,7 @@ from imap_l3_processing.swapi.response.passband_grid import (
     speed_ratio_range_at_elevation,
 )
 from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
-from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
-from tests.test_helpers import get_test_instrument_team_data_path
+from tests.swapi._helpers import load_swapi_response, proton_params
 
 # --- module-level fixtures: real instrument-team CSVs and one warmed grid ----
 
@@ -63,46 +39,7 @@ _SG_AZIMUTH_HI_DEG = +20.0
 _OA_AZIMUTH_INNER_DEG = 20.0
 _OA_AZIMUTH_OUTER_DEG = 150.0
 
-# Typical solar-wind reference values for `_proton_params`.
-_DENSITY_CM3 = 5.0
-_TEMPERATURE_K = 100_000.0
 _BULK_SPEED_KM_S = 450.0
-
-
-def _load_response() -> SwapiResponse:
-    """Build a `SwapiResponse` from the shipped instrument-team CSVs."""
-    return SwapiResponse.from_files(
-        get_test_instrument_team_data_path(
-            "swapi/imap_swapi_azimuthal-transmission_20260425_v001.csv"
-        ),
-        get_test_instrument_team_data_path(
-            "swapi/imap_swapi_central-effective-area_20260425_v001.csv"
-        ),
-        get_test_instrument_team_data_path(
-            "swapi/imap_swapi_passband-fit-coefficients_20260425_v001.csv"
-        ),
-    )
-
-
-def _proton_params(
-    *,
-    velocity_rtn=(0.0, -_BULK_SPEED_KM_S, 0.0),
-    temperature: float = _TEMPERATURE_K,
-    density: float = _DENSITY_CM3,
-) -> SolarWindParams:
-    """Solar-wind proton state. The default RTN velocity is along -Y_RTN, which
-    the identity rotation matrix maps to az=0, el=0 in the instrument frame —
-    the boresight direction (SG region).
-
-    Note: this default differs from `tests/.../test_state.py`'s helper, which
-    uses a generic velocity vector. We pick the boresight-aligned default here
-    because most tests in this file want SG to be the active region."""
-    return SolarWindParams(
-        density=density,
-        bulk_velocity_rtn=np.array(velocity_rtn),
-        temperature=temperature,
-        mass=PROTON_MASS_KG,
-    )
 
 
 class TestSpeedWindowMissesPassband(unittest.TestCase):
@@ -110,23 +47,22 @@ class TestSpeedWindowMissesPassband(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.response = _load_response()
-        cls.response.warm_cache([_ESA_VOLTAGE])
+        cls.response = load_swapi_response(warm_cache_voltages=[_ESA_VOLTAGE])
         cls.response_grid = cls.response.get_response_grid(_ESA_VOLTAGE, 1.0)
 
     def test_returns_false_when_bulk_speed_sits_in_passband(self):
         """A 450 km/s bulk at the 1 keV step sits well inside the on-axis passband, so no miss is reported."""
-        sw = _proton_params()
+        sw = proton_params()
         self.assertFalse(speed_window_misses_passband(sw, self.response_grid))
 
     def test_returns_true_when_bulk_speed_above_passband(self):
         """A 1500 km/s bulk puts the entire `bulk ± k·σ` window above the upper passband edge, so a miss is reported."""
-        sw = _proton_params(velocity_rtn=(0.0, -1500.0, 0.0))
+        sw = proton_params(velocity_rtn=(0.0, -1500.0, 0.0))
         self.assertTrue(speed_window_misses_passband(sw, self.response_grid))
 
     def test_returns_true_when_bulk_speed_below_passband(self):
         """A 100 km/s bulk puts the entire `bulk ± k·σ` window below the lower passband edge, so a miss is reported."""
-        sw = _proton_params(velocity_rtn=(0.0, -100.0, 0.0))
+        sw = proton_params(velocity_rtn=(0.0, -100.0, 0.0))
         self.assertTrue(speed_window_misses_passband(sw, self.response_grid))
 
     def test_window_overlaps_passband_when_k_sigma_exceeds_offset_above_edge(self):
@@ -138,7 +74,7 @@ class TestSpeedWindowMissesPassband(unittest.TestCase):
         bulk = v_passband_hi + 30.0
         sigma_overlap = 50.0 / SPEED_HALF_WIDTH_VTH
         T_overlap = thermal_speed_to_temperature(sigma_overlap, PROTON_MASS_KG)
-        sw_overlap = _proton_params(
+        sw_overlap = proton_params(
             velocity_rtn=(0.0, -bulk, 0.0), temperature=T_overlap
         )
         self.assertFalse(speed_window_misses_passband(sw_overlap, self.response_grid))
@@ -152,7 +88,7 @@ class TestSpeedWindowMissesPassband(unittest.TestCase):
         bulk = v_passband_hi + 30.0
         sigma_detached = 5.0 / SPEED_HALF_WIDTH_VTH
         T_detached = thermal_speed_to_temperature(sigma_detached, PROTON_MASS_KG)
-        sw_detached = _proton_params(
+        sw_detached = proton_params(
             velocity_rtn=(0.0, -bulk, 0.0), temperature=T_detached
         )
         self.assertTrue(speed_window_misses_passband(sw_detached, self.response_grid))
@@ -163,14 +99,13 @@ class TestGetAngularQuadratureSunglassesRegion(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.response = _load_response()
-        cls.response.warm_cache([_ESA_VOLTAGE])
+        cls.response = load_swapi_response(warm_cache_voltages=[_ESA_VOLTAGE])
         cls.response_grid = cls.response.get_response_grid(_ESA_VOLTAGE, 1.0)
         cls.identity = np.eye(3)
 
     def test_sg_region_is_active_for_sun_pointed_bulk(self):
         """A boresight-aligned bulk with a narrow Maxwellian falls inside the SG band, so the region is active and a quadrature is returned."""
-        sw = _proton_params()
+        sw = proton_params()
         skip, quadrature = get_angular_quadrature(
             sw, self.response_grid, REGION_SUNGLASSES, self.identity, 0.0
         )
@@ -179,7 +114,7 @@ class TestGetAngularQuadratureSunglassesRegion(unittest.TestCase):
 
     def test_sg_azimuth_window_is_inside_minus_20_to_plus_20_degrees(self):
         """For a boresight-aligned bulk, every azimuth GL node lies inside the SG `[-20°, +20°]` band."""
-        sw = _proton_params()
+        sw = proton_params()
         _, quadrature = get_angular_quadrature(
             sw, self.response_grid, REGION_SUNGLASSES, self.identity, 0.0
         )
@@ -188,7 +123,7 @@ class TestGetAngularQuadratureSunglassesRegion(unittest.TestCase):
 
     def test_sg_azimuth_window_clamps_to_plus_minus_20_for_broad_distribution(self):
         """A very hot plasma's 180° angular extent forces the azimuth window to clamp exactly to the `[-20°, +20°]` SG band, with the outermost GL nodes hugging both edges."""
-        sw = _proton_params(temperature=1e10)
+        sw = proton_params(temperature=1e10)
         _, quadrature = get_angular_quadrature(
             sw, self.response_grid, REGION_SUNGLASSES, self.identity, 0.0
         )
@@ -208,7 +143,7 @@ class TestGetAngularQuadratureSunglassesRegion(unittest.TestCase):
 
     def test_sg_elevation_window_clamps_into_passband_elevation_range(self):
         """A hot plasma's saturated angular extent is clipped by the SG passband elevation range, so every elevation node lies inside that range."""
-        sw = _proton_params(temperature=1e10)
+        sw = proton_params(temperature=1e10)
         _, quadrature = get_angular_quadrature(
             sw, self.response_grid, REGION_SUNGLASSES, self.identity, 0.0
         )
@@ -218,7 +153,7 @@ class TestGetAngularQuadratureSunglassesRegion(unittest.TestCase):
 
     def test_sg_quadrature_has_21_nodes_in_each_angular_dimension(self):
         """The SG angular quadrature is built with the doc-prescribed (Nθ, Nφ) = (21, 21) Gauss-Legendre node counts."""
-        sw = _proton_params()
+        sw = proton_params()
         _, quadrature = get_angular_quadrature(
             sw, self.response_grid, REGION_SUNGLASSES, self.identity, 0.0
         )
@@ -227,7 +162,7 @@ class TestGetAngularQuadratureSunglassesRegion(unittest.TestCase):
 
     def test_sin_cos_caches_match_their_angle_arrays(self):
         """The precomputed sin/cos arrays on the quadrature exactly match `sin`/`cos` of the corresponding angle (in radians) at every node."""
-        sw = _proton_params()
+        sw = proton_params()
         _, quadrature = get_angular_quadrature(
             sw, self.response_grid, REGION_SUNGLASSES, self.identity, 0.0
         )
@@ -246,7 +181,7 @@ class TestGetAngularQuadratureSunglassesRegion(unittest.TestCase):
 
     def test_sg_region_skipped_when_bulk_far_from_sg_band(self):
         """A bulk pointed at azimuth ≈ 90° is 70° away from the SG band and a narrow Maxwellian cannot bridge the gap, so the SG region is skipped."""
-        sw = _proton_params(velocity_rtn=(-_BULK_SPEED_KM_S, 0.0, 0.0))
+        sw = proton_params(velocity_rtn=(-_BULK_SPEED_KM_S, 0.0, 0.0))
         skip, quadrature = get_angular_quadrature(
             sw, self.response_grid, REGION_SUNGLASSES, self.identity, 0.0
         )
@@ -259,13 +194,12 @@ class TestGetAngularQuadratureOpenAperturePositive(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.response = _load_response()
-        cls.response.warm_cache([_ESA_VOLTAGE])
+        cls.response = load_swapi_response(warm_cache_voltages=[_ESA_VOLTAGE])
         cls.response_grid = cls.response.get_response_grid(_ESA_VOLTAGE, 1.0)
         cls.identity = np.eye(3)
         # Bulk pointed at az=+90°: identity rotation makes v_inst = (-v, 0, 0),
         # giving azimuth = atan2(v, 0) = 90° and elevation = 0°.
-        cls.sw_bulk_at_90 = _proton_params(
+        cls.sw_bulk_at_90 = proton_params(
             velocity_rtn=(-_BULK_SPEED_KM_S, 0.0, 0.0)
         )
 
@@ -315,12 +249,11 @@ class TestGetAngularQuadratureOpenApertureNegative(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.response = _load_response()
-        cls.response.warm_cache([_ESA_VOLTAGE])
+        cls.response = load_swapi_response(warm_cache_voltages=[_ESA_VOLTAGE])
         cls.response_grid = cls.response.get_response_grid(_ESA_VOLTAGE, 1.0)
         cls.identity = np.eye(3)
         # Bulk at az=-90°: v_inst = (+v, 0, 0) ⇒ az = atan2(-v, 0) = -90°.
-        cls.sw_bulk_at_minus_90 = _proton_params(
+        cls.sw_bulk_at_minus_90 = proton_params(
             velocity_rtn=(+_BULK_SPEED_KM_S, 0.0, 0.0)
         )
 
@@ -370,13 +303,12 @@ class TestGetSpeedQuadrature(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.response = _load_response()
-        cls.response.warm_cache([_ESA_VOLTAGE])
+        cls.response = load_swapi_response(warm_cache_voltages=[_ESA_VOLTAGE])
         cls.response_grid = cls.response.get_response_grid(_ESA_VOLTAGE, 1.0)
 
     def test_speed_window_lies_inside_per_elevation_passband(self):
         """For warm plasma the passband binds the window, so every GL node lies inside `[r_min(θ)·v0, r_max(θ)·v0]` at the given elevation."""
-        sw = _proton_params()
+        sw = proton_params()
         _, speed_quadrature = get_speed_quadrature(
             sw, self.response_grid, REGION_SUNGLASSES, 0.0
         )
@@ -390,7 +322,7 @@ class TestGetSpeedQuadrature(unittest.TestCase):
 
     def test_cold_plasma_window_lies_inside_bulk_plus_minus_k_vth(self):
         """For cold plasma (T = 480 K) at the passband center, the `bulk ± k·σ` interval is the binding constraint and every GL node sits inside it."""
-        sw = _proton_params(
+        sw = proton_params(
             velocity_rtn=(0.0, -self.response_grid.central_speed, 0.0),
             temperature=480.0,
         )
@@ -406,7 +338,7 @@ class TestGetSpeedQuadrature(unittest.TestCase):
 
     def test_cold_plasma_outer_gl_nodes_sit_close_to_window_edges(self):
         """For the same cold-plasma case, the outermost GL nodes sit within ~2 km/s of `bulk ± k·σ`, pinning the window endpoints to `bulk ± k·σ` rather than some narrower subset."""
-        sw = _proton_params(
+        sw = proton_params(
             velocity_rtn=(0.0, -self.response_grid.central_speed, 0.0),
             temperature=480.0,
         )
@@ -422,7 +354,7 @@ class TestGetSpeedQuadrature(unittest.TestCase):
 
     def test_speed_quadrature_arrays_are_all_15_long(self):
         """Each array on the returned `SpeedQuadrature` (points, weights, `speed_cubed_times_passband`) has the doc-prescribed Nv = 15 nodes."""
-        sw = _proton_params()
+        sw = proton_params()
         _, speed_quadrature = get_speed_quadrature(
             sw, self.response_grid, REGION_SUNGLASSES, 0.0
         )
@@ -432,7 +364,7 @@ class TestGetSpeedQuadrature(unittest.TestCase):
 
     def test_returns_skip_when_bulk_speed_window_does_not_overlap_passband(self):
         """A bulk so far above the passband that `bulk - k·σ` exceeds the upper edge yields skip=True and a `None` quadrature."""
-        sw = _proton_params(
+        sw = proton_params(
             velocity_rtn=(0.0, -1500.0, 0.0), temperature=10_000.0
         )
         skip, speed_quadrature = get_speed_quadrature(
@@ -443,7 +375,7 @@ class TestGetSpeedQuadrature(unittest.TestCase):
 
     def test_uses_region_specific_passband(self):
         """With a hot plasma so the passband binds the window in both regions, the SG and OA quadratures land on their own region's passband edge and the two windows are distinct."""
-        sw = _proton_params(temperature=1_000_000.0)
+        sw = proton_params(temperature=1_000_000.0)
         _, sg_quad = get_speed_quadrature(
             sw, self.response_grid, REGION_SUNGLASSES, 0.0
         )
@@ -468,7 +400,7 @@ class TestGetSpeedQuadrature(unittest.TestCase):
 
     def test_speed_cubed_times_passband_is_v3_times_normalized_passband_at_each_node(self):
         """The `speed_cubed_times_passband` array equals `v³ · P(θ, v/v0) / P(0, 1)` reconstructed from `interpolate_passband` at every GL node."""
-        sw = _proton_params()
+        sw = proton_params()
         _, speed_quadrature = get_speed_quadrature(
             sw, self.response_grid, REGION_SUNGLASSES, 0.0
         )

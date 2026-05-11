@@ -1,7 +1,3 @@
-"""Direct tests for `solar_wind.state` — the `SolarWindParams` NamedTuple,
-its vector encoding for the LM optimizer, and the bulk-speed / thermal-speed /
-temperature conversions."""
-
 import math
 import unittest
 
@@ -24,20 +20,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
     thermal_speed,
     thermal_speed_to_temperature,
 )
-
-
-def _proton_params(
-    density: float = 5.0,
-    velocity_rtn=(-450.0, 0.0, 0.0),
-    temperature: float = 100_000.0,
-) -> SolarWindParams:
-    """Solar-wind proton state at typical inertial-RTN slow-wind values."""
-    return SolarWindParams(
-        density=density,
-        bulk_velocity_rtn=np.array(velocity_rtn),
-        temperature=temperature,
-        mass=PROTON_MASS_KG,
-    )
+from tests.swapi._helpers import proton_params
 
 
 class TestStateVectorLayout(unittest.TestCase):
@@ -56,7 +39,7 @@ class TestSolarWindParamsToVector(unittest.TestCase):
 
     def test_density_and_temperature_are_log_encoded(self):
         """A params object with density 5 and temperature 1e5 produces a state whose density and temperature slots equal log(5) and log(1e5)."""
-        sw = _proton_params(density=5.0, temperature=100_000.0)
+        sw = proton_params(density=5.0, temperature=100_000.0)
         state = sw.to_vector()
         self.assertAlmostEqual(state[LOG_DENSITY_IDX], math.log(5.0))
         self.assertAlmostEqual(state[LOG_TEMPERATURE_IDX], math.log(100_000.0))
@@ -64,13 +47,13 @@ class TestSolarWindParamsToVector(unittest.TestCase):
     def test_velocity_is_stored_unchanged(self):
         """The three velocity components are written into the velocity slice verbatim, without any rotation or rescaling."""
         velocity = np.array([-450.0, 10.0, -5.0])
-        sw = _proton_params(velocity_rtn=tuple(velocity))
+        sw = proton_params(velocity_rtn=tuple(velocity))
         state = sw.to_vector()
         np.testing.assert_array_equal(state[VELOCITY_SLICE], velocity)
 
     def test_vector_has_n_state_length(self):
         """The encoded vector has exactly `N_STATE` elements so it matches the optimizer's expected length."""
-        self.assertEqual(_proton_params().to_vector().shape, (N_STATE,))
+        self.assertEqual(proton_params().to_vector().shape, (N_STATE,))
 
 
 class TestSolarWindParamsFromVector(unittest.TestCase):
@@ -78,7 +61,7 @@ class TestSolarWindParamsFromVector(unittest.TestCase):
 
     def test_from_vector_inverts_to_vector(self):
         """Encoding a params object to a vector and decoding it back recovers the original density, temperature, velocity, and mass."""
-        original = _proton_params(
+        original = proton_params(
             density=3.7, velocity_rtn=(-420.0, 5.0, -2.0), temperature=85_000.0
         )
         round_tripped = SolarWindParams.from_vector(
@@ -103,13 +86,13 @@ class TestBulkSpeed(unittest.TestCase):
 
     def test_returns_magnitude_of_bulk_velocity(self):
         """A bulk velocity of (-300, 40, -50) km/s returns the Euclidean norm sqrt(300^2 + 40^2 + 50^2)."""
-        sw = _proton_params(velocity_rtn=(-300.0, 40.0, -50.0))
+        sw = proton_params(velocity_rtn=(-300.0, 40.0, -50.0))
         expected = math.sqrt(300.0**2 + 40.0**2 + 50.0**2)
         self.assertAlmostEqual(bulk_speed(sw), expected)
 
     def test_zero_velocity_returns_zero(self):
         """A bulk velocity of (0, 0, 0) returns 0 exactly, with no divide-by-zero artefacts."""
-        sw = _proton_params(velocity_rtn=(0.0, 0.0, 0.0))
+        sw = proton_params(velocity_rtn=(0.0, 0.0, 0.0))
         self.assertEqual(bulk_speed(sw), 0.0)
 
 
@@ -118,20 +101,20 @@ class TestBulkAnglesInInstrumentFrame(unittest.TestCase):
 
     def test_velocity_along_minus_y_inst_returns_zero_angles(self):
         """Under identity rotation, an RTN wind along -Y becomes v_inst = (0, -450, 0) and yields azimuth = 0 and elevation = 0."""
-        sw = _proton_params(velocity_rtn=(0.0, -450.0, 0.0))
+        sw = proton_params(velocity_rtn=(0.0, -450.0, 0.0))
         azimuth, elevation = bulk_angles_in_instrument_frame(sw, np.eye(3))
         self.assertAlmostEqual(azimuth, 0.0)
         self.assertAlmostEqual(elevation, 0.0)
 
     def test_velocity_with_negative_x_inst_component_yields_positive_azimuth(self):
         """A wind with negative instrument-X component (v_inst_x = -50) gives a strictly positive azimuth, since azimuth = atan2(+50, +450) > 0."""
-        sw = _proton_params(velocity_rtn=(-50.0, -450.0, 0.0))
+        sw = proton_params(velocity_rtn=(-50.0, -450.0, 0.0))
         azimuth, _ = bulk_angles_in_instrument_frame(sw, np.eye(3))
         self.assertGreater(azimuth, 0.0)
 
     def test_velocity_with_positive_z_inst_component_yields_negative_elevation(self):
         """A wind with positive instrument-Z component (v_inst_z = +50) gives a strictly negative elevation, since elevation = asin(-50/|v|) < 0."""
-        sw = _proton_params(velocity_rtn=(0.0, -450.0, 50.0))
+        sw = proton_params(velocity_rtn=(0.0, -450.0, 50.0))
         _, elevation = bulk_angles_in_instrument_frame(sw, np.eye(3))
         self.assertLess(elevation, 0.0)
 
@@ -140,7 +123,7 @@ class TestBulkAnglesInInstrumentFrame(unittest.TestCase):
         rotation_xyz_to_rtn = np.array(
             [[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]]
         )
-        sw = _proton_params(velocity_rtn=(-450.0, 0.0, 0.0))
+        sw = proton_params(velocity_rtn=(-450.0, 0.0, 0.0))
         azimuth, _ = bulk_angles_in_instrument_frame(sw, rotation_xyz_to_rtn)
         self.assertAlmostEqual(abs(azimuth), 180.0, places=10)
 
@@ -150,7 +133,7 @@ class TestThermalSpeedAndTemperature(unittest.TestCase):
 
     def test_thermal_speed_matches_analytic_formula(self):
         """For a proton at 1e5 K, `thermal_speed` returns the closed-form sqrt(k*T/m) value in km/s."""
-        sw = _proton_params(temperature=100_000.0)
+        sw = proton_params(temperature=100_000.0)
         expected_km_s = (
             math.sqrt(BOLTZMANN_CONSTANT_JOULES_PER_KELVIN * 100_000.0 / PROTON_MASS_KG)
             / METERS_PER_KILOMETER
@@ -173,7 +156,7 @@ class TestThermalSpeedAndTemperature(unittest.TestCase):
 
     def test_thermal_speed_uses_params_temperature_and_mass(self):
         """`thermal_speed(SolarWindParams)` is a wrapper that reads T and m from the params and matches a direct `temperature_to_thermal_speed` call with the same inputs."""
-        sw = _proton_params(temperature=120_000.0)
+        sw = proton_params(temperature=120_000.0)
         np.testing.assert_allclose(
             thermal_speed(sw),
             temperature_to_thermal_speed(PROTON_MASS_KG, 120_000.0),

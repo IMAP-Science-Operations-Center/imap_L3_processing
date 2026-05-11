@@ -106,9 +106,7 @@ class TestSweProcessor(unittest.TestCase):
         swapi_l3a_proton_data = SwapiL3aProtonData(
             epoch=swapi_epochs,
             epoch_delta=np.repeat(timedelta(seconds=30), 10),
-            proton_sw_speed=np.array([]),
-            proton_sw_clock_angle=np.array([]),
-            proton_sw_deflection_angle=np.array([]),
+            proton_sw_velocity_rtn=np.zeros((0, 3)),
             swp_flags=np.array([]),
         )
         mock_average_over_look_directions.return_value = np.array([5, 10, 15])
@@ -271,7 +269,7 @@ class TestSweProcessor(unittest.TestCase):
     @patch('imap_l3_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
     @patch('imap_l3_processing.swe.swe_processor.average_over_look_directions')
     @patch('imap_l3_processing.swe.swe_processor.mec_breakpoint_finder')
-    @patch('imap_l3_processing.swe.swe_processor.calculate_solar_wind_velocity_vector')
+    @patch('imap_l3_processing.swe.swe_processor.rotate_rtn_vectors_to_dps')
     @patch('imap_l3_processing.swe.swe_processor.correct_and_rebin')
     @patch('imap_l3_processing.swe.swe_processor.integrate_distribution_to_get_1d_spectrum')
     @patch('imap_l3_processing.swe.swe_processor.integrate_distribution_to_get_inbound_and_outbound_1d_spectrum')
@@ -280,7 +278,7 @@ class TestSweProcessor(unittest.TestCase):
                                                           mock_integrate_distribution_to_get_inbound_and_outbound_1d_spectrum,
                                                           mock_integrate_distribution_to_get_1d_spectrum,
                                                           mock_correct_and_rebin,
-                                                          mock_calculate_solar_wind_velocity_vector,
+                                                          mock_rotate_rtn_vectors_to_dps,
                                                           _,
                                                           mock_average_over_look_directions,
                                                           mock_calculate_velocities, mock_swe_rebin_intensity):
@@ -321,10 +319,8 @@ class TestSweProcessor(unittest.TestCase):
         swapi_l3a_proton_data = SwapiL3aProtonData(
             epoch=swapi_epochs,
             epoch_delta=np.repeat(timedelta(seconds=30), 10),
-            proton_sw_speed=np.array([]),
-            proton_sw_clock_angle=np.array([]),
-            proton_sw_deflection_angle=np.array([]),
-            swp_flags=np.array([0,0,0,SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED, SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED | SwapiL3Flags.HI_CHI_SQ, SwapiL3Flags.HI_CHI_SQ,0,0,0,0]),
+            proton_sw_velocity_rtn=np.arange(30).reshape(10, 3).astype(float),
+            swp_flags=np.array([0, 0, 0, SwapiL3Flags.FIT_FAILED, SwapiL3Flags.FIT_FAILED, SwapiL3Flags.NONE, 0, 0, 0, 0]),
         )
         counts = swe_l1b_data.count_rates * swe_l2_data.acquisition_duration[:, :, np.newaxis] / 1e6
         mock_average_over_look_directions.return_value = np.array([5, 10, 15])
@@ -399,10 +395,10 @@ class TestSweProcessor(unittest.TestCase):
 
         self.assertEqual(3, mock_correct_and_rebin.call_count)
         self.assertEqual(3, mock_integrate_distribution_to_get_1d_spectrum.call_count)
-        mock_calculate_solar_wind_velocity_vector.assert_called_once_with(
-            swel3_dependency.swapi_l3a_proton_data.proton_sw_speed,
-            swel3_dependency.swapi_l3a_proton_data.proton_sw_clock_angle,
-            swel3_dependency.swapi_l3a_proton_data.proton_sw_deflection_angle)
+        mock_rotate_rtn_vectors_to_dps.assert_called_once()
+        rotate_args = mock_rotate_rtn_vectors_to_dps.call_args[0]
+        np.testing.assert_array_equal(rotate_args[0], swapi_epochs)
+        np.testing.assert_array_equal(rotate_args[1], swapi_l3a_proton_data.proton_sw_velocity_rtn)
         mock_find_closest_neighbor.assert_has_calls([
             call(
                 from_epoch=mag_epochs,
@@ -412,7 +408,7 @@ class TestSweProcessor(unittest.TestCase):
             ),
             call(
                 from_epoch=swapi_epochs,
-                from_data=mock_calculate_solar_wind_velocity_vector.return_value,
+                from_data=mock_rotate_rtn_vectors_to_dps.return_value,
                 to_epoch=epochs,
                 maximum_distance=np.timedelta64(5, 'm')
             )
@@ -483,8 +479,9 @@ class TestSweProcessor(unittest.TestCase):
             call(rebinned_by_pitch_list[2], swe_config)
         ])
 
+    @patch("imap_l3_processing.swe.swe_processor.rotate_rtn_vectors_to_dps")
     @patch("imap_l3_processing.swe.swe_processor.SweProcessor.calculate_moment_products")
-    def test_calculate_pitch_angle_products_makes_nan_if_no_mag_close_enough(self, mock_calculate_moments):
+    def test_calculate_pitch_angle_products_makes_nan_if_no_mag_close_enough(self, mock_calculate_moments, mock_rotate_rtn_vectors_to_dps):
         epochs = np.array([datetime(2025, 3, 6)])
         mag_epochs = np.array([
             datetime(2025, 3, 6, 0, 1, 30),
@@ -499,6 +496,7 @@ class TestSweProcessor(unittest.TestCase):
             datetime(2025, 3, 6, 0, 10, 30),
         ])
         swapi_epochs = np.array([datetime(2025, 3, 6)])
+        mock_rotate_rtn_vectors_to_dps.return_value = np.tile([0.0, 0.0, -400.0], (len(swapi_epochs), 1))
 
         pitch_angle_bins = [70, 100, 130]
 
@@ -536,9 +534,7 @@ class TestSweProcessor(unittest.TestCase):
         swapi_l3a_proton_data = SwapiL3aProtonData(
             epoch=swapi_epochs,
             epoch_delta=np.repeat(timedelta(seconds=30), 10),
-            proton_sw_speed=np.full(len(swapi_epochs), 400),
-            proton_sw_clock_angle=np.full(len(swapi_epochs), 0),
-            proton_sw_deflection_angle=np.full(len(swapi_epochs), 0),
+            proton_sw_velocity_rtn=np.tile([-400.0, 0.0, 0.0], (len(swapi_epochs), 1)),
             swp_flags=np.full(len(swapi_epochs), 0)
         )
         geometric_fractions = [0.0697327, 0.138312, 0.175125, 0.181759,
@@ -591,14 +587,16 @@ class TestSweProcessor(unittest.TestCase):
                                       np.full((len(epochs), num_energies, len(pitch_angle_bins), len(gyrophase_bins)),
                                               np.nan))
 
+    @patch("imap_l3_processing.swe.swe_processor.rotate_rtn_vectors_to_dps")
     @patch("imap_l3_processing.swe.swe_processor.SweProcessor.calculate_moment_products")
-    def test_calculate_pitch_angle_products_without_mocks(self, mock_calculate_moments):
+    def test_calculate_pitch_angle_products_without_mocks(self, mock_calculate_moments, mock_rotate_rtn_vectors_to_dps):
         epochs = np.array([datetime(2025, 3, 6)])
         mag_start_time = datetime(2025, 3, 6, 0, 1, 0)
         mag_epochs = np.array([mag_start_time + i * timedelta(seconds=1) for i in range(10)])
         swapi_epochs = np.array([datetime(2025, 3, 6), datetime(2025, 3, 10)])
-        swp_flags = np.array([SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED, SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED])
+        swp_flags = np.array([SwapiL3Flags.FIT_FAILED, SwapiL3Flags.FIT_FAILED])
         mock_calculate_moments.return_value = build_swe_moment_data(len(epochs))
+        mock_rotate_rtn_vectors_to_dps.return_value = np.tile([0.0, 0.0, -400.0], (len(swapi_epochs), 1))
         pitch_angle_bins = [70, 100, 130]
 
         num_energies = 9
@@ -633,9 +631,7 @@ class TestSweProcessor(unittest.TestCase):
         swapi_l3a_proton_data = SwapiL3aProtonData(
             epoch=swapi_epochs,
             epoch_delta=np.repeat(timedelta(seconds=30), 10),
-            proton_sw_speed=np.full(len(swapi_epochs), 400),
-            proton_sw_clock_angle=np.full(len(swapi_epochs), 0),
-            proton_sw_deflection_angle=np.full(len(swapi_epochs), 0),
+            proton_sw_velocity_rtn=np.tile([-400.0, 0.0, 0.0], (len(swapi_epochs), 1)),
             swp_flags=swp_flags
         )
         geometric_fractions = [0.0697327, 0.138312, 0.175125, 0.181759,

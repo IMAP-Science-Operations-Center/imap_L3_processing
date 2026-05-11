@@ -1,19 +1,3 @@
-"""Tests for `solar_wind.proton.initial_guess.calculate_initial_guess`.
-
-The doc contract (`docs/swapi/solar-wind-moments.md` §Initial Guess) is:
-1. Bulk-speed seed = proton speed at the ESA voltage of the highest count-rate bin.
-2. Temperature seed = max(1 eV, 60_000 K · (v_b / 400 km/s)²).
-3. Refine `(v_b, T)` via a Gaussian curve fit; pathological spectra that drive
-   `curve_fit` past `maxfev` surface as a wrapped `RuntimeError`.
-4. Velocity direction is anti-parallel to the chunk-mean spin axis (body +Y in RTN).
-5. Density is the optimal scale of the unit-density forward-model rates against
-   the observed count rates.
-
-Tests use the real shipped instrument-team CSVs to build a `SwapiResponse` and
-the real `build_solar_wind_fit_context` factory. The Gaussian refiner is patched
-in the seed-construction tests so the seeds passed to it are observable directly;
-elsewhere the refiner runs unmocked."""
-
 import unittest
 from unittest.mock import patch
 
@@ -40,8 +24,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
 )
 from imap_l3_processing.swapi.l3a.utils import optimal_density_scale
 from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
-from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
-from tests.test_helpers import get_test_instrument_team_data_path
+from tests.swapi._helpers import load_swapi_response
 
 
 # RTN → SWAPI rotation. Body +Y (the SWAPI boresight / spin axis) in RTN is
@@ -50,21 +33,6 @@ from tests.test_helpers import get_test_instrument_team_data_path
 _R_BASE_RTN_TO_SWAPI = np.array(
     [[0.0, 1.0, 0.0], [-1.0, 0.0, 0.0], [0.0, 0.0, 1.0]]
 )
-
-
-def _load_swapi_response() -> SwapiResponse:
-    """Build a real `SwapiResponse` from the shipped instrument-team CSVs."""
-    return SwapiResponse.from_files(
-        get_test_instrument_team_data_path(
-            "swapi/imap_swapi_azimuthal-transmission_20260425_v001.csv"
-        ),
-        get_test_instrument_team_data_path(
-            "swapi/imap_swapi_central-effective-area_20260425_v001.csv"
-        ),
-        get_test_instrument_team_data_path(
-            "swapi/imap_swapi_passband-fit-coefficients_20260425_v001.csv"
-        ),
-    )
 
 
 def _esa_voltage_for_proton_speed(speed_km_s: float) -> float:
@@ -91,8 +59,7 @@ def _build_proton_ctx(count_rate: np.ndarray, esa_voltage: np.ndarray):
     `count_rate`, `esa_voltage`, and the rotation matrices are all (N,)/(N,3,3)
     aligned in the standard L2 layout — one entry per bin, multiple sweeps
     flattened into a single axis."""
-    response = _load_swapi_response()
-    response.warm_cache(esa_voltage)
+    response = load_swapi_response(warm_cache_voltages=esa_voltage)
     ctx = build_solar_wind_fit_context(
         count_rate=count_rate,
         esa_voltage=esa_voltage,

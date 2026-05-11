@@ -1,5 +1,3 @@
-"""Tests for `solar_wind.proton.basin_hopping.escape_local_minimum`."""
-
 import unittest
 from unittest.mock import Mock, patch
 
@@ -19,20 +17,20 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.proton.basin_hopping import
     escape_local_minimum,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.state import SolarWindParams
+from tests.swapi._helpers import proton_params as _shared_proton_params
 
 
-# Local proton-state fixture. Mirrors `tests/swapi/l3a/science/solar_wind/test_state.py`'s
-# `_proton_params` (same defaults); duplicated here to keep this test file self-contained.
+# Spin-axis-mirror tests assume the slow-wind bulk lies along -R̂ (the spin
+# axis), so the file-local default puts the velocity along the RTN R-axis.
 def _proton_params(
     density: float = 5.0,
     velocity_rtn=(-450.0, 0.0, 0.0),
     temperature: float = 1.0e5,
 ) -> SolarWindParams:
-    return SolarWindParams(
+    return _shared_proton_params(
         density=density,
-        bulk_velocity_rtn=np.asarray(velocity_rtn, dtype=float),
+        velocity_rtn=velocity_rtn,
         temperature=temperature,
-        mass=PROTON_MASS_KG,
     )
 
 

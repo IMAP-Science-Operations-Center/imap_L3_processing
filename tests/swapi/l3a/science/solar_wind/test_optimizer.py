@@ -1,5 +1,3 @@
-"""Tests for `solar_wind.optimizer.optimize_solar_wind_params` and `OptimizeSolarWindParamsResult`."""
-
 import unittest
 from unittest.mock import patch
 
@@ -13,9 +11,6 @@ from imap_l3_processing.constants import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
-    model_solar_wind_ideal_coincidence_rates,
-)
 from imap_l3_processing.swapi.l3a.science.solar_wind.optimizer import (
     OptimizeSolarWindParamsResult,
     optimize_solar_wind_params,
@@ -24,24 +19,14 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
     N_STATE,
     SolarWindParams,
 )
-from imap_l3_processing.swapi.response.deadtime import deadtime_factor
-from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
-from tests.test_helpers import get_test_instrument_team_data_path
+from tests.swapi._helpers import (
+    load_swapi_response,
+    proton_params,
+    synthesize_count_rates,
+)
 
 
 # ----- module-level fixture constants --------------------------------------
-
-# Calibration CSVs shipped with the repo. Loading the full SwapiResponse
-# triggers the same code path the production pipeline uses.
-AZIMUTHAL_TRANSMISSION_PATH = get_test_instrument_team_data_path(
-    "swapi/imap_swapi_azimuthal-transmission_20260425_v001.csv"
-)
-CENTRAL_EFFECTIVE_AREA_PATH = get_test_instrument_team_data_path(
-    "swapi/imap_swapi_central-effective-area_20260425_v001.csv"
-)
-PASSBAND_FIT_COEFFICIENTS_PATH = get_test_instrument_team_data_path(
-    "swapi/imap_swapi_passband-fit-coefficients_20260425_v001.csv"
-)
 
 # A realistic proton sweep — voltages chosen to span the proton peak at
 # ~450 km/s (V ≈ m_p v²/(2 e k) ≈ 560 V at k=1.89). Sixteen bins gives the
@@ -50,47 +35,13 @@ PASSBAND_FIT_COEFFICIENTS_PATH = get_test_instrument_team_data_path(
 # Geometric spacing matches the SWAPI L2 sweep (ratio ~1.115 per step).
 _TYPICAL_PROTON_ESA_VOLTAGES = 300.0 * (1.115 ** np.arange(16))
 
-# Slow-wind proton ground truth (RTN): 450 km/s along -Y_RTN, 5 cm^-3,
-# 1e5 K. With identity instrument-to-RTN rotation, this puts the wind
-# centered on SWAPI's boresight (+Y_inst), squarely inside the SG passband
-# where the LM optimizer is well-behaved given a nearby initial guess.
-_TRUE_DENSITY = 5.0
-_TRUE_VELOCITY_RTN = np.array([0.0, -450.0, 0.0])
-_TRUE_TEMPERATURE_K = 1.0e5
-
-
-def _load_swapi_response() -> SwapiResponse:
-    """Load `SwapiResponse` from the shipped instrument-team CSVs."""
-    response = SwapiResponse.from_files(
-        AZIMUTHAL_TRANSMISSION_PATH,
-        CENTRAL_EFFECTIVE_AREA_PATH,
-        PASSBAND_FIT_COEFFICIENTS_PATH,
-    )
-    response.warm_cache(_TYPICAL_PROTON_ESA_VOLTAGES)
-    return response
-
-
-def _proton_params(
-    *,
-    density: float = _TRUE_DENSITY,
-    velocity_rtn=_TRUE_VELOCITY_RTN,
-    temperature: float = _TRUE_TEMPERATURE_K,
-) -> SolarWindParams:
-    """Build a slow-wind proton `SolarWindParams` with optional overrides."""
-    return SolarWindParams(
-        density=density,
-        bulk_velocity_rtn=np.array(velocity_rtn, dtype=float),
-        temperature=temperature,
-        mass=PROTON_MASS_KG,
-    )
-
 
 def _build_proton_fit_context(count_rate: np.ndarray):
     """Build a real `SolarWindFitContext` for the fixture proton voltages.
 
     Uses identity SWAPI→RTN rotation matrices so the wind direction
     interpretation is straightforward (instrument frame == RTN)."""
-    response = _load_swapi_response()
+    response = load_swapi_response(warm_cache_voltages=_TYPICAL_PROTON_ESA_VOLTAGES)
     n_sweeps = len(_TYPICAL_PROTON_ESA_VOLTAGES)
     rotation_matrices = np.broadcast_to(np.eye(3), (n_sweeps, 3, 3)).copy()
     return build_solar_wind_fit_context(
@@ -104,13 +55,6 @@ def _build_proton_fit_context(count_rate: np.ndarray):
     )
 
 
-def _zero_count_proton_context():
-    """Proton fit context whose `count_rate` is all zeros — the forward model
-    only depends on `count_rate` through the residual, so this is the cheapest
-    seed when only the predicted side matters."""
-    return _build_proton_fit_context(np.zeros_like(_TYPICAL_PROTON_ESA_VOLTAGES))
-
-
 def _synthetic_count_rate_for(sw_params: SolarWindParams) -> np.ndarray:
     """Forward-model deadtime-applied count rates from `sw_params` against
     the fixture voltages. Used to seed both the "recovers known params" and
@@ -119,9 +63,8 @@ def _synthetic_count_rate_for(sw_params: SolarWindParams) -> np.ndarray:
     Two-step: build a placeholder context with zero counts, run the forward
     model to get ideal rates, then apply the deadtime factor exactly the way
     `_Evaluator._eval` does (so the residual at the truth is zero)."""
-    ctx = _zero_count_proton_context()
-    ideal_rates, _ = model_solar_wind_ideal_coincidence_rates(sw_params, ctx)
-    return ideal_rates * deadtime_factor(ideal_rates)
+    ctx = _build_proton_fit_context(np.zeros_like(_TYPICAL_PROTON_ESA_VOLTAGES))
+    return synthesize_count_rates(ctx, sw_params)
 
 
 class TestOptimizeSolarWindParamsResultMSE(unittest.TestCase):
@@ -130,7 +73,7 @@ class TestOptimizeSolarWindParamsResultMSE(unittest.TestCase):
     def test_mse_is_mean_of_squared_residuals(self):
         """Given a residuals vector [1, -2, 3], mse returns 14/3 — the per-bin mean of squared residuals."""
         result = OptimizeSolarWindParamsResult(
-            sw_params=_proton_params(),
+            sw_params=proton_params(),
             residuals=np.array([1.0, -2.0, 3.0]),
             jacobian=np.zeros((3, N_STATE)),
             success=True,
@@ -140,7 +83,7 @@ class TestOptimizeSolarWindParamsResultMSE(unittest.TestCase):
     def test_mse_handles_all_zero_residuals_without_dividing_by_zero(self):
         """At the truth (noise-free fit) all residuals are zero and mse reports exactly 0.0 rather than NaN/Inf, so the wrong-basin chi^2 comparator can be applied unconditionally."""
         result = OptimizeSolarWindParamsResult(
-            sw_params=_proton_params(),
+            sw_params=proton_params(),
             residuals=np.zeros(5),
             jacobian=np.zeros((5, N_STATE)),
             success=True,
@@ -153,14 +96,14 @@ class TestOptimizeSolarWindParamsRecoversTruth(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.true_params = _proton_params()
+        cls.true_params = proton_params()
         cls.count_rate = _synthetic_count_rate_for(cls.true_params)
         cls.ctx = _build_proton_fit_context(count_rate=cls.count_rate)
         # Initial guess perturbed in density (+10%), speed (+3%), and
         # temperature (+20%). Sized so LM converges in one basin without
         # invoking the wrong-basin flip; the basin-of-attraction bounds live
         # in docs/swapi/solar-wind-moments.md § Wrong-basin detection.
-        cls.initial_guess = _proton_params(
+        cls.initial_guess = proton_params(
             density=cls.true_params.density * 1.1,
             velocity_rtn=cls.true_params.bulk_velocity_rtn * 1.03,
             temperature=cls.true_params.temperature * 1.2,
@@ -206,7 +149,7 @@ class TestOptimizeSolarWindParamsResultShape(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        true_params = _proton_params()
+        true_params = proton_params()
         count_rate = _synthetic_count_rate_for(true_params)
         cls.ctx = _build_proton_fit_context(count_rate=count_rate)
         cls.result = optimize_solar_wind_params(true_params, cls.ctx)
@@ -239,7 +182,7 @@ class TestOptimizerLeastSquaresKwargs(unittest.TestCase):
 
     def test_uses_lm_with_xtol_from_doc_spec(self):
         """When the optimizer runs, scipy.optimize.least_squares is called with `method='lm'` and `xtol=1e-4` per the doc spec."""
-        true_params = _proton_params()
+        true_params = proton_params()
         count_rate = _synthetic_count_rate_for(true_params)
         ctx = _build_proton_fit_context(count_rate=count_rate)
 
