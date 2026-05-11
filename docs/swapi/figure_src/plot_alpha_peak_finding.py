@@ -55,7 +55,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.utils import (
     esa_voltage_to_alpha_speed,
     get_alpha_peak_indices,
 )
-from imap_l3_processing.swapi.response.speed_calculation import SWAPI_K_FACTOR
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from figure_utils import load_swapi_response
 from plot_fit_accuracy import _compute_per_bin_rotation_matrices, _BIN_INDICES_IN_SWEEP
 

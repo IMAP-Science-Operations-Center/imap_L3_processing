@@ -31,7 +31,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.proton.uncertainties import
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.utils import (
     get_alpha_peak_indices,
 )
-from imap_l3_processing.swapi.response.speed_calculation import SWAPI_K_FACTOR
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 

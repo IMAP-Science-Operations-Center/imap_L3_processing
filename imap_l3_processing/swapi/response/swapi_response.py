@@ -17,7 +17,7 @@ from imap_l3_processing.swapi.response.passband_grid import (
     PassbandGrid,
     build_passband_grid,
 )
-from imap_l3_processing.swapi.response.speed_calculation import SWAPI_K_FACTOR
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 
 
 class ResponseGrid(NamedTuple):

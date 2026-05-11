@@ -4,9 +4,19 @@ from unittest import TestCase
 
 import numpy as np
 from spacepy.pycdf import CDF
+from uncertainties import UFloat, ufloat
 
+from imap_l3_processing.constants import (
+    METERS_PER_KILOMETER,
+    PROTON_CHARGE_COULOMBS,
+    PROTON_MASS_KG,
+)
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data
-from imap_l3_processing.swapi.l3a.utils import chunk_l2_data, read_l2_swapi_data
+from imap_l3_processing.swapi.l3a.utils import (
+    calculate_sw_speed,
+    chunk_l2_data,
+    read_l2_swapi_data,
+)
 
 
 class TestUtils(TestCase):
@@ -80,3 +90,56 @@ class TestUtils(TestCase):
         np.testing.assert_array_equal(np.array([5, 6, 7, np.nan]), actual_swapi_l2_data.coincidence_count_rate)
         np.testing.assert_array_equal(np.array([2, 2, np.nan, 2, 2, 2, 2, 2]),
                                       actual_swapi_l2_data.coincidence_count_rate_uncertainty)
+
+
+class TestCalculateSwSpeed(TestCase):
+    def test_2d_array_matches_analytic_formula_per_element(self):
+        E = np.array([[1.0e-16, 2.0e-16], [4.0e-16, 8.0e-16]])
+        expected = (
+            np.sqrt(2 * E * PROTON_CHARGE_COULOMBS / PROTON_MASS_KG)
+            / METERS_PER_KILOMETER
+        )
+        result = calculate_sw_speed(PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, E)
+        np.testing.assert_allclose(result, expected)
+
+    def test_2d_array_input_preserves_shape(self):
+        E = np.array([[1.0e-16, 2.0e-16], [4.0e-16, 8.0e-16]])
+        result = calculate_sw_speed(PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, E)
+        self.assertEqual(result.shape, E.shape)
+
+    def test_empty_array_input_returns_empty_array(self):
+        result = calculate_sw_speed(
+            PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, np.array([])
+        )
+        self.assertEqual(result.size, 0)
+
+    def test_ufloat_scalar_propagates_uncertainty(self):
+        E = ufloat(1.0e-16, 1.0e-18)
+        result = calculate_sw_speed(PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, E)
+        self.assertIsInstance(result, UFloat)
+        # σ_v = v · σ_E / (2 E)
+        expected_nom = (
+            np.sqrt(2 * E.nominal_value * PROTON_CHARGE_COULOMBS / PROTON_MASS_KG)
+            / METERS_PER_KILOMETER
+        )
+        expected_sigma = expected_nom * E.std_dev / (2 * E.nominal_value)
+        self.assertAlmostEqual(result.nominal_value, expected_nom)
+        self.assertAlmostEqual(result.std_dev, expected_sigma)
+
+    def test_ufloat_array_input_propagates_uncertainty_per_element(self):
+        # Array of UFloat scalars takes the `unumpy.sqrt` branch — different
+        # code path from the float-array branch above. Each element should
+        # propagate its own σ_E.
+        E_values = np.array([ufloat(1.0e-16, 1.0e-18), ufloat(4.0e-16, 2.0e-18)])
+        result = calculate_sw_speed(PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, E_values)
+        self.assertEqual(result.shape, E_values.shape)
+        for r, E in zip(result, E_values):
+            self.assertIsInstance(r, UFloat)
+            expected_nom = (
+                np.sqrt(2 * E.nominal_value * PROTON_CHARGE_COULOMBS / PROTON_MASS_KG)
+                / METERS_PER_KILOMETER
+            )
+            self.assertAlmostEqual(r.nominal_value, expected_nom)
+            self.assertAlmostEqual(
+                r.std_dev, expected_nom * E.std_dev / (2 * E.nominal_value)
+            )

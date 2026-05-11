@@ -63,7 +63,7 @@ from imap_l3_processing.swapi.l3a.utils import (
     get_swapi_geometry,
 )
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
-from imap_l3_processing.swapi.response.speed_calculation import (
+from imap_l3_processing.swapi.constants import (
     SWAPI_COARSE_SWEEP_BINS,
     SWAPI_FINE_SWEEP_BINS,
     SWAPI_K_FACTOR,

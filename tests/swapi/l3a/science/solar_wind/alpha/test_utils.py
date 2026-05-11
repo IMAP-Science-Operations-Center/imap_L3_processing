@@ -11,7 +11,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.utils import (
     esa_voltage_to_alpha_speed,
     get_alpha_peak_indices,
 )
-from imap_l3_processing.swapi.response.speed_calculation import SWAPI_K_FACTOR
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 
 
 def _analytic_speed_km_per_s(

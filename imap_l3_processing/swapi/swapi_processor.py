@@ -26,7 +26,7 @@ from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import (
     calculate_helium_pui_temperature,
     calculate_helium_pui_density,
 )
-from imap_l3_processing.swapi.response.speed_calculation import (
+from imap_l3_processing.swapi.constants import (
     SWAPI_COARSE_SWEEP_BINS,
     SWAPI_L2_K_FACTOR,
 )

@@ -34,7 +34,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
     SolarWindParams,
     calculate_integral,
 )
-from imap_l3_processing.swapi.response.speed_calculation import SWAPI_K_FACTOR
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]

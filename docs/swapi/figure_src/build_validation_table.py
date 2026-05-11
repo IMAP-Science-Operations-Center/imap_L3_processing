@@ -30,7 +30,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     calculate_integral,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.state import SolarWindParams
-from imap_l3_processing.swapi.response.speed_calculation import SWAPI_K_FACTOR
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 
 from figure_utils import load_swapi_response
 

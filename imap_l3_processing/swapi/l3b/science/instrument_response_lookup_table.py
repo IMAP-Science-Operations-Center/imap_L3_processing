@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 
 from imap_l3_processing.constants import HE_PUI_PARTICLE_MASS_KG, PUI_PARTICLE_CHARGE_COULOMBS
-from imap_l3_processing.swapi.response.speed_calculation import calculate_sw_speed
+from imap_l3_processing.swapi.l3a.utils import calculate_sw_speed
 
 
 @dataclass

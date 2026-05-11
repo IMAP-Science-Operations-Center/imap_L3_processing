@@ -34,8 +34,8 @@ import matplotlib.pyplot as plt
 from imap_l3_processing.constants import (
     PROTON_MASS_KG,
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
-    SWAPI_LIVETIME_S,
 )
+from imap_l3_processing.swapi.constants import SWAPI_LIVETIME_S
 from figure_utils import load_swapi_response
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.initial_guess import (
     calculate_initial_guess,

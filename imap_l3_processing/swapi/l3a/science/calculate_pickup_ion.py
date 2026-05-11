@@ -25,10 +25,8 @@ from imap_l3_processing.constants import (
     ONE_SECOND_IN_NANOSECONDS,
     BOLTZMANN_CONSTANT_JOULES_PER_KELVIN,
 )
-from imap_l3_processing.swapi.response.speed_calculation import (
-    SWAPI_COARSE_SWEEP_BINS,
-    calculate_sw_speed,
-)
+from imap_l3_processing.swapi.constants import SWAPI_COARSE_SWEEP_BINS
+from imap_l3_processing.swapi.l3a.utils import calculate_sw_speed
 from imap_l3_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table import (
     DensityOfNeutralHeliumLookupTable,
 )

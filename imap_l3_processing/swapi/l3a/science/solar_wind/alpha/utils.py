@@ -6,7 +6,7 @@ from imap_l3_processing.constants import (
     ALPHA_PARTICLE_MASS_KG,
     METERS_PER_KILOMETER,
 )
-from imap_l3_processing.swapi.response.speed_calculation import SWAPI_K_FACTOR
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 
 
 def esa_voltage_to_alpha_speed(esa_voltage: ArrayLike) -> np.ndarray:

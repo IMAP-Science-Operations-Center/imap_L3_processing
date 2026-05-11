@@ -42,7 +42,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.state import (
     temperature_to_thermal_speed,
 )
 from imap_l3_processing.swapi.l3a.utils import optimal_density_scale
-from imap_l3_processing.swapi.response.speed_calculation import SWAPI_K_FACTOR
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 from tests.test_helpers import get_test_instrument_team_data_path
 

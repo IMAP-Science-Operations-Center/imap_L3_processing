@@ -1,11 +1,15 @@
 import numpy as np
 import scipy.optimize
 from numpy import ndarray
+from numpy.typing import ArrayLike
 
 from imap_l3_processing.constants import (
     BOLTZMANN_CONSTANT_JOULES_PER_KELVIN,
+    METERS_PER_KILOMETER,
     PROTON_CHARGE_COULOMBS,
+    PROTON_MASS_KG,
 )
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
 )
@@ -16,9 +20,6 @@ from imap_l3_processing.swapi.l3a.utils import optimal_density_scale
 from imap_l3_processing.swapi.l3a.science.solar_wind.utils import average_spin_axis_rtn
 from imap_l3_processing.swapi.l3a.science.solar_wind.state import SolarWindParams, temperature_to_thermal_speed, \
     thermal_speed_to_temperature
-from imap_l3_processing.swapi.response.speed_calculation import (
-    esa_voltage_to_proton_speed,
-)
 
 
 # 1 eV
@@ -27,8 +28,21 @@ INITIAL_TEMPERATURE_FLOOR_K = (
 )
 
 
+def _esa_voltage_to_proton_speed(esa_voltage: ArrayLike) -> np.ndarray:
+    return (
+        np.sqrt(
+            2
+            * SWAPI_K_FACTOR
+            * PROTON_CHARGE_COULOMBS
+            * np.abs(esa_voltage)
+            / PROTON_MASS_KG
+        )
+        / METERS_PER_KILOMETER
+    )
+
+
 def calculate_initial_guess(ctx: SolarWindFitContext) -> SolarWindParams:
-    speed = esa_voltage_to_proton_speed(ctx.esa_voltage)
+    speed = _esa_voltage_to_proton_speed(ctx.esa_voltage)
 
     peak_idx = np.nanargmax(ctx.count_rate)
     bulk_speed_seed = float(speed[peak_idx])

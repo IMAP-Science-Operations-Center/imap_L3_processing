@@ -31,7 +31,11 @@ from imap_l3_processing.constants import (
     METERS_PER_KILOMETER,
     PROTON_MASS_KG,
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
+)
+from imap_l3_processing.swapi.constants import (
+    SWAPI_L2_K_FACTOR,
     SWAPI_LIVETIME_S,
+    SWAPI_SCIENCE_BINS,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
     _model_count_rates,
@@ -39,10 +43,6 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
     deadtime_factor,
     ProtonSolarWindMoments,
     _get_initial_guess,
-)
-from imap_l3_processing.swapi.response.speed_calculation import (
-    SWAPI_L2_K_FACTOR,
-    SWAPI_SCIENCE_BINS,
 )
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 

@@ -25,7 +25,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.proton.uncertainties import
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
 )
-from imap_l3_processing.swapi.response.speed_calculation import (
+from imap_l3_processing.swapi.constants import (
     SWAPI_COARSE_SWEEP_BINS,
     SWAPI_L2_K_FACTOR,
     SWAPI_SCIENCE_BINS,

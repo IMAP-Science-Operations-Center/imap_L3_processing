@@ -3,11 +3,13 @@ import unittest
 import numpy as np
 import numpy.testing as npt
 
-from imap_l3_processing.constants import ALPHA_MASS_PER_CHARGE_M_P_PER_E
-from imap_l3_processing.swapi.response.speed_calculation import (
-    SWAPI_K_FACTOR,
-    esa_voltage_to_proton_speed,
+from imap_l3_processing.constants import (
+    ALPHA_MASS_PER_CHARGE_M_P_PER_E,
+    METERS_PER_KILOMETER,
+    PROTON_CHARGE_COULOMBS,
+    PROTON_MASS_KG,
 )
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.response.swapi_response import (
     ResponseGrid,
     SwapiResponse,
@@ -161,13 +163,17 @@ class TestCreateResponseGrid(unittest.TestCase):
         self.assertIs(rg.sg_passband, cached["SG"])
         self.assertIs(rg.oa_passband, cached["OA"])
 
-    def test_central_speed_field_matches_esa_voltage_to_proton_speed(self):
-        rg = self.response.get_response_grid(self.voltage, 1.0)
-        npt.assert_allclose(
-            rg.central_speed,
-            float(esa_voltage_to_proton_speed(self.voltage)),
-            rtol=1e-12,
+    def test_central_speed_field_matches_proton_speed_formula(self):
+        # v = sqrt(2 · K · e · |V| / m_p), expressed in km/s.
+        expected_speed_km_s = (
+            np.sqrt(
+                2 * SWAPI_K_FACTOR * PROTON_CHARGE_COULOMBS
+                * abs(self.voltage) / PROTON_MASS_KG
+            )
+            / METERS_PER_KILOMETER
         )
+        rg = self.response.get_response_grid(self.voltage, 1.0)
+        npt.assert_allclose(rg.central_speed, expected_speed_km_s, rtol=1e-12)
 
     def test_central_effective_area_field_matches_csv_at_1kev_proton(self):
         # Effective area at 1 keV proton ESA voltage from the CSV

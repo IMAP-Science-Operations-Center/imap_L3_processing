@@ -62,7 +62,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.state import SolarWindParam
 from imap_l3_processing.swapi.l3a.utils import chunk_l2_data
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
-from imap_l3_processing.swapi.response.speed_calculation import (
+from imap_l3_processing.swapi.constants import (
     SWAPI_COARSE_SWEEP_BINS,
     SWAPI_L2_K_FACTOR,
     SWAPI_SCIENCE_BINS,
