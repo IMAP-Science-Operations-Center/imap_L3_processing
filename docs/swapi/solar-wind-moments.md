@@ -503,7 +503,7 @@ To validate that the algorithm recovers solar-wind moments under realistic condi
 
 The proton fit is an unweighted least-squares M-estimator: it minimizes $`\sum_{i} (\text{pred}_{i} - \text{obs}_{i})^{2}`$ where $`\text{pred}_{i}`$ is the deadtime-applied count rate from the forward model. Unweighted residuals are intentional — Pearson weighting ($`1/\sqrt{\text{pred}}`$) would amplify alpha- and PUI-shoulder contamination in low-rate tail bins, biasing the proton fit.
 
-The asymptotic covariance for an unweighted M-estimator is the Huber–White sandwich form (Stefanski & Boos, 2002, eq. 8; Seber & Wild, 1989, §2.1.4; White, 1980). We use the heteroscedasticity-consistent **HC3** variant (MacKinnon & White, 1985; Hayes & Cai, 2007), which estimates the per-bin variance non-parametrically from the squared fit residuals with a leverage correction:
+The asymptotic covariance for an unweighted M-estimator is the Huber–White sandwich form (Stefanski & Boos, 2002, eq. 8; Seber & Wild, 1989, §2.1.4; White, 1980). We use the heteroscedasticity-consistent **HC3** variant (MacKinnon & White, 1985; Long & Ervin, 2000; Hayes & Cai, 2007), which estimates the per-bin variance non-parametrically from the squared fit residuals with a leverage correction:
 ```math
 \Sigma_{x} = (J^{\top} J)^+ \thinspace  J^{\top} \mathrm{diag}\!\Big(\tfrac{r_{i}^{2}}{(1 - h_{ii})^{2}}\Big)\thinspace  J\thinspace  (J^{\top} J)^+,
 ```
@@ -678,8 +678,11 @@ This **ignores proton-parameter uncertainty's effect on Stage 2 residuals**, so 
 
 ## References
 
-- Rankin, J. S., McComas, D. J., et al. (2025). Solar Wind and Pickup Ion (SWAPI) Instrument on NASA's Interstellar Mapping and Acceleration Probe (IMAP). *Space Science Reviews*, 221(8), 108. https://doi.org/10.1007/s11214-025-01229-8 — SWAPI instrument paper; sign conventions and coordinate system used inside the forward model.
-- Tsoulfanidis, N. (1995). *Measurement and Detection of Radiation* (2nd ed.). Taylor & Francis. p. 74. — Deadtime formula: $`n = g / (1 - g\tau)`$.
-- Stefanski, L. A., & Boos, D. D. (2002). The calculus of M-estimation. *The American Statistician*, 56(1), 29–38. https://doi.org/10.1198/000313002753631330 — General M-estimator sandwich covariance $`V(\theta_{0}) = A(\theta_{0})^{-1} B(\theta_{0})\{A(\theta_{0})^{-1}\}^{\top}`$ with $`A = \mathrm{E}[-\partial\psi/\partial\theta^{\top}]`$, $`B = \mathrm{E}[\psi\psi^{\top}]`$ (eq. 8, p. 5; empirical estimator eq. 10, p. 6). Specializes to our case via $`\psi_{i} = J_{i}^{\top} r_{i}`$.
-- Seber, G. A. F., & Wild, C. J. (1989). *Nonlinear Regression*. Wiley. §2.1.4 — Asymptotic covariance of the unweighted nonlinear least-squares M-estimator under heteroscedastic noise.
-- White, H. (1980). A heteroskedasticity-consistent covariance matrix estimator and a direct test for heteroskedasticity. *Econometrica*, 48(4), 817–838. https://doi.org/10.2307/1912934 — Sandwich covariance estimator for misspecified variance.
+- Hayes, A. F., & Cai, L. (2007). Using heteroskedasticity-consistent standard error estimators in OLS regression: An introduction and software implementation. *Behavior Research Methods*, 39(4), 709–722. https://doi.org/10.3758/BF03192961
+- Long, J. S., & Ervin, L. H. (2000). Using heteroscedasticity consistent standard errors in the linear regression model. *The American Statistician*, 54(3), 217–224. https://doi.org/10.1080/00031305.2000.10474549
+- MacKinnon, J. G., & White, H. (1985). Some heteroskedasticity-consistent covariance matrix estimators with improved finite sample properties. *Journal of Econometrics*, 29(3), 305–325. https://doi.org/10.1016/0304-4076(85)90158-7
+- Rankin, J. S., McComas, D. J., et al. (2025). Solar Wind and Pickup Ion (SWAPI) Instrument on NASA's Interstellar Mapping and Acceleration Probe (IMAP). *Space Science Reviews*, 221(8), 108. https://doi.org/10.1007/s11214-025-01229-8
+- Seber, G. A. F., & Wild, C. J. (1989). *Nonlinear Regression*. Wiley.
+- Stefanski, L. A., & Boos, D. D. (2002). The calculus of M-estimation. *The American Statistician*, 56(1), 29–38. https://doi.org/10.1198/000313002753631330
+- Tsoulfanidis, N. (1995). *Measurement and Detection of Radiation* (2nd ed.). Taylor & Francis.
+- White, H. (1980). A heteroskedasticity-consistent covariance matrix estimator and a direct test for heteroskedasticity. *Econometrica*, 48(4), 817–838. https://doi.org/10.2307/1912934
