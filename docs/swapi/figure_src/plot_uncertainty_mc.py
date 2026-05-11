@@ -18,14 +18,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
-import os
-import time
 import types
-import multiprocessing
 
 import numpy as np
 import pandas as pd
-from tqdm.contrib.concurrent import process_map
 import matplotlib
 
 matplotlib.use("Agg")
@@ -36,7 +32,14 @@ from imap_l3_processing.constants import (
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
 )
 from imap_l3_processing.swapi.constants import SWAPI_LIVETIME_S
-from figure_utils import load_swapi_response
+from figure_utils import (
+    COARSE_BIN_INDICES_IN_SWEEP,
+    COARSE_SWEEP_VOLTAGES_MEAN_V,
+    FIGURES_DIR,
+    compute_per_bin_rotation_matrices,
+    load_swapi_response,
+    run_parallel_map,
+)
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.initial_guess import (
     calculate_initial_guess,
 )
@@ -63,91 +66,8 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
 )
 
-_REPO_ROOT = Path(__file__).resolve().parents[3]
 _N_SWEEPS = 5
-_SWEEP_DURATION_S = 12.0
-_BINS_PER_SWEEP = 72
-_DT_S = _SWEEP_DURATION_S / _BINS_PER_SWEEP
-_SPIN_PERIOD_S = 15.13
-
-_BIN_INDICES_IN_SWEEP = np.arange(1, 63)
-_VOLTAGES = np.array(
-    [
-        9895.52,
-        9088.69,
-        8348.80,
-        7667.55,
-        7042.16,
-        6469.31,
-        5941.77,
-        5457.31,
-        5013.22,
-        4603.65,
-        4230.77,
-        3886.92,
-        3569.16,
-        3278.72,
-        3011.13,
-        2766.25,
-        2539.54,
-        2333.83,
-        2144.24,
-        1969.31,
-        1808.74,
-        1660.86,
-        1525.75,
-        1401.82,
-        1287.58,
-        1182.24,
-        1085.15,
-        995.55,
-        914.31,
-        839.94,
-        771.70,
-        709.46,
-        651.59,
-        598.47,
-        549.91,
-        505.12,
-        463.89,
-        425.92,
-        391.18,
-        359.35,
-        329.94,
-        303.02,
-        278.25,
-        255.55,
-        234.77,
-        215.61,
-        197.95,
-        181.82,
-        167.04,
-        153.46,
-        140.91,
-        129.50,
-        118.91,
-        109.20,
-        100.30,
-        92.11,
-        84.61,
-        77.73,
-        71.40,
-        65.59,
-        60.23,
-        55.34,
-    ]
-)
-_N_BINS = len(_VOLTAGES)
-
-_ANCHOR_ROTATION_MATRIX = np.array(
-    [
-        [+0.0705, +0.9157, +0.3955],
-        [-0.9968, +0.0792, -0.0057],
-        [-0.0365, -0.3939, +0.9184],
-    ]
-).T
-_ANCHOR_TIME_S = 0.5 * _SWEEP_DURATION_S
-_SPIN_OMEGA_RAD_S = -2.0 * np.pi / _SPIN_PERIOD_S
+_N_BINS = len(COARSE_SWEEP_VOLTAGES_MEAN_V)
 
 # Typical moderate-speed solar-wind ground truth: density 5 cm^-3, T 1e5 K,
 # bulk +450 km/s radial with small T/N components.
@@ -188,10 +108,10 @@ def _initialize_worker_state() -> None:
     global _worker_state
 
     swapi_response = load_swapi_response()
-    all_esa_voltages = np.tile(_VOLTAGES, _N_SWEEPS)
+    all_esa_voltages = np.tile(COARSE_SWEEP_VOLTAGES_MEAN_V, _N_SWEEPS)
     swapi_response.warm_cache(all_esa_voltages)
-    per_bin_rotation_matrices = _compute_per_bin_rotation_matrices(
-        _N_SWEEPS, _BIN_INDICES_IN_SWEEP
+    per_bin_rotation_matrices = compute_per_bin_rotation_matrices(
+        _N_SWEEPS, COARSE_BIN_INDICES_IN_SWEEP
     )
     base_ctx = build_solar_wind_fit_context(
         count_rate=np.ones_like(all_esa_voltages),
@@ -220,44 +140,12 @@ def _initialize_worker_state() -> None:
     )
 
 
-def _compute_per_bin_rotation_matrices(
-    n_sweeps: int, bin_indices_in_sweep: np.ndarray
-) -> np.ndarray:
-    sweep_index = np.repeat(np.arange(n_sweeps), len(bin_indices_in_sweep))
-    bin_index = np.tile(bin_indices_in_sweep, n_sweeps)
-    sample_times_s = sweep_index * _SWEEP_DURATION_S + bin_index * _DT_S
-
-    spin_axis = _ANCHOR_ROTATION_MATRIX[:, 1] / np.linalg.norm(
-        _ANCHOR_ROTATION_MATRIX[:, 1]
-    )
-    delta_phi = _SPIN_OMEGA_RAD_S * (sample_times_s - _ANCHOR_TIME_S)
-
-    ax, ay, az = spin_axis
-    K = np.array([[0, -az, ay], [az, 0, -ax], [-ay, ax, 0]])
-    sin_dp = np.sin(delta_phi)[:, None, None]
-    one_minus_cos = (1.0 - np.cos(delta_phi))[:, None, None]
-    rot = np.eye(3) + sin_dp * K + one_minus_cos * (K @ K)
-    return rot @ _ANCHOR_ROTATION_MATRIX
-
-
 def _run_fits(n_samples: int, noise_kind: str) -> pd.DataFrame:
-    n_workers = os.cpu_count() or 1
-    if multiprocessing.get_start_method(allow_none=True) != "fork":
-        multiprocessing.set_start_method("fork", force=True)
-
     global _NOISE_KIND
     _NOISE_KIND = noise_kind
-    print(f"Running {n_samples} {noise_kind} MC fits across {n_workers} processes...")
-    t0 = time.perf_counter()
-    rows = process_map(
-        _process_one,
-        range(n_samples),
-        max_workers=n_workers,
-        chunksize=10,
-        desc=f"mc-{noise_kind}",
+    rows = run_parallel_map(
+        _process_one, n_samples, desc=f"mc-{noise_kind}", chunksize=10
     )
-    print(f"  Fits done in {time.perf_counter() - t0:.1f}s.")
-
     data = pd.DataFrame(rows)
     print(f"Bad-fit flags: {data['bad_flag'].sum()}/{n_samples}")
     return data
@@ -562,9 +450,8 @@ def _plot_results(experiments: list[tuple[str, pd.DataFrame]]) -> None:
 
     fig.tight_layout(rect=(0.03, 0.0, 1.0, 1.0))
 
-    out_dir = _REPO_ROOT / "docs" / "swapi" / "figures"
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / "uncertainty_mc.svg"
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+    out_path = FIGURES_DIR / "uncertainty_mc.svg"
     fig.savefig(out_path, bbox_inches="tight", dpi=200)
     print(f"Saved {out_path}")
 

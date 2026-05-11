@@ -56,14 +56,17 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.utils import (
     get_alpha_peak_indices,
 )
 from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
-from figure_utils import load_swapi_response
-from plot_fit_accuracy import _compute_per_bin_rotation_matrices, _BIN_INDICES_IN_SWEEP
-
-_REPO_ROOT = Path(__file__).resolve().parents[3]
-_FIXTURE_PATH = (
-    _REPO_ROOT / "tests" / "test_data" / "swapi" / "alpha_fit_test_spectra.npz"
+from figure_utils import (
+    COARSE_BIN_INDICES_IN_SWEEP,
+    FIGURES_DIR,
+    REPO_ROOT,
+    compute_per_bin_rotation_matrices,
+    load_swapi_response,
 )
-_OUTPUT_DIR = _REPO_ROOT / "docs" / "swapi" / "figures"
+
+_FIXTURE_PATH = (
+    REPO_ROOT / "tests" / "test_data" / "swapi" / "alpha_fit_test_spectra.npz"
+)
 
 _N_SWEEPS = 5
 _N_BINS = 62
@@ -80,31 +83,27 @@ def _load_fixture(data, name):
     return {k[len(prefix) :]: data[k] for k in data.files if k.startswith(prefix)}
 
 
-def _plot_case(axes_top, axes_bot, sr, f, title):
-    count_rates = f["count_rates"]  # (5, 62)
-    voltage_per_sweep = f["voltage_per_sweep"]  # (62,)
-    esa_flat = f["esa_flat"]  # (310,)
-    proton_eff_scale = float(f["proton_eff_scale"])
-    alpha_eff_scale = float(f["alpha_eff_scale"])
-    magnetic_field_direction = f["b_hat_rtn"]
-    cr_flat = f["cr_flat"]  # (310,)
+def _plot_case(axes_top, axes_bot, swapi_response, fixture, title):
+    count_rates = fixture["count_rates"]
+    voltage_per_sweep = fixture["voltage_per_sweep"]
+    esa_flat = fixture["esa_flat"]
+    proton_eff_scale = float(fixture["proton_eff_scale"])
+    alpha_eff_scale = float(fixture["alpha_eff_scale"])
+    magnetic_field_direction = fixture["b_hat_rtn"]
+    cr_flat = fixture["cr_flat"]
 
-    sr.warm_cache(esa_flat)
+    swapi_response.warm_cache(esa_flat)
 
-    # Synthetic per-bin SWAPI->RTN rotation matrices (anchor + spin), shared with
-    # plot_fit_accuracy. The stored fixture matrices are in an old convention;
-    # rebuild geometry here and re-run the proton fit so the proton background
-    # is consistent with the current forward model.
-    rotation_matrices = _compute_per_bin_rotation_matrices(
-        _N_SWEEPS, _BIN_INDICES_IN_SWEEP
+    # Rebuild geometry to match the current forward model — the stored fixture
+    # rotation matrices use an old convention.
+    rotation_matrices = compute_per_bin_rotation_matrices(
+        _N_SWEEPS, COARSE_BIN_INDICES_IN_SWEEP
     )
 
-    # Re-fit proton on this spectrum with the current code under the synthetic
-    # geometry; freeze the result for the alpha stage.
     proton_ctx = build_solar_wind_fit_context(
         count_rate=cr_flat,
         esa_voltage=esa_flat,
-        swapi_response=sr,
+        swapi_response=swapi_response,
         central_effective_area_scale=proton_eff_scale,
         rotation_matrices=rotation_matrices,
         mass_kg=PROTON_MASS_KG,
@@ -126,12 +125,11 @@ def _plot_case(axes_top, axes_bot, sr, f, title):
     proton_bg_avg = proton_obs_per_sweep.mean(axis=0)
     count_avg = count_rates.mean(axis=0)
 
-    # Stage-2 alpha moments fit (proton moments frozen from the refit above).
     alpha_moments = fit_solar_wind_alpha_moments(
         count_rate=cr_flat,
         esa_voltage=esa_flat,
-        measurement_time=np.zeros(len(esa_flat)),  # unused: rotation_matrices provided
-        swapi_response=sr,
+        measurement_time=np.zeros(len(esa_flat)),
+        swapi_response=swapi_response,
         proton_moments=proton_moments_obj,
         magnetic_field_direction=magnetic_field_direction,
         alpha_effective_area_scale=alpha_eff_scale,
@@ -144,7 +142,7 @@ def _plot_case(axes_top, axes_bot, sr, f, title):
         alpha_ctx = build_solar_wind_fit_context(
             count_rate=np.zeros_like(esa_flat),
             esa_voltage=esa_flat,
-            swapi_response=sr,
+            swapi_response=swapi_response,
             central_effective_area_scale=alpha_eff_scale,
             rotation_matrices=rotation_matrices,
             mass_kg=ALPHA_PARTICLE_MASS_KG,
@@ -166,7 +164,6 @@ def _plot_case(axes_top, axes_bot, sr, f, title):
         combined_fit_avg = combined_fit.reshape(_N_SWEEPS, _N_BINS).mean(axis=0)
         alpha_contribution_avg = np.maximum(combined_fit_avg - proton_bg_avg, 0.0)
 
-    # Run peak finder
     energies = SWAPI_K_FACTOR * np.abs(voltage_per_sweep)
     peak = get_alpha_peak_indices(
         count_avg - proton_bg_avg, energies, count_avg.argmax()
@@ -177,32 +174,28 @@ def _plot_case(axes_top, axes_bot, sr, f, title):
     has_peak = peak_idx.size > 0 and residual_peak.max(initial=0.0) > 0.0
 
     if has_peak:
-        p0 = [residual_peak.max(), speed_peak[int(np.argmax(residual_peak))], 50.0]
+        amplitude_guess = residual_peak.max()
+        mean_guess = float(speed_peak[int(np.argmax(residual_peak))])
         try:
             (A_fit, mu_fit, sigma_fit), _ = scipy.optimize.curve_fit(
                 lambda v, A, mu, sigma: A
                 * np.exp(-((v - mu) ** 2) / (2 * sigma**2)),
                 speed_peak,
                 residual_peak,
-                p0=p0,
+                p0=[amplitude_guess, mean_guess, 50.0],
                 bounds=([0, 0, 0], [np.inf, np.inf, np.inf]),
             )
         except RuntimeError:
-            A_fit = residual_peak.max()
-            mu_fit = float(speed_peak[int(np.argmax(residual_peak))])
-            sigma_fit = 50.0
+            A_fit, mu_fit, sigma_fit = amplitude_guess, mean_guess, 50.0
     else:
-        A_fit = 0.0
-        mu_fit = 0.0
-        sigma_fit = 1.0
+        A_fit, mu_fit, sigma_fit = 0.0, 0.0, 1.0
 
-    abs_v = np.abs(voltage_per_sweep)
-    sort_idx = np.argsort(abs_v)
-    abs_v_s = abs_v[sort_idx]
+    abs_voltage = np.abs(voltage_per_sweep)
+    sort_idx = np.argsort(abs_voltage)
+    abs_voltage_sorted = abs_voltage[sort_idx]
 
-    # --- Top panel: count rates and proton model ---
     axes_top.plot(
-        abs_v_s,
+        abs_voltage_sorted,
         count_avg[sort_idx],
         ".",
         color="tab:blue",
@@ -211,7 +204,7 @@ def _plot_case(axes_top, axes_bot, sr, f, title):
         zorder=3,
     )
     axes_top.plot(
-        abs_v_s,
+        abs_voltage_sorted,
         proton_bg_avg[sort_idx],
         color="tab:orange",
         lw=1.5,
@@ -220,7 +213,7 @@ def _plot_case(axes_top, axes_bot, sr, f, title):
     )
     if combined_fit_avg is not None:
         axes_top.plot(
-            abs_v_s,
+            abs_voltage_sorted,
             combined_fit_avg[sort_idx],
             color="tab:purple",
             lw=1.5,
@@ -229,17 +222,15 @@ def _plot_case(axes_top, axes_bot, sr, f, title):
             zorder=2,
         )
 
-    # Shade the alpha peak region
     if has_peak:
-        peak_voltages = abs_v[peak_idx]
+        peak_voltages = abs_voltage[peak_idx]
         v_lo, v_hi = peak_voltages.min(), peak_voltages.max()
         axes_top.axvspan(
             v_lo, v_hi, alpha=0.15, color="tab:green", label="Alpha peak", zorder=1
         )
 
-    # Mark peak bins on observed data
     axes_top.plot(
-        abs_v[peak_idx],
+        abs_voltage[peak_idx],
         count_avg[peak_idx],
         "o",
         color="tab:green",
@@ -257,11 +248,9 @@ def _plot_case(axes_top, axes_bot, sr, f, title):
     axes_top.legend(fontsize=7, loc="upper left")
     axes_top.grid(True, which="both", alpha=0.2)
 
-    # --- Bottom panel: residual and Gaussian fit ---
     all_speeds = esa_voltage_to_alpha_speed(voltage_per_sweep)
     all_residual = np.maximum(count_avg - proton_bg_avg, 0.0)
 
-    # Full residual as thin grey bars
     axes_bot.vlines(
         all_speeds[sort_idx],
         0,
@@ -280,7 +269,6 @@ def _plot_case(axes_top, axes_bot, sr, f, title):
         label="Residual (all bins)",
     )
 
-    # Highlight peak bins
     axes_bot.vlines(
         speed_peak, 0, residual_peak, colors="tab:green", linewidth=2, zorder=2
     )
@@ -294,7 +282,6 @@ def _plot_case(axes_top, axes_bot, sr, f, title):
         label="Peak bins",
     )
 
-    # Gaussian fit curve (initial-guess estimator)
     if has_peak:
         v_fine = np.linspace(speed_peak.min() - 50, speed_peak.max() + 50, 200)
         gauss_fine = A_fit * np.exp(-((v_fine - mu_fit) ** 2) / (2 * sigma_fit**2))
@@ -308,7 +295,6 @@ def _plot_case(axes_top, axes_bot, sr, f, title):
             zorder=3,
         )
 
-    # Full moments fit
     if alpha_contribution_avg is not None:
         alpha_speed = np.linalg.norm(
             [c.nominal_value for c in alpha_moments.bulk_velocity_rtn]
@@ -333,7 +319,7 @@ def _plot_case(axes_top, axes_bot, sr, f, title):
 
 def main():
     print("Loading calibration data...")
-    sr = load_swapi_response()
+    swapi_response = load_swapi_response()
 
     data = np.load(_FIXTURE_PATH)
     n_cases = len(_CASES)
@@ -350,12 +336,12 @@ def main():
 
     for col, (case_name, case_title) in enumerate(_CASES):
         print(f"Plotting {case_name}...")
-        f = _load_fixture(data, case_name)
-        _plot_case(axes[0, col], axes[1, col], sr, f, case_title)
+        fixture = _load_fixture(data, case_name)
+        _plot_case(axes[0, col], axes[1, col], swapi_response, fixture, case_title)
 
     fig.tight_layout()
-    _OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    out = _OUTPUT_DIR / "alpha_peak_finding.svg"
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+    out = FIGURES_DIR / "alpha_peak_finding.svg"
     fig.savefig(out, bbox_inches="tight")
     print(f"Saved {out}")
 

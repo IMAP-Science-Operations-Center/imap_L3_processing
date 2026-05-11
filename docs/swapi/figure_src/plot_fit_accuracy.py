@@ -27,14 +27,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
-import os
-import time
 import types
-import multiprocessing
 
 import numpy as np
 import pandas as pd
-from tqdm.contrib.concurrent import process_map
 from uncertainties import UFloat
 import matplotlib
 
@@ -45,7 +41,15 @@ from imap_l3_processing.constants import (
     PROTON_MASS_KG,
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
 )
-from figure_utils import load_swapi_response
+from imap_l3_processing.swapi.constants import SWAPI_LIVETIME_S
+from figure_utils import (
+    COARSE_BIN_INDICES_IN_SWEEP,
+    COARSE_SWEEP_VOLTAGES_MEAN_V,
+    REPO_ROOT,
+    compute_per_bin_rotation_matrices,
+    load_swapi_response,
+    run_parallel_map,
+)
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
     fit_solar_wind_proton_model,
 )
@@ -61,113 +65,14 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.state import SolarWindParams
 
-_REPO_ROOT = Path(__file__).resolve().parents[3]
 _N_SWEEPS = 5
-_SWEEP_DURATION_S = 12.0  # full 72-bin SWAPI sweep cadence
-_BINS_PER_SWEEP = 72
-_DT_S = _SWEEP_DURATION_S / _BINS_PER_SWEEP
-_SPIN_PERIOD_S = 15.13  # typical IMAP spin period
+_N_BINS = len(COARSE_SWEEP_VOLTAGES_MEAN_V)
 
-# Coarse-sweep bin indices within a 72-bin sweep (1-indexed): 1..62.
-_BIN_INDICES_IN_SWEEP = np.arange(1, 63)
-
-# Mean SWAPI L2 coarse-sweep voltages (V), descending — bins 1..62 of the
-# 72-bin sweep, averaged over many real sweeps.
-_VOLTAGES = np.array(
-    [
-        9895.52,
-        9088.69,
-        8348.80,
-        7667.55,
-        7042.16,
-        6469.31,
-        5941.77,
-        5457.31,
-        5013.22,
-        4603.65,
-        4230.77,
-        3886.92,
-        3569.16,
-        3278.72,
-        3011.13,
-        2766.25,
-        2539.54,
-        2333.83,
-        2144.24,
-        1969.31,
-        1808.74,
-        1660.86,
-        1525.75,
-        1401.82,
-        1287.58,
-        1182.24,
-        1085.15,
-        995.55,
-        914.31,
-        839.94,
-        771.70,
-        709.46,
-        651.59,
-        598.47,
-        549.91,
-        505.12,
-        463.89,
-        425.92,
-        391.18,
-        359.35,
-        329.94,
-        303.02,
-        278.25,
-        255.55,
-        234.77,
-        215.61,
-        197.95,
-        181.82,
-        167.04,
-        153.46,
-        140.91,
-        129.50,
-        118.91,
-        109.20,
-        100.30,
-        92.11,
-        84.61,
-        77.73,
-        71.40,
-        65.59,
-        60.23,
-        55.34,
-    ]
-)
-_N_BINS = len(_VOLTAGES)
-assert _VOLTAGES.shape == _BIN_INDICES_IN_SWEEP.shape == (62,)
-
-
-# Anchor matrix (transposed below to SWAPI→RTN) from a real SPICE attitude
-# near 2026-01-01,
-# at the first sweep midpoint (t = _ANCHOR_TIME_S). Reflects the ~4° spin-axis
-# tilt off -R̂_RTN. Per-bin matrices are built by spinning this anchor about
-# its own +Y column (the spin axis in RTN) at the nominal SWAPI spin period.
-# Stored as SWAPI→RTN.
-_ANCHOR_ROTATION_MATRIX = np.array(
-    [
-        [+0.0705, +0.9157, +0.3955],
-        [-0.9968, +0.0792, -0.0057],
-        [-0.0365, -0.3939, +0.9184],
-    ]
-).T
-_ANCHOR_TIME_S = 0.5 * _SWEEP_DURATION_S
-# Sign chosen so R(t) = anchor @ Rot(δφ, spin_axis_RTN) reproduces independent
-# SPICE-derived sweep midpoints over a 5-sweep cycle.
-_SPIN_OMEGA_RAD_S = -2.0 * np.pi / _SPIN_PERIOD_S
-
-
-# Set by main() before forking; children inherit via fork.
 _worker_state: types.SimpleNamespace | None = None
 
 
 def main():
-    csv_path = _REPO_ROOT / "docs/swapi/figure_src/wind_solar_wind_samples_2025.csv"
+    csv_path = REPO_ROOT / "docs/swapi/figure_src/wind_solar_wind_samples_2025.csv"
     ground_truth_params = _load_wind_samples(csv_path)
     _initialize_worker_state(ground_truth_params)
     data = _run_fits(n_samples=len(ground_truth_params[0]))
@@ -198,19 +103,15 @@ def _initialize_worker_state(ground_truth_params: tuple[np.ndarray, ...]) -> Non
 
     print(
         f"Using {_N_BINS} coarse-sweep bins, "
-        f"{_VOLTAGES.min():.1f}–{_VOLTAGES.max():.1f} V"
+        f"{COARSE_SWEEP_VOLTAGES_MEAN_V.min():.1f}–{COARSE_SWEEP_VOLTAGES_MEAN_V.max():.1f} V"
     )
 
     swapi_response = load_swapi_response()
-    all_esa_voltages = np.tile(_VOLTAGES, _N_SWEEPS)
+    all_esa_voltages = np.tile(COARSE_SWEEP_VOLTAGES_MEAN_V, _N_SWEEPS)
     swapi_response.warm_cache(all_esa_voltages)
-    per_bin_rotation_matrices = _compute_per_bin_rotation_matrices(
-        _N_SWEEPS,
-        _BIN_INDICES_IN_SWEEP,
+    per_bin_rotation_matrices = compute_per_bin_rotation_matrices(
+        _N_SWEEPS, COARSE_BIN_INDICES_IN_SWEEP
     )
-    # Base context: bundles per-bin response grids and rotation matrices. Reused
-    # for both forward modeling (synthetic count rates) and per-fit context
-    # construction. count_rate is a placeholder of ones to bypass the >0 filter.
     base_ctx = build_solar_wind_fit_context(
         count_rate=np.ones_like(all_esa_voltages),
         esa_voltage=all_esa_voltages,
@@ -229,49 +130,8 @@ def _initialize_worker_state(ground_truth_params: tuple[np.ndarray, ...]) -> Non
     )
 
 
-def _compute_per_bin_rotation_matrices(
-    n_sweeps: int,
-    bin_indices_in_sweep: np.ndarray,
-) -> np.ndarray:
-    """Synthetic per-bin SWAPI→RTN matrices: anchor spun about its spin axis.
-
-    Bin sample times are t = sw·_SWEEP_DURATION_S + bin_idx·_DT_S. Returns
-    shape (n_sweeps · n_bins, 3, 3) in (sweep-major, bin-minor) order.
-    """
-    sweep_index = np.repeat(np.arange(n_sweeps), len(bin_indices_in_sweep))
-    bin_index = np.tile(bin_indices_in_sweep, n_sweeps)
-    sample_times_s = sweep_index * _SWEEP_DURATION_S + bin_index * _DT_S
-
-    spin_axis = _ANCHOR_ROTATION_MATRIX[:, 1] / np.linalg.norm(
-        _ANCHOR_ROTATION_MATRIX[:, 1]
-    )
-    delta_phi = _SPIN_OMEGA_RAD_S * (sample_times_s - _ANCHOR_TIME_S)
-
-    ax, ay, az = spin_axis
-    K = np.array([[0, -az, ay], [az, 0, -ax], [-ay, ax, 0]])
-    sin_dp = np.sin(delta_phi)[:, None, None]
-    one_minus_cos = (1.0 - np.cos(delta_phi))[:, None, None]
-    rot = np.eye(3) + sin_dp * K + one_minus_cos * (K @ K)
-    # Anchor is SWAPI→RTN; rot is RTN→RTN spin. Compose rot ∘ anchor.
-    return rot @ _ANCHOR_ROTATION_MATRIX
-
-
 def _run_fits(n_samples: int) -> pd.DataFrame:
-    n_workers = os.cpu_count() or 1
-    if multiprocessing.get_start_method(allow_none=True) != "fork":
-        multiprocessing.set_start_method("fork", force=True)
-
-    print(f"Running {n_samples} fits across {n_workers} processes...")
-    t0 = time.perf_counter()
-    rows = process_map(
-        _process_one,
-        range(n_samples),
-        max_workers=n_workers,
-        chunksize=10,
-        desc="fits",
-    )
-    print(f"  Fits done in {time.perf_counter() - t0:.1f}s.")
-
+    rows = run_parallel_map(_process_one, n_samples, desc="fits", chunksize=10)
     data = pd.DataFrame(rows)
     print(f"Bad-fit flags: {data['bad_flag'].sum()}/{n_samples}")
     out_csv = Path("/tmp/fit_accuracy_results.csv")
@@ -301,9 +161,9 @@ def _process_one(i):
     count_rates = count_rates * deadtime_factor(count_rates)
     count_rates = (
         np.random.default_rng(i)
-        .poisson(np.maximum(count_rates * 0.145, 0.0))
+        .poisson(np.maximum(count_rates * SWAPI_LIVETIME_S, 0.0))
         .astype(float)
-        / 0.145
+        / SWAPI_LIVETIME_S
     )
 
     fit_ctx = build_solar_wind_fit_context(

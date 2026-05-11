@@ -11,13 +11,10 @@ import numpy as np
 
 from imap_l3_processing.swapi.response.passband_grid import PassbandGrid
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
-from figure_utils import load_swapi_response
+from figure_utils import FIGURES_DIR, load_swapi_response
 
-REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
-OUTPUT_DIR = REPOSITORY_ROOT / "docs" / "swapi" / "figures"
-
-ELEVATION_DISPLAY_LIMIT_DEG = 15.0
-ACTIVE_ELEVATION_SAMPLE_COUNT = 300
+_ELEVATION_DISPLAY_LIMIT_DEG = 15.0
+_ACTIVE_ELEVATION_SAMPLE_COUNT = 300
 
 
 def main():
@@ -53,14 +50,13 @@ def main():
     colorbar = figure.colorbar(last_image, ax=axes, fraction=0.03, pad=0.02)
     colorbar.set_label("Passband value")
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    output_path = OUTPUT_DIR / "passband_boundaries.svg"
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+    output_path = FIGURES_DIR / "passband_boundaries.svg"
     figure.savefig(output_path, bbox_inches="tight")
     print(f"Saved {output_path}")
 
 
 def representative_esa_voltages(swapi_response: SwapiResponse) -> list[float]:
-    # min/max across both regions and geometric mean
     voltage_limits = swapi_response._passband_esa_voltage_limits
     voltage_minimum = min(low for low, _ in voltage_limits.values())
     voltage_maximum = max(high for _, high in voltage_limits.values())
@@ -80,7 +76,7 @@ def plot_region_panel(
     elevations, speed_ratios = grid_axis_coordinates(grid, grid.values)
 
     active_elevations = np.linspace(
-        grid.elevation_range[0], grid.elevation_range[1], ACTIVE_ELEVATION_SAMPLE_COUNT
+        grid.elevation_range[0], grid.elevation_range[1], _ACTIVE_ELEVATION_SAMPLE_COUNT
     )
     lower_speed_ratios = _vectorized_bracket(
         grid, grid.min_boundary, active_elevations, np.minimum
@@ -98,7 +94,7 @@ def plot_region_panel(
 
     axis.set_xlabel("Speed ratio (v / v_central)")
     axis.set_title(f"{label}  |  {esa_voltage:.1f} V  ({central_speed:.0f} km/s)")
-    axis.set_ylim(-ELEVATION_DISPLAY_LIMIT_DEG, ELEVATION_DISPLAY_LIMIT_DEG)
+    axis.set_ylim(-_ELEVATION_DISPLAY_LIMIT_DEG, _ELEVATION_DISPLAY_LIMIT_DEG)
     return image
 
 

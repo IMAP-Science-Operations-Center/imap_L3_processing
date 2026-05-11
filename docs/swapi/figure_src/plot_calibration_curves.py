@@ -16,19 +16,25 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
-from figure_utils import load_swapi_response
+from figure_utils import FIGURES_DIR, load_swapi_response
 
-_REPO_ROOT = Path(__file__).resolve().parents[3]
-_OUTPUT_DIR = _REPO_ROOT / "docs" / "swapi" / "figures"
+_AREA_CSV = (
+    Path(__file__).resolve().parents[3]
+    / "instrument_team_data"
+    / "swapi"
+    / "imap_swapi_central-effective-area_20260425_v001.csv"
+)
 
 
 def main():
     swapi_response = load_swapi_response()
 
-    voltages = swapi_response.central_effective_area_voltage
-    eff_area = swapi_response.central_effective_area
+    area_df = pd.read_csv(_AREA_CSV)
+    voltages = area_df["esa_voltage"].to_numpy()
+    eff_area = area_df["effective_area"].to_numpy()
 
     transmission = swapi_response._azimuthal_transmission
     azimuths = (
@@ -43,7 +49,6 @@ def main():
     ax1.set_ylabel("Central Effective Area $\\mathcal{A}_0(V)$ (cm²)")
     ax1.grid(True, which="both", alpha=0.3)
 
-    # Full azimuth range with symmetric +/- display
     full_az = np.concatenate([-azimuths[::-1], azimuths])
     full_tx = np.concatenate([transmission[::-1], transmission])
     ax2.semilogy(
@@ -64,8 +69,8 @@ def main():
     ax2.grid(True, which="both", alpha=0.3)
 
     fig.tight_layout()
-    _OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    out = _OUTPUT_DIR / "calibration_curves.svg"
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+    out = FIGURES_DIR / "calibration_curves.svg"
     fig.savefig(out, bbox_inches="tight")
     print(f"Saved {out}")
 

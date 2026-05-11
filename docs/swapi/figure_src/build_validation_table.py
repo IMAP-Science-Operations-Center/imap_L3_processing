@@ -1,17 +1,8 @@
 #!/usr/bin/env python3
-"""Generate the integrator-validation table in `docs/swapi/solar-wind-moments.md`.
-
-Computes |ratio - 1| where ratio = optimized / reference for the 10000
-configurations in `tests/test_data/swapi/reference_integrals.csv`,
-stratifies by reference count rate, and reports median / 95th / 99th / max
-per band. Writes the markdown table in-place between the
-`BEGIN: validation_table` and `END: validation_table` HTML comment markers
-in `solar-wind-moments.md`.
-
-Usage:  python docs/swapi/figure_src/build_validation_table.py
-"""
+"""Generate the integrator-validation table in `docs/swapi/solar-wind-moments.md`."""
 
 import sys
+import types
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
@@ -21,8 +12,6 @@ import pandas as pd
 
 from imap_l3_processing.constants import (
     EV_TO_KELVIN,
-    METERS_PER_KILOMETER,
-    PROTON_CHARGE_COULOMBS,
     PROTON_MASS_KG,
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
 )
@@ -30,19 +19,24 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     calculate_integral,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.state import SolarWindParams
-from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 
-from figure_utils import load_swapi_response
-
-_REPO_ROOT = Path(__file__).resolve().parents[3]
-_REFERENCE_INTEGRALS_PATH = (
-    _REPO_ROOT / "tests" / "test_data" / "swapi" / "reference_integrals.csv"
+from figure_utils import (
+    REPO_ROOT,
+    bulk_velocity_rtn_from_swapi_angles,
+    load_swapi_response,
+    peak_esa_voltage_for_proton_bulk_speed,
+    run_parallel_map,
 )
-_DOC_PATH = _REPO_ROOT / "docs" / "swapi" / "solar-wind-moments.md"
+
+_worker_state: types.SimpleNamespace | None = None
+
+_REFERENCE_INTEGRALS_PATH = (
+    REPO_ROOT / "tests" / "test_data" / "swapi" / "reference_integrals.csv"
+)
+_DOC_PATH = REPO_ROOT / "docs" / "swapi" / "solar-wind-moments.md"
 _TABLE_BEGIN = "<!-- BEGIN: validation_table"
 _TABLE_END = "<!-- END: validation_table -->"
 
-# Reference count-rate bands used for stratification.
 _BANDS = [
     (r"$\lt 0.1$", 0.0, 0.1),
     ("$0.1$ – $1$", 0.1, 1.0),
@@ -53,14 +47,6 @@ _BANDS = [
     ("$10^4$ – $10^5$", 1e4, 1e5),
     ("$\\geq 10^5$", 1e5, np.inf),
 ]
-
-
-def _peak_voltage(bulk_speed_km_s):
-    return (
-        PROTON_MASS_KG
-        * (bulk_speed_km_s * METERS_PER_KILOMETER) ** 2
-        / (2 * SWAPI_K_FACTOR * PROTON_CHARGE_COULOMBS)
-    )
 
 
 def _build_table(rel: np.ndarray, refs_v: np.ndarray) -> str:
@@ -100,47 +86,67 @@ def _update_doc(table_md: str) -> None:
     _DOC_PATH.write_text(new_text)
 
 
+def _initialize_worker_state(
+    rows: list[tuple[float, float, float, float, float]],
+    peak_voltages: np.ndarray,
+    swapi_response,
+) -> None:
+    global _worker_state
+    _worker_state = types.SimpleNamespace(
+        rows=rows,
+        peak_voltages=peak_voltages,
+        swapi_response=swapi_response,
+        rotation_matrix=np.eye(3),
+    )
+
+
+def _process_one(i: int) -> float:
+    state = _worker_state
+    bulk_speed, azimuth, elevation, density, temperature_ev = state.rows[i]
+    sw = SolarWindParams(
+        density=density,
+        bulk_velocity_rtn=bulk_velocity_rtn_from_swapi_angles(
+            bulk_speed, azimuth, elevation
+        ),
+        temperature=temperature_ev * EV_TO_KELVIN,
+        mass=PROTON_MASS_KG,
+    )
+    response_grid = state.swapi_response.get_response_grid(
+        state.peak_voltages[i], PROTON_MASS_PER_CHARGE_M_P_PER_E
+    )
+    return calculate_integral(sw, response_grid, state.rotation_matrix)[0]
+
+
 def main():
     print("Loading calibration data...")
     swapi_response = load_swapi_response()
     df = pd.read_csv(_REFERENCE_INTEGRALS_PATH)
     references = df["integral"].to_numpy()
-    optimized = np.empty(len(df))
+    rows = [
+        (
+            float(row.bulk_speed),
+            float(row.bulk_azimuth),
+            float(row.bulk_elevation),
+            float(row.density),
+            float(row.temperature_ev),
+        )
+        for row in df.itertuples(index=False)
+    ]
 
     print(f"Warming passband cache for {len(df)} rows...")
-    peak_voltages = [
-        _peak_voltage(float(row.bulk_speed)) for row in df.itertuples(index=False)
-    ]
+    peak_voltages = np.array(
+        [peak_esa_voltage_for_proton_bulk_speed(r[0]) for r in rows]
+    )
     swapi_response.warm_cache(peak_voltages)
+    for unique_voltage in np.unique(peak_voltages):
+        swapi_response.get_response_grid(
+            float(unique_voltage), PROTON_MASS_PER_CHARGE_M_P_PER_E
+        )
 
-    print(f"Computing {len(df)} optimized integrals...")
-    rotation_matrix = np.eye(3)
-    for i, row in enumerate(df.itertuples(index=False)):
-        bulk_speed = float(row.bulk_speed)
-        az_rad = np.radians(float(row.bulk_azimuth))
-        el_rad = np.radians(float(row.bulk_elevation))
-        # Build a bulk_velocity_rtn that projects (under identity rotation) to
-        # the (azimuth, elevation, speed) the CSV row prescribes. The signs match
-        # the SWAPI convention used by `bulk_angles_in_instrument_frame`.
-        bulk_velocity_rtn = bulk_speed * np.array(
-            [
-                -np.cos(el_rad) * np.sin(az_rad),
-                -np.cos(el_rad) * np.cos(az_rad),
-                -np.sin(el_rad),
-            ]
-        )
-        sw = SolarWindParams(
-            density=float(row.density),
-            bulk_velocity_rtn=bulk_velocity_rtn,
-            temperature=float(row.temperature_ev) * EV_TO_KELVIN,
-            mass=PROTON_MASS_KG,
-        )
-        response_grid = swapi_response.get_response_grid(
-            peak_voltages[i], PROTON_MASS_PER_CHARGE_M_P_PER_E
-        )
-        optimized[i] = calculate_integral(sw, response_grid, rotation_matrix)[0]
-        if (i + 1) % 1000 == 0:
-            print(f"  {i + 1}/{len(df)}", flush=True)
+    _initialize_worker_state(rows, peak_voltages, swapi_response)
+    optimized = np.array(
+        run_parallel_map(_process_one, len(df), desc="integrals", chunksize=64)
+    )
 
     valid = references > 0
     refs_v = references[valid]
@@ -157,7 +163,7 @@ def main():
     print()
     print(table_md)
     _update_doc(table_md)
-    print(f"\nUpdated {_DOC_PATH.relative_to(_REPO_ROOT)}")
+    print(f"\nUpdated {_DOC_PATH.relative_to(REPO_ROOT)}")
 
 
 if __name__ == "__main__":

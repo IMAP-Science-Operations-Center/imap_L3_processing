@@ -28,8 +28,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from imap_l3_processing.constants import (
-    METERS_PER_KILOMETER,
-    PROTON_CHARGE_COULOMBS,
     PROTON_MASS_KG,
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
     EV_TO_KELVIN,
@@ -38,34 +36,13 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     calculate_integral,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.state import SolarWindParams
-from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from scripts.swapi.reference_integral import reference_integral_fixed_limits
-from figure_utils import load_swapi_response
-
-_REPO_ROOT = Path(__file__).resolve().parents[3]
-_OUTPUT_DIR = _REPO_ROOT / "docs" / "swapi" / "figures"
-
-
-def _bulk_velocity_rtn(bulk_speed_km_s, az_deg, el_deg):
-    """Inverse of `bulk_angles_in_instrument_frame` with R = identity (RTN ≡ SWAPI)."""
-    az = np.radians(az_deg)
-    el = np.radians(el_deg)
-    horizontal = bulk_speed_km_s * np.cos(el)
-    return np.array(
-        [
-            -horizontal * np.sin(az),
-            -horizontal * np.cos(az),
-            -bulk_speed_km_s * np.sin(el),
-        ]
-    )
-
-
-def _peak_voltage(bulk_speed_km_s):
-    return float(
-        PROTON_MASS_KG
-        * (bulk_speed_km_s * METERS_PER_KILOMETER) ** 2
-        / (2 * SWAPI_K_FACTOR * PROTON_CHARGE_COULOMBS)
-    )
+from figure_utils import (
+    FIGURES_DIR,
+    bulk_velocity_rtn_from_swapi_angles,
+    load_swapi_response,
+    peak_esa_voltage_for_proton_bulk_speed,
+)
 
 
 # (label, bulk_speed, T_K, bulk_azimuth, bulk_elevation, density)
@@ -125,13 +102,13 @@ def main():
 
     handles_for_legend = None
     for ax, (label, v_b, T_k, az, el, density) in zip(axes.flat, CASES):
-        v_peak = _peak_voltage(v_b)
+        v_peak = peak_esa_voltage_for_proton_bulk_speed(v_b)
         esa_voltages = np.logspace(
             np.log10(0.4 * v_peak), np.log10(2.5 * v_peak), n_voltages
         )
         sw = SolarWindParams(
             density=density,
-            bulk_velocity_rtn=_bulk_velocity_rtn(v_b, az, el),
+            bulk_velocity_rtn=bulk_velocity_rtn_from_swapi_angles(v_b, az, el),
             temperature=T_k,
             mass=PROTON_MASS_KG,
         )
@@ -206,8 +183,8 @@ def main():
     )
     fig.tight_layout(rect=[0, 0.03, 1, 1])
 
-    _OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    out = _OUTPUT_DIR / "spectra.svg"
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+    out = FIGURES_DIR / "spectra.svg"
     fig.savefig(out, bbox_inches="tight")
     print(f"Saved {out}")
 

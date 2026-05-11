@@ -16,8 +16,6 @@ Output: docs/swapi/figures/real_data_fit.svg
 Usage:  conda run -n imapL3 python docs/swapi/figure_src/plot_real_data_fit.py
 """
 
-import _imap_envfix  # noqa: F401  -- must precede spacepy/scipy imports
-
 import json
 import os
 import sys
@@ -28,11 +26,11 @@ from urllib.parse import urlparse
 
 import imap_data_access
 import matplotlib
-import numba
 import numpy as np
 import requests
 import spacepy.pycdf
 import spiceypy
+from matplotlib.transforms import blended_transform_factory
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -41,7 +39,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
 from imap_l3_processing.constants import (
     BOLTZMANN_CONSTANT_JOULES_PER_KELVIN,
-    METERS_PER_KILOMETER,
     ONE_SECOND_IN_NANOSECONDS,
     PROTON_MASS_KG,
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
@@ -71,11 +68,9 @@ from imap_l3_processing.swapi.constants import (
     SWAPI_SCIENCE_BINS,
 )
 from imap_l3_processing.utils import SpiceKernelTypes
-from figure_utils import load_swapi_response
+from figure_utils import FIGURES_DIR, REPO_ROOT, load_swapi_response
 
-_REPO_ROOT = Path(__file__).resolve().parents[3]
-_OUTPUT_DIR = _REPO_ROOT / "docs" / "swapi" / "figures"
-_DOC_PATH = _REPO_ROOT / "docs" / "swapi" / "solar-wind-moments.md"
+_DOC_PATH = REPO_ROOT / "docs" / "swapi" / "solar-wind-moments.md"
 _TABLE_BEGIN = "<!-- BEGIN: real_data_table"
 _TABLE_END = "<!-- END: real_data_table -->"
 
@@ -173,11 +168,9 @@ def main():
             f"{wind['v_N']:6.2f}±{wind['v_N_sigma']:.2f}]"
         )
 
-    table_md = _build_intro_table(
-        science_result, coarse_result, boot, sc_velocity_rtn, wind
-    )
+    table_md = _build_intro_table(science_result, coarse_result, boot, wind)
     _update_doc(table_md)
-    print(f"\nUpdated table block in {_DOC_PATH.relative_to(_REPO_ROOT)}")
+    print(f"\nUpdated table block in {_DOC_PATH.relative_to(REPO_ROOT)}")
 
     _make_plot(
         epoch_ns,
@@ -186,8 +179,6 @@ def main():
         swapi_response,
         science_result,
         coarse_result,
-        wind,
-        chunk_center_dt,
     )
 
 
@@ -334,14 +325,7 @@ def _bootstrap_sigmas(
     seed: int = 42,
     sc_velocity_rtn: np.ndarray | None = None,
 ) -> dict:
-    """Statistical bootstrap on the fit's residual bins, returning std of fitted
-    parameters across B resamples. Warm-starts each LM from the original
-    solution and skips basin hopping — this is ~150× faster than re-running
-    the full pipeline per resample, and gives a cleaner local sampling σ
-    (basin-hopping noise from pathological resamples is excluded by design).
-    See `docs/swapi/figure_src/plot_uncertainty_mc.py` for the calibration
-    framing this validates against; see CLAUDE.md notes for the benchmarking.
-    """
+    """Warm-started LM bootstrap (no basin hopping) for σ on (n, T, v_RTN)."""
     ctx = result["ctx"]
     fit = result["fit_result"]
     state0 = SolarWindParams(
@@ -434,13 +418,8 @@ def _bootstrap_sigmas(
     }
 
 
-def _build_intro_table(science_result, coarse_result, boot, sc_velocity_rtn, wind):
-    """Build the markdown table consumed by the Introduction section.
-
-    Columns: SWAPI all bins (HC3 σ), SWAPI all bins (boot σ), SWAPI coarse only
-    (HC3 σ), and the matching WIND/SWE 2-min sample (or em-dashes if WIND data
-    is unavailable). Row formats match the surrounding prose in the doc.
-    """
+def _build_intro_table(science_result, coarse_result, boot, wind):
+    """Build the markdown table consumed by the Introduction section."""
     sci_fit = science_result["fit_result"]
     coa_fit = coarse_result["fit_result"]
     sci_v_sun = science_result["bulk_velocity_rtn_sun"]
@@ -551,8 +530,8 @@ def _print_fit(result, sc_velocity_rtn: np.ndarray):
     v_sc = fit.bulk_velocity_rtn
     v_sc_nom = np.array([c.nominal_value for c in v_sc])
     v_sun_nom = v_sc_nom + sc_velocity_rtn
-    sun_speed_uf = sum(c**2 for c in v_sc) ** 0.5  # spacecraft speed for uncertainty
     # Inertial speed σ ≈ σ on |v_sc| (sc velocity is ~deterministic per epoch).
+    sun_speed_uf = sum(c**2 for c in v_sc) ** 0.5
     print(
         f"    n=({n.nominal_value:6.3f} ± {n.std_dev:.3f}) cm^-3, "
         f"T=({T.nominal_value:.3e} ± {T.std_dev:.1e}) K, "
@@ -561,13 +540,6 @@ def _print_fit(result, sc_velocity_rtn: np.ndarray):
         f"{v_sun_nom[1]:6.2f}±{v_sc[1].std_dev:.2f}, "
         f"{v_sun_nom[2]:6.2f}±{v_sc[2].std_dev:.2f}], "
         f"bad_fit={int(fit.bad_fit_flag)}"
-    )
-
-
-def _thermal_speed_from_T(T_K: float) -> float:
-    return float(
-        np.sqrt(BOLTZMANN_CONSTANT_JOULES_PER_KELVIN * T_K / PROTON_MASS_KG)
-        / METERS_PER_KILOMETER
     )
 
 
@@ -676,10 +648,8 @@ def _make_plot(
     swapi_response,
     science_result,
     coarse_result,
-    wind: dict | None,
-    chunk_center_dt: datetime,
 ):
-    voltages = esa_voltage / SWAPI_L2_K_FACTOR  # (n_sw, 72)
+    voltages = esa_voltage / SWAPI_L2_K_FACTOR
     valid_full = (voltages > 0) & np.isfinite(voltages)
     times_full = _measurement_times_ns(epoch_ns, slice(0, 72))
     rotation_full = get_swapi_geometry(times_full)
@@ -702,28 +672,19 @@ def _make_plot(
     coarse_2d = coarse_curve_full.reshape(voltages.shape)
 
     avg_voltage = np.nanmean(np.where(voltages > 0, voltages, np.nan), axis=0)
-    avg_count = np.nanmean(np.where(valid_full, count_rate, np.nan), axis=0)
-    avg_science = np.nanmean(science_2d, axis=0)
-    avg_coarse = np.nanmean(coarse_2d, axis=0)
 
     n_sweeps = count_rate.shape[0]
     n_panels = n_sweeps
-    n_cols = 1
     n_rows = n_panels
 
     fig = plt.figure(figsize=(10.0, 1.55 * n_rows))
-    outer = fig.add_gridspec(n_rows, n_cols, hspace=0.0)
-    # Per panel: fine sub-axis (narrow, on the left) + coarse sub-axis (wide,
-    # on the right). Step numbers run sequentially descending L→R: 71..63 on
-    # the fine sub-axis, then 62..1 on the coarse sub-axis. Same gridspec
-    # idiom as scatter-with-marginal-histogram.
+    outer = fig.add_gridspec(n_rows, 1, hspace=0.0)
     panel_axes: list[tuple] = []
     for i in range(n_panels):
         inner = outer[i, 0].subgridspec(1, 2, width_ratios=[1.4, 4.5], wspace=0)
         ax_f = fig.add_subplot(inner[0])
         ax_c = fig.add_subplot(inner[1], sharey=ax_f)
         panel_axes.append((ax_c, ax_f))
-    axes = [ax for pair in panel_axes for ax in pair]
 
     color_data = "k"
     color_full = "tab:blue"
@@ -731,22 +692,10 @@ def _make_plot(
 
     bin_indices = np.arange(72)
 
-    # X-axis is ESA step. Coarse bins are log-spaced in V, so step ≈ log V on
-    # the coarse sub-axis. Fine sub-axis is restricted to the contiguous
-    # proton-peak fine bins (V > 100 V) so the model curve is smooth — the
-    # 3 low-V fine bins (V ≈ 5–35 V) plot effectively zero rate and would
-    # introduce a false drop in the line.
+    # Fine sub-axis restricted to V > 100 V: the 3 low-V fine bins (~5–35 V)
+    # plot at effectively zero rate and would introduce a false drop in the line.
     fine_step_lo = SWAPI_FINE_SWEEP_BINS.start
     fine_step_hi = SWAPI_FINE_SWEEP_BINS.stop - 1
-    fine_useful_mask_template = (avg_voltage > 100.0) & (
-        bin_indices >= SWAPI_FINE_SWEEP_BINS.start
-    )
-
-    # Densely sample the model on the fine sub-axis: linearly interpolate
-    # both the model rate and the underlying voltage between adjacent fine
-    # bins on a step-grid. Cubic-style interpolation isn't needed — the
-    # forward model is smooth in V and the bins straddle the peak with
-    # ~25 V step, so linear interpolation in step removes the visible kink.
     fine_dense_step = np.linspace(fine_step_lo, fine_step_hi, 200)
 
     def _dense_fine(values_per_bin, v_per_bin):
@@ -756,9 +705,6 @@ def _make_plot(
         bins_keep = bin_indices[
             SWAPI_FINE_SWEEP_BINS.start : SWAPI_FINE_SWEEP_BINS.stop
         ][keep[SWAPI_FINE_SWEEP_BINS]]
-        # Interpolate against bin index — this matches how the model rate
-        # varies smoothly with the underlying voltage along the contiguous
-        # high-V fine bins.
         order = np.argsort(bins_keep)
         return (
             fine_dense_step,
@@ -779,7 +725,6 @@ def _make_plot(
             ok & (bin_indices >= SWAPI_FINE_SWEEP_BINS.start) & (v > 100.0)
         )
 
-        # Data points: ESA step on x for both sub-axes.
         ax_c.semilogy(
             bin_indices[coarse_mask],
             np.maximum(cr[coarse_mask], 0.1),
@@ -801,7 +746,6 @@ def _make_plot(
             label="L2 fine-sweep bin" if draw_legend else None,
         )
 
-        # Coarse model curve (x = ESA step, sorted by step ascending).
         coarse_steps = bin_indices[coarse_mask]
         for curve, color, ls, label in (
             (s_curve, color_full, "-", "Fit (bins 1..71, incl. fine sweep)"),
@@ -815,8 +759,6 @@ def _make_plot(
                 lw=1.4,
                 label=label if draw_legend else None,
             )
-            # Fine model curve (densely sampled in step over the contiguous
-            # proton-peak fine bins).
             x_dense, y_dense = _dense_fine(curve, v)
             ax_f.semilogy(
                 x_dense,
@@ -868,7 +810,6 @@ def _make_plot(
             )
             e_over_q_eV = SWAPI_K_FACTOR * v_at_peak
             log10_rate = float(np.log10(max(peak_rate, 1.0)))
-            # ESA step on x for both sub-axes.
             x_marker = peak_bin
             sub_ax.plot(
                 [x_marker],
@@ -880,11 +821,6 @@ def _make_plot(
                 zorder=5,
                 label=marker_label if draw_legend else None,
             )
-            # Use blended transform: x in data coords (so the text sits over
-            # the marker) and y in axes-fraction coords (so it's reliably
-            # placed near the top of the panel regardless of y-limit).
-            from matplotlib.transforms import blended_transform_factory
-
             text_transform = blended_transform_factory(
                 sub_ax.transData, sub_ax.transAxes
             )
@@ -908,7 +844,6 @@ def _make_plot(
         panel = panel_axes[i]
         _draw(panel, cr, s_curve, c_curve, v, draw_legend=(i == 0))
         _add_peak_markers(panel, cr, v, draw_legend=(i == 0))
-        # Left sub-axis is fine; ylabel goes there since fine is leftmost.
         panel[1].set_ylabel(f"{panel_titles[i]}\nrate (Hz)", fontsize=9)
 
     avg_v = np.where(np.isnan(avg_voltage), 0.0, avg_voltage)
@@ -917,15 +852,12 @@ def _make_plot(
     last_panel_idx = len(panel_axes) - 1
     seam_color = "k"
     for i, (ax_c, ax_f) in enumerate(panel_axes):
-        # Both sub-axes: x = ESA step, linear, reversed so step descends
-        # L→R (71→66 on fine, 62→1 on coarse).
         ax_f.set_xscale("linear")
         ax_f.set_xlim(fine_step_hi + 0.5, 65.5)
         ax_c.set_xscale("linear")
         ax_c.set_xlim(SWAPI_FINE_SWEEP_BINS.start - 0.5, 0.5)
         ax_f.set_ylim(max(0.1, peak * 1e-5), peak * 60)
 
-        # Solid black seam between fine (left) and coarse (right).
         ax_f.spines["right"].set_visible(True)
         ax_f.spines["right"].set_color(seam_color)
         ax_f.spines["right"].set_linewidth(1.0)
@@ -945,13 +877,9 @@ def _make_plot(
             ax_f.tick_params(labelbottom=True, bottom=True)
             ax_c.tick_params(labelbottom=True, bottom=True)
         else:
-            # Hide bottom x-tick labels on every panel except the last so the
-            # annotations on the panel below don't collide with tick labels.
             ax_f.tick_params(labelbottom=False)
             ax_c.tick_params(labelbottom=False)
 
-    # Top secondary x-axis on Sweep 1 with voltage labels at selected step
-    # positions, on both sub-axes.
     fine_label_bins = [b for b in [66, 68, 70, 71] if avg_v[b] > 0]
     coarse_label_bins = [b for b in [1, 5, 10, 20, 30, 40, 50, 60] if avg_v[b] > 0]
     ax_c_top, ax_f_top = panel_axes[0]
@@ -978,10 +906,9 @@ def _make_plot(
         bbox_to_anchor=(0.5, -0.02),
     )
 
-    # Reserve room at the bottom for the legend.
-    fig.tight_layout(rect=[0, 0.05, 1.0, 1.0])
-    _OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    out = _OUTPUT_DIR / "real_data_fit.svg"
+    fig.tight_layout(rect=(0.0, 0.05, 1.0, 1.0))
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+    out = FIGURES_DIR / "real_data_fit.svg"
     fig.savefig(out, bbox_inches="tight")
     print(f"\nSaved {out}")
 
