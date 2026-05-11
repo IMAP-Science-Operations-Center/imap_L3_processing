@@ -389,12 +389,12 @@ class TestProtonChunkFitterFitChunk(SpiceTestCase):
         self.assertEqual(result["quality_flags"], SwapiL3Flags.EPHEMERIS_GAP)
         _assert_all_nan(self, result, _PROTON_SCALAR_KEYS, _PROTON_ARRAY_KEYS)
 
-    def test_nan_in_count_rate_short_circuits_without_setting_flag(self):
-        """A NaN in the count rate short-circuits the fit to NaN outputs but leaves the quality flag as NONE (an upstream L2 flag, not a fit failure)."""
+    def test_nan_in_count_rate_short_circuits_with_fit_failed(self):
+        """A NaN in the count rate short-circuits the fit to NaN outputs and flags FIT_FAILED."""
         result = ProtonChunkFitter().fit_chunk(
             _with_nan_at(self.chunk, 0, 5), _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN
         )
-        self.assertEqual(result["quality_flags"], SwapiL3Flags.NONE)
+        self.assertEqual(int(result["quality_flags"]), int(SwapiL3Flags.FIT_FAILED))
         _assert_all_nan(self, result, _PROTON_SCALAR_KEYS, _PROTON_ARRAY_KEYS)
 
 
@@ -607,12 +607,12 @@ class TestPuiProtonChunkFitterFitChunk(SpiceTestCase):
         self.assertEqual(int(result["quality_flags"]), int(SwapiL3Flags.EPHEMERIS_GAP))
         self._assert_all_ufloats_nan(result)
 
-    def test_nan_count_rate_short_circuits_with_nan_ufloats_and_none_flag(self):
-        """A NaN in the PUI count rate short-circuits to NaN UFloat outputs but leaves the quality flag as NONE (the NaN propagates from L2, not from a fit failure)."""
+    def test_nan_count_rate_short_circuits_with_fit_failed(self):
+        """A NaN in the PUI count rate short-circuits to NaN UFloat outputs and flags FIT_FAILED."""
         result = PuiProtonChunkFitter().fit_chunk(
             _with_nan_at(self.chunk, 0, 5), _CHUNK_EPOCH, self.rotations
         )
-        self.assertEqual(result["quality_flags"], SwapiL3Flags.NONE)
+        self.assertEqual(int(result["quality_flags"]), int(SwapiL3Flags.FIT_FAILED))
         self._assert_all_ufloats_nan(result)
 
 

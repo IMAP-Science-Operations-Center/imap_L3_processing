@@ -118,13 +118,13 @@ class ProtonChunkFitter(ChunkFitter):
         bulk_velocity_rtn_sun = np.full(3, np.nan)
         bulk_velocity_rtn_sc = np.full(3, np.nan)
         velocity_covariance = np.full((3, 3), np.nan)
-        quality_flag = SwapiL3Flags.NONE
+        quality_flag = SwapiL3Flags.FIT_FAILED
         try:
             if rotation_matrices is None:
-                quality_flag |= SwapiL3Flags.EPHEMERIS_GAP
+                quality_flag = SwapiL3Flags.EPHEMERIS_GAP
                 raise ValueError("Missing rotation matrices")
             if sc_velocity_rtn is None:
-                quality_flag |= SwapiL3Flags.EPHEMERIS_GAP
+                quality_flag = SwapiL3Flags.EPHEMERIS_GAP
                 raise ValueError("Missing spacecraft velocity")
             if np.any(
                 np.isnan(data_chunk.coincidence_count_rate[:, SWAPI_COARSE_SWEEP_BINS])
@@ -133,7 +133,7 @@ class ProtonChunkFitter(ChunkFitter):
             result = _fit_proton(
                 data_chunk, epoch, SWAPI_SCIENCE_BINS, rotation_matrices
             )
-            quality_flag |= result.bad_fit_flag
+            quality_flag = result.bad_fit_flag
             speed, clock_angle, deflection_angle = derive_velocity_angles(
                 result.bulk_velocity_rtn, epoch
             )
@@ -164,7 +164,8 @@ class ProtonChunkFitter(ChunkFitter):
             )
         except Exception:
             logger.info(
-                f"Missing SPICE information at epoch {epoch}, continuing with fill value"
+                f"Proton fit exception at epoch {epoch}; using NaN fill",
+                exc_info=True,
             )
         return dict(
             epoch=epoch,
@@ -300,10 +301,10 @@ class PuiProtonChunkFitter(ChunkFitter):
         speed = ufloat(np.nan, np.nan)
         clock_angle = ufloat(np.nan, np.nan)
         deflection_angle = ufloat(np.nan, np.nan)
-        quality_flag = SwapiL3Flags.NONE
+        quality_flag = SwapiL3Flags.FIT_FAILED
         try:
             if rotation_matrices is None:
-                quality_flag |= SwapiL3Flags.EPHEMERIS_GAP
+                quality_flag = SwapiL3Flags.EPHEMERIS_GAP
                 raise ValueError("Missing rotation matrices")
             if np.any(
                 np.isnan(data_chunk.coincidence_count_rate[:, SWAPI_COARSE_SWEEP_BINS])
@@ -312,13 +313,14 @@ class PuiProtonChunkFitter(ChunkFitter):
             result = _fit_proton(
                 data_chunk, epoch, SWAPI_SCIENCE_BINS, rotation_matrices
             )
-            quality_flag |= result.bad_fit_flag
+            quality_flag = result.bad_fit_flag
             speed, clock_angle, deflection_angle = derive_velocity_angles(
                 result.bulk_velocity_rtn, epoch
             )
         except Exception:
             logger.info(
-                f"Missing SPICE information at epoch {epoch}, continuing with fill value"
+                f"PUI proton fit exception at epoch {epoch}; using NaN fill",
+                exc_info=True,
             )
         return dict(
             proton_sw_speed=speed,
