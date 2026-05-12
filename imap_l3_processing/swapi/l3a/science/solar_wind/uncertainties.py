@@ -18,42 +18,17 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.optimizer import (
 def compute_hc3_parameter_covariance(
     jacobian: ndarray, residuals: ndarray
 ) -> ndarray:
-    """HC3 sandwich estimator of the (p×p) parameter covariance for an
-    unweighted least-squares fit.
-
-    Computes ``(JᵀJ)⁺ · (Jᵀ W J) · (JᵀJ)⁺`` with the HC3 inner weights
-    ``W = diag(r_i² / (1 − h_ii)²)``, where ``h_ii = J_i · (JᵀJ)⁺ · J_iᵀ``
-    are the hat-matrix diagonals. The ``(1 − h_ii)⁻²`` reweight corrects the
-    finite-sample bias that the LM stationarity condition (``Jᵀ r = 0``)
-    induces on ``r_i²`` at high-leverage rows — typically a small set of bins
-    near the peak that carry most of the parameter information, so HC0
-    understates σ by ~10–25% on SWAPI fits. Hayes & Cai (2007) recommends
-    HC3 for small effective N.
-
-    Parameters
-    ----------
-    jacobian : ndarray, shape (n_residuals, n_params)
-        Analytic residual Jacobian at the converged solution.
-    residuals : ndarray, shape (n_residuals,)
-        Per-bin residuals ``pred − obs`` at the converged solution.
-
-    Returns
-    -------
-    ndarray, shape (n_params, n_params)
-        Sandwich covariance. Returns an all-NaN matrix of the same shape if
-        ``JᵀJ`` is rank-deficient (``np.linalg.LinAlgError``).
-    """
     n_params = jacobian.shape[1]
     try:
         JT_J_pseudoinverse = np.linalg.pinv(jacobian.T @ jacobian)
-        leverage = np.einsum(
-            "ki,ij,kj->k",
+        h_matrix = np.einsum(
+            "ki,ij,jk->k",
             jacobian,
             JT_J_pseudoinverse,
-            jacobian,
+            jacobian.T,
         )
-        leverage_clipped = np.clip(leverage, 0.0, 0.9999)
-        hc3_weights = (residuals / (1.0 - leverage_clipped)) ** 2
+        h_matrix_clipped = np.clip(h_matrix, 0.0, 0.9999)
+        hc3_weights = (residuals / (1.0 - h_matrix_clipped)) ** 2
         sandwich_middle = np.einsum(
             "ki,k,kj->ij", jacobian, hc3_weights, jacobian
         )
