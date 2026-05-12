@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
+from spacepy import pycdf
 from uncertainties import ufloat
 
 from imap_l3_processing.constants import (
@@ -129,7 +130,7 @@ class AlphaChunkFitter(ChunkFitter):
             rm = get_swapi_geometry(measurement_times(chunk, SWAPI_SCIENCE_BINS))
         except Exception:
             logger.info(
-                f"Missing SPICE information at epoch {epoch}, continuing with fill value"
+                f"Missing SPICE information at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}, continuing with fill value"
             )
             rm = None
         b_hat = compute_direction_of_mean_magnetic_field_over_chunk(
@@ -171,7 +172,7 @@ def _proton_moments_from_fit(result, epoch, data_chunk, sc_velocity_rtn):
         sun_speed_nom, sun_speed_unc = sun_speed.nominal_value, sun_speed.std_dev
     else:
         logger.warning(
-            f"Proton fit at epoch {epoch}: missing spacecraft velocity; sun-frame outputs are fill values"
+            f"Proton fit at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}: missing spacecraft velocity; sun-frame outputs are fill values"
         )
         bulk_velocity_rtn_sun = np.full(3, np.nan)
         velocity_covariance_sun = np.full((3, 3), np.nan)
@@ -279,12 +280,12 @@ def _fit_proton(
 ) -> ProtonSolarWindFitResult:
     if rotation_matrices is None:
         logger.warning(
-            f"Proton fit at epoch {epoch}: missing rotation matrices; using fill values"
+            f"Proton fit at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}: missing rotation matrices; using fill values"
         )
         return _nan_proton_result(SwapiL3Flags.NONE)
     if np.any(np.isnan(data_chunk.coincidence_count_rate[:, SWAPI_SCIENCE_BINS])):
         logger.warning(
-            f"Proton fit at epoch {epoch}: NaN in input count rate; using fill values"
+            f"Proton fit at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}: NaN in input count rate; using fill values"
         )
         return _nan_proton_result(SwapiL3Flags.NONE)
     swapi_response = _shared["swapi_response"]
@@ -304,7 +305,7 @@ def _fit_proton(
         result = fit_solar_wind_proton_model(ctx)
     except Exception:
         logger.warning(
-            f"Proton fit at epoch {epoch}: exception during fit; using fill values",
+            f"Proton fit at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}: exception during fit; using fill values",
             exc_info=True,
         )
         return _nan_proton_result(SwapiL3Flags.FIT_ERROR)
@@ -358,7 +359,7 @@ def _fit_alpha(
         or not np.all(np.isfinite(magnetic_field_direction))
     ):
         logger.warning(
-            f"Alpha fit at epoch {epoch}: missing or non-finite magnetic field direction; using fill values"
+            f"Alpha fit at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}: missing or non-finite magnetic field direction; using fill values"
         )
         return AlphaSolarWindFitResult(
             alpha_moments=_nan_alpha_moments(SwapiL3Flags.NONE),
@@ -402,7 +403,7 @@ def _fit_alpha(
         )
     except Exception:
         logger.warning(
-            f"Alpha fit at epoch {epoch}: exception during fit; using fill values",
+            f"Alpha fit at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}: exception during fit; using fill values",
             exc_info=True,
         )
         return AlphaSolarWindFitResult(

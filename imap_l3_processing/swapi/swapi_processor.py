@@ -3,6 +3,7 @@ from dataclasses import replace
 
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
+from spacepy import pycdf
 from uncertainties import ufloat
 from uncertainties.unumpy import uarray
 
@@ -196,7 +197,7 @@ class SwapiProcessor(Processor):
                 )
             except Exception:
                 logger.info(
-                    f"Exception occurred at epoch {epoch}, continuing with fill value",
+                    f"Exception occurred at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}, continuing with fill value",
                     exc_info=True,
                 )
             pui_epochs.append(epoch)
