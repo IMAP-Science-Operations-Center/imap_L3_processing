@@ -227,12 +227,6 @@ def select_mag_path(
     dependencies: ProcessingInputCollection,
     descriptor: str,
 ) -> tuple[Optional[Path], Optional[str]]:
-    """Pick a MAG path preferring L2 over L1D for a given descriptor.
-
-    Both MAG products share the same descriptor and are disambiguated by
-    `data_type`. Returns (downloaded_path, level) where level is "l2" or
-    "l1d", or (None, None) if neither is present.
-    """
     science_files = dependencies.processing_input
     for level in ("l2", "l1d"):
         match = next(
