@@ -20,12 +20,8 @@ from imap_l3_processing.swapi.response.passband_grid import (
 from imap_l3_processing.swapi.response.swapi_response import ResponseGrid
 
 
-# OA azimuth-trim parameters (`trim_oa_azimuth_by_integrand`).
 OA_SCAN_THRESHOLD = 1e-6
 OA_SCAN_RESOLUTION = 64
-
-# Drop the OA region entirely when its (cheap) rate upper bound falls below
-# this fraction of the SG rate, or below 0.1 Hz absolute.
 OA_SKIP_FRACTION = 1e-3
 
 
@@ -40,9 +36,6 @@ def trim_oa_azimuth_by_integrand(
     azimuth_hi: float,
     sg_rate: float,
 ):
-    # Returns the trimmed (min_az, max_az), or (0.0, 0.0) when the OA region
-    # should be skipped — either because the trim collapses, or because the
-    # cheap rate upper bound is negligible vs. SG already accumulated this step.
     if azimuth_hi <= azimuth_lo:
         return 0.0, 0.0
 
@@ -53,7 +46,6 @@ def trim_oa_azimuth_by_integrand(
         response_grid, sw_params, rotation_matrix, scan_azimuths, scan_elevation
     )
 
-    # narrow window to where T(φ)·M(φ) > OA_SCAN_THRESHOLD · max, padded one bin out
     threshold = OA_SCAN_THRESHOLD * np.max(transmission_x_maxwellian)
     n = transmission_x_maxwellian.shape[0]
     lower_index = 0
@@ -67,7 +59,6 @@ def trim_oa_azimuth_by_integrand(
             upper_index = min(i + 1, n - 1)
             break
 
-    # ∫ T·M dφ in degree-units; the deg→rad factor is applied in `count_rate_prefactor`
     dphi_deg = scan_azimuths[1] - scan_azimuths[0]
     transmission_az_integral = float(np.trapezoid(
         transmission_x_maxwellian[lower_index : upper_index + 1], dx=dphi_deg
@@ -101,12 +92,10 @@ def _evaluate_oa_integrand_along_azimuth(
     cos_bulk_el = math.cos(np.radians(bulk_el))
     sin_scan_el = math.sin(np.radians(scan_elevation))
     cos_scan_el = math.cos(np.radians(scan_elevation))
-    # spherical law of cosines: angle between scan view and bulk view
     cos_view_to_bulk = (
         sin_bulk_el * sin_scan_el + cos_bulk_el * cos_scan_el
         * np.cos(np.radians(scan_azimuths - bulk_az))
     )
-    # |v_view − v_bulk|² with |v_view| = central_speed and |v_bulk| = speed
     delta_v_sq = (
         central_speed**2 + speed**2 - 2.0 * central_speed * speed * cos_view_to_bulk
     )

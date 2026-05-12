@@ -73,17 +73,6 @@ def _nan_alpha_moments(flag: int) -> AlphaSolarWindMoments:
 
 
 class _AlphaEvaluator:
-    """Computes Stage-2 residuals and the analytic 3-column Jacobian in
-    (log n_α, log T_α, Δv) space from a single forward-model evaluation,
-    caching the last (residuals, jacobian) so scipy's separate `fun` and
-    `jac` callbacks share one call per state.
-
-    Builds the 3-D Jacobian from the 5-D forward-model Jacobian
-    (∂R_α/∂[log n_α, log T_α, v_R, v_T, v_N]) by the chain rule on
-    v_α = v_p + Δv·B̂, then folds the deadtime chain factor 𝒟² for the
-    summed proton+alpha observable (see `docs/swapi/solar-wind-moments.md`
-    § Deadtime correction)."""
-
     def __init__(
         self,
         proton_bulk: ndarray,
@@ -160,7 +149,6 @@ def fit_solar_wind_alpha_moments(
     if not np.all(np.isfinite(magnetic_field_direction)):
         return _nan_alpha_moments(bad_fit_flag)
 
-    # SPICE shared with Stage 1 if provided; otherwise compute here.
     if rotation_matrices is None:
         from imap_l3_processing.swapi.l3a.utils import get_swapi_geometry
 
@@ -185,7 +173,6 @@ def fit_solar_wind_alpha_moments(
         mass_per_charge_m_p_per_e=ALPHA_MASS_PER_CHARGE_M_P_PER_E,
     )
 
-    # Frozen pre-deadtime proton model rate. Deadtime acts on (proton + alpha) below.
     proton_true_rate, _ = model_solar_wind_ideal_coincidence_rates(
         SolarWindParams(
             density=proton_moments.density.nominal_value,
@@ -196,7 +183,6 @@ def fit_solar_wind_alpha_moments(
         proton_ctx,
     )
 
-    # Initial guess from the alpha bump after subtracting the deadtime-applied proton bg.
     initial_guess = _alpha_initial_guess(
         proton_true_rate=proton_true_rate,
         proton_temperature=proton_moments.temperature.nominal_value,
@@ -210,9 +196,6 @@ def fit_solar_wind_alpha_moments(
     n0, T0, dv0, peak_bin_idx = initial_guess
     proton_bulk = proton_bulk_rtn
 
-    # Subset all per-measurement arrays to only the alpha peak bins across
-    # all sweeps, so LM fits the alpha bump rather than the proton-dominated
-    # tails (which create an n↓/T↑ degeneracy).
     n_sweeps, n_bins = _infer_sweep_layout(esa_voltage)
     peak_flat_idx = np.concatenate([peak_bin_idx + s * n_bins for s in range(n_sweeps)])
     count_rate_peak = count_rate[peak_flat_idx]
@@ -274,8 +257,6 @@ def _alpha_initial_guess(
     proton_bulk_velocity_rtn: ndarray,
     magnetic_field_direction: ndarray,
 ) -> Optional[tuple]:
-    """Return (n_α, T_α, Δv=0, peak_bin_indices) as a starting point for LM, or None if peak-finding fails."""
-
     n_meas = len(alpha_ctx.esa_voltage)
     if n_meas == 0:
         return None
