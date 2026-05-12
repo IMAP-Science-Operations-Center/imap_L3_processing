@@ -440,7 +440,7 @@ The state vector is
 ```
 with $`\mathbf{v}_{b}^{\text{SC}} = (v_{R}, v_{T}, v_{N})`$ in the spacecraft RTN frame. Density and temperature are parameterized in log-space to keep them positive throughout optimization.
 
-The fit uses `scipy.optimize.least_squares` with the Levenberg–Marquardt method (settings: `method='lm'`, `xtol=1e-4`, `diff_step=1e-4`). Residuals are unweighted over all retained bins:
+The fit uses `scipy.optimize.least_squares` with the Levenberg–Marquardt method (`method='lm'`, `xtol=1e-4`). Residuals are unweighted over all retained bins:
 ```math
 r_{i} = C_{i}^{\text{observed}} - C_{i},
 ```
