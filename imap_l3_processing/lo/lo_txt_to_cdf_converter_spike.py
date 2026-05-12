@@ -1,129 +1,173 @@
-from imap_l3_processing.hi.utils import read_glows_l3e_data
-from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies
-from imap_l3_processing.maps.map_descriptors import parse_map_descriptor
-from imap_l3_processing.maps.map_models import RectangularIntensityMapData, IntensityMapData, RectangularCoords, InputRectangularPointingSet, GlowsL3eRectangularMapInputData, RectangularIntensityDataProduct
+import dataclasses
+import shutil
+from datetime import datetime
+from typing import Self
+
+from imap_data_access import ProcessingInputCollection, ScienceFilePath
+from imap_data_access.processing_input import generate_imap_input
+from imap_processing.hit.l1b.constants import FILLVAL_INT64
+
 import numpy as np
-from imap_l3_processing.maps.survival_probability_processing import process_survival_probabilities
-from imap_l3_processing.utils import save_data
-from imap_processing.ena_maps.ena_maps import RectangularPointingSet
+from imap_processing.cdf.utils import write_cdf as write_l2_cdf
+from imap_processing.ena_maps.ena_maps import RectangularSkyMap
 from imap_processing.spice.geometry import SpiceFrame
+
+from imap_l3_processing.lo.l3.lo_sp_initializer import LO_SP_MAP_KERNELS
+from imap_l3_processing.lo.lo_processor import LoProcessor
+from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.utils import furnish_spice_metakernel
 from tests.test_helpers import get_test_data_path, get_run_local_data_path
 from pathlib import Path
 import pandas
+import xarray as xr
+from imap_l3_processing.constants import TT2000_EPOCH
+import re
+import imap_data_access
 
-class LoTxtToCDFConverter:
-    def create_map_data(self, input_path: Path) -> RectangularIntensityMapData:
-        data_types = [
-            "flux",
-            "fvar",
-            "bflux",
-            "bfvar",
-            "expo",
-        ]
+LO_ENERGIES_IN_KEV = np.array([16.33, 30.47, 55.76, 106.3, 200.0, 405.0, 787.3]) / 1000.0
+LO_ENERGY_BIN_LOWERS = np.array([10.9, 20.4, 36.8, 71.6, 135.0, 269.0, 504.7]) / 1000.0
+LO_ENERGY_BIN_UPPERS = np.array([21.7, 40.5, 74.7, 140.9, 265.0, 541.0, 1069.9]) / 1000.0
 
+@dataclasses.dataclass
+class LoProcessingInput:
+    l2_cdf_path: Path
+    repoints: list[int]
+    start_date: datetime
+    end_date: datetime
+
+    @classmethod
+    def read_from_txt_data(cls, input_path: Path, output_descriptor: str) -> Self:
         loaded_data = {}
+        for data_file_path in input_path.iterdir():
+            if fn_match := re.match("map_([a-zA-Z]+)_esa(\d{1}).csv", data_file_path.name):
+                data_type, energy_level = fn_match.groups()
+                if data_type not in loaded_data:
+                    loaded_data[data_type] = np.full((1, 7, 60, 30), np.nan)
 
-        for data_type in data_types:
-            loaded_data[data_type] = np.full((1, 7, 60, 30), np.nan)
+                esa_step = int(energy_level) - 1
+                loaded_data[data_type][0, esa_step] = np.loadtxt(data_file_path, delimiter=",", skiprows=1).T
 
-            for data_file_path in input_path.glob(f"*_{data_type}.txt"):
-                esa_step = int(data_file_path.name.split('-')[1][0]) - 1
-                loaded_data[data_type][0, esa_step] = np.loadtxt(data_file_path, skiprows=28).T
+        manifest_df = pandas.read_csv(input_path / "map_l1b_manifest_esa1.csv")
+        l1c_times = pandas.to_datetime(manifest_df["date_yyyymmdd"], format="%Y%m%d")
+
+        start_date = min(l1c_times)
+        end_date = max(l1c_times)
+
+        start_date_nanoseconds = (start_date - TT2000_EPOCH).total_seconds() * 1e9
+        end_date_nanoseconds = (end_date - TT2000_EPOCH).total_seconds() * 1e9
 
         longitude = np.linspace(3, 357, 60)
-        longitude_delta = np.full((60,), 3)
         latitude = np.linspace(-87, 87, 30)
-        latitude_delta = np.full((30,), 3)
 
-        intensity_data = IntensityMapData(
-            ena_intensity = loaded_data["flux"],
-            ena_intensity_stat_uncert = loaded_data["fvar"],
-            ena_intensity_sys_err = loaded_data["fvar"],
-            bg_intensity = loaded_data["bflux"],
-            bg_intensity_stat_uncert = loaded_data["bfvar"],
-            bg_intensity_sys_err = loaded_data["bfvar"],
-            epoch=np.array([0]),
-            epoch_delta=np.array([0]),
-            energy=np.arange(1, 8, 1),
-            energy_delta_plus=np.full((7,), 1.),
-            energy_delta_minus=np.full((7,), 0),
-            energy_label=[f"ESA {i}" for i in range(1, 8)],
-            latitude=latitude,
-            longitude=longitude,
-            exposure_factor=loaded_data["expo"],
-            obs_date=np.full((1, 7, 60, 30), np.nan),
-            obs_date_range=np.full((1, 7, 60, 30), np.nan),
-            solid_angle=np.full((1, 7, 60, 30), np.nan),
-        )
-        coords = RectangularCoords(
-            latitude_delta=latitude_delta,
-            latitude_label=[str(i) for i in latitude],
-            longitude_delta=longitude_delta,
-            longitude_label=[str(i) for i in longitude],
+        map_data_coords = ["epoch", "energy", "longitude", "latitude"]
+        l2_dataset = xr.Dataset(
+            data_vars={
+                "ena_intensity": (map_data_coords, loaded_data["flux"]),
+                "ena_intensity_stat_uncert": (map_data_coords, np.sqrt(loaded_data["fvar"])),
+                "ena_intensity_sys_err": (map_data_coords, np.sqrt(loaded_data["fvar"])),
+                "bg_intensity": (map_data_coords, loaded_data["bflux"]),
+                "bg_intensity_stat_uncert": (map_data_coords, np.sqrt(loaded_data["bfvar"])),
+                "bg_intensity_sys_err": (map_data_coords, np.sqrt(loaded_data["bfvar"])),
+                "exposure_factor": (map_data_coords, loaded_data["expo"]),
+                "obs_date": (map_data_coords, np.full((1, 7, 60, 30), FILLVAL_INT64)),
+                "obs_date_range": (map_data_coords, np.full((1, 7, 60, 30), np.nan)),
+                "solid_angle": (["epoch", "longitude", "latitude"], np.full((1, 60, 30), np.nan)),
+                "energy_delta_minus": (["energy"], LO_ENERGIES_IN_KEV - LO_ENERGY_BIN_LOWERS),
+                "energy_delta_plus": (["energy"], LO_ENERGY_BIN_UPPERS - LO_ENERGIES_IN_KEV),
+            },
+            coords={
+                "epoch": np.array([start_date_nanoseconds]),
+                "energy": LO_ENERGIES_IN_KEV,
+                "longitude": longitude,
+                "latitude": latitude,
+            },
         )
 
-        return RectangularIntensityMapData(
-            intensity_map_data=intensity_data,
-            coords=coords,
+        skymap = RectangularSkyMap(6, SpiceFrame.ECLIPJ2000)
+        skymap.max_epoch = int(end_date_nanoseconds)
+        skymap.min_epoch = int(start_date_nanoseconds)
+
+        l2_dataset_with_metadata = skymap.build_cdf_dataset(
+            instrument="lo",
+            level="l2",
+            descriptor=output_descriptor,
+            external_map_dataset=l2_dataset,
+        )
+        version = "001"
+        l2_dataset_with_metadata.attrs["Data_version"] = version
+
+        repoints = list(manifest_df["repoint"])
+
+        l2_cdf_path = ScienceFilePath.generate_from_inputs(
+            instrument="lo",
+            data_level="l2",
+            descriptor=output_descriptor,
+            start_time=start_date.strftime("%Y%m%d"),
+            version=f"v{version}",
+            repointing=None,
+        ).construct_path()
+
+        if not l2_cdf_path.exists():
+            l2_cdf_path = write_l2_cdf(l2_dataset_with_metadata)
+
+        return cls(
+            l2_cdf_path=l2_cdf_path,
+            repoints=repoints,
+            start_date=start_date,
+            end_date=end_date,
         )
 
-    def create_pset_data(self, input_path: Path) -> InputRectangularPointingSet:
-        reshaped_pset = pandas.read_csv(input_path).pivot(index="esa_level", columns="bins")
+    def to_processing_input_collection(self, glows_input: list[Path]) -> ProcessingInputCollection:
+        l1c_results = imap_data_access.query(instrument="lo", data_level="l1c", version="latest")
+        l1c_file_names = [Path(l1c["file_path"]).name for l1c in l1c_results if l1c["repointing"] in self.repoints]
 
-        assert np.all()
+        glows_input = [Path(fp).name for fp in glows_input]
 
-        hae_longitude = reshaped_pset["bin_ecl_lon"].to_numpy()
-        hae_latitude = reshaped_pset["bin_ecl_lat"].to_numpy()
-        return InputRectangularPointingSet(
-            epoch=0,
-            epoch_delta=0,
-            epoch_j2000=0,
-            repointing=217,
-            exposure_times=reshaped_pset["expo"].to_numpy()[np.newaxis, ...],
-            esa_energy_step=np.arange(1, 8, 1),
-            pointing_start_met=0,
-            pointing_end_met=0,
-            hae_longitude=hae_longitude[:1, :],
-            hae_latitude=hae_latitude[:1, :]
-        )
+        inputs = [self.l2_cdf_path.name] + l1c_file_names + glows_input
+        return ProcessingInputCollection(*(generate_imap_input(fn) for fn in inputs))
+
+def filter_glows_data_for_lo_inputs(glows_input_dir: Path, repoints: list[int]) -> list[Path]:
+    filtered_glows_data = []
+    for fp in glows_input_dir.rglob("*.cdf"):
+        science_file = ScienceFilePath(fp)
+        if science_file.descriptor == "survival-probability-lo" and science_file.repointing in repoints:
+            filtered_glows_data.append(fp)
+    return filtered_glows_data
 
 if __name__ == "__main__":
-    map_descriptor = "l090-ena-h-sf-sp-ram-hae-6deg-1yr"
-    spice_frame = SpiceFrame.ECLIPJ2000
+    output_data_path = get_run_local_data_path("lo_txt_pipeline")
+    # shutil.rmtree(output_data_path, ignore_errors=True)
+    imap_data_access.config["DATA_DIR"] = output_data_path
 
-    l2_path = get_test_data_path("lo/lo_txt_pipeline/output/soc")
-    l1c_path = get_test_data_path("lo/lo_txt_pipeline/output/map.csv")
-    glows_data_path = get_run_local_data_path("glows_l3bcde_with_prod_l2/imap/glows/l3e/2025/12/imap_glows_l3e_survival-probability-lo_20251212-repoint00076_v001.cdf")
+    glows_data_dir = get_run_local_data_path("glows_l3bcde_with_prod_l2/imap/glows/l3e")
 
-    converter = LoTxtToCDFConverter()
-    l2_data = converter.create_map_data(l2_path)
-    l1c_data = converter.create_pset_data(l1c_path)
-    glows_data = read_glows_l3e_data(glows_data_path)
-    glows_data.repointing = 217
+    ram_masked_maps_path = get_test_data_path("lo/lo_txt_pipeline/3S5_l1b_ram_maps")
 
-    lo_survival_deps = HiLoL3SurvivalDependencies(
-        l2_data=l2_data,
-        l1c_data=[l1c_data],
-        glows_l3e_data=[glows_data],
-        l2_map_descriptor_parts=parse_map_descriptor(map_descriptor)
-    )
+    for pivot in (90, 105, 75):
+        descriptor = f"l{pivot:03d}-ena-h-sf-sp-ram-hae-6deg-1yr"
 
-    survival_corrected_data = process_survival_probabilities(lo_survival_deps, spice_frame_name=spice_frame)
+        csv_maps_path = ram_masked_maps_path / "outdir" / f"pivot_{pivot}" / "maps"
+        lo_txt_input = LoProcessingInput.read_from_txt_data(csv_maps_path, descriptor)
+        print(lo_txt_input.repoints)
+        glows_input_paths = filter_glows_data_for_lo_inputs(glows_data_dir, lo_txt_input.repoints)
 
-    input_metadata = InputMetadata(
-        instrument="lo",
-        data_level="l3",
-        start_date="20260101",
-        end_date="20270101",
-        version="v001",
-        descriptor=map_descriptor
-    )
+        for glows_input_path in glows_input_paths:
+            glows_path_in_data_dir = ScienceFilePath(Path(glows_input_path).name).construct_path()
+            glows_path_in_data_dir.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(glows_input_path, glows_path_in_data_dir)
 
-    data_product = RectangularIntensityDataProduct(
-        input_metadata=input_metadata,
-        data=survival_corrected_data,
-        spice_frame_name=spice_frame
-    )
+        processor = LoProcessor(
+            dependencies=lo_txt_input.to_processing_input_collection(glows_input_paths),
+            input_metadata=InputMetadata(
+                instrument="lo",
+                data_level="l3",
+                start_date=lo_txt_input.start_date,
+                end_date=lo_txt_input.end_date,
+                version="v001",
+                descriptor=descriptor
+            )
+        )
 
-    print(save_data(data_product))
+        furnish_spice_metakernel(lo_txt_input.start_date, lo_txt_input.end_date, LO_SP_MAP_KERNELS)
 
+        print("Produced: ", processor.process())
