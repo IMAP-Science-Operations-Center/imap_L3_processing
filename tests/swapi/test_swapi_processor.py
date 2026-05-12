@@ -35,11 +35,13 @@ class TestSwapiProcessor(TestCase):
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3ADependencies')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_pickup_ion_values')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_ten_minute_velocities')
+    @patch('imap_l3_processing.swapi.swapi_processor.rotate_rtn_to_dps')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_helium_pui_density')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_helium_pui_temperature')
     @patch('imap_l3_processing.processor.spiceypy')
     def test_process_l3a_pui(self, mock_spicepy, mock_calculate_helium_pui_temperature,
                              mock_calculate_helium_pui_density,
+                             mock_rotate_rtn_to_dps,
                              mock_calculate_ten_minute_velocities, mock_calculate_pickup_ion,
                              mock_swapi_l3_dependencies_class,
                              mock_parallel_chunk_runner_class,
@@ -58,16 +60,16 @@ class TestSwapiProcessor(TestCase):
 
         mock_spicepy.ktotal.return_value = 0
 
-        returned_proton_sw_speed = 400000.0
-        returned_proton_sw_clock_angle = 200.0
-        returned_proton_sw_deflection_angle = 5.0
+        returned_chunk_epoch = 10 + THIRTY_SECONDS_IN_NANOSECONDS
+        returned_bulk_velocity_rtn_sc = np.array([370.0, 10.0, 5.0])
+        rotated_velocity_dps = np.array([330.0, 12.0, 4.0])
         runner_result = dict(
-            proton_sw_speed=np.array([returned_proton_sw_speed]),
-            proton_sw_clock_angle=np.array([returned_proton_sw_clock_angle]),
-            proton_sw_deflection_angle=np.array([returned_proton_sw_deflection_angle]),
+            epoch=np.array([returned_chunk_epoch]),
+            proton_sw_bulk_velocity_rtn_sc=np.array([returned_bulk_velocity_rtn_sc]),
             quality_flags=np.array([SwapiL3Flags.NONE]),
         )
         mock_parallel_chunk_runner_class.return_value.run.return_value = runner_result
+        mock_rotate_rtn_to_dps.return_value = rotated_velocity_dps
 
         initial_epoch = 10
 
@@ -178,10 +180,14 @@ class TestSwapiProcessor(TestCase):
         self.assertEqual(expected_fitting_params, passed_in_fitting_params)
         self.assertEqual(mock_helium_inflow_vector, helium_inflow_vector)
 
-        mock_calculate_ten_minute_velocities.assert_called_with([returned_proton_sw_speed],
-                                                                [returned_proton_sw_deflection_angle],
-                                                                [returned_proton_sw_clock_angle],
-                                                                [SwapiL3Flags.NONE])
+        mock_rotate_rtn_to_dps.assert_called_once()
+        rotate_args = mock_rotate_rtn_to_dps.call_args.args
+        np.testing.assert_array_equal(rotate_args[0], returned_bulk_velocity_rtn_sc)
+        self.assertEqual(rotate_args[1], returned_chunk_epoch)
+
+        ten_min_args = mock_calculate_ten_minute_velocities.call_args.args
+        np.testing.assert_array_equal(ten_min_args[0], np.array([rotated_velocity_dps]))
+        self.assertEqual(ten_min_args[1], [SwapiL3Flags.NONE])
         mock_manager.add_global_attribute.assert_has_calls([call("Data_version", outgoing_version),
                                                             call("Generation_date",
                                                                  date.today().strftime("%Y%m%d")),
@@ -229,15 +235,14 @@ class TestSwapiProcessor(TestCase):
         chunk_of_fifty = SwapiL2Data(epoch, energy, coincidence_count_rate,
                                      coincidence_count_rate_uncertainty)
 
-        runner_quality_flag = SwapiL3Flags.FIT_FAILED
+        runner_quality_flag = SwapiL3Flags.FIT_ERROR
         mock_parallel_chunk_runner_class.return_value.run.return_value = dict(
-            proton_sw_speed=np.array([400000.0]),
-            proton_sw_clock_angle=np.array([200.0]),
-            proton_sw_deflection_angle=np.array([5.0]),
+            epoch=np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]),
+            proton_sw_bulk_velocity_rtn_sc=np.array([[400.0, 10.0, 5.0]]),
             quality_flags=np.array([runner_quality_flag]),
         )
 
-        ten_min_quality_flag = SwapiL3Flags.STALE_PROTON
+        ten_min_quality_flag = SwapiL3Flags.BAD_FIT
         mock_calculate_ten_minute_velocities.return_value = (
             np.array([[17, 18, 19]]), np.array([ten_min_quality_flag]))
 
@@ -246,13 +251,14 @@ class TestSwapiProcessor(TestCase):
         mock_calculate_helium_pui_density.return_value = 5
         mock_calculate_helium_pui_temperature.return_value = 6
 
-        input_metadata = InputMetadata('swapi', 'l3a', datetime(2025, 6, 12), datetime(2025, 6, 13), 'v123')
-        swapi_processor = SwapiProcessor(Mock(), input_metadata)
-        product = swapi_processor.process_l3a_pui(data=chunk_of_fifty, dependencies=Mock())
+        with patch('imap_l3_processing.swapi.swapi_processor.rotate_rtn_to_dps', return_value=np.array([330.0, 12.0, 4.0])):
+            input_metadata = InputMetadata('swapi', 'l3a', datetime(2025, 6, 12), datetime(2025, 6, 13), 'v123')
+            swapi_processor = SwapiProcessor(Mock(), input_metadata)
+            product = swapi_processor.process_l3a_pui(data=chunk_of_fifty, dependencies=Mock())
 
         # The runner's per-window proton-fit quality flag is passed through to calculate_ten_minute_velocities.
         self.assertEqual([runner_quality_flag],
-                         mock_calculate_ten_minute_velocities.call_args.args[3])
+                         mock_calculate_ten_minute_velocities.call_args.args[1])
 
         # The output flag is the OR of the per-window proton flag (returned by ten-min) and the per-window PUI fit flag.
         np.testing.assert_array_equal(
@@ -398,11 +404,13 @@ class TestSwapiProcessor(TestCase):
         mock_write_cdf.assert_called_once_with(str(expected_cdf_path), proton_solar_wind_data, mock_manager)
         self.assertEqual([expected_cdf_path], product)
 
+    @patch('imap_l3_processing.swapi.swapi_processor.rotate_rtn_to_dps', return_value=np.array([np.nan, np.nan, np.nan]))
     @patch('imap_l3_processing.swapi.swapi_processor.ParallelChunkRunner')
     @patch('imap_l3_processing.swapi.swapi_processor.calculate_ten_minute_velocities')
     def test_process_l3a_pui_outputs_fill_for_chunks_with_fill(self,
                                                                mock_calculate_ten_minute_velocities,
-                                                               mock_parallel_chunk_runner_class):
+                                                               mock_parallel_chunk_runner_class,
+                                                               mock_rotate_rtn_to_dps):
         instrument = 'swapi'
         end_date = datetime(2025, 6, 13)
         outgoing_data_level = "l3a"
@@ -421,9 +429,8 @@ class TestSwapiProcessor(TestCase):
 
         mock_runner = mock_parallel_chunk_runner_class.return_value
         mock_runner.run.return_value = dict(
-            proton_sw_speed=np.array([np.nan]),
-            proton_sw_clock_angle=np.array([np.nan]),
-            proton_sw_deflection_angle=np.array([np.nan]),
+            epoch=np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]),
+            proton_sw_bulk_velocity_rtn_sc=np.array([[np.nan, np.nan, np.nan]]),
             quality_flags=np.array([SwapiL3Flags.NONE]),
         )
         mock_calculate_ten_minute_velocities.return_value = (
@@ -508,9 +515,6 @@ class TestSwapiProcessor(TestCase):
             alpha_sw_delta_v=np.array([12.0]),
             alpha_sw_delta_v_uncert=np.array([1.0]),
             alpha_sw_b_hat_rtn=np.array([[1.0, 0.0, 0.0]]),
-            alpha_sw_reference_proton_density=np.array([5.0]),
-            alpha_sw_reference_proton_temperature=np.array([99000.0]),
-            alpha_sw_reference_proton_velocity_rtn=np.array([[400.0, 5.0, 1.0]]),
             bad_fit_flag=np.array([int(SwapiL3Flags.NONE)]),
         )
         mock_runner = mock_parallel_chunk_runner_class.return_value
@@ -855,7 +859,7 @@ class TestSwapiProcessor(TestCase):
     def test_process_l3a_alpha_ors_preliminary_mag_flag_when_mag_is_preliminary(
             self, mock_chunk_l2_data, mock_parallel_chunk_runner_class,
             mock_alpha_solar_wind_data_constructor):
-        existing_flag = int(SwapiL3Flags.HI_CHI_SQ)
+        existing_flag = int(SwapiL3Flags.BAD_FIT)
         runner_result = dict(
             epoch=np.array([10]),
             alpha_sw_density=np.array([0.15]),

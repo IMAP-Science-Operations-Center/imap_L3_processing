@@ -232,12 +232,13 @@ class _SyntheticAlphaSpectrumFixture:
 
 
 class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
-    """Tests for `fit_solar_wind_alpha_moments` — pre-fit guard branches (Stage-1 failure, missing/non-finite MAG B̂) must short-circuit to a NaN-filled moments result with the correct quality flag before any forward-model evaluation."""
+    """Tests for `fit_solar_wind_alpha_moments` — pre-fit guard branches (proton fill values, missing/non-finite MAG B̂) must short-circuit to a NaN-filled moments result with the proton's flag propagated before any forward-model evaluation."""
 
-    def test_stale_proton_flag_when_stage1_proton_fit_failed(self):
-        """When Stage-1 proton `bad_fit_flag` is `FIT_FAILED`, the alpha result must carry the `STALE_PROTON` flag rather than attempting a Stage-2 fit on an untrustworthy v_p*."""
+    def test_proton_fill_values_propagate_proton_flag_to_alpha(self):
+        """When the Stage-1 proton fit returned NaN moments (fill values), the alpha result inherits the proton's `bad_fit_flag` unchanged — no separate alpha-side flag is added for "stage 1 failed"."""
         proton_moments = _build_proton_fit_result(
-            bad_fit_flag=int(SwapiL3Flags.FIT_FAILED)
+            velocity_rtn=np.array([np.nan, np.nan, np.nan]),
+            bad_fit_flag=int(SwapiL3Flags.FIT_ERROR),
         )
         result = fit_solar_wind_alpha_moments(
             count_rate=np.zeros(_N_MEAS),
@@ -252,12 +253,13 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
             proton_effective_area_scale=1.0,
             rotation_matrices=_identity_rotation_matrices(),
         )
-        self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.STALE_PROTON))
+        self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.FIT_ERROR))
 
-    def test_stale_proton_returns_nan_filled_moments(self):
-        """When Stage-1 fails, every alpha moment field is filled with NaN so downstream consumers can distinguish "no fit attempted" from "fit succeeded with degenerate values"."""
+    def test_proton_fill_values_return_nan_filled_alpha_moments(self):
+        """When the Stage-1 proton fit returned NaN moments, every alpha moment field is filled with NaN so downstream consumers can distinguish "no fit attempted" from "fit succeeded with degenerate values"."""
         proton_moments = _build_proton_fit_result(
-            bad_fit_flag=int(SwapiL3Flags.FIT_FAILED)
+            velocity_rtn=np.array([np.nan, np.nan, np.nan]),
+            bad_fit_flag=int(SwapiL3Flags.FIT_ERROR),
         )
         result = fit_solar_wind_alpha_moments(
             count_rate=np.zeros(_N_MEAS),
@@ -272,8 +274,8 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
         )
         _assert_moments_are_nan_filled(self, result)
 
-    def test_fit_failed_flag_when_magnetic_field_direction_has_nans(self):
-        """A NaN component in `magnetic_field_direction` marks a MAG gap; Stage-2 has no field-aligned constraint to apply, so the fitter short-circuits with `FIT_FAILED` (the upstream `MAG_GAP` flag is set by the chunk fitter, not here)."""
+    def test_fit_error_flag_when_magnetic_field_direction_has_nans(self):
+        """A NaN component in `magnetic_field_direction` marks a MAG gap; Stage-2 has no field-aligned constraint to apply, so the fitter short-circuits with `FIT_ERROR`. The chunk fitter NaN-fills the chunk on this path and does not set any dedicated MAG-gap flag."""
         proton_moments = _build_proton_fit_result()
         nan_b_hat = np.array([np.nan, 0.0, 0.0])
         result = fit_solar_wind_alpha_moments(
@@ -287,7 +289,7 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
             proton_effective_area_scale=1.0,
             rotation_matrices=_identity_rotation_matrices(),
         )
-        self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.FIT_FAILED))
+        self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.FIT_ERROR))
 
     def test_nan_magnetic_field_direction_returns_nan_filled_moments(self):
         """A NaN B̂ short-circuits before any forward-model call and every moment field is filled with NaN, mirroring the Stage-1-failure guard."""
@@ -449,7 +451,7 @@ class TestFitAlphaMomentsRecoversTruth(
         )
 
     def test_recovers_signed_delta_v(self):
-        """The fitted Δv matches the truth in magnitude and sign — pins the wrong-basin flip's ability to recover the correct basin from a Δv=0 seed."""
+        """The fitted Δv matches the truth in magnitude and sign — LM recovers the correct basin from the Δv=0 seed."""
         np.testing.assert_allclose(
             self.result.delta_v.nominal_value, _TRUE_DELTA_V_KM_S, atol=0.5
         )
@@ -631,9 +633,9 @@ class TestFitAlphaMomentsGeometryFallback(unittest.TestCase):
             mock_get_geometry.call_args.args[0], measurement_time
         )
         # The mocked initial guess returned `None`, so the fitter
-        # short-circuited to a FIT_FAILED moments result — proving it
+        # short-circuited to a FIT_ERROR moments result — proving it
         # reached the initial-guess step (i.e. did not crash on geometry).
-        self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.FIT_FAILED))
+        self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.FIT_ERROR))
 
 
 # ----- fit_solar_wind_alpha_moments — peak-bin filtering -------------------
@@ -704,87 +706,14 @@ class TestFitAlphaMomentsPeakBinFiltering(
         )
 
 
-# ----- fit_solar_wind_alpha_moments — wrong-basin flip ---------------------
-
-
-class TestFitAlphaMomentsWrongBasinFlip(unittest.TestCase):
-    """Tests for `fit_solar_wind_alpha_moments` — wrong-basin flip: after LM-1, the fitter evaluates residuals at `−Δv` and reruns LM from the flipped seed if the flipped MSE is strictly smaller; the final result is whichever converged."""
-
-    def test_lm_runs_a_second_time_when_flipped_residual_is_lower(self):
-        """When the residual at the sign-flipped Δv is smaller than LM-1's MSE, the fitter calls `least_squares` a second time from the flipped seed and reports the LM-2 result (here, Δv = -30 after LM-1 converged to +30)."""
-        proton_moments = _build_proton_fit_result()
-
-        # LM-1 result: Δv = +30, residual norm² / N = 100.0.
-        lm1_x = np.array([np.log(0.2), np.log(4.0e5), 30.0])
-        lm1_fun = np.full(_N_MEAS, np.sqrt(100.0))
-        lm1_jac = np.zeros((_N_MEAS, 3))
-        lm1_jac[0, 0] = 1.0
-        lm1_jac[0, 1] = 1.0
-        lm1_jac[0, 2] = 1.0
-        lm1_result = MagicMock()
-        lm1_result.x = lm1_x
-        lm1_result.fun = lm1_fun
-        lm1_result.jac = lm1_jac
-        lm1_result.success = True
-
-        # LM-2 result: Δv = -30, residual norm² / N = 1.0.
-        lm2_x = np.array([np.log(0.2), np.log(4.0e5), -30.0])
-        lm2_fun = np.full(_N_MEAS, 1.0)
-        lm2_jac = np.zeros((_N_MEAS, 3))
-        lm2_jac[0, 0] = 1.0
-        lm2_jac[0, 1] = 1.0
-        lm2_jac[0, 2] = 1.0
-        lm2_result = MagicMock()
-        lm2_result.x = lm2_x
-        lm2_result.fun = lm2_fun
-        lm2_result.jac = lm2_jac
-        lm2_result.success = True
-
-        # Patch the evaluator's residuals method so the flipped-residual
-        # MSE check (called between LM-1 and LM-2) returns a smaller MSE
-        # than LM-1's own residual norm. The function under test computes
-        # `mse_flipped = mean(evaluator.residuals(x_flipped)**2)`. We
-        # control this via a residual function that returns 1.0 for any
-        # call (so squared-mean is 1.0 < 100.0).
-        with patch.object(
-            alpha_module,
-            "_alpha_initial_guess",
-            return_value=(0.2, 4.0e5, 0.0, np.array([10, 11, 12])),
-        ), patch.object(
-            alpha_module._AlphaEvaluator,
-            "residuals",
-            return_value=np.full(_N_MEAS, 1.0),
-        ), patch.object(
-            alpha_module.scipy.optimize,
-            "least_squares",
-            side_effect=[lm1_result, lm2_result],
-        ) as mock_lm:
-            result = fit_solar_wind_alpha_moments(
-                count_rate=np.full(_N_MEAS, 100.0),
-                esa_voltage=_FIVE_SWEEP_VOLTAGE,
-                measurement_time=np.zeros(_N_MEAS),
-                swapi_response=_load_swapi_response_with_warm_cache(),
-                proton_moments=proton_moments,
-                magnetic_field_direction=_B_HAT_RTN,
-                alpha_effective_area_scale=1.0,
-                proton_effective_area_scale=1.0,
-                rotation_matrices=_identity_rotation_matrices(),
-            )
-
-        self.assertEqual(mock_lm.call_count, 2)
-        lm2_x0 = mock_lm.call_args_list[1].args[1]
-        self.assertEqual(lm2_x0[2], -30.0)
-        self.assertAlmostEqual(result.delta_v.nominal_value, -30.0, places=10)
-
-
 # ----- fit_solar_wind_alpha_moments — non-converged LM ---------------------
 
 
 class TestFitAlphaMomentsLMFailureFlag(unittest.TestCase):
-    """Tests for `fit_solar_wind_alpha_moments` — when LM does not converge (`result.success=False`), the moments still carry LM's best-effort values but `FIT_FAILED` is added to the quality flag so downstream consumers can distrust them."""
+    """Tests for `fit_solar_wind_alpha_moments` — when LM does not converge (`result.success=False`), the chunk is rejected: every moment is NaN-filled and `FIT_ERROR` is set."""
 
-    def test_fit_failed_flag_set_when_least_squares_does_not_converge(self):
-        """A non-converged LM result sets `FIT_FAILED` on the output but still populates the moments (density not NaN) so downstream code can inspect what LM produced."""
+    def test_fit_error_flag_set_when_least_squares_does_not_converge(self):
+        """A non-converged LM result triggers the fit-quality guard: density and the other moments are NaN-filled and `FIT_ERROR` is reported alone."""
         proton_moments = _build_proton_fit_result()
 
         x_fit = np.array([np.log(0.2), np.log(4.0e5), 30.0])
@@ -799,10 +728,6 @@ class TestFitAlphaMomentsLMFailureFlag(unittest.TestCase):
         non_converged.jac = jac
         non_converged.success = False
 
-        # Force the wrong-basin check to *not* trigger (mse_flipped >= mse)
-        # so only one LM call happens and the result is the non-converged one.
-        # Returning identical residuals everywhere makes mse == mse_flipped,
-        # so the `<` check fails.
         with patch.object(
             alpha_module,
             "_alpha_initial_guess",
@@ -828,15 +753,72 @@ class TestFitAlphaMomentsLMFailureFlag(unittest.TestCase):
                 rotation_matrices=_identity_rotation_matrices(),
             )
 
-        self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.FIT_FAILED))
-        self.assertFalse(np.isnan(result.density.nominal_value))
+        self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.FIT_ERROR))
+        self.assertTrue(np.isnan(result.density.nominal_value))
+
+
+class TestFitAlphaMomentsHighTemperatureFlag(unittest.TestCase):
+    """Tests for `fit_solar_wind_alpha_moments` — when LM converges with a fitted alpha temperature above 5e5 K, the fit is flagged `BAD_FIT` and its moments are NaN-filled (not rejected as `FIT_ERROR`, but not retained either)."""
+
+    def test_bad_fit_flag_when_alpha_temperature_above_threshold(self):
+        """A converged Stage-2 result whose `T_α` exceeds 5e5 K is flagged `BAD_FIT` and the moments are NaN-filled."""
+        proton_moments = _build_proton_fit_result()
+
+        too_hot_alpha_temperature = 6.0e5
+        x_fit = np.array(
+            [np.log(_TRUE_ALPHA_DENSITY_CM3), np.log(too_hot_alpha_temperature), 0.0]
+        )
+        residuals_norm = np.full(_N_MEAS, 1.0)
+        jac = np.zeros((_N_MEAS, 3))
+        jac[0, 0] = 1.0
+        jac[0, 1] = 1.0
+        jac[0, 2] = 1.0
+        converged = MagicMock()
+        converged.x = x_fit
+        converged.fun = residuals_norm
+        converged.jac = jac
+        converged.success = True
+
+        with patch.object(
+            alpha_module,
+            "_alpha_initial_guess",
+            return_value=(
+                _TRUE_ALPHA_DENSITY_CM3,
+                too_hot_alpha_temperature,
+                0.0,
+                np.array([10, 11, 12]),
+            ),
+        ), patch.object(
+            alpha_module._AlphaEvaluator,
+            "residuals",
+            return_value=np.full(_N_MEAS, 1.0),
+        ), patch.object(
+            alpha_module.scipy.optimize,
+            "least_squares",
+            return_value=converged,
+        ):
+            result = fit_solar_wind_alpha_moments(
+                count_rate=np.full(_N_MEAS, 100.0),
+                esa_voltage=_FIVE_SWEEP_VOLTAGE,
+                measurement_time=np.zeros(_N_MEAS),
+                swapi_response=_load_swapi_response_with_warm_cache(),
+                proton_moments=proton_moments,
+                magnetic_field_direction=_B_HAT_RTN,
+                alpha_effective_area_scale=1.0,
+                proton_effective_area_scale=1.0,
+                rotation_matrices=_identity_rotation_matrices(),
+            )
+
+        self.assertTrue(result.bad_fit_flag & int(SwapiL3Flags.BAD_FIT))
+        self.assertFalse(result.bad_fit_flag & int(SwapiL3Flags.FIT_ERROR))
+        _assert_moments_are_nan_filled(self, result)
 
 
 # ----- fit_solar_wind_alpha_moments — initial-guess failure branches -------
 
 
 class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
-    """Tests for `fit_solar_wind_alpha_moments` — failure branches inside `_alpha_initial_guess` and `_infer_sweep_layout` that return None, causing the public function to short-circuit to a `FIT_FAILED` NaN-filled result."""
+    """Tests for `fit_solar_wind_alpha_moments` — failure branches inside `_alpha_initial_guess` and `_infer_sweep_layout` that return None, causing the public function to short-circuit to a `FIT_ERROR` NaN-filled result."""
 
     def _call(self, *, count_rate, esa_voltage, rotation_matrices=None):
         if rotation_matrices is None:
@@ -857,30 +839,30 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
             rotation_matrices=rotation_matrices,
         )
 
-    def _assert_fit_failed_nan(self, result):
-        self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.FIT_FAILED))
+    def _assert_fit_error_nan(self, result):
+        self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.FIT_ERROR))
         _assert_moments_are_nan_filled(self, result)
 
-    def test_empty_count_rate_and_voltage_returns_fit_failed(self):
-        """Empty input arrays return a `FIT_FAILED` NaN-filled result."""
+    def test_empty_count_rate_and_voltage_returns_fit_error(self):
+        """Empty input arrays return a `FIT_ERROR` NaN-filled result."""
         result = self._call(
             count_rate=np.zeros(0),
             esa_voltage=np.zeros(0),
             rotation_matrices=np.zeros((0, 3, 3)),
         )
-        self._assert_fit_failed_nan(result)
+        self._assert_fit_error_nan(result)
 
-    def test_non_periodic_voltage_axis_returns_fit_failed(self):
-        """When `_infer_sweep_layout` cannot find an `n_sweeps` such that the voltage axis is periodic (e.g. 310 distinct strictly-decreasing values), it returns `(None, None)` and the fitter short-circuits to `FIT_FAILED`."""
+    def test_non_periodic_voltage_axis_returns_fit_error(self):
+        """When `_infer_sweep_layout` cannot find an `n_sweeps` such that the voltage axis is periodic (e.g. 310 distinct strictly-decreasing values), it returns `(None, None)` and the fitter short-circuits to `FIT_ERROR`."""
         voltage = np.logspace(np.log10(3500.0), np.log10(140.0), _N_MEAS)
         result = self._call(
             count_rate=np.zeros(_N_MEAS),
             esa_voltage=voltage,
         )
-        self._assert_fit_failed_nan(result)
+        self._assert_fit_error_nan(result)
 
-    def test_non_monotonic_voltage_raises_in_peak_finder_and_returns_fit_failed(self):
-        """A non-monotonic per-sweep voltage axis violates `get_alpha_peak_indices`'s decreasing-energies assertion; the `try/except Exception` in `_alpha_initial_guess` catches it and the fitter returns `FIT_FAILED`."""
+    def test_non_monotonic_voltage_raises_in_peak_finder_and_returns_fit_error(self):
+        """A non-monotonic per-sweep voltage axis violates `get_alpha_peak_indices`'s decreasing-energies assertion; the `try/except Exception` in `_alpha_initial_guess` catches it and the fitter returns `FIT_ERROR`."""
         one_sweep = _ONE_SWEEP_VOLTAGE.copy()
         # Swap two adjacent bins to break monotonicity while keeping
         # periodicity (the same swap is tiled across all sweeps).
@@ -890,10 +872,10 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
             count_rate=np.ones(_N_MEAS),
             esa_voltage=voltage,
         )
-        self._assert_fit_failed_nan(result)
+        self._assert_fit_error_nan(result)
 
-    def test_short_peak_window_returns_fit_failed(self):
-        """When `get_alpha_peak_indices` returns a slice with fewer than 3 bins, `_alpha_initial_guess` returns `None` and the fitter reports `FIT_FAILED`."""
+    def test_short_peak_window_returns_fit_error(self):
+        """When `get_alpha_peak_indices` returns a slice with fewer than 3 bins, `_alpha_initial_guess` returns `None` and the fitter reports `FIT_ERROR`."""
         with patch.object(
             alpha_module,
             "get_alpha_peak_indices",
@@ -903,9 +885,9 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
                 count_rate=np.ones(_N_MEAS),
                 esa_voltage=_FIVE_SWEEP_VOLTAGE,
             )
-        self._assert_fit_failed_nan(result)
+        self._assert_fit_error_nan(result)
 
-    def test_no_positive_residual_at_peak_returns_fit_failed(self):
+    def test_no_positive_residual_at_peak_returns_fit_error(self):
         """When the residual `count_avg − 2·proton_bg_avg` has no positive entry inside the peak window (e.g. count_rate=0 everywhere), `_alpha_initial_guess` returns `None`."""
         with patch.object(
             alpha_module,
@@ -916,9 +898,9 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
                 count_rate=np.zeros(_N_MEAS),
                 esa_voltage=_FIVE_SWEEP_VOLTAGE,
             )
-        self._assert_fit_failed_nan(result)
+        self._assert_fit_error_nan(result)
 
-    def test_non_positive_unit_alpha_denominator_returns_fit_failed(self):
+    def test_non_positive_unit_alpha_denominator_returns_fit_error(self):
         """When the unit-density alpha forward model evaluates to ~0 at every peak bin (peak slice placed in the highest-voltage bins, far above the alpha resonance), `denom <= 0` and `_alpha_initial_guess` returns `None`."""
         # Inject a positive residual at the chosen peak bins by overriding
         # count_rate at those locations, then place the peak slice in the
@@ -938,12 +920,12 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
                 count_rate=count_rate,
                 esa_voltage=_FIVE_SWEEP_VOLTAGE,
             )
-        self._assert_fit_failed_nan(result)
+        self._assert_fit_error_nan(result)
 
 
 # Doc contracts intentionally not pinned here: upstream-set quality flags
-# (`PRELIMINARY_MAG`, `MAG_GAP`, `EPHEMERIS_GAP`) belong in chunk-fitter /
-# processor tests, and the LM-jacobian-derived sigmas (`σ_n_α`, `σ_T_α`,
+# (`PRELIMINARY_MAG`) belong in chunk-fitter / processor tests, and the
+# LM-jacobian-derived sigmas (`σ_n_α`, `σ_T_α`,
 # `σ_Δv`) plus the `Σ_v_α = Σ_v_p + σ_Δv²·B̂B̂ᵀ` covariance update would
 # require an independent numerical reference to pin without coupling to
 # scipy version drift.

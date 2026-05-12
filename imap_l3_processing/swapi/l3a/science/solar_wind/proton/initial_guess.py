@@ -28,7 +28,7 @@ INITIAL_TEMPERATURE_FLOOR_K = (
 )
 
 
-def _esa_voltage_to_proton_speed(esa_voltage: ArrayLike) -> np.ndarray:
+def esa_voltage_to_proton_speed(esa_voltage: ArrayLike) -> np.ndarray:
     return (
         np.sqrt(
             2
@@ -42,7 +42,7 @@ def _esa_voltage_to_proton_speed(esa_voltage: ArrayLike) -> np.ndarray:
 
 
 def calculate_initial_guess(ctx: SolarWindFitContext) -> SolarWindParams:
-    speed = _esa_voltage_to_proton_speed(ctx.esa_voltage)
+    speed = esa_voltage_to_proton_speed(ctx.esa_voltage)
 
     peak_idx = np.nanargmax(ctx.count_rate)
     bulk_speed_seed = float(speed[peak_idx])

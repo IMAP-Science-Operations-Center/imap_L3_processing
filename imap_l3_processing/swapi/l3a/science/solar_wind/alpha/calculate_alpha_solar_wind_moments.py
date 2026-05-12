@@ -32,11 +32,14 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.uncertainties import (
     compute_hc3_parameter_covariance,
     make_correlated_velocity,
+    r_squared,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.utils import (
     get_alpha_peak_indices,
 )
-from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
+from imap_l3_processing.swapi.constants import (
+    SWAPI_K_FACTOR,
+)
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 
@@ -145,22 +148,25 @@ def fit_solar_wind_alpha_moments(
     proton_effective_area_scale: float,
     rotation_matrices: Optional[ndarray] = None,
 ) -> AlphaSolarWindMoments:
-    # Guard: stage 1 failed → don't trust v_p*.
-    if int(proton_moments.bad_fit_flag) != int(SwapiL3Flags.NONE):
-        return _nan_alpha_moments(SwapiL3Flags.STALE_PROTON)
+    proton_bad_fit_flag = int(proton_moments.bad_fit_flag)
+    proton_bulk_rtn = proton_moments.bulk_velocity_rtn_nominal()
+
+    # Proton fit returned fill values → no v_p* to anchor Stage 2.
+    # Carry the proton flag through unchanged; no separate alpha-side flag.
+    if not np.all(np.isfinite(proton_bulk_rtn)):
+        return _nan_alpha_moments(proton_bad_fit_flag)
 
     if len(esa_voltage) == 0:
-        return _nan_alpha_moments(SwapiL3Flags.FIT_FAILED)
+        return _nan_alpha_moments(proton_bad_fit_flag | int(SwapiL3Flags.FIT_ERROR))
 
-    proton_bulk_rtn = proton_moments.bulk_velocity_rtn_nominal()
-    bad_fit_flag = SwapiL3Flags.NONE
+    bad_fit_flag = proton_bad_fit_flag
 
-    # MAG required: per-chunk gaps (NaN b_hat) → FIT_FAILED.
+    # MAG required: per-chunk gaps (NaN b_hat) → FIT_ERROR.
     # No Parker-spiral substitution; MAG presence at file level is enforced
     # by the alpha-sw processor branch.
     magnetic_field_direction = np.asarray(magnetic_field_direction, dtype=float)
     if not np.all(np.isfinite(magnetic_field_direction)):
-        return _nan_alpha_moments(SwapiL3Flags.FIT_FAILED)
+        return _nan_alpha_moments(bad_fit_flag | int(SwapiL3Flags.FIT_ERROR))
 
     # SPICE shared with Stage 1 if provided; otherwise compute here.
     if rotation_matrices is None:
@@ -207,7 +213,7 @@ def fit_solar_wind_alpha_moments(
         magnetic_field_direction=magnetic_field_direction,
     )
     if initial_guess is None:
-        return _nan_alpha_moments(bad_fit_flag | SwapiL3Flags.FIT_FAILED)
+        return _nan_alpha_moments(bad_fit_flag | SwapiL3Flags.FIT_ERROR)
 
     n0, T0, dv0, peak_bin_idx = initial_guess
     proton_bulk = proton_bulk_rtn
@@ -236,25 +242,16 @@ def fit_solar_wind_alpha_moments(
         evaluator.residuals, x0, jac=evaluator.jacobian, method="lm"
     )
 
-    # Wrong-basin: signed-Δv flip (1-DOF basin ambiguity along B̂).
-    mse = float(np.mean(result.fun**2))
-    x_flipped = result.x.copy()
-    x_flipped[2] = -x_flipped[2]
-    mse_flipped = float(np.mean(evaluator.residuals(x_flipped) ** 2))
-    if mse_flipped < mse:
-        result = scipy.optimize.least_squares(
-            evaluator.residuals,
-            x_flipped,
-            jac=evaluator.jacobian,
-            method="lm",
-        )
-
     n_a_fit = float(np.exp(result.x[0]))
     T_a_fit = float(np.exp(result.x[1]))
     dv_fit = float(result.x[2])
     bulk_velocity_rtn = proton_bulk + dv_fit * magnetic_field_direction
+
     if not result.success:
-        bad_fit_flag |= SwapiL3Flags.FIT_FAILED
+        return _nan_alpha_moments(bad_fit_flag | SwapiL3Flags.FIT_ERROR)
+
+    if r_squared(result.fun, alpha_ctx_peak.count_rate) < 0.9 or T_a_fit > 5.0e5:
+        return _nan_alpha_moments(bad_fit_flag | SwapiL3Flags.BAD_FIT)
 
     # HC3 sandwich covariance in (log n, log T, Δv) space — same estimator
     # the proton fit uses (see `solar_wind/uncertainties.py`); leverage-

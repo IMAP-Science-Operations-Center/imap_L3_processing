@@ -850,7 +850,7 @@ class SweProcessor(Processor):
             int, copy=True
         )
         swe_flags = np.where(
-            closest_flags & SwapiL3Flags.FIT_FAILED,
+            closest_flags & SwapiL3Flags.FIT_ERROR,
             SweL3Flags.FALLBACK_SWAPI_SPEED,
             SweL3Flags.NONE,
         )

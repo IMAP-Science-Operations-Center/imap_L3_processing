@@ -88,12 +88,7 @@ def get_swapi_geometry(measurement_time: ndarray) -> ndarray:
 
 
 def rotate_rtn_to_dps(vector_rtn, epoch_tt2000_ns: float):
-    """Rotate a 3-vector from IMAP_RTN into IMAP_DPS at the given TT2000 ns epoch.
-
-    Accepts plain float or `uncertainties.UFloat` components — for object-dtype
-    arrays of correlated UFloats, numpy's matmul preserves correlation tracking
-    so downstream covariance propagation in `derive_velocity_angles` stays
-    consistent with the prior matrix-multiplication implementation."""
+    """Rotate a 3-vector from IMAP_RTN into IMAP_DPS at the given TT2000 ns epoch."""
     et = float(ttj2000ns_to_et(epoch_tt2000_ns))
     return frame_transform(
         et, np.asarray(vector_rtn), SpiceFrame.IMAP_RTN, SpiceFrame.IMAP_DPS

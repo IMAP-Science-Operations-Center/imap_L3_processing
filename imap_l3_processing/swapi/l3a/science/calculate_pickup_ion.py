@@ -148,7 +148,7 @@ def calculate_pickup_ion_values(
     result = minimizer.minimize(method="nelder")
     flags = SwapiL3Flags.NONE
     if result.redchi > 10:
-        flags |= SwapiL3Flags.HI_CHI_SQ
+        flags |= SwapiL3Flags.BAD_FIT
 
     param_vals = result.uvars
     if result.uvars is None:
@@ -601,32 +601,17 @@ def extract_pui_energy_bins(
     )
 
 
-def calculate_solar_wind_velocity_vector(
-    speeds: ndarray, deflection_angle: ndarray, clock_angle: ndarray
-) -> ndarray:
-    elevation_angle = 90 - deflection_angle
-    return calculate_velocity_vector(-speeds, elevation_angle, clock_angle)
-
-
 def calculate_ten_minute_velocities(
-    speeds: ndarray,
-    deflection_angle: ndarray,
-    clock_angle: ndarray,
+    velocity_vectors_dps: ndarray,
     quality_flags: list[SwapiL3Flags],
 ) -> (ndarray, ndarray):
-    velocity_vector = calculate_solar_wind_velocity_vector(
-        speeds, deflection_angle, clock_angle
-    )
-    left_slice = 0
     chunked_velocities = []
     chunked_quality_flags = []
-    while left_slice < len(velocity_vector):
+    for left_slice in range(0, len(velocity_vectors_dps), 10):
         ten_min_slice = slice(left_slice, left_slice + 10)
-        ten_min_quality_flag = np.bitwise_or.reduce(quality_flags[ten_min_slice])
-
-        chunked_velocities.append(np.mean(velocity_vector[ten_min_slice], axis=0))
-        chunked_quality_flags.append(ten_min_quality_flag)
-
-        left_slice += 10
+        chunked_velocities.append(
+            np.mean(velocity_vectors_dps[ten_min_slice], axis=0)
+        )
+        chunked_quality_flags.append(np.bitwise_or.reduce(quality_flags[ten_min_slice]))
 
     return np.array(chunked_velocities), np.array(chunked_quality_flags)

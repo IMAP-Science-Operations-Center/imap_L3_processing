@@ -4,7 +4,7 @@ from dataclasses import replace
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 from uncertainties import ufloat
-from uncertainties.unumpy import uarray, nominal_values
+from uncertainties.unumpy import uarray
 
 from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
 from imap_l3_processing.models import InputMetadata
@@ -13,7 +13,6 @@ from imap_l3_processing.swapi.l3a.chunk_fits import (
     AlphaChunkFitter,
     ParallelChunkRunner,
     ProtonChunkFitter,
-    PuiProtonChunkFitter,
 )
 from imap_l3_processing.swapi.l3a.models import (
     SwapiL3ProtonSolarWindData,
@@ -31,7 +30,7 @@ from imap_l3_processing.swapi.constants import (
     SWAPI_L2_K_FACTOR,
 )
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
-from imap_l3_processing.swapi.l3a.utils import chunk_l2_data
+from imap_l3_processing.swapi.l3a.utils import chunk_l2_data, rotate_rtn_to_dps
 from imap_l3_processing.swapi.l3b.models import SwapiL3BCombinedVDF
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_differential_flux import (
     calculate_combined_solar_wind_differential_flux,
@@ -125,12 +124,17 @@ class SwapiProcessor(Processor):
             dependencies.swapi_response, dependencies.efficiency_calibration_table
         )
 
-        pui_proton_results = runner.run(chunks, PuiProtonChunkFitter())
+        pui_proton_results = runner.run(chunks, ProtonChunkFitter())
+        chunk_velocities_dps = np.array([
+            rotate_rtn_to_dps(rtn_velocity, chunk_epoch)
+            for rtn_velocity, chunk_epoch in zip(
+                pui_proton_results["proton_sw_bulk_velocity_rtn_sc"],
+                pui_proton_results["epoch"],
+            )
+        ])
         ten_minute_solar_wind_velocities, proton_sw_quality_flags = (
             calculate_ten_minute_velocities(
-                nominal_values(pui_proton_results["proton_sw_speed"]),
-                nominal_values(pui_proton_results["proton_sw_deflection_angle"]),
-                nominal_values(pui_proton_results["proton_sw_clock_angle"]),
+                chunk_velocities_dps,
                 list(pui_proton_results["quality_flags"]),
             )
         )

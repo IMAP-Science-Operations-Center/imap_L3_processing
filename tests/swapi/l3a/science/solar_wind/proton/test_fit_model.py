@@ -255,10 +255,23 @@ class TestProtonSolarWindFitResultPublicAPI(_ProtonFitFixture):
             )
 
 
-class TestBadFitFlag(unittest.TestCase):
-    """Tests for `fit_solar_wind_proton_model`; bad-fit-flag branch when the optimizer reports failure."""
+class TestQualityFlagBranches(unittest.TestCase):
+    """Tests for `fit_solar_wind_proton_model`; quality-flag branches: optimizer failure → `FIT_ERROR` (NaN moments), high fitted temperature → `BAD_FIT` (moments kept)."""
 
-    def _patch_optimizer_to_return_failed_result(self):
+    @classmethod
+    def setUpClass(cls):
+        _, _, cls.fit_ctx = _build_synthetic_fit_context(
+            truth_params=_truth_params()
+        )
+
+    def _patch_optimizer_with_result(self, optimize_result):
+        return patch(
+            "imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model.optimize_solar_wind_params",
+            return_value=optimize_result,
+        )
+
+    def test_fit_error_flag_when_optimizer_reports_failure(self):
+        """When the underlying optimizer returns `success=False`, the result's bad-fit flag is `SwapiL3Flags.FIT_ERROR` and the moments are NaN-filled."""
         failed_result = OptimizeSolarWindParamsResult(
             sw_params=SolarWindParams(
                 density=1.0,
@@ -272,22 +285,38 @@ class TestBadFitFlag(unittest.TestCase):
             ),
             success=False,
         )
-        return patch(
-            "imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model.optimize_solar_wind_params",
-            return_value=failed_result,
-        )
-
-    @classmethod
-    def setUpClass(cls):
-        _, _, cls.fit_ctx = _build_synthetic_fit_context(
-            truth_params=_truth_params()
-        )
-
-    def test_fit_failed_flag_when_optimizer_reports_failure(self):
-        """When the underlying optimizer returns `success=False`, the result's bad-fit flag is `SwapiL3Flags.FIT_FAILED`."""
-        with self._patch_optimizer_to_return_failed_result():
+        with self._patch_optimizer_with_result(failed_result):
             result = fit_solar_wind_proton_model(self.fit_ctx)
-        self.assertEqual(result.bad_fit_flag, SwapiL3Flags.FIT_FAILED)
+        self.assertEqual(result.bad_fit_flag, SwapiL3Flags.FIT_ERROR)
+        self.assertTrue(np.isnan(result.density.nominal_value))
+        self.assertTrue(np.isnan(result.temperature.nominal_value))
+
+    def test_bad_fit_flag_when_temperature_above_threshold(self):
+        """A converged fit whose temperature exceeds 5e5 K is flagged `BAD_FIT` and its moments are NaN-filled, distinguishing it from a clean fit but matching `FIT_ERROR`'s fill-value contract."""
+        too_hot_temperature = 6.0e5
+        too_hot_result = OptimizeSolarWindParamsResult(
+            sw_params=SolarWindParams(
+                density=_TRUE_DENSITY_CM3,
+                bulk_velocity_rtn=_TRUE_BULK_VELOCITY_RTN_KM_S.copy(),
+                temperature=too_hot_temperature,
+                mass=PROTON_MASS_KG,
+            ),
+            residuals=np.zeros(_N_BINS_PER_SWEEP * _N_SWEEPS),
+            jacobian=np.zeros(
+                (_N_BINS_PER_SWEEP * _N_SWEEPS, N_STATE)
+            ),
+            success=True,
+        )
+        with patch(
+            "imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model.escape_local_minimum",
+            return_value=too_hot_result,
+        ):
+            result = fit_solar_wind_proton_model(self.fit_ctx)
+        self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.BAD_FIT))
+        self.assertTrue(np.isnan(result.density.nominal_value))
+        self.assertTrue(np.isnan(result.temperature.nominal_value))
+        for component in result.bulk_velocity_rtn:
+            self.assertTrue(np.isnan(component.nominal_value))
 
 
 class TestPipelineOrder(unittest.TestCase):

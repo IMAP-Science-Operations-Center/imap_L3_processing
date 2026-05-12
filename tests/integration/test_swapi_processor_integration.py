@@ -50,10 +50,6 @@ class SwapiProcessorIntegration(unittest.TestCase):
             'proton_sw_temperature_uncert': 2008.7198,
             'proton_sw_density': 2.6919234,
             'proton_sw_density_uncert': 0.049627114,
-            'proton_sw_clock_angle': 237.82544,
-            'proton_sw_clock_angle_uncert': 1.9230984,
-            'proton_sw_deflection_angle': 4.661801,
-            'proton_sw_deflection_angle_uncert': 0.10569086,
             'proton_sw_bulk_velocity_rtn_sun': [474.0841, 30.623661, 16.79102],
             'proton_sw_bulk_velocity_rtn_sun_covariance': [[0.1169681, -0.0341877, 0.13108876],
                                                            [-0.0341877, 0.8606747, -0.23923519],
@@ -157,9 +153,6 @@ class SwapiProcessorIntegration(unittest.TestCase):
             'alpha_sw_delta_v',
             'alpha_sw_delta_v_uncert',
             'alpha_sw_b_hat_rtn',
-            'alpha_sw_reference_proton_density',
-            'alpha_sw_reference_proton_temperature',
-            'alpha_sw_reference_proton_velocity_rtn',
             'swp_flags',
         ]
 

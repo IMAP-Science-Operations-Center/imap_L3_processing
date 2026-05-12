@@ -9,9 +9,7 @@ from imap_l3_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, EPOC
     PROTON_SOLAR_WIND_SPEED_SUN_CDF_VAR_NAME, PROTON_SOLAR_WIND_SPEED_SUN_UNCERTAINTY_CDF_VAR_NAME, \
     SwapiL3AlphaSolarWindData, PROTON_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME, \
     PROTON_SOLAR_WIND_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_DENSITY_CDF_VAR_NAME, \
-    PROTON_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_CLOCK_ANGLE_CDF_VAR_NAME, \
-    PROTON_SOLAR_WIND_CLOCK_ANGLE_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_DEFLECTION_ANGLE_CDF_VAR_NAME, \
-    PROTON_SOLAR_WIND_DEFLECTION_ANGLE_UNCERTAINTY_CDF_VAR_NAME, \
+    PROTON_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME, \
     PROTON_SOLAR_WIND_BULK_VELOCITY_RTN_SUN_CDF_VAR_NAME, \
     PROTON_SOLAR_WIND_BULK_VELOCITY_RTN_SUN_COVARIANCE_CDF_VAR_NAME, \
     PROTON_SOLAR_WIND_BULK_VELOCITY_RTN_SC_CDF_VAR_NAME, \
@@ -20,8 +18,7 @@ from imap_l3_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, EPOC
     ALPHA_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME, ALPHA_SOLAR_WIND_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME, \
     ALPHA_SOLAR_WIND_VELOCITY_RTN_CDF_VAR_NAME, ALPHA_SOLAR_WIND_VELOCITY_COVARIANCE_RTN_CDF_VAR_NAME, \
     ALPHA_SOLAR_WIND_DELTA_V_CDF_VAR_NAME, ALPHA_SOLAR_WIND_DELTA_V_UNCERT_CDF_VAR_NAME, \
-    ALPHA_SOLAR_WIND_B_HAT_RTN_CDF_VAR_NAME, ALPHA_SOLAR_WIND_REF_PROTON_DENSITY_CDF_VAR_NAME, \
-    ALPHA_SOLAR_WIND_REF_PROTON_TEMPERATURE_CDF_VAR_NAME, ALPHA_SOLAR_WIND_REF_PROTON_VELOCITY_RTN_CDF_VAR_NAME, \
+    ALPHA_SOLAR_WIND_B_HAT_RTN_CDF_VAR_NAME, \
     SwapiL3PickupIonData, PUI_COOLING_INDEX_CDF_VAR_NAME, \
     PUI_IONIZATION_RATE_CDF_VAR_NAME, PUI_CUTOFF_SPEED_CDF_VAR_NAME, PUI_BACKGROUND_COUNT_RATE_CDF_VAR_NAME, \
     PUI_DENSITY_CDF_VAR_NAME, PUI_TEMPERATURE_CDF_VAR_NAME, PUI_COOLING_INDEX_UNCERTAINTY_CDF_VAR_NAME, \
@@ -47,17 +44,13 @@ class TestModels(CdfModelTestCase):
         temperature_uncert = np.arange(50, step=5.)
         density = np.arange(3, 13, step=1.)
         density_uncert = np.arange(1, step=.1)
-        clock_angle = np.arange(10, step=1.)
-        clock_angle_uncert = np.arange(2, step=.2)
-        deflection_angle = np.arange(100, step=10.)
-        deflection_angle_uncert = np.arange(1, step=.1)
         bulk_v_rtn_sun = np.arange(n * 3, dtype=float).reshape(n, 3)
         bulk_v_rtn_sun_cov = np.arange(n * 9, dtype=float).reshape(n, 3, 3)
         bulk_v_rtn_sc = np.arange(100, 100 + n * 3, dtype=float).reshape(n, 3)
         bulk_v_rtn_sc_cov = np.arange(200, 200 + n * 9, dtype=float).reshape(n, 3, 3)
 
         quality_flags = np.full(n, SwapiL3Flags.NONE)
-        quality_flags[3:5] |= SwapiL3Flags.FIT_FAILED
+        quality_flags[3:5] |= SwapiL3Flags.FIT_ERROR
 
         data = SwapiL3ProtonSolarWindData(
             Mock(), epoch_data,
@@ -65,8 +58,6 @@ class TestModels(CdfModelTestCase):
             speed_sun, speed_sun_uncert,
             temperature, temperature_uncert,
             density, density_uncert,
-            clock_angle, clock_angle_uncert,
-            deflection_angle, deflection_angle_uncert,
             bulk_v_rtn_sun, bulk_v_rtn_sun_cov,
             bulk_v_rtn_sc, bulk_v_rtn_sc_cov,
             quality_flags,
@@ -87,22 +78,15 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(variables[8], density, PROTON_SOLAR_WIND_DENSITY_CDF_VAR_NAME)
         self.assert_variable_attributes(variables[9], density_uncert,
                                         PROTON_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[10], clock_angle, PROTON_SOLAR_WIND_CLOCK_ANGLE_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[11], clock_angle_uncert,
-                                        PROTON_SOLAR_WIND_CLOCK_ANGLE_UNCERTAINTY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[12], deflection_angle,
-                                        PROTON_SOLAR_WIND_DEFLECTION_ANGLE_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[13], deflection_angle_uncert,
-                                        PROTON_SOLAR_WIND_DEFLECTION_ANGLE_UNCERTAINTY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[14], bulk_v_rtn_sun,
+        self.assert_variable_attributes(variables[10], bulk_v_rtn_sun,
                                         PROTON_SOLAR_WIND_BULK_VELOCITY_RTN_SUN_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[15], bulk_v_rtn_sun_cov,
+        self.assert_variable_attributes(variables[11], bulk_v_rtn_sun_cov,
                                         PROTON_SOLAR_WIND_BULK_VELOCITY_RTN_SUN_COVARIANCE_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[16], bulk_v_rtn_sc,
+        self.assert_variable_attributes(variables[12], bulk_v_rtn_sc,
                                         PROTON_SOLAR_WIND_BULK_VELOCITY_RTN_SC_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[17], bulk_v_rtn_sc_cov,
+        self.assert_variable_attributes(variables[13], bulk_v_rtn_sc_cov,
                                         PROTON_SOLAR_WIND_BULK_VELOCITY_RTN_SC_COVARIANCE_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[18], quality_flags, SWAPI_QUALITY_FLAGS_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[14], quality_flags, SWAPI_QUALITY_FLAGS_CDF_VAR_NAME)
 
     def test_getting_alpha_sw_data_product_variables(self):
         epoch_data = np.arange(20, step=2)
@@ -118,12 +102,9 @@ class TestModels(CdfModelTestCase):
         delta_v = np.arange(10, step=1.)
         delta_v_uncert = np.arange(5, step=.5)
         b_hat_rtn = np.arange(100, 100 + n * 3, dtype=float).reshape(n, 3)
-        ref_proton_density = np.arange(3, 13, step=1.)
-        ref_proton_temperature = np.arange(1000, 2000, step=100.)
-        ref_proton_velocity_rtn = np.arange(200, 200 + n * 3, dtype=float).reshape(n, 3)
 
         bad_fit_flag = np.full_like(epoch_data, SwapiL3Flags.NONE)
-        bad_fit_flag[:n // 2] = SwapiL3Flags.HI_CHI_SQ
+        bad_fit_flag[:n // 2] = SwapiL3Flags.BAD_FIT
 
         data = SwapiL3AlphaSolarWindData(
             Mock(), epoch_data,
@@ -132,7 +113,6 @@ class TestModels(CdfModelTestCase):
             velocity_rtn, velocity_cov_rtn,
             delta_v, delta_v_uncert,
             b_hat_rtn,
-            ref_proton_density, ref_proton_temperature, ref_proton_velocity_rtn,
             bad_fit_flag,
         )
         variables = data.to_data_product_variables()
@@ -151,13 +131,7 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(variables[8], delta_v, ALPHA_SOLAR_WIND_DELTA_V_CDF_VAR_NAME)
         self.assert_variable_attributes(variables[9], delta_v_uncert, ALPHA_SOLAR_WIND_DELTA_V_UNCERT_CDF_VAR_NAME)
         self.assert_variable_attributes(variables[10], b_hat_rtn, ALPHA_SOLAR_WIND_B_HAT_RTN_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[11], ref_proton_density,
-                                        ALPHA_SOLAR_WIND_REF_PROTON_DENSITY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[12], ref_proton_temperature,
-                                        ALPHA_SOLAR_WIND_REF_PROTON_TEMPERATURE_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[13], ref_proton_velocity_rtn,
-                                        ALPHA_SOLAR_WIND_REF_PROTON_VELOCITY_RTN_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[14], bad_fit_flag, SWAPI_QUALITY_FLAGS_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[11], bad_fit_flag, SWAPI_QUALITY_FLAGS_CDF_VAR_NAME)
 
     def test_getting_pui_data_product_variables(self):
         epoch_data = np.arange(20, step=2)

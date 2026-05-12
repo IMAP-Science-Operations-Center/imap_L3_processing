@@ -19,6 +19,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.proton.basin_hopping import
 from imap_l3_processing.swapi.l3a.science.solar_wind.uncertainties import (
     derive_uncertainties,
     make_correlated_velocity,
+    r_squared,
 )
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 
@@ -45,6 +46,17 @@ def fit_solar_wind_proton_model(ctx: SolarWindFitContext) -> ProtonSolarWindFitR
 
 
 def _construct_fit_result(final_result, ctx):
+    if not final_result.success:
+        return _nan_proton_fit_result(int(SwapiL3Flags.FIT_ERROR))
+
+    fit_r_squared = r_squared(final_result.residuals, ctx.count_rate)
+    flag_bad = (
+        fit_r_squared < 0.9
+        or final_result.sw_params.temperature > 5.0e5
+    )
+    if flag_bad:
+        return _nan_proton_fit_result(int(SwapiL3Flags.BAD_FIT))
+
     density_sigma, temperature_sigma, velocity_covariance = derive_uncertainties(
         final_result, ctx
     )
@@ -53,12 +65,19 @@ def _construct_fit_result(final_result, ctx):
     bulk_velocity_rtn = make_correlated_velocity(
         final_result.sw_params.bulk_velocity_rtn, velocity_covariance
     )
-    bad_fit_flag = (
-        SwapiL3Flags.NONE if final_result.success else SwapiL3Flags.FIT_FAILED
-    )
     return ProtonSolarWindFitResult(
         density=density,
         temperature=temperature,
         bulk_velocity_rtn=bulk_velocity_rtn,
+        bad_fit_flag=int(SwapiL3Flags.NONE),
+    )
+
+
+def _nan_proton_fit_result(bad_fit_flag: int) -> ProtonSolarWindFitResult:
+    nan = ufloat(np.nan, np.nan)
+    return ProtonSolarWindFitResult(
+        density=nan,
+        temperature=nan,
+        bulk_velocity_rtn=(nan, nan, nan),
         bad_fit_flag=bad_fit_flag,
     )

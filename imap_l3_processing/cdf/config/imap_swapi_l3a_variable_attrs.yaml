@@ -384,76 +384,6 @@ proton_sw_density_uncert:
   VALIDMAX: 150
   FILLVAL: -1.000000e+31
   LABLAXIS: H+ SW density uncertainty
-proton_sw_clock_angle:
-  NAME: proton_sw_clock_angle
-  DATA_TYPE: CDF_REAL4
-  CATDESC: Clock angle of proton solar wind
-  DEPEND_0: epoch
-  VAR_TYPE: data
-  RECORD_VARYING: RV
-  DISPLAY_TYPE: time_series
-  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Clock Angle Of Proton Solar Wind
-  FORMAT: F19.3
-  LABLAXIS: Clock angle of H+ SW
-  UNITS: degrees
-  VALIDMIN: 0
-  VALIDMAX: 360
-  FILLVAL: -1.000000e+31
-  SCALETYP: linear
-  DELTA_PLUS_VAR: proton_sw_clock_angle_uncert
-  DELTA_MINUS_VAR: proton_sw_clock_angle_uncert
-  SCALEMIN: 0
-  SCALEMAX: 360
-proton_sw_clock_angle_uncert:
-  NAME: proton_sw_clock_angle_uncert
-  DATA_TYPE: CDF_REAL4
-  CATDESC: Proton solar wind clock angle uncertainty
-  DEPEND_0: epoch
-  VAR_TYPE: support_data
-  RECORD_VARYING: RV
-  FIELDNAM: Proton Solar Wind Clock Angle Uncertainty
-  FORMAT: F19.3
-  UNITS: degrees
-  VALIDMIN: 0
-  VALIDMAX: 360
-  FILLVAL: -1.000000e+31
-  LABLAXIS: H+ SW clock angle uncertainty
-proton_sw_deflection_angle:
-  NAME: proton_sw_deflection_angle
-  DATA_TYPE: CDF_REAL4
-  CATDESC: Deflection angle of proton solar wind
-  DEPEND_0: epoch
-  VAR_TYPE: data
-  RECORD_VARYING: RV
-  DISPLAY_TYPE: time_series
-  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Deflection Angle Of Proton Solar Wind
-  FORMAT: F19.3
-  LABLAXIS: H+ SW deflection angle
-  UNITS: degrees
-  VALIDMIN: 0
-  VALIDMAX: 180
-  FILLVAL: -1.000000e+31
-  SCALETYP: linear
-  DELTA_PLUS_VAR: proton_sw_deflection_angle_uncert
-  DELTA_MINUS_VAR: proton_sw_deflection_angle_uncert
-  SCALEMIN: 0
-  SCALEMAX: 10
-proton_sw_deflection_angle_uncert:
-  NAME: proton_sw_deflection_angle_uncert
-  DATA_TYPE: CDF_REAL4
-  CATDESC: Proton solar wind deflection angle uncertainty
-  DEPEND_0: epoch
-  VAR_TYPE: support_data
-  RECORD_VARYING: RV
-  FIELDNAM: Proton Solar Wind Deflection Angle Uncertainty
-  FORMAT: F19.3
-  UNITS: degrees
-  VALIDMIN: 0
-  VALIDMAX: 360
-  FILLVAL: -1.000000e+31
-  LABLAXIS: H+ SW deflection angle uncertainty
 proton_sw_bulk_velocity_rtn_sun:
   NAME: proton_sw_bulk_velocity_rtn_sun
   DATA_TYPE: CDF_REAL4
@@ -699,49 +629,6 @@ alpha_sw_b_hat_rtn:
   UNITS: ' '
   VALIDMIN: -1
   VALIDMAX: 1
-  FILLVAL: -1.000000e+31
-alpha_sw_reference_proton_density:
-  NAME: alpha_sw_reference_proton_density
-  DATA_TYPE: CDF_REAL4
-  CATDESC: Reference proton density used in alpha fit
-  DEPEND_0: epoch
-  VAR_TYPE: support_data
-  RECORD_VARYING: RV
-  FIELDNAM: Alpha SW Reference Proton Density
-  FORMAT: F19.3
-  LABLAXIS: Ref proton density
-  UNITS: cm!E-3!N
-  VALIDMIN: 0
-  VALIDMAX: 150
-  FILLVAL: -1.000000e+31
-alpha_sw_reference_proton_temperature:
-  NAME: alpha_sw_reference_proton_temperature
-  DATA_TYPE: CDF_REAL4
-  CATDESC: Reference proton temperature used in alpha fit
-  DEPEND_0: epoch
-  VAR_TYPE: support_data
-  RECORD_VARYING: RV
-  FIELDNAM: Alpha SW Reference Proton Temperature
-  FORMAT: F19.3
-  LABLAXIS: Ref proton temperature
-  UNITS: K
-  VALIDMIN: 0
-  VALIDMAX: 11600000
-  FILLVAL: -1.000000e+31
-alpha_sw_reference_proton_velocity_rtn:
-  NAME: alpha_sw_reference_proton_velocity_rtn
-  DATA_TYPE: CDF_REAL4
-  CATDESC: Reference proton bulk velocity in RTN used in alpha fit
-  DEPEND_0: epoch
-  DEPEND_1: rtn_label
-  VAR_TYPE: support_data
-  RECORD_VARYING: RV
-  FIELDNAM: Alpha SW Reference Proton Velocity RTN
-  FORMAT: F19.3
-  LABLAXIS: Ref proton velocity RTN
-  UNITS: km/s
-  VALIDMIN: -2000
-  VALIDMAX: 2000
   FILLVAL: -1.000000e+31
 swp_flags:
   NAME: swp_flags
