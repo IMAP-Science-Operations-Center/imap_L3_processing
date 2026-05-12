@@ -74,6 +74,7 @@ acquisition_time_per_esa_step:
   CATDESC: Acquisition time for each step of energy
   DEPEND_0: epoch
   DEPEND_1: esa_step
+  DISPLAY_TYPE: spectrogram
   FIELDNAM: Acquisition Time
   DATA_TYPE: CDF_DOUBLE
   FILLVAL: -1.0e+31
@@ -83,6 +84,7 @@ acquisition_time_per_esa_step:
   UNITS: ms
   VALIDMAX: 625.0
   VALIDMIN: 0.0
+  VAR_TYPE: data
   RECORD_VARYING: RV
   VAR_TYPE: support_data
 
@@ -443,6 +445,7 @@ half_spin_per_esa_step:
   CATDESC: Half spin number for each step of energy
   DEPEND_0: epoch
   DEPEND_1: esa_step
+  DISPLAY_TYPE: spectrogram
   FIELDNAM: Half Spin Number
   DATA_TYPE: CDF_UINT1
   FILLVAL: 255
@@ -452,6 +455,7 @@ half_spin_per_esa_step:
   UNITS: " "
   VALIDMIN: 0
   VALIDMAX: 31
+  VAR_TYPE: data
   RECORD_VARYING: RV
   VAR_TYPE: support_data
 
