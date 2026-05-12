@@ -48,10 +48,10 @@ _shared: dict[str, Any] = {}
 
 class ChunkFitter(ABC):
     @abstractmethod
-    def precompute_geometry(self, chunk) -> tuple:
+    def precompute_geometry(self, chunk) -> tuple: ...
 
     @abstractmethod
-    def fit_chunk(self, chunk, *geometry) -> dict[str, Any]:
+    def fit_chunk(self, chunk, *geometry) -> dict[str, Any]: ...
 
 
 class ParallelChunkRunner:
