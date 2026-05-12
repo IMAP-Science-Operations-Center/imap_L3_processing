@@ -12,7 +12,7 @@ from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, CodiceLoD
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
     calculate_total_number_of_events, calculate_normalization_ratio, calculate_mass, calculate_mass_per_charge, \
     rebin_to_counts_by_species_elevation_and_spin_sector, rebin_direct_events_by_energy_and_spin_sector, \
-    CODICE_LO_NUM_AZIMUTH_BINS, normalize_counts, combine_priorities_for_species_and_convert_to_rate, \
+    CODICE_LO_NUM_AZIMUTH_BINS, combine_priorities_for_species_and_convert_to_rate, \
     rebin_3d_distribution_azimuth_to_elevation, convert_count_rate_to_intensity, rebin_direct_events_for_normalization, \
     calculate_normalization_factor, lookup_normalization_per_event
 from imap_l3_processing.constants import ONE_SECOND_IN_MICROSECONDS
@@ -455,27 +455,6 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         expected_normalization_per_event = np.full((num_epochs, num_priorities, event_buffer_len), np.nan)
         np.testing.assert_array_equal(normalization_per_event, expected_normalization_per_event)
-
-    def test_normalize_counts(self):
-        num_epochs = 2
-        num_priorities = 3
-        num_azimuth_bins = 5
-        num_spin_angles = 6
-        num_energies = 7
-
-        rng = np.random.default_rng()
-
-        counts = np.zeros((num_epochs, num_priorities, num_azimuth_bins, num_spin_angles, num_energies))
-        counts[:, :, 0, :, :] = 3
-        counts[:, :, 1, :, :] = 4
-
-        normalization_factor = rng.random((num_epochs, num_priorities, num_energies, num_spin_angles))
-
-        actual_normalized_counts = normalize_counts(counts, normalization_factor)
-
-        transposed_normalization_factor = np.transpose(normalization_factor, axes=(0, 1, 3, 2))
-        np.testing.assert_array_equal(actual_normalized_counts[:, :, 0, :, :], 3 * transposed_normalization_factor)
-        np.testing.assert_array_equal(actual_normalized_counts[:, :, 1, :, :], 4 * transposed_normalization_factor)
 
     def test_combine_priorities_for_species_and_convert_to_rate(self):
         num_epochs = 2

@@ -174,13 +174,6 @@ SPIN_ANGLE = TypeVar("SPIN_ANGLE")
 ENERGY = TypeVar("ENERGY")
 
 
-def normalize_counts(counts: np.ndarray,
-                     normalization_factor: np.ndarray[(EPOCH, PRIORITY, ENERGY, SPIN_ANGLE)]) -> np.ndarray:
-    reshaped_normalization_factor = np.transpose(normalization_factor, (0, 1, 3, 2))
-    reshaped_normalization_factor = reshaped_normalization_factor[:, :, np.newaxis, :, :]
-    return reshaped_normalization_factor * counts
-
-
 def combine_priorities_for_species_and_convert_to_rate(
         counts: np.ndarray[(EPOCH, PRIORITY, POSITION, SPIN_ANGLE, ENERGY)],
         acquisition_times: np.ndarray[(EPOCH, ENERGY,)]) -> np.ndarray:
@@ -207,7 +200,8 @@ def convert_count_rate_to_intensity(count_rates: np.ndarray,
                                     efficiency_lookup: EfficiencyLookup,
                                     geometric_factor: np.ndarray[(EPOCH, ENERGY, SPIN_ANGLE, POSITION)]) -> np.ndarray:
     reshaped_efficiency_data = efficiency_lookup.efficiency_data[np.newaxis, :, np.newaxis, :]
-    denominator = geometric_factor * energy_per_charge.bin_centers[np.newaxis, :, np.newaxis, np.newaxis] * reshaped_efficiency_data
+    denominator = geometric_factor * energy_per_charge.bin_centers[np.newaxis, :, np.newaxis,
+                                     np.newaxis] * reshaped_efficiency_data
     intensities = count_rates / denominator
     return intensities
 

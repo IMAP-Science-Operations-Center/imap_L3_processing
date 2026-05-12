@@ -705,8 +705,6 @@ class TestCodiceLoProcessor(unittest.TestCase):
         mock_mass_bin_lookup = Mock()
         dependencies = CodiceLoL3a3dDistributionsDependencies(
             l3a_direct_event_data=mock_l3a_direct_event_data,
-            l1a_sw_data=sentinel.l1a_sw_data,
-            l1a_nsw_data=Mock(spec=CodiceLoL1aNSWPriorityRates),
             mass_species_bin_lookup=mock_mass_bin_lookup,
             geometric_factors_lookup=mock_geometric_factor_lut,
             efficiency_factors_lut=mock_efficiency_lut,
