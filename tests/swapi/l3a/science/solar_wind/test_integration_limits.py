@@ -25,7 +25,11 @@ from imap_l3_processing.swapi.response.passband_grid import (
     speed_ratio_range_at_elevation,
 )
 from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
-from tests.swapi._helpers import load_swapi_response, proton_params
+from tests.swapi._helpers import (
+    NOMINAL_SWAPI_TO_RTN_ROTATION,
+    load_swapi_response,
+    proton_params,
+)
 
 # --- module-level fixtures: real instrument-team CSVs and one warmed grid ----
 
@@ -95,7 +99,7 @@ class TestGetAngularQuadratureSunglassesRegion(unittest.TestCase):
     def setUpClass(cls):
         cls.response = load_swapi_response(warm_cache_voltages=[_ESA_VOLTAGE])
         cls.response_grid = cls.response.get_response_grid(_ESA_VOLTAGE, 1.0)
-        cls.identity = np.eye(3)
+        cls.identity = NOMINAL_SWAPI_TO_RTN_ROTATION
 
     def test_sg_region_is_active_for_sun_pointed_bulk(self):
         """A boresight-aligned bulk with a narrow Maxwellian falls inside the SG band, so the region is active and a quadrature is returned."""

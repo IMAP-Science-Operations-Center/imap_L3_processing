@@ -15,7 +15,7 @@ from imap_l3_processing.swapi.response.azimuthal_transmission import (
 )
 from imap_l3_processing.swapi.response.passband_grid import build_passband_grid
 from imap_l3_processing.swapi.response.swapi_response import ResponseGrid
-from tests.swapi._helpers import proton_params
+from tests.swapi._helpers import NOMINAL_SWAPI_TO_RTN_ROTATION, proton_params
 from tests.swapi.response.test_passband_grid import _gaussian_values_df
 
 
@@ -27,9 +27,6 @@ def _make_response_grid(
     azimuthal_transmission: np.ndarray | None = None,
     azimuthal_transmission_spacing: float = 1.0,
 ) -> ResponseGrid:
-    """A real ResponseGrid backed by a real PassbandGrid. The transmission
-    curve is a long flat plateau by default so trim threshold-crossings come
-    from the Maxwellian alone unless the test overrides it."""
     if azimuthal_transmission is None:
         # T(|az|) = 1 sampled on [0°, 180°] at 1° spacing → 181 nodes.
         azimuthal_transmission = np.ones(181)
@@ -54,17 +51,13 @@ def _make_response_grid(
 def _proton_params_at_elevation(
     speed: float, bulk_el_deg: float, density: float = 5.0, temperature: float = 1.0e5
 ) -> SolarWindParams:
-    """Bulk velocity in the RTN frame placed so that, under the identity
-    rotation, `bulk_az_inst = +90°` and `bulk_el_inst = bulk_el_deg`.
-
-    Derivation: with `R = I`, `θ_b = arcsin(-v_z / |v|)` and
-    `φ_b = atan2(-v_x, -v_y)`. Putting `v_y = 0` and `v_x = -|v|·cos(el)`
-    gives `φ_b = atan2(|v|·cos(el), 0) = +90°`. Putting
-    `v_z = -|v|·sin(el)` gives `θ_b = arcsin(sin(el)) = el`."""
-    v_x = -speed * math.cos(math.radians(bulk_el_deg))
-    v_z = -speed * math.sin(math.radians(bulk_el_deg))
+    v_x_swapi = -speed * math.cos(math.radians(bulk_el_deg))
+    v_z_swapi = -speed * math.sin(math.radians(bulk_el_deg))
+    v_rtn = NOMINAL_SWAPI_TO_RTN_ROTATION @ np.array(
+        [v_x_swapi, 0.0, v_z_swapi]
+    )
     return proton_params(
-        velocity_rtn=(v_x, 0.0, v_z), density=density, temperature=temperature
+        velocity_rtn=tuple(v_rtn), density=density, temperature=temperature
     )
 
 
@@ -79,11 +72,9 @@ def _trim(
     min_elevation: float = -10.0,
     max_elevation: float = 10.0,
 ):
-    """Thin wrapper that fixes the boilerplate prefix every test reuses
-    (identity rotation, OA elevation clamp [-10°, +10°]) so the varying
-    inputs — azimuth window and sg_rate — stay visually obvious."""
     if rotation_matrix is None:
-        rotation_matrix = np.eye(3)
+        rotation_matrix = NOMINAL_SWAPI_TO_RTN_ROTATION
+  
     return trim_oa_azimuth_by_integrand(
         rg,
         sw,
@@ -123,7 +114,7 @@ class TestSkipsWhenSgRateRelativeFloorDominates(unittest.TestCase):
     def test_skips_when_oa_upper_bound_below_sg_relative_floor(self):
         """A cold bulk far from OA with a huge sg_rate trips the relative-fraction floor and skips OA."""
         rg = _make_response_grid()
-        sw = proton_params(velocity_rtn=(0.0, -450.0, 0.0), temperature=1.0e4)
+        sw = proton_params(temperature=1.0e4)
         lo, hi = _trim(rg, sw, azimuth_lo=20.0, azimuth_hi=150.0, sg_rate=1.0e6)
         self.assertEqual((lo, hi), (0.0, 0.0))
 
@@ -134,14 +125,14 @@ class TestSkipsWhenAbsoluteRateFloorDominates(unittest.TestCase):
     def test_skips_when_oa_upper_bound_below_absolute_floor(self):
         """With sg_rate=0, the 0.1 Hz absolute floor alone forces a skip for a cold bulk far from OA."""
         rg = _make_response_grid()
-        sw = proton_params(velocity_rtn=(0.0, -450.0, 0.0), temperature=1.0e4)
+        sw = proton_params(temperature=1.0e4)
         lo, hi = _trim(rg, sw, azimuth_lo=20.0, azimuth_hi=150.0, sg_rate=0.0)
         self.assertEqual((lo, hi), (0.0, 0.0))
 
     def test_skips_when_sg_relative_below_absolute_floor(self):
         """When `1e-3·sg_rate = 0.05 Hz < 0.1 Hz`, the `max(...)` picks the absolute floor and still skips."""
         rg = _make_response_grid()
-        sw = proton_params(velocity_rtn=(0.0, -450.0, 0.0), temperature=1.0e4)
+        sw = proton_params(temperature=1.0e4)
         lo, hi = _trim(rg, sw, azimuth_lo=20.0, azimuth_hi=150.0, sg_rate=50.0)
         self.assertEqual((lo, hi), (0.0, 0.0))
 
@@ -150,9 +141,10 @@ class TestReturnsTrimmedWindowWhenOaIsRelevant(unittest.TestCase):
     """Tests for `trim_oa_azimuth_by_integrand`, well-aligned bulk shared-fixture branch."""
 
     def setUp(self):
-        # Bulk along -X_RTN → azimuth_inst = atan2(450, 0) = +90°.
+        # Under NOMINAL_SWAPI_TO_RTN_ROTATION, bulk along -T_RTN (i.e.
+        # (0, -450, 0)) maps to v_swapi = (-450, 0, 0) → azimuth_inst = +90°.
         self.rg = _make_response_grid()
-        self.sw = proton_params(velocity_rtn=(-450.0, 0.0, 0.0))
+        self.sw = proton_params(velocity_rtn=(0.0, -450.0, 0.0))
         self.az_lo_in = 20.0
         self.az_hi_in = 150.0
         # zero sg_rate keeps only the 0.1 Hz floor — the upper-bound estimate
@@ -208,7 +200,7 @@ class TestTrimAt1eMinus6Threshold(unittest.TestCase):
         transmission = np.zeros(181)
         transmission[85:95] = 1.0  # T = 1 on [85°, 94°]
         rg = _make_response_grid(azimuthal_transmission=transmission)
-        sw = proton_params(velocity_rtn=(-450.0, 0.0, 0.0))  # bulk_az = 90°
+        sw = proton_params(velocity_rtn=(0.0, -450.0, 0.0))  # bulk_az = +90°
 
         lo, hi = _trim(rg, sw, azimuth_lo=20.0, azimuth_hi=150.0, sg_rate=0.0)
 
@@ -232,10 +224,11 @@ class TestSymmetryBetweenOaPositiveAndNegative(unittest.TestCase):
         """Bulks at ±90° produce OA+ and OA- windows that are exact mirror images of each other."""
         rg = _make_response_grid()
 
-        # Bulk along -X_RTN → azimuth_inst = +90° (deep in OA+).
-        sw_pos = proton_params(velocity_rtn=(-450.0, 0.0, 0.0))
-        # Bulk along +X_RTN → azimuth_inst = -90° (deep in OA-).
-        sw_neg = proton_params(velocity_rtn=(+450.0, 0.0, 0.0))
+        # Under NOMINAL_SWAPI_TO_RTN_ROTATION:
+        #   v_rtn = (0, -450, 0) → v_swapi = (-450, 0, 0) → az_inst = +90° (OA+).
+        #   v_rtn = (0, +450, 0) → v_swapi = (+450, 0, 0) → az_inst = -90° (OA-).
+        sw_pos = proton_params(velocity_rtn=(0.0, -450.0, 0.0))
+        sw_neg = proton_params(velocity_rtn=(0.0, +450.0, 0.0))
 
         lo_pos, hi_pos = _trim(rg, sw_pos, azimuth_lo=20.0, azimuth_hi=150.0, sg_rate=0.0)
         # OA-: same magnitudes, mirrored around 0.
@@ -254,7 +247,7 @@ class TestSkipPolicyAgainstSgRate(unittest.TestCase):
     def test_high_sg_rate_forces_skip_for_otherwise_aligned_bulk(self):
         """A bulk that yields a real window at sg_rate=0 flips to the (0, 0) sentinel once sg_rate is cranked above the OA upper bound."""
         rg = _make_response_grid()
-        sw = proton_params(velocity_rtn=(-450.0, 0.0, 0.0))
+        sw = proton_params(velocity_rtn=(0.0, -450.0, 0.0))  # az_inst = +90°
 
         lo_open, hi_open = _trim(
             rg, sw, azimuth_lo=20.0, azimuth_hi=150.0, sg_rate=0.0

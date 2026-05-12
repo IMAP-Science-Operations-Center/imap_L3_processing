@@ -45,15 +45,13 @@ from imap_l3_processing.swapi.constants import (
 )
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 from tests.spice_test_case import SpiceTestCase
+from tests.swapi._helpers import REALISTIC_ESA_VOLTAGES
 from tests.test_helpers import get_test_instrument_team_data_path
 
 
 _N_SWEEPS = 5
 _N_BINS = 72
-_COARSE_V = np.logspace(np.log10(10000.0), np.log10(50.0), 62)
-_FINE_V = np.logspace(np.log10(1000.0), np.log10(500.0), 9)
-_SCIENCE_V = np.concatenate([_COARSE_V, _FINE_V])
-_FULL_ENERGY = np.concatenate([[1.0e4], _SCIENCE_V]) * SWAPI_L2_K_FACTOR
+_FULL_ENERGY = np.concatenate([[1.0e4], REALISTIC_ESA_VOLTAGES]) * SWAPI_L2_K_FACTOR
 
 _TRUE_DENSITY = 5.0
 _TRUE_TEMPERATURE_K = 1.0e5
@@ -162,7 +160,7 @@ def _synthesize_chunk(*, response, rotations, proton_velocity_rtn, alpha_velocit
     the full 71-bin science axis. Per-species effective-area scales come from
     `efficiency_table` so synthesis and the fitter share the same calibration."""
     n = SWAPI_SCIENCE_BINS.stop - SWAPI_SCIENCE_BINS.start
-    voltages = np.tile(_SCIENCE_V, _N_SWEEPS)
+    voltages = np.tile(REALISTIC_ESA_VOLTAGES, _N_SWEEPS)
 
     proton_ctx = build_solar_wind_fit_context(
         count_rate=np.zeros(len(voltages)),
@@ -323,7 +321,7 @@ class TestProtonChunkFitterFitChunk(SpiceTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.response = _swapi_response_with_warm_cache(np.tile(_SCIENCE_V, _N_SWEEPS))
+        cls.response = _swapi_response_with_warm_cache(np.tile(REALISTIC_ESA_VOLTAGES, _N_SWEEPS))
         efficiency_table = _efficiency_table()
         _populate_shared(cls.response, efficiency_table)
         cls.chunk, cls.rotations, cls.true_proton_velocity_rtn, _ = _build_truth_chunk(cls.response, efficiency_table)
@@ -483,7 +481,7 @@ class TestAlphaChunkFitterFitChunk(SpiceTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.response = _swapi_response_with_warm_cache(np.tile(_SCIENCE_V, _N_SWEEPS))
+        cls.response = _swapi_response_with_warm_cache(np.tile(REALISTIC_ESA_VOLTAGES, _N_SWEEPS))
         efficiency_table = _efficiency_table()
         _populate_shared(cls.response, efficiency_table)
         cls.chunk, _, cls.true_proton_velocity_rtn, cls.true_alpha_velocity_rtn = _build_truth_chunk(cls.response, efficiency_table)
@@ -585,7 +583,7 @@ class TestParallelChunkRunnerOrchestration(unittest.TestCase):
             _make_chunk_with_start_time(_EPOCH_TT2000 + 12_000_000_000),
         ]
         runner = ParallelChunkRunner(
-            swapi_response=_swapi_response_with_warm_cache(np.tile(_SCIENCE_V, _N_SWEEPS)),
+            swapi_response=_swapi_response_with_warm_cache(np.tile(REALISTIC_ESA_VOLTAGES, _N_SWEEPS)),
             efficiency_table=_efficiency_table(),
         )
 
@@ -627,7 +625,7 @@ class TestProtonChunkFitterQualityFlags(SpiceTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.response = _swapi_response_with_warm_cache(np.tile(_SCIENCE_V, _N_SWEEPS))
+        cls.response = _swapi_response_with_warm_cache(np.tile(REALISTIC_ESA_VOLTAGES, _N_SWEEPS))
         efficiency_table = _efficiency_table()
         _populate_shared(cls.response, efficiency_table)
         cls.chunk, cls.rotations, _, _ = _build_truth_chunk(cls.response, efficiency_table)
@@ -716,7 +714,7 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.response = _swapi_response_with_warm_cache(np.tile(_SCIENCE_V, _N_SWEEPS))
+        cls.response = _swapi_response_with_warm_cache(np.tile(REALISTIC_ESA_VOLTAGES, _N_SWEEPS))
         efficiency_table = _efficiency_table()
         _populate_shared(cls.response, efficiency_table)
         cls.chunk, cls.rotations, _, _ = _build_truth_chunk(cls.response, efficiency_table)

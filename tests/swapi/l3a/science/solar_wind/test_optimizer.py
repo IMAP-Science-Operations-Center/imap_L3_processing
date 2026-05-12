@@ -20,33 +20,23 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     SolarWindParams,
 )
 from tests.swapi._helpers import (
+    NOMINAL_SWAPI_TO_RTN_ROTATION,
+    REALISTIC_ESA_VOLTAGES,
     load_swapi_response,
     proton_params,
     synthesize_count_rates,
 )
 
 
-# ----- module-level fixture constants --------------------------------------
-
-# A realistic proton sweep — voltages chosen to span the proton peak at
-# ~450 km/s (V ≈ m_p v²/(2 e k) ≈ 560 V at k=1.89). Sixteen bins gives the
-# LM problem enough information to recover all 5 parameters without making
-# the synthetic data prohibitively expensive to forward-model.
-# Geometric spacing matches the SWAPI L2 sweep (ratio ~1.115 per step).
-_TYPICAL_PROTON_ESA_VOLTAGES = 300.0 * (1.115 ** np.arange(16))
-
-
 def _build_proton_fit_context(count_rate: np.ndarray):
-    """Build a real `SolarWindFitContext` for the fixture proton voltages.
-
-    Uses identity SWAPI→RTN rotation matrices so the wind direction
-    interpretation is straightforward (instrument frame == RTN)."""
-    response = load_swapi_response(warm_cache_voltages=_TYPICAL_PROTON_ESA_VOLTAGES)
-    n_sweeps = len(_TYPICAL_PROTON_ESA_VOLTAGES)
-    rotation_matrices = np.broadcast_to(np.eye(3), (n_sweeps, 3, 3)).copy()
+    response = load_swapi_response(warm_cache_voltages=REALISTIC_ESA_VOLTAGES)
+    n_sweeps = len(REALISTIC_ESA_VOLTAGES)
+    rotation_matrices = np.broadcast_to(
+        NOMINAL_SWAPI_TO_RTN_ROTATION, (n_sweeps, 3, 3)
+    ).copy()
     return build_solar_wind_fit_context(
         count_rate=count_rate,
-        esa_voltage=_TYPICAL_PROTON_ESA_VOLTAGES,
+        esa_voltage=REALISTIC_ESA_VOLTAGES,
         swapi_response=response,
         central_effective_area_scale=1.0,
         rotation_matrices=rotation_matrices,
@@ -63,7 +53,7 @@ def _synthetic_count_rate_for(sw_params: SolarWindParams) -> np.ndarray:
     Two-step: build a placeholder context with zero counts, run the forward
     model to get ideal rates, then apply the deadtime factor exactly the way
     `_Evaluator._eval` does (so the residual at the truth is zero)."""
-    ctx = _build_proton_fit_context(np.zeros_like(_TYPICAL_PROTON_ESA_VOLTAGES))
+    ctx = _build_proton_fit_context(np.zeros_like(REALISTIC_ESA_VOLTAGES))
     return synthesize_count_rates(ctx, sw_params)
 
 

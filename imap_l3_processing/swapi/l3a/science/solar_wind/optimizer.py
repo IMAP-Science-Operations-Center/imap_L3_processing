@@ -37,6 +37,7 @@ def optimize_solar_wind_params(
         jac=evaluator.jacobian,
         method="lm",
         xtol=1e-4,
+        x_scale=1.0,
     )
 
     return OptimizeSolarWindParamsResult(

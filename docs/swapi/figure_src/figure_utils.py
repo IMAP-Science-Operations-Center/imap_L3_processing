@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Callable, TypeVar
 
 import numpy as np
-from tqdm.contrib.concurrent import process_map
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT))
@@ -122,15 +121,30 @@ def run_parallel_map(
     n_workers = os.cpu_count() or 1
     print(f"Running {n_items} {desc} across {n_workers} processes...")
     start = time.perf_counter()
-    results = process_map(
-        process_one,
-        range(n_items),
-        max_workers=n_workers,
-        chunksize=chunksize,
-        desc=desc,
-    )
+    results: list[_T | None] = [None] * n_items
+    report_every = max(1, n_items // 20)
+    with multiprocessing.get_context("fork").Pool(processes=n_workers) as pool:
+        completed = 0
+        for index, value in pool.imap_unordered(
+            _IndexedCall(process_one), range(n_items), chunksize=chunksize
+        ):
+            results[index] = value
+            completed += 1
+            if completed % report_every == 0 or completed == n_items:
+                elapsed = time.perf_counter() - start
+                print(f"  {desc}: {completed}/{n_items} ({elapsed:.1f}s)")
     print(f"  {desc} done in {time.perf_counter() - start:.1f}s.")
-    return results
+    return results  # type: ignore[return-value]
+
+
+class _IndexedCall:
+    """Picklable wrapper that returns (index, func(index)) for ordered reassembly."""
+
+    def __init__(self, func: Callable[[int], _T]):
+        self._func = func
+
+    def __call__(self, index: int):
+        return index, self._func(index)
 
 
 def bulk_velocity_rtn_from_swapi_angles(

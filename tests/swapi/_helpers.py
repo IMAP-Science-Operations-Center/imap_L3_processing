@@ -1,10 +1,3 @@
-"""Shared fixtures and helpers for SWAPI tests.
-
-Consolidates the `proton_params`, `load_swapi_response`, and
-`synthesize_count_rates` helpers that were previously duplicated across
-the SWAPI test suite.
-"""
-
 from typing import Optional
 
 import numpy as np
@@ -35,11 +28,7 @@ SWAPI_PASSBAND_FIT_COEFFICIENTS_PATH = get_test_instrument_team_data_path(
 def load_swapi_response(
     warm_cache_voltages: Optional[np.ndarray] = None,
 ) -> SwapiResponse:
-    """Build a `SwapiResponse` from the shipped instrument-team CSVs.
-
-    Pass `warm_cache_voltages` to populate the passband cache for callers that
-    will later call `create_response_grid` / `get_response_grid` (those raise
-    on a cache miss)."""
+    """Build a `SwapiResponse` from the CSV files.."""
     response = SwapiResponse.from_files(
         SWAPI_AZIMUTHAL_TRANSMISSION_PATH,
         SWAPI_CENTRAL_EFFECTIVE_AREA_PATH,
@@ -50,18 +39,40 @@ def load_swapi_response(
     return response
 
 
+# Nominal IMAP_SWAPI → IMAP_RTN rotation at spin phase 0: spin axis (+Y_SWAPI,
+# the boresight) along -R_RTN (SWAPI looks sunward), X_SWAPI along +T_RTN,
+# Z_SWAPI along +N_RTN. Columns are the SWAPI basis vectors expressed in RTN,
+# so `R @ v_swapi = v_rtn` and `R.T @ v_rtn = v_swapi`. The default bulk
+# velocity (+450, 0, 0) km/s arrives along -Y_SWAPI under this rotation.
+# 71-bin realistic SWAPI science sweep (62 coarse bins log-spaced 10000→50 V
+# plus 9 fine bins log-spaced 1000→500 V), matching the production sweep
+# shape used by `SWAPI_COARSE_SWEEP_BINS` and `SWAPI_FINE_SWEEP_BINS`.
+# Caution: The fine sweeps in real data typically start near the peak,
+# this will only start near the peak if the peak is near 1 keV
+REALISTIC_ESA_VOLTAGES = np.concatenate(
+    [
+        np.logspace(np.log10(10000.0), np.log10(50.0), 62),
+        np.logspace(np.log10(1000.0), np.log10(500.0), 9),
+    ]
+)
+
+
+NOMINAL_SWAPI_TO_RTN_ROTATION = np.array(
+    [
+        [0.0, -1.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0],
+    ]
+)
+
+
 def proton_params(
     *,
     density: float = 5.0,
-    velocity_rtn=(0.0, -450.0, 0.0),
+    velocity_rtn=(450.0, 0, 0.0),
     temperature: float = 100_000.0,
 ) -> SolarWindParams:
-    """Solar-wind proton `SolarWindParams` at typical slow-wind values.
-
-    Default `velocity_rtn = (0, -450, 0)` puts the bulk wind along -Y_RTN; under
-    the identity SWAPI→RTN rotation that maps to -Y_inst, i.e. straight down
-    the boresight (the SG passband center). Tests that need a different
-    geometry pass `velocity_rtn` explicitly."""
+    """Solar-wind proton `SolarWindParams` at typical slow-wind values."""
     return SolarWindParams(
         density=density,
         bulk_velocity_rtn=np.asarray(velocity_rtn, dtype=float),
@@ -72,7 +83,6 @@ def proton_params(
 
 def synthesize_count_rates(ctx, sw_params: SolarWindParams) -> np.ndarray:
     """Forward-model deadtime-applied coincidence count rates from `sw_params`
-    using the same model the fitter inverts. No Poisson noise — the
-    parameter-recovery tests exercise orchestration, not the noise budget."""
+    using the same model the fitter inverts. No Poisson noise."""
     ideal, _ = model_solar_wind_ideal_coincidence_rates(sw_params, ctx)
     return ideal * deadtime_factor(ideal)
