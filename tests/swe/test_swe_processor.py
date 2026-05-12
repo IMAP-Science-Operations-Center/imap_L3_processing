@@ -131,7 +131,7 @@ class TestSweProcessor(unittest.TestCase):
         mock_moment_data = build_swe_moment_data(len(epochs))
         mock_calculate_moment_products.return_value = mock_moment_data
 
-        calculate_pitch_angle_flags = np.array([SweL3Flags.NONE] * len(epochs))
+        calculate_pitch_angle_flags = np.array([SweL3Flags.NONE] * len(epochs), dtype=np.uint16)
         calculate_pitch_angle_flags[0] = SweL3Flags.FALLBACK_SWAPI_SPEED
 
         mock_calculate_pitch_angle_products.return_value = (
