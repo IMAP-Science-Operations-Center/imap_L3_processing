@@ -289,8 +289,8 @@ def _fit_proton(
         return _nan_proton_result(SwapiL3Flags.NONE)
     swapi_response = _shared["swapi_response"]
     efficiency_table = _shared["efficiency_table"]
-    count_rates = data_chunk.coincidence_count_rate[:, SWAPI_SCIENCE_BINS].flatten()
-    voltages = data_chunk.energy[:, SWAPI_SCIENCE_BINS].flatten() / SWAPI_L2_K_FACTOR
+    count_rates = data_chunk.coincidence_count_rate[:, SWAPI_SCIENCE_BINS]
+    voltages = data_chunk.energy[:, SWAPI_SCIENCE_BINS] / SWAPI_L2_K_FACTOR
     ctx = build_solar_wind_fit_context(
         count_rate=count_rates,
         esa_voltage=voltages,
@@ -390,8 +390,8 @@ def _fit_alpha(
             rotation_matrices, n_sweeps=data_chunk.sci_start_time.shape[0]
         )
         alpha_moments = fit_solar_wind_alpha_moments(
-            count_rates.flatten(),
-            voltages.flatten(),
+            count_rates,
+            voltages,
             times,
             swapi_response,
             proton_moments,

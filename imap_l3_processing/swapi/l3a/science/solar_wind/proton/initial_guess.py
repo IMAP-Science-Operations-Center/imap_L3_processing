@@ -42,9 +42,10 @@ def esa_voltage_to_proton_speed(esa_voltage: ArrayLike) -> np.ndarray:
 
 
 def calculate_initial_guess(ctx: SolarWindFitContext) -> SolarWindParams:
-    speed = esa_voltage_to_proton_speed(ctx.esa_voltage)
+    count_rate = ctx.count_rate.ravel()
+    speed = esa_voltage_to_proton_speed(ctx.esa_voltage.ravel())
 
-    peak_idx = np.nanargmax(ctx.count_rate)
+    peak_idx = np.nanargmax(count_rate)
     bulk_speed_seed = float(speed[peak_idx])
 
     temperature_seed = max(
@@ -54,7 +55,7 @@ def calculate_initial_guess(ctx: SolarWindFitContext) -> SolarWindParams:
 
     bulk_speed_init, temperature = _gaussian_refine_bulk_speed_and_temperature(
         speed,
-        ctx.count_rate,
+        count_rate,
         bulk_speed_seed,
         temperature_seed,
         ctx.mass_kg,
@@ -67,7 +68,7 @@ def calculate_initial_guess(ctx: SolarWindFitContext) -> SolarWindParams:
         SolarWindParams(1.0, bulk_velocity_rtn, temperature, ctx.mass_kg),
         ctx,
     )
-    density = optimal_density_scale(unit_ideal_rates, ctx.count_rate)
+    density = optimal_density_scale(unit_ideal_rates, count_rate)
 
     return SolarWindParams(
         density=density,

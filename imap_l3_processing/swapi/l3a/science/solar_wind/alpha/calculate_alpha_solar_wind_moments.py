@@ -99,7 +99,7 @@ class _AlphaEvaluator:
         )
         total_true = self.proton_true_rate + alpha_true
         deadtime = deadtime_factor(total_true)
-        residuals = total_true * deadtime - self.alpha_ctx.count_rate
+        residuals = total_true * deadtime - self.alpha_ctx.count_rate.ravel()
 
         deadtime_squared = deadtime * deadtime
         jacobian = np.empty((alpha_true.size, 3))
@@ -196,9 +196,10 @@ def fit_solar_wind_alpha_moments(
     n0, T0, dv0, peak_bin_idx = initial_guess
     proton_bulk = proton_bulk_rtn
 
-    n_sweeps, n_bins = _infer_sweep_layout(esa_voltage)
+    n_sweeps, n_bins = alpha_ctx.count_rate.shape
+    count_rate_flat = count_rate.ravel()
     peak_flat_idx = np.concatenate([peak_bin_idx + s * n_bins for s in range(n_sweeps)])
-    count_rate_peak = count_rate[peak_flat_idx]
+    count_rate_peak = count_rate_flat[peak_flat_idx]
     keep = count_rate_peak > 0
     if not np.all(keep):
         peak_flat_idx = peak_flat_idx[keep]
@@ -225,7 +226,19 @@ def fit_solar_wind_alpha_moments(
     if not result.success:
         return _nan_alpha_moments(bad_fit_flag | SwapiL3Flags.FIT_ERROR)
 
-    if r_squared(result.fun, alpha_ctx_peak.count_rate) < 0.9 or T_a_fit > 5.0e5:
+    n_peak_bins = peak_bin_idx.size
+    if result.fun.size == n_sweeps * n_peak_bins:
+        averaged_count_rate = np.nanmean(
+            alpha_ctx_peak.count_rate.reshape(n_sweeps, n_peak_bins), axis=0
+        )
+        averaged_residual = np.nanmean(
+            result.fun.reshape(n_sweeps, n_peak_bins), axis=0
+        )
+        fit_r_squared = r_squared(averaged_residual, averaged_count_rate)
+    else:
+        fit_r_squared = r_squared(result.fun, alpha_ctx_peak.count_rate)
+
+    if fit_r_squared < 0.9 or T_a_fit > 5.0e5:
         return _nan_alpha_moments(bad_fit_flag | SwapiL3Flags.BAD_FIT)
 
     cov_x = compute_hc3_parameter_covariance(result.jac, result.fun)
@@ -257,16 +270,12 @@ def _alpha_initial_guess(
     proton_bulk_velocity_rtn: ndarray,
     magnetic_field_direction: ndarray,
 ) -> Optional[tuple]:
-    n_meas = len(alpha_ctx.esa_voltage)
-    if n_meas == 0:
+    if alpha_ctx.count_rate.size == 0 or alpha_ctx.count_rate.ndim != 2:
         return None
 
-    n_sweeps, n_bins = _infer_sweep_layout(alpha_ctx.esa_voltage)
-    if n_sweeps is None:
-        return None
-
-    counts_per_sweep = alpha_ctx.count_rate.reshape(n_sweeps, n_bins)
-    voltage_per_sweep = alpha_ctx.esa_voltage.reshape(n_sweeps, n_bins)[0]
+    n_sweeps, n_bins = alpha_ctx.count_rate.shape
+    counts_per_sweep = alpha_ctx.count_rate
+    voltage_per_sweep = alpha_ctx.esa_voltage[0]
     proton_true_per_sweep = proton_true_rate.reshape(n_sweeps, n_bins)
     proton_obs_per_sweep = proton_true_per_sweep * deadtime_factor(
         proton_true_per_sweep
@@ -304,16 +313,3 @@ def _alpha_initial_guess(
     n_alpha = max(n_alpha, 1e-3)
 
     return (n_alpha, T_alpha, 0.0, peak_idx)
-
-
-def _infer_sweep_layout(esa_voltage: ndarray) -> tuple:
-    """Heuristic: detect n_sweeps from a periodic voltage axis."""
-    n_meas = len(esa_voltage)
-    for n_sweeps in (5, 1, 2, 3, 4, 6, 7, 8, 10):
-        if n_meas % n_sweeps != 0:
-            continue
-        n_bins = n_meas // n_sweeps
-        first = esa_voltage[:n_bins]
-        if np.allclose(esa_voltage.reshape(n_sweeps, n_bins), first):
-            return n_sweeps, n_bins
-    return None, None

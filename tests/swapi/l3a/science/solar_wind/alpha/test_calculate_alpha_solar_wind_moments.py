@@ -52,8 +52,8 @@ _N_SWEEPS = 5
 _ONE_SWEEP_VOLTAGE = np.logspace(
     np.log10(3500.0), np.log10(140.0), _N_BINS_PER_SWEEP
 )
-_FIVE_SWEEP_VOLTAGE = np.tile(_ONE_SWEEP_VOLTAGE, _N_SWEEPS)
-_N_MEAS = len(_FIVE_SWEEP_VOLTAGE)
+_FIVE_SWEEP_VOLTAGE = np.broadcast_to(_ONE_SWEEP_VOLTAGE, (_N_SWEEPS, _N_BINS_PER_SWEEP)).copy()
+_N_MEAS = _FIVE_SWEEP_VOLTAGE.size
 
 # Slow-wind ground-truth moments. RTN +R points sunward, so a sunward solar
 # wind has v_R = -450 km/s. B̂ is taken along -R̂ so a positive Δv pushes
@@ -180,7 +180,7 @@ def _synthesize_proton_plus_alpha_count_rate(
         mass=ALPHA_PARTICLE_MASS_KG,
     )
     proton_ctx = build_solar_wind_fit_context(
-        count_rate=np.zeros(len(voltage)),
+        count_rate=np.zeros(voltage.shape),
         esa_voltage=voltage,
         swapi_response=response,
         central_effective_area_scale=1.0,
@@ -191,7 +191,7 @@ def _synthesize_proton_plus_alpha_count_rate(
     proton_true, _ = model_solar_wind_ideal_coincidence_rates(proton_params, proton_ctx)
     if alpha_density > 0.0:
         alpha_ctx = build_solar_wind_fit_context(
-            count_rate=np.zeros(len(voltage)),
+            count_rate=np.zeros(voltage.shape),
             esa_voltage=voltage,
             swapi_response=response,
             central_effective_area_scale=1.0,
@@ -203,7 +203,7 @@ def _synthesize_proton_plus_alpha_count_rate(
         total_true = proton_true + alpha_true
     else:
         total_true = proton_true
-    observed = total_true * deadtime_factor(total_true)
+    observed = (total_true * deadtime_factor(total_true)).reshape(voltage.shape)
     return observed, proton_true, alpha_velocity
 
 
@@ -241,7 +241,7 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
             bad_fit_flag=int(SwapiL3Flags.FIT_ERROR),
         )
         result = fit_solar_wind_alpha_moments(
-            count_rate=np.zeros(_N_MEAS),
+            count_rate=np.zeros(_FIVE_SWEEP_VOLTAGE.shape),
             esa_voltage=_FIVE_SWEEP_VOLTAGE,
             measurement_time=np.zeros(_N_MEAS),
             # `swapi_response` should not be touched on this branch — but
@@ -262,7 +262,7 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
             bad_fit_flag=int(SwapiL3Flags.FIT_ERROR),
         )
         result = fit_solar_wind_alpha_moments(
-            count_rate=np.zeros(_N_MEAS),
+            count_rate=np.zeros(_FIVE_SWEEP_VOLTAGE.shape),
             esa_voltage=_FIVE_SWEEP_VOLTAGE,
             measurement_time=np.zeros(_N_MEAS),
             swapi_response=_load_swapi_response_with_warm_cache(),
@@ -279,7 +279,7 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
         proton_moments = _build_proton_fit_result()
         nan_b_hat = np.array([np.nan, 0.0, 0.0])
         result = fit_solar_wind_alpha_moments(
-            count_rate=np.zeros(_N_MEAS),
+            count_rate=np.zeros(_FIVE_SWEEP_VOLTAGE.shape),
             esa_voltage=_FIVE_SWEEP_VOLTAGE,
             measurement_time=np.zeros(_N_MEAS),
             swapi_response=_load_swapi_response_with_warm_cache(),
@@ -296,7 +296,7 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
         proton_moments = _build_proton_fit_result()
         nan_b_hat = np.array([np.nan, 0.0, 0.0])
         result = fit_solar_wind_alpha_moments(
-            count_rate=np.zeros(_N_MEAS),
+            count_rate=np.zeros(_FIVE_SWEEP_VOLTAGE.shape),
             esa_voltage=_FIVE_SWEEP_VOLTAGE,
             measurement_time=np.zeros(_N_MEAS),
             swapi_response=_load_swapi_response_with_warm_cache(),
@@ -345,7 +345,7 @@ class TestFitAlphaMomentsContextConstruction(unittest.TestCase):
         self.mock_build_ctx.return_value = MagicMock()
 
         fit_solar_wind_alpha_moments(
-            count_rate=np.zeros(_N_MEAS),
+            count_rate=np.zeros(_FIVE_SWEEP_VOLTAGE.shape),
             esa_voltage=_FIVE_SWEEP_VOLTAGE,
             measurement_time=np.zeros(_N_MEAS),
             swapi_response=self.swapi_response,
@@ -617,7 +617,7 @@ class TestFitAlphaMomentsGeometryFallback(unittest.TestCase):
             return_value=None,
         ):
             result = fit_solar_wind_alpha_moments(
-                count_rate=np.zeros(_N_MEAS),
+                count_rate=np.zeros(_FIVE_SWEEP_VOLTAGE.shape),
                 esa_voltage=_FIVE_SWEEP_VOLTAGE,
                 measurement_time=measurement_time,
                 swapi_response=_load_swapi_response_with_warm_cache(),
@@ -675,8 +675,7 @@ class TestFitAlphaMomentsPeakBinFiltering(
         _, _, _, peak_bin_idx = guess
         zeroed_observed = cls.observed_count_rate.copy()
         target_bin = int(peak_bin_idx[len(peak_bin_idx) // 2])
-        for s in range(_N_SWEEPS):
-            zeroed_observed[s * _N_BINS_PER_SWEEP + target_bin] = 0.0
+        zeroed_observed[:, target_bin] = 0.0
         cls.zeroed_observed_count_rate = zeroed_observed
         cls.target_bin = target_bin
 
@@ -742,7 +741,7 @@ class TestFitAlphaMomentsLMFailureFlag(unittest.TestCase):
             return_value=non_converged,
         ):
             result = fit_solar_wind_alpha_moments(
-                count_rate=np.full(_N_MEAS, 100.0),
+                count_rate=np.full(_FIVE_SWEEP_VOLTAGE.shape, 100.0),
                 esa_voltage=_FIVE_SWEEP_VOLTAGE,
                 measurement_time=np.zeros(_N_MEAS),
                 swapi_response=_load_swapi_response_with_warm_cache(),
@@ -798,7 +797,7 @@ class TestFitAlphaMomentsHighTemperatureFlag(unittest.TestCase):
             return_value=converged,
         ):
             result = fit_solar_wind_alpha_moments(
-                count_rate=np.full(_N_MEAS, 100.0),
+                count_rate=np.full(_FIVE_SWEEP_VOLTAGE.shape, 100.0),
                 esa_voltage=_FIVE_SWEEP_VOLTAGE,
                 measurement_time=np.zeros(_N_MEAS),
                 swapi_response=_load_swapi_response_with_warm_cache(),
@@ -821,16 +820,15 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
     """Tests for `fit_solar_wind_alpha_moments` — failure branches inside `_alpha_initial_guess` and `_infer_sweep_layout` that return None, causing the public function to short-circuit to a `FIT_ERROR` NaN-filled result."""
 
     def _call(self, *, count_rate, esa_voltage, rotation_matrices=None):
+        n_meas = esa_voltage.size
         if rotation_matrices is None:
-            rotation_matrices = np.broadcast_to(
-                np.eye(3), (len(esa_voltage), 3, 3)
-            ).copy()
-        warm_voltages = esa_voltage if len(esa_voltage) > 0 else None
+            rotation_matrices = np.broadcast_to(np.eye(3), (n_meas, 3, 3)).copy()
+        warm_voltages = esa_voltage if n_meas > 0 else None
         response = load_swapi_response(warm_cache_voltages=warm_voltages)
         return fit_solar_wind_alpha_moments(
             count_rate=count_rate,
             esa_voltage=esa_voltage,
-            measurement_time=np.zeros(len(esa_voltage)),
+            measurement_time=np.zeros(n_meas),
             swapi_response=response,
             proton_moments=_build_proton_fit_result(),
             magnetic_field_direction=_B_HAT_RTN,
@@ -843,8 +841,8 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
         self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.FIT_ERROR))
         _assert_moments_are_nan_filled(self, result)
 
-    def test_non_periodic_voltage_axis_returns_fit_error(self):
-        """When `_infer_sweep_layout` cannot find an `n_sweeps` such that the voltage axis is periodic (e.g. 310 distinct strictly-decreasing values), it returns `(None, None)` and the fitter short-circuits to `FIT_ERROR`."""
+    def test_one_dimensional_inputs_short_circuit_to_fit_error(self):
+        """`_alpha_initial_guess` requires a 2D (n_sweeps, n_bins) count_rate; a 1D input falls through the ndim guard and the fitter reports `FIT_ERROR`."""
         voltage = np.logspace(np.log10(3500.0), np.log10(140.0), _N_MEAS)
         result = self._call(
             count_rate=np.zeros(_N_MEAS),
@@ -855,12 +853,10 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
     def test_non_monotonic_voltage_raises_in_peak_finder_and_returns_fit_error(self):
         """A non-monotonic per-sweep voltage axis violates `get_alpha_peak_indices`'s decreasing-energies assertion; the `try/except Exception` in `_alpha_initial_guess` catches it and the fitter returns `FIT_ERROR`."""
         one_sweep = _ONE_SWEEP_VOLTAGE.copy()
-        # Swap two adjacent bins to break monotonicity while keeping
-        # periodicity (the same swap is tiled across all sweeps).
         one_sweep[10], one_sweep[11] = one_sweep[11], one_sweep[10]
-        voltage = np.tile(one_sweep, _N_SWEEPS)
+        voltage = np.broadcast_to(one_sweep, (_N_SWEEPS, _N_BINS_PER_SWEEP)).copy()
         result = self._call(
-            count_rate=np.ones(_N_MEAS),
+            count_rate=np.ones(voltage.shape),
             esa_voltage=voltage,
         )
         self._assert_fit_error_nan(result)
@@ -873,7 +869,7 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
             return_value=slice(10, 12),
         ):
             result = self._call(
-                count_rate=np.ones(_N_MEAS),
+                count_rate=np.ones(_FIVE_SWEEP_VOLTAGE.shape),
                 esa_voltage=_FIVE_SWEEP_VOLTAGE,
             )
         self._assert_fit_error_nan(result)
@@ -886,7 +882,7 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
             return_value=slice(10, 20),
         ):
             result = self._call(
-                count_rate=np.zeros(_N_MEAS),
+                count_rate=np.zeros(_FIVE_SWEEP_VOLTAGE.shape),
                 esa_voltage=_FIVE_SWEEP_VOLTAGE,
             )
         self._assert_fit_error_nan(result)
@@ -897,11 +893,9 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
         # count_rate at those locations, then place the peak slice in the
         # high-voltage tail where unit_alpha ~ 0 (alpha truth voltage is
         # ~1264 V, voltage bin 0 is 3500 V).
-        count_rate = np.zeros(_N_MEAS)
+        count_rate = np.zeros((_N_SWEEPS, _N_BINS_PER_SWEEP))
         peak_slice = slice(0, 3)
-        for s in range(_N_SWEEPS):
-            count_rate[s * _N_BINS_PER_SWEEP + peak_slice.start :
-                       s * _N_BINS_PER_SWEEP + peak_slice.stop] = 1.0e3
+        count_rate[:, peak_slice] = 1.0e3
         with patch.object(
             alpha_module,
             "get_alpha_peak_indices",

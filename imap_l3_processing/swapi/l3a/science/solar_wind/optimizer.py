@@ -68,7 +68,7 @@ class _Evaluator:
         rate_observable = rate_ideal * df
         jacobian = jacobian_ideal * np.square(df)[:, np.newaxis]
 
-        residues = rate_observable - self.ctx.count_rate
+        residues = rate_observable - self.ctx.count_rate.ravel()
 
         self._last_state = state.copy()
         self._last_residues = residues

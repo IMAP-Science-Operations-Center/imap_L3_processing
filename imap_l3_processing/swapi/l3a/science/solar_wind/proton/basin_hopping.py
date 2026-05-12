@@ -63,13 +63,14 @@ def _flipped_seed(
         SolarWindParams(1.0, flipped_velocity, sw.temperature, sw.mass),
         ctx,
     )
-    flipped_density = optimal_density_scale(unit_ideal_rates, ctx.count_rate)
+    count_rate_flat = ctx.count_rate.ravel()
+    flipped_density = optimal_density_scale(unit_ideal_rates, count_rate_flat)
 
     # Same forward model as LM-1's residuals, evaluated self-consistently at
     # `flipped_density` so the basin-check ratio compares apples to apples.
     true_rate = flipped_density * unit_ideal_rates
     obs_pred = true_rate * deadtime_factor(true_rate)
-    flipped_mse = float(np.mean((obs_pred - ctx.count_rate) ** 2))
+    flipped_mse = float(np.mean((obs_pred - count_rate_flat) ** 2))
 
     return flipped_mse, SolarWindParams(
         density=flipped_density,

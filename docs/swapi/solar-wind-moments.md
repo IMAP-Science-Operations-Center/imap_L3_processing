@@ -521,6 +521,8 @@ The dashed black curve is $`\mathcal{N}(0, 1)`$, the ideal normalized residual d
 After the optimizer returns, the moments are assigned fill values if the optimizer did not report `success`, in which case the flag `FIT_ERROR` is set.
 Fill values are also assigned if the fitted temperature exceeds $`5\times 10^{5}\thinspace \text{K}`$, or the coefficient of determination $R^2$ is below $`0.9`$. In both cases, the flag `BAD_FIT` is set.
 
+The $R^2$ is computed on the count rate averaged across the chunk's 5 sweeps, using only the 9 ESA steps within ±4 of the peak in the averaged spectrum (coarse-sweep bins only). We average across sweeps before computing $R^2$ because individual sweeps have poorer $R^2$ due to the combination of solar wind temporal variation and spin variation, even when the fit is reasonable.
+
 ### Peak speed fallback
 
 Whenever we report fill values, we attempt to populate `proton_sw_speed` with based on the observed peak of the distribution.
@@ -631,6 +633,10 @@ For alphas, we apply the same approach that we applied for the proton fit:
 
 
 This ignores proton-parameter uncertainty's effect on Stage 2 residuals, so $`\sigma_{n_{\alpha}}, \sigma_{T_{\alpha}}`$ are lower bounds.
+
+### Failed fits
+
+The alpha $R^2$ uses the averages across sweeps just like the proton fit. The points are masked by the same mask used to fit the alphas.
 
 ## Quality flags
 
