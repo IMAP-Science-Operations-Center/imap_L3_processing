@@ -1,6 +1,7 @@
 import unittest
 from datetime import datetime
 from unittest.mock import Mock, patch
+import platform
 
 import numpy as np
 from uncertainties import ufloat
