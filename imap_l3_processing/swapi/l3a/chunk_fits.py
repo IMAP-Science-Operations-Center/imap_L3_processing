@@ -211,7 +211,7 @@ def _alpha_moments_from_fit(result, epoch):
         alpha_sw_delta_v=alpha.delta_v.nominal_value,
         alpha_sw_delta_v_uncert=alpha.delta_v.std_dev,
         alpha_sw_b_hat_rtn=result.b_hat_rtn,
-        bad_fit_flag=result.bad_fit_flag,
+        quality_flags=result.bad_fit_flag,
     )
 
 
@@ -353,8 +353,9 @@ def _fit_alpha(
     magnetic_field_direction,
 ) -> AlphaSolarWindFitResult:
     nan_b_hat = np.full(3, np.nan)
-    if magnetic_field_direction is None or not np.all(
-        np.isfinite(magnetic_field_direction)
+    if (
+        magnetic_field_direction is None
+        or not np.all(np.isfinite(magnetic_field_direction))
     ):
         logger.warning(
             f"Alpha fit at epoch {epoch}: missing or non-finite magnetic field direction; using fill values"

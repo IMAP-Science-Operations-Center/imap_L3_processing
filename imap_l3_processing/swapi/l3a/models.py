@@ -144,7 +144,7 @@ class SwapiL3AlphaSolarWindData(DataProduct):
     alpha_sw_delta_v: np.ndarray
     alpha_sw_delta_v_uncert: np.ndarray
     alpha_sw_b_hat_rtn: np.ndarray
-    bad_fit_flag: np.ndarray
+    quality_flags: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -184,7 +184,7 @@ class SwapiL3AlphaSolarWindData(DataProduct):
             DataProductVariable(
                 ALPHA_SOLAR_WIND_B_HAT_RTN_CDF_VAR_NAME, self.alpha_sw_b_hat_rtn
             ),
-            DataProductVariable(SWAPI_QUALITY_FLAGS_CDF_VAR_NAME, self.bad_fit_flag),
+            DataProductVariable(SWAPI_QUALITY_FLAGS_CDF_VAR_NAME, self.quality_flags),
         ]
 
 

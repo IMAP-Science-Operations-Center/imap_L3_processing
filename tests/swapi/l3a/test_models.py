@@ -103,8 +103,8 @@ class TestModels(CdfModelTestCase):
         delta_v_uncert = np.arange(5, step=.5)
         b_hat_rtn = np.arange(100, 100 + n * 3, dtype=float).reshape(n, 3)
 
-        bad_fit_flag = np.full_like(epoch_data, SwapiL3Flags.NONE)
-        bad_fit_flag[:n // 2] = SwapiL3Flags.BAD_FIT
+        quality_flags = np.full_like(epoch_data, SwapiL3Flags.NONE)
+        quality_flags[:n // 2] = SwapiL3Flags.BAD_FIT
 
         data = SwapiL3AlphaSolarWindData(
             Mock(), epoch_data,
@@ -113,7 +113,7 @@ class TestModels(CdfModelTestCase):
             velocity_rtn, velocity_cov_rtn,
             delta_v, delta_v_uncert,
             b_hat_rtn,
-            bad_fit_flag,
+            quality_flags,
         )
         variables = data.to_data_product_variables()
 
@@ -131,7 +131,7 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(variables[8], delta_v, ALPHA_SOLAR_WIND_DELTA_V_CDF_VAR_NAME)
         self.assert_variable_attributes(variables[9], delta_v_uncert, ALPHA_SOLAR_WIND_DELTA_V_UNCERT_CDF_VAR_NAME)
         self.assert_variable_attributes(variables[10], b_hat_rtn, ALPHA_SOLAR_WIND_B_HAT_RTN_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[11], bad_fit_flag, SWAPI_QUALITY_FLAGS_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[11], quality_flags, SWAPI_QUALITY_FLAGS_CDF_VAR_NAME)
 
     def test_getting_pui_data_product_variables(self):
         epoch_data = np.arange(20, step=2)

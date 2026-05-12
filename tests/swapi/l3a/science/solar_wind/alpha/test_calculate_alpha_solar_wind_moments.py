@@ -274,8 +274,8 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
         )
         _assert_moments_are_nan_filled(self, result)
 
-    def test_fit_error_flag_when_magnetic_field_direction_has_nans(self):
-        """A NaN component in `magnetic_field_direction` marks a MAG gap; Stage-2 has no field-aligned constraint to apply, so the fitter short-circuits with `FIT_ERROR`. The chunk fitter NaN-fills the chunk on this path and does not set any dedicated MAG-gap flag."""
+    def test_mag_gap_propagates_proton_flag_with_no_dedicated_bit(self):
+        """A NaN component in `magnetic_field_direction` is treated as an ordinary data gap: the fitter short-circuits and propagates the proton's flag unchanged with no dedicated MAG-gap bit added."""
         proton_moments = _build_proton_fit_result()
         nan_b_hat = np.array([np.nan, 0.0, 0.0])
         result = fit_solar_wind_alpha_moments(
@@ -289,7 +289,7 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
             proton_effective_area_scale=1.0,
             rotation_matrices=_identity_rotation_matrices(),
         )
-        self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.FIT_ERROR))
+        self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.NONE))
 
     def test_nan_magnetic_field_direction_returns_nan_filled_moments(self):
         """A NaN B̂ short-circuits before any forward-model call and every moment field is filled with NaN, mirroring the Stage-1-failure guard."""

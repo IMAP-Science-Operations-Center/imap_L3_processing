@@ -518,7 +518,7 @@ class TestAlphaChunkFitterFitChunk(SpiceTestCase):
         super().tearDownClass()
 
     def _assert_flag_and_all_nan(self, result, flag):
-        self.assertEqual(int(result["bad_fit_flag"]), int(flag))
+        self.assertEqual(int(result["quality_flags"]), int(flag))
         _assert_all_nan(self, result, _ALPHA_SCALAR_KEYS, _ALPHA_ARRAY_KEYS)
 
     def test_recovers_alpha_truth_moments(self):
@@ -545,9 +545,9 @@ class TestAlphaChunkFitterFitChunk(SpiceTestCase):
         np.testing.assert_array_equal(self.happy_result["alpha_sw_b_hat_rtn"], _B_HAT_RTN)
 
     def test_quality_flag_none_on_clean_chunk(self):
-        """A clean chunk yields a NONE bad_fit_flag (both Stage 1 and Stage 2 converged)."""
+        """A clean chunk yields a NONE quality flag (both Stage 1 and Stage 2 converged)."""
         self.assertEqual(
-            int(self.happy_result["bad_fit_flag"]), int(SwapiL3Flags.NONE)
+            int(self.happy_result["quality_flags"]), int(SwapiL3Flags.NONE)
         )
 
     def test_missing_rotations_is_unflagged_data_gap(self):

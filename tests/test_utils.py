@@ -57,7 +57,7 @@ class TestUtils(TestCase):
                                                  alpha_sw_temperature=alpha_sw_temperature,
                                                  alpha_sw_density=alpha_sw_density,
                                                  parent_file_names=sentinel.parent_files,
-                                                 bad_fit_flag=sentinel.bad_fit_flag,
+                                                 quality_flags=sentinel.quality_flags,
                                                  alpha_sw_pre_lut_density=sentinel.alpha_sw_pre_lut_density,
                                                  alpha_sw_pre_lut_temperature=sentinel.alpha_sw_pre_lut_temperature,
                                                  )
@@ -199,14 +199,14 @@ class TestUtils(TestCase):
         alpha_sw_speed = np.array([4, 5, 6])
         alpha_sw_density = np.array([5, 5, 5])
         alpha_sw_temperature = np.array([4, 3, 5])
-        bad_fit_flag = np.repeat([SwapiL3Flags.NONE], 3)
+        quality_flags = np.repeat([SwapiL3Flags.NONE], 3)
 
         data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata,
                                                  epoch=epoch,
                                                  alpha_sw_speed=alpha_sw_speed,
                                                  alpha_sw_temperature=alpha_sw_temperature,
                                                  alpha_sw_density=alpha_sw_density,
-                                                 bad_fit_flag=bad_fit_flag,
+                                                 quality_flags=quality_flags,
                                                  alpha_sw_pre_lut_density=sentinel.alpha_sw_pre_lut_density,
                                                  alpha_sw_pre_lut_temperature=sentinel.alpha_sw_pre_lut_temperature,
                                                  )
@@ -235,14 +235,14 @@ class TestUtils(TestCase):
         alpha_sw_speed = np.array([4, 5, 6])
         alpha_sw_density = np.array([5, 5, 5])
         alpha_sw_temperature = np.array([4, 3, 5])
-        bad_fit_flag = np.repeat([SwapiL3Flags.NONE], 3)
+        quality_flags = np.repeat([SwapiL3Flags.NONE], 3)
 
         data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata,
                                                  epoch=epoch,
                                                  alpha_sw_speed=alpha_sw_speed,
                                                  alpha_sw_temperature=alpha_sw_temperature,
                                                  alpha_sw_density=alpha_sw_density,
-                                                 bad_fit_flag=bad_fit_flag,
+                                                 quality_flags=quality_flags,
                                                  alpha_sw_pre_lut_density=sentinel.alpha_sw_pre_lut_density,
                                                  alpha_sw_pre_lut_temperature=sentinel.alpha_sw_pre_lut_temperature,
                                                  )

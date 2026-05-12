@@ -110,7 +110,7 @@ class SwapiProcessor(Processor):
         result = runner.run(chunks, fitter)
         
         if dependencies.mag_is_preliminary:
-            result["bad_fit_flag"] = result["bad_fit_flag"] | int(SwapiL3Flags.PRELIMINARY_MAG)
+            result["quality_flags"] = result["quality_flags"] | int(SwapiL3Flags.PRELIMINARY_MAG)
         
         metadata = replace(self.input_metadata, descriptor="alpha-sw")
         return SwapiL3AlphaSolarWindData(metadata, **result)
