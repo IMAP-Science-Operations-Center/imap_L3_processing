@@ -476,9 +476,6 @@ At iteration $`k`$ (up to 6 times):
 2. **Check threshold.** If $`\text{MSE}_{\text{flip}} \geq 100\thinspace \text{MSE}^{(k)}`$ (RMSE ratio $`\geq 10`$), terminate the loop.
 3. **Repeat.** Otherwise, run a full least-squares fit seeded from $`(\mathbf{v}_{b}^{\text{flip}}, n^{\text{flip}}, T^{(k)})`$. If its MSE is no worse than $`\text{MSE}^{(k)}`$, it becomes iteration $`k+1`$ and the loop continues; otherwise terminate.
 
-The `bad_fit_flag` is taken from the `success` flag of the final accepted fit.
-A failed fit sets the quality flag `BAD_FIT`.
-
 ### Fitting Algorithm Validation
 
 To validate that the algorithm recovers solar-wind moments under realistic conditions, we performed the following experiment:
