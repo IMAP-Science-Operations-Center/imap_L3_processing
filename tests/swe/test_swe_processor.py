@@ -146,7 +146,8 @@ class TestSweProcessor(unittest.TestCase):
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
         swe_l1b_data = Mock()
-        swe_l3_dependency = SweL3Dependencies(swe_l2_data, swe_l1b_data, mag_l1d_data, swapi_l3a_proton_data, swe_config)
+        swe_l3_dependency = SweL3Dependencies(swe_l2_data, swe_l1b_data, mag_l1d_data, swapi_l3a_proton_data, swe_config,
+                                              mag_is_preliminary=True)
 
         swe_processor = SweProcessor(swe_l3_dependency, input_metadata)
         swe_l3_data = swe_processor.calculate_products(swe_l3_dependency)
@@ -256,13 +257,13 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_allclose(swe_l3_data.raw_psd_by_theta_rebinned, np.broadcast_to(psd_rebinned, (7, 7)))
 
         expected_quality_flags = np.array([
-            SweL3Flags.FALLBACK_SWAPI_SPEED | SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE | SweL3Flags.POTENTIAL_FIT_UNCONVERGED,
-            SweL3Flags.NONE,
-            SweL3Flags.NONE,
-            SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE,
-            SweL3Flags.NONE,
-            SweL3Flags.NONE,
-            SweL3Flags.NONE,
+            SweL3Flags.FALLBACK_SWAPI_SPEED | SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE | SweL3Flags.POTENTIAL_FIT_UNCONVERGED | SweL3Flags.PRELIMINARY_MAG,
+            SweL3Flags.PRELIMINARY_MAG,
+            SweL3Flags.PRELIMINARY_MAG,
+            SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE | SweL3Flags.PRELIMINARY_MAG,
+            SweL3Flags.PRELIMINARY_MAG,
+            SweL3Flags.PRELIMINARY_MAG,
+            SweL3Flags.PRELIMINARY_MAG,
         ])
 
         np.testing.assert_array_equal(swe_l3_data.swe_flags, expected_quality_flags)

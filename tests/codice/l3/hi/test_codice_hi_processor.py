@@ -13,6 +13,7 @@ from imap_l3_processing.codice.l3.hi.models import CodiceL2HiDirectEventData, Co
     CodiceL3HiDirectEvents
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
 from imap_l3_processing.codice.l3.lo.constants import CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM
+from imap_l3_processing.codice.quality_flags import CodiceL3Flags
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import NumpyArrayMatcher, get_test_data_path
 
@@ -293,7 +294,8 @@ class TestCodiceHiProcessor(unittest.TestCase):
         )
 
         dependencies = CodicePitchAngleDependencies(mag_data=mag_l1d_data,
-                                                    codice_sectored_intensities_data=codice_l2_data)
+                                                    codice_sectored_intensities_data=codice_l2_data,
+                                                    mag_is_preliminary=True)
 
         expected_pitch_angles = np.linspace(15, 165, 6)
         expected_gyrophase = np.linspace(15, 345, 12)
@@ -432,6 +434,11 @@ class TestCodiceHiProcessor(unittest.TestCase):
                                       expected_cno_intensity_binned_by_pa_and_gyro)
         np.testing.assert_array_equal(codice_hi_data_product.fe_intensity_by_pitch_angle_and_gyrophase,
                                       expected_fe_intensity_binned_by_pa_and_gyro)
+
+        np.testing.assert_array_equal(
+            codice_hi_data_product.codice_flags,
+            np.array([CodiceL3Flags.PRELIMINARY_MAG, CodiceL3Flags.PRELIMINARY_MAG]),
+        )
 
         np.testing.assert_array_equal(codice_hi_data_product.parent_file_names, expected_parents)
 
