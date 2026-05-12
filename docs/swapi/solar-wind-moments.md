@@ -648,7 +648,7 @@ The points used to calculate $R^2$ are masked by the same mask used to fit the a
 
 Gaps in the L2 data, ephemeris data, and MAG data (for alphas) result in fill values with no flag.
 
-For alphas, the proton flags combined with the alpha quality flags.
+For alphas, the proton flags are combined with the alpha quality flags.
 
 ## References
 

@@ -1,7 +1,9 @@
 import unittest
-from unittest.mock import patch
+from datetime import datetime
+from unittest.mock import Mock, patch
 
 import numpy as np
+from uncertainties import ufloat
 
 from imap_l3_processing.constants import (
     ALPHA_MASS_PER_CHARGE_M_P_PER_E,
@@ -11,7 +13,8 @@ from imap_l3_processing.constants import (
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
     THIRTY_SECONDS_IN_NANOSECONDS,
 )
-from imap_l3_processing.models import MagData
+from imap_l3_processing.models import InputMetadata, MagData
+from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swapi.l3a import chunk_fits
 from imap_l3_processing.swapi.l3a.chunk_fits import (
     AlphaChunkFitter,
@@ -30,6 +33,9 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
+    ProtonSolarWindFitResult,
+)
 from imap_l3_processing.swapi.l3a.utils import get_swapi_geometry
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
@@ -87,6 +93,7 @@ _ALPHA_ARRAY_KEYS = [
     "alpha_sw_velocity_rtn", "alpha_sw_velocity_covariance_rtn",
     "alpha_sw_b_hat_rtn",
 ]
+_ALPHA_BUMP_BINS = slice(24, 31)
 
 
 def _swapi_response_with_warm_cache(voltages):
@@ -220,15 +227,19 @@ def _build_truth_chunk(response, efficiency_table):
     return chunk, science_rotations, proton_velocity_rtn, alpha_velocity_rtn
 
 
-def _with_nan_at(chunk, sweep, bin_):
-    bad = chunk.coincidence_count_rate.copy()
-    bad[sweep, bin_] = np.nan
+def _with_count_rate(chunk, count_rate):
     return SwapiL2Data(
         sci_start_time=chunk.sci_start_time,
         energy=chunk.energy,
-        coincidence_count_rate=bad,
+        coincidence_count_rate=count_rate,
         coincidence_count_rate_uncertainty=chunk.coincidence_count_rate_uncertainty,
     )
+
+
+def _with_nan_at(chunk, sweep, bin_):
+    bad = chunk.coincidence_count_rate.copy()
+    bad[sweep, bin_] = np.nan
+    return _with_count_rate(chunk, bad)
 
 
 def _assert_all_nan(tc, result, scalar_keys, array_keys):
@@ -246,6 +257,16 @@ def _assert_peak_speed_fallback(tc, result, scalar_keys, array_keys):
     tc.assertAlmostEqual(result["proton_sw_speed"], _TRUE_BULK_SPEED, delta=15.0)
     other_scalars = [k for k in scalar_keys if k != "proton_sw_speed"]
     _assert_all_nan(tc, result, other_scalars, array_keys)
+
+
+def _assert_alpha_flag_and_all_nan(tc, result, flag):
+    tc.assertEqual(int(result["quality_flags"]), int(flag))
+    _assert_all_nan(tc, result, _ALPHA_SCALAR_KEYS, _ALPHA_ARRAY_KEYS)
+
+
+def _assert_proton_flag_and_peak_fallback(tc, result, flag):
+    tc.assertEqual(int(result["quality_flags"]), int(flag))
+    _assert_peak_speed_fallback(tc, result, _PROTON_SCALAR_KEYS, _PROTON_ARRAY_KEYS)
 
 
 def _zero_chunk():
@@ -381,12 +402,6 @@ class TestProtonChunkFitterFitChunk(SpiceTestCase):
         # Source returns the same matrix for both keys.
         np.testing.assert_array_equal(covariance_spacecraft_frame, covariance_sun_frame)
 
-    def test_missing_rotation_matrices_is_unflagged_data_gap(self):
-        """Calling fit_chunk with no rotation matrices reports a NONE quality flag (ephemeris gaps are treated as data gaps without a dedicated flag) and falls back to peak-bin ESA voltage as `proton_sw_speed`; every other science field NaN-fills."""
-        result = ProtonChunkFitter().fit_chunk(self.chunk, _CHUNK_EPOCH, None, _SC_VELOCITY_RTN)
-        self.assertEqual(result["quality_flags"], SwapiL3Flags.NONE)
-        _assert_peak_speed_fallback(self, result, _PROTON_SCALAR_KEYS, _PROTON_ARRAY_KEYS)
-
     def test_missing_sc_velocity_fills_only_sun_frame_outputs(self):
         """Calling fit_chunk with no SC velocity still runs the proton fit normally: density, temperature, SC-frame bulk velocity (and its covariance), peak speed, and DPS-frame clock/deflection angles are populated from the fit; only the sun-frame outputs (`proton_sw_speed_sun`, `proton_sw_bulk_velocity_rtn_sun`, and the sun-frame covariance) are fill values."""
         result = ProtonChunkFitter().fit_chunk(
@@ -418,66 +433,6 @@ class TestProtonChunkFitterFitChunk(SpiceTestCase):
             np.all(np.isfinite(result["proton_sw_bulk_velocity_rtn_sc_covariance"]))
         )
         self.assertTrue(np.isfinite(result["proton_sw_speed"]))
-
-    def test_nan_in_count_rate_is_unflagged_data_gap(self):
-        """A NaN in the count rate is treated as an L2 data gap: the quality flag is NONE, `proton_sw_speed` reports the peak-bin speed (taken across finite bins via `nanargmax`), and every other science field NaN-fills."""
-        result = ProtonChunkFitter().fit_chunk(
-            _with_nan_at(self.chunk, 0, 5), _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN
-        )
-        self.assertEqual(int(result["quality_flags"]), int(SwapiL3Flags.NONE))
-        _assert_peak_speed_fallback(self, result, _PROTON_SCALAR_KEYS, _PROTON_ARRAY_KEYS)
-
-    @patch("imap_l3_processing.swapi.l3a.chunk_fits._fit_proton")
-    def test_fit_error_falls_back_to_peak_speed(self, mock_fit_proton):
-        """When the LM rejects the fit (`FIT_ERROR` with NaN moments), the chunk fitter still reports `proton_sw_speed` from the peak-bin ESA voltage, NaN-fills every other science field, and propagates `FIT_ERROR` in `quality_flags`."""
-        from uncertainties import ufloat
-        from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
-            ProtonSolarWindFitResult,
-        )
-
-        nan = ufloat(np.nan, np.nan)
-        mock_fit_proton.return_value = ProtonSolarWindFitResult(
-            density=nan,
-            temperature=nan,
-            bulk_velocity_rtn=(nan, nan, nan),
-            bad_fit_flag=int(SwapiL3Flags.FIT_ERROR),
-        )
-
-        result = ProtonChunkFitter().fit_chunk(
-            self.chunk, _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN.copy()
-        )
-
-        self.assertEqual(int(result["quality_flags"]), int(SwapiL3Flags.FIT_ERROR))
-        _assert_peak_speed_fallback(self, result, _PROTON_SCALAR_KEYS, _PROTON_ARRAY_KEYS)
-
-    @patch("imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model.calculate_initial_guess")
-    def test_nan_initial_guess_yields_fit_error(self, mock_initial_guess):
-        """A NaN-valued initial guess causes the LM driver to reject the chunk, surfacing `FIT_ERROR` with peak-bin speed and NaN-filled moments."""
-        mock_initial_guess.return_value = SolarWindParams(
-            density=np.nan,
-            bulk_velocity_rtn=np.full(3, np.nan),
-            temperature=np.nan,
-            mass=PROTON_MASS_KG,
-        )
-
-        result = ProtonChunkFitter().fit_chunk(
-            self.chunk, _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN.copy()
-        )
-
-        self.assertEqual(int(result["quality_flags"]), int(SwapiL3Flags.FIT_ERROR))
-        _assert_peak_speed_fallback(self, result, _PROTON_SCALAR_KEYS, _PROTON_ARRAY_KEYS)
-
-    @patch("imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model.calculate_initial_guess")
-    def test_initial_guess_exception_yields_fit_error(self, mock_initial_guess):
-        """When the initial-guess routine raises, the chunk fitter catches the exception, surfaces `FIT_ERROR`, and falls back to the peak-bin speed."""
-        mock_initial_guess.side_effect = RuntimeError("synthetic initial-guess failure")
-
-        result = ProtonChunkFitter().fit_chunk(
-            self.chunk, _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN.copy()
-        )
-
-        self.assertEqual(int(result["quality_flags"]), int(SwapiL3Flags.FIT_ERROR))
-        _assert_peak_speed_fallback(self, result, _PROTON_SCALAR_KEYS, _PROTON_ARRAY_KEYS)
 
 
 # ----- AlphaChunkFitter -----------------------------------------------------
@@ -546,10 +501,6 @@ class TestAlphaChunkFitterFitChunk(SpiceTestCase):
         _clear_shared()
         super().tearDownClass()
 
-    def _assert_flag_and_all_nan(self, result, flag):
-        self.assertEqual(int(result["quality_flags"]), int(flag))
-        _assert_all_nan(self, result, _ALPHA_SCALAR_KEYS, _ALPHA_ARRAY_KEYS)
-
     def test_recovers_alpha_truth_moments(self):
         """Fitting a forward-modeled proton+alpha chunk recovers the true alpha density, temperature, delta-v, and bulk velocity within a few percent."""
         self.assertAlmostEqual(
@@ -578,30 +529,6 @@ class TestAlphaChunkFitterFitChunk(SpiceTestCase):
         self.assertEqual(
             int(self.happy_result["quality_flags"]), int(SwapiL3Flags.NONE)
         )
-
-    def test_missing_rotations_is_unflagged_data_gap(self):
-        """Calling alpha fit_chunk with no rotations NaN-fills every alpha field and reports a NONE bad_fit_flag — ephemeris gaps are treated as data gaps without a dedicated flag."""
-        result = self.fitter.fit_chunk(self.chunk, _CHUNK_EPOCH, None, _B_HAT_RTN)
-        self._assert_flag_and_all_nan(result, SwapiL3Flags.NONE)
-
-    def test_nan_b_hat_is_unflagged_data_gap(self):
-        """A NaN-valued B̂ NaN-fills every alpha field and reports a NONE bad_fit_flag — MAG gaps are treated as data gaps without a dedicated flag, since the field-aligned drift constraint cannot be evaluated."""
-        result = self.fitter.fit_chunk(
-            self.chunk, _CHUNK_EPOCH, self.rotations, np.full(3, np.nan)
-        )
-        self._assert_flag_and_all_nan(result, SwapiL3Flags.NONE)
-
-    def test_none_b_hat_is_unflagged_data_gap(self):
-        """Passing None for B̂ NaN-fills every alpha field and reports a NONE bad_fit_flag, mirroring the NaN case."""
-        result = self.fitter.fit_chunk(self.chunk, _CHUNK_EPOCH, self.rotations, None)
-        self._assert_flag_and_all_nan(result, SwapiL3Flags.NONE)
-
-    def test_nan_count_rate_is_unflagged_data_gap(self):
-        """A NaN in the alpha count rate is treated as an L2 data gap: every alpha field NaN-fills and bad_fit_flag is NONE."""
-        result = self.fitter.fit_chunk(
-            _with_nan_at(self.chunk, 0, 5), _CHUNK_EPOCH, self.rotations, _B_HAT_RTN
-        )
-        self._assert_flag_and_all_nan(result, SwapiL3Flags.NONE)
 
 
 # ----- ParallelChunkRunner --------------------------------------------------
@@ -689,6 +616,195 @@ class TestParallelChunkRunnerOrchestration(unittest.TestCase):
         np.testing.assert_array_equal(
             result["worker_cache_size"], np.array([parent_cache_size])
         )
+
+
+# ----- Proton quality flags -------------------------------------------------
+
+
+class TestProtonChunkFitterQualityFlags(SpiceTestCase):
+    """Quality-flag branches of `ProtonChunkFitter.fit_chunk`, ordered to match `docs/swapi/solar-wind-moments.md` §Quality flags: `BAD_FIT`, `FIT_ERROR`, then NONE-flag data-gap fills."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.response = _swapi_response_with_warm_cache(np.tile(_SCIENCE_V, _N_SWEEPS))
+        efficiency_table = _efficiency_table()
+        _populate_shared(cls.response, efficiency_table)
+        cls.chunk, cls.rotations, _, _ = _build_truth_chunk(cls.response, efficiency_table)
+        cls.fitter = ProtonChunkFitter()
+
+    @classmethod
+    def tearDownClass(cls):
+        _clear_shared()
+        super().tearDownClass()
+
+    def _fit(self, chunk):
+        return self.fitter.fit_chunk(
+            chunk, _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN.copy()
+        )
+
+    def test_bad_fit_when_peak_does_not_match_maxwellian(self):
+        """Scrambling the proton peak bins yields a spectrum the LM fit cannot describe (the BAD_FIT quality guard fires); the chunk fitter surfaces `BAD_FIT` with peak-bin speed and NaN-filled moments."""
+        rng = np.random.default_rng(0)
+        mean_count = self.chunk.coincidence_count_rate.mean(axis=0)
+        peak_bin = int(np.argmax(mean_count))
+        peak_window = slice(peak_bin - 2, peak_bin + 3)
+        permuted = rng.permutation(np.arange(peak_window.start, peak_window.stop))
+        corrupted = self.chunk.coincidence_count_rate.copy()
+        corrupted[:, peak_window] = corrupted[:, permuted]
+
+        result = self._fit(_with_count_rate(self.chunk, corrupted))
+
+        _assert_proton_flag_and_peak_fallback(self, result, SwapiL3Flags.BAD_FIT)
+
+    @patch("imap_l3_processing.swapi.l3a.chunk_fits._fit_proton")
+    def test_fit_error_when_inner_fit_returns_fit_error(self, mock_fit_proton):
+        """When the inner proton fit returns `FIT_ERROR` with NaN moments (scipy LM reported `success=False`), the chunk fitter propagates the flag, falls back to peak-bin speed, and NaN-fills every other science field. Mocked because there is no clean way to force scipy LM to report `success=False` from real inputs."""
+        nan = ufloat(np.nan, np.nan)
+        mock_fit_proton.return_value = ProtonSolarWindFitResult(
+            density=nan,
+            temperature=nan,
+            bulk_velocity_rtn=(nan, nan, nan),
+            bad_fit_flag=int(SwapiL3Flags.FIT_ERROR),
+        )
+
+        result = self._fit(self.chunk)
+
+        _assert_proton_flag_and_peak_fallback(self, result, SwapiL3Flags.FIT_ERROR)
+
+    @patch("imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model.calculate_initial_guess")
+    def test_fit_error_when_initial_guess_is_nan(self, mock_initial_guess):
+        """A NaN-valued initial guess causes scipy `least_squares` to reject `x0` as infeasible; the chunk fitter catches the exception, surfaces `FIT_ERROR`, and falls back to peak-bin speed. Mocked because `calculate_initial_guess` never returns NaN from real inputs (it raises instead)."""
+        mock_initial_guess.return_value = SolarWindParams(
+            density=np.nan,
+            bulk_velocity_rtn=np.full(3, np.nan),
+            temperature=np.nan,
+            mass=PROTON_MASS_KG,
+        )
+
+        result = self._fit(self.chunk)
+
+        _assert_proton_flag_and_peak_fallback(self, result, SwapiL3Flags.FIT_ERROR)
+
+    def test_fit_error_when_initial_guess_raises(self):
+        """A spectrum with a single non-zero bin (no Gaussian shape to fit) makes scipy `curve_fit` raise inside the initial-guess Gaussian refine; the chunk fitter catches the exception, surfaces `FIT_ERROR`, and falls back to peak-bin speed."""
+        peak_bin = int(np.argmax(self.chunk.coincidence_count_rate.mean(axis=0)))
+        single_bin = np.zeros_like(self.chunk.coincidence_count_rate)
+        single_bin[:, peak_bin] = 100.0
+
+        result = self._fit(_with_count_rate(self.chunk, single_bin))
+
+        _assert_proton_flag_and_peak_fallback(self, result, SwapiL3Flags.FIT_ERROR)
+
+    def test_no_flag_when_rotations_missing(self):
+        """Calling fit_chunk with no rotations reports a NONE quality flag (ephemeris gaps are treated as data gaps without a dedicated flag) and falls back to peak-bin ESA voltage as `proton_sw_speed`; every other science field NaN-fills."""
+        result = self.fitter.fit_chunk(self.chunk, _CHUNK_EPOCH, None, _SC_VELOCITY_RTN)
+        _assert_proton_flag_and_peak_fallback(self, result, SwapiL3Flags.NONE)
+
+    def test_no_flag_when_count_rate_has_nan(self):
+        """A NaN in the count rate is treated as an L2 data gap: the quality flag is NONE, `proton_sw_speed` reports the peak-bin speed (taken across finite bins via `nanargmax`), and every other science field NaN-fills."""
+        result = self._fit(_with_nan_at(self.chunk, 0, 5))
+        _assert_proton_flag_and_peak_fallback(self, result, SwapiL3Flags.NONE)
+
+
+# ----- Alpha quality flags --------------------------------------------------
+
+
+class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
+    """Quality-flag branches of `AlphaChunkFitter.fit_chunk` and the `PRELIMINARY_MAG` bit-OR in `SwapiProcessor.process_l3a_alpha`, ordered to match `docs/swapi/solar-wind-moments.md` §Quality flags: `BAD_FIT`, `PRELIMINARY_MAG`, then NONE-flag data-gap fills."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.response = _swapi_response_with_warm_cache(np.tile(_SCIENCE_V, _N_SWEEPS))
+        efficiency_table = _efficiency_table()
+        _populate_shared(cls.response, efficiency_table)
+        cls.chunk, cls.rotations, _, _ = _build_truth_chunk(cls.response, efficiency_table)
+        cls.fitter = AlphaChunkFitter(mag_data=None)
+
+    @classmethod
+    def tearDownClass(cls):
+        _clear_shared()
+        super().tearDownClass()
+
+    def test_bad_fit_when_alpha_bump_does_not_match_maxwellian(self):
+        """Scrambling and amplifying the alpha-bump bins leaves the proton peak intact but yields a Stage-2 residual the alpha LM cannot describe (the BAD_FIT quality guard fires); the chunk fitter surfaces `BAD_FIT` with every alpha moment NaN-filled while B̂ passes through unchanged."""
+        rng = np.random.default_rng(0)
+        permuted = rng.permutation(np.arange(_ALPHA_BUMP_BINS.start, _ALPHA_BUMP_BINS.stop))
+        corrupted = self.chunk.coincidence_count_rate.copy()
+        corrupted[:, _ALPHA_BUMP_BINS] = corrupted[:, permuted] * 3.0
+
+        result = self.fitter.fit_chunk(
+            _with_count_rate(self.chunk, corrupted),
+            _CHUNK_EPOCH,
+            self.rotations,
+            _B_HAT_RTN,
+        )
+
+        non_b_hat_array_keys = [k for k in _ALPHA_ARRAY_KEYS if k != "alpha_sw_b_hat_rtn"]
+        self.assertEqual(int(result["quality_flags"]), int(SwapiL3Flags.BAD_FIT))
+        _assert_all_nan(self, result, _ALPHA_SCALAR_KEYS, non_b_hat_array_keys)
+        np.testing.assert_array_equal(result["alpha_sw_b_hat_rtn"], _B_HAT_RTN)
+
+    @patch("imap_l3_processing.swapi.swapi_processor.SwapiL3AlphaSolarWindData")
+    @patch("imap_l3_processing.swapi.swapi_processor.ParallelChunkRunner")
+    @patch("imap_l3_processing.swapi.swapi_processor.chunk_l2_data")
+    def test_preliminary_mag_bit_set_iff_mag_is_preliminary(
+        self, mock_chunk_l2_data, mock_runner_class, mock_alpha_data_class
+    ):
+        """The `PRELIMINARY_MAG` bit is OR'd onto every per-chunk quality flag when `mag_is_preliminary=True` (preserving any underlying `BAD_FIT`), and the per-chunk flags pass through untouched when `mag_is_preliminary=False`. Mocked at the processor seam because the bit-OR is processor-level wiring, not chunk-fitter behavior."""
+        runner_flag = int(SwapiL3Flags.BAD_FIT)
+        cases = [
+            (True, runner_flag | int(SwapiL3Flags.PRELIMINARY_MAG)),
+            (False, runner_flag),
+        ]
+        for mag_is_preliminary, expected_flag in cases:
+            with self.subTest(mag_is_preliminary=mag_is_preliminary):
+                mock_chunk_l2_data.return_value = [Mock()]
+                mock_runner_class.return_value.run.return_value = {
+                    "quality_flags": np.array([runner_flag])
+                }
+                dependencies = Mock(
+                    mag_data=Mock(),
+                    mag_is_preliminary=mag_is_preliminary,
+                    swapi_response=Mock(),
+                    efficiency_calibration_table=Mock(),
+                )
+                data = Mock(energy=np.array([[1000.0, 2000.0]]))
+                metadata = InputMetadata(
+                    "swapi", "l3a", datetime(2025, 1, 1), datetime(2025, 1, 2), "v001"
+                )
+
+                SwapiProcessor(Mock(), metadata).process_l3a_alpha(data, dependencies)
+
+                passed_quality_flags = mock_alpha_data_class.call_args.kwargs[
+                    "quality_flags"
+                ]
+                np.testing.assert_array_equal(passed_quality_flags, [expected_flag])
+
+    def test_no_flag_when_rotations_missing(self):
+        """Calling fit_chunk with no rotations NaN-fills every alpha field and reports a NONE bad_fit_flag — ephemeris gaps are treated as data gaps without a dedicated flag."""
+        result = self.fitter.fit_chunk(self.chunk, _CHUNK_EPOCH, None, _B_HAT_RTN)
+        _assert_alpha_flag_and_all_nan(self, result, SwapiL3Flags.NONE)
+
+    def test_no_flag_when_b_hat_is_nan(self):
+        """A NaN-valued B̂ NaN-fills every alpha field and reports a NONE bad_fit_flag — MAG gaps are treated as data gaps without a dedicated flag, since the field-aligned drift constraint cannot be evaluated."""
+        result = self.fitter.fit_chunk(
+            self.chunk, _CHUNK_EPOCH, self.rotations, np.full(3, np.nan)
+        )
+        _assert_alpha_flag_and_all_nan(self, result, SwapiL3Flags.NONE)
+
+    def test_no_flag_when_b_hat_is_none(self):
+        """Passing None for B̂ NaN-fills every alpha field and reports a NONE bad_fit_flag, mirroring the NaN case."""
+        result = self.fitter.fit_chunk(self.chunk, _CHUNK_EPOCH, self.rotations, None)
+        _assert_alpha_flag_and_all_nan(self, result, SwapiL3Flags.NONE)
+
+    def test_no_flag_when_count_rate_has_nan(self):
+        """A NaN in the alpha count rate is treated as an L2 data gap: every alpha field NaN-fills and bad_fit_flag is NONE."""
+        result = self.fitter.fit_chunk(
+            _with_nan_at(self.chunk, 0, 5), _CHUNK_EPOCH, self.rotations, _B_HAT_RTN
+        )
+        _assert_alpha_flag_and_all_nan(self, result, SwapiL3Flags.NONE)
 
 
 if __name__ == "__main__":
