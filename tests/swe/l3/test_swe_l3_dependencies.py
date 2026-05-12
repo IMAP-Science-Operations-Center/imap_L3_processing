@@ -36,6 +36,12 @@ class TestSweL3Dependencies(unittest.TestCase):
         self.assertEqual(mock_read_mag_data.return_value, result.mag_data)
         self.assertEqual(mock_read_swapi_data.return_value, result.swapi_l3a_proton_data)
         self.assertEqual(mock_read_swe_config.return_value, result.configuration)
+        self.assertFalse(result.mag_is_preliminary)
+
+        result_preliminary = SweL3Dependencies.from_file_paths(
+            swe_path, swe_l1b_path, mag_path, swapi_path, config_path, mag_is_preliminary=True
+        )
+        self.assertTrue(result_preliminary.mag_is_preliminary)
 
     @patch(f"{MODULE}.download")
     @patch(f"{MODULE}.SweL3Dependencies.from_file_paths")
@@ -70,7 +76,8 @@ class TestSweL3Dependencies(unittest.TestCase):
 
         mock_from_file_paths.assert_called_with(expected_swe_path, expected_swe_l1b_path, expected_mag_path,
                                                 expected_swapi_path,
-                                                expected_config_path)
+                                                expected_config_path,
+                                                mag_is_preliminary=True)
         self.assertEqual(mock_from_file_paths.return_value, result)
 
     @patch(f"{MODULE}.download")
@@ -120,5 +127,6 @@ class TestSweL3Dependencies(unittest.TestCase):
             expected_mag_path,
             expected_swapi_path,
             expected_config_path,
+            mag_is_preliminary=False,
         )
         self.assertEqual(mock_from_file_paths.return_value, result)

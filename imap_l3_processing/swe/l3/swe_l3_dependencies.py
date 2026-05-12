@@ -24,6 +24,7 @@ class SweL3Dependencies:
     mag_data: MagData
     swapi_l3a_proton_data: SwapiL3aProtonData
     configuration: SweConfiguration
+    mag_is_preliminary: bool = False
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection) -> SweL3Dependencies:
@@ -44,6 +45,7 @@ class SweL3Dependencies:
             (d.imap_file_paths[0] for d in science_files if d.source == "mag"
             and d.descriptor == MAG_DESPUN_L1D_DESCRIPTOR
             and d.data_type == "l2"), None)
+        mag_is_preliminary = False
         if mag_dependency is None:
             try:
                 mag_dependency = next(
@@ -51,6 +53,7 @@ class SweL3Dependencies:
                     and d.descriptor == MAG_DESPUN_L1D_DESCRIPTOR
                     and d.data_type == "l1d"
                 )
+                mag_is_preliminary = True
             except StopIteration:
                 raise ValueError(f"Missing MAG {MAG_DESPUN_L1D_DESCRIPTOR} dependency.")
         try:
@@ -66,16 +69,19 @@ class SweL3Dependencies:
         swapi_file = download(swapi_dependency.construct_path())
         swe_config = download(swe_config_dependency)
 
-        return cls.from_file_paths(swe_l2_file, swe_l1b_file, mag_file, swapi_file, swe_config)
+        return cls.from_file_paths(swe_l2_file, swe_l1b_file, mag_file, swapi_file, swe_config,
+                                   mag_is_preliminary=mag_is_preliminary)
 
     @classmethod
     def from_file_paths(cls, swe_l2_file_path: Path, swe_l1b_file_path: Path, mag_file_path: Path,
                         swapi_file_path: Path,
-                        configuration_file_path: Path) -> SweL3Dependencies:
+                        configuration_file_path: Path,
+                        mag_is_preliminary: bool = False) -> SweL3Dependencies:
         mag_l1d_data = read_mag_data(mag_file_path)
         swe_l1b_data = read_l1b_swe_data(swe_l1b_file_path)
         swe_l2_data = read_l2_swe_data(swe_l2_file_path)
         swapi_l3a_proton_data = read_l3a_swapi_proton_data(swapi_file_path)
         configuration = read_swe_config(configuration_file_path)
 
-        return cls(swe_l2_data, swe_l1b_data, mag_l1d_data, swapi_l3a_proton_data, configuration)
+        return cls(swe_l2_data, swe_l1b_data, mag_l1d_data, swapi_l3a_proton_data, configuration,
+                   mag_is_preliminary=mag_is_preliminary)

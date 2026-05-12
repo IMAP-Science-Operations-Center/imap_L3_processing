@@ -17,6 +17,7 @@ from imap_l3_processing.hit.l3.pha.science.calculate_pha import EventOutput
 from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import DetectedRange, DetectorSide, \
     DetectorRange
 from imap_l3_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
+from imap_l3_processing.hit.quality_flags import HitL3Flags
 from imap_l3_processing.models import MagData, InputMetadata
 from imap_l3_processing.processor import Processor
 from tests.test_helpers import NumpyArrayMatcher, create_dataclass_mock
@@ -66,6 +67,7 @@ class TestHitProcessor(TestCase):
         averaged_mag_vectors = [sentinel.mag_vector1, sentinel.mag_vector2]
 
         mock_dependencies = Mock(spec=HITL3SectoredDependencies)
+        mock_dependencies.mag_is_preliminary = True
         mock_mag_data = create_dataclass_mock(MagData)
         mock_mag_data.rebin_to = Mock()
         mock_mag_data.rebin_to.return_value = averaged_mag_vectors
@@ -435,6 +437,9 @@ class TestHitProcessor(TestCase):
                                       np.array([sentinel.pitch_angle1, sentinel.pitch_angle2]))
         np.testing.assert_array_equal(saved_data_product.measurement_gyrophase,
                                       np.array([sentinel.gyrophase1, sentinel.gyrophase2]))
+
+        np.testing.assert_array_equal(saved_data_product.hit_flags,
+                                      np.array([HitL3Flags.PRELIMINARY_MAG, HitL3Flags.PRELIMINARY_MAG]))
 
         self.assertEqual([mock_save_data.return_value], product)
 
