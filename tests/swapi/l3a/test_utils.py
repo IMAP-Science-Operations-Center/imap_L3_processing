@@ -162,9 +162,6 @@ class TestCalculateSwSpeed(TestCase):
 
     def test_ufloat_array_input_propagates_uncertainty_per_element(self):
         """A numpy array of UFloat energies returns per-element UFloat speeds with each element's own σ_E correctly propagated."""
-        # Array of UFloat scalars takes the `unumpy.sqrt` branch — different
-        # code path from the float-array branch above. Each element should
-        # propagate its own σ_E.
         E_values = np.array([ufloat(1.0e-16, 1.0e-18), ufloat(4.0e-16, 2.0e-18)])
         result = calculate_sw_speed(PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, E_values)
         self.assertEqual(result.shape, E_values.shape)
