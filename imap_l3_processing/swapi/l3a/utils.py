@@ -3,11 +3,10 @@ from typing import Iterable
 
 import numpy as np
 import scipy.optimize
-import uncertainties
 from numpy import ndarray
 from spacepy import pycdf
 from spacepy.pycdf import CDF
-from uncertainties import umath, unumpy
+from uncertainties import UFloat, umath, unumpy
 
 from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
 from imap_l3_processing.constants import (
@@ -29,23 +28,12 @@ from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 
 
 def calculate_sw_speed(particle_mass, particle_charge, energy):
-    if np.size(energy) == 0:
-        return np.array([])
-    dimensions = np.asanyarray(energy).ndim
-    if dimensions > 0:
-        if isinstance(np.ravel(energy)[0], uncertainties.UFloat):
-            return (
-                unumpy.sqrt(2 * energy * particle_charge / particle_mass)
-                / METERS_PER_KILOMETER
-            )
-        return (
-            np.sqrt(2 * energy * particle_charge / particle_mass) / METERS_PER_KILOMETER
-        )
-    else:
-        return (
-            umath.sqrt(2 * energy * particle_charge / particle_mass)
-            / METERS_PER_KILOMETER
-        )
+    speed_squared = 2 * energy * particle_charge / particle_mass
+    if isinstance(energy, UFloat):
+        return umath.sqrt(speed_squared) / METERS_PER_KILOMETER
+    if isinstance(energy, np.ndarray) and energy.dtype == object:
+        return unumpy.sqrt(speed_squared) / METERS_PER_KILOMETER
+    return np.sqrt(speed_squared) / METERS_PER_KILOMETER
 
 
 def read_mag_rtn_data(cdf_path) -> MagData:
