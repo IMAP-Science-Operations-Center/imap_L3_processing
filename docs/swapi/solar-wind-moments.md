@@ -637,11 +637,11 @@ This ignores the effect of proton-parameter uncertainty on Stage 2 residuals, so
 
 ### Failed fits
 
-The alpha $R^2$ uses sweep averages, as in the proton fit. The points are masked by the same mask used to fit the alphas.
+For alphas, we use only the $R^2 < 0.9$ check, not the temperature check. The points used to calculate $R^2$ are masked by the same mask used to fit the alphas.
 
 ## Quality flags
 
-- `BAD_FIT` (= 2**2): fit converged but is flagged as physically implausible — the fitted temperature exceeded $`5\times 10^{5}\thinspace \text{K}`$, or $R^2$ was below $0.9$. Moments are fill-valued.
+- `BAD_FIT` (= 2**2): fit converged but is flagged as an inaccurate description of the measurements.
 - `FIT_ERROR` (= 2**3): an error occurred or the fit result's `success` was set to `False` by scipy.
 - `PRELIMINARY_MAG` (= 2**4, alpha-only): MAG L1D was used as the source for this run (L2 was unavailable).
 

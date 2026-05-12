@@ -238,7 +238,7 @@ def fit_solar_wind_alpha_moments(
     else:
         fit_r_squared = r_squared(result.fun, alpha_ctx_peak.count_rate)
 
-    if fit_r_squared < 0.9 or T_a_fit > 5.0e5:
+    if fit_r_squared < 0.9:
         return _nan_alpha_moments(bad_fit_flag | SwapiL3Flags.BAD_FIT)
 
     cov_x = compute_hc3_parameter_covariance(result.jac, result.fun)

@@ -756,63 +756,6 @@ class TestFitAlphaMomentsLMFailureFlag(unittest.TestCase):
         self.assertTrue(np.isnan(result.density.nominal_value))
 
 
-class TestFitAlphaMomentsHighTemperatureFlag(unittest.TestCase):
-    """Tests for `fit_solar_wind_alpha_moments` — when LM converges with a fitted alpha temperature above 5e5 K, the fit is flagged `BAD_FIT` and its moments are NaN-filled (not rejected as `FIT_ERROR`, but not retained either)."""
-
-    def test_bad_fit_flag_when_alpha_temperature_above_threshold(self):
-        """A converged Stage-2 result whose `T_α` exceeds 5e5 K is flagged `BAD_FIT` and the moments are NaN-filled."""
-        proton_moments = _build_proton_fit_result()
-
-        too_hot_alpha_temperature = 6.0e5
-        x_fit = np.array(
-            [np.log(_TRUE_ALPHA_DENSITY_CM3), np.log(too_hot_alpha_temperature), 0.0]
-        )
-        residuals_norm = np.full(_N_MEAS, 1.0)
-        jac = np.zeros((_N_MEAS, 3))
-        jac[0, 0] = 1.0
-        jac[0, 1] = 1.0
-        jac[0, 2] = 1.0
-        converged = MagicMock()
-        converged.x = x_fit
-        converged.fun = residuals_norm
-        converged.jac = jac
-        converged.success = True
-
-        with patch.object(
-            alpha_module,
-            "_alpha_initial_guess",
-            return_value=(
-                _TRUE_ALPHA_DENSITY_CM3,
-                too_hot_alpha_temperature,
-                0.0,
-                np.array([10, 11, 12]),
-            ),
-        ), patch.object(
-            alpha_module._AlphaEvaluator,
-            "residuals",
-            return_value=np.full(_N_MEAS, 1.0),
-        ), patch.object(
-            alpha_module.scipy.optimize,
-            "least_squares",
-            return_value=converged,
-        ):
-            result = fit_solar_wind_alpha_moments(
-                count_rate=np.full(_FIVE_SWEEP_VOLTAGE.shape, 100.0),
-                esa_voltage=_FIVE_SWEEP_VOLTAGE,
-                measurement_time=np.zeros(_N_MEAS),
-                swapi_response=_load_swapi_response_with_warm_cache(),
-                proton_moments=proton_moments,
-                magnetic_field_direction=_B_HAT_RTN,
-                alpha_effective_area_scale=1.0,
-                proton_effective_area_scale=1.0,
-                rotation_matrices=_identity_rotation_matrices(),
-            )
-
-        self.assertTrue(result.bad_fit_flag & int(SwapiL3Flags.BAD_FIT))
-        self.assertFalse(result.bad_fit_flag & int(SwapiL3Flags.FIT_ERROR))
-        _assert_moments_are_nan_filled(self, result)
-
-
 # ----- fit_solar_wind_alpha_moments — initial-guess failure branches -------
 
 
