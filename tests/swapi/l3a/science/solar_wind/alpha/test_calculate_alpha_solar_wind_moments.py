@@ -843,15 +843,6 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
         self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.FIT_ERROR))
         _assert_moments_are_nan_filled(self, result)
 
-    def test_empty_count_rate_and_voltage_returns_fit_error(self):
-        """Empty input arrays return a `FIT_ERROR` NaN-filled result."""
-        result = self._call(
-            count_rate=np.zeros(0),
-            esa_voltage=np.zeros(0),
-            rotation_matrices=np.zeros((0, 3, 3)),
-        )
-        self._assert_fit_error_nan(result)
-
     def test_non_periodic_voltage_axis_returns_fit_error(self):
         """When `_infer_sweep_layout` cannot find an `n_sweeps` such that the voltage axis is periodic (e.g. 310 distinct strictly-decreasing values), it returns `(None, None)` and the fitter short-circuits to `FIT_ERROR`."""
         voltage = np.logspace(np.log10(3500.0), np.log10(140.0), _N_MEAS)

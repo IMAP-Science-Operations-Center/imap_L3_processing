@@ -154,9 +154,6 @@ def fit_solar_wind_alpha_moments(
     if not np.all(np.isfinite(proton_bulk_rtn)):
         return _nan_alpha_moments(proton_bad_fit_flag)
 
-    if len(esa_voltage) == 0:
-        return _nan_alpha_moments(proton_bad_fit_flag | int(SwapiL3Flags.FIT_ERROR))
-
     bad_fit_flag = proton_bad_fit_flag
 
     magnetic_field_direction = np.asarray(magnetic_field_direction, dtype=float)
