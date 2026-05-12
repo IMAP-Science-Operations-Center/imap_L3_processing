@@ -120,7 +120,9 @@ class TestUtils(SpiceTestCase):
         self.assertEqual(10, len(result.swp_flags))
         self.assertEqual(datetime(2025, 1, 1), result.epoch[0])
         self.assertEqual(timedelta(seconds=30), result.epoch_delta[0])
-        np.testing.assert_array_equal(np.array([1, 0, 0, 0, 0, 0, 0, 0, 0, 0]), result.swp_flags)
+        np.testing.assert_array_equal(
+            np.array([1, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=np.uint16), result.swp_flags, strict=True
+        )
 
     def test_read_l3a_swapi_proton_data_with_fill_values(self):
         with tempfile.TemporaryDirectory() as tempdir:
