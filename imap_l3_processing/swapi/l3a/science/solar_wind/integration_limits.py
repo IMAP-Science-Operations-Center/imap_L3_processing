@@ -49,12 +49,7 @@ _GL_NODES_AZIMUTH, _GL_WEIGHTS_AZIMUTH = np.polynomial.legendre.leggauss(21)
 _GL_NODES_SPEED, _GL_WEIGHTS_SPEED = np.polynomial.legendre.leggauss(15)
 
 
-# Threshold on the bin-relative Maxwellian falloff used to size the angular
-# integration window around the bulk direction. See `solar-wind-moments.md`.
 EPSILON = 1e-6
-
-# Half-width (in thermal speeds) of the speed-axis integration window. See
-# `solar-wind-moments.md` for the empirical sweep that selected k=6.
 SPEED_HALF_WIDTH_VTH = 6.0
 
 
@@ -85,8 +80,6 @@ def get_angular_quadrature(
     rotation_matrix,
     sg_rate: float,
 ):
-    # `sg_rate` is the SG rate already accumulated this ESA step (used only for
-    # the OA skip threshold below); 0.0 is fine for SG/VV calls.
     min_el, max_el, min_az, max_az = _angular_limits(
         sw_params, rotation_matrix, region, response_grid
     )
