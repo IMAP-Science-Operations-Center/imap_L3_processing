@@ -29,8 +29,6 @@ from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 
 
 def calculate_sw_speed(particle_mass, particle_charge, energy):
-    """Energy-per-charge → speed for an ion of given mass/charge. Handles scalars,
-    arrays, and uncertainties.UFloat values."""
     if np.size(energy) == 0:
         return np.array([])
     dimensions = np.asanyarray(energy).ndim
@@ -78,17 +76,11 @@ def read_l2_swapi_data(cdf: CDF) -> SwapiL2Data:
 
 
 def get_swapi_geometry(measurement_time: ndarray) -> ndarray:
-    """Resolve SPICE geometry for a chunk of SWAPI measurements.
-
-    Returns:
-        rotation_matrices: shape (N, 3, 3) — SWAPI→RTN rotation at each measurement time.
-    """
     et_times = ttj2000ns_to_et(np.atleast_1d(measurement_time))
     return get_rotation_matrix(et_times, SpiceFrame.IMAP_SWAPI, SpiceFrame.IMAP_RTN)
 
 
 def rotate_rtn_to_dps(vector_rtn, epoch_tt2000_ns: float):
-    """Rotate a 3-vector from IMAP_RTN into IMAP_DPS at the given TT2000 ns epoch."""
     et = float(ttj2000ns_to_et(epoch_tt2000_ns))
     return frame_transform(
         et, np.asarray(vector_rtn), SpiceFrame.IMAP_RTN, SpiceFrame.IMAP_DPS
@@ -96,7 +88,6 @@ def rotate_rtn_to_dps(vector_rtn, epoch_tt2000_ns: float):
 
 
 def get_spacecraft_velocity_rtn(epoch_tt2000_ns: float) -> ndarray:
-    """Return the spacecraft velocity at `epoch_tt2000_ns` (TT2000 ns) in RTN, km/s."""
     et = float(ttj2000ns_to_et(epoch_tt2000_ns))
     state_eclipj2000 = imap_state(et, SpiceFrame.ECLIPJ2000)
     rtn_from_eclipj2000 = get_rotation_matrix(

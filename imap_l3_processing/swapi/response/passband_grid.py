@@ -59,10 +59,7 @@ def speed_ratio_range_at_elevation(grid, elevation: float):
     upper_min = grid.min_boundary[upper_row]
     lower_max = grid.max_boundary[lower_row]
     upper_max = grid.max_boundary[upper_row]
-    # If only one bracketing row is below the active-range cutoff (NaN), drop
-    # it — the union is just the valid row's interval. If both are NaN the
-    # caller queried outside the active range and failed to gate on
-    # `elevation_range`.
+
     lower_is_nan = np.isnan(lower_min) or np.isnan(lower_max)
     upper_is_nan = np.isnan(upper_min) or np.isnan(upper_max)
     if lower_is_nan and upper_is_nan:

@@ -6,11 +6,6 @@ from numpy import ndarray
 
 
 class AzimuthalTransmissionGrid(NamedTuple):
-    """Azimuth-only transmission curve `T(|az|)` sampled at uniform spacing.
-
-    The curve is symmetric about az=0 (the table stores only non-negative
-    indices; callers feed signed azimuths and the interpolator mirrors)."""
-
     values: ndarray
     spacing: float
 
@@ -20,8 +15,6 @@ def interpolate_azimuthal_transmission(
     grid: AzimuthalTransmissionGrid,
     azimuth: float,
 ) -> float:
-    """Linear interpolation of the (azimuth-only) transmission curve, with
-    wrap-around to ±180° and a symmetric extension across azimuth=0."""
     azimuth = (azimuth + 180) % 360 - 180
     i_float = abs(azimuth) / grid.spacing
     i_lower = int(math.floor(i_float))
