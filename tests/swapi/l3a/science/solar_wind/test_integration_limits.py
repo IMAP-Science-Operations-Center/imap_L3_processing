@@ -43,7 +43,7 @@ _BULK_SPEED_KM_S = 450.0
 
 
 class TestSpeedWindowMissesPassband(unittest.TestCase):
-    """Tests for `speed_window_misses_passband` — the cheap pre-check that returns True only when `bulk_speed ± k·vth` is fully disjoint from the on-axis passband speed range."""
+    """Tests for `speed_window_misses_passband` — the cheap pre-check that returns True only when `bulk_speed ± k·vth` is fully disjoint from the widest possible passband speed range (`central_speed · [0.9, 1.1]`)."""
 
     @classmethod
     def setUpClass(cls):
@@ -51,7 +51,7 @@ class TestSpeedWindowMissesPassband(unittest.TestCase):
         cls.response_grid = cls.response.get_response_grid(_ESA_VOLTAGE, 1.0)
 
     def test_returns_false_when_bulk_speed_sits_in_passband(self):
-        """A 450 km/s bulk at the 1 keV step sits well inside the on-axis passband, so no miss is reported."""
+        """A 450 km/s bulk at the 1 keV step sits well inside the passband envelope, so no miss is reported."""
         sw = proton_params()
         self.assertFalse(speed_window_misses_passband(sw, self.response_grid))
 
@@ -66,11 +66,8 @@ class TestSpeedWindowMissesPassband(unittest.TestCase):
         self.assertTrue(speed_window_misses_passband(sw, self.response_grid))
 
     def test_window_overlaps_passband_when_k_sigma_exceeds_offset_above_edge(self):
-        """With bulk 30 km/s above the passband edge and `k·σ = 50 km/s`, the window still reaches into the passband and no miss is reported — pinning `SPEED_HALF_WIDTH_VTH` as the scaling constant when paired with the detach test below."""
-        _, ratio_hi = speed_ratio_range_at_elevation(
-            self.response_grid.sg_passband, 0.0
-        )
-        v_passband_hi = self.response_grid.central_speed * ratio_hi
+        """With bulk 30 km/s above the passband envelope edge and `k·σ = 50 km/s`, the window still reaches into the passband and no miss is reported — pinning `SPEED_HALF_WIDTH_VTH` as the scaling constant when paired with the detach test below."""
+        v_passband_hi = self.response_grid.central_speed * 1.1
         bulk = v_passband_hi + 30.0
         sigma_overlap = 50.0 / SPEED_HALF_WIDTH_VTH
         T_overlap = thermal_speed_to_temperature(sigma_overlap, PROTON_MASS_KG)
@@ -81,10 +78,7 @@ class TestSpeedWindowMissesPassband(unittest.TestCase):
 
     def test_window_detaches_from_passband_when_k_sigma_falls_below_offset(self):
         """With the same 30 km/s offset above the edge but `k·σ = 5 km/s`, the window stays clear of the passband and a miss is reported — the companion case to the overlap test."""
-        _, ratio_hi = speed_ratio_range_at_elevation(
-            self.response_grid.sg_passband, 0.0
-        )
-        v_passband_hi = self.response_grid.central_speed * ratio_hi
+        v_passband_hi = self.response_grid.central_speed * 1.1
         bulk = v_passband_hi + 30.0
         sigma_detached = 5.0 / SPEED_HALF_WIDTH_VTH
         T_detached = thermal_speed_to_temperature(sigma_detached, PROTON_MASS_KG)

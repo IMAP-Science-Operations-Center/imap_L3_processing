@@ -383,7 +383,7 @@ def _plot_results(data: pd.DataFrame) -> None:
     axes[0].legend(fontsize=8, loc="lower right", framealpha=0.8)
     fig.tight_layout()
 
-    out_dir = _REPO_ROOT / "docs" / "swapi" / "figures"
+    out_dir = REPO_ROOT / "docs" / "swapi" / "figures"
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / "fit_accuracy.svg"
     fig.savefig(out_path, bbox_inches="tight", dpi=200)

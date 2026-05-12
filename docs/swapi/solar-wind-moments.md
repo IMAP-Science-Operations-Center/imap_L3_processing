@@ -261,6 +261,8 @@ v_{\text{lo}}(\theta) = \max\negthinspace \left(v_{b} - \Delta v_{\text{VDF}},\t
 v_{\text{hi}}(\theta) = \min\negthinspace \left(v_{b} + \Delta v_{\text{VDF}},\thinspace  r_{\text{max}}(\theta)v_{0}\right).
 ```
 
+If the interval $`[v_{b} - \Delta v_{\text{VDF}},\thinspace  v_{b} + \Delta v_{\text{VDF}}]`$ does not overlap with $`[0.9\thinspace v_{0},\thinspace  1.1\thinspace v_{0}]`$, the integral is skipped early because there it is guaranteed to be zero.
+
 ### Integrator Validation
 
 The optimized integrator (`calculate_integral`) is validated against a high-resolution fixed-limit reference integrator (`reference_integral_fixed_limits`) — the same forward model evaluated on a much denser fixed grid with no dynamic integration limits.

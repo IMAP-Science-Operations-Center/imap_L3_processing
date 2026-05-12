@@ -63,12 +63,10 @@ def speed_window_misses_passband(
     sw_window_lo = speed - SPEED_HALF_WIDTH_VTH * sigma
     sw_window_hi = speed + SPEED_HALF_WIDTH_VTH * sigma
 
+    # The passband grid is zero outside speed_ratio ∈ [0.9, 1.1] at every elevation
     central_speed = response_grid.central_speed
-    # union of SG and OA passband speed ranges, evaluated on-axis (elevation=0)
-    sg_lo, sg_hi = speed_ratio_range_at_elevation(response_grid.sg_passband, 0.0)
-    oa_lo, oa_hi = speed_ratio_range_at_elevation(response_grid.oa_passband, 0.0)
-    passband_lo = central_speed * min(sg_lo, oa_lo)
-    passband_hi = central_speed * max(sg_hi, oa_hi)
+    passband_lo = central_speed * 0.9
+    passband_hi = central_speed * 1.1
     return sw_window_hi < passband_lo or sw_window_lo > passband_hi
 
 
