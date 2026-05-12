@@ -21,14 +21,14 @@ def compute_hc3_parameter_covariance(
     n_params = jacobian.shape[1]
     try:
         JT_J_pseudoinverse = np.linalg.pinv(jacobian.T @ jacobian)
-        h_matrix = np.einsum(
+        h_ii = np.einsum(
             "ki,ij,jk->k",
             jacobian,
             JT_J_pseudoinverse,
             jacobian.T,
         )
-        h_matrix_clipped = np.clip(h_matrix, 0.0, 0.9999)
-        hc3_weights = (residuals / (1.0 - h_matrix_clipped)) ** 2
+        h_ii_clipped = np.clip(h_ii, 0.0, 0.9999)
+        hc3_weights = (residuals / (1.0 - h_ii_clipped)) ** 2
         sandwich_middle = np.einsum(
             "ki,k,kj->ij", jacobian, hc3_weights, jacobian
         )
