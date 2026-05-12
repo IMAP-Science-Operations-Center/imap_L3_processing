@@ -209,7 +209,7 @@ class HitProcessor(Processor):
             number_of_pitch_angle_bins, number_of_gyrophase_bins)
 
         averaged_mag_data = mag_data.rebin_to(hit_data.epoch, hit_data.epoch_delta)
-        hit_flags = np.full(len(hit_data.epoch), HitL3Flags.NONE).astype(int).astype(HitL3Flags)
+        hit_flags = np.full(len(hit_data.epoch), HitL3Flags.NONE)
         if dependencies.mag_is_preliminary:
             hit_flags |= HitL3Flags.PRELIMINARY_MAG
         measurement_pitch_angle = []

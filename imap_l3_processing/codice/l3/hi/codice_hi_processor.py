@@ -110,7 +110,7 @@ class CodiceHiProcessor(Processor):
             "fe": SpeciesIntensity(sectored_intensities.fe_intensities,*_create_pa_and_gyro_nan_arrays(fe_pa_shape, fe_gyro_shape))}
         # @formatter:on
 
-        codice_flags = np.full(len(epochs), CodiceL3Flags.NONE).astype(int).astype(CodiceL3Flags)
+        codice_flags = np.full(len(epochs), CodiceL3Flags.NONE)
         if dependencies.mag_is_preliminary:
             codice_flags |= CodiceL3Flags.PRELIMINARY_MAG
 
