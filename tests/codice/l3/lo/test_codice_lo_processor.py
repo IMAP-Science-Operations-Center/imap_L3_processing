@@ -673,43 +673,27 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(sw_priority_rates.acquisition_time_per_esa_step,
                                       l3a_direct_event_data_product.acquisition_time_per_esa_step)
 
-    @patch(f'{MODULE}.convert_count_rate_to_intensity')
     @patch(f'{MODULE}.rebin_3d_distribution_azimuth_to_elevation')
-    @patch(f'{MODULE}.combine_priorities_and_convert_to_rate')
-    @patch(f'{MODULE}.normalize_counts')
+    @patch(f'{MODULE}.combine_priorities_for_species_and_convert_to_rate')
     @patch(f'{MODULE}.PositionToElevationLookup')
-    @patch(f'{MODULE}.SpinAngleLookup')
     @patch(f'{MODULE}.rebin_to_counts_by_species_elevation_and_spin_sector')
-    def test_process_l3a_3d_distributions(self, mock_rebin,
-                                          mock_spin_angle_lookup_class, mock_elevation_angle_lookup_class,
-                                          mock_normalize_counts, mock_convert_to_rate, mock_rebin_to_elevation,
-                                          mock_convert_count_rate_to_intensity,
-                                          ):
+    @patch(f'{MODULE}.convert_count_rate_to_intensity')
+    def test_process_l3a_3d_distributions(self, mock_convert_count_rate_to_intensity, mock_rebin,
+                                          mock_elevation_angle_lookup_class,
+                                          mock_combine_priorities_for_species_and_convert_to_rate,
+                                          mock_rebin_3d_distribution_azimuth_to_elevation):
         mock_elevation_lookup = mock_elevation_angle_lookup_class.return_value
-        mock_spin_angle_lookup = mock_spin_angle_lookup_class.return_value
 
         input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02')
 
-        normalization = np.random.random(size=(77, 7, 128, 24))
-
-        l3a_direct_event_data = Mock(
-            epoch=Mock(shape=(10,)),
-            apd_id=sentinel.l3a_de_apd_id,
-            mass=sentinel.l3a_de_mass,
-            mass_per_charge=sentinel.l3a_de_mass_per_charge,
-            apd_energy=sentinel.l3a_de_apd_energy,
-            energy_step=sentinel.l3a_de_energy_step,
-            spin_angle=sentinel.l3a_de_spin_angle,
-            normalization=normalization,
-            num_events=sentinel.l3a_num_events,
-            position=sentinel.l3a_de_position,
-        )
-
-        l1a_sw_data = Mock(
-            spec=CodiceLoL1aSWPriorityRates,
-            energy_table=sentinel.l1a_energy_table,
-            acquisition_time_per_esa_step=sentinel.l1a_acquisition_time,
+        mock_l3a_direct_event_data = Mock(
+            acquisition_time_per_esa_step=sentinel.acquisition_time,
             rgfo_half_spin=sentinel.rgfo_half_spin,
+            rgfo_spin_sector=sentinel.rgfo_spin_sector,
+            rgfo_esa_step=sentinel.rgfo_esa_step,
+            half_spin_per_esa_step=sentinel.half_spin,
+            spin_angle=sentinel.spin_angle,
+            spin_angle_bin_delta=sentinel.spin_angle_bin_delta
         )
 
         mock_geometric_factor_lut = Mock(spec=GeometricFactorLookup)
@@ -718,77 +702,73 @@ class TestCodiceLoProcessor(unittest.TestCase):
         mock_energy_lookup.delta_minus = np.geomspace(280, 2, 128)
         mock_energy_lookup.delta_plus = np.geomspace(288, 1, 128)
         mock_energy_lookup.bin_centers = np.geomspace(14100, 88.082825, 128)
+        mock_mass_bin_lookup = Mock()
         dependencies = CodiceLoL3a3dDistributionsDependencies(
-            l3a_direct_event_data=l3a_direct_event_data,
-            l1a_sw_data=l1a_sw_data,
+            l3a_direct_event_data=mock_l3a_direct_event_data,
+            l1a_sw_data=sentinel.l1a_sw_data,
             l1a_nsw_data=Mock(spec=CodiceLoL1aNSWPriorityRates),
-            mass_species_bin_lookup=Mock(),
+            mass_species_bin_lookup=mock_mass_bin_lookup,
             geometric_factors_lookup=mock_geometric_factor_lut,
             efficiency_factors_lut=mock_efficiency_lut,
             energy_per_charge_lut=mock_energy_lookup,
             species=sentinel.species
         )
 
+        mock_mass_bin_lookup.get_species_index.return_value = sentinel.species_index
+
+        counts_3d_distribution = mock_rebin.return_value
+        counts_3d_distribution.__getitem__.return_value = sentinel.counts_for_species
+
         processor = CodiceLoProcessor(dependencies=Mock(), input_metadata=input_metadata)
-        mock_rebin_to_elevation.return_value = np.random.random(size=(77, 13, 24, 128))
-        l3a_direct_event_data_product = processor.process_l3a_3d_distribution_product(dependencies)
+        mock_rebin_3d_distribution_azimuth_to_elevation.return_value = np.random.random(size=(77, 128, 24, 13))
+        l3a_3d_distribution_data_product = processor.process_l3a_3d_distribution_product(dependencies)
 
-        mock_spin_angle_lookup_class.assert_called_once()
         mock_elevation_angle_lookup_class.assert_called_once()
-
+        counts_3d_distribution.__getitem__.assert_called_once_with(sentinel.species_index)
         mock_rebin.assert_called_once_with(
-            mass=sentinel.l3a_de_mass,
-            mass_per_charge=sentinel.l3a_de_mass_per_charge,
-            energy_step=sentinel.l3a_de_energy_step,
-            spin_angle=sentinel.l3a_de_spin_angle,
-            position=sentinel.l3a_de_position,
+            direct_event_data=mock_l3a_direct_event_data,
             mass_species_bin_lookup=dependencies.mass_species_bin_lookup,
-            spin_angle_lut=mock_spin_angle_lookup,
-            energy_lut=mock_energy_lookup,
-            num_events=sentinel.l3a_num_events
         )
 
-        mock_rebin.return_value.get_3d_distribution.assert_called_once_with(sentinel.species)
-        counts_3d_distribution_for_species = mock_rebin.return_value.get_3d_distribution.return_value
+        mock_combine_priorities_for_species_and_convert_to_rate.assert_called_once_with(sentinel.counts_for_species,
+                                                                                        sentinel.acquisition_time)
 
         mock_compute_geometric_factors = mock_geometric_factor_lut.get_geometric_factors
-        mock_compute_geometric_factors.assert_called_once_with(sentinel.rgfo_half_spin)
+        mock_compute_geometric_factors.assert_called_once_with(
+            sentinel.rgfo_half_spin,
+            sentinel.rgfo_spin_sector,
+            sentinel.rgfo_esa_step,
+            sentinel.half_spin,
+        )
+        mock_convert_count_rate_to_intensity.assert_called_once_with(
+            mock_combine_priorities_for_species_and_convert_to_rate.return_value,
+            mock_energy_lookup,
+            mock_efficiency_lut,
+            mock_compute_geometric_factors.return_value)
 
-        self.assertEqual(mock_normalize_counts.call_args_list[0][0][0], counts_3d_distribution_for_species)
+        mock_rebin_3d_distribution_azimuth_to_elevation.assert_called_once_with(
+            mock_convert_count_rate_to_intensity.return_value,
+            NumpyArrayMatcher(np.arange(1, 25)),
+            mock_elevation_lookup)
 
-        np.testing.assert_array_equal(mock_normalize_counts.call_args_list[0][0][1],
-                                      np.flip(l3a_direct_event_data.normalization, axis=2))
+        self.assertIsInstance(l3a_3d_distribution_data_product, CodiceLoL3a3dDistributionDataProduct)
+        self.assertEqual(processor.input_metadata, l3a_3d_distribution_data_product.input_metadata)
 
-        mock_convert_to_rate.assert_called_once_with(mock_normalize_counts.return_value, sentinel.l1a_acquisition_time)
-
-        # intensity computation
-        mock_convert_count_rate_to_intensity.assert_called_once_with(mock_convert_to_rate.return_value,
-                                                                     mock_energy_lookup,
-                                                                     mock_efficiency_lut,
-                                                                     mock_compute_geometric_factors.return_value)
-
-        mock_rebin_to_elevation.assert_called_once_with(mock_convert_count_rate_to_intensity.return_value,
-                                                        NumpyArrayMatcher(np.arange(1, 25)),
-                                                        mock_elevation_lookup)
-
-        self.assertIsInstance(l3a_direct_event_data_product, CodiceLoL3a3dDistributionDataProduct)
-        self.assertEqual(processor.input_metadata, l3a_direct_event_data_product.input_metadata)
-
-        self.assertEqual(l3a_direct_event_data.epoch, l3a_direct_event_data_product.epoch)
-        self.assertEqual(l3a_direct_event_data.epoch_delta, l3a_direct_event_data_product.epoch_delta)
-        self.assertEqual(mock_elevation_lookup.bin_centers, l3a_direct_event_data_product.elevation)
-        self.assertEqual(mock_elevation_lookup.bin_deltas, l3a_direct_event_data_product.elevation_delta)
-        self.assertEqual(mock_spin_angle_lookup.bin_centers, l3a_direct_event_data_product.spin_angle)
-        self.assertEqual(mock_spin_angle_lookup.bin_deltas, l3a_direct_event_data_product.spin_angle_delta)
-        np.testing.assert_array_equal(np.flip(mock_energy_lookup.bin_centers), l3a_direct_event_data_product.energy)
+        self.assertEqual(mock_l3a_direct_event_data.epoch, l3a_3d_distribution_data_product.epoch)
+        self.assertEqual(mock_l3a_direct_event_data.epoch_delta, l3a_3d_distribution_data_product.epoch_delta)
+        self.assertEqual(mock_elevation_lookup.bin_centers, l3a_3d_distribution_data_product.elevation)
+        self.assertEqual(mock_elevation_lookup.bin_deltas, l3a_3d_distribution_data_product.elevation_delta)
+        self.assertEqual(sentinel.spin_angle, l3a_3d_distribution_data_product.spin_angle)
+        self.assertEqual(sentinel.spin_angle_bin_delta, l3a_3d_distribution_data_product.spin_angle_delta)
+        np.testing.assert_array_equal(np.flip(mock_energy_lookup.bin_centers), l3a_3d_distribution_data_product.energy)
         np.testing.assert_array_equal(np.flip(mock_energy_lookup.delta_plus),
-                                      l3a_direct_event_data_product.energy_delta_plus)
+                                      l3a_3d_distribution_data_product.energy_delta_plus)
         np.testing.assert_array_equal(np.flip(mock_energy_lookup.delta_minus),
-                                      l3a_direct_event_data_product.energy_delta_minus)
+                                      l3a_3d_distribution_data_product.energy_delta_minus)
 
-        np.testing.assert_array_equal(np.flip(mock_rebin_to_elevation.return_value, axis=3),
-                                      l3a_direct_event_data_product.species_data)
-        self.assertEqual(sentinel.species, l3a_direct_event_data_product.species)
+        np.testing.assert_array_equal(np.flip(mock_rebin_3d_distribution_azimuth_to_elevation.return_value, axis=1),
+                                      l3a_3d_distribution_data_product.species_data)
+        self.assertEqual(sentinel.species, l3a_3d_distribution_data_product.species)
 
     def test_process_3d_distributions_save_for_each_species(self):
 

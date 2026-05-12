@@ -84,6 +84,7 @@ acquisition_time_per_esa_step:
   VALIDMAX: 625.0
   VALIDMIN: 0.0
   RECORD_VARYING: RV
+  VAR_TYPE: support_data
 
 event_index:
   <<: *support_data
@@ -452,6 +453,7 @@ half_spin_per_esa_step:
   VALIDMIN: 0
   VALIDMAX: 31
   RECORD_VARYING: RV
+  VAR_TYPE: support_data
 
 rgfo_spin_sector:
   NAME: rgfo_spin_sector

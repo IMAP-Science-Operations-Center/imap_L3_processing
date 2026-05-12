@@ -12,7 +12,7 @@ ENERGIES = TypeVar("ENERGIES")
 
 @dataclass
 class EfficiencyLookup:
-    efficiency_data: np.ndarray[(POSITION, ENERGIES)]
+    efficiency_data: np.ndarray[(ENERGIES, POSITION)]
 
     @classmethod
     def read_from_csv(cls, path: Path, species: str) -> EfficiencyLookup:
@@ -22,4 +22,4 @@ class EfficiencyLookup:
                            .drop(['species', 'product', 'esa_step'], axis=1)
                            .to_numpy())
 
-        return cls(efficiency_data=efficiency_data.T)
+        return cls(efficiency_data=efficiency_data)

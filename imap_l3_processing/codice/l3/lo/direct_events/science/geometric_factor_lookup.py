@@ -2,9 +2,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TypeVar
 
+import numpy as np
 import pandas as pd
 
-import numpy as np
+from imap_l3_processing.codice.l3.lo.constants import CODICE_LO_NUM_SPIN_SECTORS, CODICE_LO_NUM_AZIMUTH_BINS, \
+    CODICE_LO_NUM_ESA_STEPS
 
 
 def _half_spin_to_esa_step_lookup():
@@ -13,13 +15,15 @@ def _half_spin_to_esa_step_lookup():
         115, 121, 127
     ])
 
+
 POSITION = TypeVar('POSITION')
 ESA_STEP = TypeVar('ESA_STEP')
 
+
 @dataclass
 class GeometricFactorLookup:
-    _full_factor: np.ndarray[(POSITION, ESA_STEP)]
-    _reduced_factor: np.ndarray[(POSITION, ESA_STEP)]
+    _full_factor: np.ndarray[(ESA_STEP, POSITION)]
+    _reduced_factor: np.ndarray[(ESA_STEP, POSITION)]
     _esa_step_end_index: np.ndarray = field(default_factory=_half_spin_to_esa_step_lookup)
 
     @classmethod
@@ -31,19 +35,47 @@ class GeometricFactorLookup:
         full = df.get_group('full').drop(['mode', 'esa_step'], axis=1).to_numpy()
         reduced = df.get_group('reduced').drop(['mode', 'esa_step'], axis=1).to_numpy()
 
-        return cls(full.T, reduced.T)
+        return cls(full, reduced)
 
-    def get_geometric_factors(self, rgfo_half_spin: np.ma.masked_array) -> np.ndarray:
-        num_epochs = rgfo_half_spin.shape[0]
-        (num_positions, num_esa_steps) = self._reduced_factor.shape
+    def get_geometric_factors(self,
+                              rgfo_half_spin: np.ma.masked_array,
+                              rgfo_spin_sector: np.ma.masked_array,
+                              rgfo_esa_step: np.ma.masked_array,
+                              half_spin: np.ma.masked_array,
+                              ) -> np.ndarray:
+        num_epochs = half_spin.shape[0]
 
-        geometric_factors = np.full((num_epochs, num_positions, num_esa_steps), np.nan)
-        for epoch_i in range(rgfo_half_spin.shape[0]):
-            if rgfo_half_spin[epoch_i] is not np.ma.masked:
-                half_spin_index = int(rgfo_half_spin.data[epoch_i]) - 1
-                first_reduced_esa_step = self._esa_step_end_index[half_spin_index] + 1 if half_spin_index >= 0 else 0
+        full_shape = (num_epochs, CODICE_LO_NUM_ESA_STEPS, CODICE_LO_NUM_SPIN_SECTORS,
+                      CODICE_LO_NUM_AZIMUTH_BINS)
+        full_geometric_factors_full_shape = np.broadcast_to(self._full_factor[np.newaxis, :, np.newaxis, :],
+                                                            full_shape
+                                                            ).copy()
+        reduced_geometric_factors_full_shape = np.broadcast_to(self._reduced_factor[np.newaxis, :, np.newaxis, :],
+                                                               full_shape
+                                                               ).copy()
 
-                geometric_factors[epoch_i, :, 0:first_reduced_esa_step] = self._full_factor[:, 0:first_reduced_esa_step]
-                geometric_factors[epoch_i, :, first_reduced_esa_step:] = self._reduced_factor[:, first_reduced_esa_step:]
+        half_spin_greater_than_rgfo_half_spin = half_spin > rgfo_half_spin[:, np.newaxis]
+        half_spin_equal_to_rgfo_half_spin = half_spin == rgfo_half_spin[:, np.newaxis]
+        spin_sector_greater_than_rgfo_spin_sector = np.arange(0, CODICE_LO_NUM_SPIN_SECTORS)[np.newaxis,
+                                                    :] > rgfo_spin_sector[:, np.newaxis]
+        equal_half_spin_and_greater_spin_sector = (half_spin_equal_to_rgfo_half_spin[:, :, np.newaxis] &
+                                                   spin_sector_greater_than_rgfo_spin_sector[:, np.newaxis, :])
+        spin_sector_equal_to_rgfo_spin_sector = np.arange(0, CODICE_LO_NUM_SPIN_SECTORS)[np.newaxis,
+                                                :] == rgfo_spin_sector[:, np.newaxis]
 
-        return geometric_factors
+        esa_step_greater_than_rgfo_esa_step = np.arange(0, CODICE_LO_NUM_ESA_STEPS)[np.newaxis, :] > rgfo_esa_step[:,
+                                                                                                     np.newaxis]
+        equal_half_spin_equal_spin_sector_and_greater_esa_step = (
+                    half_spin_equal_to_rgfo_half_spin[:, :, np.newaxis] & spin_sector_equal_to_rgfo_spin_sector[:,
+                                                                          np.newaxis,
+                                                                          :] & esa_step_greater_than_rgfo_esa_step[:, :,
+                                                                               np.newaxis])
+        needing_reduced_factor = half_spin_greater_than_rgfo_half_spin[:, :, np.newaxis,
+                                 np.newaxis] | equal_half_spin_and_greater_spin_sector[:, :, :,
+                                               np.newaxis] | equal_half_spin_equal_spin_sector_and_greater_esa_step[:,
+                                                             :, :, np.newaxis]
+
+        return np.where(
+            needing_reduced_factor,
+            reduced_geometric_factors_full_shape,
+            full_geometric_factors_full_shape)

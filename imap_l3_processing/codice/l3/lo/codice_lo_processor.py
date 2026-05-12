@@ -15,10 +15,9 @@ from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityData
     CodiceLoL3aDirectEventDataProduct, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct, \
     CodiceLoL3ChargeStateDistributionsDataProduct, CodiceLoL3a3dDistributionDataProduct
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
-    calculate_mass, calculate_mass_per_charge, \
-    rebin_to_counts_by_species_elevation_and_spin_sector, normalize_counts, \
-    combine_priorities_and_convert_to_rate, rebin_3d_distribution_azimuth_to_elevation, convert_count_rate_to_intensity, \
-    calculate_normalization_factor, lookup_normalization_per_event
+    calculate_mass, calculate_mass_per_charge, convert_count_rate_to_intensity, \
+    rebin_to_counts_by_species_elevation_and_spin_sector, combine_priorities_for_species_and_convert_to_rate, \
+    calculate_normalization_factor, lookup_normalization_per_event, rebin_3d_distribution_azimuth_to_elevation
 from imap_l3_processing.data_utils import safe_divide
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
@@ -250,60 +249,47 @@ class CodiceLoProcessor(Processor):
         )
 
     def process_l3a_3d_distribution_product(self, dependencies: CodiceLoL3a3dDistributionsDependencies):
-        l3a_de_mass = dependencies.l3a_direct_event_data.mass
-        l3a_de_mass_per_charge = dependencies.l3a_direct_event_data.mass_per_charge
-        l3a_de_energy_step = dependencies.l3a_direct_event_data.energy_step
-        l3a_de_spin_angle = dependencies.l3a_direct_event_data.spin_angle
-        l3a_de_position = dependencies.l3a_direct_event_data.position
-        l3a_de_normalization = np.flip(dependencies.l3a_direct_event_data.normalization, axis=2)
-        l3a_de_num_events = dependencies.l3a_direct_event_data.num_events
-
-        l1a_acquisition_time = dependencies.l1a_sw_data.acquisition_time_per_esa_step
-        l1_sw_rgfo_half_spins = dependencies.l1a_sw_data.rgfo_half_spin
+        l3a_sw_rgfo_half_spins = dependencies.l3a_direct_event_data.rgfo_half_spin
+        l3a_sw_rgfo_spin_sectors = dependencies.l3a_direct_event_data.rgfo_spin_sector
+        l3a_sw_spin_angle = dependencies.l3a_direct_event_data.spin_angle
+        l3a_sw_spin_angle_bin_delta = dependencies.l3a_direct_event_data.spin_angle_bin_delta
+        l3a_sw_rgfo_esa_steps = dependencies.l3a_direct_event_data.rgfo_esa_step
+        l3a_sw_half_spins = dependencies.l3a_direct_event_data.half_spin_per_esa_step
 
         mass_species_bin_lookup = dependencies.mass_species_bin_lookup
-        spin_angle_lut = SpinAngleLookup()
         position_elevation_lut = PositionToElevationLookup()
         energy_lut = dependencies.energy_per_charge_lut
         geometric_factor_lut = dependencies.geometric_factors_lookup
 
         counts_3d_data = rebin_to_counts_by_species_elevation_and_spin_sector(
-            mass=l3a_de_mass,
-            mass_per_charge=l3a_de_mass_per_charge,
-            energy_step=l3a_de_energy_step,
-            spin_angle=l3a_de_spin_angle,
-            position=l3a_de_position,
-            mass_species_bin_lookup=mass_species_bin_lookup,
-            spin_angle_lut=spin_angle_lut,
-            energy_lut=energy_lut,
-            num_events=l3a_de_num_events,
-        )
+            direct_event_data=dependencies.l3a_direct_event_data, mass_species_bin_lookup=mass_species_bin_lookup)
 
-        normalized_counts = normalize_counts(counts_3d_data.get_3d_distribution(dependencies.species),
-                                             l3a_de_normalization)
-        normalized_count_rates = combine_priorities_and_convert_to_rate(normalized_counts, l1a_acquisition_time)
+        species_index = mass_species_bin_lookup.get_species_index(dependencies.species)
+        normalized_count_rates = combine_priorities_for_species_and_convert_to_rate(counts_3d_data[species_index],
+                                                                                    dependencies.l3a_direct_event_data.acquisition_time_per_esa_step)
 
-        geometric_factors = geometric_factor_lut.get_geometric_factors(l1_sw_rgfo_half_spins)
+        geometric_factors = geometric_factor_lut.get_geometric_factors(l3a_sw_rgfo_half_spins, l3a_sw_rgfo_spin_sectors,
+                                                                       l3a_sw_rgfo_esa_steps, l3a_sw_half_spins)
         intensities = convert_count_rate_to_intensity(normalized_count_rates,
                                                       dependencies.energy_per_charge_lut,
                                                       dependencies.efficiency_factors_lut,
                                                       geometric_factors)
 
         intensity = rebin_3d_distribution_azimuth_to_elevation(intensities, np.arange(1, 25), position_elevation_lut)
-
+        #
         return CodiceLoL3a3dDistributionDataProduct(
             input_metadata=self.input_metadata,
             epoch=dependencies.l3a_direct_event_data.epoch,
             epoch_delta=dependencies.l3a_direct_event_data.epoch_delta,
             elevation=position_elevation_lut.bin_centers,
             elevation_delta=position_elevation_lut.bin_deltas,
-            spin_angle=spin_angle_lut.bin_centers,
-            spin_angle_delta=spin_angle_lut.bin_deltas,
+            spin_angle=l3a_sw_spin_angle,
+            spin_angle_delta=l3a_sw_spin_angle_bin_delta,
             energy=np.flip(energy_lut.bin_centers),
             energy_delta_plus=np.flip(energy_lut.delta_plus),
             energy_delta_minus=np.flip(energy_lut.delta_minus),
             species=dependencies.species,
-            species_data=np.flip(intensity, axis=3),
+            species_data=np.flip(intensity, axis=1),
         )
 
 
