@@ -570,6 +570,7 @@ def _make_chunk_with_start_time(start_time):
     )
 
 
+@unittest.skipIf(platform.system() == "Windows", "fork is not available on Windows")
 class TestParallelChunkRunnerOrchestration(unittest.TestCase):
     """Tests for `ParallelChunkRunner.run` against a real fork-based Pool."""
 
