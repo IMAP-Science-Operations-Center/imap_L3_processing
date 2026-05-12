@@ -151,22 +151,14 @@ def fit_solar_wind_alpha_moments(
     proton_bad_fit_flag = int(proton_moments.bad_fit_flag)
     proton_bulk_rtn = proton_moments.bulk_velocity_rtn_nominal()
 
-    # Proton fit returned fill values → no v_p* to anchor Stage 2.
-    # Carry the proton flag through unchanged; no separate alpha-side flag.
     if not np.all(np.isfinite(proton_bulk_rtn)):
         return _nan_alpha_moments(proton_bad_fit_flag)
 
-    if len(esa_voltage) == 0:
-        return _nan_alpha_moments(proton_bad_fit_flag | int(SwapiL3Flags.FIT_ERROR))
-
     bad_fit_flag = proton_bad_fit_flag
 
-    # MAG required: per-chunk gaps (NaN b_hat) → FIT_ERROR.
-    # No Parker-spiral substitution; MAG presence at file level is enforced
-    # by the alpha-sw processor branch.
     magnetic_field_direction = np.asarray(magnetic_field_direction, dtype=float)
     if not np.all(np.isfinite(magnetic_field_direction)):
-        return _nan_alpha_moments(bad_fit_flag | int(SwapiL3Flags.FIT_ERROR))
+        return _nan_alpha_moments(bad_fit_flag)
 
     # SPICE shared with Stage 1 if provided; otherwise compute here.
     if rotation_matrices is None:
@@ -253,15 +245,11 @@ def fit_solar_wind_alpha_moments(
     if r_squared(result.fun, alpha_ctx_peak.count_rate) < 0.9 or T_a_fit > 5.0e5:
         return _nan_alpha_moments(bad_fit_flag | SwapiL3Flags.BAD_FIT)
 
-    # HC3 sandwich covariance in (log n, log T, Δv) space — same estimator
-    # the proton fit uses (see `solar_wind/uncertainties.py`); leverage-
-    # corrected because alpha-peak bins dominate parameter information.
     cov_x = compute_hc3_parameter_covariance(result.jac, result.fun)
     density_sigma = float(n_a_fit * np.sqrt(max(cov_x[0, 0], 0.0)))
     temperature_sigma = float(T_a_fit * np.sqrt(max(cov_x[1, 1], 0.0)))
     delta_v_sigma = float(np.sqrt(max(cov_x[2, 2], 0.0)))
 
-    # Σ_vα = Σ_vp + σ_Δv² B̂B̂ᵀ (additive Δv along the 1-DOF B̂ axis).
     sigma_dv2 = max(cov_x[2, 2], 0.0)
     velocity_covariance_rtn = (
         proton_moments.bulk_velocity_rtn_covariance()
