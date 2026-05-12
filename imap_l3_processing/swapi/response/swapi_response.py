@@ -21,14 +21,6 @@ from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 
 
 class ResponseGrid(NamedTuple):
-    """V-and-species-specific instrument response evaluated at one ESA step.
-
-    Carries one PassbandGrid per region (`sg_passband`, `oa_passband`); call
-    sites pick the relevant one by region rather than threading a flag through
-    the helpers. `azimuthal_transmission` is the same `AzimuthalTransmissionGrid`
-    reference across all grids in a sweep — bundling it per-grid is pointer-cheap
-    and keeps the integration call signature compact."""
-
     sg_passband: PassbandGrid
     oa_passband: PassbandGrid
     central_speed: float
@@ -37,7 +29,6 @@ class ResponseGrid(NamedTuple):
 
 
 class SwapiResponse:
-    # Azimuthal transmission table is sampled at 0.1 deg spacing; constant for all V/species.
     AZIMUTHAL_TRANSMISSION_SPACING_DEG = 0.1
 
     def __init__(
