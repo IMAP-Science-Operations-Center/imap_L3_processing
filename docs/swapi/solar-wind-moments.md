@@ -416,7 +416,7 @@ T^{(0)} = \text{max}\negthinspace \left(1\thinspace \text{eV}, 60{,}000\thinspac
 ```
 
 3. Refine $`v_{b}^{(0)}`$ and $`T^{(0)}`$ through an arbitrarily normalized Gaussian fit (with $`\sigma_{v}`$ related to $`T`$ through $`T = m\sigma_{v}^{2} / k_{B}`$).
-The temperature output of the fit is clamped to be at least $`1\thinspace \text{eV}`$. If the curve fit fails or yields a non-finite mean or non-positive $`\sigma_{v}`$, the original seed values are kept.
+The temperature output of the fit is clamped to be at least $`1\thinspace \text{eV}`$. If the initial guess fails, `FIT_ERROR` is set.
 
 #### Initial velocity direction
 
@@ -521,7 +521,7 @@ The dashed black curve is $`\mathcal{N}(0, 1)`$, the ideal normalized residual d
 ### Failed fits
 
 After the optimizer returns, the moments are assigned fill values if the optimizer did not report `success`, in which case the flag `FIT_ERROR` is set.
-Fill values are also assigned if the fitted temperature exceeds $`5\times 10^{5}\thinspace \text{K}`$, or the coefficient of determination $R^2$ is below $`0.9`$. In both cases, the flag `BAD_FIT` is set.
+Fill values are also assigned if the fitted temperature exceeds $`5\times 10^{5} \, \text{K}`$, or the coefficient of determination $R^2$ is below $`0.9`$. In both cases, the flag `BAD_FIT` is set.
 
 The $R^2$ is computed on the count rate averaged across the chunk's 5 sweeps, using only the 9 ESA steps within ±4 of the peak in the averaged spectrum (coarse-sweep bins only). We average across sweeps before computing $R^2$ because individual sweeps have poorer $R^2$ due to the combination of solar wind temporal variation and spin variation, even when the fit is reasonable.
 
@@ -591,10 +591,10 @@ C_{\text{obs}}(V) = \text{deadtime}\negthinspace \left(C_{p}^{\text{true}}(V; \t
 Stage 2's initial guess (`_alpha_initial_guess`) locates the alpha bump by subtracting the deadtime-corrected proton background from the sweep-averaged count rate:
 
 1. Reshape data into `(n_sweeps, n_bins)` via `_infer_sweep_layout`. Average the 5 sweeps: `count_avg`, `proton_bg_avg` (deadtime-corrected proton model per sweep, then averaged).
-2. Convert voltages to energies: $`E_{i} = k^{\ast} |V_{i}|`$ and form the residual $`\rho_{i} = \max(0,\thinspace  \overline{C_{i}} - 2\thinspace \overline{R_{i}^{p}})`$. The factor of 2 makes the alpha-bump finder less sensitive to the deep proton thermal tail leaking into the low-energy alpha bins.
+2. Convert voltages to energies: $`E_{i} = k^* |V_{i}|`$ and form the residual $`\rho_{i} = \max(0,\thinspace  \overline{C_{i}} - 2\thinspace \overline{R_{i}^{p}})`$. The factor of 2 makes the alpha-bump finder less sensitive to the deep proton thermal tail leaking into the low-energy alpha bins.
 3. Call `get_alpha_peak_indices(residual, energies, proton_peak_index)` to return the alpha peak slice. The function walks from the proton peak toward higher energies (lower indices), past the gap where $`E_{i} < 1.5\thinspace E_{\text{proton-peak}}`$, until it finds a residual local minimum that bounds the alpha bump on the proton side; the high-energy side is bounded at $`E_{i} = 4\thinspace E_{\text{proton-peak}}`$.
-4. Guard: require $`\geq 3`$ bins in the peak and at least one bin with positive residual.
-5. Temperature seed: $`T_{\alpha} = T_{p}^{\ast}`$ (the proton temperature). The alpha thermal width is fit by least squares in Stage 2; there is no Gaussian pre-fit on the residual.
+4. Require $`\geq 3`$ bins in the peak and at least one bin with positive residual. If either check fails, `FIT_ERROR` is set.
+5. Set $`T_{\alpha} = T_{p}`$. The alpha thermal width is fit by least squares in Stage 2; there is no Gaussian pre-fit on the residual.
 6. Density: compute a unit-density alpha forward model at $`\Delta v = 0`$ (using the proton bulk velocity as the alpha velocity seed), average across sweeps, and scale to match the mean residual at the peak:
    ```math
    n_{\alpha,0} = \max\negthinspace \left(\frac{\overline{\rho_{\text{peak}}}}{\overline{R_{\text{peak}}^{\alpha,\text{unit}}}},\thinspace  10^{-3}\right)
@@ -635,19 +635,20 @@ For alphas, we use the same approach as for the proton fit:
 
 This ignores the effect of proton-parameter uncertainty on Stage 2 residuals, so $`\sigma_{n_{\alpha}}, \sigma_{T_{\alpha}}`$ are lower bounds.
 
-### Failed fits
+### Bad fit detection
 
-For alphas, we use only the $R^2 < 0.9$ check, not the temperature check. The points used to calculate $R^2$ are masked by the same mask used to fit the alphas.
+For alphas, we use the $R^2 < 0.9$ check to set `BAD_FIT`.
+The points used to calculate $R^2$ are masked by the same mask used to fit the alphas.
 
 ## Quality flags
 
 - `BAD_FIT` (= 2**2): fit converged but is flagged as an inaccurate description of the measurements.
-- `FIT_ERROR` (= 2**3): an error occurred or the fit result's `success` was set to `False` by scipy.
+- `FIT_ERROR` (= 2**3): an error occurred, the fit failed to converge, or the initial guess stage failed.
 - `PRELIMINARY_MAG` (= 2**4, alpha-only): MAG L1D was used as the source for this run (L2 was unavailable).
 
-Ephemeris-gap and MAG-gap conditions are treated as ordinary data gaps: the chunk is fill-valued and no dedicated flag bit is set.
+Gaps in the L2 data, ephemeris data, and MAG data (for alphas) result in fill values with no flag.
 
-For alpha-sw, the Stage-1 proton `bad_fit_flag` is OR'd into the alpha `bad_fit_flag` so downstream consumers see the proton-anchor's quality. If the Stage-1 proton fit returned fill values, Stage 2 is skipped and the alpha moments also get fill values with the proton flag passed through unchanged.
+For alphas, the proton flags combined with the alpha quality flags.
 
 ## References
 

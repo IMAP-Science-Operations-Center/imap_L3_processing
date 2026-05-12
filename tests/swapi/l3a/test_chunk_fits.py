@@ -450,6 +450,35 @@ class TestProtonChunkFitterFitChunk(SpiceTestCase):
         self.assertEqual(int(result["quality_flags"]), int(SwapiL3Flags.FIT_ERROR))
         _assert_peak_speed_fallback(self, result, _PROTON_SCALAR_KEYS, _PROTON_ARRAY_KEYS)
 
+    @patch("imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model.calculate_initial_guess")
+    def test_nan_initial_guess_yields_fit_error(self, mock_initial_guess):
+        """A NaN-valued initial guess causes the LM driver to reject the chunk, surfacing `FIT_ERROR` with peak-bin speed and NaN-filled moments."""
+        mock_initial_guess.return_value = SolarWindParams(
+            density=np.nan,
+            bulk_velocity_rtn=np.full(3, np.nan),
+            temperature=np.nan,
+            mass=PROTON_MASS_KG,
+        )
+
+        result = ProtonChunkFitter().fit_chunk(
+            self.chunk, _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN.copy()
+        )
+
+        self.assertEqual(int(result["quality_flags"]), int(SwapiL3Flags.FIT_ERROR))
+        _assert_peak_speed_fallback(self, result, _PROTON_SCALAR_KEYS, _PROTON_ARRAY_KEYS)
+
+    @patch("imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model.calculate_initial_guess")
+    def test_initial_guess_exception_yields_fit_error(self, mock_initial_guess):
+        """When the initial-guess routine raises, the chunk fitter catches the exception, surfaces `FIT_ERROR`, and falls back to the peak-bin speed."""
+        mock_initial_guess.side_effect = RuntimeError("synthetic initial-guess failure")
+
+        result = ProtonChunkFitter().fit_chunk(
+            self.chunk, _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN.copy()
+        )
+
+        self.assertEqual(int(result["quality_flags"]), int(SwapiL3Flags.FIT_ERROR))
+        _assert_peak_speed_fallback(self, result, _PROTON_SCALAR_KEYS, _PROTON_ARRAY_KEYS)
+
 
 # ----- AlphaChunkFitter -----------------------------------------------------
 
