@@ -14,7 +14,6 @@ would just be duplicate data.
 """
 
 import os
-import shutil
 import subprocess
 import sys
 import unittest
@@ -29,6 +28,9 @@ from spacepy.pycdf import CDF
 import datetime
 
 import imap_l3_processing
+from tests.integration.integration_test_helpers import stage_input_file
+
+SWAPI_INTEGRATION_DATA_DIR = Path(__file__).parent / "test_data" / "swapi"
 
 
 class SwapiProcessorIntegration(unittest.TestCase):
@@ -65,16 +67,8 @@ class SwapiProcessorIntegration(unittest.TestCase):
         os.chdir(root_dir)
         imap_data_access.config["DATA_DIR"] = root_dir / "data"
 
-        anc_dir = root_dir / "data" / "imap" / "ancillary" / "swapi"
-        anc_dir.mkdir(parents=True, exist_ok=True)
-        for name in [
-            "imap_swapi_azimuthal-transmission_20260425_v001.csv",
-            "imap_swapi_central-effective-area_20260425_v001.csv",
-            "imap_swapi_passband-fit-coefficients_20260425_v001.csv",
-        ]:
-            dest = anc_dir / name
-            if not dest.exists():
-                shutil.copy(root_dir / "instrument_team_data" / "swapi" / name, dest)
+        dependency_filename = "imap_swapi_l3a_proton-sw_20260101_v001.json"
+        stage_input_file(SWAPI_INTEGRATION_DATA_DIR / dependency_filename)
 
         expected_file_path = ScienceFilePath(
             "imap_swapi_l3a_proton-sw_20260101_v001.cdf"
@@ -86,22 +80,12 @@ class SwapiProcessorIntegration(unittest.TestCase):
             [
                 sys.executable,
                 "imap_l3_data_processor.py",
-                "--instrument",
-                "swapi",
-                "--data-level",
-                "l3a",
-                "--descriptor",
-                "proton-sw",
-                "--start-date",
-                "20260101",
-                "--version",
-                "v001",
-                "--dependency",
-                # TODO switch to dependency file
-                """
-                [{"type":"science","files":["imap_swapi_l2_sci_20260101_v001.cdf"]},{"type":"ancillary","files":["imap_swapi_alpha-density-temperature-lut_20250125_v001.dat"]},{"type":"ancillary","files":["imap_swapi_efficiency-lut_20241020_v001.dat"]},{"type":"ancillary","files":["imap_swapi_energy-gf-pui-lut_20100101_v003.csv"]},{"type":"ancillary","files":["imap_swapi_instrument-response-lut_20241023_v001.zip"]},{"type":"ancillary","files":["imap_swapi_density-of-neutral-helium-lut_20241023_v002.dat"]},{"type":"ancillary","files":["imap_swapi_hydrogen-inflow-vector_20100101_v001.dat"]},{"type":"ancillary","files":["imap_swapi_helium-inflow-vector_20100101_v001.dat"]},{"type":"ancillary","files":["imap_swapi_azimuthal-transmission_20260425_v001.csv"]},{"type":"ancillary","files":["imap_swapi_central-effective-area_20260425_v001.csv"]},{"type":"ancillary","files":["imap_swapi_passband-fit-coefficients_20260425_v001.csv"]},{"type":"spice","files":["naif0012.tls","pck00011.tpc","imap_130.tf","imap_science_120.tf","imap_sclk_0161.tsc","de440.bsp","imap_recon_20250925_20260420_v01.bsp","imap_2025_358_2026_085_004.ah.bc","imap_dps_2025_363_2025_365_001.ah.bc","imap_dps_2025_359_2026_115_002.ah.bc"]}]
-                """,
-                # "imap_swapi_l3a_proton-sw_20260425_v001.json",
+                "--instrument", "swapi",
+                "--data-level", "l3a",
+                "--descriptor", "proton-sw",
+                "--start-date", "20260101",
+                "--version", "v001",
+                "--dependency", dependency_filename,
             ]
         )
 
@@ -160,16 +144,8 @@ class SwapiProcessorIntegration(unittest.TestCase):
         os.chdir(root_dir)
         imap_data_access.config["DATA_DIR"] = root_dir / "data"
 
-        anc_dir = root_dir / "data" / "imap" / "ancillary" / "swapi"
-        anc_dir.mkdir(parents=True, exist_ok=True)
-        for name in [
-            "imap_swapi_azimuthal-transmission_20260425_v001.csv",
-            "imap_swapi_central-effective-area_20260425_v001.csv",
-            "imap_swapi_passband-fit-coefficients_20260425_v001.csv",
-        ]:
-            dest = anc_dir / name
-            if not dest.exists():
-                shutil.copy(root_dir / "instrument_team_data" / "swapi" / name, dest)
+        dependency_filename = "imap_swapi_l3a_alpha-sw_20260101_v001.json"
+        stage_input_file(SWAPI_INTEGRATION_DATA_DIR / dependency_filename)
 
         expected_file_path = ScienceFilePath(
             "imap_swapi_l3a_alpha-sw_20260101_v001.cdf"
@@ -181,21 +157,12 @@ class SwapiProcessorIntegration(unittest.TestCase):
             [
                 sys.executable,
                 "imap_l3_data_processor.py",
-                "--instrument",
-                "swapi",
-                "--data-level",
-                "l3a",
-                "--descriptor",
-                "alpha-sw",
-                "--start-date",
-                "20260101",
-                "--version",
-                "v001",
-                "--dependency",
-                # TODO switch to dependency file
-                """
-                [{"type":"science","files":["imap_swapi_l2_sci_20260101_v001.cdf"]},{"type":"science","files":["imap_mag_l2_norm-rtn_20260101_v001.cdf"]},{"type":"ancillary","files":["imap_swapi_alpha-density-temperature-lut_20250125_v001.dat"]},{"type":"ancillary","files":["imap_swapi_efficiency-lut_20241020_v001.dat"]},{"type":"ancillary","files":["imap_swapi_energy-gf-pui-lut_20100101_v003.csv"]},{"type":"ancillary","files":["imap_swapi_instrument-response-lut_20241023_v001.zip"]},{"type":"ancillary","files":["imap_swapi_density-of-neutral-helium-lut_20241023_v002.dat"]},{"type":"ancillary","files":["imap_swapi_hydrogen-inflow-vector_20100101_v001.dat"]},{"type":"ancillary","files":["imap_swapi_helium-inflow-vector_20100101_v001.dat"]},{"type":"ancillary","files":["imap_swapi_azimuthal-transmission_20260425_v001.csv"]},{"type":"ancillary","files":["imap_swapi_central-effective-area_20260425_v001.csv"]},{"type":"ancillary","files":["imap_swapi_passband-fit-coefficients_20260425_v001.csv"]},{"type":"spice","files":["naif0012.tls","pck00011.tpc","imap_130.tf","imap_science_120.tf","imap_sclk_0161.tsc","de440.bsp","imap_recon_20250925_20260420_v01.bsp","imap_2025_358_2026_085_004.ah.bc","imap_dps_2025_363_2025_365_001.ah.bc","imap_dps_2025_359_2026_115_002.ah.bc"]}]
-                """,
+                "--instrument", "swapi",
+                "--data-level", "l3a",
+                "--descriptor", "alpha-sw",
+                "--start-date", "20260101",
+                "--version", "v001",
+                "--dependency", dependency_filename,
             ]
         )
 

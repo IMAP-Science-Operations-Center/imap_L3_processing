@@ -70,6 +70,20 @@ def fake_download(file: Path | str):
     assert full_path.exists(), f"Expected {full_path} to exist, but it doesn't."
     return full_path
 
+
+def stage_input_file(file_path: Path) -> Path:
+    """Copy a fixture into its canonical path under ``imap_data_access.config['DATA_DIR']``.
+
+    Mirrors ``mock_imap_data_access.__enter__``'s staging behaviour as a one-shot
+    helper, for tests that hit the live SDC for most inputs but want to drop a
+    single locally-checked-in file (typically a dependency JSON) into the spot
+    ``imap_data_access.download`` resolves to.
+    """
+    destination = generate_imap_file_path(file_path.name).construct_path()
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy(file_path, destination)
+    return destination
+
 metakernel_text = """
 \\begindata
 
@@ -160,9 +174,7 @@ class mock_imap_data_access:
 
         for file_path in self.input_files:
             try:
-                paths_to_generate = generate_imap_file_path(file_path.name).construct_path()
-                paths_to_generate.parent.mkdir(exist_ok=True, parents=True)
-                shutil.copy(src=file_path, dst=paths_to_generate)
+                stage_input_file(file_path)
             except:
                 pass
 
