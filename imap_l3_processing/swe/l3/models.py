@@ -116,6 +116,7 @@ class SwapiL3aProtonData:
     epoch: np.ndarray
     epoch_delta: np.ndarray
     proton_sw_velocity_rtn: np.ndarray[float]
+    proton_sw_speed: np.ndarray[float]
     swp_flags: np.ndarray
 
 

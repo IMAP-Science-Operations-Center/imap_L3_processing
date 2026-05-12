@@ -8,7 +8,6 @@ from imap_data_access.processing_input import ProcessingInputCollection
 from imap_l3_processing.data_utils import find_closest_neighbor
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
-from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swe.l3.models import (
     SweL3Data,
     SweL1bData,
@@ -836,6 +835,17 @@ class SweProcessor(Processor):
             swapi_epoch,
             swapi_l3a_proton_data.proton_sw_velocity_rtn,
         )
+        proton_sw_speed = swapi_l3a_proton_data.proton_sw_speed
+        fallback_to_speed = np.any(np.isnan(solar_wind_vectors), axis=1) & np.isfinite(
+            proton_sw_speed
+        )
+        speed_fallback_vectors = np.zeros_like(solar_wind_vectors)
+        speed_fallback_vectors[:, 2] = -proton_sw_speed
+        solar_wind_vectors = np.where(
+            fallback_to_speed[:, np.newaxis],
+            speed_fallback_vectors,
+            solar_wind_vectors,
+        )
         swapi_max_distance = np.timedelta64(
             int(config["max_swapi_offset_in_minutes"] * 60e9), "ns"
         )
@@ -846,11 +856,11 @@ class SweProcessor(Processor):
             maximum_distance=swapi_max_distance,
         )
 
-        closest_flags = swapi_l3a_proton_data.swp_flags[swapi_indices].astype(
-            int, copy=True
-        )
+        kept_after_nan_filter = ~np.any(np.isnan(solar_wind_vectors), axis=1)
+        fallback_at_swe = fallback_to_speed[kept_after_nan_filter][swapi_indices]
+        within_window = ~np.any(np.isnan(rebinned_solar_wind_vectors), axis=1)
         swe_flags = np.where(
-            closest_flags & SwapiL3Flags.FIT_ERROR,
+            fallback_at_swe & within_window,
             SweL3Flags.FALLBACK_SWAPI_SPEED,
             SweL3Flags.NONE,
         )
