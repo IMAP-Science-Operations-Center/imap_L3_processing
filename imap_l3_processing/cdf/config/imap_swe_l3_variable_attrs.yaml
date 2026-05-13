@@ -1599,6 +1599,8 @@ raw_psd_by_phi_rebinned:
   SCALEMIN: 1.00e-33
   SCALEMAX: 1.00e-24
   FILLVAL: -1.00E+31
+  LABL_PTR_1: energy_label
+  LABL_PTR_2: inst_az_label
   SCALETYP: log
 
 raw_psd_by_theta_rebinned:
@@ -1620,6 +1622,8 @@ raw_psd_by_theta_rebinned:
   SCALEMIN: 1.00e-33
   SCALEMAX: 1.00e-24
   FILLVAL: -1.00E+31
+  LABL_PTR_1: energy_label
+  LABL_PTR_2: inst_el_label
   SCALETYP: log
 
 inst_el:
