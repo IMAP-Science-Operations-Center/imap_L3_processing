@@ -80,6 +80,7 @@ class TestHitPitchAngleDataProduct(TestCase):
                                         sentinel.measurement_gyrophase,
                                         np.array([10, 180, 350]),
                                         np.array([10.25, 90.75, 170.5]),
+                                        sentinel.quality_flags,
                                         )
 
         data_product_variables = data.to_data_product_variables()
@@ -162,7 +163,8 @@ class TestHitPitchAngleDataProduct(TestCase):
             DataProductVariable("azimuth_label",
                                 ["10.0", "180.0", "350.0"]),
             DataProductVariable("zenith_label",
-                                ["10.25", "90.75", "170.5"])
+                                ["10.25", "90.75", "170.5"]),
+            DataProductVariable("hit_flags", sentinel.quality_flags),
         ]
 
         self.assertEqual(expected_data_product_variables, data_product_variables)

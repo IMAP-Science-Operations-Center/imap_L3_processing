@@ -15,6 +15,9 @@ def read_l2_swe_data(swe_l2_data: Path) -> SweL2Data:
         epoch = cdf["epoch"][:]
         flux = read_numeric_variable(cdf["flux_spin_sector"])
         inst_el = cdf["inst_el"][:]
+        inst_el_label = cdf["inst_el_label"][:]
+        inst_az = cdf["inst_az"][:]
+        inst_az_label = cdf["inst_az_label"][:]
         energy = cdf["energy"][:]
         inst_az_spin_sector = read_numeric_variable(cdf["inst_az_spin_sector"])
         phase_space_density = read_numeric_variable(cdf["phase_space_density_spin_sector"])
@@ -25,16 +28,20 @@ def read_l2_swe_data(swe_l2_data: Path) -> SweL2Data:
         acquisition_time_dt64[valid_times_mask] = converted_valid_times
         acquisition_duration = cdf["acq_duration"][...]
         phase_space_density_rebinned = read_numeric_variable(cdf["phase_space_density"])
-    return SweL2Data(epoch=epoch,
-                     phase_space_density=phase_space_density,
-                     flux=flux,
-                     energy=energy,
-                     inst_el=inst_el,
-                     inst_az_spin_sector=inst_az_spin_sector,
-                     acquisition_time=acquisition_time_dt64,
-                     acquisition_duration=acquisition_duration,
-                     phase_space_density_rebinned=phase_space_density_rebinned
-                     )
+    return SweL2Data(
+        epoch=epoch,
+        phase_space_density=phase_space_density,
+        flux=flux,
+        energy=energy,
+        inst_el=inst_el,
+        inst_el_label=inst_el_label,
+        inst_az=inst_az,
+        inst_az_label=inst_az_label,
+        inst_az_spin_sector=inst_az_spin_sector,
+        acquisition_time=acquisition_time_dt64,
+        acquisition_duration=acquisition_duration,
+        phase_space_density_rebinned=phase_space_density_rebinned
+    )
 
 
 def read_l1b_swe_data(swe_l1b_data: Path) -> SweL1bData:
@@ -55,15 +62,16 @@ def read_l3a_swapi_proton_data(swapi_l3a_data: Path) -> SwapiL3aProtonData:
         else:
             epoch_delta = np.repeat(timedelta(seconds=epoch_delta_ns), len(epoch))
         proton_sw_speed = read_numeric_variable(cdf["proton_sw_speed"])
-        proton_sw_clock_angle = read_numeric_variable(cdf["proton_sw_clock_angle"])
-        proton_sw_deflection_angle = read_numeric_variable(cdf["proton_sw_deflection_angle"])
-        swp_flags = read_numeric_variable(cdf["swp_flags"])
+        if "proton_sw_bulk_velocity_rtn_sc" in cdf:
+            proton_sw_velocity_rtn = read_numeric_variable(cdf["proton_sw_bulk_velocity_rtn_sc"])
+        else:
+            proton_sw_velocity_rtn = np.full((len(epoch), 3), np.nan)
+        swp_flags = cdf["swp_flags"][...]
 
     return SwapiL3aProtonData(epoch=epoch,
                               epoch_delta=epoch_delta,
+                              proton_sw_velocity_rtn=proton_sw_velocity_rtn,
                               proton_sw_speed=proton_sw_speed,
-                              proton_sw_clock_angle=proton_sw_clock_angle,
-                              proton_sw_deflection_angle=proton_sw_deflection_angle,
                               swp_flags=swp_flags)
 
 

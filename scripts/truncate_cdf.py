@@ -4,30 +4,41 @@ from pathlib import Path
 from spacepy.pycdf import CDF
 
 
-def truncate_cdf(cdf_path: Path, number_of_epochs: int = 2):
-    output_path = cdf_path.parent / f"{cdf_path.name[:-4]}-truncated.cdf"
+def truncate_cdf(cdf_path: Path, number_of_epochs: int = 2) -> Path:
+    output_path = cdf_path.parent / f"{cdf_path.stem}-truncated.cdf"
     output_path.unlink(missing_ok=True)
     original_cdf = CDF(str(cdf_path))
 
     with CDF(str(output_path), masterpath="") as cdf:
-        cdf["epoch"] = original_cdf["epoch"][...][:number_of_epochs]
-        cdf["epoch"].attrs = original_cdf["epoch"].attrs
+        for attr_name in original_cdf.attrs:
+            cdf.attrs[attr_name] = list(original_cdf.attrs[attr_name])
 
         for var in original_cdf:
-            if var in ["epoch"]:
-                continue
-            if "DEPEND_0" in original_cdf[var].attrs and original_cdf[var].attrs["DEPEND_0"] == "epoch":
-                cdf[var] = original_cdf[var][...][:number_of_epochs]
+            depends_on_epoch = var == "epoch" or original_cdf[var].attrs.get("DEPEND_0") == "epoch"
+            if depends_on_epoch:
+                cdf.clone(original_cdf[var], var, data=False)
+                cdf[var][:] = original_cdf[var][...][:number_of_epochs]
             else:
-                cdf[var] = original_cdf[var]
+                cdf.clone(original_cdf[var], var, data=True)
 
-            cdf[var].attrs = original_cdf[var].attrs
+    return output_path
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--cdf_path", required=True, type=Path)
+    parser = argparse.ArgumentParser(
+        description="Truncate one or more CDF files to a smaller number of epochs along the epoch axis."
+    )
+    parser.add_argument("cdf_paths", nargs="+", type=Path, help="One or more CDF files to truncate.")
+    parser.add_argument(
+        "-n",
+        "--number-of-epochs",
+        type=int,
+        default=2,
+        help="Number of epochs to keep from the start of each file (default: 2).",
+    )
 
     args = parser.parse_args()
 
-    truncate_cdf(args.cdf_path)
+    for cdf_path in args.cdf_paths:
+        output_path = truncate_cdf(cdf_path, args.number_of_epochs)
+        print(f"Wrote {output_path}")

@@ -35,7 +35,8 @@ class TestCodicePitchAngleDependencies(unittest.TestCase):
             call(expected_mag_science_file_path)
         ])
 
-        mock_from_files.assert_called_with(expected_mag_science_file_path, expected_codice_science_file_path)
+        mock_from_files.assert_called_with(expected_mag_science_file_path, expected_codice_science_file_path,
+                                           mag_is_preliminary=True)
         self.assertEqual(mock_from_files.return_value, dependencies)
 
     @patch(
@@ -67,7 +68,8 @@ class TestCodicePitchAngleDependencies(unittest.TestCase):
             call(expected_mag_science_file_path)
         ])
 
-        mock_from_files.assert_called_with(expected_mag_science_file_path, expected_codice_science_file_path)
+        mock_from_files.assert_called_with(expected_mag_science_file_path, expected_codice_science_file_path,
+                                           mag_is_preliminary=False)
         self.assertEqual(mock_from_files.return_value, dependencies)
 
     @patch('imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies.read_mag_data')
@@ -83,3 +85,9 @@ class TestCodicePitchAngleDependencies(unittest.TestCase):
 
         self.assertEqual(mock_codice_l2_data.return_value, dependencies.codice_sectored_intensities_data)
         self.assertEqual(mock_read_mag_data.return_value, dependencies.mag_data)
+        self.assertFalse(dependencies.mag_is_preliminary)
+
+        preliminary_dependencies = CodicePitchAngleDependencies.from_file_paths(
+            mag_file_path, codice_file_path, mag_is_preliminary=True
+        )
+        self.assertTrue(preliminary_dependencies.mag_is_preliminary)

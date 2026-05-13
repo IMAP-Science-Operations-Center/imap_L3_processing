@@ -42,6 +42,7 @@ class TestHITL3SectoredDependencies(TestCase):
 
         self.assertEqual(mock_read_hit_data.return_value, deps.data)
         self.assertEqual(mock_read_mag_data.return_value, deps.mag_data)
+        self.assertTrue(deps.mag_is_preliminary)
 
     @patch("imap_l3_processing.hit.l3.hit_l3_sectored_dependencies.read_mag_data")
     @patch("imap_l3_processing.hit.l3.hit_l3_sectored_dependencies.read_l2_hit_data")
@@ -78,3 +79,4 @@ class TestHITL3SectoredDependencies(TestCase):
 
         self.assertEqual(mock_read_hit_data.return_value, deps.data)
         self.assertEqual(mock_read_mag_data.return_value, deps.mag_data)
+        self.assertFalse(deps.mag_is_preliminary)

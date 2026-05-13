@@ -2,18 +2,6 @@
   {
     "type": "ancillary",
     "files": [
-      "imap_swapi_clock-angle-and-flow-deflection-lut_20240918_v003.dat"
-    ]
-  },
-  {
-    "type": "ancillary",
-    "files": [
-      "imap_swapi_proton-density-temperature-lut_20240905_v002.dat"
-    ]
-  },
-  {
-    "type": "ancillary",
-    "files": [
       "imap_swapi_efficiency-lut_20241020_v001.dat"
     ]
   },
@@ -57,6 +45,24 @@
     "type": "ancillary",
     "files": [
       "imap_swapi_hydrogen-inflow-vector_20100101_v001.dat"
+    ]
+  },
+  {
+    "type": "ancillary",
+    "files": [
+      "imap_swapi_azimuthal-transmission_20260425_v001.csv"
+    ]
+  },
+  {
+    "type": "ancillary",
+    "files": [
+      "imap_swapi_central-effective-area_20260425_v001.csv"
+    ]
+  },
+  {
+    "type": "ancillary",
+    "files": [
+      "imap_swapi_passband-fit-coefficients_20260425_v001.csv"
     ]
   }
 ]

@@ -105,6 +105,9 @@ class SweL2Data:
     flux: np.ndarray  # actually flux_spin_sector
     energy: np.ndarray
     inst_el: np.ndarray
+    inst_el_label: np.ndarray
+    inst_az: np.ndarray
+    inst_az_label: np.ndarray
     inst_az_spin_sector: np.ndarray
     acquisition_time: np.ndarray
     acquisition_duration: np.ndarray
@@ -115,9 +118,8 @@ class SweL2Data:
 class SwapiL3aProtonData:
     epoch: np.ndarray
     epoch_delta: np.ndarray
+    proton_sw_velocity_rtn: np.ndarray[float]
     proton_sw_speed: np.ndarray[float]
-    proton_sw_clock_angle: np.ndarray[float]
-    proton_sw_deflection_angle: np.ndarray[float]
     swp_flags: np.ndarray
 
 
@@ -215,8 +217,10 @@ class SweL3Data(DataProduct):
     phase_space_density_outward: np.ndarray
     # fit moments
     moment_data: SweL3MomentData
-    theta: np.ndarray
-    phi: np.ndarray
+    inst_el: np.ndarray
+    inst_el_label: np.ndarray
+    inst_az: np.ndarray
+    inst_az_label: np.ndarray
     raw_1d_psd_rebinned: np.ndarray
     raw_psd_by_phi_rebinned: np.ndarray
     raw_psd_by_theta_rebinned: np.ndarray
@@ -385,8 +389,8 @@ class SweL3Data(DataProduct):
             DataProductVariable("raw_1d_psd_rebinned", value=self.raw_1d_psd_rebinned),
             DataProductVariable("raw_psd_by_theta_rebinned", value=self.raw_psd_by_theta_rebinned),
             DataProductVariable("raw_psd_by_phi_rebinned", value=self.raw_psd_by_phi_rebinned),
-            DataProductVariable("inst_el", value=self.theta),
-            DataProductVariable("inst_az", value=self.phi),
+            DataProductVariable("inst_az", value=self.inst_az),
+            DataProductVariable("inst_el", value=self.inst_el),
             DataProductVariable(ENERGY_LABEL,
                                 value=[f"Energy Label {str(i + 1)}" for i in range(len(self.energy))],
                                 ),
@@ -402,6 +406,8 @@ class SweL3Data(DataProduct):
             DataProductVariable(TEMPERATURE_TENSOR_LABEL,
                                 value=["Tensor 1", "Tensor 2", "Tensor 3", "Tensor 4", "Tensor 5", "Tensor 6"],
                                 ),
+            DataProductVariable("inst_az_label", value=self.inst_az_label),
+            DataProductVariable("inst_el_label", value=self.inst_el_label),
             DataProductVariable(TENSOR_ID, value=np.array([1, 2, 3, 4, 5, 6]))
         ]
 

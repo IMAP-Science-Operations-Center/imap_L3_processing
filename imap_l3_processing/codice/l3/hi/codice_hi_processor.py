@@ -10,6 +10,7 @@ from imap_l3_processing.codice.l3.hi.models import CodiceHiL3PitchAngleDataProdu
 from imap_l3_processing.codice.l3.hi.models import CodiceL3HiDirectEvents
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
 from imap_l3_processing.codice.l3.lo.constants import CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM
+from imap_l3_processing.codice.quality_flags import CodiceL3Flags
 from imap_l3_processing.hit.l3.sectored_products.science.sectored_products_algorithms import \
     get_sector_unit_vectors
 from imap_l3_processing.models import InputMetadata
@@ -74,8 +75,7 @@ class CodiceHiProcessor(Processor):
         fe_energy_bins = dependencies.codice_sectored_intensities_data.energy_fe.shape[0]
         rebinned_mag_data = mag_data.rebin_to(sectored_intensities.epoch, sectored_intensities.epoch_delta_plus)
 
-        spin_angles_in_dps_elevation_by_spin_angle = (
-                                                             sectored_intensities.spin_angles.T + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360
+        spin_angles_in_dps_elevation_by_spin_angle = (sectored_intensities.spin_angles.T + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360
 
         mag_unit_vectors = calculate_unit_vector(rebinned_mag_data)
         sector_unit = get_sector_unit_vectors(sectored_intensities.elevation_angle,
@@ -109,6 +109,10 @@ class CodiceHiProcessor(Processor):
             "o": SpeciesIntensity(sectored_intensities.cno_intensities, *_create_pa_and_gyro_nan_arrays(cno_pa_shape, cno_gyro_shape)),
             "fe": SpeciesIntensity(sectored_intensities.fe_intensities,*_create_pa_and_gyro_nan_arrays(fe_pa_shape, fe_gyro_shape))}
         # @formatter:on
+
+        codice_flags = np.full(len(epochs), CodiceL3Flags.NONE)
+        if dependencies.mag_is_preliminary:
+            codice_flags |= CodiceL3Flags.PRELIMINARY_MAG
 
         for time_index in range(len(epochs)):
             pitch_angles = calculate_pitch_angle(particle_unit_vectors, mag_unit_vectors[time_index])
@@ -155,7 +159,8 @@ class CodiceHiProcessor(Processor):
             cno_intensity_by_pitch_angle=species_intensities['o'].intensity_by_pa,
             cno_intensity_by_pitch_angle_and_gyrophase=species_intensities['o'].intensity_by_pa_and_gyro,
             fe_intensity_by_pitch_angle=species_intensities['fe'].intensity_by_pa,
-            fe_intensity_by_pitch_angle_and_gyrophase=species_intensities['fe'].intensity_by_pa_and_gyro
+            fe_intensity_by_pitch_angle_and_gyrophase=species_intensities['fe'].intensity_by_pa_and_gyro,
+            codice_flags=codice_flags,
         )
 
 

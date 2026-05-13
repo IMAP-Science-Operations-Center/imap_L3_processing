@@ -173,6 +173,7 @@ class TestModels(unittest.TestCase):
                                                                                len(pitch_angle)) + 6,
             "fe_intensity_by_pitch_angle_and_gyrophase": np.arange(pitch_angle_and_gyrophase_size).reshape(
                 len(epoch_data), len(energy_data), len(pitch_angle), len(gyrophase)) + 7,
+            "codice_flags": np.zeros(len(epoch_data), dtype=np.uint16),
         }
 
         data_product = CodiceHiL3PitchAngleDataProduct(
