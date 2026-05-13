@@ -249,13 +249,6 @@ class CodiceLoProcessor(Processor):
         )
 
     def process_l3a_3d_distribution_product(self, dependencies: CodiceLoL3a3dDistributionsDependencies):
-        l3a_sw_rgfo_half_spins = dependencies.l3a_direct_event_data.rgfo_half_spin
-        l3a_sw_rgfo_spin_sectors = dependencies.l3a_direct_event_data.rgfo_spin_sector
-        l3a_sw_spin_angle = dependencies.l3a_direct_event_data.spin_angle
-        l3a_sw_spin_angle_bin_delta = dependencies.l3a_direct_event_data.spin_angle_bin_delta
-        l3a_sw_rgfo_esa_steps = dependencies.l3a_direct_event_data.rgfo_esa_step
-        l3a_sw_half_spins = dependencies.l3a_direct_event_data.half_spin_per_esa_step
-
         mass_species_bin_lookup = dependencies.mass_species_bin_lookup
         position_elevation_lut = PositionToElevationLookup()
         energy_lut = dependencies.energy_per_charge_lut
@@ -268,8 +261,11 @@ class CodiceLoProcessor(Processor):
         normalized_count_rates = combine_priorities_for_species_and_convert_to_rate(counts_3d_data[species_index],
                                                                                     dependencies.l3a_direct_event_data.acquisition_time_per_esa_step)
 
-        geometric_factors = geometric_factor_lut.get_geometric_factors(l3a_sw_rgfo_half_spins, l3a_sw_rgfo_spin_sectors,
-                                                                       l3a_sw_rgfo_esa_steps, l3a_sw_half_spins)
+        geometric_factors = geometric_factor_lut.get_geometric_factors(
+            dependencies.l3a_direct_event_data.rgfo_half_spin, dependencies.l3a_direct_event_data.rgfo_spin_sector,
+            dependencies.l3a_direct_event_data.rgfo_esa_step, dependencies.l3a_direct_event_data.half_spin_per_esa_step,
+            self.input_metadata.start_date.date()
+        )
         intensities = convert_count_rate_to_intensity(normalized_count_rates,
                                                       dependencies.energy_per_charge_lut,
                                                       dependencies.efficiency_factors_lut,
@@ -283,8 +279,8 @@ class CodiceLoProcessor(Processor):
             epoch_delta=dependencies.l3a_direct_event_data.epoch_delta,
             elevation=position_elevation_lut.bin_centers,
             elevation_delta=position_elevation_lut.bin_deltas,
-            spin_angle=l3a_sw_spin_angle,
-            spin_angle_delta=l3a_sw_spin_angle_bin_delta,
+            spin_angle=dependencies.l3a_direct_event_data.spin_angle_bin,
+            spin_angle_delta=dependencies.l3a_direct_event_data.spin_angle_bin_delta,
             energy=np.flip(energy_lut.bin_centers),
             energy_delta_plus=np.flip(energy_lut.delta_plus),
             energy_delta_minus=np.flip(energy_lut.delta_minus),

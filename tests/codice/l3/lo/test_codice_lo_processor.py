@@ -1,7 +1,7 @@
 import unittest
 import warnings
 from dataclasses import fields
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from pathlib import Path
 from unittest.mock import Mock, patch, call, sentinel, MagicMock
 
@@ -684,7 +684,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
                                           mock_rebin_3d_distribution_azimuth_to_elevation):
         mock_elevation_lookup = mock_elevation_angle_lookup_class.return_value
 
-        input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02')
+        input_metadata = InputMetadata('codice', "l3a", datetime(2026,5,13), Mock(spec=datetime), 'v02')
 
         mock_l3a_direct_event_data = Mock(
             acquisition_time_per_esa_step=sentinel.acquisition_time,
@@ -693,7 +693,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
             rgfo_esa_step=sentinel.rgfo_esa_step,
             half_spin_per_esa_step=sentinel.half_spin,
             spin_angle=sentinel.spin_angle,
-            spin_angle_bin_delta=sentinel.spin_angle_bin_delta
+            spin_angle_bin_delta=sentinel.spin_angle_bin_delta,
+            spin_angle_bin=sentinel.spin_angle_bin,
         )
 
         mock_geometric_factor_lut = Mock(spec=GeometricFactorLookup)
@@ -737,6 +738,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             sentinel.rgfo_spin_sector,
             sentinel.rgfo_esa_step,
             sentinel.half_spin,
+            date(2026,5,13)
         )
         mock_convert_count_rate_to_intensity.assert_called_once_with(
             mock_combine_priorities_for_species_and_convert_to_rate.return_value,
@@ -751,12 +753,11 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         self.assertIsInstance(l3a_3d_distribution_data_product, CodiceLoL3a3dDistributionDataProduct)
         self.assertEqual(processor.input_metadata, l3a_3d_distribution_data_product.input_metadata)
-
         self.assertEqual(mock_l3a_direct_event_data.epoch, l3a_3d_distribution_data_product.epoch)
         self.assertEqual(mock_l3a_direct_event_data.epoch_delta, l3a_3d_distribution_data_product.epoch_delta)
         self.assertEqual(mock_elevation_lookup.bin_centers, l3a_3d_distribution_data_product.elevation)
         self.assertEqual(mock_elevation_lookup.bin_deltas, l3a_3d_distribution_data_product.elevation_delta)
-        self.assertEqual(sentinel.spin_angle, l3a_3d_distribution_data_product.spin_angle)
+        self.assertEqual(sentinel.spin_angle_bin, l3a_3d_distribution_data_product.spin_angle)
         self.assertEqual(sentinel.spin_angle_bin_delta, l3a_3d_distribution_data_product.spin_angle_delta)
         np.testing.assert_array_equal(np.flip(mock_energy_lookup.bin_centers), l3a_3d_distribution_data_product.energy)
         np.testing.assert_array_equal(np.flip(mock_energy_lookup.delta_plus),
