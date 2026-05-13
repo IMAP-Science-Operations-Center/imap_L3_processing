@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Self
 
 from imap_data_access import ProcessingInputCollection, ScienceFilePath
-from imap_data_access.processing_input import generate_imap_input
+from imap_data_access.processing_input import generate_imap_input, ScienceInput
 from imap_processing.hit.l1b.constants import FILLVAL_INT64
 
 import numpy as np
@@ -144,14 +144,12 @@ if __name__ == "__main__":
 
     glows_data_dir = get_run_local_data_path("glows_l3bcde_with_prod_l2/imap/glows/l3e")
 
-    ram_masked_maps_path = get_test_data_path("lo/lo_txt_pipeline/3S5_l1b_ram_maps")
-
+    cg_corrected_input_path = get_test_data_path("lo/lo_txt_pipeline/3S5_l1b_ram_maps")
     for pivot in (90, 105, 75):
-        descriptor = f"l{pivot:03d}-ena-h-sf-sp-ram-hae-6deg-1yr"
+        l2_descriptor = f"l{pivot:03d}-ena-h-sf-nsp-ram-hae-6deg-1yr"
 
-        csv_maps_path = ram_masked_maps_path / "outdir" / f"pivot_{pivot}" / "maps"
-        lo_txt_input = LoProcessingInput.read_from_txt_data(csv_maps_path, descriptor)
-        print(lo_txt_input.repoints)
+        csv_maps_path = cg_corrected_input_path / "outdir" / f"pivot_{pivot}" / "maps"
+        lo_txt_input = LoProcessingInput.read_from_txt_data(csv_maps_path, l2_descriptor)
         glows_input_paths = filter_glows_data_for_lo_inputs(glows_data_dir, lo_txt_input.repoints)
 
         for glows_input_path in glows_input_paths:
@@ -159,7 +157,8 @@ if __name__ == "__main__":
             glows_path_in_data_dir.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(glows_input_path, glows_path_in_data_dir)
 
-        processor = LoProcessor(
+        sp_descriptor = l2_descriptor.replace("-nsp-", "-sp-")
+        sp_processor = LoProcessor(
             dependencies=lo_txt_input.to_processing_input_collection(glows_input_paths),
             input_metadata=InputMetadata(
                 instrument="lo",
@@ -167,10 +166,50 @@ if __name__ == "__main__":
                 start_date=lo_txt_input.start_date,
                 end_date=lo_txt_input.end_date,
                 version="v001",
-                descriptor=descriptor
+                descriptor=sp_descriptor
             )
         )
 
         furnish_spice_metakernel(lo_txt_input.start_date, lo_txt_input.end_date, LO_SP_MAP_KERNELS)
 
-        print("Produced: ", processor.process())
+        [sp_map] = sp_processor.process()
+        print("Produced: ", sp_map)
+
+        spx_descriptor = sp_descriptor.replace("-ena-", "-spx-")
+        spx_processor = LoProcessor(
+            dependencies=ProcessingInputCollection(ScienceInput(sp_map.name)),
+            input_metadata=InputMetadata(
+                instrument="lo",
+                data_level="l3",
+                start_date=lo_txt_input.start_date,
+                end_date=lo_txt_input.end_date,
+                version="v001",
+                descriptor=spx_descriptor
+            )
+        )
+
+        [spx_map] = spx_processor.process()
+        print("Produced: ", spx_map)
+
+    ram_nbs_input_path = get_test_data_path("lo/lo_txt_pipeline/3S5_l1b_ram_maps")
+    for pivot in (90, 105, 75):
+        l2_nbs_descriptor = f"l{pivot:03d}-enanbs-h-sf-nsp-ram-hae-6deg-1yr"
+
+        csv_maps_path = cg_corrected_input_path / "outdir" / f"pivot_{pivot}" / "maps"
+        lo_txt_input = LoProcessingInput.read_from_txt_data(csv_maps_path, l2_nbs_descriptor)
+
+        spx_nbs_descriptor = l2_nbs_descriptor.replace("-enanbs-", "-spxnbs-")
+        spx_nbs_processor = LoProcessor(
+            dependencies=ProcessingInputCollection(ScienceInput(lo_txt_input.l2_cdf_path.name)),
+            input_metadata=InputMetadata(
+                instrument="lo",
+                data_level="l3",
+                start_date=lo_txt_input.start_date,
+                end_date=lo_txt_input.end_date,
+                version="v001",
+                descriptor=spx_nbs_descriptor
+            )
+        )
+
+        [spx_nbs_map] = spx_nbs_processor.process()
+        print("Produced: ", spx_nbs_map)
