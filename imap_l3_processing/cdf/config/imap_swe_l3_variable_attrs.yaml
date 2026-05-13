@@ -264,7 +264,7 @@ phase_space_density_by_pitch_angle_and_gyrophase:
   LABLAXIS: e- PSD
   UNITS: s^3 cm^-6
   VALIDMIN: 0
-  VALIDMAX: 1.00e-20
+  VALIDMAX: 1.00e-15
   FILLVAL: -1.00E+31
   LABL_PTR_1: energy_label
   LABL_PTR_2: pitch_angle_label
@@ -289,7 +289,7 @@ phase_space_density_by_pitch_angle:
   LABLAXIS: e- PSD
   UNITS: s^3 cm^-6
   VALIDMIN: 0
-  VALIDMAX: 1.00e-20
+  VALIDMAX: 1.00e-15
   FILLVAL: -1.00E+31
   LABL_PTR_1: energy_label
   LABL_PTR_2: pitch_angle_label
@@ -312,7 +312,7 @@ phase_space_density_1d:
   LABLAXIS: e- PSD
   UNITS: s^3 cm^-6
   VALIDMIN: 0
-  VALIDMAX: 1.00e-20
+  VALIDMAX: 1.00e-15
   SCALEMIN: 1.00e-33
   SCALEMAX: 1.00e-24
   FILLVAL: -1.00E+31
@@ -334,7 +334,7 @@ phase_space_density_inward:
   LABLAXIS: e- PSD
   UNITS: s^3 cm^-6
   VALIDMIN: 0
-  VALIDMAX: 1.00e-20
+  VALIDMAX: 1.00e-15
   SCALEMIN: 1.00e-33
   SCALEMAX: 1.00e-24
   FILLVAL: -1.00E+31
@@ -356,7 +356,7 @@ phase_space_density_outward:
   LABLAXIS: e- PSD
   UNITS: s^3 cm^-6
   VALIDMIN: 0
-  VALIDMAX: 1.00e-20
+  VALIDMAX: 1.00e-15
   SCALEMIN: 1.00e-33
   SCALEMAX: 1.00e-24
   FILLVAL: -1.00E+31
@@ -1196,7 +1196,7 @@ core_heat_flux_magnitude_integrated:
   FIELDNAM: Core Heat Flux Magnitude Integrated
   FORMAT: F15.3
   LABLAXIS: Core heat flux magnitude integrated
-  UNITS: µW / m^2
+  UNITS: uW / m^2
   VALIDMIN: 0
   VALIDMAX: 100
   FILLVAL: -1.00E+31
@@ -1247,7 +1247,7 @@ halo_heat_flux_magnitude_integrated:
   FIELDNAM: Halo Heat Flux Magnitude Integrated
   FORMAT: F15.3
   LABLAXIS: Halo heat flux magnitude integrated
-  UNITS: µW / m^2
+  UNITS: uW / m^2
   VALIDMIN: 0
   VALIDMAX: 100
   FILLVAL: -1.00E+31
@@ -1298,7 +1298,7 @@ total_heat_flux_magnitude_integrated:
   FIELDNAM: Total Heat Flux Magnitude Integrated
   FORMAT: F15.3
   LABLAXIS: Total heat flux magnitude integrated
-  UNITS: µW / m^2
+  UNITS: uW / m^2
   VALIDMIN: 0
   VALIDMAX: 100
   FILLVAL: -1.00E+31
@@ -1530,6 +1530,22 @@ temperature_tensor_label:
   FIELDNAM: Temperature Tensor Label
   FORMAT: a20
   FILLVAL: ' '
+inst_az_label:
+  NAME: inst_az_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for instrument azimuth
+  VAR_TYPE: metadata
+  FIELDNAM: Instrument Azimuth Label
+  FORMAT: a20
+  FILLVAL: ' '
+inst_el_label:
+  NAME: inst_el_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for instrument elevation
+  VAR_TYPE: metadata
+  FIELDNAM: Instrument Elevation Label
+  FORMAT: a20
+  FILLVAL: ' '
 tensor_id:
   NAME: tensor_id
   DATA_TYPE: CDF_UINT1
@@ -1583,6 +1599,8 @@ raw_psd_by_phi_rebinned:
   SCALEMIN: 1.00e-33
   SCALEMAX: 1.00e-24
   FILLVAL: -1.00E+31
+  LABL_PTR_1: energy_label
+  LABL_PTR_2: inst_az_label
   SCALETYP: log
 
 raw_psd_by_theta_rebinned:
@@ -1604,6 +1622,8 @@ raw_psd_by_theta_rebinned:
   SCALEMIN: 1.00e-33
   SCALEMAX: 1.00e-24
   FILLVAL: -1.00E+31
+  LABL_PTR_1: energy_label
+  LABL_PTR_2: inst_el_label
   SCALETYP: log
 
 inst_el:
@@ -1611,7 +1631,7 @@ inst_el:
   CATDESC: Angle of each CEM detector
   FIELDNAM: Polar Angle
   FILLVAL: -1.00E+31
-  FORMAT: I4
+  FORMAT: E9.4
   LABLAXIS: Degree
   SCALE_TYP: linear
   UNITS: Degree

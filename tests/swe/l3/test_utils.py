@@ -88,6 +88,15 @@ class TestUtils(SpiceTestCase):
         self.assertEqual(result.inst_el[0], -63)
         self.assertEqual(len(result.inst_el), 7)
 
+        self.assertEqual(result.inst_el_label[0], "-63")
+        self.assertEqual(len(result.inst_el_label), 7)
+
+        self.assertEqual(result.inst_az[0], 6.0)
+        self.assertEqual(len(result.inst_az), 30)
+
+        self.assertEqual(result.inst_az_label[0], "6")
+        self.assertEqual(len(result.inst_az_label), 30)
+
         self.assertEqual(result.energy[0], 2.66)
         self.assertEqual(len(result.energy), 24)
 

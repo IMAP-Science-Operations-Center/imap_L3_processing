@@ -84,6 +84,9 @@ class TestSweProcessor(unittest.TestCase):
             flux=np.arange(21).reshape(7, 3),
             energy=np.array([2, 4, 6]),
             inst_el=np.array([]),
+            inst_az=sentinel.inst_az,
+            inst_az_label=sentinel.inst_az_label,
+            inst_el_label=sentinel.inst_el_label,
             inst_az_spin_sector=np.arange(21).reshape(7, 3) + 200,
             acquisition_time=np.array([]),
             acquisition_duration=np.array([]),
@@ -221,6 +224,11 @@ class TestSweProcessor(unittest.TestCase):
         # pass through from l2
         np.testing.assert_array_equal(swe_l3_data.epoch, swe_l2_data.epoch)
         np.testing.assert_array_equal(swe_l3_data.epoch_delta, mock_compute_epoch_delta_in_ns.return_value)
+        np.testing.assert_array_equal(swe_l3_data.inst_el, swe_l2_data.inst_el)
+        self.assertEqual(swe_l3_data.inst_el_label, swe_l2_data.inst_el_label)
+        self.assertEqual(swe_l3_data.inst_az, swe_l2_data.inst_az)
+        self.assertEqual(swe_l3_data.inst_az_label, swe_l2_data.inst_az_label)
+
         # coming from the config
         np.testing.assert_array_equal(swe_l3_data.energy, swe_config["energy_bins"])
         np.testing.assert_array_equal(swe_l3_data.energy_delta_plus, swe_config["energy_delta_plus"])
@@ -300,6 +308,9 @@ class TestSweProcessor(unittest.TestCase):
             flux=np.arange(27).reshape(3, 3, 3),
             energy=energies,
             inst_el=np.array([]),
+            inst_el_label=sentinel.inst_el_label,
+            inst_az=sentinel.inst_az,
+            inst_az_label=sentinel.inst_az_label,
             inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
             acquisition_time=np.array([]),
             acquisition_duration=(np.arange(9).reshape(3, 3) + 5) * 1e6,
@@ -522,6 +533,9 @@ class TestSweProcessor(unittest.TestCase):
             flux=np.arange(num_epochs * num_energies * 5 * 7).reshape(num_epochs, num_energies, 5, 7),
             energy=np.arange(num_energies) + 20,
             inst_el=np.array([-30, -20, -10, 0, 10, 20, 30]),
+            inst_el_label=sentinel.inst_el_label,
+            inst_az=sentinel.inst_az,
+            inst_az_label=sentinel.inst_az_label,
             inst_az_spin_sector=np.arange(num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
             acquisition_time=np.linspace(datetime(2025, 3, 6), datetime(2025, 3, 6, 0, 1),
                                          num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
@@ -618,6 +632,9 @@ class TestSweProcessor(unittest.TestCase):
             flux=np.arange(num_epochs * num_energies * 5 * 7).reshape(num_epochs, num_energies, 5, 7),
             energy=np.arange(num_energies) + 5,
             inst_el=np.array([-30, -20, -10, 0, 10, 20, 30]),
+            inst_el_label=sentinel.inst_el_label,
+            inst_az=sentinel.inst_az,
+            inst_az_label=sentinel.inst_az_label,
             inst_az_spin_sector=np.arange(num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
             acquisition_time=np.linspace(datetime(2025, 3, 6), datetime(2025, 3, 6, 0, 1),
                                          num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
@@ -741,6 +758,9 @@ class TestSweProcessor(unittest.TestCase):
             flux=np.arange(9).reshape(3, 3),
             energy=np.array([9, 10, 12, 14, 36, 54, 96, 102, 112, 156, 172]),
             inst_el=instrument_elevation,
+            inst_el_label=sentinel.inst_el_label,
+            inst_az=sentinel.inst_az,
+            inst_az_label=sentinel.inst_az_label,
             inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
             acquisition_time=np.array([]),
             acquisition_duration=[1e7, 2e7, 3e7],
@@ -1289,6 +1309,9 @@ class TestSweProcessor(unittest.TestCase):
             flux=np.arange(9).reshape(3, 3),
             energy=np.array([9, 10, 12, 14, 36, 54, 96, 102, 112, 156]),
             inst_el=instrument_elevation,
+            inst_el_label=sentinel.inst_el_label,
+            inst_az=sentinel.inst_az,
+            inst_az_label=sentinel.inst_az_label,
             inst_az_spin_sector=np.arange(16, 32).reshape(4, 4),
             acquisition_time=np.array([]),
             acquisition_duration=[2e7, 2e7, 2e7, 2e7],
@@ -1341,6 +1364,9 @@ class TestSweProcessor(unittest.TestCase):
             flux=np.arange(9).reshape(3, 3),
             energy=np.array([9, 10, 12, 14, 36, 54, 96, 102, 112, 156, 172]),
             inst_el=instrument_elevation,
+            inst_el_label=sentinel.inst_el_label,
+            inst_az=sentinel.inst_az,
+            inst_az_label=sentinel.inst_az_label,
             inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
             acquisition_time=np.array([]),
             acquisition_duration=np.full((1, 11, 3), 1e7),
@@ -1433,6 +1459,9 @@ class TestSweProcessor(unittest.TestCase):
                     flux=np.arange(9).reshape(3, 3),
                     energy=np.array([9, 10, 12, 14, 36, 54, 96, 102, 112, 156, 172]),
                     inst_el=instrument_elevation,
+                    inst_el_label=sentinel.inst_el_label,
+                    inst_az=sentinel.inst_az,
+                    inst_az_label=sentinel.inst_az_label,
                     inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
                     acquisition_time=np.array([]),
                     acquisition_duration=[1e7, 2e7, 3e7],
