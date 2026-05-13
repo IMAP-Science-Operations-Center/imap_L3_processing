@@ -119,10 +119,6 @@ def create_fake_swapi_l3a_cdf(l2_swepam_ion_file_path: str,
         "vel_p_rtn")._index
     sw_velocity_data = np.array([x[sw_velocity_index] for x in vd_ion[:]])
     sw_speed = np.linalg.norm(sw_velocity_data, axis=1)
-    sw_r, sw_t, sw_n = sw_velocity_data.T
-    sw_x, sw_y, sw_z = sw_n, sw_t, -sw_r
-    deflection = np.rad2deg(np.arctan2(np.sqrt(sw_x ** 2 + sw_y ** 2), -sw_z))
-    clock = np.rad2deg(np.arctan2(sw_x, -sw_y))
 
     epochs = get_epochs_from_output_file(vd_ion)
 
@@ -134,10 +130,6 @@ def create_fake_swapi_l3a_cdf(l2_swepam_ion_file_path: str,
         cdf['epoch_delta'] = epoch_deltas
         cdf['proton_sw_speed'] = sw_speed
         cdf['proton_sw_speed'].attrs["FILLVAL"] = -1e31
-        cdf['proton_sw_clock_angle'] = clock
-        cdf['proton_sw_clock_angle'].attrs["FILLVAL"] = -1e31
-        cdf['proton_sw_deflection_angle'] = deflection
-        cdf['proton_sw_deflection_angle'].attrs["FILLVAL"] = -1e31
 
 
 ATTITUDE_DATA = """Year	DOY	Secofday	Flag	RTN_r		RTN_t		RTN_n		J2GCI_x		J2GCI_y		J2GCI_z		GSE_x		GSE_y		GSE_z
