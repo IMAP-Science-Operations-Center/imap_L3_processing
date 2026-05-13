@@ -28,7 +28,7 @@ from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_
 from imap_l3_processing.glows.l3d.utils import PATH_TO_L3D_TOOLKIT
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import save_data
-from tests.integration.integration_test_helpers import mock_imap_data_access
+from tests.integration.integration_test_helpers import mock_imap_data_access, run_istp_compliance_check
 from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, \
     with_tempdir, get_run_local_data_path, run_periodically
 
@@ -113,7 +113,8 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         processor = GlowsProcessor(ProcessingInputCollection(), input_metadata)
         l3a_data = processor.process_l3a(dependencies)
 
-        print(save_data(l3a_data, delete_if_present=True))
+        output_cdf_path = save_data(l3a_data, delete_if_present=True)
+        print(output_cdf_path)
 
         expected_dict = dataclasses.asdict(expected_output)
         actual_dict = dataclasses.asdict(l3a_data)
@@ -162,6 +163,10 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
                                    expected_dict['spacecraft_location_std_dev'])
 
         self.assertEqual(actual_dict['input_metadata'], expected_dict['input_metadata'])
+
+        istp_compliance_message = run_istp_compliance_check(output_cdf_path)
+        print("ISTP Compliance:\n", istp_compliance_message)
+        self.assertIn("PASSED variable checks", istp_compliance_message)
 
     @run_periodically(timedelta(days=14))
     @run_test_in_docker

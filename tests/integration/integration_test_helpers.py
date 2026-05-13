@@ -192,3 +192,8 @@ class mock_imap_data_access:
                 fn(obj, *args, **kwargs)
 
         return wrapped
+
+def run_istp_compliance_check(cdf_path: Path):
+    cdf_as_json = requests.post("https://skteditor.heliophysics.net/cgi-bin/cdf2json.cgi", files={"file": open(cdf_path, "rb")}).json()
+    cdf_json = list(cdf_as_json.values())[0]
+    return requests.post("https://skteditor.heliophysics.net/cgi-bin/validate.cgi", json={cdf_path.name: cdf_json}).text
