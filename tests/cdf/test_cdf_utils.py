@@ -134,11 +134,20 @@ class TestCdfUtils(TempFileTestCase):
             self.assertEqual('global_val1', str(actual_cdf.attrs['global1']))
             self.assertEqual('global_val2', str(actual_cdf.attrs['global2']))
 
-    def test_write_cdf_replaces_nan_and_masked_with_fill_value(self):
+    def test_write_cdf_replaces_nan_inf_and_overflowing_floats_with_fill_value(self):
         epoch_fillval = datetime.fromisoformat("9999-12-31T23:59:59.999999")
 
         epoch_data = np.ma.masked_array([datetime(2025, 3, 7, 17, 0), None], mask=[False, True])
         expected_cdf_epoch_data = np.array([datetime(2025, 3, 7, 17, 0), epoch_fillval])
+
+        float_var_input = np.array(
+            [3, 5, np.nan, 9, np.nan, np.nan, np.inf, -np.inf, 1e40, -1e40],
+            dtype=np.float64,
+        )
+        expected_float_var = np.array(
+            [3, 5, -1e31, 9, -1e31, -1e31, -1e31, -1e31, -1e31, -1e31],
+            dtype=np.float32,
+        )
 
         class DataProductWithNan(DataProduct):
             def __init__(self):
@@ -147,7 +156,7 @@ class TestCdfUtils(TempFileTestCase):
             def to_data_product_variables(self) -> list[DataProductVariable]:
                 return [
                     DataProductVariable("epoch", epoch_data, pycdf.const.CDF_TIME_TT2000),
-                    DataProductVariable("float_var", np.array([3, 5, np.nan, 9, np.nan, np.nan]),
+                    DataProductVariable("float_var", float_var_input,
                                         pycdf.const.CDF_REAL4),
                 ]
 
@@ -163,9 +172,10 @@ class TestCdfUtils(TempFileTestCase):
 
         write_cdf(path, data, attribute_manager)
         with pycdf.CDF(path) as actual_cdf:
-            self.assertFalse(np.any(np.isnan(actual_cdf["float_var"][...])))
-            np.testing.assert_array_equal(np.array([3, 5, -1e31, 9, -1e31, -1e31], dtype=np.float32),
-                                          actual_cdf["float_var"][...], strict=True)
+            actual_float_var = actual_cdf["float_var"][...]
+            self.assertFalse(np.any(np.isnan(actual_float_var)))
+            self.assertFalse(np.any(np.isinf(actual_float_var)))
+            np.testing.assert_array_equal(expected_float_var, actual_float_var, strict=True)
             np.testing.assert_array_equal(actual_cdf["epoch"][...], expected_cdf_epoch_data, strict=True)
 
 
