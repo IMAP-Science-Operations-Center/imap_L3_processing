@@ -64,10 +64,10 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
             dataset["ram_mask"] = xr.DataArray(self.ram_mask, dims=["longitude"])
             return dataset
 
-        self.mock_add_spacecraft_velocity_to_pset_patcher = patch(
-            'imap_l3_processing.maps.rectangular_survival_probability.add_spacecraft_velocity_to_pset')
+        self.mock_add_spacecraft_position_and_velocity_to_pset_patcher = patch(
+            'imap_l3_processing.maps.rectangular_survival_probability.add_spacecraft_position_and_velocity_to_pset')
 
-        self.mock_add_sc_velocity_to_pset = self.mock_add_spacecraft_velocity_to_pset_patcher.start()
+        self.mock_add_sc_velocity_to_pset = self.mock_add_spacecraft_position_and_velocity_to_pset_patcher.start()
         self.mock_add_sc_velocity_to_pset.side_effect = _mock_add_spacecraft_velocity
 
         self.mock_calculate_ram_mask_patcher = patch(
@@ -76,11 +76,11 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
         self.mock_calculate_ram_mask.side_effect = _mock_calculate_ram_mask
 
     def tearDown(self):
-        self.mock_add_spacecraft_velocity_to_pset_patcher.stop()
+        self.mock_add_spacecraft_position_and_velocity_to_pset_patcher.stop()
         self.mock_calculate_ram_mask_patcher.stop()
 
     @patch('imap_l3_processing.maps.rectangular_survival_probability.PointingSet.__init__')
-    @patch('imap_l3_processing.maps.rectangular_survival_probability.add_spacecraft_velocity_to_pset')
+    @patch('imap_l3_processing.maps.rectangular_survival_probability.add_spacecraft_position_and_velocity_to_pset')
     @patch('imap_l3_processing.maps.rectangular_survival_probability.calculate_ram_mask')
     def test_survival_probability_pointing_set_calls_parent_constructor(self, _,
                                                                         __,
@@ -92,7 +92,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
 
         mock_rectangular_pointing_set_constructor.assert_called_once()
 
-    @patch('imap_l3_processing.maps.rectangular_survival_probability.add_spacecraft_velocity_to_pset')
+    @patch('imap_l3_processing.maps.rectangular_survival_probability.add_spacecraft_position_and_velocity_to_pset')
     @patch('imap_l3_processing.maps.rectangular_survival_probability.calculate_ram_mask')
     def test_survival_probability_pointing_set_no_cg(self, mock_calculate_ram_mask, mock_add_sc_velocity_to_pset):
         mock_calculate_ram_mask.return_value = xr.Dataset({
@@ -236,7 +236,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
 
         np.testing.assert_array_equal(cg_pointing_set.data['exposure'], expected_exposures)
 
-    @patch("imap_l3_processing.maps.rectangular_survival_probability.add_spacecraft_velocity_to_pset")
+    @patch("imap_l3_processing.maps.rectangular_survival_probability.add_spacecraft_position_and_velocity_to_pset")
     @patch("imap_l3_processing.maps.rectangular_survival_probability.apply_compton_getting_correction")
     def test_lo_cg_corrected_survival_probability_pointing_set(self, mock_cg_correction, mock_add_sc_velocity_to_pset):
         corrected_hae_longitude = np.full((1, 3, 3600), 2)
