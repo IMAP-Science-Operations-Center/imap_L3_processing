@@ -15,6 +15,9 @@ def read_l2_swe_data(swe_l2_data: Path) -> SweL2Data:
         epoch = cdf["epoch"][:]
         flux = read_numeric_variable(cdf["flux_spin_sector"])
         inst_el = cdf["inst_el"][:]
+        inst_el_label = cdf["inst_el_label"][:]
+        inst_az = cdf["inst_az"][:]
+        inst_az_label = cdf["inst_az_label"][:]
         energy = cdf["energy"][:]
         inst_az_spin_sector = read_numeric_variable(cdf["inst_az_spin_sector"])
         phase_space_density = read_numeric_variable(cdf["phase_space_density_spin_sector"])
@@ -25,16 +28,20 @@ def read_l2_swe_data(swe_l2_data: Path) -> SweL2Data:
         acquisition_time_dt64[valid_times_mask] = converted_valid_times
         acquisition_duration = cdf["acq_duration"][...]
         phase_space_density_rebinned = read_numeric_variable(cdf["phase_space_density"])
-    return SweL2Data(epoch=epoch,
-                     phase_space_density=phase_space_density,
-                     flux=flux,
-                     energy=energy,
-                     inst_el=inst_el,
-                     inst_az_spin_sector=inst_az_spin_sector,
-                     acquisition_time=acquisition_time_dt64,
-                     acquisition_duration=acquisition_duration,
-                     phase_space_density_rebinned=phase_space_density_rebinned
-                     )
+    return SweL2Data(
+        epoch=epoch,
+        phase_space_density=phase_space_density,
+        flux=flux,
+        energy=energy,
+        inst_el=inst_el,
+        inst_el_label=inst_el_label,
+        inst_az=inst_az,
+        inst_az_label=inst_az_label,
+        inst_az_spin_sector=inst_az_spin_sector,
+        acquisition_time=acquisition_time_dt64,
+        acquisition_duration=acquisition_duration,
+        phase_space_density_rebinned=phase_space_density_rebinned
+    )
 
 
 def read_l1b_swe_data(swe_l1b_data: Path) -> SweL1bData:
