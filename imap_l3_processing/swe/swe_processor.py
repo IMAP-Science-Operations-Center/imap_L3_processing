@@ -47,6 +47,8 @@ from imap_l3_processing.utils import save_data
 
 logger = logging.getLogger(__name__)
 
+UNPHYSICAL_PSD_THRESHOLD: float = 1e-19
+
 
 # Temperature Outlier Flag Algorithm
 def check_temperature_outlier_flag(data: np.ndarray):
@@ -195,6 +197,12 @@ class SweProcessor(Processor):
         ) = self.calculate_pitch_angle_products(dependencies, corrected_energy_bins)
 
         swe_quality_flags |= pitch_angle_flags
+
+        unphysical_psd_per_epoch = np.any(
+            swe_l2_data.phase_space_density_rebinned > UNPHYSICAL_PSD_THRESHOLD,
+            axis=(1, 2),
+        )
+        swe_quality_flags[unphysical_psd_per_epoch] |= np.uint16(SweL3Flags.UNPHYSICAL_PSD)
 
         if dependencies.mag_is_preliminary:
             swe_quality_flags = np.bitwise_or(swe_quality_flags, SweL3Flags.PRELIMINARY_MAG)

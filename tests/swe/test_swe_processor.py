@@ -76,7 +76,11 @@ class TestSweProcessor(unittest.TestCase):
         geometric_fractions = [1e7, 1e6, 1e4, 1e4, 1e3, 1e1, 1e1]
         sum_geometric_fractions = np.sum(geometric_fractions)
 
-        psd_rebinned = np.array([4e-7, 4e-6, 4e-4, 4e-4, 4e-3, 4e-1, 4e-1]) * sum_geometric_fractions
+        physical_psd_value = 1e-25
+        unphysical_psd_value = 1.0
+
+        phase_space_density_rebinned = np.full((7, 3, 7), physical_psd_value)
+        phase_space_density_rebinned[6, 0, 0] = unphysical_psd_value
 
         swe_l2_data = SweL2Data(
             epoch=epochs,
@@ -90,7 +94,7 @@ class TestSweProcessor(unittest.TestCase):
             inst_az_spin_sector=np.arange(21).reshape(7, 3) + 200,
             acquisition_time=np.array([]),
             acquisition_duration=np.array([]),
-            phase_space_density_rebinned=np.broadcast_to(psd_rebinned[np.newaxis, np.newaxis, :], (7, 3, 7))
+            phase_space_density_rebinned=phase_space_density_rebinned
         )
 
         expected_corrected_energy_bins = np.array([
@@ -258,9 +262,22 @@ class TestSweProcessor(unittest.TestCase):
         self.assertEqual(mock_moment_data, swe_l3_data.moment_data)
         self.assertEqual(sentinel.expected_phase_space_density_by_pitch_angle_and_gyrophase,
                          swe_l3_data.phase_space_density_by_pitch_angle_and_gyrophase)
-        np.testing.assert_array_equal(swe_l3_data.raw_psd_by_phi_rebinned, np.full((7, 3), 28))
-        np.testing.assert_array_equal(swe_l3_data.raw_1d_psd_rebinned, np.full((7,), 28))
-        np.testing.assert_allclose(swe_l3_data.raw_psd_by_theta_rebinned, np.broadcast_to(psd_rebinned, (7, 7)))
+        expected_phi_avg_at_unphysical_cell = (
+            unphysical_psd_value * geometric_fractions[0]
+            + physical_psd_value * (sum_geometric_fractions - geometric_fractions[0])
+        ) / sum_geometric_fractions
+
+        expected_psd_by_phi = np.full((7, 3), physical_psd_value)
+        expected_psd_by_phi[6, 0] = expected_phi_avg_at_unphysical_cell
+        np.testing.assert_allclose(swe_l3_data.raw_psd_by_phi_rebinned, expected_psd_by_phi)
+
+        expected_1d_psd = np.full(7, physical_psd_value)
+        expected_1d_psd[6] = (expected_phi_avg_at_unphysical_cell + 2 * physical_psd_value) / 3
+        np.testing.assert_allclose(swe_l3_data.raw_1d_psd_rebinned, expected_1d_psd)
+
+        expected_psd_by_theta = np.full((7, 7), physical_psd_value)
+        expected_psd_by_theta[6, 0] = (unphysical_psd_value + 2 * physical_psd_value) / 3
+        np.testing.assert_allclose(swe_l3_data.raw_psd_by_theta_rebinned, expected_psd_by_theta)
 
         expected_quality_flags = np.array([
             SweL3Flags.FALLBACK_SWAPI_SPEED | SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE | SweL3Flags.POTENTIAL_FIT_UNCONVERGED | SweL3Flags.PRELIMINARY_MAG,
@@ -269,7 +286,7 @@ class TestSweProcessor(unittest.TestCase):
             SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE | SweL3Flags.PRELIMINARY_MAG,
             SweL3Flags.PRELIMINARY_MAG,
             SweL3Flags.PRELIMINARY_MAG,
-            SweL3Flags.PRELIMINARY_MAG,
+            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.UNPHYSICAL_PSD,
         ])
 
         np.testing.assert_array_equal(swe_l3_data.swe_flags, expected_quality_flags)
@@ -540,7 +557,7 @@ class TestSweProcessor(unittest.TestCase):
             acquisition_time=np.linspace(datetime(2025, 3, 6), datetime(2025, 3, 6, 0, 1),
                                          num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
             acquisition_duration=np.full((num_epochs, num_energies, 5), 80000),
-            phase_space_density_rebinned=np.arange(0,392,7).reshape(2, 4, 7)
+            phase_space_density_rebinned=np.zeros((num_epochs, 4, 7))
         )
 
         swe_l1b_data = SweL1bData(
@@ -639,7 +656,7 @@ class TestSweProcessor(unittest.TestCase):
             acquisition_time=np.linspace(datetime(2025, 3, 6), datetime(2025, 3, 6, 0, 1),
                                          num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
             acquisition_duration=np.full((num_epochs, num_energies, 5), 80000),
-            phase_space_density_rebinned=np.arange(0,392, 7).reshape(2, 4, 7)
+            phase_space_density_rebinned=np.zeros((num_epochs, 4, 7))
         )
 
         swe_l1b_data = SweL1bData(
