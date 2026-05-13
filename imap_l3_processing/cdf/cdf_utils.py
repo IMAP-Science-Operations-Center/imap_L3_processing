@@ -8,6 +8,11 @@ from spacepy.pycdf import CDF
 from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_l3_processing.swapi.l3a.models import DataProduct
 
+_CDF_FLOAT_NUMPY_DTYPE = {
+    pycdf.const.CDF_REAL4.value: np.float32,
+    pycdf.const.CDF_REAL8.value: np.float64,
+}
+
 
 def write_cdf(file_path: str, data: DataProduct, attribute_manager: ImapAttributeManager):
     with CDF(file_path, '') as cdf:
@@ -48,6 +53,10 @@ def write_cdf(file_path: str, data: DataProduct, attribute_manager: ImapAttribut
             if data_array.size == 0:
                 data_array = None
             else:
+                target_float_dtype = _CDF_FLOAT_NUMPY_DTYPE.get(data_type.value)
+                if target_float_dtype is not None and np.issubdtype(data_array.dtype, np.floating):
+                    data_array = data_array.astype(target_float_dtype)
+
                 if 'FILLVAL' in variable_attributes:
                     if np.issubdtype(data_array.dtype, np.floating):
                         data_array = np.ma.masked_invalid(data_array)
