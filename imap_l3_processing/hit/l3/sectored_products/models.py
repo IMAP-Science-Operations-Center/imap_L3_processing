@@ -68,6 +68,7 @@ AZIMUTH_VAR_NAME = "azimuth"
 ZENITH_VAR_NAME = "zenith"
 AZIMUTH_LABEL_VAR_NAME = "azimuth_label"
 ZENITH_LABEL_VAR_NAME = "zenith_label"
+HIT_FLAGS_CDF_VAR_NAME = "hit_flags"
 
 
 @dataclass
@@ -127,6 +128,7 @@ class HitPitchAngleDataProduct(DataProduct):
     measurement_gyrophase: np.ndarray
     azimuth: np.ndarray
     zenith: np.ndarray
+    hit_flags: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -212,5 +214,6 @@ class HitPitchAngleDataProduct(DataProduct):
             DataProductVariable(AZIMUTH_VAR_NAME, self.azimuth),
             DataProductVariable(ZENITH_VAR_NAME, self.zenith),
             DataProductVariable(AZIMUTH_LABEL_VAR_NAME, [str(float(azimuth)) for azimuth in self.azimuth]),
-            DataProductVariable(ZENITH_LABEL_VAR_NAME, [str(float(zenith)) for zenith in self.zenith])
+            DataProductVariable(ZENITH_LABEL_VAR_NAME, [str(float(zenith)) for zenith in self.zenith]),
+            DataProductVariable(HIT_FLAGS_CDF_VAR_NAME, self.hit_flags),
         ]

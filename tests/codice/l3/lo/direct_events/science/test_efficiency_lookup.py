@@ -14,7 +14,7 @@ class TestEfficiencyLookup(unittest.TestCase):
         num_energies = 3
 
         rng = np.random.default_rng()
-        expected_efficiency_data = rng.random((num_positions, num_energies))
+        expected_efficiency_data = rng.random((num_energies, num_positions))
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir = Path(tmpdir)
 
@@ -25,18 +25,19 @@ class TestEfficiencyLookup(unittest.TestCase):
                 csv_writer.writerow(["species","product","esa_step"]+[f"position_{i}" for i in range(num_positions)])
                 for i in range(num_energies):
                     csv_writer.writerow([
-                        "hplus","sw",i, *expected_efficiency_data[:, i]
+                        "hplus","sw",i, *expected_efficiency_data[i, :]
                     ])
                 for i in range(num_energies):
                     csv_writer.writerow([
-                        "cplus6","sw",i, *expected_efficiency_data[:, i]*6
+                        "cplus6","sw",i, *expected_efficiency_data[i, :]*6
                     ])
                 for i in range(num_energies):
                     csv_writer.writerow([
-                        "hplus","nsw",i, *expected_efficiency_data[:, i]*42
+                        "hplus","nsw",i, *expected_efficiency_data[i, :]*42
                     ])
 
 
             efficiency_lookup = EfficiencyLookup.read_from_csv(output_csv, "hplus")
 
             np.testing.assert_almost_equal(efficiency_lookup.efficiency_data, expected_efficiency_data)
+            self.assertEqual(efficiency_lookup.efficiency_data.shape, (num_energies, num_positions))

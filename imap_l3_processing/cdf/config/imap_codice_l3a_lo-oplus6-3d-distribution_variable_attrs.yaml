@@ -17,12 +17,12 @@ species_3d_distribution: &species_3d_distribution
   RECORD_VARYING: RV
   SCALETYP: linear
   DEPEND_0: epoch
-  DEPEND_1: elevation
+  DEPEND_1: energy
   DEPEND_2: spin_angle
-  DEPEND_3: energy
-  LABL_PTR_1: elevation_label
+  DEPEND_3: elevation
+  LABL_PTR_1: energy_label
   LABL_PTR_2: spin_angle_label
-  LABL_PTR_3: energy_label
+  LABL_PTR_3: elevation_label
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
 
 epoch:

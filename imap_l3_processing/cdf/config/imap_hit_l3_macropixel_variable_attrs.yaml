@@ -1173,3 +1173,17 @@ zenith_label:
   FIELDNAM: Zenith label
   FORMAT: a20
   FILLVAL: ' '
+hit_flags:
+  NAME: hit_flags
+  DATA_TYPE: CDF_UINT2
+  CATDESC: Quality flags for HIT L3 macropixel
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: Quality Flags for HIT L3 macropixel
+  FORMAT: I5
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 65534
+  FILLVAL: 65535
+  LABLAXIS: Quality flags for HIT L3 macropixel

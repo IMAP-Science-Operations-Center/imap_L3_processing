@@ -297,7 +297,7 @@ class CodiceLoL3aPartialDensityDataProduct(DataProduct):
         ]
 
 
-ACQUISITION_TIME_PER_ESA_STEP_NAME = 'acquisition_time_per_esa_step'
+ACQUISITION_TIME_PER_ESA_STEP_VAR_NAME = 'acquisition_time_per_esa_step'
 EVENT_INDEX_VAR_NAME = "event_index"
 SPIN_ANGLE_DELTA_BIN_VAR_NAME = "spin_angle_bin_delta"
 SPIN_ANGLE_BIN_VAR_NAME = "spin_angle_bin"
@@ -327,6 +327,7 @@ ENERGY_BIN_LABEL_VAR_NAME = "energy_bin_label"
 SPIN_ANGLE_BIN_LABEL_VAR_NAME = "spin_angle_bin_label"
 HALF_SPIN_PER_ESA_STEP_VAR_NAME = "half_spin_per_esa_step"
 RGFO_SPIN_SECTOR_VAR_NAME = "rgfo_spin_sector"
+RGFO_HALF_SPIN_VAR_NAME = "rgfo_half_spin"
 RGFO_ESA_STEP_VAR_NAME = "rgfo_esa_step"
 NSO_HALF_SPIN_NAME = 'nso_half_spin'
 NSO_SPIN_SECTOR_VAR_NAME = "nso_spin_sector"
@@ -341,6 +342,7 @@ TYPE_VAR_NAME = "type"
 class CodiceLoDirectEventData:
     epoch: ndarray
     epoch_delta: ndarray
+    acquisition_time_per_esa_step: ndarray
     apd_energy: np.ndarray
     apd_id: np.ndarray
     data_quality: np.ndarray
@@ -352,12 +354,19 @@ class CodiceLoDirectEventData:
     mass: np.ndarray
     multi_flag: np.ndarray
     normalization: ndarray
+    normalization_per_event: ndarray
     num_events: np.ndarray
     position: np.ndarray
     spin_angle: np.ndarray
+    spin_angle_bin_delta: np.ndarray
+    spin_angle_bin: np.ndarray
+    spin_sector: np.ndarray
+    half_spin_per_esa_step: np.ndarray
+    rgfo_half_spin: np.ndarray
+    rgfo_spin_sector: np.ndarray
+    rgfo_esa_step: np.ndarray
     tof: np.ndarray
     type: np.ndarray
-
 
     @classmethod
     def read_from_cdf(cls, cdf_path: Path | str):
@@ -365,6 +374,7 @@ class CodiceLoDirectEventData:
             return cls(
                 epoch=cdf[EPOCH_VAR_NAME][...],
                 epoch_delta=cdf[EPOCH_DELTA_VAR_NAME][...],
+                acquisition_time_per_esa_step=read_numeric_variable(cdf[ACQUISITION_TIME_PER_ESA_STEP_VAR_NAME]),
                 apd_energy=read_numeric_variable(cdf[APD_ENERGY_VAR_NAME]),
                 apd_id=read_variable_and_mask_fill_values(cdf[APD_ID_VAR_NAME]),
                 data_quality=cdf[DATA_QUALITY_VAR_NAME][...],
@@ -376,9 +386,17 @@ class CodiceLoDirectEventData:
                 mass_per_charge=read_numeric_variable(cdf[MASS_PER_CHARGE_VAR_NAME]),
                 multi_flag=read_variable_and_mask_fill_values(cdf[MULTI_FLAG_VAR_NAME]),
                 normalization=read_numeric_variable(cdf[NORMALIZATION_VAR_NAME]),
+                normalization_per_event=read_numeric_variable(cdf[NORMALIZATION_PER_EVENT_VAR_NAME]),
                 num_events=read_variable_and_mask_fill_values(cdf[NUM_EVENTS_VAR_NAME]),
                 position=read_variable_and_mask_fill_values(cdf[POSITION_VAR_NAME]),
                 spin_angle=read_numeric_variable(cdf[SPIN_ANGLE_VAR_NAME]),
+                spin_angle_bin=read_numeric_variable(cdf[SPIN_ANGLE_BIN_VAR_NAME]),
+                spin_angle_bin_delta=read_numeric_variable(cdf[SPIN_ANGLE_DELTA_BIN_VAR_NAME]),
+                spin_sector=read_variable_and_mask_fill_values(cdf[SPIN_SECTOR_VAR_NAME]),
+                half_spin_per_esa_step=read_variable_and_mask_fill_values(cdf[HALF_SPIN_PER_ESA_STEP_VAR_NAME]),
+                rgfo_half_spin=read_variable_and_mask_fill_values(cdf[RGFO_HALF_SPIN_VAR_NAME]),
+                rgfo_spin_sector=read_variable_and_mask_fill_values(cdf[RGFO_SPIN_SECTOR_VAR_NAME]),
+                rgfo_esa_step=read_variable_and_mask_fill_values(cdf[RGFO_ESA_STEP_VAR_NAME]),
                 tof=read_variable_and_mask_fill_values(cdf[TOF_VAR_NAME]),
                 type=read_variable_and_mask_fill_values(cdf[TYPE_VAR_NAME]),
             )
@@ -390,18 +408,12 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
     energy_bin: np.ndarray
     energy_bin_delta_plus: np.ndarray
     energy_bin_delta_minus: np.ndarray
-    spin_angle_bin_delta: np.ndarray
-    spin_angle_bin: np.ndarray
     priority_index: np.ndarray = field(init=False)
     event_index: np.ndarray = field(init=False)
     priority_index_label: np.ndarray = field(init=False)
     event_index_label: np.ndarray = field(init=False)
     energy_bin_label: np.ndarray = field(init=False)
     spin_angle_bin_label: np.ndarray = field(init=False)
-    half_spin_per_esa_step: np.ndarray
-    rgfo_half_spin: np.ndarray
-    rgfo_spin_sector: np.ndarray
-    rgfo_esa_step: np.ndarray
     nso_half_spin: np.ndarray
     nso_spin_sector: np.ndarray
     nso_esa_step: np.ndarray
@@ -421,7 +433,7 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
         return [
             DataProductVariable(EPOCH_VAR_NAME, self.epoch),
             DataProductVariable(EPOCH_DELTA_VAR_NAME, self.epoch_delta),
-            DataProductVariable(ACQUISITION_TIME_PER_ESA_STEP_NAME, self.acquisition_time_per_esa_step),
+            DataProductVariable(ACQUISITION_TIME_PER_ESA_STEP_VAR_NAME, self.acquisition_time_per_esa_step),
             DataProductVariable(APD_ENERGY_VAR_NAME, self.apd_energy),
             DataProductVariable(APD_ID_VAR_NAME, self.apd_id),
             DataProductVariable(DATA_QUALITY_VAR_NAME, self.data_quality),

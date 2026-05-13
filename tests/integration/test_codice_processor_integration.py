@@ -125,9 +125,7 @@ class CodiceProcessorIntegration(unittest.TestCase):
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_codice_lo_3d_distributions(self, mock_parse_cli_arguments):
         input_files = [
-            CODICE_TEST_DATA_DIR / "imap_codice_l3a_lo-direct-events_20260307_v001.cdf",
-            CODICE_TEST_DATA_DIR / "imap_codice_l1a_lo-nsw-priority_20260307_v004.cdf",
-            CODICE_TEST_DATA_DIR / "imap_codice_l1a_lo-sw-priority_20260307_v004.cdf",
+            CODICE_TEST_DATA_DIR / "imap_codice_l3a_lo-direct-events_20260504_v003.cdf",
             CODICE_TEST_DATA_DIR / "imap_codice_lo-energy-per-charge_20241110_v002.csv",
             CODICE_TEST_DATA_DIR / "imap_codice_l2-lo-efficiency_20251008_v003.csv",
             CODICE_TEST_DATA_DIR / "imap_codice_l2-lo-gfactor_20251212_v003.csv",
@@ -146,17 +144,17 @@ class CodiceProcessorIntegration(unittest.TestCase):
                     mock_arguments.instrument = "codice"
                     mock_arguments.data_level = "l3a"
                     mock_arguments.descriptor = descriptor
-                    mock_arguments.start_date = "20260307"
+                    mock_arguments.start_date = "20260504"
                     mock_arguments.end_date = None
                     mock_arguments.repointing = None
-                    mock_arguments.version = "v001"
+                    mock_arguments.version = "v003"
                     mock_arguments.dependency = dependency_json
                     mock_arguments.upload_to_sdc = False
                     mock_parse_cli_arguments.return_value = mock_arguments
                     imap_l3_data_processor.imap_l3_processor()
 
                     expected_output_path = ScienceFilePath(
-                        f"imap_codice_l3a_{descriptor}_20260307_v001.cdf"
+                        f"imap_codice_l3a_{descriptor}_20260504_v003.cdf"
                     ).construct_path()
                     self.assertTrue(expected_output_path.exists())
 
