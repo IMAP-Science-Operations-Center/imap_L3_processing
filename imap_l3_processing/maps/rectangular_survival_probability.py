@@ -72,7 +72,7 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
 
         if sensor == Sensor.Hi90 or sensor == Sensor.Hi45:
             initial_dataset.attrs['Logical_source'] = 'imap_hi'
-        elif sensor in (Sensor.Lo90, Sensor.Lo):
+        elif sensor in (Sensor.Lo75, Sensor.Lo90, Sensor.Lo105, Sensor.Lo):
             initial_dataset.attrs['Logical_source'] = 'imap_lo'
         dataset = add_spacecraft_velocity_to_pset(initial_dataset)
 

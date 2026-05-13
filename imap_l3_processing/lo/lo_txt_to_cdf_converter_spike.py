@@ -1,4 +1,5 @@
 import dataclasses
+import logging
 import shutil
 from datetime import datetime
 from typing import Self
@@ -135,6 +136,8 @@ def filter_glows_data_for_lo_inputs(glows_input_dir: Path, repoints: list[int]) 
     return filtered_glows_data
 
 if __name__ == "__main__":
+    logging.basicConfig(force=True, level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
     output_data_path = get_run_local_data_path("lo_txt_pipeline")
     # shutil.rmtree(output_data_path, ignore_errors=True)
     imap_data_access.config["DATA_DIR"] = output_data_path

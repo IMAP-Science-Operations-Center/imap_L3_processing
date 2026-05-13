@@ -8,7 +8,9 @@ from typing import Optional
 class Sensor(enum.Enum):
     Hi45 = "Hi45"
     Hi90 = "Hi90"
+    Lo75 = "Lo75"
     Lo90 = "Lo90"
+    Lo105 = "Lo105"
     Lo = "Lo"
     HiCombined = "HiCombined"
     Ultra45 = "Ultra45"
@@ -19,7 +21,9 @@ class Sensor(enum.Enum):
     def get_sensor_angle(sensor_name):
         sensor_angles = {Sensor.Hi45: -45,
                          Sensor.Hi90: 0,
+                         Sensor.Lo75: 15,
                          Sensor.Lo90: 0,
+                         Sensor.Lo105: -15,
                          Sensor.Lo: 0,
                          Sensor.Ultra45: -45,
                          Sensor.Ultra90: 0}
@@ -76,7 +80,9 @@ sensor_mapping = [
     ("hic", Sensor.HiCombined),
     ("h45", Sensor.Hi45),
     ("h90", Sensor.Hi90),
+    ("l075", Sensor.Lo75),
     ("l090", Sensor.Lo90),
+    ("l105", Sensor.Lo105),
     ("ilo", Sensor.Lo),
     ("ulc", Sensor.UltraCombined),
     ("u45", Sensor.Ultra45),
@@ -118,7 +124,7 @@ grid_size_mapping = [
 
 def parse_map_descriptor(descriptor: str) -> Optional[MapDescriptorParts]:
     descriptor_regex = """
-        (?P<sensor>hic|h45|h90|l090|ulc|u45|u90|ilo)-
+        (?P<sensor>hic|h45|h90|l090|l105|l075|ulc|u45|u90|ilo)-
         (?P<quantity>ena|spxnbs|spx|isn)(?P<spectral_index_range>[0-9]{4})?(?P<quantity_suffix>[a-zA-Z]*)-
         (?P<species>h|o)-
         (?P<frame>sf|hf|hk)-
