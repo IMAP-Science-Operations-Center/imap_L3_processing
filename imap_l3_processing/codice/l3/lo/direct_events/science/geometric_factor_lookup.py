@@ -1,11 +1,13 @@
 from dataclasses import dataclass, field
+from datetime import datetime, date
 from pathlib import Path
 from typing import TypeVar
 
 import numpy as np
 import pandas as pd
 
-from imap_l3_processing.codice.l3.lo.constants import CODICE_LO_NUM_SPIN_SECTORS, CODICE_LO_NUM_ESA_STEPS
+from imap_l3_processing.codice.l3.lo.constants import CODICE_LO_NUM_SPIN_SECTORS, CODICE_LO_NUM_ESA_STEPS, \
+    CODICE_LO_NUM_AZIMUTH_BINS, CODICE_SECOND_ERA, CODICE_THIRD_ERA
 
 
 def _half_spin_to_esa_step_lookup():
@@ -41,13 +43,34 @@ class GeometricFactorLookup:
                               rgfo_spin_sector: np.ma.masked_array,
                               rgfo_esa_step: np.ma.masked_array,
                               half_spin: np.ma.masked_array,
+                              epoch: date,
                               ) -> np.ndarray:
-        use_reduced = self._is_past_rgfo(rgfo_half_spin, rgfo_spin_sector, rgfo_esa_step, half_spin)
+
+        full_shape = (rgfo_half_spin.shape[0], CODICE_LO_NUM_ESA_STEPS, CODICE_LO_NUM_SPIN_SECTORS, CODICE_LO_NUM_AZIMUTH_BINS)
+        reduced_factor_full_shape = np.broadcast_to(self._reduced_factor[None, :, None, :], full_shape)
+        full_factor_full_shape = np.broadcast_to(self._full_factor[None, :, None, :], full_shape)
+
+        if epoch < CODICE_SECOND_ERA:
+            use_reduced = self._rgfo_half_spin_compare_only(rgfo_half_spin, half_spin)
+        elif epoch < CODICE_THIRD_ERA:
+            use_reduced = False
+        else:
+            use_reduced = self._is_past_rgfo(rgfo_half_spin, rgfo_spin_sector, rgfo_esa_step, half_spin)
         return np.where(
             use_reduced,
-            self._reduced_factor[np.newaxis, :, np.newaxis, :],
-            self._full_factor[np.newaxis, :, np.newaxis, :],
+            reduced_factor_full_shape,
+            full_factor_full_shape,
         )
+
+    @staticmethod
+    def _rgfo_half_spin_compare_only(
+                                        rgfo_half_spin: np.ma.masked_array,
+                                        half_spin: np.ma.masked_array
+                                     ):
+        rgfo_half_spin_full_shape = rgfo_half_spin[:, None, None, None]
+        half_spin_full_shape = half_spin[:, :, None, None]
+        return half_spin_full_shape > rgfo_half_spin_full_shape
+
 
     @staticmethod
     def _is_past_rgfo(rgfo_half_spin: np.ma.masked_array,

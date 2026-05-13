@@ -1,3 +1,4 @@
+from datetime import date
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -34,7 +35,92 @@ class TestGeometricFactorLookup(TestCase):
     @patch("imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_lookup.CODICE_LO_NUM_ESA_STEPS", 3)
     @patch("imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_lookup.CODICE_LO_NUM_SPIN_SECTORS",
            3)
-    def test_get_geometric_factors_gets_reduced_where_half_spin_greater_than_rgfo_half_spin(self):
+    @patch("imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_lookup.CODICE_LO_NUM_AZIMUTH_BINS",
+           2)
+    def test_get_geometric_factors_gets_reduced_where_half_spin_greater_than_rgfo_half_spin_first_era(self):
+        rgfo_half_spin_threshold = 5
+        below_half_spin_threshold = 3
+        above_half_spin_threshold = 7
+        rgfo_half_spin = np.ma.masked_array(data=np.array([rgfo_half_spin_threshold, rgfo_half_spin_threshold]))
+        half_spin = np.ma.masked_array(data=np.array([
+            [below_half_spin_threshold, above_half_spin_threshold, rgfo_half_spin_threshold],
+            [above_half_spin_threshold, below_half_spin_threshold, above_half_spin_threshold],
+        ]))
+        full_factors = np.array([[10, 20], [30, 40], [50, 60]])
+        reduced_factors = np.array([[1, 2], [3, 4], [5, 6]])
+        geometric_factor_lookup = GeometricFactorLookup(
+            _full_factor=full_factors,
+            _reduced_factor=reduced_factors,
+        )
+        actual = geometric_factor_lookup.get_geometric_factors(
+            rgfo_half_spin=rgfo_half_spin,
+            rgfo_spin_sector=np.zeros(2),
+            rgfo_esa_step=np.zeros(2),
+            half_spin=half_spin,
+            epoch=date(2025,11, 23),
+        )
+        all_spin_sectors_and_positions = (3, 2)
+
+        epoch_esa_step_index_pairs_and_expected_factors = [
+            (0, 0, full_factors),
+            (0, 1, reduced_factors),
+            (0, 2, full_factors),
+            (1, 0, reduced_factors),
+            (1, 1, full_factors),
+            (1, 2, reduced_factors),
+        ]
+        for epoch, esa_step, expected_factors in epoch_esa_step_index_pairs_and_expected_factors:
+            np.testing.assert_array_equal(
+                actual[epoch, esa_step, :, :],
+                np.broadcast_to(expected_factors[esa_step], all_spin_sectors_and_positions),
+                f"Mismatch at epoch:{epoch}, esa:{esa_step}"
+            )
+
+    @patch("imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_lookup.CODICE_LO_NUM_ESA_STEPS", 3)
+    @patch("imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_lookup.CODICE_LO_NUM_SPIN_SECTORS",
+           3)
+    @patch("imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_lookup.CODICE_LO_NUM_AZIMUTH_BINS",
+           2)
+    def test_get_geometric_factors_gets_all_full_geometric_factors_for_second_era(self):
+        rgfo_half_spin_threshold = 5
+        below_half_spin_threshold = 3
+        above_half_spin_threshold = 7
+        rgfo_half_spin = np.ma.masked_array(data=np.array([rgfo_half_spin_threshold, rgfo_half_spin_threshold]))
+        half_spin = np.ma.masked_array(data=np.array([
+            [below_half_spin_threshold, above_half_spin_threshold, rgfo_half_spin_threshold],
+            [above_half_spin_threshold, below_half_spin_threshold, above_half_spin_threshold],
+        ]))
+        full_factors = np.array([[10, 20], [30, 40], [50, 60]])
+        reduced_factors = np.array([[1, 2], [3, 4], [5, 6]])
+
+        geometric_factor_lookup = GeometricFactorLookup(
+            _full_factor=full_factors,
+            _reduced_factor=reduced_factors,
+        )
+        actual_start_second_era = geometric_factor_lookup.get_geometric_factors(
+            rgfo_half_spin=rgfo_half_spin,
+            rgfo_spin_sector=np.zeros(2),
+            rgfo_esa_step=np.zeros(2),
+            half_spin=half_spin,
+            epoch=date(2025,11, 24),
+        )
+        actual_end_second_era = geometric_factor_lookup.get_geometric_factors(
+            rgfo_half_spin=rgfo_half_spin,
+            rgfo_spin_sector=np.zeros(2),
+            rgfo_esa_step=np.zeros(2),
+            half_spin=half_spin,
+            epoch=date(2026,1, 28),
+        )
+        expected = np.broadcast_to(full_factors[None, :, None, :], (2,3,3,2))
+        np.testing.assert_array_equal(actual_start_second_era, expected)
+        np.testing.assert_array_equal(actual_end_second_era, expected)
+
+    @patch("imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_lookup.CODICE_LO_NUM_ESA_STEPS", 3)
+    @patch("imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_lookup.CODICE_LO_NUM_SPIN_SECTORS",
+           3)
+    @patch("imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_lookup.CODICE_LO_NUM_AZIMUTH_BINS",
+           2)
+    def test_get_geometric_factors_gets_reduced_where_half_spin_greater_than_rgfo_half_spin_third_era(self):
         rgfo_half_spin_threshold = 5
         below_half_spin_threshold = 3
         above_half_spin_threshold = 7
@@ -54,6 +140,7 @@ class TestGeometricFactorLookup(TestCase):
             rgfo_spin_sector=np.zeros(2),
             rgfo_esa_step=np.zeros(2),
             half_spin=half_spin,
+            epoch=date(2026,1,29),
         )
         all_spin_sectors_and_positions = (3, 2)
 
@@ -73,7 +160,9 @@ class TestGeometricFactorLookup(TestCase):
     @patch("imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_lookup.CODICE_LO_NUM_ESA_STEPS", 3)
     @patch("imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_lookup.CODICE_LO_NUM_SPIN_SECTORS",
            24)
-    def test_get_geometric_factors_gets_reduced_where_equal_half_spin_greater_spin_sector(self):
+    @patch("imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_lookup.CODICE_LO_NUM_AZIMUTH_BINS",
+           2)
+    def test_get_geometric_factors_gets_reduced_where_equal_half_spin_greater_spin_sector_third_era(self):
         rgfo_half_spin = np.ma.masked_array(data=np.array([2, 2]))
         half_spin = np.ma.masked_array(data=np.array([
             [2, 2, 2],
@@ -93,6 +182,7 @@ class TestGeometricFactorLookup(TestCase):
             rgfo_spin_sector=rgfo_spin_sector,
             rgfo_esa_step=rgfo_esa_step,
             half_spin=half_spin,
+            epoch=date(2026,1, 29),
         )
 
         sector_mod_12 = np.arange(24) % 12
@@ -108,7 +198,9 @@ class TestGeometricFactorLookup(TestCase):
     @patch("imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_lookup.CODICE_LO_NUM_ESA_STEPS", 3)
     @patch("imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_lookup.CODICE_LO_NUM_SPIN_SECTORS",
            3)
-    def test_get_geometric_factors_gets_reduced_where_equal_half_spin_equal_spin_sector_greater_esa_step(self):
+    @patch("imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_lookup.CODICE_LO_NUM_AZIMUTH_BINS",
+           2)
+    def test_get_geometric_factors_gets_reduced_where_equal_half_spin_equal_spin_sector_greater_esa_step_third_era(self):
         rgfo_half_spin = np.ma.masked_array(data=np.array([2, 2]))
 
         half_spin = np.ma.masked_array(data=np.array([
@@ -129,6 +221,7 @@ class TestGeometricFactorLookup(TestCase):
             rgfo_spin_sector=rgfo_spin_sector,
             rgfo_esa_step=rgfo_esa_step,
             half_spin=half_spin,
+            epoch=date(2026,1, 29),
         )
 
         epoch_esa_step_index_and_expected_factors = [
