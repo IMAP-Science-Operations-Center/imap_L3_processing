@@ -3,11 +3,12 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import numpy as np
+from imap_data_access import AncillaryFilePath
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3a.models import GlowsL2Data, GlowsL2LightCurve, GlowsLatLon, GlowsL3LightCurve, XYZ, \
     GlowsL2Header
-from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.models import InputMetadata, Instrument
 
 
 def read_l2_glows_data(cdf: CDF) -> GlowsL2Data:
@@ -38,6 +39,15 @@ def read_l2_glows_data(cdf: CDF) -> GlowsL2Data:
                                       y=cdf['spacecraft_velocity_std_dev'][0, 1],
                                       z=cdf['spacecraft_velocity_std_dev'][0, 2], )
 
+    ancillary_files = []
+    for file in list(cdf.attrs["Parents"][...]):
+        try:
+            ancillary_file = AncillaryFilePath(file)
+            if ancillary_file.instrument == Instrument.GLOWS.value:
+                ancillary_files.append(file)
+        except AncillaryFilePath.InvalidImapFileError:
+            pass
+
     return GlowsL2Data(identifier=cdf['identifier'][0],
                        start_time=cdf['start_time'][0],
                        end_time=cdf['end_time'][0],
@@ -64,7 +74,7 @@ def read_l2_glows_data(cdf: CDF) -> GlowsL2Data:
                        header=GlowsL2Header(
                            flight_software_version=cdf.attrs["flight_software_version"][0],
                            pkts_file_name=cdf.attrs["pkts_file_name"][0],
-                           ancillary_data_files=cdf.attrs["ancillary_data_files"][...],
+                           ancillary_data_files=ancillary_files,
                        ),
                        l2_file_name=Path(cdf.pathname.decode('utf-8')).name
                        )
