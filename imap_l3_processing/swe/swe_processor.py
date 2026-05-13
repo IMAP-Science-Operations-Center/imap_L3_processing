@@ -198,9 +198,10 @@ class SweProcessor(Processor):
 
         swe_quality_flags |= pitch_angle_flags
 
+        psd_rebinned = swe_l2_data.phase_space_density_rebinned
         unphysical_psd_per_epoch = np.any(
-            swe_l2_data.phase_space_density_rebinned > UNPHYSICAL_PSD_THRESHOLD,
-            axis=(1, 2),
+            psd_rebinned > UNPHYSICAL_PSD_THRESHOLD,
+            axis=tuple(range(1, psd_rebinned.ndim)),
         )
         swe_quality_flags[unphysical_psd_per_epoch] |= np.uint16(SweL3Flags.UNPHYSICAL_PSD)
 
