@@ -65,10 +65,10 @@ class LoProcessingInput:
             data_vars={
                 "ena_intensity": (map_data_coords, loaded_data["flux"]),
                 "ena_intensity_stat_uncert": (map_data_coords, np.sqrt(loaded_data["fvar"])),
-                "ena_intensity_sys_err": (map_data_coords, np.sqrt(loaded_data["fvar"])),
+                "ena_intensity_sys_err": (map_data_coords, loaded_data["fser"]),
                 "bg_intensity": (map_data_coords, loaded_data["bflux"]),
                 "bg_intensity_stat_uncert": (map_data_coords, np.sqrt(loaded_data["bfvar"])),
-                "bg_intensity_sys_err": (map_data_coords, np.sqrt(loaded_data["bfvar"])),
+                "bg_intensity_sys_err": (map_data_coords, np.full((1, 7, 60, 30), np.nan)),
                 "exposure_factor": (map_data_coords, loaded_data["expo"]),
                 "obs_date": (map_data_coords, np.full((1, 7, 60, 30), FILLVAL_INT64)),
                 "obs_date_range": (map_data_coords, np.full((1, 7, 60, 30), np.nan)),
@@ -83,6 +83,19 @@ class LoProcessingInput:
                 "latitude": latitude,
             },
         )
+
+        variables_to_mask = [
+            "ena_intensity",
+            "ena_intensity_stat_uncert",
+            "ena_intensity_sys_err",
+            "bg_intensity",
+            "bg_intensity_stat_uncert",
+            "bg_intensity_sys_err",
+        ]
+
+        mask = l2_dataset["exposure_factor"] != 0.0
+        for var in variables_to_mask:
+            l2_dataset[var] = l2_dataset[var].where(mask, np.nan)
 
         skymap = RectangularSkyMap(6, SpiceFrame.ECLIPJ2000)
         skymap.max_epoch = int(end_date_nanoseconds)
@@ -195,7 +208,7 @@ if __name__ == "__main__":
     for pivot in (90, 105, 75):
         l2_nbs_descriptor = f"l{pivot:03d}-enanbs-h-sf-nsp-ram-hae-6deg-1yr"
 
-        csv_maps_path = cg_corrected_input_path / "outdir" / f"pivot_{pivot}" / "maps"
+        csv_maps_path = ram_nbs_input_path / "outdir" / f"pivot_{pivot}" / "maps"
         lo_txt_input = LoProcessingInput.read_from_txt_data(csv_maps_path, l2_nbs_descriptor)
 
         spx_nbs_descriptor = l2_nbs_descriptor.replace("-enanbs-", "-spxnbs-")

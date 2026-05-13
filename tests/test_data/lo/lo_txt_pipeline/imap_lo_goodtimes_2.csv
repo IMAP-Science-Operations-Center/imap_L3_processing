@@ -1,4 +1,3 @@
-YYYYDDD,GoodTime_start,GoodTime_end,bin_start,bin_end,Instrument,E-Step1,E-Step2,E-Step3,E-Step4,E-Step5,E-Step6,E-Step7,Comment
 2025312,500307336,500378867,0,59,Lo,1,1,1,1,1,1,1,# auto goodtimes bg_rate_nom = 0.007000
 2025313,500379286,500465208,0,59,Lo,1,1,1,1,1,1,1,# auto goodtimes bg_rate_nom = 0.007000
 2025314,500465628,500480868,0,59,Lo,1,1,1,1,1,1,1,# auto goodtimes bg_rate_nom = 0.007000
