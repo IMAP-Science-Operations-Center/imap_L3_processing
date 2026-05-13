@@ -62,7 +62,7 @@ def read_l2_glows_data(cdf: CDF) -> GlowsL2Data:
                        spacecraft_velocity_average=spacecraft_velocity_average,
                        spacecraft_velocity_std_dev=spacecraft_velocity_std_dev,
                        header=GlowsL2Header(
-                           flight_software_version=cdf.attrs["flight_software_version"][0],
+                           flight_software_version=str(cdf.attrs["flight_software_version"][0]),
                            pkts_file_name=cdf.attrs["pkts_file_name"][0],
                            ancillary_data_files=cdf.attrs["ancillary_data_files"][...],
                        ),
@@ -91,8 +91,8 @@ def create_glows_l3a_from_dictionary(data: dict, input_metadata: InputMetadata) 
         photon_flux_uncertainty=np.array(data["daily_lightcurve"]["flux_uncertainties"]).reshape(1, -1),
         raw_histogram=np.array(data["daily_lightcurve"]["raw_histogram"]).reshape(1, -1),
         exposure_times=np.array(data["daily_lightcurve"]["exposure_times"]).reshape(1, -1),
-        spin_angle=np.array(data["daily_lightcurve"]["spin_angle"]).reshape(1, -1)[0, ...],
-        spin_angle_delta=np.array(data["daily_lightcurve"]["spin_angle_delta"]).reshape(1, -1)[0, ...],
+        spin_angle=np.array(data["daily_lightcurve"]["spin_angle"]).reshape(1, -1),
+        spin_angle_delta=np.array(data["daily_lightcurve"]["spin_angle_delta"]).reshape(1, -1),
         latitude=np.array(data["daily_lightcurve"]["ecliptic_lat"]).reshape(1, -1),
         longitude=np.array(data["daily_lightcurve"]["ecliptic_lon"]).reshape(1, -1),
         extra_heliospheric_background=np.array(data["daily_lightcurve"]["extra_heliospheric_bckgrd"]).reshape(1, -1),
@@ -136,7 +136,7 @@ def create_glows_l3a_dictionary_from_cdf(cdf_file_path: Path) -> dict:
             'flux_uncertainties': cdf['photon_flux_uncertainty'][0],
             'extra_heliospheric_bckgrd': cdf['extra_heliospheric_bckgrd'][0],
             'time_dependent_bckgrd': cdf['time_dependent_bckgrd'][0],
-            'spin_angle': cdf['spin_angle'][...],
+            'spin_angle': cdf['spin_angle'][0],
             'raw_histogram': cdf['raw_histogram'][0],
             'number_of_bins': cdf['number_of_bins'][...]
         },

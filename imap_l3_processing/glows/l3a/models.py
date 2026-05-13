@@ -55,7 +55,7 @@ class GlowsL2LightCurve(TypedDict):
 
 
 class GlowsL2Header(TypedDict):
-    flight_software_version: int
+    flight_software_version: str
     pkts_file_name: str
     ancillary_data_files: list[str]
 

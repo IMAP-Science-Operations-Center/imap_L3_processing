@@ -26,10 +26,11 @@ energy_grid:
   FIELDNAM: Energy
   FORMAT: g9.3
   LABLAXIS: energy
-  UNITS: kEV
+  UNITS: keV
   VALIDMIN: 0
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
+  SCALETYP: log
 spin_angle:
   NAME: spin_angle
   DATA_TYPE: CDF_FLOAT
@@ -56,17 +57,19 @@ surv_prob:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Probability Of Survival
   FORMAT: g9.3
-  LABLAXIS: probability of survival
+  LABLAXIS: Probability of survival
   UNITS: ' '
   VALIDMIN: 0
   VALIDMAX: 1
   FILLVAL: -1.0000E+31
   LABL_PTR_1: energy_label
   LABL_PTR_2: spin_angle_label
+  SCALETYP: linear
 spin_axis_latitude:
   NAME: spin_axis_latitude
   DATA_TYPE: CDF_FLOAT
   CATDESC: Latitude of spin axis
+  DEPEND_0: epoch
   VAR_TYPE: metadata
   RECORD_VARYING: RV
   FIELDNAM: Spin Axis Latitude
@@ -77,6 +80,7 @@ spin_axis_longitude:
   NAME: spin_axis_longitude
   DATA_TYPE: CDF_FLOAT
   CATDESC: Longitude of spin axis
+  DEPEND_0: epoch
   VAR_TYPE: metadata
   RECORD_VARYING: RV
   FIELDNAM: Spin Axis Longitude
@@ -104,20 +108,6 @@ spin_angle_label:
   FILLVAL: ' '
   UNITS: ' '
   RECORD_VARYING: NRV
-elongation:
-  NAME: elongation
-  DATA_TYPE: CDF_UINT2
-  CATDESC: Position of Lo instrument
-  VAR_TYPE: support_data
-  FIELDNAM: Elongation
-  LABLAXIS: Elongation
-  DEPEND_0: epoch
-  FORMAT: I3
-  UNITS: degree
-  FILLVAL: 65535
-  VALIDMAX: 105
-  VALIDMIN: 75
-  RECORD_VARYING: RV
 program_version:
   NAME: program_version
   DATA_TYPE: CDF_CHAR
@@ -132,6 +122,7 @@ spacecraft_radius:
   NAME: spacecraft_radius
   DATA_TYPE: CDF_FLOAT
   CATDESC: Distance from IMAP to sun
+  DEPEND_0: epoch
   VAR_TYPE: metadata
   FIELDNAM: Spacecraft Radius
   RECORD_VARYING: RV
@@ -142,6 +133,7 @@ spacecraft_latitude:
   NAME: spacecraft_latitude
   DATA_TYPE: CDF_FLOAT
   CATDESC: IMAP spacecraft latitude
+  DEPEND_0: epoch
   VAR_TYPE: metadata
   FIELDNAM: Spacecraft Latitude
   RECORD_VARYING: RV
@@ -154,6 +146,7 @@ spacecraft_longitude:
   NAME: spacecraft_longitude
   DATA_TYPE: CDF_FLOAT
   CATDESC: IMAP spacecraft longitude
+  DEPEND_0: epoch
   VAR_TYPE: metadata
   FIELDNAM: Spacecraft Longitude
   RECORD_VARYING: RV
@@ -166,6 +159,7 @@ spacecraft_velocity_x:
   NAME: spacecraft_velocity_x
   DATA_TYPE: CDF_FLOAT
   CATDESC: IMAP spacecraft x velocity
+  DEPEND_0: epoch
   VAR_TYPE: metadata
   FIELDNAM: Spacecraft Velocity X
   RECORD_VARYING: RV
@@ -178,6 +172,7 @@ spacecraft_velocity_y:
   NAME: spacecraft_velocity_y
   DATA_TYPE: CDF_FLOAT
   CATDESC: IMAP spacecraft y velocity
+  DEPEND_0: epoch
   VAR_TYPE: metadata
   FIELDNAM: Spacecraft Velocity Y
   RECORD_VARYING: RV
@@ -190,6 +185,7 @@ spacecraft_velocity_z:
   NAME: spacecraft_velocity_z
   DATA_TYPE: CDF_FLOAT
   CATDESC: IMAP spacecraft z velocity
+  DEPEND_0: epoch
   VAR_TYPE: metadata
   FIELDNAM: Spacecraft Velocity Z
   RECORD_VARYING: RV
@@ -198,3 +194,17 @@ spacecraft_velocity_z:
   UNITS: km/s
   VALIDMIN: -50
   VALIDMAX: 50
+elongation:
+  NAME: elongation
+  DATA_TYPE: CDF_UINT2
+  CATDESC: Position of Lo instrument
+  VAR_TYPE: support_data
+  FIELDNAM: Elongation
+  LABLAXIS: Elongation
+  DEPEND_0: epoch
+  FORMAT: I3
+  UNITS: degree
+  FILLVAL: 65535
+  VALIDMAX: 105
+  VALIDMIN: 75
+  RECORD_VARYING: RV

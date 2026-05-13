@@ -11,11 +11,11 @@ epoch:
   VALIDMIN: 1990-01-01T00:00:00.000000000
   VALIDMAX: 2099-12-31T00:00:00.000000000
   FILLVAL: 9999-12-31T23:59:59.999999999
-  SCALETYP: linear
   TIME_BASE: J2000
   TIME_SCALE: TT
   MONOTON: INCREASE
   REFERENCE_POSITION: Rotating Earth Geoid
+  SCALETYP: linear
   SI_CONVERSION: 1e-9>seconds
 energy_grid:
   NAME: energy_grid
@@ -70,6 +70,7 @@ spin_axis_latitude:
   NAME: spin_axis_latitude
   DATA_TYPE: CDF_FLOAT
   CATDESC: Latitude of spin axis
+  DEPEND_0: epoch
   VAR_TYPE: metadata
   RECORD_VARYING: RV
   FIELDNAM: Spin Axis Latitude
@@ -80,6 +81,7 @@ spin_axis_longitude:
   NAME: spin_axis_longitude
   DATA_TYPE: CDF_FLOAT
   CATDESC: Longitude of spin axis
+  DEPEND_0: epoch
   VAR_TYPE: metadata
   RECORD_VARYING: RV
   FIELDNAM: Spin Axis Longitude
@@ -120,6 +122,7 @@ spacecraft_radius:
   NAME: spacecraft_radius
   DATA_TYPE: CDF_FLOAT
   CATDESC: Distance from IMAP to sun
+  DEPEND_0: epoch
   VAR_TYPE: metadata
   FIELDNAM: Spacecraft Radius
   RECORD_VARYING: RV
@@ -130,6 +133,7 @@ spacecraft_latitude:
   NAME: spacecraft_latitude
   DATA_TYPE: CDF_FLOAT
   CATDESC: IMAP spacecraft latitude
+  DEPEND_0: epoch
   VAR_TYPE: metadata
   FIELDNAM: Spacecraft Latitude
   RECORD_VARYING: RV
@@ -142,6 +146,7 @@ spacecraft_longitude:
   NAME: spacecraft_longitude
   DATA_TYPE: CDF_FLOAT
   CATDESC: IMAP spacecraft longitude
+  DEPEND_0: epoch
   VAR_TYPE: metadata
   FIELDNAM: Spacecraft Longitude
   RECORD_VARYING: RV
@@ -154,6 +159,7 @@ spacecraft_velocity_x:
   NAME: spacecraft_velocity_x
   DATA_TYPE: CDF_FLOAT
   CATDESC: IMAP spacecraft x velocity
+  DEPEND_0: epoch
   VAR_TYPE: metadata
   FIELDNAM: Spacecraft Velocity X
   RECORD_VARYING: RV
@@ -166,6 +172,7 @@ spacecraft_velocity_y:
   NAME: spacecraft_velocity_y
   DATA_TYPE: CDF_FLOAT
   CATDESC: IMAP spacecraft y velocity
+  DEPEND_0: epoch
   VAR_TYPE: metadata
   FIELDNAM: Spacecraft Velocity Y
   RECORD_VARYING: RV
@@ -178,6 +185,7 @@ spacecraft_velocity_z:
   NAME: spacecraft_velocity_z
   DATA_TYPE: CDF_FLOAT
   CATDESC: IMAP spacecraft z velocity
+  DEPEND_0: epoch
   VAR_TYPE: metadata
   FIELDNAM: Spacecraft Velocity Z
   RECORD_VARYING: RV
@@ -197,6 +205,6 @@ elongation:
   FORMAT: I3
   UNITS: degree
   FILLVAL: 65535
-  VALIDMAX: 135
-  VALIDMIN: 135
+  VALIDMAX: 180
+  VALIDMIN: 0
   RECORD_VARYING: RV
