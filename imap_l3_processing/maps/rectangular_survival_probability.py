@@ -1,11 +1,9 @@
-from typing import Optional
-
 import numpy as np
 import xarray as xr
 from imap_processing.ena_maps.ena_maps import RectangularSkyMap, PointingSet
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.ena_maps.utils.corrections import apply_compton_getting_correction, \
-    add_spacecraft_velocity_to_pset, calculate_ram_mask
+    add_spacecraft_position_and_velocity_to_pset, calculate_ram_mask
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.map_descriptors import Sensor, SpinPhase
@@ -74,7 +72,7 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
             initial_dataset.attrs['Logical_source'] = 'imap_hi'
         elif sensor in (Sensor.Lo75, Sensor.Lo90, Sensor.Lo105, Sensor.Lo):
             initial_dataset.attrs['Logical_source'] = 'imap_lo'
-        dataset = add_spacecraft_velocity_to_pset(initial_dataset)
+        dataset = add_spacecraft_position_and_velocity_to_pset(initial_dataset)
 
         if cg_corrected:
             energy_in_ev = energies * 1000
