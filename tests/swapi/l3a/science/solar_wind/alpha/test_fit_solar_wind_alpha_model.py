@@ -14,10 +14,10 @@ from imap_l3_processing.constants import (
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha import (
-    fit_model as alpha_module,
-    initial_guess as alpha_initial_guess_module,
+    fit_solar_wind_alpha_model as alpha_module,
+    calculate_initial_guess as alpha_initial_guess_module,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_model import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_solar_wind_alpha_model import (
     AlphaSolarWindFitResult,
     _AlphaEvaluator,
     fit_solar_wind_alpha_model,
@@ -29,7 +29,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
     ProtonSolarWindFitResult,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
@@ -44,7 +44,7 @@ from tests.swapi._helpers import load_swapi_response
 
 # 5-sweep coarse-only voltage axis: 62 bins/sweep × 5 sweeps = 310 measurements,
 # matching the Stage-2 axis described in the doc. The voltage values themselves
-# are arbitrary log-spaced decreasing — `get_alpha_peak_indices` requires
+# are arbitrary log-spaced decreasing — the alpha peak finder requires
 # strictly decreasing energies, but the exact endpoints are not load-bearing
 # here. The L2 voltage range divided by `SWAPI_L2_K_FACTOR` would give the
 # physical voltages SWAPI sweeps in flight.
@@ -325,16 +325,16 @@ class TestFitAlphaMomentsContextConstruction(unittest.TestCase):
 
         build_ctx_patcher = patch(
             "imap_l3_processing.swapi.l3a.science.solar_wind.alpha."
-            "fit_model.build_solar_wind_fit_context"
+            "fit_solar_wind_alpha_model.build_solar_wind_fit_context"
         )
         initial_guess_patcher = patch(
             "imap_l3_processing.swapi.l3a.science.solar_wind.alpha."
-            "fit_model.calculate_initial_guess",
+            "fit_solar_wind_alpha_model.calculate_initial_guess",
             return_value=None,
         )
         forward_model_patcher = patch(
             "imap_l3_processing.swapi.l3a.science.solar_wind.alpha."
-            "fit_model.model_solar_wind_ideal_coincidence_rates",
+            "fit_solar_wind_alpha_model.model_solar_wind_ideal_coincidence_rates",
             return_value=(np.zeros(_N_MEAS), np.zeros((_N_MEAS, 5))),
         )
         self.addCleanup(build_ctx_patcher.stop)
@@ -653,7 +653,7 @@ class TestFitAlphaMomentsPeakBinFiltering(
         # Zero out a single peak-region bin in every sweep — the initial
         # guess will still find a peak (the rest of the bump is intact), but
         # the zeroed bins must be dropped from the LM residual axis.
-        from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_model import (
+        from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_solar_wind_alpha_model import (
             calculate_initial_guess,
         )
 
@@ -794,7 +794,7 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
         self._assert_fit_error_nan(result)
 
     def test_non_monotonic_voltage_raises_in_peak_finder_and_returns_fit_error(self):
-        """A non-monotonic per-sweep voltage axis violates `get_alpha_peak_indices`'s decreasing-energies assertion; the `try/except Exception` in `calculate_initial_guess` catches it and the fitter returns `FIT_ERROR`."""
+        """A non-monotonic per-sweep voltage axis violates the alpha peak finder's decreasing-energies assertion; the `try/except Exception` in `calculate_initial_guess` catches it and the fitter returns `FIT_ERROR`."""
         one_sweep = _ONE_SWEEP_VOLTAGE.copy()
         one_sweep[10], one_sweep[11] = one_sweep[11], one_sweep[10]
         voltage = np.broadcast_to(one_sweep, (_N_SWEEPS, _N_BINS_PER_SWEEP)).copy()
@@ -805,10 +805,10 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
         self._assert_fit_error_nan(result)
 
     def test_short_peak_window_returns_fit_error(self):
-        """When `get_alpha_peak_indices` returns a slice with fewer than 3 bins, `calculate_initial_guess` returns `None` and the fitter reports `FIT_ERROR`."""
+        """When the alpha peak finder returns a slice with fewer than 3 bins, `calculate_initial_guess` returns `None` and the fitter reports `FIT_ERROR`."""
         with patch.object(
             alpha_initial_guess_module,
-            "get_alpha_peak_indices",
+            "_get_alpha_peak_indices",
             return_value=slice(10, 12),
         ):
             result = self._call(
@@ -821,7 +821,7 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
         """When the residual `count_avg − 2·proton_bg_avg` has no positive entry inside the peak window (e.g. count_rate=0 everywhere), `calculate_initial_guess` returns `None`."""
         with patch.object(
             alpha_initial_guess_module,
-            "get_alpha_peak_indices",
+            "_get_alpha_peak_indices",
             return_value=slice(10, 20),
         ):
             result = self._call(
@@ -841,7 +841,7 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
         count_rate[:, peak_slice] = 1.0e3
         with patch.object(
             alpha_initial_guess_module,
-            "get_alpha_peak_indices",
+            "_get_alpha_peak_indices",
             return_value=peak_slice,
         ):
             result = self._call(

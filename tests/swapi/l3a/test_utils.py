@@ -9,14 +9,19 @@ from spacepy.pycdf import CDF
 from uncertainties import UFloat, ufloat
 
 from imap_l3_processing.constants import (
+    ALPHA_PARTICLE_CHARGE_COULOMBS,
+    ALPHA_PARTICLE_MASS_KG,
     METERS_PER_KILOMETER,
     PROTON_CHARGE_COULOMBS,
     PROTON_MASS_KG,
 )
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.utils import (
     calculate_sw_speed,
     chunk_l2_data,
+    esa_voltage_to_alpha_speed,
+    esa_voltage_to_proton_speed,
     get_spacecraft_velocity_rtn,
     get_swapi_geometry,
     read_l2_swapi_data,
@@ -24,6 +29,15 @@ from imap_l3_processing.swapi.l3a.utils import (
     rotate_rtn_to_dps,
 )
 from tests.spice_test_case import SpiceTestCase
+
+
+def _analytic_speed_km_per_s(
+    voltage: float, mass_kg: float, charge_c: float
+) -> float:
+    return float(
+        np.sqrt(2 * SWAPI_K_FACTOR * charge_c * abs(voltage) / mass_kg)
+        / METERS_PER_KILOMETER
+    )
 
 
 class TestChunkL2Data(TestCase):
@@ -260,3 +274,59 @@ class TestSwapiSpiceHelpers(SpiceTestCase):
         speed = float(np.linalg.norm(velocity_rtn))
         self.assertGreater(speed, 10.0)
         self.assertLess(speed, 60.0)
+
+
+class TestEsaVoltageToProtonSpeed(TestCase):
+    """Tests for `esa_voltage_to_proton_speed`."""
+
+    def test_matches_analytical_formula(self):
+        """A sweep of representative ESA voltages reproduces the closed-form `sqrt(2 K q V / m)` proton speed to machine precision."""
+        for V in [200.0, 1000.0, 4000.0]:
+            with self.subTest(voltage=V):
+                np.testing.assert_allclose(
+                    esa_voltage_to_proton_speed(V),
+                    _analytic_speed_km_per_s(
+                        V, PROTON_MASS_KG, PROTON_CHARGE_COULOMBS
+                    ),
+                    rtol=1e-12,
+                )
+
+    def test_matches_hardcoded_reference_value_at_1000_volts(self):
+        """At V = 1000 V the function returns ~601.730748 km/s, the value pre-computed offline from `sqrt(2 · 1.89 · q_p · 1000 / m_p) / 1000`. This pins the absolute magnitude against a manually verifiable number, not just the live formula."""
+        np.testing.assert_allclose(
+            esa_voltage_to_proton_speed(1000.0), 601.7307477647, rtol=1e-9
+        )
+
+    def test_handles_negative_voltage(self):
+        """A negative ESA voltage yields the same proton speed as its positive counterpart, since the conversion depends on magnitude."""
+        np.testing.assert_allclose(
+            esa_voltage_to_proton_speed(-1000.0), esa_voltage_to_proton_speed(1000.0)
+        )
+
+
+class TestEsaVoltageToAlphaSpeed(TestCase):
+    """Tests for `esa_voltage_to_alpha_speed`."""
+
+    def test_matches_analytical_formula(self):
+        """A sweep of representative ESA voltages reproduces the closed-form `sqrt(2 K q V / m)` alpha speed to machine precision."""
+        for V in [200.0, 1000.0, 4000.0]:
+            with self.subTest(voltage=V):
+                np.testing.assert_allclose(
+                    esa_voltage_to_alpha_speed(V),
+                    _analytic_speed_km_per_s(
+                        V, ALPHA_PARTICLE_MASS_KG, ALPHA_PARTICLE_CHARGE_COULOMBS
+                    ),
+                    rtol=1e-12,
+                )
+
+    def test_matches_hardcoded_reference_value_at_1000_volts(self):
+        """At V = 1000 V the function returns ~426.952735 km/s, the value pre-computed offline from `sqrt(2 · 1.89 · 2·q_p · 1000 / m_alpha) / 1000`. This pins the absolute magnitude against a manually verifiable number, not just the live formula."""
+        np.testing.assert_allclose(
+            esa_voltage_to_alpha_speed(1000.0), 426.9527347202, rtol=1e-9
+        )
+
+    def test_handles_negative_voltage(self):
+        """A negative ESA voltage yields the same alpha speed as its positive counterpart, since the conversion depends on magnitude."""
+        np.testing.assert_allclose(
+            esa_voltage_to_alpha_speed(-1000.0), esa_voltage_to_alpha_speed(1000.0)
+        )

@@ -4,10 +4,10 @@ import numba
 import numpy as np
 
 from imap_l3_processing.swapi.l3a.science.solar_wind.azimuthal_regions import (
-    Region,
+    AzimuthalRegion,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.open_aperture_trimming import (
-    trim_oa_azimuth_by_integrand,
+from imap_l3_processing.swapi.l3a.science.solar_wind.trim_open_aperture import (
+    trim_open_aperture,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     SolarWindParams,
@@ -74,7 +74,7 @@ def speed_window_misses_passband(
 def get_angular_quadrature(
     sw_params: SolarWindParams,
     response_grid: ResponseGrid,
-    region: Region,
+    region: AzimuthalRegion,
     rotation_matrix,
     sg_rate: float,
 ):
@@ -85,7 +85,7 @@ def get_angular_quadrature(
         return True, None
 
     if region.is_open_aperture:
-        min_az, max_az = trim_oa_azimuth_by_integrand(
+        min_az, max_az = trim_open_aperture(
             response_grid,
             sw_params,
             rotation_matrix,
@@ -134,7 +134,7 @@ def get_angular_quadrature(
 def get_speed_quadrature(
     sw_params: SolarWindParams,
     response_grid: ResponseGrid,
-    region: Region,
+    region: AzimuthalRegion,
     elevation: float,
 ):
     passband = (
@@ -171,7 +171,7 @@ def get_speed_quadrature(
 def _angular_limits(
     sw_params: SolarWindParams,
     rotation_matrix,
-    region: Region,
+    region: AzimuthalRegion,
     response_grid: ResponseGrid,
 ):
     half_width = _maxwellian_angular_extent(

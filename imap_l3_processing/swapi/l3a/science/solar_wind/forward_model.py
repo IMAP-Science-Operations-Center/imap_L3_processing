@@ -11,7 +11,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.azimuthal_regions import (
     REGION_OPEN_APERTURE_NEG,
     REGION_OPEN_APERTURE_POS,
     REGION_SUNGLASSES,
-    Region,
+    AzimuthalRegion,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.integration_limits import (
     AngularQuadrature,
@@ -91,7 +91,7 @@ def calculate_integral(
 def _integrate_region(
     sw_params: SolarWindParams,
     response_grid: ResponseGrid,
-    region: Region,
+    region: AzimuthalRegion,
     angular_quadrature: AngularQuadrature,
     rotation_xyz_to_rtn,
 ):

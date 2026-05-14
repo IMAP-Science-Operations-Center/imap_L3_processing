@@ -14,16 +14,13 @@ from imap_l3_processing.constants import (
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
     THIRTY_SECONDS_IN_NANOSECONDS,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_model import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_solar_wind_alpha_model import (
     AlphaSolarWindFitResult,
     fit_solar_wind_alpha_model,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
     ProtonSolarWindFitResult,
     fit_solar_wind_proton_model,
-)
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.initial_guess import (
-    esa_voltage_to_proton_speed,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
@@ -36,6 +33,7 @@ from imap_l3_processing.swapi.constants import (
 from imap_l3_processing.swapi.l3a.utils import (
     chunk_epoch,
     compute_direction_of_mean_magnetic_field_over_chunk,
+    esa_voltage_to_proton_speed,
     get_spacecraft_velocity_rtn,
     get_swapi_geometry,
     measurement_times,

@@ -34,7 +34,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
     ProtonSolarWindFitResult,
 )
 from imap_l3_processing.swapi.l3a.utils import get_swapi_geometry
@@ -678,7 +678,7 @@ class TestProtonChunkFitterQualityFlags(SpiceTestCase):
 
         _assert_proton_flag_and_peak_fallback(self, result, SwapiL3Flags.FIT_ERROR)
 
-    @patch("imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model.calculate_initial_guess")
+    @patch("imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model.calculate_initial_guess")
     def test_fit_error_when_initial_guess_is_nan(self, mock_initial_guess):
         """A NaN-valued initial guess causes scipy `least_squares` to reject `x0` as infeasible; the chunk fitter catches the exception, surfaces `FIT_ERROR`, and falls back to peak-bin speed. Mocked because `calculate_initial_guess` never returns NaN from real inputs (it raises instead)."""
         mock_initial_guess.return_value = SolarWindParams(

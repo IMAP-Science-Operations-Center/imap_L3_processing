@@ -12,7 +12,7 @@ from imap_l3_processing.constants import (
     PROTON_MASS_KG,
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.initial_guess import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.calculate_initial_guess import (
     calculate_initial_guess,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
@@ -28,7 +28,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     SolarWindParams,
     VELOCITY_SLICE,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
     ProtonSolarWindFitResult,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.uncertainties import (
@@ -54,17 +54,6 @@ class AlphaSolarWindFitResult:
 
     def bulk_velocity_rtn_covariance(self) -> ndarray:
         return np.array(covariance_matrix(self.bulk_velocity_rtn))
-
-
-def _nan_alpha_fit_result(flag: int) -> AlphaSolarWindFitResult:
-    nan = ufloat(np.nan, np.nan)
-    return AlphaSolarWindFitResult(
-        density=nan,
-        temperature=nan,
-        bulk_velocity_rtn=(nan, nan, nan),
-        delta_v=nan,
-        bad_fit_flag=int(flag),
-    )
 
 
 class _AlphaEvaluator:
@@ -226,6 +215,17 @@ def fit_solar_wind_alpha_model(
         proton_bulk=proton_bulk_rtn,
         magnetic_field_direction=magnetic_field_direction,
         bad_fit_flag=bad_fit_flag,
+    )
+
+
+def _nan_alpha_fit_result(flag: int) -> AlphaSolarWindFitResult:
+    nan = ufloat(np.nan, np.nan)
+    return AlphaSolarWindFitResult(
+        density=nan,
+        temperature=nan,
+        bulk_velocity_rtn=(nan, nan, nan),
+        delta_v=nan,
+        bad_fit_flag=int(flag),
     )
 
 

@@ -7,12 +7,16 @@ from imap_l3_processing.constants import PROTON_MASS_KG
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     SolarWindFitContext,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton import fit_model
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton import (
+    escape_local_minimum as escape_local_minimum_module,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.escape_local_minimum import (
     _MAX_BASIN_REFINE_ITERS,
     _ROTATED_RMSE_RATIO_THRESHOLD,
-    OptimizeSolarWindParamsResult,
     escape_local_minimum,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.optimize_solar_wind_proton_params import (
+    OptimizeSolarWindProtonParamsResult,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from tests.swapi._helpers import proton_params as _shared_proton_params
@@ -48,18 +52,18 @@ def _single_sweep_ctx(
     )
 
 
-def _result(sw: SolarWindParams, mse: float) -> OptimizeSolarWindParamsResult:
-    """Build an `OptimizeSolarWindParamsResult` mock whose `.mse` returns `mse`
+def _result(sw: SolarWindParams, mse: float) -> OptimizeSolarWindProtonParamsResult:
+    """Build an `OptimizeSolarWindProtonParamsResult` mock whose `.mse` returns `mse`
     and whose `.sw_params` returns `sw`. Uses `Mock(spec=...)` so the test does
     not depend on how `.mse` is computed internally."""
-    mock = Mock(spec=OptimizeSolarWindParamsResult)
+    mock = Mock(spec=OptimizeSolarWindProtonParamsResult)
     mock.sw_params = sw
     mock.mse = mse
     return mock
 
 
 class TestEscapeLocalMinimum(unittest.TestCase):
-    """Tests for `escape_local_minimum`; mocks `flipped_seed` and `optimize_solar_wind_params` so cheap-gate, acceptance, and iteration-cap logic are exercised in isolation from the forward model."""
+    """Tests for `escape_local_minimum`; mocks `flipped_seed` and `optimize_solar_wind_proton_params` so cheap-gate, acceptance, and iteration-cap logic are exercised in isolation from the forward model."""
 
     # The cheap-gate condition is `flipped_mse >= threshold² × current.mse`;
     # squaring threshold compares MSE against an RMSE ratio.
@@ -75,11 +79,11 @@ class TestEscapeLocalMinimum(unittest.TestCase):
         flipped_params = _proton_params(velocity_rtn=(450.0, 0.0, 0.0))
 
         with patch.object(
-            fit_model,
+            escape_local_minimum_module,
             "flipped_seed",
             return_value=(flipped_mse_far_above_gate, flipped_params),
         ) as mock_flipped, patch.object(
-            fit_model, "optimize_solar_wind_params"
+            escape_local_minimum_module, "_restart_from_flipped_params",
         ) as mock_opt:
             out = escape_local_minimum(lm1, ctx)
 
@@ -96,11 +100,11 @@ class TestEscapeLocalMinimum(unittest.TestCase):
         flipped_mse_at_gate = lm1.mse * self._GATE_FACTOR
 
         with patch.object(
-            fit_model,
+            escape_local_minimum_module,
             "flipped_seed",
             return_value=(flipped_mse_at_gate, _proton_params()),
         ), patch.object(
-            fit_model, "optimize_solar_wind_params"
+            escape_local_minimum_module, "_restart_from_flipped_params"
         ) as mock_opt:
             out = escape_local_minimum(lm1, ctx)
 
@@ -123,15 +127,15 @@ class TestEscapeLocalMinimum(unittest.TestCase):
         flipped_seed_mse_iter2 = better_lm2.mse * (self._GATE_FACTOR * 2.0)
 
         with patch.object(
-            fit_model,
+            escape_local_minimum_module,
             "flipped_seed",
             side_effect=[
                 (flipped_seed_mse_iter1, better_params),
                 (flipped_seed_mse_iter2, better_params),
             ],
         ) as mock_flipped, patch.object(
-            fit_model,
-            "optimize_solar_wind_params",
+            escape_local_minimum_module,
+            "_restart_from_flipped_params",
             return_value=better_lm2,
         ) as mock_opt:
             out = escape_local_minimum(lm1, ctx)
@@ -154,12 +158,12 @@ class TestEscapeLocalMinimum(unittest.TestCase):
         # Flipped seed clears the cheap gate (within threshold²×current).
         flipped_seed_mse = lm1.mse * (self._GATE_FACTOR / 2.0)
         with patch.object(
-            fit_model,
+            escape_local_minimum_module,
             "flipped_seed",
             return_value=(flipped_seed_mse, worse_params),
         ), patch.object(
-            fit_model,
-            "optimize_solar_wind_params",
+            escape_local_minimum_module,
+            "_restart_from_flipped_params",
             return_value=worse_lm2,
         ) as mock_opt:
             out = escape_local_minimum(lm1, ctx)
@@ -186,7 +190,7 @@ class TestEscapeLocalMinimum(unittest.TestCase):
         lm1 = results[0]
         gate_factor = self._GATE_FACTOR
         with patch.object(
-            fit_model,
+            escape_local_minimum_module,
             "flipped_seed",
             # Always within gate (factor / 2 < gate_factor), always with a fresh seed.
             side_effect=[
@@ -194,8 +198,8 @@ class TestEscapeLocalMinimum(unittest.TestCase):
                 for i in range(chain_length - 1)
             ],
         ), patch.object(
-            fit_model,
-            "optimize_solar_wind_params",
+            escape_local_minimum_module,
+            "_restart_from_flipped_params",
             side_effect=results[1:],
         ) as mock_opt:
             out = escape_local_minimum(lm1, ctx)

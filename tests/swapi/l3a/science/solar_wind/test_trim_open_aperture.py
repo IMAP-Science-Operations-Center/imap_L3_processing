@@ -3,9 +3,9 @@ import unittest
 
 import numpy as np
 
-from imap_l3_processing.swapi.l3a.science.solar_wind.open_aperture_trimming import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.trim_open_aperture import (
     OA_SCAN_RESOLUTION,
-    trim_oa_azimuth_by_integrand,
+    trim_open_aperture,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     SolarWindParams,
@@ -75,7 +75,7 @@ def _trim(
     if rotation_matrix is None:
         rotation_matrix = NOMINAL_SWAPI_TO_RTN_ROTATION
   
-    return trim_oa_azimuth_by_integrand(
+    return trim_open_aperture(
         rg,
         sw,
         rotation_matrix,
@@ -91,7 +91,7 @@ def _trim(
 
 
 class TestSkipsWhenAzimuthWindowIsEmpty(unittest.TestCase):
-    """Tests for `trim_oa_azimuth_by_integrand`, degenerate input-window branch."""
+    """A degenerate input-window short-circuits to the (0, 0) sentinel without scanning."""
 
     def test_skips_when_window_has_zero_width(self):
         """A zero-width azimuth clamp short-circuits to the (0, 0) sentinel without scanning."""
@@ -109,7 +109,7 @@ class TestSkipsWhenAzimuthWindowIsEmpty(unittest.TestCase):
 
 
 class TestSkipsWhenSgRateRelativeFloorDominates(unittest.TestCase):
-    """Tests for `trim_oa_azimuth_by_integrand`, `1e-3·sg_rate` skip branch."""
+    """When the OA upper-bound rate falls below `1e-3·sg_rate`, OA is skipped."""
 
     def test_skips_when_oa_upper_bound_below_sg_relative_floor(self):
         """A cold bulk far from OA with a huge sg_rate trips the relative-fraction floor and skips OA."""
@@ -120,7 +120,7 @@ class TestSkipsWhenSgRateRelativeFloorDominates(unittest.TestCase):
 
 
 class TestSkipsWhenAbsoluteRateFloorDominates(unittest.TestCase):
-    """Tests for `trim_oa_azimuth_by_integrand`, 0.1 Hz absolute-floor skip branch."""
+    """When the OA upper-bound rate falls below the 0.1 Hz absolute floor, OA is skipped."""
 
     def test_skips_when_oa_upper_bound_below_absolute_floor(self):
         """With sg_rate=0, the 0.1 Hz absolute floor alone forces a skip for a cold bulk far from OA."""
@@ -138,7 +138,7 @@ class TestSkipsWhenAbsoluteRateFloorDominates(unittest.TestCase):
 
 
 class TestReturnsTrimmedWindowWhenOaIsRelevant(unittest.TestCase):
-    """Tests for `trim_oa_azimuth_by_integrand`, well-aligned bulk shared-fixture branch."""
+    """A bulk well aligned with OA yields a trimmed window contained in the input clamp."""
 
     def setUp(self):
         # Under NOMINAL_SWAPI_TO_RTN_ROTATION, bulk along -T_RTN (i.e.
@@ -181,7 +181,7 @@ class TestReturnsTrimmedWindowWhenOaIsRelevant(unittest.TestCase):
 
 
 class TestTrimAt1eMinus6Threshold(unittest.TestCase):
-    """Tests for `trim_oa_azimuth_by_integrand`, OA_SCAN_THRESHOLD endpoint selection."""
+    """OA_SCAN_THRESHOLD selects one scan node outside the first/last above-threshold node."""
 
     def test_endpoints_expand_one_node_past_threshold_crossings(self):
         """A step-function transmission plateau drives the trim to return one scan node outside the first/last above-threshold node."""
@@ -218,7 +218,7 @@ class TestTrimAt1eMinus6Threshold(unittest.TestCase):
 
 
 class TestSymmetryBetweenOaPositiveAndNegative(unittest.TestCase):
-    """Tests for `trim_oa_azimuth_by_integrand`, OA+/OA- mirror-symmetry contract."""
+    """OA+ and OA- windows are exact mirror images for mirror-symmetric bulks."""
 
     def test_mirror_symmetric_bulk_yields_mirror_symmetric_windows(self):
         """Bulks at ±90° produce OA+ and OA- windows that are exact mirror images of each other."""
@@ -242,7 +242,7 @@ class TestSymmetryBetweenOaPositiveAndNegative(unittest.TestCase):
 
 
 class TestSkipPolicyAgainstSgRate(unittest.TestCase):
-    """Tests for `trim_oa_azimuth_by_integrand`, sg_rate-driven skip transition."""
+    """Raising sg_rate above the OA upper-bound rate flips an open window to the (0, 0) sentinel."""
 
     def test_high_sg_rate_forces_skip_for_otherwise_aligned_bulk(self):
         """A bulk that yields a real window at sg_rate=0 flips to the (0, 0) sentinel once sg_rate is cranked above the OA upper bound."""
@@ -259,7 +259,7 @@ class TestSkipPolicyAgainstSgRate(unittest.TestCase):
 
 
 class TestScanAtBulkElevationClampedToOaRange(unittest.TestCase):
-    """Tests for `trim_oa_azimuth_by_integrand`, bulk-elevation clamp to `[min_elevation, max_elevation]`."""
+    """A bulk outside `[min_elevation, max_elevation]` is clamped to the OA elevation range during the scan."""
 
     def test_bulk_elevation_above_range_yields_non_empty_window(self):
         """A bulk at +20° elevation (above the +10° OA cap) still yields a non-empty trimmed window after the scan elevation is clamped to +10°."""

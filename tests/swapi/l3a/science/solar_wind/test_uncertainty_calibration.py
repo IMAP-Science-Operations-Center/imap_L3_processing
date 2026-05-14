@@ -38,7 +38,7 @@ from imap_l3_processing.swapi.l3a.chunk_fits import (
     _alpha_moments_from_fit,
     _proton_moments_from_fit,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_model import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_solar_wind_alpha_model import (
     fit_solar_wind_alpha_model,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
@@ -48,7 +48,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
     fit_solar_wind_proton_model,
 )
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags

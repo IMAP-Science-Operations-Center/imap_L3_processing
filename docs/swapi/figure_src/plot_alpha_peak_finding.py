@@ -3,8 +3,8 @@
 Plot alpha peak-finding walkthrough on real L2 SWAPI spectra.
 
 Three-panel figure (one per real-data fixture: strong alpha, hot plasma,
-cold plasma) illustrating the `get_alpha_peak_indices` peak-finder and the
-subsequent Gaussian fit on the count-rate residual:
+cold plasma) illustrating the alpha peak-finder and the subsequent Gaussian
+fit on the count-rate residual:
 
   Panel top: 5-sweep-averaged observed count rate vs ESA voltage, overlaid
       with the frozen proton model and the detected alpha peak region shaded.
@@ -37,7 +37,7 @@ from imap_l3_processing.constants import (
     PROTON_MASS_KG,
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_model import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_solar_wind_alpha_model import (
     fit_solar_wind_alpha_model,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
@@ -46,15 +46,15 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
     fit_solar_wind_proton_model,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
-from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.initial_guess import (
-    esa_voltage_to_alpha_speed,
-    get_alpha_peak_indices,
+from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.calculate_initial_guess import (
+    _get_alpha_peak_indices,
 )
+from imap_l3_processing.swapi.l3a.utils import esa_voltage_to_alpha_speed
 from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from figure_utils import (
     COARSE_BIN_INDICES_IN_SWEEP,
@@ -165,7 +165,7 @@ def _plot_case(axes_top, axes_bot, swapi_response, fixture, title):
         alpha_contribution_avg = np.maximum(combined_fit_avg - proton_bg_avg, 0.0)
 
     energies = SWAPI_K_FACTOR * np.abs(voltage_per_sweep)
-    peak = get_alpha_peak_indices(
+    peak = _get_alpha_peak_indices(
         count_avg - proton_bg_avg, energies, count_avg.argmax()
     )
     peak_idx = np.arange(peak.start, peak.stop)

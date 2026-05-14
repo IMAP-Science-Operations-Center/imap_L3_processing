@@ -4,11 +4,11 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.azimuthal_regions import (
     REGION_OPEN_APERTURE_NEG,
     REGION_OPEN_APERTURE_POS,
     REGION_SUNGLASSES,
-    Region,
+    AzimuthalRegion,
 )
 
 
-class TestRegionConstants(unittest.TestCase):
+class TestAzimuthalRegionConstants(unittest.TestCase):
     """Tests for the `REGION_SUNGLASSES`, `REGION_OPEN_APERTURE_NEG`, and `REGION_OPEN_APERTURE_POS` constants."""
 
     def test_sunglasses_region_flags_and_azimuth_sign(self):
@@ -30,9 +30,9 @@ class TestRegionConstants(unittest.TestCase):
         self.assertEqual(REGION_OPEN_APERTURE_POS.azimuth_sign, +1)
 
     def test_region_namedtuple_field_order_is_stable(self):
-        """The Region NamedTuple field order is locked so positional unpacking in numba forward-model loops keeps working."""
+        """The AzimuthalRegion NamedTuple field order is locked so positional unpacking in numba forward-model loops keeps working."""
         self.assertEqual(
-            Region._fields, ("is_sunglasses", "is_open_aperture", "azimuth_sign")
+            AzimuthalRegion._fields, ("is_sunglasses", "is_open_aperture", "azimuth_sign")
         )
 
 

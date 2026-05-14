@@ -1,7 +1,6 @@
 {
     "test_l3bcde_first_time_processing": "2026-05-13T13:40:41.421626",
     "test_spectral_fit_against_validation_data": "2026-05-13T10:44:09.412179",
-<<<<<<< HEAD
     "test_calculate_pickup_ions_with_minimize": "2026-05-13T13:53:40.833977",
     "test_ultra_all_sp_maps": "2026-05-13T14:10:00.046757",
     "test_ultra_combined_maps": null,
@@ -9,17 +8,7 @@
     "test_ultra_combined_sp_maps": "2026-05-13T14:11:34.393503",
     "test_l3bcde_reprocessing": "2026-05-13T13:52:03.774821",
     "test_glows_l3abcde_from_l2": "2026-05-14T09:16:08.408509",
-    "test_codice_lo_3d_distributions": "2026-05-13T14:07:32.825163"
-=======
-    "test_calculate_pickup_ions_with_minimize": "2026-05-13T13:44:19.584959",
-    "test_ultra_all_sp_maps": "2026-05-05T11:58:56.375160",
-    "test_ultra_combined_maps": null,
-    "test_ultra_combined_nsp_maps": "2026-05-05T11:59:26.836142",
-    "test_ultra_combined_sp_maps": "2026-05-05T12:00:05.237526",
-    "test_l3bcde_reprocessing": "2026-04-22T15:51:37.655731",
-    "test_glows_l3abcde_from_l2": "2026-04-23T11:41:54.685631",
-    "test_codice_lo_3d_distributions": "2026-04-29T10:32:52.475510",
+    "test_codice_lo_3d_distributions": "2026-05-13T14:07:32.825163",
     "test_alpha_sigma_matches_empirical_std": "2026-05-13T23:00:04.679397",
     "test_proton_sigma_matches_empirical_std": "2026-05-13T23:00:13.034110"
->>>>>>> 1925fee9 (SWAPI alpha solar-wind moments)
 }

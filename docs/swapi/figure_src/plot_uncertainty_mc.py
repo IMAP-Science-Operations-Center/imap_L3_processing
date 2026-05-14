@@ -40,13 +40,13 @@ from figure_utils import (
     load_swapi_response,
     run_parallel_map,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.initial_guess import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.calculate_initial_guess import (
     calculate_initial_guess,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
-    derive_uncertainties,
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
+    _derive_uncertainties,
     escape_local_minimum,
-    optimize_solar_wind_params,
+    optimize_solar_wind_proton_params,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     LOG_DENSITY_IDX,
@@ -202,14 +202,14 @@ def _process_one(i):
     } | {"bad_flag": True}
     try:
         initial_guess = calculate_initial_guess(fit_ctx)
-        first_result = optimize_solar_wind_params(initial_guess, fit_ctx)
+        first_result = optimize_solar_wind_proton_params(initial_guess, fit_ctx)
         final_result = escape_local_minimum(first_result, fit_ctx)
     except Exception as e:
         print(f"  case {i}: fit failed ({type(e).__name__}: {e})")
         return nan_row
 
     sw = final_result.sw_params
-    sandwich_n_sigma, sandwich_T_sigma, sandwich_v_cov = derive_uncertainties(
+    sandwich_n_sigma, sandwich_T_sigma, sandwich_v_cov = _derive_uncertainties(
         final_result, fit_ctx
     )
     ols_n_sigma, ols_T_sigma, ols_v_sigma = _uncorrected_sigmas(final_result)
