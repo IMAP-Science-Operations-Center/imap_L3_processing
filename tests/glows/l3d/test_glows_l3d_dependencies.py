@@ -13,13 +13,13 @@ class TestGlowsL3DDependencies(unittest.TestCase):
 
     @patch('imap_l3_processing.glows.l3d.glows_l3d_dependencies.imap_data_access.download')
     def test_fetch_dependencies(self, mock_download):
-        waw_helio_ion_mp_speed = get_test_data_path("glows/imap_glows_plasma-speed-2026a_20251113_v002.dat")
-        waw_helio_ion_mp_p_dens = get_test_data_path("glows/imap_glows_proton-density-2026a_20251113_v002.dat")
-        waw_helio_ion_mp_uv_anis = get_test_data_path("glows/imap_glows_uv-anisotropy-2026a_20251113_v002.dat")
-        waw_helio_ion_mp_phion = get_test_data_path("glows/imap_glows_photoion-2026a_20251113_v002.dat")
-        waw_helio_ion_mp_lya = get_test_data_path("glows/imap_glows_lya-2026a_20251113_v002.dat")
-        waw_helio_ion_mp_e_dens = get_test_data_path("glows/imap_glows_electron-density-2026a_20251113_v002.dat")
-        pipeline_settings = get_test_data_path("glows/imap_glows_pipeline-settings-l3bcde_20251113_v004.json")
+        waw_helio_ion_mp_speed = get_test_data_path("glows/imap_glows_plasma-speed-2026d_20251113_v003.dat")
+        waw_helio_ion_mp_p_dens = get_test_data_path("glows/imap_glows_proton-density-2026d_20251113_v003.dat")
+        waw_helio_ion_mp_uv_anis = get_test_data_path("glows/imap_glows_uv-anisotropy-2026d_20251113_v003.dat")
+        waw_helio_ion_mp_phion = get_test_data_path("glows/imap_glows_photoion-2026d_20251113_v003.dat")
+        waw_helio_ion_mp_lya = get_test_data_path("glows/imap_glows_lya-2026d_20251113_v003.dat")
+        waw_helio_ion_mp_e_dens = get_test_data_path("glows/imap_glows_electron-density-2026d_20251113_v003.dat")
+        pipeline_settings = get_test_data_path("glows/imap_glows_pipeline-settings-l3bcde_20251113_v005.json")
 
         mock_processing_input_collection = Mock(spec=ProcessingInputCollection)
 
@@ -66,12 +66,12 @@ class TestGlowsL3DDependencies(unittest.TestCase):
         )
 
         mock_processing_input_collection.get_file_paths.assert_has_calls([
-            call(source='glows', descriptor="plasma-speed-2026a"),
-            call(source='glows', descriptor="proton-density-2026a"),
-            call(source='glows', descriptor="uv-anisotropy-2026a"),
-            call(source='glows', descriptor="photoion-2026a"),
-            call(source='glows', descriptor="lya-2026a"),
-            call(source='glows', descriptor="electron-density-2026a"),
+            call(source='glows', descriptor="plasma-speed-2026d"),
+            call(source='glows', descriptor="proton-density-2026d"),
+            call(source='glows', descriptor="uv-anisotropy-2026d"),
+            call(source='glows', descriptor="photoion-2026d"),
+            call(source='glows', descriptor="lya-2026d"),
+            call(source='glows', descriptor="electron-density-2026d"),
             call(source='glows', descriptor="pipeline-settings-l3bcde"),
             call(source='glows', descriptor="ion-rate-profile"),
             call(source='glows', descriptor="sw-profile"),

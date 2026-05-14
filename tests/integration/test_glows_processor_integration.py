@@ -12,6 +12,7 @@ from typing import Callable
 from unittest import skip
 from unittest.mock import patch
 
+import imap_data_access
 import numpy as np
 import requests
 import spiceypy
@@ -349,7 +350,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             for file_path in expected_files:
                 self.assertTrue(file_path.construct_path().exists(), msg=str(file_path.construct_path()))
 
-    # @run_periodically(timedelta(days=14))
+    @run_periodically(timedelta(days=14))
     @run_test_in_docker
     def test_glows_l3abcde_from_l2(self):
         ancillary_file_paths = [
@@ -359,7 +360,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             GLOWS_TEST_DATA / "imap_glows_l3a-time-dep-bckgrd_20251112_v001.dat"
         ]
 
-        prod_data_folder = get_run_local_data_path("glows_l2_from_json")
+        prod_data_folder = get_run_local_data_path("glows_l2_prod")
 
         l2_paths = list(prod_data_folder.rglob("*.cdf"))
         input_files = l2_paths + ancillary_file_paths
@@ -395,20 +396,20 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         l3bcde_ancillary_inputs = [
             GLOWS_TEST_DATA / "imap_glows_WawHelioIonMP_20251113_v007.json",
             GLOWS_TEST_DATA / "imap_glows_bad-days-list_20251113_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_electron-density-2026a_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_electron-density-2026d_20251113_v003.dat",
             GLOWS_TEST_DATA / "imap_glows_energy-grid-hi_20251113_v001.dat",
             GLOWS_TEST_DATA / "imap_glows_energy-grid-lo_20251113_v002.dat",
             GLOWS_TEST_DATA / "imap_glows_energy-grid-ultra_20251113_v001.dat",
             GLOWS_TEST_DATA / "imap_glows_ionization-files_20251113_v002.dat",
-            GLOWS_TEST_DATA / "imap_glows_lya-2026a_20251113_v002.dat",
-            GLOWS_TEST_DATA / "imap_glows_photoion-2026a_20251113_v002.dat",
-            GLOWS_TEST_DATA / "imap_glows_pipeline-settings-l3bcde_20251113_v004.json",
-            GLOWS_TEST_DATA / "imap_glows_plasma-speed-2026a_20251113_v002.dat",
-            GLOWS_TEST_DATA / "imap_glows_proton-density-2026a_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_lya-2026d_20251113_v003.dat",
+            GLOWS_TEST_DATA / "imap_glows_photoion-2026d_20251113_v003.dat",
+            GLOWS_TEST_DATA / "imap_glows_pipeline-settings-l3bcde_20251113_v005.json",
+            GLOWS_TEST_DATA / "imap_glows_plasma-speed-2026d_20251113_v003.dat",
+            GLOWS_TEST_DATA / "imap_glows_proton-density-2026d_20251113_v003.dat",
             GLOWS_TEST_DATA / "imap_glows_tess-ang-16_20251113_v001.dat",
             GLOWS_TEST_DATA / "imap_glows_tess-xyz-8_20251113_v001.dat",
             GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-1CR_20251113_v002.json",
-            GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-2026a_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-2026d_20251113_v003.dat",
             INTEGRATION_TEST_DATA / "spice" / "imap_2026_090_01.repoint",
             INTEGRATION_TEST_DATA / "spice" / "imap_2025_105_2026_105_01.ah.bc",
             INTEGRATION_TEST_DATA / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
