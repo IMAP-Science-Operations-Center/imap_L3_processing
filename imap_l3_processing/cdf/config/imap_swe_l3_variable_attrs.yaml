@@ -1037,9 +1037,9 @@ core_temperature_phi_rtn_integrated:
   FIELDNAM: Core Temperature Phi RTN Integrated
   FORMAT: F15.3
   LABLAXIS: Core_t phi RTN integrated
-  UNITS: K
-  VALIDMIN: 0
-  VALIDMAX: 1.0e+7
+  UNITS: degrees
+  VALIDMIN: -180
+  VALIDMAX: 180
   FILLVAL: -1.00E+31
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_temperature_phi_rtn_integrated:
