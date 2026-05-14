@@ -506,6 +506,8 @@ class TestSwapiProcessor(TestCase):
 
         runner_result = dict(
             epoch=np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]),
+            alpha_sw_speed=np.array([450.0]),
+            alpha_sw_speed_uncert=np.array([1.0]),
             alpha_sw_density=np.array([0.15]),
             alpha_sw_density_uncert=np.array([0.01]),
             alpha_sw_temperature=np.array([400000.0]),

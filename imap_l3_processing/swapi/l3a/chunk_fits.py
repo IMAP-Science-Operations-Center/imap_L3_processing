@@ -14,9 +14,9 @@ from imap_l3_processing.constants import (
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
     THIRTY_SECONDS_IN_NANOSECONDS,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.calculate_alpha_solar_wind_moments import (
-    AlphaSolarWindMoments,
-    fit_solar_wind_alpha_moments,
+from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_model import (
+    AlphaSolarWindFitResult,
+    fit_solar_wind_alpha_model,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
     ProtonSolarWindFitResult,
@@ -201,8 +201,11 @@ def _proton_moments_from_fit(result, epoch, data_chunk, sc_velocity_rtn):
 
 def _alpha_moments_from_fit(result, epoch):
     alpha = result.alpha_moments
+    speed = sum(component**2 for component in alpha.bulk_velocity_rtn) ** 0.5
     return dict(
         epoch=epoch,
+        alpha_sw_speed=speed.nominal_value,
+        alpha_sw_speed_uncert=speed.std_dev,
         alpha_sw_density=alpha.density.nominal_value,
         alpha_sw_density_uncert=alpha.density.std_dev,
         alpha_sw_temperature=alpha.temperature.nominal_value,
@@ -324,21 +327,21 @@ def _nan_proton_result(flag) -> ProtonSolarWindFitResult:
 
 
 @dataclass
-class AlphaSolarWindFitResult:
+class AlphaChunkFitResult:
     """Chunk-level alpha output: alpha moments + the proton moments they
     reference + the B̂ used as the field-aligned drift constraint, plus the
     consolidated `bad_fit_flag` rolled up from every stage that could fail
     (missing B̂, proton fit, alpha LM)."""
 
-    alpha_moments: AlphaSolarWindMoments
+    alpha_moments: AlphaSolarWindFitResult
     proton_moments: ProtonSolarWindFitResult
     b_hat_rtn: np.ndarray
     bad_fit_flag: int
 
 
-def _nan_alpha_moments(flag) -> AlphaSolarWindMoments:
+def _nan_alpha_fit_result(flag) -> AlphaSolarWindFitResult:
     nan = ufloat(np.nan, np.nan)
-    return AlphaSolarWindMoments(
+    return AlphaSolarWindFitResult(
         density=nan,
         temperature=nan,
         bulk_velocity_rtn=(nan, nan, nan),
@@ -352,7 +355,7 @@ def _fit_alpha(
     epoch,
     rotation_matrices,
     magnetic_field_direction,
-) -> AlphaSolarWindFitResult:
+) -> AlphaChunkFitResult:
     nan_b_hat = np.full(3, np.nan)
     if (
         magnetic_field_direction is None
@@ -361,8 +364,8 @@ def _fit_alpha(
         logger.warning(
             f"Alpha fit at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}: missing or non-finite magnetic field direction; using fill values"
         )
-        return AlphaSolarWindFitResult(
-            alpha_moments=_nan_alpha_moments(SwapiL3Flags.NONE),
+        return AlphaChunkFitResult(
+            alpha_moments=_nan_alpha_fit_result(SwapiL3Flags.NONE),
             proton_moments=_nan_proton_result(SwapiL3Flags.NONE),
             b_hat_rtn=nan_b_hat,
             bad_fit_flag=int(SwapiL3Flags.NONE),
@@ -374,8 +377,8 @@ def _fit_alpha(
             [component.nominal_value for component in proton_moments.bulk_velocity_rtn]
         )
     ):
-        return AlphaSolarWindFitResult(
-            alpha_moments=_nan_alpha_moments(proton_moments.bad_fit_flag),
+        return AlphaChunkFitResult(
+            alpha_moments=_nan_alpha_fit_result(proton_moments.bad_fit_flag),
             proton_moments=proton_moments,
             b_hat_rtn=nan_b_hat,
             bad_fit_flag=int(proton_moments.bad_fit_flag),
@@ -390,7 +393,7 @@ def _fit_alpha(
         coarse_rotation_matrices = _coarse_subset_of_science_rotations(
             rotation_matrices, n_sweeps=data_chunk.sci_start_time.shape[0]
         )
-        alpha_moments = fit_solar_wind_alpha_moments(
+        alpha_moments = fit_solar_wind_alpha_model(
             count_rates,
             voltages,
             times,
@@ -406,14 +409,14 @@ def _fit_alpha(
             f"Alpha fit at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}: exception during fit; using fill values",
             exc_info=True,
         )
-        return AlphaSolarWindFitResult(
-            alpha_moments=_nan_alpha_moments(SwapiL3Flags.FIT_ERROR),
+        return AlphaChunkFitResult(
+            alpha_moments=_nan_alpha_fit_result(SwapiL3Flags.FIT_ERROR),
             proton_moments=proton_moments,
             b_hat_rtn=nan_b_hat,
             bad_fit_flag=int(SwapiL3Flags.FIT_ERROR),
         )
 
-    return AlphaSolarWindFitResult(
+    return AlphaChunkFitResult(
         alpha_moments=alpha_moments,
         proton_moments=proton_moments,
         b_hat_rtn=magnetic_field_direction,

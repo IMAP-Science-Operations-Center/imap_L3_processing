@@ -5,9 +5,11 @@ import numpy as np
 from uncertainties import covariance_matrix
 
 from imap_l3_processing.constants import PROTON_MASS_KG
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
+    derive_uncertainties,
+)
 from imap_l3_processing.swapi.l3a.science.solar_wind.uncertainties import (
     compute_hc3_parameter_covariance,
-    derive_uncertainties,
     make_correlated_velocity,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import (

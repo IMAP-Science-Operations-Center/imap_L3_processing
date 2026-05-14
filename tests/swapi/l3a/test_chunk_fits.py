@@ -23,7 +23,7 @@ from imap_l3_processing.swapi.l3a.chunk_fits import (
     ParallelChunkRunner,
     ProtonChunkFitter,
 )
-from imap_l3_processing.swapi.l3b.science.efficiency_calibration_table import (
+from imap_l3_processing.swapi.response.efficiency_calibration_table import (
     EfficiencyCalibrationTable,
 )
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data
@@ -84,6 +84,7 @@ _PROTON_ARRAY_KEYS = [
     "proton_sw_bulk_velocity_rtn_sc", "proton_sw_bulk_velocity_rtn_sc_covariance",
 ]
 _ALPHA_SCALAR_KEYS = [
+    "alpha_sw_speed", "alpha_sw_speed_uncert",
     "alpha_sw_density", "alpha_sw_density_uncert",
     "alpha_sw_temperature", "alpha_sw_temperature_uncert",
     "alpha_sw_delta_v", "alpha_sw_delta_v_uncert",
@@ -517,6 +518,11 @@ class TestAlphaChunkFitterFitChunk(SpiceTestCase):
         )
         np.testing.assert_allclose(
             self.happy_result["alpha_sw_velocity_rtn"], self.true_alpha_velocity_rtn, atol=5.0
+        )
+        np.testing.assert_allclose(
+            self.happy_result["alpha_sw_speed"],
+            np.linalg.norm(self.true_alpha_velocity_rtn),
+            atol=5.0,
         )
 
     def test_b_hat_passes_through_to_result(self):

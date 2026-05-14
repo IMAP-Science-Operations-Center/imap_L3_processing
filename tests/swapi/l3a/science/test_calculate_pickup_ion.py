@@ -23,7 +23,7 @@ from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import calculate_
 from imap_l3_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table import \
     DensityOfNeutralHeliumLookupTable
 from imap_l3_processing.swapi.l3a.science.inflow_vector import InflowVector
-from imap_l3_processing.swapi.l3b.science.efficiency_calibration_table import EfficiencyCalibrationTable
+from imap_l3_processing.swapi.response.efficiency_calibration_table import EfficiencyCalibrationTable
 from imap_l3_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
 from imap_l3_processing.swapi.l3b.science.instrument_response_lookup_table import InstrumentResponseLookupTable, \
     InstrumentResponseLookupTableCollection

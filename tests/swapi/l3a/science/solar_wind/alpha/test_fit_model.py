@@ -14,12 +14,13 @@ from imap_l3_processing.constants import (
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha import (
-    calculate_alpha_solar_wind_moments as alpha_module,
+    fit_model as alpha_module,
+    initial_guess as alpha_initial_guess_module,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.calculate_alpha_solar_wind_moments import (
-    AlphaSolarWindMoments,
+from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_model import (
+    AlphaSolarWindFitResult,
     _AlphaEvaluator,
-    fit_solar_wind_alpha_moments,
+    fit_solar_wind_alpha_model,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     SolarWindFitContext,
@@ -68,7 +69,7 @@ _B_HAT_RTN = np.array([-1.0, 0.0, 0.0])
 
 # Stage-1 proton uncertainties used to seed `ProtonSolarWindFitResult`.
 # Values are chosen small but nonzero so `bulk_velocity_rtn_covariance`
-# (used downstream by `fit_solar_wind_alpha_moments` to add
+# (used downstream by `fit_solar_wind_alpha_model` to add
 # `σ_Δv²·B̂B̂ᵀ`) is well-defined. The exact values are not pinned by any
 # test — they only need to be finite and positive.
 _STAGE1_PROTON_DENSITY_SIGMA_CM3 = 0.05
@@ -135,7 +136,7 @@ def _build_proton_fit_result(
 
 
 def _assert_moments_are_nan_filled(test, result) -> None:
-    """Assert that every moment field on an `AlphaSolarWindMoments`
+    """Assert that every moment field on an `AlphaSolarWindFitResult`
     fill-valued result is NaN. Used by the two pre-fit guard branches
     (Stage-1 failed, MAG B̂ NaN) which both short-circuit to fill values."""
     test.assertTrue(np.isnan(result.density.nominal_value))
@@ -228,11 +229,11 @@ class _SyntheticAlphaSpectrumFixture:
         cls.alpha_velocity_rtn = alpha_v
 
 
-# ----- fit_solar_wind_alpha_moments — guard conditions ---------------------
+# ----- fit_solar_wind_alpha_model — guard conditions ---------------------
 
 
 class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
-    """Tests for `fit_solar_wind_alpha_moments` — pre-fit guard branches (proton fill values, missing/non-finite MAG B̂) must short-circuit to a NaN-filled moments result with the proton's flag propagated before any forward-model evaluation."""
+    """Tests for `fit_solar_wind_alpha_model` — pre-fit guard branches (proton fill values, missing/non-finite MAG B̂) must short-circuit to a NaN-filled moments result with the proton's flag propagated before any forward-model evaluation."""
 
     def test_proton_fill_values_propagate_proton_flag_to_alpha(self):
         """When the Stage-1 proton fit returned NaN moments (fill values), the alpha result inherits the proton's `bad_fit_flag` unchanged — no separate alpha-side flag is added for "stage 1 failed"."""
@@ -240,7 +241,7 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
             velocity_rtn=np.array([np.nan, np.nan, np.nan]),
             bad_fit_flag=int(SwapiL3Flags.FIT_ERROR),
         )
-        result = fit_solar_wind_alpha_moments(
+        result = fit_solar_wind_alpha_model(
             count_rate=np.zeros(_FIVE_SWEEP_VOLTAGE.shape),
             esa_voltage=_FIVE_SWEEP_VOLTAGE,
             measurement_time=np.zeros(_N_MEAS),
@@ -261,7 +262,7 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
             velocity_rtn=np.array([np.nan, np.nan, np.nan]),
             bad_fit_flag=int(SwapiL3Flags.FIT_ERROR),
         )
-        result = fit_solar_wind_alpha_moments(
+        result = fit_solar_wind_alpha_model(
             count_rate=np.zeros(_FIVE_SWEEP_VOLTAGE.shape),
             esa_voltage=_FIVE_SWEEP_VOLTAGE,
             measurement_time=np.zeros(_N_MEAS),
@@ -278,7 +279,7 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
         """A NaN component in `magnetic_field_direction` is treated as an ordinary data gap: the fitter short-circuits and propagates the proton's flag unchanged with no dedicated MAG-gap bit added."""
         proton_moments = _build_proton_fit_result()
         nan_b_hat = np.array([np.nan, 0.0, 0.0])
-        result = fit_solar_wind_alpha_moments(
+        result = fit_solar_wind_alpha_model(
             count_rate=np.zeros(_FIVE_SWEEP_VOLTAGE.shape),
             esa_voltage=_FIVE_SWEEP_VOLTAGE,
             measurement_time=np.zeros(_N_MEAS),
@@ -295,7 +296,7 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
         """A NaN B̂ short-circuits before any forward-model call and every moment field is filled with NaN, mirroring the Stage-1-failure guard."""
         proton_moments = _build_proton_fit_result()
         nan_b_hat = np.array([np.nan, 0.0, 0.0])
-        result = fit_solar_wind_alpha_moments(
+        result = fit_solar_wind_alpha_model(
             count_rate=np.zeros(_FIVE_SWEEP_VOLTAGE.shape),
             esa_voltage=_FIVE_SWEEP_VOLTAGE,
             measurement_time=np.zeros(_N_MEAS),
@@ -309,11 +310,11 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
         _assert_moments_are_nan_filled(self, result)
 
 
-# ----- fit_solar_wind_alpha_moments — context construction -----------------
+# ----- fit_solar_wind_alpha_model — context construction -----------------
 
 
 class TestFitAlphaMomentsContextConstruction(unittest.TestCase):
-    """Tests for `fit_solar_wind_alpha_moments` — verifies it builds two separate fit contexts (proton background and alpha bump) with the correct species mass / mass-per-charge / effective-area scale routed to each."""
+    """Tests for `fit_solar_wind_alpha_model` — verifies it builds two separate fit contexts (proton background and alpha bump) with the correct species mass / mass-per-charge / effective-area scale routed to each."""
 
     def setUp(self):
         self.proton_moments = _build_proton_fit_result()
@@ -324,16 +325,16 @@ class TestFitAlphaMomentsContextConstruction(unittest.TestCase):
 
         build_ctx_patcher = patch(
             "imap_l3_processing.swapi.l3a.science.solar_wind.alpha."
-            "calculate_alpha_solar_wind_moments.build_solar_wind_fit_context"
+            "fit_model.build_solar_wind_fit_context"
         )
         initial_guess_patcher = patch(
             "imap_l3_processing.swapi.l3a.science.solar_wind.alpha."
-            "calculate_alpha_solar_wind_moments._alpha_initial_guess",
+            "fit_model.calculate_initial_guess",
             return_value=None,
         )
         forward_model_patcher = patch(
             "imap_l3_processing.swapi.l3a.science.solar_wind.alpha."
-            "calculate_alpha_solar_wind_moments.model_solar_wind_ideal_coincidence_rates",
+            "fit_model.model_solar_wind_ideal_coincidence_rates",
             return_value=(np.zeros(_N_MEAS), np.zeros((_N_MEAS, 5))),
         )
         self.addCleanup(build_ctx_patcher.stop)
@@ -344,7 +345,7 @@ class TestFitAlphaMomentsContextConstruction(unittest.TestCase):
         forward_model_patcher.start()
         self.mock_build_ctx.return_value = MagicMock()
 
-        fit_solar_wind_alpha_moments(
+        fit_solar_wind_alpha_model(
             count_rate=np.zeros(_FIVE_SWEEP_VOLTAGE.shape),
             esa_voltage=_FIVE_SWEEP_VOLTAGE,
             measurement_time=np.zeros(_N_MEAS),
@@ -406,19 +407,19 @@ class TestFitAlphaMomentsContextConstruction(unittest.TestCase):
         )
 
 
-# ----- fit_solar_wind_alpha_moments — end-to-end recovery -----------------
+# ----- fit_solar_wind_alpha_model — end-to-end recovery -----------------
 
 
 class TestFitAlphaMomentsRecoversTruth(
     _SyntheticAlphaSpectrumFixture, unittest.TestCase
 ):
-    """Tests for `fit_solar_wind_alpha_moments` — end-to-end Stage-2 recovery: synthesize a proton+alpha spectrum from known truth, hand the fitter the exact proton moments, and verify it recovers (n_α, T_α, Δv) and the field-aligned alpha velocity."""
+    """Tests for `fit_solar_wind_alpha_model` — end-to-end Stage-2 recovery: synthesize a proton+alpha spectrum from known truth, hand the fitter the exact proton moments, and verify it recovers (n_α, T_α, Δv) and the field-aligned alpha velocity."""
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.proton_moments = _build_proton_fit_result()
-        cls.result = fit_solar_wind_alpha_moments(
+        cls.result = fit_solar_wind_alpha_model(
             count_rate=cls.observed_count_rate,
             esa_voltage=cls.voltage,
             measurement_time=np.zeros(_N_MEAS),
@@ -475,7 +476,7 @@ class TestFitAlphaMomentsRecoversTruth(
 
 
 class TestFitAlphaMomentsAlphaVelocityFollowsBHat(unittest.TestCase):
-    """Tests for `fit_solar_wind_alpha_moments` — the field-aligned drift constraint v_α = v_p + Δv·B̂ must hold for any B̂ direction, including B̂ not parallel to -R̂."""
+    """Tests for `fit_solar_wind_alpha_model` — the field-aligned drift constraint v_α = v_p + Δv·B̂ must hold for any B̂ direction, including B̂ not parallel to -R̂."""
 
     @classmethod
     def setUpClass(cls):
@@ -498,7 +499,7 @@ class TestFitAlphaMomentsAlphaVelocityFollowsBHat(unittest.TestCase):
         cls.proton_moments = _build_proton_fit_result(
             velocity_rtn=cls.proton_velocity_rtn
         )
-        cls.result = fit_solar_wind_alpha_moments(
+        cls.result = fit_solar_wind_alpha_model(
             count_rate=observed,
             esa_voltage=_FIVE_SWEEP_VOLTAGE,
             measurement_time=np.zeros(_N_MEAS),
@@ -538,11 +539,11 @@ class TestFitAlphaMomentsAlphaVelocityFollowsBHat(unittest.TestCase):
         )
 
 
-# ----- AlphaSolarWindMoments accessors --------------------------------------
+# ----- AlphaSolarWindFitResult accessors --------------------------------------
 
 
-class TestAlphaSolarWindMomentsAccessors(unittest.TestCase):
-    """Tests for `AlphaSolarWindMoments.bulk_velocity_rtn_nominal` and `bulk_velocity_rtn_covariance` — accessors that extract the nominal vector and covariance matrix from the correlated UFloat triple."""
+class TestAlphaSolarWindFitResultAccessors(unittest.TestCase):
+    """Tests for `AlphaSolarWindFitResult.bulk_velocity_rtn_nominal` and `bulk_velocity_rtn_covariance` — accessors that extract the nominal vector and covariance matrix from the correlated UFloat triple."""
 
     def setUp(self):
         # Build moments from a known correlated velocity covariance so the
@@ -566,7 +567,7 @@ class TestAlphaSolarWindMomentsAccessors(unittest.TestCase):
         velocity_triple = make_correlated_velocity(
             self.expected_nominal, self.expected_covariance
         )
-        self.moments = AlphaSolarWindMoments(
+        self.moments = AlphaSolarWindFitResult(
             density=ufloat(0.2, 0.01),
             temperature=ufloat(4.0e5, 1.0e3),
             bulk_velocity_rtn=velocity_triple,
@@ -594,11 +595,11 @@ class TestAlphaSolarWindMomentsAccessors(unittest.TestCase):
         )
 
 
-# ----- fit_solar_wind_alpha_moments — geometry fallback --------------------
+# ----- fit_solar_wind_alpha_model — geometry fallback --------------------
 
 
 class TestFitAlphaMomentsGeometryFallback(unittest.TestCase):
-    """Tests for `fit_solar_wind_alpha_moments` — when `rotation_matrices` is omitted, SWAPI→RTN geometry is resolved from `measurement_time` via SPICE (`get_swapi_geometry`); the Stage-1 caller normally precomputes geometry and shares it, but the standalone-callable fallback path must also work."""
+    """Tests for `fit_solar_wind_alpha_model` — when `rotation_matrices` is omitted, SWAPI→RTN geometry is resolved from `measurement_time` via SPICE (`get_swapi_geometry`); the Stage-1 caller normally precomputes geometry and shares it, but the standalone-callable fallback path must also work."""
 
     def test_fetches_geometry_from_measurement_time_when_rotation_matrices_omitted(
         self,
@@ -613,10 +614,10 @@ class TestFitAlphaMomentsGeometryFallback(unittest.TestCase):
             return_value=rotation_matrices_from_geometry,
         ) as mock_get_geometry, patch.object(
             alpha_module,
-            "_alpha_initial_guess",
+            "calculate_initial_guess",
             return_value=None,
         ):
-            result = fit_solar_wind_alpha_moments(
+            result = fit_solar_wind_alpha_model(
                 count_rate=np.zeros(_FIVE_SWEEP_VOLTAGE.shape),
                 esa_voltage=_FIVE_SWEEP_VOLTAGE,
                 measurement_time=measurement_time,
@@ -638,13 +639,13 @@ class TestFitAlphaMomentsGeometryFallback(unittest.TestCase):
         self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.FIT_ERROR))
 
 
-# ----- fit_solar_wind_alpha_moments — peak-bin filtering -------------------
+# ----- fit_solar_wind_alpha_model — peak-bin filtering -------------------
 
 
 class TestFitAlphaMomentsPeakBinFiltering(
     _SyntheticAlphaSpectrumFixture, unittest.TestCase
 ):
-    """Tests for `fit_solar_wind_alpha_moments` — peak-bin subsetting plus zero-count filtering: Stage-2 keeps only the alpha-peak bins across sweeps, then drops any with `count_rate <= 0` so deadtime correction never divides by zero."""
+    """Tests for `fit_solar_wind_alpha_model` — peak-bin subsetting plus zero-count filtering: Stage-2 keeps only the alpha-peak bins across sweeps, then drops any with `count_rate <= 0` so deadtime correction never divides by zero."""
 
     @classmethod
     def setUpClass(cls):
@@ -652,8 +653,8 @@ class TestFitAlphaMomentsPeakBinFiltering(
         # Zero out a single peak-region bin in every sweep — the initial
         # guess will still find a peak (the rest of the bump is intact), but
         # the zeroed bins must be dropped from the LM residual axis.
-        from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.calculate_alpha_solar_wind_moments import (
-            _alpha_initial_guess,
+        from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_model import (
+            calculate_initial_guess,
         )
 
         alpha_ctx_full = build_solar_wind_fit_context(
@@ -665,12 +666,11 @@ class TestFitAlphaMomentsPeakBinFiltering(
             mass_kg=ALPHA_PARTICLE_MASS_KG,
             mass_per_charge_m_p_per_e=ALPHA_MASS_PER_CHARGE_M_P_PER_E,
         )
-        guess = _alpha_initial_guess(
+        guess = calculate_initial_guess(
             proton_true_rate=cls.proton_true_rate,
             proton_temperature=_TRUE_PROTON_TEMPERATURE_K,
             alpha_ctx=alpha_ctx_full,
             proton_bulk_velocity_rtn=_TRUE_PROTON_VELOCITY_RTN,
-            magnetic_field_direction=_B_HAT_RTN,
         )
         _, _, _, peak_bin_idx = guess
         zeroed_observed = cls.observed_count_rate.copy()
@@ -680,7 +680,7 @@ class TestFitAlphaMomentsPeakBinFiltering(
         cls.target_bin = target_bin
 
         cls.proton_moments = _build_proton_fit_result()
-        cls.result = fit_solar_wind_alpha_moments(
+        cls.result = fit_solar_wind_alpha_model(
             count_rate=zeroed_observed,
             esa_voltage=cls.voltage,
             measurement_time=np.zeros(_N_MEAS),
@@ -705,11 +705,11 @@ class TestFitAlphaMomentsPeakBinFiltering(
         )
 
 
-# ----- fit_solar_wind_alpha_moments — non-converged LM ---------------------
+# ----- fit_solar_wind_alpha_model — non-converged LM ---------------------
 
 
 class TestFitAlphaMomentsLMFailureFlag(unittest.TestCase):
-    """Tests for `fit_solar_wind_alpha_moments` — when LM does not converge (`result.success=False`), the chunk is rejected: every moment is NaN-filled and `FIT_ERROR` is set."""
+    """Tests for `fit_solar_wind_alpha_model` — when LM does not converge (`result.success=False`), the chunk is rejected: every moment is NaN-filled and `FIT_ERROR` is set."""
 
     def test_fit_error_flag_set_when_least_squares_does_not_converge(self):
         """A non-converged LM result triggers the fit-quality guard: density and the other moments are NaN-filled and `FIT_ERROR` is reported alone."""
@@ -729,7 +729,7 @@ class TestFitAlphaMomentsLMFailureFlag(unittest.TestCase):
 
         with patch.object(
             alpha_module,
-            "_alpha_initial_guess",
+            "calculate_initial_guess",
             return_value=(0.2, 4.0e5, 0.0, np.array([10, 11, 12])),
         ), patch.object(
             alpha_module._AlphaEvaluator,
@@ -740,7 +740,7 @@ class TestFitAlphaMomentsLMFailureFlag(unittest.TestCase):
             "least_squares",
             return_value=non_converged,
         ):
-            result = fit_solar_wind_alpha_moments(
+            result = fit_solar_wind_alpha_model(
                 count_rate=np.full(_FIVE_SWEEP_VOLTAGE.shape, 100.0),
                 esa_voltage=_FIVE_SWEEP_VOLTAGE,
                 measurement_time=np.zeros(_N_MEAS),
@@ -756,11 +756,11 @@ class TestFitAlphaMomentsLMFailureFlag(unittest.TestCase):
         self.assertTrue(np.isnan(result.density.nominal_value))
 
 
-# ----- fit_solar_wind_alpha_moments — initial-guess failure branches -------
+# ----- fit_solar_wind_alpha_model — initial-guess failure branches -------
 
 
 class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
-    """Tests for `fit_solar_wind_alpha_moments` — failure branches inside `_alpha_initial_guess` and `_infer_sweep_layout` that return None, causing the public function to short-circuit to a `FIT_ERROR` NaN-filled result."""
+    """Tests for `fit_solar_wind_alpha_model` — failure branches inside `calculate_initial_guess` and `_infer_sweep_layout` that return None, causing the public function to short-circuit to a `FIT_ERROR` NaN-filled result."""
 
     def _call(self, *, count_rate, esa_voltage, rotation_matrices=None):
         n_meas = esa_voltage.size
@@ -768,7 +768,7 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
             rotation_matrices = np.broadcast_to(np.eye(3), (n_meas, 3, 3)).copy()
         warm_voltages = esa_voltage if n_meas > 0 else None
         response = load_swapi_response(warm_cache_voltages=warm_voltages)
-        return fit_solar_wind_alpha_moments(
+        return fit_solar_wind_alpha_model(
             count_rate=count_rate,
             esa_voltage=esa_voltage,
             measurement_time=np.zeros(n_meas),
@@ -785,7 +785,7 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
         _assert_moments_are_nan_filled(self, result)
 
     def test_one_dimensional_inputs_short_circuit_to_fit_error(self):
-        """`_alpha_initial_guess` requires a 2D (n_sweeps, n_bins) count_rate; a 1D input falls through the ndim guard and the fitter reports `FIT_ERROR`."""
+        """`calculate_initial_guess` requires a 2D (n_sweeps, n_bins) count_rate; a 1D input falls through the ndim guard and the fitter reports `FIT_ERROR`."""
         voltage = np.logspace(np.log10(3500.0), np.log10(140.0), _N_MEAS)
         result = self._call(
             count_rate=np.zeros(_N_MEAS),
@@ -794,7 +794,7 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
         self._assert_fit_error_nan(result)
 
     def test_non_monotonic_voltage_raises_in_peak_finder_and_returns_fit_error(self):
-        """A non-monotonic per-sweep voltage axis violates `get_alpha_peak_indices`'s decreasing-energies assertion; the `try/except Exception` in `_alpha_initial_guess` catches it and the fitter returns `FIT_ERROR`."""
+        """A non-monotonic per-sweep voltage axis violates `get_alpha_peak_indices`'s decreasing-energies assertion; the `try/except Exception` in `calculate_initial_guess` catches it and the fitter returns `FIT_ERROR`."""
         one_sweep = _ONE_SWEEP_VOLTAGE.copy()
         one_sweep[10], one_sweep[11] = one_sweep[11], one_sweep[10]
         voltage = np.broadcast_to(one_sweep, (_N_SWEEPS, _N_BINS_PER_SWEEP)).copy()
@@ -805,9 +805,9 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
         self._assert_fit_error_nan(result)
 
     def test_short_peak_window_returns_fit_error(self):
-        """When `get_alpha_peak_indices` returns a slice with fewer than 3 bins, `_alpha_initial_guess` returns `None` and the fitter reports `FIT_ERROR`."""
+        """When `get_alpha_peak_indices` returns a slice with fewer than 3 bins, `calculate_initial_guess` returns `None` and the fitter reports `FIT_ERROR`."""
         with patch.object(
-            alpha_module,
+            alpha_initial_guess_module,
             "get_alpha_peak_indices",
             return_value=slice(10, 12),
         ):
@@ -818,9 +818,9 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
         self._assert_fit_error_nan(result)
 
     def test_no_positive_residual_at_peak_returns_fit_error(self):
-        """When the residual `count_avg − 2·proton_bg_avg` has no positive entry inside the peak window (e.g. count_rate=0 everywhere), `_alpha_initial_guess` returns `None`."""
+        """When the residual `count_avg − 2·proton_bg_avg` has no positive entry inside the peak window (e.g. count_rate=0 everywhere), `calculate_initial_guess` returns `None`."""
         with patch.object(
-            alpha_module,
+            alpha_initial_guess_module,
             "get_alpha_peak_indices",
             return_value=slice(10, 20),
         ):
@@ -831,7 +831,7 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
         self._assert_fit_error_nan(result)
 
     def test_non_positive_unit_alpha_denominator_returns_fit_error(self):
-        """When the unit-density alpha forward model evaluates to ~0 at every peak bin (peak slice placed in the highest-voltage bins, far above the alpha resonance), `denom <= 0` and `_alpha_initial_guess` returns `None`."""
+        """When the unit-density alpha forward model evaluates to ~0 at every peak bin (peak slice placed in the highest-voltage bins, far above the alpha resonance), `denom <= 0` and `calculate_initial_guess` returns `None`."""
         # Inject a positive residual at the chosen peak bins by overriding
         # count_rate at those locations, then place the peak slice in the
         # high-voltage tail where unit_alpha ~ 0 (alpha truth voltage is
@@ -840,7 +840,7 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
         peak_slice = slice(0, 3)
         count_rate[:, peak_slice] = 1.0e3
         with patch.object(
-            alpha_module,
+            alpha_initial_guess_module,
             "get_alpha_peak_indices",
             return_value=peak_slice,
         ):
@@ -1020,7 +1020,7 @@ class TestAlphaEvaluatorCachesEvaluation(
 class TestFitAlphaMomentsPassesAnalyticJacobianToLM(
     _SyntheticAlphaSpectrumFixture, unittest.TestCase
 ):
-    """Tests for `fit_solar_wind_alpha_moments` — verifies scipy.optimize.least_squares is invoked with `jac=...` (rather than the previous finite-difference `diff_step=...` path)."""
+    """Tests for `fit_solar_wind_alpha_model` — verifies scipy.optimize.least_squares is invoked with `jac=...` (rather than the previous finite-difference `diff_step=...` path)."""
 
     def test_least_squares_receives_jac_callable_and_no_diff_step(self):
         """LM is called with a `jac` callable (the evaluator's analytic Jacobian) and without `diff_step` — finite-difference Jacobian estimation is no longer needed."""
@@ -1036,7 +1036,7 @@ class TestFitAlphaMomentsPassesAnalyticJacobianToLM(
 
         with patch.object(
             alpha_module,
-            "_alpha_initial_guess",
+            "calculate_initial_guess",
             return_value=(
                 _TRUE_ALPHA_DENSITY_CM3,
                 _TRUE_ALPHA_TEMPERATURE_K,
@@ -1052,7 +1052,7 @@ class TestFitAlphaMomentsPassesAnalyticJacobianToLM(
             "least_squares",
             return_value=mock_result,
         ) as mock_lm:
-            fit_solar_wind_alpha_moments(
+            fit_solar_wind_alpha_model(
                 count_rate=self.observed_count_rate,
                 esa_voltage=self.voltage,
                 measurement_time=np.zeros(_N_MEAS),

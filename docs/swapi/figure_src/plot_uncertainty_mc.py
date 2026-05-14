@@ -43,14 +43,10 @@ from figure_utils import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.initial_guess import (
     calculate_initial_guess,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.optimizer import (
-    optimize_solar_wind_params,
-)
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.basin_hopping import (
-    escape_local_minimum,
-)
-from imap_l3_processing.swapi.l3a.science.solar_wind.uncertainties import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
     derive_uncertainties,
+    escape_local_minimum,
+    optimize_solar_wind_params,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     LOG_DENSITY_IDX,

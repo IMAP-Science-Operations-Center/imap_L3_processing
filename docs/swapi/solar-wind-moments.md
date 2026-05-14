@@ -577,35 +577,63 @@ This reflects the observed solar-wind tendency for non-field-aligned differentia
 
 ### Two-stage strategy
 
-When fitting alphas, we first fit the protons to each chunk as in the proton-only pipeline.
-We then use the proton model to obtain an initial guess and identify the alpha-peak step indices.
-Only those alpha-peak step indices are used in the fit.
-
-The combined proton+alpha model is
+The alpha fit runs after the proton fit on the same 5-sweep chunk. Stage 1 is the proton-only pipeline described above. Stage 2 holds the proton density, temperature, and bulk velocity at their stage-1 values (denoted $`n_{p}^{\ast}`$, $`T_{p}^{\ast}`$, $`\mathbf{v}_{p}^{\ast}`$ below) and fits three alpha parameters,
 ```math
-C_{\text{obs}}(V) = \text{deadtime}\negthinspace \left(C_{p}^{\text{true}}(V; \theta_{p}^{\ast}) + C_{\alpha}^{\text{true}}(V; \theta_{\alpha})\right).
+\mathbf{x}_{\alpha} = (\log n_{\alpha},\thinspace  \log T_{\alpha},\thinspace  \Delta v),
 ```
+with the alpha bulk velocity reconstructed as $`\mathbf{v}_{\alpha} = \mathbf{v}_{p}^{\ast} + \Delta v\thinspace \hat{\mathbf{B}}`$. Only the ESA steps inside the detected alpha-bump window are used in the residual (see [Initial guess](#initial-guess)).
+
+The combined proton+alpha model applies the deadtime factor to the sum of the two species' true rates:
+```math
+C^{\text{observed}}(V) = \bigl[C_{p}^{\text{true}}(V) + C_{\alpha}^{\text{true}}(V;\thinspace  \mathbf{x}_{\alpha})\bigr]\cdot\mathcal{D}\bigl(C_{p}^{\text{true}}(V) + C_{\alpha}^{\text{true}}(V;\thinspace  \mathbf{x}_{\alpha})\bigr),
+```
+where $`\mathcal{D}(C) = 1/(1 + \tau C)`$ is the same deadtime factor used in the [proton forward model](#deadtime-correction). $`C_{p}^{\text{true}}(V)`$ is evaluated once per chunk from $`(n_{p}^{\ast}, T_{p}^{\ast}, \mathbf{v}_{p}^{\ast})`$ and reused unchanged throughout stage 2.
 
 ### Initial guess
 
 Stage 2's initial guess (`_alpha_initial_guess`) locates the alpha bump by subtracting the deadtime-corrected proton background from the sweep-averaged count rate:
 
-1. Reshape data into `(n_sweeps, n_bins)` via `_infer_sweep_layout`. Average the 5 sweeps: `count_avg`, `proton_bg_avg` (deadtime-corrected proton model per sweep, then averaged).
-2. Convert voltages to energies: $`E_{i} = k^* |V_{i}|`$ and form the residual $`\rho_{i} = \max(0,\thinspace  \overline{C_{i}} - 2\thinspace \overline{R_{i}^{p}})`$. The factor of 2 makes the alpha-bump finder less sensitive to the deep proton thermal tail leaking into the low-energy alpha bins.
-3. Call `get_alpha_peak_indices(residual, energies, proton_peak_index)` to return the alpha peak slice. The function walks from the proton peak toward higher energies (lower indices), past the gap where $`E_{i} < 1.5\thinspace E_{\text{proton-peak}}`$, until it finds a residual local minimum that bounds the alpha bump on the proton side; the high-energy side is bounded at $`E_{i} = 4\thinspace E_{\text{proton-peak}}`$.
-4. Require $`\geq 3`$ bins in the peak and at least one bin with positive residual. If either check fails, `FIT_ERROR` is set.
-5. Set $`T_{\alpha} = T_{p}`$. The alpha thermal width is fit by least squares in Stage 2; there is no Gaussian pre-fit on the residual.
-6. Density: compute a unit-density alpha forward model at $`\Delta v = 0`$ (using the proton bulk velocity as the alpha velocity seed), average across sweeps, and scale to match the mean residual at the peak:
+1. Reshape the chunk data to `(n_sweeps, n_bins)` (5 × 62 for the coarse-only alpha grid). Average across the 5 sweeps to obtain `count_avg`. Apply the deadtime factor to the per-sweep proton model and average the same way to obtain `proton_bg_avg`.
+2. Convert voltages to energies $`E_{i} = k^* |V_{i}|`$ and form the residual
    ```math
-   n_{\alpha,0} = \max\negthinspace \left(\frac{\overline{\rho_{\text{peak}}}}{\overline{R_{\text{peak}}^{\alpha,\text{unit}}}},\thinspace  10^{-3}\right)
+   \rho_{i} = \max\negthinspace \bigl(0,\thinspace  \overline{C_{i}} - 2\thinspace \overline{R_{i}^{p}}\bigr).
    ```
-7. Return $`(n_{\alpha,0}, T_{\alpha}, \Delta v = 0, \text{peak\_bin\_indices})`$. The optimizer starts with $`\Delta v = 0`$. The returned `peak_bin_indices` are used to subset the residual axis for Stage 2 (see above).
+   The factor of 2 keeps the deep proton thermal tail from being misidentified as part of the alpha bump in the low-energy alpha bins.
+3. Call `get_alpha_peak_indices(residual, energies, proton_peak_index)` to obtain a fixed 5-bin window centered on the alpha peak. The algorithm is detailed in [Locating the alpha-bump window](#locating-the-alpha-bump-window) below.
+4. Require at least one bin in the window to have a positive residual. If the entire window is zero (the proton background fully accounts for the observed counts), return `None` and the caller sets `FIT_ERROR`.
+5. Seed the alpha temperature with the proton temperature: $`T_{\alpha}^{(0)} = T_{p}^{\ast}`$. The alpha thermal width is fit by least squares in stage 2; there is no Gaussian pre-fit on the residual.
+6. Seed the alpha density by evaluating a unit-density alpha forward model at $`\Delta v = 0`$ (using $`\mathbf{v}_{p}^{\ast}`$ as the alpha velocity seed), averaging across sweeps, and scaling to match the mean residual on the peak window:
+   ```math
+   n_{\alpha}^{(0)} = \max\negthinspace \left(\frac{\overline{\rho_{\text{peak}}}}{\overline{R_{\text{peak}}^{\alpha,\text{unit}}}},\thinspace  10^{-3}\thinspace \text{cm}^{-3}\right).
+   ```
+7. Seed $`\Delta v^{(0)} = 0`$. The initial guess returns $`(n_{\alpha}^{(0)},\thinspace  T_{\alpha}^{(0)},\thinspace  0,\thinspace  \text{peak\_bin\_indices})`$; the peak bin indices are passed through to stage 2 to subset the residual axis.
 
-The figure below shows these steps on three real L2 spectra from `imap_swapi_l2_sci_20260101`. Top row: 5-sweep-averaged observed count rate (blue dots) vs the frozen proton model (orange), with the detected alpha peak region shaded green. Bottom row: residual (observed − proton model) at all bins (grey) and the peak bins (green circles).
+#### Locating the alpha-bump window
+
+`get_alpha_peak_indices(residual, energies, proton_peak_index)` returns a 5-bin slice that brackets the alpha peak on the coarse ESA grid. SWAPI's energy axis decreases with index, so higher energies sit at lower indices. The algorithm has three steps:
+
+1. **Set the proton-side boundary of the search.** Find the lowest-index bin whose energy is at or above $`1.5\thinspace E_{\text{proton-peak}}`$. Bins below that energy are still on the proton thermal tail and are excluded from the alpha search.
+2. **Find the floor of the inter-peak valley.** Starting at that boundary, walk toward higher energies (lower indices) until the residual first rises with energy — that is, until the first index $`i`$ satisfying $`\rho_{i} > \rho_{i+1}`$. This index marks the proton-side edge of the alpha bump.
+3. **Locate the alpha peak inside the bounded range.** Take $`\arg\max_{i}\rho_{i}`$ over bins whose energies fall in $`[E_{\text{floor}},\thinspace  4\thinspace E_{\text{proton-peak}}]`$, where $`E_{\text{floor}}`$ is the energy at the index from step 2. Return the 5 indices $`\{i_{\text{peak}} - 3,\thinspace  i_{\text{peak}} - 2,\thinspace  i_{\text{peak}} - 1,\thinspace  i_{\text{peak}},\thinspace  i_{\text{peak}} + 1\}`$ — three bins on the high-energy side, the peak bin, and one bin on the low-energy side.
+
+The function raises (and the caller sets `FIT_ERROR`) when:
+- the proton peak is at index 0, so no bins above it in energy remain to search;
+- no rising-residual transition is found above $`1.5\thinspace E_{\text{proton-peak}}`$ (the residual is monotonic in energy across the search range);
+- the alpha argmax lands within 3 bins of the high-energy edge of the array, leaving no room for the 5-bin window.
+
+The figure below shows these steps on three real L2 spectra from `imap_swapi_l2_sci_20260101`. Top row: 5-sweep-averaged observed count rate (blue dots) vs. the proton model held fixed at its stage-1 values (orange), with the detected alpha peak window shaded green. Bottom row: the residual (observed − proton model) at all bins (grey) and at the peak bins (green circles).
 
 ![Alpha peak-finding on real L2 spectra](figures/alpha_peak_finding.svg)
 
 *Generated by `docs/swapi/figure_src/plot_alpha_peak_finding.py`.*
+
+### Least-squares fit
+
+Stage 2 uses `scipy.optimize.least_squares` with `method='lm'` over the 3-parameter state vector $`\mathbf{x}_{\alpha} = (\log n_{\alpha},\thinspace  \log T_{\alpha},\thinspace  \Delta v)`$, seeded from the initial guess. The residual axis covers each of the 5 sweeps at each of the 5 peak-window bins:
+```math
+r_{i,s}(\mathbf{x}_{\alpha}) = C_{i,s}^{\text{observed}}(\mathbf{x}_{\alpha}) - C_{i,s}, \qquad i \in \text{peak window},\quad s \in \{1, ..., 5\},
+```
+where $`C^{\text{observed}}`$ is the combined deadtime-corrected proton+alpha rate from the [Two-stage strategy](#two-stage-strategy) section. Bins whose measured count rate is exactly zero are dropped from the residual axis. Residuals are unweighted, for the same reason as in the proton fit. The optimizer is given the analytic Jacobian derived in the next subsection.
 
 ### Analytic Jacobian
 
@@ -613,7 +641,7 @@ The optimizer uses an analytic 3-column Jacobian of the residuals in $`(\log n_{
 
 1. Because $`\mathbf{v}_{\alpha} = \mathbf{v}_{p}^{\ast} + \Delta v\thinspace \hat{\mathbf{B}}`$ with $`\mathbf{v}_{p}^{\ast}`$ held fixed,
    ```math
-   \frac{\partial C_{\alpha}}{\partial (\Delta v)} = \nabla_{\mathbf{v}_{\alpha}} R_{\alpha} \cdot \hat{\mathbf{B}} = \sum_{c \in \{R, T, N\}} \frac{\partial C_{\alpha}}{\partial v_{\alpha, c}}\thinspace \hat{B}_{c}.
+   \frac{\partial C_{\alpha}}{\partial (\Delta v)} = \nabla_{\mathbf{v}_{\alpha}} C_{\alpha} \cdot \hat{\mathbf{B}} = \sum_{c \in \{R, T, N\}} \frac{\partial C_{\alpha}}{\partial v_{\alpha, c}}\thinspace \hat{B}_{c}.
    ```
    The density and temperature columns are unchanged.
 
@@ -637,8 +665,8 @@ This ignores the effect of proton-parameter uncertainty on Stage 2 residuals, so
 
 ### Bad fit detection
 
-For alphas, we use the $R^2 < 0.9$ check to set `BAD_FIT`.
-The points used to calculate $R^2$ are masked by the same mask used to fit the alphas.
+A fit is flagged `BAD_FIT` when $`R^{2} < 0.9`$ over the peak-window bins used in the residual.
+When no zero-count bins were dropped from the residual axis, $`R^{2}`$ is computed on the per-bin residual and count rate averaged across the 5 sweeps (same rationale as the [proton $`R^{2}`$](#failed-fits) — single sweeps look noisier than the underlying fit accuracy due to solar-wind temporal variation and spin variation). When some bins were dropped, $`R^{2}`$ is computed on the flat residual axis instead.
 
 ## Quality flags
 

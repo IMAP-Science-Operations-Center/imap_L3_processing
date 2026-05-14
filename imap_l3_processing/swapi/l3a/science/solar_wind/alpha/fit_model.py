@@ -12,16 +12,15 @@ from imap_l3_processing.constants import (
     PROTON_MASS_KG,
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
-    ProtonSolarWindFitResult,
+from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.initial_guess import (
+    calculate_initial_guess,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
-    model_solar_wind_ideal_coincidence_rates,
-)
-from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     SolarWindFitContext,
     build_solar_wind_fit_context,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
+    model_solar_wind_ideal_coincidence_rates,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     LOG_DENSITY_IDX,
@@ -29,23 +28,21 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     SolarWindParams,
     VELOCITY_SLICE,
 )
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
+    ProtonSolarWindFitResult,
+)
 from imap_l3_processing.swapi.l3a.science.solar_wind.uncertainties import (
     compute_hc3_parameter_covariance,
     make_correlated_velocity,
     r_squared,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.utils import (
-    get_alpha_peak_indices,
-)
-from imap_l3_processing.swapi.constants import (
-    SWAPI_K_FACTOR,
-)
-from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
+from imap_l3_processing.swapi.response.deadtime import deadtime_factor
+from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 
 
 @dataclass
-class AlphaSolarWindMoments:
+class AlphaSolarWindFitResult:
     density: UFloat  # cm^-3
     temperature: UFloat  # K
     bulk_velocity_rtn: tuple[UFloat, UFloat, UFloat]  # km/s, [R, T, N]; correlated
@@ -53,17 +50,15 @@ class AlphaSolarWindMoments:
     bad_fit_flag: int
 
     def bulk_velocity_rtn_nominal(self) -> ndarray:
-        """Nominal RTN velocity vector (km/s); shape (3,)."""
         return np.array([v.nominal_value for v in self.bulk_velocity_rtn])
 
     def bulk_velocity_rtn_covariance(self) -> ndarray:
-        """3×3 RTN velocity covariance (km²/s²); = Σ_vp + σ_Δv² B̂B̂ᵀ."""
         return np.array(covariance_matrix(self.bulk_velocity_rtn))
 
 
-def _nan_alpha_moments(flag: int) -> AlphaSolarWindMoments:
+def _nan_alpha_fit_result(flag: int) -> AlphaSolarWindFitResult:
     nan = ufloat(np.nan, np.nan)
-    return AlphaSolarWindMoments(
+    return AlphaSolarWindFitResult(
         density=nan,
         temperature=nan,
         bulk_velocity_rtn=(nan, nan, nan),
@@ -89,12 +84,14 @@ class _AlphaEvaluator:
         self._last_jacobian: Optional[ndarray] = None
 
     def _eval(self, x: ndarray) -> None:
-        n_a = float(np.exp(x[0]))
-        T_a = float(np.exp(x[1]))
+        alpha_density = float(np.exp(x[0]))
+        alpha_temperature = float(np.exp(x[1]))
         delta_v = float(x[2])
-        v_a_rtn = self.proton_bulk + delta_v * self.magnetic_field_direction
+        alpha_bulk_velocity_rtn = self.proton_bulk + delta_v * self.magnetic_field_direction
         alpha_true, jacobian_alpha_5d = model_solar_wind_ideal_coincidence_rates(
-            SolarWindParams(n_a, v_a_rtn, T_a, self.alpha_ctx.mass_kg),
+            SolarWindParams(
+                alpha_density, alpha_bulk_velocity_rtn, alpha_temperature, self.alpha_ctx.mass_kg
+            ),
             self.alpha_ctx,
         )
         total_true = self.proton_true_rate + alpha_true
@@ -126,7 +123,7 @@ class _AlphaEvaluator:
         return self._last_jacobian
 
 
-def fit_solar_wind_alpha_moments(
+def fit_solar_wind_alpha_model(
     count_rate: ndarray,
     esa_voltage: ndarray,
     measurement_time: ndarray,
@@ -136,18 +133,16 @@ def fit_solar_wind_alpha_moments(
     alpha_effective_area_scale: float,
     proton_effective_area_scale: float,
     rotation_matrices: Optional[ndarray] = None,
-) -> AlphaSolarWindMoments:
-    proton_bad_fit_flag = int(proton_moments.bad_fit_flag)
+) -> AlphaSolarWindFitResult:
+    bad_fit_flag = int(proton_moments.bad_fit_flag)
     proton_bulk_rtn = proton_moments.bulk_velocity_rtn_nominal()
 
     if not np.all(np.isfinite(proton_bulk_rtn)):
-        return _nan_alpha_moments(proton_bad_fit_flag)
-
-    bad_fit_flag = proton_bad_fit_flag
+        return _nan_alpha_fit_result(bad_fit_flag)
 
     magnetic_field_direction = np.asarray(magnetic_field_direction, dtype=float)
     if not np.all(np.isfinite(magnetic_field_direction)):
-        return _nan_alpha_moments(bad_fit_flag)
+        return _nan_alpha_fit_result(bad_fit_flag)
 
     if rotation_matrices is None:
         from imap_l3_processing.swapi.l3a.utils import get_swapi_geometry
@@ -183,18 +178,16 @@ def fit_solar_wind_alpha_moments(
         proton_ctx,
     )
 
-    initial_guess = _alpha_initial_guess(
+    seed = calculate_initial_guess(
+        alpha_ctx=alpha_ctx,
         proton_true_rate=proton_true_rate,
         proton_temperature=proton_moments.temperature.nominal_value,
-        alpha_ctx=alpha_ctx,
         proton_bulk_velocity_rtn=proton_bulk_rtn,
-        magnetic_field_direction=magnetic_field_direction,
     )
-    if initial_guess is None:
-        return _nan_alpha_moments(bad_fit_flag | SwapiL3Flags.FIT_ERROR)
+    if seed is None:
+        return _nan_alpha_fit_result(bad_fit_flag | SwapiL3Flags.FIT_ERROR)
 
-    n0, T0, dv0, peak_bin_idx = initial_guess
-    proton_bulk = proton_bulk_rtn
+    alpha_density_seed, alpha_temperature_seed, delta_v_seed, peak_bin_idx = seed
 
     n_sweeps, n_bins = alpha_ctx.count_rate.shape
     count_rate_flat = count_rate.ravel()
@@ -207,43 +200,65 @@ def fit_solar_wind_alpha_moments(
     alpha_ctx_peak = alpha_ctx.subset(peak_flat_idx)
 
     evaluator = _AlphaEvaluator(
-        proton_bulk=proton_bulk,
+        proton_bulk=proton_bulk_rtn,
         magnetic_field_direction=magnetic_field_direction,
         proton_true_rate=proton_true_rate_peak,
         alpha_ctx=alpha_ctx_peak,
     )
 
-    x0 = np.array([np.log(max(n0, 1e-3)), np.log(max(T0, 1e-3)), dv0])
+    x0 = np.array(
+        [
+            np.log(max(alpha_density_seed, 1e-3)),
+            np.log(max(alpha_temperature_seed, 1e-3)),
+            delta_v_seed,
+        ]
+    )
     result = scipy.optimize.least_squares(
         evaluator.residuals, x0, jac=evaluator.jacobian, method="lm"
     )
 
-    n_a_fit = float(np.exp(result.x[0]))
-    T_a_fit = float(np.exp(result.x[1]))
-    dv_fit = float(result.x[2])
-    bulk_velocity_rtn = proton_bulk + dv_fit * magnetic_field_direction
+    return _construct_alpha_fit_result(
+        result=result,
+        alpha_ctx_peak=alpha_ctx_peak,
+        n_peak_bins=peak_bin_idx.size,
+        n_sweeps=n_sweeps,
+        proton_moments=proton_moments,
+        proton_bulk=proton_bulk_rtn,
+        magnetic_field_direction=magnetic_field_direction,
+        bad_fit_flag=bad_fit_flag,
+    )
 
+
+def _construct_alpha_fit_result(
+    result: scipy.optimize.OptimizeResult,
+    alpha_ctx_peak: SolarWindFitContext,
+    n_peak_bins: int,
+    n_sweeps: int,
+    proton_moments: ProtonSolarWindFitResult,
+    proton_bulk: ndarray,
+    magnetic_field_direction: ndarray,
+    bad_fit_flag: int,
+) -> AlphaSolarWindFitResult:
     if not result.success:
-        return _nan_alpha_moments(bad_fit_flag | SwapiL3Flags.FIT_ERROR)
+        return _nan_alpha_fit_result(bad_fit_flag | SwapiL3Flags.FIT_ERROR)
 
-    n_peak_bins = peak_bin_idx.size
-    if result.fun.size == n_sweeps * n_peak_bins:
-        averaged_count_rate = np.nanmean(
-            alpha_ctx_peak.count_rate.reshape(n_sweeps, n_peak_bins), axis=0
-        )
-        averaged_residual = np.nanmean(
-            result.fun.reshape(n_sweeps, n_peak_bins), axis=0
-        )
-        fit_r_squared = r_squared(averaged_residual, averaged_count_rate)
-    else:
-        fit_r_squared = r_squared(result.fun, alpha_ctx_peak.count_rate)
+    alpha_density_fit = float(np.exp(result.x[0]))
+    alpha_temperature_fit = float(np.exp(result.x[1]))
+    delta_v_fit = float(result.x[2])
+    bulk_velocity_rtn = proton_bulk + delta_v_fit * magnetic_field_direction
 
+    fit_r_squared = _alpha_r_squared(
+        residuals=result.fun,
+        count_rate=alpha_ctx_peak.count_rate,
+        n_sweeps=n_sweeps,
+        n_peak_bins=n_peak_bins,
+    )
     if fit_r_squared < 0.9:
-        return _nan_alpha_moments(bad_fit_flag | SwapiL3Flags.BAD_FIT)
+        return _nan_alpha_fit_result(bad_fit_flag | SwapiL3Flags.BAD_FIT)
 
     cov_x = compute_hc3_parameter_covariance(result.jac, result.fun)
-    density_sigma = float(n_a_fit * np.sqrt(max(cov_x[0, 0], 0.0)))
-    temperature_sigma = float(T_a_fit * np.sqrt(max(cov_x[1, 1], 0.0)))
+    density_sigma = float(alpha_density_fit * np.sqrt(max(cov_x[0, 0], 0.0)))
+    temperature_sigma = float(alpha_temperature_fit * np.sqrt(max(cov_x[1, 1], 0.0)))
     delta_v_sigma = float(np.sqrt(max(cov_x[2, 2], 0.0)))
 
     sigma_dv2 = max(cov_x[2, 2], 0.0)
@@ -252,64 +267,26 @@ def fit_solar_wind_alpha_moments(
         + sigma_dv2 * np.outer(magnetic_field_direction, magnetic_field_direction)
     )
 
-    return AlphaSolarWindMoments(
-        density=ufloat(n_a_fit, density_sigma),
-        temperature=ufloat(T_a_fit, temperature_sigma),
+    return AlphaSolarWindFitResult(
+        density=ufloat(alpha_density_fit, density_sigma),
+        temperature=ufloat(alpha_temperature_fit, temperature_sigma),
         bulk_velocity_rtn=make_correlated_velocity(
             bulk_velocity_rtn, velocity_covariance_rtn
         ),
-        delta_v=ufloat(dv_fit, delta_v_sigma),
+        delta_v=ufloat(delta_v_fit, delta_v_sigma),
         bad_fit_flag=int(bad_fit_flag),
     )
 
 
-def _alpha_initial_guess(
-    proton_true_rate: ndarray,
-    proton_temperature: float,
-    alpha_ctx: SolarWindFitContext,
-    proton_bulk_velocity_rtn: ndarray,
-    magnetic_field_direction: ndarray,
-) -> Optional[tuple]:
-    if alpha_ctx.count_rate.size == 0 or alpha_ctx.count_rate.ndim != 2:
-        return None
-
-    n_sweeps, n_bins = alpha_ctx.count_rate.shape
-    counts_per_sweep = alpha_ctx.count_rate
-    voltage_per_sweep = alpha_ctx.esa_voltage[0]
-    proton_true_per_sweep = proton_true_rate.reshape(n_sweeps, n_bins)
-    proton_obs_per_sweep = proton_true_per_sweep * deadtime_factor(
-        proton_true_per_sweep
-    )
-
-    count_avg = counts_per_sweep.mean(axis=0)
-    proton_bg_avg = proton_obs_per_sweep.mean(axis=0)
-    energies_per_sweep = SWAPI_K_FACTOR * np.abs(voltage_per_sweep)
-    proton_peak_index = np.argmax(proton_bg_avg)
-    residual = np.maximum(0, count_avg - proton_bg_avg * 2)
-
-    try:
-        peak = get_alpha_peak_indices(residual, energies_per_sweep, proton_peak_index)
-    except Exception:
-        return None
-
-    peak_idx = np.arange(peak.start, peak.stop)
-    if len(peak_idx) < 3:
-        return None
-    residual_peak = np.maximum(residual[peak_idx], 0.0)
-    if not np.any(residual_peak > 0):
-        return None
-
-    T_alpha = proton_temperature
-
-    unit_alpha, _ = model_solar_wind_ideal_coincidence_rates(
-        SolarWindParams(1.0, proton_bulk_velocity_rtn, T_alpha, alpha_ctx.mass_kg),
-        alpha_ctx,
-    )
-    unit_alpha_per_sweep = unit_alpha.reshape(n_sweeps, n_bins).mean(axis=0)
-    denom = float(np.nanmean(unit_alpha_per_sweep[peak_idx]))
-    if denom <= 0 or not np.isfinite(denom):
-        return None
-    n_alpha = float(np.nanmean(residual_peak)) / denom
-    n_alpha = max(n_alpha, 1e-3)
-
-    return (n_alpha, T_alpha, 0.0, peak_idx)
+def _alpha_r_squared(
+    residuals: ndarray, count_rate: ndarray, n_sweeps: int, n_peak_bins: int
+) -> float:
+    if residuals.size == n_sweeps * n_peak_bins:
+        averaged_count_rate = np.nanmean(
+            count_rate.reshape(n_sweeps, n_peak_bins), axis=0
+        )
+        averaged_residual = np.nanmean(
+            residuals.reshape(n_sweeps, n_peak_bins), axis=0
+        )
+        return r_squared(averaged_residual, averaged_count_rate)
+    return r_squared(residuals, count_rate)

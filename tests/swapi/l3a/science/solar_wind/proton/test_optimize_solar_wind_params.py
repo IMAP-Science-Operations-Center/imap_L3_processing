@@ -11,7 +11,7 @@ from imap_l3_processing.constants import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.optimizer import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
     OptimizeSolarWindParamsResult,
     optimize_solar_wind_params,
 )
@@ -177,7 +177,7 @@ class TestOptimizerLeastSquaresKwargs(unittest.TestCase):
         ctx = _build_proton_fit_context(count_rate=count_rate)
 
         with patch(
-            "imap_l3_processing.swapi.l3a.science.solar_wind.optimizer.scipy.optimize.least_squares"
+            "imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model.scipy.optimize.least_squares"
         ) as mock_least_squares:
             mock_least_squares.return_value = scipy.optimize.OptimizeResult(
                 x=true_params.to_vector(),

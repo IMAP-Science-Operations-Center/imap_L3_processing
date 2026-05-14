@@ -37,8 +37,8 @@ from imap_l3_processing.constants import (
     PROTON_MASS_KG,
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.calculate_alpha_solar_wind_moments import (
-    fit_solar_wind_alpha_moments,
+from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_model import (
+    fit_solar_wind_alpha_model,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
@@ -51,7 +51,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
-from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.utils import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.initial_guess import (
     esa_voltage_to_alpha_speed,
     get_alpha_peak_indices,
 )
@@ -125,7 +125,7 @@ def _plot_case(axes_top, axes_bot, swapi_response, fixture, title):
     proton_bg_avg = proton_obs_per_sweep.mean(axis=0)
     count_avg = count_rates.mean(axis=0)
 
-    alpha_moments = fit_solar_wind_alpha_moments(
+    alpha_moments = fit_solar_wind_alpha_model(
         count_rate=cr_flat,
         esa_voltage=esa_flat,
         measurement_time=np.zeros(len(esa_flat)),

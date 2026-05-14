@@ -50,6 +50,8 @@ class TestUtils(TestCase):
         epoch = np.array([1, 2, 3])
 
         data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata, epoch=epoch,
+                                                 alpha_sw_speed=np.array([450.0, 460.0, 470.0]),
+                                                 alpha_sw_speed_uncert=np.array([1.0, 1.0, 1.0]),
                                                  alpha_sw_density=np.array([5, 5, 5]),
                                                  alpha_sw_density_uncert=np.array([0.1, 0.1, 0.1]),
                                                  alpha_sw_temperature=np.array([4, 3, 5]),
@@ -201,6 +203,8 @@ class TestUtils(TestCase):
 
         data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata,
                                                  epoch=epoch,
+                                                 alpha_sw_speed=np.array([450.0, 460.0, 470.0]),
+                                                 alpha_sw_speed_uncert=np.array([1.0, 1.0, 1.0]),
                                                  alpha_sw_density=np.array([5, 5, 5]),
                                                  alpha_sw_density_uncert=np.array([0.1, 0.1, 0.1]),
                                                  alpha_sw_temperature=np.array([4, 3, 5]),
@@ -238,6 +242,8 @@ class TestUtils(TestCase):
 
         data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata,
                                                  epoch=epoch,
+                                                 alpha_sw_speed=np.array([450.0, 460.0, 470.0]),
+                                                 alpha_sw_speed_uncert=np.array([1.0, 1.0, 1.0]),
                                                  alpha_sw_density=np.array([5, 5, 5]),
                                                  alpha_sw_density_uncert=np.array([0.1, 0.1, 0.1]),
                                                  alpha_sw_temperature=np.array([4, 3, 5]),
