@@ -13,6 +13,7 @@ from imap_l3_processing.glows.l3bc.l3bc_toolkit import l3b_CarringtonIonRate as 
 from imap_l3_processing.glows.l3bc.l3bc_toolkit import l3b_DailyIonRate as dir
 from imap_l3_processing.glows.l3bc.l3bc_toolkit import l3c_CarringtonSolarWind as csw
 from imap_l3_processing.glows.l3bc.l3bc_toolkit import l3c_EclipticSolarWind as esw
+from imap_l3_processing.glows.quality_flags import GlowsL3Flags
 
 
 def generate_l3bc(dependencies: GlowsL3BCDependencies):
@@ -81,4 +82,11 @@ def generate_l3bc(dependencies: GlowsL3BCDependencies):
     solar_wind_Carr.calculate_sw_profile()
     l3c_dat = solar_wind_Carr.get_dict()
     l3b_dat['header']['l3a_input_files_name'] = l3a_used
+
+    quality_flags = int(GlowsL3Flags.NONE)
+    if bool(sw_ecliptic.used_nominal_alpha_per_cr[idx_current_CR]):
+        quality_flags |= int(GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO)
+    l3b_dat['glows_flags'] = quality_flags
+    l3c_dat['glows_flags'] = quality_flags
+
     return l3b_dat, l3c_dat

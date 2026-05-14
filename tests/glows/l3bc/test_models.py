@@ -174,10 +174,11 @@ class TestModels(CdfModelTestCase):
                                       lat_grid_label=sentinel.lat_grid_label,
                                       uv_anisotropy_flag=sentinel.uv_anisotropy_flag,
                                       used_l3a=sentinel.used_l3a,
+                                      glows_flags=sentinel.glows_flags,
                                       )
 
         variables = data.to_data_product_variables()
-        self.assertEqual(16, len(variables))
+        self.assertEqual(17, len(variables))
 
         variables = iter(variables)
         self.assert_variable_attributes(next(variables), sentinel.epoch, "epoch")
@@ -196,6 +197,7 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(next(variables), sentinel.lat_grid_label, "lat_grid_label")
         self.assert_variable_attributes(next(variables), sentinel.uv_anisotropy_flag, "uv_anisotropy_flag")
         self.assert_variable_attributes(next(variables), sentinel.used_l3a, "used_l3a")
+        self.assert_variable_attributes(next(variables), sentinel.glows_flags, "glows_flags")
 
     def test_l3b_from_instrument_team_dictionary(self):
         glows_instrument_team_data_path = get_test_instrument_team_data_path('glows')
@@ -247,6 +249,7 @@ class TestModels(CdfModelTestCase):
             "imap_glows_l3a_20100101000000_orbX_modX_p_v00.json",
             "imap_glows_l3a_20100102000000_orbX_modX_p_v00.json",
             "imap_glows_l3a_20100103000000_orbX_modX_p_v00.json"]]))
+        np.testing.assert_equal([instrument_team_l3b_dict["glows_flags"]], result.glows_flags)
 
     def test_l3c_to_data_product_variables(self):
         data = GlowsL3CSolarWind(input_metadata=sentinel.input_metadata,
@@ -262,10 +265,11 @@ class TestModels(CdfModelTestCase):
                                  alpha_abundance_ecliptic=sentinel.alpha_abundance_ecliptic,
                                  plasma_speed_profile=sentinel.plasma_speed_profile,
                                  proton_density_profile=sentinel.proton_density_profile,
+                                 glows_flags=sentinel.glows_flags,
                                  )
 
         variables = data.to_data_product_variables()
-        self.assertEqual(12, len(variables))
+        self.assertEqual(13, len(variables))
 
         variables = iter(variables)
         self.assert_variable_attributes(next(variables), sentinel.epoch, "epoch",
@@ -291,6 +295,7 @@ class TestModels(CdfModelTestCase):
                                         expected_data_type=pycdf.const.CDF_FLOAT)
         self.assert_variable_attributes(next(variables), sentinel.proton_density_profile, "proton_density_profile",
                                         expected_data_type=pycdf.const.CDF_FLOAT)
+        self.assert_variable_attributes(next(variables), sentinel.glows_flags, "glows_flags")
 
     def test_l3c_from_instrument_team_dictionary(self):
         glows_instrument_team_data_path = get_test_instrument_team_data_path('glows')
@@ -321,6 +326,7 @@ class TestModels(CdfModelTestCase):
         self.assertEqual([model["solar_wind_ecliptic"]["plasma_speed"]], result.plasma_speed_ecliptic)
         self.assertEqual([model["solar_wind_ecliptic"]["proton_density"]], result.proton_density_ecliptic)
         self.assertEqual([model["solar_wind_ecliptic"]["alpha_abundance"]], result.alpha_abundance_ecliptic)
+        np.testing.assert_equal([model["glows_flags"]], result.glows_flags)
 
         self.assertEqual([
             "imap_glows_WawHelioIonMP_v002.json",

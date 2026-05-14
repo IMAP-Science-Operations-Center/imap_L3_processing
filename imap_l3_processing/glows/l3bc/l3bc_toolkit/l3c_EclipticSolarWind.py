@@ -64,6 +64,7 @@ class EclipticSolarWind():
         self.mean_speed = None
         self.mean_proton_density = None
         self.mean_alpha_abundance = None
+        self.used_nominal_alpha_per_cr = None
         self.invariant = None
 
     def calculate_invariant(self, ext_dependencies):
@@ -118,13 +119,16 @@ class EclipticSolarWind():
 
         proton_dens_carr = fun.process_omni_param(omni_raw, cr_grid, param_settings['density'])
         plasma_speed_carr = fun.process_omni_param(omni_raw, cr_grid, param_settings['speed'])
-        p_alpha_carr = fun.process_omni_param(omni_raw, cr_grid, param_settings['alpha'])
+        p_alpha_carr, used_nominal_alpha_per_cr = fun.process_omni_alpha_param(
+            omni_raw, cr_grid, param_settings['alpha']
+        )
 
         self.external_dependeciens = [ext_dependencies['omni_raw_data']]
         self.CR_grid = cr_grid
         self.mean_speed = plasma_speed_carr
         self.mean_proton_density = proton_dens_carr
         self.mean_alpha_abundance = p_alpha_carr
+        self.used_nominal_alpha_per_cr = used_nominal_alpha_per_cr
 
         return cr_grid, plasma_speed_carr, proton_dens_carr, p_alpha_carr
 
