@@ -96,7 +96,8 @@ class TestL3dUtils(unittest.TestCase):
                             1.0475524e-07, 1.0475524e-07, 1.0475524e-07, 1.0475524e-07,
                             1.0475524e-07, 1.0475524e-07, 1.0475524e-07]
             },
-            "uv_anisotropy_flag": 1000
+            "uv_anisotropy_flag": 1000,
+            "glows_flags": 4,
         }
 
         json_file = MagicMock()
@@ -137,6 +138,9 @@ class TestL3dUtils(unittest.TestCase):
 
         self.assertIsInstance(actual["uv_anisotropy_flag"], int)
         self.assertEqual(expected["uv_anisotropy_flag"], actual["uv_anisotropy_flag"])
+
+        self.assertIsInstance(actual["glows_flags"], int)
+        self.assertEqual(expected["glows_flags"], actual["glows_flags"])
 
     def test_convert_json_l3d_to_data_product(self):
         input_metadata = Mock(spec=InputMetadata)
@@ -253,6 +257,10 @@ class TestL3dUtils(unittest.TestCase):
         self.assertEqual(846, len(l3d_data_product.proton_density_flag))
         self.assertEqual(-1.0, l3d_data_product.proton_density_flag[0])
         np.testing.assert_allclose(10001.0, l3d_data_product.proton_density_flag[-1], rtol=1e-6)
+
+        self.assertEqual(846, len(l3d_data_product.glows_flags))
+        self.assertEqual(0, int(l3d_data_product.glows_flags[0]))
+        self.assertEqual(0, int(l3d_data_product.glows_flags[-1]))
 
     def test_get_parent_file_names_from_l3d_json(self):
         path_to_l3d_output_folder = get_test_data_path("glows/science/data_l3d")

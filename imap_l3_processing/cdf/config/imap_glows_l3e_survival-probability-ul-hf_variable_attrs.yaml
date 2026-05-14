@@ -239,3 +239,17 @@ pixel_latitude:
   UNITS: degrees
   VALIDMIN: -90
   VALIDMAX: 90
+glows_flags:
+  NAME: glows_flags
+  DATA_TYPE: CDF_UINT2
+  CATDESC: Quality flags for GLOWS L3e Ultra HF
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: Quality Flags for GLOWS L3e Ultra HF
+  FORMAT: I5
+  UNITS: ' '
+  VALIDMIN: 0
+  VALIDMAX: 65534
+  FILLVAL: 65535
+  LABLAXIS: Quality flags for GLOWS L3e Ultra HF

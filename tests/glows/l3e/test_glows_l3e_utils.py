@@ -5,12 +5,12 @@ from pathlib import Path
 from unittest.mock import patch, Mock, call, sentinel
 
 import numpy as np
-from spacepy.pycdf import CDF
+from spacepy.pycdf import CDF, const
 
 from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, \
     determine_l3e_files_to_produce, find_first_updated_cr, get_lo_pivot_angles, \
-    get_lo_pivot_angle_from_l1b_file, LoPivotAngle
+    get_lo_pivot_angle_from_l1b_file, LoPivotAngle, compute_glows_flags_for_window
 from tests.test_helpers import get_test_data_path, create_mock_query_results
 
 
@@ -158,6 +158,7 @@ class TestGlowsL3EUtils(unittest.TestCase):
             'proton_density_flag': np.arange(num_crs),
             'uv_anisotropy': np.arange(0, 20).reshape((num_crs, 2)),
             'uv_anisotropy_flag': np.arange(num_crs),
+            'glows_flags': np.arange(num_crs),
         }
 
         new_lyman_alpha = np.arange(num_crs)
@@ -184,6 +185,9 @@ class TestGlowsL3EUtils(unittest.TestCase):
         new_uv_anisotropy = np.arange(0, 20).reshape((num_crs, 2))
         new_uv_anisotropy[8, :] = 10
 
+        new_glows_flags = np.arange(num_crs)
+        new_glows_flags[9] = 10
+
         cases = [
             ('cr_grid', np.append(old_l3d['cr_grid'], 10.5), 10),
             ('lyman_alpha', new_lyman_alpha, 1),
@@ -195,6 +199,7 @@ class TestGlowsL3EUtils(unittest.TestCase):
             ('plasma_speed', new_plasma_speed, 6),
             ('proton_density', new_proton_density, 7),
             ('uv_anisotropy', new_uv_anisotropy, 8),
+            ('glows_flags', new_glows_flags, 9),
             ('no_change', None, None)
         ]
 
@@ -258,6 +263,37 @@ class TestGlowsL3EUtils(unittest.TestCase):
                         cdf["epoch"] = epochs
                         cdf["pcc_coarse_pot_pri"] = pivot_angles
                     actual = get_lo_pivot_angle_from_l1b_file(cdf_path)
+                    self.assertEqual(expected, actual)
+
+    def test_compute_glows_flags_for_window(self):
+        epochs = [
+            datetime(2025, 5, 1, 0, 0),
+            datetime(2025, 5, 1, 12, 0),
+            datetime(2025, 5, 2, 0, 0),
+            datetime(2025, 5, 2, 12, 0),
+            datetime(2025, 5, 3, 0, 0),
+        ]
+        flags = [1, 4, 8, 16, 2]
+
+        cases = [
+            ("ORs multiple rows inside window", datetime(2025, 5, 1, 6, 0), datetime(2025, 5, 2, 18, 0), 28),
+            ("excludes rows before window", datetime(2025, 5, 1, 6, 0), datetime(2025, 5, 1, 18, 0), 4),
+            ("excludes rows after window", datetime(2025, 5, 1, 18, 0), datetime(2025, 5, 2, 6, 0), 8),
+            ("includes boundaries inclusively", datetime(2025, 5, 1, 0, 0), datetime(2025, 5, 3, 0, 0), 31),
+            ("returns zero when no rows in window", datetime(2025, 5, 5, 0, 0), datetime(2025, 5, 6, 0, 0), 0),
+        ]
+
+        for name, window_start, window_end, expected in cases:
+            with self.subTest(name):
+                with tempfile.TemporaryDirectory() as tmp_dir:
+                    cdf_path = Path(tmp_dir, "l3d.cdf")
+                    with CDF(str(cdf_path), create=True) as cdf:
+                        cdf["epoch"] = epochs
+                        cdf.new("glows_flags", data=flags, type=const.CDF_UINT2, recVary=True)
+
+                    actual = compute_glows_flags_for_window(cdf_path, window_start, window_end)
+
+                    self.assertIsInstance(actual, int)
                     self.assertEqual(expected, actual)
 
     @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.get_lo_pivot_angle_from_l1b_file')

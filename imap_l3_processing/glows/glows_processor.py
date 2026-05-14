@@ -38,7 +38,8 @@ from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializer, GlowsL3EInitializerOutput
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
-from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, get_lo_pivot_angles
+from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, get_lo_pivot_angles, \
+    compute_glows_flags_for_window
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
@@ -261,7 +262,8 @@ def process_l3e_lo(
         repointing_start: datetime,
         epoch_delta: timedelta,
         elongation_value: float,
-        version: int
+        version: int,
+        glows_flags: int,
 ) -> list[Path]:
     repointing_midpoint = repointing_start + epoch_delta
     l3e_args = determine_call_args_for_l3e_executable(repointing_start, repointing_midpoint, float(elongation_value))
@@ -289,6 +291,7 @@ def process_l3e_lo(
                                                                  repointing_midpoint, elongation_value, l3e_args)
 
     lo_data.parent_file_names = parent_file_names
+    lo_data.glows_flags = np.array([glows_flags], dtype=np.uint16)
 
     lo_cdf = save_data(lo_data)
 
@@ -307,7 +310,7 @@ def process_l3e_lo(
 
 
 def process_l3e_ul_sf(parent_file_names: list[str], repointing: int, repointing_start: datetime, epoch_delta: timedelta,
-                      version: int) -> list[Path]:
+                      version: int, glows_flags: int) -> list[Path]:
     repointing_midpoint = repointing_start + epoch_delta
     call_args_object = determine_call_args_for_l3e_executable(repointing_start, repointing_midpoint, 30)
     call_args = call_args_object.to_argument_list()
@@ -331,6 +334,7 @@ def process_l3e_ul_sf(parent_file_names: list[str], repointing: int, repointing_
                                                                     repointing_midpoint, call_args_object)
 
     ul_data.parent_file_names = parent_file_names
+    ul_data.glows_flags = np.array([glows_flags], dtype=np.uint16)
 
     ul_cdf = save_data(ul_data)
 
@@ -350,7 +354,7 @@ def process_l3e_ul_sf(parent_file_names: list[str], repointing: int, repointing_
 
 
 def process_l3e_ul_hf(parent_file_names: list[str], repointing: int, repointing_start: datetime, epoch_delta: timedelta,
-                      version: int) -> list[Path]:
+                      version: int, glows_flags: int) -> list[Path]:
     repointing_midpoint = repointing_start + epoch_delta
     call_args_object = determine_call_args_for_l3e_executable(repointing_start, repointing_midpoint, 30)
 
@@ -379,6 +383,7 @@ def process_l3e_ul_hf(parent_file_names: list[str], repointing: int, repointing_
                                                                     repointing_midpoint, call_args_object)
 
     ul_data.parent_file_names = parent_file_names
+    ul_data.glows_flags = np.array([glows_flags], dtype=np.uint16)
 
     ul_cdf = save_data(ul_data)
 
@@ -396,7 +401,7 @@ def process_l3e_ul_hf(parent_file_names: list[str], repointing: int, repointing_
 
     return [ul_cdf, new_dat_path]
 
-def process_l3e_hi(parent_file_names: list[str], repointing: int, repointing_start: datetime, epoch_delta: timedelta, elongation: int, version: int) -> list[Path]:
+def process_l3e_hi(parent_file_names: list[str], repointing: int, repointing_start: datetime, epoch_delta: timedelta, elongation: int, version: int, glows_flags: int) -> list[Path]:
     repointing_midpoint = repointing_start + epoch_delta
     l3e_hi_args = determine_call_args_for_l3e_executable(repointing_start, repointing_midpoint, elongation)
     call_args = l3e_hi_args.to_argument_list()
@@ -418,6 +423,7 @@ def process_l3e_hi(parent_file_names: list[str], repointing: int, repointing_sta
         l3e_hi_args
     )
     hi_data.parent_file_names = parent_file_names
+    hi_data.glows_flags = np.array([glows_flags], dtype=np.uint16)
 
     hi_cdf = save_data(hi_data)
 
@@ -442,6 +448,7 @@ def process_l3e(initializer_data: GlowsL3EInitializerOutput):
         with SwallowExceptionAndLog(f"Exception encountered when processing L3e for repointing {repointing}"):
             start_repointing, end_repointing = get_pointing_date_range(repointing)
             epoch_delta: timedelta = (end_repointing - start_repointing) / 2
+            glows_flags = compute_glows_flags_for_window(initializer_data.l3d_cdf_path, start_repointing, end_repointing)
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e lo for repointing {repointing}"):
                 lo_parent_file_names = initializer_data.dependencies.get_lo_parents()
@@ -449,17 +456,17 @@ def process_l3e(initializer_data: GlowsL3EInitializerOutput):
                 if pivot_info.parent_filename is not None:
                     lo_parent_file_names = lo_parent_file_names + [pivot_info.parent_filename]
                 lo_version = initializer_data.repointings.lo_repointings[repointing]
-                products_list.extend(process_l3e_lo(lo_parent_file_names, repointing, start_repointing, epoch_delta, pivot_info.pivot_angle, lo_version))
+                products_list.extend(process_l3e_lo(lo_parent_file_names, repointing, start_repointing, epoch_delta, pivot_info.pivot_angle, lo_version, glows_flags))
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e hi-90 for repointing {repointing}"):
                 hi_parent_file_names = initializer_data.dependencies.get_hi_parents()
                 hi_90_version = initializer_data.repointings.hi_90_repointings[repointing]
-                products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, start_repointing, epoch_delta, 90, hi_90_version))
+                products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, start_repointing, epoch_delta, 90, hi_90_version, glows_flags))
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e hi-45 for repointing {repointing}"):
                 hi_parent_file_names = initializer_data.dependencies.get_hi_parents()
                 hi_45_version = initializer_data.repointings.hi_45_repointings[repointing]
-                products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, start_repointing, epoch_delta, 135, hi_45_version))
+                products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, start_repointing, epoch_delta, 135, hi_45_version, glows_flags))
 
             ul_parent_file_names = initializer_data.dependencies.get_ul_parents()
             ul_sf_version = initializer_data.repointings.ultra_sf_repointings[repointing]
@@ -468,12 +475,12 @@ def process_l3e(initializer_data: GlowsL3EInitializerOutput):
             with SwallowExceptionAndLog(
                     f"Exception encountered when processing L3e ultra SF for repointing {repointing}"):
                 products_list.extend(
-                    process_l3e_ul_sf(ul_parent_file_names, repointing, start_repointing, epoch_delta, ul_sf_version))
+                    process_l3e_ul_sf(ul_parent_file_names, repointing, start_repointing, epoch_delta, ul_sf_version, glows_flags))
 
             with SwallowExceptionAndLog(
                     f"Exception encountered when processing L3e ultra HF for repointing {repointing}"):
                 products_list.extend(
-                    process_l3e_ul_hf(ul_parent_file_names, repointing, start_repointing, epoch_delta, ul_hf_version))
+                    process_l3e_ul_hf(ul_parent_file_names, repointing, start_repointing, epoch_delta, ul_hf_version, glows_flags))
 
     return products_list
 

@@ -133,7 +133,9 @@ class SolarParamsHistory():
 
         self.flags={}                                                # ionization parameters interplolated to the Carrington rotation halves
         for k in anc_input_from_instr_team['WawHelioIon']: self.flags[k]=None
-       
+
+        self.glows_flags=None                                        # GLOWS quality-flag bitmask per CR (initialized in generate_initial_history)
+
     def _check_ini_data(self):
         '''
         Check if initial data ends at the same CR
@@ -263,6 +265,8 @@ class SolarParamsHistory():
         # Flags are in the 3 ionization files
         for k in ['speed', 'uv-anis', 'p-dens']:
             self.flags[k][idx[k]:]=self.ini_data['flags'][k]
+
+        self.glows_flags=np.zeros(Nt, dtype=np.uint16)
     
     def generate_hdr_txt(self,fn_dict):
         '''
@@ -367,7 +371,8 @@ class SolarParamsHistory():
         output['solar_params']={}
         output['flags']={}
         for k in self.ini_data['label']: output['solar_params'][k]=self.solar_params[k].tolist()
-        for k in ['speed','uv-anis','p-dens']: output['flags'][k]=self.flags[k].tolist()      
+        for k in ['speed','uv-anis','p-dens']: output['flags'][k]=self.flags[k].tolist()
+        output['glows_flags']=[int(v) for v in self.glows_flags]
 
         json_content = json.dumps(output, indent=3)
         output_fp = open(fn, 'w')
@@ -443,9 +448,11 @@ class SolarParamsHistory():
             # there is L3b for a current CR
             
             self.flags['uv-anis']=np.append(self.flags['uv-anis'],data_l3b[idx_read_b[0]]['uv_anisotropy_flag'])
+            self.glows_flags=np.append(self.glows_flags,np.uint16(data_l3b[idx_read_b[0]]['glows_flags']))
         else:
             # there is no L3b for a current CR
             self.flags['uv-anis']=np.append(self.flags['uv-anis'],self.settings['l3d_source_flags']['uv_anis_interpolated'])
+            self.glows_flags=np.append(self.glows_flags,np.uint16(0))
 
         #if np.abs(data_l3c[idx_read_c[0]]['CR']-CR)<0.6:
         if int(data_l3c[idx_read_c[0]]['CR'])==int(CR):

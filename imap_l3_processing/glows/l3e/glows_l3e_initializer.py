@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 class GlowsL3EInitializerOutput:
     dependencies: GlowsL3EDependencies
     repointings: GlowsL3eRepointings
+    l3d_cdf_path: Path
 
 
 class GlowsL3EInitializer:
@@ -70,6 +71,7 @@ class GlowsL3EInitializer:
 
         return GlowsL3EInitializerOutput(
             dependencies=l3e_deps,
-            repointings=glows_repointings
+            repointings=glows_repointings,
+            l3d_cdf_path=l3d_output.l3d_cdf_file_path,
         )
 

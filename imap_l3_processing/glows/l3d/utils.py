@@ -58,7 +58,8 @@ def create_glows_l3b_json_file_from_cdf(cdf_file_path: Path):
                 'lat_grid': read_numeric_variable(cdf['lat_grid']).tolist(),
                 'ph_rate': read_numeric_variable(cdf['ph_rate'])[0].tolist()
             },
-            'uv_anisotropy_flag': cdf['uv_anisotropy_flag'][0]
+            'uv_anisotropy_flag': cdf['uv_anisotropy_flag'][0],
+            'glows_flags': int(cdf['glows_flags'][0]),
         }
 
         version = cdf_file_path.name.split('_')[-1].split('.')[0]
@@ -92,6 +93,7 @@ def convert_json_to_l3d_data_product(json_file_path: Path, input_metadata: Input
         plasma_speed_flag=l3d_json_dict['flags']['speed'],
         uv_anisotropy_flag=l3d_json_dict['flags']['uv-anis'],
         proton_density_flag=l3d_json_dict['flags']['p-dens'],
+        glows_flags=np.array(l3d_json_dict['glows_flags'], dtype=np.uint16),
     )
 
 
