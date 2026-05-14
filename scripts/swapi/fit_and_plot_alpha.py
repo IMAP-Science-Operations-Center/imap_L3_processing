@@ -241,9 +241,9 @@ timestamps = np.array(
      for tt2000 in alpha_solar_wind_data.epoch])
 
 # Diagonal of the RTN velocity covariance gives variances on (vR, vT, vN).
-swapi_velocity_rtn = alpha_solar_wind_data.alpha_sw_velocity_rtn
+swapi_velocity_rtn = alpha_solar_wind_data.alpha_sw_velocity_rtn_sc
 swapi_velocity_rtn_sigma = np.sqrt(np.diagonal(
-    alpha_solar_wind_data.alpha_sw_velocity_covariance_rtn, axis1=1, axis2=2))
+    alpha_solar_wind_data.alpha_sw_velocity_rtn_covariance, axis1=1, axis2=2))
 
 wind_alphas = fetch_wind_swe_2min_alphas(
     compact_date, Path("/tmp/swapi_fit_and_plot_data/wind")) or {}

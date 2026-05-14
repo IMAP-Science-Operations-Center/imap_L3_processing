@@ -53,13 +53,10 @@ class SwapiProcessorIntegration(unittest.TestCase):
             'proton_sw_density': 2.6919234,
             'proton_sw_density_uncert': 0.049627114,
             'proton_sw_bulk_velocity_rtn_sun': [474.0841, 30.623661, 16.79102],
-            'proton_sw_bulk_velocity_rtn_sun_covariance': [[0.1169681, -0.0341877, 0.13108876],
+            'proton_sw_bulk_velocity_rtn_sc': [474.14252, 1.0705476, 20.217045],
+            'proton_sw_bulk_velocity_rtn_covariance': [[0.1169681, -0.0341877, 0.13108876],
                                                            [-0.0341877, 0.8606747, -0.23923519],
                                                            [0.13108876, -0.23923519, 1.3221142]],
-            'proton_sw_bulk_velocity_rtn_sc': [474.14252, 1.0705476, 20.217045],
-            'proton_sw_bulk_velocity_rtn_sc_covariance': [[0.1169681, -0.0341877, 0.13108876],
-                                                             [-0.0341877, 0.8606747, -0.23923519],
-                                                             [0.13108876, -0.23923519, 1.3221142]],
             'swp_flags': 0
         }
 
@@ -122,23 +119,26 @@ class SwapiProcessorIntegration(unittest.TestCase):
         L1D fallback) for the field-aligned drift constraint.
         """
 
-        # TODO: replace placeholders with values captured from a real run, matching
-        # the proton-sw pattern. Until then the test still guards subprocess success,
-        # CDF creation, and presence + finiteness of every alpha-sw variable.
-        expected_keys = [
-            'epoch',
-            'epoch_delta',
-            'alpha_sw_density',
-            'alpha_sw_density_uncert',
-            'alpha_sw_temperature',
-            'alpha_sw_temperature_uncert',
-            'alpha_sw_velocity_rtn',
-            'alpha_sw_velocity_covariance_rtn',
-            'alpha_sw_delta_v',
-            'alpha_sw_delta_v_uncert',
-            'alpha_sw_b_hat_rtn',
-            'swp_flags',
-        ]
+        # Record index 0 for this date is flagged (swp_flags=4) so every alpha
+        # quantity is fill; the first valid record is index 1.
+        sample_index = 1
+        expected_values = {
+            'epoch': datetime.datetime(2026, 1, 1, 0, 0, 35, 6000),
+            'epoch_delta': 30000000000,
+            'alpha_sw_speed': 473.3955993652344,
+            'alpha_sw_speed_uncert': 0.3668617010116577,
+            'alpha_sw_density': 0.1588851362466812,
+            'alpha_sw_density_uncert': 0.2096901834011078,
+            'alpha_sw_temperature': 2332716.75,
+            'alpha_sw_temperature_uncert': 1120345.5,
+            'alpha_sw_velocity_rtn_sc': [472.94376, -10.725992, 17.678875],
+            'alpha_sw_velocity_rtn_covariance': [
+                [0.13366441, 0.22170407, 0.13530357],
+                [0.22170407, 13.252416, 6.8162704],
+                [0.13530357, 6.8162704, 4.195147],
+            ],
+            'swp_flags': 0,
+        }
 
         root_dir = Path(imap_l3_processing.__file__).parent.parent
         os.chdir(root_dir)
@@ -169,18 +169,23 @@ class SwapiProcessorIntegration(unittest.TestCase):
         self.assertEqual(0, result.returncode)
         self.assertTrue(expected_file_path.exists())
 
+        bulk_speed_atol = 1e-3 * float(expected_values['alpha_sw_speed'])
+
         with CDF(str(expected_file_path)) as cdf:
-            for key in expected_keys:
-                self.assertIn(key, cdf, msg=f"missing variable {key}")
-                value = cdf[key][0]
-                if isinstance(value, datetime.datetime):
-                    continue
-                arr = np.asarray(value)
-                if np.issubdtype(arr.dtype, np.floating):
-                    self.assertTrue(
-                        np.all(np.isfinite(arr)),
-                        msg=f"{key} contains non-finite values: {arr}",
+            for key in expected_values.keys():
+                actual_value = cdf[key][sample_index]
+                if 'velocity' in key:
+                    rtol, atol = 1e-3, bulk_speed_atol
+                elif key.endswith('_uncert'):
+                    rtol, atol = 1e-2, 0.0
+                else:
+                    rtol, atol = 1e-3, 0.0
+                try:
+                    numpy.testing.assert_allclose(
+                        actual_value, expected_values[key], rtol=rtol, atol=atol, err_msg=key
                     )
+                except TypeError:
+                    self.assertEqual(expected_values[key], actual_value, msg=key)
 
 
 if __name__ == "__main__":

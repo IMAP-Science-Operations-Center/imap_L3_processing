@@ -324,9 +324,8 @@ class TestSwapiProcessor(TestCase):
             proton_sw_deflection_angle=np.array([5.0]),
             proton_sw_deflection_angle_uncert=np.array([0.001]),
             proton_sw_bulk_velocity_rtn_sun=np.array([[400.0, 10.0, 5.0]]),
-            proton_sw_bulk_velocity_rtn_sun_covariance=np.array([np.eye(3)]),
             proton_sw_bulk_velocity_rtn_sc=np.array([[370.0, 10.0, 5.0]]),
-            proton_sw_bulk_velocity_rtn_sc_covariance=np.array([np.eye(3)]),
+            proton_sw_bulk_velocity_rtn_covariance=np.array([np.eye(3)]),
             quality_flags=np.array([SwapiL3Flags.NONE]),
         )
         mock_runner = mock_parallel_chunk_runner_class.return_value
@@ -512,11 +511,9 @@ class TestSwapiProcessor(TestCase):
             alpha_sw_density_uncert=np.array([0.01]),
             alpha_sw_temperature=np.array([400000.0]),
             alpha_sw_temperature_uncert=np.array([2000.0]),
-            alpha_sw_velocity_rtn=np.array([[450.0, 5.0, 1.0]]),
-            alpha_sw_velocity_covariance_rtn=np.array([np.eye(3)]),
-            alpha_sw_delta_v=np.array([12.0]),
-            alpha_sw_delta_v_uncert=np.array([1.0]),
-            alpha_sw_b_hat_rtn=np.array([[1.0, 0.0, 0.0]]),
+            alpha_sw_velocity_rtn_sun=np.array([[480.0, 5.0, 1.0]]),
+            alpha_sw_velocity_rtn_sc=np.array([[450.0, 5.0, 1.0]]),
+            alpha_sw_velocity_rtn_covariance=np.array([np.eye(3)]),
             quality_flags=np.array([int(SwapiL3Flags.NONE)]),
         )
         mock_runner = mock_parallel_chunk_runner_class.return_value

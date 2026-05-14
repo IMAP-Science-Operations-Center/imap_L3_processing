@@ -126,42 +126,53 @@ class AlphaChunkFitter(ChunkFitter):
 
     def precompute_geometry(self, chunk):
         epoch = chunk_epoch(chunk)
+        rm = None
+        sc_vel = None
         try:
             rm = get_swapi_geometry(measurement_times(chunk, SWAPI_SCIENCE_BINS))
         except Exception:
             logger.info(
                 f"Missing SPICE information at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}, continuing with fill value"
             )
-            rm = None
+
+        if rm is not None:
+            try:
+                sc_vel = get_spacecraft_velocity_rtn(epoch)
+            except Exception:
+                logger.warning(
+                    "SPICE gap in spacecraft velocity.",
+                    exc_info=True,
+                )
+
         b_hat = compute_direction_of_mean_magnetic_field_over_chunk(
             self.mag_data, int(epoch), int(THIRTY_SECONDS_IN_NANOSECONDS)
         )
-        return (epoch, rm, b_hat)
+        return (epoch, rm, sc_vel, b_hat)
 
     def fit_chunk(
         self,
         data_chunk,
         epoch,
         rotation_matrices,
+        sc_velocity_rtn,
         magnetic_field_direction,
     ):
         result = _fit_alpha(
             data_chunk, epoch, rotation_matrices, magnetic_field_direction
         )
-        return _alpha_moments_from_fit(result, epoch)
+        return _alpha_moments_from_fit(result, epoch, sc_velocity_rtn)
 
 
 def _proton_moments_from_fit(result, epoch, data_chunk, sc_velocity_rtn):
     speed = sum(component**2 for component in result.bulk_velocity_rtn) ** 0.5
     speed_nom, speed_unc = speed.nominal_value, speed.std_dev
     bulk_velocity_rtn_sc = result.bulk_velocity_rtn_nominal()
-    velocity_covariance_sc = result.bulk_velocity_rtn_covariance()
+    bulk_velocity_rtn_covariance = result.bulk_velocity_rtn_covariance()
     density_nom, density_unc = result.density.nominal_value, result.density.std_dev
     temp_nom, temp_unc = result.temperature.nominal_value, result.temperature.std_dev
 
     if sc_velocity_rtn is not None:
         bulk_velocity_rtn_sun = bulk_velocity_rtn_sc + sc_velocity_rtn
-        velocity_covariance_sun = velocity_covariance_sc
         sun_velocity_unc = [
             component + sc_component
             for component, sc_component in zip(
@@ -175,7 +186,6 @@ def _proton_moments_from_fit(result, epoch, data_chunk, sc_velocity_rtn):
             f"Proton fit at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}: missing spacecraft velocity; sun-frame outputs are fill values"
         )
         bulk_velocity_rtn_sun = np.full(3, np.nan)
-        velocity_covariance_sun = np.full((3, 3), np.nan)
         sun_speed_nom = sun_speed_unc = np.nan
 
     if not np.isfinite(speed_nom):
@@ -192,16 +202,26 @@ def _proton_moments_from_fit(result, epoch, data_chunk, sc_velocity_rtn):
         proton_sw_density=density_nom,
         proton_sw_density_uncert=density_unc,
         proton_sw_bulk_velocity_rtn_sun=bulk_velocity_rtn_sun,
-        proton_sw_bulk_velocity_rtn_sun_covariance=velocity_covariance_sun,
         proton_sw_bulk_velocity_rtn_sc=bulk_velocity_rtn_sc,
-        proton_sw_bulk_velocity_rtn_sc_covariance=velocity_covariance_sc,
+        proton_sw_bulk_velocity_rtn_covariance=bulk_velocity_rtn_covariance,
         quality_flags=result.bad_fit_flag,
     )
 
 
-def _alpha_moments_from_fit(result, epoch):
+def _alpha_moments_from_fit(result, epoch, sc_velocity_rtn):
     alpha = result.alpha_moments
     speed = sum(component**2 for component in alpha.bulk_velocity_rtn) ** 0.5
+    bulk_velocity_rtn_sc = alpha.bulk_velocity_rtn_nominal()
+    bulk_velocity_rtn_covariance = alpha.bulk_velocity_rtn_covariance()
+
+    if sc_velocity_rtn is not None:
+        bulk_velocity_rtn_sun = bulk_velocity_rtn_sc + sc_velocity_rtn
+    else:
+        logger.warning(
+            f"Alpha fit at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}: missing spacecraft velocity; sun-frame velocity is fill values"
+        )
+        bulk_velocity_rtn_sun = np.full(3, np.nan)
+
     return dict(
         epoch=epoch,
         alpha_sw_speed=speed.nominal_value,
@@ -210,11 +230,9 @@ def _alpha_moments_from_fit(result, epoch):
         alpha_sw_density_uncert=alpha.density.std_dev,
         alpha_sw_temperature=alpha.temperature.nominal_value,
         alpha_sw_temperature_uncert=alpha.temperature.std_dev,
-        alpha_sw_velocity_rtn=alpha.bulk_velocity_rtn_nominal(),
-        alpha_sw_velocity_covariance_rtn=alpha.bulk_velocity_rtn_covariance(),
-        alpha_sw_delta_v=alpha.delta_v.nominal_value,
-        alpha_sw_delta_v_uncert=alpha.delta_v.std_dev,
-        alpha_sw_b_hat_rtn=result.b_hat_rtn,
+        alpha_sw_velocity_rtn_sun=bulk_velocity_rtn_sun,
+        alpha_sw_velocity_rtn_sc=bulk_velocity_rtn_sc,
+        alpha_sw_velocity_rtn_covariance=bulk_velocity_rtn_covariance,
         quality_flags=result.bad_fit_flag,
     )
 

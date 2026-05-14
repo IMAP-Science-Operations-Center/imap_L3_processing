@@ -23,12 +23,9 @@ PROTON_SOLAR_WIND_DENSITY_CDF_VAR_NAME = "proton_sw_density"
 PROTON_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME = "proton_sw_density_uncert"
 
 PROTON_SOLAR_WIND_BULK_VELOCITY_RTN_SUN_CDF_VAR_NAME = "proton_sw_bulk_velocity_rtn_sun"
-PROTON_SOLAR_WIND_BULK_VELOCITY_RTN_SUN_COVARIANCE_CDF_VAR_NAME = (
-    "proton_sw_bulk_velocity_rtn_sun_covariance"
-)
 PROTON_SOLAR_WIND_BULK_VELOCITY_RTN_SC_CDF_VAR_NAME = "proton_sw_bulk_velocity_rtn_sc"
-PROTON_SOLAR_WIND_BULK_VELOCITY_RTN_SC_COVARIANCE_CDF_VAR_NAME = (
-    "proton_sw_bulk_velocity_rtn_sc_covariance"
+PROTON_SOLAR_WIND_BULK_VELOCITY_RTN_COVARIANCE_CDF_VAR_NAME = (
+    "proton_sw_bulk_velocity_rtn_covariance"
 )
 
 ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME = "alpha_sw_speed"
@@ -37,13 +34,11 @@ ALPHA_SOLAR_WIND_DENSITY_CDF_VAR_NAME = "alpha_sw_density"
 ALPHA_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME = "alpha_sw_density_uncert"
 ALPHA_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME = "alpha_sw_temperature"
 ALPHA_SOLAR_WIND_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME = "alpha_sw_temperature_uncert"
-ALPHA_SOLAR_WIND_VELOCITY_RTN_CDF_VAR_NAME = "alpha_sw_velocity_rtn"
-ALPHA_SOLAR_WIND_VELOCITY_COVARIANCE_RTN_CDF_VAR_NAME = (
-    "alpha_sw_velocity_covariance_rtn"
+ALPHA_SOLAR_WIND_VELOCITY_RTN_SUN_CDF_VAR_NAME = "alpha_sw_velocity_rtn_sun"
+ALPHA_SOLAR_WIND_VELOCITY_RTN_SC_CDF_VAR_NAME = "alpha_sw_velocity_rtn_sc"
+ALPHA_SOLAR_WIND_VELOCITY_RTN_COVARIANCE_CDF_VAR_NAME = (
+    "alpha_sw_velocity_rtn_covariance"
 )
-ALPHA_SOLAR_WIND_DELTA_V_CDF_VAR_NAME = "alpha_sw_delta_v"
-ALPHA_SOLAR_WIND_DELTA_V_UNCERT_CDF_VAR_NAME = "alpha_sw_delta_v_uncert"
-ALPHA_SOLAR_WIND_B_HAT_RTN_CDF_VAR_NAME = "alpha_sw_b_hat_rtn"
 
 PUI_COOLING_INDEX_CDF_VAR_NAME = "pui_cooling_index"
 PUI_IONIZATION_RATE_CDF_VAR_NAME = "pui_ionization_rate"
@@ -73,9 +68,8 @@ class SwapiL3ProtonSolarWindData(DataProduct):
     proton_sw_density: np.ndarray
     proton_sw_density_uncert: np.ndarray
     proton_sw_bulk_velocity_rtn_sun: np.ndarray  # shape (N, 3), km/s, inertial RTN
-    proton_sw_bulk_velocity_rtn_sun_covariance: np.ndarray  # shape (N, 3, 3), km²/s²
     proton_sw_bulk_velocity_rtn_sc: np.ndarray  # shape (N, 3), km/s, RTN in SC rest frame
-    proton_sw_bulk_velocity_rtn_sc_covariance: np.ndarray  # shape (N, 3, 3), km²/s²
+    proton_sw_bulk_velocity_rtn_covariance: np.ndarray  # shape (N, 3, 3), km²/s²
     quality_flags: np.ndarray[SwapiL3Flags]
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
@@ -119,16 +113,12 @@ class SwapiL3ProtonSolarWindData(DataProduct):
                 self.proton_sw_bulk_velocity_rtn_sun,
             ),
             DataProductVariable(
-                PROTON_SOLAR_WIND_BULK_VELOCITY_RTN_SUN_COVARIANCE_CDF_VAR_NAME,
-                self.proton_sw_bulk_velocity_rtn_sun_covariance,
-            ),
-            DataProductVariable(
                 PROTON_SOLAR_WIND_BULK_VELOCITY_RTN_SC_CDF_VAR_NAME,
                 self.proton_sw_bulk_velocity_rtn_sc,
             ),
             DataProductVariable(
-                PROTON_SOLAR_WIND_BULK_VELOCITY_RTN_SC_COVARIANCE_CDF_VAR_NAME,
-                self.proton_sw_bulk_velocity_rtn_sc_covariance,
+                PROTON_SOLAR_WIND_BULK_VELOCITY_RTN_COVARIANCE_CDF_VAR_NAME,
+                self.proton_sw_bulk_velocity_rtn_covariance,
             ),
             DataProductVariable(SWAPI_QUALITY_FLAGS_CDF_VAR_NAME, self.quality_flags),
         ]
@@ -143,11 +133,9 @@ class SwapiL3AlphaSolarWindData(DataProduct):
     alpha_sw_density_uncert: np.ndarray
     alpha_sw_temperature: np.ndarray
     alpha_sw_temperature_uncert: np.ndarray
-    alpha_sw_velocity_rtn: np.ndarray
-    alpha_sw_velocity_covariance_rtn: np.ndarray
-    alpha_sw_delta_v: np.ndarray
-    alpha_sw_delta_v_uncert: np.ndarray
-    alpha_sw_b_hat_rtn: np.ndarray
+    alpha_sw_velocity_rtn_sun: np.ndarray  # shape (N, 3), km/s, inertial RTN
+    alpha_sw_velocity_rtn_sc: np.ndarray  # shape (N, 3), km/s, RTN in SC rest frame
+    alpha_sw_velocity_rtn_covariance: np.ndarray  # shape (N, 3, 3), km²/s²
     quality_flags: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
@@ -179,21 +167,16 @@ class SwapiL3AlphaSolarWindData(DataProduct):
                 self.alpha_sw_temperature_uncert,
             ),
             DataProductVariable(
-                ALPHA_SOLAR_WIND_VELOCITY_RTN_CDF_VAR_NAME, self.alpha_sw_velocity_rtn
+                ALPHA_SOLAR_WIND_VELOCITY_RTN_SUN_CDF_VAR_NAME,
+                self.alpha_sw_velocity_rtn_sun,
             ),
             DataProductVariable(
-                ALPHA_SOLAR_WIND_VELOCITY_COVARIANCE_RTN_CDF_VAR_NAME,
-                self.alpha_sw_velocity_covariance_rtn,
+                ALPHA_SOLAR_WIND_VELOCITY_RTN_SC_CDF_VAR_NAME,
+                self.alpha_sw_velocity_rtn_sc,
             ),
             DataProductVariable(
-                ALPHA_SOLAR_WIND_DELTA_V_CDF_VAR_NAME, self.alpha_sw_delta_v
-            ),
-            DataProductVariable(
-                ALPHA_SOLAR_WIND_DELTA_V_UNCERT_CDF_VAR_NAME,
-                self.alpha_sw_delta_v_uncert,
-            ),
-            DataProductVariable(
-                ALPHA_SOLAR_WIND_B_HAT_RTN_CDF_VAR_NAME, self.alpha_sw_b_hat_rtn
+                ALPHA_SOLAR_WIND_VELOCITY_RTN_COVARIANCE_CDF_VAR_NAME,
+                self.alpha_sw_velocity_rtn_covariance,
             ),
             DataProductVariable(SWAPI_QUALITY_FLAGS_CDF_VAR_NAME, self.quality_flags),
         ]
