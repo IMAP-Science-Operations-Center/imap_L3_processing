@@ -125,29 +125,24 @@ def _plot_case(axes_top, axes_bot, swapi_response, fixture, title):
     proton_bg_avg = proton_obs_per_sweep.mean(axis=0)
     count_avg = count_rates.mean(axis=0)
 
-    alpha_moments = fit_solar_wind_alpha_model(
+    alpha_ctx = build_solar_wind_fit_context(
         count_rate=cr_flat,
         esa_voltage=esa_flat,
-        measurement_time=np.zeros(len(esa_flat)),
         swapi_response=swapi_response,
+        central_effective_area_scale=alpha_eff_scale,
+        rotation_matrices=rotation_matrices,
+        mass_kg=ALPHA_PARTICLE_MASS_KG,
+        mass_per_charge_m_p_per_e=ALPHA_MASS_PER_CHARGE_M_P_PER_E,
+    )
+    alpha_moments = fit_solar_wind_alpha_model(
+        proton_ctx=proton_ctx,
+        alpha_ctx=alpha_ctx,
         proton_moments=proton_moments_obj,
         magnetic_field_direction=magnetic_field_direction,
-        alpha_effective_area_scale=alpha_eff_scale,
-        proton_effective_area_scale=proton_eff_scale,
-        rotation_matrices=rotation_matrices,
     )
     combined_fit_avg = None
     alpha_contribution_avg = None
     if np.isfinite(float(alpha_moments.density.nominal_value)):
-        alpha_ctx = build_solar_wind_fit_context(
-            count_rate=np.zeros_like(esa_flat),
-            esa_voltage=esa_flat,
-            swapi_response=swapi_response,
-            central_effective_area_scale=alpha_eff_scale,
-            rotation_matrices=rotation_matrices,
-            mass_kg=ALPHA_PARTICLE_MASS_KG,
-            mass_per_charge_m_p_per_e=ALPHA_MASS_PER_CHARGE_M_P_PER_E,
-        )
         alpha_sw = SolarWindParams(
             density=alpha_moments.density.nominal_value,
             bulk_velocity_rtn=np.array(

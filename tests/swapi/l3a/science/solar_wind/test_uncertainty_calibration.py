@@ -283,16 +283,20 @@ def _run_trial(trial_seed: int) -> dict | None:
             data_chunk=None,
             sc_velocity_rtn=_SC_VELOCITY_RTN,
         )
-    alpha_moments = fit_solar_wind_alpha_model(
+    alpha_ctx = build_solar_wind_fit_context(
         count_rate=noisy_rates,
         esa_voltage=_VOLTAGE_AXIS,
-        measurement_time=np.zeros(_N_MEAS),
         swapi_response=state.response,
+        central_effective_area_scale=1.0,
+        rotation_matrices=_ROTATION_MATRICES,
+        mass_kg=ALPHA_PARTICLE_MASS_KG,
+        mass_per_charge_m_p_per_e=ALPHA_MASS_PER_CHARGE_M_P_PER_E,
+    )
+    alpha_moments = fit_solar_wind_alpha_model(
+        proton_ctx=proton_ctx,
+        alpha_ctx=alpha_ctx,
         proton_moments=proton_result,
         magnetic_field_direction=_B_HAT_RTN,
-        alpha_effective_area_scale=1.0,
-        proton_effective_area_scale=1.0,
-        rotation_matrices=_ROTATION_MATRICES,
     )
     if int(alpha_moments.bad_fit_flag) != int(SwapiL3Flags.NONE):
         return None

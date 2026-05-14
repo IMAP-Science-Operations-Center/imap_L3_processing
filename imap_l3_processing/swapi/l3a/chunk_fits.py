@@ -10,6 +10,8 @@ from spacepy import pycdf
 from uncertainties import ufloat
 
 from imap_l3_processing.constants import (
+    ALPHA_MASS_PER_CHARGE_M_P_PER_E,
+    ALPHA_PARTICLE_MASS_KG,
     PROTON_MASS_KG,
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
     THIRTY_SECONDS_IN_NANOSECONDS,
@@ -387,20 +389,32 @@ def _fit_alpha(
     try:
         count_rates = data_chunk.coincidence_count_rate[:, SWAPI_COARSE_SWEEP_BINS]
         voltages = data_chunk.energy[:, SWAPI_COARSE_SWEEP_BINS] / SWAPI_L2_K_FACTOR
-        times = measurement_times(data_chunk, SWAPI_COARSE_SWEEP_BINS)
         coarse_rotation_matrices = _coarse_subset_of_science_rotations(
             rotation_matrices, n_sweeps=data_chunk.sci_start_time.shape[0]
         )
-        alpha_moments = fit_solar_wind_alpha_model(
-            count_rates,
-            voltages,
-            times,
-            swapi_response,
-            proton_moments,
-            magnetic_field_direction,
-            _eff_scale(efficiency_table, epoch, "alpha"),
-            _eff_scale(efficiency_table, epoch, "proton"),
+        proton_ctx = build_solar_wind_fit_context(
+            count_rate=count_rates,
+            esa_voltage=voltages,
+            swapi_response=swapi_response,
+            central_effective_area_scale=_eff_scale(efficiency_table, epoch, "proton"),
             rotation_matrices=coarse_rotation_matrices,
+            mass_kg=PROTON_MASS_KG,
+            mass_per_charge_m_p_per_e=PROTON_MASS_PER_CHARGE_M_P_PER_E,
+        )
+        alpha_ctx = build_solar_wind_fit_context(
+            count_rate=count_rates,
+            esa_voltage=voltages,
+            swapi_response=swapi_response,
+            central_effective_area_scale=_eff_scale(efficiency_table, epoch, "alpha"),
+            rotation_matrices=coarse_rotation_matrices,
+            mass_kg=ALPHA_PARTICLE_MASS_KG,
+            mass_per_charge_m_p_per_e=ALPHA_MASS_PER_CHARGE_M_P_PER_E,
+        )
+        alpha_moments = fit_solar_wind_alpha_model(
+            proton_ctx=proton_ctx,
+            alpha_ctx=alpha_ctx,
+            proton_moments=proton_moments,
+            magnetic_field_direction=magnetic_field_direction,
         )
     except Exception:
         logger.warning(

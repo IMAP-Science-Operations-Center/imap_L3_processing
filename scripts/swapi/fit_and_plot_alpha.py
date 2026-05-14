@@ -1,6 +1,7 @@
 """Download one day of SWAPI L2 + dependencies, run the production alpha
 solar-wind fit via SwapiProcessor, cache the result, and plot density /
-temperature / bulk speed vs time.
+temperature / bulk speed / RTN velocity components vs time. WIND SWE
+2-min alpha moments are overplotted as scatter points for comparison.
 
 Usage:
     scripts/swapi/fit_and_plot_alpha.py <YYYY-MM-DD> [--use-cache]
@@ -8,12 +9,17 @@ Usage:
 Requires the environment variable IMAP_API_KEY to be set.
 Downloads land in /tmp/swapi_fit_and_plot_data; the fit pickle lands in
 /tmp/swapi_alpha_fit_<YYYYMMDD>.pkl. --use-cache reuses that pickle and skips
-all network access.
+the SWAPI network fetch (WIND is still downloaded if not cached).
+
+WIND alphas come from
+ftp://nssdcftp.gsfc.nasa.gov/pub/data/wind/swe/ascii/2-min/wind_swe_2m_sw<YYYYMM>.asc
+and use the L1 Sun-Earth-line approximation vR=-Vx_GSE, vT=-Vy_GSE, vN=+Vz_GSE.
 """
 
 import argparse
 import os
 import pickle
+import subprocess
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -30,6 +36,109 @@ from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.utils import SpiceKernelTypes, get_spice_kernels_file_names
+
+# m_p / (2 k_B) = 60.5685 K/(km/s)^2 for protons; alpha mass = 4 m_p.
+WIND_ALPHA_TEMPERATURE_FACTOR_K_PER_KM2_PER_S2 = 4.0 * 60.5685
+# Fill threshold: real plasma + position values in the SWE 2-min file stay
+# well below 9000 in every numeric column.
+WIND_FILL_THRESHOLD = 9000.0
+WIND_FTP_URL_TEMPLATE = (
+    "ftp://nssdcftp.gsfc.nasa.gov/pub/data/wind/swe/ascii/2-min/"
+    "wind_swe_2m_sw{yyyymm}.asc"
+)
+
+
+def fetch_wind_swe_2min_alphas(compact_date_string, cache_directory):
+    """Return WIND SWE 2-min alpha moments for one UTC day, converted to RTN.
+
+    Mirrors the helper in ~/projects/imap-validation/_lib.py. Returns None
+    on network or parse failure (with a warning printed to stderr).
+    """
+    year_month_string = compact_date_string[:6]
+    cache_directory.mkdir(parents=True, exist_ok=True)
+    cache_file_path = cache_directory / f"wind_swe_2m_sw{year_month_string}.asc"
+
+    if not cache_file_path.exists():
+        url = WIND_FTP_URL_TEMPLATE.format(yyyymm=year_month_string)
+        print(f"Downloading WIND SWE 2-min {year_month_string}...", end=" ", flush=True)
+        try:
+            subprocess.run(
+                ["curl", "--ssl-reqd", "-fsS",
+                 "--connect-timeout", "15", "--max-time", "300",
+                 "-o", str(cache_file_path), url],
+                check=True,
+            )
+            print("done")
+        except (subprocess.CalledProcessError, FileNotFoundError) as exc:
+            print(f"failed ({exc})", file=sys.stderr)
+            if cache_file_path.exists() and cache_file_path.stat().st_size == 0:
+                cache_file_path.unlink()
+            return None
+
+    raw_table = np.loadtxt(cache_file_path, comments=";")
+    year_column = raw_table[:, 0].astype(int)
+    fractional_day_of_year_column = raw_table[:, 1].astype(float)
+    # Mask fills on plasma columns; year (col 0) and fit_flag (col 2) are
+    # integer-valued and never approach the threshold.
+    plasma_column_indices = [i for i in range(raw_table.shape[1]) if i not in (0, 2)]
+    plasma_block = raw_table[:, plasma_column_indices]
+    plasma_block[np.abs(plasma_block) >= WIND_FILL_THRESHOLD] = np.nan
+    raw_table[:, plasma_column_indices] = plasma_block
+
+    # FDOY convention: midnight Jan 1 = 1.0, noon Jan 1 = 1.5.
+    year_starts_nanoseconds = {
+        int(y): np.datetime64(f"{int(y):04d}-01-01", "ns").astype("int64")
+        for y in np.unique(year_column)
+    }
+    year_start_nanoseconds_column = np.array(
+        [year_starts_nanoseconds[int(y)] for y in year_column], dtype="int64")
+    epoch_nanoseconds = year_start_nanoseconds_column + (
+        (fractional_day_of_year_column - 1.0) * 86400.0 * 1e9).astype("int64")
+    epoch = epoch_nanoseconds.view("datetime64[ns]")
+
+    day_start = np.datetime64(
+        f"{compact_date_string[:4]}-{compact_date_string[4:6]}-{compact_date_string[6:8]}", "ns")
+    day_end = day_start + np.timedelta64(1, "D")
+    day_mask = (epoch >= day_start) & (epoch < day_end)
+    if not np.any(day_mask):
+        print(f"No WIND SWE rows match {compact_date_string}", file=sys.stderr)
+        return None
+
+    row = raw_table[day_mask]
+    epoch_day = epoch[day_mask]
+
+    alpha_speed = row[:, 23]
+    alpha_speed_sigma = row[:, 24]
+    alpha_velocity_x_gse, alpha_velocity_x_gse_sigma = row[:, 25], row[:, 26]
+    alpha_velocity_y_gse, alpha_velocity_y_gse_sigma = row[:, 27], row[:, 28]
+    alpha_velocity_z_gse, alpha_velocity_z_gse_sigma = row[:, 29], row[:, 30]
+    alpha_thermal_speed, alpha_thermal_speed_sigma = row[:, 31], row[:, 32]
+    alpha_density = row[:, 37]
+    alpha_density_sigma = row[:, 38]
+
+    # T = c * W^2 -> sigma_T = 2 * c * W * sigma_W (linear propagation, W >= 0).
+    alpha_temperature = WIND_ALPHA_TEMPERATURE_FACTOR_K_PER_KM2_PER_S2 * alpha_thermal_speed**2
+    alpha_temperature_sigma = (
+        2.0 * WIND_ALPHA_TEMPERATURE_FACTOR_K_PER_KM2_PER_S2
+        * np.abs(alpha_thermal_speed) * alpha_thermal_speed_sigma)
+
+    # GSE -> RTN at L1, Sun-Earth-line approximation.
+    return {
+        "epoch": epoch_day,
+        "speed": alpha_speed,
+        "speed_sigma": alpha_speed_sigma,
+        "density": alpha_density,
+        "density_sigma": alpha_density_sigma,
+        "temperature": alpha_temperature,
+        "temperature_sigma": alpha_temperature_sigma,
+        "velocity_r": -alpha_velocity_x_gse,
+        "velocity_r_sigma": alpha_velocity_x_gse_sigma,
+        "velocity_t": -alpha_velocity_y_gse,
+        "velocity_t_sigma": alpha_velocity_y_gse_sigma,
+        "velocity_n": alpha_velocity_z_gse,
+        "velocity_n_sigma": alpha_velocity_z_gse_sigma,
+    }
+
 
 argument_parser = argparse.ArgumentParser(
     description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -131,22 +240,51 @@ timestamps = np.array(
     [cdf_library.tt2000_to_datetime(int(tt2000))
      for tt2000 in alpha_solar_wind_data.epoch])
 
+# Diagonal of the RTN velocity covariance gives variances on (vR, vT, vN).
+swapi_velocity_rtn = alpha_solar_wind_data.alpha_sw_velocity_rtn
+swapi_velocity_rtn_sigma = np.sqrt(np.diagonal(
+    alpha_solar_wind_data.alpha_sw_velocity_covariance_rtn, axis1=1, axis2=2))
+
+wind_alphas = fetch_wind_swe_2min_alphas(
+    compact_date, Path("/tmp/swapi_fit_and_plot_data/wind")) or {}
+
 panels = [
-    (alpha_solar_wind_data.alpha_sw_density,
-     alpha_solar_wind_data.alpha_sw_density_uncert, "Density [cm$^{-3}$]", "log"),
-    (alpha_solar_wind_data.alpha_sw_temperature,
-     alpha_solar_wind_data.alpha_sw_temperature_uncert, "Temperature [K]", "log"),
-    (alpha_solar_wind_data.alpha_sw_speed,
-     alpha_solar_wind_data.alpha_sw_speed_uncert, "Bulk speed [km/s]", "linear"),
+    ("Density [cm$^{-3}$]", "log",
+     alpha_solar_wind_data.alpha_sw_density,
+     alpha_solar_wind_data.alpha_sw_density_uncert,
+     wind_alphas.get("density"), wind_alphas.get("density_sigma")),
+    ("Temperature [K]", "log",
+     alpha_solar_wind_data.alpha_sw_temperature,
+     alpha_solar_wind_data.alpha_sw_temperature_uncert,
+     wind_alphas.get("temperature"), wind_alphas.get("temperature_sigma")),
+    ("Bulk speed [km/s]", "linear",
+     alpha_solar_wind_data.alpha_sw_speed,
+     alpha_solar_wind_data.alpha_sw_speed_uncert,
+     wind_alphas.get("speed"), wind_alphas.get("speed_sigma")),
+    ("$v_R$ [km/s]", "linear",
+     swapi_velocity_rtn[:, 0], swapi_velocity_rtn_sigma[:, 0],
+     wind_alphas.get("velocity_r"), wind_alphas.get("velocity_r_sigma")),
+    ("$v_T$ [km/s]", "linear",
+     swapi_velocity_rtn[:, 1], swapi_velocity_rtn_sigma[:, 1],
+     wind_alphas.get("velocity_t"), wind_alphas.get("velocity_t_sigma")),
+    ("$v_N$ [km/s]", "linear",
+     swapi_velocity_rtn[:, 2], swapi_velocity_rtn_sigma[:, 2],
+     wind_alphas.get("velocity_n"), wind_alphas.get("velocity_n_sigma")),
 ]
-figure, axes = plt.subplots(len(panels), 1, sharex=True, figsize=(10, 8))
-for axis, (values, uncertainties, ylabel, yscale) in zip(axes, panels):
-    if uncertainties is None:
-        axis.plot(timestamps, values, ".")
-    else:
-        axis.errorbar(timestamps, values, yerr=uncertainties, fmt=".", capsize=2)
+wind_epoch = wind_alphas.get("epoch")
+
+figure, axes = plt.subplots(len(panels), 1, sharex=True, figsize=(10, 14))
+for axis, (ylabel, yscale, swapi_values, swapi_uncertainties,
+           wind_values, wind_uncertainties) in zip(axes, panels):
+    axis.errorbar(timestamps, swapi_values, yerr=swapi_uncertainties,
+                  fmt=".", capsize=2, color="tab:blue", label="SWAPI L3a")
+    if wind_values is not None and wind_epoch is not None:
+        axis.errorbar(wind_epoch, wind_values, yerr=wind_uncertainties,
+                      fmt=".", capsize=2, color="tab:orange", alpha=0.6,
+                      label="WIND SWE 2-min")
     axis.set_ylabel(ylabel)
     axis.set_yscale(yscale)
+axes[0].legend(loc="best")
 axes[-1].set_xlabel("Time (UTC)")
 figure.suptitle(f"SWAPI alpha solar-wind moments — {arguments.date}")
 figure.autofmt_xdate()

@@ -113,6 +113,41 @@ def _identity_rotation_matrices(n: int = _N_MEAS) -> np.ndarray:
     return np.broadcast_to(np.eye(3), (n, 3, 3)).copy()
 
 
+def _build_proton_and_alpha_contexts(
+    *,
+    response: SwapiResponse,
+    count_rate: np.ndarray,
+    voltage: np.ndarray = _FIVE_SWEEP_VOLTAGE,
+    rotation_matrices: np.ndarray | None = None,
+    proton_effective_area_scale: float = 1.0,
+    alpha_effective_area_scale: float = 1.0,
+) -> tuple[SolarWindFitContext, SolarWindFitContext]:
+    """Build the (proton, alpha) context pair the new `fit_solar_wind_alpha_model`
+    signature expects. Tests previously passed raw count_rate / response /
+    eff-scale to the fitter; the fitter now requires precomputed contexts."""
+    if rotation_matrices is None:
+        rotation_matrices = _identity_rotation_matrices(voltage.size)
+    proton_ctx = build_solar_wind_fit_context(
+        count_rate=count_rate,
+        esa_voltage=voltage,
+        swapi_response=response,
+        central_effective_area_scale=proton_effective_area_scale,
+        rotation_matrices=rotation_matrices,
+        mass_kg=PROTON_MASS_KG,
+        mass_per_charge_m_p_per_e=PROTON_MASS_PER_CHARGE_M_P_PER_E,
+    )
+    alpha_ctx = build_solar_wind_fit_context(
+        count_rate=count_rate,
+        esa_voltage=voltage,
+        swapi_response=response,
+        central_effective_area_scale=alpha_effective_area_scale,
+        rotation_matrices=rotation_matrices,
+        mass_kg=ALPHA_PARTICLE_MASS_KG,
+        mass_per_charge_m_p_per_e=ALPHA_MASS_PER_CHARGE_M_P_PER_E,
+    )
+    return proton_ctx, alpha_ctx
+
+
 def _build_proton_fit_result(
     *,
     density: float = _TRUE_PROTON_DENSITY_CM3,
@@ -235,6 +270,17 @@ class _SyntheticAlphaSpectrumFixture:
 class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
     """Tests for `fit_solar_wind_alpha_model` — pre-fit guard branches (proton fill values, missing/non-finite MAG B̂) must short-circuit to a NaN-filled moments result with the proton's flag propagated before any forward-model evaluation."""
 
+    @classmethod
+    def setUpClass(cls):
+        # Build the (proton, alpha) ctx pair once — the guard branches
+        # short-circuit before touching them, so any positive-voltage
+        # response is enough.
+        cls.response = _load_swapi_response_with_warm_cache()
+        cls.proton_ctx, cls.alpha_ctx = _build_proton_and_alpha_contexts(
+            response=cls.response,
+            count_rate=np.zeros(_FIVE_SWEEP_VOLTAGE.shape),
+        )
+
     def test_proton_fill_values_propagate_proton_flag_to_alpha(self):
         """When the Stage-1 proton fit returned NaN moments (fill values), the alpha result inherits the proton's `bad_fit_flag` unchanged — no separate alpha-side flag is added for "stage 1 failed"."""
         proton_moments = _build_proton_fit_result(
@@ -242,17 +288,10 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
             bad_fit_flag=int(SwapiL3Flags.FIT_ERROR),
         )
         result = fit_solar_wind_alpha_model(
-            count_rate=np.zeros(_FIVE_SWEEP_VOLTAGE.shape),
-            esa_voltage=_FIVE_SWEEP_VOLTAGE,
-            measurement_time=np.zeros(_N_MEAS),
-            # `swapi_response` should not be touched on this branch — but
-            # pass a real one so an unexpected dereference would not crash.
-            swapi_response=_load_swapi_response_with_warm_cache(),
+            proton_ctx=self.proton_ctx,
+            alpha_ctx=self.alpha_ctx,
             proton_moments=proton_moments,
             magnetic_field_direction=_B_HAT_RTN,
-            alpha_effective_area_scale=1.0,
-            proton_effective_area_scale=1.0,
-            rotation_matrices=_identity_rotation_matrices(),
         )
         self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.FIT_ERROR))
 
@@ -263,15 +302,10 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
             bad_fit_flag=int(SwapiL3Flags.FIT_ERROR),
         )
         result = fit_solar_wind_alpha_model(
-            count_rate=np.zeros(_FIVE_SWEEP_VOLTAGE.shape),
-            esa_voltage=_FIVE_SWEEP_VOLTAGE,
-            measurement_time=np.zeros(_N_MEAS),
-            swapi_response=_load_swapi_response_with_warm_cache(),
+            proton_ctx=self.proton_ctx,
+            alpha_ctx=self.alpha_ctx,
             proton_moments=proton_moments,
             magnetic_field_direction=_B_HAT_RTN,
-            alpha_effective_area_scale=1.0,
-            proton_effective_area_scale=1.0,
-            rotation_matrices=_identity_rotation_matrices(),
         )
         _assert_moments_are_nan_filled(self, result)
 
@@ -280,15 +314,10 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
         proton_moments = _build_proton_fit_result()
         nan_b_hat = np.array([np.nan, 0.0, 0.0])
         result = fit_solar_wind_alpha_model(
-            count_rate=np.zeros(_FIVE_SWEEP_VOLTAGE.shape),
-            esa_voltage=_FIVE_SWEEP_VOLTAGE,
-            measurement_time=np.zeros(_N_MEAS),
-            swapi_response=_load_swapi_response_with_warm_cache(),
+            proton_ctx=self.proton_ctx,
+            alpha_ctx=self.alpha_ctx,
             proton_moments=proton_moments,
             magnetic_field_direction=nan_b_hat,
-            alpha_effective_area_scale=1.0,
-            proton_effective_area_scale=1.0,
-            rotation_matrices=_identity_rotation_matrices(),
         )
         self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.NONE))
 
@@ -297,114 +326,12 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
         proton_moments = _build_proton_fit_result()
         nan_b_hat = np.array([np.nan, 0.0, 0.0])
         result = fit_solar_wind_alpha_model(
-            count_rate=np.zeros(_FIVE_SWEEP_VOLTAGE.shape),
-            esa_voltage=_FIVE_SWEEP_VOLTAGE,
-            measurement_time=np.zeros(_N_MEAS),
-            swapi_response=_load_swapi_response_with_warm_cache(),
+            proton_ctx=self.proton_ctx,
+            alpha_ctx=self.alpha_ctx,
             proton_moments=proton_moments,
             magnetic_field_direction=nan_b_hat,
-            alpha_effective_area_scale=1.0,
-            proton_effective_area_scale=1.0,
-            rotation_matrices=_identity_rotation_matrices(),
         )
         _assert_moments_are_nan_filled(self, result)
-
-
-# ----- fit_solar_wind_alpha_model — context construction -----------------
-
-
-class TestFitAlphaMomentsContextConstruction(unittest.TestCase):
-    """Tests for `fit_solar_wind_alpha_model` — verifies it builds two separate fit contexts (proton background and alpha bump) with the correct species mass / mass-per-charge / effective-area scale routed to each."""
-
-    def setUp(self):
-        self.proton_moments = _build_proton_fit_result()
-        self.swapi_response = _load_swapi_response_with_warm_cache()
-        self.proton_eff_scale = 0.987
-        self.alpha_eff_scale = 0.731
-        self.rotation_matrices = _identity_rotation_matrices()
-
-        build_ctx_patcher = patch(
-            "imap_l3_processing.swapi.l3a.science.solar_wind.alpha."
-            "fit_solar_wind_alpha_model.build_solar_wind_fit_context"
-        )
-        initial_guess_patcher = patch(
-            "imap_l3_processing.swapi.l3a.science.solar_wind.alpha."
-            "fit_solar_wind_alpha_model.calculate_initial_guess",
-            return_value=None,
-        )
-        forward_model_patcher = patch(
-            "imap_l3_processing.swapi.l3a.science.solar_wind.alpha."
-            "fit_solar_wind_alpha_model.model_solar_wind_ideal_coincidence_rates",
-            return_value=(np.zeros(_N_MEAS), np.zeros((_N_MEAS, 5))),
-        )
-        self.addCleanup(build_ctx_patcher.stop)
-        self.addCleanup(initial_guess_patcher.stop)
-        self.addCleanup(forward_model_patcher.stop)
-        self.mock_build_ctx = build_ctx_patcher.start()
-        initial_guess_patcher.start()
-        forward_model_patcher.start()
-        self.mock_build_ctx.return_value = MagicMock()
-
-        fit_solar_wind_alpha_model(
-            count_rate=np.zeros(_FIVE_SWEEP_VOLTAGE.shape),
-            esa_voltage=_FIVE_SWEEP_VOLTAGE,
-            measurement_time=np.zeros(_N_MEAS),
-            swapi_response=self.swapi_response,
-            proton_moments=self.proton_moments,
-            magnetic_field_direction=_B_HAT_RTN,
-            alpha_effective_area_scale=self.alpha_eff_scale,
-            proton_effective_area_scale=self.proton_eff_scale,
-            rotation_matrices=self.rotation_matrices,
-        )
-        self.proton_call_kwargs = self.mock_build_ctx.call_args_list[0].kwargs
-        self.alpha_call_kwargs = self.mock_build_ctx.call_args_list[1].kwargs
-
-    def test_two_contexts_are_built(self):
-        """The fitter constructs exactly one context for the frozen proton background and one for the alpha bump."""
-        self.assertEqual(self.mock_build_ctx.call_count, 2)
-
-    def test_proton_context_uses_proton_mass_per_charge(self):
-        """The proton-background context receives `PROTON_MASS_PER_CHARGE_M_P_PER_E`, so its speed→voltage mapping matches the proton species."""
-        self.assertEqual(
-            self.proton_call_kwargs["mass_per_charge_m_p_per_e"],
-            PROTON_MASS_PER_CHARGE_M_P_PER_E,
-        )
-
-    def test_alpha_context_uses_alpha_mass_per_charge(self):
-        """The alpha-bump context receives `ALPHA_MASS_PER_CHARGE_M_P_PER_E` (≈2), guarding against a regression that reuses the proton 1.0."""
-        self.assertEqual(
-            self.alpha_call_kwargs["mass_per_charge_m_p_per_e"],
-            ALPHA_MASS_PER_CHARGE_M_P_PER_E,
-        )
-
-    def test_proton_context_uses_proton_mass_kg(self):
-        """The proton-background context receives `PROTON_MASS_KG` so the Maxwellian thermal-speed scale matches the proton species."""
-        self.assertEqual(self.proton_call_kwargs["mass_kg"], PROTON_MASS_KG)
-
-    def test_alpha_context_uses_alpha_mass_kg(self):
-        """The alpha-bump context receives `ALPHA_PARTICLE_MASS_KG` so the Maxwellian thermal-speed scale matches the alpha species."""
-        self.assertEqual(self.alpha_call_kwargs["mass_kg"], ALPHA_PARTICLE_MASS_KG)
-
-    def test_proton_context_uses_proton_effective_area_scale(self):
-        """The proton-background context receives the caller-supplied proton EA scale on `central_effective_area_scale`."""
-        self.assertEqual(
-            self.proton_call_kwargs["central_effective_area_scale"],
-            self.proton_eff_scale,
-        )
-
-    def test_alpha_context_uses_alpha_effective_area_scale(self):
-        """The alpha-bump context receives the caller-supplied alpha EA scale (which folds A_α/A_p species correction and alpha time drift into one ratio) on `central_effective_area_scale`."""
-        self.assertEqual(
-            self.alpha_call_kwargs["central_effective_area_scale"],
-            self.alpha_eff_scale,
-        )
-
-    def test_alpha_and_proton_effective_area_scales_are_distinct_values(self):
-        """The two species use different EA scales — guards against a regression that wires both contexts to the same scalar."""
-        self.assertNotEqual(
-            self.alpha_call_kwargs["central_effective_area_scale"],
-            self.proton_call_kwargs["central_effective_area_scale"],
-        )
 
 
 # ----- fit_solar_wind_alpha_model — end-to-end recovery -----------------
@@ -419,16 +346,17 @@ class TestFitAlphaMomentsRecoversTruth(
     def setUpClass(cls):
         super().setUpClass()
         cls.proton_moments = _build_proton_fit_result()
-        cls.result = fit_solar_wind_alpha_model(
+        proton_ctx, alpha_ctx = _build_proton_and_alpha_contexts(
+            response=cls.response,
             count_rate=cls.observed_count_rate,
-            esa_voltage=cls.voltage,
-            measurement_time=np.zeros(_N_MEAS),
-            swapi_response=cls.response,
+            voltage=cls.voltage,
+            rotation_matrices=cls.rotation_matrices,
+        )
+        cls.result = fit_solar_wind_alpha_model(
+            proton_ctx=proton_ctx,
+            alpha_ctx=alpha_ctx,
             proton_moments=cls.proton_moments,
             magnetic_field_direction=_B_HAT_RTN,
-            alpha_effective_area_scale=1.0,
-            proton_effective_area_scale=1.0,
-            rotation_matrices=cls.rotation_matrices,
         )
 
     def test_fit_succeeds_with_no_quality_flags(self):
@@ -499,16 +427,16 @@ class TestFitAlphaMomentsAlphaVelocityFollowsBHat(unittest.TestCase):
         cls.proton_moments = _build_proton_fit_result(
             velocity_rtn=cls.proton_velocity_rtn
         )
-        cls.result = fit_solar_wind_alpha_model(
+        proton_ctx, alpha_ctx = _build_proton_and_alpha_contexts(
+            response=cls.response,
             count_rate=observed,
-            esa_voltage=_FIVE_SWEEP_VOLTAGE,
-            measurement_time=np.zeros(_N_MEAS),
-            swapi_response=cls.response,
+            rotation_matrices=cls.rotation_matrices,
+        )
+        cls.result = fit_solar_wind_alpha_model(
+            proton_ctx=proton_ctx,
+            alpha_ctx=alpha_ctx,
             proton_moments=cls.proton_moments,
             magnetic_field_direction=cls.b_hat,
-            alpha_effective_area_scale=1.0,
-            proton_effective_area_scale=1.0,
-            rotation_matrices=cls.rotation_matrices,
         )
 
     def test_alpha_velocity_minus_proton_velocity_is_parallel_to_bhat(self):
@@ -595,50 +523,6 @@ class TestAlphaSolarWindFitResultAccessors(unittest.TestCase):
         )
 
 
-# ----- fit_solar_wind_alpha_model — geometry fallback --------------------
-
-
-class TestFitAlphaMomentsGeometryFallback(unittest.TestCase):
-    """Tests for `fit_solar_wind_alpha_model` — when `rotation_matrices` is omitted, SWAPI→RTN geometry is resolved from `measurement_time` via SPICE (`get_swapi_geometry`); the Stage-1 caller normally precomputes geometry and shares it, but the standalone-callable fallback path must also work."""
-
-    def test_fetches_geometry_from_measurement_time_when_rotation_matrices_omitted(
-        self,
-    ):
-        """Calling the fitter without `rotation_matrices` triggers `get_swapi_geometry(measurement_time)` and reaches the initial-guess step rather than crashing on missing geometry."""
-        proton_moments = _build_proton_fit_result()
-        rotation_matrices_from_geometry = _identity_rotation_matrices()
-        measurement_time = np.arange(_N_MEAS, dtype=float)
-
-        with patch(
-            "imap_l3_processing.swapi.l3a.utils.get_swapi_geometry",
-            return_value=rotation_matrices_from_geometry,
-        ) as mock_get_geometry, patch.object(
-            alpha_module,
-            "calculate_initial_guess",
-            return_value=None,
-        ):
-            result = fit_solar_wind_alpha_model(
-                count_rate=np.zeros(_FIVE_SWEEP_VOLTAGE.shape),
-                esa_voltage=_FIVE_SWEEP_VOLTAGE,
-                measurement_time=measurement_time,
-                swapi_response=_load_swapi_response_with_warm_cache(),
-                proton_moments=proton_moments,
-                magnetic_field_direction=_B_HAT_RTN,
-                alpha_effective_area_scale=1.0,
-                proton_effective_area_scale=1.0,
-                rotation_matrices=None,
-            )
-
-        mock_get_geometry.assert_called_once()
-        np.testing.assert_array_equal(
-            mock_get_geometry.call_args.args[0], measurement_time
-        )
-        # The mocked initial guess returned `None`, so the fitter
-        # short-circuited to a FIT_ERROR moments result — proving it
-        # reached the initial-guess step (i.e. did not crash on geometry).
-        self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.FIT_ERROR))
-
-
 # ----- fit_solar_wind_alpha_model — peak-bin filtering -------------------
 
 
@@ -680,16 +564,17 @@ class TestFitAlphaMomentsPeakBinFiltering(
         cls.target_bin = target_bin
 
         cls.proton_moments = _build_proton_fit_result()
-        cls.result = fit_solar_wind_alpha_model(
+        proton_ctx, alpha_ctx = _build_proton_and_alpha_contexts(
+            response=cls.response,
             count_rate=zeroed_observed,
-            esa_voltage=cls.voltage,
-            measurement_time=np.zeros(_N_MEAS),
-            swapi_response=cls.response,
+            voltage=cls.voltage,
+            rotation_matrices=cls.rotation_matrices,
+        )
+        cls.result = fit_solar_wind_alpha_model(
+            proton_ctx=proton_ctx,
+            alpha_ctx=alpha_ctx,
             proton_moments=cls.proton_moments,
             magnetic_field_direction=_B_HAT_RTN,
-            alpha_effective_area_scale=1.0,
-            proton_effective_area_scale=1.0,
-            rotation_matrices=cls.rotation_matrices,
         )
 
     def test_fit_completes_when_some_peak_bins_are_zeroed(self):
@@ -727,6 +612,12 @@ class TestFitAlphaMomentsLMFailureFlag(unittest.TestCase):
         non_converged.jac = jac
         non_converged.success = False
 
+        response = _load_swapi_response_with_warm_cache()
+        proton_ctx, alpha_ctx = _build_proton_and_alpha_contexts(
+            response=response,
+            count_rate=np.full(_FIVE_SWEEP_VOLTAGE.shape, 100.0),
+        )
+
         with patch.object(
             alpha_module,
             "calculate_initial_guess",
@@ -741,15 +632,10 @@ class TestFitAlphaMomentsLMFailureFlag(unittest.TestCase):
             return_value=non_converged,
         ):
             result = fit_solar_wind_alpha_model(
-                count_rate=np.full(_FIVE_SWEEP_VOLTAGE.shape, 100.0),
-                esa_voltage=_FIVE_SWEEP_VOLTAGE,
-                measurement_time=np.zeros(_N_MEAS),
-                swapi_response=_load_swapi_response_with_warm_cache(),
+                proton_ctx=proton_ctx,
+                alpha_ctx=alpha_ctx,
                 proton_moments=proton_moments,
                 magnetic_field_direction=_B_HAT_RTN,
-                alpha_effective_area_scale=1.0,
-                proton_effective_area_scale=1.0,
-                rotation_matrices=_identity_rotation_matrices(),
             )
 
         self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.FIT_ERROR))
@@ -768,16 +654,17 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
             rotation_matrices = np.broadcast_to(np.eye(3), (n_meas, 3, 3)).copy()
         warm_voltages = esa_voltage if n_meas > 0 else None
         response = load_swapi_response(warm_cache_voltages=warm_voltages)
-        return fit_solar_wind_alpha_model(
+        proton_ctx, alpha_ctx = _build_proton_and_alpha_contexts(
+            response=response,
             count_rate=count_rate,
-            esa_voltage=esa_voltage,
-            measurement_time=np.zeros(n_meas),
-            swapi_response=response,
+            voltage=esa_voltage,
+            rotation_matrices=rotation_matrices,
+        )
+        return fit_solar_wind_alpha_model(
+            proton_ctx=proton_ctx,
+            alpha_ctx=alpha_ctx,
             proton_moments=_build_proton_fit_result(),
             magnetic_field_direction=_B_HAT_RTN,
-            alpha_effective_area_scale=1.0,
-            proton_effective_area_scale=1.0,
-            rotation_matrices=rotation_matrices,
         )
 
     def _assert_fit_error_nan(self, result):
@@ -1034,6 +921,13 @@ class TestFitAlphaMomentsPassesAnalyticJacobianToLM(
         mock_result.jac = np.zeros((_N_MEAS, 3))
         mock_result.success = True
 
+        proton_ctx, alpha_ctx = _build_proton_and_alpha_contexts(
+            response=self.response,
+            count_rate=self.observed_count_rate,
+            voltage=self.voltage,
+            rotation_matrices=self.rotation_matrices,
+        )
+
         with patch.object(
             alpha_module,
             "calculate_initial_guess",
@@ -1053,15 +947,10 @@ class TestFitAlphaMomentsPassesAnalyticJacobianToLM(
             return_value=mock_result,
         ) as mock_lm:
             fit_solar_wind_alpha_model(
-                count_rate=self.observed_count_rate,
-                esa_voltage=self.voltage,
-                measurement_time=np.zeros(_N_MEAS),
-                swapi_response=self.response,
+                proton_ctx=proton_ctx,
+                alpha_ctx=alpha_ctx,
                 proton_moments=proton_moments,
                 magnetic_field_direction=_B_HAT_RTN,
-                alpha_effective_area_scale=1.0,
-                proton_effective_area_scale=1.0,
-                rotation_matrices=self.rotation_matrices,
             )
 
         kwargs = mock_lm.call_args.kwargs

@@ -6,18 +6,11 @@ import scipy.optimize
 from numpy import ndarray
 from uncertainties import UFloat, covariance_matrix, ufloat
 
-from imap_l3_processing.constants import (
-    ALPHA_MASS_PER_CHARGE_M_P_PER_E,
-    ALPHA_PARTICLE_MASS_KG,
-    PROTON_MASS_KG,
-    PROTON_MASS_PER_CHARGE_M_P_PER_E,
-)
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.calculate_initial_guess import (
     calculate_initial_guess,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     SolarWindFitContext,
-    build_solar_wind_fit_context,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
@@ -38,7 +31,6 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.uncertainties import (
 )
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
-from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 
 
 @dataclass
@@ -56,72 +48,11 @@ class AlphaSolarWindFitResult:
         return np.array(covariance_matrix(self.bulk_velocity_rtn))
 
 
-class _AlphaEvaluator:
-    def __init__(
-        self,
-        proton_bulk: ndarray,
-        magnetic_field_direction: ndarray,
-        proton_true_rate: ndarray,
-        alpha_ctx: SolarWindFitContext,
-    ):
-        self.proton_bulk = proton_bulk
-        self.magnetic_field_direction = magnetic_field_direction
-        self.proton_true_rate = proton_true_rate
-        self.alpha_ctx = alpha_ctx
-        self._last_state: Optional[ndarray] = None
-        self._last_residuals: Optional[ndarray] = None
-        self._last_jacobian: Optional[ndarray] = None
-
-    def _eval(self, x: ndarray) -> None:
-        alpha_density = float(np.exp(x[0]))
-        alpha_temperature = float(np.exp(x[1]))
-        delta_v = float(x[2])
-        alpha_bulk_velocity_rtn = self.proton_bulk + delta_v * self.magnetic_field_direction
-        alpha_true, jacobian_alpha_5d = model_solar_wind_ideal_coincidence_rates(
-            SolarWindParams(
-                alpha_density, alpha_bulk_velocity_rtn, alpha_temperature, self.alpha_ctx.mass_kg
-            ),
-            self.alpha_ctx,
-        )
-        total_true = self.proton_true_rate + alpha_true
-        deadtime = deadtime_factor(total_true)
-        residuals = total_true * deadtime - self.alpha_ctx.count_rate.ravel()
-
-        deadtime_squared = deadtime * deadtime
-        jacobian = np.empty((alpha_true.size, 3))
-        jacobian[:, 0] = deadtime_squared * jacobian_alpha_5d[:, LOG_DENSITY_IDX]
-        jacobian[:, 1] = deadtime_squared * jacobian_alpha_5d[:, LOG_TEMPERATURE_IDX]
-        jacobian[:, 2] = deadtime_squared * (
-            jacobian_alpha_5d[:, VELOCITY_SLICE] @ self.magnetic_field_direction
-        )
-
-        self._last_state = x.copy()
-        self._last_residuals = residuals
-        self._last_jacobian = jacobian
-
-    def _refresh(self, x: ndarray) -> None:
-        if self._last_state is None or not np.array_equal(x, self._last_state):
-            self._eval(x)
-
-    def residuals(self, x: ndarray) -> ndarray:
-        self._refresh(x)
-        return self._last_residuals
-
-    def jacobian(self, x: ndarray) -> ndarray:
-        self._refresh(x)
-        return self._last_jacobian
-
-
 def fit_solar_wind_alpha_model(
-    count_rate: ndarray,
-    esa_voltage: ndarray,
-    measurement_time: ndarray,
-    swapi_response: SwapiResponse,
+    proton_ctx: SolarWindFitContext,
+    alpha_ctx: SolarWindFitContext,
     proton_moments: ProtonSolarWindFitResult,
     magnetic_field_direction: ndarray,
-    alpha_effective_area_scale: float,
-    proton_effective_area_scale: float,
-    rotation_matrices: Optional[ndarray] = None,
 ) -> AlphaSolarWindFitResult:
     bad_fit_flag = int(proton_moments.bad_fit_flag)
     proton_bulk_rtn = proton_moments.bulk_velocity_rtn_nominal()
@@ -132,30 +63,6 @@ def fit_solar_wind_alpha_model(
     magnetic_field_direction = np.asarray(magnetic_field_direction, dtype=float)
     if not np.all(np.isfinite(magnetic_field_direction)):
         return _nan_alpha_fit_result(bad_fit_flag)
-
-    if rotation_matrices is None:
-        from imap_l3_processing.swapi.l3a.utils import get_swapi_geometry
-
-        rotation_matrices = get_swapi_geometry(measurement_time)
-
-    proton_ctx = build_solar_wind_fit_context(
-        count_rate=count_rate,
-        esa_voltage=esa_voltage,
-        swapi_response=swapi_response,
-        central_effective_area_scale=proton_effective_area_scale,
-        rotation_matrices=rotation_matrices,
-        mass_kg=PROTON_MASS_KG,
-        mass_per_charge_m_p_per_e=PROTON_MASS_PER_CHARGE_M_P_PER_E,
-    )
-    alpha_ctx = build_solar_wind_fit_context(
-        count_rate=count_rate,
-        esa_voltage=esa_voltage,
-        swapi_response=swapi_response,
-        central_effective_area_scale=alpha_effective_area_scale,
-        rotation_matrices=rotation_matrices,
-        mass_kg=ALPHA_PARTICLE_MASS_KG,
-        mass_per_charge_m_p_per_e=ALPHA_MASS_PER_CHARGE_M_P_PER_E,
-    )
 
     proton_true_rate, _ = model_solar_wind_ideal_coincidence_rates(
         SolarWindParams(
@@ -179,7 +86,7 @@ def fit_solar_wind_alpha_model(
     alpha_density_seed, alpha_temperature_seed, delta_v_seed, peak_bin_idx = seed
 
     n_sweeps, n_bins = alpha_ctx.count_rate.shape
-    count_rate_flat = count_rate.ravel()
+    count_rate_flat = alpha_ctx.count_rate.ravel()
     peak_flat_idx = np.concatenate([peak_bin_idx + s * n_bins for s in range(n_sweeps)])
     count_rate_peak = count_rate_flat[peak_flat_idx]
     keep = count_rate_peak > 0
@@ -290,3 +197,59 @@ def _alpha_r_squared(
         )
         return r_squared(averaged_residual, averaged_count_rate)
     return r_squared(residuals, count_rate)
+
+
+class _AlphaEvaluator:
+    def __init__(
+        self,
+        proton_bulk: ndarray,
+        magnetic_field_direction: ndarray,
+        proton_true_rate: ndarray,
+        alpha_ctx: SolarWindFitContext,
+    ):
+        self.proton_bulk = proton_bulk
+        self.magnetic_field_direction = magnetic_field_direction
+        self.proton_true_rate = proton_true_rate
+        self.alpha_ctx = alpha_ctx
+        self._last_state: Optional[ndarray] = None
+        self._last_residuals: Optional[ndarray] = None
+        self._last_jacobian: Optional[ndarray] = None
+
+    def _eval(self, x: ndarray) -> None:
+        alpha_density = float(np.exp(x[0]))
+        alpha_temperature = float(np.exp(x[1]))
+        delta_v = float(x[2])
+        alpha_bulk_velocity_rtn = self.proton_bulk + delta_v * self.magnetic_field_direction
+        alpha_true, jacobian_alpha_5d = model_solar_wind_ideal_coincidence_rates(
+            SolarWindParams(
+                alpha_density, alpha_bulk_velocity_rtn, alpha_temperature, self.alpha_ctx.mass_kg
+            ),
+            self.alpha_ctx,
+        )
+        total_true = self.proton_true_rate + alpha_true
+        deadtime = deadtime_factor(total_true)
+        residuals = total_true * deadtime - self.alpha_ctx.count_rate.ravel()
+
+        deadtime_squared = deadtime * deadtime
+        jacobian = np.empty((alpha_true.size, 3))
+        jacobian[:, 0] = deadtime_squared * jacobian_alpha_5d[:, LOG_DENSITY_IDX]
+        jacobian[:, 1] = deadtime_squared * jacobian_alpha_5d[:, LOG_TEMPERATURE_IDX]
+        jacobian[:, 2] = deadtime_squared * (
+            jacobian_alpha_5d[:, VELOCITY_SLICE] @ self.magnetic_field_direction
+        )
+
+        self._last_state = x.copy()
+        self._last_residuals = residuals
+        self._last_jacobian = jacobian
+
+    def _refresh(self, x: ndarray) -> None:
+        if self._last_state is None or not np.array_equal(x, self._last_state):
+            self._eval(x)
+
+    def residuals(self, x: ndarray) -> ndarray:
+        self._refresh(x)
+        return self._last_residuals
+
+    def jacobian(self, x: ndarray) -> ndarray:
+        self._refresh(x)
+        return self._last_jacobian
