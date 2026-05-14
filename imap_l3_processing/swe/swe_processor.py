@@ -49,6 +49,54 @@ logger = logging.getLogger(__name__)
 
 UNPHYSICAL_PSD_THRESHOLD: float = 1e-19
 
+TEMPERATURE_TENSOR_DIAGONAL_INDICES: tuple[int, ...] = (0, 2, 5)
+
+INTEGRATED_FIELD_SUFFIXES: tuple[str, ...] = (
+    "_density_integrated",
+    "_speed_integrated",
+    "_velocity_vector_rtn_integrated",
+    "_heat_flux_magnitude_integrated",
+    "_heat_flux_theta_integrated",
+    "_heat_flux_phi_integrated",
+    "_t_parallel_integrated",
+    "_t_perpendicular_integrated",
+    "_temperature_theta_rtn_integrated",
+    "_temperature_phi_rtn_integrated",
+    "_temperature_parallel_to_mag",
+    "_temperature_perpendicular_to_mag",
+    "_temperature_tensor_integrated",
+)
+
+
+def _detect_negative(density: np.ndarray, tensor: np.ndarray) -> np.ndarray:
+    return (density < 0) | np.any(tensor[:, TEMPERATURE_TENSOR_DIAGONAL_INDICES] < 0, axis=-1)
+
+
+def check_and_mask_negative_moments(moment_data: SweL3MomentData) -> np.ndarray:
+    num_epochs = len(moment_data.core_density_integrated)
+    flags = np.full(num_epochs, SweL3Flags.NONE, dtype=np.uint16)
+
+    core_negative = _detect_negative(
+        moment_data.core_density_integrated,
+        moment_data.core_temperature_tensor_integrated,
+    )
+    halo_negative = _detect_negative(
+        moment_data.halo_density_integrated,
+        moment_data.halo_temperature_tensor_integrated,
+    )
+    total_negative = _detect_negative(
+        moment_data.total_density_integrated,
+        moment_data.total_temperature_tensor_integrated,
+    )
+
+    for field_suffix in INTEGRATED_FIELD_SUFFIXES:
+        getattr(moment_data, "core" + field_suffix)[core_negative] = np.nan
+        getattr(moment_data, "halo" + field_suffix)[halo_negative] = np.nan
+        getattr(moment_data, "total" + field_suffix)[core_negative | halo_negative | total_negative] = np.nan
+
+    flags[core_negative | halo_negative | total_negative] |= np.uint16(SweL3Flags.NEGATIVE_MOMENT)
+    return flags
+
 
 # Temperature Outlier Flag Algorithm
 def check_temperature_outlier_flag(data: np.ndarray):
@@ -164,6 +212,9 @@ class SweProcessor(Processor):
             corrected_energy_bins,
             config,
         )
+        negative_moment_flags = check_and_mask_negative_moments(swe_l3_moments_data)
+        swe_quality_flags |= negative_moment_flags
+
         # Check Temperature Outlier Flags and add to swe_quality_flags
         # each temperature variable needs checked
         temperature_outlier_flags = check_temperature_outlier_flag(swe_l3_moments_data.core_t_parallel_integrated)

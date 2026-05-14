@@ -13,7 +13,7 @@ from imap_l3_processing.swe.l3.science.moment_calculations import MomentFitResul
 from imap_l3_processing.swe.l3.science.moment_calculations import Moments
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.quality_flags import SweL3Flags
-from imap_l3_processing.swe.swe_processor import SweProcessor, logger
+from imap_l3_processing.swe.swe_processor import SweProcessor, check_and_mask_negative_moments, logger
 from tests.test_helpers import NumpyArrayMatcher, build_swe_configuration, create_dataclass_mock, build_moments, \
     build_moment_fit_results, build_swe_moment_data
 
@@ -51,6 +51,7 @@ class TestSweProcessor(unittest.TestCase):
         mock_save_data.assert_called_once_with(mock_calculate_products.return_value)
         self.assertEqual([mock_save_data.return_value], product)
 
+    @patch('imap_l3_processing.swe.swe_processor.check_and_mask_negative_moments')
     @patch("imap_l3_processing.swe.swe_processor.compute_epoch_delta_in_ns")
     @patch('imap_l3_processing.swe.swe_processor.average_over_look_directions')
     @patch('imap_l3_processing.swe.swe_processor.mec_breakpoint_finder')
@@ -58,7 +59,7 @@ class TestSweProcessor(unittest.TestCase):
     @patch('imap_l3_processing.swe.swe_processor.SweProcessor.calculate_moment_products')
     def test_calculate_products(self, mock_calculate_moment_products, mock_calculate_pitch_angle_products,
                                 mock_breakpoint_finder, mock_average_over_look_directions,
-                                mock_compute_epoch_delta_in_ns):
+                                mock_compute_epoch_delta_in_ns, mock_check_and_mask_negative_moments):
         mock_compute_epoch_delta_in_ns.return_value = [30e9, 40e9]
         epochs = datetime.now() + np.arange(7) * timedelta(minutes=1)
         swapi_epochs = datetime.now() - timedelta(seconds=15) + np.arange(2) * timedelta(minutes=.5)
@@ -135,6 +136,10 @@ class TestSweProcessor(unittest.TestCase):
 
         mock_moment_data = build_swe_moment_data(len(epochs))
         mock_calculate_moment_products.return_value = mock_moment_data
+
+        negative_moment_flags_return = np.array([SweL3Flags.NONE] * len(epochs), dtype=np.uint16)
+        negative_moment_flags_return[4] = SweL3Flags.NEGATIVE_MOMENT
+        mock_check_and_mask_negative_moments.return_value = negative_moment_flags_return
 
         calculate_pitch_angle_flags = np.array([SweL3Flags.NONE] * len(epochs), dtype=np.uint16)
         calculate_pitch_angle_flags[0] = SweL3Flags.FALLBACK_SWAPI_SPEED
@@ -284,12 +289,102 @@ class TestSweProcessor(unittest.TestCase):
             SweL3Flags.PRELIMINARY_MAG,
             SweL3Flags.PRELIMINARY_MAG,
             SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE | SweL3Flags.PRELIMINARY_MAG,
-            SweL3Flags.PRELIMINARY_MAG,
+            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.NEGATIVE_MOMENT,
             SweL3Flags.PRELIMINARY_MAG,
             SweL3Flags.PRELIMINARY_MAG | SweL3Flags.UNPHYSICAL_PSD,
         ])
 
         np.testing.assert_array_equal(swe_l3_data.swe_flags, expected_quality_flags)
+
+        mock_check_and_mask_negative_moments.assert_called_once()
+        self.assertIs(mock_moment_data, mock_check_and_mask_negative_moments.call_args[0][0])
+
+    @patch('imap_l3_processing.swe.swe_processor.check_temperature_outlier_flag')
+    @patch('imap_l3_processing.swe.swe_processor.check_and_mask_negative_moments')
+    @patch("imap_l3_processing.swe.swe_processor.compute_epoch_delta_in_ns")
+    @patch('imap_l3_processing.swe.swe_processor.average_over_look_directions')
+    @patch('imap_l3_processing.swe.swe_processor.mec_breakpoint_finder')
+    @patch('imap_l3_processing.swe.swe_processor.SweProcessor.calculate_pitch_angle_products')
+    @patch('imap_l3_processing.swe.swe_processor.SweProcessor.calculate_moment_products')
+    def test_negative_moment_mask_runs_before_temperature_outlier_checks(
+        self,
+        mock_calculate_moment_products,
+        mock_calculate_pitch_angle_products,
+        mock_breakpoint_finder,
+        mock_average_over_look_directions,
+        mock_compute_epoch_delta_in_ns,
+        mock_check_and_mask_negative_moments,
+        mock_check_temperature_outlier_flag,
+    ):
+        num_epochs = 3
+        epochs = datetime.now() + np.arange(num_epochs) * timedelta(minutes=1)
+        mock_compute_epoch_delta_in_ns.return_value = np.full(num_epochs, 30e9)
+        mock_breakpoint_finder.return_value = (1.0, 2.0, SweL3Flags.NONE)
+        mock_average_over_look_directions.return_value = np.array([1.0, 1.0, 1.0])
+
+        swe_l2_data = SweL2Data(
+            epoch=epochs,
+            phase_space_density=np.zeros((num_epochs, 3)),
+            flux=np.zeros((num_epochs, 3)),
+            energy=np.array([1.0, 2.0, 3.0]),
+            inst_el=np.array([]),
+            inst_az=sentinel.inst_az,
+            inst_az_label=sentinel.inst_az_label,
+            inst_el_label=sentinel.inst_el_label,
+            inst_az_spin_sector=np.zeros((num_epochs, 3)),
+            acquisition_time=np.array([]),
+            acquisition_duration=np.array([]),
+            phase_space_density_rebinned=np.zeros((num_epochs, 3, 5, 7)),
+        )
+        swapi_l3a_proton_data = SwapiL3aProtonData(
+            epoch=np.array([]),
+            epoch_delta=np.array([]),
+            proton_sw_velocity_rtn=np.zeros((0, 3)),
+            proton_sw_speed=np.zeros(0),
+            swp_flags=np.array([]),
+        )
+        swe_config = build_swe_configuration(
+            geometric_fractions=[1.0] * 7,
+            gyrophase_bins=[90, 180, 270],
+            gyrophase_delta=[90, 90, 90],
+            pitch_angle_delta=[45, 45, 45],
+            energy_bins=[1, 10, 100],
+            energy_delta_plus=[2, 20, 200],
+            energy_delta_minus=[8, 80, 800],
+        )
+
+        moment_data = build_swe_moment_data(num_epochs)
+        mock_calculate_moment_products.return_value = moment_data
+        mock_check_and_mask_negative_moments.return_value = np.zeros(num_epochs, dtype=np.uint16)
+        mock_check_temperature_outlier_flag.return_value = np.zeros(num_epochs, dtype=np.uint16)
+        mock_calculate_pitch_angle_products.return_value = (
+            sentinel.psd_by_pa,
+            sentinel.psd_by_pa_and_gyro,
+            sentinel.energy_spec_1d,
+            sentinel.energy_spec_in,
+            sentinel.energy_spec_out,
+            np.zeros((num_epochs, 3, 3, 3)),
+            np.zeros((num_epochs, 3, 3)),
+            np.zeros((num_epochs, 3, 3, 3)),
+            np.zeros((num_epochs, 3, 3)),
+            np.zeros(num_epochs, dtype=np.uint16),
+        )
+
+        manager = Mock()
+        manager.attach_mock(mock_check_and_mask_negative_moments, 'mask')
+        manager.attach_mock(mock_check_temperature_outlier_flag, 'outlier')
+
+        input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21), datetime(2025, 2, 22), "v001")
+        swe_l3_dependency = SweL3Dependencies(
+            swe_l2_data, Mock(), Mock(), swapi_l3a_proton_data, swe_config,
+            mag_is_preliminary=False,
+        )
+        swe_processor = SweProcessor(swe_l3_dependency, input_metadata)
+        swe_processor.calculate_products(swe_l3_dependency)
+
+        method_call_order = [c[0] for c in manager.mock_calls]
+        self.assertEqual('mask', method_call_order[0])
+        self.assertEqual(['outlier'] * 8, method_call_order[1:])
 
     @patch('imap_l3_processing.swe.swe_processor.swe_rebin_intensity_by_pitch_angle_and_gyrophase')
     @patch('imap_l3_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
@@ -1513,3 +1608,426 @@ class TestSweProcessor(unittest.TestCase):
                 self.assertIsInstance(swe_moment_data, SweL3MomentData)
 
                 failing_function.side_effect = None
+
+
+_CORE_INTEGRATED_FIELD_NAMES: tuple[str, ...] = (
+    "core_density_integrated",
+    "core_speed_integrated",
+    "core_velocity_vector_rtn_integrated",
+    "core_heat_flux_magnitude_integrated",
+    "core_heat_flux_theta_integrated",
+    "core_heat_flux_phi_integrated",
+    "core_t_parallel_integrated",
+    "core_t_perpendicular_integrated",
+    "core_temperature_theta_rtn_integrated",
+    "core_temperature_phi_rtn_integrated",
+    "core_temperature_parallel_to_mag",
+    "core_temperature_perpendicular_to_mag",
+    "core_temperature_tensor_integrated",
+)
+
+_HALO_INTEGRATED_FIELD_NAMES: tuple[str, ...] = (
+    "halo_density_integrated",
+    "halo_speed_integrated",
+    "halo_velocity_vector_rtn_integrated",
+    "halo_heat_flux_magnitude_integrated",
+    "halo_heat_flux_theta_integrated",
+    "halo_heat_flux_phi_integrated",
+    "halo_t_parallel_integrated",
+    "halo_t_perpendicular_integrated",
+    "halo_temperature_theta_rtn_integrated",
+    "halo_temperature_phi_rtn_integrated",
+    "halo_temperature_parallel_to_mag",
+    "halo_temperature_perpendicular_to_mag",
+    "halo_temperature_tensor_integrated",
+)
+
+_TOTAL_INTEGRATED_FIELD_NAMES: tuple[str, ...] = (
+    "total_density_integrated",
+    "total_speed_integrated",
+    "total_velocity_vector_rtn_integrated",
+    "total_heat_flux_magnitude_integrated",
+    "total_heat_flux_theta_integrated",
+    "total_heat_flux_phi_integrated",
+    "total_t_parallel_integrated",
+    "total_t_perpendicular_integrated",
+    "total_temperature_theta_rtn_integrated",
+    "total_temperature_phi_rtn_integrated",
+    "total_temperature_parallel_to_mag",
+    "total_temperature_perpendicular_to_mag",
+    "total_temperature_tensor_integrated",
+)
+
+_FIT_FIELD_NAMES: tuple[str, ...] = (
+    "core_fit_num_points",
+    "core_chisq",
+    "halo_chisq",
+    "core_density_fit",
+    "halo_density_fit",
+    "core_t_parallel_fit",
+    "halo_t_parallel_fit",
+    "core_t_perpendicular_fit",
+    "halo_t_perpendicular_fit",
+    "core_temperature_phi_rtn_fit",
+    "halo_temperature_phi_rtn_fit",
+    "core_temperature_theta_rtn_fit",
+    "halo_temperature_theta_rtn_fit",
+    "core_speed_fit",
+    "halo_speed_fit",
+    "core_velocity_vector_rtn_fit",
+    "halo_velocity_vector_rtn_fit",
+)
+
+
+def _build_finite_moment_data(num_epochs: int) -> SweL3MomentData:
+    shape_1d = (num_epochs,)
+    shape_2 = (num_epochs, 2)
+    shape_3 = (num_epochs, 3)
+    shape_6 = (num_epochs, 6)
+    return SweL3MomentData(
+        core_fit_num_points=np.full(shape_1d, 1.0),
+        core_chisq=np.full(shape_1d, 1.0),
+        halo_chisq=np.full(shape_1d, 1.0),
+        core_density_fit=np.full(shape_1d, 1.0),
+        halo_density_fit=np.full(shape_1d, 1.0),
+        core_t_parallel_fit=np.full(shape_1d, 1.0),
+        halo_t_parallel_fit=np.full(shape_1d, 1.0),
+        core_t_perpendicular_fit=np.full(shape_1d, 1.0),
+        halo_t_perpendicular_fit=np.full(shape_1d, 1.0),
+        core_temperature_phi_rtn_fit=np.full(shape_1d, 1.0),
+        halo_temperature_phi_rtn_fit=np.full(shape_1d, 1.0),
+        core_temperature_theta_rtn_fit=np.full(shape_1d, 1.0),
+        halo_temperature_theta_rtn_fit=np.full(shape_1d, 1.0),
+        core_speed_fit=np.full(shape_1d, 1.0),
+        halo_speed_fit=np.full(shape_1d, 1.0),
+        core_velocity_vector_rtn_fit=np.full(shape_3, 1.0),
+        halo_velocity_vector_rtn_fit=np.full(shape_3, 1.0),
+        core_density_integrated=np.full(shape_1d, 1.0),
+        halo_density_integrated=np.full(shape_1d, 1.0),
+        total_density_integrated=np.full(shape_1d, 1.0),
+        core_speed_integrated=np.full(shape_1d, 1.0),
+        halo_speed_integrated=np.full(shape_1d, 1.0),
+        total_speed_integrated=np.full(shape_1d, 1.0),
+        core_velocity_vector_rtn_integrated=np.full(shape_3, 1.0),
+        halo_velocity_vector_rtn_integrated=np.full(shape_3, 1.0),
+        total_velocity_vector_rtn_integrated=np.full(shape_3, 1.0),
+        core_heat_flux_magnitude_integrated=np.full(shape_1d, 1.0),
+        core_heat_flux_theta_integrated=np.full(shape_1d, 1.0),
+        core_heat_flux_phi_integrated=np.full(shape_1d, 1.0),
+        halo_heat_flux_magnitude_integrated=np.full(shape_1d, 1.0),
+        halo_heat_flux_theta_integrated=np.full(shape_1d, 1.0),
+        halo_heat_flux_phi_integrated=np.full(shape_1d, 1.0),
+        total_heat_flux_magnitude_integrated=np.full(shape_1d, 1.0),
+        total_heat_flux_theta_integrated=np.full(shape_1d, 1.0),
+        total_heat_flux_phi_integrated=np.full(shape_1d, 1.0),
+        core_t_parallel_integrated=np.full(shape_1d, 1.0),
+        core_t_perpendicular_integrated=np.full(shape_2, 1.0),
+        halo_t_parallel_integrated=np.full(shape_1d, 1.0),
+        halo_t_perpendicular_integrated=np.full(shape_2, 1.0),
+        total_t_parallel_integrated=np.full(shape_1d, 1.0),
+        total_t_perpendicular_integrated=np.full(shape_2, 1.0),
+        core_temperature_theta_rtn_integrated=np.full(shape_1d, 1.0),
+        core_temperature_phi_rtn_integrated=np.full(shape_1d, 1.0),
+        halo_temperature_theta_rtn_integrated=np.full(shape_1d, 1.0),
+        halo_temperature_phi_rtn_integrated=np.full(shape_1d, 1.0),
+        total_temperature_theta_rtn_integrated=np.full(shape_1d, 1.0),
+        total_temperature_phi_rtn_integrated=np.full(shape_1d, 1.0),
+        core_temperature_parallel_to_mag=np.full(shape_1d, 1.0),
+        core_temperature_perpendicular_to_mag=np.full(shape_2, 1.0),
+        halo_temperature_parallel_to_mag=np.full(shape_1d, 1.0),
+        halo_temperature_perpendicular_to_mag=np.full(shape_2, 1.0),
+        total_temperature_parallel_to_mag=np.full(shape_1d, 1.0),
+        total_temperature_perpendicular_to_mag=np.full(shape_2, 1.0),
+        core_temperature_tensor_integrated=np.full(shape_6, 1.0),
+        halo_temperature_tensor_integrated=np.full(shape_6, 1.0),
+        total_temperature_tensor_integrated=np.full(shape_6, 1.0),
+    )
+
+
+def _assert_field_nan_at_index_and_finite_elsewhere(test: unittest.TestCase, moment_data: SweL3MomentData,
+                                                    field_names: tuple[str, ...], nan_index: int,
+                                                    finite_indices: tuple[int, ...]) -> None:
+    for field_name in field_names:
+        field = getattr(moment_data, field_name)
+        test.assertTrue(np.all(np.isnan(field[nan_index])),
+                        f"{field_name}[{nan_index}] should be NaN, got {field[nan_index]!r}")
+        for finite_index in finite_indices:
+            test.assertTrue(np.all(np.isfinite(field[finite_index])),
+                            f"{field_name}[{finite_index}] should be finite, got {field[finite_index]!r}")
+
+
+def _assert_fields_finite_everywhere(test: unittest.TestCase, moment_data: SweL3MomentData,
+                                     field_names: tuple[str, ...]) -> None:
+    for field_name in field_names:
+        field = getattr(moment_data, field_name)
+        test.assertTrue(np.all(np.isfinite(field)),
+                        f"{field_name} should be finite at every index, got {field!r}")
+
+
+class TestCheckAndMaskNegativeMoments(unittest.TestCase):
+    def test_negative_core_density_masks_core_and_total_and_flags(self):
+        moment_data = _build_finite_moment_data(num_epochs=3)
+        moment_data.core_density_integrated[1] = -1.0
+
+        flags = check_and_mask_negative_moments(moment_data)
+
+        expected_flags = np.array(
+            [SweL3Flags.NONE, SweL3Flags.NEGATIVE_MOMENT, SweL3Flags.NONE], dtype=np.uint16
+        )
+        np.testing.assert_array_equal(flags, expected_flags)
+        self.assertEqual(np.uint16, flags.dtype)
+
+        _assert_field_nan_at_index_and_finite_elsewhere(
+            self, moment_data, _CORE_INTEGRATED_FIELD_NAMES, nan_index=1, finite_indices=(0, 2)
+        )
+        _assert_field_nan_at_index_and_finite_elsewhere(
+            self, moment_data, _TOTAL_INTEGRATED_FIELD_NAMES, nan_index=1, finite_indices=(0, 2)
+        )
+        _assert_fields_finite_everywhere(self, moment_data, _HALO_INTEGRATED_FIELD_NAMES)
+        _assert_fields_finite_everywhere(self, moment_data, _FIT_FIELD_NAMES)
+
+    def test_negative_core_tensor_diagonal_masks_core_and_total_and_flags(self):
+        diagonal_cases = (
+            ("Txx", [-1.0, 0.0, 1.0, 0.0, 0.0, 1.0]),
+            ("Tyy", [1.0, 0.0, -1.0, 0.0, 0.0, 1.0]),
+            ("Tzz", [1.0, 0.0, 1.0, 0.0, 0.0, -1.0]),
+        )
+        for label, tensor_at_epoch_1 in diagonal_cases:
+            with self.subTest(label):
+                moment_data = _build_finite_moment_data(num_epochs=3)
+                moment_data.core_temperature_tensor_integrated[1] = tensor_at_epoch_1
+
+                flags = check_and_mask_negative_moments(moment_data)
+
+                expected_flags = np.array(
+                    [SweL3Flags.NONE, SweL3Flags.NEGATIVE_MOMENT, SweL3Flags.NONE], dtype=np.uint16
+                )
+                np.testing.assert_array_equal(flags, expected_flags)
+                self.assertEqual(np.uint16, flags.dtype)
+
+                _assert_field_nan_at_index_and_finite_elsewhere(
+                    self, moment_data, _CORE_INTEGRATED_FIELD_NAMES, nan_index=1, finite_indices=(0, 2)
+                )
+                _assert_field_nan_at_index_and_finite_elsewhere(
+                    self, moment_data, _TOTAL_INTEGRATED_FIELD_NAMES, nan_index=1, finite_indices=(0, 2)
+                )
+                _assert_fields_finite_everywhere(self, moment_data, _HALO_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _FIT_FIELD_NAMES)
+
+    def test_negative_core_tensor_off_diagonal_does_not_flag_or_mask(self):
+        off_diagonal_cases = (
+            ("Txy", [1.0, -1.0, 1.0, 0.0, 0.0, 1.0]),
+            ("Txz", [1.0, 0.0, 1.0, -1.0, 0.0, 1.0]),
+            ("Tyz", [1.0, 0.0, 1.0, 0.0, -1.0, 1.0]),
+        )
+        for label, tensor_at_epoch_1 in off_diagonal_cases:
+            with self.subTest(label):
+                moment_data = _build_finite_moment_data(num_epochs=3)
+                moment_data.core_temperature_tensor_integrated[1] = tensor_at_epoch_1
+
+                flags = check_and_mask_negative_moments(moment_data)
+
+                expected_flags = np.array(
+                    [SweL3Flags.NONE, SweL3Flags.NONE, SweL3Flags.NONE], dtype=np.uint16
+                )
+                np.testing.assert_array_equal(flags, expected_flags)
+                self.assertEqual(np.uint16, flags.dtype)
+
+                _assert_fields_finite_everywhere(self, moment_data, _CORE_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _HALO_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _TOTAL_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _FIT_FIELD_NAMES)
+
+    def test_negative_halo_density_masks_halo_and_total_and_flags(self):
+        moment_data = _build_finite_moment_data(num_epochs=3)
+        moment_data.halo_density_integrated[1] = -1.0
+
+        flags = check_and_mask_negative_moments(moment_data)
+
+        expected_flags = np.array(
+            [SweL3Flags.NONE, SweL3Flags.NEGATIVE_MOMENT, SweL3Flags.NONE], dtype=np.uint16
+        )
+        np.testing.assert_array_equal(flags, expected_flags)
+        self.assertEqual(np.uint16, flags.dtype)
+
+        _assert_field_nan_at_index_and_finite_elsewhere(
+            self, moment_data, _HALO_INTEGRATED_FIELD_NAMES, nan_index=1, finite_indices=(0, 2)
+        )
+        _assert_field_nan_at_index_and_finite_elsewhere(
+            self, moment_data, _TOTAL_INTEGRATED_FIELD_NAMES, nan_index=1, finite_indices=(0, 2)
+        )
+        _assert_fields_finite_everywhere(self, moment_data, _CORE_INTEGRATED_FIELD_NAMES)
+        _assert_fields_finite_everywhere(self, moment_data, _FIT_FIELD_NAMES)
+
+    def test_negative_halo_tensor_diagonal_masks_halo_and_total_and_flags(self):
+        diagonal_cases = (
+            ("Txx", [-1.0, 0.0, 1.0, 0.0, 0.0, 1.0]),
+            ("Tyy", [1.0, 0.0, -1.0, 0.0, 0.0, 1.0]),
+            ("Tzz", [1.0, 0.0, 1.0, 0.0, 0.0, -1.0]),
+        )
+        for label, tensor_at_epoch_1 in diagonal_cases:
+            with self.subTest(label):
+                moment_data = _build_finite_moment_data(num_epochs=3)
+                moment_data.halo_temperature_tensor_integrated[1] = tensor_at_epoch_1
+
+                flags = check_and_mask_negative_moments(moment_data)
+
+                expected_flags = np.array(
+                    [SweL3Flags.NONE, SweL3Flags.NEGATIVE_MOMENT, SweL3Flags.NONE], dtype=np.uint16
+                )
+                np.testing.assert_array_equal(flags, expected_flags)
+                self.assertEqual(np.uint16, flags.dtype)
+
+                _assert_field_nan_at_index_and_finite_elsewhere(
+                    self, moment_data, _HALO_INTEGRATED_FIELD_NAMES, nan_index=1, finite_indices=(0, 2)
+                )
+                _assert_field_nan_at_index_and_finite_elsewhere(
+                    self, moment_data, _TOTAL_INTEGRATED_FIELD_NAMES, nan_index=1, finite_indices=(0, 2)
+                )
+                _assert_fields_finite_everywhere(self, moment_data, _CORE_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _FIT_FIELD_NAMES)
+
+    def test_negative_halo_tensor_off_diagonal_does_not_flag_or_mask(self):
+        off_diagonal_cases = (
+            ("Txy", [1.0, -1.0, 1.0, 0.0, 0.0, 1.0]),
+            ("Txz", [1.0, 0.0, 1.0, -1.0, 0.0, 1.0]),
+            ("Tyz", [1.0, 0.0, 1.0, 0.0, -1.0, 1.0]),
+        )
+        for label, tensor_at_epoch_1 in off_diagonal_cases:
+            with self.subTest(label):
+                moment_data = _build_finite_moment_data(num_epochs=3)
+                moment_data.halo_temperature_tensor_integrated[1] = tensor_at_epoch_1
+
+                flags = check_and_mask_negative_moments(moment_data)
+
+                expected_flags = np.array(
+                    [SweL3Flags.NONE, SweL3Flags.NONE, SweL3Flags.NONE], dtype=np.uint16
+                )
+                np.testing.assert_array_equal(flags, expected_flags)
+                self.assertEqual(np.uint16, flags.dtype)
+
+                _assert_fields_finite_everywhere(self, moment_data, _CORE_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _HALO_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _TOTAL_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _FIT_FIELD_NAMES)
+
+    def test_negative_total_density_masks_only_total_and_flags(self):
+        moment_data = _build_finite_moment_data(num_epochs=3)
+        moment_data.total_density_integrated[1] = -1.0
+
+        flags = check_and_mask_negative_moments(moment_data)
+
+        expected_flags = np.array(
+            [SweL3Flags.NONE, SweL3Flags.NEGATIVE_MOMENT, SweL3Flags.NONE], dtype=np.uint16
+        )
+        np.testing.assert_array_equal(flags, expected_flags)
+        self.assertEqual(np.uint16, flags.dtype)
+
+        _assert_field_nan_at_index_and_finite_elsewhere(
+            self, moment_data, _TOTAL_INTEGRATED_FIELD_NAMES, nan_index=1, finite_indices=(0, 2)
+        )
+        _assert_fields_finite_everywhere(self, moment_data, _CORE_INTEGRATED_FIELD_NAMES)
+        _assert_fields_finite_everywhere(self, moment_data, _HALO_INTEGRATED_FIELD_NAMES)
+        _assert_fields_finite_everywhere(self, moment_data, _FIT_FIELD_NAMES)
+
+    def test_negative_total_tensor_diagonal_masks_only_total_and_flags(self):
+        diagonal_cases = (
+            ("Txx", [-1.0, 0.0, 1.0, 0.0, 0.0, 1.0]),
+            ("Tyy", [1.0, 0.0, -1.0, 0.0, 0.0, 1.0]),
+            ("Tzz", [1.0, 0.0, 1.0, 0.0, 0.0, -1.0]),
+        )
+        for label, tensor_at_epoch_1 in diagonal_cases:
+            with self.subTest(label):
+                moment_data = _build_finite_moment_data(num_epochs=3)
+                moment_data.total_temperature_tensor_integrated[1] = tensor_at_epoch_1
+
+                flags = check_and_mask_negative_moments(moment_data)
+
+                expected_flags = np.array(
+                    [SweL3Flags.NONE, SweL3Flags.NEGATIVE_MOMENT, SweL3Flags.NONE], dtype=np.uint16
+                )
+                np.testing.assert_array_equal(flags, expected_flags)
+                self.assertEqual(np.uint16, flags.dtype)
+
+                _assert_field_nan_at_index_and_finite_elsewhere(
+                    self, moment_data, _TOTAL_INTEGRATED_FIELD_NAMES, nan_index=1, finite_indices=(0, 2)
+                )
+                _assert_fields_finite_everywhere(self, moment_data, _CORE_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _HALO_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _FIT_FIELD_NAMES)
+
+    def test_negative_total_tensor_off_diagonal_does_not_flag_or_mask(self):
+        off_diagonal_cases = (
+            ("Txy", [1.0, -1.0, 1.0, 0.0, 0.0, 1.0]),
+            ("Txz", [1.0, 0.0, 1.0, -1.0, 0.0, 1.0]),
+            ("Tyz", [1.0, 0.0, 1.0, 0.0, -1.0, 1.0]),
+        )
+        for label, tensor_at_epoch_1 in off_diagonal_cases:
+            with self.subTest(label):
+                moment_data = _build_finite_moment_data(num_epochs=3)
+                moment_data.total_temperature_tensor_integrated[1] = tensor_at_epoch_1
+
+                flags = check_and_mask_negative_moments(moment_data)
+
+                expected_flags = np.array(
+                    [SweL3Flags.NONE, SweL3Flags.NONE, SweL3Flags.NONE], dtype=np.uint16
+                )
+                np.testing.assert_array_equal(flags, expected_flags)
+                self.assertEqual(np.uint16, flags.dtype)
+
+                _assert_fields_finite_everywhere(self, moment_data, _CORE_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _HALO_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _TOTAL_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _FIT_FIELD_NAMES)
+
+    def test_combines_negative_sources_correctly(self):
+        moment_data = _build_finite_moment_data(num_epochs=4)
+
+        moment_data.core_density_integrated[1] = -1.0
+        moment_data.halo_density_integrated[2] = -1.0
+        moment_data.core_temperature_tensor_integrated[3] = [-1.0, 0.0, 1.0, 0.0, 0.0, 1.0]
+        moment_data.halo_temperature_tensor_integrated[3] = [-1.0, 0.0, 1.0, 0.0, 0.0, 1.0]
+        moment_data.total_density_integrated[3] = -1.0
+
+        flags = check_and_mask_negative_moments(moment_data)
+
+        expected_flags = np.array(
+            [
+                SweL3Flags.NONE,
+                SweL3Flags.NEGATIVE_MOMENT,
+                SweL3Flags.NEGATIVE_MOMENT,
+                SweL3Flags.NEGATIVE_MOMENT,
+            ],
+            dtype=np.uint16,
+        )
+        np.testing.assert_array_equal(flags, expected_flags)
+        self.assertEqual(np.uint16, flags.dtype)
+
+        def assert_population_at_epoch(epoch: int, field_names: tuple[str, ...],
+                                       should_be_masked: bool) -> None:
+            for field_name in field_names:
+                slice_at_epoch = getattr(moment_data, field_name)[epoch]
+                if should_be_masked:
+                    self.assertTrue(
+                        np.all(np.isnan(slice_at_epoch)),
+                        f"{field_name}[{epoch}] should be NaN, got {slice_at_epoch!r}",
+                    )
+                else:
+                    self.assertTrue(
+                        np.all(np.isfinite(slice_at_epoch)),
+                        f"{field_name}[{epoch}] should be finite, got {slice_at_epoch!r}",
+                    )
+
+        epoch_masking_matrix = (
+            (0, False, False, False),
+            (1, True, False, True),
+            (2, False, True, True),
+            (3, True, True, True),
+        )
+        for epoch, core_masked, halo_masked, total_masked in epoch_masking_matrix:
+            with self.subTest(epoch=epoch):
+                assert_population_at_epoch(epoch, _CORE_INTEGRATED_FIELD_NAMES, core_masked)
+                assert_population_at_epoch(epoch, _HALO_INTEGRATED_FIELD_NAMES, halo_masked)
+                assert_population_at_epoch(epoch, _TOTAL_INTEGRATED_FIELD_NAMES, total_masked)
+
+        _assert_fields_finite_everywhere(self, moment_data, _FIT_FIELD_NAMES)
