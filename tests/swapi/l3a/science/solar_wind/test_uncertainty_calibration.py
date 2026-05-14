@@ -183,8 +183,9 @@ def _inject_noise(truth_rates: np.ndarray, rng: np.random.Generator) -> np.ndarr
 def _iter_value_sigma_pairs(record: dict):
     """Yield `(name, value, sigma)` for every quantity in `record` that declares
     an uncertainty — either a `<base>_uncert` scalar partner or a `<base>_covariance`
-    matrix whose diagonal entries pair with a 3-vector value field. Fields with
-    no σ partner (epoch, quality_flags, b_hat) are silently skipped."""
+    matrix whose diagonal entries pair with a 3-vector value field (the SC-frame
+    velocity, since sun-frame is an exact deterministic shift of it). Fields with
+    no σ partner (epoch, quality_flags) are silently skipped."""
     for key in list(record.keys()):
         if key.endswith("_uncert"):
             base = key[: -len("_uncert")]
@@ -192,7 +193,7 @@ def _iter_value_sigma_pairs(record: dict):
         elif "covariance" in key:
             base = key.replace("_covariance", "")
             if base not in record:
-                base = key.replace("velocity_covariance_rtn", "velocity_rtn")
+                base = f"{base}_sc"
             assert base in record, f"no companion vector for covariance key {key!r}"
             cov = np.asarray(record[key])
             values = np.asarray(record[base])
@@ -306,7 +307,7 @@ def _run_trial(trial_seed: int) -> dict | None:
         b_hat_rtn=_B_HAT_RTN.copy(),
         bad_fit_flag=int(alpha_moments.bad_fit_flag),
     )
-    return _alpha_moments_from_fit(chunk_result, epoch=0)
+    return _alpha_moments_from_fit(chunk_result, epoch=0, sc_velocity_rtn=_SC_VELOCITY_RTN)
 
 
 def _run_mc_in_parallel(n_trials: int) -> tuple[dict, int]:
