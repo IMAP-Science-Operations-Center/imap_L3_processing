@@ -63,10 +63,10 @@ energy:
   FORMAT: F15.3
   LABLAXIS: Energy
   UNITS: MeV
-  VALIDMIN: 1
+  VALIDMIN: 0.1
   VALIDMAX: 10000
   FILLVAL: -1.00E+31
-  SCALEMIN: 0.0001
+  SCALEMIN: 0.1
   SCALEMAX: 10000
 energy_in_detector:
   NAME: energy_in_detector
@@ -81,10 +81,10 @@ energy_in_detector:
   VARIABLE_PURPOSE: ' '
   FORMAT: F15.3
   UNITS: ' '
-  VALIDMIN: 1
+  VALIDMIN: 0.1
   VALIDMAX: 10000
   FILLVAL: -1.00E+31
-  SCALEMIN: 0.0001
+  SCALEMIN: 0.1
   SCALEMAX: 10000
 range:
   NAME: range
@@ -114,10 +114,10 @@ delta_e:
   FORMAT: F15.3
   LABLAXIS: Delta E
   UNITS: MeV
-  VALIDMIN: 1
+  VALIDMIN: 0.1
   VALIDMAX: 10000
   FILLVAL: -1.00E+31
-  SCALEMIN: 0.0001
+  SCALEMIN: 0.1
   SCALEMAX: 10000
 e_prime:
   NAME: e_prime
@@ -132,10 +132,10 @@ e_prime:
   FORMAT: F15.3
   LABLAXIS: E prime
   UNITS: MeV
-  VALIDMIN: 1
+  VALIDMIN: 0.1
   VALIDMAX: 10000
   FILLVAL: -1.00E+31
-  SCALEMIN: 0.0001
+  SCALEMIN: 0.1
   SCALEMAX: 10000
 particle_id:
   NAME: particle_id
