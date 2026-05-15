@@ -686,16 +686,16 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
                 esa_voltage=voltage,
             )
 
-    def test_non_monotonic_voltage_raises_in_peak_finder_and_returns_fit_error(self):
-        """A non-monotonic per-sweep voltage axis violates the alpha peak finder's decreasing-energies assertion; the `try/except Exception` in `calculate_initial_guess` catches it and the fitter returns `FIT_ERROR`."""
+    def test_non_monotonic_voltage_raises_in_peak_finder(self):
+        """A non-monotonic per-sweep voltage axis violates the alpha peak finder's decreasing-energies assertion. The exception propagates out of `fit_solar_wind_alpha_model`; the chunk-level try/except is what converts it into a `FIT_ERROR` quality flag (covered in `test_chunk_fits.py`)."""
         one_sweep = _ONE_SWEEP_VOLTAGE.copy()
         one_sweep[10], one_sweep[11] = one_sweep[11], one_sweep[10]
         voltage = np.broadcast_to(one_sweep, (_N_SWEEPS, _N_BINS_PER_SWEEP)).copy()
-        result = self._call(
-            count_rate=np.ones(voltage.shape),
-            esa_voltage=voltage,
-        )
-        self._assert_fit_error_nan(result)
+        with self.assertRaises(AssertionError):
+            self._call(
+                count_rate=np.ones(voltage.shape),
+                esa_voltage=voltage,
+            )
 
     def test_short_peak_window_returns_fit_error(self):
         """When the alpha peak finder returns a slice with fewer than 3 bins, `calculate_initial_guess` returns `None` and the fitter reports `FIT_ERROR`."""
