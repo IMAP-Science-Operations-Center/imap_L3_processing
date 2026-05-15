@@ -194,15 +194,13 @@ def _construct_alpha_fit_result(
 def _alpha_r_squared(
     residuals: ndarray, count_rate: ndarray, n_sweeps: int, n_peak_bins: int
 ) -> float:
-    if residuals.size == n_sweeps * n_peak_bins:
-        averaged_count_rate = np.nanmean(
-            count_rate.reshape(n_sweeps, n_peak_bins), axis=0
-        )
-        averaged_residual = np.nanmean(
-            residuals.reshape(n_sweeps, n_peak_bins), axis=0
-        )
-        return r_squared(averaged_residual, averaged_count_rate)
-    return r_squared(residuals, count_rate)
+    averaged_count_rate = np.nanmean(
+        count_rate.reshape(n_sweeps, n_peak_bins), axis=0
+    )
+    averaged_residual = np.nanmean(
+        residuals.reshape(n_sweeps, n_peak_bins), axis=0
+    )
+    return r_squared(averaged_residual, averaged_count_rate)
 
 
 class _AlphaEvaluator:

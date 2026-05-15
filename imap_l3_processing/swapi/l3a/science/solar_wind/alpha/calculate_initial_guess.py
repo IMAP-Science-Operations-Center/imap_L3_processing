@@ -37,10 +37,7 @@ def calculate_initial_guess(
     proton_peak_index = np.argmax(proton_bg_avg)
     residual = np.maximum(0, count_avg - proton_bg_avg * 2)
 
-    try:
-        peak = _get_alpha_peak_indices(residual, energies_per_sweep, proton_peak_index)
-    except Exception:
-        return None
+    peak = _get_alpha_peak_indices(residual, energies_per_sweep, proton_peak_index)
 
     peak_idx = np.arange(peak.start, peak.stop)
     if len(peak_idx) < 3:
