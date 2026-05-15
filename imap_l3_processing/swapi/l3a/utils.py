@@ -1,24 +1,32 @@
+import math
 from datetime import datetime
 from typing import Iterable
 
+import numba
 import numpy as np
 import scipy.optimize
 from numpy import ndarray
+from numpy.typing import ArrayLike
 from spacepy import pycdf
 from spacepy.pycdf import CDF
 from uncertainties import UFloat, umath, unumpy
 
 from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
 from imap_l3_processing.constants import (
+    ALPHA_PARTICLE_CHARGE_COULOMBS,
+    ALPHA_PARTICLE_MASS_KG,
     METERS_PER_KILOMETER,
     ONE_SECOND_IN_NANOSECONDS,
+    PROTON_CHARGE_COULOMBS,
+    PROTON_MASS_KG,
     THIRTY_SECONDS_IN_NANOSECONDS,
 )
 from imap_l3_processing.models import MagData
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_processing.spice.geometry import (
     SpiceFrame,
-    frame_transform,
     get_rotation_matrix,
     imap_state,
 )
@@ -34,6 +42,32 @@ def calculate_sw_speed(particle_mass, particle_charge, energy):
     if isinstance(energy, np.ndarray) and energy.dtype == object:
         return unumpy.sqrt(speed_squared) / METERS_PER_KILOMETER
     return np.sqrt(speed_squared) / METERS_PER_KILOMETER
+
+
+def esa_voltage_to_proton_speed(esa_voltage: ArrayLike) -> np.ndarray:
+    return (
+        np.sqrt(
+            2
+            * SWAPI_K_FACTOR
+            * PROTON_CHARGE_COULOMBS
+            * np.abs(esa_voltage)
+            / PROTON_MASS_KG
+        )
+        / METERS_PER_KILOMETER
+    )
+
+
+def esa_voltage_to_alpha_speed(esa_voltage: ArrayLike) -> np.ndarray:
+    return (
+        np.sqrt(
+            2
+            * SWAPI_K_FACTOR
+            * ALPHA_PARTICLE_CHARGE_COULOMBS
+            * np.abs(esa_voltage)
+            / ALPHA_PARTICLE_MASS_KG
+        )
+        / METERS_PER_KILOMETER
+    )
 
 
 def read_mag_rtn_data(cdf_path) -> MagData:
@@ -68,13 +102,6 @@ def get_swapi_geometry(measurement_time: ndarray) -> ndarray:
     return get_rotation_matrix(et_times, SpiceFrame.IMAP_SWAPI, SpiceFrame.IMAP_RTN)
 
 
-def rotate_rtn_to_dps(vector_rtn, epoch_tt2000_ns: float):
-    et = float(ttj2000ns_to_et(epoch_tt2000_ns))
-    return frame_transform(
-        et, np.asarray(vector_rtn), SpiceFrame.IMAP_RTN, SpiceFrame.IMAP_DPS
-    )
-
-
 def get_spacecraft_velocity_rtn(epoch_tt2000_ns: float) -> ndarray:
     et = float(ttj2000ns_to_et(epoch_tt2000_ns))
     state_eclipj2000 = imap_state(et, SpiceFrame.ECLIPJ2000)
@@ -82,6 +109,42 @@ def get_spacecraft_velocity_rtn(epoch_tt2000_ns: float) -> ndarray:
         et, SpiceFrame.ECLIPJ2000, SpiceFrame.IMAP_RTN
     )
     return np.einsum("ij,j->i", rtn_from_eclipj2000, state_eclipj2000[3:])
+
+
+@numba.njit
+def velocity_to_angles_in_instrument_frame(vx: float, vy: float, vz: float):
+    """Convert a Cartesian flow-direction velocity to (azimuth_deg, elevation_deg)
+    look angles in the SWAPI instrument frame.
+
+    Sign convention: the Cartesian input (vx, vy, vz) is the *flow direction* —
+    the direction the particles are moving. The returned spherical angles are
+    the *look direction* — the direction SWAPI points to see those particles,
+    i.e. opposite the flow. The leading minus signs perform that flow→look
+    inversion.
+
+    Inverts the SWAPI v̂ convention v̂ = (−cosθ sinφ, −cosθ cosφ, −sinθ).
+    """
+    speed = math.sqrt(vx * vx + vy * vy + vz * vz)
+    return (
+        math.degrees(math.atan2(-vx, -vy)),
+        math.degrees(math.asin(-vz / speed)),
+    )
+
+
+@numba.njit
+def bulk_velocity_to_angles_in_instrument_frame(
+    sw_params: SolarWindParams, rotation_xyz_to_rtn
+):
+    """SolarWindParams bulk flow velocity → (azimuth_deg, elevation_deg) look
+    angles in the SWAPI instrument frame.
+
+    `sw_params.bulk_velocity_rtn` is the bulk flow direction in RTN. It is
+    rotated into the SWAPI XYZ frame and converted by
+    `velocity_to_angles_in_instrument_frame` — see that function for the
+    flow-vs-look sign convention.
+    """
+    v_xyz = rotation_xyz_to_rtn.T @ sw_params.bulk_velocity_rtn
+    return velocity_to_angles_in_instrument_frame(v_xyz[0], v_xyz[1], v_xyz[2])
 
 
 def compute_direction_of_mean_magnetic_field_over_chunk(

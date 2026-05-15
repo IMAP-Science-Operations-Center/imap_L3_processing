@@ -3,8 +3,6 @@ from dataclasses import replace
 
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
-from spacepy import pycdf
-from uncertainties import ufloat
 from uncertainties.unumpy import uarray
 
 from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
@@ -14,24 +12,21 @@ from imap_l3_processing.swapi.l3a.chunk_fits import (
     AlphaChunkFitter,
     ParallelChunkRunner,
     ProtonChunkFitter,
+    PuiChunkFitter,
 )
 from imap_l3_processing.swapi.l3a.models import (
     SwapiL3ProtonSolarWindData,
     SwapiL3AlphaSolarWindData,
     SwapiL3PickupIonData,
 )
-from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import (
-    calculate_ten_minute_velocities,
-    calculate_pickup_ion_values,
-    calculate_helium_pui_temperature,
-    calculate_helium_pui_density,
-)
 from imap_l3_processing.swapi.constants import (
     SWAPI_COARSE_SWEEP_BINS,
     SWAPI_L2_K_FACTOR,
 )
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
-from imap_l3_processing.swapi.l3a.utils import chunk_l2_data, rotate_rtn_to_dps
+from imap_l3_processing.swapi.l3a.utils import (
+    chunk_l2_data,
+)
 from imap_l3_processing.swapi.l3b.models import SwapiL3BCombinedVDF
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_differential_flux import (
     calculate_combined_solar_wind_differential_flux,
@@ -119,106 +114,25 @@ class SwapiProcessor(Processor):
     def process_l3a_pui(
         self, data, dependencies: SwapiL3ADependencies
     ) -> SwapiL3PickupIonData:
-        chunks = list(chunk_l2_data(data, 5))
         dependencies.swapi_response.warm_cache(data.energy / SWAPI_L2_K_FACTOR)
         runner = ParallelChunkRunner(
             dependencies.swapi_response, dependencies.efficiency_calibration_table
         )
 
-        pui_proton_results = runner.run(chunks, ProtonChunkFitter())
-        chunk_velocities_dps = np.array([
-            rotate_rtn_to_dps(rtn_velocity, chunk_epoch)
-            for rtn_velocity, chunk_epoch in zip(
-                pui_proton_results["proton_sw_bulk_velocity_rtn_sc"],
-                pui_proton_results["epoch"],
-            )
-        ])
-        ten_minute_solar_wind_velocities, proton_sw_quality_flags = (
-            calculate_ten_minute_velocities(
-                chunk_velocities_dps,
-                list(pui_proton_results["quality_flags"]),
-            )
-        )
-        pui_epochs = []
-        pui_cooling_index = []
-        pui_ionization_rate = []
-        pui_cutoff_speed = []
-        pui_background_rate = []
-        pui_density = []
-        pui_temperature = []
-        bad_fit_flags = []
+        proton_chunks = list(chunk_l2_data(data, 5))
+        pui_chunks = list(chunk_l2_data(data, 50))
+        proton_results = runner.run(proton_chunks, ProtonChunkFitter())
 
-        for data_chunk, sw_velocity in zip(
-            chunk_l2_data(data, 50), ten_minute_solar_wind_velocities
-        ):
-            epoch = data_chunk.sci_start_time[0] + FIVE_MINUTES_IN_NANOSECONDS
-            cooling_index = ufloat(np.nan, np.nan)
-            ionization_rate = ufloat(np.nan, np.nan)
-            cutoff_speed = ufloat(np.nan, np.nan)
-            background_count_rate = ufloat(np.nan, np.nan)
-            density = ufloat(np.nan, np.nan)
-            temperature = ufloat(np.nan, np.nan)
-            bad_fit_flag = SwapiL3Flags.NONE
-            try:
-                if np.any(
-                    np.isnan(data_chunk.coincidence_count_rate[:, SWAPI_COARSE_SWEEP_BINS])
-                ) or np.any(np.isnan(sw_velocity)):
-                    raise ValueError("Fill values in input data")
-                fit_params = calculate_pickup_ion_values(
-                    dependencies.instrument_response_calibration_table,
-                    dependencies.geometric_factor_calibration_table,
-                    data_chunk.energy,
-                    data_chunk.coincidence_count_rate,
-                    epoch,
-                    sw_velocity,
-                    dependencies.density_of_neutral_helium_calibration_table,
-                    dependencies.efficiency_calibration_table,
-                    dependencies.hydrogen_inflow_vector,
-                    dependencies.helium_inflow_vector,
-                )
-                cooling_index = fit_params.cooling_index
-                ionization_rate = fit_params.ionization_rate
-                cutoff_speed = fit_params.cutoff_speed
-                background_count_rate = fit_params.background_count_rate
-                bad_fit_flag |= fit_params.flags
-                density = calculate_helium_pui_density(
-                    epoch,
-                    sw_velocity,
-                    dependencies.density_of_neutral_helium_calibration_table,
-                    fit_params,
-                    dependencies.helium_inflow_vector,
-                )
-                temperature = calculate_helium_pui_temperature(
-                    epoch,
-                    sw_velocity,
-                    dependencies.density_of_neutral_helium_calibration_table,
-                    fit_params,
-                    dependencies.helium_inflow_vector,
-                )
-            except Exception:
-                logger.info(
-                    f"Exception occurred at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}, continuing with fill value",
-                    exc_info=True,
-                )
-            pui_epochs.append(epoch)
-            pui_cooling_index.append(cooling_index)
-            pui_ionization_rate.append(ionization_rate)
-            pui_cutoff_speed.append(cutoff_speed)
-            pui_background_rate.append(background_count_rate)
-            pui_density.append(density)
-            pui_temperature.append(temperature)
-            bad_fit_flags.append(bad_fit_flag)
-        return SwapiL3PickupIonData(
-            replace(self.input_metadata, descriptor="pui-he"),
-            np.array(pui_epochs),
-            np.array(pui_cooling_index),
-            np.array(pui_ionization_rate),
-            np.array(pui_cutoff_speed),
-            np.array(pui_background_rate),
-            np.array(pui_density),
-            np.array(pui_temperature),
-            np.bitwise_or(proton_sw_quality_flags, bad_fit_flags),
+        fitter = PuiChunkFitter(
+            density_of_neutral_helium_lookup_table=dependencies.density_of_neutral_helium_calibration_table,
+            hydrogen_inflow_vector=dependencies.hydrogen_inflow_vector,
+            helium_inflow_vector=dependencies.helium_inflow_vector,
+            proton_results=proton_results,
         )
+        result = runner.run(pui_chunks, fitter)
+
+        metadata = replace(self.input_metadata, descriptor="pui-he")
+        return SwapiL3PickupIonData(metadata, **result)
 
     def process_l3b(self, data, dependencies):
         epochs = []

@@ -9,21 +9,37 @@ from spacepy.pycdf import CDF
 from uncertainties import UFloat, ufloat
 
 from imap_l3_processing.constants import (
+    ALPHA_PARTICLE_CHARGE_COULOMBS,
+    ALPHA_PARTICLE_MASS_KG,
     METERS_PER_KILOMETER,
     PROTON_CHARGE_COULOMBS,
     PROTON_MASS_KG,
 )
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.utils import (
+    bulk_velocity_to_angles_in_instrument_frame,
     calculate_sw_speed,
     chunk_l2_data,
+    esa_voltage_to_alpha_speed,
+    esa_voltage_to_proton_speed,
     get_spacecraft_velocity_rtn,
     get_swapi_geometry,
     read_l2_swapi_data,
     read_mag_rtn_data,
-    rotate_rtn_to_dps,
+    velocity_to_angles_in_instrument_frame,
 )
 from tests.spice_test_case import SpiceTestCase
+from tests.swapi._helpers import proton_params
+
+
+def _analytic_speed_km_per_s(
+    voltage: float, mass_kg: float, charge_c: float
+) -> float:
+    return float(
+        np.sqrt(2 * SWAPI_K_FACTOR * charge_c * abs(voltage) / mass_kg)
+        / METERS_PER_KILOMETER
+    )
 
 
 class TestChunkL2Data(TestCase):
@@ -213,7 +229,7 @@ class TestReadMagRtnData(TestCase):
 
 
 class TestSwapiSpiceHelpers(SpiceTestCase):
-    """Tests for the SPICE helpers `get_swapi_geometry`, `rotate_rtn_to_dps`, and `get_spacecraft_velocity_rtn`."""
+    """Tests for the SPICE helpers `get_swapi_geometry` and `get_spacecraft_velocity_rtn`."""
 
     # 2025-06-06 12:00 UTC — inside the IMAP SPK and attitude coverage windows
     # used by the shipped `spice_kernels/` set.
@@ -235,19 +251,6 @@ class TestSwapiSpiceHelpers(SpiceTestCase):
             np.testing.assert_allclose(matrix @ matrix.T, np.eye(3), atol=1e-10)
             self.assertAlmostEqual(float(np.linalg.det(matrix)), 1.0, places=10)
 
-    def test_rotate_rtn_to_dps_preserves_vector_magnitude(self):
-        """rotate_rtn_to_dps applies a pure rotation, so the magnitude of the output vector equals the input magnitude."""
-        vector_rtn = np.array([100.0, -50.0, 25.0])
-
-        rotated = rotate_rtn_to_dps(vector_rtn, self._EPOCH_TT2000_NS)
-
-        self.assertEqual(rotated.shape, (3,))
-        self.assertAlmostEqual(
-            float(np.linalg.norm(rotated)),
-            float(np.linalg.norm(vector_rtn)),
-            places=8,
-        )
-
     def test_get_spacecraft_velocity_rtn_returns_finite_orbital_velocity(self):
         """get_spacecraft_velocity_rtn returns a finite 3-vector with magnitude in the 10–60 km/s band, ruling out unit-conversion mistakes for IMAP near L1."""
         velocity_rtn = get_spacecraft_velocity_rtn(self._EPOCH_TT2000_NS)
@@ -260,3 +263,138 @@ class TestSwapiSpiceHelpers(SpiceTestCase):
         speed = float(np.linalg.norm(velocity_rtn))
         self.assertGreater(speed, 10.0)
         self.assertLess(speed, 60.0)
+
+
+class TestVelocityToAnglesInInstrumentFrame(TestCase):
+    """Tests for `velocity_to_angles_in_instrument_frame`. The Cartesian input
+    is the flow direction; the returned (azimuth, elevation) is the look
+    direction (opposite the flow)."""
+
+    def test_flow_along_minus_y_returns_zero_angles(self):
+        """A flow along -Y means SWAPI looks toward +Y, which is the (azimuth=0, elevation=0) bore-sight in the instrument frame."""
+        azimuth, elevation = velocity_to_angles_in_instrument_frame(0.0, -450.0, 0.0)
+        self.assertAlmostEqual(azimuth, 0.0)
+        self.assertAlmostEqual(elevation, 0.0)
+
+    def test_positive_x_flow_yields_negative_azimuth(self):
+        """A flow with a positive X component (look direction in -X) gives a negative azimuth, since azimuth = atan2(-vx, -vy) < 0 when vx > 0 and vy < 0."""
+        azimuth, _ = velocity_to_angles_in_instrument_frame(50.0, -450.0, 0.0)
+        self.assertLess(azimuth, 0.0)
+
+    def test_positive_z_flow_yields_negative_elevation(self):
+        """A flow with a positive Z component (look direction in -Z) gives a negative elevation, since elevation = asin(-vz/|v|) < 0 when vz > 0."""
+        _, elevation = velocity_to_angles_in_instrument_frame(0.0, -450.0, 50.0)
+        self.assertLess(elevation, 0.0)
+
+    def test_negative_z_flow_yields_positive_elevation(self):
+        """A flow with a negative Z component (look direction in +Z) gives a positive elevation."""
+        _, elevation = velocity_to_angles_in_instrument_frame(0.0, -450.0, -50.0)
+        self.assertGreater(elevation, 0.0)
+
+    def test_pure_plus_x_flow_yields_azimuth_minus_90_elevation_zero(self):
+        """A pure +X flow has look direction along -X; azimuth = atan2(-450, 0) = -90 deg, elevation = 0."""
+        azimuth, elevation = velocity_to_angles_in_instrument_frame(450.0, 0.0, 0.0)
+        self.assertAlmostEqual(azimuth, -90.0)
+        self.assertAlmostEqual(elevation, 0.0)
+
+    def test_pure_plus_y_flow_yields_azimuth_180(self):
+        """A pure +Y flow (away from SWAPI) has look direction along -Y; azimuth = atan2(0, -450) = +/-180 deg, elevation = 0."""
+        azimuth, elevation = velocity_to_angles_in_instrument_frame(0.0, 450.0, 0.0)
+        self.assertAlmostEqual(abs(azimuth), 180.0)
+        self.assertAlmostEqual(elevation, 0.0)
+
+    def test_pure_plus_z_flow_yields_elevation_minus_90(self):
+        """A pure +Z flow has look direction along -Z; elevation = asin(-1) = -90 deg."""
+        _, elevation = velocity_to_angles_in_instrument_frame(0.0, 0.0, 450.0)
+        self.assertAlmostEqual(elevation, -90.0)
+
+
+class TestBulkVelocityToAnglesInInstrumentFrame(TestCase):
+    """Tests for `bulk_velocity_to_angles_in_instrument_frame`, which rotates a
+    SolarWindParams bulk velocity from RTN into the SWAPI XYZ frame and returns
+    look-direction (azimuth_deg, elevation_deg). See
+    `velocity_to_angles_in_instrument_frame` for the flow-vs-look convention."""
+
+    def test_velocity_along_minus_y_inst_returns_zero_angles(self):
+        """Under identity rotation, an RTN flow along -Y becomes v_inst = (0, -450, 0); look direction is +Y so azimuth = 0 and elevation = 0."""
+        sw = proton_params(velocity_rtn=(0.0, -450.0, 0.0))
+        azimuth, elevation = bulk_velocity_to_angles_in_instrument_frame(sw, np.eye(3))
+        self.assertAlmostEqual(azimuth, 0.0)
+        self.assertAlmostEqual(elevation, 0.0)
+
+    def test_velocity_with_negative_x_inst_component_yields_positive_azimuth(self):
+        """A negative instrument-X flow component (v_inst_x = -50) gives a strictly positive azimuth, since azimuth = atan2(+50, +450) > 0."""
+        sw = proton_params(velocity_rtn=(-50.0, -450.0, 0.0))
+        azimuth, _ = bulk_velocity_to_angles_in_instrument_frame(sw, np.eye(3))
+        self.assertGreater(azimuth, 0.0)
+
+    def test_velocity_with_positive_z_inst_component_yields_negative_elevation(self):
+        """A positive instrument-Z flow component (v_inst_z = +50) gives a strictly negative elevation, since elevation = asin(-50/|v|) < 0."""
+        sw = proton_params(velocity_rtn=(0.0, -450.0, 50.0))
+        _, elevation = bulk_velocity_to_angles_in_instrument_frame(sw, np.eye(3))
+        self.assertLess(elevation, 0.0)
+
+    def test_uses_rotation_argument_to_transform_into_instrument_frame(self):
+        """When the rotation maps +Y_inst to -X_RTN, an RTN flow along -X_RTN lands along +Y_inst and produces azimuth = atan2(0, -1) = +/-180 deg, catching regressions that drop the rotation."""
+        rotation_xyz_to_rtn = np.array(
+            [[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]]
+        )
+        sw = proton_params(velocity_rtn=(-450.0, 0.0, 0.0))
+        azimuth, _ = bulk_velocity_to_angles_in_instrument_frame(sw, rotation_xyz_to_rtn)
+        self.assertAlmostEqual(abs(azimuth), 180.0, places=10)
+
+
+class TestEsaVoltageToProtonSpeed(TestCase):
+    """Tests for `esa_voltage_to_proton_speed`."""
+
+    def test_matches_analytical_formula(self):
+        """A sweep of representative ESA voltages reproduces the closed-form `sqrt(2 K q V / m)` proton speed to machine precision."""
+        for V in [200.0, 1000.0, 4000.0]:
+            with self.subTest(voltage=V):
+                np.testing.assert_allclose(
+                    esa_voltage_to_proton_speed(V),
+                    _analytic_speed_km_per_s(
+                        V, PROTON_MASS_KG, PROTON_CHARGE_COULOMBS
+                    ),
+                    rtol=1e-12,
+                )
+
+    def test_matches_hardcoded_reference_value_at_1000_volts(self):
+        """At V = 1000 V the function returns ~601.730748 km/s, the value pre-computed offline from `sqrt(2 · 1.89 · q_p · 1000 / m_p) / 1000`. This pins the absolute magnitude against a manually verifiable number, not just the live formula."""
+        np.testing.assert_allclose(
+            esa_voltage_to_proton_speed(1000.0), 601.7307477647, rtol=1e-9
+        )
+
+    def test_handles_negative_voltage(self):
+        """A negative ESA voltage yields the same proton speed as its positive counterpart, since the conversion depends on magnitude."""
+        np.testing.assert_allclose(
+            esa_voltage_to_proton_speed(-1000.0), esa_voltage_to_proton_speed(1000.0)
+        )
+
+
+class TestEsaVoltageToAlphaSpeed(TestCase):
+    """Tests for `esa_voltage_to_alpha_speed`."""
+
+    def test_matches_analytical_formula(self):
+        """A sweep of representative ESA voltages reproduces the closed-form `sqrt(2 K q V / m)` alpha speed to machine precision."""
+        for V in [200.0, 1000.0, 4000.0]:
+            with self.subTest(voltage=V):
+                np.testing.assert_allclose(
+                    esa_voltage_to_alpha_speed(V),
+                    _analytic_speed_km_per_s(
+                        V, ALPHA_PARTICLE_MASS_KG, ALPHA_PARTICLE_CHARGE_COULOMBS
+                    ),
+                    rtol=1e-12,
+                )
+
+    def test_matches_hardcoded_reference_value_at_1000_volts(self):
+        """At V = 1000 V the function returns ~426.952735 km/s, the value pre-computed offline from `sqrt(2 · 1.89 · 2·q_p · 1000 / m_alpha) / 1000`. This pins the absolute magnitude against a manually verifiable number, not just the live formula."""
+        np.testing.assert_allclose(
+            esa_voltage_to_alpha_speed(1000.0), 426.9527347202, rtol=1e-9
+        )
+
+    def test_handles_negative_voltage(self):
+        """A negative ESA voltage yields the same alpha speed as its positive counterpart, since the conversion depends on magnitude."""
+        np.testing.assert_allclose(
+            esa_voltage_to_alpha_speed(-1000.0), esa_voltage_to_alpha_speed(1000.0)
+        )

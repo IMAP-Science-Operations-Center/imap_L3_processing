@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 from collections import defaultdict
 from pathlib import Path
@@ -158,12 +159,14 @@ class mock_imap_data_access:
                 continue
         self.input_files = valid_files
 
+        self.env_patcher = patch.dict(os.environ, {"IMAP_DATA_DIR": str(self.data_dir)})
         self.data_dir_patcher = patch.dict(imap_data_access.config, {"DATA_DIR": self.data_dir})
         self.download_patcher = patch.object(imap_data_access, "download", new=fake_download)
         self.query_patcher = ImapQueryPatcher(self.input_files)
         self.requests_get_patcher = RequestsGetPatcher(spice_file_paths)
 
     def __enter__(self):
+        self.env_patcher.start()
         self.data_dir_patcher.start()
         self.download_patcher.start()
         self.query_patcher.start()
@@ -179,6 +182,7 @@ class mock_imap_data_access:
                 pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        self.env_patcher.stop()
         self.data_dir_patcher.stop()
         self.download_patcher.stop()
         self.query_patcher.stop()

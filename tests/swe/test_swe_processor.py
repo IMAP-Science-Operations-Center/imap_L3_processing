@@ -5,6 +5,7 @@ from unittest.mock import patch, call, Mock, sentinel
 
 import numpy as np
 from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection, AncillaryInput
+from imap_processing.quality_flags import SweL1bFlags
 
 from imap_l3_processing.models import MagData, InputMetadata
 from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData, SweL1bData
@@ -83,6 +84,19 @@ class TestSweProcessor(unittest.TestCase):
         phase_space_density_rebinned = np.full((7, 3, 5, 7), physical_psd_value)
         phase_space_density_rebinned[6, 0, 0, 0] = unphysical_psd_value
 
+        l2_data_quality = np.array(
+            [
+                0,
+                SweL1bFlags.LAST_CAL_INTERVAL,
+                SweL1bFlags.LAST_CAL_INTERVAL | SweL1bFlags.INF,
+                0,
+                SweL1bFlags.LAST_CAL_INTERVAL | SweL1bFlags.NEG,
+                SweL1bFlags.NEG,
+                SweL1bFlags.INF,
+            ],
+            dtype=np.uint8,
+        )
+
         swe_l2_data = SweL2Data(
             epoch=epochs,
             phase_space_density=np.arange(21).reshape(7, 3) + 100,
@@ -95,7 +109,8 @@ class TestSweProcessor(unittest.TestCase):
             inst_az_spin_sector=np.arange(21).reshape(7, 3) + 200,
             acquisition_time=np.array([]),
             acquisition_duration=np.array([]),
-            phase_space_density_rebinned=phase_space_density_rebinned
+            phase_space_density_rebinned=phase_space_density_rebinned,
+            data_quality=l2_data_quality,
         )
 
         expected_corrected_energy_bins = np.array([
@@ -286,10 +301,10 @@ class TestSweProcessor(unittest.TestCase):
 
         expected_quality_flags = np.array([
             SweL3Flags.FALLBACK_SWAPI_SPEED | SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE | SweL3Flags.POTENTIAL_FIT_UNCONVERGED | SweL3Flags.PRELIMINARY_MAG,
-            SweL3Flags.PRELIMINARY_MAG,
-            SweL3Flags.PRELIMINARY_MAG,
+            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED,
+            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED,
             SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE | SweL3Flags.PRELIMINARY_MAG,
-            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.NEGATIVE_MOMENT,
+            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.NEGATIVE_MOMENT | SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED,
             SweL3Flags.PRELIMINARY_MAG,
             SweL3Flags.PRELIMINARY_MAG | SweL3Flags.UNPHYSICAL_PSD,
         ])
@@ -335,6 +350,7 @@ class TestSweProcessor(unittest.TestCase):
             acquisition_time=np.array([]),
             acquisition_duration=np.array([]),
             phase_space_density_rebinned=np.zeros((num_epochs, 3, 5, 7)),
+            data_quality=np.zeros(num_epochs, dtype=np.uint8),
         )
         swapi_l3a_proton_data = SwapiL3aProtonData(
             epoch=np.array([]),
@@ -426,7 +442,8 @@ class TestSweProcessor(unittest.TestCase):
             inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
             acquisition_time=np.array([]),
             acquisition_duration=(np.arange(9).reshape(3, 3) + 5) * 1e6,
-            phase_space_density_rebinned=np.array([])
+            phase_space_density_rebinned=np.array([]),
+            data_quality=np.array([]),
         )
 
         swe_l1b_data = SweL1bData(
@@ -652,7 +669,8 @@ class TestSweProcessor(unittest.TestCase):
             acquisition_time=np.linspace(datetime(2025, 3, 6), datetime(2025, 3, 6, 0, 1),
                                          num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
             acquisition_duration=np.full((num_epochs, num_energies, 5), 80000),
-            phase_space_density_rebinned=np.zeros((num_epochs, num_energies, 5, 7))
+            phase_space_density_rebinned=np.zeros((num_epochs, num_energies, 5, 7)),
+            data_quality=np.zeros(num_epochs, dtype=np.uint8),
         )
 
         swe_l1b_data = SweL1bData(
@@ -751,7 +769,8 @@ class TestSweProcessor(unittest.TestCase):
             acquisition_time=np.linspace(datetime(2025, 3, 6), datetime(2025, 3, 6, 0, 1),
                                          num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
             acquisition_duration=np.full((num_epochs, num_energies, 5), 80000),
-            phase_space_density_rebinned=np.zeros((num_epochs, num_energies, 5, 7))
+            phase_space_density_rebinned=np.zeros((num_epochs, num_energies, 5, 7)),
+            data_quality=np.zeros(num_epochs, dtype=np.uint8),
         )
 
         swe_l1b_data = SweL1bData(
@@ -877,6 +896,7 @@ class TestSweProcessor(unittest.TestCase):
             acquisition_time=np.array([]),
             acquisition_duration=[1e7, 2e7, 3e7],
             phase_space_density_rebinned=np.array([]),
+            data_quality=np.array([]),
         )
         expected_sin_theta = np.sin(np.deg2rad(90 - instrument_elevation))
         expected_cos_theta = np.cos(np.deg2rad(90 - instrument_elevation))
@@ -1427,7 +1447,8 @@ class TestSweProcessor(unittest.TestCase):
             inst_az_spin_sector=np.arange(16, 32).reshape(4, 4),
             acquisition_time=np.array([]),
             acquisition_duration=[2e7, 2e7, 2e7, 2e7],
-            phase_space_density_rebinned=np.array([])
+            phase_space_density_rebinned=np.array([]),
+            data_quality=np.array([]),
         )
         swe_l1_data = SweL1bData(epoch=epochs,
                                  count_rates=[Mock(), Mock(), Mock(), Mock()],
@@ -1482,7 +1503,8 @@ class TestSweProcessor(unittest.TestCase):
             inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
             acquisition_time=np.array([]),
             acquisition_duration=np.full((1, 11, 3), 1e7),
-            phase_space_density_rebinned=np.array([])
+            phase_space_density_rebinned=np.array([]),
+            data_quality=np.array([]),
         )
         swe_l1_data = SweL1bData(epoch=epochs,
                                  count_rates=np.full((1, 11, 3, 7), 10.5),
@@ -1577,7 +1599,8 @@ class TestSweProcessor(unittest.TestCase):
                     inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
                     acquisition_time=np.array([]),
                     acquisition_duration=[1e7, 2e7, 3e7],
-                    phase_space_density_rebinned=np.array([])
+                    phase_space_density_rebinned=np.array([]),
+                    data_quality=np.array([]),
                 )
                 swe_l1_data = SweL1bData(epoch=epochs,
                                          count_rates=[sentinel.l1b_count_rates_1, sentinel.l1b_count_rates_2,

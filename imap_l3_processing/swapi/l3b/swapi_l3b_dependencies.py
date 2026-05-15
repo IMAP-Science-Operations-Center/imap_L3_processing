@@ -10,7 +10,7 @@ from imap_l3_processing.swapi.descriptors import EFFICIENCY_LOOKUP_TABLE_DESCRIP
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.utils import read_l2_swapi_data
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_vdf import GeometricFactorCalibrationTable
-from imap_l3_processing.swapi.l3b.science.efficiency_calibration_table import EfficiencyCalibrationTable
+from imap_l3_processing.swapi.response.efficiency_calibration_table import EfficiencyCalibrationTable
 
 
 @dataclass

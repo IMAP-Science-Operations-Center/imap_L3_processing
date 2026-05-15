@@ -12,6 +12,7 @@ from imap_l3_processing.constants import (
 )
 from imap_l3_processing.swapi.response.azimuthal_transmission import (
     AzimuthalTransmissionGrid,
+    validate_azimuthal_transmission_values,
 )
 from imap_l3_processing.swapi.response.passband_grid import (
     PassbandGrid,
@@ -71,8 +72,12 @@ class SwapiResponse:
         coeffs_df.columns = coeffs_df.columns.astype(int)
 
         central_effective_area_values = area_df["effective_area"].values
+        azimuthal_transmission_values = transmission_df["transmission"].fillna(0).values
+        validate_azimuthal_transmission_values(
+            azimuthal_transmission_values, cls.AZIMUTHAL_TRANSMISSION_SPACING_DEG
+        )
         return cls(
-            azimuthal_transmission=transmission_df["transmission"].fillna(0).values,
+            azimuthal_transmission=azimuthal_transmission_values,
             central_effective_area_at_voltage=interp1d(
                 area_df["esa_voltage"].values,
                 central_effective_area_values,
