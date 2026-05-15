@@ -10,5 +10,6 @@
     "test_glows_l3abcde_from_l2": "2026-05-14T09:16:08.408509",
     "test_codice_lo_3d_distributions": "2026-05-13T14:07:32.825163",
     "test_alpha_sigma_matches_empirical_std": "2026-05-14T16:37:00.551676",
-    "test_proton_sigma_matches_empirical_std": "2026-05-14T16:36:49.962432"
+    "test_proton_sigma_matches_empirical_std": "2026-05-14T16:36:49.962432",
+    "test_swe_processor_with_local_data": "2026-05-15T11:05:35.108855"
 }

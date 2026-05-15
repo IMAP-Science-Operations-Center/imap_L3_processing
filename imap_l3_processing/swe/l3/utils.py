@@ -28,6 +28,7 @@ def read_l2_swe_data(swe_l2_data: Path) -> SweL2Data:
         acquisition_time_dt64[valid_times_mask] = converted_valid_times
         acquisition_duration = cdf["acq_duration"][...]
         phase_space_density_rebinned = read_numeric_variable(cdf["phase_space_density"])
+        data_quality = cdf["data_quality"][...]
     return SweL2Data(
         epoch=epoch,
         phase_space_density=phase_space_density,
@@ -40,7 +41,8 @@ def read_l2_swe_data(swe_l2_data: Path) -> SweL2Data:
         inst_az_spin_sector=inst_az_spin_sector,
         acquisition_time=acquisition_time_dt64,
         acquisition_duration=acquisition_duration,
-        phase_space_density_rebinned=phase_space_density_rebinned
+        phase_space_density_rebinned=phase_space_density_rebinned,
+        data_quality=data_quality,
     )
 
 

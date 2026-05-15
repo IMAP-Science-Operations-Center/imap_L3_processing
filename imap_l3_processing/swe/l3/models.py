@@ -112,6 +112,7 @@ class SweL2Data:
     acquisition_time: np.ndarray
     acquisition_duration: np.ndarray
     phase_space_density_rebinned: np.ndarray
+    data_quality: np.ndarray
 
 
 @dataclass

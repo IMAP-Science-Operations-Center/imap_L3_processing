@@ -4,6 +4,7 @@ from dataclasses import replace
 
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
+from imap_processing.quality_flags import SweL1bFlags
 
 from imap_l3_processing.data_utils import find_closest_neighbor
 from imap_l3_processing.models import InputMetadata
@@ -258,6 +259,9 @@ class SweProcessor(Processor):
 
         if dependencies.mag_is_preliminary:
             swe_quality_flags = np.bitwise_or(swe_quality_flags, SweL3Flags.PRELIMINARY_MAG)
+
+        last_cal_interval = (swe_l2_data.data_quality & SweL1bFlags.LAST_CAL_INTERVAL) != 0
+        swe_quality_flags[last_cal_interval] |= np.uint16(SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED)
 
         rebinned_mask = np.ma.masked_invalid(swe_l2_data.phase_space_density_rebinned)
         dist_by_phi_rebinned = np.average(
