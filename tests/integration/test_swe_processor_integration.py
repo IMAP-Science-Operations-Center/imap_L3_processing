@@ -66,7 +66,6 @@ class SweProcessorIntegration(unittest.TestCase):
                     staged = Path(staged_inputs_dir, file.name)
                     shutil.copyfile(file, staged)
                     input_files.append(staged)
-            os.environ["IMAP_DATA_DIR"] = str(OUTPUT_DATA_DIR)
             with mock_imap_data_access(OUTPUT_DATA_DIR, input_files):
                 result = subprocess.run(
                     [
@@ -85,6 +84,7 @@ class SweProcessorIntegration(unittest.TestCase):
                         "--dependency",
                         "imap_swe_l3_sci-e979d33c_20260120_v001.json",
                     ],
+                    env={**os.environ, "IMAP_DATA_DIR": str(OUTPUT_DATA_DIR)},
                 )
 
                 self.assertEqual(0, result.returncode)

@@ -20,7 +20,6 @@ import unittest
 from pathlib import Path
 from unittest import skipUnless
 
-import numpy as np
 import imap_data_access
 import numpy.testing
 from imap_data_access import ScienceFilePath
@@ -177,6 +176,77 @@ class SwapiProcessorIntegration(unittest.TestCase):
                 if 'velocity' in key:
                     rtol, atol = 1e-3, bulk_speed_atol
                 elif key.endswith('_uncert'):
+                    rtol, atol = 1e-2, 0.0
+                else:
+                    rtol, atol = 1e-3, 0.0
+                try:
+                    numpy.testing.assert_allclose(
+                        actual_value, expected_values[key], rtol=rtol, atol=atol, err_msg=key
+                    )
+                except TypeError:
+                    self.assertEqual(expected_values[key], actual_value, msg=key)
+
+
+    @skipUnless(os.environ.get("IMAP_API_KEY"), "requires production API key")
+    def test_pui_he_with_production_data(self):
+        """
+        With real data and with full dependency setup, validate that the pui-he
+        CDF output matches hardcoded expected values to check for unexpected
+        changes.
+        """
+
+        sample_index = 98
+        expected_values = {
+            'epoch': datetime.datetime(2026, 1, 1, 16, 24, 4, 954000),
+            'epoch_delta': 300000000000,
+            'pui_cooling_index': 1.9189398,
+            'pui_cooling_index_uncert': 0.20612726,
+            'pui_ionization_rate': 7.7820943e-08,
+            'pui_ionization_rate_uncert': 4.0720134e-09,
+            'pui_cutoff_speed': 481.61884,
+            'pui_cutoff_speed_uncert': 3.2015524,
+            'pui_background_count_rate': 0.50305182,
+            'pui_background_count_rate_uncert': 0.19893467,
+            'pui_density': 5.246582e-04,
+            'pui_density_uncert': 2.8316077e-05,
+            'pui_temperature': 21426046.0,
+            'pui_temperature_uncert': 838306.625,
+            'swp_flags': 0,
+        }
+
+        root_dir = Path(imap_l3_processing.__file__).parent.parent
+        os.chdir(root_dir)
+        imap_data_access.config["DATA_DIR"] = root_dir / "data"
+
+        dependency_filename = "imap_swapi_l3a_pui-he_20260101_v001.json"
+        stage_input_file(SWAPI_INTEGRATION_DATA_DIR / dependency_filename)
+
+        expected_file_path = ScienceFilePath(
+            "imap_swapi_l3a_pui-he_20260101_v001.cdf"
+        ).construct_path()
+        if expected_file_path.parent.exists():
+            expected_file_path.unlink(missing_ok=True)
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                "imap_l3_data_processor.py",
+                "--instrument", "swapi",
+                "--data-level", "l3a",
+                "--descriptor", "pui-he",
+                "--start-date", "20260101",
+                "--version", "v001",
+                "--dependency", dependency_filename,
+            ]
+        )
+
+        self.assertEqual(0, result.returncode)
+        self.assertTrue(expected_file_path.exists())
+
+        with CDF(str(expected_file_path)) as cdf:
+            for key in expected_values.keys():
+                actual_value = cdf[key][sample_index]
+                if key.endswith('_uncert'):
                     rtol, atol = 1e-2, 0.0
                 else:
                     rtol, atol = 1e-3, 0.0

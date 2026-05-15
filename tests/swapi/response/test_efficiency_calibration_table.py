@@ -69,6 +69,40 @@ class TestEfficiencyCalibrationTable(unittest.TestCase):
 
         self.assertEqual((f"No efficiency data for {time}",), content_manager.exception.args)
 
+    def test_eps_p_lab_returns_post_cutoff_proton_efficiency(self):
+        calibration_table_path = get_test_data_path("swapi/imap_swapi_efficiency-lut-test_20241020_v001.dat")
+        efficiency_table = EfficiencyCalibrationTable(calibration_table_path)
+
+        self.assertEqual(efficiency_table.eps_p_lab, 1.0)
+
+    def test_central_effective_area_scale_for_proton_uses_proton_lab_denominator(self):
+        calibration_table_path = get_test_data_path("swapi/imap_swapi_efficiency-lut-test_20241020_v001.dat")
+        efficiency_table = EfficiencyCalibrationTable(calibration_table_path)
+
+        epoch = pycdf.lib.datetime_to_tt2000(datetime(year=2024, month=10, day=3))
+        self.assertAlmostEqual(
+            efficiency_table.central_effective_area_scale_for(epoch, "proton"),
+            0.0882 / 1.0,
+        )
+
+    def test_central_effective_area_scale_for_helium_uses_proton_lab_denominator(self):
+        calibration_table_path = get_test_data_path("swapi/imap_swapi_efficiency-lut-test_20241020_v001.dat")
+        efficiency_table = EfficiencyCalibrationTable(calibration_table_path)
+
+        epoch = pycdf.lib.datetime_to_tt2000(datetime(year=2024, month=10, day=3))
+        self.assertAlmostEqual(
+            efficiency_table.central_effective_area_scale_for(epoch, "helium"),
+            0.99 / 1.0,
+        )
+
+    def test_central_effective_area_scale_for_rejects_unknown_species(self):
+        calibration_table_path = get_test_data_path("swapi/imap_swapi_efficiency-lut-test_20241020_v001.dat")
+        efficiency_table = EfficiencyCalibrationTable(calibration_table_path)
+
+        epoch = pycdf.lib.datetime_to_tt2000(datetime(year=2024, month=10, day=3))
+        with self.assertRaises(ValueError):
+            efficiency_table.central_effective_area_scale_for(epoch, "carbon")
+
     def test_loads_calibration_table_with_single_row(self):
         calibration_table_path = get_test_data_path(
             "swapi/imap_swapi_efficiency-lut-single-row-test_20241020_v001.dat")

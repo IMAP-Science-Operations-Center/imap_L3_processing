@@ -3,12 +3,15 @@ from typing import Optional
 import numpy as np
 
 from imap_l3_processing.constants import PROTON_MASS_KG
+from imap_l3_processing.swapi.l3a.science.pickup_ion.collapsed_response_grid import (
+    solar_wind_frame_speed_range,
+)
 from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
-from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
+from imap_l3_processing.swapi.response.swapi_response import ResponseGrid, SwapiResponse
 from tests.test_helpers import get_test_instrument_team_data_path
 
 
@@ -37,6 +40,18 @@ def load_swapi_response(
     if warm_cache_voltages is not None:
         response.warm_cache(warm_cache_voltages)
     return response
+
+
+def build_default_v_prime_grid_kms(
+    response_grid: ResponseGrid, bulk_speed_kms: float, n_points: int = 128
+) -> np.ndarray:
+    """Per-bin v' grid for verification scripts: `linspace(v'_min, v'_max, n_points)`
+    over the active range of one (response_grid, bulk_speed). Production code
+    uses a chunk-wide shared grid via `build_chunk_collapsed_response`."""
+    v_prime_min, v_prime_max = solar_wind_frame_speed_range(
+        response_grid.central_speed, float(bulk_speed_kms)
+    )
+    return np.linspace(v_prime_min, v_prime_max, n_points)
 
 
 # Nominal IMAP_SWAPI → IMAP_RTN rotation at spin phase 0: spin axis (+Y_SWAPI,
