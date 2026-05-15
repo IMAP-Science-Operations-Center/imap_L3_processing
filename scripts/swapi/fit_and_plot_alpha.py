@@ -1,15 +1,16 @@
 """Download one day of SWAPI L2 + dependencies, run the production alpha
-solar-wind fit via SwapiProcessor, cache the result, and plot density /
-temperature / bulk speed / RTN velocity components vs time. WIND SWE
-2-min alpha moments are overplotted as scatter points for comparison.
+solar-wind L3a CDF via ``imap_l3_data_processor.py`` (the same entry point
+the integration test exercises), and plot density / temperature / bulk
+speed / RTN velocity components vs time. WIND SWE 2-min alpha moments are
+overplotted as scatter points for comparison.
 
 Usage:
     scripts/swapi/fit_and_plot_alpha.py <YYYY-MM-DD> [--use-cache]
 
 Requires the environment variable IMAP_API_KEY to be set.
-Downloads land in /tmp/swapi_fit_and_plot_data; the fit pickle lands in
-/tmp/swapi_alpha_fit_<YYYYMMDD>.pkl. --use-cache reuses that pickle and skips
-the SWAPI network fetch (WIND is still downloaded if not cached).
+Downloads and the produced CDF land under /tmp/swapi_fit_and_plot_data
+(``IMAP_DATA_DIR``). --use-cache reuses the existing alpha-sw CDF if one
+is already there and skips the subprocess.
 
 WIND alphas come from
 ftp://nssdcftp.gsfc.nasa.gov/pub/data/wind/swe/ascii/2-min/wind_swe_2m_sw<YYYYMM>.asc
@@ -18,7 +19,6 @@ and use the L1 Sun-Earth-line approximation vR=-Vx_GSE, vT=-Vy_GSE, vN=+Vz_GSE.
 
 import argparse
 import os
-import pickle
 import subprocess
 import sys
 from datetime import datetime, timedelta
@@ -27,14 +27,12 @@ from pathlib import Path
 import imap_data_access
 import matplotlib.pyplot as plt
 import numpy as np
-import spiceypy
-from imap_data_access import ProcessingInputCollection
+from imap_data_access import DependencyFilePath, ProcessingInputCollection, ScienceFilePath
 from imap_data_access.processing_input import generate_imap_input
-from spacepy.pycdf import lib as cdf_library
+from spacepy.pycdf import CDF
 
-from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
-from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
+import imap_l3_processing
+from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
 from imap_l3_processing.utils import SpiceKernelTypes, get_spice_kernels_file_names
 
 # m_p / (2 k_B) = 60.5685 K/(km/s)^2 for protons; alpha mass = 4 m_p.
@@ -46,6 +44,10 @@ WIND_FTP_URL_TEMPLATE = (
     "ftp://nssdcftp.gsfc.nasa.gov/pub/data/wind/swe/ascii/2-min/"
     "wind_swe_2m_sw{yyyymm}.asc"
 )
+
+L3_PROCESSING_ROOT = Path(imap_l3_processing.__file__).parent.parent
+DATA_DIR = Path("/tmp/swapi_fit_and_plot_data")
+PROCESSOR_OUTPUT_VERSION = "v001"
 
 
 def fetch_wind_swe_2min_alphas(compact_date_string, cache_directory):
@@ -140,34 +142,15 @@ def fetch_wind_swe_2min_alphas(compact_date_string, cache_directory):
     }
 
 
-argument_parser = argparse.ArgumentParser(
-    description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-argument_parser.add_argument("date", help="UTC date in YYYY-MM-DD format")
-argument_parser.add_argument("--use-cache", action="store_true",
-                             help="Skip download and refit; load the cached fit from /tmp.")
-arguments = argument_parser.parse_args()
-
-if "IMAP_API_KEY" not in os.environ:
-    sys.exit("IMAP_API_KEY environment variable is required.")
-
-target_date = datetime.strptime(arguments.date, "%Y-%m-%d")
-compact_date = target_date.strftime("%Y%m%d")
-cache_path = Path(f"/tmp/swapi_alpha_fit_{compact_date}.pkl")
-
-# Route the imap-data-access download cache to /tmp so we never write into the project tree.
-imap_data_access.config["DATA_DIR"] = Path("/tmp/swapi_fit_and_plot_data")
-imap_data_access.config["DATA_DIR"].mkdir(parents=True, exist_ok=True)
-
-# Static list of SWAPI ancillaries; the same template scripts/swapi/generate_with_predicted_ephemeris.py uses.
-ancillary_template_path = Path(__file__).parent / "imap_swapi_l3a_proton-sw_dependency_template.json"
-
-if not arguments.use_cache or not cache_path.exists():
-    # SWAPI L2 science for the target date.
+def build_dependency_collection(target_date, compact_date):
+    """Query SDC for one day of SWAPI L2 + MAG RTN + SPICE kernels and merge
+    them with the static SWAPI ancillary template into a ProcessingInputCollection.
+    """
     science_query_results = imap_data_access.query(
         instrument="swapi", data_level="l2", descriptor="sci",
         start_date=compact_date, end_date=compact_date, version="latest")
     if not science_query_results:
-        sys.exit(f"No SWAPI L2 sci file at the SDC for {arguments.date}")
+        sys.exit(f"No SWAPI L2 sci file at the SDC for {compact_date}")
 
     # MAG RTN at both L2 and L1D. SwapiL3ADependencies picks L2 when both are
     # present and flags the result as preliminary when only L1D is available.
@@ -179,7 +162,7 @@ if not arguments.use_cache or not cache_path.exists():
             start_date=compact_date, end_date=compact_date, version="latest")
     ]
     if not magnetic_field_filenames:
-        sys.exit(f"No MAG norm-rtn file (L2 or L1D) at the SDC for {arguments.date}")
+        sys.exit(f"No MAG norm-rtn file (L2 or L1D) at the SDC for {compact_date}")
 
     # SPICE kernels in two windows. Non-ephemeris kernels come from a narrow
     # window around the target date. Spacecraft ephemeris kernels need a wide
@@ -202,64 +185,107 @@ if not arguments.use_cache or not cache_path.exists():
         )
     ))
 
-    # Per-day inputs (L2 + MAG + SPICE) plus the static ancillary template,
-    # downloaded together via the production collection helpers.
     dynamic_filenames = [
         os.path.basename(science_query_results[0]["file_path"]),
         *magnetic_field_filenames,
         *spice_kernel_filenames,
     ]
+    ancillary_template_path = (
+        Path(__file__).parent / "imap_swapi_l3a_proton-sw_dependency_template.json")
     processing_input_collection = ProcessingInputCollection(
         *[generate_imap_input(filename) for filename in dynamic_filenames])
     processing_input_collection.deserialize(ancillary_template_path.read_text())
+    return processing_input_collection
+
+
+argument_parser = argparse.ArgumentParser(
+    description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+argument_parser.add_argument("date", help="UTC date in YYYY-MM-DD format")
+argument_parser.add_argument("--use-cache", action="store_true",
+                             help="Skip download/processing if the alpha-sw CDF already exists in IMAP_DATA_DIR.")
+arguments = argument_parser.parse_args()
+
+if "IMAP_API_KEY" not in os.environ:
+    sys.exit("IMAP_API_KEY environment variable is required.")
+
+target_date = datetime.strptime(arguments.date, "%Y-%m-%d")
+compact_date = target_date.strftime("%Y%m%d")
+
+# Route imap-data-access cache to /tmp so we never write into the project tree.
+# Set the env var so the child imap_l3_data_processor.py subprocess sees the same DATA_DIR.
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+os.environ["IMAP_DATA_DIR"] = str(DATA_DIR)
+imap_data_access.config["DATA_DIR"] = DATA_DIR
+
+output_cdf_path = ScienceFilePath(
+    f"imap_swapi_l3a_alpha-sw_{compact_date}_{PROCESSOR_OUTPUT_VERSION}.cdf").construct_path()
+
+if not arguments.use_cache or not output_cdf_path.exists():
+    processing_input_collection = build_dependency_collection(target_date, compact_date)
     processing_input_collection.download_all_files()
 
-    # Furnish SPICE kernels before fitting — the alpha chunk fitter calls into
-    # SPICE for per-measurement rotation matrices and spacecraft ephemeris.
-    for kernel_path in processing_input_collection.get_file_paths(data_type="spice"):
-        spiceypy.furnsh(str(imap_data_access.download(kernel_path)))
+    dependency_filename = (
+        f"imap_swapi_l3a_alpha-sw_{compact_date}_{PROCESSOR_OUTPUT_VERSION}.json")
+    dependency_path = DependencyFilePath(dependency_filename).construct_path()
+    dependency_path.parent.mkdir(parents=True, exist_ok=True)
+    dependency_path.write_text(processing_input_collection.serialize())
 
-    # Run the production alpha-sw fit via SwapiProcessor.
-    dependencies = SwapiL3ADependencies.fetch_dependencies(processing_input_collection)
-    input_metadata = InputMetadata(
-        instrument="swapi", data_level="l3a",
-        start_date=target_date, end_date=target_date,
-        version="v001", descriptor="alpha-sw",
+    output_cdf_path.unlink(missing_ok=True)
+    result = subprocess.run(
+        [sys.executable, "imap_l3_data_processor.py",
+         "--instrument", "swapi",
+         "--data-level", "l3a",
+         "--descriptor", "alpha-sw",
+         "--start-date", compact_date,
+         "--version", PROCESSOR_OUTPUT_VERSION,
+         "--dependency", dependency_filename],
+        cwd=L3_PROCESSING_ROOT,
     )
-    processor = SwapiProcessor(processing_input_collection, input_metadata)
-    alpha_solar_wind_data = processor.process_l3a_alpha(dependencies.data, dependencies)
+    if result.returncode != 0:
+        sys.exit(f"imap_l3_data_processor.py exited with status {result.returncode}")
+    if not output_cdf_path.exists():
+        sys.exit(f"Processor finished but {output_cdf_path} is missing.")
 
-    with cache_path.open("wb") as cache_file:
-        pickle.dump(alpha_solar_wind_data, cache_file)
-    print(f"Cached fit to {cache_path}")
+with CDF(str(output_cdf_path)) as alpha_cdf:
+    timestamps = alpha_cdf["epoch"][...]
+    quality_flags = alpha_cdf["swp_flags"][...]
+    swapi_density = read_numeric_variable(alpha_cdf["alpha_sw_density"])
+    swapi_density_uncertainty = read_numeric_variable(alpha_cdf["alpha_sw_density_uncert"])
+    swapi_temperature = read_numeric_variable(alpha_cdf["alpha_sw_temperature"])
+    swapi_temperature_uncertainty = read_numeric_variable(alpha_cdf["alpha_sw_temperature_uncert"])
+    swapi_speed = read_numeric_variable(alpha_cdf["alpha_sw_speed"])
+    swapi_speed_uncertainty = read_numeric_variable(alpha_cdf["alpha_sw_speed_uncert"])
+    swapi_velocity_rtn = read_numeric_variable(alpha_cdf["alpha_sw_velocity_rtn_sun"])
+    swapi_velocity_rtn_covariance = read_numeric_variable(
+        alpha_cdf["alpha_sw_velocity_rtn_covariance"])
 
-with cache_path.open("rb") as cache_file:
-    alpha_solar_wind_data = pickle.load(cache_file)
-
-timestamps = np.array(
-    [cdf_library.tt2000_to_datetime(int(tt2000))
-     for tt2000 in alpha_solar_wind_data.epoch])
+# Drop flagged records so fill values don't drag the y-axes.
+good_record_mask = quality_flags == 0
+timestamps = timestamps[good_record_mask]
+swapi_density = swapi_density[good_record_mask]
+swapi_density_uncertainty = swapi_density_uncertainty[good_record_mask]
+swapi_temperature = swapi_temperature[good_record_mask]
+swapi_temperature_uncertainty = swapi_temperature_uncertainty[good_record_mask]
+swapi_speed = swapi_speed[good_record_mask]
+swapi_speed_uncertainty = swapi_speed_uncertainty[good_record_mask]
+swapi_velocity_rtn = swapi_velocity_rtn[good_record_mask]
+swapi_velocity_rtn_covariance = swapi_velocity_rtn_covariance[good_record_mask]
 
 # Diagonal of the RTN velocity covariance gives variances on (vR, vT, vN).
-swapi_velocity_rtn = alpha_solar_wind_data.alpha_sw_velocity_rtn_sun
 swapi_velocity_rtn_sigma = np.sqrt(np.diagonal(
-    alpha_solar_wind_data.alpha_sw_velocity_rtn_covariance, axis1=1, axis2=2))
+    swapi_velocity_rtn_covariance, axis1=1, axis2=2))
 
-wind_alphas = fetch_wind_swe_2min_alphas(
-    compact_date, Path("/tmp/swapi_fit_and_plot_data/wind")) or {}
+wind_alphas = fetch_wind_swe_2min_alphas(compact_date, DATA_DIR / "wind") or {}
 
 panels = [
     ("Density [cm$^{-3}$]", "log",
-     alpha_solar_wind_data.alpha_sw_density,
-     alpha_solar_wind_data.alpha_sw_density_uncert,
+     swapi_density, swapi_density_uncertainty,
      wind_alphas.get("density"), wind_alphas.get("density_sigma")),
     ("Temperature [K]", "log",
-     alpha_solar_wind_data.alpha_sw_temperature,
-     alpha_solar_wind_data.alpha_sw_temperature_uncert,
+     swapi_temperature, swapi_temperature_uncertainty,
      wind_alphas.get("temperature"), wind_alphas.get("temperature_sigma")),
     ("Bulk speed [km/s]", "linear",
-     alpha_solar_wind_data.alpha_sw_speed,
-     alpha_solar_wind_data.alpha_sw_speed_uncert,
+     swapi_speed, swapi_speed_uncertainty,
      wind_alphas.get("speed"), wind_alphas.get("speed_sigma")),
     ("$v_R$ [km/s]", "linear",
      swapi_velocity_rtn[:, 0], swapi_velocity_rtn_sigma[:, 0],
