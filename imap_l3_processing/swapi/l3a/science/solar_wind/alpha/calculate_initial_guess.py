@@ -2,13 +2,7 @@ from typing import Optional
 
 import numpy as np
 from numpy import ndarray
-from numpy.typing import ArrayLike
 
-from imap_l3_processing.constants import (
-    ALPHA_PARTICLE_CHARGE_COULOMBS,
-    ALPHA_PARTICLE_MASS_KG,
-    METERS_PER_KILOMETER,
-)
 from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     SolarWindFitContext,
@@ -69,19 +63,6 @@ def calculate_initial_guess(
     alpha_density = max(alpha_density, 1e-3)
 
     return (alpha_density, alpha_temperature, 0.0, peak_idx)
-
-
-def esa_voltage_to_alpha_speed(esa_voltage: ArrayLike) -> np.ndarray:
-    return (
-        np.sqrt(
-            2
-            * SWAPI_K_FACTOR
-            * ALPHA_PARTICLE_CHARGE_COULOMBS
-            * np.abs(esa_voltage)
-            / ALPHA_PARTICLE_MASS_KG
-        )
-        / METERS_PER_KILOMETER
-    )
 
 
 def _get_alpha_peak_indices(residuals, energies, proton_peak_index) -> slice:
