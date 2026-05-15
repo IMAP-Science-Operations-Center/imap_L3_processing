@@ -48,15 +48,6 @@ def bulk_speed(sw_params: SolarWindParams) -> float:
 
 
 @numba.njit
-def bulk_angles_in_instrument_frame(sw_params: SolarWindParams, rotation_xyz_to_rtn):
-    v_xyz = rotation_xyz_to_rtn.T @ sw_params.bulk_velocity_rtn
-    return (
-        math.degrees(math.atan2(-v_xyz[0], -v_xyz[1])),
-        math.degrees(math.asin(-v_xyz[2] / bulk_speed(sw_params))),
-    )
-
-
-@numba.njit
 def thermal_speed(sw_params: SolarWindParams) -> float:
     """Maxwellian standard deviation σ = √(kT/m), km/s."""
     temperature_k = sw_params.temperature
