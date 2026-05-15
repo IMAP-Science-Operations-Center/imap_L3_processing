@@ -369,9 +369,8 @@ def process_omni_param(omni_raw, cr_grid, param_settings):
 def process_omni_alpha_param(omni_raw, cr_grid, param_settings,
                              nominal_value: float = NOMINAL_ALPHA_PROTON_RATIO_VALUE):
 
-    param = omni_raw[:, param_settings['column_numbers']].copy()
-    invalid_mask = param[:, 3] >= param_settings['gap_marker']
-    param[invalid_mask, 3] = nominal_value
+    param_raw = omni_raw[:, param_settings['column_numbers']]
+    param = param_raw[param_raw[:, 3] < param_settings['gap_marker']]
 
     date = time_from_yday(param)
     date_cr = carrington(date.jd)
@@ -381,20 +380,22 @@ def process_omni_alpha_param(omni_raw, cr_grid, param_settings,
 
     param_cr, idx_param = np.unique(np.floor(date_cr), return_index=True, axis=0)
     param_s = np.split(param[:, 3], idx_param)[1:]
-    invalid_s = np.split(invalid_mask, idx_param)[1:]
 
     param_value = np.array([p.mean() for p in param_s])
-    used_nominal_local = np.array([bool(m.any()) for m in invalid_s])
 
-    if not (param_cr[0] <= cr_grid[0] and param_cr[-1] >= cr_grid[-1]):
+    if param_cr[-1] < cr_grid[0] or param_cr[0] > cr_grid[-1]:
+        return (
+            np.full(len(cr_grid), nominal_value, dtype=float),
+            np.ones(len(cr_grid), dtype=bool),
+        )
+
+    if param_cr[0] > cr_grid[0]:
         logging.info('There are gaps in the OMNI2 data that cannot be filled by the interpolation')
         raise Exception('OMNI Error: not enough data for interpolation')
 
     param_value_interp = np.interp(cr_grid, param_cr, param_value)
-    nearest_param_cr_indices = np.array(
-        [int(np.abs(param_cr - cr).argmin()) for cr in cr_grid]
-    )
-    used_nominal_per_cr = used_nominal_local[nearest_param_cr_indices]
+    used_nominal_per_cr = np.asarray(cr_grid) > param_cr[-1]
+    param_value_interp[used_nominal_per_cr] = nominal_value
 
     return param_value_interp, used_nominal_per_cr
 

@@ -470,7 +470,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
         counts = np.stack((priority_1, priority_2, priority_3), axis=1)
 
         acquisition_durations_in_seconds = rng.random((num_epochs, num_energies,))
-        acquisition_duration_in_microseconds = acquisition_durations_in_seconds * ONE_SECOND_IN_MICROSECONDS
+        acquisition_duration_in_microseconds = acquisition_durations_in_seconds
 
         actual_count_rates = combine_priorities_for_species_and_convert_to_rate(counts,
                                                                                 acquisition_duration_in_microseconds)
