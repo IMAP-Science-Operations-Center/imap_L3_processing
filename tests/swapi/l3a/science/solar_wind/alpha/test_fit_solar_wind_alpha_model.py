@@ -671,14 +671,14 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
         self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.FIT_ERROR))
         _assert_moments_are_nan_filled(self, result)
 
-    def test_one_dimensional_inputs_short_circuit_to_fit_error(self):
-        """`calculate_initial_guess` requires a 2D (n_sweeps, n_bins) count_rate; a 1D input falls through the ndim guard and the fitter reports `FIT_ERROR`."""
+    def test_one_dimensional_inputs_raise_value_error(self):
+        """`fit_solar_wind_alpha_model` requires a 2D (n_sweeps, n_bins) count_rate for its per-sweep aggregations and raises `ValueError` on a 1D context rather than silently degrading. The chunk-level try/except is what converts the raise into a `FIT_ERROR` quality flag (covered in `test_chunk_fits.py`)."""
         voltage = np.logspace(np.log10(3500.0), np.log10(140.0), _N_MEAS)
-        result = self._call(
-            count_rate=np.zeros(_N_MEAS),
-            esa_voltage=voltage,
-        )
-        self._assert_fit_error_nan(result)
+        with self.assertRaises(ValueError):
+            self._call(
+                count_rate=np.zeros(_N_MEAS),
+                esa_voltage=voltage,
+            )
 
     def test_non_monotonic_voltage_raises_in_peak_finder_and_returns_fit_error(self):
         """A non-monotonic per-sweep voltage axis violates the alpha peak finder's decreasing-energies assertion; the `try/except Exception` in `calculate_initial_guess` catches it and the fitter returns `FIT_ERROR`."""

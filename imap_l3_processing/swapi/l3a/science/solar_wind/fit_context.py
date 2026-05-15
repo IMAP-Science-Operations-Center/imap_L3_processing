@@ -33,12 +33,13 @@ def build_solar_wind_fit_context(
     mass_per_charge_m_p_per_e: float,
 ) -> SolarWindFitContext:
     flat_voltage = esa_voltage.ravel()
-    keep = (flat_voltage > 0) & np.isfinite(flat_voltage)
-    if not np.all(keep):
-        esa_voltage = flat_voltage[keep]
-        count_rate = count_rate.ravel()[keep]
-        rotation_matrices = rotation_matrices[keep]
-        flat_voltage = esa_voltage
+    if not np.all((flat_voltage > 0) & np.isfinite(flat_voltage)):
+        raise ValueError(
+            "esa_voltage must be strictly positive and finite at every bin. "
+            "Filter invalid voltages (and the matching count_rate / "
+            "rotation_matrices entries) at the call site before building the "
+            "context."
+        )
 
     response_grids = numba.typed.List(
         [

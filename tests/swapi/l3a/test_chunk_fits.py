@@ -41,6 +41,8 @@ from imap_l3_processing.swapi.l3a.utils import get_swapi_geometry
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 from imap_l3_processing.swapi.constants import (
+    SWAPI_COARSE_SWEEP_BINS,
+    SWAPI_FINE_SWEEP_BINS,
     SWAPI_L2_K_FACTOR,
     SWAPI_SCIENCE_BINS,
 )
@@ -241,6 +243,17 @@ def _with_nan_at(chunk, sweep, bin_):
     bad = chunk.coincidence_count_rate.copy()
     bad[sweep, bin_] = np.nan
     return _with_count_rate(chunk, bad)
+
+
+def _with_zero_energy_at(chunk, sweep, bin_):
+    bad = chunk.energy.copy()
+    bad[sweep, bin_] = 0.0
+    return SwapiL2Data(
+        sci_start_time=chunk.sci_start_time,
+        energy=bad,
+        coincidence_count_rate=chunk.coincidence_count_rate,
+        coincidence_count_rate_uncertainty=chunk.coincidence_count_rate_uncertainty,
+    )
 
 
 def _assert_all_nan(tc, result, scalar_keys, array_keys):
@@ -710,6 +723,18 @@ class TestProtonChunkFitterQualityFlags(SpiceTestCase):
         result = self._fit(_with_nan_at(self.chunk, 0, 5))
         _assert_proton_flag_and_peak_fallback(self, result, SwapiL3Flags.NONE)
 
+    def test_succeeds_when_fine_sweep_bin_has_zero_voltage(self):
+        """Production sweeps regularly carry zero voltages in the fine-sweep bins. The proton chunk fitter drops those bins (and the matching count rates / rotations) at the call site before building the fit context, so the fit converges on the surviving science bins and the quality flag is NONE."""
+        fine_bin = SWAPI_FINE_SWEEP_BINS.start + 2
+        result = self._fit(_with_zero_energy_at(self.chunk, 0, fine_bin))
+        self.assertEqual(int(result["quality_flags"]), int(SwapiL3Flags.NONE))
+        self.assertAlmostEqual(
+            result["proton_sw_density"], _TRUE_DENSITY, delta=0.05 * _TRUE_DENSITY
+        )
+        self.assertAlmostEqual(
+            result["proton_sw_speed"], _TRUE_BULK_SPEED, delta=0.05 * _TRUE_BULK_SPEED
+        )
+
 
 # ----- Alpha quality flags --------------------------------------------------
 
@@ -814,6 +839,18 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
             _B_HAT_RTN,
         )
         _assert_alpha_flag_and_all_nan(self, result, SwapiL3Flags.NONE)
+
+    def test_fit_error_when_coarse_bin_voltage_is_zero(self):
+        """Coarse-sweep bins shouldn't carry zero voltages in production, but if one does `build_solar_wind_fit_context` raises rather than silently flattening the alpha context to 1D and breaking the per-sweep aggregations. The chunk fitter's try/except catches the raise and surfaces `FIT_ERROR` with every alpha moment NaN-filled."""
+        coarse_bin = SWAPI_COARSE_SWEEP_BINS.start + 5
+        result = self.fitter.fit_chunk(
+            _with_zero_energy_at(self.chunk, 0, coarse_bin),
+            _CHUNK_EPOCH,
+            self.rotations,
+            _SC_VELOCITY_RTN,
+            _B_HAT_RTN,
+        )
+        _assert_alpha_flag_and_all_nan(self, result, SwapiL3Flags.FIT_ERROR)
 
 
 if __name__ == "__main__":

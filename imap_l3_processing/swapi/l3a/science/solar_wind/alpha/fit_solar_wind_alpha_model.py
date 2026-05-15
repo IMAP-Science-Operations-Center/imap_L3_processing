@@ -54,6 +54,12 @@ def fit_solar_wind_alpha_model(
     proton_moments: ProtonSolarWindFitResult,
     magnetic_field_direction: ndarray,
 ) -> AlphaSolarWindFitResult:
+    if alpha_ctx.count_rate.ndim != 2:
+        raise ValueError(
+            f"alpha_ctx.count_rate must be 2D (n_sweeps, n_bins); got shape "
+            f"{alpha_ctx.count_rate.shape}"
+        )
+
     bad_fit_flag = int(proton_moments.bad_fit_flag)
     proton_bulk_rtn = proton_moments.bulk_velocity_rtn_nominal()
 

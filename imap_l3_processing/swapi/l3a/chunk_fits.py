@@ -313,6 +313,15 @@ def _fit_proton(
     efficiency_table = _shared["efficiency_table"]
     count_rates = data_chunk.coincidence_count_rate[:, SWAPI_SCIENCE_BINS]
     voltages = data_chunk.energy[:, SWAPI_SCIENCE_BINS] / SWAPI_L2_K_FACTOR
+    # Fine-sweep bins legitimately contain zero voltages in some production
+    # sweeps; the proton fit is shape-agnostic, so drop the bad bins (and the
+    # matching count rates / rotations) before building the context.
+    flat_voltages = voltages.ravel()
+    keep = (flat_voltages > 0) & np.isfinite(flat_voltages)
+    if not np.all(keep):
+        voltages = flat_voltages[keep]
+        count_rates = count_rates.ravel()[keep]
+        rotation_matrices = rotation_matrices[keep]
     ctx = build_solar_wind_fit_context(
         count_rate=count_rates,
         esa_voltage=voltages,
