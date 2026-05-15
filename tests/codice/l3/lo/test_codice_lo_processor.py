@@ -673,6 +673,174 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(sw_priority_rates.acquisition_time_per_esa_step,
                                       l3a_direct_event_data_product.acquisition_time_per_esa_step)
 
+    @patch(f'{MODULE}.SpinAngleLookup')
+    @patch(f'{MODULE}.lookup_normalization_per_event', autospec=True)
+    @patch(f'{MODULE}.calculate_normalization_factor', autospec=True)
+    @patch(f'{MODULE}.calculate_mass_per_charge', autospec=True)
+    @patch(f'{MODULE}.calculate_mass', autospec=True)
+    def test_process_l3a_direct_events_aligns_priority_to_direct_event_epochs_when_missing(
+            self, mock_calculate_mass, mock_calculate_mass_per_charge,
+            mock_calculate_normalization_factor, mock_lookup_normalization_per_event,
+            mock_spin_angle_lookup_class):
+        rng = np.random.default_rng(seed=42)
+
+        num_spin_angle_bins = 4
+        num_energy_bins = 3
+        event_buffer_size = 2
+        num_priorities = 7
+        priority_l1_spin_sectors = num_spin_angle_bins // 2
+
+        mock_spin_angle_lookup = create_dataclass_mock(SpinAngleLookup)
+        mock_spin_angle_lookup.num_bins = num_spin_angle_bins
+        mock_spin_angle_lookup_class.return_value = mock_spin_angle_lookup
+
+        t0 = datetime(2026, 4, 23, 5, 10, 30)
+        t1 = datetime(2026, 4, 23, 5, 10, 31)
+        t2 = datetime(2026, 4, 23, 5, 10, 32)
+        t3 = datetime(2026, 4, 23, 5, 10, 33)
+
+        direct_event_epochs = np.array([t0, t1, t2, t3])
+        num_direct_event_epochs = len(direct_event_epochs)
+
+        sw_priority_epochs = np.array([t0, t2, t3])
+        nsw_priority_epochs = np.array([t0, t1, t3])
+        num_sw_epochs = len(sw_priority_epochs)
+        num_nsw_epochs = len(nsw_priority_epochs)
+
+        sw_priority_counts_shape = (num_sw_epochs, num_energy_bins, priority_l1_spin_sectors)
+        nsw_priority_counts_shape = (num_nsw_epochs, num_energy_bins, priority_l1_spin_sectors)
+
+        sw_priority_rates = create_dataclass_mock(CodiceLoL1aSWPriorityRates)
+        sw_priority_rates.epoch = sw_priority_epochs
+        sw_priority_rates.p0_tcrs = rng.random(sw_priority_counts_shape)
+        sw_priority_rates.p1_hplus = rng.random(sw_priority_counts_shape)
+        sw_priority_rates.p2_heplusplus = rng.random(sw_priority_counts_shape)
+        sw_priority_rates.p3_heavies = rng.random(sw_priority_counts_shape)
+        sw_priority_rates.p4_dcrs = rng.random(sw_priority_counts_shape)
+        sw_priority_rates.half_spin_per_esa_step = rng.random((num_sw_epochs, num_energy_bins))
+        sw_priority_rates.rgfo_spin_sector = rng.random(num_sw_epochs)
+        sw_priority_rates.rgfo_esa_step = rng.random(num_sw_epochs)
+        sw_priority_rates.nso_spin_sector = rng.random(num_sw_epochs)
+        sw_priority_rates.nso_esa_step = rng.random(num_sw_epochs)
+        sw_priority_rates.esa_step = np.arange(num_energy_bins)
+        sw_priority_rates.rgfo_half_spin = rng.random(num_sw_epochs)
+        sw_priority_rates.nso_half_spin = rng.random(num_sw_epochs)
+        sw_priority_rates.acquisition_time_per_esa_step = rng.random((num_sw_epochs, num_energy_bins))
+
+        nsw_priority_rates = create_dataclass_mock(CodiceLoL1aNSWPriorityRates)
+        nsw_priority_rates.epoch = nsw_priority_epochs
+        nsw_priority_rates.p5_heavies = rng.random(nsw_priority_counts_shape)
+        nsw_priority_rates.p6_hplus_heplusplus = rng.random(nsw_priority_counts_shape)
+
+        mass_per_charge = rng.random((num_direct_event_epochs, CODICE_LO_L2_NUM_PRIORITIES, event_buffer_size))
+        mock_calculate_mass_per_charge.return_value = mass_per_charge
+        mass = rng.random((num_direct_event_epochs, CODICE_LO_L2_NUM_PRIORITIES, event_buffer_size))
+        mock_calculate_mass.return_value = mass
+
+        codice_l2_variables = {
+            f.name: rng.random((num_direct_event_epochs, CODICE_LO_L2_NUM_PRIORITIES, event_buffer_size))
+            for f in fields(CodiceLoL2DirectEventData)
+        }
+        codice_l2_variables["epoch"] = direct_event_epochs
+        codice_l2_variables["spin_angle"] *= 360
+        codice_l2_variables["data_quality"] = rng.random((num_direct_event_epochs,))
+        codice_l2_variables["num_events"] = rng.random((num_direct_event_epochs,))
+
+        direct_events = CodiceLoL2DirectEventData(**codice_l2_variables)
+
+        mock_energy_lookup = create_dataclass_mock(EnergyLookup)
+        mock_energy_lookup.delta_minus = rng.random(num_energy_bins)
+        mock_energy_lookup.delta_plus = rng.random(num_energy_bins)
+        mock_energy_lookup.bin_centers = rng.random(num_energy_bins)
+        mock_energy_lookup.num_bins = num_energy_bins
+
+        expected_normalization = rng.random(
+            (num_direct_event_epochs, num_priorities, num_energy_bins, num_spin_angle_bins)
+        )
+        mock_calculate_normalization_factor.return_value = expected_normalization
+
+        sentinel_normalization_per_event_value = 5.0
+        mock_lookup_normalization_per_event.return_value = np.full(
+            (num_direct_event_epochs, num_priorities, event_buffer_size),
+            sentinel_normalization_per_event_value,
+        )
+
+        dependencies = CodiceLoL3aDirectEventsDependencies(
+            sw_priority_rates, nsw_priority_rates, direct_events, Mock(), mock_energy_lookup
+        )
+
+        input_collection = ProcessingInputCollection()
+        input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02')
+        processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
+        result = processor.process_l3a_direct_event_data_product(dependencies)
+
+        self.assertEqual(1, mock_calculate_normalization_factor.call_count)
+        actual_stacked_priorities = mock_calculate_normalization_factor.call_args.args[0]
+        self.assertEqual(
+            (num_direct_event_epochs, num_priorities, num_energy_bins, priority_l1_spin_sectors),
+            actual_stacked_priorities.shape,
+        )
+
+        np.testing.assert_equal(actual_stacked_priorities[0, 0], sw_priority_rates.p0_tcrs[0])
+        np.testing.assert_equal(actual_stacked_priorities[0, 1], sw_priority_rates.p1_hplus[0])
+        np.testing.assert_equal(actual_stacked_priorities[0, 2], sw_priority_rates.p2_heplusplus[0])
+        np.testing.assert_equal(actual_stacked_priorities[0, 3], sw_priority_rates.p3_heavies[0])
+        np.testing.assert_equal(actual_stacked_priorities[0, 4], sw_priority_rates.p4_dcrs[0])
+        np.testing.assert_equal(actual_stacked_priorities[0, 5], nsw_priority_rates.p5_heavies[0])
+        np.testing.assert_equal(actual_stacked_priorities[0, 6], nsw_priority_rates.p6_hplus_heplusplus[0])
+
+        expected_sw_nan_block = np.full((5, num_energy_bins, priority_l1_spin_sectors), np.nan)
+        np.testing.assert_equal(actual_stacked_priorities[1, 0:5], expected_sw_nan_block)
+        np.testing.assert_equal(actual_stacked_priorities[1, 5], nsw_priority_rates.p5_heavies[1])
+        np.testing.assert_equal(actual_stacked_priorities[1, 6], nsw_priority_rates.p6_hplus_heplusplus[1])
+
+        np.testing.assert_equal(actual_stacked_priorities[2, 0], sw_priority_rates.p0_tcrs[1])
+        np.testing.assert_equal(actual_stacked_priorities[2, 1], sw_priority_rates.p1_hplus[1])
+        np.testing.assert_equal(actual_stacked_priorities[2, 2], sw_priority_rates.p2_heplusplus[1])
+        np.testing.assert_equal(actual_stacked_priorities[2, 3], sw_priority_rates.p3_heavies[1])
+        np.testing.assert_equal(actual_stacked_priorities[2, 4], sw_priority_rates.p4_dcrs[1])
+        expected_nsw_nan_block = np.full((2, num_energy_bins, priority_l1_spin_sectors), np.nan)
+        np.testing.assert_equal(actual_stacked_priorities[2, 5:7], expected_nsw_nan_block)
+
+        np.testing.assert_equal(actual_stacked_priorities[3, 0], sw_priority_rates.p0_tcrs[2])
+        np.testing.assert_equal(actual_stacked_priorities[3, 1], sw_priority_rates.p1_hplus[2])
+        np.testing.assert_equal(actual_stacked_priorities[3, 2], sw_priority_rates.p2_heplusplus[2])
+        np.testing.assert_equal(actual_stacked_priorities[3, 3], sw_priority_rates.p3_heavies[2])
+        np.testing.assert_equal(actual_stacked_priorities[3, 4], sw_priority_rates.p4_dcrs[2])
+        np.testing.assert_equal(actual_stacked_priorities[3, 5], nsw_priority_rates.p5_heavies[2])
+        np.testing.assert_equal(actual_stacked_priorities[3, 6], nsw_priority_rates.p6_hplus_heplusplus[2])
+
+        self.assertEqual(1, mock_lookup_normalization_per_event.call_count)
+        np.testing.assert_equal(mock_lookup_normalization_per_event.call_args.args[0], expected_normalization)
+
+        actual_normalization_per_event = result.normalization_per_event
+
+        np.testing.assert_array_equal(
+            actual_normalization_per_event[1, 0:5, :], np.zeros((5, event_buffer_size))
+        )
+        np.testing.assert_array_equal(
+            actual_normalization_per_event[2, 5:7, :], np.zeros((2, event_buffer_size))
+        )
+
+        sentinel_row = np.full(event_buffer_size, sentinel_normalization_per_event_value)
+        np.testing.assert_array_equal(
+            actual_normalization_per_event[0],
+            np.full((num_priorities, event_buffer_size), sentinel_normalization_per_event_value),
+        )
+        np.testing.assert_array_equal(
+            actual_normalization_per_event[3],
+            np.full((num_priorities, event_buffer_size), sentinel_normalization_per_event_value),
+        )
+        np.testing.assert_array_equal(actual_normalization_per_event[1, 5], sentinel_row)
+        np.testing.assert_array_equal(actual_normalization_per_event[1, 6], sentinel_row)
+        np.testing.assert_array_equal(actual_normalization_per_event[2, 0], sentinel_row)
+        np.testing.assert_array_equal(actual_normalization_per_event[2, 1], sentinel_row)
+        np.testing.assert_array_equal(actual_normalization_per_event[2, 2], sentinel_row)
+        np.testing.assert_array_equal(actual_normalization_per_event[2, 3], sentinel_row)
+        np.testing.assert_array_equal(actual_normalization_per_event[2, 4], sentinel_row)
+
+        np.testing.assert_array_equal(result.normalization, np.flip(expected_normalization, axis=2))
+
     @patch(f'{MODULE}.rebin_3d_distribution_azimuth_to_elevation')
     @patch(f'{MODULE}.combine_priorities_for_species_and_convert_to_rate')
     @patch(f'{MODULE}.PositionToElevationLookup')
