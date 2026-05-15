@@ -1,9 +1,6 @@
 [
   {"type": "science", "files": ["imap_swapi_l2_sci_20260101_v001.cdf"]},
-  {"type": "ancillary", "files": ["imap_swapi_alpha-density-temperature-lut_20250125_v001.dat"]},
   {"type": "ancillary", "files": ["imap_swapi_efficiency-lut_20241020_v002.dat"]},
-  {"type": "ancillary", "files": ["imap_swapi_energy-gf-pui-lut_20100101_v003.csv"]},
-  {"type": "ancillary", "files": ["imap_swapi_instrument-response-lut_20241023_v001.zip"]},
   {"type": "ancillary", "files": ["imap_swapi_density-of-neutral-helium-lut_20241023_v002.dat"]},
   {"type": "ancillary", "files": ["imap_swapi_hydrogen-inflow-vector_20100101_v001.dat"]},
   {"type": "ancillary", "files": ["imap_swapi_helium-inflow-vector_20100101_v001.dat"]},

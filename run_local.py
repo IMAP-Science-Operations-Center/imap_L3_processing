@@ -261,7 +261,6 @@ def create_swapi_l3a_cdf(geometric_factor_calibration_file,
     mock_spice.sxform.side_effect = mock_sxform
 
     efficiency_calibration_table = EfficiencyCalibrationTable(imap_swapi_efficiency_lut_file)
-    geometric_factor_calibration_table = GeometricFactorCalibrationTable.from_file(geometric_factor_calibration_file)
     density_of_neutral_helium_calibration_table = DensityOfNeutralHeliumLookupTable.from_file(
         density_of_neutral_helium_calibration_file)
     swapi_cdf_data = CDF(cdf_file)
@@ -269,7 +268,6 @@ def create_swapi_l3a_cdf(geometric_factor_calibration_file,
     swapi_l3_dependencies = SwapiL3ADependencies(
         data=swapi_data,
         efficiency_calibration_table=efficiency_calibration_table,
-        geometric_factor_calibration_table=geometric_factor_calibration_table,
         density_of_neutral_helium_calibration_table=density_of_neutral_helium_calibration_table,
         hydrogen_inflow_vector=Mock(),
         helium_inflow_vector=Mock(),
