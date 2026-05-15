@@ -10,20 +10,19 @@ from spacepy import pycdf
 from uncertainties import ufloat
 
 from imap_l3_processing.constants import (
+    ALPHA_MASS_PER_CHARGE_M_P_PER_E,
+    ALPHA_PARTICLE_MASS_KG,
     PROTON_MASS_KG,
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
     THIRTY_SECONDS_IN_NANOSECONDS,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.calculate_alpha_solar_wind_moments import (
-    AlphaSolarWindMoments,
-    fit_solar_wind_alpha_moments,
+from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_solar_wind_alpha_model import (
+    AlphaSolarWindFitResult,
+    fit_solar_wind_alpha_model,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
     ProtonSolarWindFitResult,
     fit_solar_wind_proton_model,
-)
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.initial_guess import (
-    esa_voltage_to_proton_speed,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
@@ -36,6 +35,7 @@ from imap_l3_processing.swapi.constants import (
 from imap_l3_processing.swapi.l3a.utils import (
     chunk_epoch,
     compute_direction_of_mean_magnetic_field_over_chunk,
+    esa_voltage_to_proton_speed,
     get_spacecraft_velocity_rtn,
     get_swapi_geometry,
     measurement_times,
@@ -126,42 +126,53 @@ class AlphaChunkFitter(ChunkFitter):
 
     def precompute_geometry(self, chunk):
         epoch = chunk_epoch(chunk)
+        rm = None
+        sc_vel = None
         try:
             rm = get_swapi_geometry(measurement_times(chunk, SWAPI_SCIENCE_BINS))
         except Exception:
             logger.info(
                 f"Missing SPICE information at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}, continuing with fill value"
             )
-            rm = None
+
+        if rm is not None:
+            try:
+                sc_vel = get_spacecraft_velocity_rtn(epoch)
+            except Exception:
+                logger.warning(
+                    "SPICE gap in spacecraft velocity.",
+                    exc_info=True,
+                )
+
         b_hat = compute_direction_of_mean_magnetic_field_over_chunk(
             self.mag_data, int(epoch), int(THIRTY_SECONDS_IN_NANOSECONDS)
         )
-        return (epoch, rm, b_hat)
+        return (epoch, rm, sc_vel, b_hat)
 
     def fit_chunk(
         self,
         data_chunk,
         epoch,
         rotation_matrices,
+        sc_velocity_rtn,
         magnetic_field_direction,
     ):
         result = _fit_alpha(
             data_chunk, epoch, rotation_matrices, magnetic_field_direction
         )
-        return _alpha_moments_from_fit(result, epoch)
+        return _alpha_moments_from_fit(result, epoch, sc_velocity_rtn)
 
 
 def _proton_moments_from_fit(result, epoch, data_chunk, sc_velocity_rtn):
     speed = sum(component**2 for component in result.bulk_velocity_rtn) ** 0.5
     speed_nom, speed_unc = speed.nominal_value, speed.std_dev
     bulk_velocity_rtn_sc = result.bulk_velocity_rtn_nominal()
-    velocity_covariance_sc = result.bulk_velocity_rtn_covariance()
+    bulk_velocity_rtn_covariance = result.bulk_velocity_rtn_covariance()
     density_nom, density_unc = result.density.nominal_value, result.density.std_dev
     temp_nom, temp_unc = result.temperature.nominal_value, result.temperature.std_dev
 
     if sc_velocity_rtn is not None:
         bulk_velocity_rtn_sun = bulk_velocity_rtn_sc + sc_velocity_rtn
-        velocity_covariance_sun = velocity_covariance_sc
         sun_velocity_unc = [
             component + sc_component
             for component, sc_component in zip(
@@ -175,7 +186,6 @@ def _proton_moments_from_fit(result, epoch, data_chunk, sc_velocity_rtn):
             f"Proton fit at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}: missing spacecraft velocity; sun-frame outputs are fill values"
         )
         bulk_velocity_rtn_sun = np.full(3, np.nan)
-        velocity_covariance_sun = np.full((3, 3), np.nan)
         sun_speed_nom = sun_speed_unc = np.nan
 
     if not np.isfinite(speed_nom):
@@ -192,26 +202,37 @@ def _proton_moments_from_fit(result, epoch, data_chunk, sc_velocity_rtn):
         proton_sw_density=density_nom,
         proton_sw_density_uncert=density_unc,
         proton_sw_bulk_velocity_rtn_sun=bulk_velocity_rtn_sun,
-        proton_sw_bulk_velocity_rtn_sun_covariance=velocity_covariance_sun,
         proton_sw_bulk_velocity_rtn_sc=bulk_velocity_rtn_sc,
-        proton_sw_bulk_velocity_rtn_sc_covariance=velocity_covariance_sc,
+        proton_sw_bulk_velocity_rtn_covariance=bulk_velocity_rtn_covariance,
         quality_flags=result.bad_fit_flag,
     )
 
 
-def _alpha_moments_from_fit(result, epoch):
+def _alpha_moments_from_fit(result, epoch, sc_velocity_rtn):
     alpha = result.alpha_moments
+    speed = sum(component**2 for component in alpha.bulk_velocity_rtn) ** 0.5
+    bulk_velocity_rtn_sc = alpha.bulk_velocity_rtn_nominal()
+    bulk_velocity_rtn_covariance = alpha.bulk_velocity_rtn_covariance()
+
+    if sc_velocity_rtn is not None:
+        bulk_velocity_rtn_sun = bulk_velocity_rtn_sc + sc_velocity_rtn
+    else:
+        logger.warning(
+            f"Alpha fit at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}: missing spacecraft velocity; sun-frame velocity is fill values"
+        )
+        bulk_velocity_rtn_sun = np.full(3, np.nan)
+
     return dict(
         epoch=epoch,
+        alpha_sw_speed=speed.nominal_value,
+        alpha_sw_speed_uncert=speed.std_dev,
         alpha_sw_density=alpha.density.nominal_value,
         alpha_sw_density_uncert=alpha.density.std_dev,
         alpha_sw_temperature=alpha.temperature.nominal_value,
         alpha_sw_temperature_uncert=alpha.temperature.std_dev,
-        alpha_sw_velocity_rtn=alpha.bulk_velocity_rtn_nominal(),
-        alpha_sw_velocity_covariance_rtn=alpha.bulk_velocity_rtn_covariance(),
-        alpha_sw_delta_v=alpha.delta_v.nominal_value,
-        alpha_sw_delta_v_uncert=alpha.delta_v.std_dev,
-        alpha_sw_b_hat_rtn=result.b_hat_rtn,
+        alpha_sw_velocity_rtn_sun=bulk_velocity_rtn_sun,
+        alpha_sw_velocity_rtn_sc=bulk_velocity_rtn_sc,
+        alpha_sw_velocity_rtn_covariance=bulk_velocity_rtn_covariance,
         quality_flags=result.bad_fit_flag,
     )
 
@@ -292,6 +313,15 @@ def _fit_proton(
     efficiency_table = _shared["efficiency_table"]
     count_rates = data_chunk.coincidence_count_rate[:, SWAPI_SCIENCE_BINS]
     voltages = data_chunk.energy[:, SWAPI_SCIENCE_BINS] / SWAPI_L2_K_FACTOR
+    # Fine-sweep bins legitimately contain zero voltages in some production
+    # sweeps; the proton fit is shape-agnostic, so drop the bad bins (and the
+    # matching count rates / rotations) before building the context.
+    flat_voltages = voltages.ravel()
+    keep = (flat_voltages > 0) & np.isfinite(flat_voltages)
+    if not np.all(keep):
+        voltages = flat_voltages[keep]
+        count_rates = count_rates.ravel()[keep]
+        rotation_matrices = rotation_matrices[keep]
     ctx = build_solar_wind_fit_context(
         count_rate=count_rates,
         esa_voltage=voltages,
@@ -324,21 +354,21 @@ def _nan_proton_result(flag) -> ProtonSolarWindFitResult:
 
 
 @dataclass
-class AlphaSolarWindFitResult:
+class AlphaChunkFitResult:
     """Chunk-level alpha output: alpha moments + the proton moments they
     reference + the B̂ used as the field-aligned drift constraint, plus the
     consolidated `bad_fit_flag` rolled up from every stage that could fail
     (missing B̂, proton fit, alpha LM)."""
 
-    alpha_moments: AlphaSolarWindMoments
+    alpha_moments: AlphaSolarWindFitResult
     proton_moments: ProtonSolarWindFitResult
     b_hat_rtn: np.ndarray
     bad_fit_flag: int
 
 
-def _nan_alpha_moments(flag) -> AlphaSolarWindMoments:
+def _nan_alpha_fit_result(flag) -> AlphaSolarWindFitResult:
     nan = ufloat(np.nan, np.nan)
-    return AlphaSolarWindMoments(
+    return AlphaSolarWindFitResult(
         density=nan,
         temperature=nan,
         bulk_velocity_rtn=(nan, nan, nan),
@@ -352,7 +382,7 @@ def _fit_alpha(
     epoch,
     rotation_matrices,
     magnetic_field_direction,
-) -> AlphaSolarWindFitResult:
+) -> AlphaChunkFitResult:
     nan_b_hat = np.full(3, np.nan)
     if (
         magnetic_field_direction is None
@@ -361,8 +391,8 @@ def _fit_alpha(
         logger.warning(
             f"Alpha fit at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}: missing or non-finite magnetic field direction; using fill values"
         )
-        return AlphaSolarWindFitResult(
-            alpha_moments=_nan_alpha_moments(SwapiL3Flags.NONE),
+        return AlphaChunkFitResult(
+            alpha_moments=_nan_alpha_fit_result(SwapiL3Flags.NONE),
             proton_moments=_nan_proton_result(SwapiL3Flags.NONE),
             b_hat_rtn=nan_b_hat,
             bad_fit_flag=int(SwapiL3Flags.NONE),
@@ -374,8 +404,8 @@ def _fit_alpha(
             [component.nominal_value for component in proton_moments.bulk_velocity_rtn]
         )
     ):
-        return AlphaSolarWindFitResult(
-            alpha_moments=_nan_alpha_moments(proton_moments.bad_fit_flag),
+        return AlphaChunkFitResult(
+            alpha_moments=_nan_alpha_fit_result(proton_moments.bad_fit_flag),
             proton_moments=proton_moments,
             b_hat_rtn=nan_b_hat,
             bad_fit_flag=int(proton_moments.bad_fit_flag),
@@ -386,34 +416,46 @@ def _fit_alpha(
     try:
         count_rates = data_chunk.coincidence_count_rate[:, SWAPI_COARSE_SWEEP_BINS]
         voltages = data_chunk.energy[:, SWAPI_COARSE_SWEEP_BINS] / SWAPI_L2_K_FACTOR
-        times = measurement_times(data_chunk, SWAPI_COARSE_SWEEP_BINS)
         coarse_rotation_matrices = _coarse_subset_of_science_rotations(
             rotation_matrices, n_sweeps=data_chunk.sci_start_time.shape[0]
         )
-        alpha_moments = fit_solar_wind_alpha_moments(
-            count_rates,
-            voltages,
-            times,
-            swapi_response,
-            proton_moments,
-            magnetic_field_direction,
-            _eff_scale(efficiency_table, epoch, "alpha"),
-            _eff_scale(efficiency_table, epoch, "proton"),
+        proton_ctx = build_solar_wind_fit_context(
+            count_rate=count_rates,
+            esa_voltage=voltages,
+            swapi_response=swapi_response,
+            central_effective_area_scale=_eff_scale(efficiency_table, epoch, "proton"),
             rotation_matrices=coarse_rotation_matrices,
+            mass_kg=PROTON_MASS_KG,
+            mass_per_charge_m_p_per_e=PROTON_MASS_PER_CHARGE_M_P_PER_E,
+        )
+        alpha_ctx = build_solar_wind_fit_context(
+            count_rate=count_rates,
+            esa_voltage=voltages,
+            swapi_response=swapi_response,
+            central_effective_area_scale=_eff_scale(efficiency_table, epoch, "alpha"),
+            rotation_matrices=coarse_rotation_matrices,
+            mass_kg=ALPHA_PARTICLE_MASS_KG,
+            mass_per_charge_m_p_per_e=ALPHA_MASS_PER_CHARGE_M_P_PER_E,
+        )
+        alpha_moments = fit_solar_wind_alpha_model(
+            proton_ctx=proton_ctx,
+            alpha_ctx=alpha_ctx,
+            proton_moments=proton_moments,
+            magnetic_field_direction=magnetic_field_direction,
         )
     except Exception:
         logger.warning(
             f"Alpha fit at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}: exception during fit; using fill values",
             exc_info=True,
         )
-        return AlphaSolarWindFitResult(
-            alpha_moments=_nan_alpha_moments(SwapiL3Flags.FIT_ERROR),
+        return AlphaChunkFitResult(
+            alpha_moments=_nan_alpha_fit_result(SwapiL3Flags.FIT_ERROR),
             proton_moments=proton_moments,
             b_hat_rtn=nan_b_hat,
             bad_fit_flag=int(SwapiL3Flags.FIT_ERROR),
         )
 
-    return AlphaSolarWindFitResult(
+    return AlphaChunkFitResult(
         alpha_moments=alpha_moments,
         proton_moments=proton_moments,
         b_hat_rtn=magnetic_field_direction,

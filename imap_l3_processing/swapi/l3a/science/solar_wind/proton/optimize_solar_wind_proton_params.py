@@ -10,15 +10,15 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
 )
-from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
+from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 
 
 @dataclass
-class OptimizeSolarWindParamsResult:
+class OptimizeSolarWindProtonParamsResult:
     sw_params: SolarWindParams
-    residuals: ndarray  # count-rate residuals at the solution
-    jacobian: ndarray  # ∂residuals/∂state, columns ordered per the state vector
+    residuals: ndarray      # count-rate residuals at the solution
+    jacobian: ndarray       # ∂residuals/∂param, columns ordered per the params vector
     success: bool
 
     @property
@@ -26,9 +26,9 @@ class OptimizeSolarWindParamsResult:
         return float(np.mean(self.residuals**2))
 
 
-def optimize_solar_wind_params(
+def optimize_solar_wind_proton_params(
     initial_guess: SolarWindParams, ctx: SolarWindFitContext
-) -> OptimizeSolarWindParamsResult:
+) -> OptimizeSolarWindProtonParamsResult:
     evaluator = _Evaluator(ctx)
 
     raw: scipy.optimize.OptimizeResult = scipy.optimize.least_squares(
@@ -40,7 +40,7 @@ def optimize_solar_wind_params(
         x_scale=1.0,
     )
 
-    return OptimizeSolarWindParamsResult(
+    return OptimizeSolarWindProtonParamsResult(
         sw_params=SolarWindParams.from_vector(raw.x, ctx.mass_kg),
         residuals=raw.fun,
         jacobian=raw.jac,
@@ -49,14 +49,11 @@ def optimize_solar_wind_params(
 
 
 class _Evaluator:
-    """Caches the most recent (residuals, jacobian) so scipy.least_squares' separate
-    `fun` and `jac` callbacks share a single forward-model evaluation per state."""
-
     def __init__(self, ctx: SolarWindFitContext):
         self.ctx = ctx
         self._last_state: ndarray | None = None
-        self._last_resid: ndarray | None = None
-        self._last_jac: ndarray | None = None
+        self._last_residues: ndarray | None = None
+        self._last_jacobian: ndarray | None = None
 
     def _eval(self, state: ndarray) -> None:
         sw = SolarWindParams.from_vector(state, self.ctx.mass_kg)

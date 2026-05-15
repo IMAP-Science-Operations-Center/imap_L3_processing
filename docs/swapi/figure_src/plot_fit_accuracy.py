@@ -50,10 +50,10 @@ from figure_utils import (
     load_swapi_response,
     run_parallel_map,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
     fit_solar_wind_proton_model,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.initial_guess import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.calculate_initial_guess import (
     calculate_initial_guess,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
@@ -188,7 +188,7 @@ def _process_one(i):
         result = fit_solar_wind_proton_model(fit_ctx)
     except Exception as e:
         print(f"  case {i}: fit failed ({type(e).__name__}: {e}); flagging bad")
-        from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
+        from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
             ProtonSolarWindFitResult,
         )
         from uncertainties import ufloat

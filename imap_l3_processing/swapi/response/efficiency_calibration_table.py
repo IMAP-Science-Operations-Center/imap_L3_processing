@@ -4,7 +4,7 @@ from spacepy import pycdf
 
 class EfficiencyCalibrationTable:
     def __init__(self, path):
-        self.data = np.loadtxt(path, dtype=[("time", "M8[ns]"), ("MET", "i8"), ("proton efficiency", "f8"), ("alpha efficiency", "f8")])
+        self.data = np.loadtxt(path, dtype=[("time", "M8[ns]"), ("MET", "i8"), ("proton efficiency", "f8"), ("alpha efficiency", "f8")], ndmin=1)
 
     def get_proton_efficiency_for(self, time_as_tt2000) -> float:
         return self._get_efficiency_for_index("proton efficiency", time_as_tt2000)

@@ -4,17 +4,23 @@ from typing import Iterable
 import numpy as np
 import scipy.optimize
 from numpy import ndarray
+from numpy.typing import ArrayLike
 from spacepy import pycdf
 from spacepy.pycdf import CDF
 from uncertainties import UFloat, umath, unumpy
 
 from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
 from imap_l3_processing.constants import (
+    ALPHA_PARTICLE_CHARGE_COULOMBS,
+    ALPHA_PARTICLE_MASS_KG,
     METERS_PER_KILOMETER,
     ONE_SECOND_IN_NANOSECONDS,
+    PROTON_CHARGE_COULOMBS,
+    PROTON_MASS_KG,
     THIRTY_SECONDS_IN_NANOSECONDS,
 )
 from imap_l3_processing.models import MagData
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_processing.spice.geometry import (
     SpiceFrame,
@@ -34,6 +40,32 @@ def calculate_sw_speed(particle_mass, particle_charge, energy):
     if isinstance(energy, np.ndarray) and energy.dtype == object:
         return unumpy.sqrt(speed_squared) / METERS_PER_KILOMETER
     return np.sqrt(speed_squared) / METERS_PER_KILOMETER
+
+
+def esa_voltage_to_proton_speed(esa_voltage: ArrayLike) -> np.ndarray:
+    return (
+        np.sqrt(
+            2
+            * SWAPI_K_FACTOR
+            * PROTON_CHARGE_COULOMBS
+            * np.abs(esa_voltage)
+            / PROTON_MASS_KG
+        )
+        / METERS_PER_KILOMETER
+    )
+
+
+def esa_voltage_to_alpha_speed(esa_voltage: ArrayLike) -> np.ndarray:
+    return (
+        np.sqrt(
+            2
+            * SWAPI_K_FACTOR
+            * ALPHA_PARTICLE_CHARGE_COULOMBS
+            * np.abs(esa_voltage)
+            / ALPHA_PARTICLE_MASS_KG
+        )
+        / METERS_PER_KILOMETER
+    )
 
 
 def read_mag_rtn_data(cdf_path) -> MagData:

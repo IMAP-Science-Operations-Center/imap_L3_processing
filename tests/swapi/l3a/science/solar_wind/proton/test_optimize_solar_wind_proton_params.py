@@ -11,9 +11,9 @@ from imap_l3_processing.constants import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.optimizer import (
-    OptimizeSolarWindParamsResult,
-    optimize_solar_wind_params,
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.optimize_solar_wind_proton_params import (
+    OptimizeSolarWindProtonParamsResult,
+    optimize_solar_wind_proton_params,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     N_STATE,
@@ -57,12 +57,12 @@ def _synthetic_count_rate_for(sw_params: SolarWindParams) -> np.ndarray:
     return synthesize_count_rates(ctx, sw_params)
 
 
-class TestOptimizeSolarWindParamsResultMSE(unittest.TestCase):
-    """Tests for `OptimizeSolarWindParamsResult.mse`."""
+class TestOptimizeSolarWindProtonParamsResultMSE(unittest.TestCase):
+    """Tests for `OptimizeSolarWindProtonParamsResult.mse`."""
 
     def test_mse_is_mean_of_squared_residuals(self):
         """Given a residuals vector [1, -2, 3], mse returns 14/3 — the per-bin mean of squared residuals."""
-        result = OptimizeSolarWindParamsResult(
+        result = OptimizeSolarWindProtonParamsResult(
             sw_params=proton_params(),
             residuals=np.array([1.0, -2.0, 3.0]),
             jacobian=np.zeros((3, N_STATE)),
@@ -72,7 +72,7 @@ class TestOptimizeSolarWindParamsResultMSE(unittest.TestCase):
 
     def test_mse_handles_all_zero_residuals_without_dividing_by_zero(self):
         """At the truth (noise-free fit) all residuals are zero and mse reports exactly 0.0 rather than NaN/Inf, so the wrong-basin chi^2 comparator can be applied unconditionally."""
-        result = OptimizeSolarWindParamsResult(
+        result = OptimizeSolarWindProtonParamsResult(
             sw_params=proton_params(),
             residuals=np.zeros(5),
             jacobian=np.zeros((5, N_STATE)),
@@ -82,7 +82,7 @@ class TestOptimizeSolarWindParamsResultMSE(unittest.TestCase):
 
 
 class TestOptimizeSolarWindParamsRecoversTruth(unittest.TestCase):
-    """End-to-end tests for `optimize_solar_wind_params` driving an LM fit to a known synthetic solar wind state."""
+    """End-to-end tests for `optimize_solar_wind_proton_params` driving an LM fit to a known synthetic solar wind state."""
 
     @classmethod
     def setUpClass(cls):
@@ -98,7 +98,7 @@ class TestOptimizeSolarWindParamsRecoversTruth(unittest.TestCase):
             velocity_rtn=cls.true_params.bulk_velocity_rtn * 1.03,
             temperature=cls.true_params.temperature * 1.2,
         )
-        cls.result = optimize_solar_wind_params(cls.initial_guess, cls.ctx)
+        cls.result = optimize_solar_wind_proton_params(cls.initial_guess, cls.ctx)
 
     def test_optimizer_recovers_density(self):
         """Starting from a +10% density perturbation against noise-free synthetic data, the fitted density returns to the truth within 0.1%."""
@@ -134,15 +134,15 @@ class TestOptimizeSolarWindParamsRecoversTruth(unittest.TestCase):
         self.assertLess(self.result.mse, peak_rate_squared * 1e-4)
 
 
-class TestOptimizeSolarWindParamsResultShape(unittest.TestCase):
-    """Tests for `optimize_solar_wind_params` result-object shape and type contracts the wrong-basin detector and uncertainty derivation depend on."""
+class TestOptimizeSolarWindProtonParamsResultShape(unittest.TestCase):
+    """Tests for `optimize_solar_wind_proton_params` result-object shape and type contracts the wrong-basin detector and uncertainty derivation depend on."""
 
     @classmethod
     def setUpClass(cls):
         true_params = proton_params()
         count_rate = _synthetic_count_rate_for(true_params)
         cls.ctx = _build_proton_fit_context(count_rate=count_rate)
-        cls.result = optimize_solar_wind_params(true_params, cls.ctx)
+        cls.result = optimize_solar_wind_proton_params(true_params, cls.ctx)
 
     def test_sw_params_is_a_solar_wind_params(self):
         """The returned `sw_params` field is a `SolarWindParams` instance, not a raw state vector."""
@@ -168,7 +168,7 @@ class TestOptimizeSolarWindParamsResultShape(unittest.TestCase):
 
 
 class TestOptimizerLeastSquaresKwargs(unittest.TestCase):
-    """Tests that `optimize_solar_wind_params` invokes scipy with the doc-pinned LM kwargs."""
+    """Tests that `optimize_solar_wind_proton_params` invokes scipy with the doc-pinned LM kwargs."""
 
     def test_uses_lm_with_xtol_from_doc_spec(self):
         """When the optimizer runs, scipy.optimize.least_squares is called with `method='lm'` and `xtol=1e-4` per the doc spec."""
@@ -177,7 +177,7 @@ class TestOptimizerLeastSquaresKwargs(unittest.TestCase):
         ctx = _build_proton_fit_context(count_rate=count_rate)
 
         with patch(
-            "imap_l3_processing.swapi.l3a.science.solar_wind.optimizer.scipy.optimize.least_squares"
+            "imap_l3_processing.swapi.l3a.science.solar_wind.proton.optimize_solar_wind_proton_params.scipy.optimize.least_squares"
         ) as mock_least_squares:
             mock_least_squares.return_value = scipy.optimize.OptimizeResult(
                 x=true_params.to_vector(),
@@ -186,7 +186,7 @@ class TestOptimizerLeastSquaresKwargs(unittest.TestCase):
                 success=True,
             )
 
-            optimize_solar_wind_params(true_params, ctx)
+            optimize_solar_wind_proton_params(true_params, ctx)
 
             kwargs = mock_least_squares.call_args.kwargs
             self.assertEqual(kwargs["method"], "lm")

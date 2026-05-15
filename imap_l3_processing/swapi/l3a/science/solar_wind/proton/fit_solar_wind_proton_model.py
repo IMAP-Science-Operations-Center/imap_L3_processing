@@ -4,24 +4,30 @@ import numpy as np
 from numpy import ndarray
 from uncertainties import UFloat, covariance_matrix, ufloat
 
+from imap_l3_processing.swapi.constants import SWAPI_COARSE_SWEEP_BINS
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     SolarWindFitContext,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.initial_guess import (
-    calculate_initial_guess,
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
+    LOG_DENSITY_IDX,
+    LOG_TEMPERATURE_IDX,
+    VELOCITY_SLICE,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.optimizer import (
-    optimize_solar_wind_params,
-)
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.basin_hopping import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.escape_local_minimum import (
     escape_local_minimum,
 )
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.calculate_initial_guess import (
+    calculate_initial_guess,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.optimize_solar_wind_proton_params import (
+    OptimizeSolarWindProtonParamsResult,
+    optimize_solar_wind_proton_params,
+)
 from imap_l3_processing.swapi.l3a.science.solar_wind.uncertainties import (
-    derive_uncertainties,
+    compute_hc3_parameter_covariance,
     make_correlated_velocity,
     r_squared,
 )
-from imap_l3_processing.swapi.constants import SWAPI_COARSE_SWEEP_BINS
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 
 
@@ -44,7 +50,7 @@ class ProtonSolarWindFitResult:
 
 def fit_solar_wind_proton_model(ctx: SolarWindFitContext) -> ProtonSolarWindFitResult:
     initial_guess = calculate_initial_guess(ctx)
-    first_result = optimize_solar_wind_params(initial_guess, ctx)
+    first_result = optimize_solar_wind_proton_params(initial_guess, ctx)
     final_result = escape_local_minimum(first_result, ctx)
     return _construct_fit_result(final_result, ctx)
 
@@ -63,7 +69,7 @@ def _construct_fit_result(final_result, ctx):
     if flag_bad:
         return _nan_proton_fit_result(int(SwapiL3Flags.BAD_FIT))
 
-    density_sigma, temperature_sigma, velocity_covariance = derive_uncertainties(
+    density_sigma, temperature_sigma, velocity_covariance = _derive_uncertainties(
         final_result, ctx
     )
     density = ufloat(final_result.sw_params.density, density_sigma)
@@ -108,3 +114,33 @@ def _coarse_peak_averaged_r_squared(residuals: ndarray, count_rate: ndarray) -> 
         clamped_peak_index + _R_SQUARED_PEAK_HALF_WIDTH + 1,
     )
     return r_squared(averaged_residual[window], averaged_count_rate[window])
+
+
+def _derive_uncertainties(
+    result: OptimizeSolarWindProtonParamsResult,
+    ctx: SolarWindFitContext,
+) -> tuple[float, float, ndarray]:
+    parameter_covariance = compute_hc3_parameter_covariance(
+        result.jacobian, result.residuals
+    )
+    if not np.all(np.isfinite(parameter_covariance)):
+        return np.nan, np.nan, np.full((3, 3), np.nan)
+
+    log_density_variance = parameter_covariance[LOG_DENSITY_IDX, LOG_DENSITY_IDX]
+    log_temperature_variance = parameter_covariance[
+        LOG_TEMPERATURE_IDX, LOG_TEMPERATURE_IDX
+    ]
+
+    density_error = float(
+        result.sw_params.density * np.sqrt(max(log_density_variance, 0.0))
+    )
+    temperature_error = float(
+        result.sw_params.temperature * np.sqrt(max(log_temperature_variance, 0.0))
+    )
+    velocity_covariance = parameter_covariance[VELOCITY_SLICE, VELOCITY_SLICE]
+
+    return (
+        density_error,
+        temperature_error,
+        velocity_covariance,
+    )

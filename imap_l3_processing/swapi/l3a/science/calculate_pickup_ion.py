@@ -31,7 +31,7 @@ from imap_l3_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table
     DensityOfNeutralHeliumLookupTable,
 )
 from imap_l3_processing.swapi.l3a.science.inflow_vector import InflowVector
-from imap_l3_processing.swapi.l3b.science.efficiency_calibration_table import (
+from imap_l3_processing.swapi.response.efficiency_calibration_table import (
     EfficiencyCalibrationTable,
 )
 from imap_l3_processing.swapi.l3b.science.geometric_factor_calibration_table import (

@@ -4,17 +4,17 @@ from numpy import ndarray
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     SolarWindFitContext,
 )
-from imap_l3_processing.swapi.l3a.utils import optimal_density_scale
-from imap_l3_processing.swapi.l3a.science.solar_wind.utils import average_spin_axis_rtn
 from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
 )
-from imap_l3_processing.swapi.response.deadtime import deadtime_factor
-from imap_l3_processing.swapi.l3a.science.solar_wind.optimizer import (
-    OptimizeSolarWindParamsResult,
-    optimize_solar_wind_params,
-)
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.optimize_solar_wind_proton_params import (
+    OptimizeSolarWindProtonParamsResult,
+    optimize_solar_wind_proton_params,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.utils import average_spin_axis_rtn
+from imap_l3_processing.swapi.l3a.utils import optimal_density_scale
+from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 
 
 _MAX_BASIN_REFINE_ITERS = 6
@@ -22,14 +22,14 @@ _ROTATED_RMSE_RATIO_THRESHOLD = 10
 
 
 def escape_local_minimum(
-    first_result: OptimizeSolarWindParamsResult,
+    first_result: OptimizeSolarWindProtonParamsResult,
     ctx: SolarWindFitContext,
-) -> OptimizeSolarWindParamsResult:
+) -> OptimizeSolarWindProtonParamsResult:
     spin_axis_rtn = average_spin_axis_rtn(ctx.rotation_matrices)
 
     current_result = first_result
     for _ in range(_MAX_BASIN_REFINE_ITERS):
-        flipped_mse, flipped_seed_params = _flipped_seed(
+        flipped_mse, flipped_seed_params = flipped_seed(
             current_result, ctx, spin_axis_rtn
         )
 
@@ -39,9 +39,7 @@ def escape_local_minimum(
         if flipped_seed_is_substantially_worse_than_current:
             break
 
-        flipped_result: OptimizeSolarWindParamsResult = _restart_from_flipped_params(
-            flipped_seed_params, ctx
-        )
+        flipped_result = _restart_from_flipped_params(flipped_seed_params, ctx)
 
         flipped_result_is_worse_than_current = flipped_result.mse > current_result.mse
         if flipped_result_is_worse_than_current:
@@ -52,8 +50,8 @@ def escape_local_minimum(
     return current_result
 
 
-def _flipped_seed(
-    lm_result: OptimizeSolarWindParamsResult,
+def flipped_seed(
+    lm_result,
     ctx: SolarWindFitContext,
     spin_axis_rtn: ndarray,
 ) -> tuple[float, SolarWindParams]:
@@ -86,5 +84,5 @@ def _flip_vector_about_axis(v: ndarray, axis: ndarray) -> ndarray:
 
 def _restart_from_flipped_params(
     flipped_params: SolarWindParams, ctx: SolarWindFitContext
-) -> OptimizeSolarWindParamsResult:
-    return optimize_solar_wind_params(flipped_params, ctx=ctx)
+) -> OptimizeSolarWindProtonParamsResult:
+    return optimize_solar_wind_proton_params(flipped_params, ctx=ctx)

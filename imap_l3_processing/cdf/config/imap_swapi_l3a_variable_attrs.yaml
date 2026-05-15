@@ -401,20 +401,6 @@ proton_sw_bulk_velocity_rtn_sun:
   VALIDMIN: -2000
   VALIDMAX: 2000
   FILLVAL: -1.000000e+31
-proton_sw_bulk_velocity_rtn_sun_covariance:
-  NAME: proton_sw_bulk_velocity_rtn_sun_covariance
-  DATA_TYPE: CDF_REAL4
-  CATDESC: Proton solar wind bulk velocity covariance in inertial RTN (sun's rest frame)
-  DEPEND_0: epoch
-  VAR_TYPE: support_data
-  RECORD_VARYING: RV
-  FIELDNAM: Proton SW Bulk Velocity RTN Sun Covariance
-  FORMAT: F19.3
-  LABLAXIS: H+ SW bulk velocity RTN sun covariance
-  UNITS: km!E2!N/s!E2!N
-  VALIDMIN: 0
-  VALIDMAX: 1.0e+8
-  FILLVAL: -1.000000e+31
 proton_sw_bulk_velocity_rtn_sc:
   NAME: proton_sw_bulk_velocity_rtn_sc
   DATA_TYPE: CDF_REAL4
@@ -432,16 +418,16 @@ proton_sw_bulk_velocity_rtn_sc:
   VALIDMIN: -2000
   VALIDMAX: 2000
   FILLVAL: -1.000000e+31
-proton_sw_bulk_velocity_rtn_sc_covariance:
-  NAME: proton_sw_bulk_velocity_rtn_sc_covariance
+proton_sw_bulk_velocity_rtn_covariance:
+  NAME: proton_sw_bulk_velocity_rtn_covariance
   DATA_TYPE: CDF_REAL4
-  CATDESC: Proton solar wind bulk velocity covariance in RTN (spacecraft rest frame)
+  CATDESC: Proton solar wind bulk velocity covariance in RTN
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Proton SW Bulk Velocity RTN SC Covariance
+  FIELDNAM: Proton SW Bulk Velocity RTN Covariance
   FORMAT: F19.3
-  LABLAXIS: H+ SW bulk velocity RTN SC covariance
+  LABLAXIS: H+ SW bulk velocity RTN covariance
   UNITS: km!E2!N/s!E2!N
   VALIDMIN: 0
   VALIDMAX: 1.0e+8
@@ -551,84 +537,53 @@ alpha_sw_density_uncert:
   VALIDMAX: 100
   FILLVAL: -1.000000e+31
   LABLAXIS: Alpha SW density uncertainty
-alpha_sw_velocity_rtn:
-  NAME: alpha_sw_velocity_rtn
+alpha_sw_velocity_rtn_sun:
+  NAME: alpha_sw_velocity_rtn_sun
   DATA_TYPE: CDF_REAL4
-  CATDESC: Alpha solar wind bulk velocity in RTN
+  CATDESC: Alpha solar wind bulk velocity in inertial RTN (sun's rest frame)
   DEPEND_0: epoch
   DEPEND_1: rtn_label
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Alpha SW Bulk Velocity RTN
+  FIELDNAM: Alpha SW Bulk Velocity RTN Sun
   FORMAT: F19.3
-  LABLAXIS: Alpha SW bulk velocity RTN
+  LABLAXIS: Alpha SW bulk velocity RTN sun
   UNITS: km/s
   VALIDMIN: -2000
   VALIDMAX: 2000
   FILLVAL: -1.000000e+31
-alpha_sw_velocity_covariance_rtn:
-  NAME: alpha_sw_velocity_covariance_rtn
+alpha_sw_velocity_rtn_sc:
+  NAME: alpha_sw_velocity_rtn_sc
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Alpha solar wind bulk velocity in RTN (spacecraft rest frame)
+  DEPEND_0: epoch
+  DEPEND_1: rtn_label
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Alpha SW Bulk Velocity RTN SC
+  FORMAT: F19.3
+  LABLAXIS: Alpha SW bulk velocity RTN SC
+  UNITS: km/s
+  VALIDMIN: -2000
+  VALIDMAX: 2000
+  FILLVAL: -1.000000e+31
+alpha_sw_velocity_rtn_covariance:
+  NAME: alpha_sw_velocity_rtn_covariance
   DATA_TYPE: CDF_REAL4
   CATDESC: Alpha solar wind velocity covariance in RTN
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Alpha SW Velocity Covariance RTN
+  FIELDNAM: Alpha SW Velocity RTN Covariance
   FORMAT: F19.3
-  LABLAXIS: Alpha SW velocity covariance RTN
+  LABLAXIS: Alpha SW velocity RTN covariance
   UNITS: km!E2!N/s!E2!N
   VALIDMIN: 0
   VALIDMAX: 1.0e+8
-  FILLVAL: -1.000000e+31
-alpha_sw_delta_v:
-  NAME: alpha_sw_delta_v
-  DATA_TYPE: CDF_REAL4
-  CATDESC: Alpha-proton differential streaming speed along B
-  DEPEND_0: epoch
-  VAR_TYPE: data
-  RECORD_VARYING: RV
-  DISPLAY_TYPE: time_series
-  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Alpha SW Delta-V
-  FORMAT: F19.3
-  LABLAXIS: Alpha SW delta-v
-  UNITS: km/s
-  VALIDMIN: -2000
-  VALIDMAX: 2000
-  FILLVAL: -1.000000e+31
-  SCALETYP: linear
-  DELTA_PLUS_VAR: alpha_sw_delta_v_uncert
-  DELTA_MINUS_VAR: alpha_sw_delta_v_uncert
-alpha_sw_delta_v_uncert:
-  NAME: alpha_sw_delta_v_uncert
-  DATA_TYPE: CDF_REAL4
-  CATDESC: Alpha-proton differential streaming speed uncertainty
-  DEPEND_0: epoch
-  VAR_TYPE: support_data
-  RECORD_VARYING: RV
-  FIELDNAM: Alpha SW Delta-V Uncertainty
-  FORMAT: F19.3
-  LABLAXIS: Alpha SW delta-v uncertainty
-  UNITS: km/s
-  VALIDMIN: 0
-  VALIDMAX: 2000
-  FILLVAL: -1.000000e+31
-alpha_sw_b_hat_rtn:
-  NAME: alpha_sw_b_hat_rtn
-  DATA_TYPE: CDF_REAL4
-  CATDESC: Unit magnetic field vector in RTN used for alpha fit
-  DEPEND_0: epoch
-  DEPEND_1: rtn_label
-  VAR_TYPE: support_data
-  RECORD_VARYING: RV
-  FIELDNAM: Alpha SW B-hat RTN
-  FORMAT: F19.3
-  LABLAXIS: B-hat RTN
-  UNITS: ' '
-  VALIDMIN: -1
-  VALIDMAX: 1
   FILLVAL: -1.000000e+31
 swp_flags:
   NAME: swp_flags

@@ -4,7 +4,7 @@ from datetime import datetime
 from scipy.constants import milli
 from spacepy import pycdf
 
-from imap_l3_processing.swapi.l3b.science.efficiency_calibration_table import EfficiencyCalibrationTable
+from imap_l3_processing.swapi.response.efficiency_calibration_table import EfficiencyCalibrationTable
 from tests.test_helpers import get_test_data_path
 
 
@@ -68,3 +68,13 @@ class TestEfficiencyCalibrationTable(unittest.TestCase):
             efficiency_table.get_proton_efficiency_for(pycdf.lib.datetime_to_tt2000(time))
 
         self.assertEqual((f"No efficiency data for {time}",), content_manager.exception.args)
+
+    def test_loads_calibration_table_with_single_row(self):
+        calibration_table_path = get_test_data_path(
+            "swapi/imap_swapi_efficiency-lut-single-row-test_20241020_v001.dat")
+        efficiency_table = EfficiencyCalibrationTable(calibration_table_path)
+
+        time_after_row = pycdf.lib.datetime_to_tt2000(datetime(year=2001, month=2, day=1))
+        self.assertEqual(efficiency_table.get_proton_efficiency_for(time_after_row), 0.1)
+        self.assertEqual(efficiency_table.get_alpha_efficiency_for(time_after_row), 0.9)
+        self.assertEqual(efficiency_table.eps_p_lab, 0.1)

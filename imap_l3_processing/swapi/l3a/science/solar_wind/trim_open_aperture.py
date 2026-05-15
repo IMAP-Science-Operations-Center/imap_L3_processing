@@ -26,7 +26,7 @@ OA_SKIP_FRACTION = 1e-3
 
 
 @numba.njit
-def trim_oa_azimuth_by_integrand(
+def trim_open_aperture(
     response_grid: ResponseGrid,
     sw_params: SolarWindParams,
     rotation_matrix,

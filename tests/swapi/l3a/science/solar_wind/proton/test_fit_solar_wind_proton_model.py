@@ -10,11 +10,11 @@ from imap_l3_processing.constants import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.optimizer import (
-    OptimizeSolarWindParamsResult,
-)
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
     fit_solar_wind_proton_model,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.optimize_solar_wind_proton_params import (
+    OptimizeSolarWindProtonParamsResult,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     N_STATE,
@@ -211,6 +211,26 @@ class TestFitSolarWindProtonModelEndToEnd(_ProtonFitFixture):
         self.assertEqual(self.result.bad_fit_flag, SwapiL3Flags.NONE)
 
 
+class TestFitSolarWindProtonModelUncertainties(_ProtonFitFixture):
+    """Tests for `fit_solar_wind_proton_model`; exercises the internal HC3 sandwich uncertainty path via the public fit result."""
+
+    def test_density_std_dev_is_finite_and_positive(self):
+        """A successful fit emits a finite, strictly positive density std_dev from the sandwich estimator."""
+        self.assertTrue(np.isfinite(self.result.density.std_dev))
+        self.assertGreater(self.result.density.std_dev, 0.0)
+
+    def test_temperature_std_dev_is_finite_and_positive(self):
+        """A successful fit emits a finite, strictly positive temperature std_dev from the sandwich estimator."""
+        self.assertTrue(np.isfinite(self.result.temperature.std_dev))
+        self.assertGreater(self.result.temperature.std_dev, 0.0)
+
+    def test_bulk_velocity_rtn_components_have_finite_positive_std_devs(self):
+        """Each RTN bulk-velocity component carries a finite, strictly positive std_dev from the sandwich estimator."""
+        for component in self.result.bulk_velocity_rtn:
+            self.assertTrue(np.isfinite(component.std_dev))
+            self.assertGreater(component.std_dev, 0.0)
+
+
 class TestProtonSolarWindFitResultPublicAPI(_ProtonFitFixture):
     """Tests for `ProtonSolarWindFitResult.bulk_velocity_rtn_nominal` and `bulk_velocity_rtn_covariance` accessors."""
 
@@ -266,13 +286,13 @@ class TestQualityFlagBranches(unittest.TestCase):
 
     def _patch_optimizer_with_result(self, optimize_result):
         return patch(
-            "imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model.optimize_solar_wind_params",
+            "imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model.optimize_solar_wind_proton_params",
             return_value=optimize_result,
         )
 
     def test_fit_error_flag_when_optimizer_reports_failure(self):
         """When the underlying optimizer returns `success=False`, the result's bad-fit flag is `SwapiL3Flags.FIT_ERROR` and the moments are NaN-filled."""
-        failed_result = OptimizeSolarWindParamsResult(
+        failed_result = OptimizeSolarWindProtonParamsResult(
             sw_params=SolarWindParams(
                 density=1.0,
                 bulk_velocity_rtn=np.array([-1.0, 0.0, 0.0]),
@@ -294,7 +314,7 @@ class TestQualityFlagBranches(unittest.TestCase):
     def test_bad_fit_flag_when_temperature_above_threshold(self):
         """A converged fit whose temperature exceeds 5e5 K is flagged `BAD_FIT` and its moments are NaN-filled, distinguishing it from a clean fit but matching `FIT_ERROR`'s fill-value contract."""
         too_hot_temperature = 6.0e5
-        too_hot_result = OptimizeSolarWindParamsResult(
+        too_hot_result = OptimizeSolarWindProtonParamsResult(
             sw_params=SolarWindParams(
                 density=_TRUE_DENSITY_CM3,
                 bulk_velocity_rtn=_TRUE_BULK_VELOCITY_RTN_KM_S.copy(),
@@ -308,7 +328,7 @@ class TestQualityFlagBranches(unittest.TestCase):
             success=True,
         )
         with patch(
-            "imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model.escape_local_minimum",
+            "imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model.escape_local_minimum",
             return_value=too_hot_result,
         ):
             result = fit_solar_wind_proton_model(self.fit_ctx)
@@ -328,20 +348,20 @@ class TestPipelineOrder(unittest.TestCase):
             truth_params=_truth_params()
         )
 
-    def test_construct_fit_result_uses_post_basin_hopping_result(self):
-        """When basin hopping returns a result distinct from LM-1, the final fit result carries the post-basin parameters."""
-        # Synthetic post-basin density chosen well above _TRUE_DENSITY_CM3=5.0
+    def test_construct_fit_result_uses_post_escape_local_minimum_result(self):
+        """When `escape_local_minimum` returns a result distinct from LM-1, the final fit result carries the post-escape parameters."""
+        # Synthetic post-escape density chosen well above _TRUE_DENSITY_CM3=5.0
         # so the round-tripped density is unambiguously the patched value.
         # Velocity is far from the truth bulk velocity for the same reason.
-        post_basin_density = 50.0
-        post_basin_velocity = np.array([-321.0, 0.0, 0.0])
-        post_basin_temperature = 2.5e5
+        post_escape_density = 50.0
+        post_escape_velocity = np.array([-321.0, 0.0, 0.0])
+        post_escape_temperature = 2.5e5
 
-        post_basin_result = OptimizeSolarWindParamsResult(
+        post_escape_result = OptimizeSolarWindProtonParamsResult(
             sw_params=SolarWindParams(
-                density=post_basin_density,
-                bulk_velocity_rtn=post_basin_velocity,
-                temperature=post_basin_temperature,
+                density=post_escape_density,
+                bulk_velocity_rtn=post_escape_velocity,
+                temperature=post_escape_temperature,
                 mass=PROTON_MASS_KG,
             ),
             residuals=np.zeros(_N_BINS_PER_SWEEP * _N_SWEEPS),
@@ -352,15 +372,15 @@ class TestPipelineOrder(unittest.TestCase):
         )
 
         with patch(
-            "imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model.escape_local_minimum",
-            return_value=post_basin_result,
+            "imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model.escape_local_minimum",
+            return_value=post_escape_result,
         ):
             result = fit_solar_wind_proton_model(self.fit_ctx)
 
         # density alone is decisive: it, temperature, and bulk_velocity_rtn
-        # propagate together from the same OptimizeSolarWindParamsResult.
+        # propagate together from the same OptimizeSolarWindProtonParamsResult.
         self.assertAlmostEqual(
-            result.density.nominal_value, post_basin_density
+            result.density.nominal_value, post_escape_density
         )
 
 

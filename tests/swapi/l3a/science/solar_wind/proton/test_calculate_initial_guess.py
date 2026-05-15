@@ -15,7 +15,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.initial_guess import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.calculate_initial_guess import (
     INITIAL_TEMPERATURE_FLOOR_K,
     calculate_initial_guess,
 )
@@ -116,7 +116,7 @@ class TestCalculateInitialGuessSeeds(unittest.TestCase):
         ctx = self._ctx_with_peak_at(peak_speed)
         with patch(
             "imap_l3_processing.swapi.l3a.science.solar_wind.proton."
-            "initial_guess._gaussian_refine_bulk_speed_and_temperature",
+            "calculate_initial_guess._gaussian_refine_bulk_speed_and_temperature",
             return_value=(peak_speed, 1e5),
         ) as patched_refine:
             calculate_initial_guess(ctx)
@@ -132,7 +132,7 @@ class TestCalculateInitialGuessSeeds(unittest.TestCase):
         ctx = self._ctx_with_peak_at(peak_speed)
         with patch(
             "imap_l3_processing.swapi.l3a.science.solar_wind.proton."
-            "initial_guess._gaussian_refine_bulk_speed_and_temperature",
+            "calculate_initial_guess._gaussian_refine_bulk_speed_and_temperature",
             return_value=(peak_speed, 1e5),
         ) as patched_refine:
             calculate_initial_guess(ctx)
@@ -148,7 +148,7 @@ class TestCalculateInitialGuessSeeds(unittest.TestCase):
         ctx = self._ctx_with_peak_at(peak_speed)
         with patch(
             "imap_l3_processing.swapi.l3a.science.solar_wind.proton."
-            "initial_guess._gaussian_refine_bulk_speed_and_temperature",
+            "calculate_initial_guess._gaussian_refine_bulk_speed_and_temperature",
             return_value=(peak_speed, INITIAL_TEMPERATURE_FLOOR_K),
         ) as patched_refine:
             calculate_initial_guess(ctx)

@@ -23,7 +23,7 @@ from imap_l3_processing.swapi.l3a.chunk_fits import (
     ParallelChunkRunner,
     ProtonChunkFitter,
 )
-from imap_l3_processing.swapi.l3b.science.efficiency_calibration_table import (
+from imap_l3_processing.swapi.response.efficiency_calibration_table import (
     EfficiencyCalibrationTable,
 )
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data
@@ -34,13 +34,15 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model import (
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
     ProtonSolarWindFitResult,
 )
 from imap_l3_processing.swapi.l3a.utils import get_swapi_geometry
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 from imap_l3_processing.swapi.constants import (
+    SWAPI_COARSE_SWEEP_BINS,
+    SWAPI_FINE_SWEEP_BINS,
     SWAPI_L2_K_FACTOR,
     SWAPI_SCIENCE_BINS,
 )
@@ -80,17 +82,19 @@ _PROTON_SCALAR_KEYS = [
     "proton_sw_density", "proton_sw_density_uncert",
 ]
 _PROTON_ARRAY_KEYS = [
-    "proton_sw_bulk_velocity_rtn_sun", "proton_sw_bulk_velocity_rtn_sun_covariance",
-    "proton_sw_bulk_velocity_rtn_sc", "proton_sw_bulk_velocity_rtn_sc_covariance",
+    "proton_sw_bulk_velocity_rtn_sun",
+    "proton_sw_bulk_velocity_rtn_sc",
+    "proton_sw_bulk_velocity_rtn_covariance",
 ]
 _ALPHA_SCALAR_KEYS = [
+    "alpha_sw_speed", "alpha_sw_speed_uncert",
     "alpha_sw_density", "alpha_sw_density_uncert",
     "alpha_sw_temperature", "alpha_sw_temperature_uncert",
-    "alpha_sw_delta_v", "alpha_sw_delta_v_uncert",
 ]
 _ALPHA_ARRAY_KEYS = [
-    "alpha_sw_velocity_rtn", "alpha_sw_velocity_covariance_rtn",
-    "alpha_sw_b_hat_rtn",
+    "alpha_sw_velocity_rtn_sun",
+    "alpha_sw_velocity_rtn_sc",
+    "alpha_sw_velocity_rtn_covariance",
 ]
 _ALPHA_BUMP_BINS = slice(24, 31)
 
@@ -239,6 +243,17 @@ def _with_nan_at(chunk, sweep, bin_):
     bad = chunk.coincidence_count_rate.copy()
     bad[sweep, bin_] = np.nan
     return _with_count_rate(chunk, bad)
+
+
+def _with_zero_energy_at(chunk, sweep, bin_):
+    bad = chunk.energy.copy()
+    bad[sweep, bin_] = 0.0
+    return SwapiL2Data(
+        sci_start_time=chunk.sci_start_time,
+        energy=bad,
+        coincidence_count_rate=chunk.coincidence_count_rate,
+        coincidence_count_rate_uncertainty=chunk.coincidence_count_rate_uncertainty,
+    )
 
 
 def _assert_all_nan(tc, result, scalar_keys, array_keys):
@@ -391,18 +406,15 @@ class TestProtonChunkFitterFitChunk(SpiceTestCase):
             rtol=1e-12,
         )
 
-    def test_velocity_covariance_is_symmetric_psd_and_sc_equals_sun(self):
-        """The 3x3 velocity covariance is symmetric and positive-semidefinite, and the same matrix is reported under both the spacecraft-frame and Sun-frame keys."""
-        covariance_spacecraft_frame = self.result["proton_sw_bulk_velocity_rtn_sc_covariance"]
-        covariance_sun_frame = self.result["proton_sw_bulk_velocity_rtn_sun_covariance"]
-        self.assertEqual(covariance_spacecraft_frame.shape, (3, 3))
-        np.testing.assert_allclose(covariance_spacecraft_frame, covariance_spacecraft_frame.T, atol=1e-12)
-        self.assertGreaterEqual(np.linalg.eigvalsh(covariance_spacecraft_frame)[0], 0.0)
-        # Source returns the same matrix for both keys.
-        np.testing.assert_array_equal(covariance_spacecraft_frame, covariance_sun_frame)
+    def test_velocity_covariance_is_symmetric_psd(self):
+        """The 3x3 velocity covariance is symmetric and positive-semidefinite."""
+        covariance = self.result["proton_sw_bulk_velocity_rtn_covariance"]
+        self.assertEqual(covariance.shape, (3, 3))
+        np.testing.assert_allclose(covariance, covariance.T, atol=1e-12)
+        self.assertGreaterEqual(np.linalg.eigvalsh(covariance)[0], 0.0)
 
     def test_missing_sc_velocity_fills_only_sun_frame_outputs(self):
-        """Calling fit_chunk with no SC velocity still runs the proton fit normally: density, temperature, SC-frame bulk velocity (and its covariance), peak speed, and DPS-frame clock/deflection angles are populated from the fit; only the sun-frame outputs (`proton_sw_speed_sun`, `proton_sw_bulk_velocity_rtn_sun`, and the sun-frame covariance) are fill values."""
+        """Calling fit_chunk with no SC velocity still runs the proton fit normally: density, temperature, SC-frame bulk velocity, covariance, and peak speed are populated from the fit; only the sun-frame outputs (`proton_sw_speed_sun`, `proton_sw_bulk_velocity_rtn_sun`) are fill values."""
         result = ProtonChunkFitter().fit_chunk(
             self.chunk, _CHUNK_EPOCH, self.rotations, None
         )
@@ -411,9 +423,6 @@ class TestProtonChunkFitterFitChunk(SpiceTestCase):
         self.assertTrue(np.isnan(result["proton_sw_speed_sun"]))
         self.assertTrue(np.isnan(result["proton_sw_speed_sun_uncert"]))
         self.assertTrue(np.all(np.isnan(result["proton_sw_bulk_velocity_rtn_sun"])))
-        self.assertTrue(
-            np.all(np.isnan(result["proton_sw_bulk_velocity_rtn_sun_covariance"]))
-        )
 
         self.assertAlmostEqual(
             result["proton_sw_density"], _TRUE_DENSITY, delta=0.05 * _TRUE_DENSITY
@@ -429,7 +438,7 @@ class TestProtonChunkFitterFitChunk(SpiceTestCase):
             atol=5.0,
         )
         self.assertTrue(
-            np.all(np.isfinite(result["proton_sw_bulk_velocity_rtn_sc_covariance"]))
+            np.all(np.isfinite(result["proton_sw_bulk_velocity_rtn_covariance"]))
         )
         self.assertTrue(np.isfinite(result["proton_sw_speed"]))
 
@@ -444,33 +453,35 @@ class TestAlphaChunkFitterPrecomputeGeometry(SpiceTestCase):
         offsets = np.array([-1_000_000_000, 0, 1_000_000_000], dtype=np.int64)
         return MagData(epoch=epoch_ns + offsets, mag_data=np.tile(_B_HAT_RTN, (3, 1)))
 
-    def test_success_returns_rotations_and_b_hat(self):
-        """With both SPICE and MAG available, alpha precompute_geometry returns the chunk epoch, a science-bin rotation array of the right shape (matching the proton fit it shares with proton-sw), and the median B̂ in the chunk window."""
-        epoch, rotation_matrices, b_hat = AlphaChunkFitter(
+    def test_success_returns_rotations_sc_velocity_and_b_hat(self):
+        """With both SPICE and MAG available, alpha precompute_geometry returns the chunk epoch, a science-bin rotation array of the right shape (matching the proton fit it shares with proton-sw), the spacecraft velocity, and the median B̂ in the chunk window."""
+        epoch, rotation_matrices, sc_velocity, b_hat = AlphaChunkFitter(
             self._mag_centered_on(_CHUNK_EPOCH)
         ).precompute_geometry(_zero_chunk())
 
         self.assertEqual(epoch, _CHUNK_EPOCH)
-        assert rotation_matrices is not None
+        assert rotation_matrices is not None and sc_velocity is not None
         self.assertEqual(
             rotation_matrices.shape,
             (SWAPI_SCIENCE_BINS.stop - SWAPI_SCIENCE_BINS.start, 3, 3),
         )
+        self.assertEqual(sc_velocity.shape, (3,))
         np.testing.assert_allclose(b_hat, _B_HAT_RTN)
 
-    def test_spice_failure_yields_none_rotations_but_keeps_b_hat(self):
-        """When the chunk falls outside SPICE coverage, alpha precompute returns None rotations but B̂ is still computed from MAG since that path is independent."""
+    def test_spice_failure_yields_none_rotations_and_sc_velocity_but_keeps_b_hat(self):
+        """When the chunk falls outside SPICE coverage, alpha precompute returns None rotations and None spacecraft velocity, but B̂ is still computed from MAG since that path is independent."""
         out_of_coverage_chunk_epoch = _OUT_OF_COVERAGE_START_TIME + THIRTY_SECONDS_IN_NANOSECONDS
-        _, rotation_matrices, b_hat = AlphaChunkFitter(
+        _, rotation_matrices, sc_velocity, b_hat = AlphaChunkFitter(
             self._mag_centered_on(out_of_coverage_chunk_epoch)
         ).precompute_geometry(_out_of_coverage_chunk())
         self.assertIsNone(rotation_matrices)
+        self.assertIsNone(sc_velocity)
         np.testing.assert_allclose(b_hat, _B_HAT_RTN)
 
     def test_empty_mag_window_yields_nan_b_hat(self):
         """When no MAG samples fall inside the chunk window, B̂ comes back as NaN even though rotations were successfully computed."""
         far_future = _EPOCH_TT2000 + 10**18
-        _, _, b_hat = AlphaChunkFitter(
+        _, _, _, b_hat = AlphaChunkFitter(
             self._mag_centered_on(far_future)
         ).precompute_geometry(_zero_chunk())
         self.assertTrue(np.all(np.isnan(b_hat)))
@@ -492,7 +503,7 @@ class TestAlphaChunkFitterFitChunk(SpiceTestCase):
         cls.rotations = _spice_rotations(SWAPI_SCIENCE_BINS)
         cls.fitter = AlphaChunkFitter(mag_data=None)
         cls.happy_result = cls.fitter.fit_chunk(
-            cls.chunk, _CHUNK_EPOCH, cls.rotations, _B_HAT_RTN
+            cls.chunk, _CHUNK_EPOCH, cls.rotations, _SC_VELOCITY_RTN, _B_HAT_RTN
         )
 
     @classmethod
@@ -501,7 +512,7 @@ class TestAlphaChunkFitterFitChunk(SpiceTestCase):
         super().tearDownClass()
 
     def test_recovers_alpha_truth_moments(self):
-        """Fitting a forward-modeled proton+alpha chunk recovers the true alpha density, temperature, delta-v, and bulk velocity within a few percent."""
+        """Fitting a forward-modeled proton+alpha chunk recovers the true alpha density, temperature, and bulk velocity within a few percent."""
         self.assertAlmostEqual(
             self.happy_result["alpha_sw_density"],
             _TRUE_ALPHA_DENSITY,
@@ -512,16 +523,22 @@ class TestAlphaChunkFitterFitChunk(SpiceTestCase):
             _TRUE_ALPHA_TEMPERATURE_K,
             delta=0.10 * _TRUE_ALPHA_TEMPERATURE_K,
         )
-        self.assertAlmostEqual(
-            self.happy_result["alpha_sw_delta_v"], _TRUE_DELTA_V_KM_S, delta=2.0
+        np.testing.assert_allclose(
+            self.happy_result["alpha_sw_velocity_rtn_sc"], self.true_alpha_velocity_rtn, atol=5.0
         )
         np.testing.assert_allclose(
-            self.happy_result["alpha_sw_velocity_rtn"], self.true_alpha_velocity_rtn, atol=5.0
+            self.happy_result["alpha_sw_speed"],
+            np.linalg.norm(self.true_alpha_velocity_rtn),
+            atol=5.0,
         )
 
-    def test_b_hat_passes_through_to_result(self):
-        """The B̂ argument is surfaced unchanged under `alpha_sw_b_hat_rtn`."""
-        np.testing.assert_array_equal(self.happy_result["alpha_sw_b_hat_rtn"], _B_HAT_RTN)
+    def test_sun_frame_velocity_is_sc_frame_plus_sc_velocity(self):
+        """Sun-frame alpha velocity is the SC-frame velocity plus the SC orbital velocity."""
+        np.testing.assert_allclose(
+            self.happy_result["alpha_sw_velocity_rtn_sun"],
+            self.happy_result["alpha_sw_velocity_rtn_sc"] + _SC_VELOCITY_RTN,
+            atol=1e-9,
+        )
 
     def test_quality_flag_none_on_clean_chunk(self):
         """A clean chunk yields a NONE quality flag (both Stage 1 and Stage 2 converged)."""
@@ -672,7 +689,7 @@ class TestProtonChunkFitterQualityFlags(SpiceTestCase):
 
         _assert_proton_flag_and_peak_fallback(self, result, SwapiL3Flags.FIT_ERROR)
 
-    @patch("imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_model.calculate_initial_guess")
+    @patch("imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model.calculate_initial_guess")
     def test_fit_error_when_initial_guess_is_nan(self, mock_initial_guess):
         """A NaN-valued initial guess causes scipy `least_squares` to reject `x0` as infeasible; the chunk fitter catches the exception, surfaces `FIT_ERROR`, and falls back to peak-bin speed. Mocked because `calculate_initial_guess` never returns NaN from real inputs (it raises instead)."""
         mock_initial_guess.return_value = SolarWindParams(
@@ -706,6 +723,18 @@ class TestProtonChunkFitterQualityFlags(SpiceTestCase):
         result = self._fit(_with_nan_at(self.chunk, 0, 5))
         _assert_proton_flag_and_peak_fallback(self, result, SwapiL3Flags.NONE)
 
+    def test_succeeds_when_fine_sweep_bin_has_zero_voltage(self):
+        """Production sweeps regularly carry zero voltages in the fine-sweep bins. The proton chunk fitter drops those bins (and the matching count rates / rotations) at the call site before building the fit context, so the fit converges on the surviving science bins and the quality flag is NONE."""
+        fine_bin = SWAPI_FINE_SWEEP_BINS.start + 2
+        result = self._fit(_with_zero_energy_at(self.chunk, 0, fine_bin))
+        self.assertEqual(int(result["quality_flags"]), int(SwapiL3Flags.NONE))
+        self.assertAlmostEqual(
+            result["proton_sw_density"], _TRUE_DENSITY, delta=0.05 * _TRUE_DENSITY
+        )
+        self.assertAlmostEqual(
+            result["proton_sw_speed"], _TRUE_BULK_SPEED, delta=0.05 * _TRUE_BULK_SPEED
+        )
+
 
 # ----- Alpha quality flags --------------------------------------------------
 
@@ -728,7 +757,7 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
         super().tearDownClass()
 
     def test_bad_fit_when_alpha_bump_does_not_match_maxwellian(self):
-        """Scrambling and amplifying the alpha-bump bins leaves the proton peak intact but yields a Stage-2 residual the alpha LM cannot describe (the BAD_FIT quality guard fires); the chunk fitter surfaces `BAD_FIT` with every alpha moment NaN-filled while B̂ passes through unchanged."""
+        """Scrambling and amplifying the alpha-bump bins leaves the proton peak intact but yields a Stage-2 residual the alpha LM cannot describe (the BAD_FIT quality guard fires); the chunk fitter surfaces `BAD_FIT` with every alpha moment NaN-filled."""
         rng = np.random.default_rng(0)
         permuted = rng.permutation(np.arange(_ALPHA_BUMP_BINS.start, _ALPHA_BUMP_BINS.stop))
         corrupted = self.chunk.coincidence_count_rate.copy()
@@ -738,13 +767,12 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
             _with_count_rate(self.chunk, corrupted),
             _CHUNK_EPOCH,
             self.rotations,
+            _SC_VELOCITY_RTN,
             _B_HAT_RTN,
         )
 
-        non_b_hat_array_keys = [k for k in _ALPHA_ARRAY_KEYS if k != "alpha_sw_b_hat_rtn"]
         self.assertEqual(int(result["quality_flags"]), int(SwapiL3Flags.BAD_FIT))
-        _assert_all_nan(self, result, _ALPHA_SCALAR_KEYS, non_b_hat_array_keys)
-        np.testing.assert_array_equal(result["alpha_sw_b_hat_rtn"], _B_HAT_RTN)
+        _assert_all_nan(self, result, _ALPHA_SCALAR_KEYS, _ALPHA_ARRAY_KEYS)
 
     @patch("imap_l3_processing.swapi.swapi_processor.SwapiL3AlphaSolarWindData")
     @patch("imap_l3_processing.swapi.swapi_processor.ParallelChunkRunner")
@@ -784,27 +812,45 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
 
     def test_no_flag_when_rotations_missing(self):
         """Calling fit_chunk with no rotations NaN-fills every alpha field and reports a NONE bad_fit_flag — ephemeris gaps are treated as data gaps without a dedicated flag."""
-        result = self.fitter.fit_chunk(self.chunk, _CHUNK_EPOCH, None, _B_HAT_RTN)
+        result = self.fitter.fit_chunk(self.chunk, _CHUNK_EPOCH, None, None, _B_HAT_RTN)
         _assert_alpha_flag_and_all_nan(self, result, SwapiL3Flags.NONE)
 
     def test_no_flag_when_b_hat_is_nan(self):
         """A NaN-valued B̂ NaN-fills every alpha field and reports a NONE bad_fit_flag — MAG gaps are treated as data gaps without a dedicated flag, since the field-aligned drift constraint cannot be evaluated."""
         result = self.fitter.fit_chunk(
-            self.chunk, _CHUNK_EPOCH, self.rotations, np.full(3, np.nan)
+            self.chunk, _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN, np.full(3, np.nan)
         )
         _assert_alpha_flag_and_all_nan(self, result, SwapiL3Flags.NONE)
 
     def test_no_flag_when_b_hat_is_none(self):
         """Passing None for B̂ NaN-fills every alpha field and reports a NONE bad_fit_flag, mirroring the NaN case."""
-        result = self.fitter.fit_chunk(self.chunk, _CHUNK_EPOCH, self.rotations, None)
+        result = self.fitter.fit_chunk(
+            self.chunk, _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN, None
+        )
         _assert_alpha_flag_and_all_nan(self, result, SwapiL3Flags.NONE)
 
     def test_no_flag_when_count_rate_has_nan(self):
         """A NaN in the alpha count rate is treated as an L2 data gap: every alpha field NaN-fills and bad_fit_flag is NONE."""
         result = self.fitter.fit_chunk(
-            _with_nan_at(self.chunk, 0, 5), _CHUNK_EPOCH, self.rotations, _B_HAT_RTN
+            _with_nan_at(self.chunk, 0, 5),
+            _CHUNK_EPOCH,
+            self.rotations,
+            _SC_VELOCITY_RTN,
+            _B_HAT_RTN,
         )
         _assert_alpha_flag_and_all_nan(self, result, SwapiL3Flags.NONE)
+
+    def test_fit_error_when_coarse_bin_voltage_is_zero(self):
+        """Coarse-sweep bins shouldn't carry zero voltages in production, but if one does `build_solar_wind_fit_context` raises rather than silently flattening the alpha context to 1D and breaking the per-sweep aggregations. The chunk fitter's try/except catches the raise and surfaces `FIT_ERROR` with every alpha moment NaN-filled."""
+        coarse_bin = SWAPI_COARSE_SWEEP_BINS.start + 5
+        result = self.fitter.fit_chunk(
+            _with_zero_energy_at(self.chunk, 0, coarse_bin),
+            _CHUNK_EPOCH,
+            self.rotations,
+            _SC_VELOCITY_RTN,
+            _B_HAT_RTN,
+        )
+        _assert_alpha_flag_and_all_nan(self, result, SwapiL3Flags.FIT_ERROR)
 
 
 if __name__ == "__main__":

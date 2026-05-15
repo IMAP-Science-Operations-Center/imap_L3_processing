@@ -87,7 +87,7 @@ class TestSolarWindFitContextSubset(unittest.TestCase):
 
 
 class TestBuildSolarWindFitContext(unittest.TestCase):
-    """Tests for `build_solar_wind_fit_context` — filters invalid sweeps from per-sweep arrays in lockstep and materializes a per-sweep `ResponseGrid`."""
+    """Tests for `build_solar_wind_fit_context` — rejects invalid voltages and materializes one `ResponseGrid` per bin in input order."""
 
     def _call_factory(self, *, count_rate, esa_voltage, rotation_matrices=None):
         response = _swapi_response_returning_per_voltage_response_grid()
@@ -104,8 +104,8 @@ class TestBuildSolarWindFitContext(unittest.TestCase):
         )
         return ctx, response
 
-    def test_keeps_all_sweeps_when_voltages_are_finite_and_positive(self):
-        """When every voltage is finite and positive, no sweeps are dropped and one ResponseGrid is built per sweep."""
+    def test_keeps_all_inputs_unchanged_when_voltages_are_finite_and_positive(self):
+        """When every voltage is finite and positive, the context preserves count_rate and esa_voltage verbatim and builds one ResponseGrid per bin."""
         count_rate = np.array([10.0, 20.0, 30.0])
         esa_voltage = np.array([100.0, 200.0, 300.0])
         ctx, response = self._call_factory(
@@ -115,38 +115,48 @@ class TestBuildSolarWindFitContext(unittest.TestCase):
         np.testing.assert_array_equal(ctx.esa_voltage, esa_voltage)
         self.assertEqual(len(ctx.response_grids), 3)
 
-    def test_drops_sweeps_with_zero_or_negative_voltage(self):
-        """Sweeps with voltage == 0 or voltage < 0 are filtered out of count_rate and esa_voltage together."""
-        ctx, _ = self._call_factory(
-            count_rate=np.array([10.0, 20.0, 30.0, 40.0]),
-            esa_voltage=np.array([100.0, 0.0, -50.0, 400.0]),
-        )
-        np.testing.assert_array_equal(ctx.count_rate, [10.0, 40.0])
-        np.testing.assert_array_equal(ctx.esa_voltage, [100.0, 400.0])
+    def test_raises_on_zero_or_negative_voltage(self):
+        """Any voltage <= 0 raises `ValueError`; the caller is expected to drop invalid bins (and the matching count_rate / rotation_matrices entries) before building the context, since the right pre-filter depends on whether the downstream fit needs per-sweep shape preserved."""
+        with self.assertRaises(ValueError):
+            self._call_factory(
+                count_rate=np.array([10.0, 20.0]),
+                esa_voltage=np.array([100.0, 0.0]),
+            )
+        with self.assertRaises(ValueError):
+            self._call_factory(
+                count_rate=np.array([10.0, 20.0]),
+                esa_voltage=np.array([100.0, -50.0]),
+            )
 
-    def test_drops_sweeps_with_non_finite_voltage(self):
-        """NaN and inf voltages are treated as invalid and dropped alongside their count_rate entries."""
-        ctx, _ = self._call_factory(
-            count_rate=np.array([10.0, 20.0, 30.0]),
-            esa_voltage=np.array([100.0, np.nan, np.inf]),
-        )
-        np.testing.assert_array_equal(ctx.count_rate, [10.0])
-        np.testing.assert_array_equal(ctx.esa_voltage, [100.0])
+    def test_raises_on_non_finite_voltage(self):
+        """NaN or inf voltages raise `ValueError` for the same reason as the <=0 case — the response-grid factory can't sensibly evaluate at those voltages, and the caller must decide how to handle them."""
+        with self.assertRaises(ValueError):
+            self._call_factory(
+                count_rate=np.array([10.0, 20.0]),
+                esa_voltage=np.array([100.0, np.nan]),
+            )
+        with self.assertRaises(ValueError):
+            self._call_factory(
+                count_rate=np.array([10.0, 20.0]),
+                esa_voltage=np.array([100.0, np.inf]),
+            )
 
-    def test_filters_rotation_matrices_in_lockstep_with_voltages(self):
-        """When a middle sweep is dropped for a zero voltage, its rotation matrix is dropped at the same index so downstream geometry stays aligned."""
-        rotations = np.stack([np.eye(3) * (i + 1) for i in range(3)])
+    def test_preserves_input_shape_when_count_rate_is_2d(self):
+        """A 2D count_rate (n_sweeps, n_bins) is stored as-is so the alpha path's per-sweep aggregations keep working — `build_solar_wind_fit_context` does not reshape its inputs."""
+        count_rate = np.array([[10.0, 20.0], [30.0, 40.0]])
+        esa_voltage = np.array([[100.0, 200.0], [300.0, 400.0]])
+        rotations = np.stack([np.eye(3)] * 4)
         ctx, _ = self._call_factory(
-            count_rate=np.array([10.0, 20.0, 30.0]),
-            esa_voltage=np.array([100.0, 0.0, 300.0]),
+            count_rate=count_rate,
+            esa_voltage=esa_voltage,
             rotation_matrices=rotations,
         )
-        np.testing.assert_array_equal(
-            ctx.rotation_matrices, rotations[[0, 2]]
-        )
+        self.assertEqual(ctx.count_rate.shape, (2, 2))
+        self.assertEqual(ctx.esa_voltage.shape, (2, 2))
+        self.assertEqual(len(ctx.response_grids), 4)
 
-    def test_creates_response_grid_for_each_kept_voltage(self):
-        """The factory calls `get_response_grid` once per kept voltage and stores the resulting grids in the same order as the input voltages."""
+    def test_creates_response_grid_for_each_bin_in_input_order(self):
+        """The factory calls `get_response_grid` once per voltage (in ravel order) and stores the resulting grids in the same order."""
         count_rate = np.array([10.0, 20.0])
         esa_voltage = np.array([100.0, 200.0])
         ctx, response = self._call_factory(
@@ -155,16 +165,6 @@ class TestBuildSolarWindFitContext(unittest.TestCase):
         self.assertEqual(response.get_response_grid.call_count, 2)
         self.assertEqual(ctx.response_grids[0].central_speed, 100.0)
         self.assertEqual(ctx.response_grids[1].central_speed, 200.0)
-
-    def test_filters_response_grids_in_lockstep_with_voltages(self):
-        """When a sweep with a NaN voltage is dropped, no ResponseGrid is built for it and the kept grids stay aligned with the kept voltages."""
-        ctx, _ = self._call_factory(
-            count_rate=np.array([10.0, 20.0, 30.0]),
-            esa_voltage=np.array([100.0, np.nan, 300.0]),
-        )
-        self.assertEqual(len(ctx.response_grids), 2)
-        self.assertEqual(ctx.response_grids[0].central_speed, 100.0)
-        self.assertEqual(ctx.response_grids[1].central_speed, 300.0)
 
     def test_passes_species_and_efficiency_args_to_create_response_grid(self):
         """The mass-per-charge and central-effective-area scale supplied to the factory are forwarded into the `get_response_grid` call for each sweep."""
