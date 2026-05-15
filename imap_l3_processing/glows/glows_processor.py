@@ -54,10 +54,13 @@ class GlowsProcessor(Processor):
     def process(self):
         if self.input_metadata.data_level == "l3a":
             l3a_dependencies = GlowsL3ADependencies.fetch_dependencies(self.dependencies)
+
+            products = []
             l3a_output = self.process_l3a(l3a_dependencies)
-            l3a_output.parent_file_names = self.get_parent_file_names()
-            cdf = save_data(l3a_output)
-            return [cdf]
+            if l3a_output is not None:
+                l3a_output.parent_file_names = self.get_parent_file_names()
+                products.append(save_data(l3a_output))
+            return products
         elif self.input_metadata.data_level == "l3b":
             products_list = []
 
@@ -105,15 +108,16 @@ class GlowsProcessor(Processor):
 
             return products_list
 
-    def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve:
+    def process_l3a(self, dependencies: GlowsL3ADependencies) -> Optional[GlowsL3LightCurve]:
         data = dependencies.data
         l3_data = L3aData(dependencies.ancillary_files)
         l3_data.process_l2_data_file(data)
         l3_data.generate_l3a_data(dependencies.ancillary_files)
-        data_with_spin_angle = self.add_spin_angle_delta(l3_data.data, dependencies.ancillary_files)
-
-        return create_glows_l3a_from_dictionary(data_with_spin_angle,
+        if len(l3_data.data['daily_lightcurve']['exposure_times']) != 0:
+            data_with_spin_angle = self.add_spin_angle_delta(l3_data.data, dependencies.ancillary_files)
+            return create_glows_l3a_from_dictionary(data_with_spin_angle,
                                                 replace(self.input_metadata, descriptor=GLOWS_L3A_DESCRIPTOR))
+        return None
 
     @staticmethod
     def add_spin_angle_delta(data: dict, ancillary_files: dict) -> dict:

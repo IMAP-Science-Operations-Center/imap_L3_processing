@@ -169,6 +169,42 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         print("ISTP Compliance:\n", istp_compliance_message)
         self.assertIn("PASSED variable checks", istp_compliance_message)
 
+    def test_l3a_handles_l2_input_that_is_all_flagged(self):
+        bad_l2_cdf_path = get_test_data_path("glows/imap_glows_l2_hist_20251113-repoint00047_v003.cdf")
+
+        l2_science_file_path = ScienceFilePath(bad_l2_cdf_path)
+
+        date_in_path = l2_science_file_path.start_date
+        start_date = datetime.strptime(date_in_path, "%Y%m%d")
+        end_date = start_date + timedelta(days=1)
+        input_metadata = InputMetadata(
+            instrument='glows',
+            data_level='l3a',
+            descriptor='hist',
+            start_date=start_date,
+            end_date=end_date,
+            version='v001',
+            repointing=l2_science_file_path.repointing
+        )
+
+        with CDF(str(bad_l2_cdf_path)) as cdf_data:
+            l2_glows_data = read_l2_glows_data(cdf_data)
+
+        dependencies = GlowsL3ADependencies(l2_glows_data, {
+            "calibration_data": get_test_instrument_team_data_path(
+                "glows/imap_glows_calibration-data_20100101_v002.dat"),
+            "settings": get_test_instrument_team_data_path("glows/imap_glows_pipeline-settings_20100101_v001.json"),
+            "time_dependent_bckgrd": get_test_instrument_team_data_path(
+                "glows/imap_glows_time-dep-bckgrd_20100101_v001.dat"),
+            "extra_heliospheric_bckgrd": get_test_instrument_team_data_path(
+                "glows/imap_glows_map-of-extra-helio-bckgrd_20100101_v002.dat"),
+        })
+
+        processor = GlowsProcessor(ProcessingInputCollection(), input_metadata)
+        l3a_output = processor.process_l3a(dependencies)
+
+        self.assertIsNone(l3a_output)
+
     @run_periodically(timedelta(days=14))
     @run_test_in_docker
     def test_l3bcde_first_time_processing(self):
