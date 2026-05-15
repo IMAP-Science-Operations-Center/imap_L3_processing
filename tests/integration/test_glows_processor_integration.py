@@ -354,9 +354,9 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
     @run_test_in_docker
     def test_glows_l3abcde_from_l2(self):
         ancillary_file_paths = [
-            GLOWS_TEST_DATA / "imap_glows_l2-calibration_20251112_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_l2-calibration_20251112_v003.dat",
             GLOWS_TEST_DATA / "imap_glows_l3a-map-of-extra-helio-bckgrd_20251112_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_pipeline-settings_20251112_v001.json",
+            GLOWS_TEST_DATA / "imap_glows_pipeline-settings_20251112_v002.json",
             GLOWS_TEST_DATA / "imap_glows_l3a-time-dep-bckgrd_20251112_v001.dat"
         ]
 
