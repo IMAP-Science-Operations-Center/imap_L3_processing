@@ -13,10 +13,10 @@ its chunk geometry (RTN→IMAP_SWAPI rotation, energy cutoffs, Vasyliunas-
 Siscoe distribution) from real production code instead of test-side stand-ins.
 """
 import os
-import subprocess
 import tempfile
 import unittest
 from datetime import datetime
+from unittest import skipUnless
 
 import h5py
 import numpy as np
@@ -72,24 +72,10 @@ _SPICE_KERNEL_TYPES = [
 ]
 
 
+@skipUnless(os.environ.get("IMAP_API_KEY"), "requires production API key")
 class MonteCarloFitPickupIonTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        os.environ.setdefault(
-            "IMAP_API_KEY",
-            subprocess.check_output(
-                [
-                    "security",
-                    "find-generic-password",
-                    "-a",
-                    os.environ["USER"],
-                    "-s",
-                    "imap-api-key",
-                    "-w",
-                ],
-                text=True,
-            ).strip(),
-        )
         # Kernels stay furnished for the run. `PuiChunkFitter.precompute_geometry`
         # queries SPICE in the parent process; the PUI worker path
         # (`calculate_pickup_ion_values` and the moment helpers) does not, so
