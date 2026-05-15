@@ -8,7 +8,6 @@ from spacepy.pycdf import CDF
 
 from imap_l3_processing.models import MagData
 from imap_l3_processing.swapi.descriptors import SWAPI_L2_DESCRIPTOR, \
-    GEOMETRIC_FACTOR_PUI_LOOKUP_TABLE_DESCRIPTOR, \
     DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR, EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR, HYDROGEN_INFLOW_VECTOR_DESCRIPTOR, \
     HELIUM_INFLOW_VECTOR_DESCRIPTOR, AZIMUTHAL_TRANSMISSION_DESCRIPTOR, \
     CENTRAL_EFFECTIVE_AREA_DESCRIPTOR, PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR, \
@@ -20,7 +19,6 @@ from imap_l3_processing.swapi.l3a.science.pickup_ion.inflow_vector import Inflow
 from imap_l3_processing.swapi.l3a.utils import read_l2_swapi_data, read_mag_rtn_data
 from imap_l3_processing.utils import select_mag_path
 from imap_l3_processing.swapi.response.efficiency_calibration_table import EfficiencyCalibrationTable
-from imap_l3_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 
 
@@ -28,7 +26,6 @@ from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 class SwapiL3ADependencies:
     data: SwapiL2Data
     efficiency_calibration_table: EfficiencyCalibrationTable
-    geometric_factor_calibration_table: GeometricFactorCalibrationTable
     density_of_neutral_helium_calibration_table: DensityOfNeutralHeliumLookupTable
     hydrogen_inflow_vector: InflowVector
     helium_inflow_vector: InflowVector
@@ -41,7 +38,6 @@ class SwapiL3ADependencies:
         # @formatter:off
         science_dependency_file = dependencies.get_file_paths(source='swapi', descriptor=SWAPI_L2_DESCRIPTOR)
         efficiency_calibration_table = dependencies.get_file_paths(source='swapi', descriptor=EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR)
-        geometric_factor_calibration_table = dependencies.get_file_paths(source='swapi', descriptor=GEOMETRIC_FACTOR_PUI_LOOKUP_TABLE_DESCRIPTOR)
         neutral_helium_table = dependencies.get_file_paths(source='swapi', descriptor=DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR)
         hydrogen_vector_paths = dependencies.get_file_paths(source='swapi', descriptor=HYDROGEN_INFLOW_VECTOR_DESCRIPTOR)
         helium_vector_paths = dependencies.get_file_paths(source='swapi', descriptor=HELIUM_INFLOW_VECTOR_DESCRIPTOR)
@@ -56,7 +52,6 @@ class SwapiL3ADependencies:
         return cls.from_file_paths(
             download(science_dependency_file[0]),
             download(efficiency_calibration_table[0]),
-            download(geometric_factor_calibration_table[0]),
             download(neutral_helium_table[0]),
             download(hydrogen_vector_paths[0]),
             download(helium_vector_paths[0]),
@@ -69,7 +64,7 @@ class SwapiL3ADependencies:
 
     @classmethod
     def from_file_paths(cls, science_dependency_path: Path,
-                        efficiency_calibration_path: Path, geometric_factor_calibration_path: Path,
+                        efficiency_calibration_path: Path,
                         neutral_helium_path: Path, hydrogen_inflow_vector_path: Path,
                         helium_inflow_vector_path: Path, azimuthal_transmission_path: Path,
                         central_effective_area_path: Path, passband_fit_coefficients_path: Path,
@@ -78,8 +73,6 @@ class SwapiL3ADependencies:
         return cls(
             data=read_l2_swapi_data(CDF(str(science_dependency_path))),
             efficiency_calibration_table=EfficiencyCalibrationTable(efficiency_calibration_path),
-            geometric_factor_calibration_table=GeometricFactorCalibrationTable.from_file(
-                geometric_factor_calibration_path),
             density_of_neutral_helium_calibration_table=DensityOfNeutralHeliumLookupTable.from_file(
                 neutral_helium_path),
             hydrogen_inflow_vector=InflowVector.from_file(hydrogen_inflow_vector_path),

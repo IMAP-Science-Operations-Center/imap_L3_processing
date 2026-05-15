@@ -13,7 +13,7 @@ from imap_l3_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS, \
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.descriptors import DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR, \
     EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR, \
-    GEOMETRIC_FACTOR_SW_LOOKUP_TABLE_DESCRIPTOR, GEOMETRIC_FACTOR_PUI_LOOKUP_TABLE_DESCRIPTOR, \
+    GEOMETRIC_FACTOR_SW_LOOKUP_TABLE_DESCRIPTOR, \
     HYDROGEN_INFLOW_VECTOR_DESCRIPTOR, HELIUM_INFLOW_VECTOR_DESCRIPTOR, \
     AZIMUTHAL_TRANSMISSION_DESCRIPTOR, CENTRAL_EFFECTIVE_AREA_DESCRIPTOR, \
     PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR
@@ -100,7 +100,6 @@ class TestSwapiProcessor(TestCase):
 
         input_file_names = [
             f'imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{GEOMETRIC_FACTOR_PUI_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
         ]
 
@@ -259,7 +258,6 @@ class TestSwapiProcessor(TestCase):
         input_file_names = [
             f'imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{GEOMETRIC_FACTOR_PUI_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{HYDROGEN_INFLOW_VECTOR_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{HELIUM_INFLOW_VECTOR_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
@@ -717,7 +715,6 @@ def create_swapi_l3a_dependencies_with_mocks():
     return SwapiL3ADependencies(
         data=Mock(),
         efficiency_calibration_table=Mock(),
-        geometric_factor_calibration_table=Mock(),
         density_of_neutral_helium_calibration_table=Mock(),
         hydrogen_inflow_vector=Mock(),
         helium_inflow_vector=Mock(),
