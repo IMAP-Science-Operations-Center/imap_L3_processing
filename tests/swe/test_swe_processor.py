@@ -159,10 +159,23 @@ class TestSweProcessor(unittest.TestCase):
         calculate_pitch_angle_flags = np.array([SweL3Flags.NONE] * len(epochs), dtype=np.uint16)
         calculate_pitch_angle_flags[0] = SweL3Flags.FALLBACK_SWAPI_SPEED
 
+        expected_phase_space_density_by_pitch_angle = np.full((7, 3, 3), physical_psd_value)
+        expected_phase_space_density_by_pitch_angle[1, 0, 0] = unphysical_psd_value
+        expected_phase_space_density_by_pitch_angle_and_gyrophase = np.full((7, 3, 3, 3), physical_psd_value)
+        expected_phase_space_density_by_pitch_angle_and_gyrophase[2, 0, 0, 0] = unphysical_psd_value
+        expected_energy_spectrum = np.full((7, 3), physical_psd_value)
+        expected_energy_spectrum[3, 0] = unphysical_psd_value
+        expected_energy_spectrum_inbound = np.full((7, 3), physical_psd_value)
+        expected_energy_spectrum_inbound[4, 0] = unphysical_psd_value
+        expected_energy_spectrum_outbound = np.full((7, 3), physical_psd_value)
+        expected_energy_spectrum_outbound[5, 0] = unphysical_psd_value
+
         mock_calculate_pitch_angle_products.return_value = (
-            sentinel.expected_phase_space_density_by_pitch_angle,
-            sentinel.expected_phase_space_density_by_pitch_angle_and_gyrophase, sentinel.expected_intensity,
-            sentinel.expected_phase_space_density_inward, sentinel.expected_phase_space_density_outward,
+            expected_phase_space_density_by_pitch_angle,
+            expected_phase_space_density_by_pitch_angle_and_gyrophase,
+            expected_energy_spectrum,
+            expected_energy_spectrum_inbound,
+            expected_energy_spectrum_outbound,
             sentinel.intensity_by_pitch_angle_and_gyrophase, sentinel.intensity_by_pitch_angle,
             sentinel.uncertainty_by_pitch_angle_and_gyrophase, sentinel.uncertainty_by_pitch_angle,
             calculate_pitch_angle_flags
@@ -274,14 +287,14 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_l3_data.core_halo_breakpoint, expected_core_halo_breakpoint)
 
         # pitch angle specific
-        self.assertEqual(sentinel.expected_phase_space_density_by_pitch_angle,
-                         swe_l3_data.phase_space_density_by_pitch_angle)
-        self.assertEqual(sentinel.expected_intensity, swe_l3_data.phase_space_density_1d)
-        self.assertEqual(sentinel.expected_phase_space_density_inward, swe_l3_data.phase_space_density_inward)
-        self.assertEqual(sentinel.expected_phase_space_density_outward, swe_l3_data.phase_space_density_outward)
+        np.testing.assert_array_equal(swe_l3_data.phase_space_density_by_pitch_angle,
+                                      expected_phase_space_density_by_pitch_angle)
+        np.testing.assert_array_equal(swe_l3_data.phase_space_density_1d, expected_energy_spectrum)
+        np.testing.assert_array_equal(swe_l3_data.phase_space_density_inward, expected_energy_spectrum_inbound)
+        np.testing.assert_array_equal(swe_l3_data.phase_space_density_outward, expected_energy_spectrum_outbound)
         self.assertEqual(mock_moment_data, swe_l3_data.moment_data)
-        self.assertEqual(sentinel.expected_phase_space_density_by_pitch_angle_and_gyrophase,
-                         swe_l3_data.phase_space_density_by_pitch_angle_and_gyrophase)
+        np.testing.assert_array_equal(swe_l3_data.phase_space_density_by_pitch_angle_and_gyrophase,
+                                      expected_phase_space_density_by_pitch_angle_and_gyrophase)
         expected_phi_avg_at_unphysical_cell = (
             unphysical_psd_value * geometric_fractions[0]
             + physical_psd_value * (sum_geometric_fractions - geometric_fractions[0])
@@ -301,11 +314,11 @@ class TestSweProcessor(unittest.TestCase):
 
         expected_quality_flags = np.array([
             SweL3Flags.FALLBACK_SWAPI_SPEED | SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE | SweL3Flags.POTENTIAL_FIT_UNCONVERGED | SweL3Flags.PRELIMINARY_MAG,
-            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED,
-            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED,
-            SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE | SweL3Flags.PRELIMINARY_MAG,
-            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.NEGATIVE_MOMENT | SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED,
-            SweL3Flags.PRELIMINARY_MAG,
+            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED | SweL3Flags.UNPHYSICAL_PSD,
+            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED | SweL3Flags.UNPHYSICAL_PSD,
+            SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE | SweL3Flags.PRELIMINARY_MAG | SweL3Flags.UNPHYSICAL_PSD,
+            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.NEGATIVE_MOMENT | SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED | SweL3Flags.UNPHYSICAL_PSD,
+            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.UNPHYSICAL_PSD,
             SweL3Flags.PRELIMINARY_MAG | SweL3Flags.UNPHYSICAL_PSD,
         ])
 
@@ -374,11 +387,11 @@ class TestSweProcessor(unittest.TestCase):
         mock_check_and_mask_negative_moments.return_value = np.zeros(num_epochs, dtype=np.uint16)
         mock_check_temperature_outlier_flag.return_value = np.zeros(num_epochs, dtype=np.uint16)
         mock_calculate_pitch_angle_products.return_value = (
-            sentinel.psd_by_pa,
-            sentinel.psd_by_pa_and_gyro,
-            sentinel.energy_spec_1d,
-            sentinel.energy_spec_in,
-            sentinel.energy_spec_out,
+            np.zeros((num_epochs, 3, 3)),
+            np.zeros((num_epochs, 3, 3, 3)),
+            np.zeros((num_epochs, 3)),
+            np.zeros((num_epochs, 3)),
+            np.zeros((num_epochs, 3)),
             np.zeros((num_epochs, 3, 3, 3)),
             np.zeros((num_epochs, 3, 3)),
             np.zeros((num_epochs, 3, 3, 3)),
@@ -853,6 +866,7 @@ class TestSweProcessor(unittest.TestCase):
             |SweL3Flags.BACKUP_SPLINE_UNRESOLVED
             |SweL3Flags.BREAKPOINT_FIT_UNCONVERGED
             |SweL3Flags.FALLBACK_SWAPI_SPEED
+            |SweL3Flags.UNPHYSICAL_PSD
         ])
         np.testing.assert_array_equal(swe_l3_data.swe_flags, expected_swe_flags)
 
