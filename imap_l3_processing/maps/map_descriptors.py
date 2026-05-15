@@ -27,7 +27,7 @@ class Sensor(enum.Enum):
                          Sensor.Ultra45: -45,
                          Sensor.Ultra90: 0}
 
-        assert sensor_name in sensor_angles, "Invalid to attempt to get a sensor angle for " + sensor_name
+        assert sensor_name in sensor_angles, "Invalid to attempt to get a sensor angle for " + sensor_name.name
 
         return sensor_angles[sensor_name]
 

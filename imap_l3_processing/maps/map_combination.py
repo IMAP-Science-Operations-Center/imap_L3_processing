@@ -132,7 +132,10 @@ class ExposureWeightedCombination(CombinationStrategy):
         bg_intensity_sys_err = np.array([m.bg_intensity_sys_err for m in maps])
         bg_intensity_stat_uncert = np.array([m.bg_intensity_stat_uncert for m in maps])
 
-        if np.all(bg_intensities) and np.all(bg_intensity_sys_err) and np.all(bg_intensity_stat_uncert):
+        def all_elem_defined(array):
+            return all(v is not None for v in array)
+
+        if all_elem_defined(bg_intensities) and all_elem_defined(bg_intensity_sys_err) and all_elem_defined(bg_intensity_stat_uncert):
             bg_intensities = np.where(mask, 0, bg_intensities)
             bg_intensity_sys_err = np.where(mask, 0, bg_intensity_sys_err)
             bg_intensity_stat_uncert = np.where(mask, 0, bg_intensity_stat_uncert)
