@@ -508,24 +508,36 @@ def _fit_proton(
             f"Proton fit at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}: missing rotation matrices; using fill values"
         )
         return _nan_proton_result(SwapiL3Flags.NONE)
+  
     if np.any(np.isnan(data_chunk.coincidence_count_rate[:, SWAPI_SCIENCE_BINS])):
         logger.warning(
             f"Proton fit at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}: NaN in input count rate; using fill values"
         )
         return _nan_proton_result(SwapiL3Flags.NONE)
+  
     swapi_response = _shared["swapi_response"]
     efficiency_table = _shared["efficiency_table"]
     count_rates = data_chunk.coincidence_count_rate[:, SWAPI_SCIENCE_BINS]
     voltages = data_chunk.energy[:, SWAPI_SCIENCE_BINS] / SWAPI_L2_K_FACTOR
-    # Fine-sweep bins legitimately contain zero voltages in some production
-    # sweeps; the proton fit is shape-agnostic, so drop the bad bins (and the
-    # matching count rates / rotations) before building the context.
-    flat_voltages = voltages.ravel()
-    keep = (flat_voltages > 0) & np.isfinite(flat_voltages)
-    if not np.all(keep):
-        voltages = flat_voltages[keep]
-        count_rates = count_rates.ravel()[keep]
-        rotation_matrices = rotation_matrices[keep]
+    voltage_valid = (voltages > 0) & np.isfinite(voltages)
+    keep_bins = np.all(voltage_valid, axis=0)
+    n_coarse_bins = SWAPI_COARSE_SWEEP_BINS.stop - SWAPI_COARSE_SWEEP_BINS.start
+    
+    if not np.all(keep_bins[:n_coarse_bins]):
+        logger.warning(
+            f"Proton fit at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}: invalid voltage in coarse-sweep bin; using fill values"
+        )
+        return _nan_proton_result(SwapiL3Flags.FIT_ERROR)
+    
+    if not np.all(keep_bins):
+        n_sweeps_local, n_bins_local = voltages.shape
+        voltages = voltages[:, keep_bins]
+        count_rates = count_rates[:, keep_bins]
+        rotation_matrices = (
+            rotation_matrices.reshape(n_sweeps_local, n_bins_local, 3, 3)[:, keep_bins]
+            .reshape(-1, 3, 3)
+        )
+   
     ctx = build_solar_wind_fit_context(
         count_rate=count_rates,
         esa_voltage=voltages,

@@ -131,8 +131,10 @@ def _build_synthetic_fit_context(truth_params: SolarWindParams):
     """Build a SwapiResponse, per-bin rotation matrices, and a populated
     `SolarWindFitContext` whose count rates are forward-modelled from
     `truth_params`. Returns `(swapi_response, rotation_matrices, fit_ctx)`."""
-    all_voltages = np.tile(_VOLTAGES_PER_SWEEP, _N_SWEEPS)
-    swapi_response = load_swapi_response(warm_cache_voltages=all_voltages)
+    all_voltages_2d = np.tile(_VOLTAGES_PER_SWEEP, (_N_SWEEPS, 1))
+    swapi_response = load_swapi_response(
+        warm_cache_voltages=all_voltages_2d.ravel()
+    )
     rotation_matrices = _per_bin_rotation_matrices()
 
     # Build a context with placeholder rates first, then forward-model the
@@ -140,15 +142,15 @@ def _build_synthetic_fit_context(truth_params: SolarWindParams):
     # Two-step pattern keeps the rotation-matrix / response-grid wiring
     # identical between forward-model and fit.
     placeholder_ctx = _build_context(
-        count_rate=np.ones_like(all_voltages),
-        esa_voltage=all_voltages,
+        count_rate=np.ones_like(all_voltages_2d),
+        esa_voltage=all_voltages_2d,
         swapi_response=swapi_response,
         rotation_matrices=rotation_matrices,
     )
     synthesized_rates = synthesize_count_rates(placeholder_ctx, truth_params)
     fit_ctx = _build_context(
-        count_rate=synthesized_rates,
-        esa_voltage=all_voltages,
+        count_rate=synthesized_rates.reshape(all_voltages_2d.shape),
+        esa_voltage=all_voltages_2d,
         swapi_response=swapi_response,
         rotation_matrices=rotation_matrices,
     )
