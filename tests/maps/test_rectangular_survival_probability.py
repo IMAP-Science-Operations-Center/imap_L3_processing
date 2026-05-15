@@ -114,7 +114,6 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
             (Sensor.Hi45, -45, SpinPhase.RamOnly, self.ram_mask),
             (Sensor.Hi45, -45, SpinPhase.AntiRamOnly, ~self.ram_mask),
             (Sensor.Lo90, 0, SpinPhase.AntiRamOnly, ~self.ram_mask),
-            (Sensor.Lo, 0, SpinPhase.AntiRamOnly, ~self.ram_mask),
         ]
 
         expected_repointing_midpoint = self.l1c_hi_dataset.epoch_j2000 + self.l1c_epoch_delta / 2
@@ -300,7 +299,8 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
 
         cases = {
             "lo90": Sensor.Lo90,
-            "lo": Sensor.Lo
+            "lo75": Sensor.Lo75,
+            "lo105": Sensor.Lo105
         }
         for name, sensor in cases.items():
             with self.subTest(name):
@@ -421,17 +421,19 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
     @patch("imap_l3_processing.maps.rectangular_survival_probability.apply_compton_getting_correction")
     def test_survivals_matched_with_corresponding_exposures_cg_corrected(self, mock_cg_correction, mock_interpolate):
         test_cases = [
-            (Sensor.Hi90, np.array([1.25, 1.85, 3])),
-            (Sensor.Lo, np.array([1.25, 1.85, 3])),
+            Sensor.Hi90,
+            Sensor.Hi45,
+            Sensor.Lo90,
+            Sensor.Lo75,
+            Sensor.Lo105,
         ]
 
-        for sensor, glows_data in test_cases:
+        for sensor in test_cases:
             mock_cg_correction.reset_mock()
             mock_interpolate.reset_mock()
             with self.subTest(sensor):
                 hf_energies = np.array([1, 2])
-
-                self.glows_data.energy = glows_data
+                self.glows_data.energy = np.array([1.25, 1.85, 3])
 
                 energy_sc = np.array([[np.full((3600,), 1250), np.full((3600,), 1850)]])
                 exposure_times = np.array([[np.full((3600,), 10), np.full((3600,), 100)]])

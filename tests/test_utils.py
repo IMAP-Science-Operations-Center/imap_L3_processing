@@ -50,15 +50,15 @@ class TestUtils(TestCase):
         epoch = np.array([1, 2, 3])
 
         data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata, epoch=epoch,
+                                                 alpha_sw_speed=np.array([450.0, 460.0, 470.0]),
+                                                 alpha_sw_speed_uncert=np.array([1.0, 1.0, 1.0]),
                                                  alpha_sw_density=np.array([5, 5, 5]),
                                                  alpha_sw_density_uncert=np.array([0.1, 0.1, 0.1]),
                                                  alpha_sw_temperature=np.array([4, 3, 5]),
                                                  alpha_sw_temperature_uncert=np.array([0.1, 0.1, 0.1]),
-                                                 alpha_sw_velocity_rtn=np.zeros((3, 3)),
-                                                 alpha_sw_velocity_covariance_rtn=np.zeros((3, 3, 3)),
-                                                 alpha_sw_delta_v=np.array([0.0, 0.0, 0.0]),
-                                                 alpha_sw_delta_v_uncert=np.array([0.0, 0.0, 0.0]),
-                                                 alpha_sw_b_hat_rtn=np.zeros((3, 3)),
+                                                 alpha_sw_velocity_rtn_sun=np.zeros((3, 3)),
+                                                 alpha_sw_velocity_rtn_sc=np.zeros((3, 3)),
+                                                 alpha_sw_velocity_rtn_covariance=np.zeros((3, 3, 3)),
                                                  parent_file_names=sentinel.parent_files,
                                                  quality_flags=sentinel.quality_flags,
                                                  )
@@ -201,15 +201,15 @@ class TestUtils(TestCase):
 
         data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata,
                                                  epoch=epoch,
+                                                 alpha_sw_speed=np.array([450.0, 460.0, 470.0]),
+                                                 alpha_sw_speed_uncert=np.array([1.0, 1.0, 1.0]),
                                                  alpha_sw_density=np.array([5, 5, 5]),
                                                  alpha_sw_density_uncert=np.array([0.1, 0.1, 0.1]),
                                                  alpha_sw_temperature=np.array([4, 3, 5]),
                                                  alpha_sw_temperature_uncert=np.array([0.1, 0.1, 0.1]),
-                                                 alpha_sw_velocity_rtn=np.zeros((3, 3)),
-                                                 alpha_sw_velocity_covariance_rtn=np.zeros((3, 3, 3)),
-                                                 alpha_sw_delta_v=np.array([0.0, 0.0, 0.0]),
-                                                 alpha_sw_delta_v_uncert=np.array([0.0, 0.0, 0.0]),
-                                                 alpha_sw_b_hat_rtn=np.zeros((3, 3)),
+                                                 alpha_sw_velocity_rtn_sun=np.zeros((3, 3)),
+                                                 alpha_sw_velocity_rtn_sc=np.zeros((3, 3)),
+                                                 alpha_sw_velocity_rtn_covariance=np.zeros((3, 3, 3)),
                                                  quality_flags=quality_flags,
                                                  )
         save_data(data_product)
@@ -238,15 +238,15 @@ class TestUtils(TestCase):
 
         data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata,
                                                  epoch=epoch,
+                                                 alpha_sw_speed=np.array([450.0, 460.0, 470.0]),
+                                                 alpha_sw_speed_uncert=np.array([1.0, 1.0, 1.0]),
                                                  alpha_sw_density=np.array([5, 5, 5]),
                                                  alpha_sw_density_uncert=np.array([0.1, 0.1, 0.1]),
                                                  alpha_sw_temperature=np.array([4, 3, 5]),
                                                  alpha_sw_temperature_uncert=np.array([0.1, 0.1, 0.1]),
-                                                 alpha_sw_velocity_rtn=np.zeros((3, 3)),
-                                                 alpha_sw_velocity_covariance_rtn=np.zeros((3, 3, 3)),
-                                                 alpha_sw_delta_v=np.array([0.0, 0.0, 0.0]),
-                                                 alpha_sw_delta_v_uncert=np.array([0.0, 0.0, 0.0]),
-                                                 alpha_sw_b_hat_rtn=np.zeros((3, 3)),
+                                                 alpha_sw_velocity_rtn_sun=np.zeros((3, 3)),
+                                                 alpha_sw_velocity_rtn_sc=np.zeros((3, 3)),
+                                                 alpha_sw_velocity_rtn_covariance=np.zeros((3, 3, 3)),
                                                  quality_flags=quality_flags,
                                                  )
 

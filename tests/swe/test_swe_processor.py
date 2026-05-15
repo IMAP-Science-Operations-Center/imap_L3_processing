@@ -5,6 +5,7 @@ from unittest.mock import patch, call, Mock, sentinel
 
 import numpy as np
 from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection, AncillaryInput
+from imap_processing.quality_flags import SweL1bFlags
 
 from imap_l3_processing.models import MagData, InputMetadata
 from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData, SweL1bData
@@ -83,6 +84,19 @@ class TestSweProcessor(unittest.TestCase):
         phase_space_density_rebinned = np.full((7, 3, 5, 7), physical_psd_value)
         phase_space_density_rebinned[6, 0, 0, 0] = unphysical_psd_value
 
+        l2_data_quality = np.array(
+            [
+                0,
+                SweL1bFlags.LAST_CAL_INTERVAL,
+                SweL1bFlags.LAST_CAL_INTERVAL | SweL1bFlags.INF,
+                0,
+                SweL1bFlags.LAST_CAL_INTERVAL | SweL1bFlags.NEG,
+                SweL1bFlags.NEG,
+                SweL1bFlags.INF,
+            ],
+            dtype=np.uint8,
+        )
+
         swe_l2_data = SweL2Data(
             epoch=epochs,
             phase_space_density=np.arange(21).reshape(7, 3) + 100,
@@ -95,7 +109,8 @@ class TestSweProcessor(unittest.TestCase):
             inst_az_spin_sector=np.arange(21).reshape(7, 3) + 200,
             acquisition_time=np.array([]),
             acquisition_duration=np.array([]),
-            phase_space_density_rebinned=phase_space_density_rebinned
+            phase_space_density_rebinned=phase_space_density_rebinned,
+            data_quality=l2_data_quality,
         )
 
         expected_corrected_energy_bins = np.array([
@@ -144,10 +159,23 @@ class TestSweProcessor(unittest.TestCase):
         calculate_pitch_angle_flags = np.array([SweL3Flags.NONE] * len(epochs), dtype=np.uint16)
         calculate_pitch_angle_flags[0] = SweL3Flags.FALLBACK_SWAPI_SPEED
 
+        expected_phase_space_density_by_pitch_angle = np.full((7, 3, 3), physical_psd_value)
+        expected_phase_space_density_by_pitch_angle[1, 0, 0] = unphysical_psd_value
+        expected_phase_space_density_by_pitch_angle_and_gyrophase = np.full((7, 3, 3, 3), physical_psd_value)
+        expected_phase_space_density_by_pitch_angle_and_gyrophase[2, 0, 0, 0] = unphysical_psd_value
+        expected_energy_spectrum = np.full((7, 3), physical_psd_value)
+        expected_energy_spectrum[3, 0] = unphysical_psd_value
+        expected_energy_spectrum_inbound = np.full((7, 3), physical_psd_value)
+        expected_energy_spectrum_inbound[4, 0] = unphysical_psd_value
+        expected_energy_spectrum_outbound = np.full((7, 3), physical_psd_value)
+        expected_energy_spectrum_outbound[5, 0] = unphysical_psd_value
+
         mock_calculate_pitch_angle_products.return_value = (
-            sentinel.expected_phase_space_density_by_pitch_angle,
-            sentinel.expected_phase_space_density_by_pitch_angle_and_gyrophase, sentinel.expected_intensity,
-            sentinel.expected_phase_space_density_inward, sentinel.expected_phase_space_density_outward,
+            expected_phase_space_density_by_pitch_angle,
+            expected_phase_space_density_by_pitch_angle_and_gyrophase,
+            expected_energy_spectrum,
+            expected_energy_spectrum_inbound,
+            expected_energy_spectrum_outbound,
             sentinel.intensity_by_pitch_angle_and_gyrophase, sentinel.intensity_by_pitch_angle,
             sentinel.uncertainty_by_pitch_angle_and_gyrophase, sentinel.uncertainty_by_pitch_angle,
             calculate_pitch_angle_flags
@@ -259,14 +287,14 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_l3_data.core_halo_breakpoint, expected_core_halo_breakpoint)
 
         # pitch angle specific
-        self.assertEqual(sentinel.expected_phase_space_density_by_pitch_angle,
-                         swe_l3_data.phase_space_density_by_pitch_angle)
-        self.assertEqual(sentinel.expected_intensity, swe_l3_data.phase_space_density_1d)
-        self.assertEqual(sentinel.expected_phase_space_density_inward, swe_l3_data.phase_space_density_inward)
-        self.assertEqual(sentinel.expected_phase_space_density_outward, swe_l3_data.phase_space_density_outward)
+        np.testing.assert_array_equal(swe_l3_data.phase_space_density_by_pitch_angle,
+                                      expected_phase_space_density_by_pitch_angle)
+        np.testing.assert_array_equal(swe_l3_data.phase_space_density_1d, expected_energy_spectrum)
+        np.testing.assert_array_equal(swe_l3_data.phase_space_density_inward, expected_energy_spectrum_inbound)
+        np.testing.assert_array_equal(swe_l3_data.phase_space_density_outward, expected_energy_spectrum_outbound)
         self.assertEqual(mock_moment_data, swe_l3_data.moment_data)
-        self.assertEqual(sentinel.expected_phase_space_density_by_pitch_angle_and_gyrophase,
-                         swe_l3_data.phase_space_density_by_pitch_angle_and_gyrophase)
+        np.testing.assert_array_equal(swe_l3_data.phase_space_density_by_pitch_angle_and_gyrophase,
+                                      expected_phase_space_density_by_pitch_angle_and_gyrophase)
         expected_phi_avg_at_unphysical_cell = (
             unphysical_psd_value * geometric_fractions[0]
             + physical_psd_value * (sum_geometric_fractions - geometric_fractions[0])
@@ -286,11 +314,11 @@ class TestSweProcessor(unittest.TestCase):
 
         expected_quality_flags = np.array([
             SweL3Flags.FALLBACK_SWAPI_SPEED | SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE | SweL3Flags.POTENTIAL_FIT_UNCONVERGED | SweL3Flags.PRELIMINARY_MAG,
-            SweL3Flags.PRELIMINARY_MAG,
-            SweL3Flags.PRELIMINARY_MAG,
-            SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE | SweL3Flags.PRELIMINARY_MAG,
-            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.NEGATIVE_MOMENT,
-            SweL3Flags.PRELIMINARY_MAG,
+            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED | SweL3Flags.UNPHYSICAL_PSD,
+            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED | SweL3Flags.UNPHYSICAL_PSD,
+            SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE | SweL3Flags.PRELIMINARY_MAG | SweL3Flags.UNPHYSICAL_PSD,
+            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.NEGATIVE_MOMENT | SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED | SweL3Flags.UNPHYSICAL_PSD,
+            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.UNPHYSICAL_PSD,
             SweL3Flags.PRELIMINARY_MAG | SweL3Flags.UNPHYSICAL_PSD,
         ])
 
@@ -335,6 +363,7 @@ class TestSweProcessor(unittest.TestCase):
             acquisition_time=np.array([]),
             acquisition_duration=np.array([]),
             phase_space_density_rebinned=np.zeros((num_epochs, 3, 5, 7)),
+            data_quality=np.zeros(num_epochs, dtype=np.uint8),
         )
         swapi_l3a_proton_data = SwapiL3aProtonData(
             epoch=np.array([]),
@@ -358,11 +387,11 @@ class TestSweProcessor(unittest.TestCase):
         mock_check_and_mask_negative_moments.return_value = np.zeros(num_epochs, dtype=np.uint16)
         mock_check_temperature_outlier_flag.return_value = np.zeros(num_epochs, dtype=np.uint16)
         mock_calculate_pitch_angle_products.return_value = (
-            sentinel.psd_by_pa,
-            sentinel.psd_by_pa_and_gyro,
-            sentinel.energy_spec_1d,
-            sentinel.energy_spec_in,
-            sentinel.energy_spec_out,
+            np.zeros((num_epochs, 3, 3)),
+            np.zeros((num_epochs, 3, 3, 3)),
+            np.zeros((num_epochs, 3)),
+            np.zeros((num_epochs, 3)),
+            np.zeros((num_epochs, 3)),
             np.zeros((num_epochs, 3, 3, 3)),
             np.zeros((num_epochs, 3, 3)),
             np.zeros((num_epochs, 3, 3, 3)),
@@ -426,7 +455,8 @@ class TestSweProcessor(unittest.TestCase):
             inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
             acquisition_time=np.array([]),
             acquisition_duration=(np.arange(9).reshape(3, 3) + 5) * 1e6,
-            phase_space_density_rebinned=np.array([])
+            phase_space_density_rebinned=np.array([]),
+            data_quality=np.array([]),
         )
 
         swe_l1b_data = SweL1bData(
@@ -652,7 +682,8 @@ class TestSweProcessor(unittest.TestCase):
             acquisition_time=np.linspace(datetime(2025, 3, 6), datetime(2025, 3, 6, 0, 1),
                                          num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
             acquisition_duration=np.full((num_epochs, num_energies, 5), 80000),
-            phase_space_density_rebinned=np.zeros((num_epochs, num_energies, 5, 7))
+            phase_space_density_rebinned=np.zeros((num_epochs, num_energies, 5, 7)),
+            data_quality=np.zeros(num_epochs, dtype=np.uint8),
         )
 
         swe_l1b_data = SweL1bData(
@@ -751,7 +782,8 @@ class TestSweProcessor(unittest.TestCase):
             acquisition_time=np.linspace(datetime(2025, 3, 6), datetime(2025, 3, 6, 0, 1),
                                          num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
             acquisition_duration=np.full((num_epochs, num_energies, 5), 80000),
-            phase_space_density_rebinned=np.zeros((num_epochs, num_energies, 5, 7))
+            phase_space_density_rebinned=np.zeros((num_epochs, num_energies, 5, 7)),
+            data_quality=np.zeros(num_epochs, dtype=np.uint8),
         )
 
         swe_l1b_data = SweL1bData(
@@ -834,6 +866,7 @@ class TestSweProcessor(unittest.TestCase):
             |SweL3Flags.BACKUP_SPLINE_UNRESOLVED
             |SweL3Flags.BREAKPOINT_FIT_UNCONVERGED
             |SweL3Flags.FALLBACK_SWAPI_SPEED
+            |SweL3Flags.UNPHYSICAL_PSD
         ])
         np.testing.assert_array_equal(swe_l3_data.swe_flags, expected_swe_flags)
 
@@ -877,6 +910,7 @@ class TestSweProcessor(unittest.TestCase):
             acquisition_time=np.array([]),
             acquisition_duration=[1e7, 2e7, 3e7],
             phase_space_density_rebinned=np.array([]),
+            data_quality=np.array([]),
         )
         expected_sin_theta = np.sin(np.deg2rad(90 - instrument_elevation))
         expected_cos_theta = np.cos(np.deg2rad(90 - instrument_elevation))
@@ -1427,7 +1461,8 @@ class TestSweProcessor(unittest.TestCase):
             inst_az_spin_sector=np.arange(16, 32).reshape(4, 4),
             acquisition_time=np.array([]),
             acquisition_duration=[2e7, 2e7, 2e7, 2e7],
-            phase_space_density_rebinned=np.array([])
+            phase_space_density_rebinned=np.array([]),
+            data_quality=np.array([]),
         )
         swe_l1_data = SweL1bData(epoch=epochs,
                                  count_rates=[Mock(), Mock(), Mock(), Mock()],
@@ -1482,7 +1517,8 @@ class TestSweProcessor(unittest.TestCase):
             inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
             acquisition_time=np.array([]),
             acquisition_duration=np.full((1, 11, 3), 1e7),
-            phase_space_density_rebinned=np.array([])
+            phase_space_density_rebinned=np.array([]),
+            data_quality=np.array([]),
         )
         swe_l1_data = SweL1bData(epoch=epochs,
                                  count_rates=np.full((1, 11, 3, 7), 10.5),
@@ -1577,7 +1613,8 @@ class TestSweProcessor(unittest.TestCase):
                     inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
                     acquisition_time=np.array([]),
                     acquisition_duration=[1e7, 2e7, 3e7],
-                    phase_space_density_rebinned=np.array([])
+                    phase_space_density_rebinned=np.array([]),
+                    data_quality=np.array([]),
                 )
                 swe_l1_data = SweL1bData(epoch=epochs,
                                          count_rates=[sentinel.l1b_count_rates_1, sentinel.l1b_count_rates_2,

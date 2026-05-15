@@ -111,7 +111,6 @@ class ExposureWeightedCombination(CombinationStrategy):
         intensity_sys_err = np.array([m.ena_intensity_sys_err for m in maps])
         intensity_stat_unc = np.array([m.ena_intensity_stat_uncert for m in maps])
         exposures = np.array([m.exposure_factor for m in maps])
-
         mask = np.isnan(intensities) | (exposures == 0) | np.isnan(exposures)
 
         intensities = np.where(mask, 0, intensities)
@@ -129,14 +128,38 @@ class ExposureWeightedCombination(CombinationStrategy):
 
         avg_obs_date = calculate_datetime_weighted_average(np.ma.array([m.obs_date for m in maps]), masked_exposures, 0)
 
+        bg_intensities = np.array([m.bg_intensity for m in maps])
+        bg_intensity_sys_err = np.array([m.bg_intensity_sys_err for m in maps])
+        bg_intensity_stat_uncert = np.array([m.bg_intensity_stat_uncert for m in maps])
+
+        def all_elem_defined(array):
+            return all(v is not None for v in array)
+
+        if all_elem_defined(bg_intensities) and all_elem_defined(bg_intensity_sys_err) and all_elem_defined(bg_intensity_stat_uncert):
+            bg_intensities = np.where(mask, 0, bg_intensities)
+            bg_intensity_sys_err = np.where(mask, 0, bg_intensity_sys_err)
+            bg_intensity_stat_uncert = np.where(mask, 0, bg_intensity_stat_uncert)
+
+            combined_bg_intensity_stat_uncert = self.calculated_weighted_uncertainty(bg_intensity_stat_uncert,
+                                                                                     masked_exposures)
+            combined_bg_intensity_sys_err = self.calculate_weighted_sys_err(bg_intensity_sys_err, masked_exposures)
+            summed_bg_intensity = np.sum(bg_intensities * masked_exposures, axis=0)
+            exposure_weighted_summed_bg_intensity = safe_divide(summed_bg_intensity, np.sum(masked_exposures, axis=0))
+        else:
+            exposure_weighted_summed_bg_intensity = None
+            combined_bg_intensity_sys_err = None
+            combined_bg_intensity_stat_uncert = None
+
         return dataclasses.replace(maps[0],
                                    ena_intensity=exposure_weighted_summed_intensity,
-                                   exposure_factor=summed_exposures,
                                    ena_intensity_sys_err=combined_intensity_sys_err,
                                    ena_intensity_stat_uncert=combined_intensity_stat_unc,
+                                   bg_intensity=exposure_weighted_summed_bg_intensity,
+                                   bg_intensity_sys_err=combined_bg_intensity_sys_err,
+                                   bg_intensity_stat_uncert=combined_bg_intensity_stat_uncert,
+                                   exposure_factor=summed_exposures,
                                    obs_date=avg_obs_date
                                    )
-
 
 class UncertaintyWeightedCombination(CombinationStrategy):
     def _combine(self, maps: list[IntensityMapData]) -> IntensityMapData:

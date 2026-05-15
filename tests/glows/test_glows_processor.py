@@ -167,6 +167,26 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         assert_dataclass_fields(expected_data_to_save, actual_data, omit=["global_metadata_attrs"])
         self.assertEqual([mock_cdf_path], products)
 
+    @patch('imap_l3_processing.glows.glows_processor.GlowsL3ADependencies')
+    @patch('imap_l3_processing.glows.glows_processor.save_data')
+    def test_does_not_save_cdf_if_process_l3a_returns_none(self, mock_save_data, _):
+        instrument = 'glows'
+        start_date = datetime(2024, 10, 7, 10, 00, 00)
+        end_date = datetime(2024, 10, 8, 10, 00, 00)
+        outgoing_data_level = "l3a"
+        outgoing_version = 'v002'
+        input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date,
+                                       outgoing_version, repointing=5)
+
+        mock_processing_input_collection = Mock()
+        processor = GlowsProcessor(dependencies=mock_processing_input_collection, input_metadata=input_metadata)
+        processor.process_l3a = Mock(return_value=None)
+        products = processor.process()
+
+        mock_save_data.assert_not_called()
+        self.assertEqual([], products)
+
+
     @patch('imap_l3_processing.glows.glows_processor.create_glows_l3a_from_dictionary')
     @patch('imap_l3_processing.glows.glows_processor.L3aData')
     def test_process_l3a(self, l3a_data_constructor, create_glows_l3a_from_dictionary):
@@ -178,18 +198,53 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         processor.add_spin_angle_delta = Mock()
         fetched_dependencies = Mock()
+
+        mock_l3a_data = l3a_data_constructor.return_value
+        mock_l3a_data.data = {
+            "daily_lightcurve": {
+                "exposure_times": np.array([1])
+            }
+        }
         result = processor.process_l3a(fetched_dependencies)
 
         self.assertIs(create_glows_l3a_from_dictionary.return_value, result)
         l3a_data_constructor.assert_called_once_with(fetched_dependencies.ancillary_files)
-        l3a_data_constructor.return_value.process_l2_data_file.assert_called_once_with(fetched_dependencies.data)
-        l3a_data_constructor.return_value.generate_l3a_data.assert_called_once_with(
+        mock_l3a_data.process_l2_data_file.assert_called_once_with(fetched_dependencies.data)
+        mock_l3a_data.generate_l3a_data.assert_called_once_with(
             fetched_dependencies.ancillary_files)
-        processor.add_spin_angle_delta.assert_called_with(l3a_data_constructor.return_value.data,
+        processor.add_spin_angle_delta.assert_called_with(mock_l3a_data.data,
                                                           fetched_dependencies.ancillary_files)
         create_glows_l3a_from_dictionary.assert_called_once_with(processor.add_spin_angle_delta.return_value,
                                                                  replace(input_metadata,
                                                                          descriptor=GLOWS_L3A_DESCRIPTOR))
+
+    @patch('imap_l3_processing.glows.glows_processor.create_glows_l3a_from_dictionary')
+    @patch('imap_l3_processing.glows.glows_processor.L3aData')
+    def test_process_l3a_returns_none_when_no_input_histrogram_bins_are_valid(self, l3a_data_constructor, create_glows_l3a_from_dictionary):
+        input_metadata = InputMetadata('glows', "l3a", datetime(2024, 10, 7, 10, 00, 00),
+                                       datetime(2024, 10, 8, 10, 00, 00),
+                                       'v02')
+
+        processor = GlowsProcessor(dependencies=Mock(), input_metadata=input_metadata)
+
+        mock_l3a_data = l3a_data_constructor.return_value
+        mock_l3a_data.data = {
+            "daily_lightcurve": {
+                "exposure_times": np.array([])
+            }
+        }
+
+        processor.add_spin_angle_delta = Mock()
+        fetched_dependencies = Mock()
+        result = processor.process_l3a(fetched_dependencies)
+
+        self.assertIsNone(result)
+
+        mock_l3a_data.process_l2_data_file.assert_called_once_with(fetched_dependencies.data)
+        mock_l3a_data.generate_l3a_data.assert_called_once_with(
+            fetched_dependencies.ancillary_files)
+        processor.add_spin_angle_delta.assert_not_called()
+        create_glows_l3a_from_dictionary.assert_not_called()
 
     def test_add_spin_angle_delta(self):
         cases = [

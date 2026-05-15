@@ -12,18 +12,16 @@ from imap_l3_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS, \
     FIVE_MINUTES_IN_NANOSECONDS
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.descriptors import DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR, \
-    INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR, EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR, \
-    ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR, \
+    EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR, \
     GEOMETRIC_FACTOR_SW_LOOKUP_TABLE_DESCRIPTOR, GEOMETRIC_FACTOR_PUI_LOOKUP_TABLE_DESCRIPTOR, \
     HYDROGEN_INFLOW_VECTOR_DESCRIPTOR, HELIUM_INFLOW_VECTOR_DESCRIPTOR, \
     AZIMUTHAL_TRANSMISSION_DESCRIPTOR, CENTRAL_EFFECTIVE_AREA_DESCRIPTOR, \
     PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR
-from imap_l3_processing.swapi.l3a.models import SwapiL2Data, SwapiL3PickupIonData
-from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import FittingParameters
+from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SWAPI_L2_DESCRIPTOR, SwapiL3ADependencies
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_vdf import DeltaMinusPlus
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
-from imap_l3_processing.swapi.swapi_processor import SwapiProcessor, logger
+from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 
 
 class TestSwapiProcessor(TestCase):
@@ -31,20 +29,14 @@ class TestSwapiProcessor(TestCase):
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3PickupIonData')
     @patch('imap_l3_processing.utils.write_cdf')
     @patch('imap_l3_processing.swapi.swapi_processor.chunk_l2_data')
+    @patch('imap_l3_processing.swapi.swapi_processor.PuiChunkFitter')
     @patch('imap_l3_processing.swapi.swapi_processor.ParallelChunkRunner')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3ADependencies')
-    @patch('imap_l3_processing.swapi.swapi_processor.calculate_pickup_ion_values')
-    @patch('imap_l3_processing.swapi.swapi_processor.calculate_ten_minute_velocities')
-    @patch('imap_l3_processing.swapi.swapi_processor.rotate_rtn_to_dps')
-    @patch('imap_l3_processing.swapi.swapi_processor.calculate_helium_pui_density')
-    @patch('imap_l3_processing.swapi.swapi_processor.calculate_helium_pui_temperature')
     @patch('imap_l3_processing.processor.spiceypy')
-    def test_process_l3a_pui(self, mock_spicepy, mock_calculate_helium_pui_temperature,
-                             mock_calculate_helium_pui_density,
-                             mock_rotate_rtn_to_dps,
-                             mock_calculate_ten_minute_velocities, mock_calculate_pickup_ion,
+    def test_process_l3a_pui(self, mock_spicepy,
                              mock_swapi_l3_dependencies_class,
                              mock_parallel_chunk_runner_class,
+                             mock_pui_chunk_fitter_class,
                              mock_chunk_l2_data, mock_write_cdf,
                              mock_pickup_ion_data_constructor, mock_imap_attribute_manager):
         instrument = 'swapi'
@@ -62,45 +54,53 @@ class TestSwapiProcessor(TestCase):
 
         returned_chunk_epoch = 10 + THIRTY_SECONDS_IN_NANOSECONDS
         returned_bulk_velocity_rtn_sc = np.array([370.0, 10.0, 5.0])
-        rotated_velocity_dps = np.array([330.0, 12.0, 4.0])
-        runner_result = dict(
+
+        proton_runner_result = dict(
             epoch=np.array([returned_chunk_epoch]),
             proton_sw_bulk_velocity_rtn_sc=np.array([returned_bulk_velocity_rtn_sc]),
             quality_flags=np.array([SwapiL3Flags.NONE]),
         )
-        mock_parallel_chunk_runner_class.return_value.run.return_value = runner_result
-        mock_rotate_rtn_to_dps.return_value = rotated_velocity_dps
 
         initial_epoch = 10
 
         epoch = np.array([initial_epoch, 11, 12, 13])
-        epoch_for_fifty_sweeps = np.arange(initial_epoch, 50)
-        energy = np.array([15000, 16000, 17000, 18000, 19000])
+        epoch_for_fifty_sweeps = np.arange(initial_epoch, initial_epoch + 50)
+        energy_1d = np.array([15000, 16000, 17000, 18000, 19000])
         coincidence_count_rate = np.array(
             [[4, 5, 6, 7, 8], [9, 10, 11, 12, 13], [14, 15, 16, 17, 18], [19, 20, 21, 22, 23]])
         coincidence_count_rate_uncertainty = np.array(
             [[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5],
              [0.1, 0.2, 0.3, 0.4, 0.5]])
 
-        chunk_of_five = SwapiL2Data(epoch, energy, coincidence_count_rate,
+        chunk_of_five = SwapiL2Data(epoch, energy_1d, coincidence_count_rate,
                                     coincidence_count_rate_uncertainty)
-        chunk_of_fifty = SwapiL2Data(epoch_for_fifty_sweeps, energy * 2, coincidence_count_rate * 2,
-                                     coincidence_count_rate_uncertainty * 2)
 
-        expected_fitting_params = FittingParameters(1, 2, 3, 4)
-        mock_calculate_pickup_ion.return_value = expected_fitting_params
-        mock_calculate_helium_pui_density.return_value = 5
-        mock_calculate_helium_pui_temperature.return_value = 6
-        mock_calculate_ten_minute_velocities.return_value = (np.array([[17, 18, 19]]), np.array([SwapiL3Flags.NONE]))
+        energy_fifty = np.tile(energy_1d * 2, (50, 1))
+        coincidence_count_rate_fifty = np.full((50, 5), 7.0)
+        coincidence_count_rate_uncertainty_fifty = np.full((50, 5), 0.2)
+        chunk_of_fifty = SwapiL2Data(epoch_for_fifty_sweeps, energy_fifty,
+                                     coincidence_count_rate_fifty,
+                                     coincidence_count_rate_uncertainty_fifty)
+
+        pui_runner_result = dict(
+            epoch=np.array([initial_epoch + FIVE_MINUTES_IN_NANOSECONDS]),
+            cooling_index=np.array([1]),
+            ionization_rate=np.array([2]),
+            cutoff_speed=np.array([3]),
+            background_rate=np.array([4]),
+            density=np.array([5]),
+            temperature=np.array([6]),
+            quality_flags=np.array([SwapiL3Flags.NONE]),
+        )
+        mock_runner = mock_parallel_chunk_runner_class.return_value
+        mock_runner.run.side_effect = [proton_runner_result, pui_runner_result]
 
         science_input = ScienceInput(
             f'imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf')
 
         input_file_names = [
             f'imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{ALPHA_TEMPERATURE_DENSITY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{GEOMETRIC_FACTOR_PUI_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
         ]
 
@@ -125,7 +125,7 @@ class TestSwapiProcessor(TestCase):
         ]
 
         mock_l3a_dependencies = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value
-        mock_l3a_dependencies.data = Mock(energy=energy)
+        mock_l3a_dependencies.data = Mock(energy=energy_1d)
 
         mock_manager = mock_imap_attribute_manager.return_value
 
@@ -138,56 +138,38 @@ class TestSwapiProcessor(TestCase):
 
         mock_swapi_l3_dependencies_class.fetch_dependencies.assert_called_once_with(dependencies)
 
-        mock_instrument_response_calibration_table = mock_l3a_dependencies.instrument_response_calibration_table
-        mock_geometric_factor_calibration_table = mock_l3a_dependencies.geometric_factor_calibration_table
+        mock_swapi_response = mock_l3a_dependencies.swapi_response
         mock_efficiency_lut = mock_l3a_dependencies.efficiency_calibration_table
         mock_density_of_neutral_helium_calibration_table = mock_l3a_dependencies.density_of_neutral_helium_calibration_table
         mock_hydrogen_inflow_vector = mock_l3a_dependencies.hydrogen_inflow_vector
         mock_helium_inflow_vector = mock_l3a_dependencies.helium_inflow_vector
 
-        mock_chunk_l2_data.side_effect = []
-
         mock_chunk_l2_data.assert_has_calls([call(mock_l3a_dependencies.data, 5),
                                              call(mock_l3a_dependencies.data, 50)])
 
-        instrument_response_lut, geometric_factor_lut, energies, count_rates, pui_epoch, \
-            sw_velocity_vector, density_of_neutral_helium_lut, efficiency_lut, hydrogen_inflow_vector, helium_inflow_vector = mock_calculate_pickup_ion.call_args.args
+        mock_swapi_response.warm_cache.assert_called_once()
+        mock_parallel_chunk_runner_class.assert_called_once_with(
+            mock_swapi_response, mock_efficiency_lut,
+        )
+        self.assertEqual(mock_runner.run.call_count, 2)
 
-        self.assertEqual(mock_instrument_response_calibration_table, instrument_response_lut)
-        self.assertEqual(mock_efficiency_lut, efficiency_lut)
-        self.assertEqual(mock_geometric_factor_calibration_table, geometric_factor_lut)
-        self.assertEqual(mock_density_of_neutral_helium_calibration_table, density_of_neutral_helium_lut)
-        np.testing.assert_array_equal(chunk_of_fifty.energy, energies)
-        np.testing.assert_array_equal(chunk_of_fifty.coincidence_count_rate, count_rates)
-        self.assertEqual(chunk_of_fifty.sci_start_time[0] + FIVE_MINUTES_IN_NANOSECONDS, pui_epoch)
-        self.assertEqual(mock_hydrogen_inflow_vector, hydrogen_inflow_vector)
-        self.assertEqual(mock_helium_inflow_vector, helium_inflow_vector)
-        np.testing.assert_array_equal([17, 18, 19], sw_velocity_vector)
+        first_chunks, first_fitter = mock_runner.run.call_args_list[0].args
+        self.assertEqual([chunk_of_five], first_chunks)
+        self.assertEqual(first_fitter.__class__.__name__, "ProtonChunkFitter")
 
-        actual_he_epoch, sw_velocity_vector, density_of_neutral_helium_lut, passed_in_fitting_params, helium_inflow_vector = mock_calculate_helium_pui_density.call_args.args
+        second_chunks, second_fitter = mock_runner.run.call_args_list[1].args
+        self.assertEqual([chunk_of_fifty], second_chunks)
+        self.assertIs(second_fitter, mock_pui_chunk_fitter_class.return_value)
 
-        self.assertEqual(chunk_of_fifty.sci_start_time[0] + FIVE_MINUTES_IN_NANOSECONDS, actual_he_epoch)
-        np.testing.assert_array_equal([17, 18, 19], sw_velocity_vector)
-        self.assertEqual(mock_density_of_neutral_helium_calibration_table, density_of_neutral_helium_lut)
-        self.assertEqual(expected_fitting_params, passed_in_fitting_params)
-        self.assertEqual(mock_helium_inflow_vector, helium_inflow_vector)
+        pui_fitter_kwargs = mock_pui_chunk_fitter_class.call_args.kwargs
+        self.assertIs(
+            pui_fitter_kwargs["density_of_neutral_helium_lookup_table"],
+            mock_density_of_neutral_helium_calibration_table,
+        )
+        self.assertIs(pui_fitter_kwargs["hydrogen_inflow_vector"], mock_hydrogen_inflow_vector)
+        self.assertIs(pui_fitter_kwargs["helium_inflow_vector"], mock_helium_inflow_vector)
+        self.assertIs(pui_fitter_kwargs["proton_results"], proton_runner_result)
 
-        actual_he_epoch, sw_velocity_vector, density_of_neutral_helium_lut, passed_in_fitting_params, helium_inflow_vector = mock_calculate_helium_pui_temperature.call_args.args
-
-        self.assertEqual(chunk_of_fifty.sci_start_time[0] + FIVE_MINUTES_IN_NANOSECONDS, actual_he_epoch)
-        np.testing.assert_array_equal([17, 18, 19], sw_velocity_vector)
-        self.assertEqual(mock_density_of_neutral_helium_calibration_table, density_of_neutral_helium_lut)
-        self.assertEqual(expected_fitting_params, passed_in_fitting_params)
-        self.assertEqual(mock_helium_inflow_vector, helium_inflow_vector)
-
-        mock_rotate_rtn_to_dps.assert_called_once()
-        rotate_args = mock_rotate_rtn_to_dps.call_args.args
-        np.testing.assert_array_equal(rotate_args[0], returned_bulk_velocity_rtn_sc)
-        self.assertEqual(rotate_args[1], returned_chunk_epoch)
-
-        ten_min_args = mock_calculate_ten_minute_velocities.call_args.args
-        np.testing.assert_array_equal(ten_min_args[0], np.array([rotated_velocity_dps]))
-        self.assertEqual(ten_min_args[1], [SwapiL3Flags.NONE])
         mock_manager.add_global_attribute.assert_has_calls([call("Data_version", outgoing_version),
                                                             call("Generation_date",
                                                                  date.today().strftime("%Y%m%d")),
@@ -197,74 +179,17 @@ class TestSwapiProcessor(TestCase):
                                                                  f"imap_swapi_l3a_pui-he_{start_date_as_str}_{input_version}"),
                                                             ])
 
-        actual_pui_metadata, actual_pui_epoch, actual_pui_cooling_index, actual_pui_ionization_rate, \
-            actual_pui_cutoff_speed, actual_pui_background_rate, actual_pui_density, actual_pui_temperature, \
-            actual_quality_flags = mock_pickup_ion_data_constructor.call_args.args
-        self.assertEqual(expected_pickup_ion_metadata, actual_pui_metadata)
-        np.testing.assert_array_equal(np.array([initial_epoch + FIVE_MINUTES_IN_NANOSECONDS]), actual_pui_epoch)
-        np.testing.assert_array_equal(np.array([1]), actual_pui_cooling_index)
-        np.testing.assert_array_equal(np.array([2]), actual_pui_ionization_rate)
-        np.testing.assert_array_equal(np.array([3]), actual_pui_cutoff_speed)
-        np.testing.assert_array_equal(np.array([4]), actual_pui_background_rate)
-        np.testing.assert_array_equal(np.array([5]), actual_pui_density)
-        np.testing.assert_array_equal(np.array([6]), actual_pui_temperature)
-        self.assertEqual([0], actual_quality_flags)
+        actual_positional = mock_pickup_ion_data_constructor.call_args.args
+        actual_kwargs = mock_pickup_ion_data_constructor.call_args.kwargs
+        self.assertEqual(expected_pickup_ion_metadata, actual_positional[0])
+        for key, expected_val in pui_runner_result.items():
+            np.testing.assert_array_equal(expected_val, actual_kwargs[key])
 
         mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a", "pui-he")
 
         self.assertEqual(input_file_names, pickup_ion_data.parent_file_names)
         mock_write_cdf.assert_called_once_with(str(expected_cdf_path), pickup_ion_data, mock_manager)
         self.assertEqual([expected_cdf_path], product)
-
-    @patch('imap_l3_processing.swapi.swapi_processor.calculate_helium_pui_temperature')
-    @patch('imap_l3_processing.swapi.swapi_processor.calculate_helium_pui_density')
-    @patch('imap_l3_processing.swapi.swapi_processor.calculate_pickup_ion_values')
-    @patch('imap_l3_processing.swapi.swapi_processor.calculate_ten_minute_velocities')
-    @patch('imap_l3_processing.swapi.swapi_processor.ParallelChunkRunner')
-    def test_process_l3a_pui_combines_proton_and_pui_quality_flags(self,
-                                                                   mock_parallel_chunk_runner_class,
-                                                                   mock_calculate_ten_minute_velocities,
-                                                                   mock_calculate_pickup_ion,
-                                                                   mock_calculate_helium_pui_density,
-                                                                   mock_calculate_helium_pui_temperature):
-        initial_epoch = 10
-        epoch = np.arange(initial_epoch, initial_epoch + 50)
-        energy = np.tile(np.array([15000, 16000, 17000, 18000, 19000]), (50, 1))
-        coincidence_count_rate = np.full((50, 5), 5.0)
-        coincidence_count_rate_uncertainty = np.full((50, 5), 0.1)
-        chunk_of_fifty = SwapiL2Data(epoch, energy, coincidence_count_rate,
-                                     coincidence_count_rate_uncertainty)
-
-        runner_quality_flag = SwapiL3Flags.FIT_ERROR
-        mock_parallel_chunk_runner_class.return_value.run.return_value = dict(
-            epoch=np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]),
-            proton_sw_bulk_velocity_rtn_sc=np.array([[400.0, 10.0, 5.0]]),
-            quality_flags=np.array([runner_quality_flag]),
-        )
-
-        ten_min_quality_flag = SwapiL3Flags.BAD_FIT
-        mock_calculate_ten_minute_velocities.return_value = (
-            np.array([[17, 18, 19]]), np.array([ten_min_quality_flag]))
-
-        pui_fit_quality_flag = SwapiL3Flags.PUI_FIT_MISSING_UNCERTAINTY
-        mock_calculate_pickup_ion.return_value = FittingParameters(1, 2, 3, 4, pui_fit_quality_flag)
-        mock_calculate_helium_pui_density.return_value = 5
-        mock_calculate_helium_pui_temperature.return_value = 6
-
-        with patch('imap_l3_processing.swapi.swapi_processor.rotate_rtn_to_dps', return_value=np.array([330.0, 12.0, 4.0])):
-            input_metadata = InputMetadata('swapi', 'l3a', datetime(2025, 6, 12), datetime(2025, 6, 13), 'v123')
-            swapi_processor = SwapiProcessor(Mock(), input_metadata)
-            product = swapi_processor.process_l3a_pui(data=chunk_of_fifty, dependencies=Mock())
-
-        # The runner's per-window proton-fit quality flag is passed through to calculate_ten_minute_velocities.
-        self.assertEqual([runner_quality_flag],
-                         mock_calculate_ten_minute_velocities.call_args.args[1])
-
-        # The output flag is the OR of the per-window proton flag (returned by ten-min) and the per-window PUI fit flag.
-        np.testing.assert_array_equal(
-            product.quality_flags,
-            np.array([ten_min_quality_flag | pui_fit_quality_flag]),
-        )
 
     @patch('imap_l3_processing.utils.ImapAttributeManager')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3ProtonSolarWindData')
@@ -324,9 +249,8 @@ class TestSwapiProcessor(TestCase):
             proton_sw_deflection_angle=np.array([5.0]),
             proton_sw_deflection_angle_uncert=np.array([0.001]),
             proton_sw_bulk_velocity_rtn_sun=np.array([[400.0, 10.0, 5.0]]),
-            proton_sw_bulk_velocity_rtn_sun_covariance=np.array([np.eye(3)]),
             proton_sw_bulk_velocity_rtn_sc=np.array([[370.0, 10.0, 5.0]]),
-            proton_sw_bulk_velocity_rtn_sc_covariance=np.array([np.eye(3)]),
+            proton_sw_bulk_velocity_rtn_covariance=np.array([np.eye(3)]),
             quality_flags=np.array([SwapiL3Flags.NONE]),
         )
         mock_runner = mock_parallel_chunk_runner_class.return_value
@@ -336,7 +260,6 @@ class TestSwapiProcessor(TestCase):
             f'imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{GEOMETRIC_FACTOR_PUI_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{HYDROGEN_INFLOW_VECTOR_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{HELIUM_INFLOW_VECTOR_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
@@ -404,69 +327,6 @@ class TestSwapiProcessor(TestCase):
         mock_write_cdf.assert_called_once_with(str(expected_cdf_path), proton_solar_wind_data, mock_manager)
         self.assertEqual([expected_cdf_path], product)
 
-    @patch('imap_l3_processing.swapi.swapi_processor.rotate_rtn_to_dps', return_value=np.array([np.nan, np.nan, np.nan]))
-    @patch('imap_l3_processing.swapi.swapi_processor.ParallelChunkRunner')
-    @patch('imap_l3_processing.swapi.swapi_processor.calculate_ten_minute_velocities')
-    def test_process_l3a_pui_outputs_fill_for_chunks_with_fill(self,
-                                                               mock_calculate_ten_minute_velocities,
-                                                               mock_parallel_chunk_runner_class,
-                                                               mock_rotate_rtn_to_dps):
-        instrument = 'swapi'
-        end_date = datetime(2025, 6, 13)
-        outgoing_data_level = "l3a"
-        start_date = datetime(2025, 6, 12)
-        input_version = "v123"
-        initial_epoch = 10
-
-        epoch = np.arange(initial_epoch, initial_epoch + 50)
-        energy = np.tile(np.array([15000, 16000, 17000, 18000, 19000]), (50, 1))
-        coincidence_count_rate = np.full((50, 5), 5.0)
-        coincidence_count_rate[1, 3] = np.nan
-        coincidence_count_rate_uncertainty = np.full((50, 5), 0.1)
-
-        chunk_of_fifty = SwapiL2Data(epoch, energy, coincidence_count_rate,
-                                     coincidence_count_rate_uncertainty)
-
-        mock_runner = mock_parallel_chunk_runner_class.return_value
-        mock_runner.run.return_value = dict(
-            epoch=np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]),
-            proton_sw_bulk_velocity_rtn_sc=np.array([[np.nan, np.nan, np.nan]]),
-            quality_flags=np.array([SwapiL3Flags.NONE]),
-        )
-        mock_calculate_ten_minute_velocities.return_value = (
-            np.array([[np.nan, np.nan, np.nan]]),
-            np.array([SwapiL3Flags.NONE]),
-        )
-
-        input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date, input_version)
-
-        swapi_processor = SwapiProcessor(Mock(), input_metadata)
-        with self.assertLogs(logger):
-            product = swapi_processor.process_l3a_pui(data=chunk_of_fifty, dependencies=Mock())
-
-        self.assertIsInstance(product, SwapiL3PickupIonData)
-        np.testing.assert_array_equal(product.epoch, initial_epoch + FIVE_MINUTES_IN_NANOSECONDS)
-
-        np.testing.assert_array_equal(nominal_values(product.cooling_index), [np.nan])
-        np.testing.assert_array_equal(std_devs(product.cooling_index), [np.nan])
-
-        np.testing.assert_array_equal(nominal_values(product.ionization_rate), [np.nan])
-        np.testing.assert_array_equal(std_devs(product.ionization_rate), [np.nan])
-
-        np.testing.assert_array_equal(nominal_values(product.cutoff_speed), [np.nan])
-        np.testing.assert_array_equal(std_devs(product.cutoff_speed), [np.nan])
-
-        np.testing.assert_array_equal(nominal_values(product.background_rate), [np.nan])
-        np.testing.assert_array_equal(std_devs(product.background_rate), [np.nan])
-
-        np.testing.assert_array_equal(nominal_values(product.density), [np.nan])
-        np.testing.assert_array_equal(std_devs(product.density), [np.nan])
-
-        np.testing.assert_array_equal(nominal_values(product.temperature), [np.nan])
-        np.testing.assert_array_equal(std_devs(product.temperature), [np.nan])
-
-        np.testing.assert_array_equal(product.quality_flags, [SwapiL3Flags.NONE])
-
     @patch('imap_l3_processing.utils.ImapAttributeManager')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3AlphaSolarWindData')
     @patch('imap_l3_processing.utils.write_cdf')
@@ -506,15 +366,15 @@ class TestSwapiProcessor(TestCase):
 
         runner_result = dict(
             epoch=np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]),
+            alpha_sw_speed=np.array([450.0]),
+            alpha_sw_speed_uncert=np.array([1.0]),
             alpha_sw_density=np.array([0.15]),
             alpha_sw_density_uncert=np.array([0.01]),
             alpha_sw_temperature=np.array([400000.0]),
             alpha_sw_temperature_uncert=np.array([2000.0]),
-            alpha_sw_velocity_rtn=np.array([[450.0, 5.0, 1.0]]),
-            alpha_sw_velocity_covariance_rtn=np.array([np.eye(3)]),
-            alpha_sw_delta_v=np.array([12.0]),
-            alpha_sw_delta_v_uncert=np.array([1.0]),
-            alpha_sw_b_hat_rtn=np.array([[1.0, 0.0, 0.0]]),
+            alpha_sw_velocity_rtn_sun=np.array([[480.0, 5.0, 1.0]]),
+            alpha_sw_velocity_rtn_sc=np.array([[450.0, 5.0, 1.0]]),
+            alpha_sw_velocity_rtn_covariance=np.array([np.eye(3)]),
             quality_flags=np.array([int(SwapiL3Flags.NONE)]),
         )
         mock_runner = mock_parallel_chunk_runner_class.return_value
@@ -526,7 +386,6 @@ class TestSwapiProcessor(TestCase):
         input_file_names = [
             f'imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
-            f'imap_{instrument}_{INSTRUMENT_RESPONSE_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{AZIMUTHAL_TRANSMISSION_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{CENTRAL_EFFECTIVE_AREA_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
@@ -859,7 +718,6 @@ def create_swapi_l3a_dependencies_with_mocks():
         data=Mock(),
         efficiency_calibration_table=Mock(),
         geometric_factor_calibration_table=Mock(),
-        instrument_response_calibration_table=Mock(),
         density_of_neutral_helium_calibration_table=Mock(),
         hydrogen_inflow_vector=Mock(),
         helium_inflow_vector=Mock(),

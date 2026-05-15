@@ -11,7 +11,7 @@ class Sensor(enum.Enum):
     Lo75 = "Lo75"
     Lo90 = "Lo90"
     Lo105 = "Lo105"
-    Lo = "Lo"
+    LoCombined = "Lo"
     HiCombined = "HiCombined"
     Ultra45 = "Ultra45"
     Ultra90 = "Ultra90"
@@ -24,9 +24,11 @@ class Sensor(enum.Enum):
                          Sensor.Lo75: 15,
                          Sensor.Lo90: 0,
                          Sensor.Lo105: -15,
-                         Sensor.Lo: 0,
                          Sensor.Ultra45: -45,
                          Sensor.Ultra90: 0}
+
+        assert sensor_name in sensor_angles, "Invalid to attempt to get a sensor angle for " + sensor_name.name
+
         return sensor_angles[sensor_name]
 
 
@@ -83,7 +85,7 @@ sensor_mapping = [
     ("l075", Sensor.Lo75),
     ("l090", Sensor.Lo90),
     ("l105", Sensor.Lo105),
-    ("ilo", Sensor.Lo),
+    ("ilo", Sensor.LoCombined),
     ("ulc", Sensor.UltraCombined),
     ("u45", Sensor.Ultra45),
     ("u90", Sensor.Ultra90)
