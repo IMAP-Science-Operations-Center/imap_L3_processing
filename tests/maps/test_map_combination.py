@@ -93,10 +93,16 @@ class TestMapCombination(unittest.TestCase):
 
     def test_combine_maps_does_a_time_weighted_average_of_intensity(self):
         map_1 = construct_intensity_data_with_all_zero_fields()
+
         map_1.ena_intensity = np.array([1, np.nan, 3, 4, np.nan])
-        map_1.exposure_factor = np.array([1, 0, 5, 6, 0])
         map_1.ena_intensity_sys_err = np.array([1, np.nan, 10, 100, np.nan])
         map_1.ena_intensity_stat_uncert = np.array([10, np.nan, 10, 10, np.nan])
+
+        map_1.bg_intensity = np.array([4, np.nan, 3, 1, np.nan])
+        map_1.bg_intensity_sys_err = np.array([100, np.nan, 10, 1, np.nan])
+        map_1.bg_intensity_stat_uncert = np.array([10, np.nan, 10, 10, np.nan])
+
+        map_1.exposure_factor = np.array([1, 0, 5, 6, 0])
         DATETIME_FILL = datetime(9999, 12, 31, 23, 59, 59, 999999)
         map_1.obs_date = np.ma.masked_equal(
             [datetime(2025, 5, 5),
@@ -108,9 +114,15 @@ class TestMapCombination(unittest.TestCase):
 
         map_2 = construct_intensity_data_with_all_zero_fields()
         map_2.ena_intensity = np.array([5, 6, 7, 8, np.nan])
-        map_2.exposure_factor = np.array([3, 1, 5, 2, 0])
         map_2.ena_intensity_sys_err = np.array([9, 4, 2, 0, np.nan])
         map_2.ena_intensity_stat_uncert = np.array([1, 2, 3, 4, np.nan])
+
+        map_2.bg_intensity = np.array([8, 7, 6, 5, np.nan])
+        map_2.bg_intensity_sys_err = np.array([0, 2, 4, 9, np.nan])\
+
+        map_2.bg_intensity_stat_uncert = np.array([4, 3, 2, 1, np.nan])
+
+        map_2.exposure_factor = np.array([3, 1, 5, 2, 0])
         map_2.obs_date = np.ma.masked_equal(
             [datetime(2025, 5, 9),
              datetime(2025, 5, 10),
@@ -118,6 +130,14 @@ class TestMapCombination(unittest.TestCase):
              datetime(2025, 5, 12),
              DATETIME_FILL],
             DATETIME_FILL)
+
+        expected_combined_bg_stat_unc = [
+            np.sqrt((1 * 100 + 9 * 16) / 16),
+            np.sqrt((1 * 9) / 1),
+            np.sqrt((25 * 100 + 25 * 4) / 100),
+            np.sqrt((36 * 100 + 4 * 1) / 64),
+            np.nan
+        ]
 
         expected_combined_exposure = [4, 1, 10, 8, 0]
         expected_combined_intensity = [4, 6, 5, 5, np.nan]
@@ -128,8 +148,24 @@ class TestMapCombination(unittest.TestCase):
             (6 * 100 + 2 * 0) / (6 + 2),
             np.nan
         ]
-        expected_stat_unc = [np.sqrt((1 * 100 + 9 * 1) / 16), 2, np.sqrt((25 * 100 + 25 * 9) / 100),
-                             np.sqrt((36 * 100 + 16 * 4) / 64), np.nan]
+        expected_stat_unc = [
+            np.sqrt((1 * 100 + 9 * 1) / 16),
+            2,
+            np.sqrt((25 * 100 + 25 * 9) / 100),
+            np.sqrt((36 * 100 + 16 * 4) / 64),
+            np.nan
+        ]
+
+        expected_combined_bg_intensity = [7, 7, 4.5, 2, np.nan]
+        expected_combined_bg_intensity_sys_err = [
+            (1 * 100 + 3 * 0) / (1 + 3),
+            (0 * 10 + 1 * 2) / 1,
+            (5 * 4 + 5 * 10) / (5 + 5),
+            (6 * 1 + 2 * 9) / (6 + 2),
+            np.nan
+        ]
+
+
         expected_obs_date = np.ma.array(
             [datetime(2025, 5, 8),
              datetime(2025, 5, 10),
@@ -149,6 +185,10 @@ class TestMapCombination(unittest.TestCase):
         np.testing.assert_equal(combine_two.intensity_map_data.exposure_factor, expected_combined_exposure)
         np.testing.assert_equal(combine_two.intensity_map_data.obs_date.mask, expected_obs_date.mask)
         np.testing.assert_equal(combine_two.intensity_map_data.obs_date, expected_obs_date)
+        np.testing.assert_equal(combine_two.intensity_map_data.bg_intensity, expected_combined_bg_intensity)
+        np.testing.assert_equal(combine_two.intensity_map_data.bg_intensity_sys_err, expected_combined_bg_intensity_sys_err)
+        np.testing.assert_equal(combine_two.intensity_map_data.bg_intensity_stat_uncert, expected_combined_bg_stat_unc)
+
 
     def test_combine_maps_handles_integer_obs_date(self):
         map_1 = construct_intensity_data_with_all_zero_fields()

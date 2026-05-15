@@ -70,8 +70,10 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
 
         if sensor == Sensor.Hi90 or sensor == Sensor.Hi45:
             initial_dataset.attrs['Logical_source'] = 'imap_hi'
-        elif sensor in (Sensor.Lo75, Sensor.Lo90, Sensor.Lo105, Sensor.Lo):
+        elif sensor in (Sensor.Lo75, Sensor.Lo90, Sensor.Lo105):
             initial_dataset.attrs['Logical_source'] = 'imap_lo'
+        else:
+            raise ValueError("Unexpected sensor when performing survival probability correction!", sensor.name)
         dataset = add_spacecraft_position_and_velocity_to_pset(initial_dataset)
 
         if cg_corrected:

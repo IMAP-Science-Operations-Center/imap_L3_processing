@@ -72,7 +72,7 @@ class TestMapDescriptors(unittest.TestCase):
                                                                            sp, SpinPhase.FullSpin, "custom",
                                                                            PixelSize.Nside16,
                                                                            "6mo", MapQuantity.SpectralIndex, "")),
-            ("ilo-ena-h-sf-sp-ram-imaphae-2deg-3mo", MapDescriptorParts(Sensor.Lo, ReferenceFrame.Spacecraft,
+            ("ilo-ena-h-sf-sp-ram-imaphae-2deg-3mo", MapDescriptorParts(Sensor.LoCombined, ReferenceFrame.Spacecraft,
                                                                         sp, SpinPhase.RamOnly, "imaphae",
                                                                         PixelSize.TwoDegrees,
                                                                         "3mo", MapQuantity.Intensity, "")),
