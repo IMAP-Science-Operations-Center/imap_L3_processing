@@ -182,21 +182,41 @@ class CodiceLoProcessor(Processor):
         esa_energy_per_charge_lookup = dependencies.energy_lookup
 
         mass_coefficient_lookup = dependencies.mass_coefficient_lookup
-        priority_counts = [
-            codice_sw_priority_counts_l1a_data.p0_tcrs,
-            codice_sw_priority_counts_l1a_data.p1_hplus,
-            codice_sw_priority_counts_l1a_data.p2_heplusplus,
-            codice_sw_priority_counts_l1a_data.p3_heavies,
-            codice_sw_priority_counts_l1a_data.p4_dcrs,
-            codice_nsw_priority_counts_l1a_data.p5_heavies,
-            codice_nsw_priority_counts_l1a_data.p6_hplus_heplusplus,
-        ]
 
         spin_angle_lut = SpinAngleLookup()
 
         mass_per_charge = calculate_mass_per_charge(codice_direct_events.energy_per_charge, codice_direct_events.tof)
         mass = calculate_mass(codice_direct_events.apd_energy, codice_direct_events.tof, mass_coefficient_lookup)
-        stacked_priorities = np.stack(priority_counts, axis=1)
+
+        direct_event_epochs = codice_direct_events.epoch
+
+        sw_priority_counts = np.stack(
+            [
+                codice_sw_priority_counts_l1a_data.p0_tcrs,
+                codice_sw_priority_counts_l1a_data.p1_hplus,
+                codice_sw_priority_counts_l1a_data.p2_heplusplus,
+                codice_sw_priority_counts_l1a_data.p3_heavies,
+                codice_sw_priority_counts_l1a_data.p4_dcrs,
+            ],
+            axis=1,
+        )
+        nsw_priority_counts = np.stack(
+            [
+                codice_nsw_priority_counts_l1a_data.p5_heavies,
+                codice_nsw_priority_counts_l1a_data.p6_hplus_heplusplus,
+            ],
+            axis=1,
+        )
+
+        sw_aligned, sw_missing = _align_priority_counts_to_direct_event_epochs(
+            sw_priority_counts, codice_sw_priority_counts_l1a_data.epoch, direct_event_epochs
+        )
+        nsw_aligned, nsw_missing = _align_priority_counts_to_direct_event_epochs(
+            nsw_priority_counts, codice_nsw_priority_counts_l1a_data.epoch, direct_event_epochs
+        )
+
+        stacked_priorities = np.concatenate([sw_aligned, nsw_aligned], axis=1)
+
         normalization = calculate_normalization_factor(
             stacked_priorities,
             codice_direct_events.num_events,
@@ -209,6 +229,15 @@ class CodiceLoProcessor(Processor):
             codice_direct_events.energy_step,
             codice_direct_events.spin_sector,
         )
+
+        num_sw_priorities = sw_aligned.shape[1]
+        num_nsw_priorities = nsw_aligned.shape[1]
+        priority_missing_mask = np.zeros(
+            (len(direct_event_epochs), num_sw_priorities + num_nsw_priorities), dtype=bool
+        )
+        priority_missing_mask[sw_missing, :num_sw_priorities] = True
+        priority_missing_mask[nsw_missing, num_sw_priorities:] = True
+        normalization_per_event[priority_missing_mask] = 0.0
 
         return CodiceLoL3aDirectEventDataProduct(
             input_metadata=self.input_metadata,
@@ -287,6 +316,23 @@ class CodiceLoProcessor(Processor):
             species=dependencies.species,
             species_data=np.flip(intensity, axis=1),
         )
+
+
+def _align_priority_counts_to_direct_event_epochs(
+        priority_counts: np.ndarray,
+        priority_epochs: np.ndarray,
+        direct_event_epochs: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    num_direct_event_epochs = len(direct_event_epochs)
+    aligned_shape = (num_direct_event_epochs,) + priority_counts.shape[1:]
+    aligned = np.full(aligned_shape, np.nan)
+    missing_mask = np.ones(num_direct_event_epochs, dtype=bool)
+    for i, direct_event_epoch in enumerate(direct_event_epochs):
+        matching_indices = np.where(priority_epochs == direct_event_epoch)[0]
+        if len(matching_indices) > 0:
+            aligned[i] = priority_counts[matching_indices[0]]
+            missing_mask[i] = False
+    return aligned, missing_mask
 
 
 def _average_over_block(data_array: np.ndarray, block_size: int):

@@ -216,24 +216,18 @@ class SweProcessor(Processor):
         negative_moment_flags = check_and_mask_negative_moments(swe_l3_moments_data)
         swe_quality_flags |= negative_moment_flags
 
-        # Check Temperature Outlier Flags and add to swe_quality_flags
-        # each temperature variable needs checked
-        temperature_outlier_flags = check_temperature_outlier_flag(swe_l3_moments_data.core_t_parallel_integrated)
-        swe_quality_flags |= temperature_outlier_flags
-        temperature_outlier_flags = check_temperature_outlier_flag(swe_l3_moments_data.core_t_parallel_fit)
-        swe_quality_flags |= temperature_outlier_flags
-        temperature_outlier_flags = check_temperature_outlier_flag(swe_l3_moments_data.core_t_perpendicular_integrated[:,0])
-        swe_quality_flags |= temperature_outlier_flags
-        temperature_outlier_flags = check_temperature_outlier_flag(swe_l3_moments_data.core_t_perpendicular_fit)
-        swe_quality_flags |= temperature_outlier_flags
-        temperature_outlier_flags = check_temperature_outlier_flag(swe_l3_moments_data.halo_t_parallel_integrated)
-        swe_quality_flags |= temperature_outlier_flags
-        temperature_outlier_flags = check_temperature_outlier_flag(swe_l3_moments_data.halo_t_parallel_fit)
-        swe_quality_flags |= temperature_outlier_flags
-        temperature_outlier_flags = check_temperature_outlier_flag(swe_l3_moments_data.halo_t_perpendicular_integrated[:,0])
-        swe_quality_flags |= temperature_outlier_flags
-        temperature_outlier_flags = check_temperature_outlier_flag(swe_l3_moments_data.halo_t_perpendicular_fit)
-        swe_quality_flags |= temperature_outlier_flags
+        temperature_outlier_inputs = (
+            swe_l3_moments_data.core_t_parallel_integrated,
+            swe_l3_moments_data.core_t_parallel_fit,
+            swe_l3_moments_data.core_t_perpendicular_integrated[:, 0],
+            swe_l3_moments_data.core_t_perpendicular_fit,
+            swe_l3_moments_data.halo_t_parallel_integrated,
+            swe_l3_moments_data.halo_t_parallel_fit,
+            swe_l3_moments_data.halo_t_perpendicular_integrated[:, 0],
+            swe_l3_moments_data.halo_t_perpendicular_fit,
+        )
+        for temperature_array in temperature_outlier_inputs:
+            swe_quality_flags |= check_temperature_outlier_flag(temperature_array)
 
         (
             phase_space_density_by_pitch_angle,
@@ -250,12 +244,21 @@ class SweProcessor(Processor):
 
         swe_quality_flags |= pitch_angle_flags
 
-        psd_rebinned = swe_l2_data.phase_space_density_rebinned
-        unphysical_psd_per_epoch = np.any(
-            psd_rebinned > UNPHYSICAL_PSD_THRESHOLD,
-            axis=tuple(range(1, psd_rebinned.ndim)),
+        unphysical_psd_inputs = (
+            swe_l2_data.phase_space_density_rebinned,
+            phase_space_density_by_pitch_angle,
+            phase_space_density_by_pitch_angle_and_gyrophase,
+            energy_spectrum,
+            energy_spectrum_inbound,
+            energy_spectrum_outbound,
         )
-        swe_quality_flags[unphysical_psd_per_epoch] |= np.uint16(SweL3Flags.UNPHYSICAL_PSD)
+        for psd_input in unphysical_psd_inputs:
+            psd_array = np.asarray(psd_input)
+            unphysical_psd_per_epoch = np.any(
+                psd_array > UNPHYSICAL_PSD_THRESHOLD,
+                axis=tuple(range(1, psd_array.ndim)),
+            )
+            swe_quality_flags[unphysical_psd_per_epoch] |= np.uint16(SweL3Flags.UNPHYSICAL_PSD)
 
         if dependencies.mag_is_preliminary:
             swe_quality_flags = np.bitwise_or(swe_quality_flags, SweL3Flags.PRELIMINARY_MAG)
