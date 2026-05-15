@@ -1,11 +1,19 @@
+import tempfile
 import unittest
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 from imap_l3_processing.swapi.response.azimuthal_transmission import (
     AzimuthalTransmissionGrid,
+    OA_PLATEAU_AZIMUTH_MAX_DEG,
+    OA_PLATEAU_AZIMUTH_MIN_DEG,
+    OA_PLATEAU_TRANSMISSION,
+    SG_PLATEAU_AZIMUTH_MAX_DEG,
+    SG_PLATEAU_TRANSMISSION,
     interpolate_azimuthal_transmission,
+    validate_azimuthal_transmission_values,
 )
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 from tests.test_helpers import get_test_instrument_team_data_path
@@ -160,6 +168,97 @@ class TestRealGridShape(unittest.TestCase):
         self.assertEqual(len(grid.values), 1801)
         # The SG region is attenuated by ≈1/1000 at az=0.
         self.assertAlmostEqual(float(grid.values[0]), 1e-3)
+
+
+def _build_grid_satisfying_invariants(spacing: float = 0.1, n: int = 1801) -> np.ndarray:
+    """Build a synthetic values array that respects the SG-floor and OA-plateau
+    invariants the interpolator's short-circuit branches assume. Cells outside
+    those two ranges are set to a neutral 0.5 so a test can corrupt a single
+    cell in a chosen range without contaminating the other."""
+    azimuths = np.arange(n) * spacing
+    values = np.full(n, 0.5)
+    values[azimuths <= SG_PLATEAU_AZIMUTH_MAX_DEG] = SG_PLATEAU_TRANSMISSION
+    in_plateau = (azimuths >= OA_PLATEAU_AZIMUTH_MIN_DEG) & (azimuths <= OA_PLATEAU_AZIMUTH_MAX_DEG)
+    values[in_plateau] = OA_PLATEAU_TRANSMISSION
+    return values
+
+
+class TestValidateAzimuthalTransmissionValues(unittest.TestCase):
+    """`validate_azimuthal_transmission_values` enforces the constant-value
+    invariants the interpolator's short-circuit branches rely on:
+      - SG plateau: T(|az|) = SG_PLATEAU_TRANSMISSION
+        for all 0 ≤ |az| ≤ SG_PLATEAU_AZIMUTH_MAX_DEG.
+      - OA plateau: T(|az|) = OA_PLATEAU_TRANSMISSION for all
+        OA_PLATEAU_AZIMUTH_MIN_DEG ≤ |az| ≤ OA_PLATEAU_AZIMUTH_MAX_DEG.
+    If the loaded CSV deviates in either range, the interpolator would return
+    short-circuit values that contradict the data, so loading must fail loudly.
+    """
+
+    def test_production_csv_satisfies_invariants(self):
+        grid = _load_real_grid()
+        validate_azimuthal_transmission_values(grid.values, grid.spacing)
+
+    def test_synthetic_grid_satisfying_invariants_passes(self):
+        values = _build_grid_satisfying_invariants()
+        validate_azimuthal_transmission_values(values, 0.1)
+
+    def test_raises_when_sg_plateau_value_is_wrong(self):
+        values = _build_grid_satisfying_invariants()
+        # Index 50 corresponds to |az| = 5°, well inside the SG plateau range.
+        values[50] = 0.5
+        with self.assertRaises(ValueError):
+            validate_azimuthal_transmission_values(values, 0.1)
+
+    def test_raises_when_oa_plateau_value_is_wrong(self):
+        values = _build_grid_satisfying_invariants()
+        # Index 500 corresponds to |az| = 50°, inside the OA plateau range.
+        values[500] = 0.5
+        with self.assertRaises(ValueError):
+            validate_azimuthal_transmission_values(values, 0.1)
+
+    def test_raises_when_sg_plateau_endpoint_is_wrong(self):
+        # |az| = 9.0° (= SG_PLATEAU_AZIMUTH_MAX_DEG) is inclusive.
+        values = _build_grid_satisfying_invariants()
+        endpoint_index = int(round(SG_PLATEAU_AZIMUTH_MAX_DEG / 0.1))
+        values[endpoint_index] = 0.5
+        with self.assertRaises(ValueError):
+            validate_azimuthal_transmission_values(values, 0.1)
+
+    def test_raises_when_oa_plateau_endpoint_is_wrong(self):
+        # The 115° endpoint is inclusive — corrupt it and validation must trip.
+        values = _build_grid_satisfying_invariants()
+        endpoint_index = int(round(OA_PLATEAU_AZIMUTH_MAX_DEG / 0.1))
+        values[endpoint_index] = 0.5
+        with self.assertRaises(ValueError):
+            validate_azimuthal_transmission_values(values, 0.1)
+
+
+class TestSwapiResponseRejectsInvalidTransmissionCsv(unittest.TestCase):
+    """`SwapiResponse.from_files` must run `validate_azimuthal_transmission_values`
+    so that a bad transmission CSV is rejected at load time rather than
+    silently driving the short-circuit branches in the interpolator to lie."""
+
+    def test_from_files_raises_when_csv_violates_invariants(self):
+        df = pd.read_csv(get_test_instrument_team_data_path(
+            "swapi/imap_swapi_azimuthal-transmission_20260425_v001.csv"
+        ))
+        # Corrupt a single cell inside the OA plateau range.
+        df.loc[500, "transmission"] = 0.5
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            bad_csv_path = Path(tmpdir) / "bad_azimuthal_transmission.csv"
+            df.to_csv(bad_csv_path, index=False)
+
+            with self.assertRaises(ValueError):
+                SwapiResponse.from_files(
+                    bad_csv_path,
+                    get_test_instrument_team_data_path(
+                        "swapi/imap_swapi_central-effective-area_20260425_v001.csv"
+                    ),
+                    get_test_instrument_team_data_path(
+                        "swapi/imap_swapi_passband-fit-coefficients_20260425_v001.csv"
+                    ),
+                )
 
 
 if __name__ == "__main__":

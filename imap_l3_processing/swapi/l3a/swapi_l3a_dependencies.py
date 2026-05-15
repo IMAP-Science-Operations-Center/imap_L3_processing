@@ -14,9 +14,9 @@ from imap_l3_processing.swapi.descriptors import SWAPI_L2_DESCRIPTOR, \
     CENTRAL_EFFECTIVE_AREA_DESCRIPTOR, PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR, \
     MAG_RTN_DESCRIPTOR
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data
-from imap_l3_processing.swapi.l3a.science.density_of_neutral_helium_lookup_table import \
+from imap_l3_processing.swapi.l3a.science.pickup_ion.density_of_neutral_helium_lookup_table import \
     DensityOfNeutralHeliumLookupTable
-from imap_l3_processing.swapi.l3a.science.inflow_vector import InflowVector
+from imap_l3_processing.swapi.l3a.science.pickup_ion.inflow_vector import InflowVector
 from imap_l3_processing.swapi.l3a.utils import read_l2_swapi_data, read_mag_rtn_data
 from imap_l3_processing.utils import select_mag_path
 from imap_l3_processing.swapi.response.efficiency_calibration_table import EfficiencyCalibrationTable

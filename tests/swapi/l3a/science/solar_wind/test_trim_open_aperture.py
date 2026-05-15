@@ -5,10 +5,13 @@ import numpy as np
 
 from imap_l3_processing.swapi.l3a.science.solar_wind.trim_open_aperture import (
     OA_SCAN_RESOLUTION,
+    OA_SCAN_THRESHOLD,
     trim_open_aperture,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     SolarWindParams,
+    bulk_speed,
+    thermal_speed,
 )
 from imap_l3_processing.swapi.response.azimuthal_transmission import (
     AzimuthalTransmissionGrid,
@@ -184,35 +187,29 @@ class TestTrimAt1eMinus6Threshold(unittest.TestCase):
     """OA_SCAN_THRESHOLD selects one scan node outside the first/last above-threshold node."""
 
     def test_endpoints_expand_one_node_past_threshold_crossings(self):
-        """A step-function transmission plateau drives the trim to return one scan node outside the first/last above-threshold node."""
-        # Hand-built scenario with a transmission curve that's zero outside a
-        # narrow azimuth band, so the scan integrand is a step function we can
-        # reason about exactly without re-running production code.
-        #
-        # T(|az|) is 1 inside [85°, 95°] and 0 elsewhere. With a uniform-Maxwellian
-        # bulk (scaling `M(φ)` by zero kills that whole node regardless), the
-        # scan g(φ) on the 64-node grid linspace(20, 150, 64) is non-zero at
-        # exactly the scan nodes whose nearest 1° transmission sample is in the
-        # plateau. linspace(20, 150, 64) has spacing 130/63 ≈ 2.0635°, and the
-        # nodes inside [85°, 95°] are indices 32, 33, 34 (≈86.03°, 88.10°,
-        # 90.16°, 92.22°, 94.29° — but azimuth lookup quantizes to integer °, so
-        # the plateau is exactly nodes whose floor(|az|) ∈ [85, 95)).
-        transmission = np.zeros(181)
-        transmission[85:95] = 1.0  # T = 1 on [85°, 94°]
-        rg = _make_response_grid(azimuthal_transmission=transmission)
-        sw = proton_params(velocity_rtn=(0.0, -450.0, 0.0))  # bulk_az = +90°
+        """The trim returns one scan node outside the first/last node where the integrand exceeds OA_SCAN_THRESHOLD × max."""
+        # `interpolate_azimuthal_transmission` hard-codes T(|az|)=1 on the OA
+        # plateau [31°, 115°], which contains the [20°, 150°] scan window's
+        # interior. The integrand reduces to the Maxwellian centered at the
+        # bulk azimuth, which we recompute here.
+        rg = _make_response_grid()
+        sw = proton_params(velocity_rtn=(0.0, -450.0, 0.0))  # bulk_az = +90°, bulk_el = 0°
 
         lo, hi = _trim(rg, sw, azimuth_lo=20.0, azimuth_hi=150.0, sg_rate=0.0)
 
         scan = np.linspace(20.0, 150.0, OA_SCAN_RESOLUTION)
-        # Find which nodes lie in [85°, 94°] — those are the "above-threshold"
-        # nodes for this transmission. The trim must return one node outside
-        # the first/last of those indices.
-        in_plateau = (scan >= 85.0) & (scan < 95.0)
-        plateau_idx = np.where(in_plateau)[0]
-        self.assertGreater(plateau_idx.size, 0)
-        expected_lo = scan[max(int(plateau_idx[0]) - 1, 0)]
-        expected_hi = scan[min(int(plateau_idx[-1]) + 1, OA_SCAN_RESOLUTION - 1)]
+        sigma = thermal_speed(sw)
+        speed = bulk_speed(sw)
+        central = rg.central_speed
+        delta_v_sq = (
+            central**2 + speed**2
+            - 2.0 * central * speed * np.cos(np.radians(scan - 90.0))
+        )
+        integrand = np.exp(-delta_v_sq / (2.0 * sigma**2))
+        above_idx = np.where(integrand > OA_SCAN_THRESHOLD * integrand.max())[0]
+        self.assertGreater(above_idx.size, 0)
+        expected_lo = scan[max(int(above_idx[0]) - 1, 0)]
+        expected_hi = scan[min(int(above_idx[-1]) + 1, OA_SCAN_RESOLUTION - 1)]
         self.assertAlmostEqual(lo, expected_lo)
         self.assertAlmostEqual(hi, expected_hi)
 

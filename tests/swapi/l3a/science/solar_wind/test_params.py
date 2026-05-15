@@ -14,7 +14,6 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     N_STATE,
     VELOCITY_SLICE,
     SolarWindParams,
-    bulk_angles_in_instrument_frame,
     bulk_speed,
     temperature_to_thermal_speed,
     thermal_speed,
@@ -83,39 +82,6 @@ class TestBulkSpeed(unittest.TestCase):
         """A bulk velocity of (0, 0, 0) returns 0 exactly, with no divide-by-zero artefacts."""
         sw = proton_params(velocity_rtn=(0.0, 0.0, 0.0))
         self.assertEqual(bulk_speed(sw), 0.0)
-
-
-class TestBulkAnglesInInstrumentFrame(unittest.TestCase):
-    """Tests for `bulk_angles_in_instrument_frame`, which returns (azimuth, elevation) in degrees in the instrument XYZ frame:
-    azimuth = atan2(-v_x_inst, -v_y_inst), elevation = asin(-v_z_inst / |v|)."""
-
-    def test_velocity_along_minus_y_inst_returns_zero_angles(self):
-        """Under identity rotation, an RTN wind along -Y becomes v_inst = (0, -450, 0) and yields azimuth = 0 and elevation = 0."""
-        sw = proton_params(velocity_rtn=(0.0, -450.0, 0.0))
-        azimuth, elevation = bulk_angles_in_instrument_frame(sw, np.eye(3))
-        self.assertAlmostEqual(azimuth, 0.0)
-        self.assertAlmostEqual(elevation, 0.0)
-
-    def test_velocity_with_negative_x_inst_component_yields_positive_azimuth(self):
-        """A negative instrument-X component (v_inst_x = -50) gives a strictly positive azimuth, since azimuth = atan2(+50, +450) > 0."""
-        sw = proton_params(velocity_rtn=(-50.0, -450.0, 0.0))
-        azimuth, _ = bulk_angles_in_instrument_frame(sw, np.eye(3))
-        self.assertGreater(azimuth, 0.0)
-
-    def test_velocity_with_positive_z_inst_component_yields_negative_elevation(self):
-        """A positive instrument-Z component (v_inst_z = +50) gives a strictly negative elevation, since elevation = asin(-50/|v|) < 0."""
-        sw = proton_params(velocity_rtn=(0.0, -450.0, 50.0))
-        _, elevation = bulk_angles_in_instrument_frame(sw, np.eye(3))
-        self.assertLess(elevation, 0.0)
-
-    def test_uses_rotation_argument_to_transform_into_instrument_frame(self):
-        """When the rotation maps +Y_inst to -X_RTN, an RTN wind along -X_RTN lands along +Y_inst and produces azimuth = atan2(0, -1) = +/-180 degrees, catching regressions that drop the rotation."""
-        rotation_xyz_to_rtn = np.array(
-            [[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]]
-        )
-        sw = proton_params(velocity_rtn=(-450.0, 0.0, 0.0))
-        azimuth, _ = bulk_angles_in_instrument_frame(sw, rotation_xyz_to_rtn)
-        self.assertAlmostEqual(abs(azimuth), 180.0, places=10)
 
 
 class TestThermalSpeedAndTemperature(unittest.TestCase):

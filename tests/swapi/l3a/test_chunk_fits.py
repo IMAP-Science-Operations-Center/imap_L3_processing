@@ -1,3 +1,4 @@
+import platform
 import unittest
 from datetime import datetime
 from unittest.mock import Mock, patch
@@ -9,6 +10,7 @@ from uncertainties import ufloat
 from imap_l3_processing.constants import (
     ALPHA_MASS_PER_CHARGE_M_P_PER_E,
     ALPHA_PARTICLE_MASS_KG,
+    FIVE_MINUTES_IN_NANOSECONDS,
     ONE_SECOND_IN_NANOSECONDS,
     PROTON_MASS_KG,
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
@@ -22,6 +24,13 @@ from imap_l3_processing.swapi.l3a.chunk_fits import (
     ChunkFitter,
     ParallelChunkRunner,
     ProtonChunkFitter,
+    PuiChunkFitter,
+)
+from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_pickup_ion_values import (
+    PickupIonFitResult,
+)
+from imap_l3_processing.swapi.l3a.science.pickup_ion.vasyliunas_siscoe_distribution import (
+    FittingParameters,
 )
 from imap_l3_processing.swapi.response.efficiency_calibration_table import (
     EfficiencyCalibrationTable,
@@ -171,7 +180,7 @@ def _synthesize_chunk(*, response, rotations, proton_velocity_rtn, alpha_velocit
         count_rate=np.zeros(len(voltages)),
         esa_voltage=voltages,
         swapi_response=response,
-        central_effective_area_scale=chunk_fits._eff_scale(efficiency_table, _CHUNK_EPOCH, "proton"),
+        central_effective_area_scale=efficiency_table.central_effective_area_scale_for(_CHUNK_EPOCH, "proton"),
         rotation_matrices=rotations,
         mass_kg=PROTON_MASS_KG,
         mass_per_charge_m_p_per_e=PROTON_MASS_PER_CHARGE_M_P_PER_E,
@@ -180,7 +189,7 @@ def _synthesize_chunk(*, response, rotations, proton_velocity_rtn, alpha_velocit
         count_rate=np.zeros(len(voltages)),
         esa_voltage=voltages,
         swapi_response=response,
-        central_effective_area_scale=chunk_fits._eff_scale(efficiency_table, _CHUNK_EPOCH, "alpha"),
+        central_effective_area_scale=efficiency_table.central_effective_area_scale_for(_CHUNK_EPOCH, "helium"),
         rotation_matrices=rotations,
         mass_kg=ALPHA_PARTICLE_MASS_KG,
         mass_per_charge_m_p_per_e=ALPHA_MASS_PER_CHARGE_M_P_PER_E,
@@ -314,7 +323,9 @@ class TestProtonChunkFitterPrecomputeGeometry(SpiceTestCase):
 
     def test_success_returns_epoch_rotations_and_sc_velocity(self):
         """At an in-coverage chunk, precompute_geometry returns the chunk midpoint epoch, a per-bin rotation array of the right shape, and a 3-vector spacecraft velocity."""
-        epoch, rotation_matrices, spacecraft_velocity = ProtonChunkFitter().precompute_geometry(_zero_chunk())
+        [(epoch, rotation_matrices, spacecraft_velocity)] = (
+            ProtonChunkFitter().precompute_geometry([_zero_chunk()])
+        )
 
         self.assertEqual(epoch, _CHUNK_EPOCH)
         assert rotation_matrices is not None and spacecraft_velocity is not None
@@ -323,7 +334,9 @@ class TestProtonChunkFitterPrecomputeGeometry(SpiceTestCase):
 
     def test_spice_failure_yields_none_for_both_outputs(self):
         """If the chunk falls outside SPICE coverage, the proton fitter returns None for both rotations and spacecraft velocity."""
-        _, rotation_matrices, spacecraft_velocity = ProtonChunkFitter().precompute_geometry(_out_of_coverage_chunk())
+        [(_, rotation_matrices, spacecraft_velocity)] = (
+            ProtonChunkFitter().precompute_geometry([_out_of_coverage_chunk()])
+        )
 
         self.assertIsNone(rotation_matrices)
         self.assertIsNone(spacecraft_velocity)
@@ -331,8 +344,7 @@ class TestProtonChunkFitterPrecomputeGeometry(SpiceTestCase):
 
 class TestProtonChunkFitterFitChunk(SpiceTestCase):
     """Tests for `ProtonChunkFitter.fit_chunk` — end-to-end proton fit plus
-    fill-value branches on a forward-modelled chunk. Uses real SPICE for
-    `rotate_rtn_to_dps` inside `derive_velocity_angles`."""
+    fill-value branches on a forward-modelled chunk."""
 
     @classmethod
     def setUpClass(cls):
@@ -455,9 +467,9 @@ class TestAlphaChunkFitterPrecomputeGeometry(SpiceTestCase):
 
     def test_success_returns_rotations_sc_velocity_and_b_hat(self):
         """With both SPICE and MAG available, alpha precompute_geometry returns the chunk epoch, a science-bin rotation array of the right shape (matching the proton fit it shares with proton-sw), the spacecraft velocity, and the median B̂ in the chunk window."""
-        epoch, rotation_matrices, sc_velocity, b_hat = AlphaChunkFitter(
+        [(epoch, rotation_matrices, sc_velocity, b_hat)] = AlphaChunkFitter(
             self._mag_centered_on(_CHUNK_EPOCH)
-        ).precompute_geometry(_zero_chunk())
+        ).precompute_geometry([_zero_chunk()])
 
         self.assertEqual(epoch, _CHUNK_EPOCH)
         assert rotation_matrices is not None and sc_velocity is not None
@@ -471,9 +483,9 @@ class TestAlphaChunkFitterPrecomputeGeometry(SpiceTestCase):
     def test_spice_failure_yields_none_rotations_and_sc_velocity_but_keeps_b_hat(self):
         """When the chunk falls outside SPICE coverage, alpha precompute returns None rotations and None spacecraft velocity, but B̂ is still computed from MAG since that path is independent."""
         out_of_coverage_chunk_epoch = _OUT_OF_COVERAGE_START_TIME + THIRTY_SECONDS_IN_NANOSECONDS
-        _, rotation_matrices, sc_velocity, b_hat = AlphaChunkFitter(
+        [(_, rotation_matrices, sc_velocity, b_hat)] = AlphaChunkFitter(
             self._mag_centered_on(out_of_coverage_chunk_epoch)
-        ).precompute_geometry(_out_of_coverage_chunk())
+        ).precompute_geometry([_out_of_coverage_chunk()])
         self.assertIsNone(rotation_matrices)
         self.assertIsNone(sc_velocity)
         np.testing.assert_allclose(b_hat, _B_HAT_RTN)
@@ -481,9 +493,9 @@ class TestAlphaChunkFitterPrecomputeGeometry(SpiceTestCase):
     def test_empty_mag_window_yields_nan_b_hat(self):
         """When no MAG samples fall inside the chunk window, B̂ comes back as NaN even though rotations were successfully computed."""
         far_future = _EPOCH_TT2000 + 10**18
-        _, _, _, b_hat = AlphaChunkFitter(
+        [(_, _, _, b_hat)] = AlphaChunkFitter(
             self._mag_centered_on(far_future)
-        ).precompute_geometry(_zero_chunk())
+        ).precompute_geometry([_zero_chunk()])
         self.assertTrue(np.all(np.isnan(b_hat)))
 
 
@@ -554,8 +566,8 @@ class _RecordingChunkFitter(ChunkFitter):
     """A real `ChunkFitter` that echoes the chunk's start time. Module-level
     so fork-spawned workers can locate it via inherited memory."""
 
-    def precompute_geometry(self, chunk):
-        return (int(chunk.sci_start_time[0]),)
+    def precompute_geometry(self, chunks):
+        return [(int(chunk.sci_start_time[0]),) for chunk in chunks]
 
     def fit_chunk(self, chunk, epoch):
         return {
@@ -568,8 +580,8 @@ class _WarmCacheProbeChunkFitter(ChunkFitter):
     """A real `ChunkFitter` whose `fit_chunk` reports the `_passband_grid_cache` size
     seen by the worker process. Module-level for fork inheritance."""
 
-    def precompute_geometry(self, chunk):
-        return (int(chunk.sci_start_time[0]),)
+    def precompute_geometry(self, chunks):
+        return [(int(chunk.sci_start_time[0]),) for chunk in chunks]
 
     def fit_chunk(self, chunk, epoch):
         worker_response = chunk_fits._shared["swapi_response"]
@@ -851,6 +863,365 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
             _B_HAT_RTN,
         )
         _assert_alpha_flag_and_all_nan(self, result, SwapiL3Flags.FIT_ERROR)
+
+
+# ----- PuiChunkFitter -------------------------------------------------------
+
+
+_PUI_RESULT_KEYS = [
+    "epoch",
+    "cooling_index",
+    "ionization_rate",
+    "cutoff_speed",
+    "background_rate",
+    "density",
+    "temperature",
+    "quality_flags",
+]
+
+
+def _pui_chunk(start_time, count_rates=None):
+    """50-sweep chunk shaped like a PUI input window."""
+    n_sweeps = 50
+    energy = np.tile(np.arange(_N_BINS) * 100.0 + 1.0, (n_sweeps, 1))
+    if count_rates is None:
+        count_rates = np.full((n_sweeps, _N_BINS), 5.0)
+    sci_start_time = (
+        start_time + np.arange(n_sweeps, dtype=np.int64) * 12 * ONE_SECOND_IN_NANOSECONDS
+    )
+    return SwapiL2Data(
+        sci_start_time=sci_start_time,
+        energy=energy,
+        coincidence_count_rate=count_rates,
+        coincidence_count_rate_uncertainty=np.full((n_sweeps, _N_BINS), 0.1),
+    )
+
+
+@patch("imap_l3_processing.swapi.l3a.chunk_fits.build_vasyliunas_siscoe_distribution")
+@patch("imap_l3_processing.swapi.l3a.chunk_fits.calculate_pui_energy_cutoff")
+@patch("imap_l3_processing.swapi.l3a.chunk_fits.spiceypy")
+@patch("imap_l3_processing.swapi.l3a.chunk_fits.rotate_rtn_velocity_to_swapi_per_bin")
+@patch("imap_l3_processing.swapi.l3a.chunk_fits.calculate_ten_minute_velocities")
+class TestPuiChunkFitterPrecomputeGeometry(unittest.TestCase):
+    """`PuiChunkFitter.precompute_geometry` averages the 5-minute proton fits
+    into the 10-minute PUI cadence, rotates each chunk into SWAPI, and
+    precomputes the PUI chunk SPICE state. SPICE gaps fall back to NaN/None
+    fills so they propagate to fill values in the downstream fit."""
+
+    def _make_fitter(self, proton_results):
+        return PuiChunkFitter(
+            density_of_neutral_helium_lookup_table=Mock(),
+            hydrogen_inflow_vector=Mock(),
+            helium_inflow_vector=Mock(),
+            proton_results=proton_results,
+        )
+
+    def test_returns_one_geometry_tuple_per_chunk(
+        self,
+        mock_calculate_ten_minute_velocities,
+        mock_rotate_rtn_velocity_to_swapi_per_bin,
+        mock_spiceypy,
+        mock_calculate_pui_energy_cutoff,
+        mock_build_vasyliunas_siscoe_distribution,
+    ):
+        chunk = _pui_chunk(_EPOCH_TT2000)
+        expected_epoch = _EPOCH_TT2000 + FIVE_MINUTES_IN_NANOSECONDS
+        ten_minute_rtn = np.array([400.0, 10.0, 5.0])
+        per_bin = np.full((50, 62, 3), 0.5)
+        vs_dist = Mock()
+        mock_calculate_ten_minute_velocities.return_value = (
+            np.array([ten_minute_rtn]),
+            np.array([int(SwapiL3Flags.BAD_FIT)]),
+        )
+        mock_rotate_rtn_velocity_to_swapi_per_bin.return_value = per_bin
+        mock_calculate_pui_energy_cutoff.side_effect = [100.0, 200.0]
+        mock_build_vasyliunas_siscoe_distribution.return_value = vs_dist
+        fitter = self._make_fitter({
+            "proton_sw_bulk_velocity_rtn_sc": np.array([[1.0, 2.0, 3.0]]),
+            "quality_flags": np.array([int(SwapiL3Flags.BAD_FIT)]),
+        })
+
+        [(epoch, rtn, per_bin_swapi, flag, lower, upper, vs)] = (
+            fitter.precompute_geometry([chunk])
+        )
+
+        self.assertEqual(epoch, expected_epoch)
+        np.testing.assert_array_equal(rtn, ten_minute_rtn)
+        np.testing.assert_array_equal(per_bin_swapi, per_bin)
+        self.assertEqual(flag, int(SwapiL3Flags.BAD_FIT))
+        self.assertEqual(lower, 1.25 * 100.0)
+        self.assertEqual(upper, 1.2 * 200.0)
+        self.assertIs(vs, vs_dist)
+        self.assertEqual(
+            fitter.sw_velocity_rtn_by_chunk_epoch[expected_epoch].tolist(),
+            ten_minute_rtn.tolist(),
+        )
+
+    def test_spice_gap_on_rotate_yields_nan_per_bin_velocity(
+        self,
+        mock_calculate_ten_minute_velocities,
+        mock_rotate_rtn_velocity_to_swapi_per_bin,
+        mock_spiceypy,
+        mock_calculate_pui_energy_cutoff,
+        mock_build_vasyliunas_siscoe_distribution,
+    ):
+        from spiceypy.utils.exceptions import SpiceyError as _SpiceyError
+
+        chunk = _pui_chunk(_EPOCH_TT2000)
+        mock_calculate_ten_minute_velocities.return_value = (
+            np.array([[400.0, 10.0, 5.0]]),
+            np.array([int(SwapiL3Flags.NONE)]),
+        )
+        mock_rotate_rtn_velocity_to_swapi_per_bin.side_effect = _SpiceyError("gap")
+        mock_calculate_pui_energy_cutoff.side_effect = [1.0, 2.0]
+        mock_build_vasyliunas_siscoe_distribution.return_value = Mock()
+        fitter = self._make_fitter({
+            "proton_sw_bulk_velocity_rtn_sc": np.array([[1.0, 2.0, 3.0]]),
+            "quality_flags": np.array([int(SwapiL3Flags.NONE)]),
+        })
+
+        [(_, _, per_bin_swapi, _, _, _, _)] = fitter.precompute_geometry([chunk])
+
+        self.assertEqual(per_bin_swapi.shape, (50, 62, 3))
+        self.assertTrue(np.all(np.isnan(per_bin_swapi)))
+
+    def test_nan_ten_minute_velocity_skips_spice_state(
+        self,
+        mock_calculate_ten_minute_velocities,
+        mock_rotate_rtn_velocity_to_swapi_per_bin,
+        mock_spiceypy,
+        mock_calculate_pui_energy_cutoff,
+        mock_build_vasyliunas_siscoe_distribution,
+    ):
+        chunk = _pui_chunk(_EPOCH_TT2000)
+        mock_calculate_ten_minute_velocities.return_value = (
+            np.array([[np.nan, np.nan, np.nan]]),
+            np.array([int(SwapiL3Flags.NONE)]),
+        )
+        mock_rotate_rtn_velocity_to_swapi_per_bin.return_value = np.full(
+            (50, 62, 3), 0.0
+        )
+        fitter = self._make_fitter({
+            "proton_sw_bulk_velocity_rtn_sc": np.array([[1.0, 2.0, 3.0]]),
+            "quality_flags": np.array([int(SwapiL3Flags.NONE)]),
+        })
+
+        [(_, _, _, _, lower, upper, vs)] = fitter.precompute_geometry([chunk])
+
+        self.assertIsNone(lower)
+        self.assertIsNone(upper)
+        self.assertIsNone(vs)
+        mock_spiceypy.unitim.assert_not_called()
+        mock_calculate_pui_energy_cutoff.assert_not_called()
+        mock_build_vasyliunas_siscoe_distribution.assert_not_called()
+
+    def test_spice_gap_on_precompute_spice_state_yields_none(
+        self,
+        mock_calculate_ten_minute_velocities,
+        mock_rotate_rtn_velocity_to_swapi_per_bin,
+        mock_spiceypy,
+        mock_calculate_pui_energy_cutoff,
+        mock_build_vasyliunas_siscoe_distribution,
+    ):
+        from spiceypy.utils.exceptions import SpiceyError as _SpiceyError
+
+        chunk = _pui_chunk(_EPOCH_TT2000)
+        mock_calculate_ten_minute_velocities.return_value = (
+            np.array([[400.0, 10.0, 5.0]]),
+            np.array([int(SwapiL3Flags.NONE)]),
+        )
+        mock_rotate_rtn_velocity_to_swapi_per_bin.return_value = np.full(
+            (50, 62, 3), 0.0
+        )
+        mock_build_vasyliunas_siscoe_distribution.side_effect = _SpiceyError("gap")
+        fitter = self._make_fitter({
+            "proton_sw_bulk_velocity_rtn_sc": np.array([[1.0, 2.0, 3.0]]),
+            "quality_flags": np.array([int(SwapiL3Flags.NONE)]),
+        })
+
+        [(_, _, _, _, lower, upper, vs)] = fitter.precompute_geometry([chunk])
+
+        self.assertIsNone(lower)
+        self.assertIsNone(upper)
+        self.assertIsNone(vs)
+
+
+@patch("imap_l3_processing.swapi.l3a.chunk_fits.calculate_helium_pui_temperature")
+@patch("imap_l3_processing.swapi.l3a.chunk_fits.calculate_helium_pui_density")
+@patch("imap_l3_processing.swapi.l3a.chunk_fits.calculate_pickup_ion_values")
+class TestPuiChunkFitterFitChunk(unittest.TestCase):
+    """`PuiChunkFitter.fit_chunk` wraps `calculate_pickup_ion_values` and the
+    two helium-moment helpers in a try/except, then OR-combines the upstream
+    proton quality flag with the per-fit flag."""
+
+    def setUp(self):
+        self.epoch = _EPOCH_TT2000 + FIVE_MINUTES_IN_NANOSECONDS
+        self.sw_velocity_rtn = np.array([400.0, 10.0, 5.0])
+        self.bulk_sw_per_bin_swapi = np.full((50, 62, 3), 0.5)
+        self.lower_energy_cutoff = 1234.0
+        self.upper_energy_cutoff = 5678.0
+        self.vasyliunas_siscoe_distribution = Mock()
+        self.swapi_response = Mock()
+        self.efficiency_table = Mock()
+        self.efficiency_table.central_effective_area_scale_for.return_value = 0.42
+        _populate_shared(self.swapi_response, self.efficiency_table)
+        self.density_lut = Mock()
+        self.hydrogen_inflow = Mock()
+        self.helium_inflow = Mock()
+        self.fitter = PuiChunkFitter(
+            density_of_neutral_helium_lookup_table=self.density_lut,
+            hydrogen_inflow_vector=self.hydrogen_inflow,
+            helium_inflow_vector=self.helium_inflow,
+            proton_results={},
+        )
+
+    def tearDown(self):
+        _clear_shared()
+
+    def test_clean_chunk_passes_through_fit_parameters_and_moment_helpers(
+        self, mock_calculate_pickup_ion, mock_density, mock_temperature
+    ):
+        """On a clean chunk the fitter forwards the fit parameters and the moment-helper outputs verbatim, and the helium-channel effective-area scale lookup happens at the PUI chunk-center epoch."""
+        fit_params = FittingParameters(1.5, 1e-7, 450.0, 0.3, int(SwapiL3Flags.NONE))
+        mock_calculate_pickup_ion.return_value = PickupIonFitResult(
+            fitting_params=fit_params,
+            chunk_response=Mock(),
+            vasyliunas_siscoe_distribution=Mock(),
+        )
+        density_result = ufloat(5.0, 0.5)
+        temperature_result = ufloat(1e6, 1e5)
+        mock_density.return_value = density_result
+        mock_temperature.return_value = temperature_result
+
+        result = self.fitter.fit_chunk(
+            _pui_chunk(_EPOCH_TT2000),
+            self.epoch,
+            self.sw_velocity_rtn,
+            self.bulk_sw_per_bin_swapi,
+            int(SwapiL3Flags.NONE),
+            self.lower_energy_cutoff,
+            self.upper_energy_cutoff,
+            self.vasyliunas_siscoe_distribution,
+        )
+
+        self.assertEqual(result["epoch"], self.epoch)
+        self.assertEqual(result["cooling_index"], 1.5)
+        self.assertEqual(result["ionization_rate"], 1e-7)
+        self.assertEqual(result["cutoff_speed"], 450.0)
+        self.assertEqual(result["background_rate"], 0.3)
+        self.assertIs(result["density"], density_result)
+        self.assertIs(result["temperature"], temperature_result)
+        self.assertEqual(result["quality_flags"], int(SwapiL3Flags.NONE))
+
+        self.efficiency_table.central_effective_area_scale_for.assert_called_once_with(
+            self.epoch, "helium"
+        )
+        pickup_kwargs = mock_calculate_pickup_ion.call_args.kwargs
+        self.assertEqual(pickup_kwargs["central_effective_area_scale"], 0.42)
+
+    def test_combines_pui_fit_flag_with_upstream_proton_flag(
+        self, mock_calculate_pickup_ion, mock_density, mock_temperature
+    ):
+        """The output quality flag is the bitwise OR of the per-fit flag returned by `calculate_pickup_ion_values` and the upstream proton-SW quality flag."""
+        mock_calculate_pickup_ion.return_value = PickupIonFitResult(
+            fitting_params=FittingParameters(
+                1.5, 1e-7, 450.0, 0.3, int(SwapiL3Flags.BAD_FIT)
+            ),
+            chunk_response=Mock(),
+            vasyliunas_siscoe_distribution=Mock(),
+        )
+        mock_density.return_value = ufloat(5.0, 0.5)
+        mock_temperature.return_value = ufloat(1e6, 1e5)
+
+        result = self.fitter.fit_chunk(
+            _pui_chunk(_EPOCH_TT2000),
+            self.epoch,
+            self.sw_velocity_rtn,
+            self.bulk_sw_per_bin_swapi,
+            int(SwapiL3Flags.FIT_ERROR),
+            self.lower_energy_cutoff,
+            self.upper_energy_cutoff,
+            self.vasyliunas_siscoe_distribution,
+        )
+
+        self.assertEqual(
+            result["quality_flags"],
+            int(SwapiL3Flags.BAD_FIT) | int(SwapiL3Flags.FIT_ERROR),
+        )
+
+    def test_nan_in_count_rates_fills_outputs_and_skips_fit(
+        self, mock_calculate_pickup_ion, mock_density, mock_temperature
+    ):
+        """A NaN in the coarse-bin count rate slice short-circuits the fit: every scalar output is NaN, no science helper is called, and the only flag in the result is the upstream proton flag."""
+        count_rates = np.full((50, _N_BINS), 5.0)
+        count_rates[3, 30] = np.nan
+        chunk = _pui_chunk(_EPOCH_TT2000, count_rates=count_rates)
+
+        result = self.fitter.fit_chunk(
+            chunk,
+            self.epoch,
+            self.sw_velocity_rtn,
+            self.bulk_sw_per_bin_swapi,
+            int(SwapiL3Flags.NONE),
+            self.lower_energy_cutoff,
+            self.upper_energy_cutoff,
+            self.vasyliunas_siscoe_distribution,
+        )
+
+        mock_calculate_pickup_ion.assert_not_called()
+        mock_density.assert_not_called()
+        mock_temperature.assert_not_called()
+        for key in ("cooling_index", "ionization_rate", "cutoff_speed",
+                    "background_rate", "density", "temperature"):
+            self.assertTrue(np.isnan(result[key].nominal_value), msg=key)
+            self.assertTrue(np.isnan(result[key].std_dev), msg=key)
+        self.assertEqual(result["quality_flags"], int(SwapiL3Flags.NONE))
+
+    def test_nan_in_sw_velocity_fills_outputs_and_skips_fit(
+        self, mock_calculate_pickup_ion, mock_density, mock_temperature
+    ):
+        """A NaN-valued RTN SW velocity (from upstream proton fit failure) short-circuits the fit the same way as a missing count rate."""
+        result = self.fitter.fit_chunk(
+            _pui_chunk(_EPOCH_TT2000),
+            self.epoch,
+            np.array([np.nan, np.nan, np.nan]),
+            self.bulk_sw_per_bin_swapi,
+            int(SwapiL3Flags.NONE),
+            self.lower_energy_cutoff,
+            self.upper_energy_cutoff,
+            self.vasyliunas_siscoe_distribution,
+        )
+
+        mock_calculate_pickup_ion.assert_not_called()
+        for key in ("cooling_index", "ionization_rate", "cutoff_speed",
+                    "background_rate", "density", "temperature"):
+            self.assertTrue(np.isnan(result[key].nominal_value), msg=key)
+        self.assertEqual(result["quality_flags"], int(SwapiL3Flags.NONE))
+
+    def test_nan_in_bulk_sw_per_bin_swapi_fills_outputs_and_skips_fit(
+        self, mock_calculate_pickup_ion, mock_density, mock_temperature
+    ):
+        """A NaN in the per-bin SWAPI velocity (SPICE-gap fill from upstream)
+        short-circuits the fit even when the RTN average is finite."""
+        bulk_sw_per_bin_swapi_with_nan = self.bulk_sw_per_bin_swapi.copy()
+        bulk_sw_per_bin_swapi_with_nan[3, 17, 0] = np.nan
+
+        result = self.fitter.fit_chunk(
+            _pui_chunk(_EPOCH_TT2000),
+            self.epoch,
+            self.sw_velocity_rtn,
+            bulk_sw_per_bin_swapi_with_nan,
+            int(SwapiL3Flags.NONE),
+            self.lower_energy_cutoff,
+            self.upper_energy_cutoff,
+            self.vasyliunas_siscoe_distribution,
+        )
+
+        mock_calculate_pickup_ion.assert_not_called()
+        for key in ("cooling_index", "ionization_rate", "cutoff_speed",
+                    "background_rate", "density", "temperature"):
+            self.assertTrue(np.isnan(result[key].nominal_value), msg=key)
+        self.assertEqual(result["quality_flags"], int(SwapiL3Flags.NONE))
 
 
 if __name__ == "__main__":

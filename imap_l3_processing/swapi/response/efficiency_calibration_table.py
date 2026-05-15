@@ -20,6 +20,14 @@ class EfficiencyCalibrationTable:
                 return float(d["proton efficiency"])
         return float(self.data[0]["proton efficiency"])
 
+    def central_effective_area_scale_for(self, time_as_tt2000, species: str) -> float:
+        eps_lab = float(self.eps_p_lab)
+        if species == "proton":
+            return float(self.get_proton_efficiency_for(time_as_tt2000)) / eps_lab
+        if species == "helium":
+            return float(self.get_alpha_efficiency_for(time_as_tt2000)) / eps_lab
+        raise ValueError(f"Unknown species {species!r}; expected 'proton' or 'helium'.")
+
     def _get_efficiency_for_index(self, name, time_as_tt2000) -> float:
         for d in reversed(self.data):
             if d["time"] < np.datetime64(pycdf.lib.tt2000_to_datetime(int(time_as_tt2000)), "ns"):
