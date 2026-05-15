@@ -14,12 +14,18 @@ class SolarWindFitContext(NamedTuple):
     rotation_matrices: ndarray
     mass_kg: float
 
-    def subset(self, indices: ndarray) -> Self:
+    def subset(self, bin_indices: ndarray) -> Self:
+        n_sweeps, n_bins = self.count_rate.shape
+        flat_indices = np.concatenate(
+            [bin_indices + s * n_bins for s in range(n_sweeps)]
+        )
         return self._replace(
-            count_rate=self.count_rate.ravel()[indices],
-            esa_voltage=self.esa_voltage.ravel()[indices],
-            response_grids=numba.typed.List([self.response_grids[i] for i in indices]),
-            rotation_matrices=self.rotation_matrices[indices],
+            count_rate=self.count_rate[:, bin_indices],
+            esa_voltage=self.esa_voltage[:, bin_indices],
+            response_grids=numba.typed.List(
+                [self.response_grids[i] for i in flat_indices]
+            ),
+            rotation_matrices=self.rotation_matrices[flat_indices],
         )
 
 

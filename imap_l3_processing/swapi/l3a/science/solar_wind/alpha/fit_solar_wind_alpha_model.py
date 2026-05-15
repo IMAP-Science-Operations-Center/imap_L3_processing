@@ -92,14 +92,9 @@ def fit_solar_wind_alpha_model(
     alpha_density_seed, alpha_temperature_seed, delta_v_seed, peak_bin_idx = seed
 
     n_sweeps, n_bins = alpha_ctx.count_rate.shape
-    count_rate_flat = alpha_ctx.count_rate.ravel()
     peak_flat_idx = np.concatenate([peak_bin_idx + s * n_bins for s in range(n_sweeps)])
-    count_rate_peak = count_rate_flat[peak_flat_idx]
-    keep = count_rate_peak > 0
-    if not np.all(keep):
-        peak_flat_idx = peak_flat_idx[keep]
     proton_true_rate_peak = proton_true_rate[peak_flat_idx]
-    alpha_ctx_peak = alpha_ctx.subset(peak_flat_idx)
+    alpha_ctx_peak = alpha_ctx.subset(peak_bin_idx)
 
     evaluator = _AlphaEvaluator(
         proton_bulk=proton_bulk_rtn,
@@ -194,9 +189,7 @@ def _construct_alpha_fit_result(
 def _alpha_r_squared(
     residuals: ndarray, count_rate: ndarray, n_sweeps: int, n_peak_bins: int
 ) -> float:
-    averaged_count_rate = np.nanmean(
-        count_rate.reshape(n_sweeps, n_peak_bins), axis=0
-    )
+    averaged_count_rate = np.nanmean(count_rate, axis=0)
     averaged_residual = np.nanmean(
         residuals.reshape(n_sweeps, n_peak_bins), axis=0
     )

@@ -40,26 +40,30 @@ def _swapi_response_returning_per_voltage_response_grid():
 
 
 class TestSolarWindFitContextSubset(unittest.TestCase):
-    """Tests for `SolarWindFitContext.subset` — selects per-sweep arrays by index while leaving scalar `mass_kg` intact."""
+    """Tests for `SolarWindFitContext.subset` — selects the named bin columns from every sweep, preserving the (n_sweeps, n_kept_bins) 2D layout of `count_rate`/`esa_voltage` while expanding the bin indices to the flat sweep-major positions used by `response_grids` and `rotation_matrices`."""
 
     def setUp(self):
-        # 4 sweeps with distinguishable per-sweep values. The "rotation
-        # matrices" here are not real rotations (det ≠ 1) — they're just
-        # arrays distinguishable by their first entry, used to verify the
-        # subset operation indexes correctly.
+        # 2 sweeps × 3 bins, with distinguishable values per (sweep, bin)
+        # so the subset operation's axis handling is observable. The
+        # "rotation matrices" here are not real rotations (det ≠ 1) —
+        # they're just stand-ins keyed by their flat sweep-major bin-minor
+        # position so picks are easy to verify.
         self.full_ctx = SolarWindFitContext(
-            count_rate=np.array([10.0, 20.0, 30.0, 40.0]),
-            esa_voltage=np.array([100.0, 200.0, 300.0, 400.0]),
-            response_grids=["grid_0", "grid_1", "grid_2", "grid_3"],
+            count_rate=np.array([[10.0, 20.0, 30.0], [40.0, 50.0, 60.0]]),
+            esa_voltage=np.array([[100.0, 200.0, 300.0], [400.0, 500.0, 600.0]]),
+            response_grids=[
+                "s0b0", "s0b1", "s0b2",
+                "s1b0", "s1b1", "s1b2",
+            ],
             rotation_matrices=np.stack(
-                [np.eye(3) * (i + 1) for i in range(4)]
+                [np.eye(3) * (i + 1) for i in range(6)]
             ),
             mass_kg=PROTON_MASS_KG,
         )
 
-    def test_subset_with_all_indices_returns_equivalent_context(self):
-        """Subsetting with the full index range reproduces every per-sweep array unchanged."""
-        kept = self.full_ctx.subset(np.array([0, 1, 2, 3]))
+    def test_subset_with_all_bin_indices_returns_equivalent_context(self):
+        """Subsetting with every bin index reproduces all per-bin arrays unchanged."""
+        kept = self.full_ctx.subset(np.array([0, 1, 2]))
         np.testing.assert_array_equal(kept.count_rate, self.full_ctx.count_rate)
         np.testing.assert_array_equal(kept.esa_voltage, self.full_ctx.esa_voltage)
         # `subset` rebuilds response_grids as a numba.typed.List; cast to a
@@ -69,19 +73,26 @@ class TestSolarWindFitContextSubset(unittest.TestCase):
             kept.rotation_matrices, self.full_ctx.rotation_matrices
         )
 
-    def test_subset_picks_per_sweep_arrays_at_the_given_indices(self):
-        """Selecting indices [1, 3] yields a context whose count_rate, voltage, response_grids, and rotation_matrices are all picked at those positions."""
-        kept = self.full_ctx.subset(np.array([1, 3]))
-        np.testing.assert_array_equal(kept.count_rate, [20.0, 40.0])
-        np.testing.assert_array_equal(kept.esa_voltage, [200.0, 400.0])
-        self.assertEqual(list(kept.response_grids), ["grid_1", "grid_3"])
+    def test_subset_picks_bin_axis_at_the_given_indices_preserving_sweeps(self):
+        """Selecting bin indices [0, 2] yields a context with those two bin columns from each sweep; count_rate and esa_voltage stay 2D as (n_sweeps, n_kept_bins)."""
+        kept = self.full_ctx.subset(np.array([0, 2]))
+        np.testing.assert_array_equal(
+            kept.count_rate, [[10.0, 30.0], [40.0, 60.0]]
+        )
+        np.testing.assert_array_equal(
+            kept.esa_voltage, [[100.0, 300.0], [400.0, 600.0]]
+        )
+        # Flat sweep-major bin-minor order: s0b0, s0b2, s1b0, s1b2
+        self.assertEqual(
+            list(kept.response_grids), ["s0b0", "s0b2", "s1b0", "s1b2"]
+        )
         np.testing.assert_array_equal(
             kept.rotation_matrices,
-            self.full_ctx.rotation_matrices[[1, 3]],
+            self.full_ctx.rotation_matrices[[0, 2, 3, 5]],
         )
 
     def test_subset_preserves_mass(self):
-        """Subsetting to a single sweep leaves the scalar `mass_kg` field untouched."""
+        """Subsetting to a single bin leaves the scalar `mass_kg` field untouched."""
         kept = self.full_ctx.subset(np.array([0]))
         self.assertEqual(kept.mass_kg, PROTON_MASS_KG)
 
