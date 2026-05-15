@@ -122,7 +122,7 @@ def rebin_to_counts_by_species_elevation_and_spin_sector(direct_event_data: Codi
     mass = direct_event_data.mass
     mass_per_charge = direct_event_data.mass_per_charge
     spin_sector = direct_event_data.spin_sector
-    position = direct_event_data.position
+    apd_id = direct_event_data.apd_id
     energy_step = direct_event_data.energy_step
     num_events = direct_event_data.num_events
 
@@ -141,15 +141,15 @@ def rebin_to_counts_by_species_elevation_and_spin_sector(direct_event_data: Codi
                 indices_of_event = epoch_i, priority_i, event_i
                 masked_energy_step = energy_step[indices_of_event] is np.ma.masked
                 masked_spin_sector = spin_sector[indices_of_event] is np.ma.masked
-                masked_position = position[indices_of_event] is np.ma.masked
-                if masked_energy_step or masked_spin_sector or masked_position:
+                masked_apd_id = apd_id[indices_of_event] is np.ma.masked
+                if masked_energy_step or masked_spin_sector or masked_apd_id:
                     continue
 
-                position_of_event = int(position[indices_of_event])
-                assert 1 <= position[
+                apd_id_of_event = int(apd_id[indices_of_event])
+                assert 1 <= apd_id[
                     indices_of_event], f"Expected position to be greater than 0 for event {indices_of_event}"
 
-                if position_of_event > CODICE_LO_NUM_AZIMUTH_BINS:
+                if apd_id_of_event > CODICE_LO_NUM_AZIMUTH_BINS:
                     continue
 
                 species = mass_species_bin_lookup.get_species(mass[indices_of_event],
@@ -158,9 +158,9 @@ def rebin_to_counts_by_species_elevation_and_spin_sector(direct_event_data: Codi
                     energy_i = energy_step[indices_of_event]
                     species_i = mass_species_bin_lookup.get_species_index(species)
                     spin_sector_i = spin_sector[indices_of_event]
-                    position_i = position_of_event - 1
+                    apd_id_i = apd_id_of_event - 1
                     output[
-                        species_i, epoch_i, priority_i, energy_i, spin_sector_i, position_i] += \
+                        species_i, epoch_i, priority_i, energy_i, spin_sector_i, apd_id_i] += \
                         direct_event_data.normalization_per_event[indices_of_event]
 
     return output
@@ -177,12 +177,12 @@ ENERGY = TypeVar("ENERGY")
 def combine_priorities_for_species_and_convert_to_rate(
         counts: np.ndarray[(EPOCH, PRIORITY, POSITION, SPIN_ANGLE, ENERGY)],
         acquisition_times: np.ndarray[(EPOCH, ENERGY,)]) -> np.ndarray:
-    return np.sum(counts, axis=1) / (acquisition_times[:, :, np.newaxis, np.newaxis] / ONE_SECOND_IN_MICROSECONDS)
+    return np.sum(counts, axis=1) / (acquisition_times[:, :, np.newaxis, np.newaxis])
 
 
 def rebin_3d_distribution_azimuth_to_elevation(intensity_data: np.ndarray,
                                                azimuths: np.ndarray,
-                                               position_to_elevation_lut: PositionToElevationLookup) -> np.ndarray:
+                                               position_to_elevation_lut: PositionToElevationLookup, half_spin) -> np.ndarray:
     num_epochs = intensity_data.shape[0]
     num_elevations = len(position_to_elevation_lut.bin_centers)
     num_spin_angles = intensity_data.shape[2]
@@ -190,8 +190,18 @@ def rebin_3d_distribution_azimuth_to_elevation(intensity_data: np.ndarray,
     rebinned = np.zeros((num_epochs, num_energies, num_spin_angles, num_elevations))
 
     elevation_indices = position_to_elevation_lut.apd_to_elevation_index(azimuths)
-    for azimuth_index, elevation_index in enumerate(elevation_indices):
-        rebinned[:, :, :, elevation_index] += intensity_data[:, :, :, azimuth_index]
+    for azimuth_index, elevation_index in zip(azimuths, elevation_indices):
+        rebinned[:, :, :, elevation_index] += intensity_data[:, :, :, azimuth_index - 1]
+
+    for epoch_i in range(len(half_spin)):
+        ids_a = half_spin[epoch_i] % 2 == 0
+        ids_b = half_spin[epoch_i] % 2 == 1
+        rebinned[epoch_i, ids_a, 12:24, 0] = rebinned[epoch_i, ids_a, 0:12, 0]
+        rebinned[epoch_i, ids_b, 0:12, 0] = rebinned[epoch_i, ids_b, 12:24, 0]
+
+        rebinned[epoch_i, ids_a, 0:12, 12] = rebinned[epoch_i, ids_a, 12:24, 12]
+        rebinned[epoch_i, ids_b, 12:24, 12] = rebinned[epoch_i, ids_b, 0:12, 12]
+
     return rebinned
 
 
