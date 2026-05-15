@@ -58,13 +58,12 @@ from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3Survival
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct, \
     RectangularIntensityMapData
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.swapi.l3a.science.calculate_pickup_ion import DensityOfNeutralHeliumLookupTable
+from imap_l3_processing.swapi.l3a.science.pickup_ion.density_of_neutral_helium_lookup_table import \
+    DensityOfNeutralHeliumLookupTable
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
 from imap_l3_processing.swapi.l3a.utils import read_l2_swapi_data
 from imap_l3_processing.swapi.response.efficiency_calibration_table import EfficiencyCalibrationTable
 from imap_l3_processing.swapi.l3b.science.geometric_factor_calibration_table import GeometricFactorCalibrationTable
-from imap_l3_processing.swapi.l3b.science.instrument_response_lookup_table import \
-    InstrumentResponseLookupTableCollection
 from imap_l3_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
@@ -238,7 +237,7 @@ def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file
 
 @patch("imap_l3_processing.swapi.l3a.science.calculate_pickup_ion.spiceypy")
 def create_swapi_l3a_cdf(geometric_factor_calibration_file,
-                         instrument_response_calibration_file, density_of_neutral_helium_calibration_file,
+                         density_of_neutral_helium_calibration_file,
                          imap_swapi_efficiency_lut_file, cdf_file, mock_spice):
     ephemeris_time_for_epoch = int(100000 * 1e9)
     mock_spice.unitim.return_value = ephemeris_time_for_epoch
@@ -263,8 +262,6 @@ def create_swapi_l3a_cdf(geometric_factor_calibration_file,
 
     efficiency_calibration_table = EfficiencyCalibrationTable(imap_swapi_efficiency_lut_file)
     geometric_factor_calibration_table = GeometricFactorCalibrationTable.from_file(geometric_factor_calibration_file)
-    instrument_response_calibration_table = InstrumentResponseLookupTableCollection.from_file(
-        instrument_response_calibration_file)
     density_of_neutral_helium_calibration_table = DensityOfNeutralHeliumLookupTable.from_file(
         density_of_neutral_helium_calibration_file)
     swapi_cdf_data = CDF(cdf_file)
@@ -273,7 +270,6 @@ def create_swapi_l3a_cdf(geometric_factor_calibration_file,
         data=swapi_data,
         efficiency_calibration_table=efficiency_calibration_table,
         geometric_factor_calibration_table=geometric_factor_calibration_table,
-        instrument_response_calibration_table=instrument_response_calibration_table,
         density_of_neutral_helium_calibration_table=density_of_neutral_helium_calibration_table,
         hydrogen_inflow_vector=Mock(),
         helium_inflow_vector=Mock(),
@@ -1021,7 +1017,6 @@ if __name__ == "__main__":
         if "l3a" in sys.argv:
             paths = create_swapi_l3a_cdf(
                 str(get_test_data_path("swapi/imap_swapi_energy-gf-pui-lut_20100101_v001.csv")),
-                str(get_test_data_path("swapi/imap_swapi_instrument-response-lut_20241023_v000.zip")),
                 str(get_test_data_path(
                     "swapi/imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf")),
                 str(get_test_data_path("swapi/imap_swapi_efficiency-lut_20241020_v000.dat")),
