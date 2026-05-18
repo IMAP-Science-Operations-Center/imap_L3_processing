@@ -58,11 +58,11 @@ class CarringtonSolarWind():
             latitudinal grid [deg]
         plasma_speed : float 1D vector
             solar wind speed latitudinal profile [km/s]
-        proton_density : float 1D vector
+        proton_density : float 1D vector 
             solar wind density latitudinal profile [#/cm^3]
-
+        
     Methods
-    -------
+    -------   
     calculate_sw_profile(self,ext_dependencies)
         main procedure to calculate solar wwind speed and density by solving set of 2 equations
     read_l3b(self,filename)
@@ -86,7 +86,7 @@ class CarringtonSolarWind():
 
         # read pipeline settings to be used for L3b
         self.settings = fun.read_json(anc_input_from_instr_team['pipeline_settings'])
-
+    
         # All parameters will be read from L3b file or computed later on
         self.cx_profile={}
         self.cx_profile['rate']=None
@@ -104,7 +104,7 @@ class CarringtonSolarWind():
         self.sw_profile['grid']=self.settings['solar_wind_grid']
         self.sw_profile['plasma_speed']=None
         self.sw_profile['proton_density']=None
-
+        
 
     def calculate_sw_profile(self):
         '''
@@ -112,16 +112,16 @@ class CarringtonSolarWind():
         Sets of 2 equations is numerically solved.
         For detailed disscussion see Documentation Section 13.7
 
-
+        
         '''
 
         # initialization of the vectors that will be calculated later on
-        # solar wind speed latitudinal profile
+        # solar wind speed latitudinal profile   
         plasma_speed_profile=np.empty(len(self.settings['solar_wind_grid']))
-        # solar wind density latitudinal profile
+        # solar wind density latitudinal profile   
         proton_dens_profile=np.empty(len(self.settings['solar_wind_grid']))
-
-
+        
+        
         invariant=self.sw_ecliptic['invariant']
         p_alpha=self.sw_ecliptic['mean_alpha_abundance']
 
@@ -187,7 +187,7 @@ class CarringtonSolarWind():
         Parameters:
         ------------
         fn: str
-            name of the output file
+            name of the output file 
         '''
 
         # Dictionary with the solar wind speed and density profiles  that will be saved in json file
@@ -209,7 +209,7 @@ class CarringtonSolarWind():
         fun.check_nan(output['solar_wind_profile'])
 
         json_content = json.dumps(output, indent=3)
-
+        
         output_fp = open(fn, 'w')
         print(json_content, file=output_fp)
         output_fp.close()
