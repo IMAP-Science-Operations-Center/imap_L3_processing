@@ -1,6 +1,7 @@
 import enum
 import json
 import logging
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, date, timedelta
 from pathlib import Path
@@ -338,6 +339,12 @@ def furnish_spice_metakernel(start_date: datetime, end_date: datetime, kernel_ty
 
     return FurnishMetakernelOutput(metakernel_path=metakernel_path, spice_kernel_paths=downloaded_paths)
 
+@contextmanager
+def furnished_metakernel(start_date, end_date, kernel_types):
+    try:
+        yield furnish_spice_metakernel(start_date, end_date, kernel_types)
+    finally:
+        spiceypy.kclear()
 
 def read_cdf_parents(server_file_name: str) -> set[str]:
     downloaded_path = imap_data_access.download(server_file_name)

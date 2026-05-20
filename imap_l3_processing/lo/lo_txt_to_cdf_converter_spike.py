@@ -17,7 +17,7 @@ from imap_processing.spice.geometry import SpiceFrame
 from imap_l3_processing.lo.l3.lo_sp_initializer import LO_SP_MAP_KERNELS
 from imap_l3_processing.lo.lo_processor import LoProcessor
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.utils import furnish_spice_metakernel
+from imap_l3_processing.utils import furnish_spice_metakernel, furnished_metakernel
 from tests.test_helpers import get_run_local_data_path
 from pathlib import Path
 import pandas
@@ -258,13 +258,12 @@ if __name__ == "__main__":
             glows_path_in_data_dir.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(glows_input_path, glows_path_in_data_dir)
 
-        furnish_spice_metakernel(cg_processing_input.start_date, cg_processing_input.end_date, LO_SP_MAP_KERNELS)
-
-        [sp_map] = LoProcessor(
-            input_metadata=cg_processing_input.make_l3_input_metadata(f"l{pivot:03d}-ena-h-hf-sp-ram-hae-6deg-1yr"),
-            dependencies=cg_processing_input.get_survival_corrected_dependencies(glows_data_dir),
-        ).process()
-        print("Produced: ", sp_map)
+        with furnished_metakernel(cg_processing_input.start_date, cg_processing_input.end_date, LO_SP_MAP_KERNELS):
+            [sp_map] = LoProcessor(
+                input_metadata=cg_processing_input.make_l3_input_metadata(f"l{pivot:03d}-ena-h-hf-sp-ram-hae-6deg-1yr"),
+                dependencies=cg_processing_input.get_survival_corrected_dependencies(glows_data_dir),
+            ).process()
+            print("Produced: ", sp_map)
 
         combined_inputs.append(sp_map)
         start_dates.append(cg_processing_input.start_date)
