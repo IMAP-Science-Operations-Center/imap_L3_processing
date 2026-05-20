@@ -4,12 +4,14 @@ from pathlib import Path
 import numpy as np
 from imap_processing.spice.geometry import SpiceFrame
 
+from imap_l3_processing.lo.l3.lo_combined_dependencies import LoCombinedDependencies
 from imap_l3_processing.lo.l3.lo_l3_isn_background_subtracted_dependencies import \
     LoL3ISNBackgroundSubtractedDependencies
 from imap_l3_processing.lo.l3.lo_l3_spectral_fit_dependencies import LoL3SpectralFitDependencies
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies
+from imap_l3_processing.maps.map_combination import ExposureWeightedCombination
 from imap_l3_processing.maps.map_descriptors import parse_map_descriptor, MapDescriptorParts, MapQuantity, \
-    SurvivalCorrection, ReferenceFrame
+    SurvivalCorrection, ReferenceFrame, Sensor
 from imap_l3_processing.maps.map_models import ISNRateData, ISNBackgroundSubtractedData, ISNBackgroundSubtractedMapData
 from imap_l3_processing.maps.map_models import RectangularIntensityMapData, RectangularSpectralIndexDataProduct, \
     RectangularSpectralIndexMapData, RectangularIntensityDataProduct, InputRectangularPointingSet, \
@@ -43,6 +45,13 @@ class LoProcessor(MapProcessor):
                 background_subtracted = isn_background_subtraction(deps.map_data)
                 data_product = ISNBackgroundSubtractedDataProduct(self.input_metadata, background_subtracted,
                                                                   spice_frame_name=spice_frame_name)
+            case MapDescriptorParts(sensor=Sensor.LoCombined):
+                deps = LoCombinedDependencies.fetch_dependencies(self.dependencies)
+                combination = ExposureWeightedCombination()
+
+                combined_map = combination.combine_rectangular_intensity_map_data(deps.map_data)
+                data_product = RectangularIntensityDataProduct(self.input_metadata, combined_map,spice_frame_name=spice_frame_name)
+
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
                                     reference_frame=ReferenceFrame.Spacecraft | ReferenceFrame.Heliospheric):
                 deps = HiLoL3SurvivalDependencies.fetch_dependencies(self.dependencies, Instrument.IMAP_LO)

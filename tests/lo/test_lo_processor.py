@@ -4,9 +4,10 @@ from pathlib import Path
 from unittest.mock import Mock, patch, sentinel
 
 import numpy as np
-from imap_data_access.processing_input import ProcessingInputCollection
+from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput
 from imap_processing.spice.geometry import SpiceFrame
 
+from imap_l3_processing.lo.l3.lo_combined_dependencies import LoCombinedDependencies
 from imap_l3_processing.lo.lo_processor import LoProcessor, isn_background_subtraction
 from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct, \
     InputRectangularPointingSet, ISNRateData, ISNBackgroundSubtractedData, ISNBackgroundSubtractedMapData
@@ -180,6 +181,55 @@ class TestLoProcessor(unittest.TestCase):
                 mock_fetch_survival_dependencies.reset_mock()
                 mock_process_survival_prob.reset_mock()
                 mock_save_data.reset_mock()
+
+    @patch("imap_l3_processing.lo.lo_processor.LoCombinedDependencies.fetch_dependencies")
+    @patch("imap_l3_processing.lo.lo_processor.ExposureWeightedCombination")
+    @patch('imap_l3_processing.lo.lo_processor.save_data')
+    def test_process_lo_combined(self, mock_save_data,
+                                            mock_exposure_weighted_combination_class,
+                                            mock_fetch_combined_dependencies):
+
+        mock_exposure_weighted_combination = mock_exposure_weighted_combination_class.return_value
+
+        input_metadata = InputMetadata(
+            instrument="lo",
+            data_level="l3",
+            start_date=datetime(2026, 1, 1),
+            end_date=datetime(2026, 2, 1),
+            version="v001",
+            descriptor="ilo-ena-h-hf-sp-ram-hae-6deg-6mo",
+        )
+
+        mock_fetch_combined_dependencies.return_value = LoCombinedDependencies(
+            map_data=[sentinel.l075, sentinel.l090, sentinel.l105]
+        )
+
+        processing_input = ProcessingInputCollection(
+            ScienceInput('imap_lo_l3_l075-ena-h-hf-sp-ram-hae-6deg-6mo_20250422_v001.cdf'),
+            ScienceInput('imap_lo_l3_l090-ena-h-hf-sp-ram-hae-6deg-6mo_20250422_v001.cdf'),
+            ScienceInput('imap_lo_l3_l105-ena-h-hf-sp-ram-hae-6deg-6mo_20250422_v001.cdf'),
+        )
+
+        lo_processor = LoProcessor(processing_input, input_metadata)
+
+        [combined_product] = lo_processor.process(spice_frame_name=SpiceFrame.ECLIPJ2000)
+
+        mock_fetch_combined_dependencies.assert_called_once_with(processing_input)
+
+        mock_combine = mock_exposure_weighted_combination.combine_rectangular_intensity_map_data
+
+        mock_combine.assert_called_once_with([sentinel.l075, sentinel.l090, sentinel.l105])
+
+        expected_parents = [
+            'imap_lo_l3_l075-ena-h-hf-sp-ram-hae-6deg-6mo_20250422_v001.cdf',
+            'imap_lo_l3_l090-ena-h-hf-sp-ram-hae-6deg-6mo_20250422_v001.cdf',
+            'imap_lo_l3_l105-ena-h-hf-sp-ram-hae-6deg-6mo_20250422_v001.cdf',
+        ]
+        expected_data_product = RectangularIntensityDataProduct(input_metadata, mock_combine.return_value, SpiceFrame.ECLIPJ2000)
+        expected_data_product.parent_file_names.extend(expected_parents)
+        mock_save_data.assert_called_once_with(expected_data_product)
+
+        self.assertEqual(mock_save_data.return_value, combined_product)
 
     def test_rejects_unimplemented_descriptors(self):
         input_collection = ProcessingInputCollection()
