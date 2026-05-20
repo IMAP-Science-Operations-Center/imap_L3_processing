@@ -249,7 +249,7 @@ exposure_factor:
   DEPEND_1: energy
   DEPEND_2: longitude
   DEPEND_3: latitude
-  VAR_TYPE: support_data
+  VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: no_plot
   FIELDNAM: Exposure Times
