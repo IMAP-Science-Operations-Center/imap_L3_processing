@@ -1,12 +1,12 @@
 {
-    "test_l3bcde_first_time_processing": "2026-04-23T11:29:03.988077",
-    "test_spectral_fit_against_validation_data": "2026-05-05T11:57:11.738692",
-    "test_calculate_pickup_ions_with_minimize": "2026-05-05T12:00:42.432896",
-    "test_ultra_all_sp_maps": "2026-05-05T11:58:56.375160",
+    "test_l3bcde_first_time_processing": "2026-05-20T10:52:20.518461",
+    "test_spectral_fit_against_validation_data": "2026-05-20T10:50:50.331734",
+    "test_calculate_pickup_ions_with_minimize": "2026-05-20T10:52:46.704900",
+    "test_ultra_all_sp_maps": "2026-05-20T11:18:07.125115",
     "test_ultra_combined_maps": null,
-    "test_ultra_combined_nsp_maps": "2026-05-05T11:59:26.836142",
-    "test_ultra_combined_sp_maps": "2026-05-05T12:00:05.237526",
-    "test_l3bcde_reprocessing": "2026-04-22T15:51:37.655731",
+    "test_ultra_combined_nsp_maps": "2026-05-20T11:18:15.470652",
+    "test_ultra_combined_sp_maps": "2026-05-20T11:18:25.649903",
+    "test_l3bcde_reprocessing": "2026-05-20T10:52:20.826824",
     "test_glows_l3abcde_from_l2": "2026-04-23T11:41:54.685631",
-    "test_codice_lo_3d_distributions": "2026-04-29T10:32:52.475510"
+    "test_codice_lo_3d_distributions": "2026-05-20T10:52:05.102402"
 }
