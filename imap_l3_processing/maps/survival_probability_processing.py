@@ -5,7 +5,7 @@ from imap_l3_processing.maps.map_descriptors import ReferenceFrame
 from imap_l3_processing.maps.map_models import RectangularIntensityMapData, IntensityMapData
 from imap_l3_processing.maps.rectangular_survival_probability import RectangularSurvivalProbabilityPointingSet, \
     RectangularSurvivalProbabilitySkyMap
-from imap_l3_processing.utils import combine_glows_l3e_with_l1c_pointing
+from imap_l3_processing.utils import combine_glows_l3e_with_l1c_pointing, filter_bad_days
 
 
 def process_survival_probabilities(survival_probabilities_dependencies: HiLoL3SurvivalDependencies,
@@ -13,8 +13,9 @@ def process_survival_probabilities(survival_probabilities_dependencies: HiLoL3Su
         -> RectangularIntensityMapData:
     l2_descriptor_parts = survival_probabilities_dependencies.l2_map_descriptor_parts
 
-    combined_glows = combine_glows_l3e_with_l1c_pointing(survival_probabilities_dependencies.glows_l3e_data,
-                                                         survival_probabilities_dependencies.l1c_data)
+    l1c_data = filter_bad_days(survival_probabilities_dependencies.l1c_data)
+
+    combined_glows = combine_glows_l3e_with_l1c_pointing(survival_probabilities_dependencies.glows_l3e_data, l1c_data)
     pointing_sets = []
 
     cg_corrected = l2_descriptor_parts.reference_frame == ReferenceFrame.Heliospheric

@@ -22,7 +22,7 @@ from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.utils import format_time, download_dependency, read_mag_data, save_data, \
     download_external_dependency, download_dependency_with_repointing, \
     combine_glows_l3e_with_l1c_pointing, furnish_local_spice, get_spice_parent_file_names, furnish_spice_metakernel, \
-    SpiceKernelTypes, FurnishMetakernelOutput, read_cdf_parents, get_dependency_paths_by_descriptor
+    SpiceKernelTypes, FurnishMetakernelOutput, read_cdf_parents, get_dependency_paths_by_descriptor, filter_bad_days
 from imap_l3_processing.version import VERSION
 from tests.cdf.test_cdf_utils import TestDataProduct
 from tests.maps.test_builders import create_rectangular_spectral_index_map_data, create_rectangular_intensity_map_data
@@ -514,6 +514,21 @@ class TestUtils(TestCase):
         actual = combine_glows_l3e_with_l1c_pointing(glows_l3e_data, hi_l1c_data)
 
         self.assertEqual(expected, actual)
+
+    def test_filter_bad_days(self):
+        good_day_exposures = np.full((1, 7, 3600, 40), 100.0)
+        bad_day_exposures = np.zeros((1, 7, 3600, 40))
+
+        hi_l1c_data = [
+            create_dataclass_mock(InputRectangularPointingSet, exposure_times=good_day_exposures.copy()),
+            create_dataclass_mock(InputRectangularPointingSet, exposure_times=bad_day_exposures.copy()),
+            create_dataclass_mock(InputRectangularPointingSet, exposure_times=good_day_exposures.copy()),
+            create_dataclass_mock(InputRectangularPointingSet, exposure_times=bad_day_exposures.copy())
+        ]
+
+        filtered_psets = filter_bad_days(hi_l1c_data)
+
+        self.assertEqual([hi_l1c_data[0], hi_l1c_data[2]], filtered_psets)
 
     @patch("imap_l3_processing.utils.spiceypy")
     def test_furnish_local_spice(self, mock_spiceypy):

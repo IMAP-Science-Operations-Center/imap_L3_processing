@@ -8,6 +8,7 @@ from typing import Optional, Union, TypeVar
 from urllib.parse import urlparse
 
 import imap_data_access
+import numpy as np
 import requests
 import spiceypy
 from imap_data_access import ScienceFilePath, download
@@ -253,6 +254,8 @@ def combine_glows_l3e_with_l1c_pointing(glows_l3e_data: list[GlowsL3eData], l1c_
     return [(l1c_by_repoint[repoint], glows_by_repoint.get(repoint, None))
             for repoint in l1c_by_repoint.keys()]
 
+def filter_bad_days(input_psets: list[L1CPointingSet]) -> list[L1CPointingSet]:
+    return [pset for pset in input_psets if not np.all(pset.exposure_times == 0.0)]
 
 def get_dependency_paths_by_descriptor(deps: ProcessingInputCollection, descriptors: list[str]) -> dict[
     str, list[Path]]:
