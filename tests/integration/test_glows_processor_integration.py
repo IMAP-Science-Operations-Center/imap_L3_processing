@@ -33,7 +33,9 @@ from tests.integration.integration_test_helpers import mock_imap_data_access, ru
 from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, \
     with_tempdir, get_run_local_data_path, run_periodically
 
-GLOWS_L3E_INTEGRATION_DATA_DIR = get_run_local_data_path("glows_l3bcde_integration_data_dir")
+GLOWS_INTEGRATION_DATA_DIR = get_run_local_data_path(
+    "glows_l3bcde_integration_data_dir"
+)
 INTEGRATION_TEST_DATA = Path(__file__).parent / "test_data"
 GLOWS_TEST_DATA = get_test_data_path("glows")
 
@@ -178,27 +180,35 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         start_date = datetime.strptime(date_in_path, "%Y%m%d")
         end_date = start_date + timedelta(days=1)
         input_metadata = InputMetadata(
-            instrument='glows',
-            data_level='l3a',
-            descriptor='hist',
+            instrument="glows",
+            data_level="l3a",
+            descriptor="hist",
             start_date=start_date,
             end_date=end_date,
-            version='v001',
-            repointing=l2_science_file_path.repointing
+            version="v001",
+            repointing=l2_science_file_path.repointing,
         )
 
         with CDF(str(bad_l2_cdf_path)) as cdf_data:
             l2_glows_data = read_l2_glows_data(cdf_data)
 
-        dependencies = GlowsL3ADependencies(l2_glows_data, {
-            "calibration_data": get_test_instrument_team_data_path(
-                "glows/imap_glows_calibration-data_20100101_v002.dat"),
-            "settings": get_test_instrument_team_data_path("glows/imap_glows_pipeline-settings_20100101_v001.json"),
-            "time_dependent_bckgrd": get_test_instrument_team_data_path(
-                "glows/imap_glows_time-dep-bckgrd_20100101_v001.dat"),
-            "extra_heliospheric_bckgrd": get_test_instrument_team_data_path(
-                "glows/imap_glows_map-of-extra-helio-bckgrd_20100101_v002.dat"),
-        })
+        dependencies = GlowsL3ADependencies(
+            l2_glows_data,
+            {
+                "calibration_data": get_test_instrument_team_data_path(
+                    "glows/imap_glows_calibration-data_20100101_v002.dat"
+                ),
+                "settings": get_test_instrument_team_data_path(
+                    "glows/imap_glows_pipeline-settings_20100101_v001.json"
+                ),
+                "time_dependent_bckgrd": get_test_instrument_team_data_path(
+                    "glows/imap_glows_time-dep-bckgrd_20100101_v001.dat"
+                ),
+                "extra_heliospheric_bckgrd": get_test_instrument_team_data_path(
+                    "glows/imap_glows_map-of-extra-helio-bckgrd_20100101_v002.dat"
+                ),
+            },
+        )
 
         processor = GlowsProcessor(ProcessingInputCollection(), input_metadata)
         l3a_output = processor.process_l3a(dependencies)
@@ -217,13 +227,13 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-1CR_20251113_v002.json",
             GLOWS_TEST_DATA / "imap_glows_WawHelioIonMP_20251113_v007.json",
             GLOWS_TEST_DATA / "imap_glows_bad-days-list_20251113_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_pipeline-settings-l3bcde_20251113_v004.json",
-            GLOWS_TEST_DATA / "imap_glows_plasma-speed-2026a_20251113_v002.dat",
-            GLOWS_TEST_DATA / "imap_glows_proton-density-2026a_20251113_v002.dat",
-            GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-2026a_20251113_v002.dat",
-            GLOWS_TEST_DATA / "imap_glows_photoion-2026a_20251113_v002.dat",
-            GLOWS_TEST_DATA / "imap_glows_lya-2026a_20251113_v002.dat",
-            GLOWS_TEST_DATA / "imap_glows_electron-density-2026a_20251113_v002.dat",
+            GLOWS_TEST_DATA / "imap_glows_pipeline-settings-l3bcde_20251113_v006.json",
+            GLOWS_TEST_DATA / "imap_glows_plasma-speed-2026d_20251113_v003.dat",
+            GLOWS_TEST_DATA / "imap_glows_proton-density-2026d_20251113_v003.dat",
+            GLOWS_TEST_DATA / "imap_glows_uv-anisotropy-2026d_20251113_v003.dat",
+            GLOWS_TEST_DATA / "imap_glows_photoion-2026d_20251113_v003.dat",
+            GLOWS_TEST_DATA / "imap_glows_lya-2026d_20251113_v003.dat",
+            GLOWS_TEST_DATA / "imap_glows_electron-density-2026d_20251113_v003.dat",
             GLOWS_TEST_DATA / "imap_glows_tess-ang-16_20251113_v001.dat",
             GLOWS_TEST_DATA / "imap_glows_tess-xyz-8_20251113_v001.dat",
             GLOWS_TEST_DATA / "imap_glows_energy-grid-lo_20251113_v002.dat",
@@ -239,7 +249,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             INTEGRATION_TEST_DATA / "spice" / "de440.bsp",
             INTEGRATION_TEST_DATA / "spice" / "imap_recon_20250415_20260415_v01.bsp",
         ]
-        with mock_imap_data_access(GLOWS_L3E_INTEGRATION_DATA_DIR, input_files):
+        with mock_imap_data_access(GLOWS_INTEGRATION_DATA_DIR, input_files):
 
             logging.basicConfig(force=True, level=logging.INFO,
                                 format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -264,13 +274,13 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
                 ScienceFilePath('imap_glows_l3c_sw-profile_20251102-cr02304_v001.cdf'),
                 ScienceFilePath('imap_glows_l3c_sw-profile_20251130-cr02305_v001.cdf'),
 
-                ScienceFilePath('imap_glows_l3d_solar-hist_19470303-cr02304_v001.cdf'),
-                AncillaryFilePath('imap_glows_uv-anis_19470303_20251116_v001.dat'),
-                AncillaryFilePath('imap_glows_lya_19470303_20251116_v001.dat'),
-                AncillaryFilePath('imap_glows_e-dens_19470303_20251116_v001.dat'),
-                AncillaryFilePath('imap_glows_p-dens_19470303_20251116_v001.dat'),
-                AncillaryFilePath('imap_glows_speed_19470303_20251116_v001.dat'),
-                AncillaryFilePath('imap_glows_phion_19470303_20251116_v001.dat'),
+                ScienceFilePath('imap_glows_l3d_solar-hist_19470303-cr02306_v001.cdf'),
+                AncillaryFilePath('imap_glows_uv-anis_19470303_20260110_v001.dat'),
+                AncillaryFilePath('imap_glows_lya_19470303_20260110_v001.dat'),
+                AncillaryFilePath('imap_glows_e-dens_19470303_20260110_v001.dat'),
+                AncillaryFilePath('imap_glows_p-dens_19470303_20260110_v001.dat'),
+                AncillaryFilePath('imap_glows_speed_19470303_20260110_v001.dat'),
+                AncillaryFilePath('imap_glows_phion_19470303_20260110_v001.dat'),
 
                 ScienceFilePath('imap_glows_l3e_survival-probability-ul-sf_20251102-repoint00036_v001.cdf'),
                 ScienceFilePath('imap_glows_l3e_survival-probability-ul-sf_20251115-repoint00049_v001.cdf'),
@@ -396,7 +406,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             GLOWS_TEST_DATA / "imap_glows_l3a-time-dep-bckgrd_20251112_v001.dat"
         ]
 
-        prod_data_folder = get_run_local_data_path("glows_l2_prod")
+        prod_data_folder = get_run_local_data_path("glows_prod_data")
 
         l2_paths = list(prod_data_folder.rglob("*.cdf"))
         input_files = l2_paths + ancillary_file_paths
@@ -439,7 +449,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             GLOWS_TEST_DATA / "imap_glows_ionization-files_20251113_v002.dat",
             GLOWS_TEST_DATA / "imap_glows_lya-2026d_20251113_v003.dat",
             GLOWS_TEST_DATA / "imap_glows_photoion-2026d_20251113_v003.dat",
-            GLOWS_TEST_DATA / "imap_glows_pipeline-settings-l3bcde_20251113_v005.json",
+            GLOWS_TEST_DATA / "imap_glows_pipeline-settings-l3bcde_20251113_v006.json",
             GLOWS_TEST_DATA / "imap_glows_plasma-speed-2026d_20251113_v003.dat",
             GLOWS_TEST_DATA / "imap_glows_proton-density-2026d_20251113_v003.dat",
             GLOWS_TEST_DATA / "imap_glows_tess-ang-16_20251113_v001.dat",

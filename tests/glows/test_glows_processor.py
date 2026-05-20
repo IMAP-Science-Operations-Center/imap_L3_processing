@@ -45,19 +45,6 @@ from tests.test_helpers import get_test_instrument_team_data_path, get_test_data
 
 
 class TestGlowsProcessor(unittest.TestCase):
-    ran_out_of_l3b_exception = r"""Exception: Traceback (most recent call last):
-  File ".../imap_L3_processing/imap_l3_processing/glows/l3d/science/./generate_l3d.py", line 36, in <module>
-    solar_param_hist.update_solar_params_hist(EXT_DEPENDENCIES, data_l3b, data_l3c, CR_current)
-  File ".../imap_L3_processing/imap_l3_processing/glows/l3d/science/toolkit/l3d_SolarParamHistory.py", line 487, in update_solar_params_hist
-    self._update_l3bc_data(data_l3b,data_l3c,CR)
-  File ".../imap_L3_processing/imap_l3_processing/glows/l3d/science/toolkit/l3d_SolarParamHistory.py", line 424, in _update_l3bc_data
-    cr_params, idx_read_b, idx_read_c = self._generate_cr_solar_params(CR, data_l3b, data_l3c)
-                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File ".../imap_L3_processing/imap_l3_processing/glows/l3d/science/toolkit/l3d_SolarParamHistory.py", line 185, in _generate_cr_solar_params
-    if idx_read_b[-1]>=len(CR_list_b): raise Exception('L3d not generated: there is not enough L3b data to interpolate')
-                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Exception: L3d not generated: there is not enough L3b data to interpolate
-    """
 
     def setUp(self):
         self.l3bc_initializer_patcher = patch(
@@ -494,50 +481,6 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         ], products)
 
     @patch('imap_l3_processing.glows.glows_processor.GlowsProcessor.archive_dependencies')
-    def test_process_l3bc_all_data_in_bad_season_catches_exception_and_continues(self, _):
-        l3a_data_folder_path = get_test_data_path('glows/l3a_products')
-        l3a_data = [
-            create_glows_l3a_dictionary_from_cdf(
-                l3a_data_folder_path / 'imap_glows_l3a_hist_20100201-repoint00032_v001.cdf')]
-
-        external_dependencies = ExternalDependencies(
-            f107_index_file_path=get_test_instrument_team_data_path('glows/f107_fluxtable.txt'),
-            omni2_data_path=get_test_instrument_team_data_path('glows/omni_2010.dat'),
-            lyman_alpha_path=None
-        )
-
-        l3bc_deps = GlowsL3BCDependencies(
-            l3a_data=l3a_data,
-            ancillary_files={
-                'uv_anisotropy': get_test_data_path('glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json'),
-                'WawHelioIonMP_parameters': get_test_data_path('glows/imap_glows_WawHelioIonMP_20100101_v002.json'),
-                'bad_days_list': get_test_data_path('glows/imap_glows_bad-days-list_v001.dat'),
-                'pipeline_settings': get_test_instrument_team_data_path(
-                    'glows/imap_glows_pipeline-settings-L3bc_20250707_v002.json')
-            },
-            external_files={
-                'f107_raw_data': get_test_instrument_team_data_path('glows/f107_fluxtable.txt'),
-                'omni_raw_data': get_test_instrument_team_data_path('glows/omni_2010.dat'),
-            },
-            carrington_rotation_number=1,
-            start_date=Mock(), end_date=Mock(), version=1,
-            repointing_file_path=sentinel.repointing_file_path
-        )
-
-        initializer_data = GlowsL3BCInitializerData(
-            external_dependencies=external_dependencies,
-            l3bc_dependencies=[l3bc_deps],
-            l3bs_by_cr={},
-            l3cs_by_cr={},
-            repoint_file_path=sentinel.repoint_file_path
-        )
-
-        processor = GlowsProcessor(dependencies=Mock(), input_metadata=Mock())
-        processor_output = process_l3bc(processor, initializer_data)
-
-        self.assertEqual([], processor_output.data_products)
-
-    @patch('imap_l3_processing.glows.glows_processor.GlowsProcessor.archive_dependencies')
     @patch('imap_l3_processing.glows.glows_processor.generate_l3bc')
     def test_process_l3bc_catches_exceptions_from_science_code_and_continues(self, mock_generate_l3bc, _):
         l3a_data_folder_path = get_test_data_path('glows/l3a_products')
@@ -640,7 +583,9 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         self.assertEqual(set(expected_parents), set(l3b_data_product.parent_file_names))
 
-    @patch("imap_l3_processing.glows.glows_processor.create_glows_l3b_json_file_from_cdf")
+    @patch(
+        "imap_l3_processing.glows.glows_processor.create_glows_l3b_json_file_from_cdf"
+    )
     @patch("imap_l3_processing.glows.glows_processor.create_glows_l3c_json_file_from_cdf")
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch('imap_l3_processing.glows.glows_processor.rename_l3d_text_outputs')
@@ -648,7 +593,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
     @patch('imap_l3_processing.glows.glows_processor.convert_json_to_l3d_data_product')
     @patch('imap_l3_processing.glows.glows_processor.run')
     @patch('imap_l3_processing.glows.glows_processor.shutil')
-    @patch('imap_l3_processing.glows.glows_processor.os')
+    @patch("imap_l3_processing.glows.glows_processor.os")
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3DInitializer")
     @patch("imap_l3_processing.glows.glows_processor.read_pipeline_settings")
     def test_process_l3d(self, mock_read_pipeline_settings, mock_glows_l3d_initializer, mock_os, mock_shutil, mock_run,
@@ -658,6 +603,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         cr_number = 2092
         mock_read_pipeline_settings.return_value = {'start_cr': cr_number}
 
+        expected_end_cr = cr_number + 1
         glows_l3d_dependencies = GlowsL3DDependencies(
             external_files={
                 'lya_raw_data': Path('path/to/lya'),
@@ -675,7 +621,8 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                 }
             },
             l3b_file_paths=[sentinel.l3b_file_1, sentinel.l3b_file_2],
-            l3c_file_paths=[sentinel.l3c_file_1, sentinel.l3c_file_2]
+            l3c_file_paths=[sentinel.l3c_file_1, sentinel.l3c_file_2],
+            end_cr=expected_end_cr
         )
 
         old_l3d = Path('imap_glows_l3d_solar-hist_19470303-cr02090_v001.cdf')
@@ -683,11 +630,7 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         mock_glows_l3d_initializer.should_process_l3d.return_value = (
             l3d_output_version, glows_l3d_dependencies, old_l3d)
 
-        mock_run.side_effect = [
-            CompletedProcess(args=[], returncode=0, stdout=f'Processed CR= {cr_number}'),
-            CompletedProcess(args=[], returncode=0, stdout=f'Processed CR= {cr_number + 1}'),
-            CalledProcessError(cmd="", returncode=1, stderr=self.ran_out_of_l3b_exception)
-        ]
+        mock_run.return_value =  CompletedProcess(args=[], returncode=0, stdout=f'Processed CR= {expected_end_cr}')
 
         mock_os.listdir.return_value = [
             f'{cr_number}_txt_file_1',
@@ -752,16 +695,9 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         expected_working_directory = Path(l3d.__file__).parent / 'science'
 
-        self.assertEqual(3, mock_run.call_count)
+        self.assertEqual(1, mock_run.call_count)
         mock_run.assert_has_calls([
-            call([sys.executable, './generate_l3d.py', f'{cr_number}', expected_dependencies],
-                 cwd=str(expected_working_directory), check=True,
-                 capture_output=True, text=True),
-            call([sys.executable, './generate_l3d.py', f'{cr_number + 1}', expected_dependencies],
-                 cwd=str(expected_working_directory),
-                 check=True,
-                 capture_output=True, text=True),
-            call([sys.executable, './generate_l3d.py', f'{cr_number + 2}', expected_dependencies],
+            call([sys.executable, './generate_l3d.py', f'{expected_end_cr}', expected_dependencies],
                  cwd=str(expected_working_directory),
                  check=True,
                  capture_output=True, text=True),
@@ -769,10 +705,9 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
 
         mock_os.listdir.assert_called_once_with(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt')
 
-        expected_output_cr = cr_number + 1
         expected_l3d_txt_paths = [
-            Path(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / f'{expected_output_cr}_txt_file_1', ),
-            Path(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / f'{expected_output_cr}_txt_file_2', ),
+            Path(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / f'{expected_end_cr}_txt_file_1', ),
+            Path(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / f'{expected_end_cr}_txt_file_2', ),
         ]
         mock_rename_l3d.assert_has_calls([call(expected_l3d_txt_paths, f'v00{l3d_output_version}')])
 
@@ -784,11 +719,11 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                                        version=f"v00{l3d_output_version}")
 
         mock_convert_json_to_l3d_data_product.assert_called_once_with(
-            expected_working_directory / 'data_l3d' / f'imap_glows_l3d_solar-params-history_19470303-cr0{expected_output_cr}_v00.json',
+            expected_working_directory / 'data_l3d' / f'imap_glows_l3d_solar-params-history_19470303-cr0{expected_end_cr}_v00.json',
             expected_data_product_metadata,
             mock_get_parent_file_names_from_l3d_json.return_value)
 
-        mock_save_data.assert_called_once_with(sentinel.l3d_data_product, cr_number=expected_output_cr)
+        mock_save_data.assert_called_once_with(sentinel.l3d_data_product, cr_number=expected_end_cr)
 
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch('imap_l3_processing.glows.glows_processor.rename_l3d_text_outputs')
@@ -832,11 +767,10 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         }
 
         cr_number = 2095
-        mock_run.side_effect = [CompletedProcess(args=[], returncode=0, stdout=f'Processed CR= {cr_number}'),
-                                CalledProcessError(cmd="", returncode=1, stderr=self.ran_out_of_l3b_exception)]
+        mock_run.return_value = CompletedProcess(args=[], returncode=0, stdout=f'Processed CR= {cr_number}')
 
         l3d_dependencies = GlowsL3DDependencies(l3b_file_paths=l3b_file_paths, l3c_file_paths=l3c_file_paths,
-                                                ancillary_files=ancillary_inputs, external_files=external_inputs)
+                                                ancillary_files=ancillary_inputs, external_files=external_inputs, end_cr=cr_number)
 
         glows_l3d_output = process_l3d(l3d_dependencies, 1)
 
@@ -858,52 +792,34 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         ]
 
         expected_l3d_txt_file_paths = [
-            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_e-dens_19470303-cr02095_v00.dat',
-            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_uv-anis_19470303-cr02095_v00.dat',
-            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_phion_19470303-cr02095_v00.dat',
-            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_p-dens_19470303-cr02095_v00.dat',
-            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_lya_19470303-cr02095_v00.dat',
-            get_test_data_path('glows/science') / 'data_l3d_txt' / 'imap_glows_l3d_speed_19470303-cr02095_v00.dat',
+            get_test_data_path("glows/science")
+            / "data_l3d_txt"
+            / "imap_glows_l3d_e-dens_19470303-cr02095_v00.dat",
+            get_test_data_path("glows/science")
+            / "data_l3d_txt"
+            / "imap_glows_l3d_uv-anis_19470303-cr02095_v00.dat",
+            get_test_data_path("glows/science")
+            / "data_l3d_txt"
+            / "imap_glows_l3d_phion_19470303-cr02095_v00.dat",
+            get_test_data_path("glows/science")
+            / "data_l3d_txt"
+            / "imap_glows_l3d_p-dens_19470303-cr02095_v00.dat",
+            get_test_data_path("glows/science")
+            / "data_l3d_txt"
+            / "imap_glows_l3d_lya_19470303-cr02095_v00.dat",
+            get_test_data_path("glows/science")
+            / "data_l3d_txt"
+            / "imap_glows_l3d_speed_19470303-cr02095_v00.dat",
         ]
 
-        self.assertCountEqual(expected_parent_file_names, actual_data_product.parent_file_names)
-        self.assertCountEqual(expected_l3d_txt_file_paths, mock_rename_l3d_text_output.call_args[0][0])
-        self.assertEqual('v001', mock_rename_l3d_text_output.call_args[0][1])
+        self.assertCountEqual(
+            expected_parent_file_names, actual_data_product.parent_file_names
+        )
+        self.assertCountEqual(
+            expected_l3d_txt_file_paths, mock_rename_l3d_text_output.call_args[0][0]
+        )
+        self.assertEqual("v001", mock_rename_l3d_text_output.call_args[0][1])
 
-    @patch('imap_l3_processing.glows.glows_processor.rename_l3d_text_outputs')
-    @patch('imap_l3_processing.glows.glows_processor.os')
-    @patch('imap_l3_processing.glows.glows_processor.run')
-    @patch('imap_l3_processing.glows.glows_processor.read_pipeline_settings')
-    def test_process_l3d_returns_correctly_if_nothing_is_processed(self, mock_read_pipeline_settings, mock_run, _, __):
-
-        mock_read_pipeline_settings.return_value = {'start_cr': 2092}
-        ancillary_files = {
-            'pipeline_settings': get_test_data_path(
-                "glows/l3d_drift_test/imap_glows_pipeline-settings-l3bcde_20100101_v006.json"),
-            'WawHelioIon': {
-                'speed': Path('path/to/speed'),
-                'p-dens': Path('path/to/p-dens'),
-                'uv-anis': Path('path/to/uv-anis'),
-                'phion': Path('path/to/phion'),
-                'lya': Path('path/to/lya'),
-                'e-dens': Path('path/to/e-dens')
-            }
-        }
-        external_files = {
-            'lya_raw_data': Path('path/to/lya'),
-        }
-        l3b_file_paths = []
-        l3c_file_paths = []
-        l3d_dependencies = GlowsL3DDependencies(ancillary_files=ancillary_files,
-                                                external_files=external_files,
-                                                l3b_file_paths=l3b_file_paths,
-                                                l3c_file_paths=l3c_file_paths)
-
-        mock_run.side_effect = [CalledProcessError(cmd="", returncode=1, stderr=self.ran_out_of_l3b_exception)]
-
-        processor_return = process_l3d(l3d_dependencies, 1)
-
-        self.assertIsNone(processor_return)
 
     @patch('imap_l3_processing.glows.glows_processor.rename_l3d_text_outputs')
     @patch('imap_l3_processing.glows.glows_processor.get_parent_file_names_from_l3d_json')
@@ -932,10 +848,12 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
         mock_read_pipeline_settings.return_value = {'start_cr': 2091}
         l3b_file_paths = []
         l3c_file_paths = []
+        expected_cr = 2096
         l3d_dependencies = GlowsL3DDependencies(ancillary_files=ancillary_files,
                                                 external_files=external_files,
                                                 l3b_file_paths=l3b_file_paths,
-                                                l3c_file_paths=l3c_file_paths)
+                                                l3c_file_paths=l3c_file_paths,
+                                                end_cr=expected_cr)
 
         mock_os.listdir.return_value = ['2096_txt_file_1',
                                         '2096_txt_file_2',
@@ -945,7 +863,6 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                                         '2096_txt_file_6'
                                         ]
 
-        expected_cr = 2096
 
         unexpected_exception = r"""Traceback (most recent call last):
           File "...\imap-L3-processing\imap_l3_processing\glows\l3d\science\generate_l3d.py", line 46, in <module>
@@ -963,70 +880,33 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
                  ^^^^^^^^^^^^^
         FileNotFoundError: [Errno 2] No such file or directory: 'imap_glows_l3a_hist_20100511-repoint00131_v011.cdf'"""
 
-        mock_run.side_effect = [CompletedProcess(args=[], returncode=0, stdout=f'Processed CR= {expected_cr}'),
-                                CalledProcessError(cmd="", returncode=1, stderr=unexpected_exception)]
+        mock_run.side_effect = [CalledProcessError(cmd="", returncode=1, stderr=unexpected_exception)]
 
         with self.assertRaises(Exception) as context:
             process_l3d(l3d_dependencies, 1)
-        self.assertEqual(unexpected_exception, str(context.exception))
+        self.assertEqual(unexpected_exception, context.exception.stderr)
 
         mock_convert_json_to_l3d.assert_not_called()
-
-    @patch('imap_l3_processing.glows.glows_processor.convert_json_to_l3d_data_product')
-    @patch('imap_l3_processing.glows.glows_processor.get_parent_file_names_from_l3d_json')
-    @patch('imap_l3_processing.glows.glows_processor.os')
-    @patch('imap_l3_processing.glows.glows_processor.run')
-    @patch('imap_l3_processing.glows.glows_processor.save_data')
-    @patch('imap_l3_processing.glows.glows_processor.read_pipeline_settings')
-    @patch('imap_l3_processing.glows.glows_processor.GlowsL3DInitializer.should_process_l3d')
-    def test_process_l3d_does_not_save_if_nothing_processed(self, mock_should_process_l3d, mock_read_pipeline_settings,
-                                                            mock_save_data,
-                                                            mock_run, mock_os, _, __,
-                                                            ):
-
-        l3d_dependencies = MagicMock()
-        mock_should_process_l3d.return_value = sentinel.l3d_version, l3d_dependencies
-
-        mock_os.listdir.return_value = ['2096_txt_file_1',
-                                        '2096_txt_file_2',
-                                        '2096_txt_file_3',
-                                        '2096_txt_file_4',
-                                        '2096_txt_file_5',
-                                        '2096_txt_file_6'
-                                        ]
-
-        mock_run.side_effect = [CalledProcessError(cmd="", returncode=1, stderr=self.ran_out_of_l3b_exception)]
-
-        mock_read_pipeline_settings.load.return_value = {'start_cr': 2091}
-
-        products = process_l3d(dependencies=l3d_dependencies, version=1)
-
-        mock_run.assert_called_once()
-
-        mock_save_data.assert_not_called()
-        self.assertEqual(None, products)
 
     @patch('imap_l3_processing.glows.glows_processor.shutil')
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     def test_process_glows_l3d_drift(self, mock_save_data, _):
-        lyman_alpha_composite = get_test_data_path("glows/l3d_drift_test/lyman_alpha_composite.nc")
+        l3d_drift_test_data = get_test_data_path("glows/l3d_drift_test")
+        lyman_alpha_composite = l3d_drift_test_data / "lyman_alpha_composite.nc"
+        expected_cr = 2098
 
-        l3b_1 = get_test_data_path("glows/l3d_drift_test/imap_glows_l3b_ion-rate-profile_20100422_v013.cdf")
-        l3b_2 = get_test_data_path("glows/l3d_drift_test/imap_glows_l3b_ion-rate-profile_20100519_v013.cdf")
-        l3c_1 = get_test_data_path("glows/l3d_drift_test/imap_glows_l3c_sw-profile_20100422_v012.cdf")
-        l3c_2 = get_test_data_path("glows/l3d_drift_test/imap_glows_l3c_sw-profile_20100519_v012.cdf")
+        l3b_1 = l3d_drift_test_data / "imap_glows_l3b_ion-rate-profile_20100422_v013.cdf"
+        l3b_2 = l3d_drift_test_data / "imap_glows_l3b_ion-rate-profile_20100519_v013.cdf"
+        l3c_1 = l3d_drift_test_data / "imap_glows_l3c_sw-profile_20100422_v012.cdf"
+        l3c_2 = l3d_drift_test_data / "imap_glows_l3c_sw-profile_20100519_v012.cdf"
 
-        plasma_speed_legendre = get_test_data_path(
-            "glows/l3d_drift_test/imap_glows_plasma-speed-2010a_20100101_v003.dat")
-        proton_density_legendre = get_test_data_path(
-            "glows/l3d_drift_test/imap_glows_proton-density-2010a_20100101_v003.dat")
-        uv_anisotropy = get_test_data_path("glows/l3d_drift_test/imap_glows_uv-anisotropy-2010a_20100101_v003.dat")
-        photoion = get_test_data_path("glows/l3d_drift_test/imap_glows_photoion-2010a_20100101_v003.dat")
-        lya_2010a = get_test_data_path("glows/l3d_drift_test/imap_glows_lya-2010a_20100101_v003.dat")
-        electron_density = get_test_data_path(
-            "glows/l3d_drift_test/imap_glows_electron-density-2010a_20100101_v003.dat")
-        pipeline_settings = get_test_data_path(
-            "glows/l3d_drift_test/imap_glows_pipeline-settings-l3bcde_20100101_v006.json")
+        plasma_speed_legendre = l3d_drift_test_data / "imap_glows_plasma-speed-2010a_20100101_v003.dat"
+        proton_density_legendre = l3d_drift_test_data / "imap_glows_proton-density-2010a_20100101_v003.dat"
+        uv_anisotropy = l3d_drift_test_data / "imap_glows_uv-anisotropy-2010a_20100101_v003.dat"
+        photoion = l3d_drift_test_data / "imap_glows_photoion-2010a_20100101_v003.dat"
+        lya_2010a = l3d_drift_test_data / "imap_glows_lya-2010a_20100101_v003.dat"
+        electron_density = l3d_drift_test_data / "imap_glows_electron-density-2010a_20100101_v003.dat"
+        pipeline_settings = l3d_drift_test_data / "imap_glows_pipeline-settings-l3bcde_20100101_v006.json"
 
         l3d_dependencies = GlowsL3DDependencies(
             external_files={
@@ -1045,53 +925,81 @@ Exception: L3d not generated: there is not enough L3b data to interpolate
             },
             l3b_file_paths=[l3b_1, l3b_2],
             l3c_file_paths=[l3c_1, l3c_2],
+            end_cr=expected_cr
         )
 
         version = 4
         glows_l3d_output = process_l3d(l3d_dependencies, version)
 
-        expected_txt_filenames = ["imap_glows_e-dens_19470303_20100506_v004.dat",
-                                  "imap_glows_lya_19470303_20100506_v004.dat",
-                                  "imap_glows_p-dens_19470303_20100506_v004.dat",
-                                  "imap_glows_phion_19470303_20100506_v004.dat",
-                                  "imap_glows_speed_19470303_20100506_v004.dat",
-                                  "imap_glows_uv-anis_19470303_20100506_v004.dat"]
+        expected_txt_filenames = ["imap_glows_e-dens_19470303_20100629_v004.dat",
+                                  "imap_glows_lya_19470303_20100629_v004.dat",
+                                  "imap_glows_p-dens_19470303_20100629_v004.dat",
+                                  "imap_glows_phion_19470303_20100629_v004.dat",
+                                  "imap_glows_speed_19470303_20100629_v004.dat",
+                                  "imap_glows_uv-anis_19470303_20100629_v004.dat"]
         for file in expected_txt_filenames:
             self.assertIn(PATH_TO_L3D_TOOLKIT / "data_l3d_txt" / file, glows_l3d_output.l3d_text_file_paths)
 
         test_cases = [
-            (expected_txt_filenames[0], "electron_density", 847, [1947.167990000000, -1, 1250.5],
-             [2010.343068904109, 5.764092012146565e+00, 2096.5]),
-            (expected_txt_filenames[1], "lyman_alpha", 847, [1947.167990000000, 6.199757637899209e+11, 1250.5],
-             [2010.343068904109, 3.976427956000000e+11, 2096.5]),
-            (expected_txt_filenames[2], "proton_density", 847,
-             [1.94716799e+03, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-              1.25050000e+03, -1.00000000e+00],
-             [2.01034307e+03, 3.38901240e+00, 3.35060190e+00, 3.25146686e+00, 3.69331370e+00, 4.69194170e+00,
-              5.59545144e+00, 6.38779612e+00, 6.79219078e+00, 7.44907664e+00, 7.92968821e+00, 7.69531028e+00,
-              7.31272442e+00, 6.37330975e+00, 5.46350990e+00, 4.50035049e+00, 3.33430038e+00, 2.77020067e+00,
-              2.71814660e+00, 2.71783185e+00, 2.09650000e+03, 1.00000000e+04]),
-            (expected_txt_filenames[3], "phion", 847, [1947.167990000000, 1.830438692701064e-07, 1250.5],
-             [2010.343068904109, 1.049049881153713e-07, 2096.5]),
-            (expected_txt_filenames[4], "plasma_speed", 847,
-             [1.94716799e+03, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-              1.25050000e+03, -1],
-             [2010.3430689, 419.92192821, 422.74228283, 430.19209339, 398.7140042, 343.04238403, 304.35629938,
-              275.90330762, 261.5337126, 241.86406135, 227.84491603, 235.56448958, 247.05106709, 275.35344769,
-              307.8808557, 350.7627346, 422.76124576, 470.9791981, 476.1416525, 476.18197781, 2096.5, 20000.]),
-            (expected_txt_filenames[5], "uv_anisotropy", 847,
-             [1.94716799e+03, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-              1.25050000e+03, -1],
-             [2.01034307e+03, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2.09650000e+03, 1.00000000e+03]),
+            (
+                expected_txt_filenames[0],
+                "electron_density",
+                850,
+                [1947.167990000000, -1, 1250.5],
+                [2010.492523, 6.01955, 2098.5],
+            ),
+            (
+                expected_txt_filenames[1],
+                "lyman_alpha",
+                850,
+                [1947.167990000000, 6.199757637899209e+11, 1250.5],
+                [2010.49252, 391688271318.51849, 2098.50000, ],
+            ),
+            (
+                expected_txt_filenames[2],
+                "proton_density",
+                850,
+                [1.94716799e+03, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                 1.25050000e+03, -1.00000000e+00],
+                [2010.49252260274, 3.533487319946289, 3.50542426109314, 3.409455299377441, 3.878353357315063,
+                 4.971815586090088, 6.224776268005371, 7.651707649230957, 8.510316848754883, 8.865212440490723,
+                 8.813090324401855, 9.078702926635742, 9.078702926635742, 7.368694305419922, 5.78929615020752,
+                 4.63243579864502, 3.519419431686401, 3.034561634063721, 3.000047445297241, 3.000047445297241,
+                 2098.5, 88888.0],
+            ),
+            (
+                expected_txt_filenames[3],
+                "phion",
+                850,
+                [1947.167990000000, 1.830438692701064e-07, 1250.5],
+                [2010.49252260274, 1.064334895772845e-07, 2098.5],
+            ),
+            (
+                expected_txt_filenames[4],
+                "plasma_speed",
+                850,
+                [1.94716799e+03, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                1.25050000e+03, -1],
+                [2010.49252260274, 397.0, 399.0, 406.0, 374.0, 316.0, 268.0, 228.0, 209.0, 202.0, 203.0, 198.0,
+                 198.0, 235.0, 283.0, 332.0, 398.0, 436.0, 439.0, 439.0, 2098.5, 88888.0],
+            ),
+            (
+                expected_txt_filenames[5],
+                "uv_anisotropy",
+                850,
+                [1.94716799e+03, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                1.25050000e+03, -1],
+                [2010.49252260274, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2098.5, 88888.0],
+            ),
         ]
 
         [save_data_call_args] = mock_save_data.call_args_list
         l3d_data_product = save_data_call_args.args[0]
 
-        expected_cdf_filename = "imap_glows_l3d_solar-hist_19470303-cr02096_v004.cdf"
+        expected_cdf_filename = "imap_glows_l3d_solar-hist_19470303-cr02098_v004.cdf"
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_dir = Path(tmp_dir)
-            save_data(l3d_data_product, cr_number=2096, folder_path=tmp_dir)
+            save_data(l3d_data_product, cr_number=expected_cr, folder_path=tmp_dir)
 
             with CDF(str(tmp_dir / expected_cdf_filename)) as actual_cdf:
                 for filename, cdf_var_name, length_of_data, first_line, last_line in test_cases:

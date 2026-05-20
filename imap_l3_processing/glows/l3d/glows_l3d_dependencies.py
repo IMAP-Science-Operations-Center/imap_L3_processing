@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import imap_data_access
+from imap_data_access import ScienceFilePath
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.glows.descriptors import PROTON_DENSITY_DESCRIPTOR, PLASMA_SPEED_DESCRIPTOR, \
@@ -16,6 +17,7 @@ class GlowsL3DDependencies:
     ancillary_files: dict[str, Path | dict[str, Path]]
     l3b_file_paths: list[Path]
     l3c_file_paths: list[Path]
+    end_cr: float
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection, external_dependencies: ExternalDependencies):
@@ -56,4 +58,8 @@ class GlowsL3DDependencies:
             'lya_raw_data': external_dependencies.lyman_alpha_path
         }
 
-        return cls(external_dict, ancillary_dict, l3b_file_paths, l3c_file_paths)
+        last_l3b_cr = max([ScienceFilePath(file).cr for file in l3b_file_paths])
+        last_l3c_cr = max([ScienceFilePath(file).cr for file in l3c_file_paths])
+        end_cr = min(last_l3b_cr, last_l3c_cr) + 1
+
+        return cls(external_dict, ancillary_dict, l3b_file_paths, l3c_file_paths, end_cr)

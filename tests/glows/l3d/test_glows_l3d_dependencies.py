@@ -10,9 +10,9 @@ from tests.test_helpers import get_test_data_path
 
 
 class TestGlowsL3DDependencies(unittest.TestCase):
-
+    @patch("imap_l3_processing.glows.l3d.glows_l3d_dependencies.ScienceFilePath")
     @patch('imap_l3_processing.glows.l3d.glows_l3d_dependencies.imap_data_access.download')
-    def test_fetch_dependencies(self, mock_download):
+    def test_fetch_dependencies(self, mock_download, mock_science_file_path):
         waw_helio_ion_mp_speed = get_test_data_path("glows/imap_glows_plasma-speed-2026d_20251113_v003.dat")
         waw_helio_ion_mp_p_dens = get_test_data_path("glows/imap_glows_proton-density-2026d_20251113_v003.dat")
         waw_helio_ion_mp_uv_anis = get_test_data_path("glows/imap_glows_uv-anisotropy-2026d_20251113_v003.dat")
@@ -52,6 +52,13 @@ class TestGlowsL3DDependencies(unittest.TestCase):
             sentinel.l3b_downloaded_path_2,
             sentinel.l3c_downloaded_path_1,
             sentinel.l3c_downloaded_path_2,
+        ]
+
+        mock_science_file_path.side_effect = [
+            Mock(cr = 2000.5),
+            Mock(cr = 4000.5),
+            Mock(cr = 2000.5),
+            Mock(cr = 3000.5),
         ]
 
         external_dependencies = ExternalDependencies(
@@ -107,5 +114,7 @@ class TestGlowsL3DDependencies(unittest.TestCase):
 
         self.assertEqual([sentinel.l3c_downloaded_path_1, sentinel.l3c_downloaded_path_2],
                          actual_dependencies.l3c_file_paths)
+
+        self.assertEqual(actual_dependencies.end_cr, 3001.5)
 
         self.assertEqual({'lya_raw_data': sentinel.lyman_alpha_path}, actual_dependencies.external_files)
