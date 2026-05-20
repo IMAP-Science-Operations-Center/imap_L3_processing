@@ -1,6 +1,6 @@
 import unittest
 
-from imap_l3_processing.swapi.l3a.science.inflow_vector import InflowVector
+from imap_l3_processing.swapi.l3a.science.pickup_ion.inflow_vector import InflowVector
 from tests.test_helpers import get_test_data_path
 
 

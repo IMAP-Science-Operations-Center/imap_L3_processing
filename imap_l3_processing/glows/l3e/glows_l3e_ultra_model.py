@@ -26,6 +26,7 @@ SPACECRAFT_VELOCITY_Z_VAR_NAME = "spacecraft_velocity_z"
 ELONGATION_EXCLUDED_VAR_NAME = "elongation_excluded"
 PIXEL_LATITUDE_VAR_NAME = "pixel_latitude"
 PIXEL_LONGITUDE_VAR_NAME = "pixel_longitude"
+GLOWS_FLAGS_VAR_NAME = "glows_flags"
 
 
 @dataclass
@@ -46,6 +47,7 @@ class GlowsL3EUltraData(DataProduct):
     elongation_excluded: np.ndarray
     pixel_latitude: np.ndarray
     pixel_longitude: np.ndarray
+    glows_flags: np.ndarray
 
     @classmethod
     def convert_dat_to_glows_l3e_ul_product(cls, input_metadata: InputMetadata, file_path: Path,
@@ -99,6 +101,7 @@ class GlowsL3EUltraData(DataProduct):
             elongation_excluded=np.array([args.elongation]),
             pixel_latitude=np.array([pixel_latitude_to_return]),
             pixel_longitude=np.array([pixel_longitude_to_return]),
+            glows_flags=np.array([0], dtype=np.uint16),
         )
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
@@ -123,4 +126,5 @@ class GlowsL3EUltraData(DataProduct):
             DataProductVariable(ELONGATION_EXCLUDED_VAR_NAME, self.elongation_excluded),
             DataProductVariable(PIXEL_LATITUDE_VAR_NAME, self.pixel_latitude),
             DataProductVariable(PIXEL_LONGITUDE_VAR_NAME, self.pixel_longitude),
+            DataProductVariable(GLOWS_FLAGS_VAR_NAME, self.glows_flags),
         ]

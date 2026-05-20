@@ -279,6 +279,41 @@ proton_sw_speed_uncert:
   VALIDMAX: 10000
   FILLVAL: -1.000000e+31
   LABLAXIS: H+ SW speed uncertainty
+proton_sw_speed_sun:
+  NAME: proton_sw_speed_sun
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Speed of proton solar wind in the sun's rest frame
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Proton Solar Wind Speed Sun
+  FORMAT: F19.3
+  LABLAXIS: H+ SW speed sun
+  UNITS: km/s
+  VALIDMIN: 0
+  VALIDMAX: 10000
+  FILLVAL: -1.000000e+31
+  SCALETYP: linear
+  DELTA_PLUS_VAR: proton_sw_speed_sun_uncert
+  DELTA_MINUS_VAR: proton_sw_speed_sun_uncert
+  SCALEMIN: 0
+  SCALEMAX: 1000
+proton_sw_speed_sun_uncert:
+  NAME: proton_sw_speed_sun_uncert
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Proton solar wind speed uncertainty in the sun's rest frame
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: Proton Solar Wind Speed Sun Uncertainty
+  FORMAT: F19.3
+  UNITS: km/s
+  VALIDMIN: 0
+  VALIDMAX: 10000
+  FILLVAL: -1.000000e+31
+  LABLAXIS: H+ SW speed sun uncertainty
 proton_sw_temperature:
   NAME: proton_sw_temperature
   DATA_TYPE: CDF_REAL4
@@ -349,76 +384,54 @@ proton_sw_density_uncert:
   VALIDMAX: 150
   FILLVAL: -1.000000e+31
   LABLAXIS: H+ SW density uncertainty
-proton_sw_clock_angle:
-  NAME: proton_sw_clock_angle
+proton_sw_bulk_velocity_rtn_sun:
+  NAME: proton_sw_bulk_velocity_rtn_sun
   DATA_TYPE: CDF_REAL4
-  CATDESC: Clock angle of proton solar wind
+  CATDESC: Proton solar wind bulk velocity in inertial RTN (sun's rest frame)
   DEPEND_0: epoch
+  DEPEND_1: rtn_label
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Clock Angle Of Proton Solar Wind
+  FIELDNAM: Proton SW Bulk Velocity RTN Sun
   FORMAT: F19.3
-  LABLAXIS: Clock angle of H+ SW
-  UNITS: degrees
-  VALIDMIN: 0
-  VALIDMAX: 360
+  LABLAXIS: H+ SW bulk velocity RTN sun
+  UNITS: km/s
+  VALIDMIN: -2000
+  VALIDMAX: 2000
   FILLVAL: -1.000000e+31
-  SCALETYP: linear
-  DELTA_PLUS_VAR: proton_sw_clock_angle_uncert
-  DELTA_MINUS_VAR: proton_sw_clock_angle_uncert
-  SCALEMIN: 0
-  SCALEMAX: 360
-proton_sw_clock_angle_uncert:
-  NAME: proton_sw_clock_angle_uncert
+proton_sw_bulk_velocity_rtn_sc:
+  NAME: proton_sw_bulk_velocity_rtn_sc
   DATA_TYPE: CDF_REAL4
-  CATDESC: Proton solar wind clock angle uncertainty
+  CATDESC: Proton solar wind bulk velocity in RTN (spacecraft rest frame)
   DEPEND_0: epoch
-  VAR_TYPE: support_data
-  RECORD_VARYING: RV
-  FIELDNAM: Proton Solar Wind Clock Angle Uncertainty
-  FORMAT: F19.3
-  UNITS: degrees
-  VALIDMIN: 0
-  VALIDMAX: 360
-  FILLVAL: -1.000000e+31
-  LABLAXIS: H+ SW clock angle uncertainty
-proton_sw_deflection_angle:
-  NAME: proton_sw_deflection_angle
-  DATA_TYPE: CDF_REAL4
-  CATDESC: Deflection angle of proton solar wind
-  DEPEND_0: epoch
+  DEPEND_1: rtn_label
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Deflection Angle Of Proton Solar Wind
+  FIELDNAM: Proton SW Bulk Velocity RTN SC
   FORMAT: F19.3
-  LABLAXIS: H+ SW deflection angle
-  UNITS: degrees
-  VALIDMIN: 0
-  VALIDMAX: 180
+  LABLAXIS: H+ SW bulk velocity RTN SC
+  UNITS: km/s
+  VALIDMIN: -2000
+  VALIDMAX: 2000
   FILLVAL: -1.000000e+31
-  SCALETYP: linear
-  DELTA_PLUS_VAR: proton_sw_deflection_angle_uncert
-  DELTA_MINUS_VAR: proton_sw_deflection_angle_uncert
-  SCALEMIN: 0
-  SCALEMAX: 10
-proton_sw_deflection_angle_uncert:
-  NAME: proton_sw_deflection_angle_uncert
+proton_sw_bulk_velocity_rtn_covariance:
+  NAME: proton_sw_bulk_velocity_rtn_covariance
   DATA_TYPE: CDF_REAL4
-  CATDESC: Proton solar wind deflection angle uncertainty
+  CATDESC: Proton solar wind bulk velocity covariance in RTN
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Proton Solar Wind Deflection Angle Uncertainty
+  FIELDNAM: Proton SW Bulk Velocity RTN Covariance
   FORMAT: F19.3
-  UNITS: degrees
+  LABLAXIS: H+ SW bulk velocity RTN covariance
+  UNITS: km!E2!N/s!E2!N
   VALIDMIN: 0
-  VALIDMAX: 360
+  VALIDMAX: 1.0e+8
   FILLVAL: -1.000000e+31
-  LABLAXIS: H+ SW deflection angle uncertainty
 alpha_sw_speed:
   NAME: alpha_sw_speed
   DATA_TYPE: CDF_REAL4
@@ -524,6 +537,54 @@ alpha_sw_density_uncert:
   VALIDMAX: 100
   FILLVAL: -1.000000e+31
   LABLAXIS: Alpha SW density uncertainty
+alpha_sw_velocity_rtn_sun:
+  NAME: alpha_sw_velocity_rtn_sun
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Alpha solar wind bulk velocity in inertial RTN (sun's rest frame)
+  DEPEND_0: epoch
+  DEPEND_1: rtn_label
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Alpha SW Bulk Velocity RTN Sun
+  FORMAT: F19.3
+  LABLAXIS: Alpha SW bulk velocity RTN sun
+  UNITS: km/s
+  VALIDMIN: -2000
+  VALIDMAX: 2000
+  FILLVAL: -1.000000e+31
+alpha_sw_velocity_rtn_sc:
+  NAME: alpha_sw_velocity_rtn_sc
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Alpha solar wind bulk velocity in RTN (spacecraft rest frame)
+  DEPEND_0: epoch
+  DEPEND_1: rtn_label
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: Alpha SW Bulk Velocity RTN SC
+  FORMAT: F19.3
+  LABLAXIS: Alpha SW bulk velocity RTN SC
+  UNITS: km/s
+  VALIDMIN: -2000
+  VALIDMAX: 2000
+  FILLVAL: -1.000000e+31
+alpha_sw_velocity_rtn_covariance:
+  NAME: alpha_sw_velocity_rtn_covariance
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Alpha solar wind velocity covariance in RTN
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: Alpha SW Velocity RTN Covariance
+  FORMAT: F19.3
+  LABLAXIS: Alpha SW velocity RTN covariance
+  UNITS: km!E2!N/s!E2!N
+  VALIDMIN: 0
+  VALIDMAX: 1.0e+8
+  FILLVAL: -1.000000e+31
 swp_flags:
   NAME: swp_flags
   DATA_TYPE: CDF_UINT2
@@ -578,3 +639,14 @@ alpha_sw_pre_lut_density:
   SCALETYP: log
   SCALEMIN: 0.001
   SCALEMAX: 5
+
+rtn_label:
+  NAME: rtn_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: RTN component labels
+  VAR_TYPE: metadata
+  RECORD_VARYING: NRV
+  FIELDNAM: RTN Label
+  FORMAT: a1
+  FILLVAL: ' '
+

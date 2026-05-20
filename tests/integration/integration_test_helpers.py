@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 from collections import defaultdict
 from pathlib import Path
@@ -69,6 +70,20 @@ def fake_download(file: Path | str):
 
     assert full_path.exists(), f"Expected {full_path} to exist, but it doesn't."
     return full_path
+
+
+def stage_input_file(file_path: Path) -> Path:
+    """Copy a fixture into its canonical path under ``imap_data_access.config['DATA_DIR']``.
+
+    Mirrors ``mock_imap_data_access.__enter__``'s staging behaviour as a one-shot
+    helper, for tests that hit the live SDC for most inputs but want to drop a
+    single locally-checked-in file (typically a dependency JSON) into the spot
+    ``imap_data_access.download`` resolves to.
+    """
+    destination = generate_imap_file_path(file_path.name).construct_path()
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy(file_path, destination)
+    return destination
 
 metakernel_text = """
 \\begindata
@@ -144,12 +159,14 @@ class mock_imap_data_access:
                 continue
         self.input_files = valid_files
 
+        self.env_patcher = patch.dict(os.environ, {"IMAP_DATA_DIR": str(self.data_dir)})
         self.data_dir_patcher = patch.dict(imap_data_access.config, {"DATA_DIR": self.data_dir})
         self.download_patcher = patch.object(imap_data_access, "download", new=fake_download)
         self.query_patcher = ImapQueryPatcher(self.input_files)
         self.requests_get_patcher = RequestsGetPatcher(spice_file_paths)
 
     def __enter__(self):
+        self.env_patcher.start()
         self.data_dir_patcher.start()
         self.download_patcher.start()
         self.query_patcher.start()
@@ -160,13 +177,12 @@ class mock_imap_data_access:
 
         for file_path in self.input_files:
             try:
-                paths_to_generate = generate_imap_file_path(file_path.name).construct_path()
-                paths_to_generate.parent.mkdir(exist_ok=True, parents=True)
-                shutil.copy(src=file_path, dst=paths_to_generate)
+                stage_input_file(file_path)
             except:
                 pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        self.env_patcher.stop()
         self.data_dir_patcher.stop()
         self.download_patcher.stop()
         self.query_patcher.stop()
@@ -180,3 +196,8 @@ class mock_imap_data_access:
                 fn(obj, *args, **kwargs)
 
         return wrapped
+
+def run_istp_compliance_check(cdf_path: Path):
+    cdf_as_json = requests.post("https://skteditor.heliophysics.net/cgi-bin/cdf2json.cgi", files={"file": open(cdf_path, "rb")}).json()
+    cdf_json = list(cdf_as_json.values())[0]
+    return requests.post("https://skteditor.heliophysics.net/cgi-bin/validate.cgi", json={cdf_path.name: cdf_json}).text

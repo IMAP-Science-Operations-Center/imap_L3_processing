@@ -5,16 +5,16 @@ from unittest.mock import patch, call, Mock, sentinel
 
 import numpy as np
 from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection, AncillaryInput
+from imap_processing.quality_flags import SweL1bFlags
 
 from imap_l3_processing.models import MagData, InputMetadata
-from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData, SweL1bData
 from imap_l3_processing.swe.l3.models import SweL3MomentData
 from imap_l3_processing.swe.l3.science.moment_calculations import MomentFitResults, ScaleDensityOutput
 from imap_l3_processing.swe.l3.science.moment_calculations import Moments
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.quality_flags import SweL3Flags
-from imap_l3_processing.swe.swe_processor import SweProcessor, logger
+from imap_l3_processing.swe.swe_processor import SweProcessor, check_and_mask_negative_moments, logger
 from tests.test_helpers import NumpyArrayMatcher, build_swe_configuration, create_dataclass_mock, build_moments, \
     build_moment_fit_results, build_swe_moment_data
 
@@ -52,6 +52,7 @@ class TestSweProcessor(unittest.TestCase):
         mock_save_data.assert_called_once_with(mock_calculate_products.return_value)
         self.assertEqual([mock_save_data.return_value], product)
 
+    @patch('imap_l3_processing.swe.swe_processor.check_and_mask_negative_moments')
     @patch("imap_l3_processing.swe.swe_processor.compute_epoch_delta_in_ns")
     @patch('imap_l3_processing.swe.swe_processor.average_over_look_directions')
     @patch('imap_l3_processing.swe.swe_processor.mec_breakpoint_finder')
@@ -59,7 +60,7 @@ class TestSweProcessor(unittest.TestCase):
     @patch('imap_l3_processing.swe.swe_processor.SweProcessor.calculate_moment_products')
     def test_calculate_products(self, mock_calculate_moment_products, mock_calculate_pitch_angle_products,
                                 mock_breakpoint_finder, mock_average_over_look_directions,
-                                mock_compute_epoch_delta_in_ns):
+                                mock_compute_epoch_delta_in_ns, mock_check_and_mask_negative_moments):
         mock_compute_epoch_delta_in_ns.return_value = [30e9, 40e9]
         epochs = datetime.now() + np.arange(7) * timedelta(minutes=1)
         swapi_epochs = datetime.now() - timedelta(seconds=15) + np.arange(2) * timedelta(minutes=.5)
@@ -77,7 +78,24 @@ class TestSweProcessor(unittest.TestCase):
         geometric_fractions = [1e7, 1e6, 1e4, 1e4, 1e3, 1e1, 1e1]
         sum_geometric_fractions = np.sum(geometric_fractions)
 
-        psd_rebinned = np.array([4e-7, 4e-6, 4e-4, 4e-4, 4e-3, 4e-1, 4e-1]) * sum_geometric_fractions
+        physical_psd_value = 1e-25
+        unphysical_psd_value = 1.0
+
+        phase_space_density_rebinned = np.full((7, 3, 5, 7), physical_psd_value)
+        phase_space_density_rebinned[6, 0, 0, 0] = unphysical_psd_value
+
+        l2_data_quality = np.array(
+            [
+                0,
+                SweL1bFlags.LAST_CAL_INTERVAL,
+                SweL1bFlags.LAST_CAL_INTERVAL | SweL1bFlags.INF,
+                0,
+                SweL1bFlags.LAST_CAL_INTERVAL | SweL1bFlags.NEG,
+                SweL1bFlags.NEG,
+                SweL1bFlags.INF,
+            ],
+            dtype=np.uint8,
+        )
 
         swe_l2_data = SweL2Data(
             epoch=epochs,
@@ -85,10 +103,14 @@ class TestSweProcessor(unittest.TestCase):
             flux=np.arange(21).reshape(7, 3),
             energy=np.array([2, 4, 6]),
             inst_el=np.array([]),
+            inst_az=sentinel.inst_az,
+            inst_az_label=sentinel.inst_az_label,
+            inst_el_label=sentinel.inst_el_label,
             inst_az_spin_sector=np.arange(21).reshape(7, 3) + 200,
             acquisition_time=np.array([]),
             acquisition_duration=np.array([]),
-            phase_space_density_rebinned=np.broadcast_to(psd_rebinned[np.newaxis, np.newaxis, :], (7, 3, 7))
+            phase_space_density_rebinned=phase_space_density_rebinned,
+            data_quality=l2_data_quality,
         )
 
         expected_corrected_energy_bins = np.array([
@@ -106,9 +128,8 @@ class TestSweProcessor(unittest.TestCase):
         swapi_l3a_proton_data = SwapiL3aProtonData(
             epoch=swapi_epochs,
             epoch_delta=np.repeat(timedelta(seconds=30), 10),
-            proton_sw_speed=np.array([]),
-            proton_sw_clock_angle=np.array([]),
-            proton_sw_deflection_angle=np.array([]),
+            proton_sw_velocity_rtn=np.zeros((0, 3)),
+            proton_sw_speed=np.zeros(0),
             swp_flags=np.array([]),
         )
         mock_average_over_look_directions.return_value = np.array([5, 10, 15])
@@ -131,13 +152,30 @@ class TestSweProcessor(unittest.TestCase):
         mock_moment_data = build_swe_moment_data(len(epochs))
         mock_calculate_moment_products.return_value = mock_moment_data
 
-        calculate_pitch_angle_flags = np.array([SweL3Flags.NONE] * len(epochs))
+        negative_moment_flags_return = np.array([SweL3Flags.NONE] * len(epochs), dtype=np.uint16)
+        negative_moment_flags_return[4] = SweL3Flags.NEGATIVE_MOMENT
+        mock_check_and_mask_negative_moments.return_value = negative_moment_flags_return
+
+        calculate_pitch_angle_flags = np.array([SweL3Flags.NONE] * len(epochs), dtype=np.uint16)
         calculate_pitch_angle_flags[0] = SweL3Flags.FALLBACK_SWAPI_SPEED
 
+        expected_phase_space_density_by_pitch_angle = np.full((7, 3, 3), physical_psd_value)
+        expected_phase_space_density_by_pitch_angle[1, 0, 0] = unphysical_psd_value
+        expected_phase_space_density_by_pitch_angle_and_gyrophase = np.full((7, 3, 3, 3), physical_psd_value)
+        expected_phase_space_density_by_pitch_angle_and_gyrophase[2, 0, 0, 0] = unphysical_psd_value
+        expected_energy_spectrum = np.full((7, 3), physical_psd_value)
+        expected_energy_spectrum[3, 0] = unphysical_psd_value
+        expected_energy_spectrum_inbound = np.full((7, 3), physical_psd_value)
+        expected_energy_spectrum_inbound[4, 0] = unphysical_psd_value
+        expected_energy_spectrum_outbound = np.full((7, 3), physical_psd_value)
+        expected_energy_spectrum_outbound[5, 0] = unphysical_psd_value
+
         mock_calculate_pitch_angle_products.return_value = (
-            sentinel.expected_phase_space_density_by_pitch_angle,
-            sentinel.expected_phase_space_density_by_pitch_angle_and_gyrophase, sentinel.expected_intensity,
-            sentinel.expected_phase_space_density_inward, sentinel.expected_phase_space_density_outward,
+            expected_phase_space_density_by_pitch_angle,
+            expected_phase_space_density_by_pitch_angle_and_gyrophase,
+            expected_energy_spectrum,
+            expected_energy_spectrum_inbound,
+            expected_energy_spectrum_outbound,
             sentinel.intensity_by_pitch_angle_and_gyrophase, sentinel.intensity_by_pitch_angle,
             sentinel.uncertainty_by_pitch_angle_and_gyrophase, sentinel.uncertainty_by_pitch_angle,
             calculate_pitch_angle_flags
@@ -146,7 +184,8 @@ class TestSweProcessor(unittest.TestCase):
         input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21),
                                        datetime(2025, 2, 22), "v001")
         swe_l1b_data = Mock()
-        swe_l3_dependency = SweL3Dependencies(swe_l2_data, swe_l1b_data, mag_l1d_data, swapi_l3a_proton_data, swe_config)
+        swe_l3_dependency = SweL3Dependencies(swe_l2_data, swe_l1b_data, mag_l1d_data, swapi_l3a_proton_data, swe_config,
+                                              mag_is_preliminary=True)
 
         swe_processor = SweProcessor(swe_l3_dependency, input_metadata)
         swe_l3_data = swe_processor.calculate_products(swe_l3_dependency)
@@ -222,6 +261,11 @@ class TestSweProcessor(unittest.TestCase):
         # pass through from l2
         np.testing.assert_array_equal(swe_l3_data.epoch, swe_l2_data.epoch)
         np.testing.assert_array_equal(swe_l3_data.epoch_delta, mock_compute_epoch_delta_in_ns.return_value)
+        np.testing.assert_array_equal(swe_l3_data.inst_el, swe_l2_data.inst_el)
+        self.assertEqual(swe_l3_data.inst_el_label, swe_l2_data.inst_el_label)
+        self.assertEqual(swe_l3_data.inst_az, swe_l2_data.inst_az)
+        self.assertEqual(swe_l3_data.inst_az_label, swe_l2_data.inst_az_label)
+
         # coming from the config
         np.testing.assert_array_equal(swe_l3_data.energy, swe_config["energy_bins"])
         np.testing.assert_array_equal(swe_l3_data.energy_delta_plus, swe_config["energy_delta_plus"])
@@ -243,35 +287,139 @@ class TestSweProcessor(unittest.TestCase):
         np.testing.assert_array_equal(swe_l3_data.core_halo_breakpoint, expected_core_halo_breakpoint)
 
         # pitch angle specific
-        self.assertEqual(sentinel.expected_phase_space_density_by_pitch_angle,
-                         swe_l3_data.phase_space_density_by_pitch_angle)
-        self.assertEqual(sentinel.expected_intensity, swe_l3_data.phase_space_density_1d)
-        self.assertEqual(sentinel.expected_phase_space_density_inward, swe_l3_data.phase_space_density_inward)
-        self.assertEqual(sentinel.expected_phase_space_density_outward, swe_l3_data.phase_space_density_outward)
+        np.testing.assert_array_equal(swe_l3_data.phase_space_density_by_pitch_angle,
+                                      expected_phase_space_density_by_pitch_angle)
+        np.testing.assert_array_equal(swe_l3_data.phase_space_density_1d, expected_energy_spectrum)
+        np.testing.assert_array_equal(swe_l3_data.phase_space_density_inward, expected_energy_spectrum_inbound)
+        np.testing.assert_array_equal(swe_l3_data.phase_space_density_outward, expected_energy_spectrum_outbound)
         self.assertEqual(mock_moment_data, swe_l3_data.moment_data)
-        self.assertEqual(sentinel.expected_phase_space_density_by_pitch_angle_and_gyrophase,
-                         swe_l3_data.phase_space_density_by_pitch_angle_and_gyrophase)
-        np.testing.assert_array_equal(swe_l3_data.raw_psd_by_phi_rebinned, np.full((7, 3), 28))
-        np.testing.assert_array_equal(swe_l3_data.raw_1d_psd_rebinned, np.full((7,), 28))
-        np.testing.assert_allclose(swe_l3_data.raw_psd_by_theta_rebinned, np.broadcast_to(psd_rebinned, (7, 7)))
+        np.testing.assert_array_equal(swe_l3_data.phase_space_density_by_pitch_angle_and_gyrophase,
+                                      expected_phase_space_density_by_pitch_angle_and_gyrophase)
+        expected_phi_avg_at_unphysical_cell = (
+            unphysical_psd_value * geometric_fractions[0]
+            + physical_psd_value * (sum_geometric_fractions - geometric_fractions[0])
+        ) / sum_geometric_fractions
+
+        expected_psd_by_phi = np.full((7, 3, 5), physical_psd_value)
+        expected_psd_by_phi[6, 0, 0] = expected_phi_avg_at_unphysical_cell
+        np.testing.assert_allclose(swe_l3_data.raw_psd_by_phi_rebinned, expected_psd_by_phi)
+
+        expected_1d_psd = np.full((7, 3), physical_psd_value)
+        expected_1d_psd[6, 0] = (expected_phi_avg_at_unphysical_cell + 4 * physical_psd_value) / 5
+        np.testing.assert_allclose(swe_l3_data.raw_1d_psd_rebinned, expected_1d_psd)
+
+        expected_psd_by_theta = np.full((7, 3, 7), physical_psd_value)
+        expected_psd_by_theta[6, 0, 0] = (unphysical_psd_value + 4 * physical_psd_value) / 5
+        np.testing.assert_allclose(swe_l3_data.raw_psd_by_theta_rebinned, expected_psd_by_theta)
 
         expected_quality_flags = np.array([
-            SweL3Flags.FALLBACK_SWAPI_SPEED | SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE | SweL3Flags.POTENTIAL_FIT_UNCONVERGED,
-            SweL3Flags.NONE,
-            SweL3Flags.NONE,
-            SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE,
-            SweL3Flags.NONE,
-            SweL3Flags.NONE,
-            SweL3Flags.NONE,
+            SweL3Flags.FALLBACK_SWAPI_SPEED | SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE | SweL3Flags.POTENTIAL_FIT_UNCONVERGED | SweL3Flags.PRELIMINARY_MAG,
+            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED | SweL3Flags.UNPHYSICAL_PSD,
+            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED | SweL3Flags.UNPHYSICAL_PSD,
+            SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE | SweL3Flags.PRELIMINARY_MAG | SweL3Flags.UNPHYSICAL_PSD,
+            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.NEGATIVE_MOMENT | SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED | SweL3Flags.UNPHYSICAL_PSD,
+            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.UNPHYSICAL_PSD,
+            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.UNPHYSICAL_PSD,
         ])
 
         np.testing.assert_array_equal(swe_l3_data.swe_flags, expected_quality_flags)
+
+        mock_check_and_mask_negative_moments.assert_called_once()
+        self.assertIs(mock_moment_data, mock_check_and_mask_negative_moments.call_args[0][0])
+
+    @patch('imap_l3_processing.swe.swe_processor.check_temperature_outlier_flag')
+    @patch('imap_l3_processing.swe.swe_processor.check_and_mask_negative_moments')
+    @patch("imap_l3_processing.swe.swe_processor.compute_epoch_delta_in_ns")
+    @patch('imap_l3_processing.swe.swe_processor.average_over_look_directions')
+    @patch('imap_l3_processing.swe.swe_processor.mec_breakpoint_finder')
+    @patch('imap_l3_processing.swe.swe_processor.SweProcessor.calculate_pitch_angle_products')
+    @patch('imap_l3_processing.swe.swe_processor.SweProcessor.calculate_moment_products')
+    def test_negative_moment_mask_runs_before_temperature_outlier_checks(
+        self,
+        mock_calculate_moment_products,
+        mock_calculate_pitch_angle_products,
+        mock_breakpoint_finder,
+        mock_average_over_look_directions,
+        mock_compute_epoch_delta_in_ns,
+        mock_check_and_mask_negative_moments,
+        mock_check_temperature_outlier_flag,
+    ):
+        num_epochs = 3
+        epochs = datetime.now() + np.arange(num_epochs) * timedelta(minutes=1)
+        mock_compute_epoch_delta_in_ns.return_value = np.full(num_epochs, 30e9)
+        mock_breakpoint_finder.return_value = (1.0, 2.0, SweL3Flags.NONE)
+        mock_average_over_look_directions.return_value = np.array([1.0, 1.0, 1.0])
+
+        swe_l2_data = SweL2Data(
+            epoch=epochs,
+            phase_space_density=np.zeros((num_epochs, 3)),
+            flux=np.zeros((num_epochs, 3)),
+            energy=np.array([1.0, 2.0, 3.0]),
+            inst_el=np.array([]),
+            inst_az=sentinel.inst_az,
+            inst_az_label=sentinel.inst_az_label,
+            inst_el_label=sentinel.inst_el_label,
+            inst_az_spin_sector=np.zeros((num_epochs, 3)),
+            acquisition_time=np.array([]),
+            acquisition_duration=np.array([]),
+            phase_space_density_rebinned=np.zeros((num_epochs, 3, 5, 7)),
+            data_quality=np.zeros(num_epochs, dtype=np.uint8),
+        )
+        swapi_l3a_proton_data = SwapiL3aProtonData(
+            epoch=np.array([]),
+            epoch_delta=np.array([]),
+            proton_sw_velocity_rtn=np.zeros((0, 3)),
+            proton_sw_speed=np.zeros(0),
+            swp_flags=np.array([]),
+        )
+        swe_config = build_swe_configuration(
+            geometric_fractions=[1.0] * 7,
+            gyrophase_bins=[90, 180, 270],
+            gyrophase_delta=[90, 90, 90],
+            pitch_angle_delta=[45, 45, 45],
+            energy_bins=[1, 10, 100],
+            energy_delta_plus=[2, 20, 200],
+            energy_delta_minus=[8, 80, 800],
+        )
+
+        moment_data = build_swe_moment_data(num_epochs)
+        mock_calculate_moment_products.return_value = moment_data
+        mock_check_and_mask_negative_moments.return_value = np.zeros(num_epochs, dtype=np.uint16)
+        mock_check_temperature_outlier_flag.return_value = np.zeros(num_epochs, dtype=np.uint16)
+        mock_calculate_pitch_angle_products.return_value = (
+            np.zeros((num_epochs, 3, 3)),
+            np.zeros((num_epochs, 3, 3, 3)),
+            np.zeros((num_epochs, 3)),
+            np.zeros((num_epochs, 3)),
+            np.zeros((num_epochs, 3)),
+            np.zeros((num_epochs, 3, 3, 3)),
+            np.zeros((num_epochs, 3, 3)),
+            np.zeros((num_epochs, 3, 3, 3)),
+            np.zeros((num_epochs, 3, 3)),
+            np.zeros(num_epochs, dtype=np.uint16),
+        )
+
+        manager = Mock()
+        manager.attach_mock(mock_check_and_mask_negative_moments, 'mask')
+        manager.attach_mock(mock_check_temperature_outlier_flag, 'outlier')
+
+        input_metadata = InputMetadata("swe", "l3", datetime(2025, 2, 21), datetime(2025, 2, 22), "v001")
+        swe_l3_dependency = SweL3Dependencies(
+            swe_l2_data, Mock(), Mock(), swapi_l3a_proton_data, swe_config,
+            mag_is_preliminary=False,
+        )
+        swe_processor = SweProcessor(swe_l3_dependency, input_metadata)
+        swe_processor.calculate_products(swe_l3_dependency)
+
+        method_call_order = [c[0] for c in manager.mock_calls]
+        self.assertEqual('mask', method_call_order[0])
+        self.assertEqual(['outlier'] * 8, method_call_order[1:])
 
     @patch('imap_l3_processing.swe.swe_processor.swe_rebin_intensity_by_pitch_angle_and_gyrophase')
     @patch('imap_l3_processing.swe.swe_processor.calculate_velocity_in_dsp_frame_km_s')
     @patch('imap_l3_processing.swe.swe_processor.average_over_look_directions')
     @patch('imap_l3_processing.swe.swe_processor.mec_breakpoint_finder')
-    @patch('imap_l3_processing.swe.swe_processor.calculate_solar_wind_velocity_vector')
+    @patch('imap_l3_processing.swe.swe_processor.rotate_rtn_vectors_to_dps')
     @patch('imap_l3_processing.swe.swe_processor.correct_and_rebin')
     @patch('imap_l3_processing.swe.swe_processor.integrate_distribution_to_get_1d_spectrum')
     @patch('imap_l3_processing.swe.swe_processor.integrate_distribution_to_get_inbound_and_outbound_1d_spectrum')
@@ -280,7 +428,7 @@ class TestSweProcessor(unittest.TestCase):
                                                           mock_integrate_distribution_to_get_inbound_and_outbound_1d_spectrum,
                                                           mock_integrate_distribution_to_get_1d_spectrum,
                                                           mock_correct_and_rebin,
-                                                          mock_calculate_solar_wind_velocity_vector,
+                                                          mock_rotate_rtn_vectors_to_dps,
                                                           _,
                                                           mock_average_over_look_directions,
                                                           mock_calculate_velocities, mock_swe_rebin_intensity):
@@ -301,10 +449,14 @@ class TestSweProcessor(unittest.TestCase):
             flux=np.arange(27).reshape(3, 3, 3),
             energy=energies,
             inst_el=np.array([]),
+            inst_el_label=sentinel.inst_el_label,
+            inst_az=sentinel.inst_az,
+            inst_az_label=sentinel.inst_az_label,
             inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
             acquisition_time=np.array([]),
             acquisition_duration=(np.arange(9).reshape(3, 3) + 5) * 1e6,
-            phase_space_density_rebinned=np.array([])
+            phase_space_density_rebinned=np.array([]),
+            data_quality=np.array([]),
         )
 
         swe_l1b_data = SweL1bData(
@@ -321,11 +473,14 @@ class TestSweProcessor(unittest.TestCase):
         swapi_l3a_proton_data = SwapiL3aProtonData(
             epoch=swapi_epochs,
             epoch_delta=np.repeat(timedelta(seconds=30), 10),
-            proton_sw_speed=np.array([]),
-            proton_sw_clock_angle=np.array([]),
-            proton_sw_deflection_angle=np.array([]),
-            swp_flags=np.array([0,0,0,SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED, SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED | SwapiL3Flags.HI_CHI_SQ, SwapiL3Flags.HI_CHI_SQ,0,0,0,0]),
+            proton_sw_velocity_rtn=np.arange(30).reshape(10, 3).astype(float),
+            proton_sw_speed=np.full(10, 400.0),
+            swp_flags=np.zeros(10),
         )
+        rotated_dps_vectors = np.arange(30).reshape(10, 3).astype(float)
+        rotated_dps_vectors[3] = np.nan
+        rotated_dps_vectors[4] = np.nan
+        mock_rotate_rtn_vectors_to_dps.return_value = rotated_dps_vectors
         counts = swe_l1b_data.count_rates * swe_l2_data.acquisition_duration[:, :, np.newaxis] / 1e6
         mock_average_over_look_directions.return_value = np.array([5, 10, 15])
         closest_mag_data = np.arange(9).reshape(3, 3)
@@ -399,10 +554,13 @@ class TestSweProcessor(unittest.TestCase):
 
         self.assertEqual(3, mock_correct_and_rebin.call_count)
         self.assertEqual(3, mock_integrate_distribution_to_get_1d_spectrum.call_count)
-        mock_calculate_solar_wind_velocity_vector.assert_called_once_with(
-            swel3_dependency.swapi_l3a_proton_data.proton_sw_speed,
-            swel3_dependency.swapi_l3a_proton_data.proton_sw_clock_angle,
-            swel3_dependency.swapi_l3a_proton_data.proton_sw_deflection_angle)
+        mock_rotate_rtn_vectors_to_dps.assert_called_once()
+        rotate_args = mock_rotate_rtn_vectors_to_dps.call_args[0]
+        np.testing.assert_array_equal(rotate_args[0], swapi_epochs)
+        np.testing.assert_array_equal(rotate_args[1], swapi_l3a_proton_data.proton_sw_velocity_rtn)
+        expected_dps_vectors_after_speed_fallback = rotated_dps_vectors.copy()
+        expected_dps_vectors_after_speed_fallback[3] = [0.0, 0.0, -400.0]
+        expected_dps_vectors_after_speed_fallback[4] = [0.0, 0.0, -400.0]
         mock_find_closest_neighbor.assert_has_calls([
             call(
                 from_epoch=mag_epochs,
@@ -412,7 +570,7 @@ class TestSweProcessor(unittest.TestCase):
             ),
             call(
                 from_epoch=swapi_epochs,
-                from_data=mock_calculate_solar_wind_velocity_vector.return_value,
+                from_data=NumpyArrayMatcher(expected_dps_vectors_after_speed_fallback),
                 to_epoch=epochs,
                 maximum_distance=np.timedelta64(5, 'm')
             )
@@ -483,8 +641,9 @@ class TestSweProcessor(unittest.TestCase):
             call(rebinned_by_pitch_list[2], swe_config)
         ])
 
+    @patch("imap_l3_processing.swe.swe_processor.rotate_rtn_vectors_to_dps")
     @patch("imap_l3_processing.swe.swe_processor.SweProcessor.calculate_moment_products")
-    def test_calculate_pitch_angle_products_makes_nan_if_no_mag_close_enough(self, mock_calculate_moments):
+    def test_calculate_pitch_angle_products_makes_nan_if_no_mag_close_enough(self, mock_calculate_moments, mock_rotate_rtn_vectors_to_dps):
         epochs = np.array([datetime(2025, 3, 6)])
         mag_epochs = np.array([
             datetime(2025, 3, 6, 0, 1, 30),
@@ -499,6 +658,7 @@ class TestSweProcessor(unittest.TestCase):
             datetime(2025, 3, 6, 0, 10, 30),
         ])
         swapi_epochs = np.array([datetime(2025, 3, 6)])
+        mock_rotate_rtn_vectors_to_dps.return_value = np.tile([0.0, 0.0, -400.0], (len(swapi_epochs), 1))
 
         pitch_angle_bins = [70, 100, 130]
 
@@ -515,11 +675,15 @@ class TestSweProcessor(unittest.TestCase):
             flux=np.arange(num_epochs * num_energies * 5 * 7).reshape(num_epochs, num_energies, 5, 7),
             energy=np.arange(num_energies) + 20,
             inst_el=np.array([-30, -20, -10, 0, 10, 20, 30]),
+            inst_el_label=sentinel.inst_el_label,
+            inst_az=sentinel.inst_az,
+            inst_az_label=sentinel.inst_az_label,
             inst_az_spin_sector=np.arange(num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
             acquisition_time=np.linspace(datetime(2025, 3, 6), datetime(2025, 3, 6, 0, 1),
                                          num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
             acquisition_duration=np.full((num_epochs, num_energies, 5), 80000),
-            phase_space_density_rebinned=np.arange(0,392,7).reshape(2, 4, 7)
+            phase_space_density_rebinned=np.zeros((num_epochs, num_energies, 5, 7)),
+            data_quality=np.zeros(num_epochs, dtype=np.uint8),
         )
 
         swe_l1b_data = SweL1bData(
@@ -536,9 +700,8 @@ class TestSweProcessor(unittest.TestCase):
         swapi_l3a_proton_data = SwapiL3aProtonData(
             epoch=swapi_epochs,
             epoch_delta=np.repeat(timedelta(seconds=30), 10),
-            proton_sw_speed=np.full(len(swapi_epochs), 400),
-            proton_sw_clock_angle=np.full(len(swapi_epochs), 0),
-            proton_sw_deflection_angle=np.full(len(swapi_epochs), 0),
+            proton_sw_velocity_rtn=np.tile([-400.0, 0.0, 0.0], (len(swapi_epochs), 1)),
+            proton_sw_speed=np.full(len(swapi_epochs), 400.0),
             swp_flags=np.full(len(swapi_epochs), 0)
         )
         geometric_fractions = [0.0697327, 0.138312, 0.175125, 0.181759,
@@ -591,14 +754,16 @@ class TestSweProcessor(unittest.TestCase):
                                       np.full((len(epochs), num_energies, len(pitch_angle_bins), len(gyrophase_bins)),
                                               np.nan))
 
+    @patch("imap_l3_processing.swe.swe_processor.rotate_rtn_vectors_to_dps")
     @patch("imap_l3_processing.swe.swe_processor.SweProcessor.calculate_moment_products")
-    def test_calculate_pitch_angle_products_without_mocks(self, mock_calculate_moments):
+    def test_calculate_pitch_angle_products_without_mocks(self, mock_calculate_moments, mock_rotate_rtn_vectors_to_dps):
         epochs = np.array([datetime(2025, 3, 6)])
         mag_start_time = datetime(2025, 3, 6, 0, 1, 0)
         mag_epochs = np.array([mag_start_time + i * timedelta(seconds=1) for i in range(10)])
         swapi_epochs = np.array([datetime(2025, 3, 6), datetime(2025, 3, 10)])
-        swp_flags = np.array([SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED, SwapiL3Flags.SWP_SW_ANGLES_ESTIMATED])
+        swp_flags = np.zeros(2)
         mock_calculate_moments.return_value = build_swe_moment_data(len(epochs))
+        mock_rotate_rtn_vectors_to_dps.return_value = np.full((len(swapi_epochs), 3), np.nan)
         pitch_angle_bins = [70, 100, 130]
 
         num_energies = 9
@@ -610,11 +775,15 @@ class TestSweProcessor(unittest.TestCase):
             flux=np.arange(num_epochs * num_energies * 5 * 7).reshape(num_epochs, num_energies, 5, 7),
             energy=np.arange(num_energies) + 5,
             inst_el=np.array([-30, -20, -10, 0, 10, 20, 30]),
+            inst_el_label=sentinel.inst_el_label,
+            inst_az=sentinel.inst_az,
+            inst_az_label=sentinel.inst_az_label,
             inst_az_spin_sector=np.arange(num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
             acquisition_time=np.linspace(datetime(2025, 3, 6), datetime(2025, 3, 6, 0, 1),
                                          num_epochs * num_energies * 5).reshape(num_epochs, num_energies, 5),
             acquisition_duration=np.full((num_epochs, num_energies, 5), 80000),
-            phase_space_density_rebinned=np.arange(0,392, 7).reshape(2, 4, 7)
+            phase_space_density_rebinned=np.zeros((num_epochs, num_energies, 5, 7)),
+            data_quality=np.zeros(num_epochs, dtype=np.uint8),
         )
 
         swe_l1b_data = SweL1bData(
@@ -633,9 +802,8 @@ class TestSweProcessor(unittest.TestCase):
         swapi_l3a_proton_data = SwapiL3aProtonData(
             epoch=swapi_epochs,
             epoch_delta=np.repeat(timedelta(seconds=30), 10),
-            proton_sw_speed=np.full(len(swapi_epochs), 400),
-            proton_sw_clock_angle=np.full(len(swapi_epochs), 0),
-            proton_sw_deflection_angle=np.full(len(swapi_epochs), 0),
+            proton_sw_velocity_rtn=np.full((len(swapi_epochs), 3), np.nan),
+            proton_sw_speed=np.full(len(swapi_epochs), 400.0),
             swp_flags=swp_flags
         )
         geometric_fractions = [0.0697327, 0.138312, 0.175125, 0.181759,
@@ -698,6 +866,7 @@ class TestSweProcessor(unittest.TestCase):
             |SweL3Flags.BACKUP_SPLINE_UNRESOLVED
             |SweL3Flags.BREAKPOINT_FIT_UNCONVERGED
             |SweL3Flags.FALLBACK_SWAPI_SPEED
+            |SweL3Flags.UNPHYSICAL_PSD
         ])
         np.testing.assert_array_equal(swe_l3_data.swe_flags, expected_swe_flags)
 
@@ -734,10 +903,14 @@ class TestSweProcessor(unittest.TestCase):
             flux=np.arange(9).reshape(3, 3),
             energy=np.array([9, 10, 12, 14, 36, 54, 96, 102, 112, 156, 172]),
             inst_el=instrument_elevation,
+            inst_el_label=sentinel.inst_el_label,
+            inst_az=sentinel.inst_az,
+            inst_az_label=sentinel.inst_az_label,
             inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
             acquisition_time=np.array([]),
             acquisition_duration=[1e7, 2e7, 3e7],
             phase_space_density_rebinned=np.array([]),
+            data_quality=np.array([]),
         )
         expected_sin_theta = np.sin(np.deg2rad(90 - instrument_elevation))
         expected_cos_theta = np.cos(np.deg2rad(90 - instrument_elevation))
@@ -1282,10 +1455,14 @@ class TestSweProcessor(unittest.TestCase):
             flux=np.arange(9).reshape(3, 3),
             energy=np.array([9, 10, 12, 14, 36, 54, 96, 102, 112, 156]),
             inst_el=instrument_elevation,
+            inst_el_label=sentinel.inst_el_label,
+            inst_az=sentinel.inst_az,
+            inst_az_label=sentinel.inst_az_label,
             inst_az_spin_sector=np.arange(16, 32).reshape(4, 4),
             acquisition_time=np.array([]),
             acquisition_duration=[2e7, 2e7, 2e7, 2e7],
-            phase_space_density_rebinned=np.array([])
+            phase_space_density_rebinned=np.array([]),
+            data_quality=np.array([]),
         )
         swe_l1_data = SweL1bData(epoch=epochs,
                                  count_rates=[Mock(), Mock(), Mock(), Mock()],
@@ -1334,10 +1511,14 @@ class TestSweProcessor(unittest.TestCase):
             flux=np.arange(9).reshape(3, 3),
             energy=np.array([9, 10, 12, 14, 36, 54, 96, 102, 112, 156, 172]),
             inst_el=instrument_elevation,
+            inst_el_label=sentinel.inst_el_label,
+            inst_az=sentinel.inst_az,
+            inst_az_label=sentinel.inst_az_label,
             inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
             acquisition_time=np.array([]),
             acquisition_duration=np.full((1, 11, 3), 1e7),
-            phase_space_density_rebinned=np.array([])
+            phase_space_density_rebinned=np.array([]),
+            data_quality=np.array([]),
         )
         swe_l1_data = SweL1bData(epoch=epochs,
                                  count_rates=np.full((1, 11, 3, 7), 10.5),
@@ -1426,10 +1607,14 @@ class TestSweProcessor(unittest.TestCase):
                     flux=np.arange(9).reshape(3, 3),
                     energy=np.array([9, 10, 12, 14, 36, 54, 96, 102, 112, 156, 172]),
                     inst_el=instrument_elevation,
+                    inst_el_label=sentinel.inst_el_label,
+                    inst_az=sentinel.inst_az,
+                    inst_az_label=sentinel.inst_az_label,
                     inst_az_spin_sector=np.arange(10, 19).reshape(3, 3),
                     acquisition_time=np.array([]),
                     acquisition_duration=[1e7, 2e7, 3e7],
-                    phase_space_density_rebinned=np.array([])
+                    phase_space_density_rebinned=np.array([]),
+                    data_quality=np.array([]),
                 )
                 swe_l1_data = SweL1bData(epoch=epochs,
                                          count_rates=[sentinel.l1b_count_rates_1, sentinel.l1b_count_rates_2,
@@ -1460,3 +1645,426 @@ class TestSweProcessor(unittest.TestCase):
                 self.assertIsInstance(swe_moment_data, SweL3MomentData)
 
                 failing_function.side_effect = None
+
+
+_CORE_INTEGRATED_FIELD_NAMES: tuple[str, ...] = (
+    "core_density_integrated",
+    "core_speed_integrated",
+    "core_velocity_vector_rtn_integrated",
+    "core_heat_flux_magnitude_integrated",
+    "core_heat_flux_theta_integrated",
+    "core_heat_flux_phi_integrated",
+    "core_t_parallel_integrated",
+    "core_t_perpendicular_integrated",
+    "core_temperature_theta_rtn_integrated",
+    "core_temperature_phi_rtn_integrated",
+    "core_temperature_parallel_to_mag",
+    "core_temperature_perpendicular_to_mag",
+    "core_temperature_tensor_integrated",
+)
+
+_HALO_INTEGRATED_FIELD_NAMES: tuple[str, ...] = (
+    "halo_density_integrated",
+    "halo_speed_integrated",
+    "halo_velocity_vector_rtn_integrated",
+    "halo_heat_flux_magnitude_integrated",
+    "halo_heat_flux_theta_integrated",
+    "halo_heat_flux_phi_integrated",
+    "halo_t_parallel_integrated",
+    "halo_t_perpendicular_integrated",
+    "halo_temperature_theta_rtn_integrated",
+    "halo_temperature_phi_rtn_integrated",
+    "halo_temperature_parallel_to_mag",
+    "halo_temperature_perpendicular_to_mag",
+    "halo_temperature_tensor_integrated",
+)
+
+_TOTAL_INTEGRATED_FIELD_NAMES: tuple[str, ...] = (
+    "total_density_integrated",
+    "total_speed_integrated",
+    "total_velocity_vector_rtn_integrated",
+    "total_heat_flux_magnitude_integrated",
+    "total_heat_flux_theta_integrated",
+    "total_heat_flux_phi_integrated",
+    "total_t_parallel_integrated",
+    "total_t_perpendicular_integrated",
+    "total_temperature_theta_rtn_integrated",
+    "total_temperature_phi_rtn_integrated",
+    "total_temperature_parallel_to_mag",
+    "total_temperature_perpendicular_to_mag",
+    "total_temperature_tensor_integrated",
+)
+
+_FIT_FIELD_NAMES: tuple[str, ...] = (
+    "core_fit_num_points",
+    "core_chisq",
+    "halo_chisq",
+    "core_density_fit",
+    "halo_density_fit",
+    "core_t_parallel_fit",
+    "halo_t_parallel_fit",
+    "core_t_perpendicular_fit",
+    "halo_t_perpendicular_fit",
+    "core_temperature_phi_rtn_fit",
+    "halo_temperature_phi_rtn_fit",
+    "core_temperature_theta_rtn_fit",
+    "halo_temperature_theta_rtn_fit",
+    "core_speed_fit",
+    "halo_speed_fit",
+    "core_velocity_vector_rtn_fit",
+    "halo_velocity_vector_rtn_fit",
+)
+
+
+def _build_finite_moment_data(num_epochs: int) -> SweL3MomentData:
+    shape_1d = (num_epochs,)
+    shape_2 = (num_epochs, 2)
+    shape_3 = (num_epochs, 3)
+    shape_6 = (num_epochs, 6)
+    return SweL3MomentData(
+        core_fit_num_points=np.full(shape_1d, 1.0),
+        core_chisq=np.full(shape_1d, 1.0),
+        halo_chisq=np.full(shape_1d, 1.0),
+        core_density_fit=np.full(shape_1d, 1.0),
+        halo_density_fit=np.full(shape_1d, 1.0),
+        core_t_parallel_fit=np.full(shape_1d, 1.0),
+        halo_t_parallel_fit=np.full(shape_1d, 1.0),
+        core_t_perpendicular_fit=np.full(shape_1d, 1.0),
+        halo_t_perpendicular_fit=np.full(shape_1d, 1.0),
+        core_temperature_phi_rtn_fit=np.full(shape_1d, 1.0),
+        halo_temperature_phi_rtn_fit=np.full(shape_1d, 1.0),
+        core_temperature_theta_rtn_fit=np.full(shape_1d, 1.0),
+        halo_temperature_theta_rtn_fit=np.full(shape_1d, 1.0),
+        core_speed_fit=np.full(shape_1d, 1.0),
+        halo_speed_fit=np.full(shape_1d, 1.0),
+        core_velocity_vector_rtn_fit=np.full(shape_3, 1.0),
+        halo_velocity_vector_rtn_fit=np.full(shape_3, 1.0),
+        core_density_integrated=np.full(shape_1d, 1.0),
+        halo_density_integrated=np.full(shape_1d, 1.0),
+        total_density_integrated=np.full(shape_1d, 1.0),
+        core_speed_integrated=np.full(shape_1d, 1.0),
+        halo_speed_integrated=np.full(shape_1d, 1.0),
+        total_speed_integrated=np.full(shape_1d, 1.0),
+        core_velocity_vector_rtn_integrated=np.full(shape_3, 1.0),
+        halo_velocity_vector_rtn_integrated=np.full(shape_3, 1.0),
+        total_velocity_vector_rtn_integrated=np.full(shape_3, 1.0),
+        core_heat_flux_magnitude_integrated=np.full(shape_1d, 1.0),
+        core_heat_flux_theta_integrated=np.full(shape_1d, 1.0),
+        core_heat_flux_phi_integrated=np.full(shape_1d, 1.0),
+        halo_heat_flux_magnitude_integrated=np.full(shape_1d, 1.0),
+        halo_heat_flux_theta_integrated=np.full(shape_1d, 1.0),
+        halo_heat_flux_phi_integrated=np.full(shape_1d, 1.0),
+        total_heat_flux_magnitude_integrated=np.full(shape_1d, 1.0),
+        total_heat_flux_theta_integrated=np.full(shape_1d, 1.0),
+        total_heat_flux_phi_integrated=np.full(shape_1d, 1.0),
+        core_t_parallel_integrated=np.full(shape_1d, 1.0),
+        core_t_perpendicular_integrated=np.full(shape_2, 1.0),
+        halo_t_parallel_integrated=np.full(shape_1d, 1.0),
+        halo_t_perpendicular_integrated=np.full(shape_2, 1.0),
+        total_t_parallel_integrated=np.full(shape_1d, 1.0),
+        total_t_perpendicular_integrated=np.full(shape_2, 1.0),
+        core_temperature_theta_rtn_integrated=np.full(shape_1d, 1.0),
+        core_temperature_phi_rtn_integrated=np.full(shape_1d, 1.0),
+        halo_temperature_theta_rtn_integrated=np.full(shape_1d, 1.0),
+        halo_temperature_phi_rtn_integrated=np.full(shape_1d, 1.0),
+        total_temperature_theta_rtn_integrated=np.full(shape_1d, 1.0),
+        total_temperature_phi_rtn_integrated=np.full(shape_1d, 1.0),
+        core_temperature_parallel_to_mag=np.full(shape_1d, 1.0),
+        core_temperature_perpendicular_to_mag=np.full(shape_2, 1.0),
+        halo_temperature_parallel_to_mag=np.full(shape_1d, 1.0),
+        halo_temperature_perpendicular_to_mag=np.full(shape_2, 1.0),
+        total_temperature_parallel_to_mag=np.full(shape_1d, 1.0),
+        total_temperature_perpendicular_to_mag=np.full(shape_2, 1.0),
+        core_temperature_tensor_integrated=np.full(shape_6, 1.0),
+        halo_temperature_tensor_integrated=np.full(shape_6, 1.0),
+        total_temperature_tensor_integrated=np.full(shape_6, 1.0),
+    )
+
+
+def _assert_field_nan_at_index_and_finite_elsewhere(test: unittest.TestCase, moment_data: SweL3MomentData,
+                                                    field_names: tuple[str, ...], nan_index: int,
+                                                    finite_indices: tuple[int, ...]) -> None:
+    for field_name in field_names:
+        field = getattr(moment_data, field_name)
+        test.assertTrue(np.all(np.isnan(field[nan_index])),
+                        f"{field_name}[{nan_index}] should be NaN, got {field[nan_index]!r}")
+        for finite_index in finite_indices:
+            test.assertTrue(np.all(np.isfinite(field[finite_index])),
+                            f"{field_name}[{finite_index}] should be finite, got {field[finite_index]!r}")
+
+
+def _assert_fields_finite_everywhere(test: unittest.TestCase, moment_data: SweL3MomentData,
+                                     field_names: tuple[str, ...]) -> None:
+    for field_name in field_names:
+        field = getattr(moment_data, field_name)
+        test.assertTrue(np.all(np.isfinite(field)),
+                        f"{field_name} should be finite at every index, got {field!r}")
+
+
+class TestCheckAndMaskNegativeMoments(unittest.TestCase):
+    def test_negative_core_density_masks_core_and_total_and_flags(self):
+        moment_data = _build_finite_moment_data(num_epochs=3)
+        moment_data.core_density_integrated[1] = -1.0
+
+        flags = check_and_mask_negative_moments(moment_data)
+
+        expected_flags = np.array(
+            [SweL3Flags.NONE, SweL3Flags.NEGATIVE_MOMENT, SweL3Flags.NONE], dtype=np.uint16
+        )
+        np.testing.assert_array_equal(flags, expected_flags)
+        self.assertEqual(np.uint16, flags.dtype)
+
+        _assert_field_nan_at_index_and_finite_elsewhere(
+            self, moment_data, _CORE_INTEGRATED_FIELD_NAMES, nan_index=1, finite_indices=(0, 2)
+        )
+        _assert_field_nan_at_index_and_finite_elsewhere(
+            self, moment_data, _TOTAL_INTEGRATED_FIELD_NAMES, nan_index=1, finite_indices=(0, 2)
+        )
+        _assert_fields_finite_everywhere(self, moment_data, _HALO_INTEGRATED_FIELD_NAMES)
+        _assert_fields_finite_everywhere(self, moment_data, _FIT_FIELD_NAMES)
+
+    def test_negative_core_tensor_diagonal_masks_core_and_total_and_flags(self):
+        diagonal_cases = (
+            ("Txx", [-1.0, 0.0, 1.0, 0.0, 0.0, 1.0]),
+            ("Tyy", [1.0, 0.0, -1.0, 0.0, 0.0, 1.0]),
+            ("Tzz", [1.0, 0.0, 1.0, 0.0, 0.0, -1.0]),
+        )
+        for label, tensor_at_epoch_1 in diagonal_cases:
+            with self.subTest(label):
+                moment_data = _build_finite_moment_data(num_epochs=3)
+                moment_data.core_temperature_tensor_integrated[1] = tensor_at_epoch_1
+
+                flags = check_and_mask_negative_moments(moment_data)
+
+                expected_flags = np.array(
+                    [SweL3Flags.NONE, SweL3Flags.NEGATIVE_MOMENT, SweL3Flags.NONE], dtype=np.uint16
+                )
+                np.testing.assert_array_equal(flags, expected_flags)
+                self.assertEqual(np.uint16, flags.dtype)
+
+                _assert_field_nan_at_index_and_finite_elsewhere(
+                    self, moment_data, _CORE_INTEGRATED_FIELD_NAMES, nan_index=1, finite_indices=(0, 2)
+                )
+                _assert_field_nan_at_index_and_finite_elsewhere(
+                    self, moment_data, _TOTAL_INTEGRATED_FIELD_NAMES, nan_index=1, finite_indices=(0, 2)
+                )
+                _assert_fields_finite_everywhere(self, moment_data, _HALO_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _FIT_FIELD_NAMES)
+
+    def test_negative_core_tensor_off_diagonal_does_not_flag_or_mask(self):
+        off_diagonal_cases = (
+            ("Txy", [1.0, -1.0, 1.0, 0.0, 0.0, 1.0]),
+            ("Txz", [1.0, 0.0, 1.0, -1.0, 0.0, 1.0]),
+            ("Tyz", [1.0, 0.0, 1.0, 0.0, -1.0, 1.0]),
+        )
+        for label, tensor_at_epoch_1 in off_diagonal_cases:
+            with self.subTest(label):
+                moment_data = _build_finite_moment_data(num_epochs=3)
+                moment_data.core_temperature_tensor_integrated[1] = tensor_at_epoch_1
+
+                flags = check_and_mask_negative_moments(moment_data)
+
+                expected_flags = np.array(
+                    [SweL3Flags.NONE, SweL3Flags.NONE, SweL3Flags.NONE], dtype=np.uint16
+                )
+                np.testing.assert_array_equal(flags, expected_flags)
+                self.assertEqual(np.uint16, flags.dtype)
+
+                _assert_fields_finite_everywhere(self, moment_data, _CORE_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _HALO_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _TOTAL_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _FIT_FIELD_NAMES)
+
+    def test_negative_halo_density_masks_halo_and_total_and_flags(self):
+        moment_data = _build_finite_moment_data(num_epochs=3)
+        moment_data.halo_density_integrated[1] = -1.0
+
+        flags = check_and_mask_negative_moments(moment_data)
+
+        expected_flags = np.array(
+            [SweL3Flags.NONE, SweL3Flags.NEGATIVE_MOMENT, SweL3Flags.NONE], dtype=np.uint16
+        )
+        np.testing.assert_array_equal(flags, expected_flags)
+        self.assertEqual(np.uint16, flags.dtype)
+
+        _assert_field_nan_at_index_and_finite_elsewhere(
+            self, moment_data, _HALO_INTEGRATED_FIELD_NAMES, nan_index=1, finite_indices=(0, 2)
+        )
+        _assert_field_nan_at_index_and_finite_elsewhere(
+            self, moment_data, _TOTAL_INTEGRATED_FIELD_NAMES, nan_index=1, finite_indices=(0, 2)
+        )
+        _assert_fields_finite_everywhere(self, moment_data, _CORE_INTEGRATED_FIELD_NAMES)
+        _assert_fields_finite_everywhere(self, moment_data, _FIT_FIELD_NAMES)
+
+    def test_negative_halo_tensor_diagonal_masks_halo_and_total_and_flags(self):
+        diagonal_cases = (
+            ("Txx", [-1.0, 0.0, 1.0, 0.0, 0.0, 1.0]),
+            ("Tyy", [1.0, 0.0, -1.0, 0.0, 0.0, 1.0]),
+            ("Tzz", [1.0, 0.0, 1.0, 0.0, 0.0, -1.0]),
+        )
+        for label, tensor_at_epoch_1 in diagonal_cases:
+            with self.subTest(label):
+                moment_data = _build_finite_moment_data(num_epochs=3)
+                moment_data.halo_temperature_tensor_integrated[1] = tensor_at_epoch_1
+
+                flags = check_and_mask_negative_moments(moment_data)
+
+                expected_flags = np.array(
+                    [SweL3Flags.NONE, SweL3Flags.NEGATIVE_MOMENT, SweL3Flags.NONE], dtype=np.uint16
+                )
+                np.testing.assert_array_equal(flags, expected_flags)
+                self.assertEqual(np.uint16, flags.dtype)
+
+                _assert_field_nan_at_index_and_finite_elsewhere(
+                    self, moment_data, _HALO_INTEGRATED_FIELD_NAMES, nan_index=1, finite_indices=(0, 2)
+                )
+                _assert_field_nan_at_index_and_finite_elsewhere(
+                    self, moment_data, _TOTAL_INTEGRATED_FIELD_NAMES, nan_index=1, finite_indices=(0, 2)
+                )
+                _assert_fields_finite_everywhere(self, moment_data, _CORE_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _FIT_FIELD_NAMES)
+
+    def test_negative_halo_tensor_off_diagonal_does_not_flag_or_mask(self):
+        off_diagonal_cases = (
+            ("Txy", [1.0, -1.0, 1.0, 0.0, 0.0, 1.0]),
+            ("Txz", [1.0, 0.0, 1.0, -1.0, 0.0, 1.0]),
+            ("Tyz", [1.0, 0.0, 1.0, 0.0, -1.0, 1.0]),
+        )
+        for label, tensor_at_epoch_1 in off_diagonal_cases:
+            with self.subTest(label):
+                moment_data = _build_finite_moment_data(num_epochs=3)
+                moment_data.halo_temperature_tensor_integrated[1] = tensor_at_epoch_1
+
+                flags = check_and_mask_negative_moments(moment_data)
+
+                expected_flags = np.array(
+                    [SweL3Flags.NONE, SweL3Flags.NONE, SweL3Flags.NONE], dtype=np.uint16
+                )
+                np.testing.assert_array_equal(flags, expected_flags)
+                self.assertEqual(np.uint16, flags.dtype)
+
+                _assert_fields_finite_everywhere(self, moment_data, _CORE_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _HALO_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _TOTAL_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _FIT_FIELD_NAMES)
+
+    def test_negative_total_density_masks_only_total_and_flags(self):
+        moment_data = _build_finite_moment_data(num_epochs=3)
+        moment_data.total_density_integrated[1] = -1.0
+
+        flags = check_and_mask_negative_moments(moment_data)
+
+        expected_flags = np.array(
+            [SweL3Flags.NONE, SweL3Flags.NEGATIVE_MOMENT, SweL3Flags.NONE], dtype=np.uint16
+        )
+        np.testing.assert_array_equal(flags, expected_flags)
+        self.assertEqual(np.uint16, flags.dtype)
+
+        _assert_field_nan_at_index_and_finite_elsewhere(
+            self, moment_data, _TOTAL_INTEGRATED_FIELD_NAMES, nan_index=1, finite_indices=(0, 2)
+        )
+        _assert_fields_finite_everywhere(self, moment_data, _CORE_INTEGRATED_FIELD_NAMES)
+        _assert_fields_finite_everywhere(self, moment_data, _HALO_INTEGRATED_FIELD_NAMES)
+        _assert_fields_finite_everywhere(self, moment_data, _FIT_FIELD_NAMES)
+
+    def test_negative_total_tensor_diagonal_masks_only_total_and_flags(self):
+        diagonal_cases = (
+            ("Txx", [-1.0, 0.0, 1.0, 0.0, 0.0, 1.0]),
+            ("Tyy", [1.0, 0.0, -1.0, 0.0, 0.0, 1.0]),
+            ("Tzz", [1.0, 0.0, 1.0, 0.0, 0.0, -1.0]),
+        )
+        for label, tensor_at_epoch_1 in diagonal_cases:
+            with self.subTest(label):
+                moment_data = _build_finite_moment_data(num_epochs=3)
+                moment_data.total_temperature_tensor_integrated[1] = tensor_at_epoch_1
+
+                flags = check_and_mask_negative_moments(moment_data)
+
+                expected_flags = np.array(
+                    [SweL3Flags.NONE, SweL3Flags.NEGATIVE_MOMENT, SweL3Flags.NONE], dtype=np.uint16
+                )
+                np.testing.assert_array_equal(flags, expected_flags)
+                self.assertEqual(np.uint16, flags.dtype)
+
+                _assert_field_nan_at_index_and_finite_elsewhere(
+                    self, moment_data, _TOTAL_INTEGRATED_FIELD_NAMES, nan_index=1, finite_indices=(0, 2)
+                )
+                _assert_fields_finite_everywhere(self, moment_data, _CORE_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _HALO_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _FIT_FIELD_NAMES)
+
+    def test_negative_total_tensor_off_diagonal_does_not_flag_or_mask(self):
+        off_diagonal_cases = (
+            ("Txy", [1.0, -1.0, 1.0, 0.0, 0.0, 1.0]),
+            ("Txz", [1.0, 0.0, 1.0, -1.0, 0.0, 1.0]),
+            ("Tyz", [1.0, 0.0, 1.0, 0.0, -1.0, 1.0]),
+        )
+        for label, tensor_at_epoch_1 in off_diagonal_cases:
+            with self.subTest(label):
+                moment_data = _build_finite_moment_data(num_epochs=3)
+                moment_data.total_temperature_tensor_integrated[1] = tensor_at_epoch_1
+
+                flags = check_and_mask_negative_moments(moment_data)
+
+                expected_flags = np.array(
+                    [SweL3Flags.NONE, SweL3Flags.NONE, SweL3Flags.NONE], dtype=np.uint16
+                )
+                np.testing.assert_array_equal(flags, expected_flags)
+                self.assertEqual(np.uint16, flags.dtype)
+
+                _assert_fields_finite_everywhere(self, moment_data, _CORE_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _HALO_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _TOTAL_INTEGRATED_FIELD_NAMES)
+                _assert_fields_finite_everywhere(self, moment_data, _FIT_FIELD_NAMES)
+
+    def test_combines_negative_sources_correctly(self):
+        moment_data = _build_finite_moment_data(num_epochs=4)
+
+        moment_data.core_density_integrated[1] = -1.0
+        moment_data.halo_density_integrated[2] = -1.0
+        moment_data.core_temperature_tensor_integrated[3] = [-1.0, 0.0, 1.0, 0.0, 0.0, 1.0]
+        moment_data.halo_temperature_tensor_integrated[3] = [-1.0, 0.0, 1.0, 0.0, 0.0, 1.0]
+        moment_data.total_density_integrated[3] = -1.0
+
+        flags = check_and_mask_negative_moments(moment_data)
+
+        expected_flags = np.array(
+            [
+                SweL3Flags.NONE,
+                SweL3Flags.NEGATIVE_MOMENT,
+                SweL3Flags.NEGATIVE_MOMENT,
+                SweL3Flags.NEGATIVE_MOMENT,
+            ],
+            dtype=np.uint16,
+        )
+        np.testing.assert_array_equal(flags, expected_flags)
+        self.assertEqual(np.uint16, flags.dtype)
+
+        def assert_population_at_epoch(epoch: int, field_names: tuple[str, ...],
+                                       should_be_masked: bool) -> None:
+            for field_name in field_names:
+                slice_at_epoch = getattr(moment_data, field_name)[epoch]
+                if should_be_masked:
+                    self.assertTrue(
+                        np.all(np.isnan(slice_at_epoch)),
+                        f"{field_name}[{epoch}] should be NaN, got {slice_at_epoch!r}",
+                    )
+                else:
+                    self.assertTrue(
+                        np.all(np.isfinite(slice_at_epoch)),
+                        f"{field_name}[{epoch}] should be finite, got {slice_at_epoch!r}",
+                    )
+
+        epoch_masking_matrix = (
+            (0, False, False, False),
+            (1, True, False, True),
+            (2, False, True, True),
+            (3, True, True, True),
+        )
+        for epoch, core_masked, halo_masked, total_masked in epoch_masking_matrix:
+            with self.subTest(epoch=epoch):
+                assert_population_at_epoch(epoch, _CORE_INTEGRATED_FIELD_NAMES, core_masked)
+                assert_population_at_epoch(epoch, _HALO_INTEGRATED_FIELD_NAMES, halo_masked)
+                assert_population_at_epoch(epoch, _TOTAL_INTEGRATED_FIELD_NAMES, total_masked)
+
+        _assert_fields_finite_everywhere(self, moment_data, _FIT_FIELD_NAMES)

@@ -1,6 +1,7 @@
 import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import patch, Mock
 
 from astropy.time import Time, TimeDelta
@@ -11,6 +12,32 @@ from tests.test_helpers import get_test_data_path
 
 
 class TestDependencyValidator(unittest.TestCase):
+    def test_validate_omni2_dependency_returns_true_when_alpha_fill_but_density_and_speed_valid(self):
+        with TemporaryDirectory() as tmp:
+            omni_path = Path(tmp) / "omni2_slice.txt"
+            row = ["0"] * 35
+            row[0] = "2000"
+            row[1] = "32"
+            row[2] = "0"
+            row[5] = "1"
+            row[23] = "5.0"
+            row[24] = "400.0"
+            row[27] = "99.999"
+            row[30] = "0.1"
+            row[31] = "1.0"
+            row[34] = "99.999"
+            line = " ".join(row) + "\n"
+            omni_path.write_text(line + line)
+            end_date = datetime(2000, 1, 15)
+            buffer = timedelta(days=0)
+            self.assertTrue(
+                validate_omni2_dependency(
+                    end_date_exclusive=end_date,
+                    buffer=buffer,
+                    file_path=omni_path,
+                )
+            )
+
     def test_validate_omni2_dependency(self):
         file_path = get_test_data_path("glows/glows_omni2.dat")
 
@@ -21,7 +48,7 @@ class TestDependencyValidator(unittest.TestCase):
             ("Speed 1 Exists", datetime(1994, 7, 12), timedelta(days=5), False),
             ("Alpha 1 Exists", datetime(1994, 7, 12), timedelta(days=4), False),
             ("Density 2 Exists", datetime(1994, 7, 12), timedelta(days=3), False),
-            ("Speed 2 Exists", datetime(1994, 7, 12), timedelta(days=2), False),
+            ("Speed 2 Exists", datetime(1994, 7, 12), timedelta(days=2), True),
             ("Missing no values", datetime(1994, 7, 12), timedelta(days=1), True),
         ]
 

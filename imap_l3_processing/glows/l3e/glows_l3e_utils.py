@@ -111,6 +111,18 @@ def determine_l3e_files_to_produce(first_cr_processed: int, last_processed_cr: i
     return GlowsL3eRepointings(pointing_numbers, *updated_pointings_per_instruments)
 
 
+def compute_glows_flags_for_window(l3d_cdf_path: Path, window_start: datetime, window_end: datetime) -> int:
+    with CDF(str(l3d_cdf_path)) as cdf:
+        epochs = np.array(cdf['epoch'][...])
+        flags = np.array(cdf['glows_flags'][...])
+
+    in_window = (epochs >= window_start) & (epochs <= window_end)
+    selected = flags[in_window]
+    if selected.size == 0:
+        return 0
+    return int(np.bitwise_or.reduce(selected.astype(np.uint16)))
+
+
 def find_first_updated_cr(new_l3d: Path, old_l3d: str) -> Optional[int]:
     downloaded_old_l3d = imap_data_access.download(old_l3d)
 
@@ -123,12 +135,13 @@ def find_first_updated_cr(new_l3d: Path, old_l3d: str) -> Optional[int]:
         plasma_speed_flag_matches = np.isclose(old_l3d_cdf['plasma_speed_flag'][i], new_l3d_cdf['plasma_speed_flag'][i])
         proton_density_flag_matches = np.isclose(old_l3d_cdf['proton_density_flag'][i], new_l3d_cdf['proton_density_flag'][i])
         uv_anisotropy_flag_matches = np.isclose(old_l3d_cdf['uv_anisotropy_flag'][i], new_l3d_cdf['uv_anisotropy_flag'][i])
+        glows_flags_matches = np.isclose(old_l3d_cdf['glows_flags'][i], new_l3d_cdf['glows_flags'][i])
 
         plasma_speed_matches = np.all(np.isclose(old_l3d_cdf['plasma_speed'][i], new_l3d_cdf['plasma_speed'][i]))
         proton_density_matches = np.all(np.isclose(old_l3d_cdf['proton_density'][i], new_l3d_cdf['proton_density'][i]))
         uv_anisotropy_matches = np.all(np.isclose(old_l3d_cdf['uv_anisotropy'][i], new_l3d_cdf['uv_anisotropy'][i]))
 
-        if np.any(np.logical_not([lya_matches, phion_matches, plasma_speed_matches, plasma_speed_flag_matches, proton_density_matches, proton_density_flag_matches, uv_anisotropy_matches, uv_anisotropy_flag_matches])):
+        if np.any(np.logical_not([lya_matches, phion_matches, plasma_speed_matches, plasma_speed_flag_matches, proton_density_matches, proton_density_flag_matches, uv_anisotropy_matches, uv_anisotropy_flag_matches, glows_flags_matches])):
             return int(cr)
 
     if old_l3d_cdf['cr_grid'].shape != new_l3d_cdf['cr_grid'].shape:

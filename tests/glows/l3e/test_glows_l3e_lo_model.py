@@ -28,6 +28,7 @@ class TestL3eLoModel(unittest.TestCase):
             sentinel.spacecraft_velocity_x,
             sentinel.spacecraft_velocity_y,
             sentinel.spacecraft_velocity_z,
+            sentinel.glows_flags,
         )
 
         expected_energy_labels = ['Energy Label 1', 'Energy Label 2', 'Energy Label 3', 'Energy Label 4',
@@ -55,7 +56,7 @@ class TestL3eLoModel(unittest.TestCase):
             DataProductVariable("spacecraft_velocity_x", np.array([sentinel.spacecraft_velocity_x])),
             DataProductVariable("spacecraft_velocity_y", np.array([sentinel.spacecraft_velocity_y])),
             DataProductVariable("spacecraft_velocity_z", np.array([sentinel.spacecraft_velocity_z])),
-
+            DataProductVariable("glows_flags", sentinel.glows_flags),
         ]
 
         self.assertEqual(expected_data_products, data_products)

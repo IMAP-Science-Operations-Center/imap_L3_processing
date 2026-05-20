@@ -64,6 +64,7 @@ class EclipticSolarWind():
         self.mean_speed = None
         self.mean_proton_density = None
         self.mean_alpha_abundance = None
+        self.used_nominal_alpha_per_cr = None
         self.invariant = None
 
     def calculate_invariant(self, ext_dependencies):
@@ -111,20 +112,21 @@ class EclipticSolarWind():
 
         omni_raw = fun.read_raw_OMNI_data(ext_dependencies)
 
-        param_settings = {'density': {'column_numbers': (0, 1, 2, 4, 7), 'gap_marker': 999.9, 'scale': True},
-                          'speed': {'column_numbers': (0, 1, 2, 5, 8), 'gap_marker': 9999, 'scale': False},
-                          'alpha': {'column_numbers': (0, 1, 2, 6, 9), 'gap_marker': 9.999, 'scale': False}
+        param_settings = {'density': {'column_numbers': (0, 1, 2, 4, 7), 'gap_marker': 999.9, 'scale': True, 'const_if_empty': False},
+                          'speed': {'column_numbers': (0, 1, 2, 5, 8), 'gap_marker': 9999, 'scale': False, 'const_if_empty': False},
+                          'alpha': {'column_numbers': (0, 1, 2, 6, 9), 'gap_marker': 9.999, 'scale': False, 'const_if_empty': True}
                           }
 
-        proton_dens_carr = fun.process_omni_param(omni_raw, cr_grid, param_settings['density'])
-        plasma_speed_carr = fun.process_omni_param(omni_raw, cr_grid, param_settings['speed'])
-        p_alpha_carr = fun.process_omni_param(omni_raw, cr_grid, param_settings['alpha'])
+        proton_dens_carr, _ = fun.process_omni_param(omni_raw, cr_grid, param_settings['density'])
+        plasma_speed_carr, _ = fun.process_omni_param(omni_raw, cr_grid, param_settings['speed'])
+        p_alpha_carr, used_nominal_alpha_per_cr = fun.process_omni_param(omni_raw, cr_grid, param_settings['alpha'])
 
         self.external_dependeciens = [ext_dependencies['omni_raw_data']]
         self.CR_grid = cr_grid
         self.mean_speed = plasma_speed_carr
         self.mean_proton_density = proton_dens_carr
         self.mean_alpha_abundance = p_alpha_carr
+        self.used_nominal_alpha_per_cr = used_nominal_alpha_per_cr
 
         return cr_grid, plasma_speed_carr, proton_dens_carr, p_alpha_carr
 

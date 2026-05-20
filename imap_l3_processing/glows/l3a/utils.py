@@ -3,11 +3,12 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import numpy as np
+from imap_data_access import AncillaryFilePath
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3a.models import GlowsL2Data, GlowsL2LightCurve, GlowsLatLon, GlowsL3LightCurve, XYZ, \
     GlowsL2Header
-from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.models import InputMetadata, Instrument
 
 
 def read_l2_glows_data(cdf: CDF) -> GlowsL2Data:
@@ -38,6 +39,15 @@ def read_l2_glows_data(cdf: CDF) -> GlowsL2Data:
                                       y=cdf['spacecraft_velocity_std_dev'][0, 1],
                                       z=cdf['spacecraft_velocity_std_dev'][0, 2], )
 
+    ancillary_files = []
+    for file in list(cdf.attrs["Parents"][...]):
+        try:
+            ancillary_file = AncillaryFilePath(file)
+            if ancillary_file.instrument == Instrument.GLOWS.value:
+                ancillary_files.append(file)
+        except AncillaryFilePath.InvalidImapFileError:
+            pass
+
     return GlowsL2Data(identifier=cdf['identifier'][0],
                        start_time=cdf['start_time'][0],
                        end_time=cdf['end_time'][0],
@@ -62,9 +72,9 @@ def read_l2_glows_data(cdf: CDF) -> GlowsL2Data:
                        spacecraft_velocity_average=spacecraft_velocity_average,
                        spacecraft_velocity_std_dev=spacecraft_velocity_std_dev,
                        header=GlowsL2Header(
-                           flight_software_version=cdf.attrs["flight_software_version"][0],
+                           flight_software_version=str(cdf.attrs["flight_software_version"][0]),
                            pkts_file_name=cdf.attrs["pkts_file_name"][0],
-                           ancillary_data_files=cdf.attrs["ancillary_data_files"][...],
+                           ancillary_data_files=ancillary_files,
                        ),
                        l2_file_name=Path(cdf.pathname.decode('utf-8')).name
                        )
@@ -91,8 +101,8 @@ def create_glows_l3a_from_dictionary(data: dict, input_metadata: InputMetadata) 
         photon_flux_uncertainty=np.array(data["daily_lightcurve"]["flux_uncertainties"]).reshape(1, -1),
         raw_histogram=np.array(data["daily_lightcurve"]["raw_histogram"]).reshape(1, -1),
         exposure_times=np.array(data["daily_lightcurve"]["exposure_times"]).reshape(1, -1),
-        spin_angle=np.array(data["daily_lightcurve"]["spin_angle"]).reshape(1, -1)[0, ...],
-        spin_angle_delta=np.array(data["daily_lightcurve"]["spin_angle_delta"]).reshape(1, -1)[0, ...],
+        spin_angle=np.array(data["daily_lightcurve"]["spin_angle"]).reshape(1, -1),
+        spin_angle_delta=np.array(data["daily_lightcurve"]["spin_angle_delta"]).reshape(1, -1),
         latitude=np.array(data["daily_lightcurve"]["ecliptic_lat"]).reshape(1, -1),
         longitude=np.array(data["daily_lightcurve"]["ecliptic_lon"]).reshape(1, -1),
         extra_heliospheric_background=np.array(data["daily_lightcurve"]["extra_heliospheric_bckgrd"]).reshape(1, -1),
@@ -136,7 +146,7 @@ def create_glows_l3a_dictionary_from_cdf(cdf_file_path: Path) -> dict:
             'flux_uncertainties': cdf['photon_flux_uncertainty'][0],
             'extra_heliospheric_bckgrd': cdf['extra_heliospheric_bckgrd'][0],
             'time_dependent_bckgrd': cdf['time_dependent_bckgrd'][0],
-            'spin_angle': cdf['spin_angle'][...],
+            'spin_angle': cdf['spin_angle'][0],
             'raw_histogram': cdf['raw_histogram'][0],
             'number_of_bins': cdf['number_of_bins'][...]
         },

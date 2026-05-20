@@ -6,6 +6,7 @@ from pathlib import Path
 
 import numpy as np
 import spiceypy
+from imap_processing.quality_flags import SweL1bFlags
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData, SweL1bData
@@ -13,6 +14,25 @@ from imap_l3_processing.swe.l3.utils import read_swe_config, read_l2_swe_data, r
     read_l1b_swe_data, compute_epoch_delta_in_ns
 from tests.spice_test_case import SpiceTestCase
 from tests.test_helpers import get_test_data_path
+
+
+def _copy_with_rtn_velocity(source: Path, dest: Path) -> Path:
+    """Copy a SWAPI L3a CDF and inject `proton_sw_bulk_velocity_rtn_sc`.
+
+    The committed test fixtures predate the variable; tests build an augmented
+    copy in a tempdir rather than mutating the checked-in CDF."""
+    shutil.copyfile(source, dest)
+    with CDF(str(dest), readonly=False) as cdf:
+        if 'proton_sw_bulk_velocity_rtn_sc' in cdf:
+            return dest
+        speed = cdf['proton_sw_speed'][:].astype(float)
+        velocity_rtn = np.stack(
+            [-speed, np.zeros_like(speed), np.zeros_like(speed)], axis=-1
+        ).astype(np.float32)
+        cdf.new('proton_sw_bulk_velocity_rtn_sc', data=velocity_rtn)
+        cdf['proton_sw_bulk_velocity_rtn_sc'].attrs['FILLVAL'] = np.float32(-1e31)
+        cdf['proton_sw_bulk_velocity_rtn_sc'].attrs['UNITS'] = 'km/s'
+    return dest
 
 
 class TestUtils(SpiceTestCase):
@@ -55,70 +75,85 @@ class TestUtils(SpiceTestCase):
         self.assertEqual(3333, result.settle_duration[0, 0])
 
     def test_read_l2_swe_data(self):
-        result: SweL2Data = read_l2_swe_data(
-            get_test_data_path('swe/imap_swe_l2_sci-with-fill-values_20250101_v002.cdf'))
+        result: SweL2Data = read_l2_swe_data(get_test_data_path('swe/imap_swe_l2_sci_20260512_v001-trimmed.cdf'))
 
-        self.assertEqual(result.epoch[0], datetime(2025, 1, 1))
+        self.assertEqual(result.epoch[0], datetime(2026, 5, 11, 23, 59, 45, 714250))
         self.assertEqual(len(result.epoch), 6)
 
-        self.assertEqual(result.flux[3][13][12][6], 324526.5306847633)
-        self.assertTrue(np.isnan(result.flux[1][2][3][4]))
-        self.assertEqual(0, np.count_nonzero(result.flux == -1e31))
         self.assertEqual(result.flux.shape, (6, 24, 30, 7))
+        self.assertEqual(result.flux[3][13][12][6], 37562.24083953499)
+        self.assertTrue(np.all(np.isnan(result.flux[1])))
+        self.assertEqual(0, np.count_nonzero(result.flux == -1e31))
 
         self.assertEqual(result.inst_el[0], -63)
         self.assertEqual(len(result.inst_el), 7)
+
+        self.assertEqual(result.inst_el_label[0], "-63")
+        self.assertEqual(len(result.inst_el_label), 7)
+
+        self.assertEqual(result.inst_az[0], 6.0)
+        self.assertEqual(len(result.inst_az), 30)
+
+        self.assertEqual(result.inst_az_label[0], "6.0")
+        self.assertEqual(len(result.inst_az_label), 30)
 
         self.assertEqual(result.energy[0], 2.66)
         self.assertEqual(len(result.energy), 24)
 
         self.assertEqual(result.inst_az_spin_sector.shape, (6, 24, 30))
-        self.assertEqual(result.inst_az_spin_sector[0][0][0], 153.97713661193848)
-        self.assertTrue(np.isnan(result.inst_az_spin_sector[4][5][6]))
+        self.assertEqual(result.inst_az_spin_sector[0][0][0], 161.53207411694783)
+        self.assertTrue(np.all(np.isnan(result.inst_az_spin_sector[1])))
         spiceypy.sct2e(-43, 0.1)
         self.assertEqual(result.phase_space_density.shape, (6, 24, 30, 7))
-        self.assertEqual(result.phase_space_density[3][11][8][4], 1.8811969552023866e-26)
-        self.assertTrue(np.isnan(result.phase_space_density[5][4][3][2]))
+        self.assertEqual(result.phase_space_density[3][11][8][4], 3.1664245168848865e-28)
+        self.assertTrue(np.all(np.isnan(result.phase_space_density[1])))
 
         self.assertEqual(result.acquisition_time.shape, (6, 24, 30))
-        self.assertEqual(result.acquisition_time[0][0][0], np.datetime64('2024-12-31T23:59:30.099713922'))
-        self.assertTrue(np.isnat(result.acquisition_time[1][2][3]))
+        self.assertEqual(result.acquisition_time[0][0][0], np.datetime64('2026-05-11T23:59:28.899551988'))
+        self.assertTrue(np.all(np.isnat(result.acquisition_time[1])))
 
         self.assertEqual(result.acquisition_duration.shape, (6, 24, 30))
-        self.assertEqual(result.acquisition_duration[0][0][0], 80000)
+        self.assertEqual(result.acquisition_duration[0][0][0], 82150)
+        self.assertTrue(np.all(result.acquisition_duration[1] == 0))
+
+        self.assertEqual(result.phase_space_density_rebinned.shape, (6, 24, 30, 7))
+        self.assertEqual(result.phase_space_density_rebinned[3][11][8][4], 1.2744421815220178e-27)
+        self.assertTrue(np.isnan(result.phase_space_density_rebinned[0][0][0][0]))
+        self.assertTrue(np.all(np.isnan(result.phase_space_density_rebinned[1])))
+
+        self.assertEqual(len(result.data_quality), 6)
+        self.assertEqual(result.data_quality[0], SweL1bFlags.LAST_CAL_INTERVAL)
 
     def test_read_l3a_swapi_proton_data(self):
-        result = read_l3a_swapi_proton_data(get_test_data_path('swe/imap_swapi_l3a_proton-sw_20250101_v001.cdf'))
+        with tempfile.TemporaryDirectory() as tempdir:
+            cdf_path = _copy_with_rtn_velocity(
+                get_test_data_path('swe/imap_swapi_l3a_proton-sw_20250101_v001.cdf'),
+                Path(tempdir, 'swapi_l3a_with_rtn.cdf'),
+            )
+            result = read_l3a_swapi_proton_data(cdf_path)
         self.assertIsInstance(result, SwapiL3aProtonData)
         self.assertEqual(10, len(result.epoch))
         self.assertEqual(10, len(result.epoch_delta))
-        self.assertEqual(10, len(result.proton_sw_speed))
-        self.assertEqual(10, len(result.proton_sw_clock_angle))
-        self.assertEqual(10, len(result.proton_sw_deflection_angle))
+        self.assertEqual((10, 3), result.proton_sw_velocity_rtn.shape)
         self.assertEqual(10, len(result.swp_flags))
         self.assertEqual(datetime(2025, 1, 1), result.epoch[0])
         self.assertEqual(timedelta(seconds=30), result.epoch_delta[0])
-        self.assertEqual(498.4245091006667, result.proton_sw_speed[0])
-        self.assertEqual(82.53712019721974, result.proton_sw_clock_angle[0])
-        self.assertEqual(5.553957246800335e-06, result.proton_sw_deflection_angle[0])
-        np.testing.assert_array_equal(np.array([1, 0, 0, 0, 0, 0, 0, 0, 0, 0]), result.swp_flags)
+        np.testing.assert_array_equal(
+            np.array([1, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=np.uint16), result.swp_flags, strict=True
+        )
 
     def test_read_l3a_swapi_proton_data_with_fill_values(self):
         with tempfile.TemporaryDirectory() as tempdir:
-            cdf_with_fill_path = Path(tempdir, 'swe_file_with_fill.cdf')
-            shutil.copyfile(get_test_data_path('swe/imap_swapi_l3a_proton-sw_20250101_v001.cdf'), cdf_with_fill_path)
+            cdf_with_fill_path = _copy_with_rtn_velocity(
+                get_test_data_path('swe/imap_swapi_l3a_proton-sw_20250101_v001.cdf'),
+                Path(tempdir, 'swe_file_with_fill.cdf'),
+            )
             with CDF(str(cdf_with_fill_path), readonly=False) as cdf:
-                proton_sw_speed_fill_value = cdf['proton_sw_speed'].attrs['FILLVAL']
-                proton_sw_clock_angle_fill_value = cdf['proton_sw_clock_angle'].attrs['FILLVAL']
-                proton_sw_deflection_angle_fill_value = cdf['proton_sw_deflection_angle'].attrs['FILLVAL']
-                cdf['proton_sw_speed'][0] = proton_sw_speed_fill_value
-                cdf['proton_sw_clock_angle'][0] = proton_sw_clock_angle_fill_value
-                cdf['proton_sw_deflection_angle'][0] = proton_sw_deflection_angle_fill_value
+                velocity_fill_value = cdf['proton_sw_bulk_velocity_rtn_sc'].attrs['FILLVAL']
+                cdf['proton_sw_bulk_velocity_rtn_sc'][0] = [velocity_fill_value] * 3
 
             swapi_l3a_data = read_l3a_swapi_proton_data(cdf_with_fill_path)
-            self.assertTrue(np.isnan(swapi_l3a_data.proton_sw_speed[0]))
-            self.assertTrue(np.isnan(swapi_l3a_data.proton_sw_clock_angle[0]))
-            self.assertTrue(np.isnan(swapi_l3a_data.proton_sw_deflection_angle[0]))
+            self.assertTrue(np.all(np.isnan(swapi_l3a_data.proton_sw_velocity_rtn[0])))
 
     def test_compute_epoch_delta_in_ns(self):
         acq_duration_microseconds = np.full((4, 24, 30), 80_000)

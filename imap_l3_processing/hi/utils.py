@@ -27,7 +27,7 @@ def read_l1c_rectangular_pointing_set_data(path: Union[Path, str]) -> InputRecta
                                            epoch_delta=epoch_delta,
                                            epoch_j2000=cdf.raw_var("epoch")[...],
                                            repointing=repointing,
-                                           exposure_times=read_numeric_variable(exposure_time_variable),
+                                           exposure_times=exposure_time_variable[...],
                                            esa_energy_step=cdf["esa_energy_step"][...],
                                            pointing_start_met=pointing_start_met,
                                            pointing_end_met=pointing_end_met,

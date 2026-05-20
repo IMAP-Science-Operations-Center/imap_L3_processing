@@ -68,7 +68,8 @@ class TestGlowsL3EInitializer(unittest.TestCase):
 
         expected_initializer_data = GlowsL3EInitializerOutput(
             dependencies=mock_l3e_dependencies,
-            repointings=expected_repointings
+            repointings=expected_repointings,
+            l3d_cdf_path=updated_l3d,
         )
 
         mock_determine_l3e_files_to_produce.return_value = expected_repointings

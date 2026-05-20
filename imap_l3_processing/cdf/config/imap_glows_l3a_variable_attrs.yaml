@@ -211,6 +211,7 @@ exposure_times:
 spin_angle:
   NAME: spin_angle
   CATDESC: Spin angle (measured from north) for bin centers
+  DEPEND_0: epoch
   VAR_TYPE: support_data
   DISPLAY_TYPE: no_plot
   RECORD_VARYING: RV
@@ -229,6 +230,7 @@ spin_angle:
 spin_angle_delta:
   NAME: spin_angle_delta
   CATDESC: Half width of spin angle bin (spin-angle bin delta)
+  DEPEND_0: epoch
   VAR_TYPE: support_data
   DISPLAY_TYPE: no_plot
   RECORD_VARYING: RV

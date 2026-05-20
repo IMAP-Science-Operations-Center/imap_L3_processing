@@ -7,6 +7,7 @@ from imap_l3_processing.glows.l3a.utils import create_glows_l3a_dictionary_from_
 from imap_l3_processing.glows.l3bc.cannot_process_carrington_rotation_error import CannotProcessCarringtonRotationError
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
+from imap_l3_processing.glows.quality_flags import GlowsL3Flags
 from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, assert_dict_close
 
 
@@ -48,6 +49,16 @@ class TestGenerateL3BC(TestCase):
 
         with open(get_test_instrument_team_data_path("glows/imap_glows_l3c_cr_2091_v00.json")) as f:
             expected_l3c = json.load(f)
+
+        self.assertEqual(
+            int(GlowsL3Flags.NONE),
+            int(actual_l3b["glows_flags"]),
+        )
+        self.assertEqual(
+            int(GlowsL3Flags.NONE),
+            int(actual_l3c["glows_flags"]),
+        )
+
         del expected_l3b["header"]
         del expected_l3c["header"]
         del actual_l3b["header"]

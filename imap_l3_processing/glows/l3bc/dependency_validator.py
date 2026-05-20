@@ -13,8 +13,6 @@ DENSITY_COLUMN_1 = 4
 DENSITY_COLUMN_2 = 7
 SPEED_COLUMN_1 = 5
 SPEED_COLUMN_2 = 8
-ALPHA_COL_1 = 6
-ALPHA_COL_2 = 9
 
 
 def validate_omni2_dependency(end_date_exclusive: datetime,
@@ -34,9 +32,8 @@ def validate_omni2_dependency(end_date_exclusive: datetime,
     for data_point in omni_data:
         mask_fill_density_rows = np.all(data_point[[DENSITY_COLUMN_1, DENSITY_COLUMN_2]] < 999.9)
         mask_fill_speed_rows = np.all(data_point[[SPEED_COLUMN_1, SPEED_COLUMN_2]] < 9999)
-        mask_fill_alpha_rows = np.all(data_point[[ALPHA_COL_1, ALPHA_COL_2]] < 9.999)
 
-        if np.all([mask_fill_density_rows, mask_fill_speed_rows, mask_fill_alpha_rows]):
+        if np.all([mask_fill_density_rows, mask_fill_speed_rows]):
             return True
 
     return False

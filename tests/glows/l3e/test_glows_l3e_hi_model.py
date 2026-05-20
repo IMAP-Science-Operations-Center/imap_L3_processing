@@ -27,7 +27,8 @@ class TestL3eHiModel(unittest.TestCase):
             sentinel.spacecraft_velocity_x,
             sentinel.spacecraft_velocity_y,
             sentinel.spacecraft_velocity_z,
-            sentinel.elongation
+            sentinel.elongation,
+            sentinel.glows_flags,
         )
 
         expected_energy_labels = ['Energy Label 1', 'Energy Label 2', 'Energy Label 3', 'Energy Label 4',
@@ -55,6 +56,7 @@ class TestL3eHiModel(unittest.TestCase):
             DataProductVariable("spacecraft_velocity_y", sentinel.spacecraft_velocity_y),
             DataProductVariable("spacecraft_velocity_z", sentinel.spacecraft_velocity_z),
             DataProductVariable("elongation", sentinel.elongation),
+            DataProductVariable("glows_flags", sentinel.glows_flags),
         ]
 
         self.assertEqual(expected_data_products, data_products)

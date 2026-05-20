@@ -159,6 +159,12 @@ class TestCdfUtils(TestCase):
                     case _:
                         self.assertFalse(True, f"Found unknown DATA_TYPE: {variable['DATA_TYPE']}")
 
+    def test_all_record_varying_data_depends_on_epoch(self):
+        for filename, yaml_data, variable_key, variable in self.test_cases_variable:
+            with self.subTest(f"{filename}:{variable_key}"):
+                if "RECORD_VARYING" in variable and variable["RECORD_VARYING"].lower() == "rv" and variable_key != "epoch":
+                    self.assertEqual("epoch", variable.get("DEPEND_0"))
+
     def _epoch_meets_schema(self, yaml_data: dict):
         epoch_delta_types = ["epoch_delta", "epoch_delta_plus", "epoch_delta_minus"]
         if any([epoch_delta_type in yaml_data.keys() for epoch_delta_type in epoch_delta_types]):

@@ -384,6 +384,19 @@ def rotate_dps_vector_to_rtn(epoch: datetime, vector: np.ndarray) -> np.ndarray:
         return np.full(3, np.nan)
 
 
+def rotate_rtn_vectors_to_dps(epochs: np.ndarray, vectors_rtn: np.ndarray) -> np.ndarray:
+    result = np.full_like(vectors_rtn, np.nan, dtype=float)
+    for i, epoch in enumerate(epochs):
+        try:
+            et_time = spiceypy.datetime2et(epoch)
+            rotation_matrix = spiceypy.pxform("IMAP_RTN", "IMAP_DPS", et_time)
+        except spiceypy.SpiceyError as e:
+            logger.info(f"Failed to rotate RTN→DPS at epoch {epoch}: {e}")
+            continue
+        result[i] = rotation_matrix @ vectors_rtn[i]
+    return result
+
+
 def rotate_temperature(epoch: datetime, alpha: float, beta: float) -> tuple[float, float]:
     sin_dec = np.sin(beta)
     x = sin_dec * np.cos(alpha)

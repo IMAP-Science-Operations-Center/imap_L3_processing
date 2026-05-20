@@ -6,14 +6,13 @@ import numpy as np
 
 from imap_l3_processing.codice.l3.lo.constants import AZIMUTH_STEP_SIZE, ELEVATION_STEP_SIZE, ENERGY_STEP_SIZE, \
     ENERGY_LOST_IN_CARBON_FOIL, POST_ACCELERATION_VOLTAGE_IN_KV, CONVERSION_CONSTANT_K, CODICE_LO_NUM_AZIMUTH_BINS, \
-    CONSTANT_C_FROM_INSTRUMENT_TEAM, CODICE_LO_NUM_ESA_STEPS
-from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup, \
-    PositionToElevationLookup
+    CONSTANT_C_FROM_INSTRUMENT_TEAM, CODICE_LO_NUM_ESA_STEPS, CODICE_LO_NUM_SPIN_SECTORS
+from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import PositionToElevationLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.efficiency_lookup import EfficiencyLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup
-from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, CodiceLo3dData
+from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, CodiceLoDirectEventData
 from imap_l3_processing.constants import ONE_SECOND_IN_MICROSECONDS
 
 
@@ -56,14 +55,17 @@ def calculate_mass_per_charge(energy_per_charge: np.ndarray, tof: np.ndarray) ->
 def rebin_direct_events_for_normalization(num_events: np.ndarray, spin_sector: np.ndarray, energy_step: np.ndarray,
                                           num_spin_sectors: int,
                                           num_energies: int) -> np.ndarray:
-    base_counts = rebin_direct_events_by_energy_and_spin_sector(num_events, spin_sector, energy_step, num_spin_sectors, num_energies)
-    half_spin = num_spin_sectors//2
+    base_counts = rebin_direct_events_by_energy_and_spin_sector(num_events, spin_sector, energy_step, num_spin_sectors,
+                                                                num_energies)
+    half_spin = num_spin_sectors // 2
     result = np.zeros_like(base_counts)
-    result[:,:,:,0:half_spin] = base_counts[:,:,:,0:half_spin] + base_counts[:,:,:,half_spin:num_spin_sectors]
-    result[:,:,:,half_spin:num_spin_sectors] = result[:,:,:,0:half_spin]
+    result[:, :, :, 0:half_spin] = base_counts[:, :, :, 0:half_spin] + base_counts[:, :, :, half_spin:num_spin_sectors]
+    result[:, :, :, half_spin:num_spin_sectors] = result[:, :, :, 0:half_spin]
     return result
 
-def rebin_direct_events_by_energy_and_spin_sector(num_events: np.ndarray, spin_sector: np.ndarray, energy_step: np.ndarray,
+
+def rebin_direct_events_by_energy_and_spin_sector(num_events: np.ndarray, spin_sector: np.ndarray,
+                                                  energy_step: np.ndarray,
                                                   num_spin_sectors: int,
                                                   num_energies: int) -> np.ndarray:
     num_epochs = num_events.shape[0]
@@ -83,45 +85,52 @@ def rebin_direct_events_by_energy_and_spin_sector(num_events: np.ndarray, spin_s
             np.add.at(rebinned_output[time_index, priority_index], (energy_indices, spin_sectors), 1)
     return rebinned_output
 
+
 def calculate_normalization_factor(priority_counts: np.ndarray, num_events: np.ndarray, energy_steps: np.ndarray,
                                    spin_sectors: np.ndarray) -> np.ndarray:
     numerator = np.concatenate((priority_counts, priority_counts), axis=3)
     num_energies = priority_counts.shape[2]
     num_spin_sectors = 2 * priority_counts.shape[3]
-    denominator = rebin_direct_events_for_normalization(num_events, spin_sectors, energy_steps, num_spin_sectors, num_energies)
+    denominator = rebin_direct_events_for_normalization(num_events, spin_sectors, energy_steps, num_spin_sectors,
+                                                        num_energies)
 
     division_result = np.zeros(numerator.shape, dtype=float)
-    np.divide(numerator, denominator, out=division_result, where=denominator!=0)
+    np.divide(numerator, denominator, out=division_result, where=denominator != 0)
 
     output = np.zeros_like(division_result)
-    output[denominator!=0] = np.maximum(1.0, division_result[denominator!=0])
-    output[(denominator==0)&(numerator==0)] = 0.0
-    output[(denominator==0)&(numerator!=0)] = np.nan
+    output[denominator != 0] = np.maximum(1.0, division_result[denominator != 0])
+    output[(denominator == 0) & (numerator == 0)] = 0.0
+    output[(denominator == 0) & (numerator != 0)] = np.nan
     return output
 
-def lookup_normalization_per_event(normalization: np.ndarray, num_events: np.ndarray, energy_steps: np.ndarray, spin_sectors: np.ndarray) -> np.ndarray:
+
+def lookup_normalization_per_event(normalization: np.ndarray, num_events: np.ndarray, energy_steps: np.ndarray,
+                                   spin_sectors: np.ndarray) -> np.ndarray:
     results = np.full(spin_sectors.shape, np.nan)
     for (epoch, priority), count in np.ma.ndenumerate(num_events, compressed=True):
         energy_step = energy_steps[epoch, priority, :count]
         spin_sector = spin_sectors[epoch, priority, :count]
 
-        assert 0 == np.ma.count_masked(energy_step) == np.ma.count_masked(spin_sector) , "Expected all events to have an energy_step and spin_sector!"
+        assert 0 == np.ma.count_masked(energy_step) == np.ma.count_masked(
+            spin_sector), "Expected all events to have an energy_step and spin_sector!"
         results[epoch, priority, :count] = normalization[epoch, priority, energy_step, spin_sector]
     return results
 
-def rebin_to_counts_by_species_elevation_and_spin_sector(num_events: np.ndarray, mass: np.ndarray,
-                                                         mass_per_charge: np.ndarray,
-                                                         energy_step: np.ndarray,
-                                                         spin_angle: np.ndarray,
-                                                         position: np.ma.masked_array,
-                                                         mass_species_bin_lookup: MassSpeciesBinLookup,
-                                                         spin_angle_lut: SpinAngleLookup,
-                                                         energy_lut: EnergyLookup) -> CodiceLo3dData:
+
+def rebin_to_counts_by_species_elevation_and_spin_sector(direct_event_data: CodiceLoDirectEventData,
+                                                         mass_species_bin_lookup: MassSpeciesBinLookup) -> np.ndarray:
+    mass = direct_event_data.mass
+    mass_per_charge = direct_event_data.mass_per_charge
+    spin_sector = direct_event_data.spin_sector
+    apd_id = direct_event_data.apd_id
+    energy_step = direct_event_data.energy_step
+    num_events = direct_event_data.num_events
+
     num_epochs = mass.shape[0]
     num_priorities = mass.shape[1]
 
     output = np.full((mass_species_bin_lookup.get_num_species(), num_epochs, num_priorities,
-                      CODICE_LO_NUM_AZIMUTH_BINS, spin_angle_lut.num_bins, CODICE_LO_NUM_ESA_STEPS), 0)
+                      CODICE_LO_NUM_ESA_STEPS, CODICE_LO_NUM_SPIN_SECTORS, CODICE_LO_NUM_AZIMUTH_BINS), 0)
 
     for epoch_i in range(num_epochs):
         for priority_i in range(num_priorities):
@@ -130,14 +139,17 @@ def rebin_to_counts_by_species_elevation_and_spin_sector(num_events: np.ndarray,
 
             for event_i in range(num_events[epoch_i, priority_i]):
                 indices_of_event = epoch_i, priority_i, event_i
-                if (energy_step[indices_of_event] is np.ma.masked or np.isnan(spin_angle[indices_of_event]) or
-                        position[indices_of_event] is np.ma.masked):
+                masked_energy_step = energy_step[indices_of_event] is np.ma.masked
+                masked_spin_sector = spin_sector[indices_of_event] is np.ma.masked
+                masked_apd_id = apd_id[indices_of_event] is np.ma.masked
+                if masked_energy_step or masked_spin_sector or masked_apd_id:
                     continue
 
-                position_of_event = int(position[indices_of_event])
-                assert 1 <= position[indices_of_event], f"Expected position to be greater than 0 for event {indices_of_event}"
+                apd_id_of_event = int(apd_id[indices_of_event])
+                assert 1 <= apd_id[
+                    indices_of_event], f"Expected position to be greater than 0 for event {indices_of_event}"
 
-                if position_of_event > CODICE_LO_NUM_AZIMUTH_BINS:
+                if apd_id_of_event > CODICE_LO_NUM_AZIMUTH_BINS:
                     continue
 
                 species = mass_species_bin_lookup.get_species(mass[indices_of_event],
@@ -145,17 +157,13 @@ def rebin_to_counts_by_species_elevation_and_spin_sector(num_events: np.ndarray,
                 if species is not None:
                     energy_i = energy_step[indices_of_event]
                     species_i = mass_species_bin_lookup.get_species_index(species)
-                    spin_angle_i = spin_angle_lut.get_spin_angle_index(spin_angle[indices_of_event])
-                    position_i = position_of_event - 1
-                    output[species_i, epoch_i, priority_i, position_i, spin_angle_i, energy_i] += 1
+                    spin_sector_i = spin_sector[indices_of_event]
+                    apd_id_i = apd_id_of_event - 1
+                    output[
+                        species_i, epoch_i, priority_i, energy_i, spin_sector_i, apd_id_i] += \
+                        direct_event_data.normalization_per_event[indices_of_event]
 
-    return CodiceLo3dData(
-        data_in_3d_bins=output,
-        mass_bin_lookup=mass_species_bin_lookup,
-        energy_per_charge=energy_lut.bin_centers,
-        spin_angle=spin_angle_lut.bin_centers,
-        azimuth_or_elevation=np.arange(1, CODICE_LO_NUM_AZIMUTH_BINS + 1),
-    )
+    return output
 
 
 EPOCH = TypeVar("EPOCH")
@@ -166,40 +174,44 @@ SPIN_ANGLE = TypeVar("SPIN_ANGLE")
 ENERGY = TypeVar("ENERGY")
 
 
-def normalize_counts(counts: np.ndarray,
-                     normalization_factor: np.ndarray[(EPOCH, PRIORITY, ENERGY, SPIN_ANGLE)]) -> np.ndarray:
-    reshaped_normalization_factor = np.transpose(normalization_factor, (0, 1, 3, 2))
-    reshaped_normalization_factor = reshaped_normalization_factor[:, :, np.newaxis, :, :]
-    return reshaped_normalization_factor * counts
-
-
-def combine_priorities_and_convert_to_rate(counts: np.ndarray[(EPOCH, PRIORITY, POSITION, SPIN_ANGLE, ENERGY)],
-                                           acquisition_times: np.ndarray[(EPOCH, ENERGY,)]) -> np.ndarray:
-    return np.sum(counts, axis=1) / (acquisition_times[:, np.newaxis, np.newaxis, :] / ONE_SECOND_IN_MICROSECONDS)
+def combine_priorities_for_species_and_convert_to_rate(
+        counts: np.ndarray[(EPOCH, PRIORITY, POSITION, SPIN_ANGLE, ENERGY)],
+        acquisition_times: np.ndarray[(EPOCH, ENERGY,)]) -> np.ndarray:
+    return np.sum(counts, axis=1) / (acquisition_times[:, :, np.newaxis, np.newaxis])
 
 
 def rebin_3d_distribution_azimuth_to_elevation(intensity_data: np.ndarray,
                                                azimuths: np.ndarray,
-                                               position_to_elevation_lut: PositionToElevationLookup) -> np.ndarray:
+                                               position_to_elevation_lut: PositionToElevationLookup, half_spin) -> np.ndarray:
     num_epochs = intensity_data.shape[0]
     num_elevations = len(position_to_elevation_lut.bin_centers)
     num_spin_angles = intensity_data.shape[2]
-    num_energies = intensity_data.shape[3]
-    rebinned = np.zeros((num_epochs, num_elevations, num_spin_angles, num_energies))
+    num_energies = intensity_data.shape[1]
+    rebinned = np.zeros((num_epochs, num_energies, num_spin_angles, num_elevations))
 
     elevation_indices = position_to_elevation_lut.apd_to_elevation_index(azimuths)
-    for azimuth_index, elevation_index in enumerate(elevation_indices):
-        rebinned[:, elevation_index] += intensity_data[:, azimuth_index]
+    for azimuth_index, elevation_index in zip(azimuths, elevation_indices):
+        rebinned[:, :, :, elevation_index] += intensity_data[:, :, :, azimuth_index - 1]
+
+    for epoch_i in range(len(half_spin)):
+        ids_a = half_spin[epoch_i] % 2 == 0
+        ids_b = half_spin[epoch_i] % 2 == 1
+        rebinned[epoch_i, ids_a, 12:24, 0] = rebinned[epoch_i, ids_a, 0:12, 0]
+        rebinned[epoch_i, ids_b, 0:12, 0] = rebinned[epoch_i, ids_b, 12:24, 0]
+
+        rebinned[epoch_i, ids_a, 0:12, 12] = rebinned[epoch_i, ids_a, 12:24, 12]
+        rebinned[epoch_i, ids_b, 12:24, 12] = rebinned[epoch_i, ids_b, 0:12, 12]
+
     return rebinned
 
 
 def convert_count_rate_to_intensity(count_rates: np.ndarray,
                                     energy_per_charge: EnergyLookup,
                                     efficiency_lookup: EfficiencyLookup,
-                                    geometric_factor: np.ndarray[(EPOCH, ENERGY)]) -> np.ndarray:
+                                    geometric_factor: np.ndarray[(EPOCH, ENERGY, SPIN_ANGLE, POSITION)]) -> np.ndarray:
     reshaped_efficiency_data = efficiency_lookup.efficiency_data[np.newaxis, :, np.newaxis, :]
-    reshaped_geometric_factor = geometric_factor[:, :, np.newaxis, :]
-    denominator = reshaped_geometric_factor * energy_per_charge.bin_centers * reshaped_efficiency_data
+    denominator = geometric_factor * energy_per_charge.bin_centers[np.newaxis, :, np.newaxis,
+                                     np.newaxis] * reshaped_efficiency_data
     intensities = count_rates / denominator
     return intensities
 

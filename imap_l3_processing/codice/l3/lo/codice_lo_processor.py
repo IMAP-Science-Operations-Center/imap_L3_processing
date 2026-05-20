@@ -15,10 +15,9 @@ from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityData
     CodiceLoL3aDirectEventDataProduct, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct, \
     CodiceLoL3ChargeStateDistributionsDataProduct, CodiceLoL3a3dDistributionDataProduct
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
-    calculate_mass, calculate_mass_per_charge, \
-    rebin_to_counts_by_species_elevation_and_spin_sector, normalize_counts, \
-    combine_priorities_and_convert_to_rate, rebin_3d_distribution_azimuth_to_elevation, convert_count_rate_to_intensity, \
-    calculate_normalization_factor, lookup_normalization_per_event
+    calculate_mass, calculate_mass_per_charge, convert_count_rate_to_intensity, \
+    rebin_to_counts_by_species_elevation_and_spin_sector, combine_priorities_for_species_and_convert_to_rate, \
+    calculate_normalization_factor, lookup_normalization_per_event, rebin_3d_distribution_azimuth_to_elevation
 from imap_l3_processing.data_utils import safe_divide
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
@@ -183,21 +182,41 @@ class CodiceLoProcessor(Processor):
         esa_energy_per_charge_lookup = dependencies.energy_lookup
 
         mass_coefficient_lookup = dependencies.mass_coefficient_lookup
-        priority_counts = [
-            codice_sw_priority_counts_l1a_data.p0_tcrs,
-            codice_sw_priority_counts_l1a_data.p1_hplus,
-            codice_sw_priority_counts_l1a_data.p2_heplusplus,
-            codice_sw_priority_counts_l1a_data.p3_heavies,
-            codice_sw_priority_counts_l1a_data.p4_dcrs,
-            codice_nsw_priority_counts_l1a_data.p5_heavies,
-            codice_nsw_priority_counts_l1a_data.p6_hplus_heplusplus,
-        ]
 
         spin_angle_lut = SpinAngleLookup()
 
         mass_per_charge = calculate_mass_per_charge(codice_direct_events.energy_per_charge, codice_direct_events.tof)
         mass = calculate_mass(codice_direct_events.apd_energy, codice_direct_events.tof, mass_coefficient_lookup)
-        stacked_priorities = np.stack(priority_counts, axis=1)
+
+        direct_event_epochs = codice_direct_events.epoch
+
+        sw_priority_counts = np.stack(
+            [
+                codice_sw_priority_counts_l1a_data.p0_tcrs,
+                codice_sw_priority_counts_l1a_data.p1_hplus,
+                codice_sw_priority_counts_l1a_data.p2_heplusplus,
+                codice_sw_priority_counts_l1a_data.p3_heavies,
+                codice_sw_priority_counts_l1a_data.p4_dcrs,
+            ],
+            axis=1,
+        )
+        nsw_priority_counts = np.stack(
+            [
+                codice_nsw_priority_counts_l1a_data.p5_heavies,
+                codice_nsw_priority_counts_l1a_data.p6_hplus_heplusplus,
+            ],
+            axis=1,
+        )
+
+        sw_aligned, sw_missing = _align_priority_counts_to_direct_event_epochs(
+            sw_priority_counts, codice_sw_priority_counts_l1a_data.epoch, direct_event_epochs
+        )
+        nsw_aligned, nsw_missing = _align_priority_counts_to_direct_event_epochs(
+            nsw_priority_counts, codice_nsw_priority_counts_l1a_data.epoch, direct_event_epochs
+        )
+
+        stacked_priorities = np.concatenate([sw_aligned, nsw_aligned], axis=1)
+
         normalization = calculate_normalization_factor(
             stacked_priorities,
             codice_direct_events.num_events,
@@ -210,6 +229,15 @@ class CodiceLoProcessor(Processor):
             codice_direct_events.energy_step,
             codice_direct_events.spin_sector,
         )
+
+        num_sw_priorities = sw_aligned.shape[1]
+        num_nsw_priorities = nsw_aligned.shape[1]
+        priority_missing_mask = np.zeros(
+            (len(direct_event_epochs), num_sw_priorities + num_nsw_priorities), dtype=bool
+        )
+        priority_missing_mask[sw_missing, :num_sw_priorities] = True
+        priority_missing_mask[nsw_missing, num_sw_priorities:] = True
+        normalization_per_event[priority_missing_mask] = 0.0
 
         return CodiceLoL3aDirectEventDataProduct(
             input_metadata=self.input_metadata,
@@ -250,46 +278,36 @@ class CodiceLoProcessor(Processor):
         )
 
     def process_l3a_3d_distribution_product(self, dependencies: CodiceLoL3a3dDistributionsDependencies):
-        l3a_de_mass = dependencies.l3a_direct_event_data.mass
-        l3a_de_mass_per_charge = dependencies.l3a_direct_event_data.mass_per_charge
-        l3a_de_energy_step = dependencies.l3a_direct_event_data.energy_step
-        l3a_de_spin_angle = dependencies.l3a_direct_event_data.spin_angle
-        l3a_de_position = dependencies.l3a_direct_event_data.position
-        l3a_de_normalization = np.flip(dependencies.l3a_direct_event_data.normalization, axis=2)
-        l3a_de_num_events = dependencies.l3a_direct_event_data.num_events
-
-        l1a_acquisition_time = dependencies.l1a_sw_data.acquisition_time_per_esa_step
-        l1_sw_rgfo_half_spins = dependencies.l1a_sw_data.rgfo_half_spin
-
         mass_species_bin_lookup = dependencies.mass_species_bin_lookup
-        spin_angle_lut = SpinAngleLookup()
         position_elevation_lut = PositionToElevationLookup()
         energy_lut = dependencies.energy_per_charge_lut
         geometric_factor_lut = dependencies.geometric_factors_lookup
 
         counts_3d_data = rebin_to_counts_by_species_elevation_and_spin_sector(
-            mass=l3a_de_mass,
-            mass_per_charge=l3a_de_mass_per_charge,
-            energy_step=l3a_de_energy_step,
-            spin_angle=l3a_de_spin_angle,
-            position=l3a_de_position,
-            mass_species_bin_lookup=mass_species_bin_lookup,
-            spin_angle_lut=spin_angle_lut,
-            energy_lut=energy_lut,
-            num_events=l3a_de_num_events,
+            direct_event_data=dependencies.l3a_direct_event_data, mass_species_bin_lookup=mass_species_bin_lookup)
+
+        print(np.max(counts_3d_data[0][~np.isnan(counts_3d_data)[0]]))
+
+        species_index = mass_species_bin_lookup.get_species_index(dependencies.species)
+        normalized_count_rates = combine_priorities_for_species_and_convert_to_rate(counts_3d_data[species_index],
+                                                                                    dependencies.l3a_direct_event_data.acquisition_time_per_esa_step)
+
+        print(np.max(normalized_count_rates[~np.isnan(normalized_count_rates)]))
+
+        geometric_factors = geometric_factor_lut.get_geometric_factors(
+            dependencies.l3a_direct_event_data.rgfo_half_spin, dependencies.l3a_direct_event_data.rgfo_spin_sector,
+            dependencies.l3a_direct_event_data.rgfo_esa_step, dependencies.l3a_direct_event_data.half_spin_per_esa_step,
+            self.input_metadata.start_date.date()
         )
-
-        normalized_counts = normalize_counts(counts_3d_data.get_3d_distribution(dependencies.species),
-                                             l3a_de_normalization)
-        normalized_count_rates = combine_priorities_and_convert_to_rate(normalized_counts, l1a_acquisition_time)
-
-        geometric_factors = geometric_factor_lut.get_geometric_factors(l1_sw_rgfo_half_spins)
         intensities = convert_count_rate_to_intensity(normalized_count_rates,
                                                       dependencies.energy_per_charge_lut,
                                                       dependencies.efficiency_factors_lut,
                                                       geometric_factors)
 
-        intensity = rebin_3d_distribution_azimuth_to_elevation(intensities, np.arange(1, 25), position_elevation_lut)
+        print(np.max(intensities[~np.isnan(intensities)]))
+
+        intensity = rebin_3d_distribution_azimuth_to_elevation(intensities, np.arange(1, 25), position_elevation_lut,
+                                                               dependencies.l3a_direct_event_data.half_spin_per_esa_step)
 
         return CodiceLoL3a3dDistributionDataProduct(
             input_metadata=self.input_metadata,
@@ -297,14 +315,31 @@ class CodiceLoProcessor(Processor):
             epoch_delta=dependencies.l3a_direct_event_data.epoch_delta,
             elevation=position_elevation_lut.bin_centers,
             elevation_delta=position_elevation_lut.bin_deltas,
-            spin_angle=spin_angle_lut.bin_centers,
-            spin_angle_delta=spin_angle_lut.bin_deltas,
+            spin_angle=dependencies.l3a_direct_event_data.spin_angle_bin,
+            spin_angle_delta=dependencies.l3a_direct_event_data.spin_angle_bin_delta,
             energy=np.flip(energy_lut.bin_centers),
             energy_delta_plus=np.flip(energy_lut.delta_plus),
             energy_delta_minus=np.flip(energy_lut.delta_minus),
             species=dependencies.species,
-            species_data=np.flip(intensity, axis=3),
+            species_data=np.flip(intensity, axis=1),
         )
+
+
+def _align_priority_counts_to_direct_event_epochs(
+        priority_counts: np.ndarray,
+        priority_epochs: np.ndarray,
+        direct_event_epochs: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    num_direct_event_epochs = len(direct_event_epochs)
+    aligned_shape = (num_direct_event_epochs,) + priority_counts.shape[1:]
+    aligned = np.full(aligned_shape, np.nan)
+    missing_mask = np.ones(num_direct_event_epochs, dtype=bool)
+    for i, direct_event_epoch in enumerate(direct_event_epochs):
+        matching_indices = np.where(priority_epochs == direct_event_epoch)[0]
+        if len(matching_indices) > 0:
+            aligned[i] = priority_counts[matching_indices[0]]
+            missing_mask[i] = False
+    return aligned, missing_mask
 
 
 def _average_over_block(data_array: np.ndarray, block_size: int):

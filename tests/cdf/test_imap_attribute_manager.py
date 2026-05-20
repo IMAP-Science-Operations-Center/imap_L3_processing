@@ -39,14 +39,6 @@ class TestImapCdfManager(TestCase):
                          manager.get_variable_attributes('proton_sw_speed_uncert'))
         self.assertEqual(self.base_manager.get_variable_attributes('proton_sw_speed'),
                          manager.get_variable_attributes('proton_sw_speed'))
-        self.assertEqual(self.base_manager.get_variable_attributes('proton_sw_clock_angle'),
-                         manager.get_variable_attributes('proton_sw_clock_angle'))
-        self.assertEqual(self.base_manager.get_variable_attributes('proton_sw_clock_angle_uncert'),
-                         manager.get_variable_attributes('proton_sw_clock_angle_uncert'))
-        self.assertEqual(self.base_manager.get_variable_attributes('proton_sw_deflection_angle'),
-                         manager.get_variable_attributes('proton_sw_deflection_angle'))
-        self.assertEqual(self.base_manager.get_variable_attributes('proton_sw_deflection_angle_uncert'),
-                         manager.get_variable_attributes('proton_sw_deflection_angle_uncert'))
 
         self.assertEqual(self.base_manager.get_variable_attributes('alpha_sw_speed'),
                          manager.get_variable_attributes('alpha_sw_speed'))

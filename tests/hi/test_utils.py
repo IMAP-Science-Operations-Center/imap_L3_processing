@@ -72,7 +72,7 @@ class TestUtils(unittest.TestCase):
             np.testing.assert_array_equal(result.epoch_delta, cdf['epoch_delta'], strict=True)
             self.assertEqual(1, result.repointing)
             np.testing.assert_array_equal(result.esa_energy_step, cdf['esa_energy_step'])
-            np.testing.assert_array_equal(result.exposure_times, np.full_like(cdf['exposure_times'], np.nan))
+            np.testing.assert_array_equal(result.exposure_times, np.full_like(cdf['exposure_times'], 0))
 
     @patch("imap_l3_processing.hi.utils.met_to_ttj2000ns")
     def test_read_lo_l1c(self, mock_met_to_ttj2000ns):

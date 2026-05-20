@@ -1,11 +1,9 @@
-from typing import Optional
-
 import numpy as np
 import xarray as xr
 from imap_processing.ena_maps.ena_maps import RectangularSkyMap, PointingSet
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.ena_maps.utils.corrections import apply_compton_getting_correction, \
-    add_spacecraft_velocity_to_pset, calculate_ram_mask
+    add_spacecraft_position_and_velocity_to_pset, calculate_ram_mask
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.map_descriptors import Sensor, SpinPhase
@@ -57,8 +55,6 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                                          CoordNames.AZIMUTH_L1C.value: self.azimuths,
                                      })
 
-        assert num_spin_angle_bins == 3600, "unexpected number of spin angles"
-
         initial_dataset['epoch'] = l1c_dataset.epoch_j2000
         initial_dataset['epoch_delta'] = l1c_dataset.epoch_delta
         initial_dataset['hae_longitude'] = xr.DataArray(
@@ -74,9 +70,11 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
 
         if sensor == Sensor.Hi90 or sensor == Sensor.Hi45:
             initial_dataset.attrs['Logical_source'] = 'imap_hi'
-        elif sensor in (Sensor.Lo90, Sensor.Lo):
+        elif sensor in (Sensor.Lo75, Sensor.Lo90, Sensor.Lo105):
             initial_dataset.attrs['Logical_source'] = 'imap_lo'
-        dataset = add_spacecraft_velocity_to_pset(initial_dataset)
+        else:
+            raise ValueError("Unexpected sensor when performing survival probability correction!", sensor.name)
+        dataset = add_spacecraft_position_and_velocity_to_pset(initial_dataset)
 
         if cg_corrected:
             energy_in_ev = energies * 1000
@@ -116,8 +114,8 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                     self.azimuths, glows_dataset.spin_angle, glows_dataset.probability_of_survival[0])
                 log_sc_frame_energies = np.log10(spacecraft_frame_energies_in_kev[0])
 
-                sp_final = np.empty((1, len(energies), len(self.azimuths)))
-                for spin_angle_index in range(len(self.azimuths)):
+                sp_final = np.empty((1, len(energies), num_spin_angle_bins))
+                for spin_angle_index in range(num_spin_angle_bins):
                     sp_final[0, :, spin_angle_index] = np.interp(
                         log_sc_frame_energies[:, spin_angle_index],
                         np.log10(glows_dataset.energy),
@@ -132,7 +130,7 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                         np.log10(glows_dataset.energy),
                         glows_dataset.probability_of_survival[0, :, spin_angle_index])
 
-                sp_interpolated_to_pset_angles = np.zeros((1, len(energies), 3600))
+                sp_interpolated_to_pset_angles = np.zeros((1, len(energies), num_spin_angle_bins))
                 sp_interpolated_to_pset_angles[0] = interpolate_angular_data_to_nearest_neighbor(
                     self.azimuths, glows_dataset.spin_angle, sp_interpolated_to_hi_energies)
                 sp_final = sp_interpolated_to_pset_angles

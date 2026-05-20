@@ -4,16 +4,15 @@ from unittest.mock import Mock, call
 
 import numpy as np
 
-from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import SpinAngleLookup, \
-    PositionToElevationLookup
+from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import PositionToElevationLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup
-from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, CodiceLo3dData
+from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, CodiceLoDirectEventData
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
     calculate_total_number_of_events, calculate_normalization_ratio, calculate_mass, calculate_mass_per_charge, \
     rebin_to_counts_by_species_elevation_and_spin_sector, rebin_direct_events_by_energy_and_spin_sector, \
-    CODICE_LO_NUM_AZIMUTH_BINS, normalize_counts, combine_priorities_and_convert_to_rate, \
+    CODICE_LO_NUM_AZIMUTH_BINS, combine_priorities_for_species_and_convert_to_rate, \
     rebin_3d_distribution_azimuth_to_elevation, convert_count_rate_to_intensity, rebin_direct_events_for_normalization, \
     calculate_normalization_factor, lookup_normalization_per_event
 from imap_l3_processing.constants import ONE_SECOND_IN_MICROSECONDS
@@ -148,14 +147,15 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         np.testing.assert_allclose(expected_partial_densities, partial_densities)
 
-    def test_rebin_by_species(self):
+    def test_rebin_to_counts_by_species_elevation_and_spin_sector(self):
         num_epochs = 2
         num_priorities = 2
-        num_spin_angles = 24
+        num_spin_sectors = 24
         num_esa_steps = 128
         num_species = 4
 
-        # first 3 are first priority, last is second priority
+        # [[He+, Fe, He+, no call], [O+5, no call, no call, no call]],
+        # [[Mg, no call, None, no call], [no call, no call, no call, no call]]
         expected_species_returned = [
             "He+", "Fe", "He+", "O+5",
             "Mg", None
@@ -170,16 +170,18 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         mock_species_mass_range_lookup.get_species_index = mock_get_species_index
 
-        num_events = np.array([[3, 2], [3, 1]])
+        num_events = np.array([[3, 2],
+                               [3, 1]])
         num_events = np.ma.masked_array(num_events, mask=[[False, False], [False, True]])
 
-        mock_energy_lookup = Mock(spec=EnergyLookup)
-        mock_energy_lookup.num_bins = num_esa_steps
-        mock_energy_lookup.bin_centers = Mock()
+        normalized_per_event = np.array([
+            [[100, 30, 200, np.nan], [50, np.nan, np.nan, np.nan]],
+            [[60, np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan, np.nan]]
+        ])
 
-        spin_angle = np.array([
-            [[37.5, 22.5, 37.5, -9999], [7.5, 7.5, np.nan, np.nan]],
-            [[37.5, 37.5, 37.5, np.nan], [7.5, np.nan, np.nan, np.nan]]
+        spin_sector_indices = np.array([
+            [[2, 1, 2, 0], [0, 0, 0, 0]],
+            [[2, 2, 2, 0], [0, 0, 0, 0]]
         ])
 
         position = np.ma.masked_array(data=np.array([
@@ -208,18 +210,18 @@ class TestCodiceLoCalculations(unittest.TestCase):
             [[4, 4, 4, np.nan], [9, np.nan, np.nan, np.nan]],
         ])
 
-        spin_angle_lut = SpinAngleLookup()
+        direct_event_data = Mock(spec=CodiceLoDirectEventData)
+        direct_event_data.mass = mass
+        direct_event_data.mass_per_charge = mass_per_charge
+        direct_event_data.energy_step = energy_step
+        direct_event_data.spin_sector = spin_sector_indices
+        direct_event_data.position = position
+        direct_event_data.normalization_per_event = normalized_per_event
+        direct_event_data.num_events = num_events
 
         actual_counts_3d_data = rebin_to_counts_by_species_elevation_and_spin_sector(
-            num_events,
-            mass,
-            mass_per_charge,
-            energy_step,
-            spin_angle,
-            position,
+            direct_event_data,
             mock_species_mass_range_lookup,
-            spin_angle_lut,
-            mock_energy_lookup
         )
 
         mock_species_mass_range_lookup.get_species.assert_has_calls([
@@ -233,33 +235,30 @@ class TestCodiceLoCalculations(unittest.TestCase):
             call(mass[1, 0, 2], mass_per_charge[1, 0, 2]),
         ])
 
-        self.assertIsInstance(actual_counts_3d_data, CodiceLo3dData)
+        self.assertIsInstance(actual_counts_3d_data, np.ndarray)
 
+        output_shape = [num_species, num_epochs, num_priorities, num_esa_steps, num_spin_sectors,
+                        CODICE_LO_NUM_AZIMUTH_BINS]
         self.assertEqual(
-            (num_species, num_epochs, num_priorities, CODICE_LO_NUM_AZIMUTH_BINS, num_spin_angles, num_esa_steps),
-            actual_counts_3d_data.data_in_3d_bins.shape)
+            tuple(output_shape),
+            actual_counts_3d_data.shape)
 
-        self.assertEqual(mock_energy_lookup.bin_centers, actual_counts_3d_data.energy_per_charge)
-        np.testing.assert_array_equal(np.arange(1, CODICE_LO_NUM_AZIMUTH_BINS + 1),
-                                      actual_counts_3d_data.azimuth_or_elevation)
-        np.testing.assert_array_equal(spin_angle_lut.bin_centers, actual_counts_3d_data.spin_angle)
-
-        rebinned_shape = (num_epochs, num_priorities, CODICE_LO_NUM_AZIMUTH_BINS, num_spin_angles, num_esa_steps)
+        rebinned_shape = tuple(output_shape[1:])
         expected_he_plus_counts = np.zeros(rebinned_shape)
-        expected_he_plus_counts[0, 0, 1, 2, 0] = 2
-        np.testing.assert_array_equal(actual_counts_3d_data.get_3d_distribution("He+"), expected_he_plus_counts)
+        expected_he_plus_counts[0, 0, 0, 2, 1] = 300
+        np.testing.assert_array_equal(actual_counts_3d_data[0, ...], expected_he_plus_counts)
 
         expected_fe_counts = np.zeros(rebinned_shape)
-        expected_fe_counts[0, 0, 23, 1, 100] = 1
-        np.testing.assert_array_equal(actual_counts_3d_data.get_3d_distribution("Fe"), expected_fe_counts)
+        expected_fe_counts[0, 0, 100, 1, 23] = 30
+        np.testing.assert_array_equal(actual_counts_3d_data[1, ...], expected_fe_counts)
 
         expected_mg_counts = np.zeros(rebinned_shape)
-        expected_mg_counts[1, 0, 8, 2, 127] = 1
-        np.testing.assert_array_equal(actual_counts_3d_data.get_3d_distribution("Mg"), expected_mg_counts)
+        expected_mg_counts[1, 0, 127, 2, 8] = 60
+        np.testing.assert_array_equal(actual_counts_3d_data[2, ...], expected_mg_counts)
 
         expected_o_counts = np.zeros(rebinned_shape)
-        expected_o_counts[0, 1, 0, 0, 0] = 1
-        np.testing.assert_array_equal(actual_counts_3d_data.get_3d_distribution("O+5"), expected_o_counts)
+        expected_o_counts[0, 1, 0, 0, 0] = 50
+        np.testing.assert_array_equal(actual_counts_3d_data[3, ...], expected_o_counts)
 
     def test_rebin_direct_events_by_energy_and_spin_sector(self):
         num_energy_bins = 30
@@ -269,14 +268,15 @@ class TestCodiceLoCalculations(unittest.TestCase):
         event_buffer_len = 15
         num_events = np.ma.masked_array(np.array([[1, 2, 4]]), mask=[[False, True, False]])
         spin_sector = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=np.uint8)
-        spin_sector[0,0,:1] = [3]
-        spin_sector[0,2,:4] = [5, 6, 5, 7]
+        spin_sector[0, 0, :1] = [3]
+        spin_sector[0, 2, :4] = [5, 6, 5, 7]
 
         energy_step = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=np.uint8)
-        energy_step[0,0,:1] = [7]
-        energy_step[0,2,:4] = [1, 3, 1, 4]
+        energy_step[0, 0, :1] = [7]
+        energy_step[0, 2, :4] = [1, 3, 1, 4]
 
-        result = rebin_direct_events_by_energy_and_spin_sector(num_events, spin_sector, energy_step, num_spin_angle_bins, num_energy_bins)
+        result = rebin_direct_events_by_energy_and_spin_sector(num_events, spin_sector, energy_step,
+                                                               num_spin_angle_bins, num_energy_bins)
 
         expected_rebinned_counts = np.zeros((num_epochs, num_priorities, num_energy_bins, num_spin_angle_bins))
         expected_rebinned_counts[0, 0, 7, 3] = 1
@@ -294,23 +294,24 @@ class TestCodiceLoCalculations(unittest.TestCase):
         event_buffer_len = 15
         num_events = np.ma.masked_array(np.array([[2, 2, 4]]), mask=[[False, True, False]])
         spin_sector = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=np.uint8)
-        spin_sector[0,0,:2] = [3, 3+12]
-        spin_sector[0,2,:4] = [5, 6, 5, 7+12]
+        spin_sector[0, 0, :2] = [3, 3 + 12]
+        spin_sector[0, 2, :4] = [5, 6, 5, 7 + 12]
 
         energy_step = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=np.uint8)
-        energy_step[0,0,:2] = [7, 7]
-        energy_step[0,2,:4] = [1, 3, 1, 4]
-        result = rebin_direct_events_for_normalization(num_events, spin_sector, energy_step, num_spin_sectors, num_energy_bins)
+        energy_step[0, 0, :2] = [7, 7]
+        energy_step[0, 2, :4] = [1, 3, 1, 4]
+        result = rebin_direct_events_for_normalization(num_events, spin_sector, energy_step, num_spin_sectors,
+                                                       num_energy_bins)
 
         expected_rebinned_counts = np.zeros((num_epochs, num_priorities, num_energy_bins, num_spin_sectors))
         expected_rebinned_counts[0, 0, 7, 3] = 2
         expected_rebinned_counts[0, 2, 1, 5] = 2
         expected_rebinned_counts[0, 2, 3, 6] = 1
         expected_rebinned_counts[0, 2, 4, 7] = 1
-        expected_rebinned_counts[0, 0, 7, 3+12] = 2
-        expected_rebinned_counts[0, 2, 1, 5+12] = 2
-        expected_rebinned_counts[0, 2, 3, 6+12] = 1
-        expected_rebinned_counts[0, 2, 4, 7+12] = 1
+        expected_rebinned_counts[0, 0, 7, 3 + 12] = 2
+        expected_rebinned_counts[0, 2, 1, 5 + 12] = 2
+        expected_rebinned_counts[0, 2, 3, 6 + 12] = 1
+        expected_rebinned_counts[0, 2, 4, 7 + 12] = 1
         np.testing.assert_equal(result[0, 0, 7, 3], 2)
 
         np.testing.assert_array_equal(result, expected_rebinned_counts)
@@ -320,10 +321,10 @@ class TestCodiceLoCalculations(unittest.TestCase):
         num_priorities = 7
         num_esa_steps = 128
         num_l1_spin_sectors = 12
-        num_l2_spin_sectors = 2*num_l1_spin_sectors
+        num_l2_spin_sectors = 2 * num_l1_spin_sectors
         priority_counts = np.zeros((num_epochs, num_priorities, num_esa_steps, num_l1_spin_sectors))
-        priority_counts[0,0,0,0] = 4
-        priority_counts[0,0,0,2] = 20
+        priority_counts[0, 0, 0, 0] = 4
+        priority_counts[0, 0, 0, 2] = 20
 
         event_buffer_len = 15
         num_events = np.zeros((num_epochs, num_priorities), dtype=int)
@@ -338,10 +339,10 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         expected_shape = (num_epochs, num_priorities, num_esa_steps, num_l2_spin_sectors)
         expected = np.full(expected_shape, 0.0)
-        expected[0,0,0,0] = 4 / 2
-        expected[0,0,0,0+12] = 4 / 2
-        expected[0,0,0,2] = 20 / 1
-        expected[0,0,0,2+12] = 20 / 1
+        expected[0, 0, 0, 0] = 4 / 2
+        expected[0, 0, 0, 0 + 12] = 4 / 2
+        expected[0, 0, 0, 2] = 20 / 1
+        expected[0, 0, 0, 2 + 12] = 20 / 1
 
         np.testing.assert_equal(result, expected)
 
@@ -350,11 +351,10 @@ class TestCodiceLoCalculations(unittest.TestCase):
         num_priorities = 7
         num_esa_steps = 128
         num_l1_spin_sectors = 12
-        num_l2_spin_sectors = 2*num_l1_spin_sectors
+        num_l2_spin_sectors = 2 * num_l1_spin_sectors
         priority_counts = np.zeros((num_epochs, num_priorities, num_esa_steps, num_l1_spin_sectors))
-        priority_counts[0,0,0,0] = 1.
-        priority_counts[0,0,0,2] = 0.
-
+        priority_counts[0, 0, 0, 0] = 1.
+        priority_counts[0, 0, 0, 2] = 0.
 
         event_buffer_len = 15
         num_events = np.zeros((num_epochs, num_priorities), dtype=int)
@@ -369,24 +369,23 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         expected_shape = (num_epochs, num_priorities, num_esa_steps, num_l2_spin_sectors)
         expected = np.full(expected_shape, 0.0)
-        self.assertEqual(1.0, result[0,0,0,0])
-        self.assertEqual(1.0, result[0,0,0,0+12])
-        self.assertEqual(1.0, result[0,0,0,2])
-        self.assertEqual(1.0, result[0,0,0,2+12])
+        self.assertEqual(1.0, result[0, 0, 0, 0])
+        self.assertEqual(1.0, result[0, 0, 0, 0 + 12])
+        self.assertEqual(1.0, result[0, 0, 0, 2])
+        self.assertEqual(1.0, result[0, 0, 0, 2 + 12])
 
         expected[0, 0, 0, (0, 2, 12, 14)] = 1.0
         np.testing.assert_equal(result, expected)
-
 
     def test_normalization_factor_is_fill_when_priority_nonzero_and_direct_zero(self):
         num_epochs = 2
         num_priorities = 7
         num_esa_steps = 128
         num_l1_spin_sectors = 12
-        num_l2_spin_sectors = 2*num_l1_spin_sectors
+        num_l2_spin_sectors = 2 * num_l1_spin_sectors
         priority_counts = np.zeros((num_epochs, num_priorities, num_esa_steps, num_l1_spin_sectors))
-        priority_counts[0,0,0,0] = 1.
-        priority_counts[0,0,0,2] = 50.
+        priority_counts[0, 0, 0, 0] = 1.
+        priority_counts[0, 0, 0, 2] = 50.
 
         event_buffer_len = 15
         num_events = np.zeros((num_epochs, num_priorities), dtype=int)
@@ -397,10 +396,10 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         expected_shape = (num_epochs, num_priorities, num_esa_steps, num_l2_spin_sectors)
         expected = np.full(expected_shape, 0.0)
-        np.testing.assert_equal(result[0,0,0,0], np.nan)
-        np.testing.assert_equal(result[0,0,0,0+12], np.nan)
-        np.testing.assert_equal(result[0,0,0,2], np.nan)
-        np.testing.assert_equal(result[0,0,0,2+12], np.nan)
+        np.testing.assert_equal(result[0, 0, 0, 0], np.nan)
+        np.testing.assert_equal(result[0, 0, 0, 0 + 12], np.nan)
+        np.testing.assert_equal(result[0, 0, 0, 2], np.nan)
+        np.testing.assert_equal(result[0, 0, 0, 2 + 12], np.nan)
 
         expected[0, 0, 0, (0, 2, 12, 14)] = np.nan
         np.testing.assert_equal(result, expected)
@@ -410,12 +409,12 @@ class TestCodiceLoCalculations(unittest.TestCase):
         num_priorities = 7
         num_esa_steps = 128
         num_l1_spin_sectors = 12
-        num_l2_spin_sectors = 2*num_l1_spin_sectors
+        num_l2_spin_sectors = 2 * num_l1_spin_sectors
 
         normalization = np.zeros((num_epochs, num_priorities, num_esa_steps, num_l2_spin_sectors))
-        normalization[0,0,0,0] = 123.
-        normalization[0,0,0,12] = 456.
-        normalization[0,0,1,2] = 789.
+        normalization[0, 0, 0, 0] = 123.
+        normalization[0, 0, 0, 12] = 456.
+        normalization[0, 0, 1, 2] = 789.
 
         event_buffer_len = 15
         num_events = np.zeros((num_epochs, num_priorities), dtype=int)
@@ -435,21 +434,20 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         np.testing.assert_array_equal(normalization_per_event, expected_normalization_per_event)
 
-
     def test_lookup_normalization_per_event_skips_masked_num_events(self):
         num_epochs = 2
         num_priorities = 7
         num_esa_steps = 128
         num_l1_spin_sectors = 12
-        num_l2_spin_sectors = 2*num_l1_spin_sectors
+        num_l2_spin_sectors = 2 * num_l1_spin_sectors
 
         normalization = np.zeros((num_epochs, num_priorities, num_esa_steps, num_l2_spin_sectors))
-        normalization[0,0,0,0] = 123.
-        normalization[0,0,0,12] = 456.
-        normalization[0,0,1,2] = 789.
+        normalization[0, 0, 0, 0] = 123.
+        normalization[0, 0, 0, 12] = 456.
+        normalization[0, 0, 1, 2] = 789.
 
         event_buffer_len = 15
-        num_events = np.ma.array(np.full((num_epochs, num_priorities),65535), mask=True)
+        num_events = np.ma.array(np.full((num_epochs, num_priorities), 65535), mask=True)
         spin_sectors = np.ma.array(np.full((num_epochs, num_priorities, event_buffer_len), 255, dtype=int), mask=True)
         energy_steps = np.ma.array(np.full((num_epochs, num_priorities, event_buffer_len), 255, dtype=int), mask=True)
 
@@ -458,53 +456,35 @@ class TestCodiceLoCalculations(unittest.TestCase):
         expected_normalization_per_event = np.full((num_epochs, num_priorities, event_buffer_len), np.nan)
         np.testing.assert_array_equal(normalization_per_event, expected_normalization_per_event)
 
-    def test_normalize_counts(self):
+    def test_combine_priorities_for_species_and_convert_to_rate(self):
         num_epochs = 2
-        num_priorities = 3
-        num_azimuth_bins = 5
-        num_spin_angles = 6
         num_energies = 7
+        num_spin_sectors = 6
+        num_azimuth_bins = 5
 
         rng = np.random.default_rng()
-
-        counts = np.zeros((num_epochs, num_priorities, num_azimuth_bins, num_spin_angles, num_energies))
-        counts[:, :, 0, :, :] = 3
-        counts[:, :, 1, :, :] = 4
-
-        normalization_factor = rng.random((num_epochs, num_priorities, num_energies, num_spin_angles))
-
-        actual_normalized_counts = normalize_counts(counts, normalization_factor)
-
-        transposed_normalization_factor = np.transpose(normalization_factor, axes=(0, 1, 3, 2))
-        np.testing.assert_array_equal(actual_normalized_counts[:, :, 0, :, :], 3 * transposed_normalization_factor)
-        np.testing.assert_array_equal(actual_normalized_counts[:, :, 1, :, :], 4 * transposed_normalization_factor)
-
-    def test_convert_to_count_rates_combine_priority(self):
-        num_epochs = 2
-        num_azimuth_bins = 5
-        num_spin_angles = 6
-        num_energies = 7
-
-        rng = np.random.default_rng()
-        priority_1 = rng.random((num_epochs, num_azimuth_bins, num_spin_angles, num_energies))
-        priority_2 = rng.random((num_epochs, num_azimuth_bins, num_spin_angles, num_energies))
-        priority_3 = rng.random((num_epochs, num_azimuth_bins, num_spin_angles, num_energies))
+        priority_1 = rng.random((num_epochs, num_energies, num_spin_sectors, num_azimuth_bins))
+        priority_2 = rng.random((num_epochs, num_energies, num_spin_sectors, num_azimuth_bins))
+        priority_3 = rng.random((num_epochs, num_energies, num_spin_sectors, num_azimuth_bins))
 
         counts = np.stack((priority_1, priority_2, priority_3), axis=1)
 
         acquisition_durations_in_seconds = rng.random((num_epochs, num_energies,))
-        acquisition_duration_in_microseconds = acquisition_durations_in_seconds * ONE_SECOND_IN_MICROSECONDS
+        acquisition_duration_in_microseconds = acquisition_durations_in_seconds
 
-        actual_count_rates = combine_priorities_and_convert_to_rate(counts, acquisition_duration_in_microseconds)
+        actual_count_rates = combine_priorities_for_species_and_convert_to_rate(counts,
+                                                                                acquisition_duration_in_microseconds)
         expected_summed_counts = priority_1 + priority_2 + priority_3
 
-        self.assertEqual((num_epochs, num_azimuth_bins, num_spin_angles, num_energies),
+        self.assertEqual((num_epochs, num_energies, num_spin_sectors, num_azimuth_bins),
                          actual_count_rates.shape)
 
-        for index in np.ndindex(num_epochs, num_azimuth_bins, num_spin_angles):
-            epoch, _pos, _spin = index
-            np.testing.assert_array_almost_equal(actual_count_rates[index],
-                                                 expected_summed_counts[index] / acquisition_durations_in_seconds[epoch])
+        for index in np.ndindex(num_epochs, num_spin_sectors, num_azimuth_bins):
+            epoch, spin, azimuth = index
+            expected_count_rate_per_epoch_spin_azimuth = expected_summed_counts[epoch, :, spin, azimuth] / \
+                                                         acquisition_durations_in_seconds[epoch]
+            np.testing.assert_array_almost_equal(actual_count_rates[epoch, :, spin, azimuth],
+                                                 expected_count_rate_per_epoch_spin_azimuth)
 
     def test_convert_count_rate_to_intensity(self):
         num_epochs = 3
@@ -513,13 +493,13 @@ class TestCodiceLoCalculations(unittest.TestCase):
         num_energies = 6
 
         rng = np.random.default_rng()
-        count_rates = rng.random((num_epochs, num_position_bins, num_spin_angles, num_energies))
+        count_rates = rng.random((num_epochs, num_energies, num_spin_angles, num_position_bins))
         energy_per_charge = EnergyLookup(bin_centers=rng.random(num_energies),
                                          delta_plus=rng.random(num_energies),
                                          delta_minus=rng.random(num_energies))
-        geometric_factor = rng.random((num_epochs, num_position_bins, num_energies))
+        geometric_factor = rng.random((num_epochs, num_energies, num_spin_angles, num_position_bins))
 
-        efficiency = rng.random((num_position_bins, num_energies))
+        efficiency = rng.random((num_energies, num_position_bins))
 
         mock_efficiency_lookup = Mock()
         mock_efficiency_lookup.efficiency_data = efficiency
@@ -527,28 +507,28 @@ class TestCodiceLoCalculations(unittest.TestCase):
         intensity_data = convert_count_rate_to_intensity(count_rates, energy_per_charge, mock_efficiency_lookup,
                                                          geometric_factor)
 
-        expected_denominator = (energy_per_charge.bin_centers
-                                * geometric_factor[:, :, np.newaxis, :]
+        expected_denominator = (energy_per_charge.bin_centers[np.newaxis, :, np.newaxis, np.newaxis]
+                                * geometric_factor
                                 * efficiency[np.newaxis, :, np.newaxis, :])
 
         np.testing.assert_array_almost_equal(intensity_data * expected_denominator, count_rates)
 
     def test_rebin_azimuth_to_elevation(self):
         num_epochs = 3
-        num_azimuth_bins = 4
-        num_spin_angles = 5
         num_energies = 6
+        num_spin_angles = 5
+        num_azimuth_bins = 4
 
-        intensity_data = np.zeros((num_epochs, num_azimuth_bins, num_spin_angles, num_energies))
+        intensity_data = np.zeros((num_epochs, num_energies, num_spin_angles, num_azimuth_bins))
         azimuth_1_intensity = 1
         azimuth_2_intensity = 2
         azimuth_3_intensity = 3
         azimuth_4_intensity = 4
 
-        intensity_data[:, 0, :, :] = azimuth_1_intensity
-        intensity_data[:, 1, :, :] = azimuth_2_intensity
-        intensity_data[:, 2, :, :] = azimuth_3_intensity
-        intensity_data[:, 3, :, :] = azimuth_4_intensity
+        intensity_data[:, :, :, 0] = azimuth_1_intensity
+        intensity_data[:, :, :, 1] = azimuth_2_intensity
+        intensity_data[:, :, :, 2] = azimuth_3_intensity
+        intensity_data[:, :, :, 3] = azimuth_4_intensity
 
         azimuths = np.array([1, 2, 3, 4])
 
@@ -564,9 +544,9 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         mock_position_to_elevation_lookup.apd_to_elevation_index.assert_called_once_with(azimuths)
 
-        self.assertEqual((num_epochs, num_elevation_bins, num_spin_angles, num_energies),
+        self.assertEqual((num_epochs, num_energies, num_spin_angles, num_elevation_bins),
                          actual_rebinned.shape)
 
-        self.assertTrue(np.all(actual_rebinned[:, 0, :, :] == azimuth_2_intensity))
-        self.assertTrue(np.all(actual_rebinned[:, 1, :, :] == azimuth_1_intensity))
-        self.assertTrue(np.all(actual_rebinned[:, 2, :, :] == (azimuth_3_intensity + azimuth_4_intensity)))
+        self.assertTrue(np.all(actual_rebinned[:, :, :, 0] == azimuth_2_intensity))
+        self.assertTrue(np.all(actual_rebinned[:, :, :, 1] == azimuth_1_intensity))
+        self.assertTrue(np.all(actual_rebinned[:, :, :, 2] == (azimuth_3_intensity + azimuth_4_intensity)))

@@ -20,6 +20,7 @@ ELECTRON_DENSITY_CDF_VAR_NAME = "electron_density"
 PLASMA_SPEED_FLAG_CDF_VAR_NAME = "plasma_speed_flag"
 UV_ANISOTROPY_FLAG_CDF_VAR_NAME = "uv_anisotropy_flag"
 PROTON_DENSITY_FLAG_CDF_VAR_NAME = "proton_density_flag"
+GLOWS_FLAGS_CDF_VAR_NAME = "glows_flags"
 
 
 @dataclass
@@ -43,6 +44,7 @@ class GlowsL3DSolarParamsHistory(DataProduct):
     plasma_speed_flag: np.ndarray
     uv_anisotropy_flag: np.ndarray
     proton_density_flag: np.ndarray
+    glows_flags: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         epoch_delta = np.full_like(self.epoch, CARRINGTON_ROTATION_IN_NANOSECONDS / 2)
@@ -63,4 +65,5 @@ class GlowsL3DSolarParamsHistory(DataProduct):
             DataProductVariable(PLASMA_SPEED_FLAG_CDF_VAR_NAME, self.plasma_speed_flag),
             DataProductVariable(UV_ANISOTROPY_FLAG_CDF_VAR_NAME, self.uv_anisotropy_flag),
             DataProductVariable(PROTON_DENSITY_FLAG_CDF_VAR_NAME, self.proton_density_flag),
+            DataProductVariable(GLOWS_FLAGS_CDF_VAR_NAME, self.glows_flags),
         ]

@@ -73,7 +73,7 @@ class TestUtils(unittest.TestCase):
         self.assert_equal_xyz(cdf, "spacecraft_velocity_std_dev", glows_l2_data)
 
         expected_header = GlowsL2Header(
-            flight_software_version=123456,
+            flight_software_version='123456',
             pkts_file_name="data_l0/repointings/imap_glows_l0_raw_20251224-repoint00088_v000.pkts",
             ancillary_data_files=[
                 "imap_glows_pipeline-settings_20251112_v001.json",
@@ -117,11 +117,11 @@ class TestUtils(unittest.TestCase):
             self.assertEqual("2013-09-08 08:52:14", result.start_time)
             self.assertEqual("2013-09-09 04:58:14", result.end_time)
 
-            self.assertEqual((65,), result.spin_angle.shape)
-            self.assertEqual(2.000, result.spin_angle[0])
+            self.assertEqual((1, 65), result.spin_angle.shape)
+            self.assertEqual(2.000, result.spin_angle[0, 0])
 
-            self.assertEqual((65,), result.spin_angle_delta.shape)
-            self.assertEqual(expected_spin_delta, result.spin_angle_delta[0])
+            self.assertEqual((1, 65), result.spin_angle_delta.shape)
+            self.assertEqual(expected_spin_delta, result.spin_angle_delta[0, 0])
 
             self.assertEqual((1, 65), result.photon_flux.shape)
             self.assertEqual(620.9, result.photon_flux[0, 0])

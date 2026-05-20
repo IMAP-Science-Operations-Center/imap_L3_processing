@@ -1,0 +1,22 @@
+[
+  {"type": "science", "files": ["imap_swapi_l2_sci_20260101_v001.cdf"]},
+  {"type": "ancillary", "files": ["imap_swapi_efficiency-lut_20241020_v002.dat"]},
+  {"type": "ancillary", "files": ["imap_swapi_density-of-neutral-helium-lut_20241023_v002.dat"]},
+  {"type": "ancillary", "files": ["imap_swapi_hydrogen-inflow-vector_20100101_v001.dat"]},
+  {"type": "ancillary", "files": ["imap_swapi_helium-inflow-vector_20100101_v001.dat"]},
+  {"type": "ancillary", "files": ["imap_swapi_azimuthal-transmission_20250924_v001.csv"]},
+  {"type": "ancillary", "files": ["imap_swapi_central-effective-area_20250924_v001.csv"]},
+  {"type": "ancillary", "files": ["imap_swapi_passband-fit-coefficients_20250924_v001.csv"]},
+  {"type": "spice", "files": [
+    "naif0012.tls",
+    "pck00011.tpc",
+    "imap_130.tf",
+    "imap_science_120.tf",
+    "imap_sclk_0161.tsc",
+    "de440.bsp",
+    "imap_recon_20250925_20260420_v01.bsp",
+    "imap_2025_358_2026_085_004.ah.bc",
+    "imap_dps_2025_363_2025_365_001.ah.bc",
+    "imap_dps_2025_359_2026_115_002.ah.bc"
+  ]}
+]

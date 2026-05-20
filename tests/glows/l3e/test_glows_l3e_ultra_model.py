@@ -30,6 +30,7 @@ class TestL3eUltraModel(unittest.TestCase):
             sentinel.elongation_excluded,
             sentinel.pixel_latitude,
             sentinel.pixel_longitude,
+            sentinel.glows_flags,
         )
 
         expected_energy_labels = ['Energy Label 1', 'Energy Label 2', 'Energy Label 3', 'Energy Label 4',
@@ -61,6 +62,7 @@ class TestL3eUltraModel(unittest.TestCase):
             DataProductVariable("elongation_excluded", sentinel.elongation_excluded),
             DataProductVariable("pixel_latitude", sentinel.pixel_latitude),
             DataProductVariable("pixel_longitude", sentinel.pixel_longitude),
+            DataProductVariable("glows_flags", sentinel.glows_flags),
         ]
 
         self.assertEqual(expected_data_products, data_products)

@@ -146,6 +146,7 @@ class GlowsL3BIonizationRate(DataProduct):
     lat_grid_label: list[str]
     uv_anisotropy_flag: np.ndarray[int]
     used_l3a: np.ndarray[str]
+    glows_flags: np.ndarray[int]
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [DataProductVariable("epoch", self.epoch),
@@ -164,6 +165,7 @@ class GlowsL3BIonizationRate(DataProduct):
                 DataProductVariable("lat_grid_label", self.lat_grid_label),
                 DataProductVariable("uv_anisotropy_flag", self.uv_anisotropy_flag),
                 DataProductVariable("used_l3a", self.used_l3a),
+                DataProductVariable("glows_flags", self.glows_flags),
                 ]
 
     @classmethod
@@ -200,6 +202,7 @@ class GlowsL3BIonizationRate(DataProduct):
             lat_grid_label=[f"{x}°" for x in latitude_grid],
             uv_anisotropy_flag=np.array([model['uv_anisotropy_flag']]),
             used_l3a=np.array([l3a_file_names]),
+            glows_flags=np.array([model['glows_flags']], dtype=np.uint16),
         )
 
 
@@ -224,6 +227,7 @@ class GlowsL3CSolarWind(DataProduct):
     alpha_abundance_ecliptic: np.ndarray[float]
     plasma_speed_profile: np.ndarray[float]
     proton_density_profile: np.ndarray[float]
+    glows_flags: np.ndarray[int]
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -245,6 +249,7 @@ class GlowsL3CSolarWind(DataProduct):
             DataProductVariable("plasma_speed_profile", self.plasma_speed_profile, cdf_data_type=pycdf.const.CDF_FLOAT),
             DataProductVariable("proton_density_profile", self.proton_density_profile,
                                 cdf_data_type=pycdf.const.CDF_FLOAT),
+            DataProductVariable("glows_flags", self.glows_flags),
         ]
 
     @classmethod
@@ -274,6 +279,7 @@ class GlowsL3CSolarWind(DataProduct):
             alpha_abundance_ecliptic=np.array([model["solar_wind_ecliptic"]['alpha_abundance']]),
             plasma_speed_profile=np.array([model["solar_wind_profile"]['plasma_speed']]),
             proton_density_profile=np.array([model["solar_wind_profile"]['proton_density']]),
+            glows_flags=np.array([model['glows_flags']], dtype=np.uint16),
             parent_file_names=parent_file_names,
         )
 

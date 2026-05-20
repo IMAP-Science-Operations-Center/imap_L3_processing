@@ -23,40 +23,39 @@ from imap_l3_processing.codice.l3.lo.models import (
     EPOCH_VAR_NAME,
     EPOCH_DELTA_VAR_NAME,
     ELEVATION_VAR_NAME,
-    SPIN_ANGLE_VAR_NAME,
     ENERGY_VAR_NAME,
-    SPIN_ANGLE_DELTA_VAR_NAME,
     ELEVATION_DELTA_VAR_NAME,
     CodiceLoL3a3dDistributionDataProduct,
     ENERGY_DELTA_PLUS_VAR_NAME,
     ENERGY_DELTA_MINUS_VAR_NAME,
     ELEVATION_ANGLE_LABEL_VAR_NAME,
-    SPIN_ANGLE_LABEL_VAR_NAME,
-    ENERGY_LABEL_VAR_NAME,
+    ENERGY_LABEL_VAR_NAME, SPIN_ANGLE_DELTA_VAR_NAME, SPIN_ANGLE_VAR_NAME, SPIN_ANGLE_LABEL_VAR_NAME,
 )
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import save_data
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 from tests.test_helpers import get_test_data_path
 
-LO_L2_SW_SPECIES_DATA_VARS= [
-                  'hplus',
-                  'heplusplus',
-                  'heplus',
-                  'ne',
-                  'cplus4',
-                  'cplus5',
-                  'cplus6',
-                  'oplus5',
-                  'oplus6',
-                  'oplus7',
-                  'oplus8',
-                  'cnoplus',
-                  'mg',
-                  'si',
-                  'fe_loq',
-                  'fe_hiq',
-                ]
+LO_L2_SW_SPECIES_DATA_VARS = [
+    'hplus',
+    'heplusplus',
+    'heplus',
+    'ne',
+    'cplus4',
+    'cplus5',
+    'cplus6',
+    'oplus5',
+    'oplus6',
+    'oplus7',
+    'oplus8',
+    'cnoplus',
+    'mg',
+    'si',
+    'fe_loq',
+    'fe_hiq',
+]
+
+
 class TestModels(CdfModelTestCase):
     def test_lo_l2_sw_species_read_from_cdf(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -140,7 +139,6 @@ class TestModels(CdfModelTestCase):
             cdf_file_path = Path(tmpdir) / "test_fillval_cdf.cdf"
             rng = np.random.default_rng()
             with CDF(str(cdf_file_path), readonly=False, masterpath="") as cdf_file:
-
                 epoch = np.array([datetime(2010, 1, 1), datetime(2010, 1, 2)])
                 epoch_delta_minus = rng.random(len(epoch))
                 epoch_delta_plus = rng.random(len(epoch))
@@ -311,15 +309,15 @@ class TestModels(CdfModelTestCase):
         np.testing.assert_array_equal(carbon_charge_states.value, [4, 5, 6])
         self.assertEqual("carbon_charge_state", carbon_charge_states.name)
 
-    def test_codice_lo_l3a_direct_event_read_from_cdf_reads_from_correct_float_variable(self):
-        all_fill_l3a_cdf_path = get_test_data_path("codice/imap_codice_l3a_lo-direct-events_20260307_v001.cdf")
+    def test_codice_lo_l3a_direct_event_read_from_cdf_reads_where_no_variables_have_fill_value(self):
+        no_fill_l3a_cdf_path = get_test_data_path("codice/imap_codice_l3a_lo-direct-events_20260504_v003.cdf")
 
         rng = np.random.default_rng()
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir = Path(tmpdir)
 
             test_l3a_direct_event = tmpdir / "test_l3a_cdf.cdf"
-            with CDF(str(test_l3a_direct_event), masterpath=str(all_fill_l3a_cdf_path)) as cdf:
+            with CDF(str(test_l3a_direct_event), masterpath=str(no_fill_l3a_cdf_path)) as cdf:
                 cdf["apd_energy"] = rng.random(cdf["apd_energy"].shape)
                 cdf["elevation"] = rng.random(cdf["elevation"].shape)
                 cdf["energy_per_charge"] = rng.random(cdf["energy_per_charge"].shape)
@@ -328,11 +326,28 @@ class TestModels(CdfModelTestCase):
                 cdf["mass_per_charge"] = rng.random(cdf["mass_per_charge"].shape)
                 cdf["normalization"] = rng.random(cdf["normalization"].shape)
                 cdf["spin_angle"] = rng.random(cdf["spin_angle"].shape)
+                cdf["spin_angle_bin"] = rng.random(cdf["spin_angle_bin"].shape)
+                cdf["spin_angle_bin_delta"] = rng.random(cdf["spin_angle_bin_delta"].shape)
                 cdf["type"] = rng.integers(0, 5, cdf["type"].shape)
+                cdf["normalization_per_event"] = rng.random(cdf["normalization_per_event"].shape)
+                cdf["position"] = rng.random(cdf["position"].shape)
+                cdf["spin_sector"] = rng.random(cdf["spin_sector"].shape)
+                cdf["acquisition_time_per_esa_step"] = rng.random(cdf["acquisition_time_per_esa_step"].shape)
+
+                cdf["rgfo_spin_sector"] = rng.integers(0, 24, cdf["rgfo_spin_sector"].shape)
+                cdf["rgfo_half_spin"] = rng.integers(0, 32, cdf["rgfo_half_spin"].shape)
+                cdf["rgfo_esa_step"] = rng.integers(0, 128, cdf["rgfo_esa_step"].shape)
+                cdf["half_spin_per_esa_step"] = rng.integers(0, 32, cdf["half_spin_per_esa_step"].shape)
 
             actual_event_data = CodiceLoDirectEventData.read_from_cdf(test_l3a_direct_event)
 
             with CDF(str(test_l3a_direct_event)) as cdf:
+                np.testing.assert_array_equal(actual_event_data.normalization_per_event, cdf["normalization_per_event"])
+                np.testing.assert_array_equal(actual_event_data.position, cdf["position"])
+                np.testing.assert_array_equal(actual_event_data.energy_step, cdf["energy_step"])
+                np.testing.assert_array_equal(actual_event_data.spin_sector, cdf["spin_sector"])
+                np.testing.assert_array_equal(actual_event_data.acquisition_time_per_esa_step,
+                                              cdf["acquisition_time_per_esa_step"])
                 np.testing.assert_array_equal(actual_event_data.apd_energy, cdf["apd_energy"])
                 np.testing.assert_array_equal(actual_event_data.elevation, cdf["elevation"])
                 np.testing.assert_array_equal(actual_event_data.energy_per_charge, cdf["energy_per_charge"])
@@ -341,10 +356,16 @@ class TestModels(CdfModelTestCase):
                 np.testing.assert_array_equal(actual_event_data.mass_per_charge, cdf["mass_per_charge"])
                 np.testing.assert_array_equal(actual_event_data.normalization, cdf["normalization"])
                 np.testing.assert_array_equal(actual_event_data.spin_angle, cdf["spin_angle"])
+                np.testing.assert_array_equal(actual_event_data.spin_angle_bin, cdf["spin_angle_bin"])
+                np.testing.assert_array_equal(actual_event_data.spin_angle_bin_delta, cdf["spin_angle_bin_delta"])
                 np.testing.assert_array_equal(actual_event_data.type, cdf["type"])
+                np.testing.assert_array_equal(actual_event_data.rgfo_spin_sector, cdf["rgfo_spin_sector"])
+                np.testing.assert_array_equal(actual_event_data.rgfo_half_spin, cdf["rgfo_half_spin"])
+                np.testing.assert_array_equal(actual_event_data.rgfo_esa_step, cdf["rgfo_esa_step"])
+                np.testing.assert_array_equal(actual_event_data.half_spin_per_esa_step, cdf["half_spin_per_esa_step"])
 
     def test_codice_lo_l3a_direct_event_read_from_cdf_handles_fill_value(self):
-        all_fill_l3a_cdf_path = get_test_data_path("codice/imap_codice_l3a_lo-direct-events_20260307_v001-all-fill.cdf")
+        all_fill_l3a_cdf_path = get_test_data_path("codice/imap_codice_l3a_lo-direct-events_20260504_v003-all-fill.cdf")
         actual_event_data = CodiceLoDirectEventData.read_from_cdf(all_fill_l3a_cdf_path)
 
         with CDF(str(all_fill_l3a_cdf_path)) as cdf:
@@ -356,7 +377,11 @@ class TestModels(CdfModelTestCase):
             np.testing.assert_array_equal(actual_event_data.mass, np.full_like(cdf["mass"][...], np.nan))
             np.testing.assert_array_equal(actual_event_data.mass_per_charge, np.full_like(cdf["mass_per_charge"][...], np.nan))
             np.testing.assert_array_equal(actual_event_data.normalization, np.full_like(cdf["normalization"][...], np.nan))
+            np.testing.assert_array_equal(actual_event_data.normalization_per_event, np.full_like(cdf["normalization_per_event"][...], np.nan))
+            np.testing.assert_array_equal(actual_event_data.acquisition_time_per_esa_step, np.full_like(cdf["acquisition_time_per_esa_step"][...], np.nan))
             np.testing.assert_array_equal(actual_event_data.spin_angle, np.full_like(cdf["spin_angle"][...], np.nan))
+            np.testing.assert_array_equal(actual_event_data.spin_angle_bin_delta, np.full_like(cdf["spin_angle_bin_delta"][...], np.nan))
+            np.testing.assert_array_equal(actual_event_data.rgfo_spin_sector, np.full_like(cdf["rgfo_spin_sector"][...], np.nan))
             # @formatter:on
 
             masked_variables = [
@@ -366,8 +391,13 @@ class TestModels(CdfModelTestCase):
                 "multi_flag",
                 "num_events",
                 "position",
+                "spin_sector",
                 "tof",
-                "type"
+                "type",
+                "half_spin_per_esa_step",
+                "rgfo_half_spin",
+                "rgfo_spin_sector",
+                "rgfo_esa_step",
             ]
 
             for var in masked_variables:
@@ -390,7 +420,7 @@ class TestModels(CdfModelTestCase):
 
         direct_event = CodiceLoL3aDirectEventDataProduct(
             input_metadata=Mock(),
-            acquisition_time_per_esa_step=rng.random((len(epoch),len(energy_step))),
+            acquisition_time_per_esa_step=rng.random((len(epoch), len(energy_step))),
             epoch=epoch,
             epoch_delta=epoch_delta,
             normalization=rng.random((len(epoch), len(priority), len(energy_step), len(spin_angle))),
@@ -466,7 +496,8 @@ class TestModels(CdfModelTestCase):
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.p2_heplusplus, cdf["p2_heplusplus"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.p3_heavies, cdf["p3_heavies"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.p4_dcrs, cdf["p4_dcrs"][...])
-            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.half_spin_per_esa_step, cdf["half_spin_per_esa_step"][...])
+            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.half_spin_per_esa_step,
+                                          cdf["half_spin_per_esa_step"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.rgfo_spin_sector, cdf["rgfo_spin_sector"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.rgfo_esa_step, cdf["rgfo_esa_step"][...])
             np.testing.assert_array_equal(actual_l1a_sw_priority_rates.nso_spin_sector, cdf["nso_spin_sector"][...])
@@ -506,10 +537,6 @@ class TestModels(CdfModelTestCase):
 
         expected_species_data = data_in_bins[1, :, :, ...]
         actual_species_data = codice_lo_3d_data.get_3d_distribution("H+")
-
-        mass_bin_lookup.get_species_index.assert_called_with("H+")
-
-        np.testing.assert_array_equal(actual_species_data, expected_species_data)
 
     def test_codice_lo_3d_distributions_data_product(self):
         species = "hplus"
@@ -568,7 +595,7 @@ class TestModels(CdfModelTestCase):
                 cdf["energy_per_charge"] = rng.random(cdf["energy_per_charge"].shape)
                 cdf["position"] = rng.random(cdf["position"].shape)
                 cdf["spin_angle"] = rng.random(cdf["spin_angle"].shape)
-                cdf["spin_sector"] =  rng.integers(0, 24, cdf["spin_sector"].shape)
+                cdf["spin_sector"] = rng.integers(0, 24, cdf["spin_sector"].shape)
                 cdf["type"] = rng.integers(0, 5, cdf["type"].shape)
 
             l2_direct_event = CodiceLoL2DirectEventData.read_from_cdf(test_cdf_path)

@@ -82,15 +82,58 @@ def build_moment_fit_results(moments: Moments = None, chisq: float = 1, number_o
                             regress_result=regress_result)
 
 def build_swe_moment_data(epoch_len):
+    integrated_field_shapes: dict[str, tuple[int, ...]] = {
+        "core_density_integrated": (),
+        "core_speed_integrated": (),
+        "core_velocity_vector_rtn_integrated": (3,),
+        "core_heat_flux_magnitude_integrated": (),
+        "core_heat_flux_theta_integrated": (),
+        "core_heat_flux_phi_integrated": (),
+        "core_t_parallel_integrated": (),
+        "core_t_perpendicular_integrated": (2,),
+        "core_temperature_theta_rtn_integrated": (),
+        "core_temperature_phi_rtn_integrated": (),
+        "core_temperature_parallel_to_mag": (),
+        "core_temperature_perpendicular_to_mag": (2,),
+        "core_temperature_tensor_integrated": (6,),
+        "halo_density_integrated": (),
+        "halo_speed_integrated": (),
+        "halo_velocity_vector_rtn_integrated": (3,),
+        "halo_heat_flux_magnitude_integrated": (),
+        "halo_heat_flux_theta_integrated": (),
+        "halo_heat_flux_phi_integrated": (),
+        "halo_t_parallel_integrated": (),
+        "halo_t_perpendicular_integrated": (2,),
+        "halo_temperature_theta_rtn_integrated": (),
+        "halo_temperature_phi_rtn_integrated": (),
+        "halo_temperature_parallel_to_mag": (),
+        "halo_temperature_perpendicular_to_mag": (2,),
+        "halo_temperature_tensor_integrated": (6,),
+        "total_density_integrated": (),
+        "total_speed_integrated": (),
+        "total_velocity_vector_rtn_integrated": (3,),
+        "total_heat_flux_magnitude_integrated": (),
+        "total_heat_flux_theta_integrated": (),
+        "total_heat_flux_phi_integrated": (),
+        "total_t_parallel_integrated": (),
+        "total_t_perpendicular_integrated": (2,),
+        "total_temperature_theta_rtn_integrated": (),
+        "total_temperature_phi_rtn_integrated": (),
+        "total_temperature_parallel_to_mag": (),
+        "total_temperature_perpendicular_to_mag": (2,),
+        "total_temperature_tensor_integrated": (6,),
+    }
     mock_moment_data = create_dataclass_mock(SweL3MomentData)
-    mock_moment_data.core_t_parallel_integrated = np.arange(epoch_len)
-    mock_moment_data.core_t_parallel_fit = np.arange(epoch_len)
-    mock_moment_data.core_t_perpendicular_integrated = np.arange(epoch_len * 2).reshape((-1, 2))
-    mock_moment_data.core_t_perpendicular_fit = np.arange(epoch_len)
-    mock_moment_data.halo_t_parallel_integrated = np.arange(epoch_len)
-    mock_moment_data.halo_t_parallel_fit = np.arange(epoch_len)
-    mock_moment_data.halo_t_perpendicular_integrated = np.arange(epoch_len * 2).reshape((-1, 2))
-    mock_moment_data.halo_t_perpendicular_fit = np.arange(epoch_len)
+    for name, trailing_shape in integrated_field_shapes.items():
+        setattr(mock_moment_data, name, np.ones((epoch_len, *trailing_shape), dtype=np.float64))
+    mock_moment_data.core_t_parallel_integrated = np.arange(epoch_len, dtype=np.float64)
+    mock_moment_data.core_t_parallel_fit = np.arange(epoch_len, dtype=np.float64)
+    mock_moment_data.core_t_perpendicular_integrated = np.arange(epoch_len * 2, dtype=np.float64).reshape((-1, 2))
+    mock_moment_data.core_t_perpendicular_fit = np.arange(epoch_len, dtype=np.float64)
+    mock_moment_data.halo_t_parallel_integrated = np.arange(epoch_len, dtype=np.float64)
+    mock_moment_data.halo_t_parallel_fit = np.arange(epoch_len, dtype=np.float64)
+    mock_moment_data.halo_t_perpendicular_integrated = np.arange(epoch_len * 2, dtype=np.float64).reshape((-1, 2))
+    mock_moment_data.halo_t_perpendicular_fit = np.arange(epoch_len, dtype=np.float64)
     return mock_moment_data
 
 
