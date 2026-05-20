@@ -3,22 +3,22 @@ Author: Izabela Kowalska-Leszczynska (ikowalska@cbk.waw.pl)
 Functions used in L3a->L3b processing that are not class methods
 '''
 
-import json
-import logging
-
-import astropy.constants as const
-import astropy.units as u
-import netCDF4
 import numpy as np
-from astropy.coordinates import get_sun
+import astropy.units as u
+import astropy.constants as const
+import json
+import netCDF4
 from astropy.time import Time
+from astropy.coordinates import get_sun
 
-from .constants import PHISICAL_CONSTANTS
+from imap_l3_processing.glows.quality_flags import NOMINAL_ALPHA_PROTON_RATIO_VALUE
+from .constants import PHISICAL_CONSTANTS, CONST_ALPHA_TO_PROTON
 
+import logging
 logging.basicConfig(level=logging.ERROR)
 
 ##########################
-# Exceptions 
+# Exceptions
 ##########################
 class ArrayShapeError(Exception):
     pass
@@ -100,6 +100,18 @@ def carrington(jd):
     ans=(jd-PHISICAL_CONSTANTS['jd_carrington_first'])/PHISICAL_CONSTANTS['carrington_time']+1
     return ans
 
+def check_nan(data):
+    '''
+    Checks if there are any NaNs in the output data. If so, raises Exception and data product is not produced
+
+    Parameters:
+    --------------
+    data - dictionary with the data product
+    '''
+    for key in data:
+            if np.any((np.isnan(np.array(data[key])))): 
+                raise Exception("There are NaN in the output data")
+
 def cr_from_l3b_fn(fn):
     '''
     Extracts CR from the L3b filename. This may change if the naming convention will change
@@ -112,7 +124,7 @@ def cross_section_cx_LS(E):
     '''
     Lindsay&Stebbings 2005
     Returns cross_section as a astro.unit object
-    
+
     Parameters:
     -------------
     E: energy as an astropy.unit object
@@ -120,7 +132,7 @@ def cross_section_cx_LS(E):
     Output:
     ------------
     sigma: cross-section as a astropy.unit object
-    
+
     '''
     EkeV=E.to('keV').value
     out=1e-16*(1-np.exp(-67.3/EkeV))**4.5*(4.15-0.531*np.log(EkeV))**2
@@ -132,7 +144,7 @@ def cross_section_cx(E):
     Swaczyna et al. 2025
     https://doi.org/10.3847/1538-4365/adaf17
     Returns cross_section as a astro.unit object
-    
+
     Parameters:
     -------------
     E: energy as an astropy.unit object
@@ -140,7 +152,7 @@ def cross_section_cx(E):
     Output:
     ------------
     sigma: cross-section as a astropy.unit object
-    
+
     '''
 
     # Parameters
@@ -156,7 +168,7 @@ def cross_section_cx(E):
     EkeV=E.to('keV').value
     out=(1e-16)*(A1*np.log(A2/EkeV+A3))/(1+A4*EkeV+A5*EkeV**A6+A7*EkeV**A8)
     sigma=out*u.cm*u.cm
-    
+
     return sigma
 
 def derive_sin_cos(order):
@@ -184,7 +196,7 @@ def f107_daily_data(t,flux):
         '''
         Returns adjusted F10.7 flux with daily cadence. In the case of multiple measurements during a day,
         the closest to the noon is chosen
-    
+
         Parameters:
         ------------
         t:    time array of raw data (astropy.time)
@@ -217,7 +229,7 @@ def generate_cr_lya(CR, data_lya):
     '''
 
     t_CR = Time(jd_fm_Carrington(CR),format='jd')
-    
+
     CR_list = [int(carrington(t.jd)) for t in data_lya[0]]
     idx_read = find_CR_idx(CR, CR_list)
 
@@ -309,8 +321,8 @@ def make_lsq_matrix(psi, base_funcs):
 
     Parameters:
     ----------------
-    psi : 
-    base_funs: 
+    psi :
+    base_funs:
     """
 
     lsq_mtrx = np.zeros((len(psi), len(base_funcs)), float)
@@ -330,17 +342,27 @@ def process_omni_param(omni_raw, cr_grid, param_settings):
 
     # remove gaps where there was no data available based on coded value
     param=param_raw[param_raw[:,3]<param_settings['gap_marker']]
-        
     date=time_from_yday(param)
+
     date_cr=carrington(date.jd)
 
     # Scale parameter to 1au. OMNI Observations are done at different distance and we need to scale proton density
     if param_settings['scale']: param[:,3]=scale_density(date,param[:,3])
+    
+    param_v=param[:,3]  # values of the parameter
 
+    # fill alpha abudance from the end of the measurements to the last point in cr_grid by constant value 0.04 based on Ulysses data McComas et al. 2000
+    original_last_date = date_cr[-1]
+    used_nominal_per_cr = np.full(len(cr_grid), False)
+    if param_settings['const_if_empty'] and original_last_date < cr_grid[-1]:
+        date_cr=np.append(date_cr,cr_grid[-1])
+        used_nominal_per_cr = cr_grid > original_last_date
+        param_v=np.append(param_v,CONST_ALPHA_TO_PROTON)
+    
     # split array into 1-Carrington chunks
     param_cr, idx_param=np.unique(np.floor(date_cr), return_index=True,axis=0)
-    param_s=np.split(param[:,3],idx_param)[1:]
-        
+    param_s=np.split(param_v,idx_param)[1:]
+
     # calculate averaged over 1 Carrington time and parameter value
     param_value=np.array([p.mean() for p in param_s])
 
@@ -351,7 +373,7 @@ def process_omni_param(omni_raw, cr_grid, param_settings):
         logging.info('There are gaps in the OMNI2 data that cannot be filled by the interpolation')
         raise Exception('OMNI Error: not enough data for interpolation')
 
-    return param_value_interp
+    return param_value_interp, used_nominal_per_cr
 
 
 def read_f107_raw_data(fn):
@@ -365,7 +387,7 @@ def read_f107_raw_data(fn):
     Output:
     ------------
     t0:  time array (astropy.time)
-    flux_adjusted: F10.7 flux adjusted to 1au (10^(-22) W/m^2/Hz)    
+    flux_adjusted: F10.7 flux adjusted to 1au (10^(-22) W/m^2/Hz)
     '''
 
     data = np.loadtxt(fn)
@@ -380,12 +402,12 @@ def read_hdr_txt(fn,N):
     '''
     Reads header from the text file and preapers it to the further analysis
     '''
-        
+
     # open file and read header
     with open(fn) as file:
         hdr=[next(file) for _ in range(N)]
-    
-    # remove hash 
+
+    # remove hash
     hdr_str=remove_hash(hdr)
     return hdr_str
 
@@ -402,7 +424,7 @@ def read_lya_raw_data(filename):
     Reads *.nc file with composite Lyman-alpha solar irradiance (from LAPS)
     Returns daily product adjusted to 1au. Flux is in ph/(cm^2 s^2)
     '''
-        
+
     data=netCDF4.Dataset(filename)
 
     convert_to_ph=data.variables['convert_to_photons'][0].data # Multiplicative factor to convert irr_121 from W/m^2 to ph/(cm^2 s^2) [ph / (cm^2 s^2)] / (W / m^2)
@@ -410,11 +432,11 @@ def read_lya_raw_data(filename):
     flux0=data.variables['irr_121'][:].data                    # Averaged daily irradiance in band from 121.0 to 122.0 nm at 1 AU [W/m^2]
     flux=flux0*convert_to_ph                                   # Flux in ph/(cm^2 s^2)
     flux_uncert=data.variables['irr_121_uncertainty'][:].data  # Uncertainty (1 standard deviation) of average daily irradiance [W/m^2]
-        
-    t0=Time('1947-01-01 12:00')  
 
-    # convertion to jd and adding days since 1947-01-01 - it is more accurate than simple adding days to date   
-    t=Time(t0.jd+t_d1947,format='jd')            
+    t0=Time('1947-01-01 12:00')
+
+    # convertion to jd and adding days since 1947-01-01 - it is more accurate than simple adding days to date
+    t=Time(t0.jd+t_d1947,format='jd')
 
     return t, flux, flux_uncert
 
@@ -422,7 +444,7 @@ def read_lya_raw_data(filename):
 def read_raw_OMNI_data(ext_dependencies,t_window=None):
     '''
     Reads 3 types of data from OMNI2 database: plasma speed, proton density, and alpha-particles abundance in the ecliptic plane
-     
+
     Parameters:
     ------------
     ext_dependencies : dict
@@ -434,14 +456,12 @@ def read_raw_OMNI_data(ext_dependencies,t_window=None):
     # year, DOY, hour, S/C Id, proton_dens, plasma_speed, alpha_abundance, sigma proton_dens, sigma plasma_speed, sigma alpha_abundance
     omni_raw=np.loadtxt(ext_dependencies['omni_raw_data'],usecols=(0,1,2,5,23,24,27,30,31,34))
     omni_raw_date=time_from_yday(omni_raw[:,(0,1,2)])
-
     if t_window==None: out=omni_raw
     else:
         idx_ini=np.abs(omni_raw_date-t_window[0]).argmin()
         idx_fin=np.abs(omni_raw_date-t_window[1]).argmin()
-    
+
         out=omni_raw[idx_ini:idx_fin]
-    
     return out
 
 def read_json(fn):
@@ -455,7 +475,7 @@ def read_json(fn):
 
 def remove_hash(hdr):
     '''
-    Removes # from the header that is read from the text files and returns string that will 
+    Removes # from the header that is read from the text files and returns string that will
     be used to generate another header
     '''
     hdr_str=[l[2:] for l in hdr]
@@ -465,8 +485,8 @@ def resize_by_carr(t,flux):
    '''
    Reshaping flux array in such a way that each element is a list of fluxes from the same carrington rotation number
    '''
-   t_carr=carrington(t.jd) 
-   n_carr=np.array([int(t_carr[i]) for i in np.arange(len(t_carr))]) 
+   t_carr=carrington(t.jd)
+   n_carr=np.array([int(t_carr[i]) for i in np.arange(len(t_carr))])
    flux_carr_sort=np.split(flux,np.unique(n_carr,return_index=True)[1][1:])
    t_carr_sort=np.split(t,np.unique(n_carr,return_index=True)[1][1:])
    return t_carr_sort,flux_carr_sort
@@ -487,7 +507,7 @@ def scale_density(date, dens):
 
     # Sun-Earth distance at given moment
     d_sun=get_sun(date).distance
-    
+
     # Sun-L1 distance
     r_obs=d_sun*(1-(const.M_earth/(3*const.M_sun))**(1./3))
 
@@ -503,7 +523,7 @@ def select_data_window(data,t_window):
     Parameters:
     ----------------
     data: [time, value]
-        list of two 1D vectors 
+        list of two 1D vectors
     t_ini: astropy.time
     t_end: astropy.time
 
@@ -521,21 +541,21 @@ def select_noon(t_pen):
      Parameters:
      ------------
      t_pen:  time array of all measurements (astropy.time)
-   
+
     Output:
     ------------
         1. index list of all data taken at noon (20 UT) or the closest one if there is no data at noon
-        2. a list of indexes of data taken on the same day (if there is only one measurement then this 
+        2. a list of indexes of data taken on the same day (if there is only one measurement then this
             element is just 1 element list np. [[1],[2,3,4],[6]]
     '''
-    #TODO it should be done in a dynamical way - it should determine how many measurements are in a given day 
+    #TODO it should be done in a dynamical way - it should determine how many measurements are in a given day
     index=np.array([0])
     index_duplicate=[]
     i=0
     while i<(len(t_pen)-3):
-      
+
         if (t_pen[i].yday[:8]==t_pen[i+1].yday[:8]):
-      
+
             if(t_pen[i].yday[:8]==t_pen[i+2].yday[:8]):
                 if(t_pen[i].yday[:8]==t_pen[i+3].yday[:8]):
                     h=np.array([int(t_pen[i].yday[9:11]),int(t_pen[i+1].yday[9:11]),int(t_pen[i+2].yday[9:11]),int(t_pen[i+3].yday[9:11])])
@@ -558,7 +578,7 @@ def select_noon(t_pen):
             i=i+1
         index=np.append(index,k)
         index_duplicate.append(d)
-        
+
     return index[1:],index_duplicate
 
 def test_WawHelioInMP_file(model):
@@ -566,7 +586,7 @@ def test_WawHelioInMP_file(model):
     test if json file has what it should inside
     '''
 
-    vg_points_number=model['header']['vg_points_number']  
+    vg_points_number=model['header']['vg_points_number']
     hion_filtration=model['params_hion']['hion_filtration']
     hion_order=model['params_hion']['hion_order']
 
@@ -574,12 +594,12 @@ def test_WawHelioInMP_file(model):
     hion_base=np.array(model['params_hion']['hion_base'])
     hion_base_0=np.array(model['params_hion']['hion_base']).shape[0]
     hion_base_1=np.array(model['params_hion']['hion_base']).shape[1]
-    
+
     if vg_points_number!=len(model['vg_points']):
         logging.error('vg_points_number is incorrect.\nIt is '+str(vg_points_number)
                       +'\nIt should be '+str(len(model['vg_points'])))
         raise ArrayShapeError('Array shape error: Array shape is incorrect')
-     
+
     elif hion_const_0!=(hion_order-1-hion_filtration):
             logging.error('hion_const shape is incorrect.\nIt is '+str(hion_const_0)
                           +'\nIt should be '+str(hion_order-1-hion_filtration))
@@ -589,22 +609,22 @@ def test_WawHelioInMP_file(model):
             logging.error('hion_base shape is incorrect.\nIt is '+str(hion_base.shape)
                           +'\nIt should be ('+str(hion_order-1)+','+str(hion_order+1)+')')
             raise ArrayShapeError('Array shape error: Array shape is incorect')
-    
-    
+
+
     for k in np.arange(model['header']['vg_points_number']):
-       
+
         lcrv_filtration=model['vg_points'][k]['parameters']['lcrv_filtration']
         lcrv_order=model['vg_points'][k]['parameters']['lcrv_order']
-        
+
         model_const_0=np.array(model['vg_points'][k]['parameters']['model_const']).shape[0]
         model_matrix=np.array(model['vg_points'][k]['parameters']['model_matrix'])
         model_matrix_0=np.array(model['vg_points'][k]['parameters']['model_matrix']).shape[0]
         model_matrix_1=np.array(model['vg_points'][k]['parameters']['model_matrix']).shape[1]
-        
+
         lcrv_Trmatrix=np.array(model['vg_points'][k]['parameters']['lcrv_Trmatrix'])
         lcrv_Trmatrix_0=np.array(model['vg_points'][k]['parameters']['lcrv_Trmatrix']).shape[0]
         lcrv_Trmatrix_1=np.array(model['vg_points'][k]['parameters']['lcrv_Trmatrix']).shape[1]
-        
+
         if model_const_0!=hion_filtration:
             logging.error('model_const shape is incorrect.\nIt is '+str(model_const_0)
                         +'\nIt should be '+str(hion_filtration))
@@ -631,14 +651,12 @@ def time_string_from_l3a_fn(fn):
 def time_from_l3a(fn):
     data_l3a=read_json(fn)
     mean_time=Time(data_l3a['start_time'])+0.5*(Time(data_l3a['end_time'])-Time(data_l3a['start_time']))
-    return mean_time
-
+    return [mean_time, Time(data_l3a['start_time']), Time(data_l3a['end_time'])]
 
 def time_from_yday(yday_list):
-    string = [f'{int(yday_list[i,0])}:{int(yday_list[i, 1]):03d}:{int(yday_list[i, 2]):02d}:00' for i in range(len(yday_list))]
-    date = Time(string, format='yday')
-    return date
-
+        string = [f'{int(yday_list[i, 0])}:{int(yday_list[i, 1]):03d}:{int(yday_list[i, 2]):02d}:00' for i in range(len(yday_list))]
+        date=Time(string,format='yday')
+        return date
 
 def v2E(v):
     '''
@@ -652,7 +670,7 @@ def v2E(v):
     ------------
     E: energy as an astropy.unit object
     '''
-    
+
     m_H=1.6733e-24*u.g
     E=(0.5*m_H*v**2).to('eV')
     return E

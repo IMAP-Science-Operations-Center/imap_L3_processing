@@ -51,11 +51,11 @@ class TestGenerateL3BC(TestCase):
             expected_l3c = json.load(f)
 
         self.assertEqual(
-            int(GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO),
+            int(GlowsL3Flags.NONE),
             int(actual_l3b["glows_flags"]),
         )
         self.assertEqual(
-            int(GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO),
+            int(GlowsL3Flags.NONE),
             int(actual_l3c["glows_flags"]),
         )
 

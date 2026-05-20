@@ -96,8 +96,6 @@ def _nan_proton_fit_result(bad_fit_flag: int) -> ProtonSolarWindFitResult:
 
 
 def _coarse_peak_averaged_r_squared(residuals: ndarray, count_rate: ndarray) -> float:
-    if count_rate.ndim != 2:
-        return r_squared(residuals, count_rate)
     n_coarse_bins = SWAPI_COARSE_SWEEP_BINS.stop - SWAPI_COARSE_SWEEP_BINS.start
     coarse_count_rate_per_sweep = count_rate[:, :n_coarse_bins]
     coarse_residual_per_sweep = residuals.reshape(count_rate.shape)[:, :n_coarse_bins]

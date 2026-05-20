@@ -184,18 +184,18 @@ def _fit_pickup_ion_parameters(
         chunk_response, vasyliunas_siscoe_distribution, best_fit_params
     )
     
-    # R^2 on the sweep-averaged spectrum. 
-    observed_sweep_average = observed_count_rates.mean(axis=0)
-    best_fit_sweep_average = best_fit_rates.mean(axis=0)
+    # R^2 on the sweep-averaged spectrum.
+    observed_sweep_average = np.nanmean(observed_count_rates, axis=0)
+    best_fit_sweep_average = np.nanmean(best_fit_rates, axis=0)
     total_sum_of_squares = float(
-        np.sum((observed_sweep_average - observed_sweep_average.mean()) ** 2)
+        np.nansum((observed_sweep_average - np.nanmean(observed_sweep_average)) ** 2)
     )
     
     if total_sum_of_squares == 0:
         flags |= SwapiL3Flags.BAD_FIT
     else:
         residual_sum_of_squares = float(
-            np.sum((observed_sweep_average - best_fit_sweep_average) ** 2)
+            np.nansum((observed_sweep_average - best_fit_sweep_average) ** 2)
         )
         r_squared = 1.0 - residual_sum_of_squares / total_sum_of_squares
         if r_squared < 0.9:
