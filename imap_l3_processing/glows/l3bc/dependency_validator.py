@@ -15,19 +15,17 @@ SPEED_COLUMN_1 = 5
 SPEED_COLUMN_2 = 8
 
 
-def validate_omni2_dependency(end_date_exclusive: datetime,
-                              buffer: timedelta, file_path: Path) -> bool:
-    data_must_exist_after = end_date_exclusive + buffer
-
+def validate_omni2_dependency(cr_start_date: datetime,
+                              cr_end_date_exclusive: datetime, file_path: Path) -> bool:
     omni_data: ndarray = np.loadtxt(file_path, usecols=(0, 1, 2, 5, 23, 24, 27, 30, 31, 34))
-    start_year_index = np.searchsorted(omni_data[:, YEAR_COLUMN], data_must_exist_after.year)
-    omni_data = omni_data[start_year_index:]
 
-    end_year_index = np.searchsorted(omni_data[:, YEAR_COLUMN], data_must_exist_after.year, side='right')
-    omni_data = omni_data[:end_year_index]
+    row_day_keys = omni_data[:, YEAR_COLUMN] * 1000 + omni_data[:, DOY_COLUMN]
+    start_key = cr_start_date.year * 1000 + cr_start_date.timetuple().tm_yday
+    end_key = cr_end_date_exclusive.year * 1000 + cr_end_date_exclusive.timetuple().tm_yday
 
-    start_day_index = np.searchsorted(omni_data[:, DOY_COLUMN], data_must_exist_after.timetuple().tm_yday)
-    omni_data = omni_data[start_day_index:]
+    start_idx = np.searchsorted(row_day_keys, start_key)
+    end_idx = np.searchsorted(row_day_keys, end_key)
+    omni_data = omni_data[start_idx:end_idx]
 
     for data_point in omni_data:
         mask_fill_density_rows = np.all(data_point[[DENSITY_COLUMN_1, DENSITY_COLUMN_2]] < 999.9)
@@ -38,13 +36,14 @@ def validate_omni2_dependency(end_date_exclusive: datetime,
 
     return False
 
-def validate_dependencies(end_date: datetime, buffer: timedelta, omni2_file_path: Path,
+def validate_dependencies(cr_start_date: datetime, cr_end_date: datetime, buffer: timedelta,
+                          omni2_file_path: Path,
                           f107_index_path: Path, lyman_alpha_path: Path) -> bool:
-    omni_condition = validate_omni2_dependency(end_date, buffer, omni2_file_path)
+    omni_condition = validate_omni2_dependency(cr_start_date, cr_end_date, omni2_file_path)
 
-    f107_condition = validate_f107_fluxtable_dependency(end_date, buffer,
+    f107_condition = validate_f107_fluxtable_dependency(cr_end_date, buffer,
                                                         f107_index_path)
-    lyman_alpha_condition = validate_lyman_alpha_dependency(end_date, buffer, lyman_alpha_path)
+    lyman_alpha_condition = validate_lyman_alpha_dependency(cr_end_date, buffer, lyman_alpha_path)
 
     return omni_condition and f107_condition and lyman_alpha_condition
 

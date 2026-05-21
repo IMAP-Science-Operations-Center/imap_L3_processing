@@ -9,20 +9,14 @@ from datetime import timedelta, datetime
 from functools import wraps
 from pathlib import Path
 from typing import Callable
-from unittest import skip
-from unittest.mock import patch
 
-import imap_data_access
 import numpy as np
-import requests
-import spiceypy
 from imap_data_access import ProcessingInputCollection, RepointInput
 from imap_data_access import ScienceInput, AncillaryInput
 from imap_data_access.file_validation import ScienceFilePath, AncillaryFilePath
 from spacepy.pycdf import CDF
 
 import tests
-from imap_l3_processing.constants import TTJ2000_EPOCH
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_l3a_from_dictionary
@@ -459,25 +453,26 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             INTEGRATION_TEST_DATA / "spice" / "imap_2026_090_01.repoint",
             INTEGRATION_TEST_DATA / "spice" / "imap_2025_105_2026_105_01.ah.bc",
             INTEGRATION_TEST_DATA / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
-            INTEGRATION_TEST_DATA / "spice" / "imap_science_108.tf",
+            INTEGRATION_TEST_DATA / "spice" / "imap_science_120.tf",
             INTEGRATION_TEST_DATA / "spice" / "naif020.tls",
             INTEGRATION_TEST_DATA / "spice" / "imap_sclk_008.tsc",
             INTEGRATION_TEST_DATA / "spice" / "de440.bsp",
-            INTEGRATION_TEST_DATA / "spice" / "imap_recon_20250415_20260415_v01.bsp",
+            INTEGRATION_TEST_DATA / "spice" / "imap_recon_20250925_20260520_v01.bsp",
         ]
 
         lo_l1b_folder = Path("/Users/harrison/Development/imap_L3_processing/data/imap/lo/l1b")
         lo_l1b_inputs = list(lo_l1b_folder.rglob("*.cdf"))
 
         l3a_inputs = list((l3a_integration_data_dir / "imap/glows/l3a").rglob("*.cdf"))
-        prod_spice_inputs = list((prod_data_folder / "imap/spice/repoint").rglob("*"))
+
+        repoint_file_path = [INTEGRATION_TEST_DATA / "spice" / "imap_2026_139_01.repoint"]
 
         logging.basicConfig(force=True, level=logging.INFO,
                             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-        input_paths = l3bcde_ancillary_inputs + l3a_inputs + prod_spice_inputs + lo_l1b_inputs
+        input_paths = l3bcde_ancillary_inputs + l3a_inputs + repoint_file_path + lo_l1b_inputs
         with mock_imap_data_access(get_run_local_data_path("glows_l3bcde_with_prod_l2"), input_paths):
-            processing_input = ProcessingInputCollection(RepointInput("imap_2026_090_01.repoint"))
+            processing_input = ProcessingInputCollection(RepointInput("imap_2026_139_01.repoint"))
             input_metadata = InputMetadata(instrument="glows", data_level="l3b", descriptor="ion-rate-profile",
                                            version="v001", start_date=datetime(2000, 1, 1),
                                            end_date=datetime(2000, 1, 1))

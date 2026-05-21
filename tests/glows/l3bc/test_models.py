@@ -148,6 +148,7 @@ class TestModels(CdfModelTestCase):
             actual_has_valid_ext_deps = cr_to_process.has_valid_external_dependencies(external_dependencies)
 
             mock_validate_dependencies.assert_called_once_with(
+                datetime(2010, 1, 1),
                 datetime(2010, 2, 1),
                 timedelta(days=30.1),
                 Path("omni2_data_path"),

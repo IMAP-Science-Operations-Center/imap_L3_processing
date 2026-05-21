@@ -82,7 +82,6 @@ def determine_l3e_files_to_produce(first_cr_processed: int, last_processed_cr: i
     first_carrington_start_date = Time(jd_fm_Carrington(float(first_cr_processed)), format='jd')
     last_cr_end_date = Time(jd_fm_Carrington(float(last_processed_cr + 1)), format='jd')
 
-
     start_ns = (first_carrington_start_date.to_datetime() - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS
     end_ns = (last_cr_end_date.to_datetime() - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS
 
