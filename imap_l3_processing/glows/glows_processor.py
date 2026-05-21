@@ -285,12 +285,13 @@ def process_l3e_lo(
         repointing=repointing,
     )
 
-    elongation_in_filename = f"{elongation_value}."
+    elongation_value_as_int = int(elongation_value)
+    elongation_in_filename = f"{elongation_value_as_int}."
     elongation_in_filename += "0" * (5-len(elongation_in_filename))
 
     output_path = Path(f'probSur.Imap.Lo_{l3e_args.formatted_date}_{l3e_args.decimal_date[:8]}_{elongation_in_filename}.dat')
     lo_data = GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product(input_metadata, output_path,
-                                                                 repointing_midpoint, elongation_value, l3e_args)
+                                                                 repointing_midpoint, elongation_value_as_int, l3e_args)
 
     lo_data.parent_file_names = parent_file_names
     lo_data.glows_flags = np.array([glows_flags], dtype=np.uint16)
