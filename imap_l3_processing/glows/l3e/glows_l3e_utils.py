@@ -155,8 +155,8 @@ def get_lo_pivot_angle_from_l1b_file(path: Path) -> float:
     if len(epoch) == 0:
         return 90
     t0 = epoch[0]
-    start = t0 + timedelta(hours=3)
-    end = t0 + timedelta(hours=15)
+    start = t0 + timedelta(hours=0.5)
+    end = t0 + timedelta(hours=22.5)
     start_index, end_index = np.searchsorted(epoch, [start, end])
     angles_to_consider = angles[start_index:end_index]
     if len(angles_to_consider) == 0:
