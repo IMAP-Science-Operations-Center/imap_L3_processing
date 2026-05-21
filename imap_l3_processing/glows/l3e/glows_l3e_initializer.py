@@ -32,7 +32,6 @@ class GlowsL3EInitializer:
             if not latest_l3d_cr:
                 return None
 
-        ionization_files = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='ionization-files'))
         pipeline_settings_l3bcde = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='pipeline-settings-l3bcde'))
         energy_grid_lo = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='energy-grid-lo'))
         tess_xyz_8 = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='tess-xyz-8'))
@@ -43,7 +42,6 @@ class GlowsL3EInitializer:
         processing_input_collection = ProcessingInputCollection(
             ScienceInput(l3d_output.l3d_cdf_file_path.name),
             *[AncillaryInput(file.name) for file in l3d_output.l3d_text_file_paths],
-            AncillaryInput(str(ionization_files["file_path"])),
             AncillaryInput(str(pipeline_settings_l3bcde["file_path"])),
             AncillaryInput(str(energy_grid_lo["file_path"])),
             AncillaryInput(str(tess_xyz_8["file_path"])),

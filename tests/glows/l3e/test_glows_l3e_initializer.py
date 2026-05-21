@@ -22,7 +22,6 @@ class TestGlowsL3EInitializer(unittest.TestCase):
                                         mock_find_first_updated_cr, mock_determine_l3e_files_to_produce,
                                         mock_fetch_dependencies, mock_get_pointing_date_range):
         mock_query.side_effect = create_mock_query_results([
-            'imap_glows_ionization-files_20200101_v000.cdf',
             'imap_glows_pipeline-settings-l3bcde_20200101_v000.cdf',
             'imap_glows_energy-grid-lo_20200101_v000.cdf',
             'imap_glows_tess-xyz-8_20200101_v000.cdf',
@@ -32,7 +31,6 @@ class TestGlowsL3EInitializer(unittest.TestCase):
         ])
 
         mock_get_most_recently_uploaded_ancillary.side_effect = [
-            create_mock_query_results(['imap_glows_ionization-files_20200101_v000.cdf'])[0],
             create_mock_query_results(['imap_glows_pipeline-settings-l3bcde_20200101_v000.cdf'])[0],
             create_mock_query_results(['imap_glows_energy-grid-lo_20200101_v000.cdf'])[0],
             create_mock_query_results(['imap_glows_tess-xyz-8_20200101_v000.cdf'])[0],
@@ -89,7 +87,6 @@ class TestGlowsL3EInitializer(unittest.TestCase):
         mock_determine_l3e_files_to_produce.assert_called_once_with(2090, 2091, repointing_file_path)
 
         mock_query.assert_has_calls([
-            call(table="ancillary", instrument='glows', descriptor='ionization-files'),
             call(table="ancillary", instrument='glows', descriptor='pipeline-settings-l3bcde'),
             call(table="ancillary", instrument='glows', descriptor='energy-grid-lo'),
             call(table="ancillary", instrument='glows', descriptor='tess-xyz-8'),
@@ -98,8 +95,6 @@ class TestGlowsL3EInitializer(unittest.TestCase):
             call(table="ancillary", instrument='glows', descriptor='tess-ang-16'),
         ])
 
-        mock_get_most_recently_uploaded_ancillary.assert_has_calls(
-            [call(query_result) for query_result in mock_query.side_effect])
 
         mock_l3e_dependencies.copy_dependencies.assert_called_once()
 
@@ -113,7 +108,6 @@ class TestGlowsL3EInitializer(unittest.TestCase):
         self.assertEqual([
             updated_l3d.name,
             "imap_glows_e-dens_19470303_20100101_v000.dat",
-            'imap_glows_ionization-files_20200101_v000.cdf',
             'imap_glows_pipeline-settings-l3bcde_20200101_v000.cdf',
             'imap_glows_energy-grid-lo_20200101_v000.cdf',
             'imap_glows_tess-xyz-8_20200101_v000.cdf',
@@ -164,7 +158,6 @@ class TestGlowsL3EInitializer(unittest.TestCase):
                                                                 mock_get_most_recently_uploaded_ancillary,
                                                                 _, ):
         mock_get_most_recently_uploaded_ancillary.side_effect = [
-            create_mock_query_results(['imap_glows_ionization-files_20200101_v000.cdf'])[0],
             create_mock_query_results(['imap_glows_pipeline-settings-l3bcde_20200101_v000.cdf'])[0],
             create_mock_query_results(['imap_glows_energy-grid-lo_20200101_v000.cdf'])[0],
             create_mock_query_results(['imap_glows_tess-xyz-8_20200101_v000.cdf'])[0],

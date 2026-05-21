@@ -440,7 +440,6 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             GLOWS_TEST_DATA / "imap_glows_energy-grid-hi_20251113_v001.dat",
             GLOWS_TEST_DATA / "imap_glows_energy-grid-lo_20251113_v002.dat",
             GLOWS_TEST_DATA / "imap_glows_energy-grid-ultra_20251113_v001.dat",
-            GLOWS_TEST_DATA / "imap_glows_ionization-files_20251113_v002.dat",
             GLOWS_TEST_DATA / "imap_glows_lya-2026d_20251113_v003.dat",
             GLOWS_TEST_DATA / "imap_glows_photoion-2026d_20251113_v003.dat",
             GLOWS_TEST_DATA / "imap_glows_pipeline-settings-l3bcde_20251113_v006.json",
