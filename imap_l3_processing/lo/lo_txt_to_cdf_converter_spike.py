@@ -5,8 +5,8 @@ from datetime import datetime
 from typing import Self, Optional
 
 import imap_data_access
-from imap_data_access import ProcessingInputCollection, ScienceFilePath
-from imap_data_access.processing_input import ScienceInput, ProcessingInput
+from imap_data_access import ProcessingInputCollection
+from imap_data_access.processing_input import ScienceInput
 from imap_processing.hit.l1b.constants import FILLVAL_INT64
 
 import numpy as np
@@ -17,7 +17,7 @@ from imap_processing.spice.geometry import SpiceFrame
 from imap_l3_processing.lo.l3.lo_sp_initializer import LO_SP_MAP_KERNELS
 from imap_l3_processing.lo.lo_processor import LoProcessor
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.utils import furnish_spice_metakernel, furnished_metakernel
+from imap_l3_processing.utils import furnished_metakernel
 from tests.test_helpers import get_run_local_data_path
 from pathlib import Path
 import pandas
@@ -176,27 +176,28 @@ class LoProcessingInput:
             dataset=l2_dataset_with_metadata,
             l2_descriptor=l2_descriptor,
             version=version,
-            **dataclasses.asdict(manifest)
+            **dataclasses.asdict(manifest),
         )
 
     def get_spx_dependencies(self):
         l2_path = write_l2_cdf(self.dataset)
         return ProcessingInputCollection(ScienceInput(l2_path.name))
 
-    def get_glows_paths(self, glows_data_dir: Path):
-        glows_paths = []
-        for fp in glows_data_dir.rglob("*.cdf"):
-            science_file = ScienceFilePath(fp)
-            if science_file.descriptor == "survival-probability-lo" and science_file.repointing in self.repoints:
-                glows_paths.append(fp)
-        return glows_paths
-
-    def get_survival_corrected_dependencies(self, glows_data_dir: Path):
+    def get_survival_corrected_dependencies(self):
         l2_path = write_l2_cdf(self.dataset)
 
         l1c_results = imap_data_access.query(instrument="lo", data_level="l1c", version="latest")
         l1c_paths = [Path(l1c["file_path"]) for l1c in l1c_results if l1c["repointing"] in self.repoints]
-        glows_paths = self.get_glows_paths(glows_data_dir)
+
+        glows_query_results = imap_data_access.query(
+            instrument="glows",
+            data_level="l3e",
+            descriptor="survival-probability-lo",
+            version="latest",
+        )
+        glows_paths = [
+            Path(glows["file_path"]) for glows in glows_query_results if int(glows["repointing"]) in self.repoints
+        ]
 
         return ProcessingInputCollection(*(ScienceInput(p.name) for p in [l2_path, *glows_paths, *l1c_paths]))
 
@@ -219,7 +220,6 @@ if __name__ == "__main__":
     imap_data_access.config["DATA_DIR"] = output_data_path
 
     lo_input_data_dir = get_run_local_data_path("input_lo_txt_pipeline")
-    glows_data_dir = lo_input_data_dir / "glows"
     cg_corrected_input_path = lo_input_data_dir / "3S8_l1b_cg_corrected"
     ram_nbs_input_path = lo_input_data_dir / "3S5_l1b_ram_maps"
 
@@ -253,15 +253,10 @@ if __name__ == "__main__":
             exposure_factor=nbs_processing_input.dataset["exposure_factor"]
         )
 
-        for glows_input_path in cg_processing_input.get_glows_paths(glows_data_dir):
-            glows_path_in_data_dir = ScienceFilePath(Path(glows_input_path).name).construct_path()
-            glows_path_in_data_dir.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy(glows_input_path, glows_path_in_data_dir)
-
         with furnished_metakernel(cg_processing_input.start_date, cg_processing_input.end_date, LO_SP_MAP_KERNELS):
             [sp_map] = LoProcessor(
                 input_metadata=cg_processing_input.make_l3_input_metadata(f"l{pivot:03d}-ena-h-hf-sp-ram-hae-6deg-1yr"),
-                dependencies=cg_processing_input.get_survival_corrected_dependencies(glows_data_dir),
+                dependencies=cg_processing_input.get_survival_corrected_dependencies(),
             ).process()
             print("Produced: ", sp_map)
 
