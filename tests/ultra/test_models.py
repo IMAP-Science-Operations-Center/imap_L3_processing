@@ -1,3 +1,4 @@
+import traceback
 from datetime import datetime
 
 import numpy as np
@@ -8,7 +9,12 @@ from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import ENERGY_VAR_NAME, 
     HEALPIX_INDEX_VAR_NAME, EPOCH_CDF_VAR_NAME
 from imap_l3_processing.ultra.models import UltraGlowsL3eData, UltraL1CPSet
 from tests.spice_test_case import SpiceTestCase
-from tests.test_helpers import get_test_data_folder, with_tempdir, get_integration_test_data_path
+from tests.test_helpers import (
+    get_test_data_folder,
+    with_tempdir,
+    get_integration_test_data_path,
+    get_test_data_path,
+)
 
 
 class TestModels(SpiceTestCase):
@@ -43,26 +49,54 @@ class TestModels(SpiceTestCase):
         self.assertEqual(1000, actual.repointing)
         np.testing.assert_array_equal(expected_energy, actual.energy)
         np.testing.assert_array_equal(expected_healpix_index, actual.healpix_index)
-        np.testing.assert_array_equal(expected_probability_of_survival, actual.survival_probability)
+        np.testing.assert_array_equal(
+            expected_probability_of_survival, actual.survival_probability
+        )
 
-    def test_ultra_l1c_read_from_file(self):
-        expected_epoch = datetime(2025, 4, 15, 12)
+    def test_ultra_l1c_read_from_file_and_can_convert_to_xarray(self):
+        expected_epoch = datetime(2026, 5, 18, 10, 3, 11, 602839)
 
-        run_local_path = get_test_data_folder() / 'ultra' / 'fake_l1c_psets' / 'imap_ultra_l1c_45sensor-spacecraftpset_20250415-repoint00001_v010.cdf'
+        run_local_path = get_test_data_folder() / 'ultra' / 'imap_ultra_l1c_90sensor-spacecraftpset_20260518-repoint00252_v002.cdf'
 
         actual = UltraL1CPSet.read_from_path(run_local_path)
 
         with CDF(str(run_local_path)) as expected:
             self.assertEqual(expected_epoch, actual.epoch)
-            self.assertEqual(1, actual.repointing)
-            np.testing.assert_array_equal(expected["counts"][...], actual.counts)
+            self.assertEqual(252, actual.repointing)
             np.testing.assert_array_equal(expected[CoordNames.ENERGY_ULTRA_L1C.value][...], actual.energy)
             np.testing.assert_array_equal(expected["exposure_factor"][...], actual.exposure)
             np.testing.assert_array_equal(expected["epoch_delta"][...], actual.epoch_delta)
-            np.testing.assert_array_equal(expected[CoordNames.HEALPIX_INDEX.value][...], actual.healpix_index)
-            np.testing.assert_array_equal(expected[CoordNames.ELEVATION_L1C.value][...], actual.latitude)
-            np.testing.assert_array_equal(expected[CoordNames.AZIMUTH_L1C.value][...], actual.longitude)
-            np.testing.assert_array_equal(expected["sensitivity"][...], actual.sensitivity)
+            np.testing.assert_array_equal(
+                expected[CoordNames.HEALPIX_INDEX.value][...], actual.healpix_index
+            )
+            np.testing.assert_array_equal(
+                expected[CoordNames.ELEVATION_L1C.value][0], actual.latitude
+            )
+            np.testing.assert_array_equal(
+                expected[CoordNames.AZIMUTH_L1C.value][0], actual.longitude
+            )
+            np.testing.assert_array_equal(
+                expected["sensitivity"][...], actual.sensitivity
+            )
+
+    def test_ultra_l1c_convert_to_xarray(self):
+        l1c_path = get_test_data_path("ultra/imap_ultra_l1c_90sensor-spacecraftpset_20260518-repoint00252_v002.cdf")
+        actual = UltraL1CPSet.read_from_path(l1c_path)
+
+        dataset = actual.to_xarray()
+
+        self.assertEqual([
+            "exposure_factor",
+            "sensitivity",
+            CoordNames.AZIMUTH_L1C.value,
+            CoordNames.ELEVATION_L1C.value,
+        ], list(dataset.data_vars.keys()))
+
+        self.assertEqual([
+            CoordNames.TIME.value,
+            CoordNames.ENERGY_ULTRA_L1C.value,
+            CoordNames.HEALPIX_INDEX.value,
+        ], list(dataset.coords.keys()))
 
     def test_ultra_l1c_read_from_file_handles_longitude_latitude_with_time_dimension(self):
         l1c_path = get_integration_test_data_path(

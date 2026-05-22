@@ -44,7 +44,6 @@ class UltraL1CPSet:
     epoch_delta: int
     repointing: int
     energy: ndarray
-    counts: ndarray
     exposure: ndarray
     healpix_index: ndarray
     latitude: ndarray
@@ -57,7 +56,6 @@ class UltraL1CPSet:
         with CDF(str(path)) as cdf:
             return UltraL1CPSet(
                 repointing=repointing,
-                counts=read_numeric_variable(cdf["counts"]),
                 epoch=cdf[CoordNames.TIME.value][0],
                 epoch_delta=cdf["epoch_delta"][0],
                 energy=read_numeric_variable(cdf[CoordNames.ENERGY_ULTRA_L1C.value]),
@@ -71,14 +69,6 @@ class UltraL1CPSet:
     def to_xarray(self):
         return xr.Dataset(
             {
-                "counts": (
-                    [
-                        CoordNames.TIME.value,
-                        CoordNames.ENERGY_ULTRA_L1C.value,
-                        CoordNames.HEALPIX_INDEX.value,
-                    ],
-                    self.counts,
-                ),
                 "exposure_factor": (
                     [CoordNames.TIME.value,
                      CoordNames.ENERGY_ULTRA_L1C.value,
