@@ -910,22 +910,22 @@ class TestGlowsProcessor(unittest.TestCase):
 
         l3d_dependencies = GlowsL3DDependencies(
             external_files={
-                'lya_raw_data': lyman_alpha_composite,
+                "lya_raw_data": lyman_alpha_composite,
             },
             ancillary_files={
-                'pipeline_settings': pipeline_settings,
-                'WawHelioIon': {
-                    'speed': plasma_speed_legendre,
-                    'p-dens': proton_density_legendre,
-                    'uv-anis': uv_anisotropy,
-                    'phion': photoion,
-                    'lya': lya_2010a,
-                    'e-dens': electron_density
-                }
+                "pipeline_settings": pipeline_settings,
+                "WawHelioIon": {
+                    "speed": plasma_speed_legendre,
+                    "p-dens": proton_density_legendre,
+                    "uv-anis": uv_anisotropy,
+                    "phion": photoion,
+                    "lya": lya_2010a,
+                    "e-dens": electron_density,
+                },
             },
             l3b_file_paths=[l3b_1, l3b_2],
             l3c_file_paths=[l3c_1, l3c_2],
-            end_cr=expected_cr
+            end_cr=expected_cr,
         )
 
         version = 4
@@ -944,21 +944,21 @@ class TestGlowsProcessor(unittest.TestCase):
             (
                 expected_txt_filenames[0],
                 "electron_density",
-                850,
+                849,
                 [1947.167990000000, -1, 1250.5],
                 [2010.492523, 6.01955, 2098.5],
             ),
             (
                 expected_txt_filenames[1],
                 "lyman_alpha",
-                850,
+                849,
                 [1947.167990000000, 6.199757637899209e+11, 1250.5],
                 [2010.49252, 391688271318.51849, 2098.50000, ],
             ),
             (
                 expected_txt_filenames[2],
                 "proton_density",
-                850,
+                849,
                 [1.94716799e+03, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                  1.25050000e+03, -1.00000000e+00],
                 [2010.49252260274, 3.533487319946289, 3.50542426109314, 3.409455299377441, 3.878353357315063,
@@ -970,14 +970,14 @@ class TestGlowsProcessor(unittest.TestCase):
             (
                 expected_txt_filenames[3],
                 "phion",
-                850,
+                849,
                 [1947.167990000000, 1.830438692701064e-07, 1250.5],
                 [2010.49252260274, 1.064334895772845e-07, 2098.5],
             ),
             (
                 expected_txt_filenames[4],
                 "plasma_speed",
-                850,
+                849,
                 [1.94716799e+03, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                 1.25050000e+03, -1],
                 [2010.49252260274, 397.0, 399.0, 406.0, 374.0, 316.0, 268.0, 228.0, 209.0, 202.0, 203.0, 198.0,
@@ -986,7 +986,7 @@ class TestGlowsProcessor(unittest.TestCase):
             (
                 expected_txt_filenames[5],
                 "uv_anisotropy",
-                850,
+                849,
                 [1.94716799e+03, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                 1.25050000e+03, -1],
                 [2010.49252260274, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2098.5, 88888.0],

@@ -515,7 +515,7 @@ class SolarParamsHistory():
         CR_l3b_last=np.round(fun.carrington(Time(data_l3b[-1]['date']).jd),2)
         
         #for CR in np.arange(self.ini_data['CR_last']+1,CR_current+1.5):
-        CR=self.ini_data['CR_last']
+        CR=self.ini_data['CR_last'] + 1
         
         while(int(CR)<CR_l3b_last):
             # update CR grid
