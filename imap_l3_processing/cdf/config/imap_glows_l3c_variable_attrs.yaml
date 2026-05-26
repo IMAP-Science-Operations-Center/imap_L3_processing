@@ -73,9 +73,9 @@ plasma_speed_ecliptic:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Plasma Speed
+  FIELDNAM: Ecliptic Plasma Speed
   FORMAT: F9.3
-  LABLAXIS: Speed
+  LABLAXIS: Ecliptic Plasma Speed
   UNITS: km/s
   VALIDMIN: 0
   VALIDMAX: 10000.0
@@ -132,9 +132,9 @@ proton_density_ecliptic:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Proton Density
+  FIELDNAM: Ecliptic Proton Density
   FORMAT: F12.3
-  LABLAXIS: Density
+  LABLAXIS: Ecliptic Proton Density
   UNITS: cm^-3
   VALIDMIN: 0
   VALIDMAX: 1.0e+6
@@ -172,9 +172,9 @@ plasma_speed_profile:
   RECORD_VARYING: RV
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Plasma Speed
+  FIELDNAM: Plasma Speed Profile
   FORMAT: F9.3
-  LABLAXIS: Speed
+  LABLAXIS: Plasma Speed
   UNITS: km/s
   VALIDMIN: 0
   VALIDMAX: 10000.0
@@ -194,9 +194,9 @@ proton_density_profile:
   RECORD_VARYING: RV
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Proton Density
+  FIELDNAM: Proton Density Profile
   FORMAT: F12.3
-  LABLAXIS: Density
+  LABLAXIS: Proton Density
   UNITS: cm^-3
   VALIDMIN: 0
   VALIDMAX: 1.0e+6
