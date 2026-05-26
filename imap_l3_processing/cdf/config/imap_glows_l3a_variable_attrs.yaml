@@ -56,8 +56,8 @@ epoch_delta:
 identifier:
   <<: *support_data
   NAME: identifier
-  CATDESC: Spin pointing number to identify observational day
-  FIELDNAM: Spin pointing number
+  CATDESC: Spin-axis pointing number to identify observational day
+  FIELDNAM: Spin-axis pointing number
   DATA_TYPE: CDF_INT8
   FORMAT: I5
   UNITS: ' '
