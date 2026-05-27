@@ -32,7 +32,7 @@ class VasyliunasSiscoeDistribution:
     distance_km: float
     psi: float
 
-    def f(self, pickup_ion_speed, fitting_params: FittingParameters):
+    def f(self, pickup_ion_speed, fitting_params: FittingParameters, apply_cutoff: bool = True):
         w = pickup_ion_speed / fitting_params.cutoff_speed
         radius_in_au = self.distance_km / ONE_AU_IN_KM
         neutral_helium_density_per_cm3 = (
@@ -52,8 +52,10 @@ class VasyliunasSiscoeDistribution:
         )
         term3 = w ** (fitting_params.cooling_index - 3)
         term4 = neutral_helium_density_per_km3
-        term5 = np.heaviside(1 - w, 0.5)
-        return term1 * term2 * term3 * term4 * term5
+        distribution = term1 * term2 * term3 * term4
+        if apply_cutoff:
+            distribution = distribution * np.heaviside(1 - w, 0.5)
+        return distribution
 
 
 def build_vasyliunas_siscoe_distribution(

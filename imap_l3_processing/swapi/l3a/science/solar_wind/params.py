@@ -19,7 +19,7 @@ N_STATE = 5
 
 class SolarWindParams(NamedTuple):
     density: float
-    bulk_velocity_rtn: ndarray  # shape (3,), km/s, inertial RTN
+    velocity_rtn: ndarray  # shape (3,), km/s, inertial RTN
     temperature: float  # K
     mass: float  # kg
 
@@ -27,14 +27,14 @@ class SolarWindParams(NamedTuple):
         state = np.empty(N_STATE)
         state[LOG_DENSITY_IDX] = math.log(self.density)
         state[LOG_TEMPERATURE_IDX] = math.log(self.temperature)
-        state[VELOCITY_SLICE] = self.bulk_velocity_rtn
+        state[VELOCITY_SLICE] = self.velocity_rtn
         return state
 
     @classmethod
     def from_vector(cls, state: ndarray, mass: float) -> "SolarWindParams":
         return cls(
             density=math.exp(state[LOG_DENSITY_IDX]),
-            bulk_velocity_rtn=state[VELOCITY_SLICE],
+            velocity_rtn=state[VELOCITY_SLICE],
             temperature=math.exp(state[LOG_TEMPERATURE_IDX]),
             mass=mass,
         )
@@ -42,8 +42,8 @@ class SolarWindParams(NamedTuple):
 
 @numba.njit
 def bulk_speed(sw_params: SolarWindParams) -> float:
-    """||bulk_velocity_rtn||, km/s."""
-    v = sw_params.bulk_velocity_rtn
+    """||velocity_rtn||, km/s."""
+    v = sw_params.velocity_rtn
     return math.sqrt(v[0] ** 2 + v[1] ** 2 + v[2] ** 2)
 
 

@@ -56,7 +56,7 @@ def flipped_seed(
     spin_axis_rtn: ndarray,
 ) -> tuple[float, SolarWindParams]:
     sw = lm_result.sw_params
-    flipped_velocity = _flip_vector_about_axis(sw.bulk_velocity_rtn, spin_axis_rtn)
+    flipped_velocity = _flip_vector_about_axis(sw.velocity_rtn, spin_axis_rtn)
     unit_ideal_rates, _ = model_solar_wind_ideal_coincidence_rates(
         SolarWindParams(1.0, flipped_velocity, sw.temperature, sw.mass),
         ctx,
@@ -72,7 +72,7 @@ def flipped_seed(
 
     return flipped_mse, SolarWindParams(
         density=flipped_density,
-        bulk_velocity_rtn=flipped_velocity,
+        velocity_rtn=flipped_velocity,
         temperature=sw.temperature,
         mass=sw.mass,
     )

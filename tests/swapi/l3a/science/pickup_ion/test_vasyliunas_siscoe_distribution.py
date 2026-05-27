@@ -81,6 +81,42 @@ class VasyliunasSiscoeDistributionFTest(unittest.TestCase):
             ),
         )
 
+    @patch(f"{_VASYLIUNAS_SISCOE_MODULE}.DensityOfNeutralHeliumLookupTable.density")
+    def test_apply_cutoff_false_omits_heaviside_so_speeds_above_cutoff_stay_nonzero(
+        self, mock_density
+    ):
+        """With apply_cutoff=False the w<1 Heaviside is dropped, so the
+        returned distribution is the full product even for speeds above the
+        cutoff — used by the forward model so the cutoff can be applied as a
+        grid-corrected partial cell instead of a hard grid step."""
+        mock_density.return_value = 1
+
+        fitting_parameters = FittingParameters(
+            cooling_index=0.1,
+            ionization_rate=0.47,
+            cutoff_speed=500,
+            background_count_rate=23,
+        )
+        distance_km = 0.99 * ONE_AU_IN_KM
+        vasyliunas_siscoe_distribution = VasyliunasSiscoeDistribution(
+            1_234_567.1, 456, self.density_of_neutral_helium_lookup_table, distance_km, 13
+        )
+        speed_grid = np.array([485.45, 200, 585.45, 755.45])
+
+        result = vasyliunas_siscoe_distribution.f(
+            speed_grid, fitting_parameters, apply_cutoff=False
+        )
+
+        expected = (
+            0.1 / (4 * np.pi)
+            * (0.47 * ONE_AU_IN_KM**2)
+            / (distance_km * 456 * 500**3)
+            * (speed_grid / 500) ** (0.1 - 3)
+            * 1e15
+        )
+        np.testing.assert_allclose(result, expected, rtol=1e-12)
+        self.assertTrue(np.all(result > 0))
+
 
 if __name__ == "__main__":
     unittest.main()

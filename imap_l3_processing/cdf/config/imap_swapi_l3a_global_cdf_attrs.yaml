@@ -2,17 +2,48 @@ instrument_base: &instrument_base
   Instrument_type: Particles (space)
   Data_level: "3a"
 
+instrument_description: &instrument_description >
+  The Solar Wind and Pickup Ion (SWAPI) instrument
+  onboard the Interstellar Mapping and Acceleration Probe (IMAP)
+  is a top-hat electrostatic analyzer designed to measure energy-per-charge
+  distributions of solar wind protons (H+), alpha particles (He++),
+  and interstellar pickup ions (PUIs; combined H+ and He+) across
+  a range of 0.1 to 20 keV/q.
+  See https://imap.princeton.edu/spacecraft/instruments/solar-wind-and-pickup-ions-swapi for more details.
+
 imap_swapi_l3a_proton-sw:
   <<: *instrument_base
   Data_type: L3a_PROTON-SW>Level-3a Proton Solar Wind
   Logical_source_description: SWAPI Instrument Proton Solar Wind Parameters
+  TEXT:
+    - *instrument_description
+    - >
+      The proton parameters are obtained by fitting a Maxwellian distribution to
+      the measured coincidence rates using forward modeling, fully accounting for
+      the 3D instrument response and spacecraft spin.
 
 imap_swapi_l3a_alpha-sw:
   <<: *instrument_base
   Data_type: L3a_ALPHA-SW>Level-3a Alpha Solar Wind
   Logical_source_description: SWAPI Instrument Alpha Solar Wind Parameters
+  TEXT:
+    - *instrument_description
+    - >
+      The alpha parameters are obtained after obtaining the proton parameters by
+      fitting the sum of the proton+alpha Maxwellian distributions to the measured
+      coincidence rates using forward modeling, fully accounting for the 3D
+      instrument response and spacecraft spin. The alpha-proton differential flow
+      is constrained to be aligned with the magnetic field.
 
 imap_swapi_l3a_pui-he:
   <<: *instrument_base
   Data_type: L3a_PUI-HE>Level-3a Pickup Ion
   Logical_source_description: SWAPI Instrument Pickup Ion Parameters
+  TEXT:
+    - *instrument_description
+    - >
+      The PUI parameters are obtained after obtaining the proton parameters by
+      fitting a generalized filled-shell distribution to the coincidence count
+      rates corresponding to the He+ PUI range using forward modeling, accounting
+      for the 3D instrument response and spacecraft spin. The PUI distribution is
+      assumed isotropic in the proton solar wind comoving frame.

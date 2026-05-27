@@ -154,7 +154,7 @@ class MonteCarloFitPickupIonTest(unittest.TestCase):
         )
         proton_quality_flags_per_minute = [0] * (_MC_N_SAMPLES * 10)
         proton_results = {
-            "proton_sw_bulk_velocity_rtn_sc": proton_velocities_per_minute,
+            "proton_sw_velocity_rtn": proton_velocities_per_minute,
             "quality_flags": proton_quality_flags_per_minute,
         }
 

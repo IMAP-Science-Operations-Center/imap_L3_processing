@@ -26,8 +26,8 @@ import pandas as pd
 
 from imap_l3_processing.swapi.l3a.science.pickup_ion.collapsed_response_grid import (
     build_collapsed_response_grid,
+    solar_wind_frame_speed_range,
 )
-from tests.swapi._helpers import build_default_v_prime_grid_kms
 from figure_utils import FIGURES_DIR, REPO_ROOT, load_swapi_response
 
 _REFERENCE_CSV_PATH = (
@@ -40,8 +40,7 @@ _BULK_SPEED = 450.0
 _BULK_AZIMUTH = 5.0
 _BULK_ELEVATION = -10.0
 
-_TRUSTED_PEAK_FRACTION = 0.05
-_TEST_TOLERANCE = 0.015
+_N_FAST_INTEGRAL_POINTS = 64
 
 
 def main():
@@ -59,7 +58,10 @@ def main():
     )
 
     print("Computing production collapsed response grid...")
-    speed_in_sw_frame = build_default_v_prime_grid_kms(response_grid, _BULK_SPEED)
+    v_prime_min, v_prime_max = solar_wind_frame_speed_range(
+        response_grid.central_speed, float(_BULK_SPEED)
+    )
+    speed_in_sw_frame = np.linspace(v_prime_min, v_prime_max, _N_FAST_INTEGRAL_POINTS)
     production = build_collapsed_response_grid(
         response_grid,
         bulk_speed=_BULK_SPEED,
@@ -71,6 +73,10 @@ def main():
     h_ref_on_prod = np.interp(production.speed_in_sw_frame, v_prime_ref, h_ref)
     rel_err = np.abs(production.values - h_ref_on_prod) / h_ref_on_prod
 
+    KM3_PER_S_TO_CM3_PER_S = 1e15
+    h_ref_cm3 = h_ref * KM3_PER_S_TO_CM3_PER_S
+    production_values_cm3 = production.values * KM3_PER_S_TO_CM3_PER_S
+
     figure, axes = plt.subplots(
         2,
         1,
@@ -81,21 +87,21 @@ def main():
 
     axes[0].plot(
         v_prime_ref,
-        h_ref,
-        color="tab:blue",
+        h_ref_cm3,
+        color="black",
         lw=1.5,
-        label=f"Quadrature shell integral ({v_prime_ref.size} pts)",
+        label="Reference",
         zorder=2,
     )
     axes[0].scatter(
         production.speed_in_sw_frame,
-        production.values,
-        s=14,
-        color="tab:orange",
-        label=f"Fast integral ({production.speed_in_sw_frame.size} pts)",
+        production_values_cm3,
+        s=8,
+        color="red",
+        label="Optimized",
         zorder=3,
     )
-    axes[0].set_ylabel(r"$H(v', V)\ [\mathrm{km}^3/\mathrm{s}]$")
+    axes[0].set_ylabel(r"$H(v', V)\ [\mathrm{cm}^3/\mathrm{s}]$")
     axes[0].set_title(
         f"Angular-collapsed response at V={_ESA_VOLTAGE:.0f} V, m/q={_MASS_PER_CHARGE:.0f}, "
         f"bulk={_BULK_SPEED:.0f} km/s @ (az={_BULK_AZIMUTH:.0f}°, el={_BULK_ELEVATION:.0f}°)",
@@ -107,24 +113,16 @@ def main():
     axes[1].scatter(
         production.speed_in_sw_frame,
         rel_err,
-        s=14,
-        color="tab:orange",
+        s=8,
+        color="red",
         zorder=3,
     )
-    axes[1].axhline(
-        _TEST_TOLERANCE,
-        color="tab:red",
-        lw=1.0,
-        linestyle="--",
-        label=f"test bound ({_TEST_TOLERANCE:.1%})",
-    )
     axes[1].set_xlabel(r"$v'\ [\mathrm{km}/\mathrm{s}]$")
-    axes[1].set_ylabel(r"$|\mathrm{fast} - \mathrm{ref}| / \mathrm{ref}$")
-    axes[1].set_ylim(bottom=0)
-    axes[1].legend(loc="upper right", fontsize=9)
+    axes[1].set_ylabel("Relative Error")
+    axes[1].set_yscale("log")
+    axes[1].set_yticks([1e-4, 1e-3, 1e-2, 1e-1, 1e0])
+    axes[1].set_ylim(1e-4, 1.5e0)
     axes[1].grid(True, alpha=0.2)
-    axes[1].set_yscale('log')
-    axes[1].set_ylim(1e-4, 1e1)
 
     figure.tight_layout()
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)

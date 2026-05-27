@@ -3,3 +3,11 @@ imap_swapi_l3b_combined:
   Data_level: "3b"
   Data_type: L3B_COMBINED>Level-3 Science data
   Logical_source_description: SWAPI Instrument Combined VDF and Differential Flux
+  TEXT: >
+    The Solar Wind and Pickup Ion (SWAPI) instrument
+    onboard the Interstellar Mapping and Acceleration Probe (IMAP)
+    is a top-hat electrostatic analyzer designed to measure energy-per-charge
+    distributions of solar wind protons (H+), alpha particles (He++),
+    and interstellar pickup ions (PUIs; combined H+ and He+) across
+    a range of 0.1 to 20 keV/q.
+    See https://imap.princeton.edu/spacecraft/instruments/solar-wind-and-pickup-ions-swapi for more details.

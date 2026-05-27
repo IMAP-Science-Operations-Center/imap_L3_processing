@@ -132,7 +132,7 @@ _PERIODIC_FREQUENCY = timedelta(days=7)
 def _build_truth_count_rates(response, *, with_alpha: bool) -> np.ndarray:
     proton_params = SolarWindParams(
         density=_TRUE_PROTON_DENSITY_CM3,
-        bulk_velocity_rtn=_TRUE_PROTON_VELOCITY_RTN.copy(),
+        velocity_rtn=_TRUE_PROTON_VELOCITY_RTN.copy(),
         temperature=_TRUE_PROTON_TEMPERATURE_K,
         mass=PROTON_MASS_KG,
     )
@@ -151,7 +151,7 @@ def _build_truth_count_rates(response, *, with_alpha: bool) -> np.ndarray:
         alpha_velocity = _TRUE_PROTON_VELOCITY_RTN + _TRUE_DELTA_V_KM_S * _B_HAT_RTN
         alpha_params = SolarWindParams(
             density=_TRUE_ALPHA_DENSITY_CM3,
-            bulk_velocity_rtn=alpha_velocity,
+            velocity_rtn=alpha_velocity,
             temperature=_TRUE_ALPHA_TEMPERATURE_K,
             mass=ALPHA_PARTICLE_MASS_KG,
         )

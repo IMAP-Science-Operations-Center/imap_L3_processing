@@ -42,20 +42,21 @@ class SwapiProcessorIntegration(unittest.TestCase):
 
         expected_values = {
             'epoch': datetime.datetime(2025, 12, 31, 23, 59, 35, 6000),
-            'proton_sw_speed': 474.57455,
-            'proton_sw_speed_uncert': 0.36071813,
-            'proton_sw_speed_sun': 475.3688,
-            'proton_sw_speed_sun_uncert': 0.3539945,
+            'proton_sw_speed': 474.578857421875,
+            'proton_sw_speed_uncert': 0.36081013083457947,
+            'proton_sw_speed_sun': 475.4219055175781,
+            'proton_sw_speed_sun_uncert': 0.3551594018936157,
             'epoch_delta': 30000000000,
-            'proton_sw_temperature': 55131.13,
-            'proton_sw_temperature_uncert': 2008.7198,
-            'proton_sw_density': 2.6919234,
-            'proton_sw_density_uncert': 0.049627114,
-            'proton_sw_bulk_velocity_rtn_sun': [474.0841, 30.623661, 16.79102],
-            'proton_sw_bulk_velocity_rtn_sc': [474.14252, 1.0705476, 20.217045],
-            'proton_sw_bulk_velocity_rtn_covariance': [[0.1169681, -0.0341877, 0.13108876],
-                                                           [-0.0341877, 0.8606747, -0.23923519],
-                                                           [0.13108876, -0.23923519, 1.3221142]],
+            'proton_sw_temperature': 55131.46875,
+            'proton_sw_temperature_uncert': 2007.7718505859375,
+            'proton_sw_density': 2.6932971477508545,
+            'proton_sw_density_uncert': 0.049651436507701874,
+            'proton_sw_velocity_rtn_sun': [474.1429748535156, 31.2506103515625, 15.421923637390137],
+            'proton_sw_velocity_rtn': [474.2013854980469, 1.6974985599517822, 18.847949981689453],
+            'proton_sw_velocity_rtn_covariance': [[0.11774054169654846, -0.029444590210914612, 0.13579009473323822],
+                                                           [-0.029444590210914612, 0.8430156111717224, -0.22263257205486298],
+                                                           [0.13579009473323822, -0.22263257205486298, 1.3417274951934814]],
+            'proton_sw_velocity_rtn_uncert': [0.34313341675877107, 0.9181588158764923, 1.1583296142262276],
             'swp_flags': 0
         }
 
@@ -94,10 +95,10 @@ class SwapiProcessorIntegration(unittest.TestCase):
         with CDF(str(expected_file_path)) as cdf:
             for key in expected_values.keys():
                 actual_value = cdf[key][0]
-                if 'bulk_velocity' in key:
-                    rtol, atol = 1e-3, bulk_speed_atol
-                elif key.endswith('_uncert'):
+                if key.endswith('_uncert'):
                     rtol, atol = 1e-2, 0.0
+                elif 'velocity' in key:
+                    rtol, atol = 1e-3, bulk_speed_atol
                 else:
                     rtol, atol = 1e-3, 0.0
                 try:
@@ -124,18 +125,22 @@ class SwapiProcessorIntegration(unittest.TestCase):
         expected_values = {
             'epoch': datetime.datetime(2026, 1, 1, 0, 0, 35, 6000),
             'epoch_delta': 30000000000,
-            'alpha_sw_speed': 473.3955993652344,
-            'alpha_sw_speed_uncert': 0.3668617010116577,
-            'alpha_sw_density': 0.1588851362466812,
-            'alpha_sw_density_uncert': 0.2096901834011078,
-            'alpha_sw_temperature': 2332716.75,
-            'alpha_sw_temperature_uncert': 1120345.5,
-            'alpha_sw_velocity_rtn_sc': [472.94376, -10.725992, 17.678875],
+            'alpha_sw_speed': 473.3949279785156,
+            'alpha_sw_speed_uncert': 0.3672780692577362,
+            'alpha_sw_speed_sun': 473.53363037109375,
+            'alpha_sw_speed_sun_uncert': 0.4522981643676758,
+            'alpha_sw_density': 0.1577976644039154,
+            'alpha_sw_density_uncert': 0.2121371477842331,
+            'alpha_sw_temperature': 2338303.75,
+            'alpha_sw_temperature_uncert': 1141809.75,
+            'alpha_sw_velocity_rtn': [473.010009765625, -9.928609848022461, 16.30108070373535],
+            'alpha_sw_velocity_rtn_sun': [472.9515686035156, 19.624502182006836, 12.875075340270996],
             'alpha_sw_velocity_rtn_covariance': [
-                [0.13366441, 0.22170407, 0.13530357],
-                [0.22170407, 13.252416, 6.8162704],
-                [0.13530357, 6.8162704, 4.195147],
+                [0.13386771082878113, 0.23742027580738068, 0.1489003300666809],
+                [0.23742027580738068, 13.923757553100586, 7.167418003082275],
+                [0.1489003300666809, 7.167418003082275, 4.364877223968506],
             ],
+            'alpha_sw_velocity_rtn_uncert': [0.36587936649773123, 3.7314551522295676, 2.0892288586865027],
             'swp_flags': 0,
         }
 
@@ -173,10 +178,10 @@ class SwapiProcessorIntegration(unittest.TestCase):
         with CDF(str(expected_file_path)) as cdf:
             for key in expected_values.keys():
                 actual_value = cdf[key][sample_index]
-                if 'velocity' in key:
-                    rtol, atol = 1e-3, bulk_speed_atol
-                elif key.endswith('_uncert'):
+                if key.endswith('_uncert'):
                     rtol, atol = 1e-2, 0.0
+                elif 'velocity' in key:
+                    rtol, atol = 1e-3, bulk_speed_atol
                 else:
                     rtol, atol = 1e-3, 0.0
                 try:
@@ -199,18 +204,18 @@ class SwapiProcessorIntegration(unittest.TestCase):
         expected_values = {
             'epoch': datetime.datetime(2026, 1, 1, 16, 24, 4, 954000),
             'epoch_delta': 300000000000,
-            'pui_cooling_index': 1.9189398,
-            'pui_cooling_index_uncert': 0.20612726,
-            'pui_ionization_rate': 7.7820943e-08,
-            'pui_ionization_rate_uncert': 4.0720134e-09,
-            'pui_cutoff_speed': 481.61884,
-            'pui_cutoff_speed_uncert': 3.2015524,
-            'pui_background_count_rate': 0.50305182,
-            'pui_background_count_rate_uncert': 0.19893467,
-            'pui_density': 5.246582e-04,
-            'pui_density_uncert': 2.8316077e-05,
-            'pui_temperature': 21426046.0,
-            'pui_temperature_uncert': 838306.625,
+            'pui_cooling_index': 1.910225510597229,
+            'pui_cooling_index_uncert': 0.2060626894235611,
+            'pui_ionization_rate': 7.794354672796544e-08,
+            'pui_ionization_rate_uncert': 4.102200801270328e-09,
+            'pui_cutoff_speed': 481.7975769042969,
+            'pui_cutoff_speed_uncert': 3.2259936332702637,
+            'pui_background_count_rate': 0.4991186261177063,
+            'pui_background_count_rate_uncert': 0.19779543578624725,
+            'pui_density': 0.0005261990590952337,
+            'pui_density_uncert': 2.8508362447610125e-05,
+            'pui_temperature': 21379004.0,
+            'pui_temperature_uncert': 850825.4375,
             'swp_flags': 0,
         }
 

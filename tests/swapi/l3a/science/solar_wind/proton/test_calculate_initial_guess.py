@@ -76,7 +76,7 @@ def _make_synthetic_ctx_at_known_truth(truth: SolarWindParams,
                                        n_bins: int = 71):
     """Build a context whose `count_rate` array is the noiseless ideal forward
     model evaluated at `truth`."""
-    bulk_speed = float(np.linalg.norm(truth.bulk_velocity_rtn))
+    bulk_speed = float(np.linalg.norm(truth.velocity_rtn))
     # Wide enough to bracket ±5σ at T=1e5 K, narrow enough to keep all bins
     # on-instrument.
     speed_grid = np.linspace(0.4 * bulk_speed, 1.6 * bulk_speed, n_bins)
@@ -158,7 +158,7 @@ class TestCalculateInitialGuessSeeds(unittest.TestCase):
 
 
 class TestCalculateInitialGuessDirection(unittest.TestCase):
-    """Tests for `calculate_initial_guess` — chunk-mean spin-axis direction handling for the returned `bulk_velocity_rtn`."""
+    """Tests for `calculate_initial_guess` — chunk-mean spin-axis direction handling for the returned `velocity_rtn`."""
 
     def test_initial_velocity_is_anti_parallel_to_spin_axis(self):
         """With every rotation matrix aligning body +Y to -R̂, the returned bulk velocity points along +R̂ — the negation of the chunk-mean spin axis."""
@@ -176,17 +176,17 @@ class TestCalculateInitialGuessDirection(unittest.TestCase):
         expected_axis = np.array([-1.0, 0.0, 0.0])
 
         guess = calculate_initial_guess(ctx)
-        v_unit = guess.bulk_velocity_rtn / np.linalg.norm(
-            guess.bulk_velocity_rtn
+        v_unit = guess.velocity_rtn / np.linalg.norm(
+            guess.velocity_rtn
         )
         np.testing.assert_allclose(v_unit, -expected_axis, atol=1e-12)
 
     def test_velocity_magnitude_matches_truth_bulk_speed(self):
-        """On a noiseless forward-model spectrum at 450 km/s the unmocked Gaussian refine recovers the truth, so the returned `|bulk_velocity_rtn|` matches the truth bulk speed to ~2%."""
+        """On a noiseless forward-model spectrum at 450 km/s the unmocked Gaussian refine recovers the truth, so the returned `|velocity_rtn|` matches the truth bulk speed to ~2%."""
         truth_bulk_speed = 450.0
         truth = SolarWindParams(
             density=5.0,
-            bulk_velocity_rtn=np.array([truth_bulk_speed, 0.0, 0.0]),
+            velocity_rtn=np.array([truth_bulk_speed, 0.0, 0.0]),
             temperature=1.0e5,
             mass=PROTON_MASS_KG,
         )
@@ -194,7 +194,7 @@ class TestCalculateInitialGuessDirection(unittest.TestCase):
 
         guess = calculate_initial_guess(ctx)
         np.testing.assert_allclose(
-            np.linalg.norm(guess.bulk_velocity_rtn),
+            np.linalg.norm(guess.velocity_rtn),
             truth_bulk_speed,
             rtol=2e-2,
         )
@@ -207,7 +207,7 @@ class TestCalculateInitialGuessDensity(unittest.TestCase):
         """Re-running the unit-density forward model at the guess's own velocity/temperature and feeding it through `optimal_density_scale` reproduces the guess density exactly."""
         truth = SolarWindParams(
             density=4.2,
-            bulk_velocity_rtn=np.array([470.0, 0.0, 0.0]),
+            velocity_rtn=np.array([470.0, 0.0, 0.0]),
             temperature=1.2e5,
             mass=PROTON_MASS_KG,
         )
@@ -221,7 +221,7 @@ class TestCalculateInitialGuessDensity(unittest.TestCase):
         # `optimal_density_scale`. The result must match `guess.density`.
         unit_density_params = SolarWindParams(
             density=1.0,
-            bulk_velocity_rtn=guess.bulk_velocity_rtn,
+            velocity_rtn=guess.velocity_rtn,
             temperature=guess.temperature,
             mass=ctx.mass_kg,
         )
