@@ -1,6 +1,7 @@
 import enum
 import json
 import logging
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, date, timedelta
 from pathlib import Path
@@ -8,6 +9,7 @@ from typing import Optional, Union, TypeVar
 from urllib.parse import urlparse
 
 import imap_data_access
+import numpy as np
 import requests
 import spiceypy
 from imap_data_access import ScienceFilePath, download
@@ -253,6 +255,8 @@ def combine_glows_l3e_with_l1c_pointing(glows_l3e_data: list[GlowsL3eData], l1c_
     return [(l1c_by_repoint[repoint], glows_by_repoint.get(repoint, None))
             for repoint in l1c_by_repoint.keys()]
 
+def filter_bad_days(input_psets: list[L1CPointingSet]) -> list[L1CPointingSet]:
+    return [pset for pset in input_psets if not np.all(pset.exposure_times == 0.0)]
 
 def get_dependency_paths_by_descriptor(deps: ProcessingInputCollection, descriptors: list[str]) -> dict[
     str, list[Path]]:
@@ -335,6 +339,12 @@ def furnish_spice_metakernel(start_date: datetime, end_date: datetime, kernel_ty
 
     return FurnishMetakernelOutput(metakernel_path=metakernel_path, spice_kernel_paths=downloaded_paths)
 
+@contextmanager
+def furnished_metakernel(start_date, end_date, kernel_types):
+    try:
+        yield furnish_spice_metakernel(start_date, end_date, kernel_types)
+    finally:
+        spiceypy.kclear()
 
 def read_cdf_parents(server_file_name: str) -> set[str]:
     downloaded_path = imap_data_access.download(server_file_name)

@@ -78,7 +78,6 @@ class TestUltraSurvivalProbability(unittest.TestCase):
         survival_probability_times_exposure = prod.data['survival_probability_times_exposure']
         np.testing.assert_array_equal(survival_probability_times_exposure.values,
                                       expected_survival_probabilities_values)
-        np.testing.assert_array_equal(survival_probability_times_exposure.coords, prod.data['counts'].coords)
 
     @patch('imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim')
     @patch('imap_l3_processing.ultra.science.ultra_survival_probability.geometry.frame_transform_az_el')
@@ -256,7 +255,6 @@ def _create_ultra_l1c_pset(energy: np.ndarray,
                            epoch: datetime = None,
                            epoch_delta: int = ONE_SECOND_IN_NANOSECONDS * SECONDS_PER_DAY):
     epoch = datetime(2025, 10, 1, 0) if epoch is None else epoch
-    counts = counts or np.full_like(exposure_factor, 1)
     sensitivity = sensitivity or np.full_like(exposure_factor[0], 1)
     healpix_index = np.arange(exposure_factor.shape[-1])
     healpix = HEALPix(nside=int(np.sqrt(len(healpix_index) / 12)))
@@ -265,7 +263,6 @@ def _create_ultra_l1c_pset(energy: np.ndarray,
         epoch=epoch,
         epoch_delta=epoch_delta,
         energy=energy,
-        counts=counts,
         exposure=exposure_factor,
         healpix_index=healpix_index,
         latitude=np.rad2deg(lat_pix.value),

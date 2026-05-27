@@ -16,7 +16,8 @@ from imap_l3_processing.utils import get_dependency_paths_by_descriptor
 
 @dataclass
 class UltraL3Dependencies:
-    ultra_l2_map: HealPixIntensityMapData
+    ultra_l2_healpix_map: HealPixIntensityMapData
+    ultra_l2_rectangular_map: RectangularIntensityMapData
     ultra_l1c_pset: list[UltraL1CPSet]
     glows_l3e_sp: list[UltraGlowsL3eData]
     energy_bin_group_sizes: Optional[np.ndarray]
@@ -58,12 +59,13 @@ class UltraL3Dependencies:
         l1c_paths_dict = {path.stem: path for path in l1c_file_paths}
         l2_healpix_datasets = ultra_l2(l1c_paths_dict)
         l2_healpix_map_data = HealPixIntensityMapData.read_from_xarray(l2_healpix_datasets[0])
+        l2_rectangular_map_data = RectangularIntensityMapData.read_from_path(l2_map_path)
         energy_bin_group_sizes = None
         if energy_bin_path:
             paths.append(energy_bin_path)
             energy_bin_group_sizes = np.loadtxt(energy_bin_path, delimiter=',', dtype=np.uint8)
 
-        return cls(ultra_l2_map=l2_healpix_map_data, ultra_l1c_pset=ultra_l1c_data, glows_l3e_sp=glows_l3e_data,
+        return cls(ultra_l2_healpix_map=l2_healpix_map_data, ultra_l2_rectangular_map=l2_rectangular_map_data, ultra_l1c_pset=ultra_l1c_data, glows_l3e_sp=glows_l3e_data,
                    dependency_file_paths=paths, energy_bin_group_sizes=energy_bin_group_sizes)
 
 
@@ -98,8 +100,10 @@ class UltraL3SpectralIndexDependencies(SpectralIndexDependencies):
 
 @dataclass
 class UltraL3CombinedDependencies:
-    u45_l2_map: HealPixIntensityMapData
-    u90_l2_map: HealPixIntensityMapData
+    u45_l2_healpix_map: HealPixIntensityMapData
+    u90_l2_healpix_map: HealPixIntensityMapData
+    u45_l2_rectangular_map: RectangularIntensityMapData
+    u90_l2_rectangular_map: RectangularIntensityMapData
     u45_l1c_psets: list[UltraL1CPSet]
     u90_l1c_psets: list[UltraL1CPSet]
     glows_l3e_psets: list[UltraGlowsL3eData]
@@ -159,6 +163,9 @@ class UltraL3CombinedDependencies:
         l2_u90_maps = ultra_l2(l1c_u90_paths_dict)
         l2_u90_healpix_map_data = HealPixIntensityMapData.read_from_xarray(l2_u90_maps[0])
 
+        l2_u45_rectangular_map_data = RectangularIntensityMapData.read_from_path(u45_map_path)
+        l2_u90_rectangular_map_data = RectangularIntensityMapData.read_from_path(u90_map_path)
+
         dependency_paths = [*u45_pset_paths, *u90_pset_paths, *glows_l3e_pset_paths, u45_map_path,
                             u90_map_path]
         if energy_bin_group_sizes_path:
@@ -167,7 +174,8 @@ class UltraL3CombinedDependencies:
         else:
             energy_bin_group_sizes = None
 
-        return cls(u45_l2_map=l2_u45_healpix_map_data, u90_l2_map=l2_u90_healpix_map_data,
+        return cls(u45_l2_healpix_map=l2_u45_healpix_map_data, u90_l2_healpix_map=l2_u90_healpix_map_data,
+                   u45_l2_rectangular_map=l2_u45_rectangular_map_data, u90_l2_rectangular_map=l2_u90_rectangular_map_data,
                    u45_l1c_psets=u45_l1c_psets, u90_l1c_psets=u90_l1c_psets,
                    glows_l3e_psets=survival_probability_ul_pset, energy_bin_group_sizes=energy_bin_group_sizes,
                    dependency_file_paths=dependency_paths)

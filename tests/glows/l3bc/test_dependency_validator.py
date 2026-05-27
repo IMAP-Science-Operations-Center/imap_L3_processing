@@ -28,12 +28,10 @@ class TestDependencyValidator(unittest.TestCase):
             row[34] = "99.999"
             line = " ".join(row) + "\n"
             omni_path.write_text(line + line)
-            end_date = datetime(2000, 1, 15)
-            buffer = timedelta(days=0)
             self.assertTrue(
                 validate_omni2_dependency(
-                    end_date_exclusive=end_date,
-                    buffer=buffer,
+                    cr_start_date=datetime(2000, 2, 1),
+                    cr_end_date_exclusive=datetime(2000, 2, 2),
                     file_path=omni_path,
                 )
             )
@@ -42,19 +40,21 @@ class TestDependencyValidator(unittest.TestCase):
         file_path = get_test_data_path("glows/glows_omni2.dat")
 
         test_cases = [
-            ("Missing All Values Past Buffer", datetime(1994, 7, 12), timedelta(days=7),
-             False),
-            ("Density 1 Exists", datetime(1994, 7, 12), timedelta(days=6), False),
-            ("Speed 1 Exists", datetime(1994, 7, 12), timedelta(days=5), False),
-            ("Alpha 1 Exists", datetime(1994, 7, 12), timedelta(days=4), False),
-            ("Density 2 Exists", datetime(1994, 7, 12), timedelta(days=3), False),
-            ("Speed 2 Exists", datetime(1994, 7, 12), timedelta(days=2), True),
-            ("Missing no values", datetime(1994, 7, 12), timedelta(days=1), True),
+            ("Missing no values", datetime(1994, 7, 13), datetime(1994, 7, 14), True),
+            ("Speed 2 Exists", datetime(1994, 7, 14), datetime(1994, 7, 15), True),
+            ("Density 2 Exists", datetime(1994, 7, 15), datetime(1994, 7, 16), False),
+            ("Alpha 1 Exists", datetime(1994, 7, 16), datetime(1994, 7, 17), False),
+            ("Speed 1 Exists", datetime(1994, 7, 17), datetime(1994, 7, 18), False),
+            ("Density 1 Exists", datetime(1994, 7, 18), datetime(1994, 7, 19), False),
+            ("Missing All Values", datetime(1994, 7, 19), datetime(1994, 7, 20), False),
+            ("Empty window", datetime(1994, 7, 20), datetime(1994, 7, 21), False),
         ]
 
-        for name, end_date, buffer, expected in test_cases:
+        for name, cr_start_date, cr_end_date_exclusive, expected in test_cases:
             with self.subTest(name):
-                actual = validate_omni2_dependency(file_path=file_path, end_date_exclusive=end_date, buffer=buffer)
+                actual = validate_omni2_dependency(file_path=file_path,
+                                                   cr_start_date=cr_start_date,
+                                                   cr_end_date_exclusive=cr_end_date_exclusive)
                 self.assertEqual(expected, actual)
 
     @patch("imap_l3_processing.glows.l3bc.dependency_validator.validate_lyman_alpha_dependency")
@@ -69,7 +69,8 @@ class TestDependencyValidator(unittest.TestCase):
             ("flux validation fails", True, False, True, False),
             ("lyman validation fails", True, True, False, False)
         ]
-        end_date_inclusive = datetime(1994,7, 17)
+        cr_start_date = datetime(1994, 7, 10)
+        cr_end_date = datetime(1994, 7, 17)
         buffer = timedelta(2)
         omni_file_path = Path("omni path")
         fluxtable_file_path = Path("fluxtable path")
@@ -81,17 +82,17 @@ class TestDependencyValidator(unittest.TestCase):
                 mock_validate_f107_fluxtable_dependency.return_value = flux_validation
                 mock_validate_lyman_alpha_dependency.return_value = lyman_alpha_validation
 
-                actual = validate_dependencies(end_date_inclusive, buffer, omni_file_path,
+                actual = validate_dependencies(cr_start_date, cr_end_date, buffer, omni_file_path,
                                                fluxtable_file_path, lyman_alpha_file_path)
                 self.assertEqual(expected, actual)
 
-                mock_validate_omni2_dependency.assert_called_once_with(end_date_inclusive, buffer,
+                mock_validate_omni2_dependency.assert_called_once_with(cr_start_date, cr_end_date,
                                                                        omni_file_path)
 
-                mock_validate_f107_fluxtable_dependency.assert_called_once_with(end_date_inclusive, buffer,
+                mock_validate_f107_fluxtable_dependency.assert_called_once_with(cr_end_date, buffer,
                                                                                 fluxtable_file_path)
 
-                mock_validate_lyman_alpha_dependency.assert_called_once_with(end_date_inclusive, buffer,
+                mock_validate_lyman_alpha_dependency.assert_called_once_with(cr_end_date, buffer,
                                                                              lyman_alpha_file_path)
                 mock_validate_omni2_dependency.reset_mock()
                 mock_validate_f107_fluxtable_dependency.reset_mock()

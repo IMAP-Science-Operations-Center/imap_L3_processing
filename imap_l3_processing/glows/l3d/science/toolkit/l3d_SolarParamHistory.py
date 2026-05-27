@@ -157,7 +157,7 @@ class SolarParamsHistory():
         '''
         l3d_txt_fn_list={}
         for k in self.ini_data['label']: l3d_txt_fn_list[k]=np.array(sorted(glob.glob('data_l3d_txt/imap_glows_l3d*'+k+'*.dat')))
-    
+
         # list of the L3d text files from the latest CR
         fn_initial={}
         for k in l3d_txt_fn_list:
@@ -180,43 +180,59 @@ class SolarParamsHistory():
         CR_list_b=[data['CR'] for data in data_l3b]
         CR_list_c=[data['CR'] for data in data_l3b]
         
-        idx_read_b = fun.find_CR_idx(CR, CR_list_b)
+        idx_read_b = fun.find_CR_idx(CR, CR_list_b)  # two value vector with idx of the current CR and the next
         idx_read_c = fun.find_CR_idx(CR, CR_list_c)
 
         # if there is only current CR, but not the next one available, then we can't interpolate
-        if idx_read_b[-1]>=len(CR_list_b): raise Exception('L3d not generated: there is not enough L3b data to interpolate')
-        if idx_read_c[-1]>=len(CR_list_c): raise Exception('L3d not generated: there is not enough L3c data to interpolate')
+        # but we can make a temporary entry with values copied from L3bc as they are (not exactly at CR.5)
+        Nmid=int(len(data_l3b[0]['ion_rate_profile']['lat_grid'])/2)  # idx of the middle bin in phion
+        idx_current=idx_read_b[0]
+        # Patched temporary record of L3d 
+        if int(CR)==CR_list_b[-1]:
+            idx_read_b=[idx_read_b[0]]
+            idx_read_c=[idx_read_c[0]]
+            cr_params['uv-anis']=data_l3b[idx_current]['uv_anisotropy_factor']
+            cr_params['phion']=data_l3b[idx_current]['ion_rate_profile']['ph_rate'][Nmid]
+            cr_params['p-dens']=data_l3c[idx_current]['solar_wind_profile']['proton_density']
+            cr_params['speed']=data_l3c[idx_current]['solar_wind_profile']['plasma_speed']
+            p_dens_ecl=data_l3c[idx_current]['solar_wind_ecliptic']['proton_density']
+            a_abundance_ecl=data_l3c[idx_current]['solar_wind_ecliptic']['alpha_abundance']
+            cr_params['e-dens']=p_dens_ecl*(1+2*a_abundance_ecl)
+        else:
+        #if idx_read_b[-1]>=len(CR_list_b): raise Exception('L3d not generated: there is not enough L3b data to interpolate')
+        #if idx_read_c[-1]>=len(CR_list_c): raise Exception('L3d not generated: there is not enough L3c data to interpolate')
 
-        # mean time based on the light curves that were actually used during L3b processing (after removing bad-days and bad-seasons)
-        t_b=Time(np.array([data_l3b[i]['date'] for i in idx_read_b]))
-        t_c=Time(np.array([data_l3b[i]['date'] for i in idx_read_c]))
+
+            # mean time based on the light curves that were actually used during L3b processing (after removing bad-days and bad-seasons)
+            t_b=Time(np.array([data_l3b[i]['date'] for i in idx_read_b]))
+            t_c=Time(np.array([data_l3b[i]['date'] for i in idx_read_c]))
+    
+            # time nodes that will be used for interpolation. The first one is the last time stamp from the previous CR, the second and the third are next available L3bc dates
+            # Usually t_b=t_c, but there could be a cases when for a current CR L3b was generated and L3c is not. Then we can still generate L3d if we have both L3b and L3c for later CR
+            t_nods_b=np.concatenate([[fun.jd_fm_Carrington(self.ini_data['CR_last'])],t_b.jd])
+            t_nods_c=np.concatenate([[fun.jd_fm_Carrington(self.ini_data['CR_last'])],t_c.jd])
+
+            # UV-anisotropy
+            anisotropy=np.concatenate([[self.ini_data['data']['uv-anis'][-1]],np.array([data_l3b[i]['uv_anisotropy_factor'] for i in idx_read_b])])
+            cr_params['uv-anis']=np.array([np.interp(t_CR.jd,t_nods_b,anisotropy[:,i]) for i in np.arange(len(anisotropy[0]))])
+
+            # photoion in the ecliptic plane
+            Nmid=int(len(data_l3b[0]['ion_rate_profile']['lat_grid'])/2)
+            ph_b=np.concatenate([[self.ini_data['data']['phion'][-1]],np.array([data_l3b[i]['ion_rate_profile']['ph_rate'][Nmid] for i in idx_read_b])])
+            cr_params['phion']=np.interp(t_CR.jd,t_nods_b,ph_b)
+
+            # solar wind parameters (plasma speed, proton density)
+            p_dens=np.concatenate([[self.ini_data['data']['p-dens'][-1]],np.array([data_l3c[i]['solar_wind_profile']['proton_density'] for i in idx_read_c])])
+            sw_speed=np.concatenate([[self.ini_data['data']['speed'][-1]],np.array([data_l3c[i]['solar_wind_profile']['plasma_speed'] for i in idx_read_c])])
+            cr_params['p-dens']=np.array([np.interp(t_CR.jd,t_nods_c,p_dens[:,i]) for i in np.arange(len(p_dens[0]))])
+            cr_params['speed']=np.array([np.interp(t_CR.jd,t_nods_c,sw_speed[:,i]) for i in np.arange(len(sw_speed[0]))])
+
+            # electron density in the ecliptic plane calculated from p-dens and alpha-abundance
+            p_dens_ecl=np.array([data_l3c[i]['solar_wind_ecliptic']['proton_density'] for i in idx_read_c])
+            a_abundance_ecl=np.array([data_l3c[i]['solar_wind_ecliptic']['alpha_abundance'] for i in idx_read_c])
+            e_dens_ecl=np.concatenate([[self.ini_data['data']['e-dens'][-1]],p_dens_ecl*(1+2*a_abundance_ecl)])
+            cr_params['e-dens']=np.interp(t_CR.jd,t_nods_c,e_dens_ecl)
         
-        # time nodes that will be used for interpolation. The first one is the last time stamp from the previous CR, the second and the third are next available L3bc dates
-        # Usually t_b=t_c, but there could be a cases when for a current CR L3b was generated and L3c is not. Then we can still generate L3d if we have both L3b and L3c for later CR
-        t_nods_b=np.concatenate([[fun.jd_fm_Carrington(self.ini_data['CR_last'])],t_b.jd])
-        t_nods_c=np.concatenate([[fun.jd_fm_Carrington(self.ini_data['CR_last'])],t_c.jd])
-
-        # UV-anisotropy
-        anisotropy=np.concatenate([[self.ini_data['data']['uv-anis'][-1]],np.array([data_l3b[i]['uv_anisotropy_factor'] for i in idx_read_b])])
-        cr_params['uv-anis']=np.array([np.interp(t_CR.jd,t_nods_b,anisotropy[:,i]) for i in np.arange(len(anisotropy[0]))])
-
-        # photoion in the ecliptic plane
-        Nmid=int(len(data_l3b[0]['ion_rate_profile']['lat_grid'])/2)
-        ph_b=np.concatenate([[self.ini_data['data']['phion'][-1]],np.array([data_l3b[i]['ion_rate_profile']['ph_rate'][Nmid] for i in idx_read_b])])
-        cr_params['phion']=np.interp(t_CR.jd,t_nods_b,ph_b)
-
-        # solar wind parameters (plasma speed, proton density)
-        p_dens=np.concatenate([[self.ini_data['data']['p-dens'][-1]],np.array([data_l3c[i]['solar_wind_profile']['proton_density'] for i in idx_read_c])])
-        sw_speed=np.concatenate([[self.ini_data['data']['speed'][-1]],np.array([data_l3c[i]['solar_wind_profile']['plasma_speed'] for i in idx_read_c])])
-        cr_params['p-dens']=np.array([np.interp(t_CR.jd,t_nods_c,p_dens[:,i]) for i in np.arange(len(p_dens[0]))])
-        cr_params['speed']=np.array([np.interp(t_CR.jd,t_nods_c,sw_speed[:,i]) for i in np.arange(len(sw_speed[0]))])
-
-        # electron density in the ecliptic plane calculated from p-dens and alpha-abundance
-        p_dens_ecl=np.array([data_l3c[i]['solar_wind_ecliptic']['proton_density'] for i in idx_read_c])
-        a_abundance_ecl=np.array([data_l3c[i]['solar_wind_ecliptic']['alpha_abundance'] for i in idx_read_c])
-        e_dens_ecl=np.concatenate([[self.ini_data['data']['e-dens'][-1]],p_dens_ecl*(1+2*a_abundance_ecl)])
-        cr_params['e-dens']=np.interp(t_CR.jd,t_nods_c,e_dens_ecl)
-
         return cr_params, idx_read_b, idx_read_c
 
     def generate_initial_history(self,fn_list):
@@ -267,7 +283,7 @@ class SolarParamsHistory():
             self.flags[k][idx[k]:]=self.ini_data['flags'][k]
 
         self.glows_flags=np.zeros(Nt, dtype=np.uint16)
-    
+
     def generate_hdr_txt(self,fn_dict):
         '''
         Generates text header for a text L3d files from prievious L3d text files
@@ -402,7 +418,7 @@ class SolarParamsHistory():
         output[:,1]=self.solar_params[k]
         output[:,-1]=np.array(self.CR_grid)
 
-        np.savetxt(fn,output,fmt='%4.12f %.15e %4.1f',header=('').join(hdr))
+        np.savetxt(fn,output,fmt='%4.12f %.15e %4.2f',header=('').join(hdr))
         return 0
     
     def _save_to_txt_profile(self,fn,k,hdr):
@@ -418,7 +434,7 @@ class SolarParamsHistory():
         output[:,-2]=np.array(self.CR_grid)
         output[:,-1]=np.array(self.flags[k])
 
-        np.savetxt(fn,output,fmt='%4.12f '+ (Ncol-3)*'%.15e ' + '%4.1f' + '%7d',header=('').join(hdr))
+        np.savetxt(fn,output,fmt='%4.12f '+ (Ncol-3)*'%.15e ' + '%4.2f' + '%7d',header=('').join(hdr))
         return 0
     
 
@@ -442,8 +458,6 @@ class SolarParamsHistory():
         # define source flags for p-dens and speed that are result of the GLOWS analysis
         # we have want to flag those values that are based on generated L3b and L3c, as well as those that are interpolated
         
-
-        #if np.abs(data_l3b[idx_read_b[0]]['CR']-CR)<0.6:
         if int(data_l3b[idx_read_b[0]]['CR'])==int(CR):
             # there is L3b for a current CR
             
@@ -454,7 +468,6 @@ class SolarParamsHistory():
             self.flags['uv-anis']=np.append(self.flags['uv-anis'],self.settings['l3d_source_flags']['uv_anis_interpolated'])
             self.glows_flags=np.append(self.glows_flags,np.uint16(0))
 
-        #if np.abs(data_l3c[idx_read_c[0]]['CR']-CR)<0.6:
         if int(data_l3c[idx_read_c[0]]['CR'])==int(CR):
             # there is L3c for a current CR
             self.flags['speed']=np.append(self.flags['speed'],self.settings['l3d_source_flags']['speed_GLOWS'])
@@ -464,6 +477,28 @@ class SolarParamsHistory():
             self.flags['speed']=np.append(self.flags['speed'],self.settings['l3d_source_flags']['speed_GLOWS_interpolated'])
             self.flags['p-dens']=np.append(self.flags['p-dens'],self.settings['l3d_source_flags']['dens_from_speed_interpolated'])
     
+    
+    def _freeze_l3bc_data(self,data_l3b,data_l3c):
+
+        # add a row with values copied from the last CR generated from the GLOWS data
+        for k in self.ini_data['label']:
+            
+            if np.logical_or(np.logical_or(k=='speed',k=='p-dens'),k=='uv-anis'):
+                self.solar_params[k] = np.r_[self.solar_params[k],[self.solar_params[k][-1]]]
+                
+            elif np.logical_or(k=='phion',k=='e-dens'):
+                self.solar_params[k] = np.append(self.solar_params[k], self.solar_params[k][-1])
+        # add flags
+        self.flags['uv-anis']=np.append(self.flags['uv-anis'],self.settings['l3d_source_flags']['freezed'])
+        self.flags['speed']=np.append(self.flags['speed'],self.settings['l3d_source_flags']['freezed'])
+        self.flags['p-dens']=np.append(self.flags['p-dens'],self.settings['l3d_source_flags']['freezed'])
+        self.glows_flags=np.append(self.glows_flags,self.glows_flags[-1])
+
+
+    def _freeze_lya_data(self):
+
+        self.solar_params['lya'] = np.append(self.solar_params['lya'], self.solar_params['lya'][-1])
+
     def _update_lya_data(self,ext_dependencies,CR):
         '''
         Generates next value of the Lyman-alpha irradiance based on external daily measurements.
@@ -477,11 +512,15 @@ class SolarParamsHistory():
         '''
         Updates structure by calculating parameters values from last CR in the initial data until currently processed CR
         '''
+        CR_l3b_last=np.round(fun.carrington(Time(data_l3b[-1]['date']).jd),2)
         
-        for CR in np.arange(self.ini_data['CR_last']+1,CR_current+1.5):
-
+        #for CR in np.arange(self.ini_data['CR_last']+1,CR_current+1.5):
+        CR=self.ini_data['CR_last'] + 1
+        
+        while(int(CR)<CR_l3b_last):
             # update CR grid
-            self.CR_grid = np.append(self.CR_grid, CR)
+            if int(CR)==int(CR_l3b_last): self.CR_grid = np.append(self.CR_grid, CR_l3b_last)
+            else: self.CR_grid = np.append(self.CR_grid, CR)
 
             # update time grid
             t_CR = Time(fun.jd_fm_Carrington(CR),format='jd')
@@ -495,3 +534,24 @@ class SolarParamsHistory():
 
             # update last CR
             self.CR_last=CR
+            CR=CR+1
+          
+        while(int(CR)<=CR_current):
+            # update CR grid
+            self.CR_grid = np.append(self.CR_grid, CR)
+
+            # update time grid
+            t_CR = Time(fun.jd_fm_Carrington(CR),format='jd')
+            self.time_grid = np.append(self.time_grid, t_CR)
+
+            # copy l3d values from the last GLOWS CR and flag them
+            self._freeze_l3bc_data(data_l3b,data_l3c)
+
+            # copy Lyman-alpha data from the last CR
+            self._freeze_lya_data()
+
+            # update last CR
+            self.CR_last=CR
+            CR=CR+1
+        
+

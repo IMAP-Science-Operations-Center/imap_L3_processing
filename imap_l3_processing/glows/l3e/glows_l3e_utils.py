@@ -82,7 +82,6 @@ def determine_l3e_files_to_produce(first_cr_processed: int, last_processed_cr: i
     first_carrington_start_date = Time(jd_fm_Carrington(float(first_cr_processed)), format='jd')
     last_cr_end_date = Time(jd_fm_Carrington(float(last_processed_cr + 1)), format='jd')
 
-
     start_ns = (first_carrington_start_date.to_datetime() - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS
     end_ns = (last_cr_end_date.to_datetime() - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS
 
@@ -154,14 +153,14 @@ def get_lo_pivot_angle_from_l1b_file(path: Path) -> float:
         epoch = cdf['epoch'][...]
         angles = cdf['pcc_coarse_pot_pri'][...]
     if len(epoch) == 0:
-        return 90
+        return 90.0
     t0 = epoch[0]
-    start = t0 + timedelta(hours=3)
-    end = t0 + timedelta(hours=15)
+    start = t0 + timedelta(hours=0.5)
+    end = t0 + timedelta(hours=22.5)
     start_index, end_index = np.searchsorted(epoch, [start, end])
     angles_to_consider = angles[start_index:end_index]
     if len(angles_to_consider) == 0:
-        return 90
+        return 90.0
     return np.round(np.median(angles_to_consider))
 
 @dataclass
@@ -183,5 +182,5 @@ def get_lo_pivot_angles(repointings: list[int]) -> dict[int, LoPivotAngle]:
             downloaded_path = imap_data_access.download(path)
             result[repointing] = LoPivotAngle(parent_filename=Path(path).name, pivot_angle=get_lo_pivot_angle_from_l1b_file(downloaded_path))
         else:
-            result[repointing] = LoPivotAngle(parent_filename=None, pivot_angle=90)
+            result[repointing] = LoPivotAngle(parent_filename=None, pivot_angle=90.0)
     return result

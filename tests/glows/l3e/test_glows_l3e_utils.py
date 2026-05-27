@@ -214,45 +214,51 @@ class TestGlowsL3EUtils(unittest.TestCase):
 
                 mock_CDF.side_effect = [old_l3d, new_l3d]
 
-                actual_cr = find_first_updated_cr(sentinel.new_l3d_path, sentinel.old_l3d_filename)
+                actual_cr = find_first_updated_cr(
+                    sentinel.new_l3d_path, sentinel.old_l3d_filename
+                )
 
                 mock_download.assert_called_once_with(sentinel.old_l3d_filename)
-                mock_CDF.assert_has_calls([
-                    call(str(sentinel.download_old_l3d)),
-                    call(str(sentinel.new_l3d_path)),
-                ])
+                mock_CDF.assert_has_calls(
+                    [
+                        call(str(sentinel.download_old_l3d)),
+                        call(str(sentinel.new_l3d_path)),
+                    ]
+                )
 
                 self.assertEqual(actual_cr, expected)
 
     def test_get_lo_pivot_angle_from_l1b_file_real_cdf(self):
-        l1b_file = get_test_data_path("glows/imap_lo_l1b_nhk_20260318-repoint00189_v003.cdf")
+        l1b_file = get_test_data_path(
+            "glows/imap_lo_l1b_nhk_20260318-repoint00189_v003.cdf"
+        )
         actual = get_lo_pivot_angle_from_l1b_file(l1b_file)
         self.assertEqual(90.0, actual)
 
     def test_get_lo_pivot_angle_from_l1b_file_scenarios(self):
-        first_three_hours = [
-            datetime(2026, 3, 20, 0, 45),
-            datetime(2026, 3, 20, 2, 45),
+        first_thirty_minutes = [
+            datetime(2026, 3, 20, 0, 15),
+            datetime(2026, 3, 20, 0, 30),
         ]
-        three_to_fifteen = [
+        thirty_minutes_to_22_hours_thirty_minutes = [
             datetime(2026, 3, 20, 4, 45),
             datetime(2026, 3, 20, 8, 45),
             datetime(2026, 3, 20, 10, 45),
             datetime(2026, 3, 20, 12, 45),
             datetime(2026, 3, 20, 14, 45),
         ]
-        after_fifteen = [
-            datetime(2026, 3, 20, 16, 45),
-            datetime(2026, 3, 20, 20, 45),
+        after_22_hours_thirty_minutes = [
+            datetime(2026, 3, 20, 23, 0),
+            datetime(2026, 3, 20, 23, 30),
         ]
-        epochs = first_three_hours + three_to_fifteen + after_fifteen
+        epochs = first_thirty_minutes + thirty_minutes_to_22_hours_thirty_minutes + after_22_hours_thirty_minutes
         shifted_epochs = [e + timedelta(hours=10) for e in epochs]
         cases = [
             ("realistic", epochs, [89.1, 89.9, 89.9, 89.9, 89.9, 89.9, 89.9, 89.9, 89.9], 90),
             ("basic", epochs, [10, 20, 30, 40, 50, 60, 70, 80, 90], 50),
             ("only uses data within 3-15 hours from first point", shifted_epochs, [999, 999, 30, 40, 50, 60, 70, 999, 999], 50),
             ("uses median and rounds", epochs, [999, 999, 120.2, 34.4, 86.8, 50.9, 77.7, 999, 999], 78),
-            ("fallback to 90 if no points in interval", first_three_hours + after_fifteen, [10, 10, 10, 10], 90),
+            ("fallback to 90 if no points in interval", first_thirty_minutes + after_22_hours_thirty_minutes, [10, 10, 10, 10], 90),
             ("fallback to 90 if no points at all", [], [], 90),
         ]
         for name, epochs, pivot_angles, expected in cases:

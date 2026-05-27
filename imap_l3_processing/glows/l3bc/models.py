@@ -111,6 +111,7 @@ class CRToProcess:
 
     def has_valid_external_dependencies(self, external_deps: ExternalDependencies) -> bool:
         return validate_dependencies(
+            self.cr_start_date,
             self.cr_end_date,
             self.get_buffer_time(),
             external_deps.omni2_data_path,

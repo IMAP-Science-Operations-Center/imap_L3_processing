@@ -13,9 +13,14 @@ from imap_l3_processing.utils import furnish_spice_metakernel, SpiceKernelTypes
 logger = logging.getLogger(__name__)
 
 GLOWS_L3E_REQUIRED_SPICE_KERNELS: list[SpiceKernelTypes] = [
-    SpiceKernelTypes.ScienceFrames, SpiceKernelTypes.EphemerisReconstructed, SpiceKernelTypes.AttitudeHistory,
-    SpiceKernelTypes.PointingAttitude, SpiceKernelTypes.PlanetaryEphemeris, SpiceKernelTypes.Leapseconds,
-    SpiceKernelTypes.SpacecraftClock
+    SpiceKernelTypes.ScienceFrames,
+    SpiceKernelTypes.EphemerisPredicted,
+    SpiceKernelTypes.EphemerisReconstructed,
+    SpiceKernelTypes.AttitudeHistory,
+    SpiceKernelTypes.PointingAttitude,
+    SpiceKernelTypes.PlanetaryEphemeris,
+    SpiceKernelTypes.Leapseconds,
+    SpiceKernelTypes.SpacecraftClock,
 ]
 
 @dataclass

@@ -12,7 +12,7 @@ from astropy.time import Time
 from astropy.coordinates import get_sun
 
 from imap_l3_processing.glows.quality_flags import NOMINAL_ALPHA_PROTON_RATIO_VALUE
-from .constants import PHISICAL_CONSTANTS
+from .constants import PHISICAL_CONSTANTS, CONST_ALPHA_TO_PROTON
 
 import logging
 logging.basicConfig(level=logging.ERROR)
@@ -109,7 +109,7 @@ def check_nan(data):
     data - dictionary with the data product
     '''
     for key in data:
-            if np.any((np.isnan(np.array(data[key])))):
+            if np.any((np.isnan(np.array(data[key])))): 
                 raise Exception("There are NaN in the output data")
 
 def cr_from_l3b_fn(fn):
@@ -348,10 +348,20 @@ def process_omni_param(omni_raw, cr_grid, param_settings):
 
     # Scale parameter to 1au. OMNI Observations are done at different distance and we need to scale proton density
     if param_settings['scale']: param[:,3]=scale_density(date,param[:,3])
+    
+    param_v=param[:,3]  # values of the parameter
 
+    # fill alpha abudance from the end of the measurements to the last point in cr_grid by constant value 0.04 based on Ulysses data McComas et al. 2000
+    original_last_date = date_cr[-1]
+    used_nominal_per_cr = np.full(len(cr_grid), False)
+    if param_settings['const_if_empty'] and original_last_date < cr_grid[-1]:
+        date_cr=np.append(date_cr,cr_grid[-1])
+        used_nominal_per_cr = cr_grid > original_last_date
+        param_v=np.append(param_v,CONST_ALPHA_TO_PROTON)
+    
     # split array into 1-Carrington chunks
     param_cr, idx_param=np.unique(np.floor(date_cr), return_index=True,axis=0)
-    param_s=np.split(param[:,3],idx_param)[1:]
+    param_s=np.split(param_v,idx_param)[1:]
 
     # calculate averaged over 1 Carrington time and parameter value
     param_value=np.array([p.mean() for p in param_s])
@@ -362,40 +372,6 @@ def process_omni_param(omni_raw, cr_grid, param_settings):
     else:
         logging.info('There are gaps in the OMNI2 data that cannot be filled by the interpolation')
         raise Exception('OMNI Error: not enough data for interpolation')
-
-    return param_value_interp
-
-
-def process_omni_alpha_param(omni_raw, cr_grid, param_settings,
-                             nominal_value: float = NOMINAL_ALPHA_PROTON_RATIO_VALUE):
-
-    param_raw = omni_raw[:, param_settings['column_numbers']]
-    param = param_raw[param_raw[:, 3] < param_settings['gap_marker']]
-
-    date = time_from_yday(param)
-    date_cr = carrington(date.jd)
-
-    if param_settings['scale']:
-        param[:, 3] = scale_density(date, param[:, 3])
-
-    param_cr, idx_param = np.unique(np.floor(date_cr), return_index=True, axis=0)
-    param_s = np.split(param[:, 3], idx_param)[1:]
-
-    param_value = np.array([p.mean() for p in param_s])
-
-    if param_cr[-1] < cr_grid[0] or param_cr[0] > cr_grid[-1]:
-        return (
-            np.full(len(cr_grid), nominal_value, dtype=float),
-            np.ones(len(cr_grid), dtype=bool),
-        )
-
-    if param_cr[0] > cr_grid[0]:
-        logging.info('There are gaps in the OMNI2 data that cannot be filled by the interpolation')
-        raise Exception('OMNI Error: not enough data for interpolation')
-
-    param_value_interp = np.interp(cr_grid, param_cr, param_value)
-    used_nominal_per_cr = np.asarray(cr_grid) > param_cr[-1]
-    param_value_interp[used_nominal_per_cr] = nominal_value
 
     return param_value_interp, used_nominal_per_cr
 
@@ -675,7 +651,7 @@ def time_string_from_l3a_fn(fn):
 def time_from_l3a(fn):
     data_l3a=read_json(fn)
     mean_time=Time(data_l3a['start_time'])+0.5*(Time(data_l3a['end_time'])-Time(data_l3a['start_time']))
-    return mean_time
+    return [mean_time, Time(data_l3a['start_time']), Time(data_l3a['end_time'])]
 
 def time_from_yday(yday_list):
         string = [f'{int(yday_list[i, 0])}:{int(yday_list[i, 1]):03d}:{int(yday_list[i, 2]):02d}:00' for i in range(len(yday_list))]

@@ -193,45 +193,43 @@ def process_l3bc(processor, initializer_data: GlowsL3BCInitializerData):
         data_products.extend([l3b_cdf, l3c_cdf, zip_path])
 
     return GlowsL3BCProcessorOutput(
-        l3bs_by_cr=l3bs_by_cr,
-        l3cs_by_cr=l3cs_by_cr,
-        data_products=data_products
+        l3bs_by_cr=l3bs_by_cr, l3cs_by_cr=l3cs_by_cr, data_products=data_products
     )
 
-def process_l3d(dependencies: GlowsL3DDependencies, version: int) -> Optional[GlowsL3DProcessorOutput]:
+def process_l3d(
+    dependencies: GlowsL3DDependencies, version: int
+) -> Optional[GlowsL3DProcessorOutput]:
 
     [create_glows_l3b_json_file_from_cdf(l3b) for l3b in dependencies.l3b_file_paths]
     [create_glows_l3c_json_file_from_cdf(l3c) for l3c in dependencies.l3c_file_paths]
 
-    os.makedirs(PATH_TO_L3D_TOOLKIT / 'data_l3d', exist_ok=True)
-    os.makedirs(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt', exist_ok=True)
-
-    cr_to_process = read_pipeline_settings(dependencies.ancillary_files['pipeline_settings'])["start_cr"]
+    os.makedirs(PATH_TO_L3D_TOOLKIT / "data_l3d", exist_ok=True)
+    os.makedirs(PATH_TO_L3D_TOOLKIT / "data_l3d_txt", exist_ok=True)
 
     file_manifest = {
-        'external_files': {key: str(val) for key, val in dependencies.external_files.items()},
-        'ancillary_files': {
-            'pipeline_settings': str(dependencies.ancillary_files['pipeline_settings']),
-            'WawHelioIon': {key: str(val) for key, val in dependencies.ancillary_files['WawHelioIon'].items()}
+        "external_files": {
+            key: str(val) for key, val in dependencies.external_files.items()
+        },
+        "ancillary_files": {
+            "pipeline_settings": str(dependencies.ancillary_files["pipeline_settings"]),
+            "WawHelioIon": {
+                key: str(val)
+                for key, val in dependencies.ancillary_files["WawHelioIon"].items()
+            },
         },
     }
 
     last_processed_cr = None
-    try:
-        while True:
-            logger.info(f"Preparing to process CR: {cr_to_process}")
-            output: subprocess.CompletedProcess = run(
-                [sys.executable, './generate_l3d.py', f'{cr_to_process}', json.dumps(file_manifest)],
-                cwd=str(PATH_TO_L3D_TOOLKIT),
-                check=True,
-                capture_output=True, text=True)
-            if output.stdout:
-                last_processed_cr = int(output.stdout.split('= ')[-1])
-
-            cr_to_process += 1
-    except subprocess.CalledProcessError as e:
-        if 'L3d not generated: there is not enough L3b data to interpolate' not in e.stderr:
-            raise Exception(e.stderr) from e
+    logger.info(f"Preparing to process CR: {dependencies.end_cr}")
+    output: subprocess.CompletedProcess = run(
+        [sys.executable, "./generate_l3d.py", f"{dependencies.end_cr}", json.dumps(file_manifest),],
+        cwd=str(PATH_TO_L3D_TOOLKIT),
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    if output.stdout:
+        last_processed_cr = int(output.stdout.split('= ')[-1])
 
     if last_processed_cr:
         formatted_version = f"v{version:03}"
@@ -287,12 +285,13 @@ def process_l3e_lo(
         repointing=repointing,
     )
 
-    elongation_in_filename = f"{elongation_value}."
+    elongation_value_as_int = int(elongation_value)
+    elongation_in_filename = f"{elongation_value_as_int}."
     elongation_in_filename += "0" * (5-len(elongation_in_filename))
 
     output_path = Path(f'probSur.Imap.Lo_{l3e_args.formatted_date}_{l3e_args.decimal_date[:8]}_{elongation_in_filename}.dat')
     lo_data = GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product(input_metadata, output_path,
-                                                                 repointing_midpoint, elongation_value, l3e_args)
+                                                                 repointing_midpoint, elongation_value_as_int, l3e_args)
 
     lo_data.parent_file_names = parent_file_names
     lo_data.glows_flags = np.array([glows_flags], dtype=np.uint16)

@@ -132,15 +132,24 @@ class TestGlowsL3EDependencies(TestCase):
         self.assertEqual(mock_energy_grid_ultra_path, actual_dependencies.energy_grid_ultra)
         self.assertEqual(mock_tess_xyz_8_path, actual_dependencies.tess_xyz_8)
         self.assertEqual(mock_tess_ang_16_path, actual_dependencies.tess_ang16)
-        self.assertEqual(pipeline_settings_path, actual_dependencies.pipeline_settings_file)
+        self.assertEqual(
+            pipeline_settings_path, actual_dependencies.pipeline_settings_file
+        )
 
-        self.assertEqual(mock_downloaded_repoint_file, actual_dependencies.repointing_file)
+        self.assertEqual(
+            mock_downloaded_repoint_file, actual_dependencies.repointing_file
+        )
 
-    @patch('imap_l3_processing.glows.l3e.glows_l3e_dependencies.furnish_spice_metakernel')
+    @patch("imap_l3_processing.glows.l3e.glows_l3e_dependencies.furnish_spice_metakernel")
     def test_furnish_spice_dependencies(self, mock_furnish_spice_metakernel):
         expected_kernel_types = [
-            SpiceKernelTypes.ScienceFrames, SpiceKernelTypes.EphemerisReconstructed, SpiceKernelTypes.AttitudeHistory,
-            SpiceKernelTypes.PointingAttitude, SpiceKernelTypes.PlanetaryEphemeris, SpiceKernelTypes.Leapseconds,
+            SpiceKernelTypes.ScienceFrames,
+            SpiceKernelTypes.EphemerisPredicted,
+            SpiceKernelTypes.EphemerisReconstructed,
+            SpiceKernelTypes.AttitudeHistory,
+            SpiceKernelTypes.PointingAttitude,
+            SpiceKernelTypes.PlanetaryEphemeris,
+            SpiceKernelTypes.Leapseconds,
             SpiceKernelTypes.SpacecraftClock
         ]
 

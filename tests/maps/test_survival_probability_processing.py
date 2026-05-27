@@ -17,7 +17,8 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
     @patch('imap_l3_processing.maps.survival_probability_processing.RectangularSurvivalProbabilitySkyMap')
     @patch('imap_l3_processing.maps.survival_probability_processing.RectangularSurvivalProbabilityPointingSet')
     @patch('imap_l3_processing.maps.survival_probability_processing.combine_glows_l3e_with_l1c_pointing')
-    def test_process_survival_probability(self, mock_combine_glows_l3e_with_l1c_pointing,
+    @patch('imap_l3_processing.maps.survival_probability_processing.filter_bad_days')
+    def test_process_survival_probability(self, mock_filter_bad_days, mock_combine_glows_l3e_with_l1c_pointing,
                                           mock_survival_probability_pointing_set, mock_survival_skymap):
         rng = np.random.default_rng()
         input_map_flux = rng.random((1, 9, 90, 45))
@@ -36,6 +37,8 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
                                                   glows_l3e_data=sentinel.glows_l3e_data,
                                                   l2_map_descriptor_parts=l2_descriptor_parts,
                                                   dependency_file_paths=[])
+
+        mock_filter_bad_days.return_value = sentinel.filtered_l1c
 
         mock_combine_glows_l3e_with_l1c_pointing.return_value = [(sentinel.hi_l1c_1, sentinel.glows_l3e_1),
                                                                  (sentinel.hi_l1c_2, sentinel.glows_l3e_2),
@@ -64,7 +67,9 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
 
         survival_data = process_survival_probabilities(dependencies, SpiceFrame.IMAP_DPS)
 
-        mock_combine_glows_l3e_with_l1c_pointing.assert_called_once_with(sentinel.glows_l3e_data, sentinel.l1c_data)
+        mock_filter_bad_days.assert_called_once_with(sentinel.l1c_data)
+
+        mock_combine_glows_l3e_with_l1c_pointing.assert_called_once_with(sentinel.glows_l3e_data, sentinel.filtered_l1c)
 
         mock_survival_probability_pointing_set.assert_has_calls([
             call(sentinel.hi_l1c_1, sentinel.l2_sensor, sentinel.l2_spin, sentinel.glows_l3e_1,
