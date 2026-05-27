@@ -100,7 +100,6 @@ class CalculateCoincidenceRateAgainstReferenceTest(unittest.TestCase):
             bulk_sw_per_bin_kms=bulk_sw_per_bin,
             mass_per_charge_m_p_per_e=_HELIUM_MASS_PER_CHARGE_M_P_PER_E,
             cutoff_speed_max_kms=_CUTOFF_SPEED_KMS,
-            min_speed_kms=min_speed_kms,
             central_effective_area_scale=_HELIUM_EFFICIENCY_RATIO,
         )
 
