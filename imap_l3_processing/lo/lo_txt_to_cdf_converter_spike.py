@@ -5,7 +5,8 @@ from datetime import datetime
 from typing import Self, Optional
 
 import imap_data_access
-from imap_data_access import ProcessingInputCollection
+import pandas as pd
+from imap_data_access import ProcessingInputCollection, ScienceFilePath
 from imap_data_access.processing_input import ScienceInput
 from imap_processing.hit.l1b.constants import FILLVAL_INT64
 
@@ -13,6 +14,7 @@ import numpy as np
 from imap_processing.cdf.utils import write_cdf as write_l2_cdf
 from imap_processing.ena_maps.ena_maps import RectangularSkyMap
 from imap_processing.spice.geometry import SpiceFrame
+from spacepy.pycdf import CDF
 
 from imap_l3_processing.lo.l3.lo_sp_initializer import LO_SP_MAP_KERNELS
 from imap_l3_processing.lo.lo_processor import LoProcessor
@@ -183,11 +185,10 @@ class LoProcessingInput:
         l2_path = write_l2_cdf(self.dataset)
         return ProcessingInputCollection(ScienceInput(l2_path.name))
 
-    def get_survival_corrected_dependencies(self):
+    def get_survival_corrected_dependencies(self, l1c_files: list[Path]):
         l2_path = write_l2_cdf(self.dataset)
 
-        l1c_results = imap_data_access.query(instrument="lo", data_level="l1c", version="latest")
-        l1c_paths = [Path(l1c["file_path"]) for l1c in l1c_results if l1c["repointing"] in self.repoints]
+        l1c_inputs = [p for p in l1c_files if ScienceFilePath(p.name).repointing in self.repoints]
 
         glows_query_results = imap_data_access.query(
             instrument="glows",
@@ -199,7 +200,7 @@ class LoProcessingInput:
             Path(glows["file_path"]) for glows in glows_query_results if int(glows["repointing"]) in self.repoints
         ]
 
-        return ProcessingInputCollection(*(ScienceInput(p.name) for p in [l2_path, *glows_paths, *l1c_paths]))
+        return ProcessingInputCollection(*(ScienceInput(p.name) for p in [l2_path, *glows_paths, *l1c_inputs]))
 
     def make_l3_input_metadata(self, l3_descriptor: str) -> InputMetadata:
         return InputMetadata(
@@ -211,6 +212,26 @@ class LoProcessingInput:
             descriptor=l3_descriptor
         )
 
+def read_text_psets(pivot_map_path: Path):
+    all_l1cs = list(get_run_local_data_path("lo_txt_pipeline/imap/lo/l1c").rglob("*.cdf"))
+
+    for csv in (pivot_map_path / "daily").rglob("*esa1.csv"):
+        date_jd = re.match("data_YD_(\d{7})_esa1.csv", csv.name).groups()[0]
+        date = datetime.strptime(date_jd, "%Y%j")
+
+        date_ymd = date.strftime("%Y%m%d")
+        matching_l1c = next((l1c for l1c in all_l1cs if date_ymd in l1c.name), None)
+
+        if matching_l1c is not None:
+            with CDF(str(matching_l1c)) as cdf:
+                exposure_from_cdf = np.sum(cdf["exposure_time"][0, 0, ...])
+            exposure_from_csv = np.sum(pd.read_csv(csv)["expo"].to_numpy())
+
+            print(f"Total exposure difference for {date_ymd} {(exposure_from_cdf - exposure_from_csv) / 60}")
+        else:
+            print("Missing L1c for ", date_ymd)
+
+
 if __name__ == "__main__":
     logging.basicConfig(force=True, level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
@@ -218,6 +239,16 @@ if __name__ == "__main__":
     shutil.rmtree(output_data_path / "imap" / "lo" / "l2", ignore_errors=True)
     shutil.rmtree(output_data_path / "imap" / "lo" / "l3", ignore_errors=True)
     imap_data_access.config["DATA_DIR"] = output_data_path
+
+    l1c_paths = []
+    local_l1c_input = Path(r"C:\Users\Harrison\Downloads\lo_l1c")
+    for file in local_l1c_input.rglob("*.cdf"):
+        sfp = ScienceFilePath(file.name)
+
+        output_path = sfp.construct_path()
+        output_path.parent.mkdir(exist_ok=True, parents=True)
+        shutil.copy(file, output_path)
+        l1c_paths.append(output_path)
 
     lo_input_data_dir = get_run_local_data_path("input_lo_txt_pipeline")
     cg_corrected_input_path = lo_input_data_dir / "3S8_l1b_cg_corrected"
@@ -230,23 +261,25 @@ if __name__ == "__main__":
         manifest_path = ram_nbs_input_path / "outdir" / f"pivot_{pivot}" / "maps" / "map_l1b_manifest_esa1.csv"
         manifest = Manifest.load(manifest_path)
 
+        read_text_psets(ram_nbs_input_path / "outdir" / f"pivot_{pivot}")
+
         nbs_processing_input = LoProcessingInput.load(
             manifest,
-            f"l{pivot:03d}-enanbs-h-sf-nsp-ram-hae-6deg-1yr",
+            f"l{pivot:03d}-enanbs-h-sf-nsp-ram-hae-6deg-6mo",
             1,
             ram_nbs_input_path / "outdir" / f"pivot_{pivot}",
             CsvNameToProduct.create_nbs_mapping()
         )
 
         [spx_nbs_map] = LoProcessor(
-            input_metadata=nbs_processing_input.make_l3_input_metadata(f"l{pivot:03d}-spxnbs-h-sf-nsp-ram-hae-6deg-1yr"),
+            input_metadata=nbs_processing_input.make_l3_input_metadata(f"l{pivot:03d}-spxnbs-h-sf-nsp-ram-hae-6deg-6mo"),
             dependencies=nbs_processing_input.get_spx_dependencies(),
         ).process()
         print("Produced: ", spx_nbs_map)
 
         cg_processing_input = LoProcessingInput.load(
             manifest,
-            f"l{pivot:03d}-ena-h-hf-nsp-ram-hae-6deg-1yr",
+            f"l{pivot:03d}-ena-h-hf-nsp-ram-hae-6deg-6mo",
             1,
             cg_corrected_input_path / "outdir" / f"pivot_{pivot}",
             CsvNameToProduct.create_cg_mapping(),
@@ -255,8 +288,8 @@ if __name__ == "__main__":
 
         with furnished_metakernel(cg_processing_input.start_date, cg_processing_input.end_date, LO_SP_MAP_KERNELS):
             [sp_map] = LoProcessor(
-                input_metadata=cg_processing_input.make_l3_input_metadata(f"l{pivot:03d}-ena-h-hf-sp-ram-hae-6deg-1yr"),
-                dependencies=cg_processing_input.get_survival_corrected_dependencies(),
+                input_metadata=cg_processing_input.make_l3_input_metadata(f"l{pivot:03d}-ena-h-hf-sp-ram-hae-6deg-6mo"),
+                dependencies=cg_processing_input.get_survival_corrected_dependencies(l1c_paths),
             ).process()
             print("Produced: ", sp_map)
 
@@ -265,12 +298,12 @@ if __name__ == "__main__":
         end_dates.append(cg_processing_input.end_date)
 
         [spx_map] = LoProcessor(
-            input_metadata=cg_processing_input.make_l3_input_metadata(f"l{pivot:03d}-spx-h-hf-sp-ram-hae-6deg-1yr"),
+            input_metadata=cg_processing_input.make_l3_input_metadata(f"l{pivot:03d}-spx-h-hf-sp-ram-hae-6deg-6mo"),
             dependencies=ProcessingInputCollection(ScienceInput(sp_map.name)),
         ).process()
         print("Produced: ", spx_map)
 
-    combined_descriptor = "ilo-ena-h-hf-sp-ram-hae-6deg-1yr"
+    combined_descriptor = "ilo-ena-h-hf-sp-ram-hae-6deg-6mo"
     combined_start_date = min(start_dates)
     combined_end_date = max(end_dates)
     combined_processor = LoProcessor(

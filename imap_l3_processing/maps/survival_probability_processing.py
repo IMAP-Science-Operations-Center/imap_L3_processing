@@ -1,3 +1,4 @@
+import numpy as np
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies
@@ -37,6 +38,8 @@ def process_survival_probabilities(survival_probabilities_dependencies: HiLoL3Su
     corrected_stat_uncert = input_data.ena_intensity_stat_uncert / survival_probabilities
     corrected_sys_err = input_data.ena_intensity_sys_err / survival_probabilities
 
+    average_exposure = np.average([input_data.exposure_factor, survival_dataset.exposure], axis=0)
+
     map_data = RectangularIntensityMapData(
         intensity_map_data=IntensityMapData(
             ena_intensity_stat_uncert=corrected_stat_uncert,
@@ -50,7 +53,7 @@ def process_survival_probabilities(survival_probabilities_dependencies: HiLoL3Su
             energy_label=input_data.energy_label,
             latitude=input_data.latitude,
             longitude=input_data.longitude,
-            exposure_factor=input_data.exposure_factor,
+            exposure_factor=survival_dataset.exposure,
             obs_date=input_data.obs_date,
             obs_date_range=input_data.obs_date_range,
             solid_angle=input_data.solid_angle,

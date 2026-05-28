@@ -24,6 +24,8 @@ def interpolate_angular_data_to_nearest_neighbor(input_azimuths: np.array, glows
 class RectangularSurvivalProbabilityPointingSet(PointingSet):
     def __init__(self, l1c_dataset: InputRectangularPointingSet, sensor: Sensor, spin_phase: SpinPhase,
                  glows_dataset: GlowsL3eRectangularMapInputData | None, energies: np.ndarray, cg_corrected: bool = False):
+        cg_corrected = False
+
         num_spin_angle_bins = l1c_dataset.exposure_times.shape[-1]
 
         deg_spacing = 360 / num_spin_angle_bins
@@ -169,5 +171,6 @@ class RectangularSurvivalProbabilitySkyMap(RectangularSkyMap):
 
         self.data_1d = xr.Dataset({
             "exposure_weighted_survival_probabilities": self.data_1d["survival_probability_times_exposure"] /
-                                                        self.data_1d["exposure"]
+                                                        self.data_1d["exposure"],
+            "exposure": self.data_1d["exposure"],
         })
