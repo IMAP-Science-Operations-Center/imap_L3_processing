@@ -95,7 +95,7 @@ class TestOptimizeSolarWindParamsRecoversTruth(unittest.TestCase):
         # in docs/swapi/solar-wind-moments.md § Wrong-basin detection.
         cls.initial_guess = proton_params(
             density=cls.true_params.density * 1.1,
-            velocity_rtn=cls.true_params.bulk_velocity_rtn * 1.03,
+            velocity_rtn=cls.true_params.velocity_rtn * 1.03,
             temperature=cls.true_params.temperature * 1.2,
         )
         cls.result = optimize_solar_wind_proton_params(cls.initial_guess, cls.ctx)
@@ -116,11 +116,11 @@ class TestOptimizeSolarWindParamsRecoversTruth(unittest.TestCase):
             rtol=1e-3,
         )
 
-    def test_optimizer_recovers_bulk_velocity(self):
+    def test_optimizer_recovers_velocity(self):
         """Starting from a +3% speed perturbation against noise-free synthetic data, the fitted bulk velocity returns to the truth within 0.5 km/s on each RTN component."""
         np.testing.assert_allclose(
-            self.result.sw_params.bulk_velocity_rtn,
-            self.true_params.bulk_velocity_rtn,
+            self.result.sw_params.velocity_rtn,
+            self.true_params.velocity_rtn,
             atol=0.5,
         )
 

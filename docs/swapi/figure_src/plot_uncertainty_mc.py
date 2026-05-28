@@ -79,18 +79,13 @@ _LOGNORMAL_REL_SIGMA = 0.01  # 1% relative error in count rates
 _NOISE_FLOOR_HZ = 10.0
 
 _worker_state: types.SimpleNamespace | None = None
-_NOISE_KIND: str = "poisson"
 
 
 def main():
     _initialize_worker_state()
-    poisson_data = _run_fits(_N_MC_SAMPLES, noise_kind="poisson")
-    poisson_lognormal_floor_data = _run_fits(
-        _N_MC_SAMPLES, noise_kind="poisson+lognormal+floor"
-    )
+    poisson_lognormal_floor_data = _run_fits(_N_MC_SAMPLES)
     _plot_results(
         [
-            ("Poisson noise (counts)", poisson_data),
             (
                 f"Poisson + {_LOGNORMAL_REL_SIGMA:.0%} log-normal "
                 f"+ {_NOISE_FLOOR_HZ:g} Hz floor",
@@ -121,7 +116,7 @@ def _initialize_worker_state() -> None:
 
     truth_params = SolarWindParams(
         density=_TRUTH_DENSITY_CM3,
-        bulk_velocity_rtn=_TRUTH_BULK_RTN_KM_S.copy(),
+        velocity_rtn=_TRUTH_BULK_RTN_KM_S.copy(),
         temperature=_TRUTH_TEMPERATURE_K,
         mass=PROTON_MASS_KG,
     )
@@ -136,12 +131,8 @@ def _initialize_worker_state() -> None:
     )
 
 
-def _run_fits(n_samples: int, noise_kind: str) -> pd.DataFrame:
-    global _NOISE_KIND
-    _NOISE_KIND = noise_kind
-    rows = run_parallel_map(
-        _process_one, n_samples, desc=f"mc-{noise_kind}", chunksize=10
-    )
+def _run_fits(n_samples: int) -> pd.DataFrame:
+    rows = run_parallel_map(_process_one, n_samples, desc="mc", chunksize=10)
     data = pd.DataFrame(rows)
     print(f"Bad-fit flags: {data['bad_flag'].sum()}/{n_samples}")
     return data
@@ -152,25 +143,20 @@ def _process_one(i):
     rng = np.random.default_rng(i)
     counts = rng.poisson(np.maximum(ws.truth_count_rates * SWAPI_LIVETIME_S, 0.0))
     count_rates = counts.astype(float) / SWAPI_LIVETIME_S
-    if _NOISE_KIND == "poisson":
-        pass
-    elif _NOISE_KIND == "poisson+lognormal+floor":
-        # Multiplicative log-normal noise on top of Poisson sampling, with
-        # std-dev ≈ _LOGNORMAL_REL_SIGMA in linear space. Mean-1 correction:
-        # shift by -σ²/2 in log space.
-        sigma_log = np.sqrt(np.log1p(_LOGNORMAL_REL_SIGMA**2))
-        log_factor = rng.normal(-0.5 * sigma_log**2, sigma_log, count_rates.shape)
-        count_rates = np.maximum(count_rates * np.exp(log_factor), 0.0)
-        # Energy-independent Poisson noise floor: every bin gets Poisson(floor·τ)
-        # counts added — a stand-in for unmodelled detector dark/leakage rate.
-        # The mean adds 10 Hz to obs at every bin; the variance is √(floor·τ)/τ
-        # ≈ 8 Hz per bin. The fit's model does not account for this.
-        floor_counts = rng.poisson(
-            _NOISE_FLOOR_HZ * SWAPI_LIVETIME_S, size=count_rates.shape
-        )
-        count_rates = count_rates + floor_counts.astype(float) / SWAPI_LIVETIME_S
-    else:
-        raise ValueError(f"unknown noise_kind: {_NOISE_KIND}")
+    # Multiplicative log-normal noise on top of Poisson sampling, with
+    # std-dev ≈ _LOGNORMAL_REL_SIGMA in linear space. Mean-1 correction:
+    # shift by -σ²/2 in log space.
+    sigma_log = np.sqrt(np.log1p(_LOGNORMAL_REL_SIGMA**2))
+    log_factor = rng.normal(-0.5 * sigma_log**2, sigma_log, count_rates.shape)
+    count_rates = np.maximum(count_rates * np.exp(log_factor), 0.0)
+    # Energy-independent Poisson noise floor: every bin gets Poisson(floor·τ)
+    # counts added — a stand-in for unmodelled detector dark/leakage rate.
+    # The mean adds 10 Hz to obs at every bin; the variance is √(floor·τ)/τ
+    # ≈ 8 Hz per bin. The fit's model does not account for this.
+    floor_counts = rng.poisson(
+        _NOISE_FLOOR_HZ * SWAPI_LIVETIME_S, size=count_rates.shape
+    )
+    count_rates = count_rates + floor_counts.astype(float) / SWAPI_LIVETIME_S
 
     fit_ctx = build_solar_wind_fit_context(
         count_rate=count_rates,
@@ -218,9 +204,9 @@ def _process_one(i):
     return {
         "fit_density": sw.density,
         "fit_temperature": sw.temperature,
-        "fit_radial_speed": float(sw.bulk_velocity_rtn[0]),
-        "fit_tangential_speed": float(sw.bulk_velocity_rtn[1]),
-        "fit_normal_speed": float(sw.bulk_velocity_rtn[2]),
+        "fit_radial_speed": float(sw.velocity_rtn[0]),
+        "fit_tangential_speed": float(sw.velocity_rtn[1]),
+        "fit_normal_speed": float(sw.velocity_rtn[2]),
         "fit_density_sigma": sandwich_n_sigma,
         "fit_temperature_sigma": sandwich_T_sigma,
         "fit_radial_speed_sigma": float(sandwich_v_sigma[0]),

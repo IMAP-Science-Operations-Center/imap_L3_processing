@@ -37,17 +37,8 @@ from tests.test_helpers import get_test_data_path
 _CHUNK_GRID_POINTS = 256
 
 
-def _build_moment_chunk_response(
-    distribution: VasyliunasSiscoeDistribution,
-    sw_speed_kms: float,
-    lut: DensityOfNeutralHeliumLookupTable,
-) -> ChunkCollapsedResponse:
-    radius_au = distribution.distance_km / ONE_AU_IN_KM
-    min_speed_kms = max(1.0, sw_speed_kms * 0.8 * lut.get_minimum_distance() / radius_au)
-    cutoff_speed_max_kms = sw_speed_kms * 1.2
-    delta_v_prime = (cutoff_speed_max_kms - min_speed_kms) / (_CHUNK_GRID_POINTS - 1.5)
-    v_prime_max = min_speed_kms + (_CHUNK_GRID_POINTS - 1) * delta_v_prime
-    speed_in_sw_frame = np.linspace(min_speed_kms, v_prime_max, _CHUNK_GRID_POINTS)
+def _build_moment_chunk_response(sw_speed_kms: float) -> ChunkCollapsedResponse:
+    speed_in_sw_frame = np.linspace(1, sw_speed_kms * 1.2, _CHUNK_GRID_POINTS)
     bin_weights = np.zeros((1, 1, _CHUNK_GRID_POINTS))
     return ChunkCollapsedResponse(
         speed_in_sw_frame=speed_in_sw_frame, bin_weights=bin_weights
@@ -60,7 +51,7 @@ def _quad_discontinuity_points(
     lut: DensityOfNeutralHeliumLookupTable,
 ) -> tuple[float, float, float]:
     radius_au = distribution.distance_km / ONE_AU_IN_KM
-    lower = (lut.get_minimum_distance() / radius_au) ** (
+    lower = (lut.grid[1][0] / radius_au) ** (
         1.0 / fitting_params.cooling_index
     ) * fitting_params.cutoff_speed
     return (0.0, lower, fitting_params.cutoff_speed)
@@ -150,9 +141,7 @@ class CalculatePuiDensityAndTemperatureTest(SpiceTestCase):
 
         distribution = self._build_distribution(epoch, sw_velocity_vector)
         chunk_response = _build_moment_chunk_response(
-            distribution,
-            float(np.linalg.norm(sw_velocity_vector)),
-            self.density_of_neutral_helium_lookup_table,
+            float(np.linalg.norm(sw_velocity_vector))
         )
 
         expected = _quad_density_reference(
@@ -174,9 +163,7 @@ class CalculatePuiDensityAndTemperatureTest(SpiceTestCase):
         )
         distribution = self._build_distribution(epoch, sw_velocity_vector)
         chunk_response = _build_moment_chunk_response(
-            distribution,
-            float(np.linalg.norm(sw_velocity_vector)),
-            self.density_of_neutral_helium_lookup_table,
+            float(np.linalg.norm(sw_velocity_vector))
         )
 
         result = calculate_helium_pui_density(
@@ -190,6 +177,50 @@ class CalculatePuiDensityAndTemperatureTest(SpiceTestCase):
         np.testing.assert_allclose(result.n, expected_nominal, rtol=1e-3)
         self.assertGreater(result.s, 0.0)
 
+    def test_density_uncertainty_survives_fill_background(self):
+        """A filled (NaN) background does not poison the density uncertainty, since the integral is independent of background."""
+        epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 6, 6, 12))
+        sw_velocity_vector = np.array([0.0, 0.0, -500.0])
+        fitting_params = FittingParameters(
+            ufloat(1.5, 0.1),
+            ufloat(1e-7, 1e-8),
+            ufloat(520, 5),
+            ufloat(np.nan, np.nan),
+        )
+        distribution = self._build_distribution(epoch, sw_velocity_vector)
+        chunk_response = _build_moment_chunk_response(
+            float(np.linalg.norm(sw_velocity_vector))
+        )
+
+        result = calculate_helium_pui_density(
+            chunk_response, distribution, fitting_params
+        )
+
+        self.assertTrue(np.isfinite(result.n))
+        self.assertGreater(result.s, 0.0)
+
+    def test_temperature_uncertainty_survives_fill_background(self):
+        """A filled (NaN) background does not poison the temperature uncertainty, since the integral is independent of background."""
+        epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 6, 6, 12))
+        sw_velocity_vector = np.array([0.0, 0.0, -500.0])
+        fitting_params = FittingParameters(
+            ufloat(1.5, 0.1),
+            ufloat(1e-7, 1e-8),
+            ufloat(500, 5),
+            ufloat(np.nan, np.nan),
+        )
+        distribution = self._build_distribution(epoch, sw_velocity_vector)
+        chunk_response = _build_moment_chunk_response(
+            float(np.linalg.norm(sw_velocity_vector))
+        )
+
+        result = calculate_helium_pui_temperature(
+            chunk_response, distribution, fitting_params
+        )
+
+        self.assertTrue(np.isfinite(result.n))
+        self.assertGreater(result.s, 0.0)
+
     def test_temperature_matches_scipy_quad_reference(self):
         epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 6, 6, 12))
         sw_velocity_vector = np.array([0.0, 0.0, -500.0])
@@ -197,9 +228,7 @@ class CalculatePuiDensityAndTemperatureTest(SpiceTestCase):
 
         distribution = self._build_distribution(epoch, sw_velocity_vector)
         chunk_response = _build_moment_chunk_response(
-            distribution,
-            float(np.linalg.norm(sw_velocity_vector)),
-            self.density_of_neutral_helium_lookup_table,
+            float(np.linalg.norm(sw_velocity_vector))
         )
 
         expected = _quad_temperature_reference(
@@ -221,9 +250,7 @@ class CalculatePuiDensityAndTemperatureTest(SpiceTestCase):
         )
         distribution = self._build_distribution(epoch, sw_velocity_vector)
         chunk_response = _build_moment_chunk_response(
-            distribution,
-            float(np.linalg.norm(sw_velocity_vector)),
-            self.density_of_neutral_helium_lookup_table,
+            float(np.linalg.norm(sw_velocity_vector))
         )
 
         result = calculate_helium_pui_temperature(

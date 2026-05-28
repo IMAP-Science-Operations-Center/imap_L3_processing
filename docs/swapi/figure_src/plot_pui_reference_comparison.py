@@ -122,8 +122,35 @@ def main():
     voltage_v = reference.iloc[:, 0].to_numpy()
     count_rate_hz = reference.iloc[:, 1].to_numpy()
 
-    figure, axis = plt.subplots(figsize=(8, 4), constrained_layout=True)
-    axis.loglog(voltage_v, count_rate_hz, "-", label="Reference", color="black")
+    figure, axes = plt.subplots(
+        2,
+        1,
+        figsize=(8, 6),
+        sharex=True,
+        gridspec_kw={"height_ratios": [3, 1]},
+        constrained_layout=True,
+    )
+    sw_az_rad = np.radians(_SW_AZIMUTH_DEG)
+    sw_el_rad = np.radians(_SW_ELEVATION_DEG)
+    bulk_vec = _SW_SPEED_KMS * np.array([
+        -np.cos(sw_el_rad) * np.sin(sw_az_rad),
+        -np.cos(sw_el_rad) * np.cos(sw_az_rad),
+        -np.sin(sw_el_rad),
+    ]) + 0.0  # normalize -0.0 to +0.0 for display
+    axes[0].set_title(
+        f"PUI He coincidence rate — m/q={_HELIUM_MASS_PER_CHARGE_M_P_PER_E:.0f}, "
+        f"efficiency ratio={_HELIUM_EFFICIENCY_RATIO:.2f}\n"
+        f"bulk = {_SW_SPEED_KMS:.0f} km/s @ (az={_SW_AZIMUTH_DEG:.0f}°, el={_SW_ELEVATION_DEG:.0f}°) "
+        f"= ({bulk_vec[0]:.0f}, {bulk_vec[1]:.0f}, {bulk_vec[2]:.0f}) km/s\n"
+        f"cooling index={_COOLING_INDEX:.1f}, v_cutoff={_CUTOFF_SPEED_KMS:.0f} km/s, "
+        f"ionization={_IONIZATION_RATE_HZ:.0e} Hz, ψ={_INFLOW_PSI_DEG:.0f}°, r={_HELIO_DIST_AU:.1f} AU",
+        fontsize=9,
+    )
+
+    axes[0].loglog(voltage_v, count_rate_hz, "-", label="Reference", color="black")
+
+    voltage_v = voltage_v[::4]
+    count_rate_hz = count_rate_hz[::4]
 
     try:
         production_rate_hz = compute_production_rates(voltage_v)
@@ -131,19 +158,29 @@ def main():
         traceback.print_exc()
         print("calculate_coincidence_rate failed — skipping production overlay.")
     else:
-        axis.loglog(
+        axes[0].loglog(
             voltage_v,
             production_rate_hz,
             ".",
             color="red",
-            label="calculate_coincidence_rate",
+            label="Optimized",
+            markersize=4
         )
+        rel_err = np.abs(production_rate_hz - count_rate_hz) / count_rate_hz
+        axes[1].semilogy(voltage_v, rel_err, ".", color="red")
 
-    axis.set_xlabel("ESA voltage [V]")
-    axis.set_ylabel("Coincidence Rate [Hz]")
-    axis.set_ylim(1e-2, 1e2)
-    axis.grid(True, alpha=0.3)
-    axis.legend()
+    axes[0].set_ylabel("Coincidence Rate [Hz]")
+    axes[0].set_ylim(1e-2, 1e2)
+    axes[0].grid(True, alpha=0.3)
+    axes[0].legend()
+
+    axes[1].set_xscale("log")
+    axes[1].set_xlabel("ESA voltage [V]")
+    axes[1].set_ylabel("Relative Error")
+    axes[1].set_yscale("log")
+    axes[1].set_yticks([1e-4, 1e-3, 1e-2, 1e-1, 1e0])
+    axes[1].set_ylim(1e-4, 1e0)
+    axes[1].grid(True, alpha=0.3)
 
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
     output_path = FIGURES_DIR / "pui_xarray_reference.svg"

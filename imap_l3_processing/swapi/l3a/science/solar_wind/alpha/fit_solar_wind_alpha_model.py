@@ -37,15 +37,15 @@ from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 class AlphaSolarWindFitResult:
     density: UFloat  # cm^-3
     temperature: UFloat  # K
-    bulk_velocity_rtn: tuple[UFloat, UFloat, UFloat]  # km/s, [R, T, N]; correlated
+    velocity_rtn: tuple[UFloat, UFloat, UFloat]  # km/s, [R, T, N]; correlated
     delta_v: UFloat  # km/s, signed; +Δv ⇔ alpha drifts along +B̂ vs proton frame
     bad_fit_flag: int
 
-    def bulk_velocity_rtn_nominal(self) -> ndarray:
-        return np.array([v.nominal_value for v in self.bulk_velocity_rtn])
+    def velocity_rtn_nominal(self) -> ndarray:
+        return np.array([v.nominal_value for v in self.velocity_rtn])
 
-    def bulk_velocity_rtn_covariance(self) -> ndarray:
-        return np.array(covariance_matrix(self.bulk_velocity_rtn))
+    def velocity_rtn_covariance(self) -> ndarray:
+        return np.array(covariance_matrix(self.velocity_rtn))
 
 
 def fit_solar_wind_alpha_model(
@@ -61,7 +61,7 @@ def fit_solar_wind_alpha_model(
         )
 
     bad_fit_flag = int(proton_moments.bad_fit_flag)
-    proton_bulk_rtn = proton_moments.bulk_velocity_rtn_nominal()
+    proton_bulk_rtn = proton_moments.velocity_rtn_nominal()
 
     if not np.all(np.isfinite(proton_bulk_rtn)):
         return _nan_alpha_fit_result(bad_fit_flag)
@@ -73,7 +73,7 @@ def fit_solar_wind_alpha_model(
     proton_true_rate, _ = model_solar_wind_ideal_coincidence_rates(
         SolarWindParams(
             density=proton_moments.density.nominal_value,
-            bulk_velocity_rtn=proton_bulk_rtn,
+            velocity_rtn=proton_bulk_rtn,
             temperature=proton_moments.temperature.nominal_value,
             mass=proton_ctx.mass_kg,
         ),
@@ -84,7 +84,7 @@ def fit_solar_wind_alpha_model(
         alpha_ctx=alpha_ctx,
         proton_true_rate=proton_true_rate,
         proton_temperature=proton_moments.temperature.nominal_value,
-        proton_bulk_velocity_rtn=proton_bulk_rtn,
+        proton_velocity_rtn=proton_bulk_rtn,
     )
     if seed is None:
         return _nan_alpha_fit_result(bad_fit_flag | SwapiL3Flags.FIT_ERROR)
@@ -131,7 +131,7 @@ def _nan_alpha_fit_result(flag: int) -> AlphaSolarWindFitResult:
     return AlphaSolarWindFitResult(
         density=nan,
         temperature=nan,
-        bulk_velocity_rtn=(nan, nan, nan),
+        velocity_rtn=(nan, nan, nan),
         delta_v=nan,
         bad_fit_flag=int(flag),
     )
@@ -153,7 +153,7 @@ def _construct_alpha_fit_result(
     alpha_density_fit = float(np.exp(result.x[0]))
     alpha_temperature_fit = float(np.exp(result.x[1]))
     delta_v_fit = float(result.x[2])
-    bulk_velocity_rtn = proton_bulk + delta_v_fit * magnetic_field_direction
+    velocity_rtn = proton_bulk + delta_v_fit * magnetic_field_direction
 
     fit_r_squared = _alpha_r_squared(
         residuals=result.fun,
@@ -171,15 +171,15 @@ def _construct_alpha_fit_result(
 
     sigma_dv2 = max(cov_x[2, 2], 0.0)
     velocity_covariance_rtn = (
-        proton_moments.bulk_velocity_rtn_covariance()
+        proton_moments.velocity_rtn_covariance()
         + sigma_dv2 * np.outer(magnetic_field_direction, magnetic_field_direction)
     )
 
     return AlphaSolarWindFitResult(
         density=ufloat(alpha_density_fit, density_sigma),
         temperature=ufloat(alpha_temperature_fit, temperature_sigma),
-        bulk_velocity_rtn=make_correlated_velocity(
-            bulk_velocity_rtn, velocity_covariance_rtn
+        velocity_rtn=make_correlated_velocity(
+            velocity_rtn, velocity_covariance_rtn
         ),
         delta_v=ufloat(delta_v_fit, delta_v_sigma),
         bad_fit_flag=int(bad_fit_flag),
@@ -216,10 +216,10 @@ class _AlphaEvaluator:
         alpha_density = float(np.exp(x[0]))
         alpha_temperature = float(np.exp(x[1]))
         delta_v = float(x[2])
-        alpha_bulk_velocity_rtn = self.proton_bulk + delta_v * self.magnetic_field_direction
+        alpha_velocity_rtn = self.proton_bulk + delta_v * self.magnetic_field_direction
         alpha_true, jacobian_alpha_5d = model_solar_wind_ideal_coincidence_rates(
             SolarWindParams(
-                alpha_density, alpha_bulk_velocity_rtn, alpha_temperature, self.alpha_ctx.mass_kg
+                alpha_density, alpha_velocity_rtn, alpha_temperature, self.alpha_ctx.mass_kg
             ),
             self.alpha_ctx,
         )

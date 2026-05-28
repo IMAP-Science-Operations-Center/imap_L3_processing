@@ -58,7 +58,7 @@ class TestSolarWindParamsFromVector(unittest.TestCase):
         self.assertAlmostEqual(round_tripped.density, original.density)
         self.assertAlmostEqual(round_tripped.temperature, original.temperature)
         np.testing.assert_array_equal(
-            round_tripped.bulk_velocity_rtn, original.bulk_velocity_rtn
+            round_tripped.velocity_rtn, original.velocity_rtn
         )
         self.assertEqual(round_tripped.mass, original.mass)
 
@@ -72,7 +72,7 @@ class TestSolarWindParamsFromVector(unittest.TestCase):
 class TestBulkSpeed(unittest.TestCase):
     """Tests for `bulk_speed`."""
 
-    def test_returns_magnitude_of_bulk_velocity(self):
+    def test_returns_magnitude_of_velocity(self):
         """A bulk velocity of (-300, 40, -50) km/s returns the Euclidean norm sqrt(300^2 + 40^2 + 50^2)."""
         sw = proton_params(velocity_rtn=(-300.0, 40.0, -50.0))
         expected = math.sqrt(300.0**2 + 40.0**2 + 50.0**2)

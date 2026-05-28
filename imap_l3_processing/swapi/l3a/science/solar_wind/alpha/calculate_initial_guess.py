@@ -18,7 +18,7 @@ def calculate_initial_guess(
     alpha_ctx: SolarWindFitContext,
     proton_true_rate: ndarray,
     proton_temperature: float,
-    proton_bulk_velocity_rtn: ndarray,
+    proton_velocity_rtn: ndarray,
 ) -> Optional[tuple[float, float, float, ndarray]]:
     if alpha_ctx.count_rate.size == 0 or alpha_ctx.count_rate.ndim != 2:
         return None
@@ -49,7 +49,7 @@ def calculate_initial_guess(
     alpha_temperature = proton_temperature
 
     unit_alpha, _ = model_solar_wind_ideal_coincidence_rates(
-        SolarWindParams(1.0, proton_bulk_velocity_rtn, alpha_temperature, alpha_ctx.mass_kg),
+        SolarWindParams(1.0, proton_velocity_rtn, alpha_temperature, alpha_ctx.mass_kg),
         alpha_ctx,
     )
     unit_alpha_per_sweep = unit_alpha.reshape(n_sweeps, n_bins).mean(axis=0)

@@ -54,8 +54,6 @@ def calculate_pickup_ion_values(
     vasyliunas_siscoe_distribution: VasyliunasSiscoeDistribution,
     central_effective_area_scale: float = 1.0,
 ) -> PickupIonFitResult:
-    sw_velocity_kms = float(np.linalg.norm(sw_velocity_rtn_kms))
-
     voltages = np.asarray(voltages, dtype=float).reshape(-1, _COARSE_SWEEP_LEN)
     count_rates = np.asarray(count_rates, dtype=float).reshape(-1, _COARSE_SWEEP_LEN)
     bulk_sw_per_bin_swapi_kms = np.asarray(
@@ -71,14 +69,7 @@ def calculate_pickup_ion_values(
     extracted_count_rates = count_rates[:, bin_mask]
     extracted_bulk_sw_per_bin_swapi_kms = bulk_sw_per_bin_swapi_kms[:, bin_mask]
 
-    radius_in_au = vasyliunas_siscoe_distribution.distance_km / ONE_AU_IN_KM
-    min_speed_kms = max(
-        1.0,
-        sw_velocity_kms
-        * 0.8
-        * density_of_neutral_helium_lookup_table.get_minimum_distance()
-        / radius_in_au,
-    )
+    sw_velocity_kms = float(np.linalg.norm(sw_velocity_rtn_kms))
 
     chunk_response = build_chunk_collapsed_response(
         swapi_response=swapi_response,
@@ -86,7 +77,6 @@ def calculate_pickup_ion_values(
         bulk_sw_per_bin_kms=extracted_bulk_sw_per_bin_swapi_kms,
         mass_per_charge_m_p_per_e=_HELIUM_MASS_PER_CHARGE_M_P_PER_E,
         cutoff_speed_max_kms=sw_velocity_kms * 1.2,
-        min_speed_kms=min_speed_kms,
         central_effective_area_scale=central_effective_area_scale,
     )
 
@@ -159,7 +149,7 @@ def _fit_pickup_ion_parameters(
     nominal_values = result.params.valuesdict()
 
     flags = SwapiL3Flags.NONE
-    hessian_fn = ndt.Hessian(minimizer.penalty, step=1.0e-2)
+    hessian_fn = ndt.Hessian(minimizer.penalty)
     try:
         hessian_value = hessian_fn(result.x)
         cov_internal = inv(hessian_value)
@@ -168,9 +158,6 @@ def _fit_pickup_ion_parameters(
     except Exception:
         standard_errors = np.full(len(result.var_names), np.nan)
 
-    # NaN σ̂ means the Hessian was not positive definite at the MLE — typically
-    # the fit was pulled against a parameter bound, where asymptotic-MLE theory
-    # breaks down.
     if not np.all(np.isfinite(standard_errors)):
         flags |= SwapiL3Flags.BAD_FIT
 
@@ -214,7 +201,6 @@ def _fit_pickup_ion_parameters(
 
     _set_background_to_fill_if_too_high(param_vals)
 
-
     return FittingParameters(
         param_vals["cooling_index"],
         param_vals["ionization_rate"],
@@ -238,16 +224,11 @@ def _calculate_poisson_negative_log_likelihood(
         background_count_rate=parvals["background_count_rate"],
     )
 
-    # Per-sweep modeled rates: shape (n_sweeps, n_steps).
     modeled_rates = calculate_coincidence_rate(
         chunk_response, vasyliunas_siscoe_distribution, fitting_params
     )
     modeled_counts = modeled_rates * swapi_l2.SWAPI_LIVETIME
     observed_counts = observed_count_rates * swapi_l2.SWAPI_LIVETIME
-
-    # Poisson -ln L = sum(m - n*ln m); the ln(n!) term is dropped since it
-    # does not depend on the fit parameters. `background_count_rate` keeps
-    # `modeled_counts` strictly positive, so log is always finite.
     return float(np.sum(modeled_counts - observed_counts * np.log(modeled_counts)))
 
 

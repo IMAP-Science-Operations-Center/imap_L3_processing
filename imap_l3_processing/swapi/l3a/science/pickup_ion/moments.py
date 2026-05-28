@@ -35,13 +35,15 @@ def calculate_helium_pui_density(
         cooling_index: float,
         ionization_rate: float,
         cutoff_speed: float,
-        background_count_rate: float,
     ):
         params = FittingParameters(
-            cooling_index, ionization_rate, cutoff_speed, background_count_rate
+            cooling_index, ionization_rate, cutoff_speed, background_count_rate=0.0
         )
         f_pui = np.asarray(
-            vasyliunas_siscoe_distribution.f(speed_in_sw_frame, params), dtype=float
+            vasyliunas_siscoe_distribution.f(
+                speed_in_sw_frame, params, apply_cutoff=False
+            ),
+            dtype=float,
         ).copy()
         apply_partial_heaviside_at_cutoff(f_pui, speed_in_sw_frame, cutoff_speed)
         integral = float(np.sum(integration_weights * f_pui))
@@ -53,7 +55,6 @@ def calculate_helium_pui_density(
         fitting_params.cooling_index,
         fitting_params.ionization_rate,
         fitting_params.cutoff_speed,
-        fitting_params.background_count_rate,
     )
 
 
@@ -70,13 +71,15 @@ def calculate_helium_pui_temperature(
         cooling_index: float,
         ionization_rate: float,
         cutoff_speed: float,
-        background_count_rate: float,
     ):
         params = FittingParameters(
-            cooling_index, ionization_rate, cutoff_speed, background_count_rate
+            cooling_index, ionization_rate, cutoff_speed, background_count_rate=0.0
         )
         f_pui = np.asarray(
-            vasyliunas_siscoe_distribution.f(speed_in_sw_frame, params), dtype=float
+            vasyliunas_siscoe_distribution.f(
+                speed_in_sw_frame, params, apply_cutoff=False
+            ),
+            dtype=float,
         ).copy()
         apply_partial_heaviside_at_cutoff(f_pui, speed_in_sw_frame, cutoff_speed)
         weighted = integration_weights * f_pui
@@ -94,13 +97,9 @@ def calculate_helium_pui_temperature(
         fitting_params.cooling_index,
         fitting_params.ionization_rate,
         fitting_params.cutoff_speed,
-        fitting_params.background_count_rate,
     )
 
 
 def _moment_integration_weights(speed_in_sw_frame: NDArray) -> NDArray:
     delta_v_prime = speed_in_sw_frame[1] - speed_in_sw_frame[0]
-    trapz_weights = np.full(speed_in_sw_frame.shape, delta_v_prime)
-    trapz_weights[0] *= 0.5
-    trapz_weights[-1] *= 0.5
-    return speed_in_sw_frame**2 * trapz_weights
+    return speed_in_sw_frame**2 * delta_v_prime

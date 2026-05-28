@@ -153,7 +153,7 @@ def _process_one(i):
 
     truth_params = SolarWindParams(
         density=density,
-        bulk_velocity_rtn=np.array([radial_speed, tangential_speed, normal_speed]),
+        velocity_rtn=np.array([radial_speed, tangential_speed, normal_speed]),
         temperature=temperature,
         mass=PROTON_MASS_KG,
     )
@@ -180,7 +180,7 @@ def _process_one(i):
     except Exception:
         initial_guess = SolarWindParams(
             density=float("nan"),
-            bulk_velocity_rtn=np.array([float("nan")] * 3),
+            velocity_rtn=np.array([float("nan")] * 3),
             temperature=float("nan"),
             mass=PROTON_MASS_KG,
         )
@@ -197,7 +197,7 @@ def _process_one(i):
         result = ProtonSolarWindFitResult(
             density=nan_uf,
             temperature=nan_uf,
-            bulk_velocity_rtn=(nan_uf, nan_uf, nan_uf),
+            velocity_rtn=(nan_uf, nan_uf, nan_uf),
             bad_fit_flag=1,
         )
 
@@ -209,19 +209,19 @@ def _process_one(i):
         "true_normal_speed": normal_speed,
         "init_density": initial_guess.density,
         "init_temperature": initial_guess.temperature,
-        "init_radial_speed": float(initial_guess.bulk_velocity_rtn[0]),
-        "init_tangential_speed": float(initial_guess.bulk_velocity_rtn[1]),
-        "init_normal_speed": float(initial_guess.bulk_velocity_rtn[2]),
+        "init_radial_speed": float(initial_guess.velocity_rtn[0]),
+        "init_tangential_speed": float(initial_guess.velocity_rtn[1]),
+        "init_normal_speed": float(initial_guess.velocity_rtn[2]),
         "fit_density": _nominal(result.density),
         "fit_temperature": _nominal(result.temperature),
-        "fit_radial_speed": _nominal(result.bulk_velocity_rtn[0]),
-        "fit_tangential_speed": _nominal(result.bulk_velocity_rtn[1]),
-        "fit_normal_speed": _nominal(result.bulk_velocity_rtn[2]),
+        "fit_radial_speed": _nominal(result.velocity_rtn[0]),
+        "fit_tangential_speed": _nominal(result.velocity_rtn[1]),
+        "fit_normal_speed": _nominal(result.velocity_rtn[2]),
         "fit_density_sigma": _sigma(result.density),
         "fit_temperature_sigma": _sigma(result.temperature),
-        "fit_radial_speed_sigma": _sigma(result.bulk_velocity_rtn[0]),
-        "fit_tangential_speed_sigma": _sigma(result.bulk_velocity_rtn[1]),
-        "fit_normal_speed_sigma": _sigma(result.bulk_velocity_rtn[2]),
+        "fit_radial_speed_sigma": _sigma(result.velocity_rtn[0]),
+        "fit_tangential_speed_sigma": _sigma(result.velocity_rtn[1]),
+        "fit_normal_speed_sigma": _sigma(result.velocity_rtn[2]),
         "bad_flag": bool(result.bad_fit_flag),
     }
 

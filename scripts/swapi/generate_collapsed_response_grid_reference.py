@@ -27,7 +27,7 @@ from imap_l3_processing.swapi.l3a.science.pickup_ion.collapsed_response_grid imp
     solar_wind_frame_speed_range,
 )
 from imap_l3_processing.swapi.l3a.utils import (
-    velocity_to_angles_in_instrument_frame,
+    velocity_components_to_angles_in_instrument_frame,
 )
 from imap_l3_processing.swapi.response.azimuthal_transmission import (
     interpolate_azimuthal_transmission,
@@ -71,7 +71,7 @@ def shell_integral_h(
         -math.cos(bulk_elevation) * math.cos(bulk_azimuth),
         -math.sin(bulk_elevation),
     ])
-    bulk_velocity = bulk_speed * bulk_direction
+    velocity = bulk_speed * bulk_direction
 
     # cos-α band from |v|² = v_sw² + v'² + 2 v_sw v' cos α (law of cosines).
     cos_alpha_bounds = (
@@ -89,7 +89,7 @@ def shell_integral_h(
     def integrate(passband, azimuth_min_deg, azimuth_max_deg):
         return dblquad(
             lambda alpha, beta: _shell_integrand(
-                alpha, beta, bulk_velocity, rotation, v_prime, response_grid,
+                alpha, beta, velocity, rotation, v_prime, response_grid,
                 passband, azimuth_min_deg, azimuth_max_deg,
             ),
             0.0, 2.0 * math.pi, alpha_min, alpha_max,
@@ -105,7 +105,7 @@ def shell_integral_h(
 
 @numba.njit
 def _shell_integrand(
-    alpha, beta, bulk_velocity, rotation, v_prime, response_grid,
+    alpha, beta, velocity, rotation, v_prime, response_grid,
     passband, azimuth_min_deg, azimuth_max_deg,
 ):
     # `alpha`: polar angle on the shell from bulk-velocity direction;
@@ -121,11 +121,11 @@ def _shell_integrand(
     shell_x = rotation[0, 0] * local_x + rotation[0, 1] * local_y + rotation[0, 2] * local_z
     shell_y = rotation[1, 0] * local_x + rotation[1, 1] * local_y + rotation[1, 2] * local_z
     shell_z = rotation[2, 0] * local_x + rotation[2, 1] * local_y + rotation[2, 2] * local_z
-    vx = bulk_velocity[0] + v_prime * shell_x
-    vy = bulk_velocity[1] + v_prime * shell_y
-    vz = bulk_velocity[2] + v_prime * shell_z
+    vx = velocity[0] + v_prime * shell_x
+    vy = velocity[1] + v_prime * shell_y
+    vz = velocity[2] + v_prime * shell_z
     speed = math.sqrt(vx * vx + vy * vy + vz * vz)
-    azimuth_deg, elevation_deg = velocity_to_angles_in_instrument_frame(vx, vy, vz)
+    azimuth_deg, elevation_deg = velocity_components_to_angles_in_instrument_frame(vx, vy, vz)
     if not (azimuth_min_deg <= azimuth_deg <= azimuth_max_deg):
         return 0.0
     effective_area = (

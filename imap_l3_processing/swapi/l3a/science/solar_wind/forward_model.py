@@ -95,10 +95,10 @@ def _integrate_region(
     angular_quadrature: AngularQuadrature,
     rotation_xyz_to_rtn,
 ):
-    bulk_velocity = sw_params.bulk_velocity_rtn
-    bulk_r = bulk_velocity[0]
-    bulk_t = bulk_velocity[1]
-    bulk_n = bulk_velocity[2]
+    velocity = sw_params.velocity_rtn
+    bulk_r = velocity[0]
+    bulk_t = velocity[1]
+    bulk_n = velocity[2]
 
     elevation_rate = 0.0
     elevation_log_temperature_jacobian = 0.0
@@ -125,7 +125,7 @@ def _integrate_region(
                 angular_quadrature, rotation_xyz_to_rtn, i_elevation, i_azimuth
             )
 
-            bulk_velocity_along_direction = (
+            velocity_along_direction = (
                 direction_r * bulk_r + direction_t * bulk_t + direction_n * bulk_n
             )
 
@@ -137,7 +137,7 @@ def _integrate_region(
                 exponent = (
                     speed ** 2
                     + bulk_speed(sw_params) ** 2
-                    - 2 * speed * bulk_velocity_along_direction
+                    - 2 * speed * velocity_along_direction
                 ) * 1.0 / (2 * thermal_speed(sw_params) ** 2)
                 weighted_integrand = (
                     speed_quadrature.weights[i_speed]

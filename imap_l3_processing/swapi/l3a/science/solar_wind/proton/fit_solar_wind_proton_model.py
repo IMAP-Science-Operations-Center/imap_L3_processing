@@ -38,14 +38,14 @@ _R_SQUARED_PEAK_HALF_WIDTH = 4
 class ProtonSolarWindFitResult:
     density: UFloat  # cm^-3
     temperature: UFloat  # K
-    bulk_velocity_rtn: tuple[UFloat, UFloat, UFloat]  # km/s, [R, T, N]; correlated
+    velocity_rtn: tuple[UFloat, UFloat, UFloat]  # km/s, [R, T, N]; correlated
     bad_fit_flag: int
 
-    def bulk_velocity_rtn_nominal(self) -> ndarray:
-        return np.array([v.nominal_value for v in self.bulk_velocity_rtn])
+    def velocity_rtn_nominal(self) -> ndarray:
+        return np.array([v.nominal_value for v in self.velocity_rtn])
 
-    def bulk_velocity_rtn_covariance(self) -> ndarray:
-        return np.array(covariance_matrix(self.bulk_velocity_rtn))
+    def velocity_rtn_covariance(self) -> ndarray:
+        return np.array(covariance_matrix(self.velocity_rtn))
 
 
 def fit_solar_wind_proton_model(ctx: SolarWindFitContext) -> ProtonSolarWindFitResult:
@@ -74,13 +74,13 @@ def _construct_fit_result(final_result, ctx):
     )
     density = ufloat(final_result.sw_params.density, density_sigma)
     temperature = ufloat(final_result.sw_params.temperature, temperature_sigma)
-    bulk_velocity_rtn = make_correlated_velocity(
-        final_result.sw_params.bulk_velocity_rtn, velocity_covariance
+    velocity_rtn = make_correlated_velocity(
+        final_result.sw_params.velocity_rtn, velocity_covariance
     )
     return ProtonSolarWindFitResult(
         density=density,
         temperature=temperature,
-        bulk_velocity_rtn=bulk_velocity_rtn,
+        velocity_rtn=velocity_rtn,
         bad_fit_flag=int(SwapiL3Flags.NONE),
     )
 
@@ -90,7 +90,7 @@ def _nan_proton_fit_result(bad_fit_flag: int) -> ProtonSolarWindFitResult:
     return ProtonSolarWindFitResult(
         density=nan,
         temperature=nan,
-        bulk_velocity_rtn=(nan, nan, nan),
+        velocity_rtn=(nan, nan, nan),
         bad_fit_flag=bad_fit_flag,
     )
 

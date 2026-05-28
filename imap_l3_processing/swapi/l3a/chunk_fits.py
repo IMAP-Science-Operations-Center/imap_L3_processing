@@ -214,7 +214,7 @@ class PuiChunkFitter(ChunkFitter):
         values in the downstream fit."""
         ten_minute_sw_velocities_rtn, proton_sw_quality_flags = (
             calculate_ten_minute_velocities(
-                self.proton_results["proton_sw_bulk_velocity_rtn_sc"],
+                self.proton_results["proton_sw_velocity_rtn"],
                 list(self.proton_results["quality_flags"]),
             )
         )
@@ -227,24 +227,26 @@ class PuiChunkFitter(ChunkFitter):
             epoch = int(chunk.sci_start_time[0]) + FIVE_MINUTES_IN_NANOSECONDS
             self.sw_velocity_rtn_by_chunk_epoch[epoch] = ten_minute_rtn
             proton_sw_quality_flag = int(flag)
-            try:
-                bulk_sw_per_bin_swapi = rotate_rtn_velocity_to_swapi_per_bin(
-                    chunk, ten_minute_rtn
-                )
-            except SpiceyError:
-                logger.info(
-                    "SPICE gap when rotating proton SW velocity to IMAP_SWAPI "
-                    f"in PUI chunk at epoch {epoch}; using fill value."
-                )
-                n_sweeps = chunk.sci_start_time.shape[0]
-                bulk_sw_per_bin_swapi = np.full(
-                    (n_sweeps, n_coarse_bins, 3), np.nan
-                )
+            n_sweeps = chunk.sci_start_time.shape[0]
 
             lower_energy_cutoff: float | None = None
             upper_energy_cutoff: float | None = None
             vasyliunas_siscoe_distribution: VasyliunasSiscoeDistribution | None = None
-            if not np.any(np.isnan(ten_minute_rtn)):
+
+            if np.any(np.isnan(ten_minute_rtn)):
+                bulk_sw_per_bin_swapi = np.full((n_sweeps, n_coarse_bins, 3), np.nan)
+            else:
+                try:
+                    bulk_sw_per_bin_swapi = rotate_rtn_velocity_to_swapi_per_bin(
+                        chunk, ten_minute_rtn
+                    )
+                except SpiceyError:
+                    logger.info(
+                        "SPICE gap when rotating proton SW velocity to IMAP_SWAPI "
+                        f"in PUI chunk at epoch {epoch}; using fill value."
+                    )
+                    bulk_sw_per_bin_swapi = np.full((n_sweeps, n_coarse_bins, 3), np.nan)
+
                 try:
                     chunk_ephemeris_time = spiceypy.unitim(
                         epoch / ONE_SECOND_IN_NANOSECONDS, "TT", "ET"
@@ -298,38 +300,35 @@ class PuiChunkFitter(ChunkFitter):
         upper_energy_cutoff,
         vasyliunas_siscoe_distribution,
     ):
-        nan = ufloat(np.nan, np.nan)
-        cooling_index = nan
-        ionization_rate = nan
-        cutoff_speed = nan
-        background_rate = nan
-        density = nan
-        temperature = nan
-        flag = int(SwapiL3Flags.NONE)
+        count_rates_window = data_chunk.coincidence_count_rate[
+            :, SWAPI_COARSE_SWEEP_BINS
+        ]
+        if np.any(np.isnan(count_rates_window)):
+            return _pui_fill_result(
+                epoch, proton_sw_quality_flag, "gap in L2 coincidence count rate"
+            )
+        if np.any(np.isnan(sw_velocity_rtn)):
+            return _pui_fill_result(
+                epoch, proton_sw_quality_flag,
+                "gap in 10-minute proton solar wind velocity (no usable proton fit in the window)",
+            )
+        if vasyliunas_siscoe_distribution is None:
+            return _pui_fill_result(
+                epoch, proton_sw_quality_flag,
+                "no neutral-helium Vasyliunas-Siscoe distribution (SPICE gap building chunk state)",
+            )
 
         try:
-            count_rates_window = data_chunk.coincidence_count_rate[
-                :, SWAPI_COARSE_SWEEP_BINS
-            ]
-            if (
-                vasyliunas_siscoe_distribution is None
-                or np.any(np.isnan(count_rates_window))
-                or np.any(np.isnan(sw_velocity_rtn))
-                or np.any(np.isnan(bulk_sw_per_bin_swapi))
-            ):
-                raise ValueError("Fill values in input data")
-
             voltages = (
                 data_chunk.energy[:, SWAPI_COARSE_SWEEP_BINS] / SWAPI_L2_K_FACTOR
             ).flatten()
-            count_rates = count_rates_window.flatten()
             central_effective_area_scale = _shared[
                 "efficiency_table"
             ].central_effective_area_scale_for(epoch, "helium")
             fit_result = calculate_pickup_ion_values(
                 _shared["swapi_response"],
                 voltages,
-                count_rates,
+                count_rates_window.flatten(),
                 sw_velocity_rtn,
                 bulk_sw_per_bin_swapi,
                 self.density_of_neutral_helium_lookup_table,
@@ -338,12 +337,16 @@ class PuiChunkFitter(ChunkFitter):
                 vasyliunas_siscoe_distribution,
                 central_effective_area_scale=central_effective_area_scale,
             )
-            fit_params = fit_result.fitting_params
-            cooling_index = fit_params.cooling_index
-            ionization_rate = fit_params.ionization_rate
-            cutoff_speed = fit_params.cutoff_speed
-            background_rate = fit_params.background_count_rate
-            flag |= int(fit_params.flags)
+        except Exception:
+            logger.warning(
+                f"PUI fit at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}: exception during fit; using fill values",
+                exc_info=True,
+            )
+            return _pui_fill_result(epoch, proton_sw_quality_flag)
+
+        fit_params = fit_result.fitting_params
+        density = temperature = ufloat(np.nan, np.nan)
+        if not (int(fit_params.flags) & int(SwapiL3Flags.BAD_FIT)):
             density = calculate_helium_pui_density(
                 fit_result.chunk_response,
                 fit_result.vasyliunas_siscoe_distribution,
@@ -354,40 +357,33 @@ class PuiChunkFitter(ChunkFitter):
                 fit_result.vasyliunas_siscoe_distribution,
                 fit_params,
             )
-        except Exception:
-            logger.info(
-                f"Exception occurred at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}, continuing with fill value",
-                exc_info=True,
-            )
-
-        flag |= int(proton_sw_quality_flag)
 
         return dict(
             epoch=epoch,
-            cooling_index=cooling_index,
-            ionization_rate=ionization_rate,
-            cutoff_speed=cutoff_speed,
-            background_rate=background_rate,
+            cooling_index=fit_params.cooling_index,
+            ionization_rate=fit_params.ionization_rate,
+            cutoff_speed=fit_params.cutoff_speed,
+            background_rate=fit_params.background_count_rate,
             density=density,
             temperature=temperature,
-            quality_flags=flag,
+            quality_flags=int(proton_sw_quality_flag) | int(fit_params.flags),
         )
 
 
 def _proton_moments_from_fit(result, epoch, data_chunk, sc_velocity_rtn):
-    speed = sum(component**2 for component in result.bulk_velocity_rtn) ** 0.5
+    speed = sum(component**2 for component in result.velocity_rtn) ** 0.5
     speed_nom, speed_unc = speed.nominal_value, speed.std_dev
-    bulk_velocity_rtn_sc = result.bulk_velocity_rtn_nominal()
-    bulk_velocity_rtn_covariance = result.bulk_velocity_rtn_covariance()
+    velocity_rtn_sc = result.velocity_rtn_nominal()
+    velocity_rtn_covariance = result.velocity_rtn_covariance()
     density_nom, density_unc = result.density.nominal_value, result.density.std_dev
     temp_nom, temp_unc = result.temperature.nominal_value, result.temperature.std_dev
 
     if sc_velocity_rtn is not None:
-        bulk_velocity_rtn_sun = bulk_velocity_rtn_sc + sc_velocity_rtn
+        velocity_rtn_sun = velocity_rtn_sc + sc_velocity_rtn
         sun_velocity_unc = [
             component + sc_component
             for component, sc_component in zip(
-                result.bulk_velocity_rtn, sc_velocity_rtn
+                result.velocity_rtn, sc_velocity_rtn
             )
         ]
         sun_speed = sum(component**2 for component in sun_velocity_unc) ** 0.5
@@ -396,7 +392,7 @@ def _proton_moments_from_fit(result, epoch, data_chunk, sc_velocity_rtn):
         logger.warning(
             f"Proton fit at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}: missing spacecraft velocity; sun-frame outputs are fill values"
         )
-        bulk_velocity_rtn_sun = np.full(3, np.nan)
+        velocity_rtn_sun = np.full(3, np.nan)
         sun_speed_nom = sun_speed_unc = np.nan
 
     if not np.isfinite(speed_nom):
@@ -412,38 +408,47 @@ def _proton_moments_from_fit(result, epoch, data_chunk, sc_velocity_rtn):
         proton_sw_temperature_uncert=temp_unc,
         proton_sw_density=density_nom,
         proton_sw_density_uncert=density_unc,
-        proton_sw_bulk_velocity_rtn_sun=bulk_velocity_rtn_sun,
-        proton_sw_bulk_velocity_rtn_sc=bulk_velocity_rtn_sc,
-        proton_sw_bulk_velocity_rtn_covariance=bulk_velocity_rtn_covariance,
+        proton_sw_velocity_rtn_sun=velocity_rtn_sun,
+        proton_sw_velocity_rtn=velocity_rtn_sc,
+        proton_sw_velocity_rtn_covariance=velocity_rtn_covariance,
         quality_flags=result.bad_fit_flag,
     )
 
 
 def _alpha_moments_from_fit(result, epoch, sc_velocity_rtn):
     alpha = result.alpha_moments
-    speed = sum(component**2 for component in alpha.bulk_velocity_rtn) ** 0.5
-    bulk_velocity_rtn_sc = alpha.bulk_velocity_rtn_nominal()
-    bulk_velocity_rtn_covariance = alpha.bulk_velocity_rtn_covariance()
+    speed = sum(component**2 for component in alpha.velocity_rtn) ** 0.5
+    velocity_rtn_sc = alpha.velocity_rtn_nominal()
+    velocity_rtn_covariance = alpha.velocity_rtn_covariance()
 
     if sc_velocity_rtn is not None:
-        bulk_velocity_rtn_sun = bulk_velocity_rtn_sc + sc_velocity_rtn
+        velocity_rtn_sun = velocity_rtn_sc + sc_velocity_rtn
+        sun_velocity = [
+            component + sc_component
+            for component, sc_component in zip(alpha.velocity_rtn, sc_velocity_rtn)
+        ]
+        sun_speed = sum(component**2 for component in sun_velocity) ** 0.5
+        sun_speed_nom, sun_speed_unc = sun_speed.nominal_value, sun_speed.std_dev
     else:
         logger.warning(
-            f"Alpha fit at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}: missing spacecraft velocity; sun-frame velocity is fill values"
+            f"Alpha fit at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}: missing spacecraft velocity; sun-frame outputs are fill values"
         )
-        bulk_velocity_rtn_sun = np.full(3, np.nan)
+        velocity_rtn_sun = np.full(3, np.nan)
+        sun_speed_nom = sun_speed_unc = np.nan
 
     return dict(
         epoch=epoch,
         alpha_sw_speed=speed.nominal_value,
         alpha_sw_speed_uncert=speed.std_dev,
+        alpha_sw_speed_sun=sun_speed_nom,
+        alpha_sw_speed_sun_uncert=sun_speed_unc,
         alpha_sw_density=alpha.density.nominal_value,
         alpha_sw_density_uncert=alpha.density.std_dev,
         alpha_sw_temperature=alpha.temperature.nominal_value,
         alpha_sw_temperature_uncert=alpha.temperature.std_dev,
-        alpha_sw_velocity_rtn_sun=bulk_velocity_rtn_sun,
-        alpha_sw_velocity_rtn_sc=bulk_velocity_rtn_sc,
-        alpha_sw_velocity_rtn_covariance=bulk_velocity_rtn_covariance,
+        alpha_sw_velocity_rtn_sun=velocity_rtn_sun,
+        alpha_sw_velocity_rtn=velocity_rtn_sc,
+        alpha_sw_velocity_rtn_covariance=velocity_rtn_covariance,
         quality_flags=result.bad_fit_flag,
     )
 
@@ -559,12 +564,31 @@ def _fit_proton(
     return result
 
 
+def _pui_fill_result(epoch, proton_sw_quality_flag, reason=None) -> dict:
+    if reason is not None:
+        logger.warning(
+            f"PUI fit at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}: "
+            f"{reason}; using fill values"
+        )
+    nan = ufloat(np.nan, np.nan)
+    return dict(
+        epoch=epoch,
+        cooling_index=nan,
+        ionization_rate=nan,
+        cutoff_speed=nan,
+        background_rate=nan,
+        density=nan,
+        temperature=nan,
+        quality_flags=int(proton_sw_quality_flag),
+    )
+
+
 def _nan_proton_result(flag) -> ProtonSolarWindFitResult:
     nan = ufloat(np.nan, np.nan)
     return ProtonSolarWindFitResult(
         density=nan,
         temperature=nan,
-        bulk_velocity_rtn=(nan, nan, nan),
+        velocity_rtn=(nan, nan, nan),
         bad_fit_flag=int(flag),
     )
 
@@ -587,7 +611,7 @@ def _nan_alpha_fit_result(flag) -> AlphaSolarWindFitResult:
     return AlphaSolarWindFitResult(
         density=nan,
         temperature=nan,
-        bulk_velocity_rtn=(nan, nan, nan),
+        velocity_rtn=(nan, nan, nan),
         delta_v=nan,
         bad_fit_flag=int(flag),
     )
@@ -617,7 +641,7 @@ def _fit_alpha(
     proton_moments = _fit_proton(data_chunk, epoch, rotation_matrices)
     if not np.all(
         np.isfinite(
-            [component.nominal_value for component in proton_moments.bulk_velocity_rtn]
+            [component.nominal_value for component in proton_moments.velocity_rtn]
         )
     ):
         return AlphaChunkFitResult(
