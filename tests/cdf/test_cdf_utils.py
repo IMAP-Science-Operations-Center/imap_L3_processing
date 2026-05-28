@@ -308,15 +308,15 @@ class TestCdfUtils(TempFileTestCase):
             def to_data_product_variables(self) -> list[DataProductVariable]:
                 return [
                     DataProductVariable("ena_intensity", np.arange(0, 10)),
+                    DataProductVariable("ena_intensity_stat_uncert", np.arange(0, 10)),
                 ]
         path = str(self.temp_directory / "write_cdf.cdf")
         data = TestMapDataProduct()
-        ena_intensity, = data.to_data_product_variables()
         attribute_manager = Mock(spec=ImapAttributeManager)
         attribute_manager.get_global_attributes.return_value = {"global1": "global_val1", "global2": "global_val2"}
-        attribute_manager.get_variable_attributes.side_effect = [
-            {"CATDESC": "This should be ignored", "DATA_TYPE": "CDF_REAL4", "FILLVAL": -1e31, "RECORD_VARYING": "rV"},
-        ]
+
+        variable_metadata = {"CATDESC": "This should be ignored", "DATA_TYPE": "CDF_REAL4", "FILLVAL": -1e31, "RECORD_VARYING": "rV"}
+        attribute_manager.get_variable_attributes.side_effect = lambda _: variable_metadata.copy()
 
         write_cdf(path, data, attribute_manager)
 
@@ -329,6 +329,8 @@ class TestCdfUtils(TempFileTestCase):
         with pycdf.CDF(path) as actual_cdf:
             self.assertEqual("IMAP Hi45 H Inten, HAE SC Frame, Surv Corr, Ram, 6 deg, 6 Mon",
                              actual_cdf['ena_intensity'].attrs['CATDESC'])
+            self.assertEqual("IMAP Hi45 H Inten Stat. Unc., HAE SC Frame, Surv Corr, Ram, 6 deg, 6 Mon",
+                             actual_cdf['ena_intensity_stat_uncert'].attrs['CATDESC'])
 
 
 class TestDataProduct(DataProduct):

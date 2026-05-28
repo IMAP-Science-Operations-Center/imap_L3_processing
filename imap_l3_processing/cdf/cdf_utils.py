@@ -40,9 +40,9 @@ def write_cdf(file_path: str, data: DataProduct, attribute_manager: ImapAttribut
             data_type = getattr(pycdf.const, variable_attributes["DATA_TYPE"])
             data_array = np.asanyarray(data_product.value)
 
-            if (map_descriptor is not None
-                    and var_name == map_descriptor.principal_data_var):
-                variable_attributes["CATDESC"] = map_descriptor.to_catdesc()
+            if map_descriptor is not None:
+                if map_var_catdesc := map_descriptor.build_map_var_catdesc(var_name):
+                    variable_attributes["CATDESC"] = map_var_catdesc
 
             record_varying = variable_attributes["RECORD_VARYING"].lower() == "rv"
             if record_varying:
