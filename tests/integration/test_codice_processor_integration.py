@@ -121,7 +121,6 @@ class CodiceProcessorIntegration(unittest.TestCase):
             ).construct_path()
             self.assertTrue(expected_sw_csd_file_path.exists())
 
-    @run_periodically(timedelta(days=14))
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_codice_lo_3d_distributions(self, mock_parse_cli_arguments):
         input_files = [

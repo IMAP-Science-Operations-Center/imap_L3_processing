@@ -12,7 +12,7 @@ from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3a_direct_events_de
 from imap_l3_processing.codice.l3.hi.models import CodiceL2HiDirectEventData, CodiceHiL2SectoredIntensitiesData, \
     CodiceL3HiDirectEvents
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
-from imap_l3_processing.codice.l3.lo.constants import CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM
+from imap_l3_processing.codice.l3.lo.constants import CODICE_INSTRUMENT_TO_SC_FRAME_SPIN_ANGLE_OFFSET
 from imap_l3_processing.codice.quality_flags import CodiceL3Flags
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import NumpyArrayMatcher, get_test_data_path
@@ -346,7 +346,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
 
         mock_get_sector_unit_vectors.assert_called_once_with(
             codice_l2_data.elevation_angle,
-            NumpyArrayMatcher((codice_l2_data.spin_angles.T + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360))
+            NumpyArrayMatcher((codice_l2_data.spin_angles.T + CODICE_INSTRUMENT_TO_SC_FRAME_SPIN_ANGLE_OFFSET) % 360))
         mock_calculate_unit_vector.assert_has_calls(
             [call(NumpyArrayMatcher(rebinned_mag_data)), call(NumpyArrayMatcher(sector_vectors.transpose(1,0,2)))])
 

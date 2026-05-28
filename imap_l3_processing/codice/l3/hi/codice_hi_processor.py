@@ -9,7 +9,7 @@ from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3a_direct_events_de
 from imap_l3_processing.codice.l3.hi.models import CodiceHiL3PitchAngleDataProduct
 from imap_l3_processing.codice.l3.hi.models import CodiceL3HiDirectEvents
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
-from imap_l3_processing.codice.l3.lo.constants import CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM
+from imap_l3_processing.codice.l3.lo.constants import CODICE_INSTRUMENT_TO_SC_FRAME_SPIN_ANGLE_OFFSET
 from imap_l3_processing.codice.quality_flags import CodiceL3Flags
 from imap_l3_processing.hit.l3.sectored_products.science.sectored_products_algorithms import \
     get_sector_unit_vectors
@@ -75,7 +75,7 @@ class CodiceHiProcessor(Processor):
         fe_energy_bins = dependencies.codice_sectored_intensities_data.energy_fe.shape[0]
         rebinned_mag_data = mag_data.rebin_to(sectored_intensities.epoch, sectored_intensities.epoch_delta_plus)
 
-        spin_angles_in_dps_elevation_by_spin_angle = (sectored_intensities.spin_angles.T + CODICE_SPIN_ANGLE_OFFSET_FROM_MAG_BOOM) % 360
+        spin_angles_in_dps_elevation_by_spin_angle = (sectored_intensities.spin_angles.T + CODICE_INSTRUMENT_TO_SC_FRAME_SPIN_ANGLE_OFFSET) % 360
 
         mag_unit_vectors = calculate_unit_vector(rebinned_mag_data)
         sector_unit = get_sector_unit_vectors(sectored_intensities.elevation_angle,
