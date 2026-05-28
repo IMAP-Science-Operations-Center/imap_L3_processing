@@ -286,13 +286,9 @@ class CodiceLoProcessor(Processor):
         counts_3d_data = rebin_to_counts_by_species_elevation_and_spin_sector(
             direct_event_data=dependencies.l3a_direct_event_data, mass_species_bin_lookup=mass_species_bin_lookup)
 
-        print(np.max(counts_3d_data[0][~np.isnan(counts_3d_data)[0]]))
-
         species_index = mass_species_bin_lookup.get_species_index(dependencies.species)
         normalized_count_rates = combine_priorities_for_species_and_convert_to_rate(counts_3d_data[species_index],
                                                                                     dependencies.l3a_direct_event_data.acquisition_time_per_esa_step)
-
-        print(np.max(normalized_count_rates[~np.isnan(normalized_count_rates)]))
 
         geometric_factors = geometric_factor_lut.get_geometric_factors(
             dependencies.l3a_direct_event_data.rgfo_half_spin, dependencies.l3a_direct_event_data.rgfo_spin_sector,
@@ -303,8 +299,6 @@ class CodiceLoProcessor(Processor):
                                                       dependencies.energy_per_charge_lut,
                                                       dependencies.efficiency_factors_lut,
                                                       geometric_factors)
-
-        print(np.max(intensities[~np.isnan(intensities)]))
 
         intensity = rebin_3d_distribution_azimuth_to_elevation(intensities, np.arange(1, 25), position_elevation_lut,
                                                                dependencies.l3a_direct_event_data.half_spin_per_esa_step)
