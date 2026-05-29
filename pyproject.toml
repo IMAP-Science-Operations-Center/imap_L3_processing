@@ -44,3 +44,6 @@ fallback-version = "0.0.0"
 
 [tool.hatch.version]
 source = "uv-dynamic-versioning"
+
+[tool.uv.sources]
+imap-processing = { git = "https://github.com/pleasant-menlo/imap_processing", branch = "3235-more-descriptive-map-metadata" }
