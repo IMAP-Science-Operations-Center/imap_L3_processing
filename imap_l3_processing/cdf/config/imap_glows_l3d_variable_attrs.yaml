@@ -104,13 +104,13 @@ proton_density:
 uv_anisotropy:
   NAME: uv_anisotropy
   DATA_TYPE: CDF_DOUBLE
-  CATDESC: Ultraviolet anisotropy
+  CATDESC: Solar UV radiation anisotropy
   VAR_TYPE: data
   RECORD_VARYING: RV
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Ultraviolet Anisotropy
+  FIELDNAM: Solar UV Anisotropy
   FORMAT: F9.3
-  LABLAXIS: Ultraviolet Anisotropy
+  LABLAXIS: Solar UV Anisotropy
   DISPLAY_TYPE: spectrogram
   UNITS: ' '
   VALIDMIN: 0
@@ -140,13 +140,13 @@ phion:
 lyman_alpha:
   NAME: lyman_alpha
   DATA_TYPE: CDF_DOUBLE
-  CATDESC: Lyman alpha
+  CATDESC: Composite solar Lyman-alpha irradiance
   VAR_TYPE: data
   RECORD_VARYING: RV
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Lyman Alpha
+  FIELDNAM: Solar Lyman-alpha
   FORMAT: F14.3
-  LABLAXIS: Lyman alpha
+  LABLAXIS: Solar Lyman-alpha
   DISPLAY_TYPE: time_series
   UNITS: '#/cm^2/s'
   VALIDMIN: 0

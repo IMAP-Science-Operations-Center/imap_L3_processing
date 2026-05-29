@@ -94,7 +94,7 @@ combined_differential_flux:
   FIELDNAM: Combined Differential Flux
   FORMAT: F19.3
   LABLAXIS: Combined differential flux
-  UNITS: cm!E-2!N s!E-1!N sr!E-1!N (eV/q)!E-1!N
+  UNITS: cm^-2 s^-1 sr^-1 (eV/q)^-1
   VALIDMIN: 0
   VALIDMAX: 1.00e+11
   FILLVAL: -1.000000e+31
@@ -115,7 +115,7 @@ combined_differential_flux_stat_uncert:
   FIELDNAM: Combined Differential Flux Uncertainty
   FORMAT: F19.3
   LABLAXIS: Combined differential flux uncertainty
-  UNITS: cm!E-2!N s!E-1!N sr!E-1!N (eV/q)!E-1!N
+  UNITS: cm^-2 s^-1 sr^-1 (eV/q)^-1
   VALIDMIN: 0
   VALIDMAX: 1.00e+8
   FILLVAL: -1.000000e+31

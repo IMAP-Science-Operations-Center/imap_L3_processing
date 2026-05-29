@@ -11,7 +11,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.utils import (
     count_rate_conversion_factor,
 )
 from imap_l3_processing.swapi.l3a.utils import (
-    bulk_velocity_to_angles_in_instrument_frame,
+    velocity_to_angles_in_instrument_frame,
 )
 from imap_l3_processing.swapi.response.azimuthal_transmission import (
     interpolate_azimuthal_transmission,
@@ -41,7 +41,7 @@ def trim_open_aperture(
     if azimuth_hi <= azimuth_lo:
         return 0.0, 0.0
 
-    _, bulk_el = bulk_velocity_to_angles_in_instrument_frame(sw_params, rotation_matrix)
+    _, bulk_el = velocity_to_angles_in_instrument_frame(sw_params, rotation_matrix)
     scan_elevation = min(max(bulk_el, min_elevation), max_elevation)
     scan_azimuths = np.linspace(azimuth_lo, azimuth_hi, OA_SCAN_RESOLUTION)
     transmission_x_maxwellian = _evaluate_oa_integrand_along_azimuth(
@@ -88,7 +88,7 @@ def _evaluate_oa_integrand_along_azimuth(
     sigma = thermal_speed(sw_params)
     speed = bulk_speed(sw_params)
     central_speed = response_grid.central_speed
-    bulk_az, bulk_el = bulk_velocity_to_angles_in_instrument_frame(sw_params, rotation_matrix)
+    bulk_az, bulk_el = velocity_to_angles_in_instrument_frame(sw_params, rotation_matrix)
 
     sin_bulk_el = math.sin(np.radians(bulk_el))
     cos_bulk_el = math.cos(np.radians(bulk_el))

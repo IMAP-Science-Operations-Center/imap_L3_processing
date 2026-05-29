@@ -83,7 +83,7 @@ assert np.isclose(
 _TRUE_DENSITY_CM3 = 5.0
 _TRUE_TEMPERATURE_K = 1.0e5
 _TRUE_BULK_SPEED_KM_S = 450.0
-_TRUE_BULK_VELOCITY_RTN_KM_S = (
+_TRUE_VELOCITY_RTN_KM_S = (
     -_TRUE_BULK_SPEED_KM_S * _ANCHOR_ROTATION_MATRIX[:, 1]
 )
 
@@ -160,7 +160,7 @@ def _build_synthetic_fit_context(truth_params: SolarWindParams):
 def _truth_params() -> SolarWindParams:
     return SolarWindParams(
         density=_TRUE_DENSITY_CM3,
-        bulk_velocity_rtn=_TRUE_BULK_VELOCITY_RTN_KM_S.copy(),
+        velocity_rtn=_TRUE_VELOCITY_RTN_KM_S.copy(),
         temperature=_TRUE_TEMPERATURE_K,
         mass=PROTON_MASS_KG,
     )
@@ -201,11 +201,11 @@ class TestFitSolarWindProtonModelEndToEnd(_ProtonFitFixture):
             delta=0.01 * _TRUE_TEMPERATURE_K,
         )
 
-    def test_recovers_bulk_velocity_components(self):
+    def test_recovers_velocity_components(self):
         """Fitting noise-free synthesized rates recovers all three RTN bulk-velocity components within 1 km/s."""
-        nominal = self.result.bulk_velocity_rtn_nominal()
+        nominal = self.result.velocity_rtn_nominal()
         np.testing.assert_allclose(
-            nominal, _TRUE_BULK_VELOCITY_RTN_KM_S, atol=1.0
+            nominal, _TRUE_VELOCITY_RTN_KM_S, atol=1.0
         )
 
     def test_bad_fit_flag_is_none_on_successful_convergence(self):
@@ -226,52 +226,52 @@ class TestFitSolarWindProtonModelUncertainties(_ProtonFitFixture):
         self.assertTrue(np.isfinite(self.result.temperature.std_dev))
         self.assertGreater(self.result.temperature.std_dev, 0.0)
 
-    def test_bulk_velocity_rtn_components_have_finite_positive_std_devs(self):
+    def test_velocity_rtn_components_have_finite_positive_std_devs(self):
         """Each RTN bulk-velocity component carries a finite, strictly positive std_dev from the sandwich estimator."""
-        for component in self.result.bulk_velocity_rtn:
+        for component in self.result.velocity_rtn:
             self.assertTrue(np.isfinite(component.std_dev))
             self.assertGreater(component.std_dev, 0.0)
 
 
 class TestProtonSolarWindFitResultPublicAPI(_ProtonFitFixture):
-    """Tests for `ProtonSolarWindFitResult.bulk_velocity_rtn_nominal` and `bulk_velocity_rtn_covariance` accessors."""
+    """Tests for `ProtonSolarWindFitResult.velocity_rtn_nominal` and `velocity_rtn_covariance` accessors."""
 
-    def test_bulk_velocity_rtn_nominal_is_three_component_vector(self):
+    def test_velocity_rtn_nominal_is_three_component_vector(self):
         """The nominal-velocity accessor returns a length-3 RTN vector."""
-        nominal = self.result.bulk_velocity_rtn_nominal()
+        nominal = self.result.velocity_rtn_nominal()
         self.assertEqual(nominal.shape, (3,))
 
-    def test_bulk_velocity_rtn_nominal_matches_per_component_nominal_values(
+    def test_velocity_rtn_nominal_matches_per_component_nominal_values(
         self,
     ):
         """The nominal-velocity vector matches the per-component `.nominal_value` of the stored UFloat triple."""
         per_component = np.array(
-            [v.nominal_value for v in self.result.bulk_velocity_rtn]
+            [v.nominal_value for v in self.result.velocity_rtn]
         )
         np.testing.assert_array_equal(
-            self.result.bulk_velocity_rtn_nominal(), per_component
+            self.result.velocity_rtn_nominal(), per_component
         )
 
-    def test_bulk_velocity_rtn_covariance_is_three_by_three(self):
+    def test_velocity_rtn_covariance_is_three_by_three(self):
         """The covariance accessor returns a 3x3 matrix matching the RTN component count."""
-        covariance = self.result.bulk_velocity_rtn_covariance()
+        covariance = self.result.velocity_rtn_covariance()
         self.assertEqual(covariance.shape, (3, 3))
 
-    def test_bulk_velocity_rtn_covariance_is_symmetric(self):
+    def test_velocity_rtn_covariance_is_symmetric(self):
         """The returned velocity covariance matrix is symmetric to numerical tolerance."""
-        covariance = self.result.bulk_velocity_rtn_covariance()
+        covariance = self.result.velocity_rtn_covariance()
         np.testing.assert_allclose(covariance, covariance.T, atol=1e-12)
 
-    def test_bulk_velocity_rtn_covariance_is_positive_semidefinite(self):
+    def test_velocity_rtn_covariance_is_positive_semidefinite(self):
         """The returned velocity covariance matrix is positive semidefinite (all eigenvalues non-negative)."""
-        covariance = self.result.bulk_velocity_rtn_covariance()
+        covariance = self.result.velocity_rtn_covariance()
         eigenvalues = np.linalg.eigvalsh(covariance)
         self.assertGreaterEqual(eigenvalues.min(), -1e-9)
 
     def test_covariance_diagonal_matches_per_component_variance(self):
         """Each diagonal entry of the velocity covariance equals the square of the corresponding UFloat `std_dev`."""
-        covariance = self.result.bulk_velocity_rtn_covariance()
-        for i, ufloat_value in enumerate(self.result.bulk_velocity_rtn):
+        covariance = self.result.velocity_rtn_covariance()
+        for i, ufloat_value in enumerate(self.result.velocity_rtn):
             self.assertAlmostEqual(
                 covariance[i, i], ufloat_value.std_dev ** 2, places=10
             )
@@ -297,7 +297,7 @@ class TestQualityFlagBranches(unittest.TestCase):
         failed_result = OptimizeSolarWindProtonParamsResult(
             sw_params=SolarWindParams(
                 density=1.0,
-                bulk_velocity_rtn=np.array([-1.0, 0.0, 0.0]),
+                velocity_rtn=np.array([-1.0, 0.0, 0.0]),
                 temperature=1.0,
                 mass=PROTON_MASS_KG,
             ),
@@ -319,7 +319,7 @@ class TestQualityFlagBranches(unittest.TestCase):
         too_hot_result = OptimizeSolarWindProtonParamsResult(
             sw_params=SolarWindParams(
                 density=_TRUE_DENSITY_CM3,
-                bulk_velocity_rtn=_TRUE_BULK_VELOCITY_RTN_KM_S.copy(),
+                velocity_rtn=_TRUE_VELOCITY_RTN_KM_S.copy(),
                 temperature=too_hot_temperature,
                 mass=PROTON_MASS_KG,
             ),
@@ -337,7 +337,7 @@ class TestQualityFlagBranches(unittest.TestCase):
         self.assertEqual(result.bad_fit_flag, int(SwapiL3Flags.BAD_FIT))
         self.assertTrue(np.isnan(result.density.nominal_value))
         self.assertTrue(np.isnan(result.temperature.nominal_value))
-        for component in result.bulk_velocity_rtn:
+        for component in result.velocity_rtn:
             self.assertTrue(np.isnan(component.nominal_value))
 
 
@@ -362,7 +362,7 @@ class TestPipelineOrder(unittest.TestCase):
         post_escape_result = OptimizeSolarWindProtonParamsResult(
             sw_params=SolarWindParams(
                 density=post_escape_density,
-                bulk_velocity_rtn=post_escape_velocity,
+                velocity_rtn=post_escape_velocity,
                 temperature=post_escape_temperature,
                 mass=PROTON_MASS_KG,
             ),
@@ -379,7 +379,7 @@ class TestPipelineOrder(unittest.TestCase):
         ):
             result = fit_solar_wind_proton_model(self.fit_ctx)
 
-        # density alone is decisive: it, temperature, and bulk_velocity_rtn
+        # density alone is decisive: it, temperature, and velocity_rtn
         # propagate together from the same OptimizeSolarWindProtonParamsResult.
         self.assertAlmostEqual(
             result.density.nominal_value, post_escape_density

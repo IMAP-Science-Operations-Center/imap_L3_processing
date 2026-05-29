@@ -50,9 +50,11 @@ from imap_l3_processing.swapi.l3a.utils import get_swapi_geometry
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 from imap_l3_processing.swapi.constants import (
+    SWAPI_BIN_PERIOD_S,
     SWAPI_COARSE_SWEEP_BINS,
     SWAPI_FINE_SWEEP_BINS,
     SWAPI_L2_K_FACTOR,
+    SWAPI_LIVETIME_CENTER_OFFSET_S,
     SWAPI_SCIENCE_BINS,
 )
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
@@ -91,18 +93,19 @@ _PROTON_SCALAR_KEYS = [
     "proton_sw_density", "proton_sw_density_uncert",
 ]
 _PROTON_ARRAY_KEYS = [
-    "proton_sw_bulk_velocity_rtn_sun",
-    "proton_sw_bulk_velocity_rtn_sc",
-    "proton_sw_bulk_velocity_rtn_covariance",
+    "proton_sw_velocity_rtn_sun",
+    "proton_sw_velocity_rtn",
+    "proton_sw_velocity_rtn_covariance",
 ]
 _ALPHA_SCALAR_KEYS = [
     "alpha_sw_speed", "alpha_sw_speed_uncert",
+    "alpha_sw_speed_sun", "alpha_sw_speed_sun_uncert",
     "alpha_sw_density", "alpha_sw_density_uncert",
     "alpha_sw_temperature", "alpha_sw_temperature_uncert",
 ]
 _ALPHA_ARRAY_KEYS = [
     "alpha_sw_velocity_rtn_sun",
-    "alpha_sw_velocity_rtn_sc",
+    "alpha_sw_velocity_rtn",
     "alpha_sw_velocity_rtn_covariance",
 ]
 _ALPHA_BUMP_BINS = slice(24, 31)
@@ -122,9 +125,10 @@ def _spice_rotations(bin_slice):
     """SPICE-derived SWAPI→RTN rotations at the synthetic chunk's measurement
     times over `bin_slice`."""
     bin_indices = np.arange(bin_slice.start, bin_slice.stop)
+    seconds_into_sweep = bin_indices * SWAPI_BIN_PERIOD_S + SWAPI_LIVETIME_CENTER_OFFSET_S
     measurement_times = (
         _SCI_START_TIME[:, np.newaxis]
-        + bin_indices * (12 / 72 * ONE_SECOND_IN_NANOSECONDS)
+        + seconds_into_sweep * ONE_SECOND_IN_NANOSECONDS
     ).flatten()
     return get_swapi_geometry(measurement_times)
 
@@ -196,13 +200,13 @@ def _synthesize_chunk(*, response, rotations, proton_velocity_rtn, alpha_velocit
     )
     proton_truth = SolarWindParams(
         density=_TRUE_DENSITY,
-        bulk_velocity_rtn=proton_velocity_rtn.copy(),
+        velocity_rtn=proton_velocity_rtn.copy(),
         temperature=_TRUE_TEMPERATURE_K,
         mass=PROTON_MASS_KG,
     )
     alpha_truth = SolarWindParams(
         density=_TRUE_ALPHA_DENSITY,
-        bulk_velocity_rtn=alpha_velocity_rtn.copy(),
+        velocity_rtn=alpha_velocity_rtn.copy(),
         temperature=_TRUE_ALPHA_TEMPERATURE_K,
         mass=ALPHA_PARTICLE_MASS_KG,
     )
@@ -378,7 +382,7 @@ class TestProtonChunkFitterFitChunk(SpiceTestCase):
             delta=0.05 * _TRUE_TEMPERATURE_K,
         )
         np.testing.assert_allclose(
-            self.result["proton_sw_bulk_velocity_rtn_sc"], self.true_proton_velocity_rtn, atol=5.0
+            self.result["proton_sw_velocity_rtn"], self.true_proton_velocity_rtn, atol=5.0
         )
 
     def test_uncertainties_are_strictly_positive(self):
@@ -393,40 +397,40 @@ class TestProtonChunkFitterFitChunk(SpiceTestCase):
         """Reported proton speed equals the magnitude of the SC-frame bulk velocity (rotation to DPS is norm-preserving)."""
         np.testing.assert_allclose(
             self.result["proton_sw_speed"],
-            np.linalg.norm(self.result["proton_sw_bulk_velocity_rtn_sc"]),
+            np.linalg.norm(self.result["proton_sw_velocity_rtn"]),
             rtol=1e-9,
         )
 
     def test_sun_frame_velocity_is_sc_frame_plus_sc_velocity(self):
         """Sun-frame velocity is the SC-frame velocity plus the SC orbital velocity, and Sun-frame speed is its magnitude."""
         np.testing.assert_allclose(
-            self.result["proton_sw_bulk_velocity_rtn_sun"],
-            self.result["proton_sw_bulk_velocity_rtn_sc"] + _SC_VELOCITY_RTN,
+            self.result["proton_sw_velocity_rtn_sun"],
+            self.result["proton_sw_velocity_rtn"] + _SC_VELOCITY_RTN,
             atol=1e-9,
         )
         np.testing.assert_allclose(
             self.result["proton_sw_speed_sun"],
-            np.linalg.norm(self.result["proton_sw_bulk_velocity_rtn_sun"]),
+            np.linalg.norm(self.result["proton_sw_velocity_rtn_sun"]),
             rtol=1e-9,
         )
 
-    def test_speed_matches_magnitude_of_bulk_velocity_rtn(self):
+    def test_speed_matches_magnitude_of_velocity_rtn(self):
         """`proton_sw_speed` is the magnitude of the SC-frame RTN bulk velocity (magnitude is rotation-invariant)."""
         np.testing.assert_allclose(
             self.result["proton_sw_speed"],
-            np.linalg.norm(self.result["proton_sw_bulk_velocity_rtn_sc"]),
+            np.linalg.norm(self.result["proton_sw_velocity_rtn"]),
             rtol=1e-12,
         )
 
     def test_velocity_covariance_is_symmetric_psd(self):
         """The 3x3 velocity covariance is symmetric and positive-semidefinite."""
-        covariance = self.result["proton_sw_bulk_velocity_rtn_covariance"]
+        covariance = self.result["proton_sw_velocity_rtn_covariance"]
         self.assertEqual(covariance.shape, (3, 3))
         np.testing.assert_allclose(covariance, covariance.T, atol=1e-12)
         self.assertGreaterEqual(np.linalg.eigvalsh(covariance)[0], 0.0)
 
     def test_missing_sc_velocity_fills_only_sun_frame_outputs(self):
-        """Calling fit_chunk with no SC velocity still runs the proton fit normally: density, temperature, SC-frame bulk velocity, covariance, and peak speed are populated from the fit; only the sun-frame outputs (`proton_sw_speed_sun`, `proton_sw_bulk_velocity_rtn_sun`) are fill values."""
+        """Calling fit_chunk with no SC velocity still runs the proton fit normally: density, temperature, SC-frame bulk velocity, covariance, and peak speed are populated from the fit; only the sun-frame outputs (`proton_sw_speed_sun`, `proton_sw_velocity_rtn_sun`) are fill values."""
         result = ProtonChunkFitter().fit_chunk(
             self.chunk, _CHUNK_EPOCH, self.rotations, None
         )
@@ -434,7 +438,7 @@ class TestProtonChunkFitterFitChunk(SpiceTestCase):
 
         self.assertTrue(np.isnan(result["proton_sw_speed_sun"]))
         self.assertTrue(np.isnan(result["proton_sw_speed_sun_uncert"]))
-        self.assertTrue(np.all(np.isnan(result["proton_sw_bulk_velocity_rtn_sun"])))
+        self.assertTrue(np.all(np.isnan(result["proton_sw_velocity_rtn_sun"])))
 
         self.assertAlmostEqual(
             result["proton_sw_density"], _TRUE_DENSITY, delta=0.05 * _TRUE_DENSITY
@@ -445,12 +449,12 @@ class TestProtonChunkFitterFitChunk(SpiceTestCase):
             delta=0.05 * _TRUE_TEMPERATURE_K,
         )
         np.testing.assert_allclose(
-            result["proton_sw_bulk_velocity_rtn_sc"],
+            result["proton_sw_velocity_rtn"],
             self.true_proton_velocity_rtn,
             atol=5.0,
         )
         self.assertTrue(
-            np.all(np.isfinite(result["proton_sw_bulk_velocity_rtn_covariance"]))
+            np.all(np.isfinite(result["proton_sw_velocity_rtn_covariance"]))
         )
         self.assertTrue(np.isfinite(result["proton_sw_speed"]))
 
@@ -536,7 +540,7 @@ class TestAlphaChunkFitterFitChunk(SpiceTestCase):
             delta=0.10 * _TRUE_ALPHA_TEMPERATURE_K,
         )
         np.testing.assert_allclose(
-            self.happy_result["alpha_sw_velocity_rtn_sc"], self.true_alpha_velocity_rtn, atol=5.0
+            self.happy_result["alpha_sw_velocity_rtn"], self.true_alpha_velocity_rtn, atol=5.0
         )
         np.testing.assert_allclose(
             self.happy_result["alpha_sw_speed"],
@@ -545,12 +549,32 @@ class TestAlphaChunkFitterFitChunk(SpiceTestCase):
         )
 
     def test_sun_frame_velocity_is_sc_frame_plus_sc_velocity(self):
-        """Sun-frame alpha velocity is the SC-frame velocity plus the SC orbital velocity."""
+        """Sun-frame alpha velocity is the SC-frame velocity plus the SC orbital velocity, and `alpha_sw_speed_sun` is its magnitude."""
         np.testing.assert_allclose(
             self.happy_result["alpha_sw_velocity_rtn_sun"],
-            self.happy_result["alpha_sw_velocity_rtn_sc"] + _SC_VELOCITY_RTN,
+            self.happy_result["alpha_sw_velocity_rtn"] + _SC_VELOCITY_RTN,
             atol=1e-9,
         )
+        np.testing.assert_allclose(
+            self.happy_result["alpha_sw_speed_sun"],
+            np.linalg.norm(self.happy_result["alpha_sw_velocity_rtn_sun"]),
+            atol=1e-9,
+        )
+
+    def test_missing_sc_velocity_fills_only_sun_frame_outputs(self):
+        """Calling fit_chunk with no SC velocity still recovers the alpha moments; only the sun-frame outputs (`alpha_sw_speed_sun`, `alpha_sw_velocity_rtn_sun`) are fill values."""
+        result = self.fitter.fit_chunk(
+            self.chunk, _CHUNK_EPOCH, self.rotations, None, _B_HAT_RTN
+        )
+        self.assertEqual(int(result["quality_flags"]), int(SwapiL3Flags.NONE))
+
+        self.assertTrue(np.isnan(result["alpha_sw_speed_sun"]))
+        self.assertTrue(np.isnan(result["alpha_sw_speed_sun_uncert"]))
+        self.assertTrue(np.all(np.isnan(result["alpha_sw_velocity_rtn_sun"])))
+
+        self.assertTrue(np.isfinite(result["alpha_sw_speed"]))
+        self.assertTrue(np.isfinite(result["alpha_sw_density"]))
+        self.assertTrue(np.all(np.isfinite(result["alpha_sw_velocity_rtn"])))
 
     def test_quality_flag_none_on_clean_chunk(self):
         """A clean chunk yields a NONE quality flag (both Stage 1 and Stage 2 converged)."""
@@ -693,7 +717,7 @@ class TestProtonChunkFitterQualityFlags(SpiceTestCase):
         mock_fit_proton.return_value = ProtonSolarWindFitResult(
             density=nan,
             temperature=nan,
-            bulk_velocity_rtn=(nan, nan, nan),
+            velocity_rtn=(nan, nan, nan),
             bad_fit_flag=int(SwapiL3Flags.FIT_ERROR),
         )
 
@@ -706,7 +730,7 @@ class TestProtonChunkFitterQualityFlags(SpiceTestCase):
         """A NaN-valued initial guess causes scipy `least_squares` to reject `x0` as infeasible; the chunk fitter catches the exception, surfaces `FIT_ERROR`, and falls back to peak-bin speed. Mocked because `calculate_initial_guess` never returns NaN from real inputs (it raises instead)."""
         mock_initial_guess.return_value = SolarWindParams(
             density=np.nan,
-            bulk_velocity_rtn=np.full(3, np.nan),
+            velocity_rtn=np.full(3, np.nan),
             temperature=np.nan,
             mass=PROTON_MASS_KG,
         )
@@ -937,7 +961,7 @@ class TestPuiChunkFitterPrecomputeGeometry(unittest.TestCase):
         mock_calculate_pui_energy_cutoff.side_effect = [100.0, 200.0]
         mock_build_vasyliunas_siscoe_distribution.return_value = vs_dist
         fitter = self._make_fitter({
-            "proton_sw_bulk_velocity_rtn_sc": np.array([[1.0, 2.0, 3.0]]),
+            "proton_sw_velocity_rtn": np.array([[1.0, 2.0, 3.0]]),
             "quality_flags": np.array([int(SwapiL3Flags.BAD_FIT)]),
         })
 
@@ -976,7 +1000,7 @@ class TestPuiChunkFitterPrecomputeGeometry(unittest.TestCase):
         mock_calculate_pui_energy_cutoff.side_effect = [1.0, 2.0]
         mock_build_vasyliunas_siscoe_distribution.return_value = Mock()
         fitter = self._make_fitter({
-            "proton_sw_bulk_velocity_rtn_sc": np.array([[1.0, 2.0, 3.0]]),
+            "proton_sw_velocity_rtn": np.array([[1.0, 2.0, 3.0]]),
             "quality_flags": np.array([int(SwapiL3Flags.NONE)]),
         })
 
@@ -1002,7 +1026,7 @@ class TestPuiChunkFitterPrecomputeGeometry(unittest.TestCase):
             (50, 62, 3), 0.0
         )
         fitter = self._make_fitter({
-            "proton_sw_bulk_velocity_rtn_sc": np.array([[1.0, 2.0, 3.0]]),
+            "proton_sw_velocity_rtn": np.array([[1.0, 2.0, 3.0]]),
             "quality_flags": np.array([int(SwapiL3Flags.NONE)]),
         })
 
@@ -1035,7 +1059,7 @@ class TestPuiChunkFitterPrecomputeGeometry(unittest.TestCase):
         )
         mock_build_vasyliunas_siscoe_distribution.side_effect = _SpiceyError("gap")
         fitter = self._make_fitter({
-            "proton_sw_bulk_velocity_rtn_sc": np.array([[1.0, 2.0, 3.0]]),
+            "proton_sw_velocity_rtn": np.array([[1.0, 2.0, 3.0]]),
             "quality_flags": np.array([int(SwapiL3Flags.NONE)]),
         })
 
@@ -1123,15 +1147,14 @@ class TestPuiChunkFitterFitChunk(unittest.TestCase):
         self, mock_calculate_pickup_ion, mock_density, mock_temperature
     ):
         """The output quality flag is the bitwise OR of the per-fit flag returned by `calculate_pickup_ion_values` and the upstream proton-SW quality flag."""
+        nan = ufloat(np.nan, np.nan)
         mock_calculate_pickup_ion.return_value = PickupIonFitResult(
             fitting_params=FittingParameters(
-                1.5, 1e-7, 450.0, 0.3, int(SwapiL3Flags.BAD_FIT)
+                nan, nan, nan, nan, int(SwapiL3Flags.BAD_FIT)
             ),
             chunk_response=Mock(),
             vasyliunas_siscoe_distribution=Mock(),
         )
-        mock_density.return_value = ufloat(5.0, 0.5)
-        mock_temperature.return_value = ufloat(1e6, 1e5)
 
         result = self.fitter.fit_chunk(
             _pui_chunk(_EPOCH_TT2000),
@@ -1148,6 +1171,36 @@ class TestPuiChunkFitterFitChunk(unittest.TestCase):
             result["quality_flags"],
             int(SwapiL3Flags.BAD_FIT) | int(SwapiL3Flags.FIT_ERROR),
         )
+
+    def test_bad_fit_skips_moment_helpers_and_fills_density_and_temperature(
+        self, mock_calculate_pickup_ion, mock_density, mock_temperature
+    ):
+        """A `BAD_FIT` fit returns NaN-filled parameters, so the chunk fitter skips the moment helpers entirely (a NaN cutoff speed would otherwise crash them) and leaves density and temperature as NaN fill."""
+        nan = ufloat(np.nan, np.nan)
+        mock_calculate_pickup_ion.return_value = PickupIonFitResult(
+            fitting_params=FittingParameters(
+                nan, nan, nan, nan, int(SwapiL3Flags.BAD_FIT)
+            ),
+            chunk_response=Mock(),
+            vasyliunas_siscoe_distribution=Mock(),
+        )
+
+        result = self.fitter.fit_chunk(
+            _pui_chunk(_EPOCH_TT2000),
+            self.epoch,
+            self.sw_velocity_rtn,
+            self.bulk_sw_per_bin_swapi,
+            int(SwapiL3Flags.NONE),
+            self.lower_energy_cutoff,
+            self.upper_energy_cutoff,
+            self.vasyliunas_siscoe_distribution,
+        )
+
+        mock_density.assert_not_called()
+        mock_temperature.assert_not_called()
+        self.assertTrue(np.isnan(result["density"].nominal_value))
+        self.assertTrue(np.isnan(result["temperature"].nominal_value))
+        self.assertEqual(result["quality_flags"], int(SwapiL3Flags.BAD_FIT))
 
     def test_nan_in_count_rates_fills_outputs_and_skips_fit(
         self, mock_calculate_pickup_ion, mock_density, mock_temperature
@@ -1198,23 +1251,19 @@ class TestPuiChunkFitterFitChunk(unittest.TestCase):
             self.assertTrue(np.isnan(result[key].nominal_value), msg=key)
         self.assertEqual(result["quality_flags"], int(SwapiL3Flags.NONE))
 
-    def test_nan_in_bulk_sw_per_bin_swapi_fills_outputs_and_skips_fit(
+    def test_nan_vasyliunas_siscoe_distribution_none_fills_outputs_and_skips_fit(
         self, mock_calculate_pickup_ion, mock_density, mock_temperature
     ):
-        """A NaN in the per-bin SWAPI velocity (SPICE-gap fill from upstream)
-        short-circuits the fit even when the RTN average is finite."""
-        bulk_sw_per_bin_swapi_with_nan = self.bulk_sw_per_bin_swapi.copy()
-        bulk_sw_per_bin_swapi_with_nan[3, 17, 0] = np.nan
-
+        """A `None` Vasyliunas-Siscoe distribution (SPICE gap building the chunk state, with finite velocity) short-circuits the fit just like a missing input."""
         result = self.fitter.fit_chunk(
             _pui_chunk(_EPOCH_TT2000),
             self.epoch,
             self.sw_velocity_rtn,
-            bulk_sw_per_bin_swapi_with_nan,
+            self.bulk_sw_per_bin_swapi,
             int(SwapiL3Flags.NONE),
             self.lower_energy_cutoff,
             self.upper_energy_cutoff,
-            self.vasyliunas_siscoe_distribution,
+            None,
         )
 
         mock_calculate_pickup_ion.assert_not_called()

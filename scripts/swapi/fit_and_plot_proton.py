@@ -245,9 +245,9 @@ with CDF(str(output_cdf_path)) as proton_cdf:
     swapi_temperature_uncertainty = read_numeric_variable(proton_cdf["proton_sw_temperature_uncert"])
     swapi_speed = read_numeric_variable(proton_cdf["proton_sw_speed"])
     swapi_speed_uncertainty = read_numeric_variable(proton_cdf["proton_sw_speed_uncert"])
-    swapi_velocity_rtn = read_numeric_variable(proton_cdf["proton_sw_bulk_velocity_rtn_sun"])
+    swapi_velocity_rtn = read_numeric_variable(proton_cdf["proton_sw_velocity_rtn_sun"])
     swapi_velocity_rtn_covariance = read_numeric_variable(
-        proton_cdf["proton_sw_bulk_velocity_rtn_covariance"])
+        proton_cdf["proton_sw_velocity_rtn_covariance"])
 
 good_record_mask = quality_flags == 0
 timestamps = timestamps[good_record_mask]

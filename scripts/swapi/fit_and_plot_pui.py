@@ -121,19 +121,12 @@ def replay_chunk_spectrum(dependencies, data_chunk, center_of_epoch,
         dependencies.density_of_neutral_helium_calibration_table,
         dependencies.helium_inflow_vector,
     )
-    radius_in_au = vasyliunas_siscoe_distribution.distance_km / ONE_AU_IN_KM
-    min_speed_kms = max(
-        1.0,
-        sw_velocity_kms * 0.8
-        * dependencies.density_of_neutral_helium_calibration_table.get_minimum_distance()
-        / radius_in_au)
     chunk_response = build_chunk_collapsed_response(
         swapi_response=dependencies.swapi_response,
         voltages_v=extracted_voltages,
         bulk_sw_per_bin_kms=extracted_bulk_sw_per_bin_swapi_kms,
         mass_per_charge_m_p_per_e=_HELIUM_MASS_PER_CHARGE_M_P_PER_E,
         cutoff_speed_max_kms=sw_velocity_kms * 1.2,
-        min_speed_kms=min_speed_kms,
         central_effective_area_scale=central_effective_area_scale,
     )
     modeled_per_sweep = calculate_coincidence_rate(

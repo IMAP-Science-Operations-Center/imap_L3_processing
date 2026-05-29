@@ -184,7 +184,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
             [[2, 2, 2, 0], [0, 0, 0, 0]]
         ])
 
-        position = np.ma.masked_array(data=np.array([
+        apd_id = np.ma.masked_array(data=np.array([
             [[2, 24, 2, 255], [1, 25, 255, 255]],
             [[9, 9, 9, 255], [1, 255, 255, 255]]
         ]), mask=np.array([
@@ -215,7 +215,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
         direct_event_data.mass_per_charge = mass_per_charge
         direct_event_data.energy_step = energy_step
         direct_event_data.spin_sector = spin_sector_indices
-        direct_event_data.position = position
+        direct_event_data.apd_id = apd_id
         direct_event_data.normalization_per_event = normalized_per_event
         direct_event_data.num_events = num_events
 
@@ -470,10 +470,8 @@ class TestCodiceLoCalculations(unittest.TestCase):
         counts = np.stack((priority_1, priority_2, priority_3), axis=1)
 
         acquisition_durations_in_seconds = rng.random((num_epochs, num_energies,))
-        acquisition_duration_in_microseconds = acquisition_durations_in_seconds
 
-        actual_count_rates = combine_priorities_for_species_and_convert_to_rate(counts,
-                                                                                acquisition_duration_in_microseconds)
+        actual_count_rates = combine_priorities_for_species_and_convert_to_rate(counts,acquisition_durations_in_seconds)
         expected_summed_counts = priority_1 + priority_2 + priority_3
 
         self.assertEqual((num_epochs, num_energies, num_spin_sectors, num_azimuth_bins),
@@ -516,8 +514,8 @@ class TestCodiceLoCalculations(unittest.TestCase):
     def test_rebin_azimuth_to_elevation(self):
         num_epochs = 3
         num_energies = 6
-        num_spin_angles = 5
-        num_azimuth_bins = 4
+        num_spin_angles = 24
+        num_azimuth_bins = 24
 
         intensity_data = np.zeros((num_epochs, num_energies, num_spin_angles, num_azimuth_bins))
         azimuth_1_intensity = 1
@@ -532,15 +530,17 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         azimuths = np.array([1, 2, 3, 4])
 
-        num_elevation_bins = 3
+        num_elevation_bins = 13
         mock_position_to_elevation_lookup = Mock(spec=PositionToElevationLookup)
         mock_position_to_elevation_lookup.num_bins = num_elevation_bins
         mock_position_to_elevation_lookup.bin_centers = np.arange(num_elevation_bins)
         mock_position_to_elevation_lookup.apd_to_elevation_index.return_value = np.array([1, 0, 2, 2])
 
+        half_spin_per_esa = np.zeros((num_epochs, num_energies))
         actual_rebinned = rebin_3d_distribution_azimuth_to_elevation(intensity_data,
                                                                      azimuths,
-                                                                     mock_position_to_elevation_lookup)
+                                                                     mock_position_to_elevation_lookup,
+                                                                     half_spin_per_esa)
 
         mock_position_to_elevation_lookup.apd_to_elevation_index.assert_called_once_with(azimuths)
 

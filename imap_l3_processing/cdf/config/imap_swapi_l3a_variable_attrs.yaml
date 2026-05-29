@@ -1,10 +1,10 @@
 epoch:
   NAME: epoch
   DATA_TYPE: CDF_TIME_TT2000
-  CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
+  FIELDNAM: Epoch
+  CATDESC: Center-of-window time, number of nanoseconds since J2000 with leap seconds included
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Epoch
   FORMAT: ' '
   LABLAXIS: Epoch
   UNITS: ns
@@ -22,10 +22,10 @@ epoch:
 epoch_delta:
   NAME: epoch_delta
   DATA_TYPE: CDF_INT8
-  CATDESC: Epoch delta
+  FIELDNAM: Epoch Delta
+  CATDESC: Half-width of the time interval represented by each record
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Epoch Delta
   FORMAT: I19
   UNITS: ns
   VALIDMIN: 0
@@ -37,15 +37,15 @@ epoch_delta:
 pui_cooling_index:
   NAME: pui_cooling_index
   DATA_TYPE: CDF_REAL4
+  FIELDNAM: PUI Cooling Index
   CATDESC: Pickup ion cooling index
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: PUI Cooling Index
   FORMAT: F19.3
-  LABLAXIS: PUI cooling idx
+  LABLAXIS: Cool Idx
   UNITS: ' '
   VALIDMIN: 0
   VALIDMAX: 5
@@ -58,12 +58,12 @@ pui_cooling_index:
 pui_cooling_index_uncert:
   NAME: pui_cooling_index_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Pickup ion cooling index uncertainty
+  FIELDNAM: PUI Cooling Index Uncertainty
+  CATDESC: 1-sigma standard error
+  LABLAXIS: Cool Idx Err
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: PUI Cooling Index Uncertainty
-  LABLAXIS: PUI cooling idx uncertainty
   FORMAT: F19.3
   UNITS: ' '
   VALIDMIN: 0
@@ -72,20 +72,20 @@ pui_cooling_index_uncert:
 pui_ionization_rate:
   NAME: pui_ionization_rate
   DATA_TYPE: CDF_REAL4
+  FIELDNAM: PUI Ionization Rate
   CATDESC: Pickup ion ionization rate
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: PUI Ionization Rate
-  FORMAT: F19.3
-  LABLAXIS: PUI IR
-  UNITS: s!E-1!N
+  FORMAT: E19.3
+  LABLAXIS: Ion Rate
+  UNITS: s^-1
   VALIDMIN: 0
   VALIDMAX: 1.0
   FILLVAL: -1.000000e+31
-  SCALE_TYP: linear
+  SCALETYP: linear
   SCALEMIN: 0
   SCALEMAX: 9.0e-7
   DELTA_PLUS_VAR: pui_ionization_rate_uncert
@@ -93,29 +93,29 @@ pui_ionization_rate:
 pui_ionization_rate_uncert:
   NAME: pui_ionization_rate_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Pickup ion ionization rate uncertainty
+  FIELDNAM: PUI Ionization Rate Uncertainty
+  CATDESC: 1-sigma standard error
+  LABLAXIS: Ion Rate Err
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: PUI Ionization Rate Uncertainty
-  LABLAXIS: PUI IR uncertainty
-  FORMAT: F19.3
-  UNITS: s!E-1!N
+  FORMAT: E19.3
+  UNITS: s^-1
   VALIDMIN: 0
   VALIDMAX: 1.0
   FILLVAL: -1.000000e+31
 pui_cutoff_speed:
   NAME: pui_cutoff_speed
   DATA_TYPE: CDF_REAL4
-  CATDESC: Pickup ion cutoff speed
+  FIELDNAM: PUI Cutoff Speed
+  CATDESC: Pickup ion cutoff speed in the solar wind frame
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: PUI Cutoff Speed
   FORMAT: F19.3
-  LABLAXIS: PUI cutoff speed
+  LABLAXIS: Cutoff V
   UNITS: km/s
   VALIDMIN: 0
   VALIDMAX: 10000
@@ -128,12 +128,12 @@ pui_cutoff_speed:
 pui_cutoff_speed_uncert:
   NAME: pui_cutoff_speed_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Pickup ion cutoff speed uncertainty
+  FIELDNAM: PUI Cutoff Speed Uncertainty
+  CATDESC: 1-sigma standard error
+  LABLAXIS: Cutoff V Err
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: PUI Cutoff Speed Uncertainty
-  LABLAXIS: PUI cutoff speed uncertainty
   FORMAT: F19.3
   UNITS: km/s
   VALIDMIN: 0
@@ -142,16 +142,16 @@ pui_cutoff_speed_uncert:
 pui_background_count_rate:
   NAME: pui_background_count_rate
   DATA_TYPE: CDF_REAL4
+  FIELDNAM: PUI Background Count Rate
   CATDESC: Pickup ion background count rate
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: PUI Background Count Rate
-  FORMAT: F19.3
-  LABLAXIS: PUI background count rate
-  UNITS: s!E-1!N
+  FORMAT: E19.3
+  LABLAXIS: Bg Rate
+  UNITS: s^-1
   VALIDMIN: 0
   VALIDMAX: 9223372036854775807
   FILLVAL: -1.000000e+31
@@ -163,32 +163,32 @@ pui_background_count_rate:
 pui_background_count_rate_uncert:
   NAME: pui_background_count_rate_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Pickup ion background count rate uncertainty
+  FIELDNAM: PUI Background Count Rate Uncertainty
+  CATDESC: 1-sigma standard error
+  LABLAXIS: Bg Rate Err
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: PUI background count rate Uncertainty
-  LABLAXIS: PUI background count rate uncertainty
-  FORMAT: F19.3
-  UNITS: s!E-1!N
+  FORMAT: E19.3
+  UNITS: s^-1
   VALIDMIN: 0
   VALIDMAX: 1.0
   FILLVAL: -1.000000e+31
 pui_density:
   NAME: pui_density
   DATA_TYPE: CDF_REAL4
-  CATDESC: Pickup ion density
+  FIELDNAM: PUI Density
+  CATDESC: Pickup ion number density
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: PUI Density
-  FORMAT: F19.3
-  LABLAXIS: PUI density
-  UNITS: cm!E-3!N
+  FORMAT: E19.3
+  LABLAXIS: n_PUI
+  UNITS: cm^-3
   VALIDMIN: 0
-  VALIDMAX: 9223372036854775807
+  VALIDMAX: 1.0
   FILLVAL: -1.000000e+31
   SCALETYP: log
   SCALEMIN: 0.0001
@@ -198,29 +198,29 @@ pui_density:
 pui_density_uncert:
   NAME: pui_density_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Pickup ion density uncertainty
+  FIELDNAM: PUI Density Uncertainty
+  CATDESC: 1-sigma standard error
+  LABLAXIS: n_PUI Err
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: PUI Density Uncertainty
-  LABLAXIS: PUI density uncertainty
-  FORMAT: F19.3
-  UNITS: cm!E-3!N
+  FORMAT: E19.3
+  UNITS: cm^-3
   VALIDMIN: 0
   VALIDMAX: 1.0
   FILLVAL: -1.000000e+31
 pui_temperature:
   NAME: pui_temperature
   DATA_TYPE: CDF_REAL4
+  FIELDNAM: PUI Temperature
   CATDESC: Pickup ion temperature
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: PUI Temperature
-  FORMAT: F19.3
-  LABLAXIS: PUI temperature
+  FORMAT: E19.3
+  LABLAXIS: T_PUI
   UNITS: K
   VALIDMIN: 0
   VALIDMAX: 5.0e+7
@@ -233,13 +233,13 @@ pui_temperature:
 pui_temperature_uncert:
   NAME: pui_temperature_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Pickup ion temperature uncertainty
+  FIELDNAM: PUI Temperature Uncertainty
+  CATDESC: 1-sigma standard error
+  LABLAXIS: T_PUI Err
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: PUI Temperature Uncertainty
-  LABLAXIS: PUI temperature uncertainty
-  FORMAT: F19.3
+  FORMAT: E19.3
   UNITS: K
   VALIDMIN: 0
   VALIDMAX: 5.0e+7
@@ -247,15 +247,15 @@ pui_temperature_uncert:
 proton_sw_speed:
   NAME: proton_sw_speed
   DATA_TYPE: CDF_REAL4
-  CATDESC: Speed of proton solar wind
+  FIELDNAM: Proton Solar Wind Speed
+  CATDESC: Magnitude of the bulk velocity vector of the solar wind proton population (spacecraft frame)
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Proton Solar Wind Speed
   FORMAT: F19.3
-  LABLAXIS: Proton solar wind speed
+  LABLAXIS: Vp SC
   UNITS: km/s
   VALIDMIN: 0
   VALIDMAX: 10000
@@ -268,29 +268,29 @@ proton_sw_speed:
 proton_sw_speed_uncert:
   NAME: proton_sw_speed_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Proton solar wind speed uncertainty
+  FIELDNAM: Proton Solar Wind Speed Uncertainty
+  CATDESC: 1-sigma standard error
+  LABLAXIS: Vp SC Err
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Proton Solar Wind Speed Uncertainty
   FORMAT: F19.3
   UNITS: km/s
   VALIDMIN: 0
   VALIDMAX: 10000
   FILLVAL: -1.000000e+31
-  LABLAXIS: H+ SW speed uncertainty
 proton_sw_speed_sun:
   NAME: proton_sw_speed_sun
   DATA_TYPE: CDF_REAL4
-  CATDESC: Speed of proton solar wind in the sun's rest frame
+  FIELDNAM: Proton Solar Wind Speed (Sun Frame)
+  CATDESC: Magnitude of the bulk velocity vector of the solar wind proton population (Sun frame)
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Proton Solar Wind Speed Sun
   FORMAT: F19.3
-  LABLAXIS: H+ SW speed sun
+  LABLAXIS: Vp Sun
   UNITS: km/s
   VALIDMIN: 0
   VALIDMAX: 10000
@@ -303,29 +303,29 @@ proton_sw_speed_sun:
 proton_sw_speed_sun_uncert:
   NAME: proton_sw_speed_sun_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Proton solar wind speed uncertainty in the sun's rest frame
+  FIELDNAM: Proton Solar Wind Speed Uncertainty (Sun Frame)
+  CATDESC: 1-sigma standard error
+  LABLAXIS: Vp Sun Err
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Proton Solar Wind Speed Sun Uncertainty
   FORMAT: F19.3
   UNITS: km/s
   VALIDMIN: 0
   VALIDMAX: 10000
   FILLVAL: -1.000000e+31
-  LABLAXIS: H+ SW speed sun uncertainty
 proton_sw_temperature:
   NAME: proton_sw_temperature
   DATA_TYPE: CDF_REAL4
-  CATDESC: Temperature of proton solar wind
+  FIELDNAM: Proton Solar Wind Temperature
+  CATDESC: Scalar temperature of the solar wind proton population
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Proton Solar Wind Temperature
-  FORMAT: F19.3
-  LABLAXIS: Proton solar wind T
+  FORMAT: E19.3
+  LABLAXIS: Tp
   UNITS: K
   VALIDMIN: 0
   VALIDMAX: 7000000
@@ -338,30 +338,30 @@ proton_sw_temperature:
 proton_sw_temperature_uncert:
   NAME: proton_sw_temperature_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Proton solar wind temperature uncertainty
+  FIELDNAM: Proton Solar Wind Temperature Uncertainty
+  CATDESC: 1-sigma standard error
+  LABLAXIS: Tp Err
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Proton SW Temperature Uncertainty
-  FORMAT: F19.3
+  FORMAT: E19.3
   UNITS: K
   VALIDMIN: 0
   VALIDMAX: 7000000
   FILLVAL: -1.000000e+31
-  LABLAXIS: H+ SW T uncertainty
 proton_sw_density:
   NAME: proton_sw_density
   DATA_TYPE: CDF_REAL4
-  CATDESC: Density of proton solar wind
+  FIELDNAM: Proton Solar Wind Density
+  CATDESC: Number density of the solar wind proton population
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Density of Proton Solar Wind
-  FORMAT: F19.3
-  LABLAXIS: H+ SW density
-  UNITS: cm!E-3!N
+  FORMAT: E19.3
+  LABLAXIS: Np
+  UNITS: cm^-3
   VALIDMIN: 0
   VALIDMAX: 150
   FILLVAL: -1.000000e+31
@@ -373,77 +373,101 @@ proton_sw_density:
 proton_sw_density_uncert:
   NAME: proton_sw_density_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Proton solar wind density uncertainty
+  FIELDNAM: Proton Solar Wind Density Uncertainty
+  CATDESC: 1-sigma standard error
+  LABLAXIS: Np Err
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Proton Solar Wind Density Uncertainty
-  FORMAT: F19.3
-  UNITS: cm!E-3!N
+  FORMAT: E19.3
+  UNITS: cm^-3
   VALIDMIN: 0
   VALIDMAX: 150
   FILLVAL: -1.000000e+31
-  LABLAXIS: H+ SW density uncertainty
-proton_sw_bulk_velocity_rtn_sun:
-  NAME: proton_sw_bulk_velocity_rtn_sun
+proton_sw_velocity_rtn_sun:
+  NAME: proton_sw_velocity_rtn_sun
   DATA_TYPE: CDF_REAL4
-  CATDESC: Proton solar wind bulk velocity in inertial RTN (sun's rest frame)
+  FIELDNAM: Proton Solar Wind Velocity (RTN, Sun Frame)
+  CATDESC: Solar wind proton bulk velocity vector in RTN coordinates (Sun frame)
   DEPEND_0: epoch
-  DEPEND_1: rtn_label
+  LABL_PTR_1: velocity_rtn_label
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Proton SW Bulk Velocity RTN Sun
   FORMAT: F19.3
-  LABLAXIS: H+ SW bulk velocity RTN sun
+  LABLAXIS: Vp RTN Sun
   UNITS: km/s
-  VALIDMIN: -2000
-  VALIDMAX: 2000
+  VALIDMIN: -10000
+  VALIDMAX: 10000
   FILLVAL: -1.000000e+31
-proton_sw_bulk_velocity_rtn_sc:
-  NAME: proton_sw_bulk_velocity_rtn_sc
+  SCALETYP: linear
+  DELTA_PLUS_VAR: proton_sw_velocity_rtn_uncert
+  DELTA_MINUS_VAR: proton_sw_velocity_rtn_uncert
+proton_sw_velocity_rtn:
+  NAME: proton_sw_velocity_rtn
   DATA_TYPE: CDF_REAL4
-  CATDESC: Proton solar wind bulk velocity in RTN (spacecraft rest frame)
+  FIELDNAM: Proton Solar Wind Velocity (RTN)
+  CATDESC: Solar wind proton bulk velocity vector in RTN coordinates (spacecraft frame)
   DEPEND_0: epoch
-  DEPEND_1: rtn_label
+  LABL_PTR_1: velocity_rtn_label
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Proton SW Bulk Velocity RTN SC
   FORMAT: F19.3
-  LABLAXIS: H+ SW bulk velocity RTN SC
+  LABLAXIS: Vp RTN SC
   UNITS: km/s
-  VALIDMIN: -2000
-  VALIDMAX: 2000
+  VALIDMIN: -10000
+  VALIDMAX: 10000
   FILLVAL: -1.000000e+31
-proton_sw_bulk_velocity_rtn_covariance:
-  NAME: proton_sw_bulk_velocity_rtn_covariance
+  SCALETYP: linear
+  DELTA_PLUS_VAR: proton_sw_velocity_rtn_uncert
+  DELTA_MINUS_VAR: proton_sw_velocity_rtn_uncert
+proton_sw_velocity_rtn_covariance:
+  NAME: proton_sw_velocity_rtn_covariance
   DATA_TYPE: CDF_REAL4
-  CATDESC: Proton solar wind bulk velocity covariance in RTN
+  FIELDNAM: Proton Solar Wind Velocity Covariance (RTN)
+  CATDESC: Covariance matrix in RTN coordinates (frame-independent), with standard errors given by the square root of the diagonal
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Proton SW Bulk Velocity RTN Covariance
   FORMAT: F19.3
-  LABLAXIS: H+ SW bulk velocity RTN covariance
-  UNITS: km!E2!N/s!E2!N
-  VALIDMIN: 0
+  LABLAXIS: cov Vp
+  UNITS: km^2/s^2
+  VALIDMIN: -1.0e+8
   VALIDMAX: 1.0e+8
   FILLVAL: -1.000000e+31
+  LABL_PTR_1: velocity_rtn_label
+  LABL_PTR_2: velocity_rtn_label
+proton_sw_velocity_rtn_uncert:
+  NAME: proton_sw_velocity_rtn_uncert
+  DATA_TYPE: CDF_REAL4
+  FIELDNAM: Proton Solar Wind Velocity Uncertainty (RTN)
+  CATDESC: 1-sigma standard error
+  DEPEND_0: epoch
+  LABL_PTR_1: velocity_rtn_label
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FORMAT: F19.3
+  LABLAXIS: Vp RTN Err
+  UNITS: km/s
+  VALIDMIN: 0
+  VALIDMAX: 10000
+  FILLVAL: -1.000000e+31
+  SCALETYP: linear
 alpha_sw_speed:
   NAME: alpha_sw_speed
   DATA_TYPE: CDF_REAL4
-  CATDESC: Alpha solar wind speed
+  FIELDNAM: Alpha Solar Wind Speed
+  CATDESC: Magnitude of the bulk velocity vector of the solar wind alpha-particle population (spacecraft frame)
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Alpha Solar Wind Speed
   FORMAT: F19.3
-  LABLAXIS: Alpha solar wind speed
+  LABLAXIS: Va SC
   UNITS: km/s
   VALIDMIN: 0
   VALIDMAX: 10000
@@ -456,29 +480,64 @@ alpha_sw_speed:
 alpha_sw_speed_uncert:
   NAME: alpha_sw_speed_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Alpha solar wind speed uncertainty
+  FIELDNAM: Alpha Solar Wind Speed Uncertainty
+  CATDESC: 1-sigma standard error
+  LABLAXIS: Va SC Err
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Alpha Solar Wind Speed Uncertainty
   FORMAT: F19.3
   UNITS: km/s
   VALIDMIN: 0
   VALIDMAX: 10000
   FILLVAL: -1.000000e+31
-  LABLAXIS: Alpha SW speed uncertainty
-alpha_sw_temperature:
-  NAME: alpha_sw_temperature
+alpha_sw_speed_sun:
+  NAME: alpha_sw_speed_sun
   DATA_TYPE: CDF_REAL4
-  CATDESC: Alpha solar wind temperature
+  FIELDNAM: Alpha Solar Wind Speed (Sun Frame)
+  CATDESC: Magnitude of the bulk velocity vector of the solar wind alpha-particle population (Sun frame)
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Alpha Solar Wind Temperature
   FORMAT: F19.3
-  LABLAXIS: Alpha SW temperature
+  LABLAXIS: Va Sun
+  UNITS: km/s
+  VALIDMIN: 0
+  VALIDMAX: 10000
+  FILLVAL: -1.000000e+31
+  SCALETYP: linear
+  DELTA_PLUS_VAR: alpha_sw_speed_sun_uncert
+  DELTA_MINUS_VAR: alpha_sw_speed_sun_uncert
+  SCALEMIN: 0
+  SCALEMAX: 1000
+alpha_sw_speed_sun_uncert:
+  NAME: alpha_sw_speed_sun_uncert
+  DATA_TYPE: CDF_REAL4
+  FIELDNAM: Alpha Solar Wind Speed Uncertainty (Sun Frame)
+  CATDESC: 1-sigma standard error
+  LABLAXIS: Va Sun Err
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FORMAT: F19.3
+  UNITS: km/s
+  VALIDMIN: 0
+  VALIDMAX: 10000
+  FILLVAL: -1.000000e+31
+alpha_sw_temperature:
+  NAME: alpha_sw_temperature
+  DATA_TYPE: CDF_REAL4
+  FIELDNAM: Alpha Solar Wind Temperature
+  CATDESC: Scalar temperature of the solar wind alpha-particle population
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FORMAT: E19.3
+  LABLAXIS: Ta
   UNITS: K
   VALIDMIN: 0
   VALIDMAX: 28000000
@@ -491,30 +550,30 @@ alpha_sw_temperature:
 alpha_sw_temperature_uncert:
   NAME: alpha_sw_temperature_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Alpha solar wind temperature uncertainty
+  FIELDNAM: Alpha Solar Wind Temperature Uncertainty
+  CATDESC: 1-sigma standard error
+  LABLAXIS: Ta Err
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Alpha Solar Wind Temperature Uncertainty
-  FORMAT: F19.3
+  FORMAT: E19.3
   UNITS: K
   VALIDMIN: 0
   VALIDMAX: 28000000
   FILLVAL: -1.000000e+31
-  LABLAXIS: Alpha SW temperature uncertainty
 alpha_sw_density:
   NAME: alpha_sw_density
   DATA_TYPE: CDF_REAL4
-  CATDESC: Alpha solar wind density
+  FIELDNAM: Alpha Solar Wind Density
+  CATDESC: Number density of the solar wind alpha-particle population
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Alpha Solar Wind Density
-  FORMAT: F19.3
-  LABLAXIS: Alpha SW density
-  UNITS: cm!E-3!N
+  FORMAT: E19.3
+  LABLAXIS: Na
+  UNITS: cm^-3
   VALIDMIN: 0
   VALIDMAX: 100
   FILLVAL: -1.000000e+31
@@ -526,127 +585,110 @@ alpha_sw_density:
 alpha_sw_density_uncert:
   NAME: alpha_sw_density_uncert
   DATA_TYPE: CDF_REAL4
-  CATDESC: Alpha solar wind density uncertainty
+  FIELDNAM: Alpha Solar Wind Density Uncertainty
+  CATDESC: 1-sigma standard error
+  LABLAXIS: Na Err
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Alpha Solar Wind Density Uncertainty
-  FORMAT: F19.3
-  UNITS: cm!E-3!N
+  FORMAT: E19.3
+  UNITS: cm^-3
   VALIDMIN: 0
   VALIDMAX: 100
   FILLVAL: -1.000000e+31
-  LABLAXIS: Alpha SW density uncertainty
 alpha_sw_velocity_rtn_sun:
   NAME: alpha_sw_velocity_rtn_sun
   DATA_TYPE: CDF_REAL4
-  CATDESC: Alpha solar wind bulk velocity in inertial RTN (sun's rest frame)
+  FIELDNAM: Alpha Solar Wind Velocity (RTN, Sun Frame)
+  CATDESC: Solar wind alpha-particle bulk velocity vector in RTN coordinates (Sun frame)
   DEPEND_0: epoch
-  DEPEND_1: rtn_label
+  LABL_PTR_1: velocity_rtn_label
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Alpha SW Bulk Velocity RTN Sun
   FORMAT: F19.3
-  LABLAXIS: Alpha SW bulk velocity RTN sun
+  LABLAXIS: Va RTN Sun
   UNITS: km/s
-  VALIDMIN: -2000
-  VALIDMAX: 2000
+  VALIDMIN: -10000
+  VALIDMAX: 10000
   FILLVAL: -1.000000e+31
-alpha_sw_velocity_rtn_sc:
-  NAME: alpha_sw_velocity_rtn_sc
+  SCALETYP: linear
+  DELTA_PLUS_VAR: alpha_sw_velocity_rtn_uncert
+  DELTA_MINUS_VAR: alpha_sw_velocity_rtn_uncert
+alpha_sw_velocity_rtn:
+  NAME: alpha_sw_velocity_rtn
   DATA_TYPE: CDF_REAL4
-  CATDESC: Alpha solar wind bulk velocity in RTN (spacecraft rest frame)
+  FIELDNAM: Alpha Solar Wind Velocity (RTN)
+  CATDESC: Solar wind alpha-particle bulk velocity vector in RTN coordinates (spacecraft frame)
   DEPEND_0: epoch
-  DEPEND_1: rtn_label
+  LABL_PTR_1: velocity_rtn_label
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Alpha SW Bulk Velocity RTN SC
   FORMAT: F19.3
-  LABLAXIS: Alpha SW bulk velocity RTN SC
+  LABLAXIS: Va RTN SC
   UNITS: km/s
-  VALIDMIN: -2000
-  VALIDMAX: 2000
+  VALIDMIN: -10000
+  VALIDMAX: 10000
   FILLVAL: -1.000000e+31
+  SCALETYP: linear
+  DELTA_PLUS_VAR: alpha_sw_velocity_rtn_uncert
+  DELTA_MINUS_VAR: alpha_sw_velocity_rtn_uncert
 alpha_sw_velocity_rtn_covariance:
   NAME: alpha_sw_velocity_rtn_covariance
   DATA_TYPE: CDF_REAL4
-  CATDESC: Alpha solar wind velocity covariance in RTN
+  FIELDNAM: Alpha Solar Wind Velocity Covariance (RTN)
+  CATDESC: Covariance matrix in RTN coordinates (frame-independent), with standard errors given by the square root of the diagonal
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Alpha SW Velocity RTN Covariance
   FORMAT: F19.3
-  LABLAXIS: Alpha SW velocity RTN covariance
-  UNITS: km!E2!N/s!E2!N
-  VALIDMIN: 0
+  LABLAXIS: cov Va
+  UNITS: km^2/s^2
+  VALIDMIN: -1.0e+8
   VALIDMAX: 1.0e+8
   FILLVAL: -1.000000e+31
+  LABL_PTR_1: velocity_rtn_label
+  LABL_PTR_2: velocity_rtn_label
+alpha_sw_velocity_rtn_uncert:
+  NAME: alpha_sw_velocity_rtn_uncert
+  DATA_TYPE: CDF_REAL4
+  FIELDNAM: Alpha Solar Wind Velocity Uncertainty (RTN)
+  CATDESC: 1-sigma standard error
+  DEPEND_0: epoch
+  LABL_PTR_1: velocity_rtn_label
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FORMAT: F19.3
+  LABLAXIS: Va RTN Err
+  UNITS: km/s
+  VALIDMIN: 0
+  VALIDMAX: 10000
+  FILLVAL: -1.000000e+31
+  SCALETYP: linear
 swp_flags:
   NAME: swp_flags
   DATA_TYPE: CDF_UINT2
-  CATDESC: Quality flags for SWAPI L3a
+  FIELDNAM: Quality Flags
+  CATDESC: Quality flags
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
-  FIELDNAM: Quality Flags for SWAPI L3a
   FORMAT: I5
   UNITS: ' '
   VALIDMIN: 0
   VALIDMAX: 65534
   FILLVAL: 65535
-  LABLAXIS: Quality flags for SWAPI L3a
-
-alpha_sw_pre_lut_temperature:
-  NAME: alpha_sw_pre_lut_temperature
-  DATA_TYPE: CDF_REAL4
-  CATDESC: Alpha solar wind temperature pre-LUT
-  DEPEND_0: epoch
-  VAR_TYPE: data
-  RECORD_VARYING: RV
-  DISPLAY_TYPE: time_series
-  VARIABLE_PURPOSE: DEBUG
-  FIELDNAM: Alpha Solar Wind Temperature
-  FORMAT: F19.3
-  LABLAXIS: Alpha SW temperature
-  UNITS: K
-  VALIDMIN: 0
-  VALIDMAX: 28000000
-  FILLVAL: -1.000000e+31
-  SCALETYP: log
-  SCALEMIN: 4000
-  SCALEMAX: 960000
-
-alpha_sw_pre_lut_density:
-  NAME: alpha_sw_pre_lut_density
-  DATA_TYPE: CDF_REAL4
-  CATDESC: Alpha solar wind density pre-LUT
-  DEPEND_0: epoch
-  VAR_TYPE: data
-  RECORD_VARYING: RV
-  DISPLAY_TYPE: time_series
-  VARIABLE_PURPOSE: DEBUG
-  FIELDNAM: Alpha Solar Wind Density
-  FORMAT: F19.3
-  LABLAXIS: Alpha SW density
-  UNITS: cm!E-3!N
-  VALIDMIN: 0
-  VALIDMAX: 100
-  FILLVAL: -1.000000e+31
-  SCALETYP: log
-  SCALEMIN: 0.001
-  SCALEMAX: 5
-
-rtn_label:
-  NAME: rtn_label
+  LABLAXIS: Flags
+velocity_rtn_label:
+  NAME: velocity_rtn_label
   DATA_TYPE: CDF_CHAR
-  CATDESC: RTN component labels
+  FIELDNAM: Velocity RTN Label
+  CATDESC: Label for Radial-Tangential-Normal (RTN) velocity components
   VAR_TYPE: metadata
   RECORD_VARYING: NRV
-  FIELDNAM: RTN Label
-  FORMAT: a1
+  FORMAT: a20
   FILLVAL: ' '
 

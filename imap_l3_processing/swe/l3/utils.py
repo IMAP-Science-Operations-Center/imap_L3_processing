@@ -64,8 +64,8 @@ def read_l3a_swapi_proton_data(swapi_l3a_data: Path) -> SwapiL3aProtonData:
         else:
             epoch_delta = np.repeat(timedelta(seconds=epoch_delta_ns), len(epoch))
         proton_sw_speed = read_numeric_variable(cdf["proton_sw_speed"])
-        if "proton_sw_bulk_velocity_rtn_sc" in cdf:
-            proton_sw_velocity_rtn = read_numeric_variable(cdf["proton_sw_bulk_velocity_rtn_sc"])
+        if "proton_sw_velocity_rtn" in cdf:
+            proton_sw_velocity_rtn = read_numeric_variable(cdf["proton_sw_velocity_rtn"])
         else:
             proton_sw_velocity_rtn = np.full((len(epoch), 3), np.nan)
         swp_flags = cdf["swp_flags"][...]

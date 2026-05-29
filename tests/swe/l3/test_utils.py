@@ -17,21 +17,21 @@ from tests.test_helpers import get_test_data_path
 
 
 def _copy_with_rtn_velocity(source: Path, dest: Path) -> Path:
-    """Copy a SWAPI L3a CDF and inject `proton_sw_bulk_velocity_rtn_sc`.
+    """Copy a SWAPI L3a CDF and inject `proton_sw_velocity_rtn`.
 
     The committed test fixtures predate the variable; tests build an augmented
     copy in a tempdir rather than mutating the checked-in CDF."""
     shutil.copyfile(source, dest)
     with CDF(str(dest), readonly=False) as cdf:
-        if 'proton_sw_bulk_velocity_rtn_sc' in cdf:
+        if 'proton_sw_velocity_rtn' in cdf:
             return dest
         speed = cdf['proton_sw_speed'][:].astype(float)
         velocity_rtn = np.stack(
             [-speed, np.zeros_like(speed), np.zeros_like(speed)], axis=-1
         ).astype(np.float32)
-        cdf.new('proton_sw_bulk_velocity_rtn_sc', data=velocity_rtn)
-        cdf['proton_sw_bulk_velocity_rtn_sc'].attrs['FILLVAL'] = np.float32(-1e31)
-        cdf['proton_sw_bulk_velocity_rtn_sc'].attrs['UNITS'] = 'km/s'
+        cdf.new('proton_sw_velocity_rtn', data=velocity_rtn)
+        cdf['proton_sw_velocity_rtn'].attrs['FILLVAL'] = np.float32(-1e31)
+        cdf['proton_sw_velocity_rtn'].attrs['UNITS'] = 'km/s'
     return dest
 
 
@@ -149,8 +149,8 @@ class TestUtils(SpiceTestCase):
                 Path(tempdir, 'swe_file_with_fill.cdf'),
             )
             with CDF(str(cdf_with_fill_path), readonly=False) as cdf:
-                velocity_fill_value = cdf['proton_sw_bulk_velocity_rtn_sc'].attrs['FILLVAL']
-                cdf['proton_sw_bulk_velocity_rtn_sc'][0] = [velocity_fill_value] * 3
+                velocity_fill_value = cdf['proton_sw_velocity_rtn'].attrs['FILLVAL']
+                cdf['proton_sw_velocity_rtn'][0] = [velocity_fill_value] * 3
 
             swapi_l3a_data = read_l3a_swapi_proton_data(cdf_with_fill_path)
             self.assertTrue(np.all(np.isnan(swapi_l3a_data.proton_sw_velocity_rtn[0])))

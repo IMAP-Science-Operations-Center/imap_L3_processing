@@ -68,7 +68,7 @@ class TestCountRateConversionFactor(unittest.TestCase):
     ) -> SolarWindParams:
         return SolarWindParams(
             density=density,
-            bulk_velocity_rtn=np.array([-450.0, 0.0, 0.0]),
+            velocity_rtn=np.array([-450.0, 0.0, 0.0]),
             temperature=temperature,
             mass=PROTON_MASS_KG,
         )
