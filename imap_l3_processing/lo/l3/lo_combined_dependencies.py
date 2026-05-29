@@ -14,6 +14,9 @@ class LoCombinedDependencies:
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection) -> Self:
         lo_inputs = dependencies.get_file_paths(source="lo")
+
+        assert len(lo_inputs) == 3, f"Expected 3 input lo maps to produce combined map! got {len(lo_inputs)}"
+
         downloaded_paths = [imap_data_access.download(Path(i).name) for i in lo_inputs]
 
         return cls.from_file_paths(downloaded_paths)

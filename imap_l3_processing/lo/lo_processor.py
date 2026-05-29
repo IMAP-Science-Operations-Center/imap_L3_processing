@@ -56,7 +56,7 @@ class LoProcessor(MapProcessor):
                                     reference_frame=ReferenceFrame.Spacecraft | ReferenceFrame.Heliospheric):
                 deps = HiLoL3SurvivalDependencies.fetch_dependencies(self.dependencies, Instrument.IMAP_LO)
                 deps.l1c_data = list(map(self._collapse_pset_dimension, deps.l1c_data))
-                data = process_survival_probabilities(deps, spice_frame_name)
+                data = process_survival_probabilities(deps, spice_frame_name, cg_corrected=False)
 
                 data_product = RectangularIntensityDataProduct(self.input_metadata, data,
                                                                spice_frame_name=spice_frame_name)

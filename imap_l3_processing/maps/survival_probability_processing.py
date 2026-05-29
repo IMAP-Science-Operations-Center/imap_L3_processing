@@ -9,7 +9,7 @@ from imap_l3_processing.utils import combine_glows_l3e_with_l1c_pointing, filter
 
 
 def process_survival_probabilities(survival_probabilities_dependencies: HiLoL3SurvivalDependencies,
-                                   spice_frame_name: SpiceFrame) \
+                                   spice_frame_name: SpiceFrame, cg_corrected: bool = None) \
         -> RectangularIntensityMapData:
     l2_descriptor_parts = survival_probabilities_dependencies.l2_map_descriptor_parts
 
@@ -18,7 +18,9 @@ def process_survival_probabilities(survival_probabilities_dependencies: HiLoL3Su
     combined_glows = combine_glows_l3e_with_l1c_pointing(survival_probabilities_dependencies.glows_l3e_data, l1c_data)
     pointing_sets = []
 
-    cg_corrected = l2_descriptor_parts.reference_frame == ReferenceFrame.Heliospheric
+    if cg_corrected is None:
+        cg_corrected = l2_descriptor_parts.reference_frame == ReferenceFrame.Heliospheric
+
     for l1c, glows_l3e in combined_glows:
         pointing_sets.append(RectangularSurvivalProbabilityPointingSet(
             l1c, l2_descriptor_parts.sensor, l2_descriptor_parts.spin_phase, glows_l3e,

@@ -9,13 +9,17 @@ from datetime import timedelta, datetime
 from functools import wraps
 from pathlib import Path
 from typing import Callable
+from unittest import skipIf
+from unittest.mock import patch, Mock
 
+import imap_data_access
 import numpy as np
 from imap_data_access import ProcessingInputCollection, RepointInput
 from imap_data_access import ScienceInput, AncillaryInput
 from imap_data_access.file_validation import ScienceFilePath, AncillaryFilePath
 from spacepy.pycdf import CDF
 
+import imap_l3_data_processor
 import tests
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
@@ -60,13 +64,19 @@ def run_test_in_docker(test_to_run: Callable):
                 "--platform", "linux/amd64",
                 "--mount", f'type=bind,src={l3_processing_dir}/temp_cdf_data,dst=/temp_cdf_data',
                 "--mount", f'type=bind,src={l3_processing_dir}/run_local_input_data,dst=/run_local_input_data',
-                image_hash, generate_test_function_import_path(test_to_run)
             ]
+
+            if imap_api_key := os.getenv("IMAP_API_KEY"):
+                args += ["-e", f"IMAP_API_KEY={imap_api_key}"]
+
+            if imap_data_access_url := os.getenv("IMAP_DATA_ACCESS_URL"):
+                args += ["-e", f"IMAP_DATA_ACCESS_URL={imap_data_access_url}"]
+
+            args += [image_hash, generate_test_function_import_path(test_to_run)]
 
             subprocess.run(args, cwd=l3_processing_dir)
 
     return decorated
-
 
 class TestGlowsProcessorIntegration(unittest.TestCase):
     @with_tempdir
@@ -479,6 +489,31 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
 
             processor = GlowsProcessor(processing_input, input_metadata)
             processor.process()
+
+    @skipIf(os.getenv("IMAP_API_KEY") is None, "Only runs with prod IMAP_API_KEY")
+    @run_test_in_docker
+    def test_run_glows_l3be_against_prod(self):
+        with patch("imap_l3_data_processor._parse_cli_arguments") as mock_parse_cli_arguments:
+            logging.basicConfig(force=True, level=logging.INFO,
+                                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+            imap_data_access.config["DATA_DIR"] = get_run_local_data_path("glows_l3bcde_prod")
+
+            repoint_file_name = "imap_2026_147_01.repoint"
+            processing_input = ProcessingInputCollection(RepointInput(repoint_file_name))
+
+            mock_arguments = Mock()
+            mock_arguments.instrument = "glows"
+            mock_arguments.data_level = "l3b"
+            mock_arguments.descriptor = "ion-rate-profile"
+            mock_arguments.start_date = "20260101"
+            mock_arguments.end_date = None
+            mock_arguments.repointing = None
+            mock_arguments.version = "v001"
+            mock_arguments.dependency = processing_input.serialize()
+            mock_arguments.upload_to_sdc = False
+            mock_parse_cli_arguments.return_value = mock_arguments
+            imap_l3_data_processor.imap_l3_processor()
 
     @staticmethod
     def _fill_official_l2_cdf_with_json_values(output_folder: Path) -> Path:

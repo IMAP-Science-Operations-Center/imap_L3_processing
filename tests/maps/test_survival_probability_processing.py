@@ -47,23 +47,25 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
         mock_survival_probability_pointing_set.side_effect = [sentinel.pset_1, sentinel.pset_2, sentinel.pset_3]
 
         computed_survival_probabilities = rng.random((1, 9, 90, 45))
-        mock_survival_skymap.return_value.to_dataset.return_value = xr.Dataset({
-            "exposure_weighted_survival_probabilities": (
-                [
-                    CoordNames.TIME.value,
-                    CoordNames.ENERGY_ULTRA_L1C.value,
-                    CoordNames.AZIMUTH_L2.value,
-                    CoordNames.ELEVATION_L2.value,
-                ],
-                computed_survival_probabilities
-            )
-        },
+        mock_survival_skymap.return_value.to_dataset.return_value = xr.Dataset(
+            data_vars={
+                "exposure_weighted_survival_probabilities": (
+                    [
+                        CoordNames.TIME.value,
+                        CoordNames.ENERGY_ULTRA_L1C.value,
+                        CoordNames.AZIMUTH_L2.value,
+                        CoordNames.ELEVATION_L2.value,
+                    ],
+                    computed_survival_probabilities
+                )
+            },
             coords={
                 CoordNames.TIME.value: [epoch],
                 CoordNames.ENERGY_ULTRA_L1C.value: rng.random((9,)),
                 CoordNames.AZIMUTH_L2.value: rng.random((90,)),
                 CoordNames.ELEVATION_L2.value: rng.random((45,)),
-            })
+            }
+        )
 
         survival_data = process_survival_probabilities(dependencies, SpiceFrame.IMAP_DPS)
 
@@ -120,6 +122,70 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
         np.testing.assert_array_equal(survival_data.intensity_map_data.obs_date_range,
                                       intensity_map_data.obs_date_range)
         np.testing.assert_array_equal(survival_data.intensity_map_data.solid_angle, intensity_map_data.solid_angle)
+
+
+    @patch('imap_l3_processing.maps.survival_probability_processing.RectangularSurvivalProbabilitySkyMap')
+    @patch('imap_l3_processing.maps.survival_probability_processing.RectangularSurvivalProbabilityPointingSet')
+    @patch('imap_l3_processing.maps.survival_probability_processing.combine_glows_l3e_with_l1c_pointing')
+    @patch('imap_l3_processing.maps.survival_probability_processing.filter_bad_days')
+    def test_process_survival_probability_cg_correction_argument(self, _mock_filter_bad_days, mock_combine_glows_l3e_with_l1c_pointing, mock_survival_probability_pointing_set, mock_survival_skymap):
+        test_cases = [True, False]
+        for cg_correction_value in test_cases:
+            rng = np.random.default_rng()
+            input_map_flux = rng.random((1, 9, 90, 45))
+            epoch = datetime.now()
+
+            input_map = create_rectangular_intensity_map_data(epoch=[epoch], flux=input_map_flux)
+
+            intensity_map_data = input_map.intensity_map_data
+            input_map.intensity_map_data.energy = sentinel.hi_l2_energies
+
+            l2_grid = PixelSize.FourDegrees
+            l2_descriptor_parts = Mock(sensor=sentinel.l2_sensor, spin_phase=sentinel.l2_spin, grid=l2_grid,
+                                       reference_frame=ReferenceFrame.Heliospheric)
+            dependencies = HiLoL3SurvivalDependencies(l2_data=input_map,
+                                                      l1c_data=sentinel.l1c_data,
+                                                      glows_l3e_data=sentinel.glows_l3e_data,
+                                                      l2_map_descriptor_parts=l2_descriptor_parts,
+                                                      dependency_file_paths=[])
+
+            mock_combine_glows_l3e_with_l1c_pointing.return_value = [(sentinel.hi_l1c_1, sentinel.glows_l3e_1),
+                                                                     (sentinel.hi_l1c_2, sentinel.glows_l3e_2),
+                                                                     (sentinel.hi_l1c_3, sentinel.glows_l3e_3)]
+
+            mock_survival_probability_pointing_set.side_effect = [sentinel.pset_1, sentinel.pset_2, sentinel.pset_3]
+
+            computed_survival_probabilities = rng.random((1, 9, 90, 45))
+            mock_survival_skymap.return_value.to_dataset.return_value = xr.Dataset({
+                "exposure_weighted_survival_probabilities": (
+                    [
+                        CoordNames.TIME.value,
+                        CoordNames.ENERGY_ULTRA_L1C.value,
+                        CoordNames.AZIMUTH_L2.value,
+                        CoordNames.ELEVATION_L2.value,
+                    ],
+                    computed_survival_probabilities
+                )
+            },
+                coords={
+                    CoordNames.TIME.value: [epoch],
+                    CoordNames.ENERGY_ULTRA_L1C.value: rng.random((9,)),
+                    CoordNames.AZIMUTH_L2.value: rng.random((90,)),
+                    CoordNames.ELEVATION_L2.value: rng.random((45,)),
+                })
+
+            survival_data = process_survival_probabilities(dependencies, SpiceFrame.IMAP_DPS, cg_corrected=cg_correction_value)
+
+
+            mock_survival_probability_pointing_set.assert_has_calls([
+                call(sentinel.hi_l1c_1, sentinel.l2_sensor, sentinel.l2_spin, sentinel.glows_l3e_1,
+                     sentinel.hi_l2_energies, cg_corrected=cg_correction_value),
+                call(sentinel.hi_l1c_2, sentinel.l2_sensor, sentinel.l2_spin, sentinel.glows_l3e_2,
+                     sentinel.hi_l2_energies, cg_corrected=cg_correction_value),
+                call(sentinel.hi_l1c_3, sentinel.l2_sensor, sentinel.l2_spin, sentinel.glows_l3e_3,
+                     sentinel.hi_l2_energies, cg_corrected=cg_correction_value)
+            ])
+
 
     def test_integration_uses_fill_values_for_missing_l3e_data(self):
         t1 = datetime(2025, 4, 29, 12)
