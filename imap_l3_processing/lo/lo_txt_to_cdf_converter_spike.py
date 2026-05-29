@@ -81,7 +81,7 @@ class Manifest:
 
         return cls(
             repoints=list(manifest_df["repoint"]),
-            l1b_filenames=list(manifest_df["l1b_filenames"]),
+            l1b_filenames=list(manifest_df["l1b_filename"]),
             start_date=start_date,
             end_date=end_date,
         )
@@ -193,7 +193,9 @@ class LoProcessingInput:
             l2_descriptor=l2_descriptor,
             version=version,
             l2_cdf_path=write_l2_cdf(l2_dataset_with_metadata),
-            **dataclasses.asdict(manifest),
+            repoints=manifest.repoints,
+            start_date=manifest.start_date,
+            end_date=manifest.end_date,
         )
 
     def get_spx_dependencies(self):
