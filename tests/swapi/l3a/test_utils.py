@@ -12,19 +12,27 @@ from imap_l3_processing.constants import (
     ALPHA_PARTICLE_CHARGE_COULOMBS,
     ALPHA_PARTICLE_MASS_KG,
     METERS_PER_KILOMETER,
+    ONE_SECOND_IN_NANOSECONDS,
     PROTON_CHARGE_COULOMBS,
     PROTON_MASS_KG,
 )
-from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
+from imap_l3_processing.swapi.constants import (
+    SWAPI_BIN_PERIOD_S,
+    SWAPI_K_FACTOR,
+    SWAPI_LIVETIME_CENTER_OFFSET_S,
+    SWAPI_LIVETIME_S,
+    SWAPI_SCIENCE_BINS,
+)
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.utils import (
-    bulk_velocity_to_angles_in_instrument_frame,
+    velocity_components_to_angles_in_instrument_frame,
     calculate_sw_speed,
     chunk_l2_data,
     esa_voltage_to_alpha_speed,
     esa_voltage_to_proton_speed,
     get_spacecraft_velocity_rtn,
     get_swapi_geometry,
+    measurement_times,
     read_l2_swapi_data,
     read_mag_rtn_data,
     velocity_to_angles_in_instrument_frame,
@@ -98,6 +106,33 @@ class TestChunkL2Data(TestCase):
         chunks = list(chunk_l2_data(data, 5))
         self.assertEqual(len(chunks), 1)
         np.testing.assert_array_equal(chunks[0].sci_start_time, np.arange(5))
+
+
+class TestMeasurementTimes(TestCase):
+    """Tests for `measurement_times`, which timestamps each ESA step at the center of its livetime."""
+
+    def test_each_bin_is_offset_from_its_sweep_start_by_the_livetime_center(self):
+        """Each science bin's timestamp is its sweep start plus the bin index times the bin period plus the fixed livetime-center offset, flattened sweep-major."""
+        sweep_period_ns = 12 * ONE_SECOND_IN_NANOSECONDS
+        sci_start_time = np.array([1_000, 1_000 + sweep_period_ns], dtype=np.int64)
+        data = SwapiL2Data(sci_start_time, None, None, None)
+
+        times = measurement_times(data, SWAPI_SCIENCE_BINS)
+
+        def expected(sweep_start, bin_index):
+            seconds_into_sweep = bin_index * SWAPI_BIN_PERIOD_S + SWAPI_LIVETIME_CENTER_OFFSET_S
+            return sweep_start + seconds_into_sweep * ONE_SECOND_IN_NANOSECONDS
+
+        self.assertEqual(times.shape, (2 * 71,))
+        np.testing.assert_allclose(times[0], expected(1_000, 1))
+        np.testing.assert_allclose(times[70], expected(1_000, 71))
+        np.testing.assert_allclose(times[71], expected(1_000 + sweep_period_ns, 1))
+
+    def test_offset_is_the_livetime_center_not_its_start(self):
+        """The per-bin offset lands half a livetime past the end of the ramp-up, i.e. at the center of the livetime window rather than its start."""
+        ramp_up_s = SWAPI_BIN_PERIOD_S - SWAPI_LIVETIME_S
+        self.assertAlmostEqual(SWAPI_LIVETIME_CENTER_OFFSET_S, ramp_up_s + SWAPI_LIVETIME_S / 2)
+        self.assertAlmostEqual(SWAPI_LIVETIME_CENTER_OFFSET_S, SWAPI_BIN_PERIOD_S - SWAPI_LIVETIME_S / 2)
 
 
 class TestReadL2SwapiData(TestCase):
@@ -265,52 +300,52 @@ class TestSwapiSpiceHelpers(SpiceTestCase):
         self.assertLess(speed, 60.0)
 
 
-class TestVelocityToAnglesInInstrumentFrame(TestCase):
-    """Tests for `velocity_to_angles_in_instrument_frame`. The Cartesian input
+class TestVelocityComponentsToAnglesInInstrumentFrame(TestCase):
+    """Tests for `velocity_components_to_angles_in_instrument_frame`. The Cartesian input
     is the flow direction; the returned (azimuth, elevation) is the look
     direction (opposite the flow)."""
 
     def test_flow_along_minus_y_returns_zero_angles(self):
         """A flow along -Y means SWAPI looks toward +Y, which is the (azimuth=0, elevation=0) bore-sight in the instrument frame."""
-        azimuth, elevation = velocity_to_angles_in_instrument_frame(0.0, -450.0, 0.0)
+        azimuth, elevation = velocity_components_to_angles_in_instrument_frame(0.0, -450.0, 0.0)
         self.assertAlmostEqual(azimuth, 0.0)
         self.assertAlmostEqual(elevation, 0.0)
 
     def test_positive_x_flow_yields_negative_azimuth(self):
         """A flow with a positive X component (look direction in -X) gives a negative azimuth, since azimuth = atan2(-vx, -vy) < 0 when vx > 0 and vy < 0."""
-        azimuth, _ = velocity_to_angles_in_instrument_frame(50.0, -450.0, 0.0)
+        azimuth, _ = velocity_components_to_angles_in_instrument_frame(50.0, -450.0, 0.0)
         self.assertLess(azimuth, 0.0)
 
     def test_positive_z_flow_yields_negative_elevation(self):
         """A flow with a positive Z component (look direction in -Z) gives a negative elevation, since elevation = asin(-vz/|v|) < 0 when vz > 0."""
-        _, elevation = velocity_to_angles_in_instrument_frame(0.0, -450.0, 50.0)
+        _, elevation = velocity_components_to_angles_in_instrument_frame(0.0, -450.0, 50.0)
         self.assertLess(elevation, 0.0)
 
     def test_negative_z_flow_yields_positive_elevation(self):
         """A flow with a negative Z component (look direction in +Z) gives a positive elevation."""
-        _, elevation = velocity_to_angles_in_instrument_frame(0.0, -450.0, -50.0)
+        _, elevation = velocity_components_to_angles_in_instrument_frame(0.0, -450.0, -50.0)
         self.assertGreater(elevation, 0.0)
 
     def test_pure_plus_x_flow_yields_azimuth_minus_90_elevation_zero(self):
         """A pure +X flow has look direction along -X; azimuth = atan2(-450, 0) = -90 deg, elevation = 0."""
-        azimuth, elevation = velocity_to_angles_in_instrument_frame(450.0, 0.0, 0.0)
+        azimuth, elevation = velocity_components_to_angles_in_instrument_frame(450.0, 0.0, 0.0)
         self.assertAlmostEqual(azimuth, -90.0)
         self.assertAlmostEqual(elevation, 0.0)
 
     def test_pure_plus_y_flow_yields_azimuth_180(self):
         """A pure +Y flow (away from SWAPI) has look direction along -Y; azimuth = atan2(0, -450) = +/-180 deg, elevation = 0."""
-        azimuth, elevation = velocity_to_angles_in_instrument_frame(0.0, 450.0, 0.0)
+        azimuth, elevation = velocity_components_to_angles_in_instrument_frame(0.0, 450.0, 0.0)
         self.assertAlmostEqual(abs(azimuth), 180.0)
         self.assertAlmostEqual(elevation, 0.0)
 
     def test_pure_plus_z_flow_yields_elevation_minus_90(self):
         """A pure +Z flow has look direction along -Z; elevation = asin(-1) = -90 deg."""
-        _, elevation = velocity_to_angles_in_instrument_frame(0.0, 0.0, 450.0)
+        _, elevation = velocity_components_to_angles_in_instrument_frame(0.0, 0.0, 450.0)
         self.assertAlmostEqual(elevation, -90.0)
 
 
 class TestBulkVelocityToAnglesInInstrumentFrame(TestCase):
-    """Tests for `bulk_velocity_to_angles_in_instrument_frame`, which rotates a
+    """Tests for `velocity_to_angles_in_instrument_frame`, which rotates a
     SolarWindParams bulk velocity from RTN into the SWAPI XYZ frame and returns
     look-direction (azimuth_deg, elevation_deg). See
     `velocity_to_angles_in_instrument_frame` for the flow-vs-look convention."""
@@ -318,20 +353,20 @@ class TestBulkVelocityToAnglesInInstrumentFrame(TestCase):
     def test_velocity_along_minus_y_inst_returns_zero_angles(self):
         """Under identity rotation, an RTN flow along -Y becomes v_inst = (0, -450, 0); look direction is +Y so azimuth = 0 and elevation = 0."""
         sw = proton_params(velocity_rtn=(0.0, -450.0, 0.0))
-        azimuth, elevation = bulk_velocity_to_angles_in_instrument_frame(sw, np.eye(3))
+        azimuth, elevation = velocity_to_angles_in_instrument_frame(sw, np.eye(3))
         self.assertAlmostEqual(azimuth, 0.0)
         self.assertAlmostEqual(elevation, 0.0)
 
     def test_velocity_with_negative_x_inst_component_yields_positive_azimuth(self):
         """A negative instrument-X flow component (v_inst_x = -50) gives a strictly positive azimuth, since azimuth = atan2(+50, +450) > 0."""
         sw = proton_params(velocity_rtn=(-50.0, -450.0, 0.0))
-        azimuth, _ = bulk_velocity_to_angles_in_instrument_frame(sw, np.eye(3))
+        azimuth, _ = velocity_to_angles_in_instrument_frame(sw, np.eye(3))
         self.assertGreater(azimuth, 0.0)
 
     def test_velocity_with_positive_z_inst_component_yields_negative_elevation(self):
         """A positive instrument-Z flow component (v_inst_z = +50) gives a strictly negative elevation, since elevation = asin(-50/|v|) < 0."""
         sw = proton_params(velocity_rtn=(0.0, -450.0, 50.0))
-        _, elevation = bulk_velocity_to_angles_in_instrument_frame(sw, np.eye(3))
+        _, elevation = velocity_to_angles_in_instrument_frame(sw, np.eye(3))
         self.assertLess(elevation, 0.0)
 
     def test_uses_rotation_argument_to_transform_into_instrument_frame(self):
@@ -340,7 +375,7 @@ class TestBulkVelocityToAnglesInInstrumentFrame(TestCase):
             [[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]]
         )
         sw = proton_params(velocity_rtn=(-450.0, 0.0, 0.0))
-        azimuth, _ = bulk_velocity_to_angles_in_instrument_frame(sw, rotation_xyz_to_rtn)
+        azimuth, _ = velocity_to_angles_in_instrument_frame(sw, rotation_xyz_to_rtn)
         self.assertAlmostEqual(abs(azimuth), 180.0, places=10)
 
 

@@ -90,7 +90,7 @@ def proton_params(
     """Solar-wind proton `SolarWindParams` at typical slow-wind values."""
     return SolarWindParams(
         density=density,
-        bulk_velocity_rtn=np.asarray(velocity_rtn, dtype=float),
+        velocity_rtn=np.asarray(velocity_rtn, dtype=float),
         temperature=temperature,
         mass=PROTON_MASS_KG,
     )

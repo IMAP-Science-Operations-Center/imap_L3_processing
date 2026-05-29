@@ -512,18 +512,14 @@ def _evaluate_fitted_total_rate(
         density_lookup_table,
         helium_inflow_vector,
     )
+    # Production fit uses sw_speed * 1.2 as the v' grid ceiling; widen if the
+    # fitted cutoff landed above that so the grid still reaches the cutoff.
+    cutoff_speed_max_kms = max(sw_speed_kms * 1.2, cutoff_speed_kms)
     radius_in_au = vasyliunas_siscoe_distribution.distance_km / ONE_AU_IN_KM
     min_speed_kms = max(
         1.0,
-        sw_speed_kms
-        * 0.8
-        * density_lookup_table.get_minimum_distance()
-        / radius_in_au,
+        sw_speed_kms * 0.8 * density_lookup_table.get_minimum_distance() / radius_in_au,
     )
-    # Production fit uses sw_speed * 1.2 as the v' grid ceiling; widen if the
-    # fitted cutoff landed above that so the cutoff bin still has grid points
-    # on both sides for the partial-Heaviside fix.
-    cutoff_speed_max_kms = max(sw_speed_kms * 1.2, cutoff_speed_kms)
 
     chunk_response_full = build_chunk_collapsed_response(
         swapi_response=swapi_response,

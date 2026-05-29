@@ -39,7 +39,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindPara
 from scripts.swapi.reference_integral import reference_integral_fixed_limits
 from figure_utils import (
     FIGURES_DIR,
-    bulk_velocity_rtn_from_swapi_angles,
+    velocity_rtn_from_swapi_angles,
     load_swapi_response,
     peak_esa_voltage_for_proton_bulk_speed,
 )
@@ -108,7 +108,7 @@ def main():
         )
         sw = SolarWindParams(
             density=density,
-            bulk_velocity_rtn=bulk_velocity_rtn_from_swapi_angles(v_b, az, el),
+            velocity_rtn=velocity_rtn_from_swapi_angles(v_b, az, el),
             temperature=T_k,
             mass=PROTON_MASS_KG,
         )

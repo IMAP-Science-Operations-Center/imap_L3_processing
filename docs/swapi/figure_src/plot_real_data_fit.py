@@ -61,16 +61,18 @@ from imap_l3_processing.swapi.l3a.utils import (
 )
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 from imap_l3_processing.swapi.constants import (
+    SWAPI_BIN_PERIOD_S,
     SWAPI_COARSE_SWEEP_BINS,
     SWAPI_FINE_SWEEP_BINS,
     SWAPI_K_FACTOR,
     SWAPI_L2_K_FACTOR,
+    SWAPI_LIVETIME_CENTER_OFFSET_S,
     SWAPI_SCIENCE_BINS,
 )
 from imap_l3_processing.utils import SpiceKernelTypes
 from figure_utils import FIGURES_DIR, REPO_ROOT, load_swapi_response
 
-_DOC_PATH = REPO_ROOT / "docs" / "swapi" / "solar-wind-moments.md"
+_DOC_PATH = REPO_ROOT / "docs" / "swapi" / "proton-sw.md"
 _TABLE_BEGIN = "<!-- BEGIN: real_data_table"
 _TABLE_END = "<!-- END: real_data_table -->"
 
@@ -117,15 +119,15 @@ def main():
     )
 
     sc_velocity_rtn = get_spacecraft_velocity_rtn(chunk_center_ns)
-    science_result["bulk_velocity_rtn_sun"] = (
+    science_result["velocity_rtn_sun"] = (
         np.array(
-            [c.nominal_value for c in science_result["fit_result"].bulk_velocity_rtn]
+            [c.nominal_value for c in science_result["fit_result"].velocity_rtn]
         )
         + sc_velocity_rtn
     )
-    coarse_result["bulk_velocity_rtn_sun"] = (
+    coarse_result["velocity_rtn_sun"] = (
         np.array(
-            [c.nominal_value for c in coarse_result["fit_result"].bulk_velocity_rtn]
+            [c.nominal_value for c in coarse_result["fit_result"].velocity_rtn]
         )
         + sc_velocity_rtn
     )
@@ -148,9 +150,9 @@ def main():
         f"  kept {boot['B_kept']}/{boot['B_total']} resamples\n"
         f"  σ_n  = {boot['n_sigma']:.4f} cm^-3   (HC3: {science_result['fit_result'].density.std_dev:.4f})\n"
         f"  σ_T  = {boot['T_sigma']:.3e} K       (HC3: {science_result['fit_result'].temperature.std_dev:.3e})\n"
-        f"  σ_vR = {boot['vR_sigma']:.3f} km/s   (HC3: {science_result['fit_result'].bulk_velocity_rtn[0].std_dev:.3f})\n"
-        f"  σ_vT = {boot['vT_sigma']:.3f} km/s   (HC3: {science_result['fit_result'].bulk_velocity_rtn[1].std_dev:.3f})\n"
-        f"  σ_vN = {boot['vN_sigma']:.3f} km/s   (HC3: {science_result['fit_result'].bulk_velocity_rtn[2].std_dev:.3f})"
+        f"  σ_vR = {boot['vR_sigma']:.3f} km/s   (HC3: {science_result['fit_result'].velocity_rtn[0].std_dev:.3f})\n"
+        f"  σ_vT = {boot['vT_sigma']:.3f} km/s   (HC3: {science_result['fit_result'].velocity_rtn[1].std_dev:.3f})\n"
+        f"  σ_vN = {boot['vN_sigma']:.3f} km/s   (HC3: {science_result['fit_result'].velocity_rtn[2].std_dev:.3f})"
     )
 
     wind = _wind_value_at(chunk_center_dt)
@@ -280,8 +282,8 @@ def _read_5_sweep_block(
 
 def _measurement_times_ns(epoch_ns: np.ndarray, bin_slice: slice) -> np.ndarray:
     bins = np.arange(bin_slice.start, bin_slice.stop)
-    dt_per_bin = int((12 / 72) * ONE_SECOND_IN_NANOSECONDS)
-    return (epoch_ns[:, None] + bins * dt_per_bin).flatten()
+    seconds_into_sweep = bins * SWAPI_BIN_PERIOD_S + SWAPI_LIVETIME_CENTER_OFFSET_S
+    return (epoch_ns[:, None] + seconds_into_sweep * ONE_SECOND_IN_NANOSECONDS).flatten()
 
 
 # --------------------------------------------------------------------------- #
@@ -296,8 +298,8 @@ def _fit_for_bins(
     epoch_ns: np.ndarray,
     swapi_response,
 ):
-    cr = count_rate[:, bin_slice].flatten()
-    voltages = esa_voltage[:, bin_slice].flatten() / SWAPI_L2_K_FACTOR
+    cr = count_rate[:, bin_slice]
+    voltages = esa_voltage[:, bin_slice] / SWAPI_L2_K_FACTOR
     times = _measurement_times_ns(epoch_ns, bin_slice)
     rotation_matrices = get_swapi_geometry(times)
     ctx = build_solar_wind_fit_context(
@@ -330,12 +332,12 @@ def _bootstrap_sigmas(
     fit = result["fit_result"]
     state0 = SolarWindParams(
         density=fit.density.nominal_value,
-        bulk_velocity_rtn=np.array([c.nominal_value for c in fit.bulk_velocity_rtn]),
+        velocity_rtn=np.array([c.nominal_value for c in fit.velocity_rtn]),
         temperature=fit.temperature.nominal_value,
         mass=PROTON_MASS_KG,
     ).to_vector()
-    cr = ctx.count_rate
-    v = ctx.esa_voltage
+    cr = ctx.count_rate.ravel()
+    v = ctx.esa_voltage.ravel()
     rm = ctx.rotation_matrices
     swapi_response_obj = result["swapi_response"]
 
@@ -388,9 +390,9 @@ def _bootstrap_sigmas(
         sw = SolarWindParams.from_vector(raw.x, ctx_b.mass_kg)
         fits_n.append(sw.density)
         fits_T.append(sw.temperature)
-        fits_vR.append(float(sw.bulk_velocity_rtn[0]))
-        fits_vT.append(float(sw.bulk_velocity_rtn[1]))
-        fits_vN.append(float(sw.bulk_velocity_rtn[2]))
+        fits_vR.append(float(sw.velocity_rtn[0]))
+        fits_vT.append(float(sw.velocity_rtn[1]))
+        fits_vN.append(float(sw.velocity_rtn[2]))
 
     arr_n = np.array(fits_n)
     arr_T = np.array(fits_T)
@@ -422,12 +424,12 @@ def _build_intro_table(science_result, coarse_result, boot, wind):
     """Build the markdown table consumed by the Introduction section."""
     sci_fit = science_result["fit_result"]
     coa_fit = coarse_result["fit_result"]
-    sci_v_sun = science_result["bulk_velocity_rtn_sun"]
-    coa_v_sun = coarse_result["bulk_velocity_rtn_sun"]
+    sci_v_sun = science_result["velocity_rtn_sun"]
+    coa_v_sun = coarse_result["velocity_rtn_sun"]
     # Sun-frame |v| uncertainty: SC velocity is treated as deterministic so
     # |v_sc + v_sun_offset| inherits std from the SC-frame velocity ufloat.
-    sci_speed_uf = sum(c**2 for c in sci_fit.bulk_velocity_rtn) ** 0.5
-    coa_speed_uf = sum(c**2 for c in coa_fit.bulk_velocity_rtn) ** 0.5
+    sci_speed_uf = sum(c**2 for c in sci_fit.velocity_rtn) ** 0.5
+    coa_speed_uf = sum(c**2 for c in coa_fit.velocity_rtn) ** 0.5
     sci_speed_sun = float(np.linalg.norm(sci_v_sun))
     coa_speed_sun = float(np.linalg.norm(coa_v_sun))
 
@@ -473,23 +475,23 @@ def _build_intro_table(science_result, coarse_result, boot, wind):
         ),
         (
             "$`v_{R}`$ (km/s, inertial RTN)",
-            f"{sci_v_sun[0]:.2f} ± {sci_fit.bulk_velocity_rtn[0].std_dev:.2f}",
+            f"{sci_v_sun[0]:.2f} ± {sci_fit.velocity_rtn[0].std_dev:.2f}",
             f"± {boot['vR_sigma']:.2f}",
-            f"{coa_v_sun[0]:.2f} ± {coa_fit.bulk_velocity_rtn[0].std_dev:.2f}",
+            f"{coa_v_sun[0]:.2f} ± {coa_fit.velocity_rtn[0].std_dev:.2f}",
             wind_vR,
         ),
         (
             "$`v_{T}`$ (km/s, inertial RTN)",
-            f"{sci_v_sun[1]:+.2f} ± {sci_fit.bulk_velocity_rtn[1].std_dev:.2f}",
+            f"{sci_v_sun[1]:+.2f} ± {sci_fit.velocity_rtn[1].std_dev:.2f}",
             f"± {boot['vT_sigma']:.2f}",
-            f"{coa_v_sun[1]:+.2f} ± {coa_fit.bulk_velocity_rtn[1].std_dev:.2f}",
+            f"{coa_v_sun[1]:+.2f} ± {coa_fit.velocity_rtn[1].std_dev:.2f}",
             wind_vT,
         ),
         (
             "$`v_{N}`$ (km/s, inertial RTN)",
-            f"{sci_v_sun[2]:+.2f} ± {sci_fit.bulk_velocity_rtn[2].std_dev:.2f}",
+            f"{sci_v_sun[2]:+.2f} ± {sci_fit.velocity_rtn[2].std_dev:.2f}",
             f"± {boot['vN_sigma']:.2f}",
-            f"{coa_v_sun[2]:+.2f} ± {coa_fit.bulk_velocity_rtn[2].std_dev:.2f}",
+            f"{coa_v_sun[2]:+.2f} ± {coa_fit.velocity_rtn[2].std_dev:.2f}",
             wind_vN,
         ),
     ]
@@ -527,7 +529,7 @@ def _print_fit(result, sc_velocity_rtn: np.ndarray):
     fit = result["fit_result"]
     n = fit.density
     T = fit.temperature
-    v_sc = fit.bulk_velocity_rtn
+    v_sc = fit.velocity_rtn
     v_sc_nom = np.array([c.nominal_value for c in v_sc])
     v_sun_nom = v_sc_nom + sc_velocity_rtn
     # Inertial speed σ ≈ σ on |v_sc| (sc velocity is ~deterministic per epoch).
@@ -559,8 +561,8 @@ def _model_rates_with_deadtime(
     )
     sw = SolarWindParams(
         density=fit_result.density.nominal_value,
-        bulk_velocity_rtn=np.array(
-            [c.nominal_value for c in fit_result.bulk_velocity_rtn]
+        velocity_rtn=np.array(
+            [c.nominal_value for c in fit_result.velocity_rtn]
         ),
         temperature=fit_result.temperature.nominal_value,
         mass=PROTON_MASS_KG,

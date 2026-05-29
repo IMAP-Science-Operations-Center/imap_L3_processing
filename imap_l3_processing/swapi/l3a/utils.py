@@ -22,7 +22,11 @@ from imap_l3_processing.constants import (
     THIRTY_SECONDS_IN_NANOSECONDS,
 )
 from imap_l3_processing.models import MagData
-from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
+from imap_l3_processing.swapi.constants import (
+    SWAPI_BIN_PERIOD_S,
+    SWAPI_K_FACTOR,
+    SWAPI_LIVETIME_CENTER_OFFSET_S,
+)
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_processing.spice.geometry import (
@@ -112,7 +116,7 @@ def get_spacecraft_velocity_rtn(epoch_tt2000_ns: float) -> ndarray:
 
 
 @numba.njit
-def velocity_to_angles_in_instrument_frame(vx: float, vy: float, vz: float):
+def velocity_components_to_angles_in_instrument_frame(vx: float, vy: float, vz: float):
     """Convert a Cartesian flow-direction velocity to (azimuth_deg, elevation_deg)
     look angles in the SWAPI instrument frame.
 
@@ -132,19 +136,19 @@ def velocity_to_angles_in_instrument_frame(vx: float, vy: float, vz: float):
 
 
 @numba.njit
-def bulk_velocity_to_angles_in_instrument_frame(
+def velocity_to_angles_in_instrument_frame(
     sw_params: SolarWindParams, rotation_xyz_to_rtn
 ):
     """SolarWindParams bulk flow velocity → (azimuth_deg, elevation_deg) look
     angles in the SWAPI instrument frame.
 
-    `sw_params.bulk_velocity_rtn` is the bulk flow direction in RTN. It is
+    `sw_params.velocity_rtn` is the bulk flow direction in RTN. It is
     rotated into the SWAPI XYZ frame and converted by
-    `velocity_to_angles_in_instrument_frame` — see that function for the
+    `velocity_components_to_angles_in_instrument_frame` — see that function for the
     flow-vs-look sign convention.
     """
-    v_xyz = rotation_xyz_to_rtn.T @ sw_params.bulk_velocity_rtn
-    return velocity_to_angles_in_instrument_frame(v_xyz[0], v_xyz[1], v_xyz[2])
+    v_xyz = rotation_xyz_to_rtn.T @ sw_params.velocity_rtn
+    return velocity_components_to_angles_in_instrument_frame(v_xyz[0], v_xyz[1], v_xyz[2])
 
 
 def compute_direction_of_mean_magnetic_field_over_chunk(
@@ -181,9 +185,10 @@ def chunk_epoch(chunk: SwapiL2Data) -> float:
 
 def measurement_times(chunk: SwapiL2Data, bin_slice: slice) -> ndarray:
     bins = np.arange(bin_slice.start, bin_slice.stop)
+    seconds_into_sweep = bins * SWAPI_BIN_PERIOD_S + SWAPI_LIVETIME_CENTER_OFFSET_S
     return (
         chunk.sci_start_time[:, np.newaxis]
-        + bins * (12 / 72 * ONE_SECOND_IN_NANOSECONDS)
+        + seconds_into_sweep * ONE_SECOND_IN_NANOSECONDS
     ).flatten()
 
 

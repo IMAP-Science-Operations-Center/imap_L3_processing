@@ -6,22 +6,22 @@ import numpy as np
 @dataclass
 class SpinAngleLookup:
     bin_centers: np.ndarray
-    lower_bin_edges: np.ndarray
     bin_deltas: np.ndarray
+    baseline: np.ndarray
 
+    offset = 270
     def __init__(self):
         num_bins = 24
-
-        self.lower_bin_edges = np.linspace(0, 360, num_bins, endpoint=False)
-        bin_widths = np.diff(self.lower_bin_edges)
+        self.baseline = np.linspace(0, 360, num_bins, endpoint=False)
+        bin_widths = np.diff(self.baseline)
         assert np.all(bin_widths == bin_widths[0])
         bin_delta = bin_widths[0] / 2.0
 
         self.bin_deltas = np.repeat(bin_delta, num_bins)
-        self.bin_centers = self.lower_bin_edges + bin_delta
+        self.bin_centers = (self.baseline + bin_delta + self.offset) % 360
 
     def get_spin_angle_index(self, spin_angle: np.ndarray | float):
-        return np.digitize(spin_angle, self.lower_bin_edges) - 1
+        return np.digitize(spin_angle, self.baseline + self.offset) - 1
 
     @property
     def num_bins(self):

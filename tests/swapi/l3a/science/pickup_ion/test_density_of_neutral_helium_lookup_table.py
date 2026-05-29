@@ -56,12 +56,6 @@ class TestDensityArrayAndScalarInputs(TestCase):
         density = lut.density(270.0, distance=0.2)
         self.assertEqual(density, 0.03)
 
-    def test_distance_below_grid_returns_fill(self):
-        lut = _table_with_360_anchor()
-        np.testing.assert_array_equal(
-            lut.density(np.array([0.0]), np.array([0.05])), [0.0]
-        )
-
     def test_distance_above_grid_returns_fill(self):
         lut = _table_with_360_anchor()
         np.testing.assert_array_equal(
@@ -74,11 +68,11 @@ class TestDensityArrayAndScalarInputs(TestCase):
             lut.density(np.array([0.0]), np.array([0.1])), [0.01]
         )
 
-
-class TestGetMinimumDistance(TestCase):
-    def test_returns_first_distance_in_grid(self):
+    def test_density_below_lower_limit(self):
         lut = _table_with_360_anchor()
-        self.assertEqual(lut.get_minimum_distance(), 0.1)
+        np.testing.assert_allclose(
+            lut.density(np.array([0.0]), np.array([0.1 / 2])), [0.01 / 2]
+        )
 
 
 class TestTableExtension(TestCase):

@@ -15,7 +15,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     thermal_speed,
 )
 from imap_l3_processing.swapi.l3a.utils import (
-    bulk_velocity_to_angles_in_instrument_frame,
+    velocity_to_angles_in_instrument_frame,
 )
 from imap_l3_processing.swapi.response.azimuthal_transmission import (
     interpolate_azimuthal_transmission,
@@ -179,7 +179,7 @@ def _angular_limits(
     half_width = _maxwellian_angular_extent(
         sw_params, response_grid.central_speed, EPSILON
     )
-    bulk_az, bulk_el = bulk_velocity_to_angles_in_instrument_frame(sw_params, rotation_matrix)
+    bulk_az, bulk_el = velocity_to_angles_in_instrument_frame(sw_params, rotation_matrix)
 
     if region.is_sunglasses:
         el_lo, el_hi = response_grid.sg_passband.elevation_range

@@ -68,7 +68,7 @@ _TRUE_DELTA_V_KM_S = 30.0
 _B_HAT_RTN = np.array([-1.0, 0.0, 0.0])
 
 # Stage-1 proton uncertainties used to seed `ProtonSolarWindFitResult`.
-# Values are chosen small but nonzero so `bulk_velocity_rtn_covariance`
+# Values are chosen small but nonzero so `velocity_rtn_covariance`
 # (used downstream by `fit_solar_wind_alpha_model` to add
 # `σ_Δv²·B̂B̂ᵀ`) is well-defined. The exact values are not pinned by any
 # test — they only need to be finite and positive.
@@ -156,12 +156,12 @@ def _build_proton_fit_result(
     bad_fit_flag: int = int(SwapiL3Flags.NONE),
 ) -> ProtonSolarWindFitResult:
     """Build a `ProtonSolarWindFitResult` (Stage-1 output) with small but
-    nonzero uncertainties so `bulk_velocity_rtn_covariance` is well-defined
+    nonzero uncertainties so `velocity_rtn_covariance` is well-defined
     and Stage-2 has something to add `σ_Δv²·B̂B̂ᵀ` to."""
     return ProtonSolarWindFitResult(
         density=ufloat(density, _STAGE1_PROTON_DENSITY_SIGMA_CM3),
         temperature=ufloat(temperature, _STAGE1_PROTON_TEMPERATURE_SIGMA_K),
-        bulk_velocity_rtn=(
+        velocity_rtn=(
             ufloat(velocity_rtn[0], _STAGE1_PROTON_VELOCITY_SIGMA_KM_S),
             ufloat(velocity_rtn[1], _STAGE1_PROTON_VELOCITY_SIGMA_KM_S),
             ufloat(velocity_rtn[2], _STAGE1_PROTON_VELOCITY_SIGMA_KM_S),
@@ -177,7 +177,7 @@ def _assert_moments_are_nan_filled(test, result) -> None:
     test.assertTrue(np.isnan(result.density.nominal_value))
     test.assertTrue(np.isnan(result.temperature.nominal_value))
     test.assertTrue(np.isnan(result.delta_v.nominal_value))
-    for component in result.bulk_velocity_rtn:
+    for component in result.velocity_rtn:
         test.assertTrue(np.isnan(component.nominal_value))
 
 
@@ -204,14 +204,14 @@ def _synthesize_proton_plus_alpha_count_rate(
     initial-guess setup as well."""
     proton_params = SolarWindParams(
         density=proton_density,
-        bulk_velocity_rtn=np.asarray(proton_velocity_rtn, dtype=float),
+        velocity_rtn=np.asarray(proton_velocity_rtn, dtype=float),
         temperature=proton_temperature,
         mass=PROTON_MASS_KG,
     )
     alpha_velocity = np.asarray(proton_velocity_rtn, dtype=float) + delta_v * b_hat
     alpha_params = SolarWindParams(
         density=alpha_density,
-        bulk_velocity_rtn=alpha_velocity,
+        velocity_rtn=alpha_velocity,
         temperature=alpha_temperature,
         mass=ALPHA_PARTICLE_MASS_KG,
     )
@@ -386,8 +386,8 @@ class TestFitAlphaMomentsRecoversTruth(
         )
 
     def test_alpha_velocity_equals_proton_velocity_plus_delta_v_along_bhat(self):
-        """The post-fit `bulk_velocity_rtn` satisfies the algebraic identity v_α = v_p* + Δv·B̂ exactly (not approximately) — the dataclass stores the constraint, not a free vector."""
-        v_alpha = self.result.bulk_velocity_rtn_nominal()
+        """The post-fit `velocity_rtn` satisfies the algebraic identity v_α = v_p* + Δv·B̂ exactly (not approximately) — the dataclass stores the constraint, not a free vector."""
+        v_alpha = self.result.velocity_rtn_nominal()
         expected = (
             _TRUE_PROTON_VELOCITY_RTN
             + self.result.delta_v.nominal_value * _B_HAT_RTN
@@ -397,7 +397,7 @@ class TestFitAlphaMomentsRecoversTruth(
     def test_alpha_velocity_recovers_truth(self):
         """The recovered alpha velocity vector matches the synthesis truth (≈480 km/s) within ~1 km/s — combines Δv recovery + field-aligned constraint."""
         np.testing.assert_allclose(
-            self.result.bulk_velocity_rtn_nominal(),
+            self.result.velocity_rtn_nominal(),
             self.alpha_velocity_rtn,
             atol=1.0,
         )
@@ -442,7 +442,7 @@ class TestFitAlphaMomentsAlphaVelocityFollowsBHat(unittest.TestCase):
     def test_alpha_velocity_minus_proton_velocity_is_parallel_to_bhat(self):
         """For a tilted B̂, the recovered (v_α − v_p) lies along ±B̂ — equivalently, the cross product (v_α − v_p) × B̂ is zero up to numerical noise."""
         delta = (
-            self.result.bulk_velocity_rtn_nominal() - self.proton_velocity_rtn
+            self.result.velocity_rtn_nominal() - self.proton_velocity_rtn
         )
         np.testing.assert_allclose(np.cross(delta, self.b_hat), 0.0, atol=1e-9)
 
@@ -450,7 +450,7 @@ class TestFitAlphaMomentsAlphaVelocityFollowsBHat(unittest.TestCase):
         """The stored `delta_v` equals (v_α − v_p)·B̂ since B̂ is unit-normed — the scalar matches the projection of the vector offset onto the field."""
         delta_along = float(
             np.dot(
-                self.result.bulk_velocity_rtn_nominal() - self.proton_velocity_rtn,
+                self.result.velocity_rtn_nominal() - self.proton_velocity_rtn,
                 self.b_hat,
             )
         )
@@ -461,7 +461,7 @@ class TestFitAlphaMomentsAlphaVelocityFollowsBHat(unittest.TestCase):
     def test_alpha_velocity_recovers_truth_under_tilted_bhat(self):
         """With a 10° tilted B̂, the recovered alpha velocity matches the synthesis truth vector to ~1 km/s."""
         np.testing.assert_allclose(
-            self.result.bulk_velocity_rtn_nominal(),
+            self.result.velocity_rtn_nominal(),
             self.alpha_velocity_truth,
             atol=1.0,
         )
@@ -471,7 +471,7 @@ class TestFitAlphaMomentsAlphaVelocityFollowsBHat(unittest.TestCase):
 
 
 class TestAlphaSolarWindFitResultAccessors(unittest.TestCase):
-    """Tests for `AlphaSolarWindFitResult.bulk_velocity_rtn_nominal` and `bulk_velocity_rtn_covariance` — accessors that extract the nominal vector and covariance matrix from the correlated UFloat triple."""
+    """Tests for `AlphaSolarWindFitResult.velocity_rtn_nominal` and `velocity_rtn_covariance` — accessors that extract the nominal vector and covariance matrix from the correlated UFloat triple."""
 
     def setUp(self):
         # Build moments from a known correlated velocity covariance so the
@@ -498,26 +498,26 @@ class TestAlphaSolarWindFitResultAccessors(unittest.TestCase):
         self.moments = AlphaSolarWindFitResult(
             density=ufloat(0.2, 0.01),
             temperature=ufloat(4.0e5, 1.0e3),
-            bulk_velocity_rtn=velocity_triple,
+            velocity_rtn=velocity_triple,
             delta_v=ufloat(30.0, 1.0),
             bad_fit_flag=int(SwapiL3Flags.NONE),
         )
 
-    def test_bulk_velocity_rtn_nominal_returns_per_component_nominals(self):
+    def test_velocity_rtn_nominal_returns_per_component_nominals(self):
         """The nominal-vector accessor returns the per-component nominal_values as a length-3 ndarray."""
         np.testing.assert_array_equal(
-            self.moments.bulk_velocity_rtn_nominal(), self.expected_nominal
+            self.moments.velocity_rtn_nominal(), self.expected_nominal
         )
 
-    def test_bulk_velocity_rtn_covariance_is_three_by_three(self):
+    def test_velocity_rtn_covariance_is_three_by_three(self):
         """The covariance accessor returns a 3×3 matrix matching the RTN velocity dimensionality."""
-        covariance = self.moments.bulk_velocity_rtn_covariance()
+        covariance = self.moments.velocity_rtn_covariance()
         self.assertEqual(covariance.shape, (3, 3))
 
-    def test_bulk_velocity_rtn_covariance_matches_input_covariance(self):
+    def test_velocity_rtn_covariance_matches_input_covariance(self):
         """The covariance accessor round-trips: a UFloat triple built from a known PSD covariance returns that same matrix to machine precision."""
         np.testing.assert_allclose(
-            self.moments.bulk_velocity_rtn_covariance(),
+            self.moments.velocity_rtn_covariance(),
             self.expected_covariance,
             atol=1e-12,
         )
@@ -736,7 +736,7 @@ class TestAlphaEvaluatorAnalyticJacobianMatchesFiniteDifference(
         )
         alpha_only_params = SolarWindParams(
             density=_TRUE_ALPHA_DENSITY_CM3,
-            bulk_velocity_rtn=_TRUE_PROTON_VELOCITY_RTN + _TRUE_DELTA_V_KM_S * _B_HAT_RTN,
+            velocity_rtn=_TRUE_PROTON_VELOCITY_RTN + _TRUE_DELTA_V_KM_S * _B_HAT_RTN,
             temperature=_TRUE_ALPHA_TEMPERATURE_K,
             mass=ALPHA_PARTICLE_MASS_KG,
         )

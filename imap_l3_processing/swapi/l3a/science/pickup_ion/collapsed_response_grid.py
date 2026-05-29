@@ -11,7 +11,7 @@ from imap_l3_processing.constants import (
     CENTIMETERS_PER_METER,
     METERS_PER_KILOMETER,
 )
-from imap_l3_processing.swapi.l3a.utils import velocity_to_angles_in_instrument_frame
+from imap_l3_processing.swapi.l3a.utils import velocity_components_to_angles_in_instrument_frame
 from imap_l3_processing.swapi.response.passband_grid import interpolate_passband
 from imap_l3_processing.swapi.response.swapi_response import ResponseGrid, SwapiResponse
 from imap_l3_processing.swapi.response.azimuthal_transmission import interpolate_azimuthal_transmission
@@ -38,7 +38,6 @@ def build_chunk_collapsed_response(
     bulk_sw_per_bin_kms: NDArray,
     mass_per_charge_m_p_per_e: float,
     cutoff_speed_max_kms: float,
-    min_speed_kms: float,
     central_effective_area_scale: float = 1.0,
 ) -> ChunkCollapsedResponse:
     """
@@ -46,12 +45,6 @@ def build_chunk_collapsed_response(
         voltages_v: (n_steps,), ESA voltage setting [V].
         bulk_sw_per_bin_kms: (n_sweeps, n_steps, 3), bulk SW velocity vector
             (x, y, z) [km/s] in the SWAPI instrument frame.
-
-    `cutoff_speed_max_kms` is the largest f_PUI cutoff speed expected during
-    fitting; the v' grid lands it at the midpoint of the final bin, so the
-    partial-Heaviside fix has a grid point strictly above the cutoff.
-
-    `min_speed_kms` is the lower edge of the v' grid. Must be strictly positive.
     """
     voltages_v = np.asarray(voltages_v, dtype=float)
     bulk_sw_per_bin_kms = np.asarray(bulk_sw_per_bin_kms, dtype=float)
@@ -60,18 +53,13 @@ def build_chunk_collapsed_response(
         raise ValueError(
             f"voltages_v shape {voltages_v.shape} must match n_steps={n_steps}"
         )
-    if min_speed_kms <= 0.0:
-        raise ValueError(f"min_speed_kms must be > 0, got {min_speed_kms}")
-
     bulk_speeds = np.linalg.norm(bulk_sw_per_bin_kms, axis=-1)  # (n_sweeps, n_steps)
-    delta_v_prime = (cutoff_speed_max_kms - min_speed_kms) / (_CHUNK_GRID_POINTS - 1.5)
-    v_prime_max = min_speed_kms + (_CHUNK_GRID_POINTS - 1) * delta_v_prime
-    speed_in_sw_frame = np.linspace(min_speed_kms, v_prime_max, _CHUNK_GRID_POINTS)
 
-    trapz_w = np.full(_CHUNK_GRID_POINTS, delta_v_prime)
-    trapz_w[0] *= 0.5
-    trapz_w[-1] *= 0.5
-    integration_weights = speed_in_sw_frame ** 2 * trapz_w
+    speed_in_sw_frame = np.linspace(
+        cutoff_speed_max_kms * 1e-3, cutoff_speed_max_kms, _CHUNK_GRID_POINTS
+    )
+    delta_v_prime = speed_in_sw_frame[1] - speed_in_sw_frame[0]
+    integration_weights = speed_in_sw_frame ** 2 * delta_v_prime
 
     bin_weights = np.zeros((n_sweeps, n_steps, _CHUNK_GRID_POINTS))
     for sweep_index in range(n_sweeps):
@@ -79,7 +67,7 @@ def build_chunk_collapsed_response(
             voltage = float(voltages_v[step_index])
             bulk_vec = bulk_sw_per_bin_kms[sweep_index, step_index]
             bulk_speed = float(bulk_speeds[sweep_index, step_index])
-            bulk_azimuth_deg, bulk_elevation_deg = velocity_to_angles_in_instrument_frame(
+            bulk_azimuth_deg, bulk_elevation_deg = velocity_components_to_angles_in_instrument_frame(
                 bulk_vec[0], bulk_vec[1], bulk_vec[2]
             )
             response_grid = swapi_response.get_response_grid(

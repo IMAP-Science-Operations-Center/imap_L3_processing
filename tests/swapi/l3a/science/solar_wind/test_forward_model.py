@@ -34,7 +34,7 @@ _REF_BULK_SPEED_KM_S = 450.0
 # Off-axis bulk velocity used for the velocity-component Jacobian tests.
 # Adding small components in R and N breaks the symmetry that makes vR/vN
 # Jacobian entries near zero, so finite-difference noise doesn't dominate.
-_OFF_AXIS_BULK_VELOCITY_RTN = np.array([30.0, -_REF_BULK_SPEED_KM_S, 20.0])
+_OFF_AXIS_VELOCITY_RTN = np.array([30.0, -_REF_BULK_SPEED_KM_S, 20.0])
 
 # Index aliases for the RTN velocity components inside the LM state vector.
 _VELOCITY_R_IDX, _VELOCITY_T_IDX, _VELOCITY_N_IDX = (
@@ -156,7 +156,7 @@ class TestCalculateIntegralRateBehavior(_ForwardModelFixture):
         self.response_grid = self.ctx.response_grids[0]
         self.rotation_matrix = self.ctx.rotation_matrices[0]
 
-    def test_rate_is_positive_when_bulk_velocity_aligns_with_boresight(self):
+    def test_rate_is_positive_when_velocity_aligns_with_boresight(self):
         """With bulk speed at the passband center and the flow aimed along boresight, the predicted rate is strictly positive."""
         rate, _ = calculate_integral(
             proton_params(), self.response_grid, self.rotation_matrix
@@ -212,7 +212,7 @@ class TestAnalyticJacobianIdentities(_ForwardModelFixture):
             ),
         )
         rates, jacobian = model_solar_wind_ideal_coincidence_rates(
-            proton_params(velocity_rtn=_OFF_AXIS_BULK_VELOCITY_RTN),
+            proton_params(velocity_rtn=_OFF_AXIS_VELOCITY_RTN),
             ctx,
         )
         np.testing.assert_array_equal(jacobian[:, LOG_DENSITY_IDX], rates)
@@ -253,7 +253,7 @@ class TestAnalyticJacobianAgainstFiniteDifferences(_ForwardModelFixture):
         # Off-axis bulk velocity so all three velocity components produce
         # nonzero Jacobian entries (boresight-aligned bulk has vR/vN ≈ 0
         # by symmetry, and the FD signal-to-noise on those columns is poor).
-        self.sw = proton_params(velocity_rtn=_OFF_AXIS_BULK_VELOCITY_RTN)
+        self.sw = proton_params(velocity_rtn=_OFF_AXIS_VELOCITY_RTN)
         self.state = self.sw.to_vector()
 
     def test_log_temperature_jacobian_is_correct(self):
@@ -326,7 +326,7 @@ class TestNonIdentityRotation(_ForwardModelFixture):
             self.response, np.array([_ESA_VOLTAGE_AT_REF_SPEED_V])
         )
         baseline_rate, _ = calculate_integral(
-            proton_params(velocity_rtn=_OFF_AXIS_BULK_VELOCITY_RTN),
+            proton_params(velocity_rtn=_OFF_AXIS_VELOCITY_RTN),
             baseline_ctx.response_grids[0],
             baseline_ctx.rotation_matrices[0],
         )
@@ -342,7 +342,7 @@ class TestNonIdentityRotation(_ForwardModelFixture):
                 [0.0, math.sin(angle_rad), math.cos(angle_rad)],
             ]
         )
-        rotated_velocity_rtn = rotation_about_r @ _OFF_AXIS_BULK_VELOCITY_RTN
+        rotated_velocity_rtn = rotation_about_r @ _OFF_AXIS_VELOCITY_RTN
         rotated_xyz_to_rtn = rotation_about_r
         rotated_ctx = _build_fit_context_for_voltages(
             self.response,

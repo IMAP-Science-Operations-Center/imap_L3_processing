@@ -15,14 +15,13 @@ class TestCoDICEAngleLookup(unittest.TestCase):
         lower_edges = spin_angle_lut.bin_centers - spin_angle_lut.bin_deltas
         upper_edges = spin_angle_lut.bin_centers + spin_angle_lut.bin_deltas
 
-        np.testing.assert_array_equal(spin_angle_lut.lower_bin_edges, lower_edges)
-        np.testing.assert_array_equal(lower_edges[1:], upper_edges[:-1])
+        np.testing.assert_array_equal(lower_edges[1:] % 360, upper_edges[:-1] % 360)
 
-        self.assertEqual(0, lower_edges[0])
-        self.assertEqual(360, upper_edges[-1])
+        self.assertEqual(270, lower_edges[0])
+        self.assertEqual(270, upper_edges[-1])
 
         for i in range(24):
-            self.assertEqual(i, spin_angle_lut.get_spin_angle_index(15.0 * i + 7.5))
+            self.assertEqual(i, spin_angle_lut.get_spin_angle_index(15.0 * i + 277.5))
 
     def test_elevation_lookup(self):
         elevation_angle_lut = PositionToElevationLookup()

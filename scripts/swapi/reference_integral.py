@@ -3,7 +3,7 @@
 Mirrors the physics in `imap_l3_processing/swapi/l3a/science/solar_wind/forward_model.py::calculate_integral`
 but on a fixed dense trapezoid grid (no dynamic angular/speed windowing). Used
 as a ground-truth reference for the production GL quadrature in
-`docs/swapi/figure_src/build_validation_table.py` and `plot_spectra.py`.
+`docs/swapi/figure_src/plot_validation_scatter.py` and `plot_spectra.py`.
 
 Fixed integration grid:
   elevation:  -15 to 15 deg @ 0.05° (601 pts)
@@ -314,7 +314,7 @@ def reference_integrals_batch(response_grids, sws, rotation_matrices):
         oa_values_all[i] = rg.oa_passband.values
         central_speeds[i] = rg.central_speed
         central_effective_areas[i] = rg.central_effective_area
-        bulk_velocities_rtn[i] = sws[i].bulk_velocity_rtn
+        bulk_velocities_rtn[i] = sws[i].velocity_rtn
         bulk_speeds[i] = bulk_speed(sws[i])
         thermal_speeds[i] = params.thermal_speed(sws[i])
         densities[i] = sws[i].density

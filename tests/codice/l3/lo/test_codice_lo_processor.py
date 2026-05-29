@@ -917,7 +917,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         mock_rebin_3d_distribution_azimuth_to_elevation.assert_called_once_with(
             mock_convert_count_rate_to_intensity.return_value,
             NumpyArrayMatcher(np.arange(1, 25)),
-            mock_elevation_lookup)
+            mock_elevation_lookup, sentinel.half_spin)
 
         self.assertIsInstance(l3a_3d_distribution_data_product, CodiceLoL3a3dDistributionDataProduct)
         self.assertEqual(processor.input_metadata, l3a_3d_distribution_data_product.input_metadata)

@@ -53,11 +53,11 @@ class TestSwapiProcessor(TestCase):
         mock_spicepy.ktotal.return_value = 0
 
         returned_chunk_epoch = 10 + THIRTY_SECONDS_IN_NANOSECONDS
-        returned_bulk_velocity_rtn_sc = np.array([370.0, 10.0, 5.0])
+        returned_velocity_rtn_sc = np.array([370.0, 10.0, 5.0])
 
         proton_runner_result = dict(
             epoch=np.array([returned_chunk_epoch]),
-            proton_sw_bulk_velocity_rtn_sc=np.array([returned_bulk_velocity_rtn_sc]),
+            proton_sw_velocity_rtn=np.array([returned_velocity_rtn_sc]),
             quality_flags=np.array([SwapiL3Flags.NONE]),
         )
 
@@ -247,9 +247,9 @@ class TestSwapiProcessor(TestCase):
             proton_sw_clock_angle_uncert=np.array([0.25]),
             proton_sw_deflection_angle=np.array([5.0]),
             proton_sw_deflection_angle_uncert=np.array([0.001]),
-            proton_sw_bulk_velocity_rtn_sun=np.array([[400.0, 10.0, 5.0]]),
-            proton_sw_bulk_velocity_rtn_sc=np.array([[370.0, 10.0, 5.0]]),
-            proton_sw_bulk_velocity_rtn_covariance=np.array([np.eye(3)]),
+            proton_sw_velocity_rtn_sun=np.array([[400.0, 10.0, 5.0]]),
+            proton_sw_velocity_rtn=np.array([[370.0, 10.0, 5.0]]),
+            proton_sw_velocity_rtn_covariance=np.array([np.eye(3)]),
             quality_flags=np.array([SwapiL3Flags.NONE]),
         )
         mock_runner = mock_parallel_chunk_runner_class.return_value
@@ -366,12 +366,14 @@ class TestSwapiProcessor(TestCase):
             epoch=np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]),
             alpha_sw_speed=np.array([450.0]),
             alpha_sw_speed_uncert=np.array([1.0]),
+            alpha_sw_speed_sun=np.array([480.0]),
+            alpha_sw_speed_sun_uncert=np.array([1.4]),
             alpha_sw_density=np.array([0.15]),
             alpha_sw_density_uncert=np.array([0.01]),
             alpha_sw_temperature=np.array([400000.0]),
             alpha_sw_temperature_uncert=np.array([2000.0]),
             alpha_sw_velocity_rtn_sun=np.array([[480.0, 5.0, 1.0]]),
-            alpha_sw_velocity_rtn_sc=np.array([[450.0, 5.0, 1.0]]),
+            alpha_sw_velocity_rtn=np.array([[450.0, 5.0, 1.0]]),
             alpha_sw_velocity_rtn_covariance=np.array([np.eye(3)]),
             quality_flags=np.array([int(SwapiL3Flags.NONE)]),
         )

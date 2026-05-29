@@ -98,8 +98,13 @@ def build_pui_xarray_context(
 
     density_data = np.loadtxt(density_of_neutral_helium_lut_path)
     psi_axis, r_axis = np.unique(density_data[:, 0]), np.unique(density_data[:, 1])
+    density_values = density_data[:, 2].reshape(len(psi_axis), len(r_axis))
+
+    r_axis = np.insert(r_axis, 0, 0.0)
+    density_values = np.insert(density_values, 0, 0.0, axis=1)
+
     density_table = xr.DataArray(
-        density_data[:, 2].reshape(len(psi_axis), len(r_axis)),
+        density_values,
         dims=("psi", "r"),
         coords={"psi": psi_axis, "r": r_axis},
     ).pint.quantify("1/cm**3")

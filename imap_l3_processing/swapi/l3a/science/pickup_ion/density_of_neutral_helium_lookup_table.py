@@ -27,12 +27,24 @@ class DensityOfNeutralHeliumLookupTable:
     def density(self, angle: Union[ndarray, float], distance: Union[ndarray, float]):
         if isinstance(distance, float):
             coords = np.array((angle % 360, distance))
-            return self._interp(coords)[0]
+            result = self._interp(coords)[0]
         else:
             coords = np.empty((len(distance), 2))
             coords[:, 0] = angle % 360
             coords[:, 1] = distance
-            return self._interp(coords)
+            result = self._interp(coords)
+
+        if not np.all(distance >= self.get_minimum_distance()):
+            result = np.where(
+                distance > self.get_minimum_distance(),
+                result,
+                (
+                    self.density(angle, np.ones_like(distance) * self.get_minimum_distance())
+                    * (distance / self.get_minimum_distance())
+                )
+            )
+
+        return result
 
     @classmethod
     def from_file(cls, file):

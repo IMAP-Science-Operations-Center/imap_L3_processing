@@ -147,7 +147,7 @@ class _IndexedCall:
         return index, self._func(index)
 
 
-def bulk_velocity_rtn_from_swapi_angles(
+def velocity_rtn_from_swapi_angles(
     bulk_speed_km_s: float, azimuth_deg: float, elevation_deg: float
 ) -> np.ndarray:
     """Inverse of `bulk_angles_in_instrument_frame` for R = identity (RTN ≡ SWAPI)."""
