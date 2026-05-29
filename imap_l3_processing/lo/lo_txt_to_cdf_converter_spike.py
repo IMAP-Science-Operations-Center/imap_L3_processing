@@ -68,6 +68,7 @@ class CsvNameToProduct:
 @dataclasses.dataclass
 class Manifest:
     repoints: list[int]
+    l1b_filenames: list[str]
     start_date: datetime
     end_date: datetime
 
@@ -78,10 +79,9 @@ class Manifest:
         start_date = min(l1c_times)
         end_date = max(l1c_times)
 
-        repoints = list(manifest_df["repoint"])
-
         return cls(
-            repoints=repoints,
+            repoints=list(manifest_df["repoint"]),
+            l1b_filenames=list(manifest_df["l1b_filenames"]),
             start_date=start_date,
             end_date=end_date,
         )
@@ -110,11 +110,24 @@ class LoProcessingInput:
         return temp_data
 
     @classmethod
-    def load(cls, manifest: Manifest, l2_descriptor: str, version: int, input_path: Path, name_mapping: CsvNameToProduct, **additional_map_data) -> Self:
-        loaded_data = {
-            **LoProcessingInput.load_data_dir(input_path / "maps", skiprows=1),
-            **LoProcessingInput.load_data_dir(input_path / "masked_maps")
-        }
+    def load(cls,
+         manifest: Manifest,
+         l2_descriptor: str,
+         version: int,
+         input_path: Path,
+         name_mapping: CsvNameToProduct,
+         use_masked_data: bool,
+         **additional_map_data
+    ) -> Self:
+        if use_masked_data:
+            loaded_data = {
+                **LoProcessingInput.load_data_dir(input_path / "maps", skiprows=1),
+                **LoProcessingInput.load_data_dir(input_path / "masked_maps")
+            }
+        else:
+            loaded_data = {
+                **LoProcessingInput.load_data_dir(input_path / "maps", skiprows=1),
+            }
 
         start_date_nanoseconds = (manifest.start_date - TT2000_EPOCH).total_seconds() * 1e9
         end_date_nanoseconds = (manifest.end_date - TT2000_EPOCH).total_seconds() * 1e9
@@ -173,6 +186,7 @@ class LoProcessingInput:
             external_map_dataset=l2_dataset,
         )
         l2_dataset_with_metadata.attrs["Data_version"] = f"{version:03}"
+        l2_dataset_with_metadata.attrs["Parents"] = manifest.l1b_filenames
 
         return cls(
             dataset=l2_dataset_with_metadata,
@@ -235,99 +249,135 @@ if __name__ == "__main__":
         l1c_paths.append(output_path)
 
     output_maps = []
+    for masked, descriptor_suffix in [(False, ""), (True, "Masked")]:
 
-    combined_inputs = []
-    start_dates = []
-    end_dates = []
-    for pivot in (90, 105, 75):
-        manifest_path = ram_nbs_input_path / "outdir" / f"pivot_{pivot}" / "maps" / "map_l1b_manifest_esa1.csv"
-        manifest = Manifest.load(manifest_path)
+        start_dates = []
+        end_dates = []
+        for pivot in (90, 105, 75):
+            manifest_path = ram_nbs_input_path / "outdir" / f"pivot_{pivot}" / "maps" / "map_l1b_manifest_esa1.csv"
+            manifest = Manifest.load(manifest_path)
 
-        nbs_processing_input = LoProcessingInput.load(
-            manifest,
-            f"l{pivot:03d}-enanbs-h-sf-nsp-ram-hae-6deg-6mo",
-            1,
-            ram_nbs_input_path / "outdir" / f"pivot_{pivot}",
-            CsvNameToProduct.create_nbs_mapping()
-        )
+            start_dates.append(manifest.start_date)
+            end_dates.append(manifest.end_date)
 
-        output_maps.append(nbs_processing_input.l2_cdf_path)
+            nbs_processing_input = LoProcessingInput.load(
+                manifest,
+                f"l{pivot:03d}-enanbs{descriptor_suffix}-h-sf-nsp-ram-hae-6deg-6mo",
+                1,
+                ram_nbs_input_path / "outdir" / f"pivot_{pivot}",
+                CsvNameToProduct.create_nbs_mapping(),
+                masked,
+            )
 
-        [spx_nbs_map] = LoProcessor(
-            input_metadata=nbs_processing_input.make_l3_input_metadata(f"l{pivot:03d}-spxnbs-h-sf-nsp-ram-hae-6deg-6mo"),
-            dependencies=nbs_processing_input.get_spx_dependencies(),
-        ).process()
-        print("Produced: ", spx_nbs_map)
+            output_maps.append(nbs_processing_input.l2_cdf_path)
 
-        output_maps.append(spx_nbs_map)
-
-        cg_processing_input = LoProcessingInput.load(
-            manifest,
-            f"l{pivot:03d}-ena-h-hf-nsp-ram-hae-6deg-6mo",
-            1,
-            cg_corrected_input_path / "outdir" / f"pivot_{pivot}",
-            CsvNameToProduct.create_cg_mapping(),
-            exposure_factor=nbs_processing_input.dataset["exposure_factor"]
-        )
-
-        with furnished_metakernel(cg_processing_input.start_date, cg_processing_input.end_date, LO_SP_MAP_KERNELS):
-            [sp_map] = LoProcessor(
-                input_metadata=cg_processing_input.make_l3_input_metadata(f"l{pivot:03d}-ena-h-hf-sp-ram-hae-6deg-6mo"),
-                dependencies=cg_processing_input.get_survival_corrected_dependencies(l1c_paths),
+            [spx_nbs_map] = LoProcessor(
+                input_metadata=nbs_processing_input.make_l3_input_metadata(f"l{pivot:03d}-spxnbs{descriptor_suffix}-h-sf-nsp-ram-hae-6deg-6mo"),
+                dependencies=nbs_processing_input.get_spx_dependencies(),
             ).process()
-            print("Produced: ", sp_map)
+            print("Produced: ", spx_nbs_map)
 
-            output_maps.append(sp_map)
+            output_maps.append(spx_nbs_map)
 
-        combined_inputs.append(sp_map)
-        start_dates.append(cg_processing_input.start_date)
-        end_dates.append(cg_processing_input.end_date)
+            cg_processing_input = LoProcessingInput.load(
+                manifest,
+                f"l{pivot:03d}-ena{descriptor_suffix}-h-hf-nsp-ram-hae-6deg-6mo",
+                1,
+                cg_corrected_input_path / "outdir" / f"pivot_{pivot}",
+                CsvNameToProduct.create_cg_mapping(),
+                masked,
+                exposure_factor=nbs_processing_input.dataset["exposure_factor"]
+            )
 
-        [spx_cg_sp_map] = LoProcessor(
-            input_metadata=cg_processing_input.make_l3_input_metadata(f"l{pivot:03d}-spx-h-hf-sp-ram-hae-6deg-6mo"),
-            dependencies=ProcessingInputCollection(ScienceInput(sp_map.name)),
-        ).process()
-        print("Produced: ", spx_cg_sp_map)
+            output_maps.append(cg_processing_input.l2_cdf_path)
 
-        output_maps.append(spx_cg_sp_map)
+            [spx_cg_nsp_map] = LoProcessor(
+                input_metadata=cg_processing_input.make_l3_input_metadata(f"l{pivot:03d}-spx{descriptor_suffix}-h-hf-nsp-ram-hae-6deg-6mo"),
+                dependencies=cg_processing_input.get_spx_dependencies()
+            ).process()
 
-    combined_descriptor = "ilo-ena-h-hf-sp-ram-hae-6deg-6mo"
+            output_maps.append(spx_cg_nsp_map)
+
+            with furnished_metakernel(cg_processing_input.start_date, cg_processing_input.end_date, LO_SP_MAP_KERNELS):
+                [sp_map] = LoProcessor(
+                    input_metadata=cg_processing_input.make_l3_input_metadata(f"l{pivot:03d}-ena{descriptor_suffix}-h-hf-sp-ram-hae-6deg-6mo"),
+                    dependencies=cg_processing_input.get_survival_corrected_dependencies(l1c_paths),
+                ).process()
+                print("Produced: ", sp_map)
+
+                output_maps.append(sp_map)
+
+
+            [spx_cg_sp_map] = LoProcessor(
+                input_metadata=cg_processing_input.make_l3_input_metadata(f"l{pivot:03d}-spx{descriptor_suffix}-h-hf-sp-ram-hae-6deg-6mo"),
+                dependencies=ProcessingInputCollection(ScienceInput(sp_map.name)),
+            ).process()
+            print("Produced: ", spx_cg_sp_map)
+
+            output_maps.append(spx_cg_sp_map)
+
+    maps_needed_for_combination = [
+        ("ilo-enaMasked-h-hf-sp-ram-hae-6deg-6mo", [
+            "l075-enaMasked-h-hf-sp-ram-hae-6deg-6mo",
+            "l090-enaMasked-h-hf-sp-ram-hae-6deg-6mo",
+            "l105-enaMasked-h-hf-sp-ram-hae-6deg-6mo"
+        ]),
+        ("ilo-enaMasked-h-hf-nsp-ram-hae-6deg-6mo", [
+            "l075-enaMasked-h-hf-nsp-ram-hae-6deg-6mo",
+            "l090-enaMasked-h-hf-nsp-ram-hae-6deg-6mo",
+            "l105-enaMasked-h-hf-nsp-ram-hae-6deg-6mo"
+        ]),
+        ("ilo-enanbsMasked-h-sf-nsp-ram-hae-6deg-6mo", [
+            "l075-enanbsMasked-h-sf-nsp-ram-hae-6deg-6mo",
+            "l090-enanbsMasked-h-sf-nsp-ram-hae-6deg-6mo",
+            "l105-enanbsMasked-h-sf-nsp-ram-hae-6deg-6mo"
+        ])
+    ]
+
     combined_start_date = min(start_dates)
     combined_end_date = max(end_dates)
-    combined_processor = LoProcessor(
-        dependencies=ProcessingInputCollection(*[ScienceInput(map_path.name) for map_path in combined_inputs]),
-        input_metadata=InputMetadata(
-            instrument="lo",
-            data_level="l3",
-            start_date=combined_start_date,
-            end_date=combined_end_date,
-            version="v001",
-            descriptor=combined_descriptor
+    for combined_descriptor, combined_dependencies in maps_needed_for_combination:
+        combined_inputs = []
+        for output_map in output_maps:
+            if any([f"_{combined_dep}_" in output_map.name for combined_dep in combined_dependencies]):
+                combined_inputs.append(output_map)
+
+        combined_processor = LoProcessor(
+            dependencies=ProcessingInputCollection(*[ScienceInput(map_path.name) for map_path in combined_inputs]),
+            input_metadata=InputMetadata(
+                instrument="lo",
+                data_level="l3",
+                start_date=combined_start_date,
+                end_date=combined_end_date,
+                version="v001",
+                descriptor=combined_descriptor
+            )
         )
-    )
 
-    [combined_sp_map] = combined_processor.process()
-    print("Produced: ", combined_sp_map)
+        [combined_sp_map] = combined_processor.process()
+        print("Produced: ", combined_sp_map)
 
-    output_maps.append(combined_sp_map)
+        output_maps.append(combined_sp_map)
 
-    combined_spx_descriptor = combined_descriptor.replace("-ena-", "-spx-")
-    combined_spx_processor = LoProcessor(
-        dependencies=ProcessingInputCollection(ScienceInput(combined_sp_map.name)),
-        input_metadata=InputMetadata(
-            instrument="lo",
-            data_level="l3",
-            start_date=combined_start_date,
-            end_date=combined_end_date,
-            version="v001",
-            descriptor=combined_spx_descriptor
+        combined_spx_descriptor = combined_descriptor.replace("-enaMasked-", "-spxMasked-")
+        combined_spx_descriptor = combined_spx_descriptor.replace("-enanbsMasked-", "-spxnbsMasked-")
+
+        combined_spx_processor = LoProcessor(
+            dependencies=ProcessingInputCollection(ScienceInput(combined_sp_map.name)),
+            input_metadata=InputMetadata(
+                instrument="lo",
+                data_level="l3",
+                start_date=combined_start_date,
+                end_date=combined_end_date,
+                version="v001",
+                descriptor=combined_spx_descriptor
+            )
         )
-    )
 
-    [combined_spx_map] = combined_spx_processor.process()
-    print("Produced: ", combined_spx_map)
+        [combined_spx_map] = combined_spx_processor.process()
+        print("Produced: ", combined_spx_map)
 
-    output_maps.append(combined_spx_map)
+        output_maps.append(combined_spx_map)
 
     release_directory = get_run_local_data_path("IMAP-Lo May 29th 2026 Maps")
     for generated_path in output_maps:
