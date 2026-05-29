@@ -47,3 +47,4 @@ source = "uv-dynamic-versioning"
 
 [tool.uv.sources]
 imap-processing = { git = "https://github.com/pleasant-menlo/imap_processing", branch = "3235-more-descriptive-map-metadata" }
+imap-data-access = { git = "https://github.com/pleasant-menlo/imap-data-access", branch = "version-latest-considers-instrument-data-level-descriptor-repoint" }
