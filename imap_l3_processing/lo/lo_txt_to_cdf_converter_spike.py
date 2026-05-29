@@ -13,6 +13,7 @@ import numpy as np
 from imap_processing.cdf.utils import write_cdf as write_l2_cdf
 from imap_processing.ena_maps.ena_maps import RectangularSkyMap
 from imap_processing.spice.geometry import SpiceFrame
+from spacepy.pycdf import CDF
 
 from imap_l3_processing.lo.l3.lo_sp_initializer import LO_SP_MAP_KERNELS
 from imap_l3_processing.lo.lo_processor import LoProcessor
@@ -93,6 +94,7 @@ class LoProcessingInput:
     version: int
     l2_descriptor: str
     dataset: xr.Dataset
+    l2_cdf_path: Path
 
     @staticmethod
     def load_data_dir(data_dir, **kwargs):
@@ -176,16 +178,14 @@ class LoProcessingInput:
             dataset=l2_dataset_with_metadata,
             l2_descriptor=l2_descriptor,
             version=version,
+            l2_cdf_path=write_l2_cdf(l2_dataset_with_metadata),
             **dataclasses.asdict(manifest),
         )
 
     def get_spx_dependencies(self):
-        l2_path = write_l2_cdf(self.dataset)
-        return ProcessingInputCollection(ScienceInput(l2_path.name))
+        return ProcessingInputCollection(ScienceInput(self.l2_cdf_path.name))
 
     def get_survival_corrected_dependencies(self, l1c_files: list[Path]):
-        l2_path = write_l2_cdf(self.dataset)
-
         # l1c_results = imap_data_access.query(instrument="lo", data_level="l1c", version="latest")
         # l1c_inputs = [Path(l1c["file_path"]) for l1c in l1c_results if l1c["repointing"] in self.repoints]
         l1c_inputs = [p for p in l1c_files if ScienceFilePath(p.name).repointing in self.repoints]
@@ -200,7 +200,7 @@ class LoProcessingInput:
             Path(glows["file_path"]) for glows in glows_query_results if int(glows["repointing"]) in self.repoints
         ]
 
-        return ProcessingInputCollection(*(ScienceInput(p.name) for p in [l2_path, *glows_paths, *l1c_inputs]))
+        return ProcessingInputCollection(*(ScienceInput(p.name) for p in [self.l2_cdf_path, *glows_paths, *l1c_inputs]))
 
     def make_l3_input_metadata(self, l3_descriptor: str) -> InputMetadata:
         return InputMetadata(
@@ -234,6 +234,8 @@ if __name__ == "__main__":
         shutil.copy(file, output_path)
         l1c_paths.append(output_path)
 
+    output_maps = []
+
     combined_inputs = []
     start_dates = []
     end_dates = []
@@ -249,11 +251,15 @@ if __name__ == "__main__":
             CsvNameToProduct.create_nbs_mapping()
         )
 
+        output_maps.append(nbs_processing_input.l2_cdf_path)
+
         [spx_nbs_map] = LoProcessor(
             input_metadata=nbs_processing_input.make_l3_input_metadata(f"l{pivot:03d}-spxnbs-h-sf-nsp-ram-hae-6deg-6mo"),
             dependencies=nbs_processing_input.get_spx_dependencies(),
         ).process()
         print("Produced: ", spx_nbs_map)
+
+        output_maps.append(spx_nbs_map)
 
         cg_processing_input = LoProcessingInput.load(
             manifest,
@@ -271,15 +277,19 @@ if __name__ == "__main__":
             ).process()
             print("Produced: ", sp_map)
 
+            output_maps.append(sp_map)
+
         combined_inputs.append(sp_map)
         start_dates.append(cg_processing_input.start_date)
         end_dates.append(cg_processing_input.end_date)
 
-        [spx_map] = LoProcessor(
+        [spx_cg_sp_map] = LoProcessor(
             input_metadata=cg_processing_input.make_l3_input_metadata(f"l{pivot:03d}-spx-h-hf-sp-ram-hae-6deg-6mo"),
             dependencies=ProcessingInputCollection(ScienceInput(sp_map.name)),
         ).process()
-        print("Produced: ", spx_map)
+        print("Produced: ", spx_cg_sp_map)
+
+        output_maps.append(spx_cg_sp_map)
 
     combined_descriptor = "ilo-ena-h-hf-sp-ram-hae-6deg-6mo"
     combined_start_date = min(start_dates)
@@ -299,6 +309,8 @@ if __name__ == "__main__":
     [combined_sp_map] = combined_processor.process()
     print("Produced: ", combined_sp_map)
 
+    output_maps.append(combined_sp_map)
+
     combined_spx_descriptor = combined_descriptor.replace("-ena-", "-spx-")
     combined_spx_processor = LoProcessor(
         dependencies=ProcessingInputCollection(ScienceInput(combined_sp_map.name)),
@@ -314,6 +326,33 @@ if __name__ == "__main__":
 
     [combined_spx_map] = combined_spx_processor.process()
     print("Produced: ", combined_spx_map)
+
+    output_maps.append(combined_spx_map)
+
+    release_directory = get_run_local_data_path("IMAP-Lo May 29th 2026 Maps")
+    for generated_path in output_maps:
+        science_file_path = ScienceFilePath(generated_path.name)
+
+        new_name = (
+            "_".join(
+                [
+                    "imap",
+                    science_file_path.instrument,
+                    science_file_path.data_level,
+                    science_file_path.descriptor + "-INITIAL",
+                    science_file_path.start_date,
+                    science_file_path.version,
+                    ]
+            )
+            + ".cdf"
+        )
+
+        output_dir = release_directory / science_file_path.data_level
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_path = output_dir / new_name
+
+        with CDF(str(output_path), masterpath=str(generated_path), readonly=False) as cdf:
+            cdf.attrs["Logical_file_id"] = output_path.stem
 
 
 
