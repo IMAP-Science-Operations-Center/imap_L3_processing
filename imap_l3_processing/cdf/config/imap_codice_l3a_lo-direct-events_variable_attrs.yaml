@@ -6,7 +6,7 @@ data_variable: &data_variable
 
 primary_data_variable: &primary_data_variable
   <<: *data_variable
-  VARIABLE_PURPOSE: primary var, summary
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
 
 support_data: &support_data
   VAR_TYPE: support_data

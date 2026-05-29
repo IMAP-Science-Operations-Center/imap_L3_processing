@@ -5,7 +5,7 @@ support_data: &support_data
 
 primary_data_variable: &primary_data_variable
   VAR_TYPE: data
-  VARIABLE_PURPOSE: primary var, summary
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   DEPEND_0: epoch
   RECORD_VARYING: RV
   DISPLAY_TYPE: spectrogram

@@ -1,6 +1,5 @@
 primary_data_variable: &primary_data_variable
   VAR_TYPE: data
-  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   DEPEND_0: epoch
   RECORD_VARYING: RV
 
@@ -12,7 +11,6 @@ support_data: &support_data
 
 primary_support_data: &primary_support_data
   <<: *support_data
-  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
 
 metadata_variable: &metadata_variable
   DATA_TYPE: CDF_CHAR
@@ -58,8 +56,8 @@ epoch_delta:
 identifier:
   <<: *support_data
   NAME: identifier
-  CATDESC: Spin pointing number to identify observational day
-  FIELDNAM: Spin pointing number
+  CATDESC: Spin-axis pointing number to identify observational day
+  FIELDNAM: Spin-axis pointing number
   DATA_TYPE: CDF_INT8
   FORMAT: I5
   UNITS: ' '
@@ -108,6 +106,7 @@ photon_flux:
   SCALEMIN: 0
   SCALEMAX: 30000
   SI_CONVERSION: 1e10>s^-1 m^-2
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
 photon_flux_uncertainty:
   <<: *support_data
   NAME: photon_flux_uncertainty
