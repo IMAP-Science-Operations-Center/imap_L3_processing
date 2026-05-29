@@ -166,7 +166,7 @@ class TestLoProcessor(unittest.TestCase):
                 mock_fetch_survival_dependencies.assert_called_once_with(sentinel.input_dependencies,
                                                                          Instrument.IMAP_LO)
 
-                mock_process_survival_prob.assert_called_once_with(dependencies, SpiceFrame.IMAP_DPS)
+                mock_process_survival_prob.assert_called_once_with(dependencies, SpiceFrame.IMAP_DPS, cg_corrected=False)
 
                 np.testing.assert_array_equal(np.full((1, 7, 3600), 80), dependencies.l1c_data[0].exposure_times)
 
