@@ -1,8 +1,9 @@
+import abc
 import dataclasses
 import logging
 import shutil
 from datetime import datetime
-from typing import Self, Optional
+from typing import Self, Optional, override, Literal
 
 import imap_data_access
 from imap_data_access import ProcessingInputCollection, ScienceFilePath
@@ -30,40 +31,67 @@ LO_ENERGIES_IN_KEV = np.array([16.33, 30.47, 55.76, 106.3, 200.0, 405.0, 787.3])
 LO_ENERGY_BIN_LOWERS = np.array([10.9, 20.4, 36.8, 71.6, 135.0, 269.0, 504.7]) / 1000.0
 LO_ENERGY_BIN_UPPERS = np.array([21.7, 40.5, 74.7, 140.9, 265.0, 541.0, 1069.9]) / 1000.0
 
-@dataclasses.dataclass
 class CsvNameToProduct:
-    flux: str
-    flux_variance: str
-    flux_sys_err: str
-    bg_flux: str
-    bg_flux_variance: str
-    bg_flux_sys_err: str
-    exposure_factor: Optional[str]
+    @abc.abstractmethod
+    def get_energy_and_quantity(self, filename) -> Optional[tuple[int, str]]:
+        raise NotImplementedError
 
-    @classmethod
-    def create_nbs_mapping(cls):
-        return cls(
-            flux="map_flux",
-            flux_variance="map_fvar",
-            flux_sys_err="map_fser",
-            bg_flux="map_bflux",
-            bg_flux_variance="map_bfvar",
-            bg_flux_sys_err="map_bfunc",
-            exposure_factor="map_expo",
-        )
+@dataclasses.dataclass
+class NBSNameMapping(CsvNameToProduct):
+    @override
+    def get_energy_and_quantity(self, filename: str) -> Optional[tuple[int, str]]:
+        if fn_match := re.match("map_([a-zA-Z]+)_esa(\d{1}).csv", filename):
+            [quantity, energy] = fn_match.groups()
 
-    @classmethod
-    def create_cg_mapping(cls):
-        return cls(
-            flux="map_cgflux",
-            flux_variance="map_cgfvar",
-            flux_sys_err="map_cgfunc",
-            bg_flux="bkg_cgflux",
-            bg_flux_variance="bkg_cgfvar",
-            bg_flux_sys_err="bkg_cgfunc",
-            exposure_factor=None,
-        )
+            csv_to_l2_cdf_mapping = {
+                "flux": "ena_intensity",
+                "fvar": "ena_intensity_stat_var",
+                "fser": "ena_intensity_sys_err",
+                "bflux": "bg_intensity",
+                "bfvar": "bg_intensity_stat_var",
+                "bfunc": "bg_intensity_sys_err",
+                "expo": "exposure_factor"
+            }
 
+            if quantity in csv_to_l2_cdf_mapping:
+                return int(energy), csv_to_l2_cdf_mapping[quantity]
+
+
+class CGNameMapping(CsvNameToProduct):
+    @override
+    def get_energy_and_quantity(self, filename: str) -> Optional[tuple[int, str]]:
+        if fn_match := re.match("([a-zA-Z]+_[a-zA-Z]+)_esa(\d{1}).csv", filename):
+            [quantity, energy] = fn_match.groups()
+
+            csv_to_l2_cdf_mapping = {
+                "map_cgflux": "ena_intensity",
+                "map_cgfvar": "ena_intensity_stat_var",
+                "map_cgfunc": "ena_intensity_sys_err",
+                "bkg_cgflux": "bg_intensity",
+                "bkg_cgfvar": "bg_intensity_stat_var",
+                "bkg_cgfunc": "bg_intensity_sys_err",
+            }
+
+            if quantity in csv_to_l2_cdf_mapping:
+                return int(energy), csv_to_l2_cdf_mapping[quantity]
+
+class SputterOrBootStrapNameMapping(CsvNameToProduct):
+    def __init__(self, correction: Literal["sput", "boot"]):
+        self.correction = correction
+
+    @override
+    def get_energy_and_quantity(self, filename: str) -> Optional[tuple[int, str]]:
+        if fn_match := re.match("map_flux_(\d{1})_Hy_([a-zA-Z]+)_([a-zA-Z]+).csv", filename):
+            [energy, correction, quantity] = fn_match.groups()
+
+            csv_to_l2_cdf_mapping = {
+                "cor": "ena_intensity",
+                "var": "ena_intensity_stat_var",
+                "unc": "ena_intensity_sys_err",
+            }
+
+            if correction == self.correction and quantity in csv_to_l2_cdf_mapping:
+                return int(energy), csv_to_l2_cdf_mapping.get(quantity, None)
 
 @dataclasses.dataclass
 class Manifest:
@@ -81,7 +109,7 @@ class Manifest:
 
         return cls(
             repoints=list(manifest_df["repoint"]),
-            l1b_filenames=list(manifest_df["l1b_filenames"]),
+            l1b_filenames=list(manifest_df["l1b_filename"]),
             start_date=start_date,
             end_date=end_date,
         )
@@ -97,16 +125,14 @@ class LoProcessingInput:
     l2_cdf_path: Path
 
     @staticmethod
-    def load_data_dir(data_dir, **kwargs):
+    def load_data_dir(data_dir: Path, name_mapping: CsvNameToProduct, **kwargs):
         temp_data = {}
         for data_file_path in data_dir.iterdir():
-            if fn_match := re.match("([a-zA-Z]+_[a-zA-Z]+)_esa(\d{1}).csv", data_file_path.name):
-                data_type, energy_level = fn_match.groups()
+            if energy_and_quantity := name_mapping.get_energy_and_quantity(data_file_path.name):
+                esa_step, data_type = energy_and_quantity
                 if data_type not in temp_data:
                     temp_data[data_type] = np.full((1, 7, 60, 30), np.nan)
-
-                esa_step = int(energy_level) - 1
-                temp_data[data_type][0, esa_step] = np.loadtxt(data_file_path, delimiter=",", **kwargs).T
+                temp_data[data_type][0, esa_step - 1] = np.loadtxt(data_file_path, delimiter=",", **kwargs).T
         return temp_data
 
     @classmethod
@@ -121,12 +147,12 @@ class LoProcessingInput:
     ) -> Self:
         if use_masked_data:
             loaded_data = {
-                **LoProcessingInput.load_data_dir(input_path / "maps", skiprows=1),
-                **LoProcessingInput.load_data_dir(input_path / "masked_maps")
+                **LoProcessingInput.load_data_dir(input_path / "maps", name_mapping, skiprows=1),
+                **LoProcessingInput.load_data_dir(input_path / "masked_maps", name_mapping)
             }
         else:
             loaded_data = {
-                **LoProcessingInput.load_data_dir(input_path / "maps", skiprows=1),
+                **LoProcessingInput.load_data_dir(input_path / "maps", name_mapping, skiprows=1),
             }
 
         start_date_nanoseconds = (manifest.start_date - TT2000_EPOCH).total_seconds() * 1e9
@@ -138,19 +164,16 @@ class LoProcessingInput:
 
         map_data_coords = ["epoch", "energy", "longitude", "latitude"]
         l2_dataset = xr.Dataset(
-            data_vars={
-                "ena_intensity": (map_data_coords, loaded_data[name_mapping.flux]),
-                "ena_intensity_stat_uncert": (map_data_coords, np.sqrt(loaded_data[name_mapping.flux_variance])),
-                "ena_intensity_sys_err": (map_data_coords, loaded_data[name_mapping.flux_sys_err]),
-                "bg_intensity": (map_data_coords, loaded_data[name_mapping.bg_flux]),
-                "bg_intensity_stat_uncert": (map_data_coords, np.sqrt(loaded_data[name_mapping.bg_flux_variance])),
-                "bg_intensity_sys_err": (map_data_coords, loaded_data[name_mapping.bg_flux_sys_err]),
-
+            data_vars=
+            {
                 "obs_date": (map_data_coords, np.full((1, 7, 60, 30), FILLVAL_INT64)),
                 "obs_date_range": (map_data_coords, np.full((1, 7, 60, 30), np.nan)),
                 "solid_angle": (["epoch", "longitude", "latitude"], np.full((1, 60, 30), np.nan)),
                 "energy_delta_minus": (["energy"], LO_ENERGIES_IN_KEV - LO_ENERGY_BIN_LOWERS),
                 "energy_delta_plus": (["energy"], LO_ENERGY_BIN_UPPERS - LO_ENERGIES_IN_KEV),
+
+                **{quantity: (map_data_coords, data) for quantity, data in loaded_data.items()},
+                **additional_map_data
             },
             coords={
                 "epoch": np.array([start_date_nanoseconds]),
@@ -159,12 +182,14 @@ class LoProcessingInput:
                 "latitude": skymap.sky_grid.el_bin_midpoints,
             },
         )
-        if name_mapping.exposure_factor is not None:
-            l2_dataset = l2_dataset.assign(
-                exposure_factor=(map_data_coords, loaded_data[name_mapping.exposure_factor])
-            )
 
-        l2_dataset = l2_dataset.assign(**additional_map_data)
+        if "ena_intensity_stat_var" in l2_dataset.data_vars:
+            l2_dataset["ena_intensity_stat_uncert"] = np.sqrt(l2_dataset["ena_intensity_stat_var"])
+            l2_dataset.drop_vars(["ena_intensity_stat_var"])
+
+        if "bg_intensity_stat_var" in l2_dataset.data_vars:
+            l2_dataset["bg_intensity_stat_uncert"] = np.sqrt(l2_dataset["bg_intensity_stat_var"])
+            l2_dataset.drop_vars(["bg_intensity_stat_var"])
 
         variables_to_mask = [
             "ena_intensity",
@@ -177,7 +202,8 @@ class LoProcessingInput:
 
         mask = l2_dataset["exposure_factor"] != 0.0
         for var in variables_to_mask:
-            l2_dataset[var] = l2_dataset[var].where(mask, np.nan)
+            if var in l2_dataset:
+                l2_dataset[var] = l2_dataset[var].where(mask, np.nan)
 
         l2_dataset_with_metadata = skymap.build_cdf_dataset(
             instrument="lo",
@@ -193,7 +219,9 @@ class LoProcessingInput:
             l2_descriptor=l2_descriptor,
             version=version,
             l2_cdf_path=write_l2_cdf(l2_dataset_with_metadata),
-            **dataclasses.asdict(manifest),
+            repoints=manifest.repoints,
+            start_date=manifest.start_date,
+            end_date=manifest.end_date,
         )
 
     def get_spx_dependencies(self):
@@ -236,6 +264,7 @@ if __name__ == "__main__":
 
     lo_input_data_dir = get_run_local_data_path("input_lo_txt_pipeline")
     cg_corrected_input_path = lo_input_data_dir / "3S8_l1b_cg_corrected"
+    sputter_or_bootstrap_input_path = lo_input_data_dir / "3S7_l1b_sputterbootstrap_ram"
     ram_nbs_input_path = lo_input_data_dir / "3S5_l1b_ram_maps"
 
     l1c_paths = []
@@ -249,12 +278,12 @@ if __name__ == "__main__":
         l1c_paths.append(output_path)
 
     output_maps = []
-    for masked, descriptor_suffix in [(False, ""), (True, "Masked")]:
-
+    for masked, descriptor_suffix in [(False, ""), (True, "Msk")]:
         start_dates = []
         end_dates = []
         for pivot in (90, 105, 75):
-            manifest_path = ram_nbs_input_path / "outdir" / f"pivot_{pivot}" / "maps" / "map_l1b_manifest_esa1.csv"
+            ram_nbs_path_map_path = ram_nbs_input_path / "outdir" / f"pivot_{pivot}"
+            manifest_path = ram_nbs_path_map_path / "maps" / "map_l1b_manifest_esa1.csv"
             manifest = Manifest.load(manifest_path)
 
             start_dates.append(manifest.start_date)
@@ -262,75 +291,90 @@ if __name__ == "__main__":
 
             nbs_processing_input = LoProcessingInput.load(
                 manifest,
-                f"l{pivot:03d}-enanbs{descriptor_suffix}-h-sf-nsp-ram-hae-6deg-6mo",
+                f"l{pivot:03d}-enansnbs{descriptor_suffix}-h-sf-nsp-ram-hae-6deg-6mo",
                 1,
-                ram_nbs_input_path / "outdir" / f"pivot_{pivot}",
-                CsvNameToProduct.create_nbs_mapping(),
+                ram_nbs_path_map_path,
+                NBSNameMapping(),
                 masked,
             )
 
-            output_maps.append(nbs_processing_input.l2_cdf_path)
-
-            [spx_nbs_map] = LoProcessor(
-                input_metadata=nbs_processing_input.make_l3_input_metadata(f"l{pivot:03d}-spxnbs{descriptor_suffix}-h-sf-nsp-ram-hae-6deg-6mo"),
+            [spx_nsnbs_map] = LoProcessor(
+                input_metadata=nbs_processing_input.make_l3_input_metadata(f"l{pivot:03d}-spxnsnbs{descriptor_suffix}-h-sf-nsp-ram-hae-6deg-6mo"),
                 dependencies=nbs_processing_input.get_spx_dependencies(),
             ).process()
-            print("Produced: ", spx_nbs_map)
-
-            output_maps.append(spx_nbs_map)
 
             cg_processing_input = LoProcessingInput.load(
                 manifest,
-                f"l{pivot:03d}-ena{descriptor_suffix}-h-hf-nsp-ram-hae-6deg-6mo",
+                f"l{pivot:03d}-enasbs{descriptor_suffix}-h-hf-nsp-ram-hae-6deg-6mo",
                 1,
                 cg_corrected_input_path / "outdir" / f"pivot_{pivot}",
-                CsvNameToProduct.create_cg_mapping(),
+                CGNameMapping(),
                 masked,
                 exposure_factor=nbs_processing_input.dataset["exposure_factor"]
             )
 
-            output_maps.append(cg_processing_input.l2_cdf_path)
-
             [spx_cg_nsp_map] = LoProcessor(
-                input_metadata=cg_processing_input.make_l3_input_metadata(f"l{pivot:03d}-spx{descriptor_suffix}-h-hf-nsp-ram-hae-6deg-6mo"),
+                input_metadata=cg_processing_input.make_l3_input_metadata(f"l{pivot:03d}-spxsbs{descriptor_suffix}-h-hf-nsp-ram-hae-6deg-6mo"),
                 dependencies=cg_processing_input.get_spx_dependencies()
             ).process()
 
-            output_maps.append(spx_cg_nsp_map)
-
             with furnished_metakernel(cg_processing_input.start_date, cg_processing_input.end_date, LO_SP_MAP_KERNELS):
                 [sp_map] = LoProcessor(
-                    input_metadata=cg_processing_input.make_l3_input_metadata(f"l{pivot:03d}-ena{descriptor_suffix}-h-hf-sp-ram-hae-6deg-6mo"),
+                    input_metadata=cg_processing_input.make_l3_input_metadata(f"l{pivot:03d}-enasbs{descriptor_suffix}-h-hf-sp-ram-hae-6deg-6mo"),
                     dependencies=cg_processing_input.get_survival_corrected_dependencies(l1c_paths),
                 ).process()
-                print("Produced: ", sp_map)
-
-                output_maps.append(sp_map)
-
 
             [spx_cg_sp_map] = LoProcessor(
-                input_metadata=cg_processing_input.make_l3_input_metadata(f"l{pivot:03d}-spx{descriptor_suffix}-h-hf-sp-ram-hae-6deg-6mo"),
+                input_metadata=cg_processing_input.make_l3_input_metadata(f"l{pivot:03d}-spxsbs{descriptor_suffix}-h-hf-sp-ram-hae-6deg-6mo"),
                 dependencies=ProcessingInputCollection(ScienceInput(sp_map.name)),
             ).process()
-            print("Produced: ", spx_cg_sp_map)
 
-            output_maps.append(spx_cg_sp_map)
+            sputter_no_bootstrap_map = LoProcessingInput.load(
+                manifest=manifest,
+                l2_descriptor=f"l{pivot:03d}-enasnbs{descriptor_suffix}-h-sf-nsp-ram-hae-6deg-6mo",
+                version=1,
+                input_path=sputter_or_bootstrap_input_path / "outdir" / f"pivot_{pivot}",
+                name_mapping=SputterOrBootStrapNameMapping("sput"),
+                use_masked_data=masked,
+                exposure_factor=nbs_processing_input.dataset["exposure_factor"]
+            )
+
+            sputter_and_bootstrap_map = LoProcessingInput.load(
+                manifest=manifest,
+                l2_descriptor=f"l{pivot:03d}-enasbs{descriptor_suffix}-h-sf-nsp-ram-hae-6deg-6mo",
+                version=1,
+                input_path=sputter_or_bootstrap_input_path / "outdir" / f"pivot_{pivot}",
+                name_mapping=SputterOrBootStrapNameMapping("boot"),
+                use_masked_data=masked,
+                exposure_factor=nbs_processing_input.dataset["exposure_factor"]
+            )
+
+            output_maps.extend([
+                nbs_processing_input.l2_cdf_path,
+                spx_nsnbs_map,
+                cg_processing_input.l2_cdf_path,
+                spx_cg_nsp_map,
+                sp_map,
+                spx_cg_sp_map,
+                sputter_no_bootstrap_map.l2_cdf_path,
+                sputter_and_bootstrap_map.l2_cdf_path
+            ])
 
     maps_needed_for_combination = [
-        ("ilo-enaMasked-h-hf-sp-ram-hae-6deg-6mo", [
-            "l075-enaMasked-h-hf-sp-ram-hae-6deg-6mo",
-            "l090-enaMasked-h-hf-sp-ram-hae-6deg-6mo",
-            "l105-enaMasked-h-hf-sp-ram-hae-6deg-6mo"
+        ("ilo-enasbsMsk-h-hf-sp-ram-hae-6deg-6mo", [
+            "l075-enasbsMsk-h-hf-sp-ram-hae-6deg-6mo",
+            "l090-enasbsMsk-h-hf-sp-ram-hae-6deg-6mo",
+            "l105-enasbsMsk-h-hf-sp-ram-hae-6deg-6mo"
         ]),
-        ("ilo-enaMasked-h-hf-nsp-ram-hae-6deg-6mo", [
-            "l075-enaMasked-h-hf-nsp-ram-hae-6deg-6mo",
-            "l090-enaMasked-h-hf-nsp-ram-hae-6deg-6mo",
-            "l105-enaMasked-h-hf-nsp-ram-hae-6deg-6mo"
+        ("ilo-enasbsMsk-h-hf-nsp-ram-hae-6deg-6mo", [
+            "l075-enasbsMsk-h-hf-nsp-ram-hae-6deg-6mo",
+            "l090-enasbsMsk-h-hf-nsp-ram-hae-6deg-6mo",
+            "l105-enasbsMsk-h-hf-nsp-ram-hae-6deg-6mo"
         ]),
-        ("ilo-enanbsMasked-h-sf-nsp-ram-hae-6deg-6mo", [
-            "l075-enanbsMasked-h-sf-nsp-ram-hae-6deg-6mo",
-            "l090-enanbsMasked-h-sf-nsp-ram-hae-6deg-6mo",
-            "l105-enanbsMasked-h-sf-nsp-ram-hae-6deg-6mo"
+        ("ilo-enansnbsMsk-h-sf-nsp-ram-hae-6deg-6mo", [
+            "l075-enansnbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
+            "l090-enansnbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
+            "l105-enansnbsMsk-h-sf-nsp-ram-hae-6deg-6mo"
         ])
     ]
 
@@ -342,7 +386,7 @@ if __name__ == "__main__":
             if any([f"_{combined_dep}_" in output_map.name for combined_dep in combined_dependencies]):
                 combined_inputs.append(output_map)
 
-        combined_processor = LoProcessor(
+        [combined_sp_map] = LoProcessor(
             dependencies=ProcessingInputCollection(*[ScienceInput(map_path.name) for map_path in combined_inputs]),
             input_metadata=InputMetadata(
                 instrument="lo",
@@ -352,17 +396,15 @@ if __name__ == "__main__":
                 version="v001",
                 descriptor=combined_descriptor
             )
+        ).process()
+
+        combined_spx_descriptor = (
+            combined_descriptor
+               .replace("-enasbsMsk-", "-spxsbsMsk-")
+               .replace("-enansnbsMsk-", "-spxnsnbsMsk-")
         )
 
-        [combined_sp_map] = combined_processor.process()
-        print("Produced: ", combined_sp_map)
-
-        output_maps.append(combined_sp_map)
-
-        combined_spx_descriptor = combined_descriptor.replace("-enaMasked-", "-spxMasked-")
-        combined_spx_descriptor = combined_spx_descriptor.replace("-enanbsMasked-", "-spxnbsMasked-")
-
-        combined_spx_processor = LoProcessor(
+        [combined_spx_map] = LoProcessor(
             dependencies=ProcessingInputCollection(ScienceInput(combined_sp_map.name)),
             input_metadata=InputMetadata(
                 instrument="lo",
@@ -372,12 +414,12 @@ if __name__ == "__main__":
                 version="v001",
                 descriptor=combined_spx_descriptor
             )
-        )
+        ).process()
 
-        [combined_spx_map] = combined_spx_processor.process()
-        print("Produced: ", combined_spx_map)
-
-        output_maps.append(combined_spx_map)
+        output_maps.extend([
+            combined_sp_map,
+            combined_spx_map
+        ])
 
     release_directory = get_run_local_data_path("IMAP-Lo May 29th 2026 Maps")
     for generated_path in output_maps:
@@ -403,6 +445,3 @@ if __name__ == "__main__":
 
         with CDF(str(output_path), masterpath=str(generated_path), readonly=False) as cdf:
             cdf.attrs["Logical_file_id"] = output_path.stem
-
-
-
