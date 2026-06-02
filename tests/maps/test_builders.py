@@ -119,7 +119,7 @@ def create_rectangular_intensity_map(intensity_map_data: IntensityMapData = None
     return RectangularIntensityMapData(intensity_map_data=intensity_map, coords=coords)
 
 
-def construct_intensity_data_with_all_zero_fields() -> IntensityMapData:
+def construct_intensity_data_with_all_zero_fields(num_pixels: int = 1) -> IntensityMapData:
     return IntensityMapData(
         epoch=np.array([0]),
         epoch_delta=np.array([0]),
@@ -127,18 +127,18 @@ def construct_intensity_data_with_all_zero_fields() -> IntensityMapData:
         energy_delta_plus=np.array([0]),
         energy_delta_minus=np.array([0]),
         energy_label=np.array([0]),
-        latitude=np.array([0]),
+        latitude=np.array([0] * num_pixels),
         longitude=np.array([0]),
-        exposure_factor=np.array([1]),
-        obs_date=np.array([datetime(2025, 5, 6)]),
-        obs_date_range=np.array([0]),
-        solid_angle=np.array([0]),
-        ena_intensity=np.array([0]),
-        ena_intensity_stat_uncert=np.array([0]),
-        ena_intensity_sys_err=np.array([0]),
-        bg_intensity=np.array([0]),
-        bg_intensity_sys_err=np.array([0]),
-        bg_intensity_stat_uncert=np.array([0]),
+        exposure_factor=np.array([1] * num_pixels),
+        obs_date=np.array([datetime(2025, 5, 6)] * num_pixels),
+        obs_date_range=np.array([0] * num_pixels),
+        solid_angle=np.array([0] * num_pixels),
+        ena_intensity=np.array([0] * num_pixels),
+        ena_intensity_stat_uncert=np.array([0] * num_pixels),
+        ena_intensity_sys_err=np.array([0] * num_pixels),
+        bg_intensity=np.array([0] * num_pixels),
+        bg_intensity_sys_err=np.array([0] * num_pixels),
+        bg_intensity_stat_uncert=np.array([0] * num_pixels),
     )
 
 

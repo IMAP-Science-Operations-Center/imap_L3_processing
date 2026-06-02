@@ -118,8 +118,7 @@ class TestMapCombination(unittest.TestCase):
         map_2.ena_intensity_stat_uncert = np.array([1, 2, 3, 4, np.nan])
 
         map_2.bg_intensity = np.array([8, 7, 6, 5, np.nan])
-        map_2.bg_intensity_sys_err = np.array([0, 2, 4, 9, np.nan])\
-
+        map_2.bg_intensity_sys_err = np.array([0, 2, 4, 9, np.nan])
         map_2.bg_intensity_stat_uncert = np.array([4, 3, 2, 1, np.nan])
 
         map_2.exposure_factor = np.array([3, 1, 5, 2, 0])
@@ -162,32 +161,116 @@ class TestMapCombination(unittest.TestCase):
             (0 * 10 + 1 * 2) / 1,
             (5 * 4 + 5 * 10) / (5 + 5),
             (6 * 1 + 2 * 9) / (6 + 2),
-            np.nan
+            np.nan,
         ]
 
-
         expected_obs_date = np.ma.array(
-            [datetime(2025, 5, 8),
-             datetime(2025, 5, 10),
-             datetime(2025, 5, 9),
-             datetime(2025, 5, 9), np.ma.masked])
+            [
+                datetime(2025, 5, 8),
+                datetime(2025, 5, 10),
+                datetime(2025, 5, 9),
+                datetime(2025, 5, 9),
+                np.ma.masked,
+            ]
+        )
 
         exposure_weighted_strategy = ExposureWeightedCombination()
 
-        rectangular_map_1: RectangularIntensityMapData = create_rectangular_intensity_map(map_1)
-        rectangular_map_2: RectangularIntensityMapData = create_rectangular_intensity_map(map_2)
+        rectangular_map_1: RectangularIntensityMapData = (
+            create_rectangular_intensity_map(map_1)
+        )
+        rectangular_map_2: RectangularIntensityMapData = (
+            create_rectangular_intensity_map(map_2)
+        )
         combine_two = exposure_weighted_strategy.combine_rectangular_intensity_map_data(
-            [rectangular_map_1, rectangular_map_2])
+            [rectangular_map_1, rectangular_map_2]
+        )
 
-        np.testing.assert_equal(combine_two.intensity_map_data.ena_intensity, expected_combined_intensity)
-        np.testing.assert_equal(combine_two.intensity_map_data.ena_intensity_sys_err, expected_sys_err)
-        np.testing.assert_equal(combine_two.intensity_map_data.ena_intensity_stat_uncert, expected_stat_unc)
-        np.testing.assert_equal(combine_two.intensity_map_data.exposure_factor, expected_combined_exposure)
-        np.testing.assert_equal(combine_two.intensity_map_data.obs_date.mask, expected_obs_date.mask)
-        np.testing.assert_equal(combine_two.intensity_map_data.obs_date, expected_obs_date)
-        np.testing.assert_equal(combine_two.intensity_map_data.bg_intensity, expected_combined_bg_intensity)
-        np.testing.assert_equal(combine_two.intensity_map_data.bg_intensity_sys_err, expected_combined_bg_intensity_sys_err)
-        np.testing.assert_equal(combine_two.intensity_map_data.bg_intensity_stat_uncert, expected_combined_bg_stat_unc)
+        np.testing.assert_equal(
+            combine_two.intensity_map_data.ena_intensity, expected_combined_intensity
+        )
+        np.testing.assert_equal(
+            combine_two.intensity_map_data.ena_intensity_sys_err, expected_sys_err
+        )
+        np.testing.assert_equal(
+            combine_two.intensity_map_data.ena_intensity_stat_uncert, expected_stat_unc
+        )
+        np.testing.assert_equal(
+            combine_two.intensity_map_data.exposure_factor, expected_combined_exposure
+        )
+        np.testing.assert_equal(
+            combine_two.intensity_map_data.obs_date.mask, expected_obs_date.mask
+        )
+        np.testing.assert_equal(
+            combine_two.intensity_map_data.obs_date, expected_obs_date
+        )
+        np.testing.assert_equal(
+            combine_two.intensity_map_data.bg_intensity, expected_combined_bg_intensity
+        )
+        np.testing.assert_equal(
+            combine_two.intensity_map_data.bg_intensity_sys_err,
+            expected_combined_bg_intensity_sys_err,
+        )
+        np.testing.assert_equal(
+            combine_two.intensity_map_data.bg_intensity_stat_uncert,
+            expected_combined_bg_stat_unc,
+        )
+
+    def test_combine_handles_maps_with_different_patterns_of_missing_intensity_and_bg_intensity(
+        self,
+    ):
+        map_1 = construct_intensity_data_with_all_zero_fields(num_pixels=5)
+        map_1.ena_intensity = np.array([1, np.nan, np.nan, np.nan, np.nan])
+        map_1.bg_intensity = np.array([4, np.nan, 3, 1, np.nan])
+        map_1.bg_intensity_sys_err = np.array([100, np.nan, 10, 1, np.nan])
+        map_1.bg_intensity_stat_uncert = np.array([10, np.nan, 10, 10, np.nan])
+        map_1.exposure_factor = np.array([1, 0, 5, 6, 0])
+
+        map_2 = construct_intensity_data_with_all_zero_fields(num_pixels=5)
+        map_2.ena_intensity = np.array([5, 6, np.nan, np.nan, np.nan])
+        map_2.bg_intensity = np.array([8, 7, 6, 5, np.nan])
+        map_2.bg_intensity_sys_err = np.array([0, 2, 4, 9, np.nan])
+        map_2.bg_intensity_stat_uncert = np.array([4, 3, 2, 1, np.nan])
+        map_2.exposure_factor = np.array([3, 1, 5, 2, 0])
+
+        expected_combined_ena_intensity = np.array(
+            [(1 * 1 + 5 * 3) / (1 + 3), (0 + 6 * 1) / (0 + 1), np.nan, np.nan, np.nan]
+        )
+
+        expected_combined_bg_intensity = np.array(
+            [
+                (4 * 1 + 8 * 3) / (1 + 3),
+                (0 + 7 * 1) / (0 + 1),
+                (3 * 5 + 6 * 5) / (5 + 5),
+                (1 * 6 + 5 * 2) / (6 + 2),
+                np.nan,
+            ]
+        )
+
+        expected_combined_bg_stat_unc = [
+            np.sqrt((1 * 100 + 9 * 16) / 16),
+            np.sqrt((1 * 9) / 1),
+            np.sqrt((25 * 100 + 25 * 4) / 100),
+            np.sqrt((36 * 100 + 4 * 1) / 64),
+            np.nan
+        ]
+
+        expected_combined_bg_intensity_sys_err = [
+            (1 * 100 + 3 * 0) / (1 + 3),
+            (0 * 10 + 1 * 2) / 1,
+            (5 * 4 + 5 * 10) / (5 + 5),
+            (6 * 1 + 2 * 9) / (6 + 2),
+            np.nan,
+        ]
+
+        combined_map = ExposureWeightedCombination().combine_rectangular_intensity_map_data([
+            create_rectangular_intensity_map(map_1), create_rectangular_intensity_map(map_2)
+        ])
+
+        np.testing.assert_array_equal(combined_map.intensity_map_data.ena_intensity, expected_combined_ena_intensity)
+        np.testing.assert_array_equal(combined_map.intensity_map_data.bg_intensity, expected_combined_bg_intensity)
+        np.testing.assert_array_equal(combined_map.intensity_map_data.bg_intensity_stat_uncert, expected_combined_bg_stat_unc)
+        np.testing.assert_array_equal(combined_map.intensity_map_data.bg_intensity_sys_err, expected_combined_bg_intensity_sys_err)
 
 
     def test_combine_maps_handles_integer_obs_date(self):

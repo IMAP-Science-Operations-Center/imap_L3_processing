@@ -135,16 +135,24 @@ class ExposureWeightedCombination(CombinationStrategy):
         def all_elem_defined(array):
             return all(v is not None for v in array)
 
-        if all_elem_defined(bg_intensities) and all_elem_defined(bg_intensity_sys_err) and all_elem_defined(bg_intensity_stat_uncert):
-            bg_intensities = np.where(mask, 0, bg_intensities)
-            bg_intensity_sys_err = np.where(mask, 0, bg_intensity_sys_err)
-            bg_intensity_stat_uncert = np.where(mask, 0, bg_intensity_stat_uncert)
+        if (
+            all_elem_defined(bg_intensities)
+            and all_elem_defined(bg_intensity_sys_err)
+            and all_elem_defined(bg_intensity_stat_uncert)
+        ):
+            bg_mask = np.isnan(bg_intensities) | (exposures == 0) | np.isnan(exposures)
+
+            bg_intensities = np.where(bg_mask, 0, bg_intensities)
+            bg_intensity_sys_err = np.where(bg_mask, 0, bg_intensity_sys_err)
+            bg_intensity_stat_uncert = np.where(bg_mask, 0, bg_intensity_stat_uncert)
+            bg_masked_exposures = np.where(bg_mask, 0, exposures)
 
             combined_bg_intensity_stat_uncert = self.calculated_weighted_uncertainty(bg_intensity_stat_uncert,
-                                                                                     masked_exposures)
-            combined_bg_intensity_sys_err = self.calculate_weighted_sys_err(bg_intensity_sys_err, masked_exposures)
-            summed_bg_intensity = np.sum(bg_intensities * masked_exposures, axis=0)
-            exposure_weighted_summed_bg_intensity = safe_divide(summed_bg_intensity, np.sum(masked_exposures, axis=0))
+                                                                                     bg_masked_exposures)
+            combined_bg_intensity_sys_err = self.calculate_weighted_sys_err(bg_intensity_sys_err, bg_masked_exposures)
+            summed_bg_intensity = np.sum(bg_intensities * bg_masked_exposures, axis=0)
+            summed_exposures = np.sum(bg_masked_exposures, axis=0)
+            exposure_weighted_summed_bg_intensity = safe_divide(summed_bg_intensity, summed_exposures)
         else:
             exposure_weighted_summed_bg_intensity = None
             combined_bg_intensity_sys_err = None
