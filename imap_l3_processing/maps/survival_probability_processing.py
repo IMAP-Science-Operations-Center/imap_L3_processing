@@ -56,9 +56,9 @@ def process_survival_probabilities(survival_probabilities_dependencies: HiLoL3Su
             obs_date=input_data.obs_date,
             obs_date_range=input_data.obs_date_range,
             solid_angle=input_data.solid_angle,
-
+            survival_probability=survival_probabilities,
         ),
-        coords=survival_probabilities_dependencies.l2_data.coords
+        coords=survival_probabilities_dependencies.l2_data.coords,
     )
 
     if input_data.bg_intensity is not None:

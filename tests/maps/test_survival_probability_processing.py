@@ -97,10 +97,20 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
 
         np.testing.assert_array_equal(survival_data.intensity_map_data.bg_intensity,
                                       intensity_map_data.bg_intensity / computed_survival_probabilities)
-        np.testing.assert_array_equal(survival_data.intensity_map_data.bg_intensity_sys_err,
-                                      intensity_map_data.bg_intensity_sys_err / computed_survival_probabilities)
-        np.testing.assert_array_equal(survival_data.intensity_map_data.bg_intensity_stat_uncert,
-                                      intensity_map_data.bg_intensity_stat_uncert / computed_survival_probabilities)
+        np.testing.assert_array_equal(
+            survival_data.intensity_map_data.bg_intensity_sys_err,
+            intensity_map_data.bg_intensity_sys_err / computed_survival_probabilities,
+        )
+        np.testing.assert_array_equal(
+            survival_data.intensity_map_data.bg_intensity_stat_uncert,
+            intensity_map_data.bg_intensity_stat_uncert
+            / computed_survival_probabilities,
+        )
+
+        np.testing.assert_array_equal(
+            survival_data.intensity_map_data.survival_probability,
+            computed_survival_probabilities,
+        )
 
         np.testing.assert_array_equal(survival_data.intensity_map_data.epoch, intensity_map_data.epoch)
         np.testing.assert_array_equal(survival_data.intensity_map_data.epoch_delta, intensity_map_data.epoch_delta)
