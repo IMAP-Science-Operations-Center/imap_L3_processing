@@ -71,152 +71,160 @@ class TestMapModels(unittest.TestCase):
             DataProductVariable(map_models.EPOCH_VAR_NAME, sentinel.epoch),
             DataProductVariable(map_models.EPOCH_DELTA_VAR_NAME, sentinel.epoch_delta),
             DataProductVariable(map_models.ENERGY_VAR_NAME, sentinel.energy),
-            DataProductVariable(map_models.ENERGY_DELTA_PLUS_VAR_NAME, sentinel.energy_delta_plus),
-            DataProductVariable(map_models.ENERGY_DELTA_MINUS_VAR_NAME, sentinel.energy_delta_minus),
-            DataProductVariable(map_models.ENERGY_LABEL_VAR_NAME, sentinel.energy_label),
-            DataProductVariable(map_models.LATITUDE_VAR_NAME, sentinel.latitude),
-            DataProductVariable(map_models.LONGITUDE_VAR_NAME, sentinel.longitude),
-            DataProductVariable(map_models.EXPOSURE_FACTOR_VAR_NAME, sentinel.exposure_factor),
-            DataProductVariable(map_models.OBS_DATE_VAR_NAME, sentinel.obs_date),
-            DataProductVariable(map_models.OBS_DATE_RANGE_VAR_NAME, sentinel.obs_date_range),
-            DataProductVariable(map_models.SOLID_ANGLE_VAR_NAME, sentinel.solid_angle),
-            DataProductVariable(map_models.ENA_SPECTRAL_INDEX_VAR_NAME, sentinel.ena_spectral_index),
-            DataProductVariable(map_models.ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME,
-                                sentinel.ena_spectral_index_stat_uncert),
-            DataProductVariable(map_models.ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_VAR_NAME, sentinel.ena_spectral_index_scalar_coefficient),
-            DataProductVariable(map_models.ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_STAT_UNCERT_VAR_NAME, sentinel.ena_spectral_index_scalar_coefficient_stat_uncert),
-            DataProductVariable(map_models.ENA_SPECTRAL_INDEX_CHISQ_VAR_NAME, sentinel.ena_spectral_index_chisq),
-            DataProductVariable(map_models.LATITUDE_DELTA_VAR_NAME, sentinel.latitude_delta),
-            DataProductVariable(map_models.LATITUDE_LABEL_VAR_NAME, sentinel.latitude_label),
-            DataProductVariable(map_models.LONGITUDE_DELTA_VAR_NAME, sentinel.longitude_delta),
-            DataProductVariable(map_models.LONGITUDE_LABEL_VAR_NAME, sentinel.longitude_label),
-        ]
-
-        self.assertEqual(expected_variables, actual_variables)
-
-    def test_rectangular_intensity_to_data_product_variables_no_bg(self):
-        input_metadata = sentinel.input_metadata
-
-        data_product = RectangularIntensityDataProduct(
-            input_metadata=input_metadata,
-            data=RectangularIntensityMapData(
-                intensity_map_data=IntensityMapData(
-                    epoch=sentinel.epoch,
-                    epoch_delta=sentinel.epoch_delta,
-                    energy=sentinel.energy,
-                    energy_delta_plus=sentinel.energy_delta_plus,
-                    energy_delta_minus=sentinel.energy_delta_minus,
-                    energy_label=sentinel.energy_label,
-                    latitude=sentinel.latitude,
-                    longitude=sentinel.longitude,
-                    exposure_factor=sentinel.exposure_factor,
-                    obs_date=sentinel.obs_date,
-                    obs_date_range=sentinel.obs_date_range,
-                    solid_angle=sentinel.solid_angle,
-                    ena_intensity=sentinel.ena_intensity,
-                    ena_intensity_stat_uncert=sentinel.ena_intensity_stat_uncert,
-                    ena_intensity_sys_err=sentinel.ena_intensity_sys_err,
-                ),
-                coords=RectangularCoords(
-                    longitude_delta=sentinel.longitude_delta,
-                    longitude_label=sentinel.longitude_label,
-                    latitude_delta=sentinel.latitude_delta,
-                    latitude_label=sentinel.latitude_label,
-
-                )
+            DataProductVariable(
+                map_models.ENERGY_DELTA_PLUS_VAR_NAME, sentinel.energy_delta_plus
             ),
-            spice_frame_name=SpiceFrame.ECLIPJ2000,
-        )
-        actual_variables = data_product.to_data_product_variables()
-
-        expected_variables = [
-            DataProductVariable(map_models.EPOCH_VAR_NAME, sentinel.epoch),
-            DataProductVariable(map_models.EPOCH_DELTA_VAR_NAME, sentinel.epoch_delta),
-            DataProductVariable(map_models.ENERGY_VAR_NAME, sentinel.energy),
-            DataProductVariable(map_models.ENERGY_DELTA_PLUS_VAR_NAME, sentinel.energy_delta_plus),
-            DataProductVariable(map_models.ENERGY_DELTA_MINUS_VAR_NAME, sentinel.energy_delta_minus),
-            DataProductVariable(map_models.ENERGY_LABEL_VAR_NAME, sentinel.energy_label),
-            DataProductVariable(map_models.LATITUDE_VAR_NAME, sentinel.latitude),
-            DataProductVariable(map_models.LONGITUDE_VAR_NAME, sentinel.longitude),
-            DataProductVariable(map_models.EXPOSURE_FACTOR_VAR_NAME, sentinel.exposure_factor),
-            DataProductVariable(map_models.OBS_DATE_VAR_NAME, sentinel.obs_date),
-            DataProductVariable(map_models.OBS_DATE_RANGE_VAR_NAME, sentinel.obs_date_range),
-            DataProductVariable(map_models.SOLID_ANGLE_VAR_NAME, sentinel.solid_angle),
-            DataProductVariable(map_models.ENA_INTENSITY_VAR_NAME, sentinel.ena_intensity),
-            DataProductVariable(map_models.ENA_INTENSITY_STAT_UNCERT_VAR_NAME, sentinel.ena_intensity_stat_uncert),
-            DataProductVariable(map_models.ENA_INTENSITY_SYS_ERR_VAR_NAME, sentinel.ena_intensity_sys_err),
-            DataProductVariable(map_models.LATITUDE_DELTA_VAR_NAME, sentinel.latitude_delta),
-            DataProductVariable(map_models.LATITUDE_LABEL_VAR_NAME, sentinel.latitude_label),
-            DataProductVariable(map_models.LONGITUDE_DELTA_VAR_NAME, sentinel.longitude_delta),
-            DataProductVariable(map_models.LONGITUDE_LABEL_VAR_NAME, sentinel.longitude_label),
-        ]
-
-        self.assertEqual(expected_variables, actual_variables)
-
-    def test_rectangular_intensity_to_data_product_variables_with_bg(self):
-        input_metadata = sentinel.input_metadata
-
-        data_product = RectangularIntensityDataProduct(
-            input_metadata=input_metadata,
-            data=RectangularIntensityMapData(
-                intensity_map_data=IntensityMapData(
-                    epoch=sentinel.epoch,
-                    epoch_delta=sentinel.epoch_delta,
-                    energy=sentinel.energy,
-                    energy_delta_plus=sentinel.energy_delta_plus,
-                    energy_delta_minus=sentinel.energy_delta_minus,
-                    energy_label=sentinel.energy_label,
-                    latitude=sentinel.latitude,
-                    longitude=sentinel.longitude,
-                    exposure_factor=sentinel.exposure_factor,
-                    obs_date=sentinel.obs_date,
-                    obs_date_range=sentinel.obs_date_range,
-                    solid_angle=sentinel.solid_angle,
-                    ena_intensity=sentinel.ena_intensity,
-                    ena_intensity_stat_uncert=sentinel.ena_intensity_stat_uncert,
-                    ena_intensity_sys_err=sentinel.ena_intensity_sys_err,
-                    bg_intensity=sentinel.bg_intensity,
-                    bg_intensity_sys_err=sentinel.bg_intensity_sys_err,
-                    bg_intensity_stat_uncert=sentinel.bg_intensity_stat_uncert
-                ),
-                coords=RectangularCoords(
-                    longitude_delta=sentinel.longitude_delta,
-                    longitude_label=sentinel.longitude_label,
-                    latitude_delta=sentinel.latitude_delta,
-                    latitude_label=sentinel.latitude_label,
-
-                )
+            DataProductVariable(
+                map_models.ENERGY_DELTA_MINUS_VAR_NAME, sentinel.energy_delta_minus
             ),
-            spice_frame_name=SpiceFrame.ECLIPJ2000,
-        )
-        actual_variables = data_product.to_data_product_variables()
-
-        expected_variables = [
-            DataProductVariable(map_models.EPOCH_VAR_NAME, sentinel.epoch),
-            DataProductVariable(map_models.EPOCH_DELTA_VAR_NAME, sentinel.epoch_delta),
-            DataProductVariable(map_models.ENERGY_VAR_NAME, sentinel.energy),
-            DataProductVariable(map_models.ENERGY_DELTA_PLUS_VAR_NAME, sentinel.energy_delta_plus),
-            DataProductVariable(map_models.ENERGY_DELTA_MINUS_VAR_NAME, sentinel.energy_delta_minus),
-            DataProductVariable(map_models.ENERGY_LABEL_VAR_NAME, sentinel.energy_label),
+            DataProductVariable(
+                map_models.ENERGY_LABEL_VAR_NAME, sentinel.energy_label
+            ),
             DataProductVariable(map_models.LATITUDE_VAR_NAME, sentinel.latitude),
             DataProductVariable(map_models.LONGITUDE_VAR_NAME, sentinel.longitude),
-            DataProductVariable(map_models.EXPOSURE_FACTOR_VAR_NAME, sentinel.exposure_factor),
+            DataProductVariable(
+                map_models.EXPOSURE_FACTOR_VAR_NAME, sentinel.exposure_factor
+            ),
             DataProductVariable(map_models.OBS_DATE_VAR_NAME, sentinel.obs_date),
-            DataProductVariable(map_models.OBS_DATE_RANGE_VAR_NAME, sentinel.obs_date_range),
+            DataProductVariable(
+                map_models.OBS_DATE_RANGE_VAR_NAME, sentinel.obs_date_range
+            ),
             DataProductVariable(map_models.SOLID_ANGLE_VAR_NAME, sentinel.solid_angle),
-            DataProductVariable(map_models.ENA_INTENSITY_VAR_NAME, sentinel.ena_intensity),
-            DataProductVariable(map_models.ENA_INTENSITY_STAT_UNCERT_VAR_NAME, sentinel.ena_intensity_stat_uncert),
-            DataProductVariable(map_models.ENA_INTENSITY_SYS_ERR_VAR_NAME, sentinel.ena_intensity_sys_err),
-            DataProductVariable(map_models.BG_INTENSITY_VAR_NAME, sentinel.bg_intensity),
-            DataProductVariable(map_models.BG_INTENSITY_STAT_UNC_VAR_NAME, sentinel.bg_intensity_stat_uncert),
-            DataProductVariable(map_models.BG_INTENSITY_SYS_ERR_VAR_NAME, sentinel.bg_intensity_sys_err),
-            DataProductVariable(map_models.LATITUDE_DELTA_VAR_NAME, sentinel.latitude_delta),
-            DataProductVariable(map_models.LATITUDE_LABEL_VAR_NAME, sentinel.latitude_label),
-            DataProductVariable(map_models.LONGITUDE_DELTA_VAR_NAME, sentinel.longitude_delta),
-            DataProductVariable(map_models.LONGITUDE_LABEL_VAR_NAME, sentinel.longitude_label),
+            DataProductVariable(
+                map_models.ENA_SPECTRAL_INDEX_VAR_NAME, sentinel.ena_spectral_index
+            ),
+            DataProductVariable(
+                map_models.ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME,
+                sentinel.ena_spectral_index_stat_uncert,
+            ),
+            DataProductVariable(
+                map_models.ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_VAR_NAME,
+                sentinel.ena_spectral_index_scalar_coefficient,
+            ),
+            DataProductVariable(
+                map_models.ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_STAT_UNCERT_VAR_NAME,
+                sentinel.ena_spectral_index_scalar_coefficient_stat_uncert,
+            ),
+            DataProductVariable(
+                map_models.ENA_SPECTRAL_INDEX_CHISQ_VAR_NAME,
+                sentinel.ena_spectral_index_chisq,
+            ),
+            DataProductVariable(
+                map_models.LATITUDE_DELTA_VAR_NAME, sentinel.latitude_delta
+            ),
+            DataProductVariable(
+                map_models.LATITUDE_LABEL_VAR_NAME, sentinel.latitude_label
+            ),
+            DataProductVariable(
+                map_models.LONGITUDE_DELTA_VAR_NAME, sentinel.longitude_delta
+            ),
+            DataProductVariable(
+                map_models.LONGITUDE_LABEL_VAR_NAME, sentinel.longitude_label
+            ),
         ]
 
         self.assertEqual(expected_variables, actual_variables)
+
+    def test_rectangular_intensity_to_data_product_variables(self):
+        test_cases = [
+            ("no bg or sp", {}, []),
+            (
+                "bg",
+                {
+                    "bg_intensity": sentinel.bg_intensity,
+                    "bg_intensity_stat_uncert": sentinel.bg_intensity_stat_uncert,
+                    "bg_intensity_sys_err": sentinel.bg_intensity_sys_err,
+                },
+                [
+                    DataProductVariable(
+                        map_models.BG_INTENSITY_VAR_NAME, sentinel.bg_intensity
+                    ),
+                    DataProductVariable(
+                        map_models.BG_INTENSITY_STAT_UNC_VAR_NAME,
+                        sentinel.bg_intensity_stat_uncert,
+                    ),
+                    DataProductVariable(
+                        map_models.BG_INTENSITY_SYS_ERR_VAR_NAME,
+                        sentinel.bg_intensity_sys_err,
+                    ),
+                ],
+            ),
+            (
+                "sp",
+                {
+                    "survival_probability": sentinel.survival_probability,
+                },
+                [
+                    DataProductVariable(map_models.SURVIVAL_PROBABILITY_VAR_NAME, sentinel.survival_probability),
+                ]
+            )
+        ]
+
+        for (
+            test_name,
+            additional_inputs,
+            expected_additional_data_products_vars,
+        ) in test_cases:
+            with self.subTest(test_name):
+                input_metadata = sentinel.input_metadata
+
+                data_product = RectangularIntensityDataProduct(
+                    input_metadata=input_metadata,
+                    data=RectangularIntensityMapData(
+                        intensity_map_data=IntensityMapData(
+                            epoch=sentinel.epoch,
+                            epoch_delta=sentinel.epoch_delta,
+                            energy=sentinel.energy,
+                            energy_delta_plus=sentinel.energy_delta_plus,
+                            energy_delta_minus=sentinel.energy_delta_minus,
+                            energy_label=sentinel.energy_label,
+                            latitude=sentinel.latitude,
+                            longitude=sentinel.longitude,
+                            exposure_factor=sentinel.exposure_factor,
+                            obs_date=sentinel.obs_date,
+                            obs_date_range=sentinel.obs_date_range,
+                            solid_angle=sentinel.solid_angle,
+                            ena_intensity=sentinel.ena_intensity,
+                            ena_intensity_stat_uncert=sentinel.ena_intensity_stat_uncert,
+                            ena_intensity_sys_err=sentinel.ena_intensity_sys_err,
+                            **additional_inputs
+                        ),
+                        coords=RectangularCoords(
+                            longitude_delta=sentinel.longitude_delta,
+                            longitude_label=sentinel.longitude_label,
+                            latitude_delta=sentinel.latitude_delta,
+                            latitude_label=sentinel.latitude_label,
+
+                        )
+                    ),
+                    spice_frame_name=SpiceFrame.ECLIPJ2000,
+                )
+                actual_variables = data_product.to_data_product_variables()
+
+                expected_variables = [
+                    DataProductVariable(map_models.EPOCH_VAR_NAME, sentinel.epoch),
+                    DataProductVariable(map_models.EPOCH_DELTA_VAR_NAME, sentinel.epoch_delta),
+                    DataProductVariable(map_models.ENERGY_VAR_NAME, sentinel.energy),
+                    DataProductVariable(map_models.ENERGY_DELTA_PLUS_VAR_NAME, sentinel.energy_delta_plus),
+                    DataProductVariable(map_models.ENERGY_DELTA_MINUS_VAR_NAME, sentinel.energy_delta_minus),
+                    DataProductVariable(map_models.ENERGY_LABEL_VAR_NAME, sentinel.energy_label),
+                    DataProductVariable(map_models.LATITUDE_VAR_NAME, sentinel.latitude),
+                    DataProductVariable(map_models.LONGITUDE_VAR_NAME, sentinel.longitude),
+                    DataProductVariable(map_models.EXPOSURE_FACTOR_VAR_NAME, sentinel.exposure_factor),
+                    DataProductVariable(map_models.OBS_DATE_VAR_NAME, sentinel.obs_date),
+                    DataProductVariable(map_models.OBS_DATE_RANGE_VAR_NAME, sentinel.obs_date_range),
+                    DataProductVariable(map_models.SOLID_ANGLE_VAR_NAME, sentinel.solid_angle),
+                    DataProductVariable(map_models.ENA_INTENSITY_VAR_NAME, sentinel.ena_intensity),
+                    DataProductVariable(map_models.ENA_INTENSITY_STAT_UNCERT_VAR_NAME, sentinel.ena_intensity_stat_uncert),
+                    DataProductVariable(map_models.ENA_INTENSITY_SYS_ERR_VAR_NAME, sentinel.ena_intensity_sys_err),
+                    *expected_additional_data_products_vars,
+                    DataProductVariable(map_models.LATITUDE_DELTA_VAR_NAME, sentinel.latitude_delta),
+                    DataProductVariable(map_models.LATITUDE_LABEL_VAR_NAME, sentinel.latitude_label),
+                    DataProductVariable(map_models.LONGITUDE_DELTA_VAR_NAME, sentinel.longitude_delta),
+                    DataProductVariable(map_models.LONGITUDE_LABEL_VAR_NAME, sentinel.longitude_label),
+                ]
+
+                self.assertEqual(expected_variables, actual_variables)
 
     def test_healpix_spectral_index_to_data_product_variables(self):
         input_metadata = Mock()
@@ -660,7 +668,8 @@ class TestMapModels(unittest.TestCase):
             solid_angle=fake_data_per_pixel * 3.4,
             ena_intensity=fake_data_per_energy_per_pixel * 2.2,
             ena_intensity_stat_uncert=fake_data_per_energy_per_pixel * 2.3,
-            ena_intensity_sys_err=fake_data_per_energy_per_pixel * 2.4
+            ena_intensity_sys_err=fake_data_per_energy_per_pixel * 2.4,
+            survival_probability=fake_data_per_energy_per_pixel * 0.01,
         )
 
         healpix_intensity_map_data = HealPixIntensityMapData(
@@ -695,7 +704,9 @@ class TestMapModels(unittest.TestCase):
         np.testing.assert_array_equal(actual_dataset.data_vars["ena_intensity_stat_uncert"].values, intensity_map_data.ena_intensity_stat_uncert)
         np.testing.assert_array_equal(actual_dataset.data_vars["ena_intensity_sys_err"].values, intensity_map_data.ena_intensity_sys_err)
 
-        for key in [ "obs_date", "obs_date_range", "exposure_factor", "ena_intensity", "ena_intensity_stat_uncert", "ena_intensity_sys_err" ]:
+        np.testing.assert_array_equal(actual_dataset.data_vars["survival_probability"].values, intensity_map_data.survival_probability)
+
+        for key in [ "obs_date", "obs_date_range", "exposure_factor", "ena_intensity", "ena_intensity_stat_uncert", "ena_intensity_sys_err", "survival_probability" ]:
             self.assertEqual((CoordNames.TIME.value, CoordNames.ENERGY_L2.value, CoordNames.GENERIC_PIXEL.value), actual_dataset.data_vars[key].dims)
         for key in [ "latitude", "longitude", "solid_angle" ]:
             self.assertEqual((CoordNames.GENERIC_PIXEL.value,), actual_dataset.data_vars[key].dims)
@@ -766,15 +777,78 @@ class TestMapModels(unittest.TestCase):
 
         np.testing.assert_array_equal(actual_dataset.data_vars["ena_spectral_index_scalar_coefficient"].values, spectral_index_map_data.ena_spectral_index_scalar_coefficient)
         np.testing.assert_array_equal(actual_dataset.data_vars["ena_spectral_index_scalar_coefficient_stat_uncert"].values, spectral_index_map_data.ena_spectral_index_scalar_coefficient_stat_uncert)
-        np.testing.assert_array_equal(actual_dataset.data_vars["ena_spectral_index_chisq"].values, spectral_index_map_data.ena_spectral_index_chisq)
+        np.testing.assert_array_equal(
+            actual_dataset.data_vars["ena_spectral_index_chisq"].values,
+            spectral_index_map_data.ena_spectral_index_chisq,
+        )
 
-        for key in [ "obs_date", "obs_date_range", "exposure_factor", "ena_spectral_index", "ena_spectral_index_stat_uncert",
-                     "ena_spectral_index_scalar_coefficient", "ena_spectral_index_scalar_coefficient_stat_uncert",
-                     "ena_spectral_index_chisq" ]:
-            self.assertEqual((CoordNames.TIME.value, CoordNames.ENERGY_L2.value, CoordNames.GENERIC_PIXEL.value), actual_dataset.data_vars[key].dims)
-        for key in [ "latitude", "longitude", "solid_angle" ]:
-            self.assertEqual((CoordNames.GENERIC_PIXEL.value,), actual_dataset.data_vars[key].dims)
+        for key in [
+            "obs_date",
+            "obs_date_range",
+            "exposure_factor",
+            "ena_spectral_index",
+            "ena_spectral_index_stat_uncert",
+            "ena_spectral_index_scalar_coefficient",
+            "ena_spectral_index_scalar_coefficient_stat_uncert",
+            "ena_spectral_index_chisq",
+        ]:
+            self.assertEqual(
+                (
+                    CoordNames.TIME.value,
+                    CoordNames.ENERGY_L2.value,
+                    CoordNames.GENERIC_PIXEL.value,
+                ),
+                actual_dataset.data_vars[key].dims,
+            )
+        for key in ["latitude", "longitude", "solid_angle"]:
+            self.assertEqual(
+                (CoordNames.GENERIC_PIXEL.value,), actual_dataset.data_vars[key].dims
+            )
         # @formatter:on
+
+    def test_healpix_intensity_map_data_to_skymap_with_no_sp(self):
+        expected_nside = 2
+
+        num_epochs = 1
+        num_energies = 5
+        num_healpix_indices = 12 * (expected_nside**2)
+
+        fake_data_per_energy_per_pixel = np.arange(
+            num_epochs * num_energies * num_healpix_indices
+        ).reshape(num_epochs, num_energies, num_healpix_indices)
+
+        fake_data_per_pixel = np.arange(num_healpix_indices)
+
+        intensity_map_data = IntensityMapData(
+            epoch=np.array([np.datetime64("1970-01-01T00:00:00")]),
+            epoch_delta=np.array([999]),
+            energy=np.arange(num_energies) * 1.1,
+            energy_delta_plus=np.arange(num_energies) * 1.2,
+            energy_delta_minus=np.arange(num_energies) * 1.3,
+            energy_label=np.arange(num_energies).astype(str),
+            latitude=fake_data_per_pixel * 2.2,
+            longitude=fake_data_per_pixel * 2.3,
+            exposure_factor=fake_data_per_energy_per_pixel * 2.2,
+            obs_date=np.datetime64("1970-01-01T00:00:00")
+            + fake_data_per_energy_per_pixel * 10000,
+            obs_date_range=fake_data_per_energy_per_pixel * 3.2,
+            solid_angle=fake_data_per_pixel * 3.4,
+            ena_intensity=fake_data_per_energy_per_pixel * 2.2,
+            ena_intensity_stat_uncert=fake_data_per_energy_per_pixel * 2.3,
+            ena_intensity_sys_err=fake_data_per_energy_per_pixel * 2.4,
+        )
+
+        healpix_intensity_map_data = HealPixIntensityMapData(
+            intensity_map_data=intensity_map_data,
+            coords=HealPixCoords(
+                pixel_index=np.arange(num_healpix_indices),
+                pixel_index_label=np.arange(num_healpix_indices).astype(str),
+            ),
+        )
+
+        skymap = healpix_intensity_map_data.to_healpix_skymap()
+
+        self.assertNotIn("survival_probability", skymap.data_1d)
 
     def test_read_intensity_data_handles_missing_obs_date(self):
         cdf = CDF(

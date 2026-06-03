@@ -40,10 +40,20 @@ class CombinationStrategy(ABC):
 
         first_map_dict = dataclasses.asdict(first_map)
 
-        fields_which_may_differ = {"epoch", "epoch_delta", "ena_intensity", "ena_intensity_stat_uncert",
-                                   "ena_intensity_sys_err",
-                                   "bg_intensity", "bg_intensity_stat_uncert", "bg_intensity_sys_err",
-                                   "exposure_factor", "obs_date", "obs_date_range"}
+        fields_which_may_differ = {
+            "epoch",
+            "epoch_delta",
+            "ena_intensity",
+            "ena_intensity_stat_uncert",
+            "ena_intensity_sys_err",
+            "bg_intensity",
+            "bg_intensity_stat_uncert",
+            "bg_intensity_sys_err",
+            "exposure_factor",
+            "obs_date",
+            "obs_date_range",
+            "survival_probability",
+        }
 
         differing_fields = []
         for field in dataclasses.fields(first_map):
@@ -101,7 +111,8 @@ class UnweightedCombination(CombinationStrategy):
                                    exposure_factor=summed_exposures,
                                    ena_intensity_sys_err=combined_intensity_sys_err,
                                    ena_intensity_stat_uncert=combined_intensity_stat_uncert,
-                                   obs_date=avg_obs_date
+                                   obs_date=avg_obs_date,
+                                   survival_probability=None
                                    )
 
 
@@ -166,7 +177,8 @@ class ExposureWeightedCombination(CombinationStrategy):
                                    bg_intensity_sys_err=combined_bg_intensity_sys_err,
                                    bg_intensity_stat_uncert=combined_bg_intensity_stat_uncert,
                                    exposure_factor=summed_exposures,
-                                   obs_date=avg_obs_date
+                                   obs_date=avg_obs_date,
+                                   survival_probability=None
                                    )
 
 class UncertaintyWeightedCombination(CombinationStrategy):
@@ -201,5 +213,6 @@ class UncertaintyWeightedCombination(CombinationStrategy):
                                    exposure_factor=summed_exposures,
                                    ena_intensity_sys_err=combined_intensity_sys_err,
                                    ena_intensity_stat_uncert=np.sqrt(combined_intensity_stat_unc),
-                                   obs_date=avg_obs_date
+                                   obs_date=avg_obs_date,
+                                   survival_probability=None
                                    )

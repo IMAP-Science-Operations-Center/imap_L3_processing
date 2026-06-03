@@ -126,8 +126,10 @@ class UltraProcessor(MapProcessor):
         return HealPixIntensityMapData(
             intensity_map_data=IntensityMapData(
                 ena_intensity=intensity_data.ena_intensity / survival_probability_map,
-                ena_intensity_stat_uncert=intensity_data.ena_intensity_stat_uncert / survival_probability_map,
-                ena_intensity_sys_err=intensity_data.ena_intensity_sys_err / survival_probability_map,
+                ena_intensity_stat_uncert=intensity_data.ena_intensity_stat_uncert
+                / survival_probability_map,
+                ena_intensity_sys_err=intensity_data.ena_intensity_sys_err
+                / survival_probability_map,
                 epoch=intensity_data.epoch,
                 epoch_delta=intensity_data.epoch_delta,
                 energy=intensity_data.energy,
@@ -140,6 +142,7 @@ class UltraProcessor(MapProcessor):
                 obs_date=intensity_data.obs_date,
                 obs_date_range=intensity_data.obs_date_range,
                 solid_angle=intensity_data.solid_angle,
+                survival_probability=survival_probability_map,
             ),
             coords=HealPixCoords(
                 pixel_index=coords.pixel_index,
@@ -169,11 +172,17 @@ class UltraProcessor(MapProcessor):
                                                   rect_l2_map: RectangularIntensityMapData,
                                                   spacing_deg: int,
                                                   spice_frame_name: SpiceFrame) -> RectangularIntensityDataProduct:
+        has_survival_data = healpix_map_data.intensity_map_data.survival_probability is not None
+
         variables_to_convert_to_rectangular = [
             "ena_intensity",
             "ena_intensity_stat_uncert",
             "ena_intensity_sys_err",
         ]
+
+        if has_survival_data:
+            variables_to_convert_to_rectangular.append("survival_probability")
+
         healpix_map = healpix_map_data.to_healpix_skymap()
         rectangular_map, _ = healpix_map.to_rectangular_skymap(spacing_deg, variables_to_convert_to_rectangular)
         rectangular_map_xarray_dataset = rectangular_map.to_dataset()
@@ -193,9 +202,17 @@ class UltraProcessor(MapProcessor):
             solid_angle=rect_l2_data.solid_angle,
             exposure_factor=rect_l2_data.exposure_factor,
             ena_intensity=rectangular_map_xarray_dataset["ena_intensity"].values,
-            ena_intensity_stat_uncert=rectangular_map_xarray_dataset["ena_intensity_stat_uncert"].values,
-            ena_intensity_sys_err=rectangular_map_xarray_dataset["ena_intensity_sys_err"].values,
+            ena_intensity_stat_uncert=rectangular_map_xarray_dataset[
+                "ena_intensity_stat_uncert"
+            ].values,
+            ena_intensity_sys_err=rectangular_map_xarray_dataset[
+                "ena_intensity_sys_err"
+            ].values,
         )
+
+        if has_survival_data:
+            intensity_map_data.survival_probability = rectangular_map_xarray_dataset["survival_probability"].values
+
         rect_intensity_map_data = RectangularIntensityMapData(
             intensity_map_data,
             coords=RectangularCoords(

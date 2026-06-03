@@ -246,22 +246,28 @@ class TestMapIntegration(unittest.TestCase):
         lo_imap_data_dir = get_run_local_data_path("lo/integration_data")
 
         input_files = [
-            lo_test_data_dir / "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-1yr_20260101_v900.cdf",
-            lo_test_data_dir / "imap_lo_l2_l090-ena-h-hf-nsp-ram-hae-6deg-1yr_20260101_v900.cdf",
+            lo_test_data_dir
+            / "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-1yr_20260101_v900.cdf",
+            lo_test_data_dir
+            / "imap_lo_l2_l090-ena-h-hf-nsp-ram-hae-6deg-1yr_20260101_v900.cdf",
             get_test_data_path("lo/imap_lo_l1c_pset_20260101-repoint01261_v001.cdf"),
-
-            lo_test_data_dir / "imap_glows_l3e_survival-probability-lo_20260101-repoint01261_v001.cdf",
-            lo_test_data_dir / "imap_glows_l3e_survival-probability-lo_20270418-repoint03003_v001.cdf",
-
+            lo_test_data_dir
+            / "imap_glows_l3e_survival-probability-lo_20260101-repoint01261_v001.cdf",
+            lo_test_data_dir
+            / "imap_glows_l3e_survival-probability-lo_20270418-repoint03003_v001.cdf",
             INTEGRATION_TEST_DATA_PATH / "spice" / "naif020.tls",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_science_108.tf",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_sclk_008.tsc",
-            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
+            INTEGRATION_TEST_DATA_PATH
+            / "spice"
+            / "imap_dps_2025_105_2026_105_009.ah.bc",
             INTEGRATION_TEST_DATA_PATH / "spice" / "de440.bsp",
-            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_recon_20250415_20260415_v01.bsp",
+            INTEGRATION_TEST_DATA_PATH
+            / "spice"
+            / "imap_recon_20250415_20260415_v01.bsp",
         ]
 
-        with (mock_imap_data_access(lo_imap_data_dir, input_files)):
+        with mock_imap_data_access(lo_imap_data_dir, input_files):
             logging.basicConfig(
                 force=True,
                 level=logging.INFO,
@@ -302,8 +308,11 @@ class TestMapIntegration(unittest.TestCase):
 
             with CDF(str(expected_ena_path)) as cdf:
                 self.assertEqual(expected_ena_parents, set(cdf.attrs["Parents"]))
+                self.assertIn("survival_probability", cdf)
+
             with CDF(str(expected_hf_ena_path)) as cdf:
                 self.assertEqual(expected_hf_ena_parents, set(cdf.attrs["Parents"]))
+                self.assertIn("survival_probability", cdf)
 
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_lo_isn_maps(self, mock_parse_cli_arguments):
@@ -404,6 +413,7 @@ class TestMapIntegration(unittest.TestCase):
 
             with CDF(str(expected_map_path)) as cdf:
                 self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))
+                self.assertIn("survival_probability", cdf)
 
     @run_periodically(timedelta(days=7))
     @patch("imap_l3_data_processor._parse_cli_arguments")

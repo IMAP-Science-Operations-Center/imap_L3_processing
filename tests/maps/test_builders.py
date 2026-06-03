@@ -139,6 +139,7 @@ def construct_intensity_data_with_all_zero_fields(num_pixels: int = 1) -> Intens
         bg_intensity=np.array([0] * num_pixels),
         bg_intensity_sys_err=np.array([0] * num_pixels),
         bg_intensity_stat_uncert=np.array([0] * num_pixels),
+        survival_probability=np.array([0] * num_pixels),
     )
 
 

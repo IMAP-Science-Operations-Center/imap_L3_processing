@@ -112,8 +112,15 @@ class TestUltraProcessor(unittest.TestCase):
         healpix_intensity_map_data.to_healpix_skymap = Mock(return_value=mock_healpix_skymap)
         mock_rectangular_map_dataset = {
             "ena_intensity": Mock(values=sentinel.rectangular_ena_intensity),
-            "ena_intensity_stat_uncert": Mock(values=sentinel.rectangular_ena_intensity_stat_uncert),
-            "ena_intensity_sys_err": Mock(values=sentinel.rectangular_ena_intensity_sys_err),
+            "ena_intensity_stat_uncert": Mock(
+                values=sentinel.rectangular_ena_intensity_stat_uncert
+            ),
+            "ena_intensity_sys_err": Mock(
+                values=sentinel.rectangular_ena_intensity_sys_err
+            ),
+            "survival_probability": Mock(
+                values=sentinel.rectangular_survival_probability
+            ),
         }
 
         mock_rectangular_sky_map = Mock(spec=RectangularSkyMap)
@@ -139,12 +146,23 @@ class TestUltraProcessor(unittest.TestCase):
         actual_intensity_map_data = healpix_intensity_map_data_kwargs["intensity_map_data"]
         intensity_data = input_l2_healpix_map.intensity_map_data
 
-        np.testing.assert_array_equal(actual_intensity_map_data.ena_intensity,
-                                      intensity_data.ena_intensity / computed_survival_probabilities)
-        np.testing.assert_array_equal(actual_intensity_map_data.ena_intensity_stat_uncert,
-                                      intensity_data.ena_intensity_stat_uncert / computed_survival_probabilities)
-        np.testing.assert_array_equal(actual_intensity_map_data.ena_intensity_sys_err,
-                                      intensity_data.ena_intensity_sys_err / computed_survival_probabilities)
+        np.testing.assert_array_equal(
+            actual_intensity_map_data.ena_intensity,
+            intensity_data.ena_intensity / computed_survival_probabilities,
+        )
+        np.testing.assert_array_equal(
+            actual_intensity_map_data.ena_intensity_stat_uncert,
+            intensity_data.ena_intensity_stat_uncert / computed_survival_probabilities,
+        )
+        np.testing.assert_array_equal(
+            actual_intensity_map_data.ena_intensity_sys_err,
+            intensity_data.ena_intensity_sys_err / computed_survival_probabilities,
+        )
+
+        np.testing.assert_array_equal(
+            actual_intensity_map_data.survival_probability,
+            computed_survival_probabilities,
+        )
 
         np.testing.assert_array_equal(actual_intensity_map_data.epoch, intensity_data.epoch)
         np.testing.assert_array_equal(actual_intensity_map_data.epoch_delta, intensity_data.epoch_delta)
@@ -165,6 +183,7 @@ class TestUltraProcessor(unittest.TestCase):
             "ena_intensity",
             "ena_intensity_stat_uncert",
             "ena_intensity_sys_err",
+            "survival_probability"
         ])
 
         mock_save_data.assert_called_once()
@@ -181,6 +200,7 @@ class TestUltraProcessor(unittest.TestCase):
         self.assertEqual(sentinel.rectangular_ena_intensity, actual_rectangular_data.intensity_map_data.ena_intensity)
         self.assertEqual(sentinel.rectangular_ena_intensity_stat_uncert, actual_rectangular_data.intensity_map_data.ena_intensity_stat_uncert)
         self.assertEqual(sentinel.rectangular_ena_intensity_sys_err, actual_rectangular_data.intensity_map_data.ena_intensity_sys_err)
+        self.assertEqual(sentinel.rectangular_survival_probability, actual_rectangular_data.intensity_map_data.survival_probability)
 
         expected_passthrough = input_l2_rectangular_map.intensity_map_data
         self.assertIs(expected_passthrough.epoch, actual_rectangular_data.intensity_map_data.epoch)
@@ -206,13 +226,11 @@ class TestUltraProcessor(unittest.TestCase):
         self.assertEqual([mock_save_data.return_value], product)
 
     @patch('imap_l3_processing.ultra.ultra_processor.MapProcessor.get_parent_file_names')
-    @patch('imap_l3_processing.ultra.ultra_processor.UltraProcessor._process_healpix_intensity_to_rectangular')
     @patch("imap_l3_processing.ultra.ultra_processor.ExposureWeightedCombination")
     @patch('imap_l3_processing.ultra.ultra_processor.save_data')
     @patch('imap_l3_processing.ultra.ultra_processor.UltraL3CombinedDependencies.fetch_dependencies')
     def _test_process_combined_sensor(self, degree_spacing, mock_fetch_dependencies, mock_save_data,
-                                      mock_exposure_weighted_combination,
-                                      mock_healpix_to_rectangular, _):
+                                      mock_exposure_weighted_combination, _):
         input_metadata = InputMetadata(instrument="ultra",
                                        data_level="l3",
                                        start_date=datetime.now(),
@@ -227,10 +245,30 @@ class TestUltraProcessor(unittest.TestCase):
         combined_dependencies.u45_l2_rectangular_map = sentinel.u45_l2_rectangular_map
         combined_dependencies.u90_l2_rectangular_map = sentinel.u90_l2_rectangular_map
         combined_dependencies.dependency_file_paths = [
-            Path("folder/u45_map", Path("folder/u90_map"), Path("folder/u45_l1c"), Path("folder/u90_l1c"))]
+            Path(
+                "folder/u45_map",
+                Path("folder/u90_map"),
+                Path("folder/u45_l1c"),
+                Path("folder/u90_l1c"),
+            )
+        ]
 
         healpix_combination_return_value = mock_exposure_weighted_combination.return_value.combine_healpix_intensity_map_data.return_value
+        healpix_combination_return_value.intensity_map_data.survival_probability = None
         rectangular_combination_return_value = mock_exposure_weighted_combination.return_value.combine_rectangular_intensity_map_data.return_value
+
+        healpix_skymap = healpix_combination_return_value.to_healpix_skymap.return_value
+        converted_rectangular_skymap = Mock()
+        healpix_skymap.to_rectangular_skymap.return_value = (
+            converted_rectangular_skymap,
+            sentinel.who_even_knows_what_this_is,
+        )
+
+        converted_rectangular_skymap.to_dataset.return_value = {
+            "ena_intensity": Mock(values=sentinel.rectangular_ena_intensity),
+            "ena_intensity_stat_uncert": Mock(values=sentinel.rectangular_ena_intensity_stat_uncert),
+            "ena_intensity_sys_err": Mock(values=sentinel.rectangular_ena_intensity_sys_err),
+        }
 
         processor = UltraProcessor(sentinel.dependencies, input_metadata)
         product = processor.process(spice_frame_name=sentinel.spice_frame)
@@ -241,14 +279,41 @@ class TestUltraProcessor(unittest.TestCase):
             [sentinel.u45_l2_healpix_map, sentinel.u90_l2_healpix_map])
 
         mock_exposure_weighted_combination.return_value.combine_rectangular_intensity_map_data.assert_called_once_with(
-            [sentinel.u45_l2_rectangular_map, sentinel.u90_l2_rectangular_map])
+            [sentinel.u45_l2_rectangular_map, sentinel.u90_l2_rectangular_map]
+        )
 
-        mock_healpix_to_rectangular.assert_called_once_with(healpix_combination_return_value,
-                                                            rectangular_combination_return_value,
-                                                            degree_spacing,
-                                                            spice_frame_name=sentinel.spice_frame)
+        healpix_combination_return_value.to_healpix_skymap.assert_called_once()
 
-        mock_save_data.assert_called_once_with(mock_healpix_to_rectangular.return_value)
+        healpix_skymap.to_rectangular_skymap.assert_called_once_with(
+            degree_spacing,
+            [
+                "ena_intensity",
+                "ena_intensity_stat_uncert",
+                "ena_intensity_sys_err",
+            ]
+        )
+
+        actual_data_product = mock_save_data.call_args_list[0].args[0]
+
+        self.assertEqual(
+            sentinel.rectangular_ena_intensity, actual_data_product.data.intensity_map_data.ena_intensity
+        )
+        self.assertEqual(
+            sentinel.rectangular_ena_intensity_stat_uncert,
+            actual_data_product.data.intensity_map_data.ena_intensity_stat_uncert,
+        )
+        self.assertEqual(
+            sentinel.rectangular_ena_intensity_sys_err,
+            actual_data_product.data.intensity_map_data.ena_intensity_sys_err,
+        )
+
+        self.assertEqual(rectangular_combination_return_value.intensity_map_data.obs_date, actual_data_product.data.intensity_map_data.obs_date)
+        self.assertEqual(rectangular_combination_return_value.intensity_map_data.obs_date_range, actual_data_product.data.intensity_map_data.obs_date_range)
+        self.assertEqual(rectangular_combination_return_value.intensity_map_data.solid_angle, actual_data_product.data.intensity_map_data.solid_angle)
+        self.assertEqual(rectangular_combination_return_value.intensity_map_data.exposure_factor, actual_data_product.data.intensity_map_data.exposure_factor)
+        self.assertEqual(rectangular_combination_return_value.intensity_map_data.longitude, actual_data_product.data.intensity_map_data.longitude)
+        self.assertEqual(rectangular_combination_return_value.intensity_map_data.latitude, actual_data_product.data.intensity_map_data.latitude)
+
         self.assertEqual([mock_save_data.return_value], product)
 
     @patch('imap_l3_processing.ultra.ultra_processor.UltraProcessor._process_survival_probability')
@@ -406,6 +471,7 @@ class TestUltraProcessor(unittest.TestCase):
             "ena_intensity": Mock(values=sentinel.rectangular_ena_intensity),
             "ena_intensity_stat_uncert": Mock(values=sentinel.rectangular_ena_intensity_stat_unc),
             "ena_intensity_sys_err": Mock(values=sentinel.rectangular_ena_intensity_sys_err),
+            "survival_probability": Mock(values=sentinel.rectangular_survival_probability)
         }
 
         mock_rectangular_sky_map = Mock(spec=RectangularSkyMap)

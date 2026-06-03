@@ -49,6 +49,8 @@ BG_INTENSITY_VAR_NAME = "bg_intensity"
 BG_INTENSITY_STAT_UNC_VAR_NAME = "bg_intensity_stat_uncert"
 BG_INTENSITY_SYS_ERR_VAR_NAME = "bg_intensity_sys_err"
 
+SURVIVAL_PROBABILITY_VAR_NAME = "survival_probability"
+
 PIXEL_INDEX_VAR_NAME = "pixel_index"
 PIXEL_INDEX_LABEL_VAR_NAME = "pixel_index_label"
 
@@ -104,6 +106,7 @@ class IntensityMapData(MapData):
     bg_intensity: Optional[np.ndarray] = None
     bg_intensity_stat_uncert: Optional[np.ndarray] = None
     bg_intensity_sys_err: Optional[np.ndarray] = None
+    survival_probability: Optional[np.ndarray] = None
 
 
 @dataclass
@@ -261,6 +264,10 @@ class HealPixIntensityMapData:
                 CoordNames.ENERGY_L2.value: self.intensity_map_data.energy,
                 CoordNames.HEALPIX_INDEX.value: self.coords.pixel_index,
             })
+
+        if self.intensity_map_data.survival_probability is not None:
+            data_1d_with_sp = healpix_map.data_1d.assign(survival_probability=(full_shape, self.intensity_map_data.survival_probability))
+            healpix_map.data_1d = data_1d_with_sp
 
         healpix_map.data_1d = healpix_map.data_1d \
             .assign({"obs_date": (full_shape, healpix_map.data_1d["obs_date"].values.astype(np.float64))}) \
@@ -531,6 +538,10 @@ def _intensity_data_variables(data: IntensityMapData) -> list[DataProductVariabl
             DataProductVariable(BG_INTENSITY_VAR_NAME, data.bg_intensity),
             DataProductVariable(BG_INTENSITY_STAT_UNC_VAR_NAME, data.bg_intensity_stat_uncert),
             DataProductVariable(BG_INTENSITY_SYS_ERR_VAR_NAME, data.bg_intensity_sys_err),
+        ])
+    if data.survival_probability is not None:
+        intensity_variables.extend([
+            DataProductVariable(SURVIVAL_PROBABILITY_VAR_NAME, data.survival_probability),
         ])
 
     return _map_data_to_variables(data) + intensity_variables

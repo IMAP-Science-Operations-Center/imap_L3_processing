@@ -71,10 +71,20 @@ class TestMapCombination(unittest.TestCase):
     def _check_maps_match(self, combination: CombinationStrategy):
         map_1 = construct_intensity_data_with_all_zero_fields()
 
-        fields_which_may_differ = {"epoch", "epoch_delta", "ena_intensity", "ena_intensity_stat_uncert",
-                                   "ena_intensity_sys_err",
-                                   "bg_intensity", "bg_intensity_stat_uncert", "bg_intensity_sys_err",
-                                   "exposure_factor", "obs_date", "obs_date_range"}
+        fields_which_may_differ = {
+            "epoch",
+            "epoch_delta",
+            "ena_intensity",
+            "ena_intensity_stat_uncert",
+            "ena_intensity_sys_err",
+            "bg_intensity",
+            "bg_intensity_stat_uncert",
+            "bg_intensity_sys_err",
+            "exposure_factor",
+            "obs_date",
+            "obs_date_range",
+            "survival_probability",
+        }
 
         alternate_values_by_type = {datetime: datetime(2025, 5, 6), str: "label"}
         generic_value = 10
@@ -481,7 +491,35 @@ class TestMapCombination(unittest.TestCase):
 
         np.testing.assert_equal(combine_two.intensity_map_data.ena_intensity, expected_combined_intensity)
         np.testing.assert_equal(combine_two.intensity_map_data.ena_intensity_sys_err, expected_sys_err)
-        np.testing.assert_equal(combine_two.intensity_map_data.ena_intensity_stat_uncert, expected_stat_unc)
+        np.testing.assert_equal(
+            combine_two.intensity_map_data.ena_intensity_stat_uncert, expected_stat_unc
+        )
         np.testing.assert_equal(combine_two.intensity_map_data.exposure_factor, expected_combined_exposure)
-        np.testing.assert_equal(combine_two.intensity_map_data.obs_date.mask, expected_obs_date.mask)
-        np.testing.assert_equal(combine_two.intensity_map_data.obs_date, expected_obs_date)
+        np.testing.assert_equal(
+            combine_two.intensity_map_data.obs_date.mask, expected_obs_date.mask
+        )
+        np.testing.assert_equal(
+            combine_two.intensity_map_data.obs_date, expected_obs_date
+        )
+
+    def test_combination_does_not_propagate_survival_probability(self):
+        test_cases = [
+            ExposureWeightedCombination,
+            UncertaintyWeightedCombination,
+            UnweightedCombination
+        ]
+
+        for combination_strategy in test_cases:
+            with self.subTest(combination_strategy.__name__):
+                map_1 = construct_intensity_data_with_all_zero_fields()
+                map_1.survival_probability = np.array([1])
+
+                map_2 = construct_intensity_data_with_all_zero_fields()
+                map_2.survival_probability = np.array([0.5])
+
+                combined_map = combination_strategy().combine_rectangular_intensity_map_data([
+                    create_rectangular_intensity_map(map_1),
+                    create_rectangular_intensity_map(map_2)
+                ])
+
+                self.assertIsNone(combined_map.intensity_map_data.survival_probability)
