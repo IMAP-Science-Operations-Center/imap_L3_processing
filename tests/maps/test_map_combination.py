@@ -115,12 +115,16 @@ class TestMapCombination(unittest.TestCase):
         map_1.exposure_factor = np.array([1, 0, 5, 6, 0])
         DATETIME_FILL = datetime(9999, 12, 31, 23, 59, 59, 999999)
         map_1.obs_date = np.ma.masked_equal(
-            [datetime(2025, 5, 5),
-             DATETIME_FILL,
-             datetime(2025, 5, 7),
-             datetime(2025, 5, 8),
-             DATETIME_FILL],
-            DATETIME_FILL)
+            [
+                datetime(2025, 5, 5),
+                DATETIME_FILL,
+                datetime(2025, 5, 7),
+                datetime(2025, 5, 8),
+                DATETIME_FILL,
+            ],
+            DATETIME_FILL,
+        )
+        map_1.survival_probability = np.array([1, np.nan, 1, 1, 1])
 
         map_2 = construct_intensity_data_with_all_zero_fields()
         map_2.ena_intensity = np.array([5, 6, 7, 8, np.nan])
@@ -139,6 +143,7 @@ class TestMapCombination(unittest.TestCase):
              datetime(2025, 5, 12),
              DATETIME_FILL],
             DATETIME_FILL)
+        map_2.survival_probability = np.array([0, 0.5, np.nan, 1, 0])
 
         expected_combined_bg_stat_unc = [
             np.sqrt((1 * 100 + 9 * 16) / 16),
@@ -184,6 +189,8 @@ class TestMapCombination(unittest.TestCase):
             ]
         )
 
+        expected_combined_survival_probability = [0.25, 0.5, 1, 1, np.nan]
+
         exposure_weighted_strategy = ExposureWeightedCombination()
 
         rectangular_map_1: RectangularIntensityMapData = (
@@ -224,6 +231,10 @@ class TestMapCombination(unittest.TestCase):
         np.testing.assert_equal(
             combine_two.intensity_map_data.bg_intensity_stat_uncert,
             expected_combined_bg_stat_unc,
+        )
+        np.testing.assert_equal(
+            combine_two.intensity_map_data.survival_probability,
+            expected_combined_survival_probability,
         )
 
     def test_combine_handles_maps_with_different_patterns_of_missing_intensity_and_bg_intensity(
@@ -325,6 +336,7 @@ class TestMapCombination(unittest.TestCase):
              datetime(2025, 5, 9),
              ],
             DATETIME_FILL)
+        map_1.survival_probability = np.array([0.9, 1, 1, 1, np.nan, 1, 1, 1, 1])
 
         map_2 = construct_intensity_data_with_all_zero_fields()
         map_2.ena_intensity = np.array([5, 6, 7, 8, np.nan, 100, 9, 10, 11])
@@ -343,11 +355,13 @@ class TestMapCombination(unittest.TestCase):
              datetime(2025, 5, 13),
              ],
             DATETIME_FILL)
+        map_2.survival_probability = np.array([0.1, 1, 1, 1, 0.2, 0.2, 1, 0.8, 0])
 
         expected_combined_intensity = [3, np.nan, 5, 6, np.nan, 100, 4.5, 5, 12]
         expected_sys_err = [2.5, np.nan, np.nan, 6.5, np.nan, 1, np.nan, np.nan, np.nan]
         expected_stat_unc = [5, np.nan, np.nan, 13, np.nan, 1, np.nan, np.nan, np.nan]
         expected_obs_date = datetime(2025, 5, 11)
+        expected_survival_probability = [0.5, np.nan, 1, 1, 0.2, 0.6, 1, 1, 0.5]
 
         exposure_unweighted_strategy = UnweightedCombination()
 
@@ -361,6 +375,7 @@ class TestMapCombination(unittest.TestCase):
         np.testing.assert_equal(combine_two.intensity_map_data.ena_intensity_sys_err, expected_sys_err)
         np.testing.assert_equal(combine_two.intensity_map_data.ena_intensity_stat_uncert, expected_stat_unc)
         np.testing.assert_equal(combine_two.intensity_map_data.obs_date[-1], expected_obs_date)
+        np.testing.assert_equal(combine_two.intensity_map_data.survival_probability, expected_survival_probability)
 
     def test_combine_rectangular_intensity_map_data_errors_if_coords_not_matching(self):
         delta_array = np.array([1])
@@ -440,6 +455,7 @@ class TestMapCombination(unittest.TestCase):
              datetime(2025, 5, 8),
              DATETIME_FILL],
             DATETIME_FILL)
+        map_1.survival_probability = np.array([1, 0.2, 0.8, 1, np.nan])
 
         map_2 = construct_intensity_data_with_all_zero_fields()
         map_2.ena_intensity = np.array([5, 6, 7, 8, np.nan])
@@ -453,6 +469,7 @@ class TestMapCombination(unittest.TestCase):
              datetime(2025, 5, 12),
              DATETIME_FILL],
             DATETIME_FILL)
+        map_2.survival_probability = np.array([1, 0.5, 0.2, 0.25, np.nan])
 
         expected_combined_exposure = [4, 1, 5, 8, 0]
         expected_combined_intensity = [
@@ -481,6 +498,7 @@ class TestMapCombination(unittest.TestCase):
              datetime(2025, 5, 10),
              datetime(2025, 5, 7),
              datetime(2025, 5, 9), np.ma.masked])
+        expected_survival_probability = np.array([1, 0.5, 0.8, (1 / 10**2 + 0.25 / 4**2) / (1 / 10**2 + 1 / 4**2), np.nan])
 
         exposure_weighted_strategy = UncertaintyWeightedCombination()
 
@@ -501,8 +519,11 @@ class TestMapCombination(unittest.TestCase):
         np.testing.assert_equal(
             combine_two.intensity_map_data.obs_date, expected_obs_date
         )
+        np.testing.assert_equal(
+            combine_two.intensity_map_data.survival_probability, expected_survival_probability
+        )
 
-    def test_combination_does_not_propagate_survival_probability(self):
+    def test_combination_handles_missing_sp_data(self):
         test_cases = [
             ExposureWeightedCombination,
             UncertaintyWeightedCombination,
@@ -512,10 +533,10 @@ class TestMapCombination(unittest.TestCase):
         for combination_strategy in test_cases:
             with self.subTest(combination_strategy.__name__):
                 map_1 = construct_intensity_data_with_all_zero_fields()
-                map_1.survival_probability = np.array([1])
+                map_1.survival_probability = None
 
                 map_2 = construct_intensity_data_with_all_zero_fields()
-                map_2.survival_probability = np.array([0.5])
+                map_2.survival_probability = None
 
                 combined_map = combination_strategy().combine_rectangular_intensity_map_data([
                     create_rectangular_intensity_map(map_1),

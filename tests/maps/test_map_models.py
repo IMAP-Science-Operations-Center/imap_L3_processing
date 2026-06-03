@@ -462,40 +462,81 @@ class TestMapModels(unittest.TestCase):
                 "ena_intensity_stat_uncert": (full_shape, np.full((2, 15, 12), 11)),
                 "ena_intensity_sys_err": (full_shape, np.full((2, 15, 12), 12)),
                 "epoch_delta": ([CoordNames.TIME.value], np.full((2,), 13)),
-                "energy_delta_minus": ([CoordNames.ENERGY_L2.value], np.full((15,), 14)),
+                "energy_delta_minus": (
+                    [CoordNames.ENERGY_L2.value],
+                    np.full((15,), 14),
+                ),
                 "energy_delta_plus": ([CoordNames.ENERGY_L2.value], np.full((15,), 15)),
                 "energy_label": ([CoordNames.ENERGY_L2.value], np.full((15,), "123")),
-                "pixel_index_label": ([CoordNames.HEALPIX_INDEX.value], np.full((12,), "Pixel")),
+                "pixel_index_label": (
+                    [CoordNames.HEALPIX_INDEX.value],
+                    np.full((12,), "Pixel"),
+                ),
             },
             coords={
                 CoordNames.TIME.value: np.full((2,), 1),
                 CoordNames.ENERGY_L2.value: np.full((15,), 2),
                 CoordNames.HEALPIX_INDEX.value: np.full((12,), 3),
-            }
+            },
         )
 
-        output: HealPixIntensityMapData = HealPixIntensityMapData.read_from_xarray(input_xarray)
+        output: HealPixIntensityMapData = HealPixIntensityMapData.read_from_xarray(
+            input_xarray
+        )
 
-        np.testing.assert_array_equal(input_xarray["latitude"], output.intensity_map_data.latitude)
-        np.testing.assert_array_equal(input_xarray["longitude"], output.intensity_map_data.longitude)
-        np.testing.assert_array_equal(input_xarray["solid_angle"], output.intensity_map_data.solid_angle)
-        np.testing.assert_array_equal(input_xarray["obs_date"], output.intensity_map_data.obs_date)
-        np.testing.assert_array_equal(input_xarray["obs_date_range"], output.intensity_map_data.obs_date_range)
-        np.testing.assert_array_equal(input_xarray["exposure_factor"], output.intensity_map_data.exposure_factor)
-        np.testing.assert_array_equal(input_xarray["ena_intensity"], output.intensity_map_data.ena_intensity)
-        np.testing.assert_array_equal(input_xarray["ena_intensity_stat_uncert"],
-                                      output.intensity_map_data.ena_intensity_stat_uncert)
-        np.testing.assert_array_equal(input_xarray["ena_intensity_sys_err"],
-                                      output.intensity_map_data.ena_intensity_sys_err)
+        np.testing.assert_array_equal(
+            input_xarray["latitude"], output.intensity_map_data.latitude
+        )
+        np.testing.assert_array_equal(
+            input_xarray["longitude"], output.intensity_map_data.longitude
+        )
+        np.testing.assert_array_equal(
+            input_xarray["solid_angle"], output.intensity_map_data.solid_angle
+        )
+        np.testing.assert_array_equal(
+            input_xarray["obs_date"], output.intensity_map_data.obs_date
+        )
+        np.testing.assert_array_equal(
+            input_xarray["obs_date_range"], output.intensity_map_data.obs_date_range
+        )
+        np.testing.assert_array_equal(
+            input_xarray["exposure_factor"], output.intensity_map_data.exposure_factor
+        )
+        np.testing.assert_array_equal(
+            input_xarray["ena_intensity"], output.intensity_map_data.ena_intensity
+        )
+        np.testing.assert_array_equal(
+            input_xarray["ena_intensity_stat_uncert"],
+            output.intensity_map_data.ena_intensity_stat_uncert,
+        )
+        np.testing.assert_array_equal(
+            input_xarray["ena_intensity_sys_err"],
+            output.intensity_map_data.ena_intensity_sys_err,
+        )
 
-        np.testing.assert_array_equal(input_xarray[CoordNames.TIME.value], output.intensity_map_data.epoch)
-        np.testing.assert_array_equal(input_xarray["epoch_delta"], output.intensity_map_data.epoch_delta)
-        np.testing.assert_array_equal(input_xarray[CoordNames.HEALPIX_INDEX.value], output.coords.pixel_index)
-        np.testing.assert_array_equal(input_xarray["pixel_index_label"], output.coords.pixel_index_label)
-        np.testing.assert_array_equal(input_xarray[CoordNames.ENERGY_L2.value], output.intensity_map_data.energy)
+        np.testing.assert_array_equal(
+            input_xarray[CoordNames.TIME.value], output.intensity_map_data.epoch
+        )
+        np.testing.assert_array_equal(
+            input_xarray["epoch_delta"], output.intensity_map_data.epoch_delta
+        )
+        np.testing.assert_array_equal(
+            input_xarray[CoordNames.HEALPIX_INDEX.value], output.coords.pixel_index
+        )
+        np.testing.assert_array_equal(
+            input_xarray["pixel_index_label"], output.coords.pixel_index_label
+        )
+        np.testing.assert_array_equal(
+            input_xarray[CoordNames.ENERGY_L2.value], output.intensity_map_data.energy
+        )
         np.testing.assert_array_equal(input_xarray["energy_delta_minus"], output.intensity_map_data.energy_delta_minus)
-        np.testing.assert_array_equal(input_xarray["energy_delta_plus"], output.intensity_map_data.energy_delta_plus)
-        np.testing.assert_array_equal(input_xarray["energy_label"], output.intensity_map_data.energy_label)
+        np.testing.assert_array_equal(
+            input_xarray["energy_delta_plus"],
+            output.intensity_map_data.energy_delta_plus,
+        )
+        np.testing.assert_array_equal(
+            input_xarray["energy_label"], output.intensity_map_data.energy_label
+        )
 
     def test_read_intensity_map_with_rectangular_cords_data_from_cdf(self):
 
@@ -505,11 +546,27 @@ class TestMapModels(unittest.TestCase):
         obs_date_datetime = np.full(map_data_shape, datetime.now())
         obs_date_fillval = -sys.maxsize - 1
         test_cases = [
-            ("obs date is datetime", obs_date_datetime, obs_date_datetime, np.full(map_data_shape, False), False),
-            ("obs date is int", np.full(map_data_shape, 1e9, dtype=int),
-             np.full(map_data_shape, TT2000_EPOCH) + timedelta(seconds=1), np.full(map_data_shape, False), True),
-            ("obs date is all fill", np.full(map_data_shape, obs_date_fillval, dtype=int),
-             np.full(map_data_shape, TT2000_EPOCH), np.full(map_data_shape, True), True),
+            (
+                "obs date is datetime",
+                obs_date_datetime,
+                obs_date_datetime,
+                np.full(map_data_shape, False),
+                False,
+            ),
+            (
+                "obs date is int",
+                np.full(map_data_shape, 1e9, dtype=int),
+                np.full(map_data_shape, TT2000_EPOCH) + timedelta(seconds=1),
+                np.full(map_data_shape, False),
+                True,
+            ),
+            (
+                "obs date is all fill",
+                np.full(map_data_shape, obs_date_fillval, dtype=int),
+                np.full(map_data_shape, TT2000_EPOCH),
+                np.full(map_data_shape, True),
+                True,
+            ),
         ]
 
         for test_name, obs_date_in_cdf, expected_obs_date, expected_obs_date_mask, include_bg in test_cases:
@@ -519,7 +576,7 @@ class TestMapModels(unittest.TestCase):
                     cdf.col_major(True)
 
                     ena_intensity = rng.random(map_data_shape)
-                    bg_intensity = ena_intensity * .01
+                    bg_intensity = ena_intensity * 0.01
                     energy = rng.random(9)
                     energy_delta_plus = rng.random(9)
                     energy_delta_minus = rng.random(9)
@@ -529,6 +586,8 @@ class TestMapModels(unittest.TestCase):
 
                     bg_intensity_stat_unc = rng.random(map_data_shape)
                     bg_intensity_sys_err = rng.random(map_data_shape)
+
+                    survival_probability = rng.random(map_data_shape)
 
                     epoch = np.array([datetime.now()])
                     epoch_delta = np.array([FIVE_MINUTES_IN_NANOSECONDS])
@@ -564,6 +623,7 @@ class TestMapModels(unittest.TestCase):
                     cdf.new("energy_delta_plus", energy_delta_plus, recVary=False)
                     cdf.new("energy_delta_minus", energy_delta_minus, recVary=False)
                     cdf.new("energy_label", energy_label, recVary=False)
+                    cdf.new("survival_probability", survival_probability, recVary=False)
                     if include_bg:
                         cdf.new("bg_intensity", bg_intensity, recVary=True)
                         cdf.new("bg_intensity_stat_uncert", bg_intensity_stat_unc, recVary=True)
@@ -582,37 +642,38 @@ class TestMapModels(unittest.TestCase):
                         rectangular_coords = result.coords
                         map_data = result.intensity_map_data
 
-                        np.testing.assert_array_equal(epoch, map_data.epoch)
-                        np.testing.assert_array_equal(epoch_delta, map_data.epoch_delta)
-                        np.testing.assert_array_equal(energy, map_data.energy)
-                        np.testing.assert_array_equal(energy_delta_plus, map_data.energy_delta_plus)
-                        np.testing.assert_array_equal(energy_delta_minus, map_data.energy_delta_minus)
-                        np.testing.assert_array_equal(energy_label, map_data.energy_label)
-                        np.testing.assert_array_equal(lat, map_data.latitude)
-                        np.testing.assert_array_equal(lat_delta, rectangular_coords.latitude_delta)
-                        np.testing.assert_array_equal(lat_label, rectangular_coords.latitude_label)
-                        np.testing.assert_array_equal(lon, map_data.longitude)
-                        np.testing.assert_array_equal(lon_delta, rectangular_coords.longitude_delta)
-                        np.testing.assert_array_equal(lon_label, rectangular_coords.longitude_label)
-                        np.testing.assert_array_equal(ena_intensity, map_data.ena_intensity)
-                        np.testing.assert_array_equal(ena_intensity_stat_uncert, map_data.ena_intensity_stat_uncert)
-                        np.testing.assert_array_equal(ena_intensity_sys_err, map_data.ena_intensity_sys_err)
-                        np.testing.assert_array_equal(exposure, map_data.exposure_factor)
-                        np.testing.assert_array_equal(expected_obs_date, map_data.obs_date.data)
-                        np.testing.assert_array_equal(expected_obs_date_mask, map_data.obs_date.mask)
-                        np.testing.assert_array_equal(obs_date_range, map_data.obs_date_range)
-                        np.testing.assert_array_equal(solid_angle, map_data.solid_angle)
+                        np.testing.assert_array_equal(map_data.epoch, epoch)
+                        np.testing.assert_array_equal(map_data.epoch_delta, epoch_delta)
+                        np.testing.assert_array_equal(map_data.energy, energy)
+                        np.testing.assert_array_equal(map_data.energy_delta_plus, energy_delta_plus)
+                        np.testing.assert_array_equal(map_data.energy_delta_minus, energy_delta_minus)
+                        np.testing.assert_array_equal(map_data.energy_label, energy_label)
+                        np.testing.assert_array_equal(map_data.latitude, lat)
+                        np.testing.assert_array_equal(rectangular_coords.latitude_delta, lat_delta)
+                        np.testing.assert_array_equal(rectangular_coords.latitude_label, lat_label)
+                        np.testing.assert_array_equal(map_data.longitude, lon)
+                        np.testing.assert_array_equal(rectangular_coords.longitude_delta, lon_delta)
+                        np.testing.assert_array_equal(rectangular_coords.longitude_label, lon_label)
+                        np.testing.assert_array_equal(map_data.ena_intensity, ena_intensity)
+                        np.testing.assert_array_equal(map_data.ena_intensity_stat_uncert, ena_intensity_stat_uncert)
+                        np.testing.assert_array_equal(map_data.ena_intensity_sys_err, ena_intensity_sys_err)
+                        np.testing.assert_array_equal(map_data.exposure_factor, exposure)
+                        np.testing.assert_array_equal(map_data.obs_date.data, expected_obs_date)
+                        np.testing.assert_array_equal(map_data.obs_date.mask, expected_obs_date_mask)
+                        np.testing.assert_array_equal(map_data.obs_date_range, obs_date_range)
+                        np.testing.assert_array_equal(map_data.solid_angle, solid_angle)
+                        np.testing.assert_array_equal(map_data.survival_probability, survival_probability)
                         if include_bg:
-                            np.testing.assert_array_equal(bg_intensity, map_data.bg_intensity)
-                            np.testing.assert_array_equal(bg_intensity_sys_err, map_data.bg_intensity_sys_err)
-                            np.testing.assert_array_equal(bg_intensity_stat_unc, map_data.bg_intensity_stat_uncert)
+                            np.testing.assert_array_equal(map_data.bg_intensity, bg_intensity)
+                            np.testing.assert_array_equal(map_data.bg_intensity_sys_err, bg_intensity_sys_err)
+                            np.testing.assert_array_equal(map_data.bg_intensity_stat_uncert, bg_intensity_stat_unc)
                         else:
                             self.assertIsNone(map_data.bg_intensity)
                             self.assertIsNone(map_data.bg_intensity_sys_err)
                             self.assertIsNone(map_data.bg_intensity_stat_uncert)
 
     def test_fill_values_in_read_rectangular_intensity_map_data_from_cdf(self):
-        path = get_test_data_folder() / 'hi' / 'fake_l2_maps' / 'l2_map_with_fill_values.cdf'
+        path = get_test_data_folder() / 'hi' / 'map_with_fill_values.cdf'
         result = RectangularIntensityMapData.read_from_path(path)
         map_data = result.intensity_map_data
 
@@ -640,6 +701,9 @@ class TestMapModels(unittest.TestCase):
                                           np.full_like(cdf["bg_intensity_sys_err"], np.nan))
             np.testing.assert_array_equal(map_data.bg_intensity_stat_uncert,
                                           np.full_like(cdf["bg_intensity_stat_uncert"], np.nan))
+            np.testing.assert_array_equal(
+                map_data.survival_probability, np.full_like(cdf["survival_probability"], np.nan)
+                )
 
     def test_healpix_intensity_map_data_to_skymap(self):
         expected_nside = 2
@@ -850,7 +914,7 @@ class TestMapModels(unittest.TestCase):
 
         self.assertNotIn("survival_probability", skymap.data_1d)
 
-    def test_read_intensity_data_handles_missing_obs_date(self):
+    def test_read_intensity_data_handles_missing_obs_date_and_missing_sp(self):
         cdf = CDF(
             str(get_integration_test_data_path(
                 'lo/multiple_arcs/imap_lo_l2_l090-ena-h-hf-nsp-ram-hae-6deg-1yr_20250415_v005.cdf')))
@@ -858,6 +922,7 @@ class TestMapModels(unittest.TestCase):
         intensity_map_data = _read_intensity_map_data_from_open_cdf(cdf)
 
         self.assertIsNotNone(intensity_map_data.obs_date)
+        self.assertIsNone(intensity_map_data.survival_probability)
 
     def test_calculate_datetime_weighted_average(self):
 
