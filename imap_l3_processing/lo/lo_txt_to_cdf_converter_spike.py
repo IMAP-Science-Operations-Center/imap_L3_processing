@@ -251,8 +251,36 @@ class LoProcessingInput:
             start_date=self.start_date,
             end_date=self.end_date,
             version="v001",
-            descriptor=l3_descriptor
+            descriptor=l3_descriptor,
         )
+
+
+def copy_to_output_directory_and_rename_for_initial_release(
+    release_directory: Path, output_maps: list[Path]
+):
+    for generated_path in output_maps:
+        science_file_path = ScienceFilePath(generated_path.name)
+
+        new_name = (
+            "_".join(
+                [
+                    "imap",
+                    science_file_path.instrument,
+                    science_file_path.data_level,
+                    science_file_path.descriptor + "-INITIAL",
+                    science_file_path.start_date,
+                    science_file_path.version,
+                ]
+            )
+            + ".cdf"
+        )
+
+        output_dir = release_directory / science_file_path.data_level
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_path = output_dir / new_name
+
+        with CDF(str(output_path), masterpath=str(generated_path), readonly=False) as cdf:
+            cdf.attrs["Logical_file_id"] = output_path.stem
 
 if __name__ == "__main__":
     logging.basicConfig(force=True, level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -361,21 +389,46 @@ if __name__ == "__main__":
             ])
 
     maps_needed_for_combination = [
-        ("ilo-enasbsMsk-h-hf-sp-ram-hae-6deg-6mo", [
-            "l075-enasbsMsk-h-hf-sp-ram-hae-6deg-6mo",
-            "l090-enasbsMsk-h-hf-sp-ram-hae-6deg-6mo",
-            "l105-enasbsMsk-h-hf-sp-ram-hae-6deg-6mo"
-        ]),
-        ("ilo-enasbsMsk-h-hf-nsp-ram-hae-6deg-6mo", [
-            "l075-enasbsMsk-h-hf-nsp-ram-hae-6deg-6mo",
-            "l090-enasbsMsk-h-hf-nsp-ram-hae-6deg-6mo",
-            "l105-enasbsMsk-h-hf-nsp-ram-hae-6deg-6mo"
-        ]),
-        ("ilo-enansnbsMsk-h-sf-nsp-ram-hae-6deg-6mo", [
-            "l075-enansnbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
-            "l090-enansnbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
-            "l105-enansnbsMsk-h-sf-nsp-ram-hae-6deg-6mo"
-        ])
+        (
+            "ilo-enasbsMsk-h-hf-sp-ram-hae-6deg-6mo",
+            [
+                "l075-enasbsMsk-h-hf-sp-ram-hae-6deg-6mo",
+                "l090-enasbsMsk-h-hf-sp-ram-hae-6deg-6mo",
+                "l105-enasbsMsk-h-hf-sp-ram-hae-6deg-6mo",
+            ],
+        ),
+        (
+            "ilo-enasbsMsk-h-hf-nsp-ram-hae-6deg-6mo",
+            [
+                "l075-enasbsMsk-h-hf-nsp-ram-hae-6deg-6mo",
+                "l090-enasbsMsk-h-hf-nsp-ram-hae-6deg-6mo",
+                "l105-enasbsMsk-h-hf-nsp-ram-hae-6deg-6mo",
+            ],
+        ),
+        (
+            "ilo-enasbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
+            [
+                "l075-enasbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
+                "l090-enasbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
+                "l105-enasbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
+            ],
+        ),
+        (
+            "ilo-enasnbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
+            [
+                "l075-enasnbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
+                "l090-enasnbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
+                "l105-enasnbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
+            ],
+        ),
+        (
+            "ilo-enansnbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
+            [
+                "l075-enansnbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
+                "l090-enansnbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
+                "l105-enansnbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
+            ],
+        ),
     ]
 
     combined_start_date = min(start_dates)
@@ -398,10 +451,12 @@ if __name__ == "__main__":
             )
         ).process()
 
-        combined_spx_descriptor = (
-            combined_descriptor
-               .replace("-enasbsMsk-", "-spxsbsMsk-")
-               .replace("-enansnbsMsk-", "-spxnsnbsMsk-")
+        combined_spx_descriptor = combined_descriptor.replace(
+            "-enasbsMsk-", "-spxsbsMsk-"
+        ).replace(
+            "-enansnbsMsk-", "-spxnsnbsMsk-"
+        ).replace(
+            "-enasnbsMsk-", "-spxsnbsMsk-"
         )
 
         [combined_spx_map] = LoProcessor(
@@ -412,8 +467,8 @@ if __name__ == "__main__":
                 start_date=combined_start_date,
                 end_date=combined_end_date,
                 version="v001",
-                descriptor=combined_spx_descriptor
-            )
+                descriptor=combined_spx_descriptor,
+            ),
         ).process()
 
         output_maps.extend([
@@ -421,27 +476,5 @@ if __name__ == "__main__":
             combined_spx_map
         ])
 
-    release_directory = get_run_local_data_path("IMAP-Lo May 29th 2026 Maps")
-    for generated_path in output_maps:
-        science_file_path = ScienceFilePath(generated_path.name)
-
-        new_name = (
-            "_".join(
-                [
-                    "imap",
-                    science_file_path.instrument,
-                    science_file_path.data_level,
-                    science_file_path.descriptor + "-INITIAL",
-                    science_file_path.start_date,
-                    science_file_path.version,
-                    ]
-            )
-            + ".cdf"
-        )
-
-        output_dir = release_directory / science_file_path.data_level
-        output_dir.mkdir(parents=True, exist_ok=True)
-        output_path = output_dir / new_name
-
-        with CDF(str(output_path), masterpath=str(generated_path), readonly=False) as cdf:
-            cdf.attrs["Logical_file_id"] = output_path.stem
+    release_directory = get_run_local_data_path("IMAP-Lo June 2nd 2026 Maps")
+    copy_to_output_directory_and_rename_for_initial_release(release_directory, output_maps)
