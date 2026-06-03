@@ -263,5 +263,68 @@ class SwapiProcessorIntegration(unittest.TestCase):
                     self.assertEqual(expected_values[key], actual_value, msg=key)
 
 
+    @skipUnless(os.environ.get("IMAP_API_KEY"), "requires production API key")
+    def test_l3b_with_production_data(self):
+        """
+        With real data and with full dependency setup, validate that the pui-he
+        CDF output matches hardcoded expected values to check for unexpected
+        changes.
+        """
+
+        root_dir = Path(imap_l3_processing.__file__).parent.parent
+        os.chdir(root_dir)
+        imap_data_access.config["DATA_DIR"] = root_dir / "data"
+
+        dependency_filename = "imap_swapi_l3b_20260101_v001.json"
+        stage_input_file(SWAPI_INTEGRATION_DATA_DIR / dependency_filename)
+
+        expected_file_path = ScienceFilePath(
+            "imap_swapi_l3b_combined_20260101_v001.cdf"
+        ).construct_path()
+        if expected_file_path.parent.exists():
+            expected_file_path.unlink(missing_ok=True)
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                "imap_l3_data_processor.py",
+                "--instrument", "swapi",
+                "--data-level", "l3b",
+                "--start-date", "20260101",
+                "--version", "v001",
+                "--dependency", dependency_filename,
+            ]
+        )
+
+        self.assertEqual(0, result.returncode)
+        self.assertTrue(expected_file_path.exists())
+
+        l2_file_path = ScienceFilePath(
+            "imap_swapi_l2_sci_20260101_v001.cdf"
+        ).construct_path()
+        self.assertTrue(l2_file_path.exists())
+
+        with CDF(str(l2_file_path)) as l2_cdf, CDF(str(expected_file_path)) as l3b_cdf:
+            print(l3b_cdf.keys())
+            l2_coincidence_rate = l2_cdf["swp_coin_rate"][
+                :50, SWAPI_COARSE_SWEEP_BINS
+            ].mean(axis=0)
+            combined_differential_flux = l3b_cdf["combined_differential_flux"][0]
+
+            geometric_factor = (
+                l2_coincidence_rate / combined_differential_flux
+            )
+
+            index = np.abs(l3b_cdf["combined_energy"][0] - 1000.0).argmin()
+            print(l3b_cdf["combined_energy"][0][index], l3b_cdf["combined_energy"].attrs["UNITS"])
+            print(l3b_cdf["combined_differential_flux"][0][index], l3b_cdf["combined_differential_flux"].attrs["UNITS"])
+            numpy.testing.assert_allclose(
+                geometric_factor[index],
+                38.1,
+                rtol=1e-2,
+                atol=0.0,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
