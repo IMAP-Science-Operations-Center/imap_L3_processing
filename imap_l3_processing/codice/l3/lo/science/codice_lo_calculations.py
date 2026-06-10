@@ -13,7 +13,6 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import 
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup
 from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, CodiceLoDirectEventData
-from imap_l3_processing.constants import ONE_SECOND_IN_MICROSECONDS
 
 
 def calculate_partial_densities(intensities: np.ndarray, esa_steps: np.ndarray, mass_per_charge: float):
@@ -82,7 +81,14 @@ def rebin_direct_events_by_energy_and_spin_sector(num_events: np.ndarray, spin_s
             spin_sectors = spin_sector[time_index, priority_index, :events_at_index]
             energy_indices = energy_step[time_index, priority_index, :events_at_index]
 
-            np.add.at(rebinned_output[time_index, priority_index], (energy_indices, spin_sectors), 1)
+            spin_sector_mask = np.ma.getmaskarray(spin_sectors)
+            energy_indices_mask = np.ma.getmaskarray(energy_indices)
+            valid_events_mask = ~np.logical_or(spin_sector_mask, energy_indices_mask)
+
+            valid_spin_sectors = spin_sectors[valid_events_mask]
+            valid_energy_indices = energy_indices[valid_events_mask]
+
+            np.add.at(rebinned_output[time_index, priority_index], (valid_energy_indices, valid_spin_sectors), 1)
     return rebinned_output
 
 
@@ -111,9 +117,13 @@ def lookup_normalization_per_event(normalization: np.ndarray, num_events: np.nda
         energy_step = energy_steps[epoch, priority, :count]
         spin_sector = spin_sectors[epoch, priority, :count]
 
-        assert 0 == np.ma.count_masked(energy_step) == np.ma.count_masked(
-            spin_sector), "Expected all events to have an energy_step and spin_sector!"
-        results[epoch, priority, :count] = normalization[epoch, priority, energy_step, spin_sector]
+        bad_spin_sectors = np.ma.getmaskarray(spin_sector)
+        bad_energy_steps = np.ma.getmaskarray(energy_step)
+
+        good_events = ~(bad_spin_sectors | bad_energy_steps)
+        results[epoch, priority, :count][good_events] = normalization[
+            epoch, priority, energy_step[good_events], spin_sector[good_events]]
+
     return results
 
 
@@ -182,7 +192,8 @@ def combine_priorities_for_species_and_convert_to_rate(
 
 def rebin_3d_distribution_azimuth_to_elevation(intensity_data: np.ndarray,
                                                azimuths: np.ndarray,
-                                               position_to_elevation_lut: PositionToElevationLookup, half_spin) -> np.ndarray:
+                                               position_to_elevation_lut: PositionToElevationLookup,
+                                               half_spin) -> np.ndarray:
     num_epochs = intensity_data.shape[0]
     num_elevations = len(position_to_elevation_lut.bin_centers)
     num_spin_angles = intensity_data.shape[2]
