@@ -3,6 +3,7 @@ import dataclasses
 import logging
 import re
 import shutil
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
 from typing import Self, Optional, override, Literal
@@ -294,6 +295,21 @@ def copy_to_output_directory_and_rename_for_initial_release(
         with CDF(str(output_path), masterpath=str(generated_path), readonly=False) as cdf:
             cdf.attrs["Logical_file_id"] = output_path.stem
 
+
+def download_all_l1c(path: Path):
+    original_data_dir = imap_data_access.config["DATA_DIR"]
+    try:
+        imap_data_access.config["DATA_DIR"] = path
+        all_l1c = imap_data_access.query(instrument="lo", data_level="l1c", version="latest")
+
+        with ThreadPoolExecutor() as pool:
+            for l1c in all_l1c:
+                pool.submit(imap_data_access.download, l1c["file_path"])
+
+    finally:
+        imap_data_access.config["DATA_DIR"] = original_data_dir
+
+
 if __name__ == "__main__":
     logging.basicConfig(force=True, level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
@@ -309,6 +325,8 @@ if __name__ == "__main__":
 
     l1c_paths = []
     local_l1c_input = lo_input_data_dir / "l1c"
+    
+    download_all_l1c(local_l1c_input)
     for file in local_l1c_input.rglob("*.cdf"):
         sfp = ScienceFilePath(file.name)
 
@@ -316,6 +334,8 @@ if __name__ == "__main__":
         output_path.parent.mkdir(exist_ok=True, parents=True)
         shutil.copy(file, output_path)
         l1c_paths.append(output_path)
+    if len(l1c_paths) == 0:
+        raise Exception(f"Expected l1c files to be provided in {local_l1c_input}")
 
     output_maps = []
     for masked, descriptor_suffix in [(False, ""), (True, "Msk")]:
