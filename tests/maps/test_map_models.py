@@ -157,13 +157,24 @@ class TestMapModels(unittest.TestCase):
                 [
                     DataProductVariable(map_models.SURVIVAL_PROBABILITY_VAR_NAME, sentinel.survival_probability),
                 ]
+            ),
+            (
+                "sys_err_plus and minus",
+                {"ena_intensity_sys_err_minus": sentinel.ena_intensity_sys_err_minus,
+                 "ena_intensity_sys_err_plus": sentinel.ena_intensity_sys_err_plus},
+                [
+                    DataProductVariable(map_models.ENA_INTENSITY_SYS_ERR_MINUS_VAR_NAME,
+                                        sentinel.ena_intensity_sys_err_minus),
+                    DataProductVariable(map_models.ENA_INTENSITY_SYS_ERR_PLUS_VAR_NAME,
+                                        sentinel.ena_intensity_sys_err_plus),
+                ]
             )
         ]
 
         for (
-            test_name,
-            additional_inputs,
-            expected_additional_data_products_vars,
+                test_name,
+                additional_inputs,
+                expected_additional_data_products_vars,
         ) in test_cases:
             with self.subTest(test_name):
                 input_metadata = sentinel.input_metadata
@@ -215,7 +226,8 @@ class TestMapModels(unittest.TestCase):
                     DataProductVariable(map_models.OBS_DATE_RANGE_VAR_NAME, sentinel.obs_date_range),
                     DataProductVariable(map_models.SOLID_ANGLE_VAR_NAME, sentinel.solid_angle),
                     DataProductVariable(map_models.ENA_INTENSITY_VAR_NAME, sentinel.ena_intensity),
-                    DataProductVariable(map_models.ENA_INTENSITY_STAT_UNCERT_VAR_NAME, sentinel.ena_intensity_stat_uncert),
+                    DataProductVariable(map_models.ENA_INTENSITY_STAT_UNCERT_VAR_NAME,
+                                        sentinel.ena_intensity_stat_uncert),
                     DataProductVariable(map_models.ENA_INTENSITY_SYS_ERR_VAR_NAME, sentinel.ena_intensity_sys_err),
                     *expected_additional_data_products_vars,
                     DataProductVariable(map_models.LATITUDE_DELTA_VAR_NAME, sentinel.latitude_delta),
@@ -277,8 +289,10 @@ class TestMapModels(unittest.TestCase):
             DataProductVariable(map_models.ENA_SPECTRAL_INDEX_VAR_NAME, sentinel.ena_spectral_index),
             DataProductVariable(map_models.ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME,
                                 sentinel.ena_spectral_index_stat_uncert),
-            DataProductVariable(map_models.ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_VAR_NAME, sentinel.ena_spectral_index_scalar_coefficient),
-            DataProductVariable(map_models.ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_STAT_UNCERT_VAR_NAME, sentinel.ena_spectral_index_scalar_coefficient_stat_uncert),
+            DataProductVariable(map_models.ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_VAR_NAME,
+                                sentinel.ena_spectral_index_scalar_coefficient),
+            DataProductVariable(map_models.ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_STAT_UNCERT_VAR_NAME,
+                                sentinel.ena_spectral_index_scalar_coefficient_stat_uncert),
             DataProductVariable(map_models.ENA_SPECTRAL_INDEX_CHISQ_VAR_NAME, sentinel.ena_spectral_index_chisq),
             DataProductVariable(map_models.PIXEL_INDEX_VAR_NAME, sentinel.pixel_index),
             DataProductVariable(map_models.PIXEL_INDEX_LABEL_VAR_NAME, sentinel.pixel_index_label),
@@ -552,6 +566,7 @@ class TestMapModels(unittest.TestCase):
                 obs_date_datetime,
                 np.full(map_data_shape, False),
                 False,
+                True
             ),
             (
                 "obs date is int",
@@ -559,6 +574,7 @@ class TestMapModels(unittest.TestCase):
                 np.full(map_data_shape, TT2000_EPOCH) + timedelta(seconds=1),
                 np.full(map_data_shape, False),
                 True,
+                False
             ),
             (
                 "obs date is all fill",
@@ -566,10 +582,11 @@ class TestMapModels(unittest.TestCase):
                 np.full(map_data_shape, TT2000_EPOCH),
                 np.full(map_data_shape, True),
                 True,
+                True
             ),
         ]
 
-        for test_name, obs_date_in_cdf, expected_obs_date, expected_obs_date_mask, include_bg in test_cases:
+        for test_name, obs_date_in_cdf, expected_obs_date, expected_obs_date_mask, include_bg, include_ena_sys_err_minus in test_cases:
             with tempfile.TemporaryDirectory() as temp_dir:
                 pathname = os.path.join(temp_dir, "test_cdf")
                 with CDF(pathname, '') as cdf:
@@ -583,6 +600,9 @@ class TestMapModels(unittest.TestCase):
                     energy_label = energy.astype(str)
                     ena_intensity_stat_uncert = rng.random(map_data_shape)
                     ena_intensity_sys_err = rng.random(map_data_shape)
+
+                    ena_intensity_sys_err_minus = rng.random(map_data_shape)
+                    ena_intensity_sys_err_plus = rng.random(map_data_shape)
 
                     bg_intensity_stat_unc = rng.random(map_data_shape)
                     bg_intensity_sys_err = rng.random(map_data_shape)
@@ -629,6 +649,10 @@ class TestMapModels(unittest.TestCase):
                         cdf.new("bg_intensity_stat_uncert", bg_intensity_stat_unc, recVary=True)
                         cdf.new("bg_intensity_sys_err", bg_intensity_sys_err, recVary=True)
 
+                    if include_ena_sys_err_minus:
+                        cdf.new("ena_intensity_sys_err_minus", ena_intensity_sys_err_minus, recVary=True)
+                        cdf.new("ena_intensity_sys_err_plus", ena_intensity_sys_err_plus, recVary=True)
+
                     for var in cdf:
                         cdf[var].attrs['FILLVAL'] = 1000000
 
@@ -671,6 +695,14 @@ class TestMapModels(unittest.TestCase):
                             self.assertIsNone(map_data.bg_intensity)
                             self.assertIsNone(map_data.bg_intensity_sys_err)
                             self.assertIsNone(map_data.bg_intensity_stat_uncert)
+                        if include_ena_sys_err_minus:
+                            np.testing.assert_array_equal(map_data.ena_intensity_sys_err_minus,
+                                                          ena_intensity_sys_err_minus)
+                            np.testing.assert_array_equal(map_data.ena_intensity_sys_err_plus,
+                                                          ena_intensity_sys_err_plus)
+                        else:
+                            self.assertIsNone(map_data.ena_intensity_sys_err_minus)
+                            self.assertIsNone(map_data.ena_intensity_sys_err_plus)
 
     def test_fill_values_in_read_rectangular_intensity_map_data_from_cdf(self):
         path = get_test_data_folder() / 'hi' / 'map_with_fill_values.cdf'
@@ -703,7 +735,13 @@ class TestMapModels(unittest.TestCase):
                                           np.full_like(cdf["bg_intensity_stat_uncert"], np.nan))
             np.testing.assert_array_equal(
                 map_data.survival_probability, np.full_like(cdf["survival_probability"], np.nan)
-                )
+            )
+            np.testing.assert_array_equal(
+                map_data.ena_intensity_sys_err_plus, np.full_like(cdf["ena_intensity_sys_err_plus"], np.nan)
+            )
+            np.testing.assert_array_equal(
+                map_data.ena_intensity_sys_err_minus, np.full_like(cdf["ena_intensity_sys_err_minus"], np.nan)
+            )
 
     def test_healpix_intensity_map_data_to_skymap(self):
         expected_nside = 2
@@ -875,7 +913,7 @@ class TestMapModels(unittest.TestCase):
 
         num_epochs = 1
         num_energies = 5
-        num_healpix_indices = 12 * (expected_nside**2)
+        num_healpix_indices = 12 * (expected_nside ** 2)
 
         fake_data_per_energy_per_pixel = np.arange(
             num_epochs * num_energies * num_healpix_indices
@@ -894,7 +932,7 @@ class TestMapModels(unittest.TestCase):
             longitude=fake_data_per_pixel * 2.3,
             exposure_factor=fake_data_per_energy_per_pixel * 2.2,
             obs_date=np.datetime64("1970-01-01T00:00:00")
-            + fake_data_per_energy_per_pixel * 10000,
+                     + fake_data_per_energy_per_pixel * 10000,
             obs_date_range=fake_data_per_energy_per_pixel * 3.2,
             solid_angle=fake_data_per_pixel * 3.4,
             ena_intensity=fake_data_per_energy_per_pixel * 2.2,

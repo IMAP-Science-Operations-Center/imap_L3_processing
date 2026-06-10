@@ -63,6 +63,9 @@ ISN_BG_RATE_SUBTRACTED_VAR_NAME = "isn_rate_bg_subtracted"
 ISN_BG_RATE_SUBTRACTED_STAT_UNCERT_VAR_NAME = "isn_rate_bg_subtracted_stat_uncert"
 ISN_BG_RATE_SUBTRACTED_VAR_SYS_ERR_NAME = "isn_rate_bg_subtracted_sys_err"
 
+ENA_INTENSITY_SYS_ERR_MINUS_VAR_NAME = "ena_intensity_sys_err_minus"
+ENA_INTENSITY_SYS_ERR_PLUS_VAR_NAME = "ena_intensity_sys_err_plus"
+
 
 @dataclass
 class MapData:
@@ -103,6 +106,8 @@ class IntensityMapData(MapData):
     ena_intensity: np.ndarray
     ena_intensity_stat_uncert: np.ndarray
     ena_intensity_sys_err: np.ndarray
+    ena_intensity_sys_err_minus: Optional[np.ndarray] = None
+    ena_intensity_sys_err_plus: Optional[np.ndarray] = None
     bg_intensity: Optional[np.ndarray] = None
     bg_intensity_stat_uncert: Optional[np.ndarray] = None
     bg_intensity_sys_err: Optional[np.ndarray] = None
@@ -266,7 +271,8 @@ class HealPixIntensityMapData:
             })
 
         if self.intensity_map_data.survival_probability is not None:
-            data_1d_with_sp = healpix_map.data_1d.assign(survival_probability=(full_shape, self.intensity_map_data.survival_probability))
+            data_1d_with_sp = healpix_map.data_1d.assign(
+                survival_probability=(full_shape, self.intensity_map_data.survival_probability))
             healpix_map.data_1d = data_1d_with_sp
 
         healpix_map.data_1d = healpix_map.data_1d \
@@ -343,6 +349,10 @@ def _read_intensity_map_data_from_open_cdf(cdf: CDF) -> IntensityMapData:
         map_intensity_data.bg_intensity_sys_err = read_numeric_variable(cdf["bg_intensity_sys_err"])
         map_intensity_data.bg_intensity_stat_uncert = read_numeric_variable(cdf["bg_intensity_stat_uncert"])
 
+    if "ena_intensity_sys_err_minus" in cdf:
+        map_intensity_data.ena_intensity_sys_err_minus = read_numeric_variable(cdf["ena_intensity_sys_err_minus"])
+        map_intensity_data.ena_intensity_sys_err_plus = read_numeric_variable(cdf["ena_intensity_sys_err_plus"])
+
     return map_intensity_data
 
 
@@ -417,9 +427,10 @@ class HealPixSpectralIndexMapData:
                 "ena_spectral_index": (full_shape, self.spectral_index_map_data.ena_spectral_index),
                 "ena_spectral_index_stat_uncert": (
                     full_shape, self.spectral_index_map_data.ena_spectral_index_stat_uncert),
-                "ena_spectral_index_scalar_coefficient": (full_shape, self.spectral_index_map_data.ena_spectral_index_scalar_coefficient),
+                "ena_spectral_index_scalar_coefficient": (full_shape,
+                                                          self.spectral_index_map_data.ena_spectral_index_scalar_coefficient),
                 "ena_spectral_index_scalar_coefficient_stat_uncert": (full_shape,
-                                                          self.spectral_index_map_data.ena_spectral_index_scalar_coefficient_stat_uncert),
+                                                                      self.spectral_index_map_data.ena_spectral_index_scalar_coefficient_stat_uncert),
                 "ena_spectral_index_chisq": (
                     full_shape,
                     self.spectral_index_map_data.ena_spectral_index_chisq),
@@ -532,7 +543,8 @@ def _spectral_index_data_variables(data: SpectralIndexMapData) -> list[DataProdu
         DataProductVariable(ENA_SPECTRAL_INDEX_VAR_NAME, data.ena_spectral_index),
         DataProductVariable(ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME, data.ena_spectral_index_stat_uncert),
         DataProductVariable(ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_VAR_NAME, data.ena_spectral_index_scalar_coefficient),
-        DataProductVariable(ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_STAT_UNCERT_VAR_NAME, data.ena_spectral_index_scalar_coefficient_stat_uncert),
+        DataProductVariable(ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_STAT_UNCERT_VAR_NAME,
+                            data.ena_spectral_index_scalar_coefficient_stat_uncert),
         DataProductVariable(ENA_SPECTRAL_INDEX_CHISQ_VAR_NAME, data.ena_spectral_index_chisq),
     ]
 
@@ -553,6 +565,10 @@ def _intensity_data_variables(data: IntensityMapData) -> list[DataProductVariabl
         intensity_variables.extend([
             DataProductVariable(SURVIVAL_PROBABILITY_VAR_NAME, data.survival_probability),
         ])
+    if data.ena_intensity_sys_err_minus is not None:
+        intensity_variables.extend(
+            [DataProductVariable(ENA_INTENSITY_SYS_ERR_MINUS_VAR_NAME, data.ena_intensity_sys_err_minus),
+             DataProductVariable(ENA_INTENSITY_SYS_ERR_PLUS_VAR_NAME, data.ena_intensity_sys_err_plus)])
 
     return _map_data_to_variables(data) + intensity_variables
 
