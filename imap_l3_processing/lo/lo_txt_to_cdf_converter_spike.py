@@ -1,40 +1,41 @@
 import abc
 import dataclasses
 import logging
+import re
 import shutil
 from datetime import datetime
+from pathlib import Path
 from typing import Self, Optional, override, Literal
 
 import imap_data_access
+import numpy as np
+import pandas
+import xarray as xr
 from imap_data_access import ProcessingInputCollection, ScienceFilePath
 from imap_data_access.processing_input import ScienceInput
-from imap_processing.hit.l1b.constants import FILLVAL_INT64
-
-import numpy as np
 from imap_processing.cdf.utils import write_cdf as write_l2_cdf
 from imap_processing.ena_maps.ena_maps import RectangularSkyMap
+from imap_processing.hit.l1b.constants import FILLVAL_INT64
 from imap_processing.spice.geometry import SpiceFrame
 from spacepy.pycdf import CDF
 
+from imap_l3_processing.constants import TT2000_EPOCH
 from imap_l3_processing.lo.l3.lo_sp_initializer import LO_SP_MAP_KERNELS
 from imap_l3_processing.lo.lo_processor import LoProcessor
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import furnished_metakernel
 from tests.test_helpers import get_run_local_data_path
-from pathlib import Path
-import pandas
-import xarray as xr
-from imap_l3_processing.constants import TT2000_EPOCH
-import re
 
 LO_ENERGIES_IN_KEV = np.array([16.33, 30.47, 55.76, 106.3, 200.0, 405.0, 787.3]) / 1000.0
 LO_ENERGY_BIN_LOWERS = np.array([10.9, 20.4, 36.8, 71.6, 135.0, 269.0, 504.7]) / 1000.0
 LO_ENERGY_BIN_UPPERS = np.array([21.7, 40.5, 74.7, 140.9, 265.0, 541.0, 1069.9]) / 1000.0
 
+
 class CsvNameToProduct:
     @abc.abstractmethod
     def get_energy_and_quantity(self, filename) -> Optional[tuple[int, str]]:
         raise NotImplementedError
+
 
 @dataclasses.dataclass
 class NBSNameMapping(CsvNameToProduct):
@@ -46,6 +47,8 @@ class NBSNameMapping(CsvNameToProduct):
             csv_to_l2_cdf_mapping = {
                 "flux": "ena_intensity",
                 "fvar": "ena_intensity_stat_var",
+                "fsel": "ena_intensity_sys_err_minus",
+                "fseu": "ena_intensity_sys_err_plus",
                 "fser": "ena_intensity_sys_err",
                 "bflux": "bg_intensity",
                 "bfvar": "bg_intensity_stat_var",
@@ -66,6 +69,8 @@ class CGNameMapping(CsvNameToProduct):
             csv_to_l2_cdf_mapping = {
                 "map_cgflux": "ena_intensity",
                 "map_cgfvar": "ena_intensity_stat_var",
+                "map_cgfunl": "ena_intensity_sys_err_minus",
+                "map_cgfunu": "ena_intensity_sys_err_plus",
                 "map_cgfunc": "ena_intensity_sys_err",
                 "bkg_cgflux": "bg_intensity",
                 "bkg_cgfvar": "bg_intensity_stat_var",
@@ -74,6 +79,7 @@ class CGNameMapping(CsvNameToProduct):
 
             if quantity in csv_to_l2_cdf_mapping:
                 return int(energy), csv_to_l2_cdf_mapping[quantity]
+
 
 class SputterOrBootStrapNameMapping(CsvNameToProduct):
     def __init__(self, correction: Literal["sput", "boot"]):
@@ -88,10 +94,13 @@ class SputterOrBootStrapNameMapping(CsvNameToProduct):
                 "cor": "ena_intensity",
                 "var": "ena_intensity_stat_var",
                 "unc": "ena_intensity_sys_err",
+                "unu": "ena_intensity_sys_err_plus",
+                "unl": "ena_intensity_sys_err_minus",
             }
 
             if correction == self.correction and quantity in csv_to_l2_cdf_mapping:
                 return int(energy), csv_to_l2_cdf_mapping.get(quantity, None)
+
 
 @dataclasses.dataclass
 class Manifest:
@@ -113,6 +122,7 @@ class Manifest:
             start_date=start_date,
             end_date=end_date,
         )
+
 
 @dataclasses.dataclass
 class LoProcessingInput:
@@ -137,14 +147,14 @@ class LoProcessingInput:
 
     @classmethod
     def load(cls,
-         manifest: Manifest,
-         l2_descriptor: str,
-         version: int,
-         input_path: Path,
-         name_mapping: CsvNameToProduct,
-         use_masked_data: bool,
-         **additional_map_data
-    ) -> Self:
+             manifest: Manifest,
+             l2_descriptor: str,
+             version: int,
+             input_path: Path,
+             name_mapping: CsvNameToProduct,
+             use_masked_data: bool,
+             **additional_map_data
+             ) -> Self:
         if use_masked_data:
             loaded_data = {
                 **LoProcessingInput.load_data_dir(input_path / "maps", name_mapping, skiprows=1),
@@ -195,6 +205,8 @@ class LoProcessingInput:
             "ena_intensity",
             "ena_intensity_stat_uncert",
             "ena_intensity_sys_err",
+            "ena_intensity_sys_err_plus",
+            "ena_intensity_sys_err_minus",
             "bg_intensity",
             "bg_intensity_stat_uncert",
             "bg_intensity_sys_err",
@@ -256,23 +268,23 @@ class LoProcessingInput:
 
 
 def copy_to_output_directory_and_rename_for_initial_release(
-    release_directory: Path, output_maps: list[Path]
+        release_directory: Path, output_maps: list[Path]
 ):
     for generated_path in output_maps:
         science_file_path = ScienceFilePath(generated_path.name)
 
         new_name = (
-            "_".join(
-                [
-                    "imap",
-                    science_file_path.instrument,
-                    science_file_path.data_level,
-                    science_file_path.descriptor + "-INITIAL",
-                    science_file_path.start_date,
-                    science_file_path.version,
-                ]
-            )
-            + ".cdf"
+                "_".join(
+                    [
+                        "imap",
+                        science_file_path.instrument,
+                        science_file_path.data_level,
+                        science_file_path.descriptor + "-INITIAL",
+                        science_file_path.start_date,
+                        science_file_path.version,
+                    ]
+                )
+                + ".cdf"
         )
 
         output_dir = release_directory / science_file_path.data_level
@@ -327,7 +339,8 @@ if __name__ == "__main__":
             )
 
             [spx_nsnbs_map] = LoProcessor(
-                input_metadata=nbs_processing_input.make_l3_input_metadata(f"l{pivot:03d}-spxnsnbs{descriptor_suffix}-h-sf-nsp-ram-hae-6deg-6mo"),
+                input_metadata=nbs_processing_input.make_l3_input_metadata(
+                    f"l{pivot:03d}-spxnsnbs{descriptor_suffix}-h-sf-nsp-ram-hae-6deg-6mo"),
                 dependencies=nbs_processing_input.get_spx_dependencies(),
             ).process()
 
@@ -342,18 +355,21 @@ if __name__ == "__main__":
             )
 
             [spx_cg_nsp_map] = LoProcessor(
-                input_metadata=cg_processing_input.make_l3_input_metadata(f"l{pivot:03d}-spxsbs{descriptor_suffix}-h-hf-nsp-ram-hae-6deg-6mo"),
+                input_metadata=cg_processing_input.make_l3_input_metadata(
+                    f"l{pivot:03d}-spxsbs{descriptor_suffix}-h-hf-nsp-ram-hae-6deg-6mo"),
                 dependencies=cg_processing_input.get_spx_dependencies()
             ).process()
 
             with furnished_metakernel(cg_processing_input.start_date, cg_processing_input.end_date, LO_SP_MAP_KERNELS):
                 [sp_map] = LoProcessor(
-                    input_metadata=cg_processing_input.make_l3_input_metadata(f"l{pivot:03d}-enasbs{descriptor_suffix}-h-hf-sp-ram-hae-6deg-6mo"),
+                    input_metadata=cg_processing_input.make_l3_input_metadata(
+                        f"l{pivot:03d}-enasbs{descriptor_suffix}-h-hf-sp-ram-hae-6deg-6mo"),
                     dependencies=cg_processing_input.get_survival_corrected_dependencies(l1c_paths),
                 ).process()
 
             [spx_cg_sp_map] = LoProcessor(
-                input_metadata=cg_processing_input.make_l3_input_metadata(f"l{pivot:03d}-spxsbs{descriptor_suffix}-h-hf-sp-ram-hae-6deg-6mo"),
+                input_metadata=cg_processing_input.make_l3_input_metadata(
+                    f"l{pivot:03d}-spxsbs{descriptor_suffix}-h-hf-sp-ram-hae-6deg-6mo"),
                 dependencies=ProcessingInputCollection(ScienceInput(sp_map.name)),
             ).process()
 
