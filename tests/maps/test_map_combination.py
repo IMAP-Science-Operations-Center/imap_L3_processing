@@ -33,6 +33,13 @@ class TestMapCombination(unittest.TestCase):
                 combination = combination_strategy()
                 self._combine_maps_with_no_background_data(combination)
 
+    def test_combine_maps_works_for_maps_with_no_intensity_sys_errors(self):
+        for combination_strategy in [UnweightedCombination, ExposureWeightedCombination,
+                                     UncertaintyWeightedCombination]:
+            with self.subTest(strategy=combination_strategy):
+                combination = combination_strategy()
+                self._combine_maps_with_no_intensity_sys_errors(combination)
+
     def test_check_maps_match(self):
         for combination_strategy in [UnweightedCombination, ExposureWeightedCombination,
                                      UncertaintyWeightedCombination]:
@@ -68,8 +75,19 @@ class TestMapCombination(unittest.TestCase):
         combine_one = combination._combine([map_1])
         np.testing.assert_equal(dataclasses.asdict(combine_one), dataclasses.asdict(map_1))
 
+    def _combine_maps_with_no_intensity_sys_errors(self, combination: CombinationStrategy):
+        map_1 = construct_intensity_data_with_all_zero_fields()
+        map_1.ena_intensity_stat_uncert = np.array([1])
+        map_1.ena_intensity_sys_err_plus = None
+        map_1.ena_intensity_sys_err_minus = None
+
+        combine_one = combination._combine([map_1])
+        np.testing.assert_equal(dataclasses.asdict(combine_one), dataclasses.asdict(map_1))
+
     def _check_maps_match(self, combination: CombinationStrategy):
         map_1 = construct_intensity_data_with_all_zero_fields()
+        map_1.ena_intensity_sys_err_plus = np.array([0] * 1),
+        map_1.ena_intensity_sys_err_minus = np.array([0] * 2)
 
         fields_which_may_differ = {
             "epoch",
@@ -84,6 +102,8 @@ class TestMapCombination(unittest.TestCase):
             "obs_date",
             "obs_date_range",
             "survival_probability",
+            "ena_intensity_sys_err_minus",
+            "ena_intensity_sys_err_plus"
         }
 
         alternate_values_by_type = {datetime: datetime(2025, 5, 6), str: "label"}
@@ -112,6 +132,9 @@ class TestMapCombination(unittest.TestCase):
         map_1.bg_intensity_sys_err = np.array([100, np.nan, 10, 1, np.nan])
         map_1.bg_intensity_stat_uncert = np.array([10, np.nan, 10, 10, np.nan])
 
+        map_1.ena_intensity_sys_err_minus = np.array([10, np.nan, 10, 10, np.nan])
+        map_1.ena_intensity_sys_err_plus = np.array([11, np.nan, 11, 11, np.nan])
+
         map_1.exposure_factor = np.array([1, 0, 5, 6, 0])
         DATETIME_FILL = datetime(9999, 12, 31, 23, 59, 59, 999999)
         map_1.obs_date = np.ma.masked_equal(
@@ -124,6 +147,7 @@ class TestMapCombination(unittest.TestCase):
             ],
             DATETIME_FILL,
         )
+
         map_1.survival_probability = np.array([1, np.nan, 1, 1, 1])
 
         map_2 = construct_intensity_data_with_all_zero_fields()
@@ -134,6 +158,9 @@ class TestMapCombination(unittest.TestCase):
         map_2.bg_intensity = np.array([8, 7, 6, 5, np.nan])
         map_2.bg_intensity_sys_err = np.array([0, 2, 4, 9, np.nan])
         map_2.bg_intensity_stat_uncert = np.array([4, 3, 2, 1, np.nan])
+
+        map_2.ena_intensity_sys_err_minus = np.array([5, 6, 7, 8, np.nan])
+        map_2.ena_intensity_sys_err_plus = np.array([8, 9, 10, 11, np.nan])
 
         map_2.exposure_factor = np.array([3, 1, 5, 2, 0])
         map_2.obs_date = np.ma.masked_equal(
@@ -177,6 +204,22 @@ class TestMapCombination(unittest.TestCase):
             (5 * 4 + 5 * 10) / (5 + 5),
             (6 * 1 + 2 * 9) / (6 + 2),
             np.nan,
+        ]
+
+        expected_combined_sys_err_minus = [
+            (1 * 10 + 3 * 5) / (1 + 3),
+            (1 * 6) / 1,
+            (5 * 10 + 5 * 7) / (5 + 5),
+            (6 * 10 + 2 * 8) / (6 + 2),
+            np.nan
+        ]
+
+        expected_combined_sys_err_plus = [
+            (1 * 11 + 3 * 8) / (1 + 3),
+            (1 * 9) / 1,
+            (5 * 11 + 5 * 10) / (5 + 5),
+            (6 * 11 + 2 * 11) / (6 + 2),
+            np.nan
         ]
 
         expected_obs_date = np.ma.array(
@@ -236,9 +279,17 @@ class TestMapCombination(unittest.TestCase):
             combine_two.intensity_map_data.survival_probability,
             expected_combined_survival_probability,
         )
+        np.testing.assert_equal(
+            combine_two.intensity_map_data.ena_intensity_sys_err_minus,
+            expected_combined_sys_err_minus,
+        )
+        np.testing.assert_equal(
+            combine_two.intensity_map_data.ena_intensity_sys_err_plus,
+            expected_combined_sys_err_plus,
+        )
 
     def test_combine_handles_maps_with_different_patterns_of_missing_intensity_and_bg_intensity(
-        self,
+            self,
     ):
         map_1 = construct_intensity_data_with_all_zero_fields(num_pixels=5)
         map_1.ena_intensity = np.array([1, np.nan, np.nan, np.nan, np.nan])
@@ -290,9 +341,10 @@ class TestMapCombination(unittest.TestCase):
 
         np.testing.assert_array_equal(combined_map.intensity_map_data.ena_intensity, expected_combined_ena_intensity)
         np.testing.assert_array_equal(combined_map.intensity_map_data.bg_intensity, expected_combined_bg_intensity)
-        np.testing.assert_array_equal(combined_map.intensity_map_data.bg_intensity_stat_uncert, expected_combined_bg_stat_unc)
-        np.testing.assert_array_equal(combined_map.intensity_map_data.bg_intensity_sys_err, expected_combined_bg_intensity_sys_err)
-
+        np.testing.assert_array_equal(combined_map.intensity_map_data.bg_intensity_stat_uncert,
+                                      expected_combined_bg_stat_unc)
+        np.testing.assert_array_equal(combined_map.intensity_map_data.bg_intensity_sys_err,
+                                      expected_combined_bg_intensity_sys_err)
 
     def test_combine_maps_handles_integer_obs_date(self):
         map_1 = construct_intensity_data_with_all_zero_fields()
@@ -498,7 +550,8 @@ class TestMapCombination(unittest.TestCase):
              datetime(2025, 5, 10),
              datetime(2025, 5, 7),
              datetime(2025, 5, 9), np.ma.masked])
-        expected_survival_probability = np.array([1, 0.5, 0.8, (1 / 10**2 + 0.25 / 4**2) / (1 / 10**2 + 1 / 4**2), np.nan])
+        expected_survival_probability = np.array(
+            [1, 0.5, 0.8, (1 / 10 ** 2 + 0.25 / 4 ** 2) / (1 / 10 ** 2 + 1 / 4 ** 2), np.nan])
 
         exposure_weighted_strategy = UncertaintyWeightedCombination()
 

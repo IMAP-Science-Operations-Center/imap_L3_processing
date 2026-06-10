@@ -53,7 +53,8 @@ def create_intensity_map_data(epoch=None, epoch_delta=None, lon=None, lat=None, 
 
 def create_rectangular_intensity_map_data(epoch=None, epoch_delta=None, lon=None, lat=None, energy=None,
                                           energy_delta=None, flux=None,
-                                          intensity_stat_uncert=None) -> RectangularIntensityMapData:
+                                          intensity_stat_uncert=None,
+                                          include_ena_intensity_sys_err_minus=False) -> RectangularIntensityMapData:
     lon = lon if lon is not None else np.array([1.0])
     lat = lat if lat is not None else np.array([1.0])
     energy = energy if energy is not None else np.array([1.0])
@@ -64,9 +65,13 @@ def create_rectangular_intensity_map_data(epoch=None, epoch_delta=None, lon=None
     intensity_stat_uncert = intensity_stat_uncert if intensity_stat_uncert is not None else np.full(
         (len(epoch), len(energy), len(lon), len(lat)),
         fill_value=1)
+    ena_intensity_sys_err_minus = None
+    ena_intensity_sys_err_plus = None
+    if include_ena_intensity_sys_err_minus:
+        ena_intensity_sys_err_minus = np.full((len(epoch), len(energy), len(lon), len(lat)), fill_value=2)
+        ena_intensity_sys_err_plus = np.full((len(epoch), len(energy), len(lon), len(lat)), fill_value=3)
 
     if isinstance(flux, np.ndarray):
-
         more_real_flux = flux
 
     else:
@@ -91,7 +96,9 @@ def create_rectangular_intensity_map_data(epoch=None, epoch_delta=None, lon=None
             ena_intensity_sys_err=flux * .001,
             bg_intensity=flux * .01,
             bg_intensity_stat_uncert=intensity_stat_uncert * .01,
-            bg_intensity_sys_err=flux * .01 * .001
+            bg_intensity_sys_err=flux * .01 * .001,
+            ena_intensity_sys_err_minus=ena_intensity_sys_err_minus,
+            ena_intensity_sys_err_plus=ena_intensity_sys_err_plus
         ),
         coords=RectangularCoords(
             latitude_delta=np.full_like(lat, 0),

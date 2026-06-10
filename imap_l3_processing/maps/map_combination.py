@@ -46,6 +46,8 @@ class CombinationStrategy(ABC):
             "ena_intensity",
             "ena_intensity_stat_uncert",
             "ena_intensity_sys_err",
+            "ena_intensity_sys_err_minus",
+            "ena_intensity_sys_err_plus",
             "bg_intensity",
             "bg_intensity_stat_uncert",
             "bg_intensity_sys_err",
@@ -85,6 +87,8 @@ class UnweightedCombination(CombinationStrategy):
         intensity_sys_err = np.array([m.ena_intensity_sys_err for m in maps])
         intensity_stat_unc = np.array([m.ena_intensity_stat_uncert for m in maps])
         exposures = np.array([m.exposure_factor for m in maps])
+        if any(m.ena_intensity_sys_err_plus is not None for m in maps):
+            raise NotImplementedError("Unweighted combination does not yet combine asymmetric systemic errors")
 
         mask = np.isnan(intensities) | (exposures == 0) | np.isnan(exposures)
 
@@ -116,7 +120,7 @@ class UnweightedCombination(CombinationStrategy):
         survival_probabilities = np.array([m.survival_probability for m in maps])
         if all(m.survival_probability is not None for m in maps):
             sp_mask = (
-                np.isnan(survival_probabilities) | (exposures == 0) | np.isnan(exposures)
+                    np.isnan(survival_probabilities) | (exposures == 0) | np.isnan(exposures)
             )
             masked_survival_probabilities = np.where(sp_mask, 0, survival_probabilities)
             sp_masked_weights = np.where(sp_mask, 0, 1)
@@ -138,6 +142,7 @@ class UnweightedCombination(CombinationStrategy):
             obs_date=avg_obs_date,
             survival_probability=exposure_weighted_summed_survival_probability,
         )
+
 
 class ExposureWeightedCombination(CombinationStrategy):
     def _combine(self, maps: list[IntensityMapData]):
@@ -171,7 +176,7 @@ class ExposureWeightedCombination(CombinationStrategy):
             sp_mask = np.isnan(survival_probabilities) | (exposures == 0) | np.isnan(exposures)
             masked_survival_probabilities = np.where(sp_mask, 0, survival_probabilities)
             sp_masked_exposures = np.where(sp_mask, 0, exposures)
-            summed_survival_probability = np.sum(masked_survival_probabilities * sp_masked_exposures, axis = 0)
+            summed_survival_probability = np.sum(masked_survival_probabilities * sp_masked_exposures, axis=0)
             exposure_weighted_summed_survival_probability = safe_divide(
                 summed_survival_probability, np.sum(sp_masked_exposures, axis=0)
             )
@@ -184,13 +189,16 @@ class ExposureWeightedCombination(CombinationStrategy):
         bg_intensity_sys_err = np.array([m.bg_intensity_sys_err for m in maps])
         bg_intensity_stat_uncert = np.array([m.bg_intensity_stat_uncert for m in maps])
 
+        ena_intensity_sys_err_plus = np.array([m.ena_intensity_sys_err_plus for m in maps])
+        ena_intensity_sys_err_minus = np.array([m.ena_intensity_sys_err_minus for m in maps])
+
         def all_elem_defined(array):
             return all(v is not None for v in array)
 
         if (
-            all_elem_defined(bg_intensities)
-            and all_elem_defined(bg_intensity_sys_err)
-            and all_elem_defined(bg_intensity_stat_uncert)
+                all_elem_defined(bg_intensities)
+                and all_elem_defined(bg_intensity_sys_err)
+                and all_elem_defined(bg_intensity_stat_uncert)
         ):
             bg_mask = np.isnan(bg_intensities) | (exposures == 0) | np.isnan(exposures)
 
@@ -209,6 +217,21 @@ class ExposureWeightedCombination(CombinationStrategy):
             exposure_weighted_summed_bg_intensity = None
             combined_bg_intensity_sys_err = None
             combined_bg_intensity_stat_uncert = None
+        if (
+                all_elem_defined(ena_intensity_sys_err_plus)
+                and all_elem_defined(ena_intensity_sys_err_minus)
+        ):
+            assert np.all(np.isfinite(ena_intensity_sys_err_plus) | mask)
+            assert np.all(np.isfinite(ena_intensity_sys_err_minus) | mask)
+            ena_intensity_sys_err_plus = np.where(mask, 0, ena_intensity_sys_err_plus)
+            ena_intensity_sys_err_minus = np.where(mask, 0, ena_intensity_sys_err_minus)
+
+            combined_sys_err_plus = self.calculate_weighted_sys_err(ena_intensity_sys_err_plus, masked_exposures)
+            combined_sys_err_minus = self.calculate_weighted_sys_err(ena_intensity_sys_err_minus, masked_exposures)
+
+        else:
+            combined_sys_err_plus = None
+            combined_sys_err_minus = None
 
         return dataclasses.replace(maps[0],
                                    ena_intensity=exposure_weighted_summed_intensity,
@@ -219,8 +242,11 @@ class ExposureWeightedCombination(CombinationStrategy):
                                    bg_intensity_stat_uncert=combined_bg_intensity_stat_uncert,
                                    exposure_factor=summed_exposures,
                                    obs_date=avg_obs_date,
-                                   survival_probability=exposure_weighted_summed_survival_probability
+                                   survival_probability=exposure_weighted_summed_survival_probability,
+                                   ena_intensity_sys_err_plus=combined_sys_err_plus,
+                                   ena_intensity_sys_err_minus=combined_sys_err_minus,
                                    )
+
 
 class UncertaintyWeightedCombination(CombinationStrategy):
     def _combine(self, maps: list[IntensityMapData]) -> IntensityMapData:
@@ -229,7 +255,12 @@ class UncertaintyWeightedCombination(CombinationStrategy):
         intensity_stat_unc = np.array([m.ena_intensity_stat_uncert for m in maps])
         exposures = np.array([m.exposure_factor for m in maps])
 
-        missing_weights_or_exposures = (exposures == 0) | np.isnan(exposures) | np.isnan(intensity_stat_unc) | np.isinf(intensity_stat_unc)
+        if any(m.ena_intensity_sys_err_plus is not None for m in maps):
+            raise NotImplementedError(
+                "Uncertainty-weighted combination does not yet combine asymmetric systemic errors")
+
+        missing_weights_or_exposures = (exposures == 0) | np.isnan(exposures) | np.isnan(intensity_stat_unc) | np.isinf(
+            intensity_stat_unc)
         inten_mask = np.isnan(intensities) | missing_weights_or_exposures
 
         intensities = np.where(inten_mask, 0, intensities)
