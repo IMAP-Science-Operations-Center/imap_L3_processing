@@ -190,7 +190,7 @@ class CodiceLoProcessor(Processor):
 
         direct_event_epochs = codice_direct_events.epoch
 
-        sw_priority_counts = np.stack(
+        sw_priority_counts = np.ma.stack(
             [
                 codice_sw_priority_counts_l1a_data.p0_tcrs,
                 codice_sw_priority_counts_l1a_data.p1_hplus,
@@ -200,22 +200,53 @@ class CodiceLoProcessor(Processor):
             ],
             axis=1,
         )
-        nsw_priority_counts = np.stack(
+        nsw_priority_counts = np.ma.stack(
             [
                 codice_nsw_priority_counts_l1a_data.p5_heavies,
                 codice_nsw_priority_counts_l1a_data.p6_hplus_heplusplus,
             ],
             axis=1,
         )
-
-        sw_aligned, sw_missing = _align_priority_counts_to_direct_event_epochs(
+        sw_aligned, sw_missing = _align_priority_counts_variable_to_direct_event_epochs(
             sw_priority_counts, codice_sw_priority_counts_l1a_data.epoch, direct_event_epochs
         )
-        nsw_aligned, nsw_missing = _align_priority_counts_to_direct_event_epochs(
+        nsw_aligned, nsw_missing = _align_priority_counts_variable_to_direct_event_epochs(
             nsw_priority_counts, codice_nsw_priority_counts_l1a_data.epoch, direct_event_epochs
         )
-
-        stacked_priorities = np.concatenate([sw_aligned, nsw_aligned], axis=1)
+        acquisition_time_per_esa_aligned, _ = _align_priority_counts_variable_to_direct_event_epochs(
+            codice_sw_priority_counts_l1a_data.acquisition_time_per_esa_step, codice_sw_priority_counts_l1a_data.epoch,
+            direct_event_epochs
+        )
+        rgfo_half_spin_aligned, _ = _align_priority_counts_variable_to_direct_event_epochs(
+            codice_sw_priority_counts_l1a_data.rgfo_half_spin, codice_sw_priority_counts_l1a_data.epoch,
+            direct_event_epochs
+        )
+        rgfo_spin_sector_aligned, _ = _align_priority_counts_variable_to_direct_event_epochs(
+            codice_sw_priority_counts_l1a_data.rgfo_spin_sector, codice_sw_priority_counts_l1a_data.epoch,
+            direct_event_epochs
+        )
+        rgfo_esa_step_aligned, _ = _align_priority_counts_variable_to_direct_event_epochs(
+            codice_sw_priority_counts_l1a_data.rgfo_esa_step, codice_sw_priority_counts_l1a_data.epoch,
+            direct_event_epochs
+        )
+        half_spin_per_esa_step_aligned, _ = _align_priority_counts_variable_to_direct_event_epochs(
+            codice_sw_priority_counts_l1a_data.half_spin_per_esa_step, codice_sw_priority_counts_l1a_data.epoch,
+            direct_event_epochs
+        )
+        nso_spin_sector_aligned, _ = _align_priority_counts_variable_to_direct_event_epochs(
+            codice_sw_priority_counts_l1a_data.nso_spin_sector, codice_sw_priority_counts_l1a_data.epoch,
+            direct_event_epochs
+        )
+        nso_esa_step_aligned, _ = _align_priority_counts_variable_to_direct_event_epochs(
+            codice_sw_priority_counts_l1a_data.nso_esa_step, codice_sw_priority_counts_l1a_data.epoch,
+            direct_event_epochs
+        )
+        nso_half_spin_aligned, _ = _align_priority_counts_variable_to_direct_event_epochs(
+            codice_sw_priority_counts_l1a_data.nso_half_spin, codice_sw_priority_counts_l1a_data.epoch,
+            direct_event_epochs
+        )
+        stacked_priorities = np.concatenate([
+            np.ma.filled(sw_aligned, np.nan), np.ma.filled(nsw_aligned, np.nan)], axis=1)
 
         normalization = calculate_normalization_factor(
             stacked_priorities,
@@ -243,7 +274,7 @@ class CodiceLoProcessor(Processor):
             input_metadata=self.input_metadata,
             epoch=codice_direct_events.epoch,
             epoch_delta=codice_direct_events.epoch_delta_plus,
-            acquisition_time_per_esa_step=codice_sw_priority_counts_l1a_data.acquisition_time_per_esa_step,
+            acquisition_time_per_esa_step=acquisition_time_per_esa_aligned,
             apd_energy=codice_direct_events.apd_energy,
             apd_id=codice_direct_events.apd_id,
             data_quality=codice_direct_events.data_quality,
@@ -255,20 +286,20 @@ class CodiceLoProcessor(Processor):
             energy_step=codice_direct_events.energy_step,
             esa_step=codice_sw_priority_counts_l1a_data.esa_step,
             gain=codice_direct_events.gain,
-            half_spin_per_esa_step=codice_sw_priority_counts_l1a_data.half_spin_per_esa_step,
+            half_spin_per_esa_step=half_spin_per_esa_step_aligned,
             multi_flag=codice_direct_events.multi_flag,
-            nso_esa_step=codice_sw_priority_counts_l1a_data.nso_esa_step,
-            nso_spin_sector=codice_sw_priority_counts_l1a_data.nso_spin_sector,
-            nso_half_spin=codice_sw_priority_counts_l1a_data.nso_half_spin,
+            nso_esa_step=nso_esa_step_aligned,
+            nso_spin_sector=nso_spin_sector_aligned,
+            nso_half_spin=nso_half_spin_aligned,
             num_events=codice_direct_events.num_events,
             position=codice_direct_events.position,
             mass_per_charge=mass_per_charge,
             mass=mass,
             normalization=np.flip(normalization, axis=2),
             normalization_per_event=normalization_per_event,
-            rgfo_esa_step=codice_sw_priority_counts_l1a_data.rgfo_esa_step,
-            rgfo_spin_sector=codice_sw_priority_counts_l1a_data.rgfo_spin_sector,
-            rgfo_half_spin=codice_sw_priority_counts_l1a_data.rgfo_half_spin,
+            rgfo_esa_step=rgfo_esa_step_aligned,
+            rgfo_spin_sector=rgfo_spin_sector_aligned,
+            rgfo_half_spin=rgfo_half_spin_aligned,
             spin_angle=codice_direct_events.spin_angle,
             spin_angle_bin=spin_angle_lut.bin_centers,
             spin_angle_bin_delta=spin_angle_lut.bin_deltas,
@@ -319,19 +350,19 @@ class CodiceLoProcessor(Processor):
         )
 
 
-def _align_priority_counts_to_direct_event_epochs(
-        priority_counts: np.ndarray,
+def _align_priority_counts_variable_to_direct_event_epochs(
+        priority_variable: np.ndarray,
         priority_epochs: np.ndarray,
         direct_event_epochs: np.ndarray,
 ) -> tuple[np.ndarray, np.ndarray]:
     num_direct_event_epochs = len(direct_event_epochs)
-    aligned_shape = (num_direct_event_epochs,) + priority_counts.shape[1:]
-    aligned = np.full(aligned_shape, np.nan)
+    aligned_shape = (num_direct_event_epochs,) + priority_variable.shape[1:]
+    aligned = np.ma.masked_all(aligned_shape, priority_variable.dtype)
     missing_mask = np.ones(num_direct_event_epochs, dtype=bool)
     for i, direct_event_epoch in enumerate(direct_event_epochs):
         matching_indices = np.where(priority_epochs == direct_event_epoch)[0]
         if len(matching_indices) > 0:
-            aligned[i] = priority_counts[matching_indices[0]]
+            aligned[i] = priority_variable[matching_indices[0]]
             missing_mask[i] = False
     return aligned, missing_mask
 

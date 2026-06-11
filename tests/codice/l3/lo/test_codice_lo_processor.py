@@ -841,6 +841,249 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         np.testing.assert_array_equal(result.normalization, np.flip(expected_normalization, axis=2))
 
+    @patch(f'{MODULE}.SpinAngleLookup')
+    @patch(f'{MODULE}.lookup_normalization_per_event', autospec=True)
+    @patch(f'{MODULE}.calculate_normalization_factor', autospec=True)
+    @patch(f'{MODULE}.calculate_mass_per_charge', autospec=True)
+    @patch(f'{MODULE}.calculate_mass', autospec=True)
+    def test_process_l3a_direct_events_handles_masked_priority_counts(
+            self, mock_calculate_mass, mock_calculate_mass_per_charge,
+            mock_calculate_normalization_factor, mock_lookup_normalization_per_event,
+            mock_spin_angle_lookup_class):
+        rng = np.random.default_rng(seed=42)
+
+        num_spin_angle_bins = 4
+        num_energy_bins = 3
+        event_buffer_size = 2
+        num_priorities = 7
+        priority_l1_spin_sectors = num_spin_angle_bins // 2
+
+        mock_spin_angle_lookup = create_dataclass_mock(SpinAngleLookup)
+        mock_spin_angle_lookup.num_bins = num_spin_angle_bins
+        mock_spin_angle_lookup_class.return_value = mock_spin_angle_lookup
+
+        t0 = datetime(2026, 4, 23, 5, 10, 30)
+        t1 = datetime(2026, 4, 23, 5, 10, 31)
+        t2 = datetime(2026, 4, 23, 5, 10, 32)
+        t3 = datetime(2026, 4, 23, 5, 10, 33)
+
+        direct_event_epochs = np.array([t0, t1, t2, t3])
+        num_direct_event_epochs = len(direct_event_epochs)
+
+        sw_priority_epochs = np.array([t0, t2, t3])
+        nsw_priority_epochs = np.array([t0, t1, t3])
+        num_sw_epochs = len(sw_priority_epochs)
+        num_nsw_epochs = len(nsw_priority_epochs)
+
+        sw_priority_counts_shape = (num_sw_epochs, num_energy_bins, priority_l1_spin_sectors)
+        nsw_priority_counts_shape = (num_nsw_epochs, num_energy_bins, priority_l1_spin_sectors)
+        sw_mask = np.full(sw_priority_counts_shape, False)
+        sw_mask[0, 0, 0] = True
+        sw_priority_rates = create_dataclass_mock(CodiceLoL1aSWPriorityRates)
+        sw_priority_rates.epoch = sw_priority_epochs
+        sw_priority_rates.p0_tcrs = np.ma.array(rng.random(sw_priority_counts_shape), mask=sw_mask)
+        sw_priority_rates.p1_hplus = np.ma.array(rng.random(sw_priority_counts_shape), mask=sw_mask)
+        sw_priority_rates.p2_heplusplus = np.ma.array(rng.random(sw_priority_counts_shape), mask=sw_mask)
+        sw_priority_rates.p3_heavies = np.ma.array(rng.random(sw_priority_counts_shape), mask=sw_mask)
+        sw_priority_rates.p4_dcrs = np.ma.array(rng.random(sw_priority_counts_shape), mask=sw_mask)
+        sw_priority_rates.half_spin_per_esa_step = rng.random((num_sw_epochs, num_energy_bins))
+        sw_priority_rates.rgfo_spin_sector = rng.random(num_sw_epochs)
+        sw_priority_rates.rgfo_esa_step = rng.random(num_sw_epochs)
+        sw_priority_rates.nso_spin_sector = rng.random(num_sw_epochs)
+        sw_priority_rates.nso_esa_step = rng.random(num_sw_epochs)
+        sw_priority_rates.esa_step = np.arange(num_energy_bins)
+        sw_priority_rates.rgfo_half_spin = rng.integers(0, 12, num_sw_epochs, np.uint8)
+        sw_priority_rates.nso_half_spin = rng.integers(0, 12, num_sw_epochs, np.uint8)
+        sw_priority_rates.acquisition_time_per_esa_step = rng.random((num_sw_epochs, num_energy_bins))
+
+        nsw_mask = np.full(nsw_priority_counts_shape, False)
+        nsw_mask[0, 0, 0] = True
+        nsw_priority_rates = create_dataclass_mock(CodiceLoL1aNSWPriorityRates)
+        nsw_priority_rates.epoch = nsw_priority_epochs
+        nsw_priority_rates.p5_heavies = np.ma.array(rng.random(nsw_priority_counts_shape), mask=nsw_mask)
+        nsw_priority_rates.p6_hplus_heplusplus = np.ma.array(rng.random(nsw_priority_counts_shape), mask=nsw_mask)
+
+        mass_per_charge = rng.random((num_direct_event_epochs, CODICE_LO_L2_NUM_PRIORITIES, event_buffer_size))
+        mock_calculate_mass_per_charge.return_value = mass_per_charge
+        mass = rng.random((num_direct_event_epochs, CODICE_LO_L2_NUM_PRIORITIES, event_buffer_size))
+        mock_calculate_mass.return_value = mass
+
+        codice_l2_variables = {
+            f.name: rng.random((num_direct_event_epochs, CODICE_LO_L2_NUM_PRIORITIES, event_buffer_size))
+            for f in fields(CodiceLoL2DirectEventData)
+        }
+        codice_l2_variables["epoch"] = direct_event_epochs
+        codice_l2_variables["spin_angle"] *= 360
+        codice_l2_variables["data_quality"] = rng.random((num_direct_event_epochs,))
+        codice_l2_variables["num_events"] = rng.random((num_direct_event_epochs,))
+
+        direct_events = CodiceLoL2DirectEventData(**codice_l2_variables)
+
+        mock_energy_lookup = create_dataclass_mock(EnergyLookup)
+        mock_energy_lookup.delta_minus = rng.random(num_energy_bins)
+        mock_energy_lookup.delta_plus = rng.random(num_energy_bins)
+        mock_energy_lookup.bin_centers = rng.random(num_energy_bins)
+        mock_energy_lookup.num_bins = num_energy_bins
+
+        expected_normalization = rng.random(
+            (num_direct_event_epochs, num_priorities, num_energy_bins, num_spin_angle_bins)
+        )
+        mock_calculate_normalization_factor.return_value = expected_normalization
+
+        sentinel_normalization_per_event_value = 5.0
+        mock_lookup_normalization_per_event.return_value = np.full(
+            (num_direct_event_epochs, num_priorities, event_buffer_size),
+            sentinel_normalization_per_event_value,
+        )
+
+        dependencies = CodiceLoL3aDirectEventsDependencies(
+            sw_priority_rates, nsw_priority_rates, direct_events, Mock(), mock_energy_lookup
+        )
+
+        input_collection = ProcessingInputCollection()
+        input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02')
+        processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
+        result = processor.process_l3a_direct_event_data_product(dependencies)
+
+        self.assertEqual(1, mock_calculate_normalization_factor.call_count)
+        actual_stacked_priorities = mock_calculate_normalization_factor.call_args.args[0]
+        self.assertEqual(
+            (num_direct_event_epochs, num_priorities, num_energy_bins, priority_l1_spin_sectors),
+            actual_stacked_priorities.shape,
+        )
+
+        np.testing.assert_equal(actual_stacked_priorities[0, :, 0, 0], np.full(7, np.nan))
+
+    @patch(f'{MODULE}.SpinAngleLookup')
+    @patch(f'{MODULE}.lookup_normalization_per_event', autospec=True)
+    @patch(f'{MODULE}.calculate_normalization_factor', autospec=True)
+    @patch(f'{MODULE}.calculate_mass_per_charge', autospec=True)
+    @patch(f'{MODULE}.calculate_mass', autospec=True)
+    def test_process_l3a_direct_events_aligns_passthrough_vars_to_direct_event_epochs_when_missing(
+            self, mock_calculate_mass, mock_calculate_mass_per_charge,
+            mock_calculate_normalization_factor, mock_lookup_normalization_per_event,
+            mock_spin_angle_lookup_class):
+        rng = np.random.default_rng(seed=42)
+
+        num_spin_angle_bins = 4
+        num_energy_bins = 3
+        event_buffer_size = 2
+        num_priorities = 7
+        priority_l1_spin_sectors = num_spin_angle_bins // 2
+
+        mock_spin_angle_lookup = create_dataclass_mock(SpinAngleLookup)
+        mock_spin_angle_lookup.num_bins = num_spin_angle_bins
+        mock_spin_angle_lookup_class.return_value = mock_spin_angle_lookup
+
+        t0 = datetime(2026, 4, 23, 5, 10, 30)
+        t1 = datetime(2026, 4, 23, 5, 10, 31)
+        t2 = datetime(2026, 4, 23, 5, 10, 32)
+        t3 = datetime(2026, 4, 23, 5, 10, 33)
+
+        direct_event_epochs = np.array([t0, t1, t2, t3])
+        num_direct_event_epochs = len(direct_event_epochs)
+
+        sw_priority_epochs = np.array([t0, t2, t3])
+        nsw_priority_epochs = np.array([t0, t1, t3])
+        num_sw_epochs = len(sw_priority_epochs)
+        num_nsw_epochs = len(nsw_priority_epochs)
+
+        sw_priority_counts_shape = (num_sw_epochs, num_energy_bins, priority_l1_spin_sectors)
+        nsw_priority_counts_shape = (num_nsw_epochs, num_energy_bins, priority_l1_spin_sectors)
+
+        sw_priority_rates = create_dataclass_mock(CodiceLoL1aSWPriorityRates)
+        sw_priority_rates.epoch = sw_priority_epochs
+        sw_priority_rates.p0_tcrs = rng.random(sw_priority_counts_shape)
+        sw_priority_rates.p1_hplus = rng.random(sw_priority_counts_shape)
+        sw_priority_rates.p2_heplusplus = rng.random(sw_priority_counts_shape)
+        sw_priority_rates.p3_heavies = rng.random(sw_priority_counts_shape)
+        sw_priority_rates.p4_dcrs = rng.random(sw_priority_counts_shape)
+        sw_priority_rates.half_spin_per_esa_step = rng.random((num_sw_epochs, num_energy_bins))
+        sw_priority_rates.rgfo_spin_sector = rng.random(num_sw_epochs)
+        sw_priority_rates.rgfo_esa_step = rng.random(num_sw_epochs)
+        sw_priority_rates.nso_spin_sector = rng.random(num_sw_epochs)
+        sw_priority_rates.nso_esa_step = rng.random(num_sw_epochs)
+        sw_priority_rates.esa_step = np.arange(num_energy_bins)
+        sw_priority_rates.rgfo_half_spin = rng.integers(0, 12, num_sw_epochs, np.uint8)
+        sw_priority_rates.nso_half_spin = rng.integers(0, 12, num_sw_epochs, np.uint8)
+        sw_priority_rates.acquisition_time_per_esa_step = rng.random((num_sw_epochs, num_energy_bins))
+
+        nsw_priority_rates = create_dataclass_mock(CodiceLoL1aNSWPriorityRates)
+        nsw_priority_rates.epoch = nsw_priority_epochs
+        nsw_priority_rates.p5_heavies = rng.random(nsw_priority_counts_shape)
+        nsw_priority_rates.p6_hplus_heplusplus = rng.random(nsw_priority_counts_shape)
+
+        mass_per_charge = rng.random((num_direct_event_epochs, CODICE_LO_L2_NUM_PRIORITIES, event_buffer_size))
+        mock_calculate_mass_per_charge.return_value = mass_per_charge
+        mass = rng.random((num_direct_event_epochs, CODICE_LO_L2_NUM_PRIORITIES, event_buffer_size))
+        mock_calculate_mass.return_value = mass
+
+        codice_l2_variables = {
+            f.name: rng.random((num_direct_event_epochs, CODICE_LO_L2_NUM_PRIORITIES, event_buffer_size))
+            for f in fields(CodiceLoL2DirectEventData)
+        }
+        codice_l2_variables["epoch"] = direct_event_epochs
+        codice_l2_variables["spin_angle"] *= 360
+        codice_l2_variables["data_quality"] = rng.random((num_direct_event_epochs,))
+        codice_l2_variables["num_events"] = rng.random((num_direct_event_epochs,))
+
+        direct_events = CodiceLoL2DirectEventData(**codice_l2_variables)
+
+        mock_energy_lookup = create_dataclass_mock(EnergyLookup)
+        mock_energy_lookup.delta_minus = rng.random(num_energy_bins)
+        mock_energy_lookup.delta_plus = rng.random(num_energy_bins)
+        mock_energy_lookup.bin_centers = rng.random(num_energy_bins)
+        mock_energy_lookup.num_bins = num_energy_bins
+
+        expected_normalization = rng.random(
+            (num_direct_event_epochs, num_priorities, num_energy_bins, num_spin_angle_bins)
+        )
+        mock_calculate_normalization_factor.return_value = expected_normalization
+
+        sentinel_normalization_per_event_value = 5.0
+        mock_lookup_normalization_per_event.return_value = np.full(
+            (num_direct_event_epochs, num_priorities, event_buffer_size),
+            sentinel_normalization_per_event_value,
+        )
+
+        dependencies = CodiceLoL3aDirectEventsDependencies(
+            sw_priority_rates, nsw_priority_rates, direct_events, Mock(), mock_energy_lookup
+        )
+
+        input_collection = ProcessingInputCollection()
+        input_metadata = InputMetadata('codice', "l3a", Mock(spec=datetime), Mock(spec=datetime), 'v02')
+        processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
+        result = processor.process_l3a_direct_event_data_product(dependencies)
+
+        variables_to_compare = [
+            (sw_priority_rates.acquisition_time_per_esa_step, result.acquisition_time_per_esa_step),
+            (sw_priority_rates.rgfo_half_spin, result.rgfo_half_spin),
+            (sw_priority_rates.rgfo_spin_sector, result.rgfo_spin_sector),
+            (sw_priority_rates.rgfo_esa_step, result.rgfo_esa_step),
+            (sw_priority_rates.half_spin_per_esa_step, result.half_spin_per_esa_step),
+            (sw_priority_rates.nso_spin_sector, result.nso_spin_sector),
+            (sw_priority_rates.nso_esa_step, result.nso_esa_step),
+            (sw_priority_rates.nso_half_spin, result.nso_half_spin),
+        ]
+        for input_var, result_var in variables_to_compare:
+            np.testing.assert_equal(
+                input_var[0],
+                result_var[0],
+            )
+            np.testing.assert_equal(
+                input_var[1],
+                result_var[2],
+            )
+            np.testing.assert_equal(
+                input_var[2],
+                result_var[3],
+            )
+
+            self.assertTrue(np.all(result_var.mask[0] == False))
+            self.assertTrue(np.all(result_var.mask[1] == True))
+            self.assertTrue(np.all(result_var.mask[2] == False))
+            self.assertTrue(np.all(result_var.mask[3] == False))
+
     @patch(f'{MODULE}.rebin_3d_distribution_azimuth_to_elevation')
     @patch(f'{MODULE}.combine_priorities_for_species_and_convert_to_rate')
     @patch(f'{MODULE}.PositionToElevationLookup')
@@ -852,7 +1095,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
                                           mock_rebin_3d_distribution_azimuth_to_elevation):
         mock_elevation_lookup = mock_elevation_angle_lookup_class.return_value
 
-        input_metadata = InputMetadata('codice', "l3a", datetime(2026,5,13), Mock(spec=datetime), 'v02')
+        input_metadata = InputMetadata('codice', "l3a", datetime(2026, 5, 13), Mock(spec=datetime), 'v02')
 
         mock_l3a_direct_event_data = Mock(
             acquisition_time_per_esa_step=sentinel.acquisition_time,
@@ -906,7 +1149,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             sentinel.rgfo_spin_sector,
             sentinel.rgfo_esa_step,
             sentinel.half_spin,
-            date(2026,5,13)
+            date(2026, 5, 13)
         )
         mock_convert_count_rate_to_intensity.assert_called_once_with(
             mock_combine_priorities_for_species_and_convert_to_rate.return_value,
