@@ -174,8 +174,8 @@ class TestCodiceLoCalculations(unittest.TestCase):
         num_events = np.ma.masked_array(num_events, mask=[[False, False], [False, True]])
 
         normalized_per_event = np.array([
-            [[100, 30, 200, np.nan], [50, np.nan, np.nan, np.nan]],
-            [[60, np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan, np.nan]]
+            [[100.78, 30.9, 200.1, np.nan], [50.458, np.nan, np.nan, np.nan]],
+            [[60.22, np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan, np.nan]]
         ])
 
         spin_sector_indices = np.array([
@@ -244,19 +244,19 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         rebinned_shape = tuple(output_shape[1:])
         expected_he_plus_counts = np.zeros(rebinned_shape)
-        expected_he_plus_counts[0, 0, 0, 2, 1] = 300
+        expected_he_plus_counts[0, 0, 0, 2, 1] = 300.88
         np.testing.assert_array_equal(actual_counts_3d_data[0, ...], expected_he_plus_counts)
 
         expected_fe_counts = np.zeros(rebinned_shape)
-        expected_fe_counts[0, 0, 100, 1, 23] = 30
+        expected_fe_counts[0, 0, 100, 1, 23] = 30.9
         np.testing.assert_array_equal(actual_counts_3d_data[1, ...], expected_fe_counts)
 
         expected_mg_counts = np.zeros(rebinned_shape)
-        expected_mg_counts[1, 0, 127, 2, 8] = 60
+        expected_mg_counts[1, 0, 127, 2, 8] = 60.22
         np.testing.assert_array_equal(actual_counts_3d_data[2, ...], expected_mg_counts)
 
         expected_o_counts = np.zeros(rebinned_shape)
-        expected_o_counts[0, 1, 0, 0, 0] = 50
+        expected_o_counts[0, 1, 0, 0, 0] = 50.458
         np.testing.assert_array_equal(actual_counts_3d_data[3, ...], expected_o_counts)
 
     def test_rebin_direct_events_by_energy_and_spin_sector(self):

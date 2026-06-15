@@ -140,7 +140,7 @@ def rebin_to_counts_by_species_elevation_and_spin_sector(direct_event_data: Codi
     num_priorities = mass.shape[1]
 
     output = np.full((mass_species_bin_lookup.get_num_species(), num_epochs, num_priorities,
-                      CODICE_LO_NUM_ESA_STEPS, CODICE_LO_NUM_SPIN_SECTORS, CODICE_LO_NUM_AZIMUTH_BINS), 0)
+                      CODICE_LO_NUM_ESA_STEPS, CODICE_LO_NUM_SPIN_SECTORS, CODICE_LO_NUM_AZIMUTH_BINS), 0.0)
 
     for epoch_i in range(num_epochs):
         for priority_i in range(num_priorities):
