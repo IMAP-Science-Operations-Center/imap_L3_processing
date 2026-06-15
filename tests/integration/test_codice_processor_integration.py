@@ -1,6 +1,5 @@
 import logging
 import unittest
-from datetime import timedelta
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -12,7 +11,7 @@ from spacepy.pycdf import CDF
 import imap_l3_data_processor
 import tests
 from tests.integration.integration_test_helpers import mock_imap_data_access
-from tests.test_helpers import get_run_local_data_path, get_test_data_path, run_periodically
+from tests.test_helpers import get_run_local_data_path, get_test_data_path
 
 INTEGRATION_DATA_DIR = Path(tests.integration.__file__).parent / "test_data/codice"
 CODICE_TEST_DATA_DIR = get_test_data_path("codice")
@@ -126,7 +125,7 @@ class CodiceProcessorIntegration(unittest.TestCase):
         input_files = [
             CODICE_TEST_DATA_DIR / "imap_codice_l3a_lo-direct-events_20260504_v003.cdf",
             CODICE_TEST_DATA_DIR / "imap_codice_lo-energy-per-charge_20241110_v002.csv",
-            CODICE_TEST_DATA_DIR / "imap_codice_l2-lo-efficiency_20251008_v003.csv",
+            CODICE_TEST_DATA_DIR / "imap_codice_l3-lo-efficiency_20251008_v003.csv",
             CODICE_TEST_DATA_DIR / "imap_codice_l2-lo-gfactor_20251212_v003.csv",
             CODICE_TEST_DATA_DIR / "imap_codice_lo-mass-species-bin-lookup_20250309_v003.csv",
         ]

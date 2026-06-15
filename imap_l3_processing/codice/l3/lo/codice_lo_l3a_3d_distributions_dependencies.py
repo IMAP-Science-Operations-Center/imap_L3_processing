@@ -14,7 +14,7 @@ from imap_l3_processing.codice.l3.lo.models import CodiceLoDirectEventData
 
 MASS_SPECIES_BIN_LOOKUP_DESCRIPTOR = "lo-mass-species-bin-lookup"
 GEOMETRIC_FACTOR_LOOKUP_DESCRIPTOR = "l2-lo-gfactor"
-EFFICIENCY_FACTOR_LOOKUP_DESCRIPTOR = "l2-lo-efficiency"
+EFFICIENCY_FACTOR_LOOKUP_DESCRIPTOR = "l3-lo-efficiency"
 
 
 @dataclass
