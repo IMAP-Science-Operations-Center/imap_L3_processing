@@ -151,7 +151,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         mock_species_mass_range_lookup.get_species_index = mock_get_species_index
 
-        num_events = np.array([[3, 2],
+        num_events = np.array([[4, 2],
                                [3, 1]])
         num_events = np.ma.masked_array(num_events, mask=[[False, False], [False, True]])
 
@@ -166,18 +166,18 @@ class TestCodiceLoCalculations(unittest.TestCase):
         ])
 
         apd_id = np.ma.masked_array(data=np.array([
-            [[2, 24, 2, 255], [1, 25, 255, 255]],
+            [[2, 24, 2, 0], [1, 25, 255, 255]],
             [[9, 9, 9, 255], [1, 255, 255, 255]]
         ]), mask=np.array([
-            [[False, False, False, True], [False, False, True, True]],
+            [[False, False, False, False], [False, False, True, True]],
             [[False, True, False, True], [False, True, True, True]],
         ]))
 
         energy_step = np.ma.masked_array(data=np.array([
-            [[0, 100, 0, 255], [0, 255, 255, 255]],
+            [[0, 100, 0, 0], [0, 100, 255, 255]],
             [[127, 255, 127, 255], [0, 255, 255, 255]]
         ]), mask=np.array([
-            [[False, False, False, True], [False, True, True, True]],
+            [[False, False, False, False], [False, False, True, True]],
             [[False, True, False, True], [False, True, True, True]],
         ]))
 

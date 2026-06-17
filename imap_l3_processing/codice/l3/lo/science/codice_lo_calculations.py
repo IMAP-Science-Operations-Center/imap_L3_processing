@@ -148,10 +148,7 @@ def rebin_to_counts_by_species_elevation_and_spin_sector(direct_event_data: Codi
                     continue
 
                 apd_id_of_event = int(apd_id[indices_of_event])
-                assert 1 <= apd_id[
-                    indices_of_event], f"Expected position to be greater than 0 for event {indices_of_event}"
-
-                if apd_id_of_event > CODICE_LO_NUM_AZIMUTH_BINS:
+                if apd_id_of_event < 1 or apd_id_of_event > CODICE_LO_NUM_AZIMUTH_BINS:
                     continue
 
                 species = mass_species_bin_lookup.get_species(mass[indices_of_event],
