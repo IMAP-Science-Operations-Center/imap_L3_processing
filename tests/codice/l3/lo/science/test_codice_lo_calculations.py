@@ -10,7 +10,7 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_look
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup
 from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, CodiceLoDirectEventData
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
-    calculate_total_number_of_events, calculate_normalization_ratio, calculate_mass, calculate_mass_per_charge, \
+    calculate_total_number_of_events, calculate_mass, calculate_mass_per_charge, \
     rebin_to_counts_by_species_elevation_and_spin_sector, rebin_direct_events_by_energy_and_spin_sector, \
     CODICE_LO_NUM_AZIMUTH_BINS, combine_priorities_for_species_and_convert_to_rate, \
     rebin_3d_distribution_azimuth_to_elevation, convert_count_rate_to_intensity, rebin_direct_events_for_normalization, \
@@ -35,24 +35,6 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         actual_total_number_of_events = calculate_total_number_of_events(priority_0_tcrs, acquisition_time)
         np.testing.assert_array_equal(actual_total_number_of_events, expected_total_number_of_events)
-
-    def test_calculate_normalization_ratio(self):
-        energy_and_spin_angle_counts = {
-            EnergyAndSpinAngle(energy=1, spin_angle=6): 30,
-            EnergyAndSpinAngle(energy=2, spin_angle=5): 25,
-            EnergyAndSpinAngle(energy=3, spin_angle=4): 20,
-        }
-
-        total_number_of_events = 300
-        normalization_ratios = calculate_normalization_ratio(energy_and_spin_angle_counts, total_number_of_events)
-
-        expected_normalization_ratio = np.full((128, 12), np.nan)
-
-        expected_normalization_ratio[1][6] = 10
-        expected_normalization_ratio[2][5] = 12
-        expected_normalization_ratio[3][4] = 15
-
-        np.testing.assert_array_equal(expected_normalization_ratio, normalization_ratios)
 
     def test_calculate_mass(self):
         apd_energy = np.array([[np.exp(1)], [np.exp(2)]])
