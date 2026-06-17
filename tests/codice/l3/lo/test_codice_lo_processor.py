@@ -613,6 +613,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_equal(mock_calculate_normalization_factor.call_args.args[1], expected_num_events)
         np.testing.assert_equal(mock_calculate_normalization_factor.call_args.args[2], expected_energy_step)
         np.testing.assert_equal(mock_calculate_normalization_factor.call_args.args[3], expected_spin_sector)
+        np.testing.assert_equal(mock_calculate_normalization_factor.call_args.args[4], expected_apd_id)
 
         self.assertEqual(1, mock_lookup_normalization_per_event.call_count)
         np.testing.assert_equal(mock_lookup_normalization_per_event.call_args.args[0], expected_normalization)

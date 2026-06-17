@@ -256,7 +256,9 @@ class TestCodiceLoCalculations(unittest.TestCase):
         energy_step[0, 0, :1] = [7]
         energy_step[0, 2, :4] = [1, 3, 1, 4]
 
-        result = rebin_direct_events_by_energy_and_spin_sector(num_events, spin_sector, energy_step,
+        apd_ids = np.ones((num_epochs, num_priorities, event_buffer_len), dtype=int)
+
+        result = rebin_direct_events_by_energy_and_spin_sector(num_events, spin_sector, energy_step, apd_ids,
                                                                num_spin_angle_bins, num_energy_bins)
 
         expected_rebinned_counts = np.zeros((num_epochs, num_priorities, num_energy_bins, num_spin_angle_bins))
@@ -264,6 +266,36 @@ class TestCodiceLoCalculations(unittest.TestCase):
         expected_rebinned_counts[0, 2, 1, 5] = 2
         expected_rebinned_counts[0, 2, 3, 6] = 1
         expected_rebinned_counts[0, 2, 4, 7] = 1
+
+        np.testing.assert_array_equal(result, expected_rebinned_counts)
+
+    def test_rebin_direct_events_by_energy_and_spin_sector_ignores_invalid_apd_ids(self):
+        num_energy_bins = 30
+        num_spin_angle_bins = 20
+        num_priorities = 3
+        num_epochs = 1
+        event_buffer_len = 15
+        num_events = np.ma.masked_array(np.array([[1, 2, 4]]), mask=[[False, True, False]])
+        spin_sector = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=np.uint8)
+        spin_sector[0, 0, :1] = [3]
+        spin_sector[0, 2, :4] = [5, 6, 5, 7]
+
+        energy_step = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=np.uint8)
+        energy_step[0, 0, :1] = [7]
+        energy_step[0, 2, :4] = [1, 3, 1, 4]
+
+        apd_ids = np.ma.ones((num_epochs, num_priorities, event_buffer_len), dtype=int)
+        apd_ids[0, 2, :4] = [0, 1, 25, 255]
+        apd_ids[0, 2, 3] = np.ma.masked
+
+        result = rebin_direct_events_by_energy_and_spin_sector(num_events, spin_sector, energy_step, apd_ids,
+                                                               num_spin_angle_bins, num_energy_bins)
+
+        expected_rebinned_counts = np.zeros((num_epochs, num_priorities, num_energy_bins, num_spin_angle_bins))
+        expected_rebinned_counts[0, 0, 7, 3] = 1
+        expected_rebinned_counts[0, 2, 1, 5] = 0
+        expected_rebinned_counts[0, 2, 3, 6] = 1
+        expected_rebinned_counts[0, 2, 4, 7] = 0
 
         np.testing.assert_array_equal(result, expected_rebinned_counts)
 
@@ -283,7 +315,10 @@ class TestCodiceLoCalculations(unittest.TestCase):
         energy_step[0, 0, :1] = [7]
         energy_step[0, 2, :4] = [1, 255, 1, 4]
         energy_step[0, 2, 1] = np.ma.masked
-        result = rebin_direct_events_by_energy_and_spin_sector(num_events, spin_sector, energy_step,
+
+        apd_ids = np.ones((num_epochs, num_priorities, event_buffer_len), dtype=int)
+
+        result = rebin_direct_events_by_energy_and_spin_sector(num_events, spin_sector, energy_step, apd_ids,
                                                                num_spin_angle_bins, num_energy_bins)
 
         expected_rebinned_counts = np.zeros((num_epochs, num_priorities, num_energy_bins, num_spin_angle_bins))
@@ -308,7 +343,10 @@ class TestCodiceLoCalculations(unittest.TestCase):
         energy_step = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=np.uint8)
         energy_step[0, 0, :2] = [7, 7]
         energy_step[0, 2, :4] = [1, 3, 1, 4]
-        result = rebin_direct_events_for_normalization(num_events, spin_sector, energy_step, num_spin_sectors,
+
+        apd_ids = np.ones((num_epochs, num_priorities, event_buffer_len), dtype=int)
+
+        result = rebin_direct_events_for_normalization(num_events, spin_sector, energy_step, apd_ids, num_spin_sectors,
                                                        num_energy_bins)
 
         expected_rebinned_counts = np.zeros((num_epochs, num_priorities, num_energy_bins, num_spin_sectors))
@@ -338,12 +376,14 @@ class TestCodiceLoCalculations(unittest.TestCase):
         num_events = np.zeros((num_epochs, num_priorities), dtype=int)
         spin_sectors = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=int)
         energy_steps = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=int)
+        apd_ids = np.ones((num_epochs, num_priorities, event_buffer_len), dtype=int)
 
-        num_events[0, 0] = 3
-        spin_sectors[0, 0, :3] = [0, 2, 12]
-        energy_steps[0, 0, :3] = [0, 0, 0]
+        num_events[0, 0] = 4
+        spin_sectors[0, 0, :4] = [0, 2, 12, 0]
+        energy_steps[0, 0, :4] = [0, 0, 0, 0]
+        apd_ids[0, 0, :4] = [1, 1, 1, 0]
 
-        result = calculate_normalization_factor(priority_counts, num_events, energy_steps, spin_sectors)
+        result = calculate_normalization_factor(priority_counts, num_events, energy_steps, spin_sectors, apd_ids)
 
         expected_shape = (num_epochs, num_priorities, num_esa_steps, num_l2_spin_sectors)
         expected = np.full(expected_shape, 0.0)
@@ -368,12 +408,13 @@ class TestCodiceLoCalculations(unittest.TestCase):
         num_events = np.zeros((num_epochs, num_priorities), dtype=int)
         spin_sectors = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=int)
         energy_steps = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=int)
+        apd_ids = np.ones((num_epochs, num_priorities, event_buffer_len), dtype=int)
 
         num_events[0, 0] = 3
         spin_sectors[0, 0, :3] = [0, 12, 2]
         energy_steps[0, 0, :3] = [0, 0, 0]
 
-        result = calculate_normalization_factor(priority_counts, num_events, energy_steps, spin_sectors)
+        result = calculate_normalization_factor(priority_counts, num_events, energy_steps, spin_sectors, apd_ids)
 
         expected_shape = (num_epochs, num_priorities, num_esa_steps, num_l2_spin_sectors)
         expected = np.full(expected_shape, 0.0)
@@ -399,8 +440,9 @@ class TestCodiceLoCalculations(unittest.TestCase):
         num_events = np.zeros((num_epochs, num_priorities), dtype=int)
         spin_sectors = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=int)
         energy_steps = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=int)
+        apd_ids = np.ones((num_epochs, num_priorities, event_buffer_len), dtype=int)
 
-        result = calculate_normalization_factor(priority_counts, num_events, energy_steps, spin_sectors)
+        result = calculate_normalization_factor(priority_counts, num_events, energy_steps, spin_sectors, apd_ids)
 
         expected_shape = (num_epochs, num_priorities, num_esa_steps, num_l2_spin_sectors)
         expected = np.full(expected_shape, 0.0)
