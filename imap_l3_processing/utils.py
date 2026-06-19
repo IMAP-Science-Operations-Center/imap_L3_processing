@@ -310,8 +310,8 @@ def get_spice_kernels_file_names(start_date: datetime, end_date: datetime, kerne
     return kernels
 
 
-def furnish_spice_metakernel(start_date: datetime, end_date: datetime, kernel_types: list[SpiceKernelTypes]):
-    metakernel_path = imap_data_access.config.get("DATA_DIR") / "metakernel" / "metakernel.txt"
+def furnish_spice_metakernel(start_date: datetime, end_date: datetime, kernel_types: list[SpiceKernelTypes], metakernel_file_name: str="metakernel.txt") -> FurnishMetakernelOutput:
+    metakernel_path = imap_data_access.config.get("DATA_DIR") / "metakernel" / metakernel_file_name
     kernel_path = imap_data_access.config.get("DATA_DIR") / "imap" / "spice"
 
     parameters: dict = {

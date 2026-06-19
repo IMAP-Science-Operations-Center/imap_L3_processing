@@ -7,6 +7,9 @@ import imap_data_access
 import numpy as np
 import spiceypy
 from astropy.time import Time
+from spiceypy import SpiceyError
+
+from imap_l3_processing.glows.quality_flags import GlowsL3Flags
 from imap_processing.spice.repoint import set_global_repoint_table_paths, get_repoint_data
 from spacepy.pycdf import CDF
 
@@ -16,11 +19,23 @@ from imap_l3_processing.constants import ONE_AU_IN_KM, TT2000_EPOCH, ONE_SECOND_
 from imap_l3_processing.glows.descriptors import GLOWS_L3E_ULTRA_HF_DESCRIPTOR, GLOWS_L3E_ULTRA_SF_DESCRIPTOR, \
     GLOWS_L3E_LO_DESCRIPTOR, GLOWS_L3E_HI_45_DESCRIPTOR, GLOWS_L3E_HI_90_DESCRIPTOR
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import jd_fm_Carrington
-from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
+from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments, GlowsL3eSpacecraftInfo
+from imap_l3_processing.utils import FurnishMetakernelOutput
 
 
-def determine_call_args_for_l3e_executable(start_date: datetime, repointing_midpoint: datetime,
-                                           elongation: float) -> GlowsL3eCallArguments:
+def determine_call_args_for_l3e_executable(start_date: datetime, repointing_midpoint: datetime, elongation: float,
+                                           spacecraft_info: GlowsL3eSpacecraftInfo) -> GlowsL3eCallArguments:
+    formatted_date = start_date.strftime("%Y%m%d_%H%M%S")
+    decimal_date = _decimal_time(repointing_midpoint)
+
+    return GlowsL3eCallArguments(
+        formatted_date=formatted_date,
+        decimal_date=decimal_date,
+        elongation=elongation,
+        spacecraft_info=spacecraft_info,
+    )
+
+def determine_spacecraft_info_for_l3e_executable(repointing_midpoint: datetime) -> GlowsL3eSpacecraftInfo:
     ephemeris_time = spiceypy.datetime2et(repointing_midpoint)
 
     [x, y, z, vx, vy, vz], _ = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")
@@ -32,12 +47,7 @@ def determine_call_args_for_l3e_executable(start_date: datetime, repointing_midp
 
     _, spin_axis_long, spin_axis_lat = spiceypy.reclat(spin_axis)
 
-    formatted_date = start_date.strftime("%Y%m%d_%H%M%S")
-    decimal_date = _decimal_time(repointing_midpoint)
-
-    return GlowsL3eCallArguments(
-        formatted_date=formatted_date,
-        decimal_date=decimal_date,
+    return GlowsL3eSpacecraftInfo(
         spacecraft_radius=radius / ONE_AU_IN_KM,
         spacecraft_longitude=np.rad2deg(longitude) % 360,
         spacecraft_latitude=np.rad2deg(latitude),
@@ -46,8 +56,26 @@ def determine_call_args_for_l3e_executable(start_date: datetime, repointing_midp
         spacecraft_velocity_z=vz,
         spin_axis_longitude=np.rad2deg(spin_axis_long) % 360,
         spin_axis_latitude=np.rad2deg(spin_axis_lat),
-        elongation=elongation
     )
+
+
+def determine_spacecraft_info_using_predict_if_needed(repointing_midpoint: datetime, spice_with_predict: FurnishMetakernelOutput, spice_without_predict: FurnishMetakernelOutput) -> \
+    tuple[GlowsL3eSpacecraftInfo, GlowsL3Flags, list[str]]:
+    try:
+        with spiceypy.KernelPool([str(spice_without_predict.metakernel_path)]):
+            spacecraft_info: GlowsL3eSpacecraftInfo = determine_spacecraft_info_for_l3e_executable(repointing_midpoint)
+
+            glows_l3_flags: GlowsL3Flags = GlowsL3Flags.NONE
+            kernel_names = [n.name for n in spice_without_predict.spice_kernel_paths]
+    except SpiceyError:
+        with spiceypy.KernelPool([str(spice_with_predict.metakernel_path)]):
+            spacecraft_info: GlowsL3eSpacecraftInfo = determine_spacecraft_info_for_l3e_executable(
+                repointing_midpoint)
+
+            glows_l3_flags: GlowsL3Flags = GlowsL3Flags.PREDICTIVE_EPHEMERIS
+            kernel_names = [n.name for n in spice_with_predict.spice_kernel_paths]
+
+    return spacecraft_info, glows_l3_flags, kernel_names
 
 
 def _decimal_time(t: datetime) -> str:

@@ -34,12 +34,13 @@ from imap_l3_processing.glows.l3d.glows_l3d_initializer import GlowsL3DInitializ
 from imap_l3_processing.glows.l3d.models import GlowsL3DProcessorOutput
 from imap_l3_processing.glows.l3d.utils import create_glows_l3b_json_file_from_cdf, create_glows_l3c_json_file_from_cdf, \
     PATH_TO_L3D_TOOLKIT, convert_json_to_l3d_data_product, get_parent_file_names_from_l3d_json, rename_l3d_text_outputs
+from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eSpacecraftInfo
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializer, GlowsL3EInitializerOutput
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, get_lo_pivot_angles, \
-    compute_glows_flags_for_window
+    compute_glows_flags_for_window, determine_spacecraft_info_using_predict_if_needed
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
@@ -266,9 +267,11 @@ def process_l3e_lo(
         elongation_value: float,
         version: int,
         glows_flags: int,
+        spacecraft_info: GlowsL3eSpacecraftInfo
 ) -> list[Path]:
     repointing_midpoint = repointing_start + epoch_delta
-    l3e_args = determine_call_args_for_l3e_executable(repointing_start, repointing_midpoint, float(elongation_value))
+    l3e_args = determine_call_args_for_l3e_executable(repointing_start, repointing_midpoint, float(elongation_value),
+                                                      spacecraft_info=spacecraft_info)
     call_args = l3e_args.to_argument_list()
 
     logger.info(f"Processing L3e Lo, calling survProbLo with {call_args}")
@@ -313,9 +316,10 @@ def process_l3e_lo(
 
 
 def process_l3e_ul_sf(parent_file_names: list[str], repointing: int, repointing_start: datetime, epoch_delta: timedelta,
-                      version: int, glows_flags: int) -> list[Path]:
+                      version: int, glows_flags: int, spacecraft_info: GlowsL3eSpacecraftInfo) -> list[Path]:
     repointing_midpoint = repointing_start + epoch_delta
-    call_args_object = determine_call_args_for_l3e_executable(repointing_start, repointing_midpoint, 30)
+    call_args_object = determine_call_args_for_l3e_executable(repointing_start, repointing_midpoint, 30,
+                                                              spacecraft_info=spacecraft_info)
     call_args = call_args_object.to_argument_list()
 
     logger.info(f"Processing L3e Ultra, calling survProbUltra with {call_args}")
@@ -357,14 +361,15 @@ def process_l3e_ul_sf(parent_file_names: list[str], repointing: int, repointing_
 
 
 def process_l3e_ul_hf(parent_file_names: list[str], repointing: int, repointing_start: datetime, epoch_delta: timedelta,
-                      version: int, glows_flags: int) -> list[Path]:
+                      version: int, glows_flags: int, spacecraft_info: GlowsL3eSpacecraftInfo) -> list[Path]:
     repointing_midpoint = repointing_start + epoch_delta
-    call_args_object = determine_call_args_for_l3e_executable(repointing_start, repointing_midpoint, 30)
+    call_args_object = determine_call_args_for_l3e_executable(repointing_start, repointing_midpoint, 30,
+                                                              spacecraft_info=spacecraft_info)
 
-    call_args_object = replace(call_args_object,
+    call_args_object.spacecraft_info = replace(call_args_object.spacecraft_info,
                                spacecraft_velocity_x=0,
                                spacecraft_velocity_y=0,
-                               spacecraft_velocity_z=0
+                               spacecraft_velocity_z=0,
                                )
 
     call_args = call_args_object.to_argument_list()
@@ -404,9 +409,10 @@ def process_l3e_ul_hf(parent_file_names: list[str], repointing: int, repointing_
 
     return [ul_cdf, new_dat_path]
 
-def process_l3e_hi(parent_file_names: list[str], repointing: int, repointing_start: datetime, epoch_delta: timedelta, elongation: int, version: int, glows_flags: int) -> list[Path]:
+def process_l3e_hi(parent_file_names: list[str], repointing: int, repointing_start: datetime, epoch_delta: timedelta, elongation: int, version: int, glows_flags: int, spacecraft_info: GlowsL3eSpacecraftInfo) -> list[Path]:
     repointing_midpoint = repointing_start + epoch_delta
-    l3e_hi_args = determine_call_args_for_l3e_executable(repointing_start, repointing_midpoint, elongation)
+    l3e_hi_args = determine_call_args_for_l3e_executable(repointing_start, repointing_midpoint, elongation,
+                                                         spacecraft_info=spacecraft_info)
     call_args = l3e_hi_args.to_argument_list()
 
     logger.info(f"Processing L3e Hi, calling survProbHi with {call_args}")
@@ -452,38 +458,40 @@ def process_l3e(initializer_data: GlowsL3EInitializerOutput):
             start_repointing, end_repointing = get_pointing_date_range(repointing)
             epoch_delta: timedelta = (end_repointing - start_repointing) / 2
             glows_flags = compute_glows_flags_for_window(initializer_data.l3d_cdf_path, start_repointing, end_repointing)
+            spacecraft_info, predict_flag, kernel_names = determine_spacecraft_info_using_predict_if_needed(start_repointing + epoch_delta, initializer_data.metakernel_with_predict_ephem, initializer_data.metakernel_without_predict_ephem)
+            glows_flags |= predict_flag
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e lo for repointing {repointing}"):
-                lo_parent_file_names = initializer_data.dependencies.get_lo_parents()
+                lo_parent_file_names = initializer_data.dependencies.get_lo_parents() + kernel_names
                 pivot_info = lo_pivot_angles[repointing]
                 if pivot_info.parent_filename is not None:
                     lo_parent_file_names = lo_parent_file_names + [pivot_info.parent_filename]
                 lo_version = initializer_data.repointings.lo_repointings[repointing]
-                products_list.extend(process_l3e_lo(lo_parent_file_names, repointing, start_repointing, epoch_delta, pivot_info.pivot_angle, lo_version, glows_flags))
+                products_list.extend(process_l3e_lo(lo_parent_file_names, repointing, start_repointing, epoch_delta, pivot_info.pivot_angle, lo_version, glows_flags, spacecraft_info))
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e hi-90 for repointing {repointing}"):
-                hi_parent_file_names = initializer_data.dependencies.get_hi_parents()
+                hi_parent_file_names = initializer_data.dependencies.get_hi_parents() + kernel_names
                 hi_90_version = initializer_data.repointings.hi_90_repointings[repointing]
-                products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, start_repointing, epoch_delta, 90, hi_90_version, glows_flags))
+                products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, start_repointing, epoch_delta, 90, hi_90_version, glows_flags, spacecraft_info))
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e hi-45 for repointing {repointing}"):
-                hi_parent_file_names = initializer_data.dependencies.get_hi_parents()
+                hi_parent_file_names = initializer_data.dependencies.get_hi_parents() + kernel_names
                 hi_45_version = initializer_data.repointings.hi_45_repointings[repointing]
-                products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, start_repointing, epoch_delta, 135, hi_45_version, glows_flags))
+                products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, start_repointing, epoch_delta, 135, hi_45_version, glows_flags, spacecraft_info))
 
-            ul_parent_file_names = initializer_data.dependencies.get_ul_parents()
+            ul_parent_file_names = initializer_data.dependencies.get_ul_parents() + kernel_names
             ul_sf_version = initializer_data.repointings.ultra_sf_repointings[repointing]
             ul_hf_version = initializer_data.repointings.ultra_hf_repointings[repointing]
 
             with SwallowExceptionAndLog(
                     f"Exception encountered when processing L3e ultra SF for repointing {repointing}"):
                 products_list.extend(
-                    process_l3e_ul_sf(ul_parent_file_names, repointing, start_repointing, epoch_delta, ul_sf_version, glows_flags))
+                    process_l3e_ul_sf(ul_parent_file_names, repointing, start_repointing, epoch_delta, ul_sf_version, glows_flags, spacecraft_info))
 
             with SwallowExceptionAndLog(
                     f"Exception encountered when processing L3e ultra HF for repointing {repointing}"):
                 products_list.extend(
-                    process_l3e_ul_hf(ul_parent_file_names, repointing, start_repointing, epoch_delta, ul_hf_version, glows_flags))
+                    process_l3e_ul_hf(ul_parent_file_names, repointing, start_repointing, epoch_delta, ul_hf_version, glows_flags, spacecraft_info))
 
     return products_list
 

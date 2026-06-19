@@ -13,6 +13,7 @@ from imap_l3_processing.glows.l3d.utils import get_most_recently_uploaded_ancill
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.glows.l3e.glows_l3e_utils import find_first_updated_cr, determine_l3e_files_to_produce, \
     GlowsL3eRepointings
+from imap_l3_processing.utils import FurnishMetakernelOutput
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,8 @@ class GlowsL3EInitializerOutput:
     dependencies: GlowsL3EDependencies
     repointings: GlowsL3eRepointings
     l3d_cdf_path: Path
+    metakernel_with_predict_ephem: FurnishMetakernelOutput
+    metakernel_without_predict_ephem: FurnishMetakernelOutput
 
 
 class GlowsL3EInitializer:
@@ -65,11 +68,15 @@ class GlowsL3EInitializer:
             earliest_repointing_start, _ = get_pointing_date_range(min(glows_repointings.repointing_numbers))
             _, latest_repointing_end = get_pointing_date_range(max(glows_repointings.repointing_numbers))
 
-            l3e_deps.furnish_spice_dependencies(start_date=earliest_repointing_start, end_date=latest_repointing_end)
+            furnished_metakernels = GlowsL3EDependencies.collect_spice_dependencies(start_date=earliest_repointing_start, end_date=latest_repointing_end)
+        else:
+            furnished_metakernels = (None, None)
 
         return GlowsL3EInitializerOutput(
             dependencies=l3e_deps,
             repointings=glows_repointings,
             l3d_cdf_path=l3d_output.l3d_cdf_file_path,
+            metakernel_with_predict_ephem=furnished_metakernels[0],
+            metakernel_without_predict_ephem=furnished_metakernels[1],
         )
 

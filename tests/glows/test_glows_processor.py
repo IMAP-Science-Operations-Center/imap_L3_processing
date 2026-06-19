@@ -31,13 +31,14 @@ from imap_l3_processing.glows.l3bc.glows_l3bc_initializer import GlowsL3BCInitia
 from imap_l3_processing.glows.l3bc.models import ExternalDependencies
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3d.utils import PATH_TO_L3D_TOOLKIT
-from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
+from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments, GlowsL3eSpacecraftInfo
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import GlowsL3EHiData
 from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializerOutput
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
 from imap_l3_processing.glows.l3e.glows_l3e_utils import GlowsL3eRepointings, LoPivotAngle
+from imap_l3_processing.glows.quality_flags import GlowsL3Flags
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import save_data
 from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path, get_test_data_folder, \
@@ -79,6 +80,8 @@ class TestGlowsProcessor(unittest.TestCase):
                 ultra_hf_repointings={},
             ),
             l3d_cdf_path=Path("path/to/l3d.cdf"),
+            metakernel_with_predict_ephem=Mock(),
+            metakernel_without_predict_ephem=Mock(),
         )
 
     def tearDown(self):
@@ -1015,11 +1018,13 @@ class TestGlowsProcessor(unittest.TestCase):
     @patch('imap_l3_processing.glows.glows_processor.compute_glows_flags_for_window')
     @patch('imap_l3_processing.glows.glows_processor.get_lo_pivot_angles')
     @patch('imap_l3_processing.glows.glows_processor.get_pointing_date_range')
+    @patch('imap_l3_processing.glows.glows_processor.determine_spacecraft_info_using_predict_if_needed')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_hi')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_lo')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_ul_hf')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_ul_sf')
     def test_process_l3e(self, mock_process_ultra, mock_process_ultra_hf, mock_process_lo, mock_process_hi,
+                         mock_determine_spacecraft_info,
                          mock_get_pointing_date_range,
                          mock_get_lo_pivot_angles,
                          mock_compute_glows_flags_for_window,
@@ -1033,6 +1038,7 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_process_ultra_hf.return_value = [Path('path/to/ultra_l3e_hf')]
         mock_get_lo_pivot_angles.return_value = {25: LoPivotAngle("l1b_nhk.cdf",75)}
         mock_compute_glows_flags_for_window.return_value = 4
+        mock_determine_spacecraft_info.return_value = sentinel.spacecraft_info, GlowsL3Flags.PREDICTIVE_EPHEMERIS, ["spice kernel"]
 
         expected_l3e_products = [
             Path('path/to/lo_l3e'),
@@ -1064,20 +1070,23 @@ class TestGlowsProcessor(unittest.TestCase):
                 ultra_hf_repointings={25: 4},
             ),
             l3d_cdf_path=l3d_cdf_path,
+            metakernel_with_predict_ephem=Mock(),
+            metakernel_without_predict_ephem=Mock(),
         )
 
         actual_l3e_products = process_l3e(initializer_data)
         mock_get_pointing_date_range.assert_called_once_with(25)
         mock_compute_glows_flags_for_window.assert_called_once_with(l3d_cdf_path, start_epoch, end_epoch)
-
+        mock_determine_spacecraft_info.assert_called_once_with(datetime(2020, 1, 1, 12), initializer_data.metakernel_with_predict_ephem, initializer_data.metakernel_without_predict_ephem)
+        expected_flags = 4 | 2**15
         mock_process_hi.assert_has_calls([
-            call(["hi_ancillary.dat"], 25, start_epoch, epoch_delta, 90, 1, 4),
-            call(["hi_ancillary.dat"], 25, start_epoch, epoch_delta, 135, 2, 4)
+            call(["hi_ancillary.dat", "spice kernel"], 25, start_epoch, epoch_delta, 90, 1, expected_flags, sentinel.spacecraft_info),
+            call(["hi_ancillary.dat", "spice kernel"], 25, start_epoch, epoch_delta, 135, 2, expected_flags, sentinel.spacecraft_info)
         ])
-        mock_process_lo.assert_called_once_with(["lo_ancillary.dat", "l1b_nhk.cdf"], 25, start_epoch, epoch_delta, 75,
-                                                3, 4)
-        mock_process_ultra.assert_called_once_with(["ul_ancillary.dat"], 25, start_epoch, epoch_delta, 4, 4)
-        mock_process_ultra_hf.assert_called_once_with(["ul_ancillary.dat"], 25, start_epoch, epoch_delta, 4, 4)
+        mock_process_lo.assert_called_once_with(["lo_ancillary.dat", "spice kernel", "l1b_nhk.cdf"], 25, start_epoch, epoch_delta, 75,
+                                                3, expected_flags, sentinel.spacecraft_info)
+        mock_process_ultra.assert_called_once_with(["ul_ancillary.dat", "spice kernel"], 25, start_epoch, epoch_delta, 4, expected_flags, sentinel.spacecraft_info)
+        mock_process_ultra_hf.assert_called_once_with(["ul_ancillary.dat", "spice kernel"], 25, start_epoch, epoch_delta, 4, expected_flags, sentinel.spacecraft_info)
 
         self.assertEqual(expected_l3e_products, actual_l3e_products)
         mock_get_lo_pivot_angles.assert_called_once_with([25])
@@ -1115,10 +1124,11 @@ class TestGlowsProcessor(unittest.TestCase):
 
         parent_file_names = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
         glows_flags = 4
-        products = process_l3e_ul_sf(parent_file_names, repointing, epoch_start_date, epoch_delta, version, glows_flags)
+        spacecraft_info = Mock()
+        products = process_l3e_ul_sf(parent_file_names, repointing, epoch_start_date, epoch_delta, version, glows_flags, spacecraft_info)
 
         expected_repointing_midpoint = epoch_start_date + epoch_delta
-        mock_determine_call_args.assert_called_once_with(epoch_start_date, expected_repointing_midpoint, 30)
+        mock_determine_call_args.assert_called_once_with(epoch_start_date, expected_repointing_midpoint, 30, spacecraft_info=spacecraft_info)
 
         mock_run.assert_called_once_with(["./survProbUltra"] + ultra_args)
 
@@ -1161,9 +1171,7 @@ class TestGlowsProcessor(unittest.TestCase):
         input_metadata = InputMetadata('glows', "l3e", start_date=epoch_start_date, end_date=epoch_end_date,
                                        version='v012', descriptor=GLOWS_L3E_ULTRA_HF_DESCRIPTOR, repointing=repointing)
 
-        mock_determine_call_args.return_value = GlowsL3eCallArguments(
-            formatted_date="20241007_000000",
-            decimal_date="date.001",
+        spacecraft_frame_spacecraft_info = GlowsL3eSpacecraftInfo(
             spacecraft_radius=500,
             spacecraft_longitude=200,
             spacecraft_latitude=65,
@@ -1172,20 +1180,28 @@ class TestGlowsProcessor(unittest.TestCase):
             spacecraft_velocity_z=360,
             spin_axis_longitude=240,
             spin_axis_latitude=3,
+        )
+
+        mock_determine_call_args.return_value = GlowsL3eCallArguments(
+            formatted_date="20241007_000000",
+            decimal_date="date.001",
+            spacecraft_info=spacecraft_frame_spacecraft_info,
             elongation=30
         )
 
         expected_rest_frame_args = GlowsL3eCallArguments(
             formatted_date="20241007_000000",
             decimal_date="date.001",
-            spacecraft_radius=500,
-            spacecraft_longitude=200,
-            spacecraft_latitude=65,
-            spacecraft_velocity_x=0,
-            spacecraft_velocity_y=0,
-            spacecraft_velocity_z=0,
-            spin_axis_longitude=240,
-            spin_axis_latitude=3,
+            spacecraft_info=GlowsL3eSpacecraftInfo(
+                spacecraft_radius=500,
+                spacecraft_longitude=200,
+                spacecraft_latitude=65,
+                spacecraft_velocity_x=0,
+                spacecraft_velocity_y=0,
+                spacecraft_velocity_z=0,
+                spin_axis_longitude=240,
+                spin_axis_latitude=3,
+            ),
             elongation=30
         )
 
@@ -1195,10 +1211,10 @@ class TestGlowsProcessor(unittest.TestCase):
 
         parent_file_names = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
         glows_flags = 8
-        products = process_l3e_ul_hf(parent_file_names, repointing, epoch_start_date, epoch_delta, version, glows_flags)
+        products = process_l3e_ul_hf(parent_file_names, repointing, epoch_start_date, epoch_delta, version, glows_flags, spacecraft_info=spacecraft_frame_spacecraft_info)
 
         expected_repointing_midpoint = epoch_start_date + epoch_delta
-        mock_determine_call_args.assert_called_once_with(epoch_start_date, expected_repointing_midpoint, 30)
+        mock_determine_call_args.assert_called_once_with(epoch_start_date, expected_repointing_midpoint, 30, spacecraft_info=spacecraft_frame_spacecraft_info)
 
         mock_run.assert_called_once_with(["./survProbUltra"] + expected_rest_frame_args.to_argument_list())
 
@@ -1271,12 +1287,13 @@ class TestGlowsProcessor(unittest.TestCase):
 
                 parent_file_names = ["some_l3e_hi_parent.dat", "some_repointing_file.repoint.csv"]
                 glows_flags = 16
+                spacecraft_info = Mock()
                 products = process_l3e_hi(parent_file_names, repointing, epoch_start_date, epoch_delta, elongation,
-                                          version, glows_flags)
+                                          version, glows_flags, spacecraft_info=spacecraft_info)
 
                 expected_repointing_midpoint = epoch_start_date + epoch_delta
                 mock_determine_call_args.assert_called_once_with(epoch_start_date, expected_repointing_midpoint,
-                                                                 float(elongation))
+                                                                 float(elongation), spacecraft_info=spacecraft_info)
 
                 mock_run.assert_called_once_with(["./survProbHi"] + hi_args)
 
@@ -1332,9 +1349,7 @@ class TestGlowsProcessor(unittest.TestCase):
 
                 lo_call_args = ["20241007_000000", "date.100", "vx", "vy", "vz", f"{elongation:.3f}"]
 
-                l3e_args = GlowsL3eCallArguments(
-                    formatted_date="20241007_000000",
-                    decimal_date="date.100",
+                spacecraft_info = GlowsL3eSpacecraftInfo(
                     spacecraft_radius=np.float32(100.0),
                     spacecraft_longitude=np.float32(100.0),
                     spacecraft_latitude=np.float32(100.0),
@@ -1343,7 +1358,13 @@ class TestGlowsProcessor(unittest.TestCase):
                     spacecraft_velocity_z=np.float32(100.0),
                     spin_axis_longitude=np.float32(100.0),
                     spin_axis_latitude=np.float32(100.0),
-                    elongation=elongation
+                )
+
+                l3e_args = GlowsL3eCallArguments(
+                    formatted_date="20241007_000000",
+                    decimal_date="date.100",
+                    spacecraft_info=spacecraft_info,
+                    elongation=elongation,
                 )
                 l3e_args.to_argument_list = Mock(return_value=lo_call_args)
                 mock_determine_call_args.return_value = l3e_args
@@ -1357,12 +1378,13 @@ class TestGlowsProcessor(unittest.TestCase):
                 parent_file_names = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
 
                 glows_flags = 32
+
                 products = process_l3e_lo(parent_file_names, repointing, epoch_start_date, epoch_delta, elongation,
-                                          version, glows_flags)
+                                          version, glows_flags, spacecraft_info=spacecraft_info)
 
                 expected_repointing_midpoint = epoch_start_date + epoch_delta
                 mock_determine_call_args.assert_called_once_with(epoch_start_date, expected_repointing_midpoint,
-                                                                 elongation)
+                                                                 elongation, spacecraft_info=spacecraft_info)
 
                 mock_run.assert_called_once_with(["./survProbLo"] + lo_call_args)
 
@@ -1401,7 +1423,8 @@ class TestGlowsProcessor(unittest.TestCase):
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_lo')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_ul_hf')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_ul_sf')
-    def test_process_l3e_skips_repointing_on_exception(self, mock_process_ultra_sf, mock_process_ultra_hf, mock_process_lo,
+    @patch('imap_l3_processing.glows.glows_processor.determine_spacecraft_info_using_predict_if_needed')
+    def test_process_l3e_skips_repointing_on_exception(self, mock_determine_spacecraft_info, mock_process_ultra_sf, mock_process_ultra_hf, mock_process_lo,
                                                        mock_process_hi, mock_get_pointing_date_range,
                                                        mock_get_lo_pivot_angles,
                                                        mock_compute_glows_flags_for_window):
@@ -1483,6 +1506,13 @@ class TestGlowsProcessor(unittest.TestCase):
             (start_epoch_4, end_epoch_4),
         ]
 
+        mock_determine_spacecraft_info.side_effect = [
+            (sentinel.spacecraft_info24, GlowsL3Flags.NONE, []),
+            (sentinel.spacecraft_info25, GlowsL3Flags.NONE, []),
+            (sentinel.spacecraft_info26, GlowsL3Flags.NONE, []),
+            (sentinel.spacecraft_info27, GlowsL3Flags.PREDICTIVE_EPHEMERIS, ["predict"]),
+        ]
+
         mock_dependencies = Mock()
 
         hi_parents = ["imap_glows_hi-ancillary_20100101_v001.dat"]
@@ -1491,6 +1521,8 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_dependencies.get_lo_parents.return_value = lo_parents
         ultra_parents = ["imap_glows_ul-ancillary_20100101_v001.dat"]
         mock_dependencies.get_ul_parents.return_value = ultra_parents
+
+        metakernel_with_predict_ephem, metakernel_without_predict_ephem = Mock(), Mock()
 
         initializer_data = GlowsL3EInitializerOutput(
             dependencies=mock_dependencies,
@@ -1503,6 +1535,8 @@ class TestGlowsProcessor(unittest.TestCase):
                 ultra_sf_repointings={24: 4, 25: 4, 26: 4, 27: 4},
             ),
             l3d_cdf_path=Path("path/to/l3d.cdf"),
+            metakernel_with_predict_ephem=metakernel_with_predict_ephem,
+            metakernel_without_predict_ephem=metakernel_without_predict_ephem,
         )
 
         actual_l3e_products = process_l3e(initializer_data)
@@ -1510,34 +1544,34 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_get_pointing_date_range.assert_has_calls([call(24), call(25), call(26), call(27)])
 
         mock_process_hi.assert_has_calls([
-            call(hi_parents, 24, start_epoch_1, epoch_delta_1, 90, 1, 0),
-            call(hi_parents, 24, start_epoch_1, epoch_delta_1, 135, 2, 0),
-            call(hi_parents, 25, start_epoch_2, epoch_delta_2, 90, 1, 0),
-            call(hi_parents, 25, start_epoch_2, epoch_delta_2, 135, 2, 0),
-            call(hi_parents, 26, start_epoch_3, epoch_delta_3, 90, 1, 0),
-            call(hi_parents, 26, start_epoch_3, epoch_delta_3, 135, 2, 0),
-            call(hi_parents, 27, start_epoch_4, epoch_delta_4, 90, 1, 0),
-            call(hi_parents, 27, start_epoch_4, epoch_delta_4, 135, 2, 0)
+            call(hi_parents, 24, start_epoch_1, epoch_delta_1, 90, 1, 0, sentinel.spacecraft_info24),
+            call(hi_parents, 24, start_epoch_1, epoch_delta_1, 135, 2, 0, sentinel.spacecraft_info24),
+            call(hi_parents, 25, start_epoch_2, epoch_delta_2, 90, 1, 0, sentinel.spacecraft_info25),
+            call(hi_parents, 25, start_epoch_2, epoch_delta_2, 135, 2, 0, sentinel.spacecraft_info25),
+            call(hi_parents, 26, start_epoch_3, epoch_delta_3, 90, 1, 0, sentinel.spacecraft_info26),
+            call(hi_parents, 26, start_epoch_3, epoch_delta_3, 135, 2, 0, sentinel.spacecraft_info26),
+            call(hi_parents + ["predict"], 27, start_epoch_4, epoch_delta_4, 90, 1, GlowsL3Flags.PREDICTIVE_EPHEMERIS, sentinel.spacecraft_info27),
+            call(hi_parents + ["predict"], 27, start_epoch_4, epoch_delta_4, 135, 2, GlowsL3Flags.PREDICTIVE_EPHEMERIS, sentinel.spacecraft_info27),
         ])
         mock_process_lo.assert_has_calls([
-            call(lo_parents + ["l1b_nhk_24"], 24, start_epoch_1, epoch_delta_1, 124, 3, 0),
-            call(lo_parents + ["l1b_nhk_25"], 25, start_epoch_2, epoch_delta_2, 125, 3, 0),
-            call(lo_parents + ["l1b_nhk_26"], 26, start_epoch_3, epoch_delta_3, 126, 3, 0),
-            call(lo_parents, 27, start_epoch_4, epoch_delta_4, 90, 3, 0),
+            call(lo_parents + ["l1b_nhk_24"], 24, start_epoch_1, epoch_delta_1, 124, 3, 0, sentinel.spacecraft_info24),
+            call(lo_parents + ["l1b_nhk_25"], 25, start_epoch_2, epoch_delta_2, 125, 3, 0, sentinel.spacecraft_info25),
+            call(lo_parents + ["l1b_nhk_26"], 26, start_epoch_3, epoch_delta_3, 126, 3, 0, sentinel.spacecraft_info26),
+            call(lo_parents + ["predict"], 27, start_epoch_4, epoch_delta_4, 90, 3, GlowsL3Flags.PREDICTIVE_EPHEMERIS, sentinel.spacecraft_info27),
         ])
 
         mock_process_ultra_sf.assert_has_calls([
-            call(ultra_parents, 24, start_epoch_1, epoch_delta_1, 4, 0),
-            call(ultra_parents, 25, start_epoch_2, epoch_delta_2, 4, 0),
-            call(ultra_parents, 26, start_epoch_3, epoch_delta_3, 4, 0),
-            call(ultra_parents, 27, start_epoch_4, epoch_delta_4, 4, 0),
+            call(ultra_parents, 24, start_epoch_1, epoch_delta_1, 4, 0, sentinel.spacecraft_info24),
+            call(ultra_parents, 25, start_epoch_2, epoch_delta_2, 4, 0, sentinel.spacecraft_info25),
+            call(ultra_parents, 26, start_epoch_3, epoch_delta_3, 4, 0, sentinel.spacecraft_info26),
+            call(ultra_parents + ["predict"], 27, start_epoch_4, epoch_delta_4, 4, GlowsL3Flags.PREDICTIVE_EPHEMERIS, sentinel.spacecraft_info27),
         ])
 
         mock_process_ultra_hf.assert_has_calls([
-            call(ultra_parents, 24, start_epoch_1, epoch_delta_1, 4, 0),
-            call(ultra_parents, 25, start_epoch_2, epoch_delta_2, 4, 0),
-            call(ultra_parents, 26, start_epoch_3, epoch_delta_3, 4, 0),
-            call(ultra_parents, 27, start_epoch_4, epoch_delta_4, 4, 0),
+            call(ultra_parents, 24, start_epoch_1, epoch_delta_1, 4, 0, sentinel.spacecraft_info24),
+            call(ultra_parents, 25, start_epoch_2, epoch_delta_2, 4, 0, sentinel.spacecraft_info25),
+            call(ultra_parents, 26, start_epoch_3, epoch_delta_3, 4, 0, sentinel.spacecraft_info26),
+            call(ultra_parents + ["predict"], 27, start_epoch_4, epoch_delta_4, 4, GlowsL3Flags.PREDICTIVE_EPHEMERIS, sentinel.spacecraft_info27),
         ])
 
         self.assertEqual(expected_l3e_products, actual_l3e_products)

@@ -610,7 +610,7 @@ class TestUtils(TestCase):
 
             fake_imap_data_access_config = {"DATA_DIR": mock_data_dir, "DATA_ACCESS_URL": mock_data_access_url}
             with patch.object(imap_data_access, "config", new=fake_imap_data_access_config):
-                actual_output = furnish_spice_metakernel(start_date, end_date, kernel_types)
+                actual_output = furnish_spice_metakernel(start_date, end_date, kernel_types, metakernel_file_name="metakernel_file.txt")
 
                 expected_request_params = {
                     "file_types": ["leapseconds", "imap_frames"],
@@ -630,7 +630,7 @@ class TestUtils(TestCase):
                     call('imap_001.tf')
                 ])
 
-                expected_metakernel_path = mock_data_dir / "metakernel" / "metakernel.txt"
+                expected_metakernel_path = mock_data_dir / "metakernel" / "metakernel_file.txt"
                 self.assertEqual(metakernel_bytes, expected_metakernel_path.read_bytes())
 
                 mock_spiceypy.furnsh.assert_called_once_with(str(expected_metakernel_path))

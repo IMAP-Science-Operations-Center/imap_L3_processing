@@ -4,14 +4,23 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch, Mock, call, sentinel
 
+import imap_data_access
 import numpy as np
+from imap_data_access import SPICEFilePath
+
+from imap_l3_processing.glows.quality_flags import GlowsL3Flags
 from spacepy.pycdf import CDF, const
 
-from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
+from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments, GlowsL3eSpacecraftInfo
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, \
+    determine_spacecraft_info_for_l3e_executable, \
     determine_l3e_files_to_produce, find_first_updated_cr, get_lo_pivot_angles, \
-    get_lo_pivot_angle_from_l1b_file, LoPivotAngle, compute_glows_flags_for_window
-from tests.test_helpers import get_test_data_path, create_mock_query_results
+    get_lo_pivot_angle_from_l1b_file, LoPivotAngle, compute_glows_flags_for_window, \
+    determine_spacecraft_info_using_predict_if_needed
+from imap_l3_processing.utils import FurnishMetakernelOutput
+from tests.integration.integration_test_helpers import mock_imap_data_access, create_metakernel
+from tests.test_helpers import get_test_data_path, create_mock_query_results, get_spice_data_path, \
+    get_integration_test_data_path
 
 
 class TestGlowsL3EUtils(unittest.TestCase):
@@ -23,6 +32,24 @@ class TestGlowsL3EUtils(unittest.TestCase):
     def test_determine_call_args_for_l3e_executable(self, mock_pxform: Mock, mock_reclat: Mock, mock_spkezr: Mock,
                                                     mock_date_time_2et: Mock):
         start_time = datetime.fromisoformat("2025-05-01 00:00:00")
+        repointing_midpoint = datetime.fromisoformat("2025-05-01 12:00:00")
+
+        elongation = 90
+        spacecraft_info = Mock()
+        call_args: GlowsL3eCallArguments = determine_call_args_for_l3e_executable(start_time, repointing_midpoint,
+                                                                                  elongation, spacecraft_info)
+
+        self.assertEqual("20250501_000000", call_args.formatted_date)
+        self.assertEqual("2025.33014", call_args.decimal_date)
+        self.assertEqual(elongation, call_args.elongation)
+        self.assertEqual(spacecraft_info, call_args.spacecraft_info)
+
+    @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.spiceypy.datetime2et")
+    @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.spiceypy.spkezr")
+    @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.spiceypy.reclat")
+    @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.spiceypy.pxform")
+    def test_determine_spacecraft_info_for_l3e_executable(self, mock_pxform: Mock, mock_reclat: Mock, mock_spkezr: Mock,
+                                                    mock_date_time_2et: Mock):
         repointing_midpoint = datetime.fromisoformat("2025-05-01 12:00:00")
 
         x, y, z, vx, vy, vz = 1.0, 2.0, 3.0, 4.0, 5.0, 6.0
@@ -37,9 +64,9 @@ class TestGlowsL3EUtils(unittest.TestCase):
         spin_axis_long, spin_axis_lat = -1.4, 0.2
         mock_reclat.side_effect = [(radius, longitude, latitude), (Mock(), spin_axis_long, spin_axis_lat)]
 
-        elongation = 90
-        call_args: GlowsL3eCallArguments = determine_call_args_for_l3e_executable(start_time, repointing_midpoint,
-                                                                                  elongation)
+        call_args: GlowsL3eSpacecraftInfo = determine_spacecraft_info_for_l3e_executable(repointing_midpoint)
+
+        self.assertIsInstance(call_args, GlowsL3eSpacecraftInfo)
 
         mock_date_time_2et.assert_called_once_with(repointing_midpoint)
 
@@ -50,8 +77,6 @@ class TestGlowsL3EUtils(unittest.TestCase):
         mock_pxform.assert_called_once_with("IMAP_DPS", "ECLIPJ2000", mock_date_time_2et.return_value)
         np.testing.assert_array_equal([12.0, 15.0, 18.0], mock_reclat.call_args_list[1][0][0])
 
-        self.assertEqual("20250501_000000", call_args.formatted_date)
-        self.assertEqual("2025.33014", call_args.decimal_date)
         self.assertEqual(0.4679210985587912, call_args.spacecraft_radius)
         self.assertEqual(261.6337638953414, call_args.spacecraft_longitude)
         self.assertEqual(-51.56620156177409, call_args.spacecraft_latitude)
@@ -60,7 +85,71 @@ class TestGlowsL3EUtils(unittest.TestCase):
         self.assertEqual(vz, call_args.spacecraft_velocity_z)
         self.assertEqual(np.rad2deg(spin_axis_long) % 360, call_args.spin_axis_longitude)
         self.assertEqual(np.rad2deg(spin_axis_lat), call_args.spin_axis_latitude)
-        self.assertEqual(elongation, call_args.elongation)
+
+    def test_determine_spacecraft_info_using_predict_if_needed(self):
+        with (tempfile.TemporaryDirectory() as tmp_dir):
+
+            input_files = [
+                get_integration_test_data_path("spice/de440.bsp"),
+                get_integration_test_data_path("spice/imap_dps_2025_359_2026_058_002.ah.bc"),
+                get_integration_test_data_path("spice/imap_dps_2025_359_2026_131_002.ah.bc"),
+                get_integration_test_data_path("spice/imap_recon_20250925_20260520_v01.bsp"),
+                get_integration_test_data_path("spice/imap_science_120.tf"),
+                get_integration_test_data_path("spice/imap_sclk_0171.tsc"),
+                get_integration_test_data_path("spice/naif0012.tls"),
+            ]
+
+            with mock_imap_data_access(Path(tmp_dir), input_files):
+                spice_paths_with_predict = [SPICEFilePath(p.name) for p in input_files]
+                spice_paths_without_predict = [p for p in spice_paths_with_predict if "imap_dps_2025_359_2026_131" not in p.filename.name]
+
+                spice_dir = imap_data_access.config["DATA_DIR"] / "imap/spice"
+                metakernel_with_predict = Path(tmp_dir, "metakernel_with_predict")
+                metakernel_with_predict.write_text(create_metakernel(spice_dir, spice_paths_with_predict))
+
+                metakernel_without_predict = Path(tmp_dir, "metakernel_without_predict")
+                metakernel_without_predict.write_text(create_metakernel(spice_dir, spice_paths_without_predict))
+
+                input_files_with_predict = [Path("parent/kernel 1"), Path("kernel 2"), Path("kernel 3"), Path("kernel 4")]
+                input_files_without_predict = [Path("kernel 5"), Path("kernel 6"), Path("kernel 7"), Path("kernel 8")]
+
+                spice_with_predict = FurnishMetakernelOutput(metakernel_with_predict, input_files_with_predict)
+                spice_without_predict = FurnishMetakernelOutput(metakernel_without_predict, input_files_without_predict)
+
+                date_with_predict = datetime(2026, 3, 25, 12)
+                date_without_predict = datetime(2026, 1, 15, 12)
+
+                result_without_predict = determine_spacecraft_info_using_predict_if_needed(date_without_predict, spice_with_predict, spice_without_predict)
+                self.assertIsInstance(result_without_predict, tuple)
+                spacecraft_info: GlowsL3eSpacecraftInfo = result_without_predict[0]
+                self.assertIsInstance(spacecraft_info, GlowsL3eSpacecraftInfo)
+                glows_flags = result_without_predict[1]
+                self.assertIsInstance(glows_flags, GlowsL3Flags)
+                self.assertEqual(GlowsL3Flags.NONE, glows_flags)
+                kernel_names = result_without_predict[2]
+                self.assertIsInstance(kernel_names, list)
+                self.assertEqual(["kernel 5", "kernel 6", "kernel 7", "kernel 8"], kernel_names)
+                self.assertEqual(GlowsL3eSpacecraftInfo(spacecraft_radius=0.974926812207828,
+                       spacecraft_longitude=np.float64(114.98987223111648),
+                       spacecraft_latitude=np.float64(-0.02732735672494243),
+                       spacecraft_velocity_x=np.float64(-27.105121226323945),
+                       spacecraft_velocity_y=np.float64(-12.572196725157356),
+                       spacecraft_velocity_z=np.float64(0.04038850296808949),
+                       spin_axis_longitude=np.float64(291.46869723545007),
+                       spin_axis_latitude=np.float64(0.08089846053031882)), spacecraft_info)
+
+                result_with_predict = determine_spacecraft_info_using_predict_if_needed(date_with_predict, spice_with_predict, spice_without_predict)
+                spacecraft_info, glows_flags, kernel_names = result_with_predict
+                self.assertEqual(GlowsL3Flags.PREDICTIVE_EPHEMERIS, glows_flags)
+                self.assertEqual(["kernel 1", "kernel 2", "kernel 3", "kernel 4"], kernel_names)
+                self.assertEqual(GlowsL3eSpacecraftInfo(spacecraft_radius=0.9869148557889134,
+                       spacecraft_longitude=np.float64(184.44380384879602),
+                       spacecraft_latitude=np.float64(0.04367233154056944),
+                       spacecraft_velocity_x=np.float64(1.8304001531697336),
+                       spacecraft_velocity_y=np.float64(-29.587138738875474),
+                       spacecraft_velocity_z=np.float64(-0.009923833866874787),
+                       spin_axis_longitude=np.float64(0.9116206658792297),
+                       spin_axis_latitude=np.float64(0.0758987849137639)) ,spacecraft_info)
 
     @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access.query")
     def test_determine_l3e_files_to_produce(self, mock_query):

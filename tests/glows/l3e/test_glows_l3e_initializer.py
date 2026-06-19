@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch, call
+from unittest.mock import patch, call, Mock
 
 from imap_data_access import RepointInput
 
@@ -18,7 +18,8 @@ class TestGlowsL3EInitializer(unittest.TestCase):
     @patch('imap_l3_processing.glows.l3e.glows_l3e_initializer.find_first_updated_cr')
     @patch('imap_l3_processing.glows.l3e.glows_l3e_initializer.get_most_recently_uploaded_ancillary')
     @patch('imap_l3_processing.glows.l3e.glows_l3e_initializer.imap_data_access.query')
-    def test_get_repointings_to_process(self, mock_query, mock_get_most_recently_uploaded_ancillary,
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_initializer.GlowsL3EDependencies.collect_spice_dependencies')
+    def test_get_repointings_to_process(self, mock_collect_spice_dependencies, mock_query, mock_get_most_recently_uploaded_ancillary,
                                         mock_find_first_updated_cr, mock_determine_l3e_files_to_produce,
                                         mock_fetch_dependencies, mock_get_pointing_date_range):
         mock_query.side_effect = create_mock_query_results([
@@ -38,6 +39,10 @@ class TestGlowsL3EInitializer(unittest.TestCase):
             create_mock_query_results(['imap_glows_energy-grid-ultra_20200101_v000.cdf'])[0],
             create_mock_query_results(['imap_glows_tess-ang-16_20200101_v000.cdf'])[0],
         ]
+
+        mock_spice_with_predict, mock_spice_without_predict = Mock(), Mock()
+
+        mock_collect_spice_dependencies.return_value = (mock_spice_with_predict, mock_spice_without_predict)
 
         updated_l3d = Path('path/to/imap_glows_l3d_solar-hist_19470303-cr02091_v000.cdf')
         updated_l3d_text_file_path = Path("imap_glows_e-dens_19470303_20100101_v000.dat")
@@ -68,6 +73,8 @@ class TestGlowsL3EInitializer(unittest.TestCase):
             dependencies=mock_l3e_dependencies,
             repointings=expected_repointings,
             l3d_cdf_path=updated_l3d,
+            metakernel_without_predict_ephem=mock_spice_without_predict,
+            metakernel_with_predict_ephem=mock_spice_with_predict,
         )
 
         mock_determine_l3e_files_to_produce.return_value = expected_repointings
@@ -126,7 +133,7 @@ class TestGlowsL3EInitializer(unittest.TestCase):
             call(2468)
         ])
 
-        mock_l3e_dependencies.furnish_spice_dependencies.assert_called_once_with(
+        mock_collect_spice_dependencies.assert_called_once_with(
             start_date=datetime(2010, 1, 1),
             end_date=datetime(2011, 2, 2),
         )

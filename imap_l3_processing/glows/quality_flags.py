@@ -7,3 +7,4 @@ NOMINAL_ALPHA_PROTON_RATIO_VALUE: float = 0.04
 class GlowsL3Flags(FlagNameMixin):
     NONE = CommonFlags.NONE
     NOMINAL_ALPHA_PROTON_RATIO = 2 ** 2
+    PREDICTIVE_EPHEMERIS = 2 ** 15

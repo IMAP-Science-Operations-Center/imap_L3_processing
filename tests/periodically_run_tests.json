@@ -1,14 +1,14 @@
 {
-    "test_l3bcde_first_time_processing": "2026-06-03T15:44:15.445151",
-    "test_spectral_fit_against_validation_data": "2026-06-10T15:45:51.002557",
+    "test_l3bcde_first_time_processing": "2026-06-19T16:29:00.160365",
+    "test_spectral_fit_against_validation_data": "2026-06-19T16:28:11.954430",
     "test_calculate_pickup_ions_with_minimize": "2026-05-20T10:52:46.704900",
     "test_l3bcde_reprocessing": "2026-06-10T15:49:11.328315",
     "test_glows_l3abcde_from_l2": "2026-06-10T15:47:58.463278",
     "test_codice_lo_3d_distributions": "2026-05-28T09:43:22.990231",
-    "test_alpha_sigma_matches_empirical_std": "2026-06-10T15:52:57.807349",
-    "test_proton_sigma_matches_empirical_std": "2026-06-10T15:53:35.510111",
-    "test_swe_processor_with_local_data": "2026-06-10T15:51:38.513730",
-    "test_ultra_all_sp_maps": "2026-06-10T15:50:02.825494",
-    "test_ultra_combined_nsp_maps": "2026-06-10T15:50:23.153090",
-    "test_ultra_combined_sp_maps": "2026-06-10T15:50:52.562588"
+    "test_alpha_sigma_matches_empirical_std": "2026-06-19T16:32:05.836849",
+    "test_proton_sigma_matches_empirical_std": "2026-06-19T16:32:36.458650",
+    "test_swe_processor_with_local_data": "2026-06-19T16:31:04.598074",
+    "test_ultra_all_sp_maps": "2026-06-19T16:29:34.729519",
+    "test_ultra_combined_nsp_maps": "2026-06-19T16:29:52.816518",
+    "test_ultra_combined_sp_maps": "2026-06-19T16:30:19.677647"
 }
