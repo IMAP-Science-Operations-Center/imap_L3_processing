@@ -4,7 +4,7 @@ from unittest.mock import sentinel, Mock, MagicMock
 
 import numpy as np
 
-from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
+from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments, GlowsL3eSpacecraftInfo
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.models import DataProductVariable
 from tests.test_helpers import get_test_instrument_team_data_path
@@ -140,18 +140,20 @@ class TestL3eLoModel(unittest.TestCase):
         spin_axis_lon = 90.0
 
         args = MagicMock(spec=GlowsL3eCallArguments)
-        args.spin_axis_latitude = spin_axis_lat
-        args.spin_axis_longitude = spin_axis_lon
-
         expected_program_version = 'Lo.v00.01'
 
-        args.spacecraft_radius = .5
-        args.spacecraft_longitude = 85.4
-        args.spacecraft_latitude = 45.1
+        spacecraft_info = MagicMock(spec=GlowsL3eSpacecraftInfo)
+        spacecraft_info.spin_axis_latitude = spin_axis_lat
+        spacecraft_info.spin_axis_longitude = spin_axis_lon
+        spacecraft_info.spacecraft_radius = .5
+        spacecraft_info.spacecraft_longitude = 85.4
+        spacecraft_info.spacecraft_latitude = 45.1
 
-        args.spacecraft_velocity_x = 2.1
-        args.spacecraft_velocity_y = 2.2
-        args.spacecraft_velocity_z = 2.3
+        spacecraft_info.spacecraft_velocity_x = 2.1
+        spacecraft_info.spacecraft_velocity_y = 2.2
+        spacecraft_info.spacecraft_velocity_z = 2.3
+
+        args.spacecraft_info = spacecraft_info
 
         l3e_lo_product: GlowsL3ELoData = GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product(mock_metadata, lo_file_path,
                                                                                             epoch,
