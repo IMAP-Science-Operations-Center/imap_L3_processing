@@ -33,7 +33,8 @@ class GlowsL3EInitializer:
         if previous_l3d is not None:
             latest_l3d_cr = find_first_updated_cr(l3d_output.l3d_cdf_file_path, previous_l3d)
             if not latest_l3d_cr:
-                return None
+                print("would skip because no difference in l3d")
+                #return None
 
         pipeline_settings_l3bcde = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='pipeline-settings-l3bcde'))
         energy_grid_lo = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='energy-grid-lo'))

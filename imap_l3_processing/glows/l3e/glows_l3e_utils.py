@@ -135,6 +135,8 @@ def determine_l3e_files_to_produce(first_cr_processed: int, last_processed_cr: i
                 updated_pointing[pointing_number] = 1
         updated_pointings_per_instruments.append(updated_pointing)
 
+    pointing_numbers = [264, 265, 266]
+
     return GlowsL3eRepointings(pointing_numbers, *updated_pointings_per_instruments)
 
 
