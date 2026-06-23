@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
 import imap_data_access
 import numpy as np
+from imap_data_access import ScienceInput
 from imap_data_access.processing_input import ProcessingInputCollection
 from imap_processing.ultra.l2.ultra_l2 import ultra_l2
 
@@ -28,6 +30,7 @@ class UltraL3Dependencies:
         ultra_l2_names = deps.get_file_paths("ultra", data_type="l2")
         assert len(ultra_l2_names) == 1, f"Incorrect number of map dependencies: {len(ultra_l2_names)}"
         ultra_l2_name = ultra_l2_names[0]
+
 
         ultra_l1c_names = deps.get_file_paths("ultra", data_type="l1c")
         glows_l3e_names = deps.get_file_paths("glows")
@@ -57,7 +60,10 @@ class UltraL3Dependencies:
             glows_l3e_data.append(UltraGlowsL3eData.read_from_path(file_path))
         paths = [l2_map_path] + l1c_file_paths + glows_file_paths
         l1c_paths_dict = {path.stem: path for path in l1c_file_paths}
-        l2_healpix_datasets = ultra_l2(l1c_paths_dict)
+
+        l2_descriptor = ScienceInput(l2_map_path.name).descriptor
+        l2_descriptor = re.sub(r"[246]deg", "nside32", l2_descriptor)
+        l2_healpix_datasets = ultra_l2(l1c_paths_dict, descriptor=l2_descriptor)
         l2_healpix_map_data = HealPixIntensityMapData.read_from_xarray(l2_healpix_datasets[0])
         l2_rectangular_map_data = RectangularIntensityMapData.read_from_path(l2_map_path)
         energy_bin_group_sizes = None
@@ -154,13 +160,16 @@ class UltraL3CombinedDependencies:
 
         for pset in glows_l3e_pset_paths:
             survival_probability_ul_pset.append(UltraGlowsL3eData.read_from_path(pset))
-
+        u45_l2_descriptor = ScienceInput(u45_map_path.name).descriptor
+        u45_l2_descriptor = re.sub(r"[246]deg", "nside32", u45_l2_descriptor)
         l1c_u45_paths_dict = {path.stem: path for index, path in enumerate(u45_pset_paths)}
-        l2_u45_maps = ultra_l2(l1c_u45_paths_dict)
+        l2_u45_maps = ultra_l2(l1c_u45_paths_dict, descriptor=u45_l2_descriptor)
         l2_u45_healpix_map_data = HealPixIntensityMapData.read_from_xarray(l2_u45_maps[0])
 
+        u90_l2_descriptor = ScienceInput(u90_map_path.name).descriptor
+        u90_l2_descriptor = re.sub(r"[246]deg", "nside32", u90_l2_descriptor)
         l1c_u90_paths_dict = {path.stem: path for index, path in enumerate(u90_pset_paths)}
-        l2_u90_maps = ultra_l2(l1c_u90_paths_dict)
+        l2_u90_maps = ultra_l2(l1c_u90_paths_dict, descriptor=u90_l2_descriptor)
         l2_u90_healpix_map_data = HealPixIntensityMapData.read_from_xarray(l2_u90_maps[0])
 
         l2_u45_rectangular_map_data = RectangularIntensityMapData.read_from_path(u45_map_path)
