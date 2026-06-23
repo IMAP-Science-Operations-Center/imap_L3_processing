@@ -49,9 +49,6 @@ class TestUltraL3Dependencies(unittest.TestCase):
 
         mock_download.side_effect = returned_download_paths
         mock_science_input_constructor.return_value = Mock(descriptor="ultra-nsp-descriptor-6deg")
-        # l2_science_input = mock_science_input_constructor.return_value
-        # l2_science_input.descriptor.return_value = sentinel.l2_map_descriptor
-
 
         l1c_data = [sentinel.ultra_l1c_data_1, sentinel.ultra_l1c_data_2,
                     sentinel.ultra_l1c_data_3]
