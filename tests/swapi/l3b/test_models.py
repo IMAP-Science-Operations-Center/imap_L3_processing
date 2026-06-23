@@ -5,7 +5,7 @@ from spacepy import pycdf
 from uncertainties.unumpy import uarray
 
 from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
-from imap_l3_processing.models import UpstreamDataDependency
+from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.l3a.models import EPOCH_CDF_VAR_NAME, EPOCH_DELTA_CDF_VAR_NAME
 from imap_l3_processing.swapi.l3b.models import SwapiL3BCombinedVDF, COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_CDF_VAR_NAME, \
     COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_DELTA_CDF_VAR_NAME, SOLAR_WIND_ENERGY_CDF_VAR_NAME, \
@@ -16,7 +16,7 @@ from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 class TestModels(CdfModelTestCase):
     def test_combined_vdf_data_products(self):
-        input_metadata = UpstreamDataDependency("swapi", "l3b",
+        input_metadata = InputMetadata("swapi", "l3b",
                                                 datetime(2024, 9, 8),
                                                 datetime(2024, 9, 9),
                                                 "v001", "")

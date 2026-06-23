@@ -25,15 +25,6 @@ class InputMetadata:
     def logical_source(self):
         return f"imap_{self.instrument}_{self.data_level}_{self.descriptor}"
 
-    def to_upstream_data_dependency(self, descriptor: str):
-        return UpstreamDataDependency(self.instrument, self.data_level, self.start_date, self.end_date, self.version,
-                                      descriptor, self.repointing)
-
-
-@dataclass
-class UpstreamDataDependency(InputMetadata):
-    pass
-
 
 @dataclass
 class DataProductVariable:
