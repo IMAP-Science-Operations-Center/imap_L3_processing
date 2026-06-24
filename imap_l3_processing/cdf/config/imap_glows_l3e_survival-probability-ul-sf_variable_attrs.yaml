@@ -26,7 +26,7 @@ energy_grid:
   FIELDNAM: Energy
   FORMAT: g9.3
   LABLAXIS: Energy
-  UNITS: kEV
+  UNITS: keV
   VALIDMIN: 0
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
@@ -68,23 +68,31 @@ spin_axis_latitude:
   DATA_TYPE: CDF_FLOAT
   CATDESC: Latitude of spin axis
   DEPEND_0: epoch
-  VAR_TYPE: metadata
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  SCALETYP: linear
   FIELDNAM: Spin Axis Latitude
-  FORMAT: F9.3
+  LABLAXIS: Spin Axis Latitude
+  FORMAT: F5.1
   FILLVAL: -1.0000E+31
   UNITS: degrees
+  VALIDMIN: -90
+  VALIDMAX: 90
 spin_axis_longitude:
   NAME: spin_axis_longitude
   DATA_TYPE: CDF_FLOAT
   CATDESC: Longitude of spin axis
   DEPEND_0: epoch
-  VAR_TYPE: metadata
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   FIELDNAM: Spin Axis Longitude
-  FORMAT: F9.3
+  LABLAXIS: Spin Axis Longitude
+  FORMAT: F5.1
   FILLVAL: -1.0000E+31
   UNITS: degrees
+  VALIDMIN: 0
+  VALIDMAX: 360
 energy_label:
   NAME: energy_label
   DATA_TYPE: CDF_CHAR
@@ -122,10 +130,15 @@ spacecraft_radius:
   DATA_TYPE: CDF_FLOAT
   CATDESC: Distance from IMAP to sun
   DEPEND_0: epoch
-  VAR_TYPE: metadata
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: time_series
+  SCALETYP: linear
   FIELDNAM: Spacecraft Radius
+  LALBAXIS: Spacecraft Radius
   RECORD_VARYING: RV
-  FORMAT: F9.3
+  FORMAT: F4.2
+  VALIDMIN: 0.0
+  VALIDMAX: 1.1
   FILLVAL: -1.0000E+31
   UNITS: AU
 spacecraft_latitude:
@@ -133,10 +146,13 @@ spacecraft_latitude:
   DATA_TYPE: CDF_FLOAT
   CATDESC: IMAP spacecraft latitude
   DEPEND_0: epoch
-  VAR_TYPE: metadata
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: time_series
+  SCALETYP: linear
   FIELDNAM: Spacecraft Latitude
+  LABLAXIS: Spacecraft Latitude
   RECORD_VARYING: RV
-  FORMAT: F9.3
+  FORMAT: F5.1
   FILLVAL: -1.0000E+31
   UNITS: degrees
   VALIDMIN: -90
@@ -146,10 +162,13 @@ spacecraft_longitude:
   DATA_TYPE: CDF_FLOAT
   CATDESC: IMAP spacecraft longitude
   DEPEND_0: epoch
-  VAR_TYPE: metadata
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: time_series
+  SCALETYP: linear
   FIELDNAM: Spacecraft Longitude
+  LABLAXIS: Spacecraft Longitude
   RECORD_VARYING: RV
-  FORMAT: F9.3
+  FORMAT: F5.1
   FILLVAL: -1.0000E+31
   UNITS: degrees
   VALIDMIN: 0
@@ -159,10 +178,13 @@ spacecraft_velocity_x:
   DATA_TYPE: CDF_FLOAT
   CATDESC: IMAP spacecraft x velocity
   DEPEND_0: epoch
-  VAR_TYPE: metadata
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: time_series
+  SCALETYP: linear
   FIELDNAM: Spacecraft Velocity X
+  LABLAXIS: Spacecraft Velocity X
   RECORD_VARYING: RV
-  FORMAT: F9.3
+  FORMAT: F6.2
   FILLVAL: -1.0000E+31
   UNITS: km/s
   VALIDMIN: -50
@@ -172,10 +194,13 @@ spacecraft_velocity_y:
   DATA_TYPE: CDF_FLOAT
   CATDESC: IMAP spacecraft y velocity
   DEPEND_0: epoch
-  VAR_TYPE: metadata
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: time_series
+  SCALETYP: linear
   FIELDNAM: Spacecraft Velocity Y
+  LABLAXIS: Spacecraft Velocity Y
   RECORD_VARYING: RV
-  FORMAT: F9.3
+  FORMAT: F6.2
   FILLVAL: -1.0000E+31
   UNITS: km/s
   VALIDMIN: -50
@@ -185,10 +210,13 @@ spacecraft_velocity_z:
   DATA_TYPE: CDF_FLOAT
   CATDESC: IMAP spacecraft z velocity
   DEPEND_0: epoch
-  VAR_TYPE: metadata
+  VAR_TYPE: support_data
+  DISPLAY_TYPE: time_series
+  SCALETYP: linear
   FIELDNAM: Spacecraft Velocity Z
+  LABLAXIS: Spacecraft Velocity Z
   RECORD_VARYING: RV
-  FORMAT: F9.3
+  FORMAT: F6.2
   FILLVAL: -1.0000E+31
   UNITS: km/s
   VALIDMIN: -50
@@ -214,11 +242,11 @@ pixel_longitude:
   DATA_TYPE: CDF_FLOAT
   CATDESC: Pixel center longitude in HAE (ECLIPJ2000)
   VAR_NOTES: Reference frames are defined according to IMAP mission SPICE kernels.
-  VAR_TYPE: metadata
+  VAR_TYPE: support_data
   FIELDNAM: HAE longitude
   LABLAXIS: Longitude
   RECORD_VARYING: RV
-  FORMAT: F9.3
+  FORMAT: F5.1
   FILLVAL: -1.0000E+31
   UNITS: degrees
   VALIDMIN: 0
@@ -230,11 +258,11 @@ pixel_latitude:
   DATA_TYPE: CDF_FLOAT
   CATDESC: Pixel center latitude in HAE (ECLIPJ2000)
   VAR_NOTES: Reference frames are defined according to IMAP mission SPICE kernels.
-  VAR_TYPE: metadata
+  VAR_TYPE: support_data
   FIELDNAM: HAE latitude
   LABLAXIS: Latitude
   RECORD_VARYING: RV
-  FORMAT: F9.3
+  FORMAT: F5.1
   FILLVAL: -1.0000E+31
   UNITS: degrees
   VALIDMIN: -90

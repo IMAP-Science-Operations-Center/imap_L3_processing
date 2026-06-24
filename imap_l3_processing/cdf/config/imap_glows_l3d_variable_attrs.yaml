@@ -128,7 +128,7 @@ phion:
   RECORD_VARYING: RV
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Photoionization Rate
-  FORMAT: F9.3
+  FORMAT: E6.1E2
   LABLAXIS: Photoionization rate
   DISPLAY_TYPE: time_series
   UNITS: '#/s'
