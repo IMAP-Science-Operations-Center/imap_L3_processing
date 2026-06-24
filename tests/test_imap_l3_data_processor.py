@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from pathlib import Path
 from unittest import TestCase
@@ -58,7 +59,7 @@ class TestImapL3DataProcessor(TestCase):
                 mock_argument_parser = mock_argparse.ArgumentParser.return_value
                 mock_argument_parser.parse_args.return_value.instrument = instrument
                 mock_argument_parser.parse_args.return_value.data_level = data_level
-                mock_argument_parser.parse_args.return_value.dependency = "dependency_string"
+                mock_argument_parser.parse_args.return_value.dependency = "[]"
                 mock_argument_parser.parse_args.return_value.start_date = "20250101"
                 mock_argument_parser.parse_args.return_value.end_date = None
                 mock_argument_parser.parse_args.return_value.repointing = "repoint00022"
@@ -81,13 +82,13 @@ class TestImapL3DataProcessor(TestCase):
                     call("--start-date"),
                     call("--end-date", required=False),
                     call("--repointing", required=False),
-                    call("--version"),
+                    call("--version", required=False),
                     call("--dependency"),
                     call("--upload-to-sdc", action="store_true", required=False,
                          help="Upload completed output files to the IMAP SDC.")
                 ])
 
-                mock_processing_input.return_value.deserialize.assert_called_once_with("dependency_string")
+                mock_processing_input.return_value.deserialize.assert_called_once_with("[]")
 
                 expected_processor.assert_called_once_with(mock_processing_input.return_value, expected_input_metadata)
                 mock_upload.assert_called_once_with(sentinel.cdf)
@@ -234,7 +235,7 @@ class TestImapL3DataProcessor(TestCase):
         mock_argument_parser.parse_args.return_value.end_date = "20160630"
         mock_argument_parser.parse_args.return_value.version = "v101"
         mock_argument_parser.parse_args.return_value.descriptor = "dont care"
-        mock_argument_parser.parse_args.return_value.dependency = "also dont care"
+        mock_argument_parser.parse_args.return_value.dependency = "[]"
         mock_argument_parser.parse_args.return_value.repointing = None
 
         mock_download.side_effect = [
@@ -307,7 +308,7 @@ class TestImapL3DataProcessor(TestCase):
                     call("--start-date"),
                     call("--end-date", required=False),
                     call("--repointing", required=False),
-                    call("--version"),
+                    call("--version", required=False),
                     call("--dependency"),
                     call("--upload-to-sdc", action="store_true", required=False,
                          help="Upload completed output files to the IMAP SDC.")
@@ -517,3 +518,124 @@ class TestImapL3DataProcessor(TestCase):
         self.assertEqual(str(exception_manager.exception),
                          "Level l4 data processing has not yet been implemented for swapi")
         mock_upload.assert_not_called()
+
+    @patch('imap_l3_data_processor.ProcessingInputCollection')
+    @patch('imap_l3_data_processor.imap_data_access.upload')
+    @patch('imap_l3_data_processor.SweProcessor')
+    @patch('imap_l3_data_processor.argparse')
+    def test_version_comes_from_dependency(self, mock_argparse, mock_processor_class, mock_upload,
+                                                         mock_processing_input_collection):
+        cases = [("20170630", datetime(2017, 6, 30)), (None, datetime(2016, 6, 30))]
+
+        instrument_argument = "swe"
+        data_level_argument = "l3"
+        start_date_argument = "20160630"
+        version_argument = "v092"
+        descriptor_argument = "pitch-angle"
+        science_input_1 = ScienceInput("imap_swe_l1_sci_20250101_v112.cdf", "imap_swe_l1_sci_20250102_v112.cdf")
+        science_input_2 = ScienceInput("imap_mag_l1d_norm-dsrf_20250101_v112.cdf")
+        ancillary_input = AncillaryInput("imap_swe_ancillary_20250101_v112.cdf")
+        imap_data_access_dependency = ProcessingInputCollection(science_input_1, science_input_2, ancillary_input)
+
+        version_input = {
+            "sci": {"major_version": 2, "minor_version": 1}
+        }
+        combined_input = {
+            "version": version_input,
+            "dependency": json.loads(imap_data_access_dependency.serialize()),
+        }
+
+        mock_processing_input_collection.return_value = imap_data_access_dependency
+        mock_processing_input_collection.deserialize = Mock()
+        mock_processing_input_collection.get_science_inputs = Mock(return_value=[])
+
+        mock_argument_parser = mock_argparse.ArgumentParser.return_value
+
+        mock_argument_parser.parse_args.return_value.instrument = instrument_argument
+        mock_argument_parser.parse_args.return_value.data_level = data_level_argument
+        mock_argument_parser.parse_args.return_value.dependency = json.dumps(combined_input)
+        mock_argument_parser.parse_args.return_value.start_date = start_date_argument
+        mock_argument_parser.parse_args.return_value.version = version_argument
+        mock_argument_parser.parse_args.return_value.descriptor = descriptor_argument
+        mock_argument_parser.parse_args.return_value.repointing = None
+
+        mock_processor = mock_processor_class.return_value
+
+        for input_end_date, expected_end_date in cases:
+            with self.subTest(input_end_date):
+                mock_upload.reset_mock()
+
+                mock_argument_parser.parse_args.return_value.end_date = input_end_date
+
+                mock_processor_class.return_value.process.return_value = [Mock()]
+
+                imap_l3_processor()
+
+                parser = mock_argparse.ArgumentParser()
+                parser.add_argument.assert_has_calls([
+                    call("--instrument"),
+                    call("--data-level"),
+                    call("--descriptor"),
+                    call("--start-date"),
+                    call("--end-date", required=False),
+                    call("--repointing", required=False),
+                    call("--version", required=False),
+                    call("--dependency"),
+                    call("--upload-to-sdc", action="store_true", required=False,
+                         help="Upload completed output files to the IMAP SDC.")
+                ])
+
+                expected_input_metadata = InputMetadata("swe", "l3", datetime(year=2016, month=6, day=30),
+                                                        expected_end_date, "v002.0001", "pitch-angle")
+
+                mock_processor_class.assert_called_with(imap_data_access_dependency, expected_input_metadata)
+
+                mock_processor.process.assert_called()
+                mock_upload.assert_called_once_with(mock_processor_class.return_value.process.return_value[0])
+
+
+    @patch('imap_l3_data_processor.ProcessingInputCollection')
+    @patch('imap_l3_data_processor.imap_data_access.upload')
+    @patch('imap_l3_data_processor.SweProcessor')
+    @patch('imap_l3_data_processor.argparse')
+    def test_raises_error_if_multiple_versions_are_specified(self, mock_argparse, mock_processor_class, mock_upload,
+                                                         mock_processing_input_collection):
+
+        instrument_argument = "swe"
+        data_level_argument = "l3"
+        start_date_argument = "20160630"
+        version_argument = "v092"
+        descriptor_argument = "pitch-angle"
+        science_input_1 = ScienceInput("imap_swe_l1_sci_20250101_v112.cdf", "imap_swe_l1_sci_20250102_v112.cdf")
+        science_input_2 = ScienceInput("imap_mag_l1d_norm-dsrf_20250101_v112.cdf")
+        ancillary_input = AncillaryInput("imap_swe_ancillary_20250101_v112.cdf")
+        imap_data_access_dependency = ProcessingInputCollection(science_input_1, science_input_2, ancillary_input)
+
+        version_input = {
+            "sci": {"major_version": 2, "minor_version": 1},
+            "another_var": {"major_version": 2, "minor_version": 1}
+        }
+        combined_input = {
+            "version": version_input,
+            "dependency": json.loads(imap_data_access_dependency.serialize()),
+        }
+
+        mock_processing_input_collection.return_value = imap_data_access_dependency
+        mock_processing_input_collection.deserialize = Mock()
+        mock_processing_input_collection.get_science_inputs = Mock(return_value=[])
+
+        mock_argument_parser = mock_argparse.ArgumentParser.return_value
+
+        mock_argument_parser.parse_args.return_value.instrument = instrument_argument
+        mock_argument_parser.parse_args.return_value.data_level = data_level_argument
+        mock_argument_parser.parse_args.return_value.dependency = json.dumps(combined_input)
+        mock_argument_parser.parse_args.return_value.start_date = start_date_argument
+        mock_argument_parser.parse_args.return_value.version = version_argument
+        mock_argument_parser.parse_args.return_value.descriptor = descriptor_argument
+        mock_argument_parser.parse_args.return_value.repointing = None
+        mock_argument_parser.parse_args.return_value.end_date = None
+
+        with self.assertRaises(ValueError) as exception:
+                mock_processor_class.return_value.process.return_value = [Mock()]
+                imap_l3_processor()
+        self.assertEqual(str(exception.exception), "Expected only a single version to be specified in the dependency.")

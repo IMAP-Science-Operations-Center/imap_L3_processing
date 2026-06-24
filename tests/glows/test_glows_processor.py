@@ -16,6 +16,7 @@ from zipfile import ZIP_DEFLATED
 import imap_data_access
 import numpy as np
 from imap_data_access import AncillaryFilePath
+from imap_data_access.file_validation import Version
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
@@ -295,25 +296,27 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_archive_dependencies.side_effect = [Path("path1.zip"), Path("path2.zip")]
 
         l3a_data_1 = {"filename": "l3a_file_1"}
+        first_dependency_version = Version(1, 1)
         first_dependency = GlowsL3BCDependencies(l3a_data=[l3a_data_1],
                                                  external_files=sentinel.external_files_1,
                                                  ancillary_files={
                                                      'bad_days_list': sentinel.bad_days_list_1,
                                                  },
                                                  carrington_rotation_number=first_cr_number_to_process,
-                                                 version=1,
+                                                 version=first_dependency_version,
                                                  start_date=Mock(),
                                                  end_date=Mock(),
                                                  repointing_file_path=sentinel.repointing_file_path)
 
         l3a_data_2 = {"filename": "l3a_file_2"}
+        second_dependency_version = Version(1, 2)
         second_dependency = GlowsL3BCDependencies(l3a_data=[l3a_data_2],
                                                   external_files=sentinel.external_files_2,
                                                   ancillary_files={
                                                       'bad_days_list': sentinel.bad_days_list_2,
                                                   },
                                                   carrington_rotation_number=second_cr_number_to_process,
-                                                  version=2,
+                                                  version=second_dependency_version,
                                                   start_date=Mock(),
                                                   end_date=Mock(),
                                                   repointing_file_path=sentinel.repointing_file_path)
@@ -333,9 +336,10 @@ class TestGlowsProcessor(unittest.TestCase):
                                       Path("path/to/l3b_file_2.cdf"),
                                       Path("path/to/l3c_file_2.cdf")]
 
+        input_version = Version(2,1)
         input_metadata = InputMetadata('glows', "l3b", datetime(2024, 10, 7, 10, 00, 00),
                                        datetime(2024, 10, 8, 10, 00, 00),
-                                       'v02')
+                                       str(input_version))
 
         mock_glows_l3bc_initializer.get_crs_to_process.return_value = GlowsL3BCInitializerData(
             external_dependencies=external_deps,
@@ -345,7 +349,7 @@ class TestGlowsProcessor(unittest.TestCase):
             repoint_file_path=sentinel.repoint_file_path
         )
 
-        processor = GlowsProcessor(dependencies=Mock(), input_metadata=input_metadata)
+        processor = GlowsProcessor(dependencies=sentinel.dependencies, input_metadata=input_metadata)
         products = processor.process()
 
         self.assertEqual([Path("path/to/l3b_file_1.cdf"),
@@ -366,14 +370,16 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_generate_l3bc.assert_has_calls(
             [call(dependencies_with_filtered_list_1), call(dependencies_with_filtered_list_2)])
 
+        mock_glows_l3bc_initializer.get_crs_to_process.assert_called_once_with(sentinel.dependencies, input_version.major)
+
         expected_l3b_metadata_1 = InputMetadata("glows", "l3b", first_dependency.start_date,
-                                                first_dependency.end_date, 'v001', "ion-rate-profile")
+                                                first_dependency.end_date, str(first_dependency_version), "ion-rate-profile")
         expected_l3b_metadata_2 = InputMetadata("glows", "l3b", second_dependency.start_date,
-                                                second_dependency.end_date, 'v002', "ion-rate-profile")
+                                                second_dependency.end_date, str(second_dependency_version), "ion-rate-profile")
         expected_l3c_metadata_1 = InputMetadata("glows", "l3c", first_dependency.start_date,
-                                                first_dependency.end_date, 'v001', "sw-profile")
+                                                first_dependency.end_date, str(first_dependency_version), "sw-profile")
         expected_l3c_metadata_2 = InputMetadata("glows", "l3c", second_dependency.start_date,
-                                                second_dependency.end_date, 'v002', "sw-profile")
+                                                second_dependency.end_date, str(second_dependency_version), "sw-profile")
         mock_l3b_model_class.from_instrument_team_dictionary.assert_has_calls(
             [call(sentinel.l3b_data_1, expected_l3b_metadata_1),
              call(sentinel.l3b_data_2, expected_l3b_metadata_2)])
@@ -410,7 +416,7 @@ class TestGlowsProcessor(unittest.TestCase):
                                                               mock_archive_dependencies, mock_generate_l3bc,
                                                               mock_l3c_from_instrument_team_dictionary,
                                                               mock_l3b_from_instrument_team_dictionary, _):
-        bc_dependencies_1 = GlowsL3BCDependencies(version=1,
+        bc_dependencies_1 = GlowsL3BCDependencies(version=Version(1, 1),
                                                   carrington_rotation_number=2096,
                                                   start_date=datetime(year=2021, month=1, day=1),
                                                   end_date=datetime(year=2021, month=1, day=1),
@@ -419,7 +425,7 @@ class TestGlowsProcessor(unittest.TestCase):
                                                   ancillary_files=defaultdict(Mock),
                                                   repointing_file_path=sentinel.repointing_file_path
                                                   )
-        bc_dependencies_2 = GlowsL3BCDependencies(version=1,
+        bc_dependencies_2 = GlowsL3BCDependencies(version=Version(1,1),
                                                   carrington_rotation_number=2096,
                                                   start_date=datetime(year=2021, month=1, day=1),
                                                   end_date=datetime(year=2021, month=1, day=1),
@@ -508,7 +514,7 @@ class TestGlowsProcessor(unittest.TestCase):
                 'omni_raw_data': get_test_instrument_team_data_path('glows/omni_2010.dat'),
             },
             carrington_rotation_number=1,
-            start_date=Mock(), end_date=Mock(), version=1,
+            start_date=Mock(), end_date=Mock(), version=Version(1,1),
             repointing_file_path=sentinel.repointing_file_path
         )
 
@@ -553,7 +559,7 @@ class TestGlowsProcessor(unittest.TestCase):
                 'omni_raw_data': get_test_instrument_team_data_path('glows/omni2_all_years.dat'),
             },
             carrington_rotation_number=2092,
-            start_date=Mock(), end_date=Mock(), version=1,
+            start_date=Mock(), end_date=Mock(), version=Version(1,1),
             repointing_file_path=sentinel.repointing_file_path,
         )
 
@@ -648,7 +654,7 @@ class TestGlowsProcessor(unittest.TestCase):
 
         mock_save_data.return_value = Path("l3d_cdf.cdf")
 
-        processor = GlowsProcessor(Mock(), Mock(data_level="l3b"))
+        processor = GlowsProcessor(Mock(), Mock(data_level="l3b", version=str(Version(1,1))))
         products = processor.process()
 
         mock_convert_l3b_to_json.assert_has_calls([call(sentinel.l3b_file_1), call(sentinel.l3b_file_2)])
@@ -1546,10 +1552,10 @@ class TestGlowsProcessor(unittest.TestCase):
     @patch("imap_l3_processing.glows.glows_processor.json")
     @patch("imap_l3_processing.glows.glows_processor.ZipFile")
     def test_archive_dependencies(self, mock_zip, mock_json):
-        expected_filepath = TEMP_CDF_FOLDER_PATH / "imap_glows_l3b-archive_20250314_v001.zip"
+        version_number = Version(1,1)
+        expected_filepath = TEMP_CDF_FOLDER_PATH / f"imap_glows_l3b-archive_20250314_{version_number}.zip"
         expected_json_filename = "cr_to_process.json"
 
-        version_number = 1
         l3bc_dependencies = GlowsL3BCDependencies(
             version=version_number,
             carrington_rotation_number=2095,

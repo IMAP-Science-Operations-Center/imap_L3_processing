@@ -12,7 +12,7 @@ from typing import Optional
 from zipfile import ZipFile, ZIP_DEFLATED
 
 import numpy as np
-from imap_data_access.file_validation import generate_imap_file_path, ScienceFilePath, AncillaryFilePath
+from imap_data_access.file_validation import generate_imap_file_path, ScienceFilePath, AncillaryFilePath, Version
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
@@ -63,14 +63,14 @@ class GlowsProcessor(Processor):
             return products
         elif self.input_metadata.data_level == "l3b":
             products_list = []
-
-            l3bc_initializer_data: GlowsL3BCInitializerData = GlowsL3BCInitializer.get_crs_to_process(self.dependencies)
+            major_version = Version.from_version(self.input_metadata.version).major
+            l3bc_initializer_data: GlowsL3BCInitializerData = GlowsL3BCInitializer.get_crs_to_process(self.dependencies, major_version)
 
             if len(l3bc_initializer_data.l3bc_dependencies) > 0:
                 logger.info("Found CRs to Process L3BC:")
                 for dep in l3bc_initializer_data.l3bc_dependencies:
                     l3a_file_names = [l3a_d["filename"] for l3a_d in dep.l3a_data]
-                    logger.info(f"\t{dep.carrington_rotation_number}, v{dep.version:03}: {l3a_file_names}")
+                    logger.info(f"\t{dep.carrington_rotation_number}, {dep.version}: {l3a_file_names}")
             else:
                 logger.info("No CRs to process for B/C")
 
@@ -133,7 +133,7 @@ class GlowsProcessor(Processor):
     @staticmethod
     def archive_dependencies(l3bc_deps: GlowsL3BCDependencies, external_dependencies: ExternalDependencies) -> Path:
         start_date = l3bc_deps.start_date.strftime("%Y%m%d")
-        zip_path = TEMP_CDF_FOLDER_PATH / f"imap_glows_l3b-archive_{start_date}_v{l3bc_deps.version:03}.zip"
+        zip_path = TEMP_CDF_FOLDER_PATH / f"imap_glows_l3b-archive_{start_date}_{l3bc_deps.version}.zip"
         json_filename = "cr_to_process.json"
         with ZipFile(zip_path, "w", ZIP_DEFLATED) as file:
             file.write(external_dependencies.lyman_alpha_path, "lyman_alpha_composite.nc")
@@ -171,9 +171,9 @@ def process_l3bc(processor, initializer_data: GlowsL3BCInitializerData):
             continue
 
         l3b_metadata = InputMetadata("glows", "l3b", dependency.start_date, dependency.end_date,
-                                     f"v{dependency.version:03}", GLOWS_L3B_DESCRIPTOR)
+                                     str(dependency.version), GLOWS_L3B_DESCRIPTOR)
         l3c_metadata = InputMetadata("glows", "l3c", dependency.start_date, dependency.end_date,
-                                     f"v{dependency.version:03}", GLOWS_L3C_DESCRIPTOR)
+                                     str(dependency.version), GLOWS_L3C_DESCRIPTOR)
 
         l3b_data_product = GlowsL3BIonizationRate.from_instrument_team_dictionary(l3b_data, l3b_metadata)
         l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data, l3c_metadata)

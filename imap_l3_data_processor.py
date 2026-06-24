@@ -1,4 +1,5 @@
 import argparse
+import json
 import logging
 import re
 from datetime import datetime
@@ -6,6 +7,7 @@ from tempfile import TemporaryDirectory
 
 import imap_data_access
 import spiceypy
+from imap_data_access.file_validation import Version
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcessor
@@ -38,7 +40,7 @@ def _parse_cli_arguments():
     parser.add_argument("--start-date")
     parser.add_argument("--end-date", required=False)
     parser.add_argument("--repointing", required=False)
-    parser.add_argument("--version")
+    parser.add_argument("--version", required=False)
     parser.add_argument("--dependency")
     parser.add_argument(
         "--upload-to-sdc",
@@ -67,7 +69,18 @@ def imap_l3_processor():
             args.dependency = f.read()
 
     processing_input_collection = ProcessingInputCollection()
-    processing_input_collection.deserialize(args.dependency)
+
+    parsed_dependency = json.loads(args.dependency)
+    if isinstance(parsed_dependency, list):
+        version = args.version
+        processing_input_collection.deserialize(args.dependency)
+    else:
+        version_numbers = list(parsed_dependency["version"].values())
+        match version_numbers:
+            case [{"major_version": major, "minor_version": minor}]:
+                version = str(Version(major, minor))
+            case _:
+                raise ValueError("Expected only a single version to be specified in the dependency.")
 
     repointing_number = None
     if args.repointing is not None:
@@ -81,7 +94,7 @@ def imap_l3_processor():
                                      args.data_level,
                                      _convert_to_datetime(args.start_date),
                                      _convert_to_datetime(args.end_date or args.start_date),
-                                     args.version, descriptor=args.descriptor, repointing=repointing_number)
+                                     version, descriptor=args.descriptor, repointing=repointing_number)
     if args.instrument in ["hi", "lo", "ultra"] and args.data_level == 'l3' and not parse_map_descriptor(
             args.descriptor):
         initializer_class, processor_class, descriptors = {
