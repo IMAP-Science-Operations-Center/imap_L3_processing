@@ -83,10 +83,11 @@ def generate_l3bc(dependencies: GlowsL3BCDependencies):
     l3c_dat = solar_wind_Carr.get_dict()
     l3b_dat['header']['l3a_input_files_name'] = l3a_used
 
-    quality_flags = int(GlowsL3Flags.NONE)
+    l3b_quality_flags = int(GlowsL3Flags.NONE)
+    l3c_quality_flags = int(GlowsL3Flags.NONE)
     if bool(sw_ecliptic.used_nominal_alpha_per_cr[idx_current_CR]):
-        quality_flags |= int(GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO)
-    l3b_dat['glows_flags'] = quality_flags
-    l3c_dat['glows_flags'] = quality_flags
+        l3c_quality_flags |= int(GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO)
+    l3b_dat['glows_flags'] = l3b_quality_flags
+    l3c_dat['glows_flags'] = l3c_quality_flags
 
     return l3b_dat, l3c_dat

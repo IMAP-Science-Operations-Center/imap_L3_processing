@@ -283,5 +283,4 @@ glows_flags:
   LABLAXIS: Quality flags for GLOWS L3b
   VAR_NOTES: >-
     Details in release notes. Each bit being set indicates a specific potential concern.
-    Bit 2: Solar wind alpha/proton density ratio not available in OMNI data; used nominal value of 0.04
-    Other bits are reserved.
+    All bits are reserved for future use.
