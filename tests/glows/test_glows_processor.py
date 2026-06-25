@@ -632,7 +632,7 @@ class TestGlowsProcessor(unittest.TestCase):
         )
 
         old_l3d = Path('imap_glows_l3d_solar-hist_19470303-cr02090_v001.cdf')
-        l3d_output_version = 5
+        l3d_output_version = Version(12, 5)
         mock_glows_l3d_initializer.should_process_l3d.return_value = (
             l3d_output_version, glows_l3d_dependencies, old_l3d)
 
@@ -659,7 +659,8 @@ class TestGlowsProcessor(unittest.TestCase):
 
         mock_convert_l3b_to_json.assert_has_calls([call(sentinel.l3b_file_1), call(sentinel.l3b_file_2)])
         mock_convert_l3c_to_json.assert_has_calls([call(sentinel.l3c_file_1), call(sentinel.l3c_file_2)])
-
+        mock_glows_l3d_initializer.should_process_l3d.assert_called_with(
+            self.mock_external_deps, [], [], 1)
         self.assertEqual([
             Path("imap_glows_e-dens_19470303_20100101_v000.dat"),
             Path("imap_glows_lya_19470303_20100101_v000.dat"),
@@ -715,14 +716,14 @@ class TestGlowsProcessor(unittest.TestCase):
             Path(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / f'{expected_end_cr}_txt_file_1', ),
             Path(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt' / f'{expected_end_cr}_txt_file_2', ),
         ]
-        mock_rename_l3d.assert_has_calls([call(expected_l3d_txt_paths, f'v00{l3d_output_version}')])
+        mock_rename_l3d.assert_has_calls([call(expected_l3d_txt_paths, str(Version(None, l3d_output_version.minor)))])
 
         mock_get_parent_file_names_from_l3d_json.assert_called_once_with(expected_working_directory / 'data_l3d')
 
         expected_data_product_metadata = InputMetadata(instrument="glows", data_level="l3d", descriptor="solar-hist",
                                                        start_date=datetime(1947, 3, 3),
                                                        end_date=datetime(1947, 3, 3),
-                                                       version=f"v00{l3d_output_version}")
+                                                       version=f"{l3d_output_version}")
 
         mock_convert_json_to_l3d_data_product.assert_called_once_with(
             expected_working_directory / 'data_l3d' / f'imap_glows_l3d_solar-params-history_19470303-cr0{expected_end_cr}_v00.json',
@@ -778,7 +779,7 @@ class TestGlowsProcessor(unittest.TestCase):
         l3d_dependencies = GlowsL3DDependencies(l3b_file_paths=l3b_file_paths, l3c_file_paths=l3c_file_paths,
                                                 ancillary_files=ancillary_inputs, external_files=external_inputs, end_cr=cr_number)
 
-        glows_l3d_output = process_l3d(l3d_dependencies, 1)
+        glows_l3d_output = process_l3d(l3d_dependencies, Version(1,1))
 
         [save_data_call_args] = mock_save_data.call_args_list
         actual_data_product = save_data_call_args.args[0]
@@ -934,8 +935,7 @@ class TestGlowsProcessor(unittest.TestCase):
             end_cr=expected_cr,
         )
 
-        version = 4
-        glows_l3d_output = process_l3d(l3d_dependencies, version)
+        glows_l3d_output = process_l3d(l3d_dependencies, Version(1, 4))
 
         expected_txt_filenames = ["imap_glows_e-dens_19470303_20100629_v004.dat",
                                   "imap_glows_lya_19470303_20100629_v004.dat",
@@ -1002,7 +1002,7 @@ class TestGlowsProcessor(unittest.TestCase):
         [save_data_call_args] = mock_save_data.call_args_list
         l3d_data_product = save_data_call_args.args[0]
 
-        expected_cdf_filename = "imap_glows_l3d_solar-hist_19470303-cr02098_v004.cdf"
+        expected_cdf_filename = "imap_glows_l3d_solar-hist_19470303-cr02098_v001.0004.cdf"
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_dir = Path(tmp_dir)
             save_data(l3d_data_product, cr_number=expected_cr, folder_path=tmp_dir)
@@ -1063,11 +1063,11 @@ class TestGlowsProcessor(unittest.TestCase):
             dependencies=mock_dependencies,
             repointings=GlowsL3eRepointings(
                 repointing_numbers=[25],
-                hi_90_repointings={25: 1},
-                hi_45_repointings={25: 2},
-                lo_repointings={25: 3},
-                ultra_sf_repointings={25: 4},
-                ultra_hf_repointings={25: 4},
+                hi_90_repointings={25: Version(None,1)},
+                hi_45_repointings={25: Version(None,2)},
+                lo_repointings={25: Version(None,3)},
+                ultra_sf_repointings={25: Version(None,4)},
+                ultra_hf_repointings={25: Version(None,4)},
             ),
             l3d_cdf_path=l3d_cdf_path,
         )
@@ -1077,13 +1077,15 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_compute_glows_flags_for_window.assert_called_once_with(l3d_cdf_path, start_epoch, end_epoch)
 
         mock_process_hi.assert_has_calls([
-            call(["hi_ancillary.dat"], 25, start_epoch, epoch_delta, 90, 1, 4),
-            call(["hi_ancillary.dat"], 25, start_epoch, epoch_delta, 135, 2, 4)
+            call(["hi_ancillary.dat"], 25, start_epoch, epoch_delta, 90, Version(None,1), 4),
+            call(["hi_ancillary.dat"], 25, start_epoch, epoch_delta, 135, Version(None,2), 4)
         ])
         mock_process_lo.assert_called_once_with(["lo_ancillary.dat", "l1b_nhk.cdf"], 25, start_epoch, epoch_delta, 75,
-                                                3, 4)
-        mock_process_ultra.assert_called_once_with(["ul_ancillary.dat"], 25, start_epoch, epoch_delta, 4, 4)
-        mock_process_ultra_hf.assert_called_once_with(["ul_ancillary.dat"], 25, start_epoch, epoch_delta, 4, 4)
+                                                Version(None, 3), 4)
+        mock_process_ultra.assert_called_once_with(["ul_ancillary.dat"], 25, start_epoch, epoch_delta,
+                                                   Version(None, 4), 4)
+        mock_process_ultra_hf.assert_called_once_with(["ul_ancillary.dat"], 25, start_epoch, epoch_delta,
+                                                      Version(None, 4), 4)
 
         self.assertEqual(expected_l3e_products, actual_l3e_products)
         mock_get_lo_pivot_angles.assert_called_once_with([25])
@@ -1094,7 +1096,7 @@ class TestGlowsProcessor(unittest.TestCase):
     @patch("imap_l3_processing.glows.glows_processor.run")
     @patch("imap_l3_processing.glows.glows_processor.determine_call_args_for_l3e_executable")
     @patch("imap_l3_processing.glows.glows_processor.shutil")
-    def test_process_l3e_ultra(self, mock_shutil, mock_determine_call_args, mock_run,
+    def test_process_l3e_ultra_sf(self, mock_shutil, mock_determine_call_args, mock_run,
                                mock_convert_dat_to_glows_l3e_ul_product,
                                mock_save_data, mock_get_parent_file_names):
         mock_get_parent_file_names.return_value = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
@@ -1103,10 +1105,10 @@ class TestGlowsProcessor(unittest.TestCase):
         epoch_end_date = datetime(year=2024, month=10, day=7, hour=23)
         epoch_delta = (epoch_end_date - epoch_start_date) / 2
         repointing = 20
-        version = 12
+        version = Version(1,12)
 
         expected_input_metadata = InputMetadata('glows', "l3e", start_date=epoch_start_date, end_date=epoch_end_date,
-                                                version='v012', descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
+                                                version='v001.0012', descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
                                                 repointing=repointing)
 
         ultra_args = ["20241007_000000", "date.001", "vx", "vy", "vz", "30.000"]
@@ -1117,7 +1119,7 @@ class TestGlowsProcessor(unittest.TestCase):
 
         mock_convert_dat_to_glows_l3e_ul_product.return_value = sentinel.ultra_data_1
 
-        mock_save_data.return_value = "imap_glows_l3e_survival-probability-ul-sf_20241007-repoint00020_v012.cdf"
+        mock_save_data.return_value = "imap_glows_l3e_survival-probability-ul-sf_20241007-repoint00020_v001.0012.cdf"
 
         parent_file_names = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
         glows_flags = 4
@@ -1144,7 +1146,7 @@ class TestGlowsProcessor(unittest.TestCase):
                          survival_data_product.parent_file_names)
         np.testing.assert_array_equal(survival_data_product.glows_flags, np.array([glows_flags], dtype=np.uint16))
 
-        self.assertEqual(products, ["imap_glows_l3e_survival-probability-ul-sf_20241007-repoint00020_v012.cdf",
+        self.assertEqual(products, ["imap_glows_l3e_survival-probability-ul-sf_20241007-repoint00020_v001.0012.cdf",
                                     expected_first_data_path])
 
     @patch('imap_l3_processing.glows.glows_processor.Processor.get_parent_file_names')
@@ -1162,10 +1164,10 @@ class TestGlowsProcessor(unittest.TestCase):
         epoch_end_date = datetime(year=2024, month=10, day=7, hour=23)
         epoch_delta = (epoch_end_date - epoch_start_date) / 2
         repointing = 20
-        version = 12
+        version = Version(1, 12)
 
         input_metadata = InputMetadata('glows', "l3e", start_date=epoch_start_date, end_date=epoch_end_date,
-                                       version='v012', descriptor=GLOWS_L3E_ULTRA_HF_DESCRIPTOR, repointing=repointing)
+                                       version='v001.0012', descriptor=GLOWS_L3E_ULTRA_HF_DESCRIPTOR, repointing=repointing)
 
         mock_determine_call_args.return_value = GlowsL3eCallArguments(
             formatted_date="20241007_000000",
@@ -1197,7 +1199,7 @@ class TestGlowsProcessor(unittest.TestCase):
 
         mock_convert_dat_to_glows_l3e_ul_product.return_value = sentinel.ultra_data_hf
 
-        mock_save_data.return_value = "imap_glows_l3e_survival-probability-ul-hf_20241007-repoint00020_v012.cdf"
+        mock_save_data.return_value = "imap_glows_l3e_survival-probability-ul-hf_20241007-repoint00020_v001.0012.cdf"
 
         parent_file_names = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]
         glows_flags = 8
@@ -1224,7 +1226,7 @@ class TestGlowsProcessor(unittest.TestCase):
                          survival_data_product.parent_file_names)
         np.testing.assert_array_equal(survival_data_product.glows_flags, np.array([glows_flags], dtype=np.uint16))
 
-        self.assertEqual(products, ["imap_glows_l3e_survival-probability-ul-hf_20241007-repoint00020_v012.cdf",
+        self.assertEqual(products, ["imap_glows_l3e_survival-probability-ul-hf_20241007-repoint00020_v001.0012.cdf",
                                     expected_first_data_path])
 
     @patch('imap_l3_processing.glows.glows_processor.save_data')
@@ -1252,11 +1254,11 @@ class TestGlowsProcessor(unittest.TestCase):
                 epoch_end_date = datetime(year=2024, month=10, day=7, hour=23)
                 epoch_delta = (epoch_end_date - epoch_start_date) / 2
                 repointing = 20
-                version = 12
+                version = Version(1, 12)
 
                 expected_input_metadata = InputMetadata(
                     instrument='glows', data_level="l3e", start_date=epoch_start_date, end_date=epoch_end_date,
-                    version='v012', descriptor=f'survival-probability-hi-{descriptor_elongation}',
+                    version=str(version), descriptor=f'survival-probability-hi-{descriptor_elongation}',
                     repointing=repointing)
 
                 l3e_dependencies = MagicMock(spec=GlowsL3EDependencies)
@@ -1271,7 +1273,7 @@ class TestGlowsProcessor(unittest.TestCase):
                 mock_convert_dat_to_glows_l3e_hi_product.return_value = sentinel.hi_data_1
 
                 saved_cdf_path = Path(
-                    f"imap_glows_l3e_survival-probability-hi-{descriptor_elongation}_20241007-repoint00020_v001.cdf")
+                    f"imap_glows_l3e_survival-probability-hi-{descriptor_elongation}_20241007-repoint00020_v001.0012.cdf")
 
                 mock_save_data.return_value = saved_cdf_path
 
@@ -1303,7 +1305,7 @@ class TestGlowsProcessor(unittest.TestCase):
                 np.testing.assert_array_equal(survival_data_product.glows_flags, np.array([glows_flags], dtype=np.uint16))
 
                 expected_output_data_path = AncillaryFilePath(
-                    f"imap_glows_survival-probability-hi-{descriptor_elongation}-raw_20241007_v001.dat"
+                    f"imap_glows_survival-probability-hi-{descriptor_elongation}-raw_20241007_v012.dat"
                 ).construct_path()
 
                 mock_shutil.move.assert_called_once_with(first_output_data_path, expected_output_data_path)
@@ -1330,11 +1332,11 @@ class TestGlowsProcessor(unittest.TestCase):
                 epoch_end_date = datetime(year=2024, month=10, day=7, hour=23)
                 epoch_delta = (epoch_end_date - epoch_start_date) / 2
                 repointing = 20
-                version = 12
+                version = Version(1,12)
 
                 expected_input_metadata = InputMetadata(
                     instrument='glows', data_level="l3e", start_date=epoch_start_date, end_date=epoch_end_date,
-                    version='v012', descriptor=f'survival-probability-lo', repointing=repointing)
+                    version=str(version), descriptor=f'survival-probability-lo', repointing=repointing)
 
                 lo_call_args = ["20241007_000000", "date.100", "vx", "vy", "vz", f"{elongation:.3f}"]
 
@@ -1357,7 +1359,7 @@ class TestGlowsProcessor(unittest.TestCase):
                 lo_data_1 = Mock()
                 mock_convert_dat_to_glows_l3e_lo_product.return_value = lo_data_1
 
-                output_cdf_path = Path("imap_glows_l3e_survival-probability-lo_20241007-repoint00020_v012.cdf")
+                output_cdf_path = Path("imap_glows_l3e_survival-probability-lo_20241007-repoint00020_v001.0012.cdf")
                 mock_save_data.return_value = output_cdf_path
 
                 parent_file_names = ["l3d_file", "ancillary_1", "ancillary_2", "ancillary_3"]

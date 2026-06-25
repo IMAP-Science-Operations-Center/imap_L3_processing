@@ -7,6 +7,7 @@ import imap_data_access
 import numpy as np
 import spiceypy
 from astropy.time import Time
+from imap_data_access.file_validation import Version
 from imap_processing.spice.repoint import set_global_repoint_table_paths, get_repoint_data
 from spacepy.pycdf import CDF
 
@@ -59,15 +60,15 @@ def _decimal_time(t: datetime) -> str:
 @dataclass
 class GlowsL3eRepointings:
     repointing_numbers: list[int]
-    hi_90_repointings: dict[int, int]
-    hi_45_repointings: dict[int, int]
-    lo_repointings: dict[int, int]
-    ultra_sf_repointings: dict[int, int]
-    ultra_hf_repointings: dict[int, int]
+    hi_90_repointings: dict[int, Version]
+    hi_45_repointings: dict[int, Version]
+    lo_repointings: dict[int, Version]
+    ultra_sf_repointings: dict[int, Version]
+    ultra_hf_repointings: dict[int, Version]
 
 
 def determine_l3e_files_to_produce(first_cr_processed: int, last_processed_cr: int,
-                                   repointing_path: Path) -> GlowsL3eRepointings:
+                                   repointing_path: Path, major_version: int|None) -> GlowsL3eRepointings:
     descriptors = [
         GLOWS_L3E_HI_90_DESCRIPTOR,
         GLOWS_L3E_HI_45_DESCRIPTOR,
@@ -98,14 +99,15 @@ def determine_l3e_files_to_produce(first_cr_processed: int, last_processed_cr: i
     updated_pointings_per_instruments = []
     for descriptor in descriptors:
         l3e_files = imap_data_access.query(instrument='glows', data_level='l3e', version="latest", descriptor=descriptor)
-        updated_pointing = {int(l3e['repointing']): int(l3e['version'][1:]) for l3e in l3e_files}
-
+        existing_file_versions = {int(l3e['repointing']): Version.from_version(l3e['version']) for l3e in l3e_files}
+        new_file_versions = {}
         for pointing_number in pointing_numbers:
-            if pointing_number in updated_pointing:
-                updated_pointing[pointing_number] = updated_pointing[pointing_number] + 1
+            if pointing_number in existing_file_versions:
+                previous_version = existing_file_versions[pointing_number]
+                new_file_versions[pointing_number] = Version(major_version, previous_version.minor + 1)
             else:
-                updated_pointing[pointing_number] = 1
-        updated_pointings_per_instruments.append(updated_pointing)
+                new_file_versions[pointing_number] = Version(major_version, 1)
+        updated_pointings_per_instruments.append(new_file_versions)
 
     return GlowsL3eRepointings(pointing_numbers, *updated_pointings_per_instruments)
 
