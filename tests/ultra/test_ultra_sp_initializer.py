@@ -99,11 +99,10 @@ class TestUltraSPInitializer(unittest.TestCase):
 
                 initializer = UltraSPInitializer()
                 actual_maps_to_produce = initializer.get_maps_that_should_be_produced(
-                    f"u{sensor}-ena-h-sf-sp-full-hae-4deg-3mo")
+                    f"u{sensor}-ena-h-sf-sp-full-hae-4deg-3mo", None)
 
                 with self.assertRaises(NotImplementedError) as e:
-                    initializer.get_maps_that_should_be_produced(
-                        f"u{sensor}-ena-h-hk-sp-full-hae-4deg-3mo")
+                    initializer.get_maps_that_should_be_produced(f"u{sensor}-ena-h-hk-sp-full-hae-4deg-3mo", None)
                 self.assertEqual(e.exception.args, ("Reference frame should be either Spacecraft or Heliospheric",))
 
                 self.mock_query.assert_has_calls([
@@ -253,8 +252,8 @@ class TestUltraSPInitializer(unittest.TestCase):
         ]
 
         initializer = UltraSPInitializer()
-        actual_maps_to_produce = initializer.get_maps_that_should_be_produced(
-            f"ulc-ena-h-sf-sp-full-hae-4deg-3mo")
+        actual_maps_to_produce = initializer.get_maps_that_should_be_produced(f"ulc-ena-h-sf-sp-full-hae-4deg-3mo",
+                                                                              None)
 
         self.mock_query.assert_has_calls([
             call(instrument='glows', data_level='l3e', descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR, version="latest"),
@@ -409,8 +408,8 @@ class TestUltraSPInitializer(unittest.TestCase):
         ]
 
         initializer = UltraSPInitializer()
-        actual_maps_to_produce = initializer.get_maps_that_should_be_produced(
-            f"ulc-ena-h-hf-sp-full-hae-4deg-3mo")
+        actual_maps_to_produce = initializer.get_maps_that_should_be_produced(f"ulc-ena-h-hf-sp-full-hae-4deg-3mo",
+                                                                              None)
 
         self.mock_query.assert_has_calls([
             call(instrument='glows', data_level='l3e', descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR, version="latest"),

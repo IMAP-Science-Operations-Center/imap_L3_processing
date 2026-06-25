@@ -1,3 +1,4 @@
+import itertools
 import json
 from datetime import datetime
 from pathlib import Path
@@ -109,7 +110,7 @@ class TestImapL3DataProcessor(TestCase):
                                                            mock_ultra_processor_class, mock_ultra_initializer_class,
                                                            mock_ultra_combined_nsp_initializer_class,
                                                            mock_hi_combined_initializer_class):
-        test_cases = [
+        instrument_cases = [
             ("hi", "sp-maps", mock_hi_initializer_class, mock_hi_processor_class, HI_SP_MAP_DESCRIPTORS),
             ("hi", "hic-maps", mock_hi_combined_initializer_class, mock_hi_processor_class, HI_COMBINED_DESCRIPTORS),
             ("lo", "all-maps", mock_lo_initializer_class, mock_lo_processor_class, LO_SP_MAP_DESCRIPTORS),
@@ -122,27 +123,45 @@ class TestImapL3DataProcessor(TestCase):
              ULTRA_COMBINED_NSP_DESCRIPTORS),
         ]
 
-        for instrument, descriptor, mock_initializer_class, mock_processor_class, expected_descriptors in test_cases:
+        dependency_with_version_info = """
+        {
+            "version": {
+                "descriptor": {
+                    "major_version": 123,
+                    "minor_version": 0
+                }
+            },
+            "dependency": []
+        }
+        """
+        dependency_cases = [
+            ("old style", "[]", 'v001', None, 'v001'),
+            ("new style", dependency_with_version_info, None, 123, 'v123.0000'),
+        ]
+
+        for instrument_case, dependency_case in itertools.product(instrument_cases, dependency_cases):
+            instrument, descriptor, mock_initializer_class, mock_processor_class, expected_descriptors = instrument_case
+            dependency_name, dependency_contents, version_argument, expected_major_version, expected_version_str = dependency_case
             mock_upload.reset_mock()
             mock_argparse.reset_mock()
             mock_initializer_class.reset_mock()
             mock_processor_class.reset_mock()
 
-            with self.subTest(instrument=instrument):
+            with self.subTest(instrument=instrument, descriptor=descriptor, dependency=dependency_name):
                 data_level = "l3"
                 mock_argument_parser = mock_argparse.ArgumentParser.return_value
                 mock_argument_parser.parse_args.return_value.instrument = instrument
                 mock_argument_parser.parse_args.return_value.data_level = data_level
-                mock_argument_parser.parse_args.return_value.dependency = "[]"
+                mock_argument_parser.parse_args.return_value.dependency = dependency_contents
                 mock_argument_parser.parse_args.return_value.start_date = "20250101"
                 mock_argument_parser.parse_args.return_value.end_date = None
                 mock_argument_parser.parse_args.return_value.repointing = "repoint00022"
-                mock_argument_parser.parse_args.return_value.version = sentinel.version
+                mock_argument_parser.parse_args.return_value.version = version_argument
                 mock_argument_parser.parse_args.return_value.descriptor = descriptor
 
                 expected_input_metadata = InputMetadata(instrument, data_level, datetime(2025, 1, 1),
                                                         datetime(2025, 1, 1),
-                                                        sentinel.version, descriptor=descriptor,
+                                                        expected_version_str, descriptor=descriptor,
                                                         )
 
                 mock_initializer = mock_initializer_class.return_value
@@ -156,7 +175,7 @@ class TestImapL3DataProcessor(TestCase):
                 imap_l3_processor()
 
                 mock_initializer.get_maps_that_should_be_produced.assert_has_calls([
-                    call(descriptor) for descriptor in expected_descriptors
+                    call(descriptor, expected_major_version) for descriptor in expected_descriptors
                 ])
 
                 self.assertEqual(len(expected_descriptors), mock_processor_class.call_count)
@@ -189,7 +208,7 @@ class TestImapL3DataProcessor(TestCase):
         mock_argument_parser.parse_args.return_value.start_date = "20250101"
         mock_argument_parser.parse_args.return_value.end_date = None
         mock_argument_parser.parse_args.return_value.repointing = "repoint00022"
-        mock_argument_parser.parse_args.return_value.version = sentinel.version
+        mock_argument_parser.parse_args.return_value.version = "v001"
         mock_argument_parser.parse_args.return_value.descriptor = descriptor
 
         mock_hi_initializer.get_maps_that_should_be_produced.side_effect = [
@@ -540,14 +559,15 @@ class TestImapL3DataProcessor(TestCase):
         version_input = {
             "sci": {"major_version": 2, "minor_version": 1}
         }
+        serialized_dependency_paths = imap_data_access_dependency.serialize()
         combined_input = {
             "version": version_input,
-            "dependency": json.loads(imap_data_access_dependency.serialize()),
+            "dependency": json.loads(serialized_dependency_paths),
         }
 
         mock_processing_input_collection.return_value = imap_data_access_dependency
-        mock_processing_input_collection.deserialize = Mock()
-        mock_processing_input_collection.get_science_inputs = Mock(return_value=[])
+        imap_data_access_dependency.deserialize = Mock()
+        imap_data_access_dependency.get_science_inputs = Mock(return_value=[])
 
         mock_argument_parser = mock_argparse.ArgumentParser.return_value
 
@@ -564,6 +584,7 @@ class TestImapL3DataProcessor(TestCase):
         for input_end_date, expected_end_date in cases:
             with self.subTest(input_end_date):
                 mock_upload.reset_mock()
+                imap_data_access_dependency.deserialize.reset_mock()
 
                 mock_argument_parser.parse_args.return_value.end_date = input_end_date
 
@@ -590,6 +611,7 @@ class TestImapL3DataProcessor(TestCase):
 
                 mock_processor_class.assert_called_with(imap_data_access_dependency, expected_input_metadata)
 
+                imap_data_access_dependency.deserialize.assert_called_once_with(serialized_dependency_paths)
                 mock_processor.process.assert_called()
                 mock_upload.assert_called_once_with(mock_processor_class.return_value.process.return_value[0])
 

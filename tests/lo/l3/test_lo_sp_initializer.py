@@ -40,8 +40,8 @@ class TestLoSPInitializer(unittest.TestCase):
             'imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20100701_v001.cdf',
             'imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20101001_v001.cdf',
 
-            'imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100101_v001.cdf',
-            'imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100401_v001.cdf'
+            'imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100101_v003.0001.cdf',
+            'imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100401_v003.0001.cdf'
         ])
 
         mock_read_cdf_parents.side_effect = [
@@ -86,7 +86,8 @@ class TestLoSPInitializer(unittest.TestCase):
         ]
 
         initializer = LoSPInitializer()
-        actual_maps_to_produce = initializer.get_maps_that_should_be_produced("l090-ena-h-sf-sp-ram-hae-6deg-12mo")
+        actual_maps_to_produce = initializer.get_maps_that_should_be_produced("l090-ena-h-sf-sp-ram-hae-6deg-12mo",
+                                                                              3)
 
         self.mock_query.assert_has_calls([
             call(instrument='glows', data_level='l3e', descriptor='survival-probability-lo', version="latest"),
@@ -100,8 +101,8 @@ class TestLoSPInitializer(unittest.TestCase):
             call('imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20100701_v001.cdf'),
             call('imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20101001_v001.cdf'),
 
-            call('imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100101_v001.cdf'),
-            call('imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100401_v001.cdf')
+            call('imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100101_v003.0001.cdf'),
+            call('imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100401_v003.0001.cdf')
         ])
 
         expected_possible_map_to_produce = PossibleMapToProduce(
@@ -110,7 +111,7 @@ class TestLoSPInitializer(unittest.TestCase):
                 data_level="l3",
                 start_date=datetime(2010, 4, 1),
                 end_date=datetime(2011, 4, 1, 6, 0),
-                version="v002",
+                version="v003.0002",
                 descriptor="l090-ena-h-sf-sp-ram-hae-6deg-12mo"
             ),
             input_files={

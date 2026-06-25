@@ -219,7 +219,16 @@ class TestMapIntegration(unittest.TestCase):
             mock_arguments.end_date = None
             mock_arguments.repointing = None
             mock_arguments.version = "v001"
-            mock_arguments.dependency = "[]"
+            mock_arguments.dependency = """
+            { "version": {
+                "hic-maps": {
+                    "major_version": 4,
+                    "minor_version": 7
+                    } 
+                },
+                "dependency": []
+            }
+            """
             mock_arguments.upload_to_sdc = False
 
             mock_parse_cli_arguments.return_value = mock_arguments
@@ -227,14 +236,14 @@ class TestMapIntegration(unittest.TestCase):
             imap_l3_data_processor.imap_l3_processor()
 
             expected_map_path = ScienceFilePath(
-                'imap_hi_l3_hic-ena-h-hf-sp-full-hae-6deg-1yr_20250415_v001.cdf').construct_path()
+                'imap_hi_l3_hic-ena-h-hf-sp-full-hae-6deg-1yr_20250415_v004.0001.cdf').construct_path()
             self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
 
             with CDF(str(expected_map_path)) as cdf:
                 self.assertEqual(set(sp_files), set(cdf.attrs["Parents"]))
 
             expected_map_path = ScienceFilePath(
-                'imap_hi_l3_hic-ena-h-hf-nsp-full-hae-6deg-1yr_20250415_v001.cdf').construct_path()
+                'imap_hi_l3_hic-ena-h-hf-nsp-full-hae-6deg-1yr_20250415_v004.0001.cdf').construct_path()
             self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
 
             with CDF(str(expected_map_path)) as cdf:

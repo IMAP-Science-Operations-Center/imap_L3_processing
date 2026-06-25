@@ -75,6 +75,7 @@ def imap_l3_processor():
         version = args.version
         processing_input_collection.deserialize(args.dependency)
     else:
+        processing_input_collection.deserialize(json.dumps(parsed_dependency["dependency"]))
         version_numbers = list(parsed_dependency["version"].values())
         match version_numbers:
             case [{"major_version": major, "minor_version": minor}]:
@@ -110,8 +111,9 @@ def imap_l3_processor():
         initializer = initializer_class()
         paths = []
         maps_to_produce = []
+        major_version_from_dependency = Version.from_version(version).major
         for map_descriptor in descriptors:
-            maps_to_produce.extend(initializer.get_maps_that_should_be_produced(map_descriptor))
+            maps_to_produce.extend(initializer.get_maps_that_should_be_produced(map_descriptor, major_version_from_dependency))
 
         logger.info(f"maps to produce {[m.input_metadata.descriptor for m in maps_to_produce]}")
         if len(maps_to_produce) == 0:
