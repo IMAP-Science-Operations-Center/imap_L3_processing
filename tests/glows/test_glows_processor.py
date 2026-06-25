@@ -1555,7 +1555,7 @@ class TestGlowsProcessor(unittest.TestCase):
     @patch("imap_l3_processing.glows.glows_processor.ZipFile")
     def test_archive_dependencies(self, mock_zip, mock_json):
         version_number = Version(1,1)
-        expected_filepath = TEMP_CDF_FOLDER_PATH / f"imap_glows_l3b-archive_20250314_{version_number}.zip"
+        expected_filepath = TEMP_CDF_FOLDER_PATH / f"imap_glows_l3b-archive_20250314_v001.zip"
         expected_json_filename = "cr_to_process.json"
 
         l3bc_dependencies = GlowsL3BCDependencies(

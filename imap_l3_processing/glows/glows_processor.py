@@ -134,7 +134,8 @@ class GlowsProcessor(Processor):
     @staticmethod
     def archive_dependencies(l3bc_deps: GlowsL3BCDependencies, external_dependencies: ExternalDependencies) -> Path:
         start_date = l3bc_deps.start_date.strftime("%Y%m%d")
-        zip_path = TEMP_CDF_FOLDER_PATH / f"imap_glows_l3b-archive_{start_date}_{l3bc_deps.version}.zip"
+        minor_version_str = str(Version(None,l3bc_deps.version.minor))
+        zip_path = TEMP_CDF_FOLDER_PATH / f"imap_glows_l3b-archive_{start_date}_{minor_version_str}.zip"
         json_filename = "cr_to_process.json"
         with ZipFile(zip_path, "w", ZIP_DEFLATED) as file:
             file.write(external_dependencies.lyman_alpha_path, "lyman_alpha_composite.nc")
