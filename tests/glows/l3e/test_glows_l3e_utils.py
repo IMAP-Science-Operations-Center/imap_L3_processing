@@ -7,6 +7,7 @@ from unittest.mock import patch, Mock, call, sentinel
 import numpy as np
 from spacepy.pycdf import CDF, const
 
+from imap_l3_processing.constants import ONE_SECOND_IN_NANOSECONDS
 from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, \
     determine_l3e_files_to_produce, find_first_updated_cr, get_lo_pivot_angles, \
@@ -273,20 +274,24 @@ class TestGlowsL3EUtils(unittest.TestCase):
 
     def test_compute_glows_flags_for_window(self):
         epochs = [
-            datetime(2025, 5, 1, 0, 0),
-            datetime(2025, 5, 1, 12, 0),
-            datetime(2025, 5, 2, 0, 0),
-            datetime(2025, 5, 2, 12, 0),
-            datetime(2025, 5, 3, 0, 0),
+            datetime(2025, 5, 6, 0, 0),
+            datetime(2025, 5, 16, 0, 0),
+            datetime(2025, 5, 26, 0, 0),
+            datetime(2025, 6, 5, 0, 0),
         ]
-        flags = [1, 4, 8, 16, 2]
+        epoch_deltas = [
+            timedelta(days=5).total_seconds()*ONE_SECOND_IN_NANOSECONDS,
+            timedelta(days=5).total_seconds()*ONE_SECOND_IN_NANOSECONDS,
+            timedelta(days=5).total_seconds()*ONE_SECOND_IN_NANOSECONDS,
+            timedelta(days=5).total_seconds()*ONE_SECOND_IN_NANOSECONDS,
+        ]
+        flags = [3, 6, 8, 16]
 
         cases = [
-            ("ORs multiple rows inside window", datetime(2025, 5, 1, 6, 0), datetime(2025, 5, 2, 18, 0), 28),
-            ("excludes rows before window", datetime(2025, 5, 1, 6, 0), datetime(2025, 5, 1, 18, 0), 4),
-            ("excludes rows after window", datetime(2025, 5, 1, 18, 0), datetime(2025, 5, 2, 6, 0), 8),
-            ("includes boundaries inclusively", datetime(2025, 5, 1, 0, 0), datetime(2025, 5, 3, 0, 0), 31),
-            ("returns zero when no rows in window", datetime(2025, 5, 5, 0, 0), datetime(2025, 5, 6, 0, 0), 0),
+            ("ORs multiple CRs inside window", datetime(2025, 5, 10, 12, 0), datetime(2025, 5, 11, 12, 0), 7),
+            ("window exists in only a single CR", datetime(2025, 5, 11, 12, 0), datetime(2025, 5, 12, 12, 0), 6),
+            ("does not include CRs when only touching the boundary", datetime(2025, 5, 21, 0, 0), datetime(2025, 5, 30, 0, 0), 8),
+            ("returns zero when no CRs intersect window", datetime(2025, 4, 5, 0, 0), datetime(2025, 4, 6, 0, 0), 0),
         ]
 
         for name, window_start, window_end, expected in cases:
@@ -295,6 +300,7 @@ class TestGlowsL3EUtils(unittest.TestCase):
                     cdf_path = Path(tmp_dir, "l3d.cdf")
                     with CDF(str(cdf_path), create=True) as cdf:
                         cdf["epoch"] = epochs
+                        cdf["epoch_delta"] = epoch_deltas
                         cdf.new("glows_flags", data=flags, type=const.CDF_UINT2, recVary=True)
 
                     actual = compute_glows_flags_for_window(cdf_path, window_start, window_end)
