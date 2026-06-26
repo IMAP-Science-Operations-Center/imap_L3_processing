@@ -1,3 +1,4 @@
+import itertools
 import unittest
 from datetime import datetime
 from unittest.mock import patch, Mock, call
@@ -32,8 +33,9 @@ class TestHiCombinedInitializer(unittest.TestCase):
         self.hi_combined_initializer_mock_query.stop()
 
     def test_get_maps_that_should_be_produced_no_existing_combined_sp(self):
-        for deg in ["6deg", "4deg"]:
-            with self.subTest(msg=f"'hic-ena-h-hf-sp-full-hae-{deg}-1yr'"):
+
+        for deg, (major_version, expected_version) in itertools.product(["6deg", "4deg"], [(None, 'v001'), (1, 'v001.0001')]):
+            with self.subTest(deg=deg,major_version=major_version):
                 self.hi_combined_initializer_mock_query.side_effect = [
                     create_mock_query_results([
                         f'imap_hi_l3_h45-ena-h-hf-sp-ram-hae-{deg}-1yr_20250101_v001.cdf',
@@ -59,7 +61,7 @@ class TestHiCombinedInitializer(unittest.TestCase):
                             data_level='l3',
                             start_date=datetime(2025, 1, 1),
                             end_date=datetime(2026, 1, 1),
-                            version='v001',
+                            version=expected_version,
                             descriptor=f'hic-ena-h-hf-sp-full-hae-{deg}-1yr'
                         )
                     )
@@ -67,7 +69,7 @@ class TestHiCombinedInitializer(unittest.TestCase):
 
                 initializer = HiCombinedInitializer()
                 actual_maps_to_produce = initializer.get_maps_that_should_be_produced(
-                    f'hic-ena-h-hf-sp-full-hae-{deg}-1yr')
+                    f'hic-ena-h-hf-sp-full-hae-{deg}-1yr', major_version)
 
                 self.hi_combined_initializer_mock_query.assert_has_calls([
                     call(instrument='hi', data_level='l3'),
@@ -75,6 +77,56 @@ class TestHiCombinedInitializer(unittest.TestCase):
                 ])
 
                 self.assertEqual(expected_maps_to_produce, actual_maps_to_produce)
+
+    @patch('imap_l3_processing.maps.map_initializer.read_cdf_parents')
+    def test_get_maps_that_should_be_produced_new_major_version(self, mock_read_cdf_parents: Mock):
+        mock_read_cdf_parents.return_value = {
+            *l3_sp_input_maps
+        }
+
+        mock_read_cdf_parents.reset_mock()
+        self.hi_combined_initializer_mock_query.side_effect = [
+            create_mock_query_results([
+                f'imap_hi_l3_h45-ena-h-hf-sp-ram-hae-6deg-1yr_20250101_v001.cdf',
+                f'imap_hi_l3_h45-ena-h-hf-sp-anti-hae-6deg-1yr_20250101_v001.cdf',
+                f'imap_hi_l3_h90-ena-h-hf-sp-ram-hae-6deg-1yr_20250101_v001.cdf',
+                f'imap_hi_l3_h90-ena-h-hf-sp-anti-hae-6deg-1yr_20250101_v001.cdf',
+                f'imap_hi_l3_hic-ena-h-hf-sp-full-hae-6deg-1yr_20250101_v001.cdf',
+            ]),
+            create_mock_query_results([])
+        ]
+
+        expected_maps_to_produce = [
+            PossibleMapToProduce(
+                input_files={
+                    f'imap_hi_l3_h45-ena-h-hf-sp-ram-hae-6deg-1yr_20250101_v001.cdf',
+                    f'imap_hi_l3_h45-ena-h-hf-sp-anti-hae-6deg-1yr_20250101_v001.cdf',
+
+                    f'imap_hi_l3_h90-ena-h-hf-sp-ram-hae-6deg-1yr_20250101_v001.cdf',
+                    f'imap_hi_l3_h90-ena-h-hf-sp-anti-hae-6deg-1yr_20250101_v001.cdf',
+                },
+                input_metadata=InputMetadata(
+                    instrument='hi',
+                    data_level='l3',
+                    start_date=datetime(2025, 1, 1),
+                    end_date=datetime(2026, 1, 1),
+                    version='v002.0002',
+                    descriptor=f'hic-ena-h-hf-sp-full-hae-6deg-1yr'
+                )
+            )
+        ]
+
+        initializer = HiCombinedInitializer()
+        actual_maps_to_produce = initializer.get_maps_that_should_be_produced(
+            f'hic-ena-h-hf-sp-full-hae-6deg-1yr', 2)
+
+        mock_read_cdf_parents.assert_called_once_with(f'imap_hi_l3_hic-ena-h-hf-sp-full-hae-6deg-1yr_20250101_v001.cdf')
+        self.hi_combined_initializer_mock_query.assert_has_calls([
+            call(instrument='hi', data_level='l3'),
+            call(instrument='hi', data_level='l2')
+        ])
+
+        self.assertEqual(expected_maps_to_produce, actual_maps_to_produce)
 
     def test_get_maps_that_should_be_produced_no_existing_combined_nsp(self):
         self.maxDiff = 2000
@@ -113,7 +165,7 @@ class TestHiCombinedInitializer(unittest.TestCase):
 
                 initializer = HiCombinedInitializer()
                 actual_maps_to_produce = initializer.get_maps_that_should_be_produced(
-                    f'hic-ena-h-hf-nsp-full-hae-{deg}-1yr')
+                    f'hic-ena-h-hf-nsp-full-hae-{deg}-1yr', None)
 
                 self.hi_combined_initializer_mock_query.assert_has_calls([
                     call(instrument='hi', data_level='l3'),
@@ -144,7 +196,7 @@ class TestHiCombinedInitializer(unittest.TestCase):
         expected_maps_to_produce = []
 
         initializer = HiCombinedInitializer()
-        actual_maps_to_produce = initializer.get_maps_that_should_be_produced('hic-ena-h-hf-sp-full-hae-6deg-1yr')
+        actual_maps_to_produce = initializer.get_maps_that_should_be_produced('hic-ena-h-hf-sp-full-hae-6deg-1yr', None)
 
         self.hi_combined_initializer_mock_query.assert_has_calls([
             call(instrument='hi', data_level='l3'),
@@ -166,7 +218,8 @@ class TestHiCombinedInitializer(unittest.TestCase):
         expected_maps_to_produce = []
 
         initializer = HiCombinedInitializer()
-        actual_maps_to_produce = initializer.get_maps_that_should_be_produced('hic-ena-h-hf-nsp-full-hae-6deg-1yr')
+        actual_maps_to_produce = initializer.get_maps_that_should_be_produced('hic-ena-h-hf-nsp-full-hae-6deg-1yr',
+                                                                              None)
 
         self.hi_combined_initializer_mock_query.assert_has_calls([
             call(instrument='hi', data_level='l3'),
@@ -213,7 +266,7 @@ class TestHiCombinedInitializer(unittest.TestCase):
         ]
 
         initializer = HiCombinedInitializer()
-        actual_maps_to_produce = initializer.get_maps_that_should_be_produced('hic-ena-h-hf-sp-full-hae-6deg-1yr')
+        actual_maps_to_produce = initializer.get_maps_that_should_be_produced('hic-ena-h-hf-sp-full-hae-6deg-1yr', None)
 
         self.hi_combined_initializer_mock_query.assert_has_calls([
             call(instrument='hi', data_level='l3'),
@@ -274,7 +327,8 @@ class TestHiCombinedInitializer(unittest.TestCase):
         ]
 
         initializer = HiCombinedInitializer()
-        actual_maps_to_produce = initializer.get_maps_that_should_be_produced(f'hic-ena-h-hf-nsp-full-hae-6deg-1yr')
+        actual_maps_to_produce = initializer.get_maps_that_should_be_produced(f'hic-ena-h-hf-nsp-full-hae-6deg-1yr',
+                                                                              None)
 
         mock_read_cdf_parents.assert_not_called()
 

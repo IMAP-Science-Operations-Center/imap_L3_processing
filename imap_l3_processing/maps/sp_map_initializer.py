@@ -3,6 +3,7 @@ from abc import abstractmethod
 from datetime import datetime
 
 from imap_data_access import ScienceFilePath
+from imap_data_access.file_validation import Version
 
 from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, parse_map_descriptor, \
     get_duration_from_map_descriptor, map_descriptor_parts_to_string, Sensor
@@ -29,7 +30,7 @@ class SPMapInitializer(MapInitializer):
     def _get_l2_dependencies(self, descriptor: MapDescriptorParts) -> list[MapDescriptorParts]:
         raise NotImplementedError()
 
-    def get_maps_that_can_be_produced(self, l3_descriptor: str) -> list[PossibleMapToProduce]:
+    def get_maps_that_can_be_produced(self, l3_descriptor: str, major_version: int|None) -> list[PossibleMapToProduce]:
         l3_descriptor_parts = parse_map_descriptor(l3_descriptor)
         map_duration = get_duration_from_map_descriptor(l3_descriptor_parts)
 
@@ -80,7 +81,7 @@ class SPMapInitializer(MapInitializer):
                            repoint in glows_file_by_repointing]
 
             input_metadata = InputMetadata(instrument=self.instrument, data_level='l3', start_date=start_date,
-                                           end_date=start_date + map_duration, version='v001',
+                                           end_date=start_date + map_duration, version=str(Version(major_version, 1)),
                                            descriptor=l3_descriptor)
 
             possible_map_to_produce = PossibleMapToProduce(

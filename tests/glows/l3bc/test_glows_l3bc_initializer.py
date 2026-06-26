@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch, call, sentinel
 
 from imap_data_access import ProcessingInputCollection, RepointInput
+from imap_data_access.file_validation import Version
 
 from imap_l3_processing.glows.l3bc.glows_l3bc_initializer import GlowsL3BCInitializer, GlowsL3BCInitializerData
 from imap_l3_processing.glows.l3bc.models import CRToProcess, ExternalDependencies
@@ -95,8 +96,12 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
             2092: "imap_glows_l3c_sw-profile_20100201-cr02092_v001.cdf"
         }
 
+        major_version_to_process = 3
+
         l3bc_initializer_data = GlowsL3BCInitializer.get_crs_to_process(
-            ProcessingInputCollection(RepointInput("imap_2026_269_05.repoint.csv")))
+            ProcessingInputCollection(RepointInput("imap_2026_269_05.repoint.csv")),
+            major_version_to_process
+        )
 
         mock_download.assert_called_once()
         mock_set_global_repoint_table_paths.assert_called_with([mock_download.return_value])
@@ -150,8 +155,8 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
         )
 
         mock_should_process_cr_candidate.assert_has_calls([
-            call(expected_cr_candidate_1, expected_l3bs_by_cr, mock_fetch_external_deps.return_value),
-            call(expected_cr_candidate_2, expected_l3bs_by_cr, mock_fetch_external_deps.return_value)
+            call(expected_cr_candidate_1, expected_l3bs_by_cr, mock_fetch_external_deps.return_value, major_version_to_process),
+            call(expected_cr_candidate_2, expected_l3bs_by_cr, mock_fetch_external_deps.return_value, major_version_to_process)
         ], any_order=False)
 
         mock_l3bc_deps_from_cr.assert_called_once_with(expected_cr_candidate_1, 2,
@@ -197,7 +202,7 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
                 mock_query.side_effect = query_that_returns_empty_list_for_missing_ancillary
 
                 actual_crs_to_process = GlowsL3BCInitializer.get_crs_to_process(
-                    ProcessingInputCollection(RepointInput("imap_2026_269_05.repoint.csv")))
+                    ProcessingInputCollection(RepointInput("imap_2026_269_05.repoint.csv")), sentinel.major_version)
 
                 mock_query.assert_has_calls([
                     call(instrument="glows", data_level="l3a", descriptor="hist", version="latest"),
@@ -254,7 +259,7 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
                 ]
 
                 actual_crs_to_process = GlowsL3BCInitializer.get_crs_to_process(
-                    ProcessingInputCollection(RepointInput("imap_2026_269_05.repoint.csv")))
+                    ProcessingInputCollection(RepointInput("imap_2026_269_05.repoint.csv")), sentinel.major_version)
 
                 mock_query.assert_has_calls([
                     call(instrument="glows", data_level="l3a", descriptor="hist", version="latest"),
@@ -297,7 +302,7 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
             omni2_data_path=Path("omni2_data_path"),
         )
 
-        self.assertIsNone(GlowsL3BCInitializer.should_process_cr_candidate(cr_candidate, {}, external_dependencies))
+        self.assertIsNone(GlowsL3BCInitializer.should_process_cr_candidate(cr_candidate, {}, external_dependencies, 1))
 
     def test_should_process_cr_no_existing_l3b(self):
 
@@ -320,9 +325,9 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
             omni2_data_path=Path("omni2_data_path"),
         )
 
-        actual_version = GlowsL3BCInitializer.should_process_cr_candidate(cr_candidate, {}, external_dependencies)
+        actual_version = GlowsL3BCInitializer.should_process_cr_candidate(cr_candidate, {}, external_dependencies, major_version=2)
 
-        self.assertEqual(1, actual_version)
+        self.assertEqual(Version(2, 1), actual_version)
 
     @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.read_cdf_parents")
     def test_should_process_cr_existing_cr_should_process(self, mock_read_cdf_parents):
@@ -347,16 +352,18 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
         }
 
         test_cases = [
-            ("new l3a file version", new_l3a_version),
-            ("new l3a files arrived", new_l3a_file),
-            ("new ancillary file arrived", new_ancillary)
+            ("new l3a file version", new_l3a_version, 2),
+            ("new l3a files arrived", new_l3a_file, 2),
+            ("new ancillary file arrived", new_ancillary, 2),
+            ("new major version", {}, 3)
         ]
 
-        for name, new_server_data in test_cases:
+        for name, new_server_data, new_major_version in test_cases:
             with self.subTest(name):
                 mock_read_cdf_parents.reset_mock()
 
-                existing_file_version = 2
+                existing_file_major_version = 2
+                existing_file_minor_version = 3
 
                 already_processed_cr = CRToProcess(
                     l3a_file_names={
@@ -392,14 +399,16 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
                     "some_zip_file.zip"
                 }
 
-                l3bs = {2091: f"imap_glows_l3b_ion-rate-profile_20100101-cr02091_v00{existing_file_version}.cdf"}
+                existing_file_version = Version(existing_file_major_version, existing_file_minor_version)
+                l3bs = {2091: f"imap_glows_l3b_ion-rate-profile_20100101-cr02091_{existing_file_version}.cdf"}
                 actual_version = GlowsL3BCInitializer.should_process_cr_candidate(cr_candidate, l3bs,
-                                                                                  external_dependencies)
+                                                                                  external_dependencies, new_major_version)
+                expected_version = Version(new_major_version, existing_file_minor_version + 1)
 
                 mock_read_cdf_parents.assert_called_once_with(
-                    f"imap_glows_l3b_ion-rate-profile_20100101-cr02091_v00{existing_file_version}.cdf")
+                    f"imap_glows_l3b_ion-rate-profile_20100101-cr02091_{existing_file_version}.cdf")
 
-                self.assertEqual(existing_file_version + 1, actual_version)
+                self.assertEqual(expected_version, actual_version)
 
     @patch("imap_l3_processing.glows.l3bc.glows_l3bc_initializer.read_cdf_parents")
     def test_should_process_cr_existing_cr_should_not_reprocess(self, mock_read_cdf_parents):
@@ -418,8 +427,8 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
         )
         cr_candidate.buffer_time_has_elapsed_since_cr = Mock(return_value=True)
         cr_candidate.has_valid_external_dependencies = Mock(return_value=True)
-
-        l3bs = {2091: "imap_glows_l3b_ion-rate-profile_20100101-cr02091_v001.cdf"}
+        existing_version = Version(2, 1)
+        l3bs = {2091: f"imap_glows_l3b_ion-rate-profile_20100101-cr02091_{existing_version}.cdf"}
 
         external_dependencies = ExternalDependencies(
             f107_index_file_path=Path("f107_index_file_path"),
@@ -437,9 +446,9 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
             "some_zip_file.zip"
         }
 
-        self.assertIsNone(GlowsL3BCInitializer.should_process_cr_candidate(cr_candidate, l3bs, external_dependencies))
+        self.assertIsNone(GlowsL3BCInitializer.should_process_cr_candidate(cr_candidate, l3bs, external_dependencies, existing_version.major))
 
-        mock_read_cdf_parents.assert_called_once_with("imap_glows_l3b_ion-rate-profile_20100101-cr02091_v001.cdf")
+        mock_read_cdf_parents.assert_called_once_with(f"imap_glows_l3b_ion-rate-profile_20100101-cr02091_{existing_version}.cdf")
 
     def test_should_process_cr_with_invalid_dependencies(self):
         cr_candidate = CRToProcess(
@@ -462,7 +471,7 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
             omni2_data_path=Path("omni2_data_path"),
         )
 
-        self.assertIsNone(GlowsL3BCInitializer.should_process_cr_candidate(cr_candidate, {}, external_dependencies))
+        self.assertIsNone(GlowsL3BCInitializer.should_process_cr_candidate(cr_candidate, {}, external_dependencies, 1))
 
         cr_candidate.has_valid_external_dependencies.assert_called_once_with(external_dependencies)
 

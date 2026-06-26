@@ -6,6 +6,7 @@ from pathlib import Path
 
 import imap_data_access
 from imap_data_access import ScienceFilePath, ImapFilePath, ProcessingInputCollection
+from imap_data_access.file_validation import Version
 from imap_data_access.processing_input import generate_imap_input
 
 from imap_l3_processing.models import InputMetadata
@@ -35,11 +36,11 @@ class MapInitializer(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_maps_that_can_be_produced(self, l3_descriptor: str):
+    def get_maps_that_can_be_produced(self, l3_descriptor: str, major_version: int|None):
         raise NotImplementedError()
 
-    def get_maps_that_should_be_produced(self, descriptor: str) -> list[PossibleMapToProduce]:
-        possible_maps = self.get_maps_that_can_be_produced(descriptor)
+    def get_maps_that_should_be_produced(self, descriptor: str, major_version: int|None) -> list[PossibleMapToProduce]:
+        possible_maps = self.get_maps_that_can_be_produced(descriptor, major_version)
 
         maps_to_make = []
         for possible_map in possible_maps:
@@ -47,10 +48,12 @@ class MapInitializer(abc.ABC):
             if start_dates_for_l3_descriptor := self.existing_l3_maps.get(descriptor):
                 if l3_result := start_dates_for_l3_descriptor.get(start_time):
                     existing_parents = read_cdf_parents(l3_result)
-                    if possible_map.input_files.issubset(existing_parents):
+                    existing_major_version = Version.from_version(ScienceFilePath(l3_result).version).major
+                    if possible_map.input_files.issubset(existing_parents) and major_version == existing_major_version:
                         continue
-                    new_version = int(ScienceFilePath(l3_result).version[1:]) + 1
-                    possible_map.input_metadata.version = f'v{new_version:03}'
+                    new_minor_version = Version.from_version(ScienceFilePath(l3_result).version).minor + 1
+                    new_version = Version(major_version, new_minor_version)
+                    possible_map.input_metadata.version = str(new_version)
             maps_to_make.append(possible_map)
         return maps_to_make
 

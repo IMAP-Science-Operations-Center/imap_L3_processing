@@ -26,7 +26,7 @@ from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, 
     HealPixIntensityMapData, HealPixSpectralIndexMapData, RectangularSpectralIndexDataProduct, \
     RectangularIntensityDataProduct, HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct, MapDataProduct, \
     ISNBackgroundSubtractedDataProduct, ISNBackgroundSubtractedMapData
-from imap_l3_processing.models import UpstreamDataDependency, DataProduct, MagData, InputMetadata
+from imap_l3_processing.models import DataProduct, MagData, InputMetadata
 from imap_l3_processing.ultra.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.version import VERSION
 
@@ -171,37 +171,6 @@ def format_time(t: Optional[datetime]) -> Optional[str]:
     if t is not None:
         return t.strftime("%Y%m%d")
     return None
-
-
-def download_dependency(dependency: UpstreamDataDependency) -> Path:
-    files_to_download = [result['file_path'] for result in
-                         imap_data_access.query(instrument=dependency.instrument,
-                                                data_level=dependency.data_level,
-                                                descriptor=dependency.descriptor,
-                                                start_date=format_time(dependency.start_date),
-                                                end_date=format_time(dependency.end_date),
-                                                version=dependency.version
-                                                )]
-    if len(files_to_download) != 1:
-        raise ValueError(f"{files_to_download}. Expected one file to download, found {len(files_to_download)}.")
-
-    return imap_data_access.download(files_to_download[0])
-
-
-def download_dependency_with_repointing(dependency: UpstreamDataDependency) -> (Path, int):
-    files_with_repointing_to_download = [(result['file_path'], result['repointing']) for result in
-                                         imap_data_access.query(instrument=dependency.instrument,
-                                                                data_level=dependency.data_level,
-                                                                descriptor=dependency.descriptor,
-                                                                start_date=format_time(dependency.start_date),
-                                                                end_date=format_time(dependency.end_date),
-                                                                version=dependency.version
-                                                                )]
-    if len(files_with_repointing_to_download) != 1:
-        raise ValueError(
-            f"{[file[0] for file in files_with_repointing_to_download]}. Expected one file to download, found {len(files_with_repointing_to_download)}.")
-    repointing_number = files_with_repointing_to_download[0][1]
-    return imap_data_access.download(files_with_repointing_to_download[0][0]), repointing_number
 
 
 def download_external_dependency(dependency_url: str, file_path: Path) -> Optional[Path]:

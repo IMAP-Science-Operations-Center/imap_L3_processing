@@ -19,8 +19,8 @@ from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, 
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
-from imap_l3_processing.utils import format_time, download_dependency, read_mag_data, save_data, \
-    download_external_dependency, download_dependency_with_repointing, \
+from imap_l3_processing.utils import format_time, read_mag_data, save_data, \
+    download_external_dependency, \
     combine_glows_l3e_with_l1c_pointing, furnish_local_spice, get_spice_parent_file_names, furnish_spice_metakernel, \
     SpiceKernelTypes, FurnishMetakernelOutput, read_cdf_parents, get_dependency_paths_by_descriptor, filter_bad_days
 from imap_l3_processing.version import VERSION
@@ -362,64 +362,6 @@ class TestUtils(TestCase):
         actual_time = format_time(None)
         self.assertEqual(None, actual_time)
 
-    @patch('imap_l3_processing.utils.imap_data_access')
-    def test_download_dependency(self, mock_data_access):
-        dependency = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
-                                   "descriptor")
-        query_dictionary = [{'file_path': "imap_swapi_l2_descriptor-fake-menlo-444_20240917_v2.cdf",
-                             'second_entry': '12345'}]
-        mock_data_access.query.return_value = query_dictionary
-
-        path = download_dependency(dependency)
-
-        mock_data_access.query.assert_called_once_with(instrument=dependency.instrument,
-                                                       data_level=dependency.data_level,
-                                                       descriptor=dependency.descriptor,
-                                                       start_date="20240917",
-                                                       end_date="20240918",
-                                                       version='v2')
-        mock_data_access.download.assert_called_once_with("imap_swapi_l2_descriptor-fake-menlo-444_20240917_v2.cdf")
-
-        self.assertIs(path, mock_data_access.download.return_value)
-
-    @patch('imap_l3_processing.utils.imap_data_access')
-    def test_download_dependency_with_repointing(self, mock_data_access):
-        dependency = InputMetadata("glows", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
-                                   "hist")
-        query_dictionary = [{'file_path': "imap_glows_l2_hist_20240917-repoint00001_v002.cdf",
-                             'repointing': 1,
-                             'third_entry': '12345'}]
-        mock_data_access.query.return_value = query_dictionary
-
-        path, repointing = download_dependency_with_repointing(dependency)
-
-        mock_data_access.query.assert_called_once_with(instrument=dependency.instrument,
-                                                       data_level=dependency.data_level,
-                                                       descriptor=dependency.descriptor,
-                                                       start_date="20240917",
-                                                       end_date="20240918",
-                                                       version='v002')
-        mock_data_access.download.assert_called_once_with("imap_glows_l2_hist_20240917-repoint00001_v002.cdf")
-        self.assertEqual(path, mock_data_access.download.return_value)
-        self.assertEqual(1, repointing)
-
-    @patch('imap_l3_processing.utils.imap_data_access')
-    def test_download_dependency_with_repointing_throws_if_no_files_or_more_than_one_found(self, mock_data_access):
-        dependency = InputMetadata("glows", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
-                                   "hist")
-
-        for return_values in ([], [{'file_path': "a", 'repointing': ''}, {'file_path': "b", 'repointing': ''}]):
-            with self.subTest(return_values):
-                mock_data_access.query.return_value = return_values
-                with self.assertRaises(Exception) as cm:
-                    download_dependency_with_repointing(dependency)
-                expected_files_to_download = [dict_entry['file_path'] for dict_entry in return_values]
-                mock_data_access.download.assert_not_called()
-
-                self.assertEqual(
-                    f"{expected_files_to_download}. Expected one file to download, found {len(return_values)}.",
-                    str(cm.exception))
-
     @patch("imap_l3_processing.utils.requests")
     @patch('builtins.open')
     def test_download_external_dependency(self, mock_open_file, mock_requests):
@@ -449,28 +391,6 @@ class TestUtils(TestCase):
 
         returned = download_external_dependency(expected_url, expected_filename)
         self.assertIsNone(returned)
-
-    @patch('imap_l3_processing.utils.imap_data_access')
-    def test_download_dependency_throws_value_error_if_not_one_file_returned(self, mock_data_access):
-        dependency = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
-                                   "descriptor")
-        query_dictionary_more_than_one_file = [{'file_path': "imap_swapi_l2_descriptor-fake-menlo-444_20240917_v2.cdf",
-                                                'second_entry': '12345'}, {"file_path": "extra_value"}]
-        query_dictionary_less_than_one_file = []
-
-        cases = [("2", query_dictionary_more_than_one_file),
-                 ("0", query_dictionary_less_than_one_file)]
-
-        for case, query_dictionary in cases:
-            with self.subTest(case):
-                mock_data_access.query.return_value = query_dictionary
-                expected_files_to_download = [dict_entry['file_path'] for dict_entry in query_dictionary]
-                with self.assertRaises(Exception) as cm:
-                    download_dependency(dependency)
-
-                self.assertEqual(
-                    f"{expected_files_to_download}. Expected one file to download, found {case}.",
-                    str(cm.exception))
 
     def test_read_l1d_mag_data(self):
         file_name_as_str = "test_cdf.cdf"

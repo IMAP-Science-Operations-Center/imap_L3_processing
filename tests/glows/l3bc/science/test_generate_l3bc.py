@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 from unittest import TestCase
 from unittest.mock import sentinel
 
+from imap_data_access.file_validation import Version
+
 from imap_l3_processing.glows.l3a.utils import create_glows_l3a_dictionary_from_cdf
 from imap_l3_processing.glows.l3bc.cannot_process_carrington_rotation_error import CannotProcessCarringtonRotationError
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
@@ -38,7 +40,7 @@ class TestGenerateL3BC(TestCase):
             carrington_rotation_number=cr,
             start_date=datetime.now(),
             end_date=datetime.now() + timedelta(days=1),
-            version=1,
+            version=Version(1,1),
             repointing_file_path=sentinel.repointing_file_path
         )
 
@@ -91,7 +93,7 @@ class TestGenerateL3BC(TestCase):
             carrington_rotation_number=cr,
             start_date=datetime.now(),
             end_date=datetime.now() + timedelta(days=1),
-            version=1,
+            version=Version(1,1),
             repointing_file_path=sentinel.repointing_file_path
         )
 
@@ -151,7 +153,7 @@ class TestGenerateL3BC(TestCase):
             carrington_rotation_number=cr,
             start_date=datetime.now(),
             end_date=datetime.now() + timedelta(days=1),
-            version=1,
+            version=Version(1,1),
             repointing_file_path=sentinel.repointing_file_path
         )
         l3b, l3c = generate_l3bc(dependencies)

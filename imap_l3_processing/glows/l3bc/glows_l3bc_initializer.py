@@ -6,6 +6,7 @@ from typing import Optional
 
 import imap_data_access
 from imap_data_access import ScienceFilePath, ProcessingInputCollection, RepointInput
+from imap_data_access.file_validation import Version
 from imap_processing.spice.repoint import set_global_repoint_table_paths
 from spacepy.pycdf import CDF
 
@@ -37,7 +38,7 @@ class GlowsL3BCInitializerData:
 
 class GlowsL3BCInitializer:
     @staticmethod
-    def get_crs_to_process(dependencies: ProcessingInputCollection) -> GlowsL3BCInitializerData:
+    def get_crs_to_process(dependencies: ProcessingInputCollection, major_version_to_process: int) -> GlowsL3BCInitializerData:
         [repoint_file] = dependencies.get_file_paths(data_type=RepointInput.data_type)
         repoint_downloaded_path = imap_data_access.download(repoint_file)
         set_global_repoint_table_paths([repoint_downloaded_path])
@@ -108,7 +109,7 @@ class GlowsL3BCInitializer:
                 )
 
                 if version := GlowsL3BCInitializer.should_process_cr_candidate(cr_candidate, l3bs_by_cr,
-                                                                               external_dependencies):
+                                                                               external_dependencies, major_version_to_process):
                     l3bc_dependencies = GlowsL3BCDependencies.download_from_cr_to_process(cr_candidate, version,
                                                                                           external_dependencies,
                                                                                           repoint_downloaded_path)
@@ -128,7 +129,7 @@ class GlowsL3BCInitializer:
 
     @staticmethod
     def should_process_cr_candidate(cr_candidate: CRToProcess, l3bs_by_cr: dict[int, str],
-                                    external_dependencies: ExternalDependencies) -> Optional[int]:
+                                    external_dependencies: ExternalDependencies, major_version: int|None) -> Optional[Version]:
         if not cr_candidate.buffer_time_has_elapsed_since_cr():
             logger.warning(f"Not enough time has elapsed for cr {cr_candidate.cr_rotation_number}")
             return None
@@ -139,11 +140,14 @@ class GlowsL3BCInitializer:
 
         match l3bs_by_cr.get(cr_candidate.cr_rotation_number):
             case None:
-                return 1
+                return Version(major_version, 1)
             case l3b_file_name:
                 l3b_parents = read_cdf_parents(l3b_file_name)
-                if not cr_candidate.pipeline_dependency_file_names().issubset(l3b_parents):
-                    return int(ScienceFilePath(l3b_file_name).version[1:]) + 1
+                existing_version = Version.from_version(ScienceFilePath(l3b_file_name).version)
+                major_version_updated = major_version != existing_version.major
+                inputs_changed = not cr_candidate.pipeline_dependency_file_names().issubset(l3b_parents)
+                if major_version_updated or inputs_changed:
+                    return Version(major_version, existing_version.minor+1)
         return None
 
     @staticmethod

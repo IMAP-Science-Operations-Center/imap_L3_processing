@@ -3,6 +3,7 @@ from datetime import datetime
 from pathlib import Path
 
 import imap_data_access
+from imap_data_access.file_validation import Version
 
 from imap_l3_processing.maps.map_descriptors import Sensor, map_descriptor_parts_to_string, \
     parse_map_descriptor, get_duration_from_map_descriptor
@@ -45,7 +46,7 @@ class UltraCombinedNSPInitializer(MapInitializer):
             kernel_types=ULTRA_SP_SPICE_KERNELS
         )
 
-    def get_maps_that_can_be_produced(self, descriptor: str) -> list[PossibleMapToProduce]:
+    def get_maps_that_can_be_produced(self, descriptor: str, major_version: int|None) -> list[PossibleMapToProduce]:
         descriptor_parts = parse_map_descriptor(descriptor)
         if descriptor_parts is None:
             raise ValueError(f"Invalid map descriptor: {descriptor}")
@@ -79,7 +80,7 @@ class UltraCombinedNSPInitializer(MapInitializer):
                     data_level='l3',
                     start_date=start_date,
                     end_date=start_date + get_duration_from_map_descriptor(descriptor_parts),
-                    version='v001',
+                    version=str(Version(major_version, 1)),
                     descriptor=descriptor,
                 )
             ))
