@@ -105,8 +105,8 @@ class GlowsL3EUltraData(DataProduct):
         )
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
-        energy_labels = [f"Energy Label {i}" for i in range(1, 21)]
-        spin_angle_labels = [f"Heal Pixel Label {i}" for i in range(0, 3072)]
+        energy_labels = [f"Energy Label {i}" for i in range(1, len(self.energy) + 1)]
+        spin_angle_labels = [f"Pixel Index {i}" for i in range(0, len(self.healpix_index))]
         return [
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch),
             DataProductVariable(ENERGY_VAR_NAME, self.energy),

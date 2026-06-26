@@ -12,11 +12,18 @@ from tests.test_helpers import get_test_instrument_team_data_path
 
 class TestL3eUltraModel(unittest.TestCase):
     def test_l3e_ultra_model_to_data_product_variables(self):
+        rng = np.random.default_rng()
+        num_energies = rng.integers(1, 100)
+        energy_array = rng.integers(1, 100, num_energies)
+
+        num_pixels = rng.integers(0, 99)
+        healpix_index_array = rng.integers(1, 100, num_pixels)
+
         l3e_ultra: GlowsL3EUltraData = GlowsL3EUltraData(
             Mock(),
             sentinel.epoch,
-            sentinel.energy,
-            sentinel.healpix_index,
+            energy_array,
+            healpix_index_array,
             sentinel.probability_of_survival,
             sentinel.spin_axis_latitude,
             sentinel.spin_axis_longitude,
@@ -33,20 +40,19 @@ class TestL3eUltraModel(unittest.TestCase):
             sentinel.glows_flags,
         )
 
-        expected_energy_labels = ['Energy Label 1', 'Energy Label 2', 'Energy Label 3', 'Energy Label 4',
-                                  'Energy Label 5', 'Energy Label 6', 'Energy Label 7', 'Energy Label 8',
-                                  'Energy Label 9', 'Energy Label 10', 'Energy Label 11', 'Energy Label 12',
-                                  'Energy Label 13', 'Energy Label 14', 'Energy Label 15', 'Energy Label 16',
-                                  'Energy Label 17', 'Energy Label 18', 'Energy Label 19', 'Energy Label 20',
-                                  ]
-
-        expected_healpix_labels = [f'Heal Pixel Label {i}' for i in range(0, 3072)]
+        expected_energy_labels = [f'Energy Label {i}' for i in range(1, num_energies+1)]
+        expected_healpix_labels = [f'Pixel Index {i}' for i in range(0, num_pixels)]
 
         data_products = l3e_ultra.to_data_product_variables()
+        data_product_catalog = {d.name:d.value for d in data_products}
+
+        self.assertEqual(len(data_product_catalog['energy_label']), num_energies)
+        self.assertEqual(len(data_product_catalog['healpix_index_label']), num_pixels)
+
         expected_data_products = [
             DataProductVariable("epoch", sentinel.epoch),
-            DataProductVariable("energy_grid", sentinel.energy),
-            DataProductVariable("healpix_index", sentinel.healpix_index),
+            DataProductVariable("energy_grid", energy_array),
+            DataProductVariable("healpix_index", healpix_index_array),
             DataProductVariable("surv_prob", sentinel.probability_of_survival),
             DataProductVariable("energy_label", expected_energy_labels),
             DataProductVariable("healpix_index_label", expected_healpix_labels),

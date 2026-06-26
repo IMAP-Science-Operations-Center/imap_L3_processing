@@ -12,11 +12,18 @@ from tests.test_helpers import get_test_instrument_team_data_path
 
 class TestL3eHiModel(unittest.TestCase):
     def test_l3e_hi_model_to_data_product_variables(self):
+        rng = np.random.default_rng()
+        num_energies = rng.integers(1, 100)
+        energy_array = rng.integers(1, 100, num_energies)
+
+        num_spin_angles = rng.integers(1, 100)
+        spin_angle_array = rng.integers(1, 100, num_spin_angles)
+
         l3e_hi: GlowsL3EHiData = GlowsL3EHiData(
             Mock(),
             sentinel.epoch,
-            sentinel.energy,
-            sentinel.spin_angle,
+            energy_array,
+            spin_angle_array,
             sentinel.probability_of_survival,
             sentinel.spin_axis_latitude,
             sentinel.spin_axis_longitude,
@@ -31,18 +38,23 @@ class TestL3eHiModel(unittest.TestCase):
             sentinel.glows_flags,
         )
 
-        expected_energy_labels = ['Energy Label 1', 'Energy Label 2', 'Energy Label 3', 'Energy Label 4',
-                                  'Energy Label 5', 'Energy Label 6', 'Energy Label 7', 'Energy Label 8',
-                                  'Energy Label 9', 'Energy Label 10', 'Energy Label 11', 'Energy Label 12',
-                                  'Energy Label 13', 'Energy Label 14', 'Energy Label 15', 'Energy Label 16']
+        expected_energy_labels = [f'Energy Label {i}' for i in range(1, num_energies+1)]
 
-        expected_spin_angle_labels = [f"Spin Angle Label {i}" for i in range(1, 361)]
+        expected_spin_angle_labels = [f"Spin Angle Label {i}" for i in range(1, num_spin_angles+1)]
 
         data_products = l3e_hi.to_data_product_variables()
+
+        data_product_catalog = {d.name: d.value for d in data_products}
+        actual_energy_labels = data_product_catalog['energy_label']
+        actual_spin_angle_labels = data_product_catalog['spin_angle_label']
+
+        self.assertEqual(len(actual_energy_labels), num_energies)
+        self.assertEqual(len(actual_spin_angle_labels), num_spin_angles)
+
         expected_data_products = [
             DataProductVariable("epoch", sentinel.epoch),
-            DataProductVariable("energy_grid", sentinel.energy),
-            DataProductVariable("spin_angle", sentinel.spin_angle),
+            DataProductVariable("energy_grid", energy_array),
+            DataProductVariable("spin_angle", spin_angle_array),
             DataProductVariable("surv_prob", sentinel.probability_of_survival),
             DataProductVariable("energy_label", expected_energy_labels),
             DataProductVariable("spin_angle_label", expected_spin_angle_labels),
