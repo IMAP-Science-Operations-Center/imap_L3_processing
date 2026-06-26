@@ -12,66 +12,67 @@ from tests.test_helpers import get_test_instrument_team_data_path
 
 class TestL3eHiModel(unittest.TestCase):
     def test_l3e_hi_model_to_data_product_variables(self):
-        rng = np.random.default_rng()
-        num_energies = rng.integers(1, 100)
-        energy_array = rng.integers(1, 100, num_energies)
 
-        num_spin_angles = rng.integers(1, 100)
-        spin_angle_array = rng.integers(1, 100, num_spin_angles)
+        test_cases = {
+            'case 1':(
+                [1.2234,2,4.51,66.7666],
+                [1,41650233.0,4.22,9.5],
+                ['1.22','2.00','4.51','66.77'],
+                ['1','41650233','4','10']
+            ),
+            'case 2':(
+                [4.536,48.193,4253.1],
+                [13,14.0,34.2,19.5],
+                ['4.54','48.19','4253.10'],
+                ['13','14','34','20']
+            )
+        }
 
-        l3e_hi: GlowsL3EHiData = GlowsL3EHiData(
-            Mock(),
-            sentinel.epoch,
-            energy_array,
-            spin_angle_array,
-            sentinel.probability_of_survival,
-            sentinel.spin_axis_latitude,
-            sentinel.spin_axis_longitude,
-            sentinel.program_version,
-            sentinel.spacecraft_radius,
-            sentinel.spacecraft_latitude,
-            sentinel.spacecraft_longitude,
-            sentinel.spacecraft_velocity_x,
-            sentinel.spacecraft_velocity_y,
-            sentinel.spacecraft_velocity_z,
-            sentinel.elongation,
-            sentinel.glows_flags,
-        )
+        for name, (energy_array, spin_angle_array, expected_energy_labels, expected_spin_angle_labels) in test_cases.items():
+            with self.subTest(name):
+                l3e_hi: GlowsL3EHiData = GlowsL3EHiData(
+                    Mock(),
+                    sentinel.epoch,
+                    energy_array,
+                    spin_angle_array,
+                    sentinel.probability_of_survival,
+                    sentinel.spin_axis_latitude,
+                    sentinel.spin_axis_longitude,
+                    sentinel.program_version,
+                    sentinel.spacecraft_radius,
+                    sentinel.spacecraft_latitude,
+                    sentinel.spacecraft_longitude,
+                    sentinel.spacecraft_velocity_x,
+                    sentinel.spacecraft_velocity_y,
+                    sentinel.spacecraft_velocity_z,
+                    sentinel.elongation,
+                    sentinel.glows_flags,
+                )
 
-        expected_energy_labels = [f'Energy Label {i}' for i in range(1, num_energies+1)]
+                data_products = l3e_hi.to_data_product_variables()
 
-        expected_spin_angle_labels = [f"Spin Angle Label {i}" for i in range(1, num_spin_angles+1)]
 
-        data_products = l3e_hi.to_data_product_variables()
+                expected_data_products = [
+                    DataProductVariable("epoch", sentinel.epoch),
+                    DataProductVariable("energy_grid", energy_array),
+                    DataProductVariable("spin_angle", spin_angle_array),
+                    DataProductVariable("surv_prob", sentinel.probability_of_survival),
+                    DataProductVariable("energy_label", expected_energy_labels),
+                    DataProductVariable("spin_angle_label", expected_spin_angle_labels),
+                    DataProductVariable("spin_axis_latitude", sentinel.spin_axis_latitude),
+                    DataProductVariable("spin_axis_longitude", sentinel.spin_axis_longitude),
+                    DataProductVariable("program_version", sentinel.program_version),
+                    DataProductVariable("spacecraft_radius", sentinel.spacecraft_radius),
+                    DataProductVariable("spacecraft_latitude", sentinel.spacecraft_latitude),
+                    DataProductVariable("spacecraft_longitude", sentinel.spacecraft_longitude),
+                    DataProductVariable("spacecraft_velocity_x", sentinel.spacecraft_velocity_x),
+                    DataProductVariable("spacecraft_velocity_y", sentinel.spacecraft_velocity_y),
+                    DataProductVariable("spacecraft_velocity_z", sentinel.spacecraft_velocity_z),
+                    DataProductVariable("elongation", sentinel.elongation),
+                    DataProductVariable("glows_flags", sentinel.glows_flags),
+                ]
 
-        data_product_catalog = {d.name: d.value for d in data_products}
-        actual_energy_labels = data_product_catalog['energy_label']
-        actual_spin_angle_labels = data_product_catalog['spin_angle_label']
-
-        self.assertEqual(len(actual_energy_labels), num_energies)
-        self.assertEqual(len(actual_spin_angle_labels), num_spin_angles)
-
-        expected_data_products = [
-            DataProductVariable("epoch", sentinel.epoch),
-            DataProductVariable("energy_grid", energy_array),
-            DataProductVariable("spin_angle", spin_angle_array),
-            DataProductVariable("surv_prob", sentinel.probability_of_survival),
-            DataProductVariable("energy_label", expected_energy_labels),
-            DataProductVariable("spin_angle_label", expected_spin_angle_labels),
-            DataProductVariable("spin_axis_latitude", sentinel.spin_axis_latitude),
-            DataProductVariable("spin_axis_longitude", sentinel.spin_axis_longitude),
-            DataProductVariable("program_version", sentinel.program_version),
-            DataProductVariable("spacecraft_radius", sentinel.spacecraft_radius),
-            DataProductVariable("spacecraft_latitude", sentinel.spacecraft_latitude),
-            DataProductVariable("spacecraft_longitude", sentinel.spacecraft_longitude),
-            DataProductVariable("spacecraft_velocity_x", sentinel.spacecraft_velocity_x),
-            DataProductVariable("spacecraft_velocity_y", sentinel.spacecraft_velocity_y),
-            DataProductVariable("spacecraft_velocity_z", sentinel.spacecraft_velocity_z),
-            DataProductVariable("elongation", sentinel.elongation),
-            DataProductVariable("glows_flags", sentinel.glows_flags),
-        ]
-
-        self.assertEqual(expected_data_products, data_products)
+                self.assertEqual(expected_data_products, data_products)
 
     def test_convert_dat_to_glows_l3e_hi_product(self):
         hi_file_path = get_test_instrument_team_data_path("glows/probSur.Imap.Hi_2009.000_90.00.txt")

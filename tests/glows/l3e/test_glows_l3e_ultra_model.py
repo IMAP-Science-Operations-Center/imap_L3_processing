@@ -12,66 +12,68 @@ from tests.test_helpers import get_test_instrument_team_data_path
 
 class TestL3eUltraModel(unittest.TestCase):
     def test_l3e_ultra_model_to_data_product_variables(self):
-        rng = np.random.default_rng()
-        num_energies = rng.integers(1, 100)
-        energy_array = rng.integers(1, 100, num_energies)
+        test_cases = {
+            'case 1':(
+                [1.2234,2,4.51,66.7666],
+                [1,41650233.0,4.22,9.5],
+                ['1.22','2.00','4.51','66.77'],
+                ['1','41650233','4','10']
+            ),
+            'case 2':(
+                [4.536,48.193,4253.1],
+                [13,14.0,34.2,19.5],
+                ['4.54','48.19','4253.10'],
+                ['13','14','34','20']
+            )
+        }
 
-        num_pixels = rng.integers(0, 99)
-        healpix_index_array = rng.integers(1, 100, num_pixels)
+        for name, (energy_array, healpix_index_array, expected_energy_labels, expected_healpix_labels) in test_cases.items():
+            with self.subTest(name):
+                l3e_ultra: GlowsL3EUltraData = GlowsL3EUltraData(
+                    Mock(),
+                    sentinel.epoch,
+                    energy_array,
+                    healpix_index_array,
+                    sentinel.probability_of_survival,
+                    sentinel.spin_axis_latitude,
+                    sentinel.spin_axis_longitude,
+                    sentinel.program_version,
+                    sentinel.spacecraft_radius,
+                    sentinel.spacecraft_latitude,
+                    sentinel.spacecraft_longitude,
+                    sentinel.spacecraft_velocity_x,
+                    sentinel.spacecraft_velocity_y,
+                    sentinel.spacecraft_velocity_z,
+                    sentinel.elongation_excluded,
+                    sentinel.pixel_latitude,
+                    sentinel.pixel_longitude,
+                    sentinel.glows_flags,
+                )
+                data_products = l3e_ultra.to_data_product_variables()
 
-        l3e_ultra: GlowsL3EUltraData = GlowsL3EUltraData(
-            Mock(),
-            sentinel.epoch,
-            energy_array,
-            healpix_index_array,
-            sentinel.probability_of_survival,
-            sentinel.spin_axis_latitude,
-            sentinel.spin_axis_longitude,
-            sentinel.program_version,
-            sentinel.spacecraft_radius,
-            sentinel.spacecraft_latitude,
-            sentinel.spacecraft_longitude,
-            sentinel.spacecraft_velocity_x,
-            sentinel.spacecraft_velocity_y,
-            sentinel.spacecraft_velocity_z,
-            sentinel.elongation_excluded,
-            sentinel.pixel_latitude,
-            sentinel.pixel_longitude,
-            sentinel.glows_flags,
-        )
+                expected_data_products = [
+                    DataProductVariable("epoch", sentinel.epoch),
+                    DataProductVariable("energy_grid", energy_array),
+                    DataProductVariable("healpix_index", healpix_index_array),
+                    DataProductVariable("surv_prob", sentinel.probability_of_survival),
+                    DataProductVariable("energy_label", expected_energy_labels),
+                    DataProductVariable("healpix_index_label", expected_healpix_labels),
+                    DataProductVariable("spin_axis_latitude", sentinel.spin_axis_latitude),
+                    DataProductVariable("spin_axis_longitude", sentinel.spin_axis_longitude),
+                    DataProductVariable("program_version", sentinel.program_version),
+                    DataProductVariable("spacecraft_radius", sentinel.spacecraft_radius),
+                    DataProductVariable("spacecraft_latitude", sentinel.spacecraft_latitude),
+                    DataProductVariable("spacecraft_longitude", sentinel.spacecraft_longitude),
+                    DataProductVariable("spacecraft_velocity_x", sentinel.spacecraft_velocity_x),
+                    DataProductVariable("spacecraft_velocity_y", sentinel.spacecraft_velocity_y),
+                    DataProductVariable("spacecraft_velocity_z", sentinel.spacecraft_velocity_z),
+                    DataProductVariable("elongation_excluded", sentinel.elongation_excluded),
+                    DataProductVariable("pixel_latitude", sentinel.pixel_latitude),
+                    DataProductVariable("pixel_longitude", sentinel.pixel_longitude),
+                    DataProductVariable("glows_flags", sentinel.glows_flags),
+                ]
 
-        expected_energy_labels = [f'Energy Label {i}' for i in range(1, num_energies+1)]
-        expected_healpix_labels = [f'Pixel Index {i}' for i in range(0, num_pixels)]
-
-        data_products = l3e_ultra.to_data_product_variables()
-        data_product_catalog = {d.name:d.value for d in data_products}
-
-        self.assertEqual(len(data_product_catalog['energy_label']), num_energies)
-        self.assertEqual(len(data_product_catalog['healpix_index_label']), num_pixels)
-
-        expected_data_products = [
-            DataProductVariable("epoch", sentinel.epoch),
-            DataProductVariable("energy_grid", energy_array),
-            DataProductVariable("healpix_index", healpix_index_array),
-            DataProductVariable("surv_prob", sentinel.probability_of_survival),
-            DataProductVariable("energy_label", expected_energy_labels),
-            DataProductVariable("healpix_index_label", expected_healpix_labels),
-            DataProductVariable("spin_axis_latitude", sentinel.spin_axis_latitude),
-            DataProductVariable("spin_axis_longitude", sentinel.spin_axis_longitude),
-            DataProductVariable("program_version", sentinel.program_version),
-            DataProductVariable("spacecraft_radius", sentinel.spacecraft_radius),
-            DataProductVariable("spacecraft_latitude", sentinel.spacecraft_latitude),
-            DataProductVariable("spacecraft_longitude", sentinel.spacecraft_longitude),
-            DataProductVariable("spacecraft_velocity_x", sentinel.spacecraft_velocity_x),
-            DataProductVariable("spacecraft_velocity_y", sentinel.spacecraft_velocity_y),
-            DataProductVariable("spacecraft_velocity_z", sentinel.spacecraft_velocity_z),
-            DataProductVariable("elongation_excluded", sentinel.elongation_excluded),
-            DataProductVariable("pixel_latitude", sentinel.pixel_latitude),
-            DataProductVariable("pixel_longitude", sentinel.pixel_longitude),
-            DataProductVariable("glows_flags", sentinel.glows_flags),
-        ]
-
-        self.assertEqual(expected_data_products, data_products)
+                self.assertEqual(expected_data_products, data_products)
 
     def test_convert_dat_to_glows_l3e_ul_product(self):
         ul_file_path = get_test_instrument_team_data_path("glows/probSur.Imap.Ul_20250420_000000_2025.300.txt")

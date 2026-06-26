@@ -13,7 +13,7 @@ ENERGY_VAR_NAME = "energy_grid"
 PROBABILITY_OF_SURVIVAL_VAR_NAME = "surv_prob"
 HEALPIX_INDEX_VAR_NAME = "healpix_index"
 ENERGY_LABEL_VAR_NAME = "energy_label"
-SPIN_ANGLE_LABEL_VAR_NAME = "healpix_index_label"
+PIXEL_INDEX_LABEL_VAR_NAME = "healpix_index_label"
 SPIN_AXIS_LATITUDE_VAR_NAME = "spin_axis_latitude"
 SPIN_AXIS_LONGITUDE_VAR_NAME = "spin_axis_longitude"
 PROGRAM_VERSION_VAR_NAME = "program_version"
@@ -105,15 +105,15 @@ class GlowsL3EUltraData(DataProduct):
         )
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
-        energy_labels = [f"Energy Label {i}" for i in range(1, len(self.energy) + 1)]
-        spin_angle_labels = [f"Pixel Index {i}" for i in range(0, len(self.healpix_index))]
+        energy_labels = [f"{i:.2f}" for i in self.energy]
+        pixel_labels = [f"{i:.0f}" for i in self.healpix_index]
         return [
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch),
             DataProductVariable(ENERGY_VAR_NAME, self.energy),
             DataProductVariable(HEALPIX_INDEX_VAR_NAME, self.healpix_index),
             DataProductVariable(PROBABILITY_OF_SURVIVAL_VAR_NAME, self.probability_of_survival),
             DataProductVariable(ENERGY_LABEL_VAR_NAME, energy_labels),
-            DataProductVariable(SPIN_ANGLE_LABEL_VAR_NAME, spin_angle_labels),
+            DataProductVariable(PIXEL_INDEX_LABEL_VAR_NAME, pixel_labels),
             DataProductVariable(SPIN_AXIS_LATITUDE_VAR_NAME, self.spin_axis_lat),
             DataProductVariable(SPIN_AXIS_LONGITUDE_VAR_NAME, self.spin_axis_lon),
             DataProductVariable(PROGRAM_VERSION_VAR_NAME, self.program_version),

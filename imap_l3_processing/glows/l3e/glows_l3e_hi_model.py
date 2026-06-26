@@ -80,8 +80,8 @@ class GlowsL3EHiData(DataProduct):
                    )
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
-        spin_angle_labels = [f"Spin Angle Label {i}" for i in range(1, len(self.spin_angle) + 1)]
-        energy_labels = [f"Energy Label {i}" for i in range(1, len(self.energy) + 1)]
+        spin_angle_labels = [f"{i:.0f}" for i in self.spin_angle]
+        energy_labels = [f"{i:.2f}" for i in self.energy]
         return [
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch),
             DataProductVariable(ENERGY_VAR_NAME, self.energy),
