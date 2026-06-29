@@ -13,6 +13,7 @@ from imap_data_access import AncillaryFilePath
 from imap_data_access.file_validation import generate_imap_file_path, ScienceFilePath, SPICEFilePath
 from requests import Response
 
+from imap_l3_processing.glows.l3bc.models import OMNI2_URL
 from tests.test_helpers import create_mock_query_results
 
 
@@ -94,10 +95,11 @@ metakernel_text = """
 """
 
 class RequestsGetPatcher:
-    def __init__(self, spice_inputs: list[Path]):
+    def __init__(self, spice_inputs: list[Path], omni_file: Path | None = None):
         self.spice_file_names = [Path(spice_input).name for spice_input in spice_inputs]
         self.original_requests_get = requests.get
         self.patcher = patch.object(requests, "get", new=self)
+        self.omni_file = omni_file
 
     def start(self):
         self.patcher.start()
@@ -136,13 +138,16 @@ class RequestsGetPatcher:
                     response.content = response.text.encode()
             else:
                 assert False, "I don't know how to mock that IMAP endpoint!"
+        elif url == OMNI2_URL and self.omni_file:
+            response.status_code = 200
+            response.content = self.omni_file.read_bytes()
         else:
             response = self.original_requests_get(url, **kwargs)
 
         return response
 
 class mock_imap_data_access:
-    def __init__(self, data_dir: Path, input_files: list[Path]):
+    def __init__(self, data_dir: Path, input_files: list[Path], omni_file: Path | None = None):
         self.data_dir = data_dir
 
         valid_files = []
@@ -163,7 +168,7 @@ class mock_imap_data_access:
         self.data_dir_patcher = patch.dict(imap_data_access.config, {"DATA_DIR": self.data_dir})
         self.download_patcher = patch.object(imap_data_access, "download", new=fake_download)
         self.query_patcher = ImapQueryPatcher(self.input_files)
-        self.requests_get_patcher = RequestsGetPatcher(spice_file_paths)
+        self.requests_get_patcher = RequestsGetPatcher(spice_file_paths, omni_file)
 
     def __enter__(self):
         self.env_patcher.start()
