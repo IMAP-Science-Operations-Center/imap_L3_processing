@@ -187,40 +187,67 @@ plasma_speed_flag:
   DATA_TYPE: CDF_INT4
   CATDESC: Solar wind plasma speed source
   DEPEND_0: epoch
-  VAR_TYPE: metadata
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
-  DISPLAY_TYPE: no_plot
+  DISPLAY_TYPE: time_series
   FIELDNAM: Plasma Speed Source
-  FORMAT: I5
+  FORMAT: I6
   LABLAXIS: Plasma speed source
+  VALIDMIN: -1
+  VALIDMAX: 100000
   FILLVAL: -2147483648
   UNITS: ' '
+  VAR_NOTES: >-
+    Details in release notes. Values:
+    -1: Unspecified
+    20000: Speed from GLOWS measurements and ancillary inputs
+    20001: Speed interpolated
+    88888: Value extrapolated by repeating previous measured value
 uv_anisotropy_flag:
   NAME: uv_anisotropy_flag
   DATA_TYPE: CDF_INT4
   CATDESC: Ultraviolet anisotropy source
   DEPEND_0: epoch
-  VAR_TYPE: metadata
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
-  DISPLAY_TYPE: no_plot
+  DISPLAY_TYPE: time_series
   FIELDNAM: UV Anisotropy Source
-  FORMAT: I5
+  FORMAT: I6
   LABLAXIS: UV anisotropy source
+  VALIDMIN: -1
+  VALIDMAX: 100000
   FILLVAL: -2147483648
   UNITS: ' '
+  VAR_NOTES: >-
+    Details in release notes. Values:
+    -1: Unspecified
+    10000: Constant model
+    20000: Pheomenological model
+    20010: Pheomenological model 1
+    20020: Pheomenological model 2
+    30001: UV anisotropy interpolated
+    88888: Value extrapolated by repeating previous measured value
 proton_density_flag:
   NAME: proton_density_flag
   DATA_TYPE: CDF_INT4
   CATDESC: Solar wind proton density source
   DEPEND_0: epoch
-  VAR_TYPE: metadata
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
-  DISPLAY_TYPE: no_plot
+  DISPLAY_TYPE: time_series
   FIELDNAM: Proton Density Source
-  FORMAT: I5
+  FORMAT: I6
   LABLAXIS: Proton density source
+  VALIDMIN: -1
+  VALIDMAX: 100000
   FILLVAL: -2147483648
   UNITS: ' '
+  VAR_NOTES: >-
+    Details in release notes. Values:
+    -1: Unspecified
+    10000: Density from same source as speed data
+    10001: Density from source of speed data, interpolated
+    88888: Value extrapolated by repeating previous measured value
 glows_flags:
   NAME: glows_flags
   DATA_TYPE: CDF_UINT2

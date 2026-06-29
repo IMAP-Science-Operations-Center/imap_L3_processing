@@ -244,14 +244,25 @@ uv_anisotropy_flag:
   NAME: uv_anisotropy_flag
   DATA_TYPE: CDF_INT2
   CATDESC: Source flag for UV anisotropy
-  VAR_TYPE: metadata
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
   FIELDNAM: UV Anisotropy Source
-  FORMAT: I16
+  FORMAT: I6
   LABLAXIS: UV anisotropy source
+  VALIDMIN = -1
+  VALIDMAX = 30000
   FILLVAL: -32768
-  DISPLAY_TYPE: no_plot
-  RECORD_VARYING: NRV
+  DISPLAY_TYPE: time_series
+  SCALETYP: linear
+  RECORD_VARYING: RV
   UNITS: ' '
+  VAR_NOTES: >-
+    Details in release notes. Values:
+    -1: Unspecified
+    10000: Constant model
+    20000: Pheomenological model
+    20010: Pheomenological model 1
+    20020: Pheomenological model 2
 used_l3a:
   NAME: used_l3a
   DATA_TYPE: CDF_CHAR
