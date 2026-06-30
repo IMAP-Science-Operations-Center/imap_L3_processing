@@ -1174,7 +1174,7 @@ zenith_label:
 hit_flags:
   NAME: hit_flags
   DATA_TYPE: CDF_UINT2
-  CATDESC: Quality flags for HIT L3 macropixel (0: no special concern; nonzero: use caution)
+  CATDESC: "Quality flags for HIT L3 macropixel (0: no special concern; nonzero: use caution)"
   DEPEND_0: epoch
   VAR_TYPE: data
   DISPLAY_TYPE: time_series

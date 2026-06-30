@@ -249,8 +249,8 @@ uv_anisotropy_flag:
   FIELDNAM: UV Anisotropy Source
   FORMAT: I6
   LABLAXIS: UV anisotropy source
-  VALIDMIN = -1
-  VALIDMAX = 30000
+  VALIDMIN: -1
+  VALIDMAX: 30000
   FILLVAL: -32768
   DISPLAY_TYPE: time_series
   SCALETYP: linear

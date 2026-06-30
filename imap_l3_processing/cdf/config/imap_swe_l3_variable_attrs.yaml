@@ -341,7 +341,7 @@ phase_space_density_inward:
   LABL_PTR_1: energy_label
   SCALETYP: log
   SI_CONVERSION: 1e12>s^3 m^-6
-  VAR_NOTES: Integrated over half the pitch angle distribution: 0-90 degrees
+  VAR_NOTES: "Integrated over half the pitch angle distribution: 0-90 degrees"
 phase_space_density_outward:
   NAME: phase_space_density_outward
   DATA_TYPE: CDF_REAL4
@@ -364,7 +364,7 @@ phase_space_density_outward:
   LABL_PTR_1: energy_label
   SCALETYP: log
   SI_CONVERSION: 1e12>s^3 m^-6
-  VAR_NOTES: Integrated over half the pitch angle distribution: 90-180 degrees
+  VAR_NOTES: "Integrated over half the pitch angle distribution: 90-180 degrees"
 spacecraft_potential:
   NAME: spacecraft_potential
   DATA_TYPE: CDF_REAL4
@@ -1664,7 +1664,7 @@ inst_az:
 swe_flags:
   NAME: swe_flags
   DATA_TYPE: CDF_UINT2
-  CATDESC: Quality flags for SWE L3 (0: no special concern; nonzero: use caution)
+  CATDESC: "Quality flags for SWE L3 (0: no special concern; nonzero: use caution)"
   DEPEND_0: epoch
   VAR_TYPE: support_data
   DISPLAY_TYPE: time_series
@@ -1672,7 +1672,7 @@ swe_flags:
   RECORD_VARYING: RV
   FIELDNAM: Quality Flags for SWE L3
   FORMAT: I5
-  UNITS: ' '
+  UNITS: '0: okay; nonzero: caution'
   VALIDMIN: 0
   VALIDMAX: 65534
   FILLVAL: 65535
