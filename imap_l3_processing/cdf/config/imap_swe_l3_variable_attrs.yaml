@@ -260,7 +260,7 @@ phase_space_density_by_pitch_angle_and_gyrophase:
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Electron Phase Space Density
-  FORMAT: F15.3
+  FORMAT: E8.2E3
   LABLAXIS: e- PSD
   UNITS: s^3 cm^-6
   VALIDMIN: 0
@@ -285,7 +285,7 @@ phase_space_density_by_pitch_angle:
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Electron Phase Space Density
-  FORMAT: F15.3
+  FORMAT: E8.2E3
   LABLAXIS: e- PSD
   UNITS: s^3 cm^-6
   VALIDMIN: 0
@@ -308,7 +308,7 @@ phase_space_density_1d:
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Electron Phase Space Density
-  FORMAT: F15.3
+  FORMAT: E8.2E3
   LABLAXIS: e- PSD
   UNITS: s^3 cm^-6
   VALIDMIN: 0
@@ -329,9 +329,9 @@ phase_space_density_inward:
   RECORD_VARYING: RV
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Electron Phase Space Density
-  FORMAT: F15.3
-  LABLAXIS: e- PSD
+  FIELDNAM: Electron Phase Space Density Inward
+  FORMAT: E8.2E3
+  LABLAXIS: e- PSD In
   UNITS: s^3 cm^-6
   VALIDMIN: 0
   VALIDMAX: 1.00e-15
@@ -352,9 +352,9 @@ phase_space_density_outward:
   RECORD_VARYING: RV
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Electron Phase Space Density
-  FORMAT: F15.3
-  LABLAXIS: e- PSD
+  FIELDNAM: Electron Phase Space Density Outward
+  FORMAT: E8.2E3
+  LABLAXIS: e- PSD Out
   UNITS: s^3 cm^-6
   VALIDMIN: 0
   VALIDMAX: 1.00e-15
@@ -1571,7 +1571,7 @@ raw_1d_psd_rebinned:
   VAR_TYPE: data
   RECORD_VARYING: RV
   FIELDNAM: Raw 1D PSD
-  FORMAT: F12.6
+  FORMAT: E8.2E3
   LABLAXIS: Raw 1D PSD
   UNITS: ' '
   DISPLAY_TYPE: spectrogram
@@ -1592,7 +1592,7 @@ raw_psd_by_phi_rebinned:
   VAR_TYPE: data
   RECORD_VARYING: RV
   FIELDNAM: Raw PSD by phi
-  FORMAT: F12.6
+  FORMAT: E8.2E3
   LABLAXIS: Raw PSD by phi
   UNITS: ' '
   DISPLAY_TYPE: spectrogram
@@ -1615,7 +1615,7 @@ raw_psd_by_theta_rebinned:
   VAR_TYPE: data
   RECORD_VARYING: RV
   FIELDNAM: Raw PSD by theta
-  FORMAT: F12.6
+  FORMAT: E8.2E3
   LABLAXIS: Raw PSD by theta
   UNITS: ' '
   DISPLAY_TYPE: spectrogram
@@ -1666,7 +1666,7 @@ swe_flags:
   DATA_TYPE: CDF_UINT2
   CATDESC: "Quality flags for SWE L3 (0: no special concern; nonzero: use caution)"
   DEPEND_0: epoch
-  VAR_TYPE: support_data
+  VAR_TYPE: data
   DISPLAY_TYPE: time_series
   SCALETYP: linear
   RECORD_VARYING: RV
