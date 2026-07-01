@@ -129,14 +129,14 @@ ssd_energy:
 ssd_id:
   <<: *per_event_data
   NAME: ssd_id
-  CATDESC: Elevation angle of event in despun pointing set frame
-  FIELDNAM: Elevation angle
-  LABLAXIS: Elevation angle
+  CATDESC: Solid State Detector identifier
+  FIELDNAM: SSD ID
+  LABLAXIS: SSD ID
   UNITS: " "
   DATA_TYPE: CDF_UINT1
   FILLVAL: 255
   VALIDMIN: 0
-  VALIDMAX: 32
+  VALIDMAX: 15
   FORMAT: I2
 
 spin_angle:
@@ -212,27 +212,18 @@ estimated_mass:
   SCALEMAX: 1.0e+2
 
 elevation_angle:
+  <<: *per_event_data
   NAME: elevation_angle
   DATA_TYPE: CDF_FLOAT
-  CATDESC: Elevation Angle
+  CATDESC: Elevation Angle of event in despun pointing set frame
   FIELDNAM: Elevation Angle
-  DEPEND_0: epoch
-  DEPEND_1: priority_index
-  DEPEND_2: event_index
-  LABL_PTR_1: priority_index_label
-  LABL_PTR_2: event_index_label
   FORMAT: F8.2
   FILLVAL: -1.000000E+31
   LABLAXIS: Elevation Angle
-  SCALETYP: linear
   UNITS: degrees
   VALIDMAX: 180.0
   VALIDMIN: 0.0
-  VAR_TYPE: data
   DICT_KEY: SPASE>Particle>ParticleType:Ion,ParticleQuantity:ArrivalDirection,Qualifier:DirectionAngle.ElevationAngle
-  RECORD_VARYING: RV
-  DISPLAY_TYPE: no_plot
-  VARIABLE_PURPOSE: ' '
 
 gain:
   NAME: gain

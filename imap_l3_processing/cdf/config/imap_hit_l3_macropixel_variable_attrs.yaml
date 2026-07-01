@@ -1034,15 +1034,14 @@ measurement_pitch_angle:
   NAME: measurement_pitch_angle
   DATA_TYPE: CDF_REAL4
   CATDESC: Measured input pitch angle before rebinning
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DEPEND_1: azimuth
   DEPEND_2: zenith
-  DISPLAY_TYPE: no_plot
+  DISPLAY_TYPE: spectrogram
   FIELDNAM: Measurement Pitch Angle
-  VARIABLE_PURPOSE: ' '
-  FORMAT: F15.3
+  FORMAT: F5.1
   LABLAXIS: Pitch angle
   UNITS: degrees
   VALIDMIN: 0
@@ -1054,15 +1053,14 @@ measurement_gyrophase:
   NAME: measurement_gyrophase
   DATA_TYPE: CDF_REAL4
   CATDESC: Measured input gyrophase before rebinning
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
   DEPEND_1: azimuth
   DEPEND_2: zenith
-  DISPLAY_TYPE: no_plot
+  DISPLAY_TYPE: spectrogram
   FIELDNAM: Measurement Gyrophase
-  VARIABLE_PURPOSE: ' '
-  FORMAT: F15.3
+  FORMAT: F5.1
   LABLAXIS: Gyrophase
   UNITS: degrees
   VALIDMIN: 0
@@ -1176,14 +1174,20 @@ zenith_label:
 hit_flags:
   NAME: hit_flags
   DATA_TYPE: CDF_UINT2
-  CATDESC: Quality flags for HIT L3 macropixel
+  CATDESC: "Quality flags for HIT L3 macropixel (0: no special concern; nonzero: use caution)"
   DEPEND_0: epoch
-  VAR_TYPE: support_data
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+  SCALETYP: linear
   RECORD_VARYING: RV
   FIELDNAM: Quality Flags for HIT L3 macropixel
   FORMAT: I5
-  UNITS: ' '
+  UNITS: '0: okay; nonzero: caution'
   VALIDMIN: 0
   VALIDMAX: 65534
   FILLVAL: 65535
   LABLAXIS: Quality flags for HIT L3 macropixel
+  VAR_NOTES: >-
+    Details in release notes. Each bit being set indicates a specific potential concern.
+    Bit 2: preliminary MAG L1D used for magnetic field direction instead of the nominal MAG L2 product.
+    Other bits are reserved.

@@ -326,16 +326,21 @@ num_events:
 data_quality:
   <<: *per_priority
   NAME: data_quality
-  VAR_TYPE: metadata
-  CATDESC: Data quality
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+  SCALETYP: linear
+  CATDESC: "Data quality (0=good, 1=suspect)"
   FIELDNAM: Data quality
   LABLAXIS: Data quality
   DATA_TYPE: CDF_UINT1
-  FORMAT: I3
-  UNITS: " "
+  FORMAT: I1
+  UNITS: "0=good 1=suspect"
   VALIDMIN: 0
   VALIDMAX: 1
   FILLVAL: 255
+  VAR_NOTES: >-
+    Propagated from packet-level suspect bit via level 2. 0=good packet group.
+    1=suspect packet group.
 
 tof:
   <<: *per_event
@@ -579,13 +584,18 @@ esa_step:
 type:
   <<: *per_event
   NAME: type
-  CATDESC: Event Type
-  FIELDNAM: Type
-  LABLAXIS: Type
+  CATDESC: "Event PHA Type: 0=TCR; 1=DCR, 2=APD only"
+  FIELDNAM: PHA Type
+  LABLAXIS: PHA Type
   SCALETYP: linear
-  UNITS: " "
+  UNITS: "0=TCR; 1=DCR, 2=APD only"
   DATA_TYPE: CDF_UINT1
-  VALIDMAX: 4
+  VALIDMAX: 2
   VALIDMIN: 0
   FORMAT: I1
   FILLVAL: 255
+  VAR_NOTES: >-
+    PHA type code.
+    0 = TCR (Triple Coincidence, STA + STB + SP + APD);
+    1 = DCR (Double Coincidence, STA + STB + SP);
+    2 = APD-only energy event (APD with one or two of STA, STB, SP).

@@ -244,14 +244,25 @@ uv_anisotropy_flag:
   NAME: uv_anisotropy_flag
   DATA_TYPE: CDF_INT2
   CATDESC: Source flag for UV anisotropy
-  VAR_TYPE: metadata
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
   FIELDNAM: UV Anisotropy Source
-  FORMAT: I16
+  FORMAT: I6
   LABLAXIS: UV anisotropy source
+  VALIDMIN: -1
+  VALIDMAX: 30000
   FILLVAL: -32768
-  DISPLAY_TYPE: no_plot
-  RECORD_VARYING: NRV
+  DISPLAY_TYPE: time_series
+  SCALETYP: linear
+  RECORD_VARYING: RV
   UNITS: ' '
+  VAR_NOTES: >-
+    Details in release notes. Values:
+    -1: Unspecified
+    10000: Constant model
+    20000: Pheomenological model
+    20010: Pheomenological model 1
+    20020: Pheomenological model 2
 used_l3a:
   NAME: used_l3a
   DATA_TYPE: CDF_CHAR
@@ -268,14 +279,19 @@ used_l3a:
 glows_flags:
   NAME: glows_flags
   DATA_TYPE: CDF_UINT2
-  CATDESC: Quality flags for GLOWS L3b
+  CATDESC: "Quality flags for GLOWS L3b (0: no special concern; nonzero: use caution)"
   DEPEND_0: epoch
-  VAR_TYPE: support_data
+  VAR_TYPE: data
   RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  SCALETYP: linear
   FIELDNAM: Quality Flags for GLOWS L3b
   FORMAT: I5
-  UNITS: ' '
+  UNITS: '0: okay; nonzero: caution'
   VALIDMIN: 0
   VALIDMAX: 65534
   FILLVAL: 65535
   LABLAXIS: Quality flags for GLOWS L3b
+  VAR_NOTES: >-
+    Details in release notes. Each bit being set indicates a specific potential concern.
+    All bits are reserved for future use.
