@@ -20,7 +20,7 @@ from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.lo.l3.lo_sp_initializer import LoSPInitializer, LO_SP_MAP_DESCRIPTORS
 from imap_l3_processing.lo.lo_processor import LoProcessor
 from imap_l3_processing.maps.map_descriptors import parse_map_descriptor
-from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.ultra.ultra_combined_nsp_initializer import UltraCombinedNSPInitializer, \
@@ -72,16 +72,11 @@ def imap_l3_processor():
 
     parsed_dependency = json.loads(args.dependency)
     if isinstance(parsed_dependency, list):
-        version = args.version
         processing_input_collection.deserialize(args.dependency)
+        version_map = VersionMap({}, Version(None, args.version))
     else:
         processing_input_collection.deserialize(json.dumps(parsed_dependency["dependency"]))
-        version_numbers = list(parsed_dependency["version"].values())
-        match version_numbers:
-            case [{"major_version": major, "minor_version": minor}]:
-                version = str(Version(major, minor))
-            case _:
-                raise ValueError("Expected only a single version to be specified in the dependency.")
+        version_map = VersionMap({k: Version(v["major_version"], v["minor_version"]) for k, v in parsed_dependency["version"].items()})
 
     repointing_number = None
     if args.repointing is not None:
@@ -95,7 +90,7 @@ def imap_l3_processor():
                                      args.data_level,
                                      _convert_to_datetime(args.start_date),
                                      _convert_to_datetime(args.end_date or args.start_date),
-                                     version, descriptor=args.descriptor, repointing=repointing_number)
+                                     version_map, descriptor=args.descriptor, repointing=repointing_number)
     if args.instrument in ["hi", "lo", "ultra"] and args.data_level == 'l3' and not parse_map_descriptor(
             args.descriptor):
         initializer_class, processor_class, descriptors = {
@@ -111,8 +106,8 @@ def imap_l3_processor():
         initializer = initializer_class()
         paths = []
         maps_to_produce = []
-        major_version_from_dependency = Version.from_version(version).major
         for map_descriptor in descriptors:
+            major_version_from_dependency = version_map.lookup(map_descriptor).major
             maps_to_produce.extend(initializer.get_maps_that_should_be_produced(map_descriptor, major_version_from_dependency))
 
         logger.info(f"maps to produce {[m.input_metadata.descriptor for m in maps_to_produce]}")

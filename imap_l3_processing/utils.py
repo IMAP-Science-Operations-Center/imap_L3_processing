@@ -57,7 +57,7 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: P
         start_time=formatted_start_date,
         repointing=data.input_metadata.repointing,
         cr=cr_number,
-        version=data.input_metadata.version,
+        version=str(data.input_metadata.version.lookup(data.input_metadata.descriptor))
     )
 
     file_path = science_file_path.construct_path()
@@ -72,7 +72,8 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: P
         file_path.unlink(missing_ok=True)
 
     attribute_manager = ImapAttributeManager()
-    attribute_manager.add_global_attribute("Data_version", data.input_metadata.version.replace('v', ''))
+    version = str(data.input_metadata.version.lookup(data.input_metadata.descriptor)).replace('v','')
+    attribute_manager.add_global_attribute("Data_version", version)
     attribute_manager.add_instrument_attrs(data.input_metadata.instrument, data.input_metadata.data_level,
                                            data.input_metadata.descriptor)
     attribute_manager.add_global_attribute("Generation_date", date.today().strftime("%Y%m%d"))

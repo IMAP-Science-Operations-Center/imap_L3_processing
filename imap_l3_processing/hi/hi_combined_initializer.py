@@ -8,7 +8,7 @@ from imap_data_access.file_validation import Version
 from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, parse_map_descriptor, Sensor, \
     map_descriptor_parts_to_string, SpinPhase
 from imap_l3_processing.maps.map_initializer import PossibleMapToProduce, MapInitializer
-from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.models import InputMetadata, VersionMap
 
 HI_COMBINED_DESCRIPTORS = [
     "hic-ena-h-hf-nsp-full-hae-6deg-1yr",
@@ -35,7 +35,7 @@ class HiCombinedInitializer(MapInitializer):
     def furnish_spice_dependencies(self, map_to_produce: PossibleMapToProduce):
         pass
 
-    def get_maps_that_can_be_produced(self, input_descriptor: str, major_version: int|None) -> list[PossibleMapToProduce]:
+    def get_maps_that_can_be_produced(self, input_descriptor: str) -> list[PossibleMapToProduce]:
         possible_maps_to_produce = []
         map_descriptor: MapDescriptorParts = parse_map_descriptor(input_descriptor)
 
@@ -74,7 +74,7 @@ class HiCombinedInitializer(MapInitializer):
                     data_level='l3',
                     start_date=start_date,
                     end_date=start_date + relativedelta(months=+12),
-                    version=str(Version(major_version, 1)),
+                    version=VersionMap({},Version(None,1)),
                     descriptor=input_descriptor,
                     repointing=None
                 )

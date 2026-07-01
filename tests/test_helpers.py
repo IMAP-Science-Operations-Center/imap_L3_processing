@@ -12,10 +12,11 @@ from unittest.mock import Mock
 import imap_data_access
 import numpy as np
 from imap_data_access import ScienceFilePath, AncillaryFilePath, SPICEFilePath
-from imap_data_access.file_validation import generate_imap_file_path
+from imap_data_access.file_validation import generate_imap_file_path, Version
 
 import imap_l3_processing
 import tests
+from imap_l3_processing.models import VersionMap
 from imap_l3_processing.swe.l3.models import SweConfiguration, SweL3MomentData
 from imap_l3_processing.swe.l3.science.moment_calculations import Moments, MomentFitResults
 
@@ -255,6 +256,8 @@ def create_mock_query_results(file_names: list[Path | str], ingestion_dates: Opt
                 raise NotImplementedError(f"Unexpected file path type {imap_file_path}")
     return file_paths
 
+def create_mock_version_map(descriptor: Optional[str] = 'descriptor', major_version: Optional[int] = None, minor_version: Optional[int] = 1):
+    return VersionMap({descriptor:Version(major_version, minor_version)})
 
 @dataclass
 class PeriodicallyRunTest:

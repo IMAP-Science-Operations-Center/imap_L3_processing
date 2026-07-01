@@ -5,7 +5,7 @@ from unittest.mock import patch, call
 from imap_data_access.file_validation import Version
 
 from imap_l3_processing.maps.map_initializer import MapInitializer, PossibleMapToProduce
-from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.ultra.ultra_combined_nsp_initializer import UltraCombinedNSPInitializer
 from tests.integration.integration_test_helpers import ImapQueryPatcher
 
@@ -23,11 +23,59 @@ class TestUltraCombinedNSPInitializer(unittest.TestCase):
         self.assertIsInstance(UltraCombinedNSPInitializer(), MapInitializer)
 
     @patch('imap_l3_processing.maps.map_initializer.read_cdf_parents')
+    def test_get_maps_that_can_be_produced(self, mock_read_cdf_parents):
+        self.mock_query.side_effect = ImapQueryPatcher([
+            'imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-4deg-3mo_20100101_v001.cdf',
+            'imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-3mo_20100101_v001.cdf',
+        ])
+
+        initializer = UltraCombinedNSPInitializer()
+        descriptor = 'ulc-ena-h-sf-nsp-full-hae-4deg-3mo'
+        mock_read_cdf_parents.side_effect = [
+            [
+                "imap_ultra_l1c_45sensor-spacecraftpset_20100101-repoint00001_v001.cdf",
+                "imap_ultra_l1c_45sensor-spacecraftpset_20100102-repoint00002_v001.cdf",
+                "imap_ultra_l1c_45sensor-spacecraftpset_20100103-repoint00003_v001.cdf",
+
+            ],
+            [
+                "imap_ultra_l1c_90sensor-spacecraftpset_20100101-repoint00001_v001.cdf",
+                "imap_ultra_l1c_90sensor-spacecraftpset_20100102-repoint00002_v001.cdf",
+                "imap_ultra_l1c_90sensor-spacecraftpset_20100103-repoint00003_v001.cdf"
+            ],
+        ]
+        actual_possible_maps = initializer.get_maps_that_can_be_produced(descriptor)
+
+        expected_possible_maps = [
+            PossibleMapToProduce(
+                input_files={
+                    'imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-4deg-3mo_20100101_v001.cdf',
+                    'imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-3mo_20100101_v001.cdf',
+                    "imap_ultra_l1c_45sensor-spacecraftpset_20100101-repoint00001_v001.cdf",
+                    "imap_ultra_l1c_45sensor-spacecraftpset_20100102-repoint00002_v001.cdf",
+                    "imap_ultra_l1c_45sensor-spacecraftpset_20100103-repoint00003_v001.cdf",
+                    "imap_ultra_l1c_90sensor-spacecraftpset_20100101-repoint00001_v001.cdf",
+                    "imap_ultra_l1c_90sensor-spacecraftpset_20100102-repoint00002_v001.cdf",
+                    "imap_ultra_l1c_90sensor-spacecraftpset_20100103-repoint00003_v001.cdf",
+                },
+                input_metadata=InputMetadata(
+                    instrument='ultra',
+                    data_level='l3',
+                    start_date=datetime(2010, 1, 1),
+                    end_date=datetime(2010, 4, 2, 7, 30),
+                    version=VersionMap({},Version(None,1)),
+                    descriptor=descriptor,
+                )
+            )
+        ]
+
+        self.assertEqual(expected_possible_maps, actual_possible_maps)
+
+    @patch('imap_l3_processing.maps.map_initializer.read_cdf_parents')
     def test_get_maps_that_should_be_produced(self, mock_read_cdf_parents):
-        self.maxDiff = None
         cases = [
-            (None, "v002"),
-            (4, "v004.0002"),
+            (None, Version(None,2)),
+            (4, Version(4,2)),
         ]
         for major_version, expected_version in cases:
             with self.subTest(major_version=major_version):
@@ -126,14 +174,16 @@ class TestUltraCombinedNSPInitializer(unittest.TestCase):
                     call(f'imap_ultra_l3_ulc-ena-h-sf-nsp-full-hae-4deg-3mo_20100401_{Version(major_version, 1)}.cdf'),
                 ])
 
+                descriptor = "ulc-ena-h-sf-nsp-full-hae-4deg-3mo"
+
                 expected_possible_map_to_produce_with_previous_version = PossibleMapToProduce(
                     input_metadata=InputMetadata(
                         instrument="ultra",
                         data_level="l3",
                         start_date=datetime(2010, 4, 1),
                         end_date=datetime(2010, 7, 1, 7, 30),
-                        version=expected_version,
-                        descriptor=f"ulc-ena-h-sf-nsp-full-hae-4deg-3mo"
+                        version=VersionMap({descriptor:expected_version}),
+                        descriptor=descriptor
                     ),
                     input_files={
                         f'imap_ultra_l1c_45sensor-spacecraftpset_20100401-repoint00101_v001.cdf',
@@ -153,8 +203,8 @@ class TestUltraCombinedNSPInitializer(unittest.TestCase):
                         data_level="l3",
                         start_date=datetime(2010, 7, 1),
                         end_date=datetime(2010, 9, 30, 7, 30),
-                        version=str(Version(major_version, 1)),
-                        descriptor=f"ulc-ena-h-sf-nsp-full-hae-4deg-3mo"
+                        version=VersionMap({descriptor: Version(major_version, 1)}),
+                        descriptor=descriptor
                     ),
                     input_files={
                         f'imap_ultra_l1c_45sensor-spacecraftpset_20100701-repoint00201_v001.cdf',

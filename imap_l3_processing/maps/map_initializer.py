@@ -9,7 +9,7 @@ from imap_data_access import ScienceFilePath, ImapFilePath, ProcessingInputColle
 from imap_data_access.file_validation import Version
 from imap_data_access.processing_input import generate_imap_input
 
-from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.utils import read_cdf_parents
 
 logger = logging.getLogger(__name__)
@@ -36,24 +36,26 @@ class MapInitializer(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_maps_that_can_be_produced(self, l3_descriptor: str, major_version: int|None):
+    def get_maps_that_can_be_produced(self, descriptor: str):
         raise NotImplementedError()
 
     def get_maps_that_should_be_produced(self, descriptor: str, major_version: int|None) -> list[PossibleMapToProduce]:
-        possible_maps = self.get_maps_that_can_be_produced(descriptor, major_version)
+        possible_maps = self.get_maps_that_can_be_produced(descriptor)
 
         maps_to_make = []
         for possible_map in possible_maps:
             start_time = possible_map.input_metadata.start_date.strftime("%Y%m%d")
-            if start_dates_for_l3_descriptor := self.existing_l3_maps.get(descriptor):
-                if l3_result := start_dates_for_l3_descriptor.get(start_time):
-                    existing_parents = read_cdf_parents(l3_result)
-                    existing_major_version = Version.from_version(ScienceFilePath(l3_result).version).major
+            possible_map.input_metadata.version = VersionMap({descriptor: Version(major_version, 1)})
+
+            if highest_version_path_by_start_date := self.existing_l3_maps.get(descriptor):
+                if path_with_highest_version := highest_version_path_by_start_date.get(start_time):
+                    existing_parents = read_cdf_parents(path_with_highest_version)
+                    existing_major_version = Version.from_version(ScienceFilePath(path_with_highest_version).version).major
                     if possible_map.input_files.issubset(existing_parents) and major_version == existing_major_version:
                         continue
-                    new_minor_version = Version.from_version(ScienceFilePath(l3_result).version).minor + 1
-                    new_version = Version(major_version, new_minor_version)
-                    possible_map.input_metadata.version = str(new_version)
+                    existing_highest_version = Version.from_version(ScienceFilePath(path_with_highest_version).version)
+                    new_version = Version(major_version, existing_highest_version.minor + 1)
+                    possible_map.input_metadata.version = VersionMap({descriptor: new_version})
             maps_to_make.append(possible_map)
         return maps_to_make
 

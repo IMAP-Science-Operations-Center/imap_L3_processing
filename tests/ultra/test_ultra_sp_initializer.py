@@ -2,10 +2,12 @@ import unittest
 from datetime import datetime
 from unittest.mock import patch, call
 
+from imap_data_access.file_validation import Version
+
 from imap_l3_processing.glows.descriptors import GLOWS_L3E_ULTRA_SF_DESCRIPTOR, GLOWS_L3E_ULTRA_HF_DESCRIPTOR
 from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
 from imap_l3_processing.maps.sp_map_initializer import SPMapInitializer
-from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.ultra.ultra_sp_initializer import UltraSPInitializer, ULTRA_SP_SPICE_KERNELS
 from tests.integration.integration_test_helpers import ImapQueryPatcher
 
@@ -125,15 +127,15 @@ class TestUltraSPInitializer(unittest.TestCase):
                     call(f'imap_ultra_l3_u{sensor}-ena-h-sf-sp-full-hae-4deg-3mo_20100101_v001.cdf'),
                     call(f'imap_ultra_l3_u{sensor}-ena-h-sf-sp-full-hae-4deg-3mo_20100401_v001.cdf'),
                 ])
-
+                descriptor = f"u{sensor}-ena-h-sf-sp-full-hae-4deg-3mo"
                 expected_possible_map_to_produce = PossibleMapToProduce(
                     input_metadata=InputMetadata(
                         instrument="ultra",
                         data_level="l3",
                         start_date=datetime(2010, 4, 1),
                         end_date=datetime(2010, 7, 1, 7, 30),
-                        version="v002",
-                        descriptor=f"u{sensor}-ena-h-sf-sp-full-hae-4deg-3mo"
+                        version=VersionMap({descriptor: Version(None, 2)}),
+                        descriptor=descriptor
                     ),
                     input_files={
                         'imap_glows_l3e_survival-probability-ul-sf_20100401-repoint00101_v002.cdf',
@@ -277,6 +279,7 @@ class TestUltraSPInitializer(unittest.TestCase):
             call(f'imap_ultra_l3_ulc-ena-h-sf-sp-full-hae-4deg-3mo_20100101_v001.cdf'),
             call(f'imap_ultra_l3_ulc-ena-h-sf-sp-full-hae-4deg-3mo_20100401_v001.cdf'),
         ])
+        descriptor = f"ulc-ena-h-sf-sp-full-hae-4deg-3mo"
 
         expected_possible_map_to_produce = PossibleMapToProduce(
             input_metadata=InputMetadata(
@@ -284,8 +287,8 @@ class TestUltraSPInitializer(unittest.TestCase):
                 data_level="l3",
                 start_date=datetime(2010, 4, 1),
                 end_date=datetime(2010, 7, 1, 7, 30),
-                version="v002",
-                descriptor=f"ulc-ena-h-sf-sp-full-hae-4deg-3mo"
+                version=VersionMap({descriptor: Version(None, 2)}),
+                descriptor=descriptor
             ),
             input_files={
                 'imap_glows_l3e_survival-probability-ul-sf_20100401-repoint00101_v002.cdf',
@@ -434,14 +437,15 @@ class TestUltraSPInitializer(unittest.TestCase):
             call(f'imap_ultra_l3_ulc-ena-h-hf-sp-full-hae-4deg-3mo_20100401_v001.cdf'),
         ])
 
+        descriptor = f"ulc-ena-h-hf-sp-full-hae-4deg-3mo"
         expected_possible_map_to_produce = PossibleMapToProduce(
             input_metadata=InputMetadata(
                 instrument="ultra",
                 data_level="l3",
                 start_date=datetime(2010, 4, 1),
                 end_date=datetime(2010, 7, 1, 7, 30),
-                version="v002",
-                descriptor=f"ulc-ena-h-hf-sp-full-hae-4deg-3mo"
+                version=VersionMap({descriptor: Version(None, 2)}),
+                descriptor=descriptor,
             ),
             input_files={
                 'imap_glows_l3e_survival-probability-ul-hf_20100401-repoint00101_v002.cdf',
@@ -466,13 +470,14 @@ class TestUltraSPInitializer(unittest.TestCase):
         start_date = datetime(2025, 4, 15)
         end_date = datetime(2025, 7, 15)
 
+        descriptor = "u90-ena-h-sf-sp-full-hae-4deg-3mo"
         input_metadata = InputMetadata(
             instrument="ultra",
             data_level="l2",
             start_date=start_date,
             end_date=end_date,
-            version="v000",
-            descriptor="u90-ena-h-sf-sp-full-hae-4deg-3mo",
+            version=VersionMap({descriptor: Version(None, 0)}),
+            descriptor=descriptor
         )
         map_to_produce = PossibleMapToProduce(set(), input_metadata)
 

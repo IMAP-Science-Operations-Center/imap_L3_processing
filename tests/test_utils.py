@@ -8,6 +8,7 @@ from unittest.mock import patch, call, Mock, sentinel
 import imap_data_access
 import numpy as np
 from imap_data_access import config
+from imap_data_access.file_validation import Version
 from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection
 from imap_processing.spice.geometry import SpiceFrame
 from requests import RequestException
@@ -16,7 +17,7 @@ from spacepy.pycdf import CDF
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH, TT2000_EPOCH
 from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet, \
     RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct
-from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.utils import format_time, read_mag_data, save_data, \
@@ -26,7 +27,7 @@ from imap_l3_processing.utils import format_time, read_mag_data, save_data, \
 from imap_l3_processing.version import VERSION
 from tests.cdf.test_cdf_utils import TestDataProduct
 from tests.maps.test_builders import create_rectangular_spectral_index_map_data, create_rectangular_intensity_map_data
-from tests.test_helpers import get_spice_data_path, with_tempdir, create_dataclass_mock
+from tests.test_helpers import get_spice_data_path, with_tempdir, create_dataclass_mock, create_mock_version_map
 
 
 class TestUtils(TestCase):
@@ -45,7 +46,7 @@ class TestUtils(TestCase):
     def test_save_data(self, mock_science_file_path_class, mock_write_cdf, mock_today, mock_attribute_manager):
         mock_today.today.return_value = date(2024, 9, 16)
 
-        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
+        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), VersionMap({"descriptor":Version(1,2)}),
                                        "descriptor", repointing=None)
         epoch = np.array([1, 2, 3])
 
@@ -77,7 +78,7 @@ class TestUtils(TestCase):
             data_level="l2",
             descriptor="descriptor",
             start_time="20240917",
-            version="v002",
+            version="v001.0002",
             repointing=None,
             cr=sentinel.cr
         )
@@ -88,7 +89,7 @@ class TestUtils(TestCase):
                                                mock_attribute_manager.return_value)
 
         mock_attribute_manager.return_value.add_global_attribute.assert_has_calls([
-            call("Data_version", "002"),
+            call("Data_version", "001.0002"),
             call("Generation_date", "20240916"),
             call("Logical_source", "imap_swapi_l2_descriptor"),
             call("Logical_file_id", expected_file_path.stem),
@@ -196,8 +197,9 @@ class TestUtils(TestCase):
     def test_save_data_does_not_add_parent_attribute_if_empty(self, mock_write_cdf, mock_today, _):
         mock_today.today.return_value = date(2024, 9, 16)
 
-        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
-                                       "descriptor")
+        descriptor = "descriptor"
+        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), create_mock_version_map(descriptor=descriptor, minor_version=2),
+                                       descriptor)
         epoch = np.array([1, 2, 3])
         quality_flags = np.repeat([SwapiL3Flags.NONE], 3)
 
@@ -235,8 +237,9 @@ class TestUtils(TestCase):
     def test_save_data_custom_path(self, mock_write_cdf, mock_today, _):
         mock_today.today.return_value = date(2024, 9, 16)
 
-        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
-                                       "descriptor")
+        descriptor = "descriptor"
+        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), create_mock_version_map(descriptor=descriptor, minor_version=2),
+                                       descriptor)
         epoch = np.array([1, 2, 3])
         quality_flags = np.repeat([SwapiL3Flags.NONE], 3)
 
@@ -270,7 +273,9 @@ class TestUtils(TestCase):
     @patch("imap_l3_processing.utils.write_cdf")
     @patch("imap_l3_processing.utils.ImapAttributeManager.add_global_attribute")
     def test_save_data_procedurally_generates_map_global_metadata(self, mock_add_global_attr, _):
-        input_metadata = InputMetadata("ultra", "l3", datetime(2025, 1, 1), datetime(2025, 1, 1), "v001", "descriptor")
+        descriptor = "descriptor"
+        input_metadata = InputMetadata("ultra", "l3", datetime(2025, 1, 1), datetime(2025, 1, 1), create_mock_version_map(descriptor=descriptor, minor_version=1),
+                                       descriptor)
 
         epoch_as_datetime = np.array([datetime(2025, 1, 1)])
         epoch_as_int = np.array([(datetime(2025, 1, 1) - TT2000_EPOCH).total_seconds() * 1e9])
@@ -302,8 +307,9 @@ class TestUtils(TestCase):
     @patch("imap_l3_processing.utils.write_cdf")
     def test_save_data_procedurally_generates_all_map_global_metadata_if_absent(self, mock_write_cdf,
                                                                                 mock_add_instrument_attrs):
-        non_map_input_metadata = InputMetadata("swapi", "l3", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
-                                               "descriptor")
+        descriptor = "descriptor"
+        non_map_input_metadata = InputMetadata("swapi", "l3", datetime(2024, 9, 17), datetime(2024, 9, 18), create_mock_version_map(descriptor=descriptor, minor_version=2) ,
+                                               descriptor)
 
         def add_swapi_attrs_from_file(attr_manager, instrument, level, descriptor):
             for logical_source in ["imap_swapi_l3_descriptor", "imap_ultra_l3_ena-map-descriptor"]:
@@ -315,11 +321,11 @@ class TestUtils(TestCase):
 
         mock_add_instrument_attrs.side_effect = add_swapi_attrs_from_file
 
-        map_input_metadata = InputMetadata("hi", "l3b", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
+        map_input_metadata = InputMetadata("hi", "l3b", datetime(2024, 9, 17), datetime(2024, 9, 18), create_mock_version_map(descriptor="spx-map-descriptor", minor_version=2),
                                            "spx-map-descriptor")
 
         map_input_metadata_with_existing_global_attrs = InputMetadata("ultra", "l3", datetime(2024, 9, 17),
-                                                                      datetime(2024, 9, 18), "v002",
+                                                                      datetime(2024, 9, 18), create_mock_version_map(descriptor="ena-map-descriptor", minor_version=2),
                                                                       "ena-map-descriptor")
 
         cases = [

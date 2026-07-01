@@ -2,8 +2,9 @@ import unittest
 from datetime import datetime, timedelta
 
 import numpy as np
+from imap_data_access.file_validation import Version
 
-from imap_l3_processing.models import MagData
+from imap_l3_processing.models import MagData, VersionMap
 
 
 class TestModels(unittest.TestCase):
@@ -49,6 +50,66 @@ class TestModels(unittest.TestCase):
                                                  epoch_delta=hit_data_delta)
         np.testing.assert_array_equal(actual_average, expected_average)
 
+    def test_version_map(self):
+        version_map = VersionMap(
+            {
+                "sci": Version(1, 5),
+                "other": Version(2, 90),
+            },
+            fallback=Version(1, 99),
+        )
+        self.assertEqual(version_map.lookup("sci"), Version(1, 5))
+        self.assertEqual(version_map.lookup("other"), Version(2, 90))
+        self.assertEqual(version_map.lookup("unknown"), Version(1, 99))
+
+        fallback_version_map = VersionMap(
+            {},
+            fallback=Version(1, 1),
+        )
+        self.assertEqual(fallback_version_map.lookup("sci"), Version(1, 1))
+
+    def test_version_map_throws_error_if_no_fallback(self):
+        version_map = VersionMap(
+            {
+                "sci": Version(1, 5)
+            },
+        )
+
+        with self.assertRaises(KeyError):
+            version_map.lookup("other")
+
+
+    def test_version_map_equality(self):
+        version_map = VersionMap(
+            {
+                "sci": Version(1, 5),
+                "other": Version(2, 90),
+            },
+            fallback=Version(1, 99),
+        )
+        equal_version_map = VersionMap(
+            {
+                "sci": Version(1, 5),
+                "other": Version(2, 90),
+            },
+            fallback=Version(1, 99),
+        )
+        different_map = VersionMap(
+            {
+                "sci": Version(1, 3),
+            },
+            fallback=Version(1, 99),
+        )
+        different_fallback = VersionMap(
+            {
+                "sci": Version(1, 5),
+                "other": Version(2, 90),
+            },
+            fallback=None,
+        )
+        self.assertEqual(version_map, equal_version_map)
+        self.assertNotEqual(version_map, different_map)
+        self.assertNotEqual(version_map, different_fallback)
 
 if __name__ == '__main__':
     unittest.main()

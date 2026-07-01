@@ -7,8 +7,21 @@ from pathlib import Path
 from typing import Union, Optional, TypeVar, Generic
 
 import numpy as np
+from imap_data_access.file_validation import Version
 
 from imap_l3_processing.data_utils import rebin
+
+
+@dataclass
+class VersionMap:
+    mapping: dict[str, Version]
+    fallback: Version | None = None
+
+    def lookup(self, descriptor: str) -> Version:
+        result = self.mapping.get(descriptor, self.fallback)
+        if result is None:
+            raise KeyError(f"No version found for descriptor {descriptor}")
+        return result
 
 
 @dataclass
@@ -17,7 +30,7 @@ class InputMetadata:
     data_level: str
     start_date: datetime
     end_date: Optional[datetime]
-    version: str
+    version: VersionMap
     descriptor: str = ""
     repointing: Optional[int] = None
 
