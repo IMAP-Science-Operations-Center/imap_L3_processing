@@ -658,7 +658,7 @@ core_speed_fit:
   SCALEMIN: 0
   SCALEMAX: 1000
   FILLVAL: -1.00E+31
-  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit. Recommend using SWAPI ion measurements for solar wind speed/velocity.
 halo_speed_fit:
   NAME: halo_speed_fit
   DATA_TYPE: CDF_REAL4
@@ -675,7 +675,7 @@ halo_speed_fit:
   VALIDMIN: 0
   VALIDMAX: 50000
   FILLVAL: -1.00E+31
-  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit. Recommend using SWAPI ion measurements for solar wind speed/velocity.
 core_velocity_vector_rtn_fit:
   NAME: core_velocity_vector_rtn_fit
   DATA_TYPE: CDF_REAL4
@@ -692,7 +692,7 @@ core_velocity_vector_rtn_fit:
   VALIDMAX: 5000
   FILLVAL: -1.00E+31
   LABL_PTR_1: rtn_label
-  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit. Recommend using SWAPI ion measurements for solar wind speed/velocity.
   LABLAXIS: Core v vec rtn fit
 halo_velocity_vector_rtn_fit:
   NAME: halo_velocity_vector_rtn_fit
@@ -710,7 +710,7 @@ halo_velocity_vector_rtn_fit:
   VALIDMAX: 50000
   FILLVAL: -1.00E+31
   LABL_PTR_1: rtn_label
-  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit. Recommend using SWAPI ion measurements for solar wind speed/velocity.
   LABLAXIS: Halo v vec rtn fit
 core_density_integrated:
   NAME: core_density_integrated
@@ -785,7 +785,7 @@ core_velocity_vector_rtn_integrated:
   VALIDMAX: 5000
   FILLVAL: -1.00E+31
   LABL_PTR_1: rtn_label
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution. Recommend using SWAPI ion measurements for solar wind speed/velocity.
   LABLAXIS: Core v vec rtn int.
 halo_velocity_vector_rtn_integrated:
   NAME: halo_velocity_vector_rtn_integrated
@@ -803,7 +803,7 @@ halo_velocity_vector_rtn_integrated:
   VALIDMAX: 50000
   FILLVAL: -1.00E+31
   LABL_PTR_1: rtn_label
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution. Recommend using SWAPI ion measurements for solar wind speed/velocity.
   LABLAXIS: Halo v vec rtn int.
 total_velocity_vector_rtn_integrated:
   NAME: total_velocity_vector_rtn_integrated
@@ -821,7 +821,7 @@ total_velocity_vector_rtn_integrated:
   VALIDMAX: 5000
   FILLVAL: -1.00E+31
   LABL_PTR_1: rtn_label
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution. Recommend using SWAPI ion measurements for solar wind speed/velocity.
   LABLAXIS: Total v vec rtn int.
 core_speed_integrated:
   NAME: core_speed_integrated
@@ -841,7 +841,7 @@ core_speed_integrated:
   SCALEMIN: 0
   SCALEMAX: 5000
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution. Recommend using SWAPI ion measurements for solar wind speed/velocity.
 halo_speed_integrated:
   NAME: halo_speed_integrated
   DATA_TYPE: CDF_REAL4
@@ -858,7 +858,7 @@ halo_speed_integrated:
   VALIDMIN: 0
   VALIDMAX: 50000
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution. Recommend using SWAPI ion measurements for solar wind speed/velocity.
 total_speed_integrated:
   NAME: total_speed_integrated
   DATA_TYPE: CDF_REAL4
@@ -875,7 +875,7 @@ total_speed_integrated:
   VALIDMIN: 0
   VALIDMAX: 5000
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution. Recommend using SWAPI ion measurements for solar wind speed/velocity.
 core_t_parallel_integrated:
   NAME: core_t_parallel_integrated
   DATA_TYPE: CDF_REAL4
