@@ -29,7 +29,7 @@ from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.utils import save_data
 from tests.integration.integration_test_helpers import mock_imap_data_access, run_istp_compliance_check
 from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, \
-    with_tempdir, get_run_local_data_path, run_periodically
+    with_tempdir, get_run_local_data_path, run_periodically, create_mock_version_map
 
 GLOWS_INTEGRATION_DATA_DIR = get_run_local_data_path(
     "glows_l3bcde_integration_data_dir"
@@ -88,13 +88,14 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         date_in_path = l2_science_file_path.start_date
         start_date = datetime.strptime(date_in_path, "%Y%m%d")
         end_date = start_date + timedelta(days=1)
+        l3a_descriptor = 'hist'
         input_metadata = InputMetadata(
             instrument='glows',
             data_level='l3a',
-            descriptor='hist',
+            descriptor=l3a_descriptor,
             start_date=start_date,
             end_date=end_date,
-            version='v001',
+            version=create_mock_version_map(descriptor=l3a_descriptor,minor_version=1),
             repointing=l2_science_file_path.repointing
         )
 

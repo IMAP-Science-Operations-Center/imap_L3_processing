@@ -40,7 +40,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, get_lo_pivot_angles, \
     compute_glows_flags_for_window
-from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
 
@@ -63,8 +63,8 @@ class GlowsProcessor(Processor):
             return products
         elif self.input_metadata.data_level == "l3b":
             products_list = []
-            major_version = Version.from_version(self.input_metadata.version).major
-            l3bc_initializer_data: GlowsL3BCInitializerData = GlowsL3BCInitializer.get_crs_to_process(self.dependencies, major_version)
+            l3bc_major_version = self.input_metadata.version.lookup(GLOWS_L3B_DESCRIPTOR).major
+            l3bc_initializer_data: GlowsL3BCInitializerData = GlowsL3BCInitializer.get_crs_to_process(self.dependencies, l3bc_major_version)
 
             if len(l3bc_initializer_data.l3bc_dependencies) > 0:
                 logger.info("Found CRs to Process L3BC:")
@@ -77,10 +77,11 @@ class GlowsProcessor(Processor):
             glows_l3bc_output_data = process_l3bc(self, l3bc_initializer_data)
             products_list.extend(glows_l3bc_output_data.data_products)
 
+            l3d_major_version = self.input_metadata.version.lookup(GLOWS_L3D_DESCRIPTOR).major
             l3bs = list({**l3bc_initializer_data.l3bs_by_cr, **glows_l3bc_output_data.l3bs_by_cr}.values())
             l3cs = list({**l3bc_initializer_data.l3cs_by_cr, **glows_l3bc_output_data.l3cs_by_cr}.values())
             l3d_initializer_result = GlowsL3DInitializer.should_process_l3d(l3bc_initializer_data.external_dependencies,
-                                                                            l3bs, l3cs, major_version)
+                                                                            l3bs, l3cs, l3d_major_version)
             if l3d_initializer_result is None:
                 logger.info("No inputs to L3d have changed. Skipping processing of L3d and L3e!")
                 return products_list
@@ -168,14 +169,15 @@ def process_l3bc(processor, initializer_data: GlowsL3BCInitializerData):
         filtered_days = filter_l3a_files(dependency.l3a_data, dependency.ancillary_files['bad_days_list'],
                                          dependency.carrington_rotation_number)
         with SwallowExceptionAndLog(f"Exception caught in L3BC science code, skipping CR {dependency.carrington_rotation_number}") as manager:
-            l3b_data, l3c_data = generate_l3bc(replace(dependency, l3a_data=filtered_days))
+            dependency_filtering_out_bad_days = replace(dependency, l3a_data=filtered_days)
+            l3b_data, l3c_data = generate_l3bc(dependency_filtering_out_bad_days)
         if manager.exception_caught:
             continue
 
         l3b_metadata = InputMetadata("glows", "l3b", dependency.start_date, dependency.end_date,
-                                     str(dependency.version), GLOWS_L3B_DESCRIPTOR)
+                                     VersionMap({GLOWS_L3B_DESCRIPTOR: dependency.version}), GLOWS_L3B_DESCRIPTOR)
         l3c_metadata = InputMetadata("glows", "l3c", dependency.start_date, dependency.end_date,
-                                     str(dependency.version), GLOWS_L3C_DESCRIPTOR)
+                                     VersionMap({GLOWS_L3C_DESCRIPTOR: dependency.version}), GLOWS_L3C_DESCRIPTOR)
 
         l3b_data_product = GlowsL3BIonizationRate.from_instrument_team_dictionary(l3b_data, l3b_metadata)
         l3c_data_product = GlowsL3CSolarWind.from_instrument_team_dictionary(l3c_data, l3c_metadata)
@@ -248,7 +250,7 @@ def process_l3d(
 
         start_date = datetime(1947, 3, 3)
         data_product_metadata = InputMetadata(instrument="glows", data_level="l3d", descriptor=GLOWS_L3D_DESCRIPTOR,
-                                              start_date=start_date, end_date=start_date, version=str(version))
+                                              start_date=start_date, end_date=start_date, version=VersionMap({GLOWS_L3D_DESCRIPTOR: version}))
         parent_file_names = get_parent_file_names_from_l3d_json(PATH_TO_L3D_TOOLKIT / 'data_l3d')
 
         l3d_data_product = convert_json_to_l3d_data_product(PATH_TO_L3D_TOOLKIT / 'data_l3d' / file_name,
