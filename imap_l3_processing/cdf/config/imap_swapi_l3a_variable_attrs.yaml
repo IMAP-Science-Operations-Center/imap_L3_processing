@@ -672,7 +672,7 @@ swp_flags:
   NAME: swp_flags
   DATA_TYPE: CDF_UINT2
   FIELDNAM: Quality Flags for SWAPI L3a
-  CATDESC: "Quality flags for SWAPI L3a (0: no special concern; nonzero: use caution)"
+  CATDESC: "Quality flags for SWAPI L3a (caution required if nonzero)"
   DEPEND_0: epoch
   VAR_TYPE: data
   DISPLAY_TYPE: time_series
@@ -686,7 +686,7 @@ swp_flags:
   FILLVAL: 65535
   LABLAXIS: Quality flags for SWAPI L3a
   VAR_NOTES: >-
-    Details in release notes. Each bit being set indicates a specific potential concern.
+    Each bit corresponds to a specific potential concern. See release notes for details.
     Bit 2: Bad fit: fitting resulted in invalid values or large residuals.
     Bit 3: Fit error: fit failed to complete.
     Bit 4: preliminary MAG L1D was used for acquiring the magnetic field direction instead of the nominal MAG L2 product.

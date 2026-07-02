@@ -1666,7 +1666,7 @@ inst_az:
 swe_flags:
   NAME: swe_flags
   DATA_TYPE: CDF_UINT2
-  CATDESC: "Quality flags for SWE L3 (0: no special concern; nonzero: use caution)"
+  CATDESC: "Quality flags for SWE L3 (caution required if nonzero)"
   DEPEND_0: epoch
   VAR_TYPE: data
   DISPLAY_TYPE: time_series
@@ -1680,7 +1680,7 @@ swe_flags:
   FILLVAL: 65535
   LABLAXIS: Quality flags for SWE L3
   VAR_NOTES: >-
-    Details in release notes. Each bit being set indicates a specific potential concern.
+    Each bit corresponds to a specific potential concern. See release notes for details.
     Bit 2: first 4 points of the PSD 1D Rebinned are linear in log PSD - log energy space; spacecraft_potential is set to 2.5 V
     Bit 3: breakpoint finding algortithm fell back to a spline method, which failed
     Bit 4: fit to resolve the photo-core breakpoint fell back to spline method

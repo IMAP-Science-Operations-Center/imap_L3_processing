@@ -1174,7 +1174,7 @@ zenith_label:
 hit_flags:
   NAME: hit_flags
   DATA_TYPE: CDF_UINT2
-  CATDESC: "Quality flags for HIT L3 macropixel (0: no special concern; nonzero: use caution)"
+  CATDESC: "Quality flags for HIT L3 macropixel (caution required if nonzero)"
   DEPEND_0: epoch
   VAR_TYPE: data
   DISPLAY_TYPE: time_series
@@ -1188,6 +1188,6 @@ hit_flags:
   FILLVAL: 65535
   LABLAXIS: Quality flags for HIT L3 macropixel
   VAR_NOTES: >-
-    Details in release notes. Each bit being set indicates a specific potential concern.
+    Each bit corresponds to a specific potential concern. See release notes for details.
     Bit 2: preliminary MAG L1D used for magnetic field direction instead of the nominal MAG L2 product.
     Other bits are reserved.

@@ -239,7 +239,7 @@ elongation:
 glows_flags:
   NAME: glows_flags
   DATA_TYPE: CDF_UINT2
-  CATDESC: "Quality flags for GLOWS L3e Hi-45 (0: no special concern; nonzero: use caution)"
+  CATDESC: "Quality flags for GLOWS L3e Hi-45 (caution required if nonzero)"
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -252,6 +252,6 @@ glows_flags:
   FILLVAL: 65535
   LABLAXIS: Quality flags for GLOWS L3e Hi-45
   VAR_NOTES: >-
-    Details in release notes. Each bit being set indicates a specific potential concern.
+    Each bit corresponds to a specific potential concern. See release notes for details.
     Bit 2: Solar wind alpha/proton density ratio not available in OMNI data; input GLOWS L3c file used nominal value of 0.04.
     Other bits are reserved.
