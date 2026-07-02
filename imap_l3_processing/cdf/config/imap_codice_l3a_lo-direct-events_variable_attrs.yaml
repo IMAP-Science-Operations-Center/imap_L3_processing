@@ -299,12 +299,12 @@ multi_flag:
   <<: *per_event
   NAME: multi_flag
   VAR_TYPE: data
-  CATDESC: Multi flag
+  CATDESC: "Multiple detector flag (1=multiple APDs triggered)"
   FIELDNAM: Multi flag
   LABLAXIS: Multi flag
   DATA_TYPE: CDF_UINT1
-  FORMAT: I3
-  UNITS: " "
+  FORMAT: I1
+  UNITS: "1=multiple APDs triggered"
   VALIDMIN: 0
   VALIDMAX: 1
   FILLVAL: 255

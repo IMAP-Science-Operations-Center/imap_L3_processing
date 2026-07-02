@@ -77,10 +77,10 @@ epoch_delta:
 data_quality:
   <<: *per_priority_data
   NAME: data_quality
-  CATDESC: Data quality flags
-  FIELDNAM: Data Quality Flags
+  CATDESC: "Data quality flag (0=valid, 1=invalid)"
+  FIELDNAM: Data Quality Flag
   LABLAXIS: Quality flag
-  UNITS: " "
+  UNITS: "0=valid 1=invalid"
   DATA_TYPE: CDF_UINT1
   FORMAT: I1
   VALIDMIN: 0
@@ -103,10 +103,10 @@ num_events:
 multi_flag:
   <<: *per_event_data
   NAME: multi_flag
-  CATDESC: Multi flag
+  CATDESC: "Multiple detector flag (1=multiple SSDs triggered)"
   FIELDNAM: Multi Flag
   LABLAXIS: Multi flag
-  UNITS: " "
+  UNITS: "1=multiple SSDs triggered"
   DATA_TYPE: CDF_UINT1
   VALIDMIN: 0
   VALIDMAX: 1
