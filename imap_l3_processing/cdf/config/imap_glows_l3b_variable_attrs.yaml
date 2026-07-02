@@ -257,7 +257,7 @@ uv_anisotropy_flag:
   RECORD_VARYING: RV
   UNITS: ' '
   VAR_NOTES: >-
-    Details in release notes. Values:
+    Primarily for instrument team traceability. Details in release notes. Values:
     -1: Unspecified
     10000: Constant model
     20000: Pheomenological model

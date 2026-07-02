@@ -198,7 +198,7 @@ plasma_speed_flag:
   FILLVAL: -2147483648
   UNITS: ' '
   VAR_NOTES: >-
-    Details in release notes. Values:
+    Primarily for instrument team traceability. Details in release notes. Values:
     -1: Unspecified
     20000: Speed from GLOWS measurements and ancillary inputs
     20001: Speed interpolated
@@ -219,7 +219,7 @@ uv_anisotropy_flag:
   FILLVAL: -2147483648
   UNITS: ' '
   VAR_NOTES: >-
-    Details in release notes. Values:
+    Primarily for instrument team traceability. Details in release notes. Values:
     -1: Unspecified
     10000: Constant model
     20000: Pheomenological model
@@ -243,7 +243,7 @@ proton_density_flag:
   FILLVAL: -2147483648
   UNITS: ' '
   VAR_NOTES: >-
-    Details in release notes. Values:
+    Primarily for instrument team traceability. Details in release notes. Values:
     -1: Unspecified
     10000: Density from same source as speed data
     10001: Density from source of speed data, interpolated
