@@ -128,7 +128,7 @@ phion:
   RECORD_VARYING: RV
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Photoionization Rate
-  FORMAT: F9.3
+  FORMAT: E6.1E2
   LABLAXIS: Photoionization rate
   DISPLAY_TYPE: time_series
   UNITS: '#/s'
@@ -187,51 +187,84 @@ plasma_speed_flag:
   DATA_TYPE: CDF_INT4
   CATDESC: Solar wind plasma speed source
   DEPEND_0: epoch
-  VAR_TYPE: metadata
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
-  DISPLAY_TYPE: no_plot
+  DISPLAY_TYPE: time_series
   FIELDNAM: Plasma Speed Source
-  FORMAT: I5
+  FORMAT: I6
   LABLAXIS: Plasma speed source
+  VALIDMIN: -1
+  VALIDMAX: 100000
   FILLVAL: -2147483648
   UNITS: ' '
+  VAR_NOTES: >-
+    Primarily for instrument team traceability. Details in release notes. Values:
+    -1: Unspecified
+    20000: Speed from GLOWS measurements and ancillary inputs
+    20001: Speed interpolated
+    88888: Value extrapolated by repeating previous measured value
 uv_anisotropy_flag:
   NAME: uv_anisotropy_flag
   DATA_TYPE: CDF_INT4
   CATDESC: Ultraviolet anisotropy source
   DEPEND_0: epoch
-  VAR_TYPE: metadata
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
-  DISPLAY_TYPE: no_plot
+  DISPLAY_TYPE: time_series
   FIELDNAM: UV Anisotropy Source
-  FORMAT: I5
+  FORMAT: I6
   LABLAXIS: UV anisotropy source
+  VALIDMIN: -1
+  VALIDMAX: 100000
   FILLVAL: -2147483648
   UNITS: ' '
+  VAR_NOTES: >-
+    Primarily for instrument team traceability. Details in release notes. Values:
+    -1: Unspecified
+    10000: Constant model
+    20000: Pheomenological model
+    20010: Pheomenological model 1
+    20020: Pheomenological model 2
+    30001: UV anisotropy interpolated
+    88888: Value extrapolated by repeating previous measured value
 proton_density_flag:
   NAME: proton_density_flag
   DATA_TYPE: CDF_INT4
   CATDESC: Solar wind proton density source
   DEPEND_0: epoch
-  VAR_TYPE: metadata
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
-  DISPLAY_TYPE: no_plot
+  DISPLAY_TYPE: time_series
   FIELDNAM: Proton Density Source
-  FORMAT: I5
+  FORMAT: I6
   LABLAXIS: Proton density source
+  VALIDMIN: -1
+  VALIDMAX: 100000
   FILLVAL: -2147483648
   UNITS: ' '
+  VAR_NOTES: >-
+    Primarily for instrument team traceability. Details in release notes. Values:
+    -1: Unspecified
+    10000: Density from same source as speed data
+    10001: Density from source of speed data, interpolated
+    88888: Value extrapolated by repeating previous measured value
 glows_flags:
   NAME: glows_flags
   DATA_TYPE: CDF_UINT2
-  CATDESC: Quality flags for GLOWS L3d
+  CATDESC: "Quality flags for GLOWS L3d (caution required if nonzero)"
   DEPEND_0: epoch
-  VAR_TYPE: support_data
+  VAR_TYPE: data
   RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  SCALETYP: linear
   FIELDNAM: Quality Flags for GLOWS L3d
   FORMAT: I5
-  UNITS: ' '
+  UNITS: '0: okay; nonzero: caution'
   VALIDMIN: 0
   VALIDMAX: 65534
   FILLVAL: 65535
   LABLAXIS: Quality flags for GLOWS L3d
+  VAR_NOTES: >-
+    Each bit corresponds to a specific potential concern. See release notes for details.
+    Bit 2: Solar wind alpha/proton density ratio not available in OMNI data; input GLOWS L3c file used nominal value of 0.04.
+    Other bits are reserved.
