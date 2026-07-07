@@ -390,7 +390,7 @@ proton_sw_velocity_rtn_sun:
   FIELDNAM: Proton Solar Wind Velocity (RTN, Sun Frame)
   CATDESC: Solar wind proton bulk velocity vector in RTN coordinates (Sun frame)
   DEPEND_0: epoch
-  LABL_PTR_1: velocity_rtn_label
+  LABL_PTR_1: proton_sw_velocity_rtn_sun_label
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
@@ -410,7 +410,7 @@ proton_sw_velocity_rtn:
   FIELDNAM: Proton Solar Wind Velocity (RTN)
   CATDESC: Solar wind proton bulk velocity vector in RTN coordinates (spacecraft frame)
   DEPEND_0: epoch
-  LABL_PTR_1: velocity_rtn_label
+  LABL_PTR_1: proton_sw_velocity_rtn_label
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
@@ -602,7 +602,7 @@ alpha_sw_velocity_rtn_sun:
   FIELDNAM: Alpha Solar Wind Velocity (RTN, Sun Frame)
   CATDESC: Solar wind alpha-particle bulk velocity vector in RTN coordinates (Sun frame)
   DEPEND_0: epoch
-  LABL_PTR_1: velocity_rtn_label
+  LABL_PTR_1: alpha_sw_velocity_rtn_sun_label
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
@@ -622,7 +622,7 @@ alpha_sw_velocity_rtn:
   FIELDNAM: Alpha Solar Wind Velocity (RTN)
   CATDESC: Solar wind alpha-particle bulk velocity vector in RTN coordinates (spacecraft frame)
   DEPEND_0: epoch
-  LABL_PTR_1: velocity_rtn_label
+  LABL_PTR_1: alpha_sw_velocity_rtn_label
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
@@ -678,7 +678,6 @@ swp_flags:
   DISPLAY_TYPE: time_series
   SCALETYP: linear
   RECORD_VARYING: RV
-  FIELDNAM: Quality Flags for SWAPI L3a
   FORMAT: I5
   UNITS: '0: okay; nonzero: caution'
   VALIDMIN: 0
@@ -693,6 +692,42 @@ swp_flags:
     All other bits are reserved.
 velocity_rtn_label:
   NAME: velocity_rtn_label
+  DATA_TYPE: CDF_CHAR
+  FIELDNAM: Velocity RTN Label
+  CATDESC: Label for Radial-Tangential-Normal (RTN) velocity components
+  VAR_TYPE: metadata
+  RECORD_VARYING: NRV
+  FORMAT: a20
+  FILLVAL: ' '
+alpha_sw_velocity_rtn_label:
+  NAME: alpha_sw_velocity_rtn_label
+  DATA_TYPE: CDF_CHAR
+  FIELDNAM: Velocity RTN Label
+  CATDESC: Label for Radial-Tangential-Normal (RTN) velocity components
+  VAR_TYPE: metadata
+  RECORD_VARYING: NRV
+  FORMAT: a20
+  FILLVAL: ' '
+alpha_sw_velocity_rtn_sun_label:
+  NAME: alpha_sw_velocity_rtn_sun_label
+  DATA_TYPE: CDF_CHAR
+  FIELDNAM: Velocity RTN Label
+  CATDESC: Label for Radial-Tangential-Normal (RTN) velocity components
+  VAR_TYPE: metadata
+  RECORD_VARYING: NRV
+  FORMAT: a20
+  FILLVAL: ' '
+proton_sw_velocity_rtn_label:
+  NAME: proton_sw_velocity_rtn_label
+  DATA_TYPE: CDF_CHAR
+  FIELDNAM: Velocity RTN Label
+  CATDESC: Label for Radial-Tangential-Normal (RTN) velocity components
+  VAR_TYPE: metadata
+  RECORD_VARYING: NRV
+  FORMAT: a20
+  FILLVAL: ' '
+proton_sw_velocity_rtn_sun_label:
+  NAME: proton_sw_velocity_rtn_sun_label
   DATA_TYPE: CDF_CHAR
   FIELDNAM: Velocity RTN Label
   CATDESC: Label for Radial-Tangential-Normal (RTN) velocity components

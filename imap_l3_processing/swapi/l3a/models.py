@@ -64,6 +64,11 @@ PUI_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME = "pui_temperature_uncert"
 SWAPI_QUALITY_FLAGS_CDF_VAR_NAME = "swp_flags"
 
 VELOCITY_RTN_LABEL_CDF_VAR_NAME = "velocity_rtn_label"
+ALPHA_VELOCITY_RTN_LABEL_CDF_VAR_NAME = "alpha_sw_velocity_rtn_label"
+ALPHA_VELOCITY_RTN_SUN_LABEL_CDF_VAR_NAME = "alpha_sw_velocity_rtn_sun_label"
+
+PROTON_SOLAR_WIND_VELOCITY_RTN_SUN_LABEL_CDF_VAR_NAME = "proton_sw_velocity_rtn_sun_label"
+PROTON_SOLAR_WIND_VELOCITY_RTN_LABEL_CDF_VAR_NAME = "proton_sw_velocity_rtn_label"
 
 
 @dataclass
@@ -140,6 +145,8 @@ class SwapiL3ProtonSolarWindData(DataProduct):
             ),
             DataProductVariable(SWAPI_QUALITY_FLAGS_CDF_VAR_NAME, self.quality_flags),
             DataProductVariable(VELOCITY_RTN_LABEL_CDF_VAR_NAME, value=["R", "T", "N"]),
+            DataProductVariable(PROTON_SOLAR_WIND_VELOCITY_RTN_LABEL_CDF_VAR_NAME, value=["Vp SC R", "Vp SC T", "Vp SC N"]),
+            DataProductVariable(PROTON_SOLAR_WIND_VELOCITY_RTN_SUN_LABEL_CDF_VAR_NAME, value=["Vp Sun R", "Vp Sun T", "Vp Sun N"]),
         ]
 
 
@@ -217,6 +224,8 @@ class SwapiL3AlphaSolarWindData(DataProduct):
             ),
             DataProductVariable(SWAPI_QUALITY_FLAGS_CDF_VAR_NAME, self.quality_flags),
             DataProductVariable(VELOCITY_RTN_LABEL_CDF_VAR_NAME, value=["R", "T", "N"]),
+            DataProductVariable(ALPHA_VELOCITY_RTN_LABEL_CDF_VAR_NAME, value=["Va SC R", "Va SC T", "Va SC N"]),
+            DataProductVariable(ALPHA_VELOCITY_RTN_SUN_LABEL_CDF_VAR_NAME, value=["Va Sun R", "Va Sun T", "Va Sun N"]),
         ]
 
 

@@ -1,4 +1,4 @@
-from unittest.mock import Mock
+from unittest.mock import Mock, sentinel
 
 import numpy as np
 from uncertainties.unumpy import uarray
@@ -26,7 +26,9 @@ from imap_l3_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, EPOC
     PUI_DENSITY_CDF_VAR_NAME, PUI_TEMPERATURE_CDF_VAR_NAME, PUI_COOLING_INDEX_UNCERTAINTY_CDF_VAR_NAME, \
     PUI_IONIZATION_RATE_UNCERTAINTY_CDF_VAR_NAME, PUI_CUTOFF_SPEED_UNCERTAINTY_CDF_VAR_NAME, \
     PUI_BACKGROUND_COUNT_RATE_UNCERTAINTY_CDF_VAR_NAME, PUI_DENSITY_UNCERTAINTY_CDF_VAR_NAME, \
-    PUI_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME, SWAPI_QUALITY_FLAGS_CDF_VAR_NAME, VELOCITY_RTN_LABEL_CDF_VAR_NAME
+    PUI_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME, SWAPI_QUALITY_FLAGS_CDF_VAR_NAME, VELOCITY_RTN_LABEL_CDF_VAR_NAME, \
+    ALPHA_VELOCITY_RTN_SUN_LABEL_CDF_VAR_NAME, ALPHA_VELOCITY_RTN_LABEL_CDF_VAR_NAME, \
+    PROTON_SOLAR_WIND_VELOCITY_RTN_SUN_LABEL_CDF_VAR_NAME, PROTON_SOLAR_WIND_VELOCITY_RTN_LABEL_CDF_VAR_NAME
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
@@ -65,30 +67,36 @@ class TestModels(CdfModelTestCase):
 
         variables = data.to_data_product_variables()
 
-        self.assert_variable_attributes(variables[0], epoch_data, EPOCH_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[1], speed, PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[2], speed_uncert, PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[3], speed_sun, PROTON_SOLAR_WIND_SPEED_SUN_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[4], speed_sun_uncert,
+        var_iter = iter(variables)
+
+        self.assert_variable_attributes(next(var_iter), epoch_data, EPOCH_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), speed, PROTON_SOLAR_WIND_SPEED_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), speed_uncert, PROTON_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), speed_sun, PROTON_SOLAR_WIND_SPEED_SUN_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), speed_sun_uncert,
                                         PROTON_SOLAR_WIND_SPEED_SUN_UNCERTAINTY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[5], epoch_delta, EPOCH_DELTA_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[6], temperature, PROTON_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[7], temperature_uncert,
+        self.assert_variable_attributes(next(var_iter), epoch_delta, EPOCH_DELTA_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), temperature, PROTON_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), temperature_uncert,
                                         PROTON_SOLAR_WIND_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[8], density, PROTON_SOLAR_WIND_DENSITY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[9], density_uncert,
+        self.assert_variable_attributes(next(var_iter), density, PROTON_SOLAR_WIND_DENSITY_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), density_uncert,
                                         PROTON_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[10], bulk_v_rtn_sun,
+        self.assert_variable_attributes(next(var_iter), bulk_v_rtn_sun,
                                         PROTON_SOLAR_WIND_VELOCITY_RTN_SUN_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[11], bulk_v_rtn_sc,
+        self.assert_variable_attributes(next(var_iter), bulk_v_rtn_sc,
                                         PROTON_SOLAR_WIND_VELOCITY_RTN_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[12], bulk_v_rtn_cov,
+        self.assert_variable_attributes(next(var_iter), bulk_v_rtn_cov,
                                         PROTON_SOLAR_WIND_VELOCITY_RTN_COVARIANCE_CDF_VAR_NAME)
         expected_velocity_uncert = np.sqrt(np.diagonal(bulk_v_rtn_cov, axis1=1, axis2=2))
-        self.assert_variable_attributes(variables[13], expected_velocity_uncert,
+        self.assert_variable_attributes(next(var_iter), expected_velocity_uncert,
                                         PROTON_SOLAR_WIND_VELOCITY_RTN_UNCERTAINTY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[14], quality_flags, SWAPI_QUALITY_FLAGS_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[15], ["R", "T", "N"], VELOCITY_RTN_LABEL_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), quality_flags, SWAPI_QUALITY_FLAGS_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), ["R", "T", "N"], VELOCITY_RTN_LABEL_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), ["Vp SC R", "Vp SC T", "Vp SC N"], PROTON_SOLAR_WIND_VELOCITY_RTN_LABEL_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), ["Vp Sun R", "Vp Sun T", "Vp Sun N"], PROTON_SOLAR_WIND_VELOCITY_RTN_SUN_LABEL_CDF_VAR_NAME)
+
+        self.assertIs(sentinel.done, next(var_iter, sentinel.done))
 
     def test_getting_alpha_sw_data_product_variables(self):
         epoch_data = np.arange(20, step=2)
@@ -121,31 +129,36 @@ class TestModels(CdfModelTestCase):
         )
         variables = data.to_data_product_variables()
 
-        self.assert_variable_attributes(variables[0], epoch_data, EPOCH_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[1], speed, ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[2], speed_uncert,
+        var_iter = iter(variables)
+        self.assert_variable_attributes(next(var_iter), epoch_data, EPOCH_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), speed, ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), speed_uncert,
                                         ALPHA_SOLAR_WIND_SPEED_UNCERTAINTY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[3], speed_sun, ALPHA_SOLAR_WIND_SPEED_SUN_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[4], speed_sun_uncert,
+        self.assert_variable_attributes(next(var_iter), speed_sun, ALPHA_SOLAR_WIND_SPEED_SUN_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), speed_sun_uncert,
                                         ALPHA_SOLAR_WIND_SPEED_SUN_UNCERTAINTY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[5], epoch_delta, EPOCH_DELTA_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[6], density, ALPHA_SOLAR_WIND_DENSITY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[7], density_uncert,
+        self.assert_variable_attributes(next(var_iter), epoch_delta, EPOCH_DELTA_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), density, ALPHA_SOLAR_WIND_DENSITY_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), density_uncert,
                                         ALPHA_SOLAR_WIND_DENSITY_UNCERTAINTY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[8], temperature, ALPHA_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[9], temperature_uncert,
+        self.assert_variable_attributes(next(var_iter), temperature, ALPHA_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), temperature_uncert,
                                         ALPHA_SOLAR_WIND_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[10], velocity_rtn_sun,
+        self.assert_variable_attributes(next(var_iter), velocity_rtn_sun,
                                         ALPHA_SOLAR_WIND_VELOCITY_RTN_SUN_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[11], velocity_rtn_sc,
+        self.assert_variable_attributes(next(var_iter), velocity_rtn_sc,
                                         ALPHA_SOLAR_WIND_VELOCITY_RTN_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[12], velocity_rtn_cov,
+        self.assert_variable_attributes(next(var_iter), velocity_rtn_cov,
                                         ALPHA_SOLAR_WIND_VELOCITY_RTN_COVARIANCE_CDF_VAR_NAME)
         expected_velocity_uncert = np.sqrt(np.diagonal(velocity_rtn_cov, axis1=1, axis2=2))
-        self.assert_variable_attributes(variables[13], expected_velocity_uncert,
+        self.assert_variable_attributes(next(var_iter), expected_velocity_uncert,
                                         ALPHA_SOLAR_WIND_VELOCITY_RTN_UNCERTAINTY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[14], quality_flags, SWAPI_QUALITY_FLAGS_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[15], ["R", "T", "N"], VELOCITY_RTN_LABEL_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), quality_flags, SWAPI_QUALITY_FLAGS_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), ["R", "T", "N"], VELOCITY_RTN_LABEL_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), ['Va SC R', 'Va SC T', 'Va SC N'], ALPHA_VELOCITY_RTN_LABEL_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), ['Va Sun R', 'Va Sun T', 'Va Sun N'], ALPHA_VELOCITY_RTN_SUN_LABEL_CDF_VAR_NAME)
+
+        self.assertIs(sentinel.done, next(var_iter, sentinel.done))
 
     def test_getting_pui_data_product_variables(self):
         epoch_data = np.arange(20, step=2)

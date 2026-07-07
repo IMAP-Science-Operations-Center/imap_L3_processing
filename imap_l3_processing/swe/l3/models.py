@@ -91,11 +91,19 @@ HALO_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME = "halo_temperature_tensor_integ
 TOTAL_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME = "total_temperature_tensor_integrated"
 SWE_FLAGS_VAR_NAME = "swe_flags"
 INTEGRATED_LABEL = "integrated_label"
-TEMPERATURE_TENSOR_LABEL = "temperature_tensor_label"
 RTN_LABEL = "rtn_label"
 GYROPHASE_LABEL = "gyrophase_label"
 PITCH_ANGLE_LABEL = "pitch_angle_label"
 ENERGY_LABEL = "energy_label"
+
+CORE_VELOCITY_VECTOR_RTN_FIT_LABEL = "core_velocity_vector_rtn_fit_label"
+HALO_VELOCITY_VECTOR_RTN_FIT_LABEL = "halo_velocity_vector_rtn_fit_label"
+CORE_VELOCITY_VECTOR_RTN_INTEGRATED_LABEL = "core_velocity_vector_rtn_integrated_label"
+HALO_VELOCITY_VECTOR_RTN_INTEGRATED_LABEL = "halo_velocity_vector_rtn_integrated_label"
+TOTAL_VELOCITY_VECTOR_RTN_INTEGRATED_LABEL = "total_velocity_vector_rtn_integrated_label"
+CORE_TEMPERATURE_TENSOR_INTEGRATED_LABEL = "core_temperature_tensor_integrated_label"
+HALO_TEMPERATURE_TENSOR_INTEGRATED_LABEL = "halo_temperature_tensor_integrated_label"
+TOTAL_TEMPERATURE_TENSOR_INTEGRATED_LABEL = "total_temperature_tensor_integrated_label"
 
 
 @dataclass
@@ -404,8 +412,29 @@ class SweL3Data(DataProduct):
             DataProductVariable(RTN_LABEL,
                                 value=["R", "T", "N"],
                                 ),
-            DataProductVariable(TEMPERATURE_TENSOR_LABEL,
-                                value=["Tensor 1", "Tensor 2", "Tensor 3", "Tensor 4", "Tensor 5", "Tensor 6"],
+            DataProductVariable(CORE_VELOCITY_VECTOR_RTN_FIT_LABEL,
+                                value=["Core v fit R", "Core v fit T", "Core v fit N"],
+                                ),
+            DataProductVariable(HALO_VELOCITY_VECTOR_RTN_FIT_LABEL,
+                                value=["Halo v fit R", "Halo v fit T", "Halo v fit N"],
+                                ),
+            DataProductVariable(CORE_VELOCITY_VECTOR_RTN_INTEGRATED_LABEL,
+                                value=["Core v int. R", "Core v int. T", "Core v int. N"],
+                                ),
+            DataProductVariable(HALO_VELOCITY_VECTOR_RTN_INTEGRATED_LABEL,
+                                value=["Halo v int. R", "Halo v int. T", "Halo v int. N"],
+                                ),
+            DataProductVariable(TOTAL_VELOCITY_VECTOR_RTN_INTEGRATED_LABEL,
+                                value=["Total v int. R", "Total v int. T", "Total v int. N"],
+                                ),
+            DataProductVariable(CORE_TEMPERATURE_TENSOR_INTEGRATED_LABEL,
+                                value=['Core T_XX', 'Core T_XY', 'Core T_YY', 'Core T_XZ', 'Core T_YZ', 'Core T_ZZ'],
+                                ),
+            DataProductVariable(HALO_TEMPERATURE_TENSOR_INTEGRATED_LABEL,
+                                value=['Halo T_XX', 'Halo T_XY', 'Halo T_YY', 'Halo T_XZ', 'Halo T_YZ', 'Halo T_ZZ'],
+                                ),
+            DataProductVariable(TOTAL_TEMPERATURE_TENSOR_INTEGRATED_LABEL,
+                                value=['Total T_XX', 'Total T_XY', 'Total T_YY', 'Total T_XZ', 'Total T_YZ', 'Total T_ZZ'],
                                 ),
             DataProductVariable("inst_az_label", value=self.inst_az_label),
             DataProductVariable("inst_el_label", value=self.inst_el_label),

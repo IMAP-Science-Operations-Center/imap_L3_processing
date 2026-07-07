@@ -691,7 +691,7 @@ core_velocity_vector_rtn_fit:
   VALIDMIN: -5000
   VALIDMAX: 5000
   FILLVAL: -1.00E+31
-  LABL_PTR_1: rtn_label
+  LABL_PTR_1: core_velocity_vector_rtn_fit_label
   VAR_NOTES: Analytically calculated from Bi-Maxellian fit. Recommend using SWAPI ion measurements for solar wind speed/velocity.
   LABLAXIS: Core v vec rtn fit
 halo_velocity_vector_rtn_fit:
@@ -709,7 +709,7 @@ halo_velocity_vector_rtn_fit:
   VALIDMIN: -50000
   VALIDMAX: 50000
   FILLVAL: -1.00E+31
-  LABL_PTR_1: rtn_label
+  LABL_PTR_1: halo_velocity_vector_rtn_fit_label
   VAR_NOTES: Analytically calculated from Bi-Maxellian fit. Recommend using SWAPI ion measurements for solar wind speed/velocity.
   LABLAXIS: Halo v vec rtn fit
 core_density_integrated:
@@ -784,7 +784,7 @@ core_velocity_vector_rtn_integrated:
   VALIDMIN: -5000
   VALIDMAX: 5000
   FILLVAL: -1.00E+31
-  LABL_PTR_1: rtn_label
+  LABL_PTR_1: core_velocity_vector_rtn_integrated_label
   VAR_NOTES: Calculated by integration over the measured phase space distribution. Recommend using SWAPI ion measurements for solar wind speed/velocity.
   LABLAXIS: Core v vec rtn int.
 halo_velocity_vector_rtn_integrated:
@@ -802,7 +802,7 @@ halo_velocity_vector_rtn_integrated:
   VALIDMIN: -50000
   VALIDMAX: 50000
   FILLVAL: -1.00E+31
-  LABL_PTR_1: rtn_label
+  LABL_PTR_1: halo_velocity_vector_rtn_integrated_label
   VAR_NOTES: Calculated by integration over the measured phase space distribution. Recommend using SWAPI ion measurements for solar wind speed/velocity.
   LABLAXIS: Halo v vec rtn int.
 total_velocity_vector_rtn_integrated:
@@ -820,7 +820,7 @@ total_velocity_vector_rtn_integrated:
   VALIDMIN: -5000
   VALIDMAX: 5000
   FILLVAL: -1.00E+31
-  LABL_PTR_1: rtn_label
+  LABL_PTR_1: total_velocity_vector_rtn_integrated_label
   VAR_NOTES: Calculated by integration over the measured phase space distribution. Recommend using SWAPI ion measurements for solar wind speed/velocity.
   LABLAXIS: Total v vec rtn int.
 core_speed_integrated:
@@ -1148,7 +1148,7 @@ core_temperature_tensor_integrated:
   VALIDMIN: -1000
   VALIDMAX: 1000
   FILLVAL: -1.00E+31
-  LABL_PTR_1: temperature_tensor_label
+  LABL_PTR_1: core_temperature_tensor_integrated_label
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_temperature_tensor_integrated:
   NAME: halo_temperature_tensor_integrated
@@ -1167,7 +1167,7 @@ halo_temperature_tensor_integrated:
   VALIDMIN: -1000
   VALIDMAX: 1000
   FILLVAL: -1.00E+31
-  LABL_PTR_1: temperature_tensor_label
+  LABL_PTR_1: halo_temperature_tensor_integrated_label
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_temperature_tensor_integrated:
   NAME: total_temperature_tensor_integrated
@@ -1186,7 +1186,7 @@ total_temperature_tensor_integrated:
   VALIDMIN: -1000
   VALIDMAX: 1000
   FILLVAL: -1.00E+31
-  LABL_PTR_1: temperature_tensor_label
+  LABL_PTR_1: total_temperature_tensor_integrated_label
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_heat_flux_magnitude_integrated:
   NAME: core_heat_flux_magnitude_integrated
@@ -1518,6 +1518,46 @@ gyrophase_label:
   FIELDNAM: Gyrophase Label
   FORMAT: a20
   FILLVAL: ' '
+core_velocity_vector_rtn_fit_label:
+  NAME: core_velocity_vector_rtn_fit_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for RTN
+  VAR_TYPE: metadata
+  FIELDNAM: Rtn Label
+  FORMAT: a20
+  FILLVAL: ' '
+halo_velocity_vector_rtn_fit_label:
+  NAME: halo_velocity_vector_rtn_fit_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for RTN
+  VAR_TYPE: metadata
+  FIELDNAM: Rtn Label
+  FORMAT: a20
+  FILLVAL: ' '
+core_velocity_vector_rtn_integrated_label:
+  NAME: core_velocity_vector_rtn_integrated_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for RTN
+  VAR_TYPE: metadata
+  FIELDNAM: Rtn Label
+  FORMAT: a20
+  FILLVAL: ' '
+halo_velocity_vector_rtn_integrated_label:
+  NAME: halo_velocity_vector_rtn_integrated_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for RTN
+  VAR_TYPE: metadata
+  FIELDNAM: Rtn Label
+  FORMAT: a20
+  FILLVAL: ' '
+total_velocity_vector_rtn_integrated_label:
+  NAME: total_velocity_vector_rtn_integrated_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for RTN
+  VAR_TYPE: metadata
+  FIELDNAM: Rtn Label
+  FORMAT: a20
+  FILLVAL: ' '
 rtn_label:
   NAME: rtn_label
   DATA_TYPE: CDF_CHAR
@@ -1526,13 +1566,32 @@ rtn_label:
   FIELDNAM: Rtn Label
   FORMAT: a20
   FILLVAL: ' '
-temperature_tensor_label:
-  NAME: temperature_tensor_label
+core_temperature_tensor_integrated_label:
+  NAME: core_temperature_tensor_integrated_label
   DATA_TYPE: CDF_CHAR
   CATDESC: Label for temperature tensor
   VAR_TYPE: metadata
   FIELDNAM: Temperature Tensor Label
   FORMAT: a20
+  VAR_NOTES: "Calculated by integration over the measured phase space distribution. In despun pointing set (DPS) coordinates."
+  FILLVAL: ' '
+halo_temperature_tensor_integrated_label:
+  NAME: halo_temperature_tensor_integrated_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for temperature tensor
+  VAR_TYPE: metadata
+  FIELDNAM: Temperature Tensor Label
+  FORMAT: a20
+  VAR_NOTES: "Calculated by integration over the measured phase space distribution. In despun pointing set (DPS) coordinates."
+  FILLVAL: ' '
+total_temperature_tensor_integrated_label:
+  NAME: total_temperature_tensor_integrated_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for temperature tensor
+  VAR_TYPE: metadata
+  FIELDNAM: Temperature Tensor Label
+  FORMAT: a20
+  VAR_NOTES: "Calculated by integration over the measured phase space distribution. In despun pointing set (DPS) coordinates."
   FILLVAL: ' '
 inst_az_label:
   NAME: inst_az_label
