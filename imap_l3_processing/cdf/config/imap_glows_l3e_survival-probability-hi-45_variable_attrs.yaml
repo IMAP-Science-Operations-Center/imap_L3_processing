@@ -135,7 +135,7 @@ spacecraft_radius:
   DISPLAY_TYPE: time_series
   SCALETYP: linear
   FIELDNAM: Spacecraft Radius
-  LALBAXIS: Spacecraft Radius
+  LABLAXIS: Spacecraft Radius
   RECORD_VARYING: RV
   FORMAT: F4.2
   VALIDMIN: 0.0

@@ -146,6 +146,7 @@ particle_id:
   DEPEND_0: epoch
   DISPLAY_TYPE: time_series
   FIELDNAM: Particle Id
+  LABLAXIS: Particle Id
   FORMAT: I3
   UNITS: ' '
   VALIDMIN: 0
@@ -160,6 +161,7 @@ priority_buffer_number:
   DEPEND_0: epoch
   DISPLAY_TYPE: time_series
   FIELDNAM: Priority Buffer Number
+  LABLAXIS: Priority Buffer Number
   FORMAT: I3
   UNITS: ' '
   VALIDMIN: 0
