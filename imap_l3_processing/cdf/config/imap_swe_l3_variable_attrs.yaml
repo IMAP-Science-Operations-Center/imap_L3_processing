@@ -184,7 +184,7 @@ intensity_by_pitch_angle_and_gyrophase:
   DEPEND_1: energy
   DEPEND_2: pitch_angle
   DEPEND_3: gyrophase
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -203,6 +203,7 @@ intensity_by_pitch_angle_and_gyrophase:
   SCALETYP: linear
   DELTA_PLUS_VAR: intensity_uncertainty_by_pitch_angle_and_gyrophase
   DELTA_MINUS_VAR: intensity_uncertainty_by_pitch_angle_and_gyrophase
+  VAR_NOTES: "Sparsely sampled: there are more pitch/gyro angle bins than actual measurement directions."
 intensity_uncertainty_by_pitch_angle:
   NAME: intensity_uncertainty_by_pitch_angle
   DATA_TYPE: CDF_REAL4
@@ -255,12 +256,12 @@ phase_space_density_by_pitch_angle_and_gyrophase:
   DEPEND_1: energy
   DEPEND_2: pitch_angle
   DEPEND_3: gyrophase
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Electron Phase Space Density
-  FORMAT: F15.3
+  FORMAT: E8.2E3
   LABLAXIS: e- PSD
   UNITS: s^3 cm^-6
   VALIDMIN: 0
@@ -273,6 +274,7 @@ phase_space_density_by_pitch_angle_and_gyrophase:
   SCALEMIN: 1.00e-33
   SCALEMAX: 1.00e-24
   SI_CONVERSION: 1e12>s^3 m^-6
+  VAR_NOTES: "Sparsely sampled: there are more pitch/gyro angle bins than actual measurement directions."
 phase_space_density_by_pitch_angle:
   NAME: phase_space_density_by_pitch_angle
   DATA_TYPE: CDF_REAL4
@@ -285,7 +287,7 @@ phase_space_density_by_pitch_angle:
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Electron Phase Space Density
-  FORMAT: F15.3
+  FORMAT: E8.2E3
   LABLAXIS: e- PSD
   UNITS: s^3 cm^-6
   VALIDMIN: 0
@@ -308,7 +310,7 @@ phase_space_density_1d:
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Electron Phase Space Density
-  FORMAT: F15.3
+  FORMAT: E8.2E3
   LABLAXIS: e- PSD
   UNITS: s^3 cm^-6
   VALIDMIN: 0
@@ -329,9 +331,9 @@ phase_space_density_inward:
   RECORD_VARYING: RV
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Electron Phase Space Density
-  FORMAT: F15.3
-  LABLAXIS: e- PSD
+  FIELDNAM: Electron Phase Space Density Inward
+  FORMAT: E8.2E3
+  LABLAXIS: e- PSD In
   UNITS: s^3 cm^-6
   VALIDMIN: 0
   VALIDMAX: 1.00e-15
@@ -341,6 +343,7 @@ phase_space_density_inward:
   LABL_PTR_1: energy_label
   SCALETYP: log
   SI_CONVERSION: 1e12>s^3 m^-6
+  VAR_NOTES: "Inward/outward are each integrated over half the pitch angle distribution (0-90 or 90-180 degree pitch angle), with outward being the larger and inward the smaller of these two."
 phase_space_density_outward:
   NAME: phase_space_density_outward
   DATA_TYPE: CDF_REAL4
@@ -351,9 +354,9 @@ phase_space_density_outward:
   RECORD_VARYING: RV
   DISPLAY_TYPE: spectrogram
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Electron Phase Space Density
-  FORMAT: F15.3
-  LABLAXIS: e- PSD
+  FIELDNAM: Electron Phase Space Density Outward
+  FORMAT: E8.2E3
+  LABLAXIS: e- PSD Out
   UNITS: s^3 cm^-6
   VALIDMIN: 0
   VALIDMAX: 1.00e-15
@@ -363,16 +366,17 @@ phase_space_density_outward:
   LABL_PTR_1: energy_label
   SCALETYP: log
   SI_CONVERSION: 1e12>s^3 m^-6
+  VAR_NOTES: "Inward/outward are each integrated over half the pitch angle distribution (0-90 or 90-180 degree pitch angle), with outward being the larger and inward the smaller of these two."
 spacecraft_potential:
   NAME: spacecraft_potential
   DATA_TYPE: CDF_REAL4
-  CATDESC: IMAP spacecraft potential
+  CATDESC: IMAP spacecraft potential calculated at SWE
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Spacecraft Potential
+  FIELDNAM: Spacecraft Potential At SWE
   FORMAT: F9.3
   LABLAXIS: Potential
   UNITS: V
@@ -435,7 +439,7 @@ core_chisq:
   DATA_TYPE: CDF_REAL4
   CATDESC: Chi square error for core moment fitting
   DEPEND_0: epoch
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -451,7 +455,7 @@ halo_chisq:
   DATA_TYPE: CDF_REAL4
   CATDESC: Chi square error for halo moment fitting
   DEPEND_0: epoch
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -571,7 +575,7 @@ halo_t_perpendicular_fit:
 core_temperature_phi_rtn_fit:
   NAME: core_temperature_phi_rtn_fit
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core temperature phi RTN fit
+  CATDESC: Core temperature fit, rotated to RTN coordinates, phi
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -584,11 +588,11 @@ core_temperature_phi_rtn_fit:
   VALIDMIN: -180
   VALIDMAX: 180
   FILLVAL: -1.00E+31
-  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit. In RTN coordinates, phi is the angle in the R-T plane.
 halo_temperature_phi_rtn_fit:
   NAME: halo_temperature_phi_rtn_fit
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo temperature phi RTN fit
+  CATDESC: Halo temperature fit, rotated to RTN coordinates, phi
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -601,11 +605,11 @@ halo_temperature_phi_rtn_fit:
   VALIDMIN: -180
   VALIDMAX: 180
   FILLVAL: -1.00E+31
-  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit. In RTN coordinates, phi is the angle in the R-T plane.
 core_temperature_theta_rtn_fit:
   NAME: core_temperature_theta_rtn_fit
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core temperature theta RTN fit
+  CATDESC: Core temperature fit, rotated to RTN coordinates, theta
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -618,11 +622,11 @@ core_temperature_theta_rtn_fit:
   VALIDMIN: -90
   VALIDMAX: 90
   FILLVAL: -1.00E+31
-  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit. In RTN coordinates, theta is the angle relative to the N axis.
 halo_temperature_theta_rtn_fit:
   NAME: halo_temperature_theta_rtn_fit
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo temperature theta RTN fit
+  CATDESC: Halo temperature fit, rotated to RTN coordinates, theta
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -635,13 +639,13 @@ halo_temperature_theta_rtn_fit:
   VALIDMIN: -90
   VALIDMAX: 90
   FILLVAL: -1.00E+31
-  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit. In RTN coordinates, theta is the angle relative to the N axis.
 core_speed_fit:
   NAME: core_speed_fit
   DATA_TYPE: CDF_REAL4
   CATDESC: Core speed fit
   DEPEND_0: epoch
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -654,13 +658,13 @@ core_speed_fit:
   SCALEMIN: 0
   SCALEMAX: 1000
   FILLVAL: -1.00E+31
-  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit. Recommend using SWAPI ion measurements for solar wind speed/velocity.
 halo_speed_fit:
   NAME: halo_speed_fit
   DATA_TYPE: CDF_REAL4
   CATDESC: Halo speed fit
   DEPEND_0: epoch
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -671,13 +675,13 @@ halo_speed_fit:
   VALIDMIN: 0
   VALIDMAX: 50000
   FILLVAL: -1.00E+31
-  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit. Recommend using SWAPI ion measurements for solar wind speed/velocity.
 core_velocity_vector_rtn_fit:
   NAME: core_velocity_vector_rtn_fit
   DATA_TYPE: CDF_REAL4
   CATDESC: Core velocity vector RTN fit
   DEPEND_0: epoch
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -687,15 +691,15 @@ core_velocity_vector_rtn_fit:
   VALIDMIN: -5000
   VALIDMAX: 5000
   FILLVAL: -1.00E+31
-  LABL_PTR_1: rtn_label
-  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  LABL_PTR_1: core_velocity_vector_rtn_fit_label
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit. Recommend using SWAPI ion measurements for solar wind speed/velocity.
   LABLAXIS: Core v vec rtn fit
 halo_velocity_vector_rtn_fit:
   NAME: halo_velocity_vector_rtn_fit
   DATA_TYPE: CDF_REAL4
   CATDESC: Halo velocity vector RTN fit
   DEPEND_0: epoch
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -705,13 +709,13 @@ halo_velocity_vector_rtn_fit:
   VALIDMIN: -50000
   VALIDMAX: 50000
   FILLVAL: -1.00E+31
-  LABL_PTR_1: rtn_label
-  VAR_NOTES: Analytically calculated from Bi-Maxellian fit
+  LABL_PTR_1: halo_velocity_vector_rtn_fit_label
+  VAR_NOTES: Analytically calculated from Bi-Maxellian fit. Recommend using SWAPI ion measurements for solar wind speed/velocity.
   LABLAXIS: Halo v vec rtn fit
 core_density_integrated:
   NAME: core_density_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Density halo/suprathermal electrons (high energy) integrated
+  CATDESC: Density of core electrons found through numerical integration
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -770,7 +774,7 @@ core_velocity_vector_rtn_integrated:
   DATA_TYPE: CDF_REAL4
   CATDESC: Core velocity vector RTN integrated
   DEPEND_0: epoch
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -780,15 +784,15 @@ core_velocity_vector_rtn_integrated:
   VALIDMIN: -5000
   VALIDMAX: 5000
   FILLVAL: -1.00E+31
-  LABL_PTR_1: rtn_label
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  LABL_PTR_1: core_velocity_vector_rtn_integrated_label
+  VAR_NOTES: Calculated by integration over the measured phase space distribution. Recommend using SWAPI ion measurements for solar wind speed/velocity.
   LABLAXIS: Core v vec rtn int.
 halo_velocity_vector_rtn_integrated:
   NAME: halo_velocity_vector_rtn_integrated
   DATA_TYPE: CDF_REAL4
   CATDESC: Halo velocity vector RTN integrated
   DEPEND_0: epoch
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -798,15 +802,15 @@ halo_velocity_vector_rtn_integrated:
   VALIDMIN: -50000
   VALIDMAX: 50000
   FILLVAL: -1.00E+31
-  LABL_PTR_1: rtn_label
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  LABL_PTR_1: halo_velocity_vector_rtn_integrated_label
+  VAR_NOTES: Calculated by integration over the measured phase space distribution. Recommend using SWAPI ion measurements for solar wind speed/velocity.
   LABLAXIS: Halo v vec rtn int.
 total_velocity_vector_rtn_integrated:
   NAME: total_velocity_vector_rtn_integrated
   DATA_TYPE: CDF_REAL4
   CATDESC: Total velocity vector RTN integrated
   DEPEND_0: epoch
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -816,15 +820,15 @@ total_velocity_vector_rtn_integrated:
   VALIDMIN: -5000
   VALIDMAX: 5000
   FILLVAL: -1.00E+31
-  LABL_PTR_1: rtn_label
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  LABL_PTR_1: total_velocity_vector_rtn_integrated_label
+  VAR_NOTES: Calculated by integration over the measured phase space distribution. Recommend using SWAPI ion measurements for solar wind speed/velocity.
   LABLAXIS: Total v vec rtn int.
 core_speed_integrated:
   NAME: core_speed_integrated
   DATA_TYPE: CDF_REAL4
   CATDESC: Core speed integrated
   DEPEND_0: epoch
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -837,13 +841,13 @@ core_speed_integrated:
   SCALEMIN: 0
   SCALEMAX: 5000
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution. Recommend using SWAPI ion measurements for solar wind speed/velocity.
 halo_speed_integrated:
   NAME: halo_speed_integrated
   DATA_TYPE: CDF_REAL4
   CATDESC: Halo speed integrated
   DEPEND_0: epoch
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -854,13 +858,13 @@ halo_speed_integrated:
   VALIDMIN: 0
   VALIDMAX: 50000
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution. Recommend using SWAPI ion measurements for solar wind speed/velocity.
 total_speed_integrated:
   NAME: total_speed_integrated
   DATA_TYPE: CDF_REAL4
   CATDESC: Total speed integrated
   DEPEND_0: epoch
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -871,7 +875,7 @@ total_speed_integrated:
   VALIDMIN: 0
   VALIDMAX: 5000
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution. Recommend using SWAPI ion measurements for solar wind speed/velocity.
 core_t_parallel_integrated:
   NAME: core_t_parallel_integrated
   DATA_TYPE: CDF_REAL4
@@ -911,7 +915,7 @@ total_t_parallel_integrated:
   DATA_TYPE: CDF_REAL4
   CATDESC: Total t_parallel integrated
   DEPEND_0: epoch
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -926,7 +930,7 @@ total_t_parallel_integrated:
 core_t_perpendicular_integrated:
   NAME: core_t_perpendicular_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Average of perpendicular core temperature eigenvalues
+  CATDESC: Average of two perpendicular core temperature eigenvalues
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -943,7 +947,7 @@ core_t_perpendicular_integrated:
 halo_t_perpendicular_integrated:
   NAME: halo_t_perpendicular_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Average of perpendicular halo temperature eigenvalues
+  CATDESC: Average of two perpendicular halo temperature eigenvalues
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -962,7 +966,7 @@ total_t_perpendicular_integrated:
   DATA_TYPE: CDF_REAL4
   CATDESC: Average of perpendicular total temperature eigenvalues
   DEPEND_0: epoch
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -994,7 +998,7 @@ core_t_ratio_perpendicular_integrated:
 halo_t_ratio_perpendicular_integrated:
   NAME: halo_t_ratio_perpendicular_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Ratio of perpendicular halo temperature eigenvalues
+  CATDESC: Ratio of two perpendicular halo temperature eigenvalues
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1013,7 +1017,7 @@ total_t_ratio_perpendicular_integrated:
   DATA_TYPE: CDF_REAL4
   CATDESC: Ratio of perpendicular total temperature eigenvalues
   DEPEND_0: epoch
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -1028,7 +1032,7 @@ total_t_ratio_perpendicular_integrated:
 core_temperature_phi_rtn_integrated:
   NAME: core_temperature_phi_rtn_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core temperature phi RTN integrated
+  CATDESC: Core temperature integrated, rotated to RTN coordinates, phi
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1041,11 +1045,11 @@ core_temperature_phi_rtn_integrated:
   VALIDMIN: -180
   VALIDMAX: 180
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution. In RTN coordinates, phi is the angle in the R-T plane.
 halo_temperature_phi_rtn_integrated:
   NAME: halo_temperature_phi_rtn_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo temperature phi RTN integrated
+  CATDESC: Halo temperature integrated, rotated to RTN coordinates, phi
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1058,13 +1062,13 @@ halo_temperature_phi_rtn_integrated:
   VALIDMIN: -180
   VALIDMAX: 180
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution, rotated to the measured magnetic field direction. In RTN coordinates, phi is the angle in the R-T plane.
 total_temperature_phi_rtn_integrated:
   NAME: total_temperature_phi_rtn_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Total temperature phi RTN integrated
+  CATDESC: Total temperature integrated, rotated to RTN coordinates, phi
   DEPEND_0: epoch
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -1075,7 +1079,7 @@ total_temperature_phi_rtn_integrated:
   VALIDMIN: -180
   VALIDMAX: 180
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution. In RTN coordinates, phi is the angle in the R-T plane.
 core_temperature_theta_rtn_integrated:
   NAME: core_temperature_theta_rtn_integrated
   DATA_TYPE: CDF_REAL4
@@ -1096,7 +1100,7 @@ core_temperature_theta_rtn_integrated:
 halo_temperature_theta_rtn_integrated:
   NAME: halo_temperature_theta_rtn_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo temperature theta RTN integrated
+  CATDESC: Halo temperature integrated, rotated to RTN coordinates, theta
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1109,13 +1113,13 @@ halo_temperature_theta_rtn_integrated:
   VALIDMIN: -90
   VALIDMAX: 90
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution. In RTN coordinates, theta is the angle relative to the N axis.
 total_temperature_theta_rtn_integrated:
   NAME: total_temperature_theta_rtn_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Total temperature theta RTN integrated
+  CATDESC: Total temperature integrated, rotated to RTN coordinates, theta
   DEPEND_0: epoch
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -1126,14 +1130,14 @@ total_temperature_theta_rtn_integrated:
   VALIDMIN: -90
   VALIDMAX: 90
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution. In RTN coordinates, theta is the angle relative to the N axis.
 core_temperature_tensor_integrated:
   NAME: core_temperature_tensor_integrated
   DATA_TYPE: CDF_REAL4
   CATDESC: Core temperature tensor integrated
   DEPEND_0: epoch
   DEPEND_1: tensor_id
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -1144,7 +1148,7 @@ core_temperature_tensor_integrated:
   VALIDMIN: -1000
   VALIDMAX: 1000
   FILLVAL: -1.00E+31
-  LABL_PTR_1: temperature_tensor_label
+  LABL_PTR_1: core_temperature_tensor_integrated_label
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 halo_temperature_tensor_integrated:
   NAME: halo_temperature_tensor_integrated
@@ -1152,7 +1156,7 @@ halo_temperature_tensor_integrated:
   CATDESC: Halo temperature tensor integrated
   DEPEND_0: epoch
   DEPEND_1: tensor_id
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -1163,7 +1167,7 @@ halo_temperature_tensor_integrated:
   VALIDMIN: -1000
   VALIDMAX: 1000
   FILLVAL: -1.00E+31
-  LABL_PTR_1: temperature_tensor_label
+  LABL_PTR_1: halo_temperature_tensor_integrated_label
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 total_temperature_tensor_integrated:
   NAME: total_temperature_tensor_integrated
@@ -1171,7 +1175,7 @@ total_temperature_tensor_integrated:
   CATDESC: Total temperature tensor integrated
   DEPEND_0: epoch
   DEPEND_1: tensor_id
-  VAR_TYPE: data
+  VAR_TYPE: support_datadata
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
@@ -1182,7 +1186,7 @@ total_temperature_tensor_integrated:
   VALIDMIN: -1000
   VALIDMAX: 1000
   FILLVAL: -1.00E+31
-  LABL_PTR_1: temperature_tensor_label
+  LABL_PTR_1: total_temperature_tensor_integrated_label
   VAR_NOTES: Calculated by integration over the measured phase space distribution
 core_heat_flux_magnitude_integrated:
   NAME: core_heat_flux_magnitude_integrated
@@ -1217,7 +1221,7 @@ core_heat_flux_theta_integrated:
   VALIDMIN: -90
   VALIDMAX: 90
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution. In RTN coordinates, theta is the angle relative to the N axis.
 core_heat_flux_phi_integrated:
   NAME: core_heat_flux_phi_integrated
   DATA_TYPE: CDF_REAL4
@@ -1234,7 +1238,7 @@ core_heat_flux_phi_integrated:
   VALIDMIN: -180
   VALIDMAX: 180
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution. In RTN coordinates, phi is the angle in the R-T plane.
 halo_heat_flux_magnitude_integrated:
   NAME: halo_heat_flux_magnitude_integrated
   DATA_TYPE: CDF_REAL4
@@ -1255,7 +1259,7 @@ halo_heat_flux_magnitude_integrated:
 halo_heat_flux_theta_integrated:
   NAME: halo_heat_flux_theta_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo heat flux theta integrated
+  CATDESC: Halo heat flux integrated, rotated to RTN coordinates, theta
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1268,11 +1272,11 @@ halo_heat_flux_theta_integrated:
   VALIDMIN: -90
   VALIDMAX: 90
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution. In RTN coordinates, theta is the angle relative to the N axis.
 halo_heat_flux_phi_integrated:
   NAME: halo_heat_flux_phi_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Halo heat flux phi integrated
+  CATDESC: Halo heat flux integrated, rotated to RTN coordinates, phi
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1285,7 +1289,7 @@ halo_heat_flux_phi_integrated:
   VALIDMIN: -180
   VALIDMAX: 180
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution. In RTN coordinates, phi is the angle in the R-T plane.
 total_heat_flux_magnitude_integrated:
   NAME: total_heat_flux_magnitude_integrated
   DATA_TYPE: CDF_REAL4
@@ -1306,7 +1310,7 @@ total_heat_flux_magnitude_integrated:
 total_heat_flux_theta_integrated:
   NAME: total_heat_flux_theta_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Total heat flux theta integrated
+  CATDESC: Total heat flux integrated, rotated to RTN coordinates, theta
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1319,11 +1323,11 @@ total_heat_flux_theta_integrated:
   VALIDMIN: -90
   VALIDMAX: 90
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution. In RTN coordinates, theta is the angle relative to the N axis.
 total_heat_flux_phi_integrated:
   NAME: total_heat_flux_phi_integrated
   DATA_TYPE: CDF_REAL4
-  CATDESC: Total heat flux phi integrated
+  CATDESC: Total heat flux integrated, rotated to RTN coordinates, phi
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
@@ -1336,7 +1340,7 @@ total_heat_flux_phi_integrated:
   VALIDMIN: -180
   VALIDMAX: 180
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution. In RTN coordinates, phi is the angle in the R-T plane.
 core_temperature_parallel_to_mag:
   NAME: core_temperature_parallel_to_mag
   DATA_TYPE: CDF_REAL4
@@ -1346,14 +1350,14 @@ core_temperature_parallel_to_mag:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Core T Parallel To Mag
+  FIELDNAM: Core T Integrated Parallel To Mag
   FORMAT: F15.3
   LABLAXIS: Core temperature parallel to mag
   UNITS: K
   VALIDMIN: 0
   VALIDMAX: 1.0e+7
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution, rotated to the measured magnetic field direction
 halo_temperature_parallel_to_mag:
   NAME: halo_temperature_parallel_to_mag
   DATA_TYPE: CDF_REAL4
@@ -1363,24 +1367,24 @@ halo_temperature_parallel_to_mag:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Halo T Parallel To Mag
+  FIELDNAM: Halo T Integrated Parallel To Mag
   FORMAT: F15.3
   LABLAXIS: Halo t parallel to mag
   UNITS: K
   VALIDMIN: 0
   VALIDMAX: 1.0e+7
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution, rotated to the measured magnetic field direction
 total_temperature_parallel_to_mag:
   NAME: total_temperature_parallel_to_mag
   DATA_TYPE: CDF_REAL4
   CATDESC: Total temperature parallel to mag
   DEPEND_0: epoch
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Total T Parallel To Mag
+  FIELDNAM: Total T Integrated Parallel To Mag
   FORMAT: F15.3
   LABLAXIS: Total t parallel to mag
   UNITS: K
@@ -1391,20 +1395,20 @@ total_temperature_parallel_to_mag:
 core_temperature_perpendicular_to_mag:
   NAME: core_temperature_perpendicular_to_mag
   DATA_TYPE: CDF_REAL4
-  CATDESC: Core temperature perpendicular to mag
+  CATDESC: Average of two core temperature eigenvalues perpendicular to mag
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Core T Perpendicular To Mag
+  FIELDNAM: Core T Integrated Perpendicular To Mag
   FORMAT: F15.3
   LABLAXIS: Core t perpendicular to mag
   UNITS: K
   VALIDMIN: 0
   VALIDMAX: 1.0e+7
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution, rotated to the measured magnetic field direction
 halo_temperature_perpendicular_to_mag:
   NAME: halo_temperature_perpendicular_to_mag
   DATA_TYPE: CDF_REAL4
@@ -1414,82 +1418,82 @@ halo_temperature_perpendicular_to_mag:
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Halo T Perpendicular To Mag
+  FIELDNAM: Halo T Integrated Perpendicular To Mag
   FORMAT: F15.3
   LABLAXIS: Halo t perpendicular to mag
   UNITS: K
   VALIDMIN: 0
   VALIDMAX: 1.0e+7
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution, rotated to the measured magnetic field direction
 total_temperature_perpendicular_to_mag:
   NAME: total_temperature_perpendicular_to_mag
   DATA_TYPE: CDF_REAL4
   CATDESC: Total temperature perpendicular to mag
   DEPEND_0: epoch
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Total T Perpendicular To Mag
+  FIELDNAM: Total T Integrated Perpendicular To Mag
   FORMAT: F15.3
   LABLAXIS: Total t perpendicular to mag
   UNITS: K
   VALIDMIN: 0
   VALIDMAX: 1.0e+7
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution, rotated to the measured magnetic field direction
 core_temperature_ratio_perpendicular_to_mag:
   NAME: core_temperature_ratio_perpendicular_to_mag
   DATA_TYPE: CDF_REAL4
-  CATDESC: Ratio of core temperatures perpendicular to mag
+  CATDESC: Ratio of core two temperature eigenvalues perpendicular to mag
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Core T Ratio Perpendicular To Mag
+  FIELDNAM: Core Integrated T Ratio Perpendicular To Mag
   FORMAT: F15.3
   LABLAXIS: Core t ratio
   UNITS: ' '
   VALIDMIN: 0
   VALIDMAX: 10
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution, rotated to the measured magnetic field direction
 halo_temperature_ratio_perpendicular_to_mag:
   NAME: halo_temperature_ratio_perpendicular_to_mag
   DATA_TYPE: CDF_REAL4
-  CATDESC: Ratio of halo temperatures perpendicular to mag
+  CATDESC: Ratio of two halo temperatures perpendicular to mag
   DEPEND_0: epoch
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Halo T Ratio Perpendicular To Mag
+  FIELDNAM: Halo Integrated T Ratio Perpendicular To Mag
   FORMAT: F15.3
   LABLAXIS: Halo t ratio
   UNITS: ' '
   VALIDMIN: 0
   VALIDMAX: 10
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution, rotated to the measured magnetic field direction
 total_temperature_ratio_perpendicular_to_mag:
   NAME: total_temperature_ratio_perpendicular_to_mag
   DATA_TYPE: CDF_REAL4
-  CATDESC: Ratio of total temperatures perpendicular to mag
+  CATDESC: Ratio of total two temperature eigenvalues perpendicular to mag
   DEPEND_0: epoch
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
-  FIELDNAM: Total T Ratio Perpendicular To Mag
+  FIELDNAM: Total Integrated T Ratio Perpendicular To Mag
   FORMAT: F15.3
   LABLAXIS: Total t ratio
   UNITS: ' '
   VALIDMIN: 0
   VALIDMAX: 10
   FILLVAL: -1.00E+31
-  VAR_NOTES: Calculated by integration over the measured phase space distribution
+  VAR_NOTES: Calculated by integration over the measured phase space distribution, rotated to the measured magnetic field direction
 energy_label:
   NAME: energy_label
   DATA_TYPE: CDF_CHAR
@@ -1514,6 +1518,46 @@ gyrophase_label:
   FIELDNAM: Gyrophase Label
   FORMAT: a20
   FILLVAL: ' '
+core_velocity_vector_rtn_fit_label:
+  NAME: core_velocity_vector_rtn_fit_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for RTN
+  VAR_TYPE: metadata
+  FIELDNAM: Rtn Label
+  FORMAT: a20
+  FILLVAL: ' '
+halo_velocity_vector_rtn_fit_label:
+  NAME: halo_velocity_vector_rtn_fit_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for RTN
+  VAR_TYPE: metadata
+  FIELDNAM: Rtn Label
+  FORMAT: a20
+  FILLVAL: ' '
+core_velocity_vector_rtn_integrated_label:
+  NAME: core_velocity_vector_rtn_integrated_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for RTN
+  VAR_TYPE: metadata
+  FIELDNAM: Rtn Label
+  FORMAT: a20
+  FILLVAL: ' '
+halo_velocity_vector_rtn_integrated_label:
+  NAME: halo_velocity_vector_rtn_integrated_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for RTN
+  VAR_TYPE: metadata
+  FIELDNAM: Rtn Label
+  FORMAT: a20
+  FILLVAL: ' '
+total_velocity_vector_rtn_integrated_label:
+  NAME: total_velocity_vector_rtn_integrated_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for RTN
+  VAR_TYPE: metadata
+  FIELDNAM: Rtn Label
+  FORMAT: a20
+  FILLVAL: ' '
 rtn_label:
   NAME: rtn_label
   DATA_TYPE: CDF_CHAR
@@ -1522,13 +1566,32 @@ rtn_label:
   FIELDNAM: Rtn Label
   FORMAT: a20
   FILLVAL: ' '
-temperature_tensor_label:
-  NAME: temperature_tensor_label
+core_temperature_tensor_integrated_label:
+  NAME: core_temperature_tensor_integrated_label
   DATA_TYPE: CDF_CHAR
   CATDESC: Label for temperature tensor
   VAR_TYPE: metadata
   FIELDNAM: Temperature Tensor Label
   FORMAT: a20
+  VAR_NOTES: "Calculated by integration over the measured phase space distribution. In despun pointing set (DPS) coordinates."
+  FILLVAL: ' '
+halo_temperature_tensor_integrated_label:
+  NAME: halo_temperature_tensor_integrated_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for temperature tensor
+  VAR_TYPE: metadata
+  FIELDNAM: Temperature Tensor Label
+  FORMAT: a20
+  VAR_NOTES: "Calculated by integration over the measured phase space distribution. In despun pointing set (DPS) coordinates."
+  FILLVAL: ' '
+total_temperature_tensor_integrated_label:
+  NAME: total_temperature_tensor_integrated_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for temperature tensor
+  VAR_TYPE: metadata
+  FIELDNAM: Temperature Tensor Label
+  FORMAT: a20
+  VAR_NOTES: "Calculated by integration over the measured phase space distribution. In despun pointing set (DPS) coordinates."
   FILLVAL: ' '
 inst_az_label:
   NAME: inst_az_label
@@ -1566,10 +1629,10 @@ raw_1d_psd_rebinned:
   DEPEND_0: epoch
   DEPEND_1: energy
   CATDESC: Raw 1D PSD from rebinned data
-  VAR_TYPE: data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   FIELDNAM: Raw 1D PSD
-  FORMAT: F12.6
+  FORMAT: E8.2E3
   LABLAXIS: Raw 1D PSD
   UNITS: ' '
   DISPLAY_TYPE: spectrogram
@@ -1586,11 +1649,11 @@ raw_psd_by_phi_rebinned:
   DEPEND_0: epoch
   DEPEND_1: energy
   DEPEND_2: inst_az
-  CATDESC: Raw PSD by phi from rebinned data
-  VAR_TYPE: data
+  CATDESC: Raw PSD by spin angle phi from rebinned data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   FIELDNAM: Raw PSD by phi
-  FORMAT: F12.6
+  FORMAT: E8.2E3
   LABLAXIS: Raw PSD by phi
   UNITS: ' '
   DISPLAY_TYPE: spectrogram
@@ -1609,11 +1672,11 @@ raw_psd_by_theta_rebinned:
   DEPEND_0: epoch
   DEPEND_1: energy
   DEPEND_2: inst_el
-  CATDESC: Raw PSD by theta from rebinned data
-  VAR_TYPE: data
+  CATDESC: Raw PSD by polar angle theta from rebinned data
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   FIELDNAM: Raw PSD by theta
-  FORMAT: F12.6
+  FORMAT: E8.2E3
   LABLAXIS: Raw PSD by theta
   UNITS: ' '
   DISPLAY_TYPE: spectrogram
@@ -1662,15 +1725,30 @@ inst_az:
 swe_flags:
   NAME: swe_flags
   DATA_TYPE: CDF_UINT2
-  CATDESC: Quality flags for SWE L3
+  CATDESC: "Quality flags for SWE L3 (caution required if nonzero)"
   DEPEND_0: epoch
-  VAR_TYPE: support_data
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+  SCALETYP: linear
   RECORD_VARYING: RV
   FIELDNAM: Quality Flags for SWE L3
   FORMAT: I5
-  UNITS: ' '
+  UNITS: '0: okay; nonzero: caution'
   VALIDMIN: 0
   VALIDMAX: 65534
   FILLVAL: 65535
   LABLAXIS: Quality flags for SWE L3
-
+  VAR_NOTES: >-
+    Each bit corresponds to a specific potential concern. See release notes for details.
+    Bit 2: first 4 points of the PSD 1D Rebinned are linear in log PSD - log energy space; spacecraft_potential is set to 2.5 V
+    Bit 3: breakpoint finding algortithm fell back to a spline method, which failed
+    Bit 4: fit to resolve the photo-core breakpoint fell back to spline method
+    Bit 5: fit to resolve the core-halo breakpoint fell back to spline method
+    Bit 6: Unimplemented. Reserved to indicate any of IMAP Ultra deflectors are turned off. (Nominal is when IMAP Ultra deflectors are turned on)
+    Bit 7: any temperature product yielded a value found to be an extreme statistical outlier, similar to a spike removal routine.
+    Bit 8: preliminary MAG L1D was used for acquiring the magnetic field direction instead of the nominal MAG L2 product.
+    Bit 9: solar wind vector is unresolved, but measured speed is used from SWAPI L3A
+    Bit 10: any density or temperature moment is negative (unphysical)
+    Bit 11: any PSD value is unphysically large (>1e-19).
+    Bit 12: passthrough of LAST_CAL_INTERVAL from L2 Quality Flags: calibration was extrapolated using the last two entries in the calibration table.
+    Bit 13: Unimplemented. Reserved to indicate predictive ephemeris was used instead of reconstructed ephemeris.

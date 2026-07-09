@@ -42,7 +42,11 @@ from imap_l3_processing.swe.l3.models import SweL3Data, EPOCH_CDF_VAR_NAME, EPOC
     CORE_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME, \
     HALO_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME, TOTAL_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME, \
     CORE_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, HALO_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, \
-    TOTAL_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, TEMPERATURE_TENSOR_LABEL, TENSOR_ID, SWE_FLAGS_VAR_NAME
+    TOTAL_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME, TENSOR_ID, SWE_FLAGS_VAR_NAME, \
+    CORE_VELOCITY_VECTOR_RTN_FIT_LABEL, HALO_VELOCITY_VECTOR_RTN_FIT_LABEL, CORE_VELOCITY_VECTOR_RTN_INTEGRATED_LABEL, \
+    HALO_VELOCITY_VECTOR_RTN_INTEGRATED_LABEL, TOTAL_VELOCITY_VECTOR_RTN_INTEGRATED_LABEL, \
+    CORE_TEMPERATURE_TENSOR_INTEGRATED_LABEL, HALO_TEMPERATURE_TENSOR_INTEGRATED_LABEL, \
+    TOTAL_TEMPERATURE_TENSOR_INTEGRATED_LABEL
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 
@@ -240,11 +244,18 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(next(variables), sentinel.raw_psd_by_phi_rebinned, 'raw_psd_by_phi_rebinned')
         self.assert_variable_attributes(next(variables), sentinel.inst_az, 'inst_az')
         self.assert_variable_attributes(next(variables), sentinel.inst_el, 'inst_el')
-        self.assert_variable_attributes(next(variables), ["Energy Label 1", "Energy Label 2", "Energy Label 3"], ENERGY_LABEL)
-        self.assert_variable_attributes(next(variables), ["Pitch Angle Label 1", "Pitch Angle Label 2", "Pitch Angle Label 3", "Pitch Angle Label 4", "Pitch Angle Label 5"], PITCH_ANGLE_LABEL)
-        self.assert_variable_attributes(next(variables), ["Gyrophase Label 1", "Gyrophase Label 2", "Gyrophase Label 3", "Gyrophase Label 4"], GYROPHASE_LABEL)
+        self.assert_variable_attributes(next(variables), ["10.0 eV", "20.0 eV", "30.0 eV"], ENERGY_LABEL)
+        self.assert_variable_attributes(next(variables), ["PA 11", "PA 12", "PA 13", "PA 14", "PA 15"], PITCH_ANGLE_LABEL)
+        self.assert_variable_attributes(next(variables), ["Gyrophase 20", "Gyrophase 40", "Gyrophase 60", "Gyrophase 80"], GYROPHASE_LABEL)
         self.assert_variable_attributes(next(variables), ["R", "T", "N"], RTN_LABEL)
-        self.assert_variable_attributes(next(variables), ["Tensor 1", "Tensor 2", "Tensor 3", "Tensor 4", "Tensor 5", "Tensor 6"], TEMPERATURE_TENSOR_LABEL)
+        self.assert_variable_attributes(next(variables), ["Core v fit R", "Core v fit T", "Core v fit N"], CORE_VELOCITY_VECTOR_RTN_FIT_LABEL)
+        self.assert_variable_attributes(next(variables), ["Halo v fit R", "Halo v fit T", "Halo v fit N"], HALO_VELOCITY_VECTOR_RTN_FIT_LABEL)
+        self.assert_variable_attributes(next(variables), ["Core v int. R", "Core v int. T", "Core v int. N"], CORE_VELOCITY_VECTOR_RTN_INTEGRATED_LABEL)
+        self.assert_variable_attributes(next(variables), ["Halo v int. R", "Halo v int. T", "Halo v int. N"], HALO_VELOCITY_VECTOR_RTN_INTEGRATED_LABEL)
+        self.assert_variable_attributes(next(variables), ["Total v int. R", "Total v int. T", "Total v int. N"], TOTAL_VELOCITY_VECTOR_RTN_INTEGRATED_LABEL)
+        self.assert_variable_attributes(next(variables), ["Core T_XX", "Core T_XY", "Core T_YY", "Core T_XZ", "Core T_YZ", "Core T_ZZ"], CORE_TEMPERATURE_TENSOR_INTEGRATED_LABEL)
+        self.assert_variable_attributes(next(variables), ["Halo T_XX", "Halo T_XY", "Halo T_YY", "Halo T_XZ", "Halo T_YZ", "Halo T_ZZ"], HALO_TEMPERATURE_TENSOR_INTEGRATED_LABEL)
+        self.assert_variable_attributes(next(variables), ["Total T_XX", "Total T_XY", "Total T_YY", "Total T_XZ", "Total T_YZ", "Total T_ZZ"], TOTAL_TEMPERATURE_TENSOR_INTEGRATED_LABEL)
         self.assert_variable_attributes(next(variables), sentinel.inst_az_label, 'inst_az_label')
         self.assert_variable_attributes(next(variables), sentinel.inst_el_label, 'inst_el_label')
         self.assert_variable_attributes(next(variables),[1,2,3,4,5, 6], TENSOR_ID)

@@ -117,14 +117,16 @@ def identify_versions_for_l3e_output_files(start_cr_of_mission: int, end_cr_of_m
 
 def compute_glows_flags_for_window(l3d_cdf_path: Path, window_start: datetime, window_end: datetime) -> int:
     with CDF(str(l3d_cdf_path)) as cdf:
-        epochs = np.array(cdf['epoch'][...])
-        flags = np.array(cdf['glows_flags'][...])
+        epochs = cdf['epoch'][...]
+        epoch_deltas = cdf['epoch_delta'][...] / 1e9 * timedelta(seconds=1)
+        flags = cdf['glows_flags'][...]
+    cr_starts = epochs - epoch_deltas
+    cr_ends = epochs + epoch_deltas
 
-    in_window = (epochs >= window_start) & (epochs <= window_end)
-    selected = flags[in_window]
-    if selected.size == 0:
-        return 0
-    return int(np.bitwise_or.reduce(selected.astype(np.uint16)))
+    cr_intersects_window = (window_start < cr_ends) & (cr_starts < window_end)
+    selected = flags[cr_intersects_window]
+
+    return int(np.bitwise_or.reduce(selected.astype(np.uint16), initial=0))
 
 
 def find_first_updated_cr(new_l3d: Path, old_l3d: str) -> Optional[int]:
