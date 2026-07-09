@@ -16,16 +16,17 @@ import imap_data_access
 import numpy as np
 from imap_data_access import ProcessingInputCollection, RepointInput
 from imap_data_access import ScienceInput, AncillaryInput
-from imap_data_access.file_validation import ScienceFilePath, AncillaryFilePath
+from imap_data_access.file_validation import ScienceFilePath, AncillaryFilePath, Version
 from spacepy.pycdf import CDF
 
 import imap_l3_data_processor
 import tests
+from imap_l3_processing.glows.descriptors import GLOWS_L3BCDE_DESCRIPTORS
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.utils import read_l2_glows_data, create_glows_l3a_from_dictionary
 from imap_l3_processing.glows.l3d.utils import PATH_TO_L3D_TOOLKIT
-from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.utils import save_data
 from tests.integration.integration_test_helpers import mock_imap_data_access, run_istp_compliance_check
 from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path, \
@@ -141,8 +142,6 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         np.testing.assert_allclose(actual_dict['spin_angle_delta'], expected_dict['spin_angle_delta'])
         np.testing.assert_allclose(actual_dict['latitude'], expected_dict['latitude'], atol=1e-3)
         np.testing.assert_allclose(actual_dict['longitude'], expected_dict['longitude'], atol=1e-3)
-        # np.testing.assert_allclose(actual_dict['extra_heliospheric_background'], expected_dict['extra_heliospheric_background'])
-        # np.testing.assert_allclose(actual_dict['time_dependent_background'], expected_dict['time_dependent_background'])
         np.testing.assert_allclose(actual_dict['filter_temperature_average'],
                                    expected_dict['filter_temperature_average'])
         np.testing.assert_allclose(actual_dict['filter_temperature_std_dev'],
@@ -190,7 +189,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             descriptor="hist",
             start_date=start_date,
             end_date=end_date,
-            version="v001",
+            version=VersionMap({}, Version(None, 1)),
             repointing=l2_science_file_path.repointing,
         )
 
@@ -266,8 +265,10 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
                     shutil.rmtree(path)
 
             processing_input = ProcessingInputCollection(RepointInput("imap_2026_090_01.repoint"))
+
+            version_map = VersionMap({descriptor: Version(i, 2) for i, descriptor in enumerate(GLOWS_L3BCDE_DESCRIPTORS)})
             input_metadata = InputMetadata(instrument="glows", data_level="l3b", descriptor="ion-rate-profile",
-                                           version="v001", start_date=datetime(2000, 1, 1),
+                                           version=version_map, start_date=datetime(2000, 1, 1),
                                            end_date=datetime(2000, 1, 1))
 
             processor = GlowsProcessor(processing_input, input_metadata)
@@ -373,7 +374,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         with mock_imap_data_access(get_run_local_data_path("glows_reprocessing"), l3bcde_input_files):
             processing_input = ProcessingInputCollection(RepointInput("imap_2026_090_01.repoint"))
             input_metadata = InputMetadata(instrument="glows", data_level="l3b", descriptor="ion-rate-profile",
-                                           version="v001", start_date=datetime(2000, 1, 1),
+                                           version=VersionMap({}, Version(None, 1)), start_date=datetime(2000, 1, 1),
                                            end_date=datetime(2000, 1, 1))
 
             processor = GlowsProcessor(processing_input, input_metadata)
@@ -431,7 +432,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
                     data_level="l3a",
                     start_date=start_date,
                     end_date=end_date,
-                    version="v001",
+                    version=VersionMap({}, Version(None, 1)),
                     descriptor="hist",
                     repointing=l2_science_file_path.repointing,
                 )
@@ -485,7 +486,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         with mock_imap_data_access(get_run_local_data_path("glows_l3bcde_with_prod_l2"), input_paths):
             processing_input = ProcessingInputCollection(RepointInput("imap_2026_139_01.repoint"))
             input_metadata = InputMetadata(instrument="glows", data_level="l3b", descriptor="ion-rate-profile",
-                                           version="v001", start_date=datetime(2000, 1, 1),
+                                           version=VersionMap({}, Version(None, 1)), start_date=datetime(2000, 1, 1),
                                            end_date=datetime(2000, 1, 1))
 
             processor = GlowsProcessor(processing_input, input_metadata)

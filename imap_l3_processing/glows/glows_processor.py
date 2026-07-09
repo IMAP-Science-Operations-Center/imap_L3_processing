@@ -17,7 +17,8 @@ from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.descriptors import GLOWS_L3A_DESCRIPTOR, GLOWS_L3E_ULTRA_SF_DESCRIPTOR, \
-    GLOWS_L3E_ULTRA_HF_DESCRIPTOR, GLOWS_L3D_DESCRIPTOR, GLOWS_L3B_DESCRIPTOR, GLOWS_L3C_DESCRIPTOR
+    GLOWS_L3E_ULTRA_HF_DESCRIPTOR, GLOWS_L3D_DESCRIPTOR, GLOWS_L3B_DESCRIPTOR, GLOWS_L3C_DESCRIPTOR, \
+    GLOWS_L3E_LO_DESCRIPTOR
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.glows_toolkit.l3a_data import L3aData
 from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve
@@ -99,7 +100,7 @@ class GlowsProcessor(Processor):
             for txt_file in process_l3d_result.l3d_text_file_paths:
                 logger.info(f"Saved L3d text file output to: {txt_file}")
 
-            l3e_initializer_output = GlowsL3EInitializer.get_repointings_to_process(process_l3d_result, old_l3d, l3bc_initializer_data.repoint_file_path)
+            l3e_initializer_output = GlowsL3EInitializer.get_repointings_to_process(process_l3d_result, old_l3d, l3bc_initializer_data.repoint_file_path, self.input_metadata.version)
             if l3e_initializer_output is not None:
                 logger.info(f"Processing L3e for repointings: {l3e_initializer_output.repointings.repointing_numbers}")
                 products_list.extend([*process_l3d_result.l3d_text_file_paths, process_l3d_result.l3d_cdf_file_path])
@@ -271,36 +272,41 @@ def process_l3e(initializer_data: GlowsL3EInitializerOutput):
             glows_flags = compute_glows_flags_for_window(initializer_data.l3d_cdf_path, start_repointing, end_repointing)
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e lo for repointing {repointing}"):
-                lo_parent_file_names = initializer_data.dependencies.get_lo_parents()
-                pivot_info = lo_pivot_angles[repointing]
-                if pivot_info.parent_filename is not None:
-                    lo_parent_file_names = lo_parent_file_names + [pivot_info.parent_filename]
-                lo_version = initializer_data.repointings.lo_repointings[repointing]
-                products_list.extend(process_l3e_lo(lo_parent_file_names, repointing, start_repointing, epoch_delta, pivot_info.pivot_angle, lo_version, glows_flags))
+                if repointing in initializer_data.repointings.lo_repointings:
+                    lo_parent_file_names = initializer_data.dependencies.get_lo_parents()
+                    pivot_info = lo_pivot_angles[repointing]
+                    if pivot_info.parent_filename is not None:
+                        lo_parent_file_names = lo_parent_file_names + [pivot_info.parent_filename]
+                    lo_version = initializer_data.repointings.lo_repointings[repointing]
+                    products_list.extend(process_l3e_lo(lo_parent_file_names, repointing, start_repointing, epoch_delta, pivot_info.pivot_angle, lo_version, glows_flags))
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e hi-90 for repointing {repointing}"):
-                hi_parent_file_names = initializer_data.dependencies.get_hi_parents()
-                hi_90_version = initializer_data.repointings.hi_90_repointings[repointing]
-                products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, start_repointing, epoch_delta, 90, hi_90_version, glows_flags))
+                if repointing in initializer_data.repointings.hi_90_repointings:
+                    hi_parent_file_names = initializer_data.dependencies.get_hi_parents()
+                    hi_90_version = initializer_data.repointings.hi_90_repointings[repointing]
+                    products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, start_repointing, epoch_delta, 90, hi_90_version, glows_flags))
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e hi-45 for repointing {repointing}"):
-                hi_parent_file_names = initializer_data.dependencies.get_hi_parents()
-                hi_45_version = initializer_data.repointings.hi_45_repointings[repointing]
-                products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, start_repointing, epoch_delta, 135, hi_45_version, glows_flags))
+                if repointing in initializer_data.repointings.hi_45_repointings:
+                    hi_parent_file_names = initializer_data.dependencies.get_hi_parents()
+                    hi_45_version = initializer_data.repointings.hi_45_repointings[repointing]
+                    products_list.extend(process_l3e_hi(hi_parent_file_names, repointing, start_repointing, epoch_delta, 135, hi_45_version, glows_flags))
 
             ul_parent_file_names = initializer_data.dependencies.get_ul_parents()
-            ul_sf_version = initializer_data.repointings.ultra_sf_repointings[repointing]
-            ul_hf_version = initializer_data.repointings.ultra_hf_repointings[repointing]
 
             with SwallowExceptionAndLog(
                     f"Exception encountered when processing L3e ultra SF for repointing {repointing}"):
-                products_list.extend(
-                    process_l3e_ul_sf(ul_parent_file_names, repointing, start_repointing, epoch_delta, ul_sf_version, glows_flags))
+                if repointing in initializer_data.repointings.ultra_sf_repointings:
+                    ul_sf_version = initializer_data.repointings.ultra_sf_repointings[repointing]
+                    products_list.extend(
+                        process_l3e_ul_sf(ul_parent_file_names, repointing, start_repointing, epoch_delta, ul_sf_version, glows_flags))
 
             with SwallowExceptionAndLog(
                     f"Exception encountered when processing L3e ultra HF for repointing {repointing}"):
-                products_list.extend(
-                    process_l3e_ul_hf(ul_parent_file_names, repointing, start_repointing, epoch_delta, ul_hf_version, glows_flags))
+                if repointing in initializer_data.repointings.ultra_hf_repointings:
+                    ul_hf_version = initializer_data.repointings.ultra_hf_repointings[repointing]
+                    products_list.extend(
+                        process_l3e_ul_hf(ul_parent_file_names, repointing, start_repointing, epoch_delta, ul_hf_version, glows_flags))
 
     return products_list
 
@@ -324,10 +330,10 @@ def process_l3e_lo(
     input_metadata = InputMetadata(
         instrument="glows",
         data_level="l3e",
-        descriptor="survival-probability-lo",
+        descriptor=GLOWS_L3E_LO_DESCRIPTOR,
         start_date=repointing_start,
         end_date=repointing_start + epoch_delta * 2,
-        version=str(version),
+        version=VersionMap({GLOWS_L3E_LO_DESCRIPTOR: version}),
         repointing=repointing,
     )
 
@@ -374,7 +380,7 @@ def process_l3e_ul_sf(parent_file_names: list[str], repointing: int, repointing_
         descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
         start_date=repointing_start,
         end_date=repointing_start + epoch_delta * 2,
-        version=str(version),
+        version=VersionMap({GLOWS_L3E_ULTRA_SF_DESCRIPTOR: version}),
         repointing=repointing,
     )
 
@@ -423,7 +429,7 @@ def process_l3e_ul_hf(parent_file_names: list[str], repointing: int, repointing_
         descriptor=GLOWS_L3E_ULTRA_HF_DESCRIPTOR,
         start_date=repointing_start,
         end_date=repointing_start + epoch_delta * 2,
-        version=str(version),
+        version=VersionMap({GLOWS_L3E_ULTRA_HF_DESCRIPTOR: version}),
         repointing=repointing,
     )
 
@@ -459,8 +465,9 @@ def process_l3e_hi(parent_file_names: list[str], repointing: int, repointing_sta
 
     run(["./survProbHi"] + call_args)
 
-    input_metadata = InputMetadata(instrument='glows', descriptor=f'survival-probability-hi-{180-elongation}',
-                                   version=str(version), start_date=repointing_start, end_date=repointing_start + epoch_delta * 2,
+    descriptor = f'survival-probability-hi-{180-elongation}'
+    input_metadata = InputMetadata(instrument='glows', descriptor=descriptor,
+                                   version=VersionMap({descriptor: version}), start_date=repointing_start, end_date=repointing_start + epoch_delta * 2,
                                    repointing=repointing, data_level='l3e')
 
     output_path = Path(f'probSur.Imap.Hi_{call_args[0]}_{call_args[1][:8]}_{call_args[-1][:5]}.dat')
