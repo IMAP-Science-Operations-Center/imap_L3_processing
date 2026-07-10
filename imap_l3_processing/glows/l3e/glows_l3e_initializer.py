@@ -33,12 +33,6 @@ class GlowsL3EInitializer:
             repointing_file_path: Path,
             version_map: VersionMap,
     ) -> Optional[GlowsL3EInitializerOutput]:
-        first_updated_cr = None
-        if previous_l3d is not None:
-            first_updated_cr = find_first_updated_cr(l3d_output.l3d_cdf_file_path, previous_l3d)
-            if first_updated_cr is None:
-                return None
-
         pipeline_settings_l3bcde = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='pipeline-settings-l3bcde'))
         energy_grid_lo = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='energy-grid-lo'))
         tess_xyz_8 = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='tess-xyz-8'))
@@ -63,12 +57,17 @@ class GlowsL3EInitializer:
 
         first_cr = l3e_deps.pipeline_settings["start_cr"]
 
-        if first_updated_cr is None:
-            first_updated_cr = first_cr
-        else:
-            first_updated_cr -= 1
+        first_updated_cr = first_cr
+        if previous_l3d is not None:
+            first_updated_cr = find_first_updated_cr(l3d_output.l3d_cdf_file_path, previous_l3d)
+            if first_updated_cr is None:
+                first_updated_cr = first_cr
+            else:
+                first_updated_cr -= 1
 
-        last_cr = ScienceFilePath(l3d_output.l3d_cdf_file_path).cr
+
+
+        last_cr = l3d_output.last_processed_cr
         glows_repointings = identify_versions_for_l3e_output_files(first_cr, last_cr, first_updated_cr, repointing_file_path, version_map)
 
         if len(glows_repointings.repointing_numbers) > 0:
