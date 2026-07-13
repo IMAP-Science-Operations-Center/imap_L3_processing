@@ -12,10 +12,11 @@ from unittest.mock import Mock
 import imap_data_access
 import numpy as np
 from imap_data_access import ScienceFilePath, AncillaryFilePath, SPICEFilePath
-from imap_data_access.file_validation import generate_imap_file_path
+from imap_data_access.file_validation import generate_imap_file_path, Version
 
 import imap_l3_processing
 import tests
+from imap_l3_processing.models import VersionMap
 from imap_l3_processing.swe.l3.models import SweConfiguration, SweL3MomentData
 from imap_l3_processing.swe.l3.science.moment_calculations import Moments, MomentFitResults
 
@@ -228,17 +229,32 @@ def create_mock_query_results(file_names: list[Path | str], ingestion_dates: Opt
 
         match imap_file_path:
             case ScienceFilePath():
-                file_paths.append({
-                    "instrument": imap_file_path.instrument,
-                    "data_level": imap_file_path.data_level,
-                    "descriptor": imap_file_path.descriptor,
-                    "start_date": imap_file_path.start_date,
-                    "ingestion_date": ingestion_date.strftime("%Y%m%d %H:%M:%S"),
-                    "version": imap_file_path.version,
-                    "cr": imap_file_path.cr,
-                    "file_path": file_path,
-                    "repointing": imap_file_path.repointing
-                })
+                version_object = Version.from_version(imap_file_path.version)
+                if version_object.major is not None:
+                    file_paths.append({
+                        "instrument": imap_file_path.instrument,
+                        "data_level": imap_file_path.data_level,
+                        "descriptor": imap_file_path.descriptor,
+                        "start_date": imap_file_path.start_date,
+                        "ingestion_date": ingestion_date.strftime("%Y%m%d %H:%M:%S"),
+                        "major_version": version_object.major,
+                        "minor_version": version_object.minor,
+                        "cr": imap_file_path.cr,
+                        "file_path": file_path,
+                        "repointing": imap_file_path.repointing
+                    })
+                else:
+                    file_paths.append({
+                        "instrument": imap_file_path.instrument,
+                        "data_level": imap_file_path.data_level,
+                        "descriptor": imap_file_path.descriptor,
+                        "start_date": imap_file_path.start_date,
+                        "ingestion_date": ingestion_date.strftime("%Y%m%d %H:%M:%S"),
+                        "version": imap_file_path.version,
+                        "cr": imap_file_path.cr,
+                        "file_path": file_path,
+                        "repointing": imap_file_path.repointing
+                    })
             case AncillaryFilePath():
                 file_paths.append({
                     "instrument": imap_file_path.instrument,
@@ -255,6 +271,8 @@ def create_mock_query_results(file_names: list[Path | str], ingestion_dates: Opt
                 raise NotImplementedError(f"Unexpected file path type {imap_file_path}")
     return file_paths
 
+def create_mock_version_map(descriptor: Optional[str] = 'descriptor', major_version: Optional[int] = None, minor_version: Optional[int] = 1):
+    return VersionMap({descriptor:Version(major_version, minor_version)})
 
 @dataclass
 class PeriodicallyRunTest:

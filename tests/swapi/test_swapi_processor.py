@@ -5,12 +5,13 @@ from unittest.mock import patch, sentinel, call, Mock
 
 import numpy as np
 from imap_data_access import config
+from imap_data_access.file_validation import Version
 from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput, AncillaryInput
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 from imap_l3_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS, \
     FIVE_MINUTES_IN_NANOSECONDS
-from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.swapi.descriptors import DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR, \
     EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR, \
     GEOMETRIC_FACTOR_SW_LOOKUP_TABLE_DESCRIPTOR, \
@@ -22,6 +23,7 @@ from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SWAPI_L2_DESCRIP
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_vdf import DeltaMinusPlus
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
+from tests.test_helpers import create_mock_version_map
 
 
 class TestSwapiProcessor(TestCase):
@@ -46,7 +48,8 @@ class TestSwapiProcessor(TestCase):
         end_date = datetime(2025, 9, 26)
         outgoing_data_level = "l3a"
         start_date = datetime(2025, 9, 25)
-        input_version = "v123"
+        descriptor = "pui-he"
+        input_version = VersionMap({descriptor: Version(None, 123)})
         outgoing_version = "123"
         start_date_as_str = datetime.strftime(start_date, "%Y%m%d")
 
@@ -110,13 +113,13 @@ class TestSwapiProcessor(TestCase):
         input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date, input_version)
 
         pickup_ion_data = mock_pickup_ion_data_constructor.return_value
-        expected_pickup_ion_metadata = replace(input_metadata, descriptor="pui-he")
+        expected_pickup_ion_metadata = replace(input_metadata, descriptor=descriptor)
         pickup_ion_data.input_metadata = expected_pickup_ion_metadata
 
-        input_metadata.descriptor = "pui-he"
+        input_metadata.descriptor = descriptor
 
         expected_cdf_path = (config["DATA_DIR"] / "imap" / "swapi" / "l3a" / "2025" / "09" /
-                             f"imap_swapi_l3a_pui-he_{start_date_as_str}_{input_version}.cdf")
+                             f"imap_swapi_l3a_pui-he_{start_date_as_str}_v123.cdf")
 
         mock_chunk_l2_data.side_effect = [
             [chunk_of_five],
@@ -175,7 +178,7 @@ class TestSwapiProcessor(TestCase):
                                                             call("Logical_source",
                                                                  f"imap_swapi_l3a_pui-he"),
                                                             call("Logical_file_id",
-                                                                 f"imap_swapi_l3a_pui-he_{start_date_as_str}_{input_version}"),
+                                                                 f"imap_swapi_l3a_pui-he_{start_date_as_str}_v123"),
                                                             ])
 
         actual_positional = mock_pickup_ion_data_constructor.call_args.args
@@ -184,7 +187,7 @@ class TestSwapiProcessor(TestCase):
         for key, expected_val in pui_runner_result.items():
             np.testing.assert_array_equal(expected_val, actual_kwargs[key])
 
-        mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a", "pui-he")
+        mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a", descriptor)
 
         self.assertEqual(input_file_names, pickup_ion_data.parent_file_names)
         mock_write_cdf.assert_called_once_with(str(expected_cdf_path), pickup_ion_data, mock_manager)
@@ -211,7 +214,8 @@ class TestSwapiProcessor(TestCase):
         end_date = datetime(2025, 6, 13)
         outgoing_data_level = "l3a"
         start_date = datetime(2025, 6, 12)
-        input_version = "v123"
+        descriptor = "proton-sw"
+        input_version = VersionMap({descriptor: Version(None, 123)})
         outgoing_version = "123"
         start_date_as_str = datetime.strftime(start_date, "%Y%m%d")
 
@@ -273,13 +277,14 @@ class TestSwapiProcessor(TestCase):
         input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date, input_version)
 
         proton_solar_wind_data = mock_proton_solar_wind_data_constructor.return_value
-        expected_proton_metadata = replace(input_metadata, descriptor="proton-sw")
+
+        expected_proton_metadata = replace(input_metadata, descriptor=descriptor)
         proton_solar_wind_data.input_metadata = expected_proton_metadata
 
-        input_metadata.descriptor = "proton-sw"
+        input_metadata.descriptor = descriptor
 
         expected_cdf_path = (config["DATA_DIR"] / "imap" / "swapi" / "l3a" / "2025" / "06" /
-                             f"imap_swapi_l3a_proton-sw_{start_date_as_str}_{input_version}.cdf")
+                             f"imap_swapi_l3a_proton-sw_{start_date_as_str}_v123.cdf")
 
         mock_chunk_l2_data.return_value = [chunk_of_five]
 
@@ -316,10 +321,10 @@ class TestSwapiProcessor(TestCase):
                                                             call("Logical_source",
                                                                  f"imap_swapi_l3a_proton-sw"),
                                                             call("Logical_file_id",
-                                                                 f"imap_swapi_l3a_proton-sw_{start_date_as_str}_{input_version}"),
+                                                                 f"imap_swapi_l3a_proton-sw_{start_date_as_str}_v123"),
                                                             ])
 
-        mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a", "proton-sw")
+        mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a", descriptor)
 
         self.assertEqual(input_file_names, proton_solar_wind_data.parent_file_names)
         mock_write_cdf.assert_called_once_with(str(expected_cdf_path), proton_solar_wind_data, mock_manager)
@@ -346,7 +351,8 @@ class TestSwapiProcessor(TestCase):
         end_date = datetime(2025, 8, 29)
         outgoing_data_level = "l3a"
         start_date = datetime(2025, 8, 28)
-        input_version = "v123"
+        l3a_descriptor = "alpha-sw"
+        input_version = create_mock_version_map(descriptor=l3a_descriptor, minor_version=123)
         outgoing_version = "123"
         start_date_as_str = datetime.strftime(start_date, "%Y%m%d")
 
@@ -397,13 +403,13 @@ class TestSwapiProcessor(TestCase):
         input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date, input_version)
 
         alpha_solar_wind_data = mock_alpha_solar_wind_data_constructor.return_value
-        expected_alpha_metadata = replace(input_metadata, descriptor="alpha-sw")
+        expected_alpha_metadata = replace(input_metadata, descriptor=l3a_descriptor)
         alpha_solar_wind_data.input_metadata = expected_alpha_metadata
 
-        input_metadata.descriptor = "alpha-sw"
+        input_metadata.descriptor = l3a_descriptor
 
         expected_cdf_path = (config["DATA_DIR"] / "imap" / "swapi" / "l3a" / "2025" / "08" /
-                             f"imap_swapi_l3a_alpha-sw_{start_date_as_str}_{input_version}.cdf")
+                             f"imap_swapi_l3a_alpha-sw_{start_date_as_str}_v123.cdf")
 
         mock_chunk_l2_data.return_value = [chunk_of_five]
 
@@ -440,9 +446,9 @@ class TestSwapiProcessor(TestCase):
             call("Data_version", outgoing_version),
             call("Generation_date", date.today().strftime("%Y%m%d")),
             call("Logical_source", "imap_swapi_l3a_alpha-sw"),
-            call("Logical_file_id", f"imap_swapi_l3a_alpha-sw_{start_date_as_str}_{input_version}"),
+            call("Logical_file_id", f"imap_swapi_l3a_alpha-sw_{start_date_as_str}_v123"),
         ])
-        mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a", "alpha-sw")
+        mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a", l3a_descriptor)
 
         self.assertEqual(input_file_names, alpha_solar_wind_data.parent_file_names)
         mock_write_cdf.assert_called_once_with(str(expected_cdf_path), alpha_solar_wind_data, mock_manager)

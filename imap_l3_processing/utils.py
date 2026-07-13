@@ -26,7 +26,7 @@ from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, 
     HealPixIntensityMapData, HealPixSpectralIndexMapData, RectangularSpectralIndexDataProduct, \
     RectangularIntensityDataProduct, HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct, MapDataProduct, \
     ISNBackgroundSubtractedDataProduct, ISNBackgroundSubtractedMapData
-from imap_l3_processing.models import UpstreamDataDependency, DataProduct, MagData, InputMetadata
+from imap_l3_processing.models import DataProduct, MagData, InputMetadata
 from imap_l3_processing.ultra.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.version import VERSION
 
@@ -57,7 +57,7 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: P
         start_time=formatted_start_date,
         repointing=data.input_metadata.repointing,
         cr=cr_number,
-        version=data.input_metadata.version,
+        version=str(data.input_metadata.version.lookup(data.input_metadata.descriptor))
     )
 
     file_path = science_file_path.construct_path()
@@ -72,7 +72,8 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: P
         file_path.unlink(missing_ok=True)
 
     attribute_manager = ImapAttributeManager()
-    attribute_manager.add_global_attribute("Data_version", data.input_metadata.version.replace('v', ''))
+    version = str(data.input_metadata.version.lookup(data.input_metadata.descriptor)).replace('v','')
+    attribute_manager.add_global_attribute("Data_version", version)
     attribute_manager.add_instrument_attrs(data.input_metadata.instrument, data.input_metadata.data_level,
                                            data.input_metadata.descriptor)
     attribute_manager.add_global_attribute("Generation_date", date.today().strftime("%Y%m%d"))
@@ -171,37 +172,6 @@ def format_time(t: Optional[datetime]) -> Optional[str]:
     if t is not None:
         return t.strftime("%Y%m%d")
     return None
-
-
-def download_dependency(dependency: UpstreamDataDependency) -> Path:
-    files_to_download = [result['file_path'] for result in
-                         imap_data_access.query(instrument=dependency.instrument,
-                                                data_level=dependency.data_level,
-                                                descriptor=dependency.descriptor,
-                                                start_date=format_time(dependency.start_date),
-                                                end_date=format_time(dependency.end_date),
-                                                version=dependency.version
-                                                )]
-    if len(files_to_download) != 1:
-        raise ValueError(f"{files_to_download}. Expected one file to download, found {len(files_to_download)}.")
-
-    return imap_data_access.download(files_to_download[0])
-
-
-def download_dependency_with_repointing(dependency: UpstreamDataDependency) -> (Path, int):
-    files_with_repointing_to_download = [(result['file_path'], result['repointing']) for result in
-                                         imap_data_access.query(instrument=dependency.instrument,
-                                                                data_level=dependency.data_level,
-                                                                descriptor=dependency.descriptor,
-                                                                start_date=format_time(dependency.start_date),
-                                                                end_date=format_time(dependency.end_date),
-                                                                version=dependency.version
-                                                                )]
-    if len(files_with_repointing_to_download) != 1:
-        raise ValueError(
-            f"{[file[0] for file in files_with_repointing_to_download]}. Expected one file to download, found {len(files_with_repointing_to_download)}.")
-    repointing_number = files_with_repointing_to_download[0][1]
-    return imap_data_access.download(files_with_repointing_to_download[0][0]), repointing_number
 
 
 def download_external_dependency(dependency_url: str, file_path: Path) -> Optional[Path]:

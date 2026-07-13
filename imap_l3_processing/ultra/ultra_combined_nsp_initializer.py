@@ -3,11 +3,12 @@ from datetime import datetime
 from pathlib import Path
 
 import imap_data_access
+from imap_data_access.file_validation import Version
 
 from imap_l3_processing.maps.map_descriptors import Sensor, map_descriptor_parts_to_string, \
     parse_map_descriptor, get_duration_from_map_descriptor
 from imap_l3_processing.maps.map_initializer import MapInitializer, PossibleMapToProduce
-from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.ultra.ultra_sp_initializer import ULTRA_SP_SPICE_KERNELS
 from imap_l3_processing.utils import furnish_spice_metakernel
 
@@ -79,7 +80,7 @@ class UltraCombinedNSPInitializer(MapInitializer):
                     data_level='l3',
                     start_date=start_date,
                     end_date=start_date + get_duration_from_map_descriptor(descriptor_parts),
-                    version='v001',
+                    version=VersionMap({},Version(None,1)),
                     descriptor=descriptor,
                 )
             ))

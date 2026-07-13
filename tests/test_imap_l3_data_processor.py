@@ -1,8 +1,11 @@
+import itertools
+import json
 from datetime import datetime
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch, call, Mock, sentinel
 
+from imap_data_access.file_validation import Version
 from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection, \
     AncillaryInput, SPICEInput
 
@@ -11,7 +14,7 @@ from imap_l3_processing.hi.hi_combined_initializer import HI_COMBINED_DESCRIPTOR
 from imap_l3_processing.hi.hi_sp_initializer import HI_SP_MAP_DESCRIPTORS
 from imap_l3_processing.lo.l3.lo_sp_initializer import LO_SP_MAP_DESCRIPTORS
 from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
-from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.ultra.ultra_combined_nsp_initializer import ULTRA_COMBINED_NSP_DESCRIPTORS
 from imap_l3_processing.ultra.ultra_sp_initializer import ULTRA_45_DESCRIPTORS, ULTRA_90_DESCRIPTORS, \
     ULTRA_COMBINED_SP_DESCRIPTORS
@@ -58,16 +61,16 @@ class TestImapL3DataProcessor(TestCase):
                 mock_argument_parser = mock_argparse.ArgumentParser.return_value
                 mock_argument_parser.parse_args.return_value.instrument = instrument
                 mock_argument_parser.parse_args.return_value.data_level = data_level
-                mock_argument_parser.parse_args.return_value.dependency = "dependency_string"
+                mock_argument_parser.parse_args.return_value.dependency = "[]"
                 mock_argument_parser.parse_args.return_value.start_date = "20250101"
                 mock_argument_parser.parse_args.return_value.end_date = None
                 mock_argument_parser.parse_args.return_value.repointing = "repoint00022"
-                mock_argument_parser.parse_args.return_value.version = sentinel.version
+                mock_argument_parser.parse_args.return_value.version = "v099"
                 mock_argument_parser.parse_args.return_value.descriptor = descriptor
 
                 expected_input_metadata = InputMetadata(instrument, data_level, datetime(2025, 1, 1),
                                                         datetime(2025, 1, 1),
-                                                        sentinel.version, descriptor=descriptor,
+                                                        VersionMap({},Version(None, 99)), descriptor=descriptor,
                                                         repointing=22)
 
                 expected_processor.return_value.process.return_value = [sentinel.cdf]
@@ -81,13 +84,13 @@ class TestImapL3DataProcessor(TestCase):
                     call("--start-date"),
                     call("--end-date", required=False),
                     call("--repointing", required=False),
-                    call("--version"),
+                    call("--version", required=False),
                     call("--dependency"),
                     call("--upload-to-sdc", action="store_true", required=False,
                          help="Upload completed output files to the IMAP SDC.")
                 ])
 
-                mock_processing_input.return_value.deserialize.assert_called_once_with("dependency_string")
+                mock_processing_input.return_value.deserialize.assert_called_once_with("[]")
 
                 expected_processor.assert_called_once_with(mock_processing_input.return_value, expected_input_metadata)
                 mock_upload.assert_called_once_with(sentinel.cdf)
@@ -108,7 +111,7 @@ class TestImapL3DataProcessor(TestCase):
                                                            mock_ultra_processor_class, mock_ultra_initializer_class,
                                                            mock_ultra_combined_nsp_initializer_class,
                                                            mock_hi_combined_initializer_class):
-        test_cases = [
+        instrument_cases = [
             ("hi", "sp-maps", mock_hi_initializer_class, mock_hi_processor_class, HI_SP_MAP_DESCRIPTORS),
             ("hi", "hic-maps", mock_hi_combined_initializer_class, mock_hi_processor_class, HI_COMBINED_DESCRIPTORS),
             ("lo", "all-maps", mock_lo_initializer_class, mock_lo_processor_class, LO_SP_MAP_DESCRIPTORS),
@@ -121,54 +124,67 @@ class TestImapL3DataProcessor(TestCase):
              ULTRA_COMBINED_NSP_DESCRIPTORS),
         ]
 
-        for instrument, descriptor, mock_initializer_class, mock_processor_class, expected_descriptors in test_cases:
-            mock_upload.reset_mock()
-            mock_argparse.reset_mock()
-            mock_initializer_class.reset_mock()
-            mock_processor_class.reset_mock()
+        for instrument, descriptor, mock_initializer_class, mock_processor_class, expected_descriptors in instrument_cases:
+            version_descriptors = {descriptor: { "major_version": 123,"minor_version": 0} for descriptor in expected_descriptors}
+            dependency_with_version_info = {
+                "version": version_descriptors,
+                "dependency": []
+            }
+            dependency_with_version_info_as_string = json.dumps(dependency_with_version_info)
 
-            with self.subTest(instrument=instrument):
-                data_level = "l3"
-                mock_argument_parser = mock_argparse.ArgumentParser.return_value
-                mock_argument_parser.parse_args.return_value.instrument = instrument
-                mock_argument_parser.parse_args.return_value.data_level = data_level
-                mock_argument_parser.parse_args.return_value.dependency = "[]"
-                mock_argument_parser.parse_args.return_value.start_date = "20250101"
-                mock_argument_parser.parse_args.return_value.end_date = None
-                mock_argument_parser.parse_args.return_value.repointing = "repoint00022"
-                mock_argument_parser.parse_args.return_value.version = sentinel.version
-                mock_argument_parser.parse_args.return_value.descriptor = descriptor
+            dependency_cases = [
+                ("old style", "[]", None, VersionMap({descriptor: Version(None, 1)})),
+                ("new style", dependency_with_version_info_as_string, 123, VersionMap({descriptor: Version(123, 1)})),
+            ]
+            for source_of_version_info, dependency_contents, expected_major_version, expected_version_map in dependency_cases:
 
-                expected_input_metadata = InputMetadata(instrument, data_level, datetime(2025, 1, 1),
-                                                        datetime(2025, 1, 1),
-                                                        sentinel.version, descriptor=descriptor,
-                                                        )
+                mock_upload.reset_mock()
+                mock_argparse.reset_mock()
+                mock_initializer_class.reset_mock()
+                mock_processor_class.reset_mock()
 
-                mock_initializer = mock_initializer_class.return_value
-                mock_processor = mock_processor_class.return_value
+                with self.subTest(instrument=instrument, descriptor=descriptor, dependency=source_of_version_info):
+                    data_level = "l3"
+                    mock_argument_parser = mock_argparse.ArgumentParser.return_value
+                    mock_argument_parser.parse_args.return_value.instrument = instrument
+                    mock_argument_parser.parse_args.return_value.data_level = data_level
+                    mock_argument_parser.parse_args.return_value.dependency = dependency_contents
+                    mock_argument_parser.parse_args.return_value.start_date = "20250101"
+                    mock_argument_parser.parse_args.return_value.end_date = None
+                    mock_argument_parser.parse_args.return_value.repointing = "repoint00022"
+                    mock_argument_parser.parse_args.return_value.version = "v001"
+                    mock_argument_parser.parse_args.return_value.descriptor = descriptor
 
-                possible_map_to_produce = PossibleMapToProduce(set(), expected_input_metadata)
-                mock_initializer.get_maps_that_should_be_produced.return_value = [possible_map_to_produce]
+                    expected_input_metadata = InputMetadata(instrument, data_level, datetime(2025, 1, 1),
+                                                            datetime(2025, 1, 1),
+                                                            expected_version_map, descriptor=descriptor,
+                                                            )
 
-                mock_processor.process.return_value = [sentinel.cdf]
+                    mock_initializer = mock_initializer_class.return_value
+                    mock_processor = mock_processor_class.return_value
 
-                imap_l3_processor()
+                    possible_map_to_produce = PossibleMapToProduce(set(), expected_input_metadata)
+                    mock_initializer.get_maps_that_should_be_produced.return_value = [possible_map_to_produce]
 
-                mock_initializer.get_maps_that_should_be_produced.assert_has_calls([
-                    call(descriptor) for descriptor in expected_descriptors
-                ])
+                    mock_processor.process.return_value = [sentinel.cdf]
 
-                self.assertEqual(len(expected_descriptors), mock_processor_class.call_count)
+                    imap_l3_processor()
 
-                self.assertEqual(len(expected_descriptors), mock_initializer.furnish_spice_dependencies.call_count)
-                mock_initializer.furnish_spice_dependencies.assert_called_with(possible_map_to_produce)
+                    mock_initializer.get_maps_that_should_be_produced.assert_has_calls([
+                        call(descriptor, expected_major_version) for descriptor in expected_descriptors
+                    ])
 
-                mock_processor_class.assert_called_with(possible_map_to_produce.processing_input_collection,
-                                                        expected_input_metadata)
-                self.assertEqual(len(expected_descriptors), mock_processor.process.call_count)
+                    self.assertEqual(len(expected_descriptors), mock_processor_class.call_count)
 
-                self.assertEqual(len(expected_descriptors), mock_upload.call_count)
-                mock_upload.assert_called_with(sentinel.cdf)
+                    self.assertEqual(len(expected_descriptors), mock_initializer.furnish_spice_dependencies.call_count)
+                    mock_initializer.furnish_spice_dependencies.assert_called_with(possible_map_to_produce)
+
+                    mock_processor_class.assert_called_with(possible_map_to_produce.processing_input_collection,
+                                                            expected_input_metadata)
+                    self.assertEqual(len(expected_descriptors), mock_processor.process.call_count)
+
+                    self.assertEqual(len(expected_descriptors), mock_upload.call_count)
+                    mock_upload.assert_called_with(sentinel.cdf)
 
     @patch('imap_l3_data_processor.imap_data_access.upload')
     @patch('imap_l3_data_processor.HiSPInitializer')
@@ -188,7 +204,7 @@ class TestImapL3DataProcessor(TestCase):
         mock_argument_parser.parse_args.return_value.start_date = "20250101"
         mock_argument_parser.parse_args.return_value.end_date = None
         mock_argument_parser.parse_args.return_value.repointing = "repoint00022"
-        mock_argument_parser.parse_args.return_value.version = sentinel.version
+        mock_argument_parser.parse_args.return_value.version = "v001"
         mock_argument_parser.parse_args.return_value.descriptor = descriptor
 
         mock_hi_initializer.get_maps_that_should_be_produced.side_effect = [
@@ -234,7 +250,7 @@ class TestImapL3DataProcessor(TestCase):
         mock_argument_parser.parse_args.return_value.end_date = "20160630"
         mock_argument_parser.parse_args.return_value.version = "v101"
         mock_argument_parser.parse_args.return_value.descriptor = "dont care"
-        mock_argument_parser.parse_args.return_value.dependency = "also dont care"
+        mock_argument_parser.parse_args.return_value.dependency = "[]"
         mock_argument_parser.parse_args.return_value.repointing = None
 
         mock_download.side_effect = [
@@ -259,7 +275,7 @@ class TestImapL3DataProcessor(TestCase):
     @patch('imap_l3_data_processor.imap_data_access.upload')
     @patch('imap_l3_data_processor.SweProcessor')
     @patch('imap_l3_data_processor.argparse')
-    def test_uses_input_from_processing_input_collection(self, mock_argparse, mock_processor_class, mock_upload,
+    def test_sets_end_date_to_start_date_if_not_specified(self, mock_argparse, mock_processor_class, mock_upload,
                                                          mock_processing_input_collection):
         cases = [("20170630", datetime(2017, 6, 30)), (None, datetime(2016, 6, 30))]
 
@@ -307,14 +323,14 @@ class TestImapL3DataProcessor(TestCase):
                     call("--start-date"),
                     call("--end-date", required=False),
                     call("--repointing", required=False),
-                    call("--version"),
+                    call("--version", required=False),
                     call("--dependency"),
                     call("--upload-to-sdc", action="store_true", required=False,
                          help="Upload completed output files to the IMAP SDC.")
                 ])
 
                 expected_input_metadata = InputMetadata("swe", "l3", datetime(year=2016, month=6, day=30),
-                                                        expected_end_date, "v092", "pitch-angle")
+                                                        expected_end_date, VersionMap({}, Version(None, 92)), "pitch-angle")
 
                 mock_processor_class.assert_called_with(imap_data_access_dependency, expected_input_metadata)
 
@@ -517,3 +533,81 @@ class TestImapL3DataProcessor(TestCase):
         self.assertEqual(str(exception_manager.exception),
                          "Level l4 data processing has not yet been implemented for swapi")
         mock_upload.assert_not_called()
+
+    @patch('imap_l3_data_processor.ProcessingInputCollection')
+    @patch('imap_l3_data_processor.imap_data_access.upload')
+    @patch('imap_l3_data_processor.SweProcessor')
+    @patch('imap_l3_data_processor.argparse')
+    def test_version_comes_from_dependency(self, mock_argparse, mock_processor_class, mock_upload,
+                                                         mock_processing_input_collection):
+        instrument_argument = "swe"
+        data_level_argument = "l3"
+        start_date_argument = "20160630"
+        version_argument = "v092"
+        descriptor_argument = "pitch-angle"
+        science_input_1 = ScienceInput("imap_swe_l1_sci_20250101_v112.cdf", "imap_swe_l1_sci_20250102_v112.cdf")
+        science_input_2 = ScienceInput("imap_mag_l1d_norm-dsrf_20250101_v112.cdf")
+        ancillary_input = AncillaryInput("imap_swe_ancillary_20250101_v112.cdf")
+        imap_data_access_dependency = ProcessingInputCollection(science_input_1, science_input_2, ancillary_input)
+
+        serialized_dependency_paths = imap_data_access_dependency.serialize()
+        dependency_without_version_info = json.loads(serialized_dependency_paths)
+        dependency_with_version_info = {
+            "version": {
+                "sci": {"major_version": 2, "minor_version": 1},
+                "var": {"major_version": 3, "minor_version": 2}
+            },
+            "dependency": dependency_without_version_info,
+        }
+
+        mock_processing_input_collection.return_value = imap_data_access_dependency
+        imap_data_access_dependency.deserialize = Mock()
+        imap_data_access_dependency.get_science_inputs = Mock(return_value=[])
+
+        mock_argument_parser = mock_argparse.ArgumentParser.return_value
+
+        mock_argument_parser.parse_args.return_value.instrument = instrument_argument
+        mock_argument_parser.parse_args.return_value.data_level = data_level_argument
+        mock_argument_parser.parse_args.return_value.start_date = start_date_argument
+        mock_argument_parser.parse_args.return_value.version = version_argument
+        mock_argument_parser.parse_args.return_value.descriptor = descriptor_argument
+        mock_argument_parser.parse_args.return_value.repointing = None
+
+        mock_processor = mock_processor_class.return_value
+        cases = [("version in dependency", dependency_with_version_info, VersionMap({'sci':Version(2,1), 'var':Version(3,2)})),
+                 ("version on command line", dependency_without_version_info, VersionMap({}, Version(None,92)))]
+        input_end_date, expected_end_date = "20170630", datetime(2017, 6, 30)
+        for name, dependency, expected_version_map in cases:
+            with self.subTest(name):
+                mock_argument_parser.parse_args.return_value.dependency = json.dumps(dependency)
+                mock_upload.reset_mock()
+                imap_data_access_dependency.deserialize.reset_mock()
+
+                mock_argument_parser.parse_args.return_value.end_date = input_end_date
+
+                mock_processor_class.return_value.process.return_value = [Mock()]
+
+                imap_l3_processor()
+
+                parser = mock_argparse.ArgumentParser()
+                parser.add_argument.assert_has_calls([
+                    call("--instrument"),
+                    call("--data-level"),
+                    call("--descriptor"),
+                    call("--start-date"),
+                    call("--end-date", required=False),
+                    call("--repointing", required=False),
+                    call("--version", required=False),
+                    call("--dependency"),
+                    call("--upload-to-sdc", action="store_true", required=False,
+                         help="Upload completed output files to the IMAP SDC.")
+                ])
+
+                expected_input_metadata = InputMetadata("swe", "l3", datetime(year=2016, month=6, day=30),
+                                                        expected_end_date, expected_version_map, "pitch-angle")
+
+                mock_processor_class.assert_called_with(imap_data_access_dependency, expected_input_metadata)
+
+                imap_data_access_dependency.deserialize.assert_called_once_with(serialized_dependency_paths)
+                mock_processor.process.assert_called()
+                mock_upload.assert_called_once_with(mock_processor_class.return_value.process.return_value[0])

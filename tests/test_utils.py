@@ -8,6 +8,7 @@ from unittest.mock import patch, call, Mock, sentinel
 import imap_data_access
 import numpy as np
 from imap_data_access import config
+from imap_data_access.file_validation import Version
 from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection
 from imap_processing.spice.geometry import SpiceFrame
 from requests import RequestException
@@ -16,17 +17,17 @@ from spacepy.pycdf import CDF
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH, TT2000_EPOCH
 from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet, \
     RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct
-from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
-from imap_l3_processing.utils import format_time, download_dependency, read_mag_data, save_data, \
-    download_external_dependency, download_dependency_with_repointing, \
+from imap_l3_processing.utils import format_time, read_mag_data, save_data, \
+    download_external_dependency, \
     combine_glows_l3e_with_l1c_pointing, furnish_local_spice, get_spice_parent_file_names, furnish_spice_metakernel, \
     SpiceKernelTypes, FurnishMetakernelOutput, read_cdf_parents, get_dependency_paths_by_descriptor, filter_bad_days
 from imap_l3_processing.version import VERSION
 from tests.cdf.test_cdf_utils import TestDataProduct
 from tests.maps.test_builders import create_rectangular_spectral_index_map_data, create_rectangular_intensity_map_data
-from tests.test_helpers import get_spice_data_path, with_tempdir, create_dataclass_mock
+from tests.test_helpers import get_spice_data_path, with_tempdir, create_dataclass_mock, create_mock_version_map
 
 
 class TestUtils(TestCase):
@@ -45,7 +46,7 @@ class TestUtils(TestCase):
     def test_save_data(self, mock_science_file_path_class, mock_write_cdf, mock_today, mock_attribute_manager):
         mock_today.today.return_value = date(2024, 9, 16)
 
-        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
+        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), VersionMap({"descriptor":Version(1,2)}),
                                        "descriptor", repointing=None)
         epoch = np.array([1, 2, 3])
 
@@ -77,7 +78,7 @@ class TestUtils(TestCase):
             data_level="l2",
             descriptor="descriptor",
             start_time="20240917",
-            version="v002",
+            version="v001.0002",
             repointing=None,
             cr=sentinel.cr
         )
@@ -88,7 +89,7 @@ class TestUtils(TestCase):
                                                mock_attribute_manager.return_value)
 
         mock_attribute_manager.return_value.add_global_attribute.assert_has_calls([
-            call("Data_version", "002"),
+            call("Data_version", "001.0002"),
             call("Generation_date", "20240916"),
             call("Logical_source", "imap_swapi_l2_descriptor"),
             call("Logical_file_id", expected_file_path.stem),
@@ -196,8 +197,9 @@ class TestUtils(TestCase):
     def test_save_data_does_not_add_parent_attribute_if_empty(self, mock_write_cdf, mock_today, _):
         mock_today.today.return_value = date(2024, 9, 16)
 
-        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
-                                       "descriptor")
+        descriptor = "descriptor"
+        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), create_mock_version_map(descriptor=descriptor, minor_version=2),
+                                       descriptor)
         epoch = np.array([1, 2, 3])
         quality_flags = np.repeat([SwapiL3Flags.NONE], 3)
 
@@ -235,8 +237,9 @@ class TestUtils(TestCase):
     def test_save_data_custom_path(self, mock_write_cdf, mock_today, _):
         mock_today.today.return_value = date(2024, 9, 16)
 
-        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
-                                       "descriptor")
+        descriptor = "descriptor"
+        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), create_mock_version_map(descriptor=descriptor, minor_version=2),
+                                       descriptor)
         epoch = np.array([1, 2, 3])
         quality_flags = np.repeat([SwapiL3Flags.NONE], 3)
 
@@ -270,7 +273,9 @@ class TestUtils(TestCase):
     @patch("imap_l3_processing.utils.write_cdf")
     @patch("imap_l3_processing.utils.ImapAttributeManager.add_global_attribute")
     def test_save_data_procedurally_generates_map_global_metadata(self, mock_add_global_attr, _):
-        input_metadata = InputMetadata("ultra", "l3", datetime(2025, 1, 1), datetime(2025, 1, 1), "v001", "descriptor")
+        descriptor = "descriptor"
+        input_metadata = InputMetadata("ultra", "l3", datetime(2025, 1, 1), datetime(2025, 1, 1), create_mock_version_map(descriptor=descriptor, minor_version=1),
+                                       descriptor)
 
         epoch_as_datetime = np.array([datetime(2025, 1, 1)])
         epoch_as_int = np.array([(datetime(2025, 1, 1) - TT2000_EPOCH).total_seconds() * 1e9])
@@ -302,8 +307,9 @@ class TestUtils(TestCase):
     @patch("imap_l3_processing.utils.write_cdf")
     def test_save_data_procedurally_generates_all_map_global_metadata_if_absent(self, mock_write_cdf,
                                                                                 mock_add_instrument_attrs):
-        non_map_input_metadata = InputMetadata("swapi", "l3", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
-                                               "descriptor")
+        descriptor = "descriptor"
+        non_map_input_metadata = InputMetadata("swapi", "l3", datetime(2024, 9, 17), datetime(2024, 9, 18), create_mock_version_map(descriptor=descriptor, minor_version=2) ,
+                                               descriptor)
 
         def add_swapi_attrs_from_file(attr_manager, instrument, level, descriptor):
             for logical_source in ["imap_swapi_l3_descriptor", "imap_ultra_l3_ena-map-descriptor"]:
@@ -315,11 +321,11 @@ class TestUtils(TestCase):
 
         mock_add_instrument_attrs.side_effect = add_swapi_attrs_from_file
 
-        map_input_metadata = InputMetadata("hi", "l3b", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
+        map_input_metadata = InputMetadata("hi", "l3b", datetime(2024, 9, 17), datetime(2024, 9, 18), create_mock_version_map(descriptor="spx-map-descriptor", minor_version=2),
                                            "spx-map-descriptor")
 
         map_input_metadata_with_existing_global_attrs = InputMetadata("ultra", "l3", datetime(2024, 9, 17),
-                                                                      datetime(2024, 9, 18), "v002",
+                                                                      datetime(2024, 9, 18), create_mock_version_map(descriptor="ena-map-descriptor", minor_version=2),
                                                                       "ena-map-descriptor")
 
         cases = [
@@ -362,64 +368,6 @@ class TestUtils(TestCase):
         actual_time = format_time(None)
         self.assertEqual(None, actual_time)
 
-    @patch('imap_l3_processing.utils.imap_data_access')
-    def test_download_dependency(self, mock_data_access):
-        dependency = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
-                                   "descriptor")
-        query_dictionary = [{'file_path': "imap_swapi_l2_descriptor-fake-menlo-444_20240917_v2.cdf",
-                             'second_entry': '12345'}]
-        mock_data_access.query.return_value = query_dictionary
-
-        path = download_dependency(dependency)
-
-        mock_data_access.query.assert_called_once_with(instrument=dependency.instrument,
-                                                       data_level=dependency.data_level,
-                                                       descriptor=dependency.descriptor,
-                                                       start_date="20240917",
-                                                       end_date="20240918",
-                                                       version='v2')
-        mock_data_access.download.assert_called_once_with("imap_swapi_l2_descriptor-fake-menlo-444_20240917_v2.cdf")
-
-        self.assertIs(path, mock_data_access.download.return_value)
-
-    @patch('imap_l3_processing.utils.imap_data_access')
-    def test_download_dependency_with_repointing(self, mock_data_access):
-        dependency = InputMetadata("glows", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
-                                   "hist")
-        query_dictionary = [{'file_path': "imap_glows_l2_hist_20240917-repoint00001_v002.cdf",
-                             'repointing': 1,
-                             'third_entry': '12345'}]
-        mock_data_access.query.return_value = query_dictionary
-
-        path, repointing = download_dependency_with_repointing(dependency)
-
-        mock_data_access.query.assert_called_once_with(instrument=dependency.instrument,
-                                                       data_level=dependency.data_level,
-                                                       descriptor=dependency.descriptor,
-                                                       start_date="20240917",
-                                                       end_date="20240918",
-                                                       version='v002')
-        mock_data_access.download.assert_called_once_with("imap_glows_l2_hist_20240917-repoint00001_v002.cdf")
-        self.assertEqual(path, mock_data_access.download.return_value)
-        self.assertEqual(1, repointing)
-
-    @patch('imap_l3_processing.utils.imap_data_access')
-    def test_download_dependency_with_repointing_throws_if_no_files_or_more_than_one_found(self, mock_data_access):
-        dependency = InputMetadata("glows", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v002",
-                                   "hist")
-
-        for return_values in ([], [{'file_path': "a", 'repointing': ''}, {'file_path': "b", 'repointing': ''}]):
-            with self.subTest(return_values):
-                mock_data_access.query.return_value = return_values
-                with self.assertRaises(Exception) as cm:
-                    download_dependency_with_repointing(dependency)
-                expected_files_to_download = [dict_entry['file_path'] for dict_entry in return_values]
-                mock_data_access.download.assert_not_called()
-
-                self.assertEqual(
-                    f"{expected_files_to_download}. Expected one file to download, found {len(return_values)}.",
-                    str(cm.exception))
-
     @patch("imap_l3_processing.utils.requests")
     @patch('builtins.open')
     def test_download_external_dependency(self, mock_open_file, mock_requests):
@@ -449,28 +397,6 @@ class TestUtils(TestCase):
 
         returned = download_external_dependency(expected_url, expected_filename)
         self.assertIsNone(returned)
-
-    @patch('imap_l3_processing.utils.imap_data_access')
-    def test_download_dependency_throws_value_error_if_not_one_file_returned(self, mock_data_access):
-        dependency = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), "v2",
-                                   "descriptor")
-        query_dictionary_more_than_one_file = [{'file_path': "imap_swapi_l2_descriptor-fake-menlo-444_20240917_v2.cdf",
-                                                'second_entry': '12345'}, {"file_path": "extra_value"}]
-        query_dictionary_less_than_one_file = []
-
-        cases = [("2", query_dictionary_more_than_one_file),
-                 ("0", query_dictionary_less_than_one_file)]
-
-        for case, query_dictionary in cases:
-            with self.subTest(case):
-                mock_data_access.query.return_value = query_dictionary
-                expected_files_to_download = [dict_entry['file_path'] for dict_entry in query_dictionary]
-                with self.assertRaises(Exception) as cm:
-                    download_dependency(dependency)
-
-                self.assertEqual(
-                    f"{expected_files_to_download}. Expected one file to download, found {case}.",
-                    str(cm.exception))
 
     def test_read_l1d_mag_data(self):
         file_name_as_str = "test_cdf.cdf"

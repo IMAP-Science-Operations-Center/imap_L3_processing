@@ -3,11 +3,12 @@ from abc import abstractmethod
 from datetime import datetime
 
 from imap_data_access import ScienceFilePath
+from imap_data_access.file_validation import Version
 
 from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, parse_map_descriptor, \
     get_duration_from_map_descriptor, map_descriptor_parts_to_string, Sensor
 from imap_l3_processing.maps.map_initializer import PossibleMapToProduce, MapInitializer
-from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.models import InputMetadata, VersionMap
 
 logger = logging.getLogger(__name__)
 
@@ -29,19 +30,19 @@ class SPMapInitializer(MapInitializer):
     def _get_l2_dependencies(self, descriptor: MapDescriptorParts) -> list[MapDescriptorParts]:
         raise NotImplementedError()
 
-    def get_maps_that_can_be_produced(self, l3_descriptor: str) -> list[PossibleMapToProduce]:
-        l3_descriptor_parts = parse_map_descriptor(l3_descriptor)
+    def get_maps_that_can_be_produced(self, descriptor: str) -> list[PossibleMapToProduce]:
+        l3_descriptor_parts = parse_map_descriptor(descriptor)
         map_duration = get_duration_from_map_descriptor(l3_descriptor_parts)
 
         glows_file_by_repointing = self._collect_glows_psets_by_repoint(l3_descriptor_parts)
 
         if len(glows_file_by_repointing) == 0:
-            logger.info(f"No GLOWS data available for descriptor {l3_descriptor}. "
+            logger.info(f"No GLOWS data available for descriptor {descriptor}. "
                         f"Processing will use default survival probability of 1.0.")
 
         l2_descriptors = self._get_l2_dependencies(l3_descriptor_parts)
         l2_descriptor_strs = [map_descriptor_parts_to_string(parts) for parts in l2_descriptors]
-        assert l2_descriptor_strs, f"Expected at least one L2 dependency for l3 map: {l3_descriptor}"
+        assert l2_descriptor_strs, f"Expected at least one L2 dependency for l3 map: {descriptor}"
 
         possible_start_dates = set(self.input_maps_by_descriptor[l2_descriptor_strs[0]].keys())
         for l2_descriptor in l2_descriptor_strs[1:]:
@@ -80,9 +81,8 @@ class SPMapInitializer(MapInitializer):
                            repoint in glows_file_by_repointing]
 
             input_metadata = InputMetadata(instrument=self.instrument, data_level='l3', start_date=start_date,
-                                           end_date=start_date + map_duration, version='v001',
-                                           descriptor=l3_descriptor)
-
+                                           end_date=start_date + map_duration, version=VersionMap({}, Version(None, 1)),
+                                           descriptor=descriptor)
             possible_map_to_produce = PossibleMapToProduce(
                 input_files=set(l2_file_paths + glows_files + l1c_names + self._get_ancillary_files()),
                 input_metadata=input_metadata

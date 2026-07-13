@@ -1,4 +1,5 @@
 import argparse
+import json
 import logging
 import re
 from datetime import datetime
@@ -6,6 +7,7 @@ from tempfile import TemporaryDirectory
 
 import imap_data_access
 import spiceypy
+from imap_data_access.file_validation import Version
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcessor
@@ -18,7 +20,7 @@ from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.lo.l3.lo_sp_initializer import LoSPInitializer, LO_SP_MAP_DESCRIPTORS
 from imap_l3_processing.lo.lo_processor import LoProcessor
 from imap_l3_processing.maps.map_descriptors import parse_map_descriptor
-from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.ultra.ultra_combined_nsp_initializer import UltraCombinedNSPInitializer, \
@@ -38,7 +40,7 @@ def _parse_cli_arguments():
     parser.add_argument("--start-date")
     parser.add_argument("--end-date", required=False)
     parser.add_argument("--repointing", required=False)
-    parser.add_argument("--version")
+    parser.add_argument("--version", required=False)
     parser.add_argument("--dependency")
     parser.add_argument(
         "--upload-to-sdc",
@@ -67,7 +69,14 @@ def imap_l3_processor():
             args.dependency = f.read()
 
     processing_input_collection = ProcessingInputCollection()
-    processing_input_collection.deserialize(args.dependency)
+
+    parsed_dependency = json.loads(args.dependency)
+    if isinstance(parsed_dependency, list):
+        processing_input_collection.deserialize(args.dependency)
+        version_map = VersionMap({}, Version(None, args.version))
+    else:
+        processing_input_collection.deserialize(json.dumps(parsed_dependency["dependency"]))
+        version_map = VersionMap({k: Version(v["major_version"], v["minor_version"]) for k, v in parsed_dependency["version"].items()})
 
     repointing_number = None
     if args.repointing is not None:
@@ -81,7 +90,7 @@ def imap_l3_processor():
                                      args.data_level,
                                      _convert_to_datetime(args.start_date),
                                      _convert_to_datetime(args.end_date or args.start_date),
-                                     args.version, descriptor=args.descriptor, repointing=repointing_number)
+                                     version_map, descriptor=args.descriptor, repointing=repointing_number)
     if args.instrument in ["hi", "lo", "ultra"] and args.data_level == 'l3' and not parse_map_descriptor(
             args.descriptor):
         initializer_class, processor_class, descriptors = {
@@ -98,7 +107,8 @@ def imap_l3_processor():
         paths = []
         maps_to_produce = []
         for map_descriptor in descriptors:
-            maps_to_produce.extend(initializer.get_maps_that_should_be_produced(map_descriptor))
+            major_version_from_dependency = version_map.lookup(map_descriptor).major
+            maps_to_produce.extend(initializer.get_maps_that_should_be_produced(map_descriptor, major_version_from_dependency))
 
         logger.info(f"maps to produce {[m.input_metadata.descriptor for m in maps_to_produce]}")
         if len(maps_to_produce) == 0:

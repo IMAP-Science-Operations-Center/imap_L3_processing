@@ -7,6 +7,7 @@ import imap_data_access
 import numpy as np
 import spiceypy
 from astropy.time import Time
+from imap_data_access.file_validation import Version
 from imap_processing.spice.repoint import set_global_repoint_table_paths, get_repoint_data
 from spacepy.pycdf import CDF
 
@@ -14,9 +15,10 @@ from typing import Optional
 
 from imap_l3_processing.constants import ONE_AU_IN_KM, TT2000_EPOCH, ONE_SECOND_IN_NANOSECONDS
 from imap_l3_processing.glows.descriptors import GLOWS_L3E_ULTRA_HF_DESCRIPTOR, GLOWS_L3E_ULTRA_SF_DESCRIPTOR, \
-    GLOWS_L3E_LO_DESCRIPTOR, GLOWS_L3E_HI_45_DESCRIPTOR, GLOWS_L3E_HI_90_DESCRIPTOR
+    GLOWS_L3E_LO_DESCRIPTOR, GLOWS_L3E_HI_45_DESCRIPTOR, GLOWS_L3E_HI_90_DESCRIPTOR, GLOWS_L3E_DESCRIPTORS
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import jd_fm_Carrington
 from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
+from imap_l3_processing.models import VersionMap
 
 
 def determine_call_args_for_l3e_executable(start_date: datetime, repointing_midpoint: datetime,
@@ -57,57 +59,66 @@ def _decimal_time(t: datetime) -> str:
 
 
 @dataclass
-class GlowsL3eRepointings:
+class GlowsL3eVersionsForRepointings:
     repointing_numbers: list[int]
-    hi_90_repointings: dict[int, int]
-    hi_45_repointings: dict[int, int]
-    lo_repointings: dict[int, int]
-    ultra_sf_repointings: dict[int, int]
-    ultra_hf_repointings: dict[int, int]
+    hi_90_repointings: dict[int, Version]
+    hi_45_repointings: dict[int, Version]
+    lo_repointings: dict[int, Version]
+    ultra_sf_repointings: dict[int, Version]
+    ultra_hf_repointings: dict[int, Version]
 
 
-def determine_l3e_files_to_produce(first_cr_processed: int, last_processed_cr: int,
-                                   repointing_path: Path) -> GlowsL3eRepointings:
-    descriptors = [
-        GLOWS_L3E_HI_90_DESCRIPTOR,
-        GLOWS_L3E_HI_45_DESCRIPTOR,
-        GLOWS_L3E_LO_DESCRIPTOR,
-        GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
-        GLOWS_L3E_ULTRA_HF_DESCRIPTOR,
-    ]
+def identify_versions_for_l3e_output_files(start_cr_of_mission: int, end_cr_of_mission: int, first_updated_cr_from_l3d: Optional[int],
+                                           repointing_path: Path, version_map: VersionMap) -> GlowsL3eVersionsForRepointings:
 
     set_global_repoint_table_paths([repointing_path])
     repointing_data = get_repoint_data()
 
-    first_carrington_start_date = Time(jd_fm_Carrington(float(first_cr_processed)), format='jd')
-    last_cr_end_date = Time(jd_fm_Carrington(float(last_processed_cr + 1)), format='jd')
+    all_pointing_numbers = get_repoint_numbers_within_cr_window(start_cr_of_mission, end_cr_of_mission, repointing_data)
+    pointing_numbers_updated_by_l3d = get_repoint_numbers_within_cr_window(first_updated_cr_from_l3d, end_cr_of_mission, repointing_data)
 
-    start_ns = (first_carrington_start_date.to_datetime() - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS
-    end_ns = (last_cr_end_date.to_datetime() - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS
-
-    vectorized_date_conv = np.vectorize(lambda d: (Time(d, format="iso").to_datetime(
-        leap_second_strict='silent') - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS)
-    repoint_starts = vectorized_date_conv(repointing_data["repoint_start_utc"])
-    repoint_ids = repointing_data["repoint_id"]
-
-    pointing_numbers = []
-    for i in range(len(repoint_ids)):
-        if i + 1 < len(repoint_ids) and start_ns < repoint_starts[i + 1] < end_ns:
-            pointing_numbers.append(int(repoint_ids[i]))
-
-    updated_pointings_per_instruments = []
-    for descriptor in descriptors:
+    updated_pointings_per_instruments = {}
+    updated_pointing_numbers = {}
+    for descriptor in GLOWS_L3E_DESCRIPTORS:
         l3e_files = imap_data_access.query(instrument='glows', data_level='l3e', version="latest", descriptor=descriptor)
-        updated_pointing = {int(l3e['repointing']): int(l3e['version'][1:]) for l3e in l3e_files}
-
-        for pointing_number in pointing_numbers:
-            if pointing_number in updated_pointing:
-                updated_pointing[pointing_number] = updated_pointing[pointing_number] + 1
+        existing_file_versions = {}
+        for l3e in l3e_files:
+            if 'major_version' in l3e.keys() and 'minor_version' in l3e.keys():
+                existing_file_versions[int(l3e['repointing'])] = Version(l3e["major_version"], l3e["minor_version"])
+            elif 'version' in l3e.keys():
+                existing_file_versions[int(l3e['repointing'])] = Version.from_version(l3e['version'])
             else:
-                updated_pointing[pointing_number] = 1
-        updated_pointings_per_instruments.append(updated_pointing)
+                continue
+        new_file_versions = {}
+        for pointing_number in all_pointing_numbers:
+            new_major_version = version_map.lookup(descriptor).major
+            if pointing_number in existing_file_versions:
+                previous_version = existing_file_versions[pointing_number]
 
-    return GlowsL3eRepointings(pointing_numbers, *updated_pointings_per_instruments)
+                if previous_version.major is None:
+                    if new_major_version or pointing_number in pointing_numbers_updated_by_l3d:
+                        new_file_versions[pointing_number] = Version(new_major_version, previous_version.minor + 1)
+
+                elif new_major_version is not None:
+                    higher_major_version_given = new_major_version > previous_version.major
+                    same_major_but_updated_by_l3d = new_major_version == previous_version.major and pointing_number in pointing_numbers_updated_by_l3d
+                    if higher_major_version_given or same_major_but_updated_by_l3d:
+                        new_file_versions[pointing_number] = Version(new_major_version, previous_version.minor + 1)
+
+            else:
+                new_file_versions[pointing_number] = Version(new_major_version, 1)
+
+        updated_pointings_per_instruments[descriptor] = new_file_versions
+        updated_pointing_numbers = updated_pointing_numbers | new_file_versions.keys()
+
+
+    return GlowsL3eVersionsForRepointings(list(updated_pointing_numbers),
+                                          updated_pointings_per_instruments[GLOWS_L3E_HI_90_DESCRIPTOR],
+                                          updated_pointings_per_instruments[GLOWS_L3E_HI_45_DESCRIPTOR],
+                                          updated_pointings_per_instruments[GLOWS_L3E_LO_DESCRIPTOR],
+                                          updated_pointings_per_instruments[GLOWS_L3E_ULTRA_SF_DESCRIPTOR],
+                                          updated_pointings_per_instruments[GLOWS_L3E_ULTRA_HF_DESCRIPTOR],
+                                          )
 
 
 def compute_glows_flags_for_window(l3d_cdf_path: Path, window_start: datetime, window_end: datetime) -> int:
@@ -186,3 +197,24 @@ def get_lo_pivot_angles(repointings: list[int]) -> dict[int, LoPivotAngle]:
         else:
             result[repointing] = LoPivotAngle(parent_filename=None, pivot_angle=90.0)
     return result
+
+def get_repoint_numbers_within_cr_window(start_cr_number: int | None, end_cr_number: int, repointing_data) -> list[int]:
+    if start_cr_number is None:
+        return []
+    first_carrington_start_date = Time(jd_fm_Carrington(float(start_cr_number)), format='jd')
+    last_cr_end_date = Time(jd_fm_Carrington(float(end_cr_number + 1)), format='jd')
+
+    start_ns = (first_carrington_start_date.to_datetime() - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS
+    end_ns = (last_cr_end_date.to_datetime() - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS
+
+    vectorized_date_conv = np.vectorize(lambda d: (Time(d, format="iso").to_datetime(
+        leap_second_strict='silent') - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS)
+    repoint_starts = vectorized_date_conv(repointing_data["repoint_start_utc"])
+    repoint_ids = repointing_data["repoint_id"]
+
+    repoint_numbers = []
+    for i in range(len(repoint_ids)):
+        if i + 1 < len(repoint_ids) and start_ns < repoint_starts[i + 1] < end_ns:
+            repoint_numbers.append(int(repoint_ids[i]))
+
+    return repoint_numbers

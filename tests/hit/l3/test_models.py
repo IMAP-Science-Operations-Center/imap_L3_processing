@@ -7,7 +7,7 @@ from spacepy.pycdf import CDF
 
 from imap_l3_processing.hit.l3 import models
 from imap_l3_processing.hit.l3.models import HitDirectEventDataProduct, HitL1Data
-from imap_l3_processing.models import DataProductVariable, UpstreamDataDependency
+from imap_l3_processing.models import DataProductVariable, InputMetadata
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 
@@ -21,7 +21,7 @@ class TestModels(CdfModelTestCase):
             os.remove('test_cdf.cdf')
 
     def test_direct_events_to_data_product_variables_with_multiple_events(self):
-        input_metadata = UpstreamDataDependency(
+        input_metadata = InputMetadata(
             instrument="HIT",
             data_level="L3A",
             start_date=datetime.min,
