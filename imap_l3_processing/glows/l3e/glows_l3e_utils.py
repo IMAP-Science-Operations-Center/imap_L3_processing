@@ -198,8 +198,9 @@ def get_lo_pivot_angles(repointings: list[int]) -> dict[int, LoPivotAngle]:
             result[repointing] = LoPivotAngle(parent_filename=None, pivot_angle=90.0)
     return result
 
-def get_repoint_numbers_within_cr_window(start_cr_number: int, end_cr_number: int, repointing_data) -> list[int]:
-
+def get_repoint_numbers_within_cr_window(start_cr_number: int | None, end_cr_number: int, repointing_data) -> list[int]:
+    if start_cr_number is None:
+        return []
     first_carrington_start_date = Time(jd_fm_Carrington(float(start_cr_number)), format='jd')
     last_cr_end_date = Time(jd_fm_Carrington(float(end_cr_number + 1)), format='jd')
 

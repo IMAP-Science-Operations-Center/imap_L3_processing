@@ -291,6 +291,18 @@ class TestGlowsL3EUtils(unittest.TestCase):
         actual_repoint_numbers = get_repoint_numbers_within_cr_window(start_cr, end_cr, repointing_data)
 
         np.testing.assert_array_equal(actual_repoint_numbers, expected_repoint_numbers)
+    def test_get_repoint_numbers_within_cr_window_returns_empty_for_none_start(self):
+        start_cr = None
+        end_cr = 2094
+
+        repointing_path = get_test_data_path("fake_1_day_repointing_file.csv")
+
+        set_global_repoint_table_paths([repointing_path])
+        repointing_data = get_repoint_data()
+
+        actual_repoint_numbers = get_repoint_numbers_within_cr_window(start_cr, end_cr, repointing_data)
+
+        np.testing.assert_array_equal(actual_repoint_numbers, [])
 
     @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.get_repoint_numbers_within_cr_window')
     @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access')

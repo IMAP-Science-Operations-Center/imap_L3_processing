@@ -60,12 +60,8 @@ class GlowsL3EInitializer:
         first_updated_cr = first_cr
         if previous_l3d is not None:
             first_updated_cr = find_first_updated_cr(l3d_output.l3d_cdf_file_path, previous_l3d)
-            if first_updated_cr is None:
-                first_updated_cr = first_cr
-            else:
+            if first_updated_cr is not None:
                 first_updated_cr -= 1
-
-
 
         last_cr = l3d_output.last_processed_cr
         glows_repointings = identify_versions_for_l3e_output_files(first_cr, last_cr, first_updated_cr, repointing_file_path, version_map)

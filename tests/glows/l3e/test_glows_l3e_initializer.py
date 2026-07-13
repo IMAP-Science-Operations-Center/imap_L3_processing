@@ -141,7 +141,7 @@ class TestGlowsL3EInitializer(unittest.TestCase):
     @patch(f'{MODULE}.GlowsL3EDependencies.fetch_dependencies')
     @patch(f'{MODULE}.identify_versions_for_l3e_output_files')
     @patch(f'{MODULE}.find_first_updated_cr')
-    def test_get_repointings_to_process_uses_mission_start_cr_as_first_updated_when_identical_l3d_files(self,
+    def test_get_repointings_to_process_identical_l3d_files(self,
                                                                                                         mock_find_first_updated_cr,
                                                                                                         mock_identify_versions_for_l3e_output_files,
                                                                                                         mock_fetch_dependencies):
@@ -167,7 +167,7 @@ class TestGlowsL3EInitializer(unittest.TestCase):
             glows_l3d_processor_output.l3d_cdf_file_path
         )
         mock_find_first_updated_cr.assert_called_once_with(glows_l3d_processor_output.l3d_cdf_file_path, previous_l3d)
-        mock_identify_versions_for_l3e_output_files.assert_called_once_with(sentinel.start_of_mission_cr, expected_last_cr, sentinel.start_of_mission_cr, repointing_file_path, sentinel.version_map)
+        mock_identify_versions_for_l3e_output_files.assert_called_once_with(sentinel.start_of_mission_cr, expected_last_cr, None, repointing_file_path, sentinel.version_map)
         self.assertEqual(expected_initializer_output, actual_initializer_output)
 
     @patch(f'{MODULE}.imap_data_access.query')
