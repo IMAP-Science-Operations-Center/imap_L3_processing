@@ -79,7 +79,7 @@ class MapInitializer(abc.ABC):
 
         file_paths_by_descriptor = defaultdict(dict)
         for (descriptor, start_date), query_results in qr_by_descriptor_and_start_date.items():
-            highest_version_qr = max(query_results, key=lambda x: x['version'])
+            highest_version_qr = max(query_results, key=lambda x: x['minor_version'] if 'minor_version' in x else Version.from_version(x['version']).minor)
             file_paths_by_descriptor[descriptor][start_date] = Path(highest_version_qr['file_path']).name
 
         return file_paths_by_descriptor

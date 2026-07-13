@@ -79,10 +79,16 @@ def identify_versions_for_l3e_output_files(start_cr_of_mission: int, end_cr_of_m
 
     updated_pointings_per_instruments = {}
     updated_pointing_numbers = {}
-
     for descriptor in GLOWS_L3E_DESCRIPTORS:
         l3e_files = imap_data_access.query(instrument='glows', data_level='l3e', version="latest", descriptor=descriptor)
-        existing_file_versions = {int(l3e['repointing']): Version.from_version(l3e['version']) for l3e in l3e_files}
+        existing_file_versions = {}
+        for l3e in l3e_files:
+            if 'major_version' in l3e.keys() and 'minor_version' in l3e.keys():
+                existing_file_versions[int(l3e['repointing'])] = Version(l3e["major_version"], l3e["minor_version"])
+            elif 'version' in l3e.keys():
+                existing_file_versions[int(l3e['repointing'])] = Version.from_version(l3e['version'])
+            else:
+                continue
         new_file_versions = {}
         for pointing_number in all_pointing_numbers:
             new_major_version = version_map.lookup(descriptor).major
