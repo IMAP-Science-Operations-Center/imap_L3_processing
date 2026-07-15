@@ -224,37 +224,27 @@ def create_mock_query_results(file_names: list[Path | str], ingestion_dates: Opt
 
     for fn, ingestion_date in zip(file_names, ingestion_dates):
         imap_file_path = generate_imap_file_path(Path(fn).name)
-        file_path = (str(imap_file_path.construct_path().relative_to(imap_data_access.config["DATA_DIR"]))
-                     .replace('\\', '/'))
+        file_path = str(
+            imap_file_path.construct_path().relative_to(
+                imap_data_access.config["DATA_DIR"]
+            )
+        ).replace("\\", "/")
 
         match imap_file_path:
             case ScienceFilePath():
-                version_object = Version.from_version(imap_file_path.version)
-                if version_object.major is not None:
-                    file_paths.append({
-                        "instrument": imap_file_path.instrument,
-                        "data_level": imap_file_path.data_level,
-                        "descriptor": imap_file_path.descriptor,
-                        "start_date": imap_file_path.start_date,
-                        "ingestion_date": ingestion_date.strftime("%Y%m%d %H:%M:%S"),
-                        "major_version": version_object.major,
-                        "minor_version": version_object.minor,
-                        "cr": imap_file_path.cr,
-                        "file_path": file_path,
-                        "repointing": imap_file_path.repointing
-                    })
-                else:
-                    file_paths.append({
-                        "instrument": imap_file_path.instrument,
-                        "data_level": imap_file_path.data_level,
-                        "descriptor": imap_file_path.descriptor,
-                        "start_date": imap_file_path.start_date,
-                        "ingestion_date": ingestion_date.strftime("%Y%m%d %H:%M:%S"),
-                        "version": imap_file_path.version,
-                        "cr": imap_file_path.cr,
-                        "file_path": file_path,
-                        "repointing": imap_file_path.repointing
-                    })
+                version_object = Version(imap_file_path.major_version, imap_file_path.minor_version)
+                file_paths.append({
+                    "instrument": imap_file_path.instrument,
+                    "data_level": imap_file_path.data_level,
+                    "descriptor": imap_file_path.descriptor,
+                    "start_date": imap_file_path.start_date,
+                    "ingestion_date": ingestion_date.strftime("%Y%m%d %H:%M:%S"),
+                    "major_version": version_object.major,
+                    "minor_version": version_object.minor,
+                    "cr": imap_file_path.cr,
+                    "file_path": file_path,
+                    "repointing": imap_file_path.repointing
+                })
             case AncillaryFilePath():
                 file_paths.append({
                     "instrument": imap_file_path.instrument,

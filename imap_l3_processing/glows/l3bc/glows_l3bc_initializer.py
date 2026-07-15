@@ -143,7 +143,8 @@ class GlowsL3BCInitializer:
                 return Version(major_version, 1)
             case l3b_file_name:
                 l3b_parents = read_cdf_parents(l3b_file_name)
-                existing_version = Version.from_version(ScienceFilePath(l3b_file_name).version)
+                existing_path = ScienceFilePath(l3b_file_name)
+                existing_version = Version(existing_path.major_version, existing_path.minor_version)
                 major_version_updated = major_version != existing_version.major
                 inputs_changed = not cr_candidate.pipeline_dependency_file_names().issubset(l3b_parents)
                 if major_version_updated or inputs_changed:

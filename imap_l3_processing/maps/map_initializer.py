@@ -50,11 +50,15 @@ class MapInitializer(abc.ABC):
             if highest_version_path_by_start_date := self.existing_l3_maps.get(descriptor):
                 if path_with_highest_version := highest_version_path_by_start_date.get(start_time):
                     existing_parents = read_cdf_parents(path_with_highest_version)
-                    existing_major_version = Version.from_version(ScienceFilePath(path_with_highest_version).version).major
-                    if possible_map.input_files.issubset(existing_parents) and major_version == existing_major_version:
+                    existing_path = ScienceFilePath(path_with_highest_version)
+                    if (
+                        possible_map.input_files.issubset(existing_parents)
+                        and major_version == existing_path.major_version
+                    ):
                         continue
-                    existing_highest_version = Version.from_version(ScienceFilePath(path_with_highest_version).version)
-                    new_version = Version(major_version, existing_highest_version.minor + 1)
+                    new_version = Version(
+                        major_version, existing_path.minor_version + 1
+                    )
                     possible_map.input_metadata.version = VersionMap({descriptor: new_version})
             maps_to_make.append(possible_map)
         return maps_to_make

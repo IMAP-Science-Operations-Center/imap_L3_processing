@@ -13,6 +13,7 @@ import numpy as np
 import requests
 import spiceypy
 from imap_data_access import ScienceFilePath, download
+from imap_data_access.file_validation import Version
 from imap_data_access.processing_input import ProcessingInputCollection
 from requests import RequestException
 from spacepy.pycdf import CDF
@@ -50,6 +51,7 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: P
               cr_number=None) -> Path:
     assert data.input_metadata.repointing is None or cr_number is None, "You cannot call save_data with both a repointing in the metadata while passing in a CR number"
     formatted_start_date = data.input_metadata.start_date.strftime("%Y%m%d")
+    version = data.input_metadata.version.lookup(data.input_metadata.descriptor)
     science_file_path = ScienceFilePath.generate_from_inputs(
         instrument=data.input_metadata.instrument,
         data_level=data.input_metadata.data_level,
@@ -57,7 +59,8 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: P
         start_time=formatted_start_date,
         repointing=data.input_metadata.repointing,
         cr=cr_number,
-        version=str(data.input_metadata.version.lookup(data.input_metadata.descriptor))
+        major_version=version.major,
+        minor_version=version.minor,
     )
 
     file_path = science_file_path.construct_path()
@@ -322,3 +325,9 @@ def read_cdf_parents(server_file_name: str) -> set[str]:
     with CDF(str(downloaded_path)) as cdf:
         parents = set(cdf.attrs["Parents"])
     return parents
+
+def get_version_from_query_result(science_file_query_result):
+    if "major_version" in science_file_query_result:
+        return Version(science_file_query_result["major_version"], science_file_query_result["minor_version"])
+    else:
+        return Version.from_version(science_file_query_result["version"])

@@ -10,10 +10,16 @@ from urllib.parse import urlparse
 import imap_data_access
 import requests
 from imap_data_access import AncillaryFilePath
-from imap_data_access.file_validation import generate_imap_file_path, ScienceFilePath, SPICEFilePath
+from imap_data_access.file_validation import (
+    generate_imap_file_path,
+    ScienceFilePath,
+    SPICEFilePath,
+    Version,
+)
 from requests import Response
 
 from imap_l3_processing.glows.l3bc.models import OMNI2_URL
+from imap_l3_processing.utils import get_version_from_query_result
 from tests.test_helpers import create_mock_query_results
 
 
@@ -62,7 +68,7 @@ class ImapQueryPatcher:
         query_results_by_date = defaultdict(list)
         for qr in query_results:
             query_results_by_date[qr["start_date"]].append(qr)
-        return [max(qrs, key=lambda qr: qr["version"]) for qrs in query_results_by_date.values()]
+        return [max(qrs, key=get_version_from_query_result) for qrs in query_results_by_date.values()]
 
 def fake_download(file: Path | str):
     filename = Path(file).name

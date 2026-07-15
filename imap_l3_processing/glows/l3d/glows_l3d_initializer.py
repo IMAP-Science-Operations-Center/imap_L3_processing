@@ -12,7 +12,7 @@ from imap_l3_processing.glows.descriptors import PLASMA_SPEED_DESCRIPTOR, PROTON
 from imap_l3_processing.glows.l3bc.models import ExternalDependencies, read_pipeline_settings
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3d.utils import query_for_most_recent_l3d
-from imap_l3_processing.utils import read_cdf_parents
+from imap_l3_processing.utils import read_cdf_parents, get_version_from_query_result
 
 logger = logging.getLogger(__name__)
 
@@ -106,11 +106,11 @@ class GlowsL3DInitializer:
             l3d_parents = read_cdf_parents(Path(most_recent_l3d["file_path"]).name)
             old_l3d = Path(most_recent_l3d["file_path"]).name
 
-            logger.info(f"Old L3d parents: {l3d_parents}, new L3d deps: {updated_input_files}")
-            if 'major_version' in most_recent_l3d and 'minor_version' in most_recent_l3d:
-                most_recent_l3d_version = Version(most_recent_l3d['major_version'], most_recent_l3d['major_version'])
-            else:
-                most_recent_l3d_version = Version.from_version(most_recent_l3d['version'])
+            logger.info(
+                f"Old L3d parents: {l3d_parents}, new L3d deps: {updated_input_files}"
+            )
+
+            most_recent_l3d_version = get_version_from_query_result(most_recent_l3d)
             same_major_version = most_recent_l3d_version.major == major_version
             if same_major_version and updated_input_files.issubset(l3d_parents):
                 return None

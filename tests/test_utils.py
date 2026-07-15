@@ -20,14 +20,34 @@ from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, 
 from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
-from imap_l3_processing.utils import format_time, read_mag_data, save_data, \
-    download_external_dependency, \
-    combine_glows_l3e_with_l1c_pointing, furnish_local_spice, get_spice_parent_file_names, furnish_spice_metakernel, \
-    SpiceKernelTypes, FurnishMetakernelOutput, read_cdf_parents, get_dependency_paths_by_descriptor, filter_bad_days
+from imap_l3_processing.utils import (
+    format_time,
+    read_mag_data,
+    save_data,
+    download_external_dependency,
+    combine_glows_l3e_with_l1c_pointing,
+    furnish_local_spice,
+    get_spice_parent_file_names,
+    furnish_spice_metakernel,
+    SpiceKernelTypes,
+    FurnishMetakernelOutput,
+    read_cdf_parents,
+    get_dependency_paths_by_descriptor,
+    filter_bad_days,
+    get_version_from_query_result,
+)
 from imap_l3_processing.version import VERSION
 from tests.cdf.test_cdf_utils import TestDataProduct
 from tests.maps.test_builders import create_rectangular_spectral_index_map_data, create_rectangular_intensity_map_data
-from tests.test_helpers import get_spice_data_path, with_tempdir, create_dataclass_mock, create_mock_version_map
+from tests.test_helpers import (
+    get_spice_data_path,
+    with_tempdir,
+    create_dataclass_mock,
+    create_mock_version_map,
+)
+
+
+
 
 
 class TestUtils(TestCase):
@@ -78,9 +98,10 @@ class TestUtils(TestCase):
             data_level="l2",
             descriptor="descriptor",
             start_time="20240917",
-            version="v001.0002",
+            major_version=1,
+            minor_version=2,
             repointing=None,
-            cr=sentinel.cr
+            cr=sentinel.cr,
         )
 
         mock_science_file_path.construct_path.assert_called_once()
@@ -610,7 +631,7 @@ class TestUtils(TestCase):
     def test_read_cdf_parents(self, temp_dir, mock_download):
         cdf_downloaded_path = temp_dir / "l3b.cdf"
 
-        with CDF(str(cdf_downloaded_path), masterpath='') as cdf:
+        with CDF(str(cdf_downloaded_path), masterpath="") as cdf:
             cdf.attrs["Parents"] = ["l3a_1.cdf", "l3a_2.cdf"]
 
         mock_download.return_value = cdf_downloaded_path
@@ -621,3 +642,38 @@ class TestUtils(TestCase):
         mock_download.assert_called_once_with(cdf_path)
 
         self.assertEqual({"l3a_1.cdf", "l3a_2.cdf"}, parents)
+
+    def test_get_version_from_query_result(self):
+        science_file_query_result = {
+            "instrument": "",
+            "data_level": "",
+            "descriptor": "",
+            "start_date": "",
+            "ingestion_date": "",
+            "major_version": "1",
+            "minor_version": "2",
+            "cr": "",
+            "file_path": "",
+            "repointing": "",
+        }
+        ancillary_file_query_result = {
+            "instrument": "",
+            "descriptor": "",
+            "start_date": "",
+            "end_date": "",
+            "ingestion_date": "",
+            "version": "v003",
+            "file_path": "",
+        }
+
+        science_file_version = get_version_from_query_result(science_file_query_result)
+        ancillary_file_version = get_version_from_query_result(ancillary_file_query_result)
+
+        self.assertIsInstance(science_file_version, Version)
+        self.assertIsInstance(ancillary_file_version, Version)
+
+        self.assertEqual(1, science_file_version.major)
+        self.assertEqual(2, science_file_version.minor)
+
+        self.assertEqual(None, ancillary_file_version.major)
+        self.assertEqual(3, ancillary_file_version.minor)
