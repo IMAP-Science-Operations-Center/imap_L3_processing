@@ -623,6 +623,9 @@ class TestGlowsProcessor(unittest.TestCase):
         self.assertEqual(set(expected_parents), set(l3b_data_product.parent_file_names))
 
     @patch(
+        "imap_l3_processing.glows.glows_processor.process_l3e"
+    )
+    @patch(
         "imap_l3_processing.glows.glows_processor.create_glows_l3b_json_file_from_cdf"
     )
     @patch("imap_l3_processing.glows.glows_processor.create_glows_l3c_json_file_from_cdf")
@@ -637,7 +640,8 @@ class TestGlowsProcessor(unittest.TestCase):
     @patch("imap_l3_processing.glows.glows_processor.read_pipeline_settings")
     def test_process_l3d(self, mock_read_pipeline_settings, mock_glows_l3d_initializer, mock_os, mock_shutil, mock_run,
                          mock_convert_json_to_l3d_data_product, mock_get_parent_file_names_from_l3d_json,
-                         mock_rename_l3d, mock_save_data, mock_convert_l3c_to_json, mock_convert_l3b_to_json):
+                         mock_rename_l3d, mock_save_data, mock_convert_l3c_to_json, mock_convert_l3b_to_json,
+                         mock_process_l3e):
 
         cr_number = 2092
         mock_read_pipeline_settings.return_value = {'start_cr': cr_number}
@@ -1135,6 +1139,7 @@ class TestGlowsProcessor(unittest.TestCase):
         self.assertEqual(expected_l3e_products, actual_l3e_products)
         mock_get_lo_pivot_angles.assert_called_once_with([25])
 
+    @patch('imap_l3_processing.glows.glows_processor.get_lo_pivot_angles')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_ul_hf')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_ul_sf')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_hi')
@@ -1142,8 +1147,13 @@ class TestGlowsProcessor(unittest.TestCase):
     @patch('imap_l3_processing.glows.glows_processor.compute_glows_flags_for_window')
     @patch('imap_l3_processing.glows.glows_processor.get_pointing_date_range')
     @patch('imap_l3_processing.glows.glows_processor.process_l3d')
-    def test_process_l3e_through_process(self, mock_process_l3d, mock_get_pointing_date_range, mock_compute_flags,
-                                         mock_process_lo, mock_process_hi, mock_process_ul_sf, mock_process_ul_hf):
+    def test_process_l3e_invoked_from_top_level_process(self, mock_process_l3d, mock_get_pointing_date_range, mock_compute_flags,
+                                         mock_process_lo, mock_process_hi, mock_process_ul_sf, mock_process_ul_hf,
+                                         mock_get_lo_pivot_angles):
+        mock_get_lo_pivot_angles.return_value = {
+            2902: LoPivotAngle("l1b_2902", 90),
+            2905: LoPivotAngle("l1b_2905", 90),
+        }
         mock_compute_flags.return_value = 0
         self.mock_l3d_initializer.should_process_l3d.return_value = (sentinel.l3d_version, sentinel.glows_l3d_dependency, sentinel.old_l3d)
         process_l3d_result = GlowsL3DProcessorOutput(sentinel.l3d_cdf_file_path, [sentinel.l3d_text_file_paths],
@@ -1152,16 +1162,18 @@ class TestGlowsProcessor(unittest.TestCase):
 
         input_major_version = 5
 
-        input_version_map = VersionMap({
-            GLOWS_L3B_DESCRIPTOR: Version(2, 1),
-            GLOWS_L3C_DESCRIPTOR: Version(2, 1),
-            GLOWS_L3D_DESCRIPTOR: Version(2, 1),
-            GLOWS_L3E_HI_45_DESCRIPTOR: Version(input_major_version, 1),
-            GLOWS_L3E_HI_90_DESCRIPTOR: Version(input_major_version, 1),
-            GLOWS_L3E_LO_DESCRIPTOR: Version(input_major_version, 1),
-            GLOWS_L3E_ULTRA_SF_DESCRIPTOR: Version(input_major_version, 1),
-            GLOWS_L3E_ULTRA_HF_DESCRIPTOR: Version(input_major_version, 1),
-        })
+        input_version_map = VersionMap(
+            {
+                GLOWS_L3B_DESCRIPTOR: Version(2, 1),
+                GLOWS_L3C_DESCRIPTOR: Version(2, 1),
+                GLOWS_L3D_DESCRIPTOR: Version(2, 1),
+                GLOWS_L3E_HI_45_DESCRIPTOR: Version(input_major_version, 1),
+                GLOWS_L3E_HI_90_DESCRIPTOR: Version(input_major_version, 1),
+                GLOWS_L3E_LO_DESCRIPTOR: Version(input_major_version, 1),
+                GLOWS_L3E_ULTRA_SF_DESCRIPTOR: Version(input_major_version, 1),
+                GLOWS_L3E_ULTRA_HF_DESCRIPTOR: Version(input_major_version, 1),
+            }
+        )
         input_metadata = InputMetadata('glows', "l3b", datetime(2024, 10, 7), None, version=input_version_map)
 
         mock_get_pointing_date_range.return_value = datetime(2025, 1, 1), datetime(2025, 1, 2)
@@ -1175,7 +1187,32 @@ class TestGlowsProcessor(unittest.TestCase):
             {2902: Version(None, 1), 2907: Version(5,15)},
         )
 
-        self.mock_l3e_initializer.get_repointings_to_process.return_value = GlowsL3EInitializerOutput(Mock(), l3e_initialzer_repointings, sentinel.l3d_cdf_file_path)
+        l3e_dependencies = GlowsL3EDependencies(
+            Path('2025/05/03/imap_glows_energy_grid_lo'),
+            Path('2025/05/03/imap_glows_energy_grid_hi'),
+            Path('2025/05/03/imap_glows_energy_grid_ultra'),
+            Path('2025/05/03/imap_glows_tess_xyz_8'),
+            Path('2025/05/03/imap_glows_tess_ang16'),
+            Path('2025/05/03/imap_glows_lya_series'),
+            Path('2025/05/03/imap_glows_solar_uv_anisotropy'),
+            Path('2025/05/03/imap_glows_speed_3d_sw'),
+            Path('2025/05/03/imap_glows_density_3d_sw'),
+            Path('2025/05/03/imap_glows_phion_hydrogen'),
+            Path('2025/05/03/imap_glows_sw_eqtr_electrons'),
+            {
+                "executable_dependency_paths": {
+                    "energy-grid-lo": "EnGridLo.dat",
+                    "energy-grid-hi": "EnGridHi.dat",
+                    "energy-grid-ultra": "EnGridUltra.dat",
+                    "tess-xyz-8": "tessXYZ8.dat",
+                    "tess-ang-16": "tessAng16.dat",
+                    "ionization-files": "ionization.files.dat",
+                }
+            },
+            Path("path/to/some/pipeline_settings_file.csv"),
+            Path("repoint.csv")
+        )
+        self.mock_l3e_initializer.get_repointings_to_process.return_value = GlowsL3EInitializerOutput(l3e_dependencies, l3e_initialzer_repointings, sentinel.l3d_cdf_file_path)
         expected_lo_files = [
             [f'imap_glows_l3e_survival-probability-lo_20250101-repoint02902_v001.cdf', sentinel.lo_dat_1],
             [f'imap_glows_l3e_survival-probability-lo_20250101-repoint02905_v003.0013.cdf', sentinel.lo_dat_2],
