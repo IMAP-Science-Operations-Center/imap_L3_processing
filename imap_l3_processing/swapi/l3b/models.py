@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+import numpy
 import numpy as np
 from spacepy import pycdf
 from uncertainties.unumpy import nominal_values, std_devs
@@ -11,6 +12,7 @@ from imap_l3_processing.swapi.l3a.models import EPOCH_CDF_VAR_NAME, EPOCH_DELTA_
 SOLAR_WIND_ENERGY_CDF_VAR_NAME = "combined_energy"
 SOLAR_WIND_COMBINED_ENERGY_DELTA_MINUS_CDF_VAR_NAME = "combined_energy_stat_uncert_minus"
 SOLAR_WIND_COMBINED_ENERGY_DELTA_PLUS_CDF_VAR_NAME = "combined_energy_stat_uncert_plus"
+SOLAR_WIND_ENERGY_LABEL_CDF_VAR_NAME = "combined_energy_label"
 
 COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_CDF_VAR_NAME = "combined_differential_flux"
 COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_DELTA_CDF_VAR_NAME = "combined_differential_flux_stat_uncert"
@@ -37,6 +39,7 @@ class SwapiL3BCombinedVDF(DataProduct):
     combined_differential_flux: np.ndarray[float]
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
+        energy_labels = numpy.char.mod("%.2f keV", self.combined_energy/1000)
         return [
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
             DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, np.full_like(self.epoch, FIVE_MINUTES_IN_NANOSECONDS)),
@@ -44,9 +47,10 @@ class SwapiL3BCombinedVDF(DataProduct):
             DataProductVariable(SOLAR_WIND_ENERGY_CDF_VAR_NAME, self.combined_energy),
             DataProductVariable(SOLAR_WIND_COMBINED_ENERGY_DELTA_MINUS_CDF_VAR_NAME, self.combined_energy_delta_minus),
             DataProductVariable(SOLAR_WIND_COMBINED_ENERGY_DELTA_PLUS_CDF_VAR_NAME, self.combined_energy_delta_plus),
+            DataProductVariable(SOLAR_WIND_ENERGY_LABEL_CDF_VAR_NAME, energy_labels),
 
             DataProductVariable(COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_CDF_VAR_NAME,
                                 nominal_values(self.combined_differential_flux)),
             DataProductVariable(COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_DELTA_CDF_VAR_NAME,
-                                std_devs(self.combined_differential_flux))
+                                std_devs(self.combined_differential_flux)),
         ]

@@ -6,11 +6,19 @@ from uncertainties.unumpy import uarray
 
 from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.swapi.l3a.models import EPOCH_CDF_VAR_NAME, EPOCH_DELTA_CDF_VAR_NAME
-from imap_l3_processing.swapi.l3b.models import SwapiL3BCombinedVDF, COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_CDF_VAR_NAME, \
-    COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_DELTA_CDF_VAR_NAME, SOLAR_WIND_ENERGY_CDF_VAR_NAME, \
-    SOLAR_WIND_COMBINED_ENERGY_DELTA_MINUS_CDF_VAR_NAME, \
-    SOLAR_WIND_COMBINED_ENERGY_DELTA_PLUS_CDF_VAR_NAME
+from imap_l3_processing.swapi.l3a.models import (
+    EPOCH_CDF_VAR_NAME,
+    EPOCH_DELTA_CDF_VAR_NAME,
+)
+from imap_l3_processing.swapi.l3b.models import (
+    SwapiL3BCombinedVDF,
+    COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_CDF_VAR_NAME,
+    COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_DELTA_CDF_VAR_NAME,
+    SOLAR_WIND_ENERGY_CDF_VAR_NAME,
+    SOLAR_WIND_COMBINED_ENERGY_DELTA_MINUS_CDF_VAR_NAME,
+    SOLAR_WIND_COMBINED_ENERGY_DELTA_PLUS_CDF_VAR_NAME,
+    SOLAR_WIND_ENERGY_LABEL_CDF_VAR_NAME,
+)
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 
@@ -37,12 +45,15 @@ class TestModels(CdfModelTestCase):
         pui_velocities_delta_minus = 1 + np.array([0.23, 0.24, 0.25])
         pui_vdf = np.array([[26, 27, 28], [29, 30, 31], [32, 33, 34]])
         pui_vdf_uncertainties = np.array([[0.72, 0.8, 0.9], [0.10, 0.121, 0.12], [0.13, 0.142, 0.15]])
-        combined_energies = np.array([230, 240, 250])
+        combined_energies = np.array([[230, 240, 250], [1234.56, 1234.56, 1234.56],[19731,19731,19731]])
         combined_energies_delta_plus = np.array([44, 55, 66])
         combined_energies_delta_minus = 1 + np.array([44, 55, 66])
         combined_differential_flux = np.array([[26, 27.2, 28], [29.2, 30, 31], [32, 33.5, 34]])
         combined_differential_flux_uncertainties = np.array(
-            [[0.725, 0.8, 0.9], [0.105, 0.121, 0.124], [0.13, 0.1425, 0.15]])
+            [[0.725, 0.8, 0.9], [0.105, 0.121, 0.124], [0.13, 0.1425, 0.15]]
+        )
+
+        expected_combined_energy_labels = np.array([["0.23 keV", "0.24 keV", "0.25 keV"],["1.23 keV", "1.23 keV", "1.23 keV"],["19.73 keV", "19.73 keV", "19.73 keV"]])
 
         vdf = SwapiL3BCombinedVDF(
             input_metadata=input_metadata,
@@ -66,7 +77,7 @@ class TestModels(CdfModelTestCase):
 
         variables = vdf.to_data_product_variables()
 
-        self.assertEqual(7, len(variables))
+        self.assertEqual(8, len(variables))
         self.assert_variable_attributes(variables[0], epoch, EPOCH_CDF_VAR_NAME, pycdf.const.CDF_TIME_TT2000)
         self.assert_variable_attributes(variables[1], epoch_delta, EPOCH_DELTA_CDF_VAR_NAME)
 
@@ -75,7 +86,8 @@ class TestModels(CdfModelTestCase):
                                         SOLAR_WIND_COMBINED_ENERGY_DELTA_MINUS_CDF_VAR_NAME)
         self.assert_variable_attributes(variables[4], combined_energies_delta_plus,
                                         SOLAR_WIND_COMBINED_ENERGY_DELTA_PLUS_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[5], combined_differential_flux,
+        self.assert_variable_attributes(variables[5], expected_combined_energy_labels, SOLAR_WIND_ENERGY_LABEL_CDF_VAR_NAME)
+        self.assert_variable_attributes(variables[6], combined_differential_flux,
                                         COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[6], combined_differential_flux_uncertainties,
+        self.assert_variable_attributes(variables[7], combined_differential_flux_uncertainties,
                                         COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_DELTA_CDF_VAR_NAME)
