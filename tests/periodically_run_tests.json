@@ -1,6 +1,6 @@
 {
-    "test_l3bcde_first_time_processing": "2026-07-07T14:18:08.887025",
-    "test_spectral_fit_against_validation_data": "2026-07-13T09:33:37.838756",
+    "test_l3bcde_first_time_processing": "2026-07-21T14:19:33.214715",
+    "test_spectral_fit_against_validation_data": "2026-07-21T14:18:31.726618",
     "test_calculate_pickup_ions_with_minimize": "2026-05-20T10:52:46.704900",
     "test_l3bcde_reprocessing": "2026-07-13T09:34:43.565666",
     "test_glows_l3abcde_from_l2": "2026-07-13T09:34:43.073702",
@@ -8,7 +8,7 @@
     "test_alpha_sigma_matches_empirical_std": null,
     "test_proton_sigma_matches_empirical_std": null,
     "test_swe_processor_with_local_data": "2026-07-15T09:02:12.235584",
-    "test_ultra_all_sp_maps": "2026-07-13T09:35:49.849096",
+    "test_ultra_all_sp_maps": "2026-07-21T14:20:27.689667",
     "test_ultra_combined_nsp_maps": "2026-07-15T09:06:55.575362",
     "test_ultra_combined_sp_maps": "2026-07-15T09:34:41.018233"
 }
