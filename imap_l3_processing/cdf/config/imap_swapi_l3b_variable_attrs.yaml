@@ -128,3 +128,4 @@ combined_energy_label:
   FIELDNAM: Label For Combined Energy
   FORMAT: a20
   FILLVAL: ' '
+  RECORD_VARYING: NRV

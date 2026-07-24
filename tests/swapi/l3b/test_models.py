@@ -33,27 +33,29 @@ class TestModels(CdfModelTestCase):
         proton_velocities = np.array([4, 5, 6])
         proton_velocities_delta_plus = np.array([0.4, 0.5, 0.6])
         proton_velocities_delta_minus = 1 + np.array([0.4, 0.5, 0.6])
-        proton_vdf = np.array([[7, 8, 9], [10, 11, 12], [13, 14, 15]])
-        proton_vdf_uncertainties = np.array([[0.7, 0.8, 0.9], [0.10, 0.11, 0.12], [0.13, 0.14, 0.15]])
+        proton_vdf = np.array([[7, 8, 9, 10], [10, 11, 12, 13], [13, 14, 15, 16]])
+        proton_vdf_uncertainties = np.array(
+            [[0.7, 0.8, 0.9, 1.0], [0.10, 0.11, 0.12, 0.13], [0.13, 0.14, 0.15, 0.16]]
+        )
         alpha_velocities = np.array([11, 12, 13])
         alpha_velocities_delta_plus = np.array([0.11, 0.12, 0.13])
         alpha_velocities_delta_minus = 1 + np.array([0.11, 0.12, 0.13])
-        alpha_vdf = np.array([[14, 15, 16], [17, 18, 19], [20, 21, 22]])
-        alpha_vdf_uncertainties = np.array([[0.7, 0.8, 0.9], [0.10, 0.11, 0.12], [0.13, 0.14, 0.15]])
+        alpha_vdf = np.array([[14, 15, 16, 17], [17, 18, 19, 20], [20, 21, 22, 23]])
+        alpha_vdf_uncertainties = np.array([[0.7, 0.8, 0.9, 1.0], [0.10, 0.11, 0.12, 0.13], [0.13, 0.14, 0.15, 0.16]])
         pui_velocities = np.array([23, 24, 25])
         pui_velocities_delta_plus = np.array([0.23, 0.24, 0.25])
         pui_velocities_delta_minus = 1 + np.array([0.23, 0.24, 0.25])
-        pui_vdf = np.array([[26, 27, 28], [29, 30, 31], [32, 33, 34]])
-        pui_vdf_uncertainties = np.array([[0.72, 0.8, 0.9], [0.10, 0.121, 0.12], [0.13, 0.142, 0.15]])
-        combined_energies = np.array([[230, 240, 250], [1234.56, 1234.56, 1234.56],[19731,19731,19731]])
+        pui_vdf = np.array([[26, 27, 28, 29], [29, 30, 31, 32], [32, 33, 34, 35]])
+        pui_vdf_uncertainties = np.array([[0.72, 0.8, 0.9, 1.0], [0.10, 0.121, 0.12, 0.13], [0.13, 0.142, 0.15, 0.16]])
+        combined_energies = np.array([[100, 300, 1000, 3000], [100, 300, 1000, 3000],[100, 300, 1000, 3000]])
         combined_energies_delta_plus = np.array([44, 55, 66])
         combined_energies_delta_minus = 1 + np.array([44, 55, 66])
-        combined_differential_flux = np.array([[26, 27.2, 28], [29.2, 30, 31], [32, 33.5, 34]])
+        combined_differential_flux = np.array([[26, 27.2, 28, 29], [29.2, 30, 31, 32.1], [32, 33.5, 34, 36]])
         combined_differential_flux_uncertainties = np.array(
-            [[0.725, 0.8, 0.9], [0.105, 0.121, 0.124], [0.13, 0.1425, 0.15]]
+            [[0.725, 0.8, 0.9, 1.0], [0.105, 0.121, 0.124, 0.129], [0.13, 0.1425, 0.15, 0.16]]
         )
 
-        expected_combined_energy_labels = np.array([["0.23 keV", "0.24 keV", "0.25 keV"],["1.23 keV", "1.23 keV", "1.23 keV"],["19.73 keV", "19.73 keV", "19.73 keV"]])
+        expected_combined_energy_labels = np.array(["E00", "E01", "E02", "E03"])
 
         vdf = SwapiL3BCombinedVDF(
             input_metadata=input_metadata,
