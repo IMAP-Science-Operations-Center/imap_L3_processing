@@ -40,7 +40,9 @@ class SwapiL3BCombinedVDF(DataProduct):
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         energy_count = self.combined_energy.shape[-1]
-        energy_labels = numpy.char.mod("E%02d", np.arange(energy_count))
+        energy_labels = numpy.char.mod(
+            "ESA %02d", np.arange(start=1, stop=energy_count + 1)
+        )
         return [
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
             DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, np.full_like(self.epoch, FIVE_MINUTES_IN_NANOSECONDS)),

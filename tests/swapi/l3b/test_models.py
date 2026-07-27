@@ -52,10 +52,14 @@ class TestModels(CdfModelTestCase):
         combined_energies_delta_minus = 1 + np.array([44, 55, 66])
         combined_differential_flux = np.array([[26, 27.2, 28, 29], [29.2, 30, 31, 32.1], [32, 33.5, 34, 36]])
         combined_differential_flux_uncertainties = np.array(
-            [[0.725, 0.8, 0.9, 1.0], [0.105, 0.121, 0.124, 0.129], [0.13, 0.1425, 0.15, 0.16]]
+            [
+                [0.725, 0.8, 0.9, 1.0],
+                [0.105, 0.121, 0.124, 0.129],
+                [0.13, 0.1425, 0.15, 0.16],
+            ]
         )
 
-        expected_combined_energy_labels = np.array(["E00", "E01", "E02", "E03"])
+        expected_combined_energy_labels = np.array(["ESA 01", "ESA 02", "ESA 03", "ESA 04"])
 
         vdf = SwapiL3BCombinedVDF(
             input_metadata=input_metadata,
