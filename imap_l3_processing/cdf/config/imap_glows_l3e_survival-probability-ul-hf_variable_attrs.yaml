@@ -277,6 +277,7 @@ glows_flags:
   DISPLAY_TYPE: time_series
   SCALETYP: linear
   FIELDNAM: Quality Flags for GLOWS L3e Ultra HF
+  FORMAT: I5
   UNITS: '0: okay; nonzero: caution'
   VALIDMIN: 0
   VALIDMAX: 65534
