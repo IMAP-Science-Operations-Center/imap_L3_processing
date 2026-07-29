@@ -1175,7 +1175,7 @@ total_temperature_tensor_integrated:
   CATDESC: Total temperature tensor integrated
   DEPEND_0: epoch
   DEPEND_1: tensor_id
-  VAR_TYPE: support_datadata
+  VAR_TYPE: support_data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
