@@ -35,6 +35,7 @@ from imap_l3_processing.utils import (
     get_dependency_paths_by_descriptor,
     filter_bad_days,
     get_version_from_query_result,
+    get_temp_cache_dir,
 )
 from imap_l3_processing.version import VERSION
 from tests.cdf.test_cdf_utils import TestDataProduct
@@ -677,3 +678,11 @@ class TestUtils(TestCase):
 
         self.assertEqual(None, ancillary_file_version.major)
         self.assertEqual(3, ancillary_file_version.minor)
+
+    def test_get_cache_directory(self):
+        cache_temp_dir = get_temp_cache_dir()
+        self.assertIsInstance(cache_temp_dir, Path)
+        second_cache_temp_dir = get_temp_cache_dir()
+        self.assertEqual(cache_temp_dir, second_cache_temp_dir)
+
+        self.assertTrue(cache_temp_dir.is_relative_to(Path(tempfile.gettempdir())))

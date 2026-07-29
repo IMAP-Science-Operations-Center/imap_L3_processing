@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, date, timedelta
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Optional, Union, TypeVar
 from urllib.parse import urlparse
 
@@ -32,7 +33,19 @@ from imap_l3_processing.ultra.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.version import VERSION
 
 logger = logging.getLogger(__name__)
+_cache_directory: TemporaryDirectory|None = None
 
+def get_temp_cache_dir() -> Path:
+    global _cache_directory
+    if _cache_directory is None:
+        _cache_directory = TemporaryDirectory(ignore_cleanup_errors=True)
+    return Path(_cache_directory.name)
+
+def clear_temp_cache():
+    global _cache_directory
+    if _cache_directory is not None:
+        _cache_directory.cleanup()
+    _cache_directory = None
 
 class SpiceKernelTypes(enum.Enum):
     Leapseconds = "leapseconds"
