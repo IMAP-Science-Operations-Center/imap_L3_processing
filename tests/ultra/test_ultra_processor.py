@@ -17,6 +17,7 @@ from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.ultra.ultra_l3_dependencies import (
     UltraL3Dependencies,
     UltraL3SpectralIndexDependencies,
+    UltraL3CombinedDependencies,
 )
 from imap_l3_processing.ultra.ultra_processor import (
     UltraProcessor,
@@ -278,19 +279,30 @@ class TestUltraProcessor(unittest.TestCase):
                                        descriptor=f"ulc-ena-h-sf-nsp-full-hae-{degree_spacing}deg-6mo",
                                        )
 
-        combined_dependencies = mock_fetch_dependencies.return_value
-        combined_dependencies.u90_l2_healpix_map = sentinel.u90_l2_healpix_map
-        combined_dependencies.u45_l2_healpix_map = sentinel.u45_l2_healpix_map
-        combined_dependencies.u45_l2_rectangular_map = sentinel.u45_l2_rectangular_map
-        combined_dependencies.u90_l2_rectangular_map = sentinel.u90_l2_rectangular_map
-        combined_dependencies.dependency_file_paths = [
-            Path(
-                "folder/u45_map",
-                Path("folder/u90_map"),
-                Path("folder/u45_l1c"),
-                Path("folder/u90_l1c"),
-            )
-        ]
+        mock_fetch_dependencies.return_value = UltraL3CombinedDependencies(
+            u45_dependencies=UltraL3Dependencies(
+                ultra_l2_healpix_map=sentinel.u45_l2_healpix_map,
+                ultra_l2_rectangular_map=sentinel.u45_l2_rectangular_map,
+                ultra_l1c_pset=[],
+                glows_l3e_sp=[],
+                energy_bin_group_sizes=None,
+                dependency_file_paths=[
+                    Path("folder/u45_map"),
+                    Path("folder/u45_l1c"),
+                ],
+            ),
+            u90_dependencies=UltraL3Dependencies(
+                ultra_l2_healpix_map=sentinel.u90_l2_healpix_map,
+                ultra_l2_rectangular_map=sentinel.u90_l2_rectangular_map,
+                ultra_l1c_pset=[],
+                glows_l3e_sp=[],
+                energy_bin_group_sizes=None,
+                dependency_file_paths=[
+                    Path("folder/u90_map"),
+                    Path("folder/u90_l1c"),
+                ],
+            ),
+        )
 
         healpix_combination_return_value = mock_exposure_weighted_combination.return_value.combine_healpix_intensity_map_data.return_value
         healpix_combination_return_value.intensity_map_data.survival_probability = None
@@ -354,6 +366,7 @@ class TestUltraProcessor(unittest.TestCase):
         self.assertEqual(rectangular_combination_return_value.intensity_map_data.latitude, actual_data_product.data.intensity_map_data.latitude)
 
         self.assertEqual([mock_save_data.return_value], product)
+        self.assertEqual(['u45_map', 'u45_l1c', 'u90_map', 'u90_l1c'], actual_data_product.parent_file_names)
 
     @patch('imap_l3_processing.ultra.ultra_processor.correct_healpix_data_for_survival_probability')
     @patch('imap_l3_processing.ultra.ultra_processor.UltraProcessor._process_healpix_intensity_to_rectangular')
@@ -373,38 +386,33 @@ class TestUltraProcessor(unittest.TestCase):
                                        version="",
                                        descriptor=f"ulc-ena-h-sf-sp-full-hae-{degree_spacing}deg-6mo",
                                        )
-        mock_dependencies = Mock()
-        mock_dependencies.u45_l2_healpix_map = sentinel.u45_l2_healpix_map
-        mock_dependencies.u90_l2_healpix_map = sentinel.u90_l2_healpix_map
-        mock_dependencies.u45_l2_rectangular_map = sentinel.u45_l2_rectangular_map
-        mock_dependencies.u90_l2_rectangular_map = sentinel.u90_l2_rectangular_map
-        mock_dependencies.u45_l1c_psets = [sentinel.u45_l1c_1, sentinel.u45_l1c_2, sentinel.u45_l1c_3]
-        mock_dependencies.u90_l1c_psets = [sentinel.u90_l1c_1, sentinel.u90_l1c_2, sentinel.u90_l1c_3]
-        mock_dependencies.glows_l3e_psets = [sentinel.glows_pset_1, sentinel.glows_pset_2, sentinel.glows_pset_3]
-        mock_dependencies.dependency_file_paths = sentinel.dependency_file_paths
-        mock_dependencies.energy_bin_group_sizes = sentinel.energy_bin_sizes
-        mock_fetch_dependencies.return_value = mock_dependencies
+        mock_fetch_dependencies.return_value = UltraL3CombinedDependencies(
+            u45_dependencies=UltraL3Dependencies(
+                ultra_l2_healpix_map=sentinel.u45_l2_healpix_map,
+                ultra_l2_rectangular_map=sentinel.u45_l2_rectangular_map,
+                ultra_l1c_pset=[sentinel.u45_l1c_1, sentinel.u45_l1c_2, sentinel.u45_l1c_3],
+                glows_l3e_sp=[sentinel.glows_pset_1, sentinel.glows_pset_2, sentinel.glows_pset_3],
+                energy_bin_group_sizes=sentinel.energy_bin_sizes,
+                dependency_file_paths=[
+                    Path("folder/u45_map"),
+                    Path("folder/u45_l1c"),
+                ],
+            ),
+            u90_dependencies=UltraL3Dependencies(
+                ultra_l2_healpix_map=sentinel.u90_l2_healpix_map,
+                ultra_l2_rectangular_map=sentinel.u90_l2_rectangular_map,
+                ultra_l1c_pset=[sentinel.u90_l1c_1, sentinel.u90_l1c_2, sentinel.u90_l1c_3],
+                glows_l3e_sp=[sentinel.glows_pset_1, sentinel.glows_pset_2, sentinel.glows_pset_3],
+                energy_bin_group_sizes=sentinel.energy_bin_sizes,
+                dependency_file_paths=[
+                    Path("folder/u90_map"),
+                    Path("folder/u90_l1c"),
+                ],
+            ),
+        )
 
         mock_combination_strategy = Mock()
         mock_uncertainty_weighted_combination.return_value = mock_combination_strategy
-
-        expected_u45_dependency = UltraL3Dependencies(
-            ultra_l2_healpix_map=mock_dependencies.u45_l2_healpix_map,
-            ultra_l2_rectangular_map=mock_dependencies.u45_l2_rectangular_map,
-            ultra_l1c_pset=mock_dependencies.u45_l1c_psets,
-            glows_l3e_sp=mock_dependencies.glows_l3e_psets,
-            dependency_file_paths=mock_dependencies.dependency_file_paths,
-            energy_bin_group_sizes=mock_dependencies.energy_bin_group_sizes,
-        )
-
-        expected_u90_dependency = UltraL3Dependencies(
-            ultra_l2_healpix_map=mock_dependencies.u90_l2_healpix_map,
-            ultra_l2_rectangular_map=mock_dependencies.u90_l2_rectangular_map,
-            ultra_l1c_pset=mock_dependencies.u90_l1c_psets,
-            glows_l3e_sp=mock_dependencies.glows_l3e_psets,
-            dependency_file_paths=mock_dependencies.dependency_file_paths,
-            energy_bin_group_sizes=mock_dependencies.energy_bin_group_sizes,
-        )
 
         mock_correct_healpix_data.side_effect = [sentinel.u45_l2_survival_corrected_map,
                                                  sentinel.u90_l2_survival_corrected_map]
@@ -429,8 +437,18 @@ class TestUltraProcessor(unittest.TestCase):
         self.assertEqual([mock_save_data.return_value], product)
 
         mock_correct_healpix_data.assert_has_calls([
-            call(expected_u45_dependency, sentinel.spice_frame),
-            call(expected_u90_dependency, sentinel.spice_frame)
+            call(mock_fetch_dependencies.return_value.u45_dependencies, sentinel.spice_frame),
+            call(mock_fetch_dependencies.return_value.u90_dependencies, sentinel.spice_frame)
+        ])
+        mock_healpix_to_rectangular.return_value.add_paths_to_parents.assert_has_calls([
+            call([
+                Path("folder/u45_map"),
+                Path("folder/u45_l1c"),
+            ]),
+            call([
+                Path("folder/u90_map"),
+                Path("folder/u90_l1c"),
+            ]),
         ])
 
     @patch('imap_l3_processing.ultra.ultra_processor.HealPixIntensityMapData')

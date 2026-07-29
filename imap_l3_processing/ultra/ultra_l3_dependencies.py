@@ -107,17 +107,11 @@ class UltraL3SpectralIndexDependencies(SpectralIndexDependencies):
     def get_fit_energy_ranges(self) -> np.ndarray:
         return self.fit_energy_ranges
 
+
 @dataclass
 class UltraL3CombinedDependencies:
-    u45_l2_healpix_map: HealPixIntensityMapData
-    u90_l2_healpix_map: HealPixIntensityMapData
-    u45_l2_rectangular_map: RectangularIntensityMapData
-    u90_l2_rectangular_map: RectangularIntensityMapData
-    u45_l1c_psets: list[UltraL1CPSet]
-    u90_l1c_psets: list[UltraL1CPSet]
-    glows_l3e_psets: list[UltraGlowsL3eData]
-    energy_bin_group_sizes: np.ndarray
-    dependency_file_paths: list[Path] = field(default_factory=list)
+    u45_dependencies: UltraL3Dependencies
+    u90_dependencies: UltraL3Dependencies
 
     @classmethod
     def fetch_dependencies(cls, deps: ProcessingInputCollection) -> UltraL3CombinedDependencies:
@@ -147,46 +141,20 @@ class UltraL3CombinedDependencies:
     def from_file_paths(cls, u45_pset_paths: list[Path], u90_pset_paths: list[Path], glows_l3e_pset_paths: list[Path],
                         u45_map_path: Path, u90_map_path: Path,
                         energy_bin_group_sizes_path: Optional[Path]) -> UltraL3CombinedDependencies:
-        u45_l1c_psets = []
-        u90_l1c_psets = []
-        survival_probability_ul_pset = []
-
-        for pset in u45_pset_paths:
-            u45_l1c_psets.append(UltraL1CPSet.read_from_path(pset))
-
-        u45_pset_paths = sorted(u45_pset_paths, key=lambda pset: pset.name)
-
-        for pset in u90_pset_paths:
-            u90_l1c_psets.append(UltraL1CPSet.read_from_path(pset))
-
-        u90_pset_paths = sorted(u90_pset_paths, key=lambda pset: pset.name)
-
-        for pset in glows_l3e_pset_paths:
-            survival_probability_ul_pset.append(UltraGlowsL3eData.read_from_path(pset))
-        l2_u45_healpix_map_data = load_or_create_healpix_l2(u45_map_path, u45_pset_paths)
-        l2_u90_healpix_map_data = load_or_create_healpix_l2(u90_map_path, u90_pset_paths)
-
-        l2_u45_rectangular_map_data = RectangularIntensityMapData.read_from_path(u45_map_path)
-        l2_u90_rectangular_map_data = RectangularIntensityMapData.read_from_path(u90_map_path)
-
-        dependency_paths = [*u45_pset_paths, *u90_pset_paths, *glows_l3e_pset_paths, u45_map_path,
-                            u90_map_path]
-        if energy_bin_group_sizes_path:
-            energy_bin_group_sizes = np.loadtxt(energy_bin_group_sizes_path, delimiter=",", dtype=np.uint8)
-            dependency_paths.append(energy_bin_group_sizes_path)
-        else:
-            energy_bin_group_sizes = None
 
         return cls(
-            u45_l2_healpix_map=l2_u45_healpix_map_data,
-            u90_l2_healpix_map=l2_u90_healpix_map_data,
-            u45_l2_rectangular_map=l2_u45_rectangular_map_data,
-            u90_l2_rectangular_map=l2_u90_rectangular_map_data,
-            u45_l1c_psets=u45_l1c_psets,
-            u90_l1c_psets=u90_l1c_psets,
-            glows_l3e_psets=survival_probability_ul_pset,
-            energy_bin_group_sizes=energy_bin_group_sizes,
-            dependency_file_paths=dependency_paths,
+            u45_dependencies=UltraL3Dependencies.from_file_paths(
+                l2_map_path=u45_map_path,
+                l1c_file_paths=u45_pset_paths,
+                glows_file_paths=glows_l3e_pset_paths,
+                energy_bin_path=energy_bin_group_sizes_path
+            ),
+            u90_dependencies=UltraL3Dependencies.from_file_paths(
+                l2_map_path=u90_map_path,
+                l1c_file_paths=u90_pset_paths,
+                glows_file_paths=glows_l3e_pset_paths,
+                energy_bin_path=energy_bin_group_sizes_path
+            ),
         )
 
 

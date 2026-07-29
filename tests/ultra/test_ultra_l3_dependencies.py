@@ -390,28 +390,50 @@ class TestUltraL3CombinedDependencies(unittest.TestCase):
             ]
         )
 
-        mock_l2_read_from_path.assert_has_calls([
-            call(u45_l2_path),
-            call(u90_l2_path)
-        ])
+        mock_l2_read_from_path.assert_has_calls([call(u45_l2_path), call(u90_l2_path)])
 
-        mock_load_or_create_healpix_l2.assert_has_calls([
-            call(u45_l2_path, expected_file_paths[:3]),
-            call(u90_l2_path, expected_file_paths[3:6]),
-        ])
+        mock_load_or_create_healpix_l2.assert_has_calls(
+            [
+                call(u45_l2_path, expected_file_paths[:3]),
+                call(u90_l2_path, expected_file_paths[3:6]),
+            ]
+        )
+        self.assertIsInstance(combined_dependencies, UltraL3CombinedDependencies)
+        u45_deps = combined_dependencies.u45_dependencies
+        u90_deps = combined_dependencies.u90_dependencies
+        self.assertIsInstance(u45_deps, UltraL3Dependencies)
+        self.assertIsInstance(u90_deps, UltraL3Dependencies)
 
-        self.assertEqual(combined_dependencies.u45_l2_healpix_map, sentinel.u45_healpix_dataset)
-        self.assertEqual(combined_dependencies.u90_l2_healpix_map, sentinel.u90_healpix_dataset)
-        self.assertEqual(combined_dependencies.u45_l2_rectangular_map, sentinel.u45_rectangular_l2)
-        self.assertEqual(combined_dependencies.u90_l2_rectangular_map, sentinel.u90_rectangular_l2)
-        self.assertEqual(combined_dependencies.u45_l1c_psets, [sentinel.u45_l1c_1, sentinel.u45_l1c_2, sentinel.u45_l1c_3])
-        self.assertEqual(combined_dependencies.u90_l1c_psets, [sentinel.u90_l1c_1, sentinel.u90_l1c_2, sentinel.u90_l1c_3])
-        self.assertEqual(combined_dependencies.glows_l3e_psets, [])
+        self.assertEqual(u45_deps.ultra_l2_healpix_map, sentinel.u45_healpix_dataset)
+        self.assertEqual(u90_deps.ultra_l2_healpix_map, sentinel.u90_healpix_dataset)
+        self.assertEqual(u45_deps.ultra_l2_rectangular_map, sentinel.u45_rectangular_l2)
+        self.assertEqual(u90_deps.ultra_l2_rectangular_map, sentinel.u90_rectangular_l2)
+        self.assertEqual(u45_deps.ultra_l1c_pset, [sentinel.u45_l1c_1, sentinel.u45_l1c_2, sentinel.u45_l1c_3])
+        self.assertEqual(u90_deps.ultra_l1c_pset, [sentinel.u90_l1c_1, sentinel.u90_l1c_2, sentinel.u90_l1c_3])
+        self.assertEqual(u45_deps.glows_l3e_sp, [])
+        self.assertEqual(u90_deps.glows_l3e_sp, [])
 
         np.testing.assert_array_equal(np.array([0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 46], dtype=np.uint8),
-                                      combined_dependencies.energy_bin_group_sizes, strict=True)
+                                      u45_deps.energy_bin_group_sizes, strict=True)
+        np.testing.assert_array_equal(np.array([0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 46], dtype=np.uint8),
+                                      u90_deps.energy_bin_group_sizes, strict=True)
 
-        self.assertEqual(combined_dependencies.dependency_file_paths, expected_file_paths)
+        expected_45_file_paths = [
+            u45_l2_path,
+            Path("imap_ultra_l1c_u45-pset_20251010_v001.cdf"),
+            Path("imap_ultra_l1c_u45-pset_20251011_v001.cdf"),
+            Path("imap_ultra_l1c_u45-pset_20251012_v001.cdf"),
+            l2_energy_bin_group_sizes_file_path
+        ]
+        expected_90_file_paths = [
+            u90_l2_path,
+            Path("imap_ultra_l1c_u90-pset_20251010_v001.cdf"),
+            Path("imap_ultra_l1c_u90-pset_20251011_v001.cdf"),
+            Path("imap_ultra_l1c_u90-pset_20251012_v001.cdf"),
+            l2_energy_bin_group_sizes_file_path
+        ]
+        self.assertEqual(u45_deps.dependency_file_paths, expected_45_file_paths)
+        self.assertEqual(u90_deps.dependency_file_paths, expected_90_file_paths)
 
     @patch('imap_l3_processing.ultra.ultra_l3_dependencies.load_or_create_healpix_l2')
     @patch('imap_l3_processing.ultra.ultra_l3_dependencies.RectangularIntensityMapData.read_from_path')
@@ -452,7 +474,8 @@ class TestUltraL3CombinedDependencies(unittest.TestCase):
 
         combined_dependencies = UltraL3CombinedDependencies.fetch_dependencies(processing_input_collection)
 
-        self.assertIsNone(combined_dependencies.energy_bin_group_sizes)
+        self.assertIsNone(combined_dependencies.u45_dependencies.energy_bin_group_sizes)
+        self.assertIsNone(combined_dependencies.u90_dependencies.energy_bin_group_sizes)
 
     @patch('imap_l3_processing.ultra.ultra_l3_dependencies.load_or_create_healpix_l2')
     @patch('imap_l3_processing.ultra.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path')
@@ -526,7 +549,10 @@ class TestUltraL3CombinedDependencies(unittest.TestCase):
                 ]
                 mock_l2_read_from_paths.side_effect = [sentinel.u45_rectangular_l2, sentinel.u90_rectangular_l2]
 
-                mock_l3e_read_from_path.side_effect = [sentinel.glows_1, sentinel.glows_2, sentinel.glows_3]
+                mock_l3e_read_from_path.side_effect = [
+                    sentinel.glows_1, sentinel.glows_2, sentinel.glows_3,
+                    sentinel.glows_1, sentinel.glows_2, sentinel.glows_3,
+                ]
 
                 combined_dependencies = UltraL3CombinedDependencies.fetch_dependencies(processing_input_collection)
 
@@ -550,7 +576,10 @@ class TestUltraL3CombinedDependencies(unittest.TestCase):
                 mock_l3e_read_from_path.assert_has_calls([
                     call(Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251010_v001.cdf")),
                     call(Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251011_v001.cdf")),
-                    call(Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251012_v001.cdf"))
+                    call(Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251012_v001.cdf")),
+                    call(Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251010_v001.cdf")),
+                    call(Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251011_v001.cdf")),
+                    call(Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251012_v001.cdf")),
                 ])
 
                 mock_l2_read_from_paths.assert_has_calls([
@@ -562,14 +591,34 @@ class TestUltraL3CombinedDependencies(unittest.TestCase):
                     call(u45_l2_path, u45_l1c_paths),
                     call(u90_l2_path, u90_l1c_paths),
                 ])
-                self.assertEqual(combined_dependencies.u45_l2_healpix_map, sentinel.u45_healpix_dataset)
-                self.assertEqual(combined_dependencies.u90_l2_healpix_map, sentinel.u90_healpix_dataset)
-                self.assertEqual(combined_dependencies.u45_l2_rectangular_map, sentinel.u45_rectangular_l2)
-                self.assertEqual(combined_dependencies.u90_l2_rectangular_map, sentinel.u90_rectangular_l2)
-                self.assertEqual(combined_dependencies.u45_l1c_psets,
+                u45_deps = combined_dependencies.u45_dependencies
+                u90_deps = combined_dependencies.u90_dependencies
+                self.assertEqual(u45_deps.ultra_l2_healpix_map, sentinel.u45_healpix_dataset)
+                self.assertEqual(u90_deps.ultra_l2_healpix_map, sentinel.u90_healpix_dataset)
+                self.assertEqual(u45_deps.ultra_l2_rectangular_map, sentinel.u45_rectangular_l2)
+                self.assertEqual(u90_deps.ultra_l2_rectangular_map, sentinel.u90_rectangular_l2)
+                self.assertEqual(u45_deps.ultra_l1c_pset,
                                  [sentinel.u45_l1c_1, sentinel.u45_l1c_2, sentinel.u45_l1c_3])
-                self.assertEqual(combined_dependencies.u90_l1c_psets,
+                self.assertEqual(u90_deps.ultra_l1c_pset,
                                  [sentinel.u90_l1c_1, sentinel.u90_l1c_2, sentinel.u90_l1c_3])
-                self.assertEqual(combined_dependencies.glows_l3e_psets,
+                self.assertEqual(u45_deps.glows_l3e_sp,
                                  [sentinel.glows_1, sentinel.glows_2, sentinel.glows_3])
-                self.assertEqual(combined_dependencies.dependency_file_paths, expected_file_paths)
+                self.assertEqual(u90_deps.glows_l3e_sp,
+                                 [sentinel.glows_1, sentinel.glows_2, sentinel.glows_3])
+                expected_u45_file_paths = [
+                    u45_l2_path,
+                    *u45_l1c_paths,
+                    Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251010_v001.cdf"),
+                    Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251011_v001.cdf"),
+                    Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251012_v001.cdf"),
+                ]
+                expected_u90_file_paths = [
+                    u90_l2_path,
+                    *u90_l1c_paths,
+                    Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251010_v001.cdf"),
+                    Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251011_v001.cdf"),
+                    Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251012_v001.cdf"),
+                ]
+                self.assertEqual(u45_deps.dependency_file_paths, expected_u45_file_paths)
+                self.assertEqual(u90_deps.dependency_file_paths, expected_u90_file_paths)
+
