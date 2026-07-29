@@ -14,14 +14,19 @@ from imap_l3_processing.maps.map_models import HealPixIntensityMapData, Intensit
     HealPixSpectralIndexDataProduct, SpectralIndexMapData, RectangularIntensityDataProduct, \
     RectangularSpectralIndexDataProduct, RectangularSpectralIndexMapData, RectangularIntensityMapData
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.ultra.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies
-from imap_l3_processing.ultra.ultra_processor import UltraProcessor
+from imap_l3_processing.ultra.ultra_l3_dependencies import (
+    UltraL3Dependencies,
+    UltraL3SpectralIndexDependencies,
+)
+from imap_l3_processing.ultra.ultra_processor import (
+    UltraProcessor,
+    correct_healpix_data_for_survival_probability,
+)
 from tests.maps.test_builders import create_rectangular_intensity_map_data
 from tests.test_helpers import get_test_data_path
 
 
 class TestUltraProcessor(unittest.TestCase):
-
     def test_process_survival_probability_all_spacings(self):
         for degree_spacing in [2, 4, 6]:
             with self.subTest(spacing=degree_spacing):
@@ -42,24 +47,19 @@ class TestUltraProcessor(unittest.TestCase):
             with self.subTest(spacing=degree_spacing):
                 self._test_process_combined_sensor_survival_probability(degree_spacing)
 
-    @patch('imap_l3_processing.ultra.ultra_processor.HealPixIntensityMapData')
-    @patch('imap_l3_processing.utils.spiceypy')
-    @patch('imap_l3_processing.ultra.ultra_processor.save_data')
-    @patch('imap_l3_processing.ultra.ultra_processor.UltraSurvivalProbabilitySkyMap')
-    @patch('imap_l3_processing.ultra.ultra_processor.UltraSurvivalProbability')
-    @patch('imap_l3_processing.ultra.ultra_processor.combine_glows_l3e_with_l1c_pointing')
-    @patch('imap_l3_processing.ultra.ultra_processor.UltraL3Dependencies.fetch_dependencies')
-    def _test_process_survival_probability(self, degree_spacing, mock_fetch_dependencies,
-                                           mock_combine_glows_l3e_with_l1c_pointing,
-                                           mock_survival_probability_pointing_set, mock_survival_skymap,
-                                           mock_save_data, mock_spiceypy,
-                                           mock_healpix_intensity_map_data_class):
-        healpix_intensity_map_data = mock_healpix_intensity_map_data_class.return_value
+    @patch("imap_l3_processing.ultra.ultra_processor.UltraSurvivalProbabilitySkyMap")
+    @patch("imap_l3_processing.ultra.ultra_processor.UltraSurvivalProbability")
+    @patch(
+        "imap_l3_processing.ultra.ultra_processor.combine_glows_l3e_with_l1c_pointing"
+    )
+    def test_correct_healpix_data_for_survival_probability(
+        self,
+        mock_combine_glows_l3e_with_l1c_pointing,
+        mock_survival_probability_pointing_set,
+        mock_survival_skymap,
+    ):
         rng = np.random.default_rng()
         healpix_indices = np.arange(12)
-        mock_spiceypy.ktotal.return_value = 1
-        fake_spice = Path("path/to/fake/spice.tls")
-        mock_spiceypy.kdata.return_value = [fake_spice]
 
         input_map_flux = rng.random((1, 9, 12))
         epoch = datetime.now()
@@ -70,15 +70,8 @@ class TestUltraProcessor(unittest.TestCase):
         input_l2_map_name = "imap_ultra_l2_a-map-descriptor_20250601_v000.cdf"
         input_l1c_pset_name = "imap_ultra_l1c_a-pset-descriptor_20250601_v000.cdf"
         input_glows_l3e_name = "imap_glows_l3e_a-glows-descriptor_20250601_v000.cdf"
-        input_deps = ProcessingInputCollection(ScienceInput(input_l2_map_name))
-        input_metadata = InputMetadata(instrument="ultra",
-                                       data_level="l3",
-                                       start_date=datetime.now(),
-                                       end_date=datetime.now() + timedelta(days=1),
-                                       version="",
-                                       descriptor=f"u90-ena-h-sf-sp-full-hae-{degree_spacing}deg-6mo")
 
-        mock_fetch_dependencies.return_value = UltraL3Dependencies(
+        dependencies = UltraL3Dependencies(
             ultra_l2_healpix_map=input_l2_healpix_map,
             ultra_l2_rectangular_map=input_l2_rectangular_map,
             ultra_l1c_pset=sentinel.ultra_l1c_pset,
@@ -108,29 +101,8 @@ class TestUltraProcessor(unittest.TestCase):
                 CoordNames.HEALPIX_INDEX.value: healpix_indices,
             })
 
-        mock_healpix_skymap = Mock()
-        healpix_intensity_map_data.to_healpix_skymap = Mock(return_value=mock_healpix_skymap)
-        mock_rectangular_map_dataset = {
-            "ena_intensity": Mock(values=sentinel.rectangular_ena_intensity),
-            "ena_intensity_stat_uncert": Mock(
-                values=sentinel.rectangular_ena_intensity_stat_uncert
-            ),
-            "ena_intensity_sys_err": Mock(
-                values=sentinel.rectangular_ena_intensity_sys_err
-            ),
-            "survival_probability": Mock(
-                values=sentinel.rectangular_survival_probability
-            ),
-        }
+        healpix_intensity_map_data = correct_healpix_data_for_survival_probability(dependencies, SpiceFrame.ECLIPJ2000)
 
-        mock_rectangular_sky_map = Mock(spec=RectangularSkyMap)
-        mock_rectangular_sky_map.to_dataset.return_value = mock_rectangular_map_dataset
-        mock_healpix_skymap.to_rectangular_skymap.return_value = mock_rectangular_sky_map, 0
-
-        processor = UltraProcessor(input_deps, input_metadata)
-        product = processor.process(SpiceFrame.IMAP_GCS)
-
-        mock_fetch_dependencies.assert_called_once_with(input_deps)
         mock_combine_glows_l3e_with_l1c_pointing.assert_called_once_with(sentinel.glows_l3e_sp, sentinel.ultra_l1c_pset)
         mock_survival_probability_pointing_set.assert_has_calls([
             call(sentinel.ultra_l1c_1, sentinel.glows_l3e_1, bin_groups=sentinel.bin_groups),
@@ -138,12 +110,10 @@ class TestUltraProcessor(unittest.TestCase):
             call(sentinel.ultra_l1c_3, sentinel.glows_l3e_3, bin_groups=sentinel.bin_groups)
         ])
         mock_survival_skymap.assert_called_once_with([sentinel.pset_1, sentinel.pset_2, sentinel.pset_3],
-                                                     SpiceFrame.IMAP_GCS, input_l2_healpix_map.coords.nside)
+                                                     SpiceFrame.ECLIPJ2000, input_l2_healpix_map.coords.nside)
         mock_survival_skymap.return_value.to_dataset.assert_called_once_with()
 
-        mock_healpix_intensity_map_data_class.assert_called_once()
-        healpix_intensity_map_data_kwargs = mock_healpix_intensity_map_data_class.call_args_list[0].kwargs
-        actual_intensity_map_data = healpix_intensity_map_data_kwargs["intensity_map_data"]
+        actual_intensity_map_data = healpix_intensity_map_data.intensity_map_data
         intensity_data = input_l2_healpix_map.intensity_map_data
 
         np.testing.assert_array_equal(
@@ -177,8 +147,77 @@ class TestUltraProcessor(unittest.TestCase):
         np.testing.assert_array_equal(actual_intensity_map_data.obs_date, intensity_data.obs_date)
         np.testing.assert_array_equal(actual_intensity_map_data.obs_date_range, intensity_data.obs_date_range)
         np.testing.assert_array_equal(actual_intensity_map_data.solid_angle, intensity_data.solid_angle)
+        coords = healpix_intensity_map_data.coords
+        np.testing.assert_array_equal(coords.pixel_index, input_l2_healpix_map.coords.pixel_index)
+        np.testing.assert_array_equal(coords.pixel_index_label, input_l2_healpix_map.coords.pixel_index_label)
 
-        healpix_intensity_map_data.to_healpix_skymap.assert_called_once()
+
+    @patch('imap_l3_processing.ultra.ultra_processor.correct_healpix_data_for_survival_probability')
+    @patch('imap_l3_processing.utils.spiceypy')
+    @patch('imap_l3_processing.ultra.ultra_processor.save_data')
+    @patch('imap_l3_processing.ultra.ultra_processor.UltraL3Dependencies.fetch_dependencies')
+    def _test_process_survival_probability(self, degree_spacing, mock_fetch_dependencies,
+                                           mock_save_data, mock_spiceypy,
+                                           mock_correct_healpix_data_for_survival_probability):
+        rng = np.random.default_rng()
+        healpix_indices = np.arange(12)
+        mock_spiceypy.ktotal.return_value = 1
+        fake_spice = Path("path/to/fake/spice.tls")
+        mock_spiceypy.kdata.return_value = [fake_spice]
+
+        input_map_flux = rng.random((1, 9, 12))
+        epoch = datetime.now()
+        input_l2_healpix_map = _create_ultra_l2_healpix_data(epoch=[epoch], flux=input_map_flux, healpix_indices=healpix_indices)
+        input_l2_healpix_map.intensity_map_data.energy = sentinel.ultra_l2_energies
+        input_l2_rectangular_map = create_rectangular_intensity_map_data()
+
+        input_l2_map_name = "imap_ultra_l2_a-map-descriptor_20250601_v000.cdf"
+        input_l1c_pset_name = "imap_ultra_l1c_a-pset-descriptor_20250601_v000.cdf"
+        input_glows_l3e_name = "imap_glows_l3e_a-glows-descriptor_20250601_v000.cdf"
+        input_deps = ProcessingInputCollection(ScienceInput(input_l2_map_name))
+        input_metadata = InputMetadata(instrument="ultra",
+                                       data_level="l3",
+                                       start_date=datetime.now(),
+                                       end_date=datetime.now() + timedelta(days=1),
+                                       version="",
+                                       descriptor=f"u90-ena-h-sf-sp-full-hae-{degree_spacing}deg-6mo")
+
+        mock_fetch_dependencies.return_value = UltraL3Dependencies(
+            ultra_l2_healpix_map=input_l2_healpix_map,
+            ultra_l2_rectangular_map=input_l2_rectangular_map,
+            ultra_l1c_pset=sentinel.ultra_l1c_pset,
+            glows_l3e_sp=sentinel.glows_l3e_sp,
+            dependency_file_paths=[Path(input_l2_map_name), Path(input_l1c_pset_name), Path(input_glows_l3e_name)],
+            energy_bin_group_sizes=sentinel.bin_groups,
+        )
+        mock_healpix_map_data = mock_correct_healpix_data_for_survival_probability.return_value
+        mock_healpix_skymap = Mock()
+        mock_healpix_map_data.to_healpix_skymap = Mock(return_value=mock_healpix_skymap)
+        mock_rectangular_map_dataset = {
+            "ena_intensity": Mock(values=sentinel.rectangular_ena_intensity),
+            "ena_intensity_stat_uncert": Mock(
+                values=sentinel.rectangular_ena_intensity_stat_uncert
+            ),
+            "ena_intensity_sys_err": Mock(
+                values=sentinel.rectangular_ena_intensity_sys_err
+            ),
+            "survival_probability": Mock(
+                values=sentinel.rectangular_survival_probability
+            ),
+        }
+
+        mock_rectangular_sky_map = Mock(spec=RectangularSkyMap)
+        mock_rectangular_sky_map.to_dataset.return_value = mock_rectangular_map_dataset
+        mock_healpix_skymap.to_rectangular_skymap.return_value = mock_rectangular_sky_map, 0
+
+        processor = UltraProcessor(input_deps, input_metadata)
+        product = processor.process(SpiceFrame.IMAP_GCS)
+
+        mock_fetch_dependencies.assert_called_once_with(input_deps)
+        mock_correct_healpix_data_for_survival_probability.assert_called_once_with(
+            mock_fetch_dependencies.return_value, SpiceFrame.IMAP_GCS
+        )
+        mock_healpix_map_data.to_healpix_skymap.assert_called_once()
         mock_healpix_skymap.to_rectangular_skymap.assert_called_once_with(degree_spacing, [
             "ena_intensity",
             "ena_intensity_stat_uncert",
@@ -316,7 +355,7 @@ class TestUltraProcessor(unittest.TestCase):
 
         self.assertEqual([mock_save_data.return_value], product)
 
-    @patch('imap_l3_processing.ultra.ultra_processor.UltraProcessor._process_survival_probability')
+    @patch('imap_l3_processing.ultra.ultra_processor.correct_healpix_data_for_survival_probability')
     @patch('imap_l3_processing.ultra.ultra_processor.UltraProcessor._process_healpix_intensity_to_rectangular')
     @patch('imap_l3_processing.ultra.ultra_processor.MapProcessor.get_parent_file_names')
     @patch("imap_l3_processing.ultra.ultra_processor.UncertaintyWeightedCombination")
@@ -325,7 +364,7 @@ class TestUltraProcessor(unittest.TestCase):
     def _test_process_combined_sensor_survival_probability(self, degree_spacing, mock_fetch_dependencies,
                                                            mock_save_data, mock_uncertainty_weighted_combination,
                                                            mock_get_parent_file_names, mock_healpix_to_rectangular,
-                                                           mock_process_survival_probability):
+                                                           mock_correct_healpix_data):
         mock_get_parent_file_names.return_value = ["ram_map", "antiram_map"]
         input_metadata = InputMetadata(instrument="ultra",
                                        data_level="l3",
@@ -367,8 +406,8 @@ class TestUltraProcessor(unittest.TestCase):
             energy_bin_group_sizes=mock_dependencies.energy_bin_group_sizes,
         )
 
-        mock_process_survival_probability.side_effect = [sentinel.u45_l2_survival_corrected_map,
-                                                         sentinel.u90_l2_survival_corrected_map]
+        mock_correct_healpix_data.side_effect = [sentinel.u45_l2_survival_corrected_map,
+                                                 sentinel.u90_l2_survival_corrected_map]
 
         processor = UltraProcessor(sentinel.dependencies, input_metadata)
         product = processor.process(spice_frame_name=sentinel.spice_frame)
@@ -389,7 +428,7 @@ class TestUltraProcessor(unittest.TestCase):
         mock_save_data.assert_called_once_with(mock_healpix_to_rectangular.return_value)
         self.assertEqual([mock_save_data.return_value], product)
 
-        mock_process_survival_probability.assert_has_calls([
+        mock_correct_healpix_data.assert_has_calls([
             call(expected_u45_dependency, sentinel.spice_frame),
             call(expected_u90_dependency, sentinel.spice_frame)
         ])
