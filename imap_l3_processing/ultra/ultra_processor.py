@@ -1,7 +1,12 @@
+import logging
+import pickle
+import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from hashlib import sha256
 from typing import Optional
 
+from imap_data_access import ScienceFilePath, ImapFilePath
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.map_combination import ExposureWeightedCombination, UncertaintyWeightedCombination
@@ -16,9 +21,18 @@ from imap_l3_processing.maps.spectral_fit import calculate_spectral_index_for_mu
     slice_energy_range_by_bin, fit_spectral_index_map
 from imap_l3_processing.ultra.science.ultra_survival_probability import UltraSurvivalProbabilitySkyMap, \
     UltraSurvivalProbability
-from imap_l3_processing.ultra.ultra_l3_dependencies import UltraL3Dependencies, UltraL3SpectralIndexDependencies, \
-    UltraL3CombinedDependencies
-from imap_l3_processing.utils import save_data, combine_glows_l3e_with_l1c_pointing
+from imap_l3_processing.ultra.ultra_l3_dependencies import (
+    UltraL3Dependencies,
+    UltraL3SpectralIndexDependencies,
+    UltraL3CombinedDependencies,
+)
+from imap_l3_processing.utils import (
+    save_data,
+    combine_glows_l3e_with_l1c_pointing,
+    get_temp_cache_dir,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class UltraProcessor(MapProcessor):
@@ -227,7 +241,9 @@ class UltraProcessor(MapProcessor):
             data=RectangularSpectralIndexMapData(
                 spectral_index_map_data=SpectralIndexMapData(
                     ena_spectral_index=rectangular_dataset["ena_spectral_index"].values,
-                    ena_spectral_index_stat_uncert=rectangular_dataset["ena_spectral_index_stat_uncert"].values,
+                    ena_spectral_index_stat_uncert=rectangular_dataset[
+                        "ena_spectral_index_stat_uncert"
+                    ].values,
                     epoch=healpix_spectral_index_map_data.epoch,
                     epoch_delta=healpix_spectral_index_map_data.epoch_delta,
                     energy=healpix_spectral_index_map_data.energy,
@@ -247,17 +263,44 @@ class UltraProcessor(MapProcessor):
                     longitude_delta=longitude_deltas,
                     longitude_label=longitude.astype(str),
                 ),
-            )
+            ),
         )
+
 
 @dataclass
 class UltraMapDescriptorParts:
     grid_size: int
 
+def _make_cache_key_for_sp_corrected_data(deps: UltraL3Dependencies) -> str:
+    pset_names = []
+    glows_names = []
+    for path in deps.dependency_file_paths:
+        try:
+            sfp = ScienceFilePath(path)
+            if sfp.instrument == "ultra":
+                if sfp.data_level == "l1c":
+                    pset_names.append(path.name)
+                elif sfp.data_level == "l2":
+                    l2_descriptor = re.sub(r"[246]deg", "nside32", sfp.descriptor)
+            elif sfp.instrument == "glows" and sfp.data_level == "l3e":
+                glows_names.append(path.name)
+        except ImapFilePath.InvalidImapFileError:
+            pass
+    return str(sorted(pset_names)) + str(sorted(glows_names)) + l2_descriptor
 
 def correct_healpix_data_for_survival_probability(
     deps: UltraL3Dependencies, spice_frame_name: SpiceFrame
 ) -> HealPixIntensityMapData:
+    cache_key = _make_cache_key_for_sp_corrected_data(deps)
+    cache_filename = sha256(cache_key.encode("utf-8")).hexdigest()
+    cache_path = get_temp_cache_dir() / cache_filename
+    if cache_path.exists():
+        logger.info("Loading cached HEALPix SP-corrected data from %s", cache_path)
+        with open(cache_path, "rb") as f:
+            return pickle.load(f)
+
+    logger.info("Cached HEALPix SP-corrected data not found; building from inputs")
+
     combined_psets = combine_glows_l3e_with_l1c_pointing(deps.glows_l3e_sp, deps.ultra_l1c_pset)
     survival_probability_psets = [UltraSurvivalProbability(_l1c, _l3e, bin_groups=deps.energy_bin_group_sizes)
                                   for _l1c, _l3e in combined_psets]
@@ -267,7 +310,7 @@ def correct_healpix_data_for_survival_probability(
     corrected_skymap = UltraSurvivalProbabilitySkyMap(survival_probability_psets, spice_frame_name, coords.nside)
     survival_probability_map = corrected_skymap.to_dataset()["exposure_weighted_survival_probabilities"].values
 
-    return HealPixIntensityMapData(
+    healpix_intensity_data = HealPixIntensityMapData(
         intensity_map_data=IntensityMapData(
             ena_intensity=intensity_data.ena_intensity / survival_probability_map,
             ena_intensity_stat_uncert=intensity_data.ena_intensity_stat_uncert
@@ -293,3 +336,9 @@ def correct_healpix_data_for_survival_probability(
             pixel_index_label=coords.pixel_index_label,
         ),
     )
+    logger.info("Saving HEALPix SP-corrected data to cache at %s", cache_path)
+
+    with open(cache_path, "wb") as f:
+        pickle.dump(healpix_intensity_data, f)
+
+    return healpix_intensity_data
