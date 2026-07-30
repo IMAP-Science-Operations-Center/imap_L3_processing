@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import Mock, sentinel
 
 import numpy as np
+from imap_data_access.file_validation import Version
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.codice.l3.lo.models import (
@@ -31,7 +32,7 @@ from imap_l3_processing.codice.l3.lo.models import (
     ELEVATION_ANGLE_LABEL_VAR_NAME,
     ENERGY_LABEL_VAR_NAME, SPIN_ANGLE_DELTA_VAR_NAME, SPIN_ANGLE_VAR_NAME, SPIN_ANGLE_LABEL_VAR_NAME,
 )
-from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.utils import save_data
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 from tests.test_helpers import get_test_data_path
@@ -268,7 +269,7 @@ class TestModels(CdfModelTestCase):
                                                   fe_loq_partial_density=rng.random(len(epoch), dtype='float32'),
                                                   fe_hiq_partial_density=rng.random(len(epoch), dtype='float32'), )
 
-        input_metadata = InputMetadata("codice", "l3a", datetime.now(), datetime.now(), "v000", "lo-partial-densities")
+        input_metadata = InputMetadata("codice", "l3a", datetime.now(), datetime.now(), VersionMap({"lo-partial-densities": Version(None, 1)}), "lo-partial-densities")
 
         codice_lo_l3a_partial_densities = CodiceLoL3aPartialDensityDataProduct(input_metadata, density_data)
 

@@ -3,11 +3,13 @@ from datetime import datetime
 from typing import Callable
 from unittest.mock import patch, call, Mock, sentinel
 
+from imap_data_access.file_validation import Version
+
 from imap_l3_processing.hi.hi_sp_initializer import HiSPInitializer, HI_SP_SPICE_KERNELS
 from imap_l3_processing.maps.map_descriptors import parse_map_descriptor, map_descriptor_parts_to_string
 from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
 from imap_l3_processing.maps.sp_map_initializer import logger
-from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.models import InputMetadata, VersionMap
 from tests.test_helpers import create_mock_query_results
 
 
@@ -20,124 +22,132 @@ class TestHiSPInitializer(unittest.TestCase):
         self.query_patcher.stop()
 
     @patch('imap_l3_processing.maps.map_initializer.read_cdf_parents')
-    def test_get_maps_that_can_be_produced(self, mock_read_cdf_parents):
-        self.mock_query.side_effect = [
-            create_mock_query_results([
-                'imap_glows_l3e_survival-probability-hi-45_20100101-repoint00001_v001.cdf',
-                'imap_glows_l3e_survival-probability-hi-45_20100102-repoint00002_v001.cdf',
-                'imap_glows_l3e_survival-probability-hi-45_20100103-repoint00003_v001.cdf',
-
-                'imap_glows_l3e_survival-probability-hi-45_20100401-repoint00101_v001.cdf',
-                'imap_glows_l3e_survival-probability-hi-45_20100402-repoint00102_v001.cdf',
-                'imap_glows_l3e_survival-probability-hi-45_20100403-repoint00103_v001.cdf',
-
-                'imap_glows_l3e_survival-probability-hi-45_20100702-repoint00202_v001.cdf',
-            ]),
-            create_mock_query_results([]),
-            create_mock_query_results([
-                'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf',
-                'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100401_v001.cdf',
-                'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100701_v001.cdf',
-                'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20101001_v001.cdf'
-            ]),
-            create_mock_query_results([])
+    def test_get_maps_that_can_be_produced_always_returns_possible_maps_with_default_version_map(self, mock_read_cdf_parents):
+        descriptor = 'h45-ena-h-sf-sp-anti-hae-4deg-3mo'
+        cases = [
+            (None, VersionMap({}, Version(None, 1))),
+             (4, VersionMap({}, Version(None, 1))),
         ]
+        for major_version, expected_version in cases:
+            with self.subTest(major_version=major_version):
 
-        mock_read_cdf_parents.side_effect = self.create_fake_read_cdf_parents("45")
+                self.mock_query.side_effect = [
+                    create_mock_query_results([
+                        'imap_glows_l3e_survival-probability-hi-45_20100101-repoint00001_v001.cdf',
+                        'imap_glows_l3e_survival-probability-hi-45_20100102-repoint00002_v001.cdf',
+                        'imap_glows_l3e_survival-probability-hi-45_20100103-repoint00003_v001.cdf',
 
-        expected_possible_maps = [
-            PossibleMapToProduce(
-                input_files={
-                    'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf',
-                    'imap_glows_l3e_survival-probability-hi-45_20100101-repoint00001_v001.cdf',
-                    'imap_glows_l3e_survival-probability-hi-45_20100102-repoint00002_v001.cdf',
-                    'imap_glows_l3e_survival-probability-hi-45_20100103-repoint00003_v001.cdf',
-                    'imap_hi_l1c_45sensor-pset_20100101-repoint00001_v001.cdf',
-                    'imap_hi_l1c_45sensor-pset_20100102-repoint00002_v001.cdf',
-                    'imap_hi_l1c_45sensor-pset_20100103-repoint00003_v001.cdf',
-                },
-                input_metadata=InputMetadata(
-                    instrument="hi",
-                    data_level="l3",
-                    start_date=datetime(2010, 1, 1),
-                    end_date=datetime(2010, 4, 2, 7, 30),
-                    version="v001",
-                    descriptor='h45-ena-h-sf-sp-anti-hae-4deg-3mo',
-                )
-            ),
-            PossibleMapToProduce(
-                input_files={
-                    'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100401_v001.cdf',
-                    'imap_glows_l3e_survival-probability-hi-45_20100401-repoint00101_v001.cdf',
-                    'imap_glows_l3e_survival-probability-hi-45_20100402-repoint00102_v001.cdf',
-                    'imap_glows_l3e_survival-probability-hi-45_20100403-repoint00103_v001.cdf',
-                    'imap_hi_l1c_45sensor-pset_20100401-repoint00101_v001.cdf',
-                    'imap_hi_l1c_45sensor-pset_20100402-repoint00102_v001.cdf',
-                    'imap_hi_l1c_45sensor-pset_20100403-repoint00103_v001.cdf',
-                },
-                input_metadata=InputMetadata(
-                    instrument="hi",
-                    data_level="l3",
-                    start_date=datetime(2010, 4, 1),
-                    end_date=datetime(2010, 7, 1, 7, 30),
-                    version="v001",
-                    descriptor='h45-ena-h-sf-sp-anti-hae-4deg-3mo',
-                )
-            ),
-            PossibleMapToProduce(
-                input_files={
-                    'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100701_v001.cdf',
-                    'imap_glows_l3e_survival-probability-hi-45_20100702-repoint00202_v001.cdf',
-                    'imap_hi_l1c_45sensor-pset_20100401-repoint00201_v001.cdf',
-                    'imap_hi_l1c_45sensor-pset_20100402-repoint00202_v001.cdf',
-                    'imap_hi_l1c_45sensor-pset_20100403-repoint00203_v001.cdf',
-                },
-                input_metadata=InputMetadata(
-                    instrument="hi",
-                    data_level="l3",
-                    start_date=datetime(2010, 7, 1),
-                    end_date=datetime(2010, 9, 30, 7, 30),
-                    version="v001",
-                    descriptor='h45-ena-h-sf-sp-anti-hae-4deg-3mo',
-                )
-            ),
-            PossibleMapToProduce(
-                input_files={
-                    'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20101001_v001.cdf',
-                    'imap_hi_l1c_45sensor-pset_20101001-repoint00301_v001.cdf',
-                    'imap_hi_l1c_45sensor-pset_20101002-repoint00302_v001.cdf',
-                    'imap_hi_l1c_45sensor-pset_20101003-repoint00303_v001.cdf',
-                },
-                input_metadata=InputMetadata(
-                    instrument="hi",
-                    data_level="l3",
-                    start_date=datetime(2010, 10, 1),
-                    end_date=datetime(2010, 12, 31, 7, 30),
-                    version="v001",
-                    descriptor='h45-ena-h-sf-sp-anti-hae-4deg-3mo',
-                )
-            ),
-        ]
+                        'imap_glows_l3e_survival-probability-hi-45_20100401-repoint00101_v001.cdf',
+                        'imap_glows_l3e_survival-probability-hi-45_20100402-repoint00102_v001.cdf',
+                        'imap_glows_l3e_survival-probability-hi-45_20100403-repoint00103_v001.cdf',
 
-        initializer = HiSPInitializer()
+                        'imap_glows_l3e_survival-probability-hi-45_20100702-repoint00202_v001.cdf',
+                    ]),
+                    create_mock_query_results([]),
+                    create_mock_query_results([
+                        'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf',
+                        'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100401_v001.cdf',
+                        'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100701_v001.cdf',
+                        'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20101001_v001.cdf'
+                    ]),
+                    create_mock_query_results([])
+                ]
 
-        self.mock_query.assert_has_calls([
-            call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-45', version="latest"),
-            call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-90', version="latest"),
-            call(instrument='hi', data_level='l2'),
-            call(instrument='hi', data_level='l3'),
-        ])
+                mock_read_cdf_parents.side_effect = self.create_fake_read_cdf_parents("45")
 
-        actual_possible_maps = initializer.get_maps_that_can_be_produced('h45-ena-h-sf-sp-anti-hae-4deg-3mo')
+                expected_possible_maps = [
+                    PossibleMapToProduce(
+                        input_files={
+                            'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf',
+                            'imap_glows_l3e_survival-probability-hi-45_20100101-repoint00001_v001.cdf',
+                            'imap_glows_l3e_survival-probability-hi-45_20100102-repoint00002_v001.cdf',
+                            'imap_glows_l3e_survival-probability-hi-45_20100103-repoint00003_v001.cdf',
+                            'imap_hi_l1c_45sensor-pset_20100101-repoint00001_v001.cdf',
+                            'imap_hi_l1c_45sensor-pset_20100102-repoint00002_v001.cdf',
+                            'imap_hi_l1c_45sensor-pset_20100103-repoint00003_v001.cdf',
+                        },
+                        input_metadata=InputMetadata(
+                            instrument="hi",
+                            data_level="l3",
+                            start_date=datetime(2010, 1, 1),
+                            end_date=datetime(2010, 4, 2, 7, 30),
+                            version=expected_version,
+                            descriptor=descriptor,
+                        )
+                    ),
+                    PossibleMapToProduce(
+                        input_files={
+                            'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100401_v001.cdf',
+                            'imap_glows_l3e_survival-probability-hi-45_20100401-repoint00101_v001.cdf',
+                            'imap_glows_l3e_survival-probability-hi-45_20100402-repoint00102_v001.cdf',
+                            'imap_glows_l3e_survival-probability-hi-45_20100403-repoint00103_v001.cdf',
+                            'imap_hi_l1c_45sensor-pset_20100401-repoint00101_v001.cdf',
+                            'imap_hi_l1c_45sensor-pset_20100402-repoint00102_v001.cdf',
+                            'imap_hi_l1c_45sensor-pset_20100403-repoint00103_v001.cdf',
+                        },
+                        input_metadata=InputMetadata(
+                            instrument="hi",
+                            data_level="l3",
+                            start_date=datetime(2010, 4, 1),
+                            end_date=datetime(2010, 7, 1, 7, 30),
+                            version=expected_version,
+                            descriptor=descriptor,
+                        )
+                    ),
+                    PossibleMapToProduce(
+                        input_files={
+                            'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100701_v001.cdf',
+                            'imap_glows_l3e_survival-probability-hi-45_20100702-repoint00202_v001.cdf',
+                            'imap_hi_l1c_45sensor-pset_20100401-repoint00201_v001.cdf',
+                            'imap_hi_l1c_45sensor-pset_20100402-repoint00202_v001.cdf',
+                            'imap_hi_l1c_45sensor-pset_20100403-repoint00203_v001.cdf',
+                        },
+                        input_metadata=InputMetadata(
+                            instrument="hi",
+                            data_level="l3",
+                            start_date=datetime(2010, 7, 1),
+                            end_date=datetime(2010, 9, 30, 7, 30),
+                            version=expected_version,
+                            descriptor=descriptor,
+                        )
+                    ),
+                    PossibleMapToProduce(
+                        input_files={
+                            'imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20101001_v001.cdf',
+                            'imap_hi_l1c_45sensor-pset_20101001-repoint00301_v001.cdf',
+                            'imap_hi_l1c_45sensor-pset_20101002-repoint00302_v001.cdf',
+                            'imap_hi_l1c_45sensor-pset_20101003-repoint00303_v001.cdf',
+                        },
+                        input_metadata=InputMetadata(
+                            instrument="hi",
+                            data_level="l3",
+                            start_date=datetime(2010, 10, 1),
+                            end_date=datetime(2010, 12, 31, 7, 30),
+                            version=expected_version,
+                            descriptor=descriptor,
+                        )
+                    ),
+                ]
 
-        mock_read_cdf_parents.assert_has_calls([
-            call('imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf'),
-            call('imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100401_v001.cdf'),
-            call('imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100701_v001.cdf'),
-            call('imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20101001_v001.cdf'),
-        ], any_order=True)
+                initializer = HiSPInitializer()
 
-        self.assertEqual(expected_possible_maps, actual_possible_maps)
+                self.mock_query.assert_has_calls([
+                    call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-45', version="latest"),
+                    call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-90', version="latest"),
+                    call(instrument='hi', data_level='l2'),
+                    call(instrument='hi', data_level='l3'),
+                ])
+
+                actual_possible_maps = initializer.get_maps_that_can_be_produced('h45-ena-h-sf-sp-anti-hae-4deg-3mo')
+
+                mock_read_cdf_parents.assert_has_calls([
+                    call('imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf'),
+                    call('imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100401_v001.cdf'),
+                    call('imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100701_v001.cdf'),
+                    call('imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20101001_v001.cdf'),
+                ], any_order=True)
+
+                self.assertEqual(expected_possible_maps, actual_possible_maps)
 
     @patch('imap_l3_processing.maps.map_initializer.read_cdf_parents')
     def test_get_maps_that_can_be_produced_with_no_glows_data(self, mock_read_cdf_parents):
@@ -199,7 +209,8 @@ class TestHiSPInitializer(unittest.TestCase):
         ]
 
         initializer = HiSPInitializer()
-        actual_possible_maps = initializer.get_maps_that_can_be_produced('h90-ena-h-sf-sp-full-hae-4deg-6mo')
+        descriptor = 'h90-ena-h-sf-sp-full-hae-4deg-6mo'
+        actual_possible_maps = initializer.get_maps_that_can_be_produced(descriptor)
 
         self.mock_query.assert_has_calls([
             call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-45', version="latest"),
@@ -227,8 +238,8 @@ class TestHiSPInitializer(unittest.TestCase):
                 data_level="l3",
                 start_date=datetime(2010, 1, 1),
                 end_date=datetime(2010, 7, 2, 15),
-                version="v001",
-                descriptor='h90-ena-h-sf-sp-full-hae-4deg-6mo',
+                version=VersionMap({},Version(None,1)),
+                descriptor=descriptor,
             )
         )
 
@@ -318,6 +329,7 @@ class TestHiSPInitializer(unittest.TestCase):
 
         mock_read_cdf_parents.side_effect = self.create_fake_read_cdf_parents("90")
 
+        descriptor = 'h90-ena-h-sf-sp-anti-hae-4deg-3mo'
         expected_possible_maps = [
             PossibleMapToProduce(
                 input_files={
@@ -334,8 +346,8 @@ class TestHiSPInitializer(unittest.TestCase):
                     data_level="l3",
                     start_date=datetime(2010, 4, 1),
                     end_date=datetime(2010, 7, 1, 7, 30),
-                    version="v002",
-                    descriptor='h90-ena-h-sf-sp-anti-hae-4deg-3mo',
+                    version=VersionMap({descriptor:Version(None,2)}),
+                    descriptor=descriptor,
                 )
             ),
             PossibleMapToProduce(
@@ -351,8 +363,8 @@ class TestHiSPInitializer(unittest.TestCase):
                     data_level="l3",
                     start_date=datetime(2010, 7, 1),
                     end_date=datetime(2010, 9, 30, 7, 30),
-                    version="v001",
-                    descriptor='h90-ena-h-sf-sp-anti-hae-4deg-3mo',
+                    version=VersionMap({descriptor:Version(None,1)}),
+                    descriptor=descriptor,
                 )
             ),
             PossibleMapToProduce(
@@ -367,8 +379,8 @@ class TestHiSPInitializer(unittest.TestCase):
                     data_level="l3",
                     start_date=datetime(2010, 10, 1),
                     end_date=datetime(2010, 12, 31, 7, 30),
-                    version="v001",
-                    descriptor='h90-ena-h-sf-sp-anti-hae-4deg-3mo',
+                    version=VersionMap({descriptor:Version(None,1)}),
+                    descriptor=descriptor,
                 )
             ),
         ]
@@ -382,7 +394,7 @@ class TestHiSPInitializer(unittest.TestCase):
             call(instrument='hi', data_level='l3'),
         ])
 
-        actual_possible_maps = initializer.get_maps_that_should_be_produced('h90-ena-h-sf-sp-anti-hae-4deg-3mo')
+        actual_possible_maps = initializer.get_maps_that_should_be_produced(descriptor, None)
 
         mock_read_cdf_parents.assert_has_calls([
             call(f'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf'),
@@ -395,6 +407,75 @@ class TestHiSPInitializer(unittest.TestCase):
         ])
 
         self.assertEqual(expected_possible_maps, actual_possible_maps)
+
+
+
+    @patch('imap_l3_processing.maps.map_initializer.read_cdf_parents')
+    def test_get_maps_that_should_be_produced_remakes_when_major_version_changes(self, mock_read_cdf_parents):
+        for major_version in [2,3]:
+            with self.subTest(major_version=major_version):
+                self.mock_query.reset_mock()
+                mock_read_cdf_parents.reset_mock()
+                self.mock_query.side_effect = [
+                    create_mock_query_results([]),
+                    create_mock_query_results([
+                        'imap_glows_l3e_survival-probability-hi-90_20100101-repoint00001_v001.cdf',
+                        'imap_glows_l3e_survival-probability-hi-90_20100102-repoint00002_v001.cdf',
+                        'imap_glows_l3e_survival-probability-hi-90_20100103-repoint00003_v001.cdf',
+                    ]),
+                    create_mock_query_results([
+                        'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf',
+                        'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v000.cdf',
+                    ]),
+                    create_mock_query_results([
+                        'imap_hi_l3_h90-ena-h-sf-sp-anti-hae-4deg-3mo_20100101_v001.cdf',
+                        'imap_hi_l3_h90-ena-h-sf-sp-anti-hae-4deg-3mo_20100101_v000.cdf',
+                    ]),
+                ]
+
+                mock_read_cdf_parents.side_effect = self.create_fake_read_cdf_parents("90")
+
+                descriptor = 'h90-ena-h-sf-sp-anti-hae-4deg-3mo'
+                expected_possible_maps = [
+                    PossibleMapToProduce(
+                        input_files={
+                            'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf',
+                            'imap_glows_l3e_survival-probability-hi-90_20100101-repoint00001_v001.cdf',
+                            'imap_glows_l3e_survival-probability-hi-90_20100102-repoint00002_v001.cdf',
+                            'imap_glows_l3e_survival-probability-hi-90_20100103-repoint00003_v001.cdf',
+                            'imap_hi_l1c_90sensor-pset_20100101-repoint00001_v001.cdf',
+                            'imap_hi_l1c_90sensor-pset_20100102-repoint00002_v001.cdf',
+                            'imap_hi_l1c_90sensor-pset_20100103-repoint00003_v001.cdf',
+                        },
+                        input_metadata=InputMetadata(
+                            instrument="hi",
+                            data_level="l3",
+                            start_date=datetime(2010, 1, 1),
+                            end_date=datetime(2010, 4, 2, 7, 30),
+                            version=VersionMap({descriptor:Version(major_version,2)}),
+                            descriptor=descriptor,
+                        )
+                    ),
+                ]
+
+                initializer = HiSPInitializer()
+
+                self.mock_query.assert_has_calls([
+                    call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-45', version="latest"),
+                    call(instrument='glows', data_level='l3e', descriptor='survival-probability-hi-90', version="latest"),
+                    call(instrument='hi', data_level='l2'),
+                    call(instrument='hi', data_level='l3'),
+                ])
+
+                actual_possible_maps = initializer.get_maps_that_should_be_produced(descriptor, major_version)
+
+                mock_read_cdf_parents.assert_has_calls([
+                    call(f'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf'),
+
+                    call(f'imap_hi_l3_h90-ena-h-sf-sp-anti-hae-4deg-3mo_20100101_v001.cdf'),
+                ])
+
+                self.assertEqual(expected_possible_maps, actual_possible_maps)
 
     def test_get_dependencies(self):
         cases = [

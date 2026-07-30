@@ -2,9 +2,11 @@ import unittest
 from datetime import datetime
 from unittest.mock import patch, call
 
+from imap_data_access.file_validation import Version
+
 from imap_l3_processing.lo.l3.lo_sp_initializer import LoSPInitializer, LO_SP_MAP_KERNELS
 from imap_l3_processing.maps.map_initializer import PossibleMapToProduce, MapInitializer
-from imap_l3_processing.models import InputMetadata
+from imap_l3_processing.models import InputMetadata, VersionMap
 from tests.integration.integration_test_helpers import ImapQueryPatcher
 
 
@@ -40,8 +42,8 @@ class TestLoSPInitializer(unittest.TestCase):
             'imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20100701_v001.cdf',
             'imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20101001_v001.cdf',
 
-            'imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100101_v001.cdf',
-            'imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100401_v001.cdf'
+            'imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100101_v003.0001.cdf',
+            'imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100401_v003.0001.cdf'
         ])
 
         mock_read_cdf_parents.side_effect = [
@@ -86,7 +88,9 @@ class TestLoSPInitializer(unittest.TestCase):
         ]
 
         initializer = LoSPInitializer()
-        actual_maps_to_produce = initializer.get_maps_that_should_be_produced("l090-ena-h-sf-sp-ram-hae-6deg-12mo")
+        descriptor = "l090-ena-h-sf-sp-ram-hae-6deg-12mo"
+        actual_maps_to_produce = initializer.get_maps_that_should_be_produced(descriptor,
+                                                                              3)
 
         self.mock_query.assert_has_calls([
             call(instrument='glows', data_level='l3e', descriptor='survival-probability-lo', version="latest"),
@@ -100,8 +104,8 @@ class TestLoSPInitializer(unittest.TestCase):
             call('imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20100701_v001.cdf'),
             call('imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20101001_v001.cdf'),
 
-            call('imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100101_v001.cdf'),
-            call('imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100401_v001.cdf')
+            call('imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100101_v003.0001.cdf'),
+            call('imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100401_v003.0001.cdf')
         ])
 
         expected_possible_map_to_produce = PossibleMapToProduce(
@@ -110,8 +114,8 @@ class TestLoSPInitializer(unittest.TestCase):
                 data_level="l3",
                 start_date=datetime(2010, 4, 1),
                 end_date=datetime(2011, 4, 1, 6, 0),
-                version="v002",
-                descriptor="l090-ena-h-sf-sp-ram-hae-6deg-12mo"
+                version=VersionMap({descriptor: Version(3, 2)}),
+                descriptor=descriptor
             ),
             input_files={
                 'imap_glows_l3e_survival-probability-lo_20100401-repoint00101_v002.cdf',

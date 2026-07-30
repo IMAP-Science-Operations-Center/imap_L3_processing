@@ -10,9 +10,16 @@ from urllib.parse import urlparse
 import imap_data_access
 import requests
 from imap_data_access import AncillaryFilePath
-from imap_data_access.file_validation import generate_imap_file_path, ScienceFilePath, SPICEFilePath
+from imap_data_access.file_validation import (
+    generate_imap_file_path,
+    ScienceFilePath,
+    SPICEFilePath,
+    Version,
+)
 from requests import Response
 
+from imap_l3_processing.glows.l3bc.models import OMNI2_URL
+from imap_l3_processing.utils import get_version_from_query_result
 from tests.test_helpers import create_mock_query_results
 
 
@@ -61,7 +68,7 @@ class ImapQueryPatcher:
         query_results_by_date = defaultdict(list)
         for qr in query_results:
             query_results_by_date[qr["start_date"]].append(qr)
-        return [max(qrs, key=lambda qr: qr["version"]) for qrs in query_results_by_date.values()]
+        return [max(qrs, key=get_version_from_query_result) for qrs in query_results_by_date.values()]
 
 def fake_download(file: Path | str):
     filename = Path(file).name
@@ -112,10 +119,11 @@ def create_metakernel(path_to_spice_dir: str, requested_spice_paths: list[SPICEF
 
 
 class RequestsGetPatcher:
-    def __init__(self, spice_inputs: list[Path]):
+    def __init__(self, spice_inputs: list[Path], omni_file: Path | None = None):
         self.spice_file_names = [Path(spice_input).name for spice_input in spice_inputs]
         self.original_requests_get = requests.get
         self.patcher = patch.object(requests, "get", new=self)
+        self.omni_file = omni_file
 
     def start(self):
         self.patcher.start()
@@ -142,6 +150,9 @@ class RequestsGetPatcher:
                     response.content = response.text.encode()
             else:
                 assert False, "I don't know how to mock that IMAP endpoint!"
+        elif url == OMNI2_URL and self.omni_file:
+            response.status_code = 200
+            response.content = self.omni_file.read_bytes()
         else:
             response = self.original_requests_get(url, **kwargs)
 
@@ -149,7 +160,7 @@ class RequestsGetPatcher:
 
 
 class mock_imap_data_access:
-    def __init__(self, data_dir: Path, input_files: list[Path]):
+    def __init__(self, data_dir: Path, input_files: list[Path], omni_file: Path | None = None):
         self.data_dir = data_dir
 
         valid_files = []
@@ -170,7 +181,7 @@ class mock_imap_data_access:
         self.data_dir_patcher = patch.dict(imap_data_access.config, {"DATA_DIR": self.data_dir})
         self.download_patcher = patch.object(imap_data_access, "download", new=fake_download)
         self.query_patcher = ImapQueryPatcher(self.input_files)
-        self.requests_get_patcher = RequestsGetPatcher(spice_file_paths)
+        self.requests_get_patcher = RequestsGetPatcher(spice_file_paths, omni_file)
 
     def __enter__(self):
         self.env_patcher.start()

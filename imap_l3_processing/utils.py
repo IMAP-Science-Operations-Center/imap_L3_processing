@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, date, timedelta
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Optional, Union, TypeVar
 from urllib.parse import urlparse
 
@@ -13,6 +14,7 @@ import numpy as np
 import requests
 import spiceypy
 from imap_data_access import ScienceFilePath, download
+from imap_data_access.file_validation import Version
 from imap_data_access.processing_input import ProcessingInputCollection
 from requests import RequestException
 from spacepy.pycdf import CDF
@@ -26,12 +28,24 @@ from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, 
     HealPixIntensityMapData, HealPixSpectralIndexMapData, RectangularSpectralIndexDataProduct, \
     RectangularIntensityDataProduct, HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct, MapDataProduct, \
     ISNBackgroundSubtractedDataProduct, ISNBackgroundSubtractedMapData
-from imap_l3_processing.models import UpstreamDataDependency, DataProduct, MagData, InputMetadata
+from imap_l3_processing.models import DataProduct, MagData, InputMetadata
 from imap_l3_processing.ultra.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.version import VERSION
 
 logger = logging.getLogger(__name__)
+_cache_directory: TemporaryDirectory|None = None
 
+def get_temp_cache_dir() -> Path:
+    global _cache_directory
+    if _cache_directory is None:
+        _cache_directory = TemporaryDirectory(ignore_cleanup_errors=True)
+    return Path(_cache_directory.name)
+
+def clear_temp_cache():
+    global _cache_directory
+    if _cache_directory is not None:
+        _cache_directory.cleanup()
+    _cache_directory = None
 
 class SpiceKernelTypes(enum.Enum):
     Leapseconds = "leapseconds"
@@ -50,6 +64,7 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: P
               cr_number=None) -> Path:
     assert data.input_metadata.repointing is None or cr_number is None, "You cannot call save_data with both a repointing in the metadata while passing in a CR number"
     formatted_start_date = data.input_metadata.start_date.strftime("%Y%m%d")
+    version = data.input_metadata.version.lookup(data.input_metadata.descriptor)
     science_file_path = ScienceFilePath.generate_from_inputs(
         instrument=data.input_metadata.instrument,
         data_level=data.input_metadata.data_level,
@@ -57,7 +72,8 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: P
         start_time=formatted_start_date,
         repointing=data.input_metadata.repointing,
         cr=cr_number,
-        version=data.input_metadata.version,
+        major_version=version.major,
+        minor_version=version.minor,
     )
 
     file_path = science_file_path.construct_path()
@@ -72,7 +88,8 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: P
         file_path.unlink(missing_ok=True)
 
     attribute_manager = ImapAttributeManager()
-    attribute_manager.add_global_attribute("Data_version", data.input_metadata.version.replace('v', ''))
+    version = str(data.input_metadata.version.lookup(data.input_metadata.descriptor)).replace('v','')
+    attribute_manager.add_global_attribute("Data_version", version)
     attribute_manager.add_instrument_attrs(data.input_metadata.instrument, data.input_metadata.data_level,
                                            data.input_metadata.descriptor)
     attribute_manager.add_global_attribute("Generation_date", date.today().strftime("%Y%m%d"))
@@ -171,37 +188,6 @@ def format_time(t: Optional[datetime]) -> Optional[str]:
     if t is not None:
         return t.strftime("%Y%m%d")
     return None
-
-
-def download_dependency(dependency: UpstreamDataDependency) -> Path:
-    files_to_download = [result['file_path'] for result in
-                         imap_data_access.query(instrument=dependency.instrument,
-                                                data_level=dependency.data_level,
-                                                descriptor=dependency.descriptor,
-                                                start_date=format_time(dependency.start_date),
-                                                end_date=format_time(dependency.end_date),
-                                                version=dependency.version
-                                                )]
-    if len(files_to_download) != 1:
-        raise ValueError(f"{files_to_download}. Expected one file to download, found {len(files_to_download)}.")
-
-    return imap_data_access.download(files_to_download[0])
-
-
-def download_dependency_with_repointing(dependency: UpstreamDataDependency) -> (Path, int):
-    files_with_repointing_to_download = [(result['file_path'], result['repointing']) for result in
-                                         imap_data_access.query(instrument=dependency.instrument,
-                                                                data_level=dependency.data_level,
-                                                                descriptor=dependency.descriptor,
-                                                                start_date=format_time(dependency.start_date),
-                                                                end_date=format_time(dependency.end_date),
-                                                                version=dependency.version
-                                                                )]
-    if len(files_with_repointing_to_download) != 1:
-        raise ValueError(
-            f"{[file[0] for file in files_with_repointing_to_download]}. Expected one file to download, found {len(files_with_repointing_to_download)}.")
-    repointing_number = files_with_repointing_to_download[0][1]
-    return imap_data_access.download(files_with_repointing_to_download[0][0]), repointing_number
 
 
 def download_external_dependency(dependency_url: str, file_path: Path) -> Optional[Path]:
@@ -352,3 +338,9 @@ def read_cdf_parents(server_file_name: str) -> set[str]:
     with CDF(str(downloaded_path)) as cdf:
         parents = set(cdf.attrs["Parents"])
     return parents
+
+def get_version_from_query_result(science_file_query_result):
+    if "major_version" in science_file_query_result:
+        return Version(science_file_query_result["major_version"], science_file_query_result["minor_version"])
+    else:
+        return Version.from_version(science_file_query_result["version"])

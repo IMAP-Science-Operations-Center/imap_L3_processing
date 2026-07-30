@@ -6,6 +6,7 @@ from typing import Optional
 
 import imap_data_access
 import numpy as np
+from imap_data_access.file_validation import Version
 from spacepy.pycdf import CDF
 
 import imap_l3_processing
@@ -142,5 +143,11 @@ def rename_l3d_text_outputs(paths: list[Path], version: str) -> list[Path]:
 
 def query_for_most_recent_l3d(descriptor: str) -> Optional[dict]:
     query_result = imap_data_access.query(instrument="glows", data_level="l3d", descriptor=descriptor)
-    sorted_query_result = sorted(query_result, key=lambda qr: (qr["cr"], qr["version"]), reverse=True)
+    sorted_query_result = sorted(
+        query_result,
+        key=lambda qr: (
+            qr["cr"],
+            (qr["minor_version"] if "minor_version" in qr else Version.from_version(qr["version"]).minor)
+        ),
+        reverse=True)
     return next(iter(sorted_query_result), None)

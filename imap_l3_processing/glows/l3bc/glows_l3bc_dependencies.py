@@ -3,6 +3,7 @@ from datetime import datetime
 from pathlib import Path
 
 import imap_data_access
+from imap_data_access.file_validation import Version
 
 from imap_l3_processing.glows.l3a.utils import create_glows_l3a_dictionary_from_cdf
 from imap_l3_processing.glows.l3bc.models import CRToProcess, ExternalDependencies
@@ -10,7 +11,7 @@ from imap_l3_processing.glows.l3bc.models import CRToProcess, ExternalDependenci
 
 @dataclass
 class GlowsL3BCDependencies:
-    version: int
+    version: Version
     carrington_rotation_number: int
     start_date: datetime
     end_date: datetime
@@ -24,7 +25,7 @@ class GlowsL3BCDependencies:
         return [l3a['filename'] for l3a in self.l3a_data]
 
     @classmethod
-    def download_from_cr_to_process(cls, cr_to_process: CRToProcess, version: int,
+    def download_from_cr_to_process(cls, cr_to_process: CRToProcess, version: Version,
                                     external_dependencies: ExternalDependencies, repointing_file_path: Path):
         external_files = {
             'f107_raw_data': external_dependencies.f107_index_file_path,

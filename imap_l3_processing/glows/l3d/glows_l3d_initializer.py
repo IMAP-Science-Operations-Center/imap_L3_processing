@@ -4,6 +4,7 @@ from typing import Optional
 
 import imap_data_access
 from imap_data_access import ProcessingInputCollection, ScienceInput, AncillaryInput, ScienceFilePath
+from imap_data_access.file_validation import Version
 
 from imap_l3_processing.glows.descriptors import PLASMA_SPEED_DESCRIPTOR, PROTON_DENSITY_DESCRIPTOR, \
     UV_ANISOTROPY_DESCRIPTOR, PHOTOION_DESCRIPTOR, LYA_DESCRIPTOR, ELECTRON_DENSITY_DESCRIPTOR, \
@@ -11,7 +12,7 @@ from imap_l3_processing.glows.descriptors import PLASMA_SPEED_DESCRIPTOR, PROTON
 from imap_l3_processing.glows.l3bc.models import ExternalDependencies, read_pipeline_settings
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3d.utils import query_for_most_recent_l3d
-from imap_l3_processing.utils import read_cdf_parents
+from imap_l3_processing.utils import read_cdf_parents, get_version_from_query_result
 
 logger = logging.getLogger(__name__)
 
@@ -19,8 +20,8 @@ logger = logging.getLogger(__name__)
 class GlowsL3DInitializer:
 
     @staticmethod
-    def should_process_l3d(external_deps: ExternalDependencies, l3bs: list[str], l3cs: list[str]) -> Optional[
-        tuple[int, GlowsL3DDependencies, Optional[Path]]]:
+    def should_process_l3d(external_deps: ExternalDependencies, l3bs: list[str], l3cs: list[str], major_version: int|None) -> Optional[
+        tuple[Version, GlowsL3DDependencies, Optional[str]]]:
         if len(l3bs) == 0 and len(l3cs) == 0:
             logger.info("Found no L3b and L3c files!")
             return None
@@ -105,13 +106,19 @@ class GlowsL3DInitializer:
             l3d_parents = read_cdf_parents(Path(most_recent_l3d["file_path"]).name)
             old_l3d = Path(most_recent_l3d["file_path"]).name
 
-            logger.info(f"Old L3d parents: {l3d_parents}, new L3d deps: {updated_input_files}")
-            if updated_input_files.issubset(l3d_parents):
+            logger.info(
+                f"Old L3d parents: {l3d_parents}, new L3d deps: {updated_input_files}"
+            )
+
+            most_recent_l3d_version = get_version_from_query_result(most_recent_l3d)
+            same_major_version = most_recent_l3d_version.major == major_version
+            if same_major_version and updated_input_files.issubset(l3d_parents):
                 return None
-            version_to_generate = int(most_recent_l3d['version'][1:]) + 1
+            minor_version_to_generate = most_recent_l3d_version.minor + 1
         else:
             old_l3d = None
-            version_to_generate = 1
+            minor_version_to_generate = 1
+        version_to_generate = Version(major_version, minor_version_to_generate)
 
         return (version_to_generate,
                 GlowsL3DDependencies.fetch_dependencies(processing_input_collection, external_deps),

@@ -11,7 +11,7 @@ float_data: &float_data
 
 species_3d_distribution: &species_3d_distribution
   <<: *float_data
-  UNITS: cm -2 s -1 sr -1 keV -1
+  UNITS: "#/(cm^2-s-sr-keV/q)"
   VAR_TYPE: data
   DISPLAY_TYPE: spectrogram
   RECORD_VARYING: RV

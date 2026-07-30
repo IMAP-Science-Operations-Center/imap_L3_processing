@@ -3,11 +3,12 @@ from unittest import mock
 from unittest.mock import Mock, call, patch, sentinel
 
 import numpy as np
+from imap_data_access.file_validation import Version
 from spacepy import pycdf
 
 from imap_l3_processing.cdf.cdf_utils import write_cdf, read_variable_and_mask_fill_values, read_numeric_variable
 from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
-from imap_l3_processing.models import DataProduct, DataProductVariable, InputMetadata
+from imap_l3_processing.models import DataProduct, DataProductVariable, InputMetadata, VersionMap
 from tests.temp_file_test_case import TempFileTestCase
 
 
@@ -337,7 +338,7 @@ class TestDataProduct(DataProduct):
     def __init__(self):
         super().__init__(
             input_metadata=InputMetadata("glows", "l3", datetime(year=2025, month=5, day=10),
-                                            datetime(year=2025, month=5, day=12), "v003", "descriptor"),
+                                            datetime(year=2025, month=5, day=12), VersionMap({'descriptor': Version(None, 3)}), "descriptor"),
             parent_file_names=[]
         )
 

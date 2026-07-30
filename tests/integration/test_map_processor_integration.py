@@ -1,3 +1,4 @@
+import json
 import logging
 import unittest
 from datetime import timedelta
@@ -10,6 +11,7 @@ from spacepy.pycdf import CDF
 from spiceypy import spiceypy
 
 import imap_l3_data_processor
+from imap_l3_processing.hi.hi_combined_initializer import HI_COMBINED_DESCRIPTORS
 from tests.integration.integration_test_helpers import mock_imap_data_access
 from tests.test_helpers import get_run_local_data_path, run_periodically, get_test_data_path
 
@@ -219,7 +221,13 @@ class TestMapIntegration(unittest.TestCase):
             mock_arguments.end_date = None
             mock_arguments.repointing = None
             mock_arguments.version = "v001"
-            mock_arguments.dependency = "[]"
+
+            version_descriptors = {descriptor: {"major_version": 4, "minor_version": 7} for descriptor in HI_COMBINED_DESCRIPTORS}
+            dependency_with_version_info = {
+                "version": version_descriptors,
+                "dependency": []
+            }
+            mock_arguments.dependency = json.dumps(dependency_with_version_info)
             mock_arguments.upload_to_sdc = False
 
             mock_parse_cli_arguments.return_value = mock_arguments
@@ -227,14 +235,14 @@ class TestMapIntegration(unittest.TestCase):
             imap_l3_data_processor.imap_l3_processor()
 
             expected_map_path = ScienceFilePath(
-                'imap_hi_l3_hic-ena-h-hf-sp-full-hae-6deg-1yr_20250415_v001.cdf').construct_path()
+                'imap_hi_l3_hic-ena-h-hf-sp-full-hae-6deg-1yr_20250415_v004.0001.cdf').construct_path()
             self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
 
             with CDF(str(expected_map_path)) as cdf:
                 self.assertEqual(set(sp_files), set(cdf.attrs["Parents"]))
 
             expected_map_path = ScienceFilePath(
-                'imap_hi_l3_hic-ena-h-hf-nsp-full-hae-6deg-1yr_20250415_v001.cdf').construct_path()
+                'imap_hi_l3_hic-ena-h-hf-nsp-full-hae-6deg-1yr_20250415_v004.0001.cdf').construct_path()
             self.assertTrue(expected_map_path.exists(), f"Expected file {expected_map_path.name} not found")
 
             with CDF(str(expected_map_path)) as cdf:

@@ -6,17 +6,21 @@ from unittest.mock import patch, Mock, call, sentinel
 
 import imap_data_access
 import numpy as np
+from imap_data_access.file_validation import Version
 from imap_data_access import SPICEFilePath
-
-from imap_l3_processing.glows.quality_flags import GlowsL3Flags
+from imap_processing.spice.repoint import get_repoint_data, set_global_repoint_table_paths
 from spacepy.pycdf import CDF, const
-
+from imap_l3_processing.constants import ONE_SECOND_IN_NANOSECONDS
+from imap_l3_processing.glows.descriptors import GLOWS_L3E_DESCRIPTORS, GLOWS_L3E_HI_45_DESCRIPTOR, \
+    GLOWS_L3E_HI_90_DESCRIPTOR, GLOWS_L3E_LO_DESCRIPTOR, GLOWS_L3E_ULTRA_SF_DESCRIPTOR, GLOWS_L3E_ULTRA_HF_DESCRIPTOR
 from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments, GlowsL3eSpacecraftInfo
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, \
-    determine_spacecraft_info_for_l3e_executable, \
-    determine_l3e_files_to_produce, find_first_updated_cr, get_lo_pivot_angles, \
+    identify_versions_for_l3e_output_files, find_first_updated_cr, get_lo_pivot_angles, \
     get_lo_pivot_angle_from_l1b_file, LoPivotAngle, compute_glows_flags_for_window, \
+    get_repoint_numbers_within_cr_window, determine_spacecraft_info_for_l3e_executable, \
     determine_spacecraft_info_using_predict_if_needed
+from imap_l3_processing.glows.quality_flags import GlowsL3Flags
+from imap_l3_processing.models import VersionMap
 from imap_l3_processing.utils import FurnishMetakernelOutput
 from tests.integration.integration_test_helpers import mock_imap_data_access, create_metakernel
 from tests.test_helpers import get_test_data_path, create_mock_query_results, get_spice_data_path, \
@@ -151,86 +155,6 @@ class TestGlowsL3EUtils(unittest.TestCase):
                        spin_axis_longitude=np.float64(0.9116206658792297),
                        spin_axis_latitude=np.float64(0.0758987849137639)) ,spacecraft_info)
 
-    @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access.query")
-    def test_determine_l3e_files_to_produce(self, mock_query):
-        last_processed_cr = 2094
-        first_cr_processed = 2093
-        repoint_pathing = get_test_data_path("fake_1_day_repointing_file.csv")
-
-        expected_repointings = [i for i in range(3682, 3736)]
-
-        expected_hi_90_repointing_to_version = {i: 1 for i in expected_repointings}
-        expected_hi_45_repointing_to_version = {i: 1 for i in expected_repointings}
-        expected_lo_repointing_to_version = {i: 1 for i in expected_repointings}
-        expected_ultra_repointing_to_version = {i: 1 for i in expected_repointings}
-
-        expected_hi_90_repointing_to_version.update({
-            3682: 2, 3683: 3, 3684: 4, 3685: 5, 3686: 6
-        })
-        expected_hi_45_repointing_to_version.update({
-            3683: 3, 3684: 4, 3685: 5, 3686: 6, 3687: 7
-        })
-        expected_lo_repointing_to_version.update({
-            3684: 4, 3685: 5, 3686: 6, 3687: 7, 3688: 8
-        })
-        expected_ultra_repointing_to_version.update({
-            3685: 5, 3686: 6, 3687: 7, 3688: 8, 3689: 9
-        })
-
-        mock_query.side_effect = [
-            create_mock_query_results([
-                'imap_glows_l3e_survival-probability-hi-90_20250101-repoint03682_v001.cdf',
-                'imap_glows_l3e_survival-probability-hi-90_20250101-repoint03683_v002.cdf',
-                'imap_glows_l3e_survival-probability-hi-90_20250101-repoint03684_v003.cdf',
-                'imap_glows_l3e_survival-probability-hi-90_20250101-repoint03685_v004.cdf',
-                'imap_glows_l3e_survival-probability-hi-90_20250101-repoint03686_v005.cdf',
-            ]),
-            create_mock_query_results([
-                'imap_glows_l3e_survival-probability-hi-45_20250101-repoint03683_v002.cdf',
-                'imap_glows_l3e_survival-probability-hi-45_20250101-repoint03684_v003.cdf',
-                'imap_glows_l3e_survival-probability-hi-45_20250101-repoint03685_v004.cdf',
-                'imap_glows_l3e_survival-probability-hi-45_20250101-repoint03686_v005.cdf',
-                'imap_glows_l3e_survival-probability-hi-45_20250101-repoint03687_v006.cdf',
-            ]),
-            create_mock_query_results([
-                'imap_glows_l3e_survival-probability-lo_20250101-repoint03684_v003.cdf',
-                'imap_glows_l3e_survival-probability-lo_20250101-repoint03685_v004.cdf',
-                'imap_glows_l3e_survival-probability-lo_20250101-repoint03686_v005.cdf',
-                'imap_glows_l3e_survival-probability-lo_20250101-repoint03687_v006.cdf',
-                'imap_glows_l3e_survival-probability-lo_20250101-repoint03688_v007.cdf',
-            ]),
-            create_mock_query_results([
-                'imap_glows_l3e_survival-probability-ul-sf_20250101-repoint03685_v004.cdf',
-                'imap_glows_l3e_survival-probability-ul-sf_20250101-repoint03686_v005.cdf',
-                'imap_glows_l3e_survival-probability-ul-sf_20250101-repoint03687_v006.cdf',
-                'imap_glows_l3e_survival-probability-ul-sf_20250101-repoint03688_v007.cdf',
-                'imap_glows_l3e_survival-probability-ul-sf_20250101-repoint03689_v008.cdf',
-            ]),
-            create_mock_query_results([
-                'imap_glows_l3e_survival-probability-ul-hf_20250101-repoint03685_v004.cdf',
-                'imap_glows_l3e_survival-probability-ul-hf_20250101-repoint03686_v005.cdf',
-                'imap_glows_l3e_survival-probability-ul-hf_20250101-repoint03687_v006.cdf',
-                'imap_glows_l3e_survival-probability-ul-hf_20250101-repoint03688_v007.cdf',
-                'imap_glows_l3e_survival-probability-ul-hf_20250101-repoint03689_v008.cdf',
-            ]),
-        ]
-
-        repointings = determine_l3e_files_to_produce(first_cr_processed, last_processed_cr, repoint_pathing)
-        mock_query.assert_has_calls([
-            call(instrument="glows", data_level="l3e", version='latest', descriptor='survival-probability-hi-90'),
-            call(instrument="glows", data_level="l3e", version='latest', descriptor='survival-probability-hi-45'),
-            call(instrument="glows", data_level="l3e", version='latest', descriptor='survival-probability-lo'),
-            call(instrument="glows", data_level="l3e", version='latest', descriptor='survival-probability-ul-sf'),
-            call(instrument="glows", data_level="l3e", version='latest', descriptor='survival-probability-ul-hf'),
-        ])
-
-        self.assertEqual(expected_hi_90_repointing_to_version, repointings.hi_90_repointings)
-        self.assertEqual(expected_hi_45_repointing_to_version, repointings.hi_45_repointings)
-        self.assertEqual(expected_lo_repointing_to_version, repointings.lo_repointings)
-        self.assertEqual(expected_ultra_repointing_to_version, repointings.ultra_sf_repointings)
-        self.assertEqual(expected_ultra_repointing_to_version, repointings.ultra_hf_repointings)
-        self.assertEqual(expected_repointings, repointings.repointing_numbers)
-
     @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access.download')
     @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.CDF')
     def test_find_first_updated_cr(self, mock_CDF, mock_download):
@@ -345,15 +269,17 @@ class TestGlowsL3EUtils(unittest.TestCase):
         cases = [
             ("realistic", epochs, [89.1, 89.9, 89.9, 89.9, 89.9, 89.9, 89.9, 89.9, 89.9], 90),
             ("basic", epochs, [10, 20, 30, 40, 50, 60, 70, 80, 90], 50),
-            ("only uses data within 3-15 hours from first point", shifted_epochs, [999, 999, 30, 40, 50, 60, 70, 999, 999], 50),
+            ("only uses data within 3-15 hours from first point", shifted_epochs,
+             [999, 999, 30, 40, 50, 60, 70, 999, 999], 50),
             ("uses median and rounds", epochs, [999, 999, 120.2, 34.4, 86.8, 50.9, 77.7, 999, 999], 78),
-            ("fallback to 90 if no points in interval", first_thirty_minutes + after_22_hours_thirty_minutes, [10, 10, 10, 10], 90),
+            ("fallback to 90 if no points in interval", first_thirty_minutes + after_22_hours_thirty_minutes,
+             [10, 10, 10, 10], 90),
             ("fallback to 90 if no points at all", [], [], 90),
         ]
         for name, epochs, pivot_angles, expected in cases:
             with self.subTest(name):
                 with tempfile.TemporaryDirectory() as tmp_dir:
-                    cdf_path = Path(tmp_dir,"l1b.cdf")
+                    cdf_path = Path(tmp_dir, "l1b.cdf")
                     with CDF(str(cdf_path), create=True) as cdf:
                         cdf["epoch"] = epochs
                         cdf["pcc_coarse_pot_pri"] = pivot_angles
@@ -362,20 +288,24 @@ class TestGlowsL3EUtils(unittest.TestCase):
 
     def test_compute_glows_flags_for_window(self):
         epochs = [
-            datetime(2025, 5, 1, 0, 0),
-            datetime(2025, 5, 1, 12, 0),
-            datetime(2025, 5, 2, 0, 0),
-            datetime(2025, 5, 2, 12, 0),
-            datetime(2025, 5, 3, 0, 0),
+            datetime(2025, 5, 6, 0, 0),
+            datetime(2025, 5, 16, 0, 0),
+            datetime(2025, 5, 26, 0, 0),
+            datetime(2025, 6, 5, 0, 0),
         ]
-        flags = [1, 4, 8, 16, 2]
+        epoch_deltas = [
+            timedelta(days=5).total_seconds()*ONE_SECOND_IN_NANOSECONDS,
+            timedelta(days=5).total_seconds()*ONE_SECOND_IN_NANOSECONDS,
+            timedelta(days=5).total_seconds()*ONE_SECOND_IN_NANOSECONDS,
+            timedelta(days=5).total_seconds()*ONE_SECOND_IN_NANOSECONDS,
+        ]
+        flags = [3, 6, 8, 16]
 
         cases = [
-            ("ORs multiple rows inside window", datetime(2025, 5, 1, 6, 0), datetime(2025, 5, 2, 18, 0), 28),
-            ("excludes rows before window", datetime(2025, 5, 1, 6, 0), datetime(2025, 5, 1, 18, 0), 4),
-            ("excludes rows after window", datetime(2025, 5, 1, 18, 0), datetime(2025, 5, 2, 6, 0), 8),
-            ("includes boundaries inclusively", datetime(2025, 5, 1, 0, 0), datetime(2025, 5, 3, 0, 0), 31),
-            ("returns zero when no rows in window", datetime(2025, 5, 5, 0, 0), datetime(2025, 5, 6, 0, 0), 0),
+            ("ORs multiple CRs inside window", datetime(2025, 5, 10, 12, 0), datetime(2025, 5, 11, 12, 0), 7),
+            ("window exists in only a single CR", datetime(2025, 5, 11, 12, 0), datetime(2025, 5, 12, 12, 0), 6),
+            ("does not include CRs when only touching the boundary", datetime(2025, 5, 21, 0, 0), datetime(2025, 5, 30, 0, 0), 8),
+            ("returns zero when no CRs intersect window", datetime(2025, 4, 5, 0, 0), datetime(2025, 4, 6, 0, 0), 0),
         ]
 
         for name, window_start, window_end, expected in cases:
@@ -384,6 +314,7 @@ class TestGlowsL3EUtils(unittest.TestCase):
                     cdf_path = Path(tmp_dir, "l3d.cdf")
                     with CDF(str(cdf_path), create=True) as cdf:
                         cdf["epoch"] = epochs
+                        cdf["epoch_delta"] = epoch_deltas
                         cdf.new("glows_flags", data=flags, type=const.CDF_UINT2, recVary=True)
 
                     actual = compute_glows_flags_for_window(cdf_path, window_start, window_end)
@@ -408,8 +339,10 @@ class TestGlowsL3EUtils(unittest.TestCase):
             Path("local/path/to/file5.cdf"): 72,
             Path("local/path/to/file6.cdf"): 84,
         }
+
         def mock_read_from_cdf(path: Path):
             return pivot_angles_by_file_path[path]
+
         mock_get_pivot_angle_from_file.side_effect = mock_read_from_cdf
 
         result = get_lo_pivot_angles([3, 4, 6, 10])
@@ -431,3 +364,405 @@ class TestGlowsL3EUtils(unittest.TestCase):
             6: LoPivotAngle(parent_filename="file6.cdf", pivot_angle=84),
             10: LoPivotAngle(parent_filename=None, pivot_angle=90),
         }, result)
+
+    def test_get_repoint_numbers_within_cr_window(self):
+        start_cr = 2093
+        end_cr = 2094
+        expected_repoint_numbers = list(range(3682, 3736))
+
+        repointing_path = get_test_data_path("fake_1_day_repointing_file.csv")
+
+        set_global_repoint_table_paths([repointing_path])
+        repointing_data = get_repoint_data()
+
+        actual_repoint_numbers = get_repoint_numbers_within_cr_window(start_cr, end_cr, repointing_data)
+
+        np.testing.assert_array_equal(actual_repoint_numbers, expected_repoint_numbers)
+    def test_get_repoint_numbers_within_cr_window_returns_empty_for_none_start(self):
+        start_cr = None
+        end_cr = 2094
+
+        repointing_path = get_test_data_path("fake_1_day_repointing_file.csv")
+
+        set_global_repoint_table_paths([repointing_path])
+        repointing_data = get_repoint_data()
+
+        actual_repoint_numbers = get_repoint_numbers_within_cr_window(start_cr, end_cr, repointing_data)
+
+        np.testing.assert_array_equal(actual_repoint_numbers, [])
+
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.get_repoint_numbers_within_cr_window')
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access')
+    def test_identify_versions_for_l3e_output_files_gives_minor_version_1_for_non_existing_l3e(self,
+                                                                                               mock_imap_data_access,
+                                                                                               mock_get_repoint_numbers_within_cr_window):
+        start_cr_of_mission = 2093
+        end_cr_of_mission = 2094
+        first_cr_updated_in_l3d = None
+        repointing_path = get_test_data_path("fake_1_day_repointing_file.csv")
+        version_map = VersionMap({desc: Version(3 + i, 5) for i, desc in enumerate(GLOWS_L3E_DESCRIPTORS)})
+
+        mock_imap_data_access.query.side_effect = [
+            create_mock_query_results([]),
+            create_mock_query_results([]),
+            create_mock_query_results([]),
+            create_mock_query_results([]),
+            create_mock_query_results([])
+        ]
+
+        all_repointing_numbers = list(range(3682, 3736))
+        updated_repointing_numbers = list()
+        mock_get_repoint_numbers_within_cr_window.side_effect = [
+            all_repointing_numbers,
+            updated_repointing_numbers
+        ]
+
+        result = identify_versions_for_l3e_output_files(start_cr_of_mission, end_cr_of_mission, first_cr_updated_in_l3d,
+                                                        repointing_path, version_map)
+
+        mock_imap_data_access.query.assert_has_calls([
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_HI_45_DESCRIPTOR),
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_HI_90_DESCRIPTOR),
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_LO_DESCRIPTOR),
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR),
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_ULTRA_HF_DESCRIPTOR)
+        ])
+
+        expected_versions_for_hi45_repoint_number = {repoint_number: Version(3, 1) for repoint_number in
+                                                     all_repointing_numbers}
+        expected_versions_for_hi90_repoint_number = {repoint_number: Version(4, 1) for repoint_number in
+                                                     all_repointing_numbers}
+        expected_versions_for_lo_repoint_number = {repoint_number: Version(5, 1) for repoint_number in
+                                                   all_repointing_numbers}
+        expected_versions_for_ultra_sf_repoint_number = {repoint_number: Version(6, 1) for repoint_number in
+                                                         all_repointing_numbers}
+        expected_versions_for_ultra_hf_repoint_number = {repoint_number: Version(7, 1) for repoint_number in
+                                                         all_repointing_numbers}
+
+        self.assertCountEqual(all_repointing_numbers, result.repointing_numbers)
+        self.assertEqual(expected_versions_for_hi90_repoint_number, result.hi_90_repointings)
+        self.assertEqual(expected_versions_for_hi45_repoint_number, result.hi_45_repointings)
+        self.assertEqual(expected_versions_for_lo_repoint_number, result.lo_repointings)
+        self.assertEqual(expected_versions_for_ultra_sf_repoint_number, result.ultra_sf_repointings)
+        self.assertEqual(expected_versions_for_ultra_hf_repoint_number, result.ultra_hf_repointings)
+
+
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.get_repoint_numbers_within_cr_window')
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access')
+    def test_identify_versions_for_l3e_output_files_gives_minor_version_1_for_non_existing_l3e(self,
+                                                                                               mock_imap_data_access,
+                                                                                               mock_get_repoint_numbers_within_cr_window):
+        start_cr_of_mission = 2093
+        end_cr_of_mission = 2094
+        first_cr_updated_in_l3d = None
+        repointing_path = get_test_data_path("fake_1_day_repointing_file.csv")
+        version_map = VersionMap({}, Version(None, 1))
+
+        mock_imap_data_access.query.side_effect = [
+            create_mock_query_results([]),
+            create_mock_query_results([]),
+            create_mock_query_results([]),
+            create_mock_query_results([]),
+            create_mock_query_results([])
+        ]
+
+        all_repointing_numbers = list(range(3682, 3736))
+        updated_repointing_numbers = list()
+        mock_get_repoint_numbers_within_cr_window.side_effect = [
+            all_repointing_numbers,
+            updated_repointing_numbers
+        ]
+
+        result = identify_versions_for_l3e_output_files(start_cr_of_mission, end_cr_of_mission, first_cr_updated_in_l3d,
+                                                        repointing_path, version_map)
+
+        mock_imap_data_access.query.assert_has_calls([
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_HI_45_DESCRIPTOR),
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_HI_90_DESCRIPTOR),
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_LO_DESCRIPTOR),
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR),
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_ULTRA_HF_DESCRIPTOR)
+        ])
+
+        expected_versions_for_hi45_repoint_number = {repoint_number: Version(None, 1) for repoint_number in
+                                                     all_repointing_numbers}
+        expected_versions_for_hi90_repoint_number = {repoint_number: Version(None, 1) for repoint_number in
+                                                     all_repointing_numbers}
+        expected_versions_for_lo_repoint_number = {repoint_number: Version(None, 1) for repoint_number in
+                                                   all_repointing_numbers}
+        expected_versions_for_ultra_sf_repoint_number = {repoint_number: Version(None, 1) for repoint_number in
+                                                         all_repointing_numbers}
+        expected_versions_for_ultra_hf_repoint_number = {repoint_number: Version(None, 1) for repoint_number in
+                                                         all_repointing_numbers}
+
+        self.assertCountEqual(all_repointing_numbers, result.repointing_numbers)
+        self.assertEqual(expected_versions_for_hi90_repoint_number, result.hi_90_repointings)
+        self.assertEqual(expected_versions_for_hi45_repoint_number, result.hi_45_repointings)
+        self.assertEqual(expected_versions_for_lo_repoint_number, result.lo_repointings)
+        self.assertEqual(expected_versions_for_ultra_sf_repoint_number, result.ultra_sf_repointings)
+        self.assertEqual(expected_versions_for_ultra_hf_repoint_number, result.ultra_hf_repointings)
+
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.get_repoint_numbers_within_cr_window')
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access')
+    def test_identify_versions_for_l3e_output_files_increments_major_and_minor_when_given_higher_major_version(self,
+                                                                                                               mock_imap_data_access,
+                                                                                                               mock_get_repoint_numbers_within_cr_window):
+        start_cr_of_mission = 2093
+        end_cr_of_mission = 2094
+        first_cr_updated_in_l3d = None
+        repointing_path = get_test_data_path("fake_1_day_repointing_file.csv")
+        version_map = VersionMap({desc: Version(3 + i, 5) for i, desc in enumerate(GLOWS_L3E_DESCRIPTORS)})
+
+        all_repointing_numbers = list(range(3682, 3736))
+        updated_repointing_numbers = list()
+
+        cases = (2, None)
+        for old_major_version in cases:
+            with self.subTest(old_major_version):
+                mock_get_repoint_numbers_within_cr_window.reset_mock()
+                mock_imap_data_access.reset_mock()
+
+                mock_get_repoint_numbers_within_cr_window.side_effect = [
+                    all_repointing_numbers,
+                    updated_repointing_numbers
+                ]
+
+                mock_imap_data_access.query.side_effect = [
+                    create_mock_query_results([
+                        f'imap_glows_l3e_survival-probability-hi-90_20250101-repoint03682_{Version(old_major_version, 1)}.cdf',
+                        f'imap_glows_l3e_survival-probability-hi-90_20250101-repoint03683_{Version(3, 1)}.cdf',
+                        f'imap_glows_l3e_survival-probability-hi-90_20250101-repoint03735_{Version(3, 1)}.cdf'
+                    ]),
+                    create_mock_query_results([
+                        f'imap_glows_l3e_survival-probability-hi-45_20250101-repoint03683_{Version(old_major_version, 2)}.cdf',
+                        f'imap_glows_l3e_survival-probability-hi-45_20250101-repoint03684_{Version(4, 2)}.cdf',
+                        f'imap_glows_l3e_survival-probability-hi-45_20250101-repoint03735_{Version(4, 2)}.cdf'
+                    ]),
+                    create_mock_query_results([
+                        f'imap_glows_l3e_survival-probability-lo_20250101-repoint03684_{Version(old_major_version, 3)}.cdf',
+                        f'imap_glows_l3e_survival-probability-lo_20250101-repoint03685_{Version(5, 3)}.cdf',
+                        f'imap_glows_l3e_survival-probability-lo_20250101-repoint03735_{Version(5, 3)}.cdf'
+                    ]),
+                    create_mock_query_results([
+                        f'imap_glows_l3e_survival-probability-ul-sf_20250101-repoint03685_{Version(old_major_version, 4)}.cdf',
+                        f'imap_glows_l3e_survival-probability-ul-sf_20250101-repoint03686_{Version(6, 4)}.cdf',
+                        f'imap_glows_l3e_survival-probability-ul-sf_20250101-repoint03735_{Version(6, 4)}.cdf'
+                    ]),
+                    create_mock_query_results([
+                        f'imap_glows_l3e_survival-probability-ul-hf_20250101-repoint03686_{Version(old_major_version, 5)}.cdf',
+                        f'imap_glows_l3e_survival-probability-ul-hf_20250101-repoint03687_{Version(7, 5)}.cdf',
+                        f'imap_glows_l3e_survival-probability-ul-hf_20250101-repoint03735_{Version(7, 5)}.cdf'
+                    ])
+                ]
+
+                result = identify_versions_for_l3e_output_files(start_cr_of_mission, end_cr_of_mission,
+                                                                first_cr_updated_in_l3d, repointing_path, version_map)
+
+                mock_imap_data_access.query.assert_has_calls([
+                    call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_HI_45_DESCRIPTOR),
+                    call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_HI_90_DESCRIPTOR),
+                    call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_LO_DESCRIPTOR),
+                    call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR),
+                    call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_ULTRA_HF_DESCRIPTOR)
+                ])
+
+                self.assertCountEqual(list(range(3682, 3735)), result.repointing_numbers)
+
+                self.assertNotIn(3683, result.hi_45_repointings)
+                self.assertNotIn(3684, result.hi_90_repointings)
+                self.assertNotIn(3685, result.lo_repointings)
+                self.assertNotIn(3686, result.ultra_sf_repointings)
+                self.assertNotIn(3687, result.ultra_hf_repointings)
+
+                self.assertEqual(Version(3, 2), result.hi_45_repointings[3682])
+                self.assertEqual(Version(4, 3), result.hi_90_repointings[3683])
+                self.assertEqual(Version(5, 4), result.lo_repointings[3684])
+                self.assertEqual(Version(6, 5), result.ultra_sf_repointings[3685])
+                self.assertEqual(Version(7, 6), result.ultra_hf_repointings[3686])
+
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.get_repoint_numbers_within_cr_window')
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access')
+    def test_identify_versions_for_l3e_output_files_does_not_process_if_input_major_version_is_none_and_existing_has_major(self,
+                                                                                                               mock_imap_data_access,
+                                                                                                               mock_get_repoint_numbers_within_cr_window):
+        start_cr_of_mission = 2093
+        end_cr_of_mission = 2094
+        first_cr_updated_in_l3d = None
+        repointing_path = get_test_data_path("fake_1_day_repointing_file.csv")
+        version_map = VersionMap({}, Version(None,1))
+
+        all_repointing_numbers = list(range(3682, 3736))
+        updated_repointing_numbers = list()
+
+        mock_get_repoint_numbers_within_cr_window.side_effect = [
+            all_repointing_numbers,
+            updated_repointing_numbers
+        ]
+
+        mock_imap_data_access.query.side_effect = [
+            create_mock_query_results([
+                f'imap_glows_l3e_survival-probability-hi-90_20250101-repoint{repoint:05d}_v001.0001.cdf' for repoint in all_repointing_numbers
+            ]),
+            create_mock_query_results([
+                f'imap_glows_l3e_survival-probability-hi-45_20250101-repoint{repoint:05d}_v001.0002.cdf' for repoint in all_repointing_numbers
+            ]),
+            create_mock_query_results([
+                f'imap_glows_l3e_survival-probability-lo_20250101-repoint{repoint:05d}_v001.0003.cdf' for repoint in all_repointing_numbers
+            ]),
+            create_mock_query_results([
+                f'imap_glows_l3e_survival-probability-ul-sf_20250101-repoint{repoint:05d}_v001.0004.cdf' for repoint in all_repointing_numbers
+            ]),
+            create_mock_query_results([
+                f'imap_glows_l3e_survival-probability-ul-hf_20250101-repoint{repoint:05d}_v001.0005.cdf' for repoint in all_repointing_numbers
+            ])
+        ]
+
+        result = identify_versions_for_l3e_output_files(start_cr_of_mission, end_cr_of_mission,
+                                                        first_cr_updated_in_l3d, repointing_path, version_map)
+
+        mock_imap_data_access.query.assert_has_calls([
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_HI_45_DESCRIPTOR),
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_HI_90_DESCRIPTOR),
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_LO_DESCRIPTOR),
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR),
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_ULTRA_HF_DESCRIPTOR)
+        ])
+
+        self.assertEqual(0, len(result.repointing_numbers))
+        self.assertEqual({}, result.hi_45_repointings)
+        self.assertEqual({}, result.hi_90_repointings)
+        self.assertEqual({}, result.lo_repointings)
+        self.assertEqual({}, result.ultra_sf_repointings)
+        self.assertEqual({}, result.ultra_hf_repointings)
+
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.get_repoint_numbers_within_cr_window')
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access')
+    def test_identify_versions_for_l3e_output_files_increments_minor_when_same_major_and_updated_l3d_covers_pointing(
+            self, mock_imap_data_access, mock_get_repoint_numbers_within_cr_window
+    ):
+        start_cr_of_mission = 2093
+        end_cr_of_mission = 2095
+        first_cr_updated_in_l3d = None
+        repointing_path = get_test_data_path("fake_1_day_repointing_file.csv")
+        version_map = VersionMap({desc: Version(3 + i, 5) for i, desc in enumerate(GLOWS_L3E_DESCRIPTORS)})
+
+        all_repointing_numbers = list(range(3682, 3763))
+        updated_repointing_numbers = list(range(3709, 3763))
+
+        mock_get_repoint_numbers_within_cr_window.side_effect = [
+            all_repointing_numbers,
+            updated_repointing_numbers
+        ]
+
+        mock_imap_data_access.query.side_effect = [
+            create_mock_query_results([
+                f'imap_glows_l3e_survival-probability-hi-90_20250101-repoint{repoint:05d}_{Version(3, 1)}.cdf' for repoint in all_repointing_numbers
+            ]),
+            create_mock_query_results([
+                f'imap_glows_l3e_survival-probability-hi-45_20250101-repoint{repoint:05d}_{Version(4, 2)}.cdf' for repoint in all_repointing_numbers
+            ]),
+            create_mock_query_results([
+                f'imap_glows_l3e_survival-probability-lo_20250101-repoint{repoint:05d}_{Version(5, 3)}.cdf' for repoint in all_repointing_numbers
+            ]),
+            create_mock_query_results([
+                f'imap_glows_l3e_survival-probability-ul-sf_20250101-repoint{repoint:05d}_{Version(6, 4)}.cdf' for repoint in all_repointing_numbers
+            ]),
+            create_mock_query_results([
+                f'imap_glows_l3e_survival-probability-ul-hf_20250101-repoint{repoint:05d}_{Version(7, 5)}.cdf' for repoint in all_repointing_numbers
+            ])
+        ]
+
+        result = identify_versions_for_l3e_output_files(start_cr_of_mission, end_cr_of_mission,
+                                                        first_cr_updated_in_l3d, repointing_path, version_map)
+
+        mock_imap_data_access.query.assert_has_calls([
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_HI_45_DESCRIPTOR),
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_HI_90_DESCRIPTOR),
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_LO_DESCRIPTOR),
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR),
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_ULTRA_HF_DESCRIPTOR)
+        ])
+
+        expected_versions_for_hi45_repoint_number = {repoint_number: Version(3, 2) for repoint_number in
+                                                     updated_repointing_numbers}
+        expected_versions_for_hi90_repoint_number = {repoint_number: Version(4, 3) for repoint_number in
+                                                     updated_repointing_numbers}
+        expected_versions_for_lo_repoint_number = {repoint_number: Version(5, 4) for repoint_number in
+                                                   updated_repointing_numbers}
+        expected_versions_for_ultra_sf_repoint_number = {repoint_number: Version(6, 5) for repoint_number in
+                                                         updated_repointing_numbers}
+        expected_versions_for_ultra_hf_repoint_number = {repoint_number: Version(7, 6) for repoint_number in
+                                                         updated_repointing_numbers}
+
+        self.assertCountEqual(updated_repointing_numbers, result.repointing_numbers)
+        self.assertEqual(expected_versions_for_hi90_repoint_number, result.hi_90_repointings)
+        self.assertEqual(expected_versions_for_hi45_repoint_number, result.hi_45_repointings)
+        self.assertEqual(expected_versions_for_lo_repoint_number, result.lo_repointings)
+        self.assertEqual(expected_versions_for_ultra_sf_repoint_number, result.ultra_sf_repointings)
+        self.assertEqual(expected_versions_for_ultra_hf_repoint_number, result.ultra_hf_repointings)
+
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.get_repoint_numbers_within_cr_window')
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access')
+    def test_identify_versions_for_l3e_output_files_increments_minor_for_legacy_versioning_and_updated_l3d_covers_pointing(
+            self, mock_imap_data_access, mock_get_repoint_numbers_within_cr_window
+    ):
+        start_cr_of_mission = 2093
+        end_cr_of_mission = 2095
+        first_cr_updated_in_l3d = None
+        repointing_path = get_test_data_path("fake_1_day_repointing_file.csv")
+        version_map = VersionMap({}, Version(None,1))
+
+        all_repointing_numbers = list(range(3682, 3763))
+        updated_repointing_numbers = list(range(3709, 3763))
+
+        mock_get_repoint_numbers_within_cr_window.side_effect = [
+            all_repointing_numbers,
+            updated_repointing_numbers
+        ]
+
+        mock_imap_data_access.query.side_effect = [
+            create_mock_query_results([
+                f'imap_glows_l3e_survival-probability-hi-90_20250101-repoint{repoint:05d}_{Version(None, 1)}.cdf' for repoint in all_repointing_numbers
+            ]),
+            create_mock_query_results([
+                f'imap_glows_l3e_survival-probability-hi-45_20250101-repoint{repoint:05d}_{Version(None, 2)}.cdf' for repoint in all_repointing_numbers
+            ]),
+            create_mock_query_results([
+                f'imap_glows_l3e_survival-probability-lo_20250101-repoint{repoint:05d}_{Version(None, 3)}.cdf' for repoint in all_repointing_numbers
+            ]),
+            create_mock_query_results([
+                f'imap_glows_l3e_survival-probability-ul-sf_20250101-repoint{repoint:05d}_{Version(None, 4)}.cdf' for repoint in all_repointing_numbers
+            ]),
+            create_mock_query_results([
+                f'imap_glows_l3e_survival-probability-ul-hf_20250101-repoint{repoint:05d}_{Version(None, 5)}.cdf' for repoint in all_repointing_numbers
+            ])
+        ]
+
+        result = identify_versions_for_l3e_output_files(start_cr_of_mission, end_cr_of_mission,
+                                                        first_cr_updated_in_l3d, repointing_path, version_map)
+
+        mock_imap_data_access.query.assert_has_calls([
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_HI_45_DESCRIPTOR),
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_HI_90_DESCRIPTOR),
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_LO_DESCRIPTOR),
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_ULTRA_SF_DESCRIPTOR),
+            call(instrument='glows', data_level='l3e', version="latest", descriptor=GLOWS_L3E_ULTRA_HF_DESCRIPTOR)
+        ])
+
+        expected_versions_for_hi45_repoint_number = {repoint_number: Version(None, 2) for repoint_number in
+                                                     updated_repointing_numbers}
+        expected_versions_for_hi90_repoint_number = {repoint_number: Version(None, 3) for repoint_number in
+                                                     updated_repointing_numbers}
+        expected_versions_for_lo_repoint_number = {repoint_number: Version(None, 4) for repoint_number in
+                                                   updated_repointing_numbers}
+        expected_versions_for_ultra_sf_repoint_number = {repoint_number: Version(None, 5) for repoint_number in
+                                                         updated_repointing_numbers}
+        expected_versions_for_ultra_hf_repoint_number = {repoint_number: Version(None, 6) for repoint_number in
+                                                         updated_repointing_numbers}
+
+        self.assertCountEqual(updated_repointing_numbers, result.repointing_numbers)
+        self.assertEqual(expected_versions_for_hi90_repoint_number, result.hi_90_repointings)
+        self.assertEqual(expected_versions_for_hi45_repoint_number, result.hi_45_repointings)
+        self.assertEqual(expected_versions_for_lo_repoint_number, result.lo_repointings)
+        self.assertEqual(expected_versions_for_ultra_sf_repoint_number, result.ultra_sf_repointings)
+        self.assertEqual(expected_versions_for_ultra_hf_repoint_number, result.ultra_hf_repointings)
