@@ -171,7 +171,9 @@ class TestGlowsL3EInitializer(unittest.TestCase):
         expected_initializer_output = GlowsL3EInitializerOutput(
             mock_l3e_dependencies,
             mock_identify_versions_for_l3e_output_files.return_value,
-            glows_l3d_processor_output.l3d_cdf_file_path
+            glows_l3d_processor_output.l3d_cdf_file_path,
+            metakernel_with_predict_ephem=None,
+            metakernel_without_predict_ephem=None,
         )
         mock_find_first_updated_cr.assert_called_once_with(glows_l3d_processor_output.l3d_cdf_file_path, previous_l3d)
         mock_identify_versions_for_l3e_output_files.assert_called_once_with(sentinel.start_of_mission_cr, expected_last_cr, None, repointing_file_path, sentinel.version_map)
