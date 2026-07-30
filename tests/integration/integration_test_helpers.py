@@ -140,13 +140,18 @@ class RequestsGetPatcher:
                 if 'params' in kwargs and kwargs['params'].get('list_files') == 'true':
                     response.text = json.dumps(self.spice_file_names)
                 elif 'params' in kwargs:
-                    prefix = kwargs['params'].get("spice_path") or ""
+                    prefix = kwargs["params"].get("spice_path") or ""
 
-                    spice_file_paths = [SPICEFilePath(fn) for fn in self.spice_file_names]
-                    requested_spice_paths = [p for p in spice_file_paths if p.spice_metadata["type"] in
-                                             kwargs["params"]["file_types"]]
+                    spice_file_paths = [
+                        SPICEFilePath(fn) for fn in self.spice_file_names
+                    ]
+                    requested_spice_paths = [
+                        p
+                        for p in spice_file_paths
+                        if p.spice_metadata["type"] in kwargs["params"]["file_types"]
+                    ]
                     metakernel_text = create_metakernel(prefix, requested_spice_paths)
-                    response.text =metakernel_text
+                    response.text = metakernel_text
                     response.content = response.text.encode()
             else:
                 assert False, "I don't know how to mock that IMAP endpoint!"

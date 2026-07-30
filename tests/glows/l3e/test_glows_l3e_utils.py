@@ -124,14 +124,8 @@ class TestGlowsL3EUtils(unittest.TestCase):
                 date_without_predict = datetime(2026, 1, 15, 12)
 
                 result_without_predict = determine_spacecraft_info_using_predict_if_needed(date_without_predict, spice_with_predict, spice_without_predict)
-                self.assertIsInstance(result_without_predict, tuple)
-                spacecraft_info: GlowsL3eSpacecraftInfo = result_without_predict[0]
-                self.assertIsInstance(spacecraft_info, GlowsL3eSpacecraftInfo)
-                glows_flags = result_without_predict[1]
-                self.assertIsInstance(glows_flags, GlowsL3Flags)
+                spacecraft_info, glows_flags, kernel_names = result_without_predict
                 self.assertEqual(GlowsL3Flags.NONE, glows_flags)
-                kernel_names = result_without_predict[2]
-                self.assertIsInstance(kernel_names, list)
                 self.assertEqual(["kernel 5", "kernel 6", "kernel 7", "kernel 8"], kernel_names)
                 self.assertEqual(GlowsL3eSpacecraftInfo(spacecraft_radius=0.974926812207828,
                        spacecraft_longitude=np.float64(114.98987223111648),
