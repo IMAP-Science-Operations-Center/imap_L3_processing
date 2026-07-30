@@ -218,25 +218,33 @@ def create_l1c_pset(
     ram_latitudes = np.linspace(89.95, -89.95, 1800)
     anti_latitudes = np.linspace(-89.95, 89.95, 1800)
     full_rotation_latitudes = np.concat([ram_latitudes, anti_latitudes])
-    return InputRectangularPointingSet(epoch, epoch_delta, epoch_j2000, repointing, exposures, energy_steps,
-                                       pointing_start_met, pointing_end_met,
-                                       hae_longitude=hae_longitude if hae_longitude is not None else ((np.linspace(0,
-                                                                                                                   360,
-                                                                                                                   3600,
-                                                                                                                   endpoint=False) + 90.05) % 360)[
-                                                                                                     np.newaxis, :],
-                                       hae_latitude=hae_latitude if hae_latitude is not None else (
-                                           full_rotation_latitudes[np.newaxis, :])
-                                       )
+    return InputRectangularPointingSet(
+        epoch,
+        epoch_delta,
+        epoch_j2000,
+        repointing,
+        exposures,
+        energy_steps,
+        pointing_start_met,
+        pointing_end_met,
+        hae_longitude=hae_longitude
+        if hae_longitude is not None
+        else ((np.linspace(0, 360, 3600, endpoint=False) + 90.05) % 360)[np.newaxis, :],
+        hae_latitude=hae_latitude
+        if hae_latitude is not None
+        else (full_rotation_latitudes[np.newaxis, :]),
+    )
 
 
 def create_l3e_pset(
-        epoch: datetime = datetime(2025, 4, 15, 12),
-        repointing: int = 1,
-        energy_steps=np.array([0.5, 5.0, 12.0]),
-        spin_angle=np.arange(0, 360),
-        sp: Optional[np.array] = None,
+    epoch: datetime = datetime(2025, 4, 15, 12),
+    repointing: int = 1,
+    energy_steps=np.array([0.5, 5.0, 12.0]),
+    spin_angle=np.arange(0, 360),
+    sp: Optional[np.array] = None,
+    flags: Optional[np.array] = None,
 ) -> GlowsL3eRectangularMapInputData:
     epoch_j2000 = np.array([spiceypy.datetime2et(epoch)]) * 1e9
     sp = sp or np.full(shape=(1, len(energy_steps), len(spin_angle)), fill_value=0.5)
-    return GlowsL3eRectangularMapInputData(epoch, epoch_j2000, repointing, energy_steps, spin_angle, sp)
+    flags = flags or np.full(1, 0, dtype=np.uint16)
+    return GlowsL3eRectangularMapInputData(epoch, epoch_j2000, repointing, energy_steps, spin_angle, sp, flags)

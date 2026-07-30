@@ -51,7 +51,11 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
             energy=np.geomspace(1, 10000, self.num_energies + 1),
             spin_angle=np.arange(0, 360, 1) + 0.5,
             probability_of_survival=np.arange((self.num_energies + 1) * 360).reshape(
-                (1, self.num_energies + 1, 360)) + 5.4)
+                (1, self.num_energies + 1, 360)
+            )
+            + 5.4,
+            flags=np.array([0], dtype=np.uint16),
+        )
 
         l1c_spin_angles = np.linspace(0, 360, 3600, endpoint=False) + 0.05
         self.ram_mask = (l1c_spin_angles < 90) | (l1c_spin_angles > 270)

@@ -598,8 +598,9 @@ def calculate_datetime_weighted_average(data: np.ndarray, weights: np.ndarray, a
         epoch_based_dates = np.array((np.ma.getdata(data) - TT2000_EPOCH) / timedelta(seconds=1),
                                      dtype=float)
 
-        averaged_dates_as_seconds = np.ma.average(epoch_based_dates, weights=weights,
-                                                  axis=axis, **kwargs)
+        averaged_dates_as_seconds = np.ma.average(
+            epoch_based_dates, weights=weights, axis=axis, **kwargs
+        )
 
         return np.ma.array(
             averaged_dates_as_seconds.data * timedelta(seconds=1) + TT2000_EPOCH,
@@ -617,6 +618,7 @@ class GlowsL3eRectangularMapInputData:
     energy: np.ndarray
     spin_angle: np.ndarray
     probability_of_survival: np.ndarray
+    flags: np.ndarray
 
 
 @dataclass
