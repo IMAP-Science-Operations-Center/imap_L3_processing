@@ -165,8 +165,9 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
             ],
         )
         dataset["epoch"] = repointing_midpoint
+        predict_flag_set = flag_value & GlowsL3Flags.PREDICTIVE_EPHEMERIS != 0
         dataset["predicted_ephemeris_flag"] = xr.DataArray(
-            np.full(sp_final.shape, flag_value & GlowsL3Flags.PREDICTIVE_EPHEMERIS != 0, dtype=float),
+            exposure * predict_flag_set,
             dims=[
                 CoordNames.TIME.value,
                 CoordNames.ENERGY_ULTRA_L1C.value,
