@@ -556,11 +556,17 @@ def _intensity_data_variables(data: IntensityMapData) -> list[DataProductVariabl
         DataProductVariable(ENA_INTENSITY_SYS_ERR_VAR_NAME, data.ena_intensity_sys_err),
     ]
     if data.bg_intensity is not None:
-        intensity_variables.extend([
-            DataProductVariable(BG_INTENSITY_VAR_NAME, data.bg_intensity),
-            DataProductVariable(BG_INTENSITY_STAT_UNC_VAR_NAME, data.bg_intensity_stat_uncert),
-            DataProductVariable(BG_INTENSITY_SYS_ERR_VAR_NAME, data.bg_intensity_sys_err),
-        ])
+        intensity_variables.extend(
+            [
+                DataProductVariable(BG_INTENSITY_VAR_NAME, data.bg_intensity),
+                DataProductVariable(
+                    BG_INTENSITY_STAT_UNC_VAR_NAME, data.bg_intensity_stat_uncert
+                ),
+                DataProductVariable(
+                    BG_INTENSITY_SYS_ERR_VAR_NAME, data.bg_intensity_sys_err
+                ),
+            ]
+        )
     if data.survival_probability is not None:
         intensity_variables.extend([
             DataProductVariable(SURVIVAL_PROBABILITY_VAR_NAME, data.survival_probability),
@@ -578,7 +584,7 @@ def _rectangular_coords_to_variables(coords: RectangularCoords) -> list[DataProd
         DataProductVariable(LATITUDE_DELTA_VAR_NAME, coords.latitude_delta),
         DataProductVariable(LATITUDE_LABEL_VAR_NAME, coords.latitude_label),
         DataProductVariable(LONGITUDE_DELTA_VAR_NAME, coords.longitude_delta),
-        DataProductVariable(LONGITUDE_LABEL_VAR_NAME, coords.longitude_label)
+        DataProductVariable(LONGITUDE_LABEL_VAR_NAME, coords.longitude_label),
     ]
 
 

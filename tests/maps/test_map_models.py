@@ -913,7 +913,7 @@ class TestMapModels(unittest.TestCase):
 
         num_epochs = 1
         num_energies = 5
-        num_healpix_indices = 12 * (expected_nside ** 2)
+        num_healpix_indices = 12 * (expected_nside**2)
 
         fake_data_per_energy_per_pixel = np.arange(
             num_epochs * num_energies * num_healpix_indices
@@ -932,7 +932,7 @@ class TestMapModels(unittest.TestCase):
             longitude=fake_data_per_pixel * 2.3,
             exposure_factor=fake_data_per_energy_per_pixel * 2.2,
             obs_date=np.datetime64("1970-01-01T00:00:00")
-                     + fake_data_per_energy_per_pixel * 10000,
+            + fake_data_per_energy_per_pixel * 10000,
             obs_date_range=fake_data_per_energy_per_pixel * 3.2,
             solid_angle=fake_data_per_pixel * 3.4,
             ena_intensity=fake_data_per_energy_per_pixel * 2.2,
@@ -954,8 +954,12 @@ class TestMapModels(unittest.TestCase):
 
     def test_read_intensity_data_handles_missing_obs_date_and_missing_sp(self):
         cdf = CDF(
-            str(get_integration_test_data_path(
-                'lo/multiple_arcs/imap_lo_l2_l090-ena-h-hf-nsp-ram-hae-6deg-1yr_20250415_v005.cdf')))
+            str(
+                get_integration_test_data_path(
+                    "lo/multiple_arcs/imap_lo_l2_l090-ena-h-hf-nsp-ram-hae-6deg-1yr_20250415_v005.cdf"
+                )
+            )
+        )
 
         intensity_map_data = _read_intensity_map_data_from_open_cdf(cdf)
 
