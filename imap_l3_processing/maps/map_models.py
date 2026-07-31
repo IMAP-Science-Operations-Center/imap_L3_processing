@@ -599,13 +599,14 @@ def calculate_datetime_weighted_average(data: np.ndarray, weights: np.ndarray, a
                                         **kwargs) -> np.ma.masked_array:
     if isinstance(np.ravel(np.ma.getdata(data))[0], datetime):
         masked_indices = np.ma.getmask(data)
-        weights[masked_indices] = 0
+        masked_weights = weights.copy()
+        masked_weights[masked_indices] = 0
 
         epoch_based_dates = np.array((np.ma.getdata(data) - TT2000_EPOCH) / timedelta(seconds=1),
                                      dtype=float)
 
         averaged_dates_as_seconds = np.ma.average(
-            epoch_based_dates, weights=weights, axis=axis, **kwargs
+            epoch_based_dates, weights=masked_weights, axis=axis, **kwargs
         )
 
         return np.ma.array(

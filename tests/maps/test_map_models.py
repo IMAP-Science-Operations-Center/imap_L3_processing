@@ -982,9 +982,11 @@ class TestMapModels(unittest.TestCase):
         map_1_weights = [1, 1, 1]
         map_2_weights = [1, 2, 1]
 
+        weights = np.array([map_1_weights, map_2_weights])
+        original_weights = weights.copy()
         average_obs_date: np.ma.masked_array = calculate_datetime_weighted_average(
             np.ma.masked_array([map_1_obs_date, map_2_obs_date]),
-            np.array([map_1_weights, map_2_weights]), axis=0)
+            weights, axis=0)
 
         self.assertIsInstance(average_obs_date, np.ma.masked_array)
 
@@ -996,6 +998,9 @@ class TestMapModels(unittest.TestCase):
 
         self.assertEqual(TT2000_EPOCH, average_obs_date.data[2])
         self.assertTrue(average_obs_date.mask[2])
+
+        np.testing.assert_equal(weights, original_weights, "should not mutate the input weights")
+
 
     def test_lo_isn_data_read_from_path(self):
         path_to_cdf = get_test_data_folder() / 'lo' / 'imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-1yr_20250415_v000'
