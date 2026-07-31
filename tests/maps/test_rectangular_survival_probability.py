@@ -1,4 +1,5 @@
 import dataclasses
+import copy
 from datetime import datetime
 from unittest.mock import patch, sentinel, call, MagicMock
 
@@ -10,6 +11,7 @@ from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
 from imap_processing.spice.geometry import SpiceFrame
 
+from imap_l3_processing.glows.quality_flags import GlowsL3Flags
 from imap_l3_processing.maps.map_descriptors import SpinPhase
 from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet
 from imap_l3_processing.maps.rectangular_survival_probability import Sensor, \
@@ -378,6 +380,15 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
         expected = np.ones((1, self.num_energies, 3600)) * self.l1c_hi_dataset.exposure_times
         np.testing.assert_array_equal(sp_times_exposure, expected)
 
+    def test_predicted_ephemeris_flag_not_set_when_glows_is_none(self):
+        pointing_set = RectangularSurvivalProbabilityPointingSet(
+            self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
+            glows_dataset=None, energies=self.hi_energies)
+
+        pset_values = pointing_set.data["predicted_ephemeris_flag"].values
+        expected = np.zeros((1, self.num_energies, 3600))
+        np.testing.assert_array_equal(pset_values, expected)
+
     def test_exposure_weighted_survivals_are_repeated_to_match_l1c_shape(self):
         pointing_set = RectangularSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
                                                                  self.glows_data,
@@ -496,6 +507,26 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                 np.testing.assert_array_almost_equal(pointing_set.data["survival_probability_times_exposure"].values,
                                                      corresponding_glows_data * exposure_times)
 
+    def test_survival_probability_pointing_set_propagates_predicted_ephemeris_flag(self):
+        cases = {
+            GlowsL3Flags.NONE: 0.0,
+            GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO: 0.0,
+            GlowsL3Flags.PREDICTIVE_EPHEMERIS: 1.0,
+            GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO | GlowsL3Flags.PREDICTIVE_EPHEMERIS: 1.0,
+        }
+        for flag_value, expected_pset_value in cases.items():
+            with self.subTest(flag_value):
+                self.glows_data.flags[0] = flag_value
+                pointing_set = RectangularSurvivalProbabilityPointingSet(
+                    self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
+                    glows_dataset=self.glows_data, energies=self.hi_energies)
+        
+                pset_values = pointing_set.data["predicted_ephemeris_flag"].values
+                expected = np.full((1, self.num_energies, 3600), expected_pset_value)
+                np.testing.assert_array_equal(pset_values, expected, strict=True)
+                self.assertEqual(pointing_set.data["predicted_ephemeris_flag"].dims,
+                                 pointing_set.data["survival_probability_times_exposure"].dims)
+
     def test_interpolate_angular_data_to_nearest_neighbor(self):
         input_cases = [
             (0, 360),
@@ -543,9 +574,9 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
         mock_skymap_constructor.assert_called_with(sentinel.spacing_deg, sentinel.spice_frame)
 
         mock_project_pset.assert_has_calls([
-            call(pset_1, ["survival_probability_times_exposure", "exposure"],
+            call(pset_1, ["survival_probability_times_exposure", "exposure", "predicted_ephemeris_flag"],
                  pset_valid_mask=pset_1.data['directional_mask']),
-            call(pset_2, ["survival_probability_times_exposure", "exposure"],
+            call(pset_2, ["survival_probability_times_exposure", "exposure", "predicted_ephemeris_flag"],
                  pset_valid_mask=pset_2.data['directional_mask']),
         ])
 
@@ -596,3 +627,58 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
         np.testing.assert_array_almost_equal(survival_prob_in_skygrid_shape,
                                              survival_probability_dataset[
                                                  "exposure_weighted_survival_probabilities"].values)
+
+    def test_survival_probability_sky_map_returns_predicted_ephemeris_flag(self):
+        self.l1c_hi_dataset.hae_longitude = np.concat([
+            np.full((1, 1800), 30.05),
+            np.full((1, 1800), 210.05)
+        ], axis=1)
+
+        self.l1c_hi_dataset.hae_latitude = np.concat([
+            np.linspace(90, -90, 1800, endpoint=False) - 0.05,
+            np.linspace(-90, 90, 1800, endpoint=False) + 0.05,
+        ]).reshape(1, -1)
+        self.ram_mask = np.concat((np.full(1800, True), np.full(1800, False)))
+
+        cases = {
+            (GlowsL3Flags.PREDICTIVE_EPHEMERIS, 0, True),
+            (GlowsL3Flags.PREDICTIVE_EPHEMERIS, GlowsL3Flags.PREDICTIVE_EPHEMERIS, True),
+            (0, 0, False),
+            (GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO | GlowsL3Flags.PREDICTIVE_EPHEMERIS, 0, True),
+        }
+
+        for pset1_flags, pset2_flags, expected in cases:
+            with self.subTest(pset1_flags=pset1_flags, pset2_flags=pset2_flags, expected=expected):
+                pset1_glows = copy.deepcopy(self.glows_data)
+                pset1_glows.flags[0] = pset1_flags
+                pset1_l1c = pset2_l1c = self.l1c_hi_dataset
+
+                pset2_glows = copy.deepcopy(self.glows_data)
+                pset2_glows.flags[0] = pset2_flags
+
+                pset1 = RectangularSurvivalProbabilityPointingSet(pset1_l1c, Sensor.Hi90, SpinPhase.RamOnly,
+                                                                  pset1_glows, self.hi_energies)
+
+                pset2 = RectangularSurvivalProbabilityPointingSet(pset2_l1c, Sensor.Hi90, SpinPhase.RamOnly,
+                                                                  pset2_glows, self.hi_energies)
+
+                spice_frame = SpiceFrame.IMAP_HAE
+                actual_skymap = RectangularSurvivalProbabilitySkyMap([pset1, pset2],
+                                                                     0.1, spice_frame)
+                survival_probability_dataset = actual_skymap.to_dataset()
+
+                predicted_ephemeris_in_skygrid_shape = np.full((1, 2, 3600, 1800), False)
+                predicted_ephemeris_in_skygrid_shape[:, :, 300, :] = expected
+
+                self.assertIn("predicted_ephemeris_flag", survival_probability_dataset)
+                self.assertEqual((1, 2, 3600, 1800),
+                                 survival_probability_dataset["predicted_ephemeris_flag"].values.shape)
+
+                actual_sp_at_relevant_long = survival_probability_dataset["predicted_ephemeris_flag"].values[:,
+                                             :, 300, :]
+
+                np.testing.assert_array_equal(np.full((1, 2, 1800), expected), actual_sp_at_relevant_long)
+
+                np.testing.assert_array_equal(predicted_ephemeris_in_skygrid_shape,
+                                                     survival_probability_dataset[
+                                                         "predicted_ephemeris_flag"].values)

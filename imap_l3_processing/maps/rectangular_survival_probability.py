@@ -6,6 +6,7 @@ from imap_processing.ena_maps.utils.corrections import apply_compton_getting_cor
     add_spacecraft_position_and_velocity_to_pset, calculate_ram_mask
 from imap_processing.spice.geometry import SpiceFrame
 
+from imap_l3_processing.glows.quality_flags import GlowsL3Flags
 from imap_l3_processing.maps.map_descriptors import Sensor, SpinPhase
 from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet
 
@@ -128,14 +129,24 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                     sp_interpolated_to_hi_energies[:, spin_angle_index] = np.interp(
                         np.log10(energies),
                         np.log10(glows_dataset.energy),
-                        glows_dataset.probability_of_survival[0, :, spin_angle_index])
+                        glows_dataset.probability_of_survival[0, :, spin_angle_index],
+                    )
 
-                sp_interpolated_to_pset_angles = np.zeros((1, len(energies), num_spin_angle_bins))
-                sp_interpolated_to_pset_angles[0] = interpolate_angular_data_to_nearest_neighbor(
-                    self.azimuths, glows_dataset.spin_angle, sp_interpolated_to_hi_energies)
+                sp_interpolated_to_pset_angles = np.zeros(
+                    (1, len(energies), num_spin_angle_bins)
+                )
+                sp_interpolated_to_pset_angles[0] = (
+                    interpolate_angular_data_to_nearest_neighbor(
+                        self.azimuths,
+                        glows_dataset.spin_angle,
+                        sp_interpolated_to_hi_energies,
+                    )
+                )
                 sp_final = sp_interpolated_to_pset_angles
+            flag_value = glows_dataset.flags[0]
         else:
             sp_final = np.ones((1, len(energies), 3600))
+            flag_value = 0
 
         dataset["survival_probability_times_exposure"] = xr.DataArray(
             sp_final * exposure,
@@ -154,6 +165,14 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
             ],
         )
         dataset["epoch"] = repointing_midpoint
+        dataset["predicted_ephemeris_flag"] = xr.DataArray(
+            np.full(sp_final.shape, flag_value & GlowsL3Flags.PREDICTIVE_EPHEMERIS != 0, dtype=float),
+            dims=[
+                CoordNames.TIME.value,
+                CoordNames.ENERGY_ULTRA_L1C.value,
+                CoordNames.AZIMUTH_L1C.value,
+            ],
+        )
 
         frame = SpiceFrame.IMAP_HAE
         super().__init__(dataset, frame)
@@ -164,10 +183,11 @@ class RectangularSurvivalProbabilitySkyMap(RectangularSkyMap):
                  spacing_degree: float, spice_frame: SpiceFrame):
         super().__init__(spacing_degree, spice_frame)
         for sp_pset in survival_probability_pointing_sets:
-            value_keys = ["survival_probability_times_exposure", "exposure"]
+            value_keys = ["survival_probability_times_exposure", "exposure", "predicted_ephemeris_flag"]
             self.project_pset_values_to_map(sp_pset, value_keys, pset_valid_mask=sp_pset.data["directional_mask"])
 
         self.data_1d = xr.Dataset({
             "exposure_weighted_survival_probabilities": self.data_1d["survival_probability_times_exposure"] /
-                                                        self.data_1d["exposure"]
+                                                        self.data_1d["exposure"],
+            "predicted_ephemeris_flag": self.data_1d["predicted_ephemeris_flag"] != 0,
         })
