@@ -134,6 +134,9 @@ class UnweightedCombination(CombinationStrategy):
         else:
             exposure_weighted_summed_survival_probability = None
 
+        predicted_ephemeris_flags = np.array([m.predicted_ephemeris_flag for m in maps])
+        combined_predicted_ephemeris_flag = np.logical_or.reduce(predicted_ephemeris_flags)
+
         return dataclasses.replace(
             maps[0],
             ena_intensity=exposure_weighted_summed_intensity,
@@ -142,6 +145,7 @@ class UnweightedCombination(CombinationStrategy):
             ena_intensity_stat_uncert=combined_intensity_stat_uncert,
             obs_date=avg_obs_date,
             survival_probability=exposure_weighted_summed_survival_probability,
+            predicted_ephemeris_flag=combined_predicted_ephemeris_flag,
         )
 
 
@@ -234,6 +238,9 @@ class ExposureWeightedCombination(CombinationStrategy):
             combined_sys_err_plus = None
             combined_sys_err_minus = None
 
+        predicted_ephemeris_flags = np.array([m.predicted_ephemeris_flag for m in maps])
+        combined_predicted_ephemeris_flag = np.logical_or.reduce(predicted_ephemeris_flags)
+
         return dataclasses.replace(maps[0],
                                    ena_intensity=exposure_weighted_summed_intensity,
                                    ena_intensity_sys_err=combined_intensity_sys_err,
@@ -246,6 +253,7 @@ class ExposureWeightedCombination(CombinationStrategy):
                                    survival_probability=exposure_weighted_summed_survival_probability,
                                    ena_intensity_sys_err_plus=combined_sys_err_plus,
                                    ena_intensity_sys_err_minus=combined_sys_err_minus,
+                                   predicted_ephemeris_flag=combined_predicted_ephemeris_flag
                                    )
 
 
@@ -296,11 +304,15 @@ class UncertaintyWeightedCombination(CombinationStrategy):
         else:
             uncertainty_weighted_combined_sp = None
 
+        predicted_ephemeris_flags = np.array([m.predicted_ephemeris_flag for m in maps])
+        combined_predicted_ephemeris_flag = np.logical_or.reduce(predicted_ephemeris_flags)
+
         return dataclasses.replace(maps[0],
                                    ena_intensity=uncertainty_weighted_combined_intensity,
                                    exposure_factor=summed_exposures,
                                    ena_intensity_sys_err=combined_intensity_sys_err,
                                    ena_intensity_stat_uncert=np.sqrt(combined_intensity_stat_unc),
                                    obs_date=avg_obs_date,
-                                   survival_probability=uncertainty_weighted_combined_sp
+                                   survival_probability=uncertainty_weighted_combined_sp,
+                                   predicted_ephemeris_flag=combined_predicted_ephemeris_flag
                                    )
