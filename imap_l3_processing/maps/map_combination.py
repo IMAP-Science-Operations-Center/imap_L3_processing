@@ -55,6 +55,7 @@ class CombinationStrategy(ABC):
             "obs_date",
             "obs_date_range",
             "survival_probability",
+            "predicted_ephemeris_flag",
         }
 
         differing_fields = []

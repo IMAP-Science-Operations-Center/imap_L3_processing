@@ -15,6 +15,7 @@ from spacepy.pycdf import CDF
 
 from imap_l3_processing.cdf.cdf_utils import read_variable_and_mask_fill_values, read_numeric_variable
 from imap_l3_processing.constants import TT2000_EPOCH
+from imap_l3_processing.maps.quality_flags import MapL3Flags
 from imap_l3_processing.models import DataProduct, DataProductVariable, D
 
 EPOCH_VAR_NAME = "epoch"
@@ -66,6 +67,8 @@ ISN_BG_RATE_SUBTRACTED_VAR_SYS_ERR_NAME = "isn_rate_bg_subtracted_sys_err"
 ENA_INTENSITY_SYS_ERR_MINUS_VAR_NAME = "ena_intensity_sys_err_minus"
 ENA_INTENSITY_SYS_ERR_PLUS_VAR_NAME = "ena_intensity_sys_err_plus"
 
+QUALITY_FLAGS_VAR_NAME = "quality_flags"
+
 
 @dataclass
 class MapData:
@@ -112,6 +115,7 @@ class IntensityMapData(MapData):
     bg_intensity_stat_uncert: Optional[np.ndarray] = None
     bg_intensity_sys_err: Optional[np.ndarray] = None
     survival_probability: Optional[np.ndarray] = None
+    predicted_ephemeris_flag: Optional[np.ndarray] = None
 
 
 @dataclass
@@ -575,6 +579,14 @@ def _intensity_data_variables(data: IntensityMapData) -> list[DataProductVariabl
         intensity_variables.extend(
             [DataProductVariable(ENA_INTENSITY_SYS_ERR_MINUS_VAR_NAME, data.ena_intensity_sys_err_minus),
              DataProductVariable(ENA_INTENSITY_SYS_ERR_PLUS_VAR_NAME, data.ena_intensity_sys_err_plus)])
+    if data.predicted_ephemeris_flag is not None:
+        empty_flags_array = np.full(data.predicted_ephemeris_flag.shape, MapL3Flags.NONE)
+        predicted_ephemeris_flag_array = np.where(data.predicted_ephemeris_flag, MapL3Flags.PREDICTIVE_EPHEMERIS, MapL3Flags.NONE)
+        flags_array = np.bitwise_or(empty_flags_array, predicted_ephemeris_flag_array)
+
+        intensity_variables.extend([
+            DataProductVariable(QUALITY_FLAGS_VAR_NAME, flags_array),
+        ])
 
     return _map_data_to_variables(data) + intensity_variables
 

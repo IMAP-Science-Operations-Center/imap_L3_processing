@@ -5,6 +5,7 @@ from datetime import timedelta
 from pathlib import Path
 from unittest.mock import patch, Mock
 
+import numpy as np
 from imap_data_access import ProcessingInputCollection, ScienceInput
 from imap_data_access import ScienceFilePath
 from spacepy.pycdf import CDF
@@ -187,6 +188,7 @@ class TestMapIntegration(unittest.TestCase):
 
             with CDF(str(expected_map_path)) as cdf:
                 self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))
+                self.assertTrue(np.any(cdf['quality_flags'][...] > 0))
 
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_hi_combined_sensor(self, mock_parse_cli_arguments):

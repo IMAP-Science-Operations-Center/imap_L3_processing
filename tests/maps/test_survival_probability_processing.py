@@ -48,6 +48,8 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
         mock_survival_probability_pointing_set.side_effect = [sentinel.pset_1, sentinel.pset_2, sentinel.pset_3]
 
         computed_survival_probabilities = rng.random((1, 9, 90, 45))
+        pred_ephemeris_flag = rng.random((1, 9, 90, 45)) > 0.8
+
         mock_survival_skymap.return_value.to_dataset.return_value = xr.Dataset(
             data_vars={
                 "exposure_weighted_survival_probabilities": (
@@ -58,6 +60,15 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
                         CoordNames.ELEVATION_L2.value,
                     ],
                     computed_survival_probabilities
+                ),
+                "predicted_ephemeris_flag": (
+                    [
+                        CoordNames.TIME.value,
+                        CoordNames.ENERGY_ULTRA_L1C.value,
+                        CoordNames.AZIMUTH_L2.value,
+                        CoordNames.ELEVATION_L2.value,
+                    ],
+                    pred_ephemeris_flag
                 )
             },
             coords={
@@ -139,6 +150,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
         np.testing.assert_array_equal(survival_data.intensity_map_data.obs_date_range,
                                       intensity_map_data.obs_date_range)
         np.testing.assert_array_equal(survival_data.intensity_map_data.solid_angle, intensity_map_data.solid_angle)
+        np.testing.assert_array_equal(survival_data.intensity_map_data.predicted_ephemeris_flag, pred_ephemeris_flag)
 
     @patch('imap_l3_processing.maps.survival_probability_processing.RectangularSurvivalProbabilitySkyMap')
     @patch('imap_l3_processing.maps.survival_probability_processing.RectangularSurvivalProbabilityPointingSet')
@@ -156,7 +168,6 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
 
             input_map = create_rectangular_intensity_map_data(epoch=[epoch], flux=input_map_flux)
 
-            intensity_map_data = input_map.intensity_map_data
             input_map.intensity_map_data.energy = sentinel.hi_l2_energies
 
             l2_grid = PixelSize.FourDegrees
@@ -175,6 +186,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
             mock_survival_probability_pointing_set.side_effect = [sentinel.pset_1, sentinel.pset_2, sentinel.pset_3]
 
             computed_survival_probabilities = rng.random((1, 9, 90, 45))
+            predicted_ephemeris_flag = rng.random((1, 9, 90, 45)) > 0.7
             mock_survival_skymap.return_value.to_dataset.return_value = xr.Dataset({
                 "exposure_weighted_survival_probabilities": (
                     [
@@ -184,6 +196,15 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
                         CoordNames.ELEVATION_L2.value,
                     ],
                     computed_survival_probabilities
+                ),
+                "predicted_ephemeris_flag": (
+                    [
+                        CoordNames.TIME.value,
+                        CoordNames.ENERGY_ULTRA_L1C.value,
+                        CoordNames.AZIMUTH_L2.value,
+                        CoordNames.ELEVATION_L2.value,
+                    ],
+                    predicted_ephemeris_flag
                 )
             },
                 coords={
@@ -193,7 +214,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
                     CoordNames.ELEVATION_L2.value: rng.random((45,)),
                 })
 
-            survival_data = process_survival_probabilities(dependencies, SpiceFrame.IMAP_DPS,
+            process_survival_probabilities(dependencies, SpiceFrame.IMAP_DPS,
                                                            cg_corrected=cg_correction_value)
 
             mock_survival_probability_pointing_set.assert_has_calls([

@@ -103,7 +103,8 @@ class TestMapCombination(unittest.TestCase):
             "obs_date_range",
             "survival_probability",
             "ena_intensity_sys_err_minus",
-            "ena_intensity_sys_err_plus"
+            "ena_intensity_sys_err_plus",
+            "predicted_ephemeris_flag",
         }
 
         alternate_values_by_type = {datetime: datetime(2025, 5, 6), str: "label"}

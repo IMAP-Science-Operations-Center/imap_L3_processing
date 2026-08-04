@@ -33,7 +33,10 @@ def process_survival_probabilities(survival_probabilities_dependencies: HiLoL3Su
     survival_dataset = survival_sky_map.to_dataset()
 
     input_data = survival_probabilities_dependencies.l2_data.intensity_map_data
-    survival_probabilities = survival_dataset["exposure_weighted_survival_probabilities"].values
+    survival_probabilities = survival_dataset[
+        "exposure_weighted_survival_probabilities"
+    ].values
+    predicted_ephemeris_flag = survival_dataset["predicted_ephemeris_flag"].values
 
     survival_corrected_intensity = input_data.ena_intensity / survival_probabilities
     corrected_stat_uncert = input_data.ena_intensity_stat_uncert / survival_probabilities
@@ -57,6 +60,7 @@ def process_survival_probabilities(survival_probabilities_dependencies: HiLoL3Su
             obs_date_range=input_data.obs_date_range,
             solid_angle=input_data.solid_angle,
             survival_probability=survival_probabilities,
+            predicted_ephemeris_flag=predicted_ephemeris_flag,
         ),
         coords=survival_probabilities_dependencies.l2_data.coords,
     )

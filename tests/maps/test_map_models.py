@@ -18,14 +18,34 @@ from imap_l3_processing.cdf.cdf_utils import read_variable_and_mask_fill_values,
 from imap_l3_processing.constants import ONE_SECOND_IN_NANOSECONDS, SECONDS_PER_DAY, FIVE_MINUTES_IN_NANOSECONDS, \
     TT2000_EPOCH
 from imap_l3_processing.maps import map_models
-from imap_l3_processing.maps.map_models import RectangularCoords, SpectralIndexMapData, RectangularSpectralIndexMapData, \
-    RectangularSpectralIndexDataProduct, RectangularIntensityMapData, IntensityMapData, RectangularIntensityDataProduct, \
-    HealPixIntensityMapData, \
-    HealPixSpectralIndexMapData, HealPixCoords, HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct, \
-    convert_tt2000_time_to_datetime, _read_intensity_map_data_from_open_cdf, calculate_datetime_weighted_average, \
-    ISNRateData, ISNBackgroundSubtractedData, ISNBackgroundSubtractedDataProduct, ISNBackgroundSubtractedMapData
+from imap_l3_processing.maps.map_models import (
+    RectangularCoords,
+    SpectralIndexMapData,
+    RectangularSpectralIndexMapData,
+    RectangularSpectralIndexDataProduct,
+    RectangularIntensityMapData,
+    IntensityMapData,
+    RectangularIntensityDataProduct,
+    HealPixIntensityMapData,
+    HealPixSpectralIndexMapData,
+    HealPixCoords,
+    HealPixSpectralIndexDataProduct,
+    HealPixIntensityDataProduct,
+    convert_tt2000_time_to_datetime,
+    _read_intensity_map_data_from_open_cdf,
+    calculate_datetime_weighted_average,
+    ISNRateData,
+    ISNBackgroundSubtractedData,
+    ISNBackgroundSubtractedDataProduct,
+    ISNBackgroundSubtractedMapData,
+)
+from imap_l3_processing.maps.quality_flags import MapL3Flags
 from imap_l3_processing.models import DataProductVariable
-from tests.test_helpers import get_test_data_folder, get_integration_test_data_path
+from tests.test_helpers import (
+    get_test_data_folder,
+    get_integration_test_data_path,
+    NumpyArrayMatcher,
+)
 
 
 class TestMapModels(unittest.TestCase):
@@ -155,20 +175,48 @@ class TestMapModels(unittest.TestCase):
                     "survival_probability": sentinel.survival_probability,
                 },
                 [
-                    DataProductVariable(map_models.SURVIVAL_PROBABILITY_VAR_NAME, sentinel.survival_probability),
-                ]
+                    DataProductVariable(
+                        map_models.SURVIVAL_PROBABILITY_VAR_NAME,
+                        sentinel.survival_probability,
+                    ),
+                ],
             ),
             (
                 "sys_err_plus and minus",
-                {"ena_intensity_sys_err_minus": sentinel.ena_intensity_sys_err_minus,
-                 "ena_intensity_sys_err_plus": sentinel.ena_intensity_sys_err_plus},
+                {
+                    "ena_intensity_sys_err_minus": sentinel.ena_intensity_sys_err_minus,
+                    "ena_intensity_sys_err_plus": sentinel.ena_intensity_sys_err_plus,
+                },
                 [
-                    DataProductVariable(map_models.ENA_INTENSITY_SYS_ERR_MINUS_VAR_NAME,
-                                        sentinel.ena_intensity_sys_err_minus),
-                    DataProductVariable(map_models.ENA_INTENSITY_SYS_ERR_PLUS_VAR_NAME,
-                                        sentinel.ena_intensity_sys_err_plus),
-                ]
-            )
+                    DataProductVariable(
+                        map_models.ENA_INTENSITY_SYS_ERR_MINUS_VAR_NAME,
+                        sentinel.ena_intensity_sys_err_minus,
+                    ),
+                    DataProductVariable(
+                        map_models.ENA_INTENSITY_SYS_ERR_PLUS_VAR_NAME,
+                        sentinel.ena_intensity_sys_err_plus,
+                    ),
+                ],
+            ),
+            (
+                "sp with predicted ephemeris flags",
+                {
+                    "survival_probability": sentinel.survival_probability,
+                    "predicted_ephemeris_flag": np.array([False, False, True, False]),
+                },
+                [
+                    DataProductVariable(
+                        map_models.SURVIVAL_PROBABILITY_VAR_NAME,
+                        sentinel.survival_probability,
+                    ),
+                    DataProductVariable(
+                        map_models.QUALITY_FLAGS_VAR_NAME,
+                        NumpyArrayMatcher(
+                            np.array([MapL3Flags.NONE, MapL3Flags.NONE, MapL3Flags.PREDICTIVE_EPHEMERIS, MapL3Flags.NONE], dtype=np.uint16)
+                        ),
+                    ),
+                ],
+            ),
         ]
 
         for (
