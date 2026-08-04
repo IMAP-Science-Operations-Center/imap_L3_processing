@@ -59,19 +59,21 @@ def slice_energy_range_by_bin(data: IntensityMapData, start_bin_id: int, end_bin
     if not bin_ids_valid:
         raise ValueError(f"Error slicing energy bins {start_bin_id},{end_bin_id}")
 
-    energy_slice = slice(start_bin_id-1,end_bin_id)
-    return dataclasses.replace(data,
-                               energy=data.energy[energy_slice],
-                               energy_delta_plus=data.energy_delta_plus[energy_slice],
-                               energy_delta_minus=data.energy_delta_minus[energy_slice],
-                               energy_label=data.energy_label[energy_slice],
-                               exposure_factor=data.exposure_factor[:, energy_slice],
-                               obs_date=data.obs_date[:, energy_slice],
-                               obs_date_range=data.obs_date_range[:, energy_slice],
-                               ena_intensity=data.ena_intensity[:, energy_slice],
-                               ena_intensity_sys_err=data.ena_intensity_sys_err[:, energy_slice],
-                               ena_intensity_stat_uncert=data.ena_intensity_stat_uncert[:, energy_slice]
-                               )
+    energy_slice = slice(start_bin_id - 1, end_bin_id)
+    return dataclasses.replace(
+        data,
+        energy=data.energy[energy_slice],
+        energy_delta_plus=data.energy_delta_plus[energy_slice],
+        energy_delta_minus=data.energy_delta_minus[energy_slice],
+        energy_label=data.energy_label[energy_slice],
+        exposure_factor=data.exposure_factor[:, energy_slice],
+        obs_date=data.obs_date[:, energy_slice],
+        obs_date_range=data.obs_date_range[:, energy_slice],
+        ena_intensity=data.ena_intensity[:, energy_slice],
+        ena_intensity_sys_err=data.ena_intensity_sys_err[:, energy_slice],
+        ena_intensity_stat_uncert=data.ena_intensity_stat_uncert[:, energy_slice],
+        predicted_ephemeris_flag=data.predicted_ephemeris_flag[:, energy_slice],
+    )
 
 def fit_spectral_index_map(intensity_data: IntensityMapData) -> SpectralIndexMapData:
     fluxes = intensity_data.ena_intensity
@@ -96,6 +98,7 @@ def fit_spectral_index_map(intensity_data: IntensityMapData) -> SpectralIndexMap
     output_scalar_coefficients[positive_gammas] = np.nan
     output_gamma_errors[positive_gammas] = np.nan
     chisq[positive_gammas] = np.nan
+    predicted_ephemeris_flag = np.any(intensity_data.predicted_ephemeris_flag, axis=1, keepdims=True)
 
     return SpectralIndexMapData(
         epoch=intensity_data.epoch,
@@ -115,6 +118,7 @@ def fit_spectral_index_map(intensity_data: IntensityMapData) -> SpectralIndexMap
         ena_spectral_index_scalar_coefficient=output_scalar_coefficients,
         ena_spectral_index_scalar_coefficient_stat_uncert=output_scalar_errors,
         ena_spectral_index_chisq=chisq,
+        predicted_ephemeris_flag=predicted_ephemeris_flag
     )
 
 

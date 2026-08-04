@@ -63,9 +63,12 @@ class TestHiSpectralFitDependencies(unittest.TestCase):
         np.testing.assert_array_equal(deps.get_fit_energy_ranges(), [[0.9, 3.2]])
 
 
-def _create_intensity_map_data(ena_intensity=None, energy=None, energy_delta_plus=None, energy_delta_minus=None):
+def _create_intensity_map_data(
+    ena_intensity=None, energy=None, energy_delta_plus=None, energy_delta_minus=None
+):
+    full_shape = (1, 1, 8, 15)
     return IntensityMapData(
-        ena_intensity=ena_intensity if ena_intensity is not None else np.full((1, 1, 8, 15), 1),
+        ena_intensity=ena_intensity if ena_intensity is not None else np.full(full_shape, 1),
         ena_intensity_stat_uncert=None,
         ena_intensity_sys_err=None,
         epoch=None,
@@ -80,4 +83,5 @@ def _create_intensity_map_data(ena_intensity=None, energy=None, energy_delta_plu
         obs_date=None,
         obs_date_range=None,
         solid_angle=None,
+        predicted_ephemeris_flag=np.full(full_shape, False)
     )

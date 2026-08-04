@@ -834,6 +834,7 @@ def _create_ultra_l2_healpix_data(epoch=None, lon=None, lat=None, energy=None, e
             ena_intensity=flux,
             ena_intensity_stat_uncert=intensity_stat_uncert,
             ena_intensity_sys_err=np.full_like(flux, 0),
+            predicted_ephemeris_flag=np.full_like(flux, False)
         ),
         HealPixCoords(
             pixel_index=healpix_indices,

@@ -115,12 +115,15 @@ class TestSpectralFit(unittest.TestCase):
             latitude=latitude,
             longitude=longitude,
             exposure_factor=np.full(full_shape, 1.0),
-            obs_date=np.ma.array(np.full(full_shape, datetime(year=2010, month=1, day=1))),
+            obs_date=np.ma.array(
+                np.full(full_shape, datetime(year=2010, month=1, day=1))
+            ),
             obs_date_range=np.full(full_shape, 100000),
             solid_angle=np.full(full_shape, 1.23),
             ena_intensity=np.array(flux_data).reshape(full_shape),
             ena_intensity_sys_err=np.array([]),
-            ena_intensity_stat_uncert=np.array(errors).reshape(full_shape)
+            ena_intensity_stat_uncert=np.array(errors).reshape(full_shape),
+            predicted_ephemeris_flag=np.full(full_shape, False),
         )
 
         spectral_intensity_map = fit_spectral_index_map(data)
@@ -155,6 +158,10 @@ class TestSpectralFit(unittest.TestCase):
         longitude = np.arange(0, 360, 45)
 
         input_shape = (1, 3, len(longitude), len(latitude))
+        predicted_ephemeris_flag = np.full(input_shape, False)
+        predicted_ephemeris_flag[0, 0, 1:3] = True
+        predicted_ephemeris_flag[0, 1, 3] = True
+
         input_map = IntensityMapData(
             epoch=np.array([datetime.now()]),
             epoch_delta=np.array([1000000]),
@@ -170,7 +177,8 @@ class TestSpectralFit(unittest.TestCase):
             solid_angle=np.full((len(longitude), len(latitude)), 0.1),
             ena_intensity=np.full(input_shape, 1),
             ena_intensity_sys_err=np.full(input_shape, 1),
-            ena_intensity_stat_uncert=np.full(input_shape, 1)
+            ena_intensity_stat_uncert=np.full(input_shape, 1),
+            predicted_ephemeris_flag=predicted_ephemeris_flag
         )
 
         input_map.obs_date[0, 0] = datetime(2025, 1, 1)
@@ -199,6 +207,11 @@ class TestSpectralFit(unittest.TestCase):
                                       np.full(expected_ena_shape, datetime(2026, 1, 1)))
         np.testing.assert_array_equal(output.obs_date_range, np.full(expected_ena_shape, 2))
         np.testing.assert_array_equal(output.exposure_factor, np.full(expected_ena_shape, 6))
+
+        expected_predicted_ephem_flag = np.full(expected_ena_shape, False)
+        expected_predicted_ephem_flag[0, 0, 1:4] = True
+
+        np.testing.assert_array_equal(output.predicted_ephemeris_flag, expected_predicted_ephem_flag)
 
     def test_finds_best_fit_with_nan_in_flux(self):
         energies = np.geomspace(1, 10, 23)
@@ -247,12 +260,15 @@ class TestSpectralFit(unittest.TestCase):
             latitude=latitude,
             longitude=longitude,
             exposure_factor=np.full(full_shape, 1.0),
-            obs_date=np.ma.array(np.full(full_shape, datetime(year=2010, month=1, day=1))),
+            obs_date=np.ma.array(
+                np.full(full_shape, datetime(year=2010, month=1, day=1))
+            ),
             obs_date_range=np.full(full_shape, 100000),
             solid_angle=np.full(full_shape, 1.23),
             ena_intensity=np.array(flux_data).reshape(full_shape),
             ena_intensity_sys_err=np.array([]),
-            ena_intensity_stat_uncert=np.array(errors).reshape(full_shape)
+            ena_intensity_stat_uncert=np.array(errors).reshape(full_shape),
+            predicted_ephemeris_flag=np.full(full_shape, False),
         )
 
         spectral_intensity_map = fit_spectral_index_map(data)
@@ -456,7 +472,8 @@ class TestSpectralFit(unittest.TestCase):
             solid_angle=np.full(full_shape, 1.23),
             ena_intensity=flux,
             ena_intensity_sys_err=np.zeros_like(flux),
-            ena_intensity_stat_uncert=np.array(variance).reshape(full_shape)
+            ena_intensity_stat_uncert=np.array(variance).reshape(full_shape),
+            predicted_ephemeris_flag=np.full_like(flux, False)
         )
 
         output_energies = np.array([[1, 100.5], [100.5, 10000.5]])
@@ -602,6 +619,7 @@ class TestSpectralFit(unittest.TestCase):
             ena_intensity=build_array(100, 200, 300, 400, 500),
             ena_intensity_stat_uncert=build_array(11, 12, 13, 14, 15),
             ena_intensity_sys_err=build_array(21, 22, 23, 24, 25),
+            predicted_ephemeris_flag=build_array(False, False, True, True, False),
         )
 
         expected_data = IntensityMapData(
@@ -623,6 +641,7 @@ class TestSpectralFit(unittest.TestCase):
             ena_intensity=build_array(100, 200, 300),
             ena_intensity_stat_uncert=build_array(11, 12, 13),
             ena_intensity_sys_err=build_array(21, 22, 23),
+            predicted_ephemeris_flag=build_array(False, False, True,),
         )
 
         actual = slice_energy_range_by_bin(input_data, 1, 3)
@@ -660,6 +679,7 @@ class TestSpectralFit(unittest.TestCase):
             ena_intensity=build_array(100, 200, 300, 400, 500),
             ena_intensity_stat_uncert=build_array(11, 12, 13, 14, 15),
             ena_intensity_sys_err=build_array(21, 22, 23, 24, 25),
+            predicted_ephemeris_flag=build_array(False, False, True, True, False),
         )
         cases = [
             (1, 10),

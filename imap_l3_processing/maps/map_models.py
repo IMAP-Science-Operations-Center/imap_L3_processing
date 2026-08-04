@@ -109,13 +109,13 @@ class IntensityMapData(MapData):
     ena_intensity: np.ndarray
     ena_intensity_stat_uncert: np.ndarray
     ena_intensity_sys_err: np.ndarray
+    predicted_ephemeris_flag: Optional[np.ndarray] = None
     ena_intensity_sys_err_minus: Optional[np.ndarray] = None
     ena_intensity_sys_err_plus: Optional[np.ndarray] = None
     bg_intensity: Optional[np.ndarray] = None
     bg_intensity_stat_uncert: Optional[np.ndarray] = None
     bg_intensity_sys_err: Optional[np.ndarray] = None
     survival_probability: Optional[np.ndarray] = None
-    predicted_ephemeris_flag: Optional[np.ndarray] = None
 
 
 @dataclass
@@ -139,6 +139,7 @@ class SpectralIndexMapData(MapData):
     ena_spectral_index_scalar_coefficient: np.ndarray
     ena_spectral_index_scalar_coefficient_stat_uncert: np.ndarray
     ena_spectral_index_chisq: np.ndarray
+    predicted_ephemeris_flag: np.ndarray | None = None
 
 
 @dataclass
@@ -324,7 +325,11 @@ def _read_intensity_map_data_from_open_cdf(cdf: CDF) -> IntensityMapData:
         obs_date_range = np.ma.masked_array(
             np.full(obs_date_shape, 0), mask=all_mask_array, dtype=np.int64
         )
-
+    if QUALITY_FLAGS_VAR_NAME in cdf:
+        quality_flag_data = cdf[QUALITY_FLAGS_VAR_NAME][...]
+        predicted_ephemeris = (quality_flag_data & MapL3Flags.PREDICTIVE_EPHEMERIS) > 0
+    else:
+        predicted_ephemeris = np.full_like(cdf["ena_intensity"], False, dtype=bool)
     map_intensity_data = IntensityMapData(
         epoch=cdf["epoch"][...],
         epoch_delta=read_variable_and_mask_fill_values(cdf["epoch_delta"]),
@@ -343,6 +348,7 @@ def _read_intensity_map_data_from_open_cdf(cdf: CDF) -> IntensityMapData:
             cdf["ena_intensity_stat_uncert"]
         ),
         ena_intensity_sys_err=read_numeric_variable(cdf["ena_intensity_sys_err"]),
+        predicted_ephemeris_flag=predicted_ephemeris
     )
 
     if "survival_probability" in cdf:
@@ -368,6 +374,7 @@ def _read_healpix_coords_from_open_cdf(cdf: CDF) -> HealPixCoords:
 
 
 def _read_intensity_map_data_from_xarray(dataset: xarray.Dataset) -> IntensityMapData:
+    intensity = _replace_fill_values_in_xarray(dataset, "ena_intensity")
     return IntensityMapData(
         epoch=dataset[CoordNames.TIME.value].values,
         epoch_delta=_replace_fill_values_in_xarray(dataset, "epoch_delta"),
@@ -381,9 +388,10 @@ def _read_intensity_map_data_from_xarray(dataset: xarray.Dataset) -> IntensityMa
         obs_date=_replace_fill_values_in_xarray(dataset, "obs_date"),
         obs_date_range=_replace_fill_values_in_xarray(dataset, "obs_date_range"),
         solid_angle=np.squeeze(_replace_fill_values_in_xarray(dataset, "solid_angle")),
-        ena_intensity=_replace_fill_values_in_xarray(dataset, "ena_intensity"),
+        ena_intensity=intensity,
         ena_intensity_stat_uncert=_replace_fill_values_in_xarray(dataset, "ena_intensity_stat_uncert"),
-        ena_intensity_sys_err=_replace_fill_values_in_xarray(dataset, "ena_intensity_sys_err")
+        ena_intensity_sys_err=_replace_fill_values_in_xarray(dataset, "ena_intensity_sys_err"),
+        predicted_ephemeris_flag=np.full_like(intensity, False, dtype=bool)
     )
 
 
@@ -543,22 +551,47 @@ def _map_data_to_variables(data: MapData) -> list[DataProductVariable]:
 
 
 def _spectral_index_data_variables(data: SpectralIndexMapData) -> list[DataProductVariable]:
-    return _map_data_to_variables(data) + [
+    variables = _map_data_to_variables(data) + [
         DataProductVariable(ENA_SPECTRAL_INDEX_VAR_NAME, data.ena_spectral_index),
-        DataProductVariable(ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME, data.ena_spectral_index_stat_uncert),
-        DataProductVariable(ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_VAR_NAME, data.ena_spectral_index_scalar_coefficient),
-        DataProductVariable(ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_STAT_UNCERT_VAR_NAME,
-                            data.ena_spectral_index_scalar_coefficient_stat_uncert),
-        DataProductVariable(ENA_SPECTRAL_INDEX_CHISQ_VAR_NAME, data.ena_spectral_index_chisq),
+        DataProductVariable(
+            ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME, data.ena_spectral_index_stat_uncert
+        ),
+        DataProductVariable(
+            ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_VAR_NAME,
+            data.ena_spectral_index_scalar_coefficient,
+        ),
+        DataProductVariable(
+            ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_STAT_UNCERT_VAR_NAME,
+            data.ena_spectral_index_scalar_coefficient_stat_uncert,
+        ),
+        DataProductVariable(
+            ENA_SPECTRAL_INDEX_CHISQ_VAR_NAME, data.ena_spectral_index_chisq
+        ),
     ]
+    if data.predicted_ephemeris_flag is not None:
+        quality_flags = np.zeros(data.predicted_ephemeris_flag.shape, dtype=np.uint16)
+        quality_flags[data.predicted_ephemeris_flag] |= np.uint16(
+            MapL3Flags.PREDICTIVE_EPHEMERIS
+        )
+
+        variables.append(DataProductVariable(QUALITY_FLAGS_VAR_NAME, quality_flags))
+    return variables
 
 
 def _intensity_data_variables(data: IntensityMapData) -> list[DataProductVariable]:
+
     intensity_variables = [
         DataProductVariable(ENA_INTENSITY_VAR_NAME, data.ena_intensity),
         DataProductVariable(ENA_INTENSITY_STAT_UNCERT_VAR_NAME, data.ena_intensity_stat_uncert),
         DataProductVariable(ENA_INTENSITY_SYS_ERR_VAR_NAME, data.ena_intensity_sys_err),
     ]
+    if data.predicted_ephemeris_flag is not None:
+        empty_flags_array = np.full(data.predicted_ephemeris_flag.shape, MapL3Flags.NONE)
+        predicted_ephemeris_flag_array = np.where(
+            data.predicted_ephemeris_flag, MapL3Flags.PREDICTIVE_EPHEMERIS, MapL3Flags.NONE
+        )
+        flags_array = np.bitwise_or(empty_flags_array, predicted_ephemeris_flag_array)
+        intensity_variables.append( DataProductVariable(QUALITY_FLAGS_VAR_NAME, flags_array))
     if data.bg_intensity is not None:
         intensity_variables.extend(
             [
@@ -579,15 +612,6 @@ def _intensity_data_variables(data: IntensityMapData) -> list[DataProductVariabl
         intensity_variables.extend(
             [DataProductVariable(ENA_INTENSITY_SYS_ERR_MINUS_VAR_NAME, data.ena_intensity_sys_err_minus),
              DataProductVariable(ENA_INTENSITY_SYS_ERR_PLUS_VAR_NAME, data.ena_intensity_sys_err_plus)])
-    if data.predicted_ephemeris_flag is not None:
-        empty_flags_array = np.full(data.predicted_ephemeris_flag.shape, MapL3Flags.NONE)
-        predicted_ephemeris_flag_array = np.where(data.predicted_ephemeris_flag, MapL3Flags.PREDICTIVE_EPHEMERIS, MapL3Flags.NONE)
-        flags_array = np.bitwise_or(empty_flags_array, predicted_ephemeris_flag_array)
-
-        intensity_variables.extend([
-            DataProductVariable(QUALITY_FLAGS_VAR_NAME, flags_array),
-        ])
-
     return _map_data_to_variables(data) + intensity_variables
 
 

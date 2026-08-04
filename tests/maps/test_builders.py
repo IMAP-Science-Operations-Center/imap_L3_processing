@@ -39,15 +39,18 @@ def create_intensity_map_data(epoch=None, epoch_delta=None, lon=None, lat=None, 
         latitude=lat,
         longitude=lon,
         exposure_factor=np.full_like(flux, 0),
-        obs_date=np.ma.array(np.full(more_real_flux.shape, datetime(year=2010, month=1, day=1))),
+        obs_date=np.ma.array(
+            np.full(more_real_flux.shape, datetime(year=2010, month=1, day=1))
+        ),
         obs_date_range=np.ma.array(np.full_like(more_real_flux, 0)),
         solid_angle=np.full_like(more_real_flux, 0),
         ena_intensity=flux,
         ena_intensity_stat_uncert=intensity_stat_uncert,
-        ena_intensity_sys_err=flux * .001,
-        bg_intensity=flux * .01,
-        bg_intensity_stat_uncert=intensity_stat_uncert * .01,
-        bg_intensity_sys_err=flux * .01 * .001
+        ena_intensity_sys_err=flux * 0.001,
+        bg_intensity=flux * 0.01,
+        bg_intensity_stat_uncert=intensity_stat_uncert * 0.01,
+        bg_intensity_sys_err=flux * 0.01 * 0.001,
+        predicted_ephemeris_flag=np.full_like(flux, False),
     )
 
 
@@ -98,7 +101,8 @@ def create_rectangular_intensity_map_data(epoch=None, epoch_delta=None, lon=None
             bg_intensity_stat_uncert=intensity_stat_uncert * .01,
             bg_intensity_sys_err=flux * .01 * .001,
             ena_intensity_sys_err_minus=ena_intensity_sys_err_minus,
-            ena_intensity_sys_err_plus=ena_intensity_sys_err_plus
+            ena_intensity_sys_err_plus=ena_intensity_sys_err_plus,
+            predicted_ephemeris_flag=np.full_like(flux, False)
         ),
         coords=RectangularCoords(
             latitude_delta=np.full_like(lat, 0),
