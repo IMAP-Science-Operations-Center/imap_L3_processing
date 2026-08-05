@@ -146,23 +146,28 @@ class UltraProcessor(MapProcessor):
         else:
             map_data = calculate_spectral_index_for_multiple_ranges(
                 dependencies.map_data.intensity_map_data,
-                dependencies.get_fit_energy_ranges()
+                dependencies.get_fit_energy_ranges(),
             )
         return RectangularSpectralIndexMapData(
-            spectral_index_map_data=map_data,
-            coords=dependencies.map_data.coords
+            spectral_index_map_data=map_data, coords=dependencies.map_data.coords
         )
 
-    def _process_healpix_intensity_to_rectangular(self, healpix_map_data: HealPixIntensityMapData,
-                                                  rect_l2_map: RectangularIntensityMapData,
-                                                  spacing_deg: int,
-                                                  spice_frame_name: SpiceFrame) -> RectangularIntensityDataProduct:
-        has_survival_data = healpix_map_data.intensity_map_data.survival_probability is not None
+    def _process_healpix_intensity_to_rectangular(
+        self,
+        healpix_map_data: HealPixIntensityMapData,
+        rect_l2_map: RectangularIntensityMapData,
+        spacing_deg: int,
+        spice_frame_name: SpiceFrame,
+    ) -> RectangularIntensityDataProduct:
+        has_survival_data = (
+            healpix_map_data.intensity_map_data.survival_probability is not None
+        )
 
         variables_to_convert_to_rectangular = [
             "ena_intensity",
             "ena_intensity_stat_uncert",
             "ena_intensity_sys_err",
+            "predicted_ephemeris_flag"
         ]
 
         if has_survival_data:
@@ -173,6 +178,7 @@ class UltraProcessor(MapProcessor):
         rectangular_map_xarray_dataset = rectangular_map.to_dataset()
 
         rect_l2_data = rect_l2_map.intensity_map_data
+        predicted_ephemeris_flag = rectangular_map_xarray_dataset["predicted_ephemeris_flag"].values > 0
         intensity_map_data = IntensityMapData(
             epoch=rect_l2_data.epoch,
             epoch_delta=rect_l2_data.epoch_delta,
@@ -193,6 +199,7 @@ class UltraProcessor(MapProcessor):
             ena_intensity_sys_err=rectangular_map_xarray_dataset[
                 "ena_intensity_sys_err"
             ].values,
+            predicted_ephemeris_flag=predicted_ephemeris_flag,
         )
 
         if has_survival_data:
@@ -256,6 +263,7 @@ class UltraProcessor(MapProcessor):
                     obs_date=obs_date,
                     obs_date_range=rectangular_dataset["obs_date_range"].values,
                     solid_angle=rectangular_skymap.solid_angle_grid.T,
+                    predicted_ephemeris_flag=None,
                 ),
                 coords=RectangularCoords(
                     latitude_delta=latitude_deltas,
@@ -302,13 +310,19 @@ def correct_healpix_data_for_survival_probability(
     logger.info("Cached HEALPix SP-corrected data not found; building from inputs")
 
     combined_psets = combine_glows_l3e_with_l1c_pointing(deps.glows_l3e_sp, deps.ultra_l1c_pset)
-    survival_probability_psets = [UltraSurvivalProbability(_l1c, _l3e, bin_groups=deps.energy_bin_group_sizes)
-                                  for _l1c, _l3e in combined_psets]
+    survival_probability_psets = [
+        UltraSurvivalProbability(_l1c, _l3e, bin_groups=deps.energy_bin_group_sizes)
+        for _l1c, _l3e in combined_psets
+    ]
 
     intensity_data = deps.ultra_l2_healpix_map.intensity_map_data
     coords = deps.ultra_l2_healpix_map.coords
-    corrected_skymap = UltraSurvivalProbabilitySkyMap(survival_probability_psets, spice_frame_name, coords.nside)
-    survival_probability_map = corrected_skymap.to_dataset()["exposure_weighted_survival_probabilities"].values
+    corrected_skymap = UltraSurvivalProbabilitySkyMap(
+        survival_probability_psets, spice_frame_name, coords.nside
+    )
+    skymap_dataset = corrected_skymap.to_dataset()
+    survival_probability_map = skymap_dataset["exposure_weighted_survival_probabilities"].values
+    predicted_ephemeris_flag = skymap_dataset["predicted_ephemeris_flag"].values
 
     healpix_intensity_data = HealPixIntensityMapData(
         intensity_map_data=IntensityMapData(
@@ -330,6 +344,7 @@ def correct_healpix_data_for_survival_probability(
             obs_date_range=intensity_data.obs_date_range,
             solid_angle=intensity_data.solid_angle,
             survival_probability=survival_probability_map,
+            predicted_ephemeris_flag=predicted_ephemeris_flag,
         ),
         coords=HealPixCoords(
             pixel_index=coords.pixel_index,

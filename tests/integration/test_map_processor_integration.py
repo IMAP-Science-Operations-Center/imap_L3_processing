@@ -360,7 +360,10 @@ class TestMapIntegration(unittest.TestCase):
             expected_ena_path = ScienceFilePath(
                 expected_output_file).construct_path()
 
-            self.assertTrue(expected_ena_path.exists(), f"Expected file {expected_ena_path.name} not found")
+            self.assertTrue(
+                expected_ena_path.exists(),
+                f"Expected file {expected_ena_path.name} not found",
+            )
 
             expected_ena_parents = {
                 input_file,

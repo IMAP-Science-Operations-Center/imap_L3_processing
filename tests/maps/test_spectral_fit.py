@@ -467,17 +467,18 @@ class TestSpectralFit(unittest.TestCase):
             latitude=latitude,
             longitude=longitude,
             exposure_factor=np.full(full_shape, 1.0),
-            obs_date=np.ma.array(np.full(full_shape, datetime(year=2010, month=1, day=1))),
+            obs_date=np.ma.array(
+                np.full(full_shape, datetime(year=2010, month=1, day=1))
+            ),
             obs_date_range=np.full(full_shape, 100000),
             solid_angle=np.full(full_shape, 1.23),
             ena_intensity=flux,
             ena_intensity_sys_err=np.zeros_like(flux),
             ena_intensity_stat_uncert=np.array(variance).reshape(full_shape),
-            predicted_ephemeris_flag=np.full_like(flux, False)
+            predicted_ephemeris_flag=np.full_like(flux, False),
         )
 
         output_energies = np.array([[1, 100.5], [100.5, 10000.5]])
-
         spectral_index_map_data = calculate_spectral_index_for_multiple_ranges(data, output_energies)
         np.testing.assert_array_equal(spectral_index_map_data.ena_spectral_index[0, 0, 0, 0], true_gamma_range_1)
         np.testing.assert_array_equal(spectral_index_map_data.ena_spectral_index[0, 1, 0, 0], true_gamma_range_2)
@@ -500,12 +501,17 @@ class TestSpectralFit(unittest.TestCase):
         np.testing.assert_array_equal(spectral_index_map_data.longitude, longitude)
         np.testing.assert_array_equal(spectral_index_map_data.solid_angle, data.solid_angle)
 
-        np.testing.assert_array_equal(spectral_index_map_data.energy_label, ["0.5 - 100.5", "100.5 - 10000.5"])
+        np.testing.assert_array_equal(
+            spectral_index_map_data.energy_label, ["0.5 - 100.5", "100.5 - 10000.5"]
+        )
 
         np.testing.assert_array_equal(spectral_index_map_data.exposure_factor, np.reshape([11, 12], (1, 2, 1, 1)))
         np.testing.assert_array_equal(spectral_index_map_data.obs_date,
                                       np.full((1, 2, 1, 1), datetime(year=2010, month=1, day=1)))
         np.testing.assert_array_equal(spectral_index_map_data.obs_date_range, np.full((1, 2, 1, 1), 100000))
+
+        self.assertEqual((1, 2, 1, 1), spectral_index_map_data.predicted_ephemeris_flag.shape)
+        np.testing.assert_array_equal(spectral_index_map_data.predicted_ephemeris_flag, np.full((1,2,1,1), False), )
 
     @patch('imap_l3_processing.maps.spectral_fit.mpfit')
     def test_spectral_fit_returns_nan_if_fit_status_is_not_positive_or_equal_to_five(self, mock_mpfit):
@@ -558,37 +564,62 @@ class TestSpectralFit(unittest.TestCase):
 
     def test_spectral_fit_against_validation_data(self):
         test_cases = [
-            ("hi45", RectangularIntensityMapData.read_from_path(
-                get_test_data_path("hi/fake_l2_maps/hi45-6months.cdf")
-            ).intensity_map_data,
-             "hi/validation/spectral_index/IMAP-Hi45_6months_4.0x4.0_fit_gam.csv",
-             "hi/validation/spectral_index/IMAP-Hi45_6months_4.0x4.0_fit_gam_sig.csv",
-             "hi/validation/spectral_index/menlo-IMAP-Hi45_6months_4.0x4.0_fit_A0.csv",
-             "hi/validation/spectral_index/menlo-IMAP-Hi45_6months_4.0x4.0_fit_A0_sig.csv",
-             "hi/validation/spectral_index/menlo-IMAP-Hi45_6months_4.0x4.0_fit_chisq.csv",
-             )
+            (
+                "hi45",
+                RectangularIntensityMapData.read_from_path(
+                    get_test_data_path("hi/fake_l2_maps/hi45-6months.cdf")
+                ).intensity_map_data,
+                "hi/validation/spectral_index/IMAP-Hi45_6months_4.0x4.0_fit_gam.csv",
+                "hi/validation/spectral_index/IMAP-Hi45_6months_4.0x4.0_fit_gam_sig.csv",
+                "hi/validation/spectral_index/menlo-IMAP-Hi45_6months_4.0x4.0_fit_A0.csv",
+                "hi/validation/spectral_index/menlo-IMAP-Hi45_6months_4.0x4.0_fit_A0_sig.csv",
+                "hi/validation/spectral_index/menlo-IMAP-Hi45_6months_4.0x4.0_fit_chisq.csv",
+            )
         ]
 
-        for name, input_data, expected_gamma_path, expected_sigma_path, expected_a_path, expected_a_sig_path, expected_chisq_path in test_cases:
+        for (
+            name,
+            input_data,
+            expected_gamma_path,
+            expected_sigma_path,
+            expected_a_path,
+            expected_a_sig_path,
+            expected_chisq_path,
+        ) in test_cases:
             with self.subTest(name):
-                expected_gamma = np.loadtxt(get_test_data_path(expected_gamma_path), delimiter=",", dtype=np.float64).T
+                expected_gamma = np.loadtxt(
+                    get_test_data_path(expected_gamma_path),
+                    delimiter=",",
+                    dtype=np.float64,
+                ).T
                 expected_a = np.loadtxt(get_test_data_path(expected_a_path), delimiter=",", dtype=np.float64).T
-                expected_gamma_sigma = np.loadtxt(get_test_data_path(expected_sigma_path), delimiter=",",
-                                                  dtype=np.float64).T
-                expected_a_sigma = np.loadtxt(get_test_data_path(expected_a_sig_path), delimiter=",", dtype=np.float64).T
+                expected_gamma_sigma = np.loadtxt(
+                    get_test_data_path(expected_sigma_path),
+                    delimiter=",",
+                    dtype=np.float64,
+                ).T
+                expected_a_sigma = np.loadtxt(
+                    get_test_data_path(expected_a_sig_path),
+                    delimiter=",",
+                    dtype=np.float64,
+                ).T
                 expected_chisq = np.loadtxt(get_test_data_path(expected_chisq_path), delimiter=",", dtype=np.float64).T
 
                 output_data = calculate_spectral_index_for_multiple_ranges(input_data, [[0, np.inf]])
 
                 np.testing.assert_allclose(output_data.ena_spectral_index[0, 0],
                                            expected_gamma, atol=1e-3)
-                np.testing.assert_allclose(output_data.ena_spectral_index_stat_uncert[0, 0],
-                                           expected_gamma_sigma, atol=1e-3)
+                np.testing.assert_allclose(
+                    output_data.ena_spectral_index_stat_uncert[0, 0],
+                    expected_gamma_sigma,
+                    atol=1e-3,
+                )
                 np.testing.assert_allclose(output_data.ena_spectral_index_scalar_coefficient[0, 0],
                                            expected_a, atol=1e-3)
                 np.testing.assert_allclose(output_data.ena_spectral_index_scalar_coefficient_stat_uncert[0, 0],
                                            expected_a_sigma, atol=1e-3)
                 np.testing.assert_allclose(output_data.ena_spectral_index_chisq[0, 0], expected_chisq)
+                np.testing.assert_allclose(output_data.predicted_ephemeris_flag, np.full((1,1,90,45), False))
 
     def test_slice_energy_range_by_bin(self):
         def build_array(*values):

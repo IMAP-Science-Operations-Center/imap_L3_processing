@@ -11,6 +11,7 @@ from imap_processing.ultra.l2.ultra_l2 import bin_pset_energy_bins
 from xarray import Dataset
 
 from imap_l3_processing.constants import ONE_SECOND_IN_NANOSECONDS
+from imap_l3_processing.glows.quality_flags import GlowsL3Flags
 from imap_l3_processing.ultra.models import UltraL1CPSet, UltraGlowsL3eData
 
 
@@ -24,7 +25,12 @@ class UltraSurvivalProbability(UltraPointingSet):
             num_pixels = len(l1c_pset.healpix_index)
             num_energies = len(coarse_bins.energy_bin_geometric_mean)
             energy_interpolated_sp = np.ones((num_energies, num_pixels))
+            predicted_ephemeris = np.zeros((1,num_energies, num_pixels))
         else:
+            predicted_ephemeris = (
+                l3e_glows.flags & GlowsL3Flags.PREDICTIVE_EPHEMERIS > 0
+            )
+
             l1c_epoch_in_et = spiceypy.unitim(
                 self.data.coords[CoordNames.TIME.value].values[0] / ONE_SECOND_IN_NANOSECONDS, "TT", "ET")
             rotated_az_el_points = geometry.frame_transform_az_el(l1c_epoch_in_et, self.az_el_points,
@@ -57,7 +63,16 @@ class UltraSurvivalProbability(UltraPointingSet):
                 CoordNames.ENERGY_ULTRA_L1C.value,
                 CoordNames.HEALPIX_INDEX.value
             ],
-            np.array([energy_interpolated_sp] * coarse_bins.exposure_factor)
+            energy_interpolated_sp * coarse_bins.exposure_factor.data
+        )
+
+        self.data["predicted_ephemeris_flag"] = (
+            [
+                CoordNames.TIME.value,
+                CoordNames.ENERGY_ULTRA_L1C.value,
+                CoordNames.HEALPIX_INDEX.value
+            ],
+            predicted_ephemeris * coarse_bins.exposure_factor.data
         )
 
         self.data["epoch_delta"] = [l1c_pset.epoch_delta]
@@ -67,11 +82,12 @@ class UltraSurvivalProbabilitySkyMap(HealpixSkyMap):
     def __init__(self, sp: list[UltraSurvivalProbability], spice_frame: geometry.SpiceFrame, nside: int):
         super().__init__(nside, spice_frame)
         for sp_pset in sp:
-            self.project_pset_values_to_map(sp_pset, ["survival_probability_times_exposure", "exposure_factor"],
+            self.project_pset_values_to_map(sp_pset, ["survival_probability_times_exposure", "exposure_factor", "predicted_ephemeris_flag"],
                                             pset_valid_mask=np.isfinite(
                                                 sp_pset.data["survival_probability_times_exposure"]))
 
         self.data_1d = Dataset({
             "exposure_weighted_survival_probabilities": self.data_1d["survival_probability_times_exposure"] /
-                                                        self.data_1d["exposure_factor"]
+                                                        self.data_1d["exposure_factor"],
+            "predicted_ephemeris_flag": self.data_1d["predicted_ephemeris_flag"] > 0
         })

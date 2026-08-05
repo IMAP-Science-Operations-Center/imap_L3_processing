@@ -75,13 +75,14 @@ class TestMapModels(unittest.TestCase):
                     ena_spectral_index_scalar_coefficient=sentinel.ena_spectral_index_scalar_coefficient,
                     ena_spectral_index_scalar_coefficient_stat_uncert=sentinel.ena_spectral_index_scalar_coefficient_stat_uncert,
                     ena_spectral_index_chisq=sentinel.ena_spectral_index_chisq,
+                    predicted_ephemeris_flag=np.array([True]),
                 ),
                 coords=RectangularCoords(
                     latitude_delta=sentinel.latitude_delta,
                     latitude_label=sentinel.latitude_label,
                     longitude_delta=sentinel.longitude_delta,
                     longitude_label=sentinel.longitude_label,
-                )
+                ),
             ),
             spice_frame_name=SpiceFrame.ECLIPJ2000,
         )
@@ -129,6 +130,10 @@ class TestMapModels(unittest.TestCase):
             DataProductVariable(
                 map_models.ENA_SPECTRAL_INDEX_CHISQ_VAR_NAME,
                 sentinel.ena_spectral_index_chisq,
+            ),
+            DataProductVariable(
+                map_models.QUALITY_FLAGS_VAR_NAME,
+                np.array([MapL3Flags.PREDICTIVE_EPHEMERIS])
             ),
             DataProductVariable(
                 map_models.LATITUDE_DELTA_VAR_NAME, sentinel.latitude_delta
@@ -344,6 +349,7 @@ class TestMapModels(unittest.TestCase):
                     ena_spectral_index_scalar_coefficient=sentinel.ena_spectral_index_scalar_coefficient,
                     ena_spectral_index_scalar_coefficient_stat_uncert=sentinel.ena_spectral_index_scalar_coefficient_stat_uncert,
                     ena_spectral_index_chisq=sentinel.ena_spectral_index_chisq,
+                    predicted_ephemeris_flag=None,
                 ),
                 coords=HealPixCoords(
                     pixel_index=sentinel.pixel_index,
@@ -422,27 +428,52 @@ class TestMapModels(unittest.TestCase):
             DataProductVariable(map_models.EPOCH_VAR_NAME, sentinel.epoch),
             DataProductVariable(map_models.EPOCH_DELTA_VAR_NAME, sentinel.epoch_delta),
             DataProductVariable(map_models.ENERGY_VAR_NAME, sentinel.energy),
-            DataProductVariable(map_models.ENERGY_DELTA_PLUS_VAR_NAME, sentinel.energy_delta_plus),
-            DataProductVariable(map_models.ENERGY_DELTA_MINUS_VAR_NAME, sentinel.energy_delta_minus),
-            DataProductVariable(map_models.ENERGY_LABEL_VAR_NAME, sentinel.energy_label),
-            DataProductVariable(map_models.EXPOSURE_FACTOR_VAR_NAME, sentinel.exposure_factor),
+            DataProductVariable(
+                map_models.ENERGY_DELTA_PLUS_VAR_NAME, sentinel.energy_delta_plus
+            ),
+            DataProductVariable(
+                map_models.ENERGY_DELTA_MINUS_VAR_NAME, sentinel.energy_delta_minus
+            ),
+            DataProductVariable(
+                map_models.ENERGY_LABEL_VAR_NAME, sentinel.energy_label
+            ),
+            DataProductVariable(
+                map_models.EXPOSURE_FACTOR_VAR_NAME, sentinel.exposure_factor
+            ),
             DataProductVariable(map_models.SOLID_ANGLE_VAR_NAME, sentinel.solid_angle),
             DataProductVariable(map_models.BG_RATE_VAR_NAME, sentinel.bg_rate),
-            DataProductVariable(map_models.BG_RATE_STAT_UNCERT_VAR_NAME, sentinel.bg_rate_stat_uncert),
-            DataProductVariable(map_models.BG_RATE_SYS_ERR_VAR_NAME, sentinel.bg_rate_sys_err),
+            DataProductVariable(
+                map_models.BG_RATE_STAT_UNCERT_VAR_NAME, sentinel.bg_rate_stat_uncert
+            ),
+            DataProductVariable(
+                map_models.BG_RATE_SYS_ERR_VAR_NAME, sentinel.bg_rate_sys_err
+            ),
             DataProductVariable(map_models.LATITUDE_VAR_NAME, sentinel.latitude),
-            DataProductVariable(map_models.LATITUDE_DELTA_VAR_NAME, sentinel.latitude_delta),
-            DataProductVariable(map_models.LATITUDE_LABEL_VAR_NAME, sentinel.latitude_label),
+            DataProductVariable(
+                map_models.LATITUDE_DELTA_VAR_NAME, sentinel.latitude_delta
+            ),
+            DataProductVariable(
+                map_models.LATITUDE_LABEL_VAR_NAME, sentinel.latitude_label
+            ),
             DataProductVariable(map_models.LONGITUDE_VAR_NAME, sentinel.longitude),
-            DataProductVariable(map_models.LONGITUDE_DELTA_VAR_NAME, sentinel.longitude_delta),
-            DataProductVariable(map_models.LONGITUDE_LABEL_VAR_NAME, sentinel.longitude_label),
-            DataProductVariable(map_models.ISN_BG_RATE_SUBTRACTED_VAR_NAME,
-                                sentinel.isn_bg_rate_subtracted),
-            DataProductVariable(map_models.ISN_BG_RATE_SUBTRACTED_VAR_SYS_ERR_NAME,
-                                sentinel.isn_bg_rate_subtracted_sys_err),
-            DataProductVariable(map_models.ISN_BG_RATE_SUBTRACTED_STAT_UNCERT_VAR_NAME,
-                                sentinel.isn_bg_rate_subtracted_stat_uncert),
-
+            DataProductVariable(
+                map_models.LONGITUDE_DELTA_VAR_NAME, sentinel.longitude_delta
+            ),
+            DataProductVariable(
+                map_models.LONGITUDE_LABEL_VAR_NAME, sentinel.longitude_label
+            ),
+            DataProductVariable(
+                map_models.ISN_BG_RATE_SUBTRACTED_VAR_NAME,
+                sentinel.isn_bg_rate_subtracted,
+            ),
+            DataProductVariable(
+                map_models.ISN_BG_RATE_SUBTRACTED_VAR_SYS_ERR_NAME,
+                sentinel.isn_bg_rate_subtracted_sys_err,
+            ),
+            DataProductVariable(
+                map_models.ISN_BG_RATE_SUBTRACTED_STAT_UNCERT_VAR_NAME,
+                sentinel.isn_bg_rate_subtracted_stat_uncert,
+            ),
         ]
 
         self.assertEqual(expected_variables, actual_variables)
@@ -450,7 +481,7 @@ class TestMapModels(unittest.TestCase):
     def test_healpix_intensity_to_data_product_variables(self):
         input_metadata = Mock()
 
-        expected_predicted_ephemeris = None
+        expected_predicted_ephemeris = np.array([True])
         data_product = HealPixIntensityDataProduct(
             input_metadata=input_metadata,
             data=HealPixIntensityMapData(
@@ -499,6 +530,7 @@ class TestMapModels(unittest.TestCase):
             DataProductVariable(map_models.ENA_INTENSITY_VAR_NAME, sentinel.ena_intensity),
             DataProductVariable(map_models.ENA_INTENSITY_STAT_UNCERT_VAR_NAME, sentinel.ena_intensity_stat_uncert),
             DataProductVariable(map_models.ENA_INTENSITY_SYS_ERR_VAR_NAME, sentinel.ena_intensity_sys_err),
+            DataProductVariable(map_models.QUALITY_FLAGS_VAR_NAME, np.array([MapL3Flags.PREDICTIVE_EPHEMERIS])),
             DataProductVariable(map_models.PIXEL_INDEX_VAR_NAME, sentinel.pixel_index),
             DataProductVariable(map_models.PIXEL_INDEX_LABEL_VAR_NAME, sentinel.pixel_index_label),
         ]
@@ -1000,12 +1032,15 @@ class TestMapModels(unittest.TestCase):
                     np.testing.assert_array_equal(map_data.predicted_ephemeris_flag, expected_predicted_ephemeris_flag, strict=True)
 
     def test_fill_values_in_read_rectangular_intensity_map_data_from_cdf(self):
-        path = get_test_data_folder() / 'hi' / 'map_with_fill_values.cdf'
+        path = get_test_data_folder() / "hi" / "map_with_fill_values.cdf"
         result = RectangularIntensityMapData.read_from_path(path)
         map_data = result.intensity_map_data
 
         with CDF(str(path)) as cdf:
-            np.testing.assert_array_equal(map_data.epoch, cdf["epoch"], )
+            np.testing.assert_array_equal(
+                map_data.epoch,
+                cdf["epoch"],
+            )
 
             self.assertTrue(np.all(map_data.epoch_delta.mask))
             self.assertTrue(np.all(map_data.obs_date.mask))
@@ -1015,10 +1050,16 @@ class TestMapModels(unittest.TestCase):
             np.testing.assert_array_equal(map_data.energy_delta_plus, np.full_like(cdf["energy_delta_plus"], np.nan))
             np.testing.assert_array_equal(map_data.energy_delta_minus, np.full_like(cdf["energy_delta_minus"], np.nan))
             np.testing.assert_array_equal(map_data.latitude, np.full_like(cdf["latitude"], np.nan))
-            np.testing.assert_array_equal(map_data.longitude, np.full_like(cdf["longitude"], np.nan))
-            np.testing.assert_array_equal(map_data.ena_intensity, np.full_like(cdf["ena_intensity"], np.nan))
-            np.testing.assert_array_equal(map_data.ena_intensity_stat_uncert,
-                                          np.full_like(cdf["ena_intensity_stat_uncert"], np.nan))
+            np.testing.assert_array_equal(
+                map_data.longitude, np.full_like(cdf["longitude"], np.nan)
+            )
+            np.testing.assert_array_equal(
+                map_data.ena_intensity, np.full_like(cdf["ena_intensity"], np.nan)
+            )
+            np.testing.assert_array_equal(
+                map_data.ena_intensity_stat_uncert,
+                np.full_like(cdf["ena_intensity_stat_uncert"], np.nan),
+            )
             np.testing.assert_array_equal(map_data.ena_intensity_sys_err,
                                           np.full_like(cdf["ena_intensity_sys_err"], np.nan))
             np.testing.assert_array_equal(map_data.exposure_factor, np.full_like(cdf["exposure_factor"], np.nan))
@@ -1026,10 +1067,13 @@ class TestMapModels(unittest.TestCase):
             np.testing.assert_array_equal(map_data.bg_intensity, np.full_like(cdf["bg_intensity"], np.nan))
             np.testing.assert_array_equal(map_data.bg_intensity_sys_err,
                                           np.full_like(cdf["bg_intensity_sys_err"], np.nan))
-            np.testing.assert_array_equal(map_data.bg_intensity_stat_uncert,
-                                          np.full_like(cdf["bg_intensity_stat_uncert"], np.nan))
             np.testing.assert_array_equal(
-                map_data.survival_probability, np.full_like(cdf["survival_probability"], np.nan)
+                map_data.bg_intensity_stat_uncert,
+                np.full_like(cdf["bg_intensity_stat_uncert"], np.nan),
+            )
+            np.testing.assert_array_equal(
+                map_data.survival_probability,
+                np.full_like(cdf["survival_probability"], np.nan),
             )
             np.testing.assert_array_equal(
                 map_data.ena_intensity_sys_err_plus, np.full_like(cdf["ena_intensity_sys_err_plus"], np.nan)
@@ -1050,6 +1094,9 @@ class TestMapModels(unittest.TestCase):
 
         fake_data_per_pixel = np.arange(num_healpix_indices)
 
+        expected_predicted_ephemeris_flag = np.full_like(fake_data_per_energy_per_pixel, False)
+        expected_predicted_ephemeris_flag[0,:,43] = True
+
         intensity_map_data = IntensityMapData(
             epoch=np.array([np.datetime64('1970-01-01T00:00:00')]),
             epoch_delta=np.array([999]),
@@ -1067,7 +1114,7 @@ class TestMapModels(unittest.TestCase):
             ena_intensity_stat_uncert=fake_data_per_energy_per_pixel * 2.3,
             ena_intensity_sys_err=fake_data_per_energy_per_pixel * 2.4,
             survival_probability=fake_data_per_energy_per_pixel * 0.01,
-            predicted_ephemeris_flag=np.full_like(fake_data_per_energy_per_pixel, False),
+            predicted_ephemeris_flag=expected_predicted_ephemeris_flag,
         )
 
         healpix_intensity_map_data = HealPixIntensityMapData(
@@ -1103,8 +1150,9 @@ class TestMapModels(unittest.TestCase):
         np.testing.assert_array_equal(actual_dataset.data_vars["ena_intensity_sys_err"].values, intensity_map_data.ena_intensity_sys_err)
 
         np.testing.assert_array_equal(actual_dataset.data_vars["survival_probability"].values, intensity_map_data.survival_probability)
+        np.testing.assert_array_equal(actual_dataset.data_vars["predicted_ephemeris_flag"].values, expected_predicted_ephemeris_flag)
 
-        for key in [ "obs_date", "obs_date_range", "exposure_factor", "ena_intensity", "ena_intensity_stat_uncert", "ena_intensity_sys_err", "survival_probability" ]:
+        for key in [ "obs_date", "obs_date_range", "exposure_factor", "ena_intensity", "ena_intensity_stat_uncert", "ena_intensity_sys_err", "survival_probability", "predicted_ephemeris_flag"]:
             self.assertEqual((CoordNames.TIME.value, CoordNames.ENERGY_L2.value, CoordNames.GENERIC_PIXEL.value), actual_dataset.data_vars[key].dims)
         for key in [ "latitude", "longitude", "solid_angle" ]:
             self.assertEqual((CoordNames.GENERIC_PIXEL.value,), actual_dataset.data_vars[key].dims)
@@ -1140,6 +1188,7 @@ class TestMapModels(unittest.TestCase):
             ena_spectral_index_scalar_coefficient=fake_data_per_energy_per_pixel * 2.4,
             ena_spectral_index_scalar_coefficient_stat_uncert=fake_data_per_energy_per_pixel * 2.5,
             ena_spectral_index_chisq=fake_data_per_energy_per_pixel * 2.6,
+            predicted_ephemeris_flag=None,
         )
 
         healpix_spectral_index_map_data = HealPixSpectralIndexMapData(

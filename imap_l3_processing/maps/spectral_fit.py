@@ -29,11 +29,28 @@ def calculate_spectral_index_for_multiple_ranges(intensity_data: IntensityMapDat
         obs_date=np.concat([m.obs_date for m in spectral_maps], axis=1),
         obs_date_range=np.concat([m.obs_date_range for m in spectral_maps], axis=1),
         solid_angle=intensity_data.solid_angle,
-        ena_spectral_index=np.concat([m.ena_spectral_index for m in spectral_maps], axis=1),
-        ena_spectral_index_stat_uncert=np.concat([m.ena_spectral_index_stat_uncert for m in spectral_maps], axis=1),
-        ena_spectral_index_scalar_coefficient=np.concat([m.ena_spectral_index_scalar_coefficient for m in spectral_maps], axis=1),
-        ena_spectral_index_scalar_coefficient_stat_uncert=np.concat([m.ena_spectral_index_scalar_coefficient_stat_uncert for m in spectral_maps], axis=1),
-        ena_spectral_index_chisq=np.concat([m.ena_spectral_index_chisq for m in spectral_maps], axis=1),
+        ena_spectral_index=np.concat(
+            [m.ena_spectral_index for m in spectral_maps], axis=1
+        ),
+        ena_spectral_index_stat_uncert=np.concat(
+            [m.ena_spectral_index_stat_uncert for m in spectral_maps], axis=1
+        ),
+        ena_spectral_index_scalar_coefficient=np.concat(
+            [m.ena_spectral_index_scalar_coefficient for m in spectral_maps], axis=1
+        ),
+        ena_spectral_index_scalar_coefficient_stat_uncert=np.concat(
+            [
+                m.ena_spectral_index_scalar_coefficient_stat_uncert
+                for m in spectral_maps
+            ],
+            axis=1,
+        ),
+        ena_spectral_index_chisq=np.concat(
+            [m.ena_spectral_index_chisq for m in spectral_maps], axis=1
+        ),
+        predicted_ephemeris_flag=np.concat(
+            [m.predicted_ephemeris_flag for m in spectral_maps], axis=1
+        ),
     )
 
 

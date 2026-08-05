@@ -23,11 +23,21 @@ import imap_l3_processing
 from imap_l3_processing.cdf.cdf_utils import write_cdf, read_numeric_variable
 from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_l3_processing.constants import TT2000_EPOCH
-from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet, \
-    RectangularSpectralIndexMapData, RectangularIntensityMapData, \
-    HealPixIntensityMapData, HealPixSpectralIndexMapData, RectangularSpectralIndexDataProduct, \
-    RectangularIntensityDataProduct, HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct, MapDataProduct, \
-    ISNBackgroundSubtractedDataProduct, ISNBackgroundSubtractedMapData
+from imap_l3_processing.maps.map_models import (
+    GlowsL3eRectangularMapInputData,
+    InputRectangularPointingSet,
+    RectangularSpectralIndexMapData,
+    RectangularIntensityMapData,
+    HealPixIntensityMapData,
+    HealPixSpectralIndexMapData,
+    RectangularSpectralIndexDataProduct,
+    RectangularIntensityDataProduct,
+    HealPixSpectralIndexDataProduct,
+    HealPixIntensityDataProduct,
+    MapDataProduct,
+    ISNBackgroundSubtractedDataProduct,
+    ISNBackgroundSubtractedMapData,
+)
 from imap_l3_processing.models import DataProduct, MagData, InputMetadata
 from imap_l3_processing.ultra.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.version import VERSION

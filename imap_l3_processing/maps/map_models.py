@@ -109,7 +109,7 @@ class IntensityMapData(MapData):
     ena_intensity: np.ndarray
     ena_intensity_stat_uncert: np.ndarray
     ena_intensity_sys_err: np.ndarray
-    predicted_ephemeris_flag: Optional[np.ndarray] = None
+    predicted_ephemeris_flag: np.ndarray
     ena_intensity_sys_err_minus: Optional[np.ndarray] = None
     ena_intensity_sys_err_plus: Optional[np.ndarray] = None
     bg_intensity: Optional[np.ndarray] = None
@@ -139,7 +139,7 @@ class SpectralIndexMapData(MapData):
     ena_spectral_index_scalar_coefficient: np.ndarray
     ena_spectral_index_scalar_coefficient_stat_uncert: np.ndarray
     ena_spectral_index_chisq: np.ndarray
-    predicted_ephemeris_flag: np.ndarray | None = None
+    predicted_ephemeris_flag: np.ndarray
 
 
 @dataclass
@@ -256,24 +256,51 @@ class HealPixIntensityMapData:
     def to_healpix_skymap(self) -> HealpixSkyMap:
         healpix_map = HealpixSkyMap(self.coords.nside, SpiceFrame.ECLIPJ2000)
 
-        full_shape = [CoordNames.TIME.value, CoordNames.ENERGY_L2.value, CoordNames.HEALPIX_INDEX.value]
+        full_shape = [
+            CoordNames.TIME.value,
+            CoordNames.ENERGY_L2.value,
+            CoordNames.HEALPIX_INDEX.value,
+        ]
         healpix_map.data_1d = xarray.Dataset(
             data_vars={
-                "latitude": ([CoordNames.HEALPIX_INDEX.value], self.intensity_map_data.latitude),
-                "longitude": ([CoordNames.HEALPIX_INDEX.value], self.intensity_map_data.longitude),
-                "solid_angle": ([CoordNames.HEALPIX_INDEX.value], self.intensity_map_data.solid_angle),
+                "latitude": (
+                    [CoordNames.HEALPIX_INDEX.value],
+                    self.intensity_map_data.latitude,
+                ),
+                "longitude": (
+                    [CoordNames.HEALPIX_INDEX.value],
+                    self.intensity_map_data.longitude,
+                ),
+                "solid_angle": (
+                    [CoordNames.HEALPIX_INDEX.value],
+                    self.intensity_map_data.solid_angle,
+                ),
                 "obs_date_range": (full_shape, self.intensity_map_data.obs_date_range),
                 "obs_date": (full_shape, self.intensity_map_data.obs_date),
-                "exposure_factor": (full_shape, self.intensity_map_data.exposure_factor),
+                "exposure_factor": (
+                    full_shape,
+                    self.intensity_map_data.exposure_factor,
+                ),
                 "ena_intensity": (full_shape, self.intensity_map_data.ena_intensity),
-                "ena_intensity_stat_uncert": (full_shape, self.intensity_map_data.ena_intensity_stat_uncert),
-                "ena_intensity_sys_err": (full_shape, self.intensity_map_data.ena_intensity_sys_err),
+                "ena_intensity_stat_uncert": (
+                    full_shape,
+                    self.intensity_map_data.ena_intensity_stat_uncert,
+                ),
+                "ena_intensity_sys_err": (
+                    full_shape,
+                    self.intensity_map_data.ena_intensity_sys_err,
+                ),
+                "predicted_ephemeris_flag": (
+                    full_shape,
+                    self.intensity_map_data.predicted_ephemeris_flag,
+                ),
             },
             coords={
                 CoordNames.TIME.value: self.intensity_map_data.epoch,
                 CoordNames.ENERGY_L2.value: self.intensity_map_data.energy,
                 CoordNames.HEALPIX_INDEX.value: self.coords.pixel_index,
-            })
+            },
+        )
 
         if self.intensity_map_data.survival_probability is not None:
             data_1d_with_sp = healpix_map.data_1d.assign(
@@ -579,19 +606,17 @@ def _spectral_index_data_variables(data: SpectralIndexMapData) -> list[DataProdu
 
 
 def _intensity_data_variables(data: IntensityMapData) -> list[DataProductVariable]:
-
+    empty_flags_array = np.full(data.predicted_ephemeris_flag.shape, MapL3Flags.NONE)
+    predicted_ephemeris_flag_array = np.where(
+        data.predicted_ephemeris_flag, MapL3Flags.PREDICTIVE_EPHEMERIS, MapL3Flags.NONE
+    )
+    flags_array = np.bitwise_or(empty_flags_array, predicted_ephemeris_flag_array)
     intensity_variables = [
         DataProductVariable(ENA_INTENSITY_VAR_NAME, data.ena_intensity),
         DataProductVariable(ENA_INTENSITY_STAT_UNCERT_VAR_NAME, data.ena_intensity_stat_uncert),
         DataProductVariable(ENA_INTENSITY_SYS_ERR_VAR_NAME, data.ena_intensity_sys_err),
+        DataProductVariable(QUALITY_FLAGS_VAR_NAME, flags_array),
     ]
-    if data.predicted_ephemeris_flag is not None:
-        empty_flags_array = np.full(data.predicted_ephemeris_flag.shape, MapL3Flags.NONE)
-        predicted_ephemeris_flag_array = np.where(
-            data.predicted_ephemeris_flag, MapL3Flags.PREDICTIVE_EPHEMERIS, MapL3Flags.NONE
-        )
-        flags_array = np.bitwise_or(empty_flags_array, predicted_ephemeris_flag_array)
-        intensity_variables.append( DataProductVariable(QUALITY_FLAGS_VAR_NAME, flags_array))
     if data.bg_intensity is not None:
         intensity_variables.extend(
             [

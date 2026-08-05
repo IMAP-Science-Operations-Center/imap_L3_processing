@@ -631,28 +631,6 @@ class TestMapCombination(unittest.TestCase):
 
                 self.assertIsNone(combined_map.intensity_map_data.survival_probability)
 
-    def test_combination_handles_missing_predict_ephem_flag(self):
-        test_cases = [
-            ExposureWeightedCombination,
-            UncertaintyWeightedCombination,
-            UnweightedCombination
-        ]
-
-        for combination_strategy in test_cases:
-            with self.subTest(combination_strategy.__name__):
-                map_1 = construct_intensity_data_with_all_zero_fields()
-                map_1.predicted_ephemeris_flag = None
-
-                map_2 = construct_intensity_data_with_all_zero_fields()
-                map_2.predicted_ephemeris_flag = None
-
-                combined_map = combination_strategy().combine_rectangular_intensity_map_data([
-                    create_rectangular_intensity_map(map_1),
-                    create_rectangular_intensity_map(map_2)
-                ])
-
-                self.assertIsNone(combined_map.intensity_map_data.predicted_ephemeris_flag)
-
     def test_combination_handles_predict_ephem_flag(self):
         test_cases = [
             ExposureWeightedCombination,

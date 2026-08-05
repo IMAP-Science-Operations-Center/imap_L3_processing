@@ -189,7 +189,9 @@ def create_rectangular_spectral_index_map_data(epoch=None, epoch_delta=None, lon
             latitude=lat,
             longitude=lon,
             exposure_factor=np.full_like(spectral_index, 0),
-            obs_date=np.ma.array(np.full(more_real_flux.shape, datetime(year=2010, month=1, day=1))),
+            obs_date=np.ma.array(
+                np.full(more_real_flux.shape, datetime(year=2010, month=1, day=1))
+            ),
             obs_date_range=np.ma.array(np.full_like(more_real_flux, 0)),
             solid_angle=np.full_like(more_real_flux, 0),
             ena_spectral_index=spectral_index,
@@ -197,13 +199,14 @@ def create_rectangular_spectral_index_map_data(epoch=None, epoch_delta=None, lon
             ena_spectral_index_scalar_coefficient=ena_spectral_index_scalar_coefficient,
             ena_spectral_index_scalar_coefficient_stat_uncert=ena_spectral_index_scalar_coefficient_stat_unc,
             ena_spectral_index_chisq=ena_spectral_index_chisq,
+            predicted_ephemeris_flag=np.full(more_real_flux.shape, False),
         ),
         coords=RectangularCoords(
             latitude_delta=np.full_like(lat, 0),
             latitude_label=lat.astype(str),
             longitude_delta=np.full_like(lon, 0),
             longitude_label=lon.astype(str),
-        )
+        ),
     )
 
 
