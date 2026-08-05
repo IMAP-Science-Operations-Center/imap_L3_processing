@@ -29,11 +29,8 @@ from imap_l3_processing.maps.map_models import (
     RectangularSpectralIndexMapData,
     RectangularIntensityMapData,
     HealPixIntensityMapData,
-    HealPixSpectralIndexMapData,
     RectangularSpectralIndexDataProduct,
     RectangularIntensityDataProduct,
-    HealPixSpectralIndexDataProduct,
-    HealPixIntensityDataProduct,
     MapDataProduct,
     ISNBackgroundSubtractedDataProduct,
     ISNBackgroundSubtractedMapData,
@@ -109,10 +106,14 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: P
 
     map_instruments = ["hi", "lo", "ultra"]
     if data.input_metadata.instrument in map_instruments:
-
-        if isinstance(data, (RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct,
-                             HealPixSpectralIndexDataProduct, HealPixIntensityDataProduct,
-                             ISNBackgroundSubtractedDataProduct)):
+        if isinstance(
+            data,
+            (
+                RectangularSpectralIndexDataProduct,
+                RectangularIntensityDataProduct,
+                ISNBackgroundSubtractedDataProduct,
+            ),
+        ):
             attrs = generate_map_global_metadata(data)
             for key, value in attrs.items():
                 attribute_manager.add_global_attribute(key, value)
@@ -142,7 +143,6 @@ def generate_map_global_metadata(data_product: MapDataProduct) -> dict:
     match data_product.data:
         case (
         RectangularSpectralIndexMapData(spectral_index_map_data=map_data) |
-        HealPixSpectralIndexMapData(spectral_index_map_data=map_data) |
         RectangularIntensityMapData(intensity_map_data=map_data) |
         HealPixIntensityMapData(intensity_map_data=map_data) |
         ISNBackgroundSubtractedMapData(isn_rate_map_data=map_data)

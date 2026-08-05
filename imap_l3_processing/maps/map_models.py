@@ -446,48 +446,6 @@ def _read_rectangular_coords_from_open_cdf(cdf: CDF) -> RectangularCoords:
 
 
 @dataclass
-class HealPixSpectralIndexMapData:
-    spectral_index_map_data: SpectralIndexMapData
-    coords: HealPixCoords
-
-    def to_healpix_skymap(self) -> HealpixSkyMap:
-        healpix_map = HealpixSkyMap(self.coords.nside, SpiceFrame.ECLIPJ2000)
-
-        full_shape = [CoordNames.TIME.value, CoordNames.ENERGY_L2.value, CoordNames.HEALPIX_INDEX.value]
-        healpix_map.data_1d = xarray.Dataset(
-            data_vars={
-                "latitude": ([CoordNames.HEALPIX_INDEX.value], self.spectral_index_map_data.latitude),
-                "longitude": ([CoordNames.HEALPIX_INDEX.value], self.spectral_index_map_data.longitude),
-                "solid_angle": ([CoordNames.HEALPIX_INDEX.value], self.spectral_index_map_data.solid_angle),
-                "obs_date_range": (full_shape, self.spectral_index_map_data.obs_date_range),
-                "obs_date": (full_shape, self.spectral_index_map_data.obs_date),
-                "exposure_factor": (full_shape, self.spectral_index_map_data.exposure_factor),
-
-                "ena_spectral_index": (full_shape, self.spectral_index_map_data.ena_spectral_index),
-                "ena_spectral_index_stat_uncert": (
-                    full_shape, self.spectral_index_map_data.ena_spectral_index_stat_uncert),
-                "ena_spectral_index_scalar_coefficient": (full_shape,
-                                                          self.spectral_index_map_data.ena_spectral_index_scalar_coefficient),
-                "ena_spectral_index_scalar_coefficient_stat_uncert": (full_shape,
-                                                                      self.spectral_index_map_data.ena_spectral_index_scalar_coefficient_stat_uncert),
-                "ena_spectral_index_chisq": (
-                    full_shape,
-                    self.spectral_index_map_data.ena_spectral_index_chisq),
-            },
-            coords={
-                CoordNames.TIME.value: self.spectral_index_map_data.epoch,
-                CoordNames.ENERGY_L2.value: self.spectral_index_map_data.energy,
-                CoordNames.HEALPIX_INDEX.value: self.coords.pixel_index,
-            })
-
-        healpix_map.data_1d = healpix_map.data_1d \
-            .assign({"obs_date": (full_shape, healpix_map.data_1d["obs_date"].values.astype(np.float64))}) \
-            .rename({CoordNames.HEALPIX_INDEX.value: CoordNames.GENERIC_PIXEL.value})
-
-        return healpix_map
-
-
-@dataclass
 class MapDataProduct(DataProduct[D], Generic[D]):
     data: D
     spice_frame_name: SpiceFrame
@@ -495,22 +453,6 @@ class MapDataProduct(DataProduct[D], Generic[D]):
     @abc.abstractmethod
     def to_data_product_variables(self) -> list[DataProductVariable]:
         raise NotImplementedError
-
-
-class HealPixSpectralIndexDataProduct(MapDataProduct[HealPixSpectralIndexMapData]):
-    data: HealPixSpectralIndexMapData
-
-    def to_data_product_variables(self) -> list[DataProductVariable]:
-        return _spectral_index_data_variables(self.data.spectral_index_map_data) \
-            + _healpix_coords_to_variables(self.data.coords)
-
-
-class HealPixIntensityDataProduct(MapDataProduct[HealPixIntensityMapData]):
-    data: HealPixIntensityMapData
-
-    def to_data_product_variables(self) -> list[DataProductVariable]:
-        return _intensity_data_variables(self.data.intensity_map_data) \
-            + _healpix_coords_to_variables(self.data.coords)
 
 
 class RectangularSpectralIndexDataProduct(MapDataProduct[RectangularSpectralIndexMapData]):
@@ -648,12 +590,6 @@ def _rectangular_coords_to_variables(coords: RectangularCoords) -> list[DataProd
         DataProductVariable(LONGITUDE_LABEL_VAR_NAME, coords.longitude_label),
     ]
 
-
-def _healpix_coords_to_variables(coords: HealPixCoords) -> list[DataProductVariable]:
-    return [
-        DataProductVariable(PIXEL_INDEX_VAR_NAME, coords.pixel_index),
-        DataProductVariable(PIXEL_INDEX_LABEL_VAR_NAME, coords.pixel_index_label),
-    ]
 
 
 def calculate_datetime_weighted_average(data: np.ndarray, weights: np.ndarray, axis: int,

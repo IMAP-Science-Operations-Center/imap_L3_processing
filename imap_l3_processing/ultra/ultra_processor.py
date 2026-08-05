@@ -9,13 +9,28 @@ from typing import Optional
 from imap_data_access import ScienceFilePath, ImapFilePath
 from imap_processing.spice.geometry import SpiceFrame
 
-from imap_l3_processing.maps.map_combination import ExposureWeightedCombination, UncertaintyWeightedCombination
-from imap_l3_processing.maps.map_descriptors import MapDescriptorParts, MapQuantity, SurvivalCorrection, \
-    parse_map_descriptor, PixelSize, Sensor
-from imap_l3_processing.maps.map_models import HealPixIntensityMapData, IntensityMapData, \
-    HealPixCoords, HealPixSpectralIndexMapData, RectangularIntensityDataProduct, \
-    RectangularIntensityMapData, RectangularCoords, RectangularSpectralIndexDataProduct, \
-    RectangularSpectralIndexMapData, SpectralIndexMapData
+from imap_l3_processing.maps.map_combination import (
+    ExposureWeightedCombination,
+    UncertaintyWeightedCombination,
+)
+from imap_l3_processing.maps.map_descriptors import (
+    MapDescriptorParts,
+    MapQuantity,
+    SurvivalCorrection,
+    parse_map_descriptor,
+    PixelSize,
+    Sensor,
+)
+from imap_l3_processing.maps.map_models import (
+    HealPixIntensityMapData,
+    IntensityMapData,
+    HealPixCoords,
+    RectangularIntensityDataProduct,
+    RectangularIntensityMapData,
+    RectangularCoords,
+    RectangularSpectralIndexDataProduct,
+    RectangularSpectralIndexMapData,
+)
 from imap_l3_processing.maps.map_processor import MapProcessor
 from imap_l3_processing.maps.spectral_fit import calculate_spectral_index_for_multiple_ranges, \
     slice_energy_range_by_bin, fit_spectral_index_map
@@ -217,63 +232,6 @@ class UltraProcessor(MapProcessor):
 
         return RectangularIntensityDataProduct(data=rect_intensity_map_data, input_metadata=self.input_metadata,
                                                spice_frame_name=spice_frame_name)
-
-    def _process_healpix_spectral_index_to_rectangular(self, healpix_map_data: HealPixSpectralIndexMapData,
-                                                       spacing_deg: int) -> RectangularSpectralIndexDataProduct:
-        spectral_index_skymap = healpix_map_data.to_healpix_skymap()
-
-        variables_to_project = [
-            'exposure_factor',
-            'ena_spectral_index',
-            'ena_spectral_index_stat_uncert',
-            'obs_date',
-            'obs_date_range',
-        ]
-
-        rectangular_skymap, _ = spectral_index_skymap.to_rectangular_skymap(spacing_deg, variables_to_project)
-
-        rectangular_dataset = rectangular_skymap.to_dataset()
-
-        obs_date = datetime(year=1970, month=1, day=1) + timedelta(seconds=1) * (
-                rectangular_dataset["obs_date"].values / 1e9)
-
-        latitude = rectangular_skymap.sky_grid.el_bin_midpoints
-        longitude = rectangular_skymap.sky_grid.az_bin_midpoints
-        latitude_deltas = latitude - rectangular_skymap.sky_grid.el_bin_edges[:-1]
-        longitude_deltas = longitude - rectangular_skymap.sky_grid.az_bin_edges[:-1]
-
-        healpix_spectral_index_map_data = healpix_map_data.spectral_index_map_data
-        return RectangularSpectralIndexDataProduct(
-            input_metadata=self.input_metadata,
-            data=RectangularSpectralIndexMapData(
-                spectral_index_map_data=SpectralIndexMapData(
-                    ena_spectral_index=rectangular_dataset["ena_spectral_index"].values,
-                    ena_spectral_index_stat_uncert=rectangular_dataset[
-                        "ena_spectral_index_stat_uncert"
-                    ].values,
-                    epoch=healpix_spectral_index_map_data.epoch,
-                    epoch_delta=healpix_spectral_index_map_data.epoch_delta,
-                    energy=healpix_spectral_index_map_data.energy,
-                    energy_delta_plus=healpix_spectral_index_map_data.energy_delta_plus,
-                    energy_delta_minus=healpix_spectral_index_map_data.energy_delta_minus,
-                    energy_label=healpix_spectral_index_map_data.energy_label,
-                    latitude=latitude,
-                    longitude=longitude,
-                    exposure_factor=rectangular_dataset["exposure_factor"].values,
-                    obs_date=obs_date,
-                    obs_date_range=rectangular_dataset["obs_date_range"].values,
-                    solid_angle=rectangular_skymap.solid_angle_grid.T,
-                    predicted_ephemeris_flag=None,
-                ),
-                coords=RectangularCoords(
-                    latitude_delta=latitude_deltas,
-                    latitude_label=latitude.astype(str),
-                    longitude_delta=longitude_deltas,
-                    longitude_label=longitude.astype(str),
-                ),
-            ),
-        )
-
 
 @dataclass
 class UltraMapDescriptorParts:
