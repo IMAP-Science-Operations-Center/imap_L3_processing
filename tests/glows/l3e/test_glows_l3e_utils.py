@@ -12,13 +12,14 @@ from imap_processing.spice.repoint import get_repoint_data, set_global_repoint_t
 from spacepy.pycdf import CDF, const
 from imap_l3_processing.constants import ONE_SECOND_IN_NANOSECONDS
 from imap_l3_processing.glows.descriptors import GLOWS_L3E_DESCRIPTORS, GLOWS_L3E_HI_45_DESCRIPTOR, \
-    GLOWS_L3E_HI_90_DESCRIPTOR, GLOWS_L3E_LO_DESCRIPTOR, GLOWS_L3E_ULTRA_SF_DESCRIPTOR, GLOWS_L3E_ULTRA_HF_DESCRIPTOR
+    GLOWS_L3E_HI_90_DESCRIPTOR, GLOWS_L3E_LO_DESCRIPTOR, GLOWS_L3E_ULTRA_SF_DESCRIPTOR, GLOWS_L3E_ULTRA_HF_DESCRIPTOR, \
+    GLOWS_REPROCESSING_DESCRIPTOR
 from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments, GlowsL3eSpacecraftInfo
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, \
     identify_versions_for_l3e_output_files, find_first_updated_cr, get_lo_pivot_angles, \
     get_lo_pivot_angle_from_l1b_file, LoPivotAngle, compute_glows_flags_for_window, \
     get_repoint_numbers_within_cr_window, determine_spacecraft_info_for_l3e_executable, \
-    determine_spacecraft_info_using_predict_if_needed
+    determine_spacecraft_info_using_predict_if_needed, retrieve_reprocess_ancillary
 from imap_l3_processing.glows.quality_flags import GlowsL3Flags
 from imap_l3_processing.models import VersionMap
 from imap_l3_processing.utils import FurnishMetakernelOutput
@@ -760,3 +761,16 @@ class TestGlowsL3EUtils(unittest.TestCase):
         self.assertEqual(expected_versions_for_lo_repoint_number, result.lo_repointings)
         self.assertEqual(expected_versions_for_ultra_sf_repoint_number, result.ultra_sf_repointings)
         self.assertEqual(expected_versions_for_ultra_hf_repoint_number, result.ultra_hf_repointings)
+
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access.download')
+    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access.query')
+    def test_retrieve_reprocess_ancillary(self, mock_query, mock_download):
+        mock_query.return_value = create_mock_query_results(['imap_glows_reprocess-ancillary_20250101_v000.txt'])
+        path_to_downloaded_ancillary = Path('imap_glows_reprocess-ancillary_20250101_v000.txt')
+        mock_download.return_value = path_to_downloaded_ancillary
+
+        actual_path = retrieve_reprocess_ancillary()
+
+        mock_query.assert_called_with(instrument='glows', version="latest", descriptor=GLOWS_REPROCESSING_DESCRIPTOR, table="ancillary")
+        mock_download.assert_called_with('imap_glows_reprocess-ancillary_20250101_v000.txt')
+        self.assertEqual(path_to_downloaded_ancillary, actual_path)

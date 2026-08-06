@@ -27,6 +27,8 @@ GLOWS_L3E_LO_DESCRIPTOR = 'survival-probability-lo'
 GLOWS_L3E_ULTRA_SF_DESCRIPTOR = 'survival-probability-ul-sf'
 GLOWS_L3E_ULTRA_HF_DESCRIPTOR = 'survival-probability-ul-hf'
 
+GLOWS_REPROCESSING_DESCRIPTOR = 'reprocess-ancillary'
+
 GLOWS_L3BCDE_DESCRIPTORS = [
     GLOWS_L3B_DESCRIPTOR,
     GLOWS_L3C_DESCRIPTOR,

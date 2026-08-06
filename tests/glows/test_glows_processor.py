@@ -1855,5 +1855,6 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_zip_file.writestr.assert_called_once_with(expected_json_filename, mock_json.dumps.return_value)
 
 
+
 if __name__ == '__main__':
     unittest.main()
