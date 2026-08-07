@@ -47,12 +47,12 @@ from imap_l3_processing.utils import save_data
 from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path, get_test_data_folder, \
     assert_dataclass_fields
 
+MODULE = 'imap_l3_processing.glows.glows_processor'
 
 class TestGlowsProcessor(unittest.TestCase):
 
     def setUp(self):
-        self.l3bc_initializer_patcher = patch(
-            "imap_l3_processing.glows.glows_processor.GlowsL3BCInitializer.get_crs_to_process")
+        self.l3bc_initializer_patcher = patch(f"{MODULE}.GlowsL3BCInitializer.get_crs_to_process")
         self.mock_l3bc_initializer = self.l3bc_initializer_patcher.start()
 
         self.mock_external_deps = Mock()
@@ -64,13 +64,11 @@ class TestGlowsProcessor(unittest.TestCase):
             repoint_file_path=Path("imap_2001_052_001.repoint.csv"),
         )
 
-        self.l3d_initializer_patcher = patch(
-            "imap_l3_processing.glows.glows_processor.GlowsL3DInitializer")
+        self.l3d_initializer_patcher = patch(f"{MODULE}.GlowsL3DInitializer")
         self.mock_l3d_initializer = self.l3d_initializer_patcher.start()
         self.mock_l3d_initializer.should_process_l3d.return_value = None
 
-        self.mock_l3e_initializer_patcher = patch(
-            "imap_l3_processing.glows.glows_processor.GlowsL3EInitializer")
+        self.mock_l3e_initializer_patcher = patch(f"{MODULE}.GlowsL3EInitializer")
         self.mock_l3e_initializer = self.mock_l3e_initializer_patcher.start()
         self.mock_l3e_initializer.get_repointings_to_process.return_value = GlowsL3EInitializerOutput(
             dependencies=Mock(),
@@ -87,10 +85,15 @@ class TestGlowsProcessor(unittest.TestCase):
             metakernel_without_predict_ephem=Mock(),
         )
 
+        self.fetch_reprocess_info_patcher = patch(f"{MODULE}.fetch_reprocess_info")
+        self.mock_fetch_reprocess_info = self.fetch_reprocess_info_patcher.start()
+        self.mock_reprocess_info = self.mock_fetch_reprocess_info.return_value
+
     def tearDown(self):
         self.l3bc_initializer_patcher.stop()
         self.l3d_initializer_patcher.stop()
         self.mock_l3e_initializer_patcher.stop()
+        self.fetch_reprocess_info_patcher.stop()
 
         if os.path.exists(PATH_TO_L3D_TOOLKIT / 'data_l3b'): shutil.rmtree(PATH_TO_L3D_TOOLKIT / 'data_l3b')
         if os.path.exists(PATH_TO_L3D_TOOLKIT / 'data_l3c'): shutil.rmtree(PATH_TO_L3D_TOOLKIT / 'data_l3c')
@@ -625,12 +628,8 @@ class TestGlowsProcessor(unittest.TestCase):
 
         self.assertEqual(set(expected_parents), set(l3b_data_product.parent_file_names))
 
-    @patch(
-        "imap_l3_processing.glows.glows_processor.process_l3e"
-    )
-    @patch(
-        "imap_l3_processing.glows.glows_processor.create_glows_l3b_json_file_from_cdf"
-    )
+    @patch("imap_l3_processing.glows.glows_processor.process_l3e")
+    @patch("imap_l3_processing.glows.glows_processor.create_glows_l3b_json_file_from_cdf")
     @patch("imap_l3_processing.glows.glows_processor.create_glows_l3c_json_file_from_cdf")
     @patch('imap_l3_processing.glows.glows_processor.save_data')
     @patch('imap_l3_processing.glows.glows_processor.rename_l3d_text_outputs')
@@ -643,8 +642,7 @@ class TestGlowsProcessor(unittest.TestCase):
     @patch("imap_l3_processing.glows.glows_processor.read_pipeline_settings")
     def test_process_l3d(self, mock_read_pipeline_settings, mock_glows_l3d_initializer, mock_os, mock_shutil, mock_run,
                          mock_convert_json_to_l3d_data_product, mock_get_parent_file_names_from_l3d_json,
-                         mock_rename_l3d, mock_save_data, mock_convert_l3c_to_json, mock_convert_l3b_to_json,
-                         mock_process_l3e):
+                         mock_rename_l3d, mock_save_data, mock_convert_l3c_to_json, mock_convert_l3b_to_json, _):
 
         cr_number = 2092
         mock_read_pipeline_settings.return_value = {'start_cr': cr_number}
@@ -713,7 +711,7 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_convert_l3b_to_json.assert_has_calls([call(sentinel.l3b_file_1), call(sentinel.l3b_file_2)])
         mock_convert_l3c_to_json.assert_has_calls([call(sentinel.l3c_file_1), call(sentinel.l3c_file_2)])
         mock_glows_l3d_initializer.should_process_l3d.assert_called_with(
-            self.mock_external_deps, [], [], input_major_version)
+            self.mock_external_deps, [], [], self.mock_reprocess_info, input_major_version)
         self.assertEqual([
             Path("imap_glows_e-dens_19470303_20100101_v000.dat"),
             Path("imap_glows_lya_19470303_20100101_v000.dat"),

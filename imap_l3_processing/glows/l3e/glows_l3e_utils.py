@@ -9,6 +9,7 @@ import spiceypy
 from astropy.time import Time
 from spiceypy import SpiceyError
 
+from imap_l3_processing.glows.l3e.reprocess_info import ReprocessInfo
 from imap_l3_processing.glows.quality_flags import GlowsL3Flags
 from imap_data_access.file_validation import Version
 from imap_processing.spice.repoint import set_global_repoint_table_paths, get_repoint_data
@@ -248,6 +249,7 @@ def get_repoint_numbers_within_cr_window(start_cr_number: int | None, end_cr_num
 
     return repoint_numbers
 
-def retrieve_reprocess_ancillary():
+def fetch_reprocess_info():
     ancillary_file = imap_data_access.query(instrument='glows', version="latest", descriptor=GLOWS_REPROCESSING_DESCRIPTOR, table="ancillary")[0]
-    return imap_data_access.download(Path(ancillary_file["file_path"]).name)
+    path_to_downloaded_ancillary = imap_data_access.download(Path(ancillary_file["file_path"]).name)
+    return ReprocessInfo.parse_from_ancillary(path_to_downloaded_ancillary)

@@ -19,13 +19,14 @@ from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for
     identify_versions_for_l3e_output_files, find_first_updated_cr, get_lo_pivot_angles, \
     get_lo_pivot_angle_from_l1b_file, LoPivotAngle, compute_glows_flags_for_window, \
     get_repoint_numbers_within_cr_window, determine_spacecraft_info_for_l3e_executable, \
-    determine_spacecraft_info_using_predict_if_needed, retrieve_reprocess_ancillary
+    determine_spacecraft_info_using_predict_if_needed, fetch_reprocess_info
+from imap_l3_processing.glows.l3e.reprocess_info import ProductToReprocess
 from imap_l3_processing.glows.quality_flags import GlowsL3Flags
 from imap_l3_processing.models import VersionMap
 from imap_l3_processing.utils import FurnishMetakernelOutput
 from tests.integration.integration_test_helpers import mock_imap_data_access, create_metakernel
 from tests.test_helpers import get_test_data_path, create_mock_query_results, get_spice_data_path, \
-    get_integration_test_data_path
+    get_integration_test_data_path, get_test_data_folder
 
 
 class TestGlowsL3EUtils(unittest.TestCase):
@@ -764,13 +765,24 @@ class TestGlowsL3EUtils(unittest.TestCase):
 
     @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access.download')
     @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access.query')
-    def test_retrieve_reprocess_ancillary(self, mock_query, mock_download):
+    def test_fetch_reprocess_ancillary_produces_reprocess_info(self, mock_query, mock_download):
         mock_query.return_value = create_mock_query_results(['imap_glows_reprocess-ancillary_20250101_v000.txt'])
-        path_to_downloaded_ancillary = Path('imap_glows_reprocess-ancillary_20250101_v000.txt')
+
+        path_to_downloaded_ancillary = get_test_data_folder() / 'glows' / 'glows_reprocessing_ancillary_file.txt'
         mock_download.return_value = path_to_downloaded_ancillary
 
-        actual_path = retrieve_reprocess_ancillary()
+        reprocess_info = fetch_reprocess_info()
 
         mock_query.assert_called_with(instrument='glows', version="latest", descriptor=GLOWS_REPROCESSING_DESCRIPTOR, table="ancillary")
         mock_download.assert_called_with('imap_glows_reprocess-ancillary_20250101_v000.txt')
-        self.assertEqual(path_to_downloaded_ancillary, actual_path)
+
+        expected_products_to_reprocess = [
+            ProductToReprocess("survival-probability-lo", ["repoint00245", "repoint00246"], ["cr02310"]),
+            ProductToReprocess("survival-probability-hi-90", [], ["cr02313"]),
+            ProductToReprocess("survival-probability-hi-45", [], ["cr02313", "cr02314"]),
+            ProductToReprocess("survival-probability-ul-sf", ["repoint0246", "repoint0247"], []),
+            ProductToReprocess("survival-probability-ul-hf", ["repoint0243"], [])
+        ]
+        self.assertEqual(expected_products_to_reprocess, reprocess_info.products_to_reprocess)
+
+

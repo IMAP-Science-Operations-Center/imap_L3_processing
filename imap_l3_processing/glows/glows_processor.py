@@ -41,7 +41,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializ
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, get_lo_pivot_angles, \
-    compute_glows_flags_for_window, determine_spacecraft_info_using_predict_if_needed
+    compute_glows_flags_for_window, determine_spacecraft_info_using_predict_if_needed, fetch_reprocess_info
 from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
@@ -79,11 +79,13 @@ class GlowsProcessor(Processor):
             glows_l3bc_output_data = process_l3bc(self, l3bc_initializer_data)
             products_list.extend(glows_l3bc_output_data.data_products)
 
+            reprocess_info = fetch_reprocess_info()
+
             l3d_major_version = self.input_metadata.version.lookup(GLOWS_L3D_DESCRIPTOR).major
             l3bs = list({**l3bc_initializer_data.l3bs_by_cr, **glows_l3bc_output_data.l3bs_by_cr}.values())
             l3cs = list({**l3bc_initializer_data.l3cs_by_cr, **glows_l3bc_output_data.l3cs_by_cr}.values())
             l3d_initializer_result = GlowsL3DInitializer.should_process_l3d(l3bc_initializer_data.external_dependencies,
-                                                                            l3bs, l3cs, l3d_major_version)
+                                                                            l3bs, l3cs, reprocess_info, l3d_major_version)
             if l3d_initializer_result is None:
                 logger.info("No inputs to L3d have changed. Skipping processing of L3d and L3e!")
                 return products_list
