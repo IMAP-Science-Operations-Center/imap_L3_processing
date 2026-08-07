@@ -9,7 +9,6 @@ import spiceypy
 from astropy.time import Time
 from spiceypy import SpiceyError
 
-from imap_l3_processing.glows.l3e.reprocess_info import ReprocessInfo
 from imap_l3_processing.glows.quality_flags import GlowsL3Flags
 from imap_data_access.file_validation import Version
 from imap_processing.spice.repoint import set_global_repoint_table_paths, get_repoint_data
@@ -19,8 +18,7 @@ from typing import Optional
 
 from imap_l3_processing.constants import ONE_AU_IN_KM, TT2000_EPOCH, ONE_SECOND_IN_NANOSECONDS
 from imap_l3_processing.glows.descriptors import GLOWS_L3E_ULTRA_HF_DESCRIPTOR, GLOWS_L3E_ULTRA_SF_DESCRIPTOR, \
-    GLOWS_L3E_LO_DESCRIPTOR, GLOWS_L3E_HI_45_DESCRIPTOR, GLOWS_L3E_HI_90_DESCRIPTOR, GLOWS_L3E_DESCRIPTORS, \
-    GLOWS_REPROCESSING_DESCRIPTOR
+    GLOWS_L3E_LO_DESCRIPTOR, GLOWS_L3E_HI_45_DESCRIPTOR, GLOWS_L3E_HI_90_DESCRIPTOR, GLOWS_L3E_DESCRIPTORS
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import jd_fm_Carrington
 from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments, GlowsL3eSpacecraftInfo
 from imap_l3_processing.utils import FurnishMetakernelOutput
@@ -249,7 +247,4 @@ def get_repoint_numbers_within_cr_window(start_cr_number: int | None, end_cr_num
 
     return repoint_numbers
 
-def fetch_reprocess_info():
-    ancillary_file = imap_data_access.query(instrument='glows', version="latest", descriptor=GLOWS_REPROCESSING_DESCRIPTOR, table="ancillary")[0]
-    path_to_downloaded_ancillary = imap_data_access.download(Path(ancillary_file["file_path"]).name)
-    return ReprocessInfo.parse_from_ancillary(path_to_downloaded_ancillary)
+

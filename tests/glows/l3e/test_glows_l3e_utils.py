@@ -6,27 +6,25 @@ from unittest.mock import patch, Mock, call, sentinel
 
 import imap_data_access
 import numpy as np
-from imap_data_access.file_validation import Version
 from imap_data_access import SPICEFilePath
+from imap_data_access.file_validation import Version
 from imap_processing.spice.repoint import get_repoint_data, set_global_repoint_table_paths
 from spacepy.pycdf import CDF, const
+
 from imap_l3_processing.constants import ONE_SECOND_IN_NANOSECONDS
 from imap_l3_processing.glows.descriptors import GLOWS_L3E_DESCRIPTORS, GLOWS_L3E_HI_45_DESCRIPTOR, \
-    GLOWS_L3E_HI_90_DESCRIPTOR, GLOWS_L3E_LO_DESCRIPTOR, GLOWS_L3E_ULTRA_SF_DESCRIPTOR, GLOWS_L3E_ULTRA_HF_DESCRIPTOR, \
-    GLOWS_REPROCESSING_DESCRIPTOR
+    GLOWS_L3E_HI_90_DESCRIPTOR, GLOWS_L3E_LO_DESCRIPTOR, GLOWS_L3E_ULTRA_SF_DESCRIPTOR, GLOWS_L3E_ULTRA_HF_DESCRIPTOR
 from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments, GlowsL3eSpacecraftInfo
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, \
     identify_versions_for_l3e_output_files, find_first_updated_cr, get_lo_pivot_angles, \
     get_lo_pivot_angle_from_l1b_file, LoPivotAngle, compute_glows_flags_for_window, \
     get_repoint_numbers_within_cr_window, determine_spacecraft_info_for_l3e_executable, \
-    determine_spacecraft_info_using_predict_if_needed, fetch_reprocess_info
-from imap_l3_processing.glows.l3e.reprocess_info import ProductToReprocess
+    determine_spacecraft_info_using_predict_if_needed
 from imap_l3_processing.glows.quality_flags import GlowsL3Flags
 from imap_l3_processing.models import VersionMap
 from imap_l3_processing.utils import FurnishMetakernelOutput
 from tests.integration.integration_test_helpers import mock_imap_data_access, create_metakernel
-from tests.test_helpers import get_test_data_path, create_mock_query_results, get_spice_data_path, \
-    get_integration_test_data_path, get_test_data_folder
+from tests.test_helpers import get_test_data_path, create_mock_query_results, get_integration_test_data_path
 
 
 class TestGlowsL3EUtils(unittest.TestCase):
@@ -763,26 +761,6 @@ class TestGlowsL3EUtils(unittest.TestCase):
         self.assertEqual(expected_versions_for_ultra_sf_repoint_number, result.ultra_sf_repointings)
         self.assertEqual(expected_versions_for_ultra_hf_repoint_number, result.ultra_hf_repointings)
 
-    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access.download')
-    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access.query')
-    def test_fetch_reprocess_ancillary_produces_reprocess_info(self, mock_query, mock_download):
-        mock_query.return_value = create_mock_query_results(['imap_glows_reprocess-ancillary_20250101_v000.txt'])
 
-        path_to_downloaded_ancillary = get_test_data_folder() / 'glows' / 'glows_reprocessing_ancillary_file.txt'
-        mock_download.return_value = path_to_downloaded_ancillary
-
-        reprocess_info = fetch_reprocess_info()
-
-        mock_query.assert_called_with(instrument='glows', version="latest", descriptor=GLOWS_REPROCESSING_DESCRIPTOR, table="ancillary")
-        mock_download.assert_called_with('imap_glows_reprocess-ancillary_20250101_v000.txt')
-
-        expected_products_to_reprocess = [
-            ProductToReprocess("survival-probability-lo", ["repoint00245", "repoint00246"], ["cr02310"]),
-            ProductToReprocess("survival-probability-hi-90", [], ["cr02313"]),
-            ProductToReprocess("survival-probability-hi-45", [], ["cr02313", "cr02314"]),
-            ProductToReprocess("survival-probability-ul-sf", ["repoint0246", "repoint0247"], []),
-            ProductToReprocess("survival-probability-ul-hf", ["repoint0243"], [])
-        ]
-        self.assertEqual(expected_products_to_reprocess, reprocess_info.products_to_reprocess)
 
 

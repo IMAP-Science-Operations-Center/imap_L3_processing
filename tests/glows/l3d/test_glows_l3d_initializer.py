@@ -8,7 +8,7 @@ from imap_data_access.file_validation import Version
 from imap_l3_processing.glows.descriptors import GLOWS_L3E_ULTRA_HF_DESCRIPTOR, GLOWS_L3E_HI_45_DESCRIPTOR, \
     GLOWS_L3E_HI_90_DESCRIPTOR, GLOWS_L3E_LO_DESCRIPTOR, GLOWS_L3E_ULTRA_SF_DESCRIPTOR, GLOWS_L3B_DESCRIPTOR
 from imap_l3_processing.glows.l3d.glows_l3d_initializer import GlowsL3DInitializer
-from imap_l3_processing.glows.l3e.reprocess_info import ReprocessInfo, ProductToReprocess
+from imap_l3_processing.glows.l3e.reprocess_info import ReprocessInfo, ReprocessTargets
 from tests.test_helpers import create_mock_query_results
 
 
@@ -228,7 +228,7 @@ class TestGlowsL3DInitializer(unittest.TestCase):
 
         mock_read_pipeline_settings.return_value = {"start_cr": 1}
 
-        actual_l3d_deps = GlowsL3DInitializer.should_process_l3d(external_dependencies, l3bs, l3cs, ReprocessInfo([]),None)
+        actual_l3d_deps = GlowsL3DInitializer.should_process_l3d(external_dependencies, l3bs, l3cs, ReprocessInfo({}),None)
         mock_fetch_l3d_deps.assert_not_called()
         self.assertIsNone(actual_l3d_deps)
 
@@ -303,18 +303,18 @@ class TestGlowsL3DInitializer(unittest.TestCase):
         }
 
         cases = [
-            (GLOWS_L3E_HI_45_DESCRIPTOR, ProductToReprocess(GLOWS_L3E_HI_45_DESCRIPTOR, [], [])),
-            (GLOWS_L3E_HI_90_DESCRIPTOR, ProductToReprocess(GLOWS_L3E_HI_90_DESCRIPTOR, [], [])),
-            (GLOWS_L3E_LO_DESCRIPTOR, ProductToReprocess(GLOWS_L3E_LO_DESCRIPTOR, [], [])),
-            (GLOWS_L3E_ULTRA_SF_DESCRIPTOR, ProductToReprocess(GLOWS_L3E_ULTRA_SF_DESCRIPTOR, [], [])),
-            (GLOWS_L3E_ULTRA_HF_DESCRIPTOR, ProductToReprocess(GLOWS_L3E_ULTRA_HF_DESCRIPTOR, [], [])),
+            (GLOWS_L3E_HI_45_DESCRIPTOR, {GLOWS_L3E_HI_45_DESCRIPTOR: ReprocessTargets([], [])}),
+            (GLOWS_L3E_HI_90_DESCRIPTOR, {GLOWS_L3E_HI_90_DESCRIPTOR: ReprocessTargets([], [])}),
+            (GLOWS_L3E_LO_DESCRIPTOR, {GLOWS_L3E_LO_DESCRIPTOR: ReprocessTargets([], [])}),
+            (GLOWS_L3E_ULTRA_SF_DESCRIPTOR, {GLOWS_L3E_ULTRA_SF_DESCRIPTOR: ReprocessTargets([], [])}),
+            (GLOWS_L3E_ULTRA_HF_DESCRIPTOR, {GLOWS_L3E_ULTRA_HF_DESCRIPTOR: ReprocessTargets([], [])}),
         ]
 
-        for case, product_to_reprocess in cases:
-            with self.subTest(product_to_reprocess):
+        for case, products_to_reprocess in cases:
+            with self.subTest(products_to_reprocess):
                 mock_fetch_dependencies.reset_mock()
 
-                reprocess_info = ReprocessInfo([product_to_reprocess])
+                reprocess_info = ReprocessInfo(products_to_reprocess)
 
                 version, l3d_deps, old_l3d = GlowsL3DInitializer.should_process_l3d(external_dependencies, l3bs, l3cs, reprocess_info, 1)
 
@@ -373,8 +373,8 @@ class TestGlowsL3DInitializer(unittest.TestCase):
         }
 
         cases = [
-            ("no l3e products to reprocess", [ProductToReprocess(GLOWS_L3B_DESCRIPTOR, [], [])]),
-            ("no products", [])
+            ("no l3e products to reprocess", {GLOWS_L3B_DESCRIPTOR: ReprocessTargets([], [])}),
+            ("no products", {})
         ]
 
         for case, products_to_reprocess in cases:

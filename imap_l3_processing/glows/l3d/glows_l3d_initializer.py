@@ -103,6 +103,9 @@ class GlowsL3DInitializer:
             Path(electron_density_2026a['file_path']).name,
         }
 
+        old_l3d = None
+        minor_version_to_generate = 1
+
         if most_recent_l3d is not None:
             l3d_parents = read_cdf_parents(Path(most_recent_l3d["file_path"]).name)
             old_l3d = Path(most_recent_l3d["file_path"]).name
@@ -112,18 +115,13 @@ class GlowsL3DInitializer:
             )
 
             most_recent_l3d_version = get_version_from_query_result(most_recent_l3d)
-            same_major_version = most_recent_l3d_version.major == major_version
             minor_version_to_generate = most_recent_l3d_version.minor + 1
-            if same_major_version and updated_input_files.issubset(l3d_parents):
-                if reprocess_info.should_reprocess_l3d():
-                    version_to_generate = Version(major_version, minor_version_to_generate)
-                    return GlowsL3DInitializer.generate_result(version_to_generate, processing_input_collection,
-                                                               external_deps, old_l3d)
-                else:
-                    return None
-        else:
-            old_l3d = None
-            minor_version_to_generate = 1
+
+            same_major_version = most_recent_l3d_version.major == major_version
+            inputs_unchanged = same_major_version and updated_input_files.issubset(l3d_parents)
+
+            if inputs_unchanged and not reprocess_info.should_reprocess_l3d():
+                 return None
 
         version_to_generate = Version(major_version, minor_version_to_generate)
         return GlowsL3DInitializer.generate_result(version_to_generate, processing_input_collection, external_deps,

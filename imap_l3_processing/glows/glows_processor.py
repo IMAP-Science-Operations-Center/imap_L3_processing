@@ -41,7 +41,8 @@ from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializ
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, get_lo_pivot_angles, \
-    compute_glows_flags_for_window, determine_spacecraft_info_using_predict_if_needed, fetch_reprocess_info
+    compute_glows_flags_for_window, determine_spacecraft_info_using_predict_if_needed
+from imap_l3_processing.glows.l3e.reprocess_info import fetch_reprocess_info
 from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.utils import save_data
