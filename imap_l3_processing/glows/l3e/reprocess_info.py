@@ -43,10 +43,19 @@ class ReprocessInfo:
         return data_level, descriptor, ReprocessTargets(repoints, carrington_rotations)
 
     def should_reprocess_l3d(self) -> bool:
-        return any(set(self.products_to_reprocess.keys()).intersection(set(GLOWS_L3E_DESCRIPTORS)))
+        return any(
+            set(self.products_to_reprocess.keys()).intersection(
+                set(GLOWS_L3E_DESCRIPTORS)
+            )
+        )
 
-    def get_repoints_for_descriptor(self, descriptor: str, repointing_data) -> list[int]:
-        reprocess_targets = self.products_to_reprocess[descriptor]
+    def get_repoints_for_descriptor(
+        self, descriptor: str, repointing_data
+    ) -> list[int]:
+        reprocess_targets = self.products_to_reprocess.get(descriptor, None)
+        if reprocess_targets is None:
+            return []
+
         repoints = reprocess_targets.repoints
 
         for cr in reprocess_targets.carrington_rotations:

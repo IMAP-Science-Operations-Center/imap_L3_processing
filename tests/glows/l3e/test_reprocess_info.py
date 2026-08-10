@@ -59,16 +59,25 @@ class TestReprocessInfo(unittest.TestCase):
         set_global_repoint_table_paths([repointing_path])
         repointing_data = get_repoint_data()
 
-        repoints_for_lo = reprocess_info.get_repoints_for_descriptor(GLOWS_L3E_LO_DESCRIPTOR, repointing_data)
-        repoints_for_hi = reprocess_info.get_repoints_for_descriptor(GLOWS_L3E_HI_45_DESCRIPTOR, repointing_data)
+        repoints_for_lo = reprocess_info.get_repoints_for_descriptor(
+            GLOWS_L3E_LO_DESCRIPTOR, repointing_data
+        )
+        repoints_for_hi = reprocess_info.get_repoints_for_descriptor(
+            GLOWS_L3E_HI_45_DESCRIPTOR, repointing_data
+        )
+        repoints_for_ultra = reprocess_info.get_repoints_for_descriptor(
+            GLOWS_L3E_ULTRA_HF_DESCRIPTOR, repointing_data
+        )
 
         repoints_for_cr2093 = list(range(3682, 3710))
         repoints_for_cr2094 = list(range(3710, 3736))
 
         expected_repoints_lo = [2045, 2046] + repoints_for_cr2093 + repoints_for_cr2094
         expected_repoints_hi = [2050]
+        expected_repoints_ultra = []
         self.assertEqual(expected_repoints_lo, repoints_for_lo)
         self.assertEqual(expected_repoints_hi, repoints_for_hi)
+        self.assertEqual(expected_repoints_ultra, repoints_for_ultra)
 
     @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access.download')
     @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access.query')

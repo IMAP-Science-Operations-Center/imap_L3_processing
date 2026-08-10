@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import typing
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -24,6 +26,8 @@ from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallAr
 from imap_l3_processing.utils import FurnishMetakernelOutput
 from imap_l3_processing.models import VersionMap
 
+if typing.TYPE_CHECKING:
+    from imap_l3_processing.glows.l3e.reprocess_info import ReprocessInfo
 
 def determine_call_args_for_l3e_executable(start_date: datetime, repointing_midpoint: datetime, elongation: float,
                                            spacecraft_info: GlowsL3eSpacecraftInfo) -> GlowsL3eCallArguments:
@@ -95,9 +99,8 @@ class GlowsL3eVersionsForRepointings:
     ultra_sf_repointings: dict[int, Version]
     ultra_hf_repointings: dict[int, Version]
 
-
 def identify_versions_for_l3e_output_files(start_cr_of_mission: int, end_cr_of_mission: int, first_updated_cr_from_l3d: Optional[int],
-                                           repointing_path: Path, version_map: VersionMap) -> GlowsL3eVersionsForRepointings:
+                                           repointing_path: Path, version_map: VersionMap, reprocess_info: ReprocessInfo) -> GlowsL3eVersionsForRepointings:
 
     set_global_repoint_table_paths([repointing_path])
     repointing_data = get_repoint_data()
@@ -108,6 +111,10 @@ def identify_versions_for_l3e_output_files(start_cr_of_mission: int, end_cr_of_m
     updated_pointings_per_instruments = {}
     updated_pointing_numbers = {}
     for descriptor in GLOWS_L3E_DESCRIPTORS:
+        repointings_to_force_processing = reprocess_info.get_repoints_for_descriptor(
+            descriptor, repointing_data
+        )
+        repointings_to_process = pointing_numbers_updated_by_l3d + repointings_to_force_processing
         l3e_files = imap_data_access.query(instrument='glows', data_level='l3e', version="latest", descriptor=descriptor)
         existing_file_versions = {}
         for l3e in l3e_files:
@@ -124,13 +131,13 @@ def identify_versions_for_l3e_output_files(start_cr_of_mission: int, end_cr_of_m
                 previous_version = existing_file_versions[pointing_number]
 
                 if previous_version.major is None:
-                    if new_major_version or pointing_number in pointing_numbers_updated_by_l3d:
+                    if new_major_version or pointing_number in repointings_to_process:
                         new_file_versions[pointing_number] = Version(new_major_version, previous_version.minor + 1)
 
                 elif new_major_version is not None:
                     higher_major_version_given = new_major_version > previous_version.major
-                    same_major_but_updated_by_l3d = new_major_version == previous_version.major and pointing_number in pointing_numbers_updated_by_l3d
-                    if higher_major_version_given or same_major_but_updated_by_l3d:
+                    same_major_but_updated = new_major_version == previous_version.major and pointing_number in repointings_to_process
+                    if higher_major_version_given or same_major_but_updated:
                         new_file_versions[pointing_number] = Version(new_major_version, previous_version.minor + 1)
 
             else:
