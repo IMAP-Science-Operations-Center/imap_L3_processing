@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
 
+from imap_data_access import ProcessingInputCollection, AncillaryInput, RepointInput
 from imap_processing.spice.repoint import set_global_repoint_table_paths, get_repoint_data
 
 from imap_l3_processing.glows.descriptors import GLOWS_L3E_HI_45_DESCRIPTOR, GLOWS_L3E_HI_90_DESCRIPTOR, \
@@ -99,18 +100,17 @@ class TestReprocessInfo(unittest.TestCase):
         self.assertEqual(expected_repoints_ultra, repoints_for_ultra)
 
     @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access.download')
-    @patch('imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access.query')
-    def test_fetch_reprocess_ancillary_produces_reprocess_info(self, mock_query, mock_download):
-        mock_query.return_value = create_mock_query_results(['imap_glows_reprocess-ancillary_20250101_v000.txt'])
-
+    def test_fetch_reprocess_info_downloads_and_parses_reprocess_info(self, mock_download):
+        processing_input = ProcessingInputCollection(
+            AncillaryInput(f"imap_glows_{GLOWS_REPROCESSING_DESCRIPTOR}_20250101_v000.dat"),
+            RepointInput("imap_2026_269_12.repoint.csv"),
+        )
         path_to_downloaded_ancillary = get_test_data_folder() / 'glows' / 'glows_reprocessing_ancillary_file.txt'
         mock_download.return_value = path_to_downloaded_ancillary
 
-        reprocess_info = fetch_reprocess_info()
+        reprocess_info = fetch_reprocess_info(processing_input)
 
-        mock_query.assert_called_with(instrument='glows', version="latest", descriptor=GLOWS_REPROCESSING_DESCRIPTOR,
-                                      table="ancillary")
-        mock_download.assert_called_with('imap_glows_reprocess-ancillary_20250101_v000.txt')
+        mock_download.assert_called_with(f'imap_glows_{GLOWS_REPROCESSING_DESCRIPTOR}_20250101_v000.dat')
 
         expected_products_to_reprocess = {
             GLOWS_L3E_LO_DESCRIPTOR: ReprocessTargets([245, 246], [2310]),

@@ -650,30 +650,34 @@ class TestGlowsProcessor(unittest.TestCase):
         expected_end_cr = cr_number + 1
         glows_l3d_dependencies = GlowsL3DDependencies(
             external_files={
-                'lya_raw_data': Path('path/to/lya'),
+                "lya_raw_data": Path("path/to/lya"),
             },
             ancillary_files={
-                'pipeline_settings':
-                    Path('glows/imap_glows_pipeline-settings-l3bcde_20250514_v004.json'),
-                'WawHelioIon': {
-                    'speed': Path('path/to/speed'),
-                    'p-dens': Path('path/to/p-dens'),
-                    'uv-anis': Path('path/to/uv-anis'),
-                    'phion': Path('path/to/phion'),
-                    'lya': Path('path/to/lya'),
-                    'e-dens': Path('path/to/e-dens')
-                }
+                "pipeline_settings": Path(
+                    "glows/imap_glows_pipeline-settings-l3bcde_20250514_v004.json"
+                ),
+                "WawHelioIon": {
+                    "speed": Path("path/to/speed"),
+                    "p-dens": Path("path/to/p-dens"),
+                    "uv-anis": Path("path/to/uv-anis"),
+                    "phion": Path("path/to/phion"),
+                    "lya": Path("path/to/lya"),
+                    "e-dens": Path("path/to/e-dens"),
+                },
             },
             l3b_file_paths=[sentinel.l3b_file_1, sentinel.l3b_file_2],
             l3c_file_paths=[sentinel.l3c_file_1, sentinel.l3c_file_2],
-            end_cr=expected_end_cr
+            end_cr=expected_end_cr,
         )
 
         old_l3d = Path('imap_glows_l3d_solar-hist_19470303-cr02090_v001.cdf')
         input_major_version = 12
         l3d_output_version = Version(input_major_version, 5)
         mock_glows_l3d_initializer.should_process_l3d.return_value = (
-            l3d_output_version, glows_l3d_dependencies, old_l3d)
+            l3d_output_version,
+            glows_l3d_dependencies,
+            old_l3d,
+        )
 
         mock_run.return_value = CompletedProcess(args=[], returncode=0, stdout=f'Processed CR= {expected_end_cr}')
 
@@ -688,30 +692,34 @@ class TestGlowsProcessor(unittest.TestCase):
 
         mock_rename_l3d.return_value = [
             Path("imap_glows_e-dens_19470303_20100101_v000.dat"),
-            Path("imap_glows_lya_19470303_20100101_v000.dat")
+            Path("imap_glows_lya_19470303_20100101_v000.dat"),
         ]
 
         mock_save_data.return_value = Path("l3d_cdf.cdf")
 
-        input_version_map = VersionMap({
-            GLOWS_L3B_DESCRIPTOR: Version(2, 1),
-            GLOWS_L3C_DESCRIPTOR: Version(2, 1),
-            GLOWS_L3D_DESCRIPTOR: Version(input_major_version, 1),
-            GLOWS_L3E_HI_45_DESCRIPTOR: Version(2, 1),
-            GLOWS_L3E_HI_90_DESCRIPTOR: Version(2, 1),
-            GLOWS_L3E_LO_DESCRIPTOR: Version(2, 1),
-            GLOWS_L3E_ULTRA_SF_DESCRIPTOR: Version(2, 1),
-            GLOWS_L3E_ULTRA_HF_DESCRIPTOR: Version(2, 1),
-        })
+        input_version_map = VersionMap(
+            {
+                GLOWS_L3B_DESCRIPTOR: Version(2, 1),
+                GLOWS_L3C_DESCRIPTOR: Version(2, 1),
+                GLOWS_L3D_DESCRIPTOR: Version(input_major_version, 1),
+                GLOWS_L3E_HI_45_DESCRIPTOR: Version(2, 1),
+                GLOWS_L3E_HI_90_DESCRIPTOR: Version(2, 1),
+                GLOWS_L3E_LO_DESCRIPTOR: Version(2, 1),
+                GLOWS_L3E_ULTRA_SF_DESCRIPTOR: Version(2, 1),
+                GLOWS_L3E_ULTRA_HF_DESCRIPTOR: Version(2, 1),
+            }
+        )
         input_metadata = InputMetadata('glows', "l3b", datetime(2024, 10, 7), None, version=input_version_map)
 
-        processor = GlowsProcessor(Mock(), input_metadata)
+        processing_input_collection = Mock()
+        processor = GlowsProcessor(processing_input_collection, input_metadata)
         products = processor.process()
 
         mock_convert_l3b_to_json.assert_has_calls([call(sentinel.l3b_file_1), call(sentinel.l3b_file_2)])
         mock_convert_l3c_to_json.assert_has_calls([call(sentinel.l3c_file_1), call(sentinel.l3c_file_2)])
         mock_glows_l3d_initializer.should_process_l3d.assert_called_with(
             self.mock_external_deps, [], [], self.mock_reprocess_info, input_major_version)
+        self.mock_fetch_reprocess_info.assert_called_with(processing_input_collection)
         self.assertEqual([
             Path("imap_glows_e-dens_19470303_20100101_v000.dat"),
             Path("imap_glows_lya_19470303_20100101_v000.dat"),
@@ -1334,7 +1342,8 @@ class TestGlowsProcessor(unittest.TestCase):
             sentinel.ul_hf_dat_2,
         ]
 
-        processor = GlowsProcessor(Mock(), input_metadata)
+        processing_input_collection = Mock()
+        processor = GlowsProcessor(processing_input_collection, input_metadata)
         products = processor.process()
 
 
@@ -1346,6 +1355,7 @@ class TestGlowsProcessor(unittest.TestCase):
             self.mock_reprocess_info,
         )
         self.assertEqual(expected_products, products)
+        self.mock_fetch_reprocess_info.assert_called_once_with(processing_input_collection)
 
     @patch('imap_l3_processing.glows.glows_processor.Processor.get_parent_file_names')
     @patch('imap_l3_processing.glows.glows_processor.save_data')

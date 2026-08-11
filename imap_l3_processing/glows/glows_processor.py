@@ -80,7 +80,7 @@ class GlowsProcessor(Processor):
             glows_l3bc_output_data = process_l3bc(self, l3bc_initializer_data)
             products_list.extend(glows_l3bc_output_data.data_products)
 
-            reprocess_info = fetch_reprocess_info()
+            reprocess_info = fetch_reprocess_info(self.dependencies)
 
             l3d_major_version = self.input_metadata.version.lookup(GLOWS_L3D_DESCRIPTOR).major
             l3bs = list({**l3bc_initializer_data.l3bs_by_cr, **glows_l3bc_output_data.l3bs_by_cr}.values())

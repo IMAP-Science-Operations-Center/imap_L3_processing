@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import imap_data_access
+from imap_data_access import ProcessingInputCollection
 
 from imap_l3_processing.glows.descriptors import (
     GLOWS_L3D_DESCRIPTOR,
@@ -90,7 +91,7 @@ class ReprocessInfo:
 
         return sorted(repoints)
 
-def fetch_reprocess_info():
-    ancillary_file = imap_data_access.query(instrument='glows', version="latest", descriptor=GLOWS_REPROCESSING_DESCRIPTOR, table="ancillary")[0]
-    path_to_downloaded_ancillary = imap_data_access.download(Path(ancillary_file["file_path"]).name)
+def fetch_reprocess_info(input_collection: ProcessingInputCollection) -> ReprocessInfo:
+    [reprocessing_file_path] = input_collection.get_file_paths(source="glows", descriptor=GLOWS_REPROCESSING_DESCRIPTOR)
+    path_to_downloaded_ancillary = imap_data_access.download(reprocessing_file_path.name)
     return ReprocessInfo.parse_from_ancillary(path_to_downloaded_ancillary)
