@@ -63,10 +63,14 @@ class TestReprocessInfo(unittest.TestCase):
             self.assertEqual(expected_result, reprocess_info.should_reprocess_l3d())
 
     def test_get_repoints(self):
-        reprocess_info = ReprocessInfo({
-            GLOWS_L3E_LO_DESCRIPTOR: ReprocessTargets([2045, 2046], [2093, 2094]),
-            GLOWS_L3E_HI_45_DESCRIPTOR: ReprocessTargets([2050], [])
-        })
+        reprocess_info = ReprocessInfo(
+            {
+                GLOWS_L3E_LO_DESCRIPTOR: ReprocessTargets(
+                    [2045, 2046, 3700], [2093, 2094]
+                ),
+                GLOWS_L3E_HI_45_DESCRIPTOR: ReprocessTargets([2050], []),
+            }
+        )
 
         repointing_path = get_test_data_path("fake_1_day_repointing_file.csv")
         set_global_repoint_table_paths([repointing_path])

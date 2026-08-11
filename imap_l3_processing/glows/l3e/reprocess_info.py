@@ -77,12 +77,12 @@ class ReprocessInfo:
         if reprocess_targets is None:
             return []
 
-        repoints = reprocess_targets.repoints
+        repoints = set(reprocess_targets.repoints)
 
         for cr in reprocess_targets.carrington_rotations:
-            repoints += get_repoint_numbers_within_cr_window(cr, cr, repointing_data)
+            repoints.update(get_repoint_numbers_within_cr_window(cr, cr, repointing_data))
 
-        return repoints
+        return sorted(repoints)
 
 def fetch_reprocess_info():
     ancillary_file = imap_data_access.query(instrument='glows', version="latest", descriptor=GLOWS_REPROCESSING_DESCRIPTOR, table="ancillary")[0]

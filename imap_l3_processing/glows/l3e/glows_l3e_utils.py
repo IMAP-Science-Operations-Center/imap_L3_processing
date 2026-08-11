@@ -114,7 +114,7 @@ def identify_versions_for_l3e_output_files(start_cr_of_mission: int, end_cr_of_m
         repointings_to_force_processing = reprocess_info.get_repoints_for_descriptor(
             descriptor, repointing_data
         )
-        repointings_to_process = pointing_numbers_updated_by_l3d + repointings_to_force_processing
+        repointings_to_process = set(pointing_numbers_updated_by_l3d + repointings_to_force_processing)
         l3e_files = imap_data_access.query(instrument='glows', data_level='l3e', version="latest", descriptor=descriptor)
         existing_file_versions = {}
         for l3e in l3e_files:
