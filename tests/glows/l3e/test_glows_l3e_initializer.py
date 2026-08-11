@@ -88,18 +88,23 @@ class TestGlowsL3EInitializer(unittest.TestCase):
             (datetime(2011, 2, 1), datetime(2011, 2, 2)),
         ]
 
-        input_major_version = VersionMap({descriptor: Version(2, 1) for descriptor in GLOWS_L3BCDE_DESCRIPTORS})
+        input_major_version = VersionMap(
+            {descriptor: Version(2, 1) for descriptor in GLOWS_L3BCDE_DESCRIPTORS}
+        )
 
         repointing_file_path = Path("imap_2026_105_01.repoint.csv")
-        actual_initializer_output = GlowsL3EInitializer.get_repointings_to_process(glows_l3d_processor_output,
-                                                                                   previous_l3d,
-                                                                                   repointing_file_path,
-                                                                                   input_major_version)
+        actual_initializer_output = GlowsL3EInitializer.get_repointings_to_process(
+            glows_l3d_processor_output,
+            previous_l3d,
+            repointing_file_path,
+            input_major_version,
+            sentinel.reprocess_info,
+        )
 
         mock_find_first_updated_cr.assert_called_once_with(updated_l3d, previous_l3d)
 
         mock_identify_versions_for_l3e_output_files.assert_called_once_with(sentinel.start_of_mission_cr, sentinel.last_processed_cr, 2090, repointing_file_path,
-                                                                            input_major_version)
+                                                                            input_major_version, sentinel.reprocess_info)
 
         mock_query.assert_has_calls([
             call(table="ancillary", instrument='glows', descriptor='pipeline-settings-l3bcde'),
@@ -163,10 +168,13 @@ class TestGlowsL3EInitializer(unittest.TestCase):
         mock_find_first_updated_cr.return_value = None
 
         repointing_file_path = Path("imap_2026_105_01.repoint.csv")
-        actual_initializer_output = GlowsL3EInitializer.get_repointings_to_process(glows_l3d_processor_output,
-                                                                                   previous_l3d,
-                                                                                   repointing_file_path,
-                                                                                   sentinel.version_map)
+        actual_initializer_output = GlowsL3EInitializer.get_repointings_to_process(
+            glows_l3d_processor_output,
+            previous_l3d,
+            repointing_file_path,
+            sentinel.version_map,
+            sentinel.reprocess_info,
+        )
 
         expected_initializer_output = GlowsL3EInitializerOutput(
             mock_l3e_dependencies,
@@ -176,7 +184,14 @@ class TestGlowsL3EInitializer(unittest.TestCase):
             metakernel_without_predict_ephem=None,
         )
         mock_find_first_updated_cr.assert_called_once_with(glows_l3d_processor_output.l3d_cdf_file_path, previous_l3d)
-        mock_identify_versions_for_l3e_output_files.assert_called_once_with(sentinel.start_of_mission_cr, expected_last_cr, None, repointing_file_path, sentinel.version_map)
+        mock_identify_versions_for_l3e_output_files.assert_called_once_with(
+            sentinel.start_of_mission_cr,
+            expected_last_cr,
+            None,
+            repointing_file_path,
+            sentinel.version_map,
+            sentinel.reprocess_info,
+        )
         self.assertEqual(expected_initializer_output, actual_initializer_output)
 
     @patch(f'{MODULE}.imap_data_access.query')
@@ -213,9 +228,18 @@ class TestGlowsL3EInitializer(unittest.TestCase):
         mock_fetch_dependencies.return_value.pipeline_settings = {"start_cr": sentinel.start_of_mission_cr}
 
         repointing_file_path = Path("imap_2026_105_01.repoint.csv")
-        _ = GlowsL3EInitializer.get_repointings_to_process(glows_l3d_processor_output, previous_l3d,
-                                                           repointing_file_path, sentinel.version_map)
+        _ = GlowsL3EInitializer.get_repointings_to_process(
+            glows_l3d_processor_output, previous_l3d,
+            repointing_file_path, sentinel.version_map,
+            sentinel.reprocess_info,
+        )
 
         mock_find_first_updated_cr.assert_not_called()
-        mock_identify_versions_for_l3e_output_files.assert_called_once_with(sentinel.start_of_mission_cr, sentinel.last_processed_cr, sentinel.start_of_mission_cr, repointing_file_path,
-                                                                            sentinel.version_map)
+        mock_identify_versions_for_l3e_output_files.assert_called_once_with(
+            sentinel.start_of_mission_cr,
+            sentinel.last_processed_cr,
+            sentinel.start_of_mission_cr,
+            repointing_file_path,
+            sentinel.version_map,
+            sentinel.reprocess_info,
+        )

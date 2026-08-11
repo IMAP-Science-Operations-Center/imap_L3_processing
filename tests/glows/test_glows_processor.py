@@ -1259,47 +1259,92 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_process_lo.side_effect = expected_lo_files
 
         expected_hi90_files = [
-            [f'imap_glows_l3e_survival-probability-hi-90_20250101-repoint02902_v001.cdf',sentinel.hi90_dat_1],
-            [f'imap_glows_l3e_survival-probability-hi-90_20250101-repoint02903_v001.0011.cdf',sentinel.hi90_dat_2],
+            [
+                f"imap_glows_l3e_survival-probability-hi-90_20250101-repoint02902_v001.cdf",
+                sentinel.hi90_dat_1,
+            ],
+            [
+                f"imap_glows_l3e_survival-probability-hi-90_20250101-repoint02903_v001.0011.cdf",
+                sentinel.hi90_dat_2,
+            ],
         ]
         expected_hi45_files = [
-            [f'imap_glows_l3e_survival-probability-hi-45_20250101-repoint02902_v001.cdf', sentinel.hi45_dat_1],
-            [f'imap_glows_l3e_survival-probability-hi-45_20250101-repoint02904_v002.0012.cdf', sentinel.hi45_dat_2],
+            [
+                f"imap_glows_l3e_survival-probability-hi-45_20250101-repoint02902_v001.cdf",
+                sentinel.hi45_dat_1,
+            ],
+            [
+                f"imap_glows_l3e_survival-probability-hi-45_20250101-repoint02904_v002.0012.cdf",
+                sentinel.hi45_dat_2,
+            ],
         ]
-        mock_process_hi.side_effect = [expected_hi90_files[0], expected_hi45_files[0], expected_hi90_files[1], expected_hi45_files[1]]
+        mock_process_hi.side_effect = [
+            expected_hi90_files[0],
+            expected_hi45_files[0],
+            expected_hi90_files[1],
+            expected_hi45_files[1],
+        ]
 
         expected_ul_sf_files = [
-            [f'imap_glows_l3e_survival-probability-ul-sf_20250101-repoint02902_v001.cdf', sentinel.ul_sf_dat_1],
-            [f'imap_glows_l3e_survival-probability-ul-sf_20250101-repoint02906_v004.0014.cdf', sentinel.ul_sf_dat_2],
+            [
+                f"imap_glows_l3e_survival-probability-ul-sf_20250101-repoint02902_v001.cdf",
+                sentinel.ul_sf_dat_1,
+            ],
+            [
+                f"imap_glows_l3e_survival-probability-ul-sf_20250101-repoint02906_v004.0014.cdf",
+                sentinel.ul_sf_dat_2,
+            ],
         ]
         mock_process_ul_sf.side_effect = expected_ul_sf_files
 
         expected_ul_hf_files = [
-            [f'imap_glows_l3e_survival-probability-ul-hf_20250101-repoint02902_v001.cdf', sentinel.ul_hf_dat_1],
-            [f'imap_glows_l3e_survival-probability-ul-hf_20250101-repoint02907_v005.0015.cdf', sentinel.ul_hf_dat_2],
+            [
+                f"imap_glows_l3e_survival-probability-ul-hf_20250101-repoint02902_v001.cdf",
+                sentinel.ul_hf_dat_1,
+            ],
+            [
+                f"imap_glows_l3e_survival-probability-ul-hf_20250101-repoint02907_v005.0015.cdf",
+                sentinel.ul_hf_dat_2,
+            ],
         ]
         mock_process_ul_hf.side_effect = expected_ul_hf_files
 
         expected_products = [
             sentinel.l3d_text_file_paths,
             sentinel.l3d_cdf_file_path,
-            f'imap_glows_l3e_survival-probability-lo_20250101-repoint02902_v001.cdf', sentinel.lo_dat_1,
-            f'imap_glows_l3e_survival-probability-hi-90_20250101-repoint02902_v001.cdf', sentinel.hi90_dat_1,
-            f'imap_glows_l3e_survival-probability-hi-45_20250101-repoint02902_v001.cdf', sentinel.hi45_dat_1,
-            f'imap_glows_l3e_survival-probability-ul-sf_20250101-repoint02902_v001.cdf', sentinel.ul_sf_dat_1,
-            f'imap_glows_l3e_survival-probability-ul-hf_20250101-repoint02902_v001.cdf', sentinel.ul_hf_dat_1,
-            f'imap_glows_l3e_survival-probability-hi-90_20250101-repoint02903_v001.0011.cdf', sentinel.hi90_dat_2,
-            f'imap_glows_l3e_survival-probability-hi-45_20250101-repoint02904_v002.0012.cdf', sentinel.hi45_dat_2,
-            f'imap_glows_l3e_survival-probability-lo_20250101-repoint02905_v003.0013.cdf', sentinel.lo_dat_2,
-            f'imap_glows_l3e_survival-probability-ul-sf_20250101-repoint02906_v004.0014.cdf', sentinel.ul_sf_dat_2,
-            f'imap_glows_l3e_survival-probability-ul-hf_20250101-repoint02907_v005.0015.cdf', sentinel.ul_hf_dat_2,
+            f"imap_glows_l3e_survival-probability-lo_20250101-repoint02902_v001.cdf",
+            sentinel.lo_dat_1,
+            f"imap_glows_l3e_survival-probability-hi-90_20250101-repoint02902_v001.cdf",
+            sentinel.hi90_dat_1,
+            f"imap_glows_l3e_survival-probability-hi-45_20250101-repoint02902_v001.cdf",
+            sentinel.hi45_dat_1,
+            f"imap_glows_l3e_survival-probability-ul-sf_20250101-repoint02902_v001.cdf",
+            sentinel.ul_sf_dat_1,
+            f"imap_glows_l3e_survival-probability-ul-hf_20250101-repoint02902_v001.cdf",
+            sentinel.ul_hf_dat_1,
+            f"imap_glows_l3e_survival-probability-hi-90_20250101-repoint02903_v001.0011.cdf",
+            sentinel.hi90_dat_2,
+            f"imap_glows_l3e_survival-probability-hi-45_20250101-repoint02904_v002.0012.cdf",
+            sentinel.hi45_dat_2,
+            f"imap_glows_l3e_survival-probability-lo_20250101-repoint02905_v003.0013.cdf",
+            sentinel.lo_dat_2,
+            f"imap_glows_l3e_survival-probability-ul-sf_20250101-repoint02906_v004.0014.cdf",
+            sentinel.ul_sf_dat_2,
+            f"imap_glows_l3e_survival-probability-ul-hf_20250101-repoint02907_v005.0015.cdf",
+            sentinel.ul_hf_dat_2,
         ]
 
         processor = GlowsProcessor(Mock(), input_metadata)
         products = processor.process()
 
 
-        self.mock_l3e_initializer.get_repointings_to_process.assert_called_once_with(process_l3d_result, sentinel.old_l3d, self.mock_l3bc_initializer.return_value.repoint_file_path, input_version_map)
+        self.mock_l3e_initializer.get_repointings_to_process.assert_called_once_with(
+            process_l3d_result,
+            sentinel.old_l3d,
+            self.mock_l3bc_initializer.return_value.repoint_file_path,
+            input_version_map,
+            self.mock_reprocess_info,
+        )
         self.assertEqual(expected_products, products)
 
     @patch('imap_l3_processing.glows.glows_processor.Processor.get_parent_file_names')
