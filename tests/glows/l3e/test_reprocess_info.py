@@ -21,6 +21,7 @@ class TestReprocessInfo(unittest.TestCase):
             "survival-probability-hi-45": ReprocessTargets([], [2313, 2314]),
             "survival-probability-ul-sf": ReprocessTargets([246, 247], []),
             "survival-probability-ul-hf": ReprocessTargets([243], []),
+            "solar-hist": ReprocessTargets([], []),
         }
         test_file: Path = get_test_data_folder() / 'glows' / 'glows_reprocessing_ancillary_file.txt'
         mock_datetime.now.return_value = datetime(2026, 8, 11, 11, 40, tzinfo=timezone.utc)
@@ -40,7 +41,7 @@ class TestReprocessInfo(unittest.TestCase):
                 mock_datetime.fromisoformat.assert_called_with("2226-08-11 11:40")
                 mock_datetime.now.assert_called_with(timezone.utc)
 
-    def test_should_reprocess_l3d_if_l3e_products_are_specified(self):
+    def test_should_reprocess_l3d_if_l3d_or_l3e_products_are_specified(self):
         cases = [
             ("should reprocess l3e hi45",
              {GLOWS_L3E_HI_45_DESCRIPTOR: ReprocessTargets([], []), GLOWS_L3B_DESCRIPTOR: ReprocessTargets([], [])}, True),
@@ -54,13 +55,14 @@ class TestReprocessInfo(unittest.TestCase):
              {GLOWS_L3E_ULTRA_HF_DESCRIPTOR: ReprocessTargets([], []), GLOWS_L3B_DESCRIPTOR: ReprocessTargets([], [])}, True),
             ("should not reprocess l3b alone", {GLOWS_L3B_DESCRIPTOR: ReprocessTargets([], [])}, False),
             ("should not reprocess l3c alone", {GLOWS_L3C_DESCRIPTOR: ReprocessTargets([], [])}, False),
-            ("should not reprocess l3d alone", {GLOWS_L3D_DESCRIPTOR: ReprocessTargets([], [])}, False),
+            ("should reprocess l3d alone", {GLOWS_L3D_DESCRIPTOR: ReprocessTargets([], [])}, True),
         ]
 
         for case, products_to_reprocess, expected_result in cases:
-            reprocess_info = ReprocessInfo(products_to_reprocess)
+            with self.subTest(case):
+                reprocess_info = ReprocessInfo(products_to_reprocess)
 
-            self.assertEqual(expected_result, reprocess_info.should_reprocess_l3d())
+                self.assertEqual(expected_result, reprocess_info.should_reprocess_l3d())
 
     def test_get_repoints(self):
         reprocess_info = ReprocessInfo(
@@ -115,6 +117,7 @@ class TestReprocessInfo(unittest.TestCase):
             GLOWS_L3E_HI_90_DESCRIPTOR: ReprocessTargets([], [2313]),
             GLOWS_L3E_HI_45_DESCRIPTOR: ReprocessTargets([], [2313, 2314]),
             GLOWS_L3E_ULTRA_SF_DESCRIPTOR: ReprocessTargets([246, 247], []),
-            GLOWS_L3E_ULTRA_HF_DESCRIPTOR: ReprocessTargets([243], [])
+            GLOWS_L3E_ULTRA_HF_DESCRIPTOR: ReprocessTargets([243], []),
+            GLOWS_L3D_DESCRIPTOR: ReprocessTargets([], []),
         }
         self.assertEqual(expected_products_to_reprocess, reprocess_info.products_to_reprocess)

@@ -5,3 +5,4 @@ l3e_survival-probability-hi-45 cr02313, cr02314
 l3e_survival-probability-ul-sf repoint0246, repoint0247
 l3e_survival-probability-ul-hf repoint0243
 l3c_sw-profile cr02311
+l3d_solar-hist

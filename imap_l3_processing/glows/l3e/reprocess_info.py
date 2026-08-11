@@ -6,10 +6,16 @@ from pathlib import Path
 
 import imap_data_access
 
-from imap_l3_processing.glows.descriptors import GLOWS_L3E_DESCRIPTORS, GLOWS_REPROCESSING_DESCRIPTOR
-from imap_l3_processing.glows.l3e.glows_l3e_utils import get_repoint_numbers_within_cr_window
+from imap_l3_processing.glows.descriptors import (
+    GLOWS_L3D_DESCRIPTOR,
+    GLOWS_L3E_DESCRIPTORS,
+    GLOWS_REPROCESSING_DESCRIPTOR,
+)
+from imap_l3_processing.glows.l3e.glows_l3e_utils import (
+    get_repoint_numbers_within_cr_window,
+)
 
-L3E_DATA_LEVEL = "l3e"
+SUPPORTED_DATA_LEVELS = ["l3e", "l3d"]
 REPOINT_PREFIX = "repoint"
 CARRINGTON_ROTATION_PREFIX = "cr"
 IGNORE_AFTER_PREFIX = "ignore-after:"
@@ -37,7 +43,7 @@ class ReprocessInfo:
             products = {
                 descriptor: target
                 for data_level, descriptor, target in parsed_products
-                if data_level == L3E_DATA_LEVEL
+                if data_level in SUPPORTED_DATA_LEVELS
             }
         return cls(products)
 
@@ -64,7 +70,7 @@ class ReprocessInfo:
         return data_level, descriptor, ReprocessTargets(repoints, carrington_rotations)
 
     def should_reprocess_l3d(self) -> bool:
-        return any(
+        return GLOWS_L3D_DESCRIPTOR in self.products_to_reprocess or any(
             set(self.products_to_reprocess.keys()).intersection(
                 set(GLOWS_L3E_DESCRIPTORS)
             )
