@@ -75,23 +75,32 @@ class GlowsL3EInitializer:
                 first_updated_cr -= 1
 
         last_cr = l3d_output.last_processed_cr
-        glows_repointings = identify_versions_for_l3e_output_files(
-            first_cr, last_cr, first_updated_cr,
-            repointing_file_path, version_map,
+        files_to_produce = identify_versions_for_l3e_output_files(
+            first_cr,
+            last_cr,
+            first_updated_cr,
+            repointing_file_path,
+            version_map,
             reprocess_info,
         )
 
-        if len(glows_repointings.repointing_numbers) > 0:
-            earliest_repointing_start, _ = get_pointing_date_range(min(glows_repointings.repointing_numbers))
-            _, latest_repointing_end = get_pointing_date_range(max(glows_repointings.repointing_numbers))
+        if len(files_to_produce.repointing_numbers) == 0:
+            return None
 
-            furnished_metakernels = GlowsL3EDependencies.collect_spice_dependencies(start_date=earliest_repointing_start, end_date=latest_repointing_end)
-        else:
-            furnished_metakernels = (None, None)
+        earliest_repointing_start, _ = get_pointing_date_range(
+            min(files_to_produce.repointing_numbers)
+        )
+        _, latest_repointing_end = get_pointing_date_range(
+            max(files_to_produce.repointing_numbers)
+        )
+
+        furnished_metakernels = GlowsL3EDependencies.collect_spice_dependencies(
+            start_date=earliest_repointing_start, end_date=latest_repointing_end
+        )
 
         return GlowsL3EInitializerOutput(
             dependencies=l3e_deps,
-            repointings=glows_repointings,
+            repointings=files_to_produce,
             l3d_cdf_path=l3d_output.l3d_cdf_file_path,
             metakernel_with_predict_ephem=furnished_metakernels[0],
             metakernel_without_predict_ephem=furnished_metakernels[1],

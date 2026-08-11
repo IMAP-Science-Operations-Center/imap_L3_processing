@@ -153,19 +153,37 @@ class TestGlowsL3EInitializer(unittest.TestCase):
     @patch(f'{MODULE}.GlowsL3EDependencies.fetch_dependencies')
     @patch(f'{MODULE}.identify_versions_for_l3e_output_files')
     @patch(f'{MODULE}.find_first_updated_cr')
-    def test_get_repointings_to_process_identical_l3d_files(self,
-                                                                                                        mock_find_first_updated_cr,
-                                                                                                        mock_identify_versions_for_l3e_output_files,
-                                                                                                        mock_fetch_dependencies):
-        updated_l3d = Path('path/to/imap_glows_l3d_solar-hist_19470303-cr02091_v000.cdf')
-        updated_l3d_text_file_path = Path("imap_glows_e-dens_19470303_20100101_v000.dat")
+    def test_get_repointings_to_process_identical_l3d_files(
+        self,
+        mock_find_first_updated_cr,
+        mock_identify_versions_for_l3e_output_files,
+        mock_fetch_dependencies,
+    ):
+        updated_l3d = Path(
+            "path/to/imap_glows_l3d_solar-hist_19470303-cr02091_v000.cdf"
+        )
+        updated_l3d_text_file_path = Path(
+            "imap_glows_e-dens_19470303_20100101_v000.dat"
+        )
         expected_last_cr = 2091
-        glows_l3d_processor_output = GlowsL3DProcessorOutput(updated_l3d, [updated_l3d_text_file_path], expected_last_cr)
-        previous_l3d = 'imap_glows_l3d_solar-hist_19470303-cr02091_v000.cdf'
+        glows_l3d_processor_output = GlowsL3DProcessorOutput(
+            updated_l3d, [updated_l3d_text_file_path], expected_last_cr
+        )
+        previous_l3d = "imap_glows_l3d_solar-hist_19470303-cr02091_v000.cdf"
 
         mock_l3e_dependencies = mock_fetch_dependencies.return_value
-        mock_l3e_dependencies.pipeline_settings = {"start_cr": sentinel.start_of_mission_cr}
+        mock_l3e_dependencies.pipeline_settings = {
+            "start_cr": sentinel.start_of_mission_cr
+        }
         mock_find_first_updated_cr.return_value = None
+        mock_identify_versions_for_l3e_output_files.return_value = GlowsL3eVersionsForRepointings(
+            repointing_numbers=[],
+            hi_90_repointings={},
+            hi_45_repointings={},
+            lo_repointings={},
+            ultra_sf_repointings={},
+            ultra_hf_repointings={},
+        )
 
         repointing_file_path = Path("imap_2026_105_01.repoint.csv")
         actual_initializer_output = GlowsL3EInitializer.get_repointings_to_process(
@@ -174,14 +192,6 @@ class TestGlowsL3EInitializer(unittest.TestCase):
             repointing_file_path,
             sentinel.version_map,
             sentinel.reprocess_info,
-        )
-
-        expected_initializer_output = GlowsL3EInitializerOutput(
-            mock_l3e_dependencies,
-            mock_identify_versions_for_l3e_output_files.return_value,
-            glows_l3d_processor_output.l3d_cdf_file_path,
-            metakernel_with_predict_ephem=None,
-            metakernel_without_predict_ephem=None,
         )
         mock_find_first_updated_cr.assert_called_once_with(glows_l3d_processor_output.l3d_cdf_file_path, previous_l3d)
         mock_identify_versions_for_l3e_output_files.assert_called_once_with(
@@ -192,7 +202,7 @@ class TestGlowsL3EInitializer(unittest.TestCase):
             sentinel.version_map,
             sentinel.reprocess_info,
         )
-        self.assertEqual(expected_initializer_output, actual_initializer_output)
+        self.assertIsNone(actual_initializer_output)
 
     @patch(f'{MODULE}.imap_data_access.query')
     @patch(f'{MODULE}.get_most_recently_uploaded_ancillary')
