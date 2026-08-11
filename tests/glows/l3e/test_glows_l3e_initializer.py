@@ -150,6 +150,8 @@ class TestGlowsL3EInitializer(unittest.TestCase):
             end_date=datetime(2011, 2, 2),
         )
 
+    @patch(f'{MODULE}.get_most_recently_uploaded_ancillary')
+    @patch(f'{MODULE}.imap_data_access')
     @patch(f'{MODULE}.GlowsL3EDependencies.fetch_dependencies')
     @patch(f'{MODULE}.identify_versions_for_l3e_output_files')
     @patch(f'{MODULE}.find_first_updated_cr')
@@ -158,6 +160,8 @@ class TestGlowsL3EInitializer(unittest.TestCase):
         mock_find_first_updated_cr,
         mock_identify_versions_for_l3e_output_files,
         mock_fetch_dependencies,
+        mock_imap_data_access,
+        mock_get_most_recently_uploaded_ancillary,
     ):
         updated_l3d = Path(
             "path/to/imap_glows_l3d_solar-hist_19470303-cr02091_v000.cdf"
@@ -184,6 +188,14 @@ class TestGlowsL3EInitializer(unittest.TestCase):
             ultra_sf_repointings={},
             ultra_hf_repointings={},
         )
+        mock_get_most_recently_uploaded_ancillary.side_effect = [
+            create_mock_query_results(['imap_glows_pipeline-settings-l3bcde_20200101_v000.cdf'])[0],
+            create_mock_query_results(['imap_glows_energy-grid-lo_20200101_v000.cdf'])[0],
+            create_mock_query_results(['imap_glows_tess-xyz-8_20200101_v000.cdf'])[0],
+            create_mock_query_results(['imap_glows_energy-grid-hi_20200101_v000.cdf'])[0],
+            create_mock_query_results(['imap_glows_energy-grid-ultra_20200101_v000.cdf'])[0],
+            create_mock_query_results(['imap_glows_tess-ang-16_20200101_v000.cdf'])[0],
+        ]
 
         repointing_file_path = Path("imap_2026_105_01.repoint.csv")
         actual_initializer_output = GlowsL3EInitializer.get_repointings_to_process(
