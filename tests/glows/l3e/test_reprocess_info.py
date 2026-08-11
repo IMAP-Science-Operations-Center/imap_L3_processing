@@ -1,4 +1,5 @@
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
 
@@ -12,20 +13,32 @@ from tests.test_helpers import get_test_data_folder, get_test_data_path, create_
 
 
 class TestReprocessInfo(unittest.TestCase):
-    def test_parse_from_ancillary(self):
-        test_file: Path = get_test_data_folder() / 'glows' / 'glows_reprocessing_ancillary_file.txt'
-
-        reprocess_info = ReprocessInfo.parse_from_ancillary(test_file)
-
-        expected_products_to_reprocess = {
+    @patch("imap_l3_processing.glows.l3e.reprocess_info.datetime")
+    def test_parse_from_ancillary(self, mock_datetime):
+        products = {
             "survival-probability-lo": ReprocessTargets([245, 246], [2310]),
             "survival-probability-hi-90": ReprocessTargets([], [2313]),
             "survival-probability-hi-45": ReprocessTargets([], [2313, 2314]),
             "survival-probability-ul-sf": ReprocessTargets([246, 247], []),
-            "survival-probability-ul-hf": ReprocessTargets([243], [])
+            "survival-probability-ul-hf": ReprocessTargets([243], []),
         }
+        test_file: Path = get_test_data_folder() / 'glows' / 'glows_reprocessing_ancillary_file.txt'
+        mock_datetime.now.return_value = datetime(2026, 8, 11, 11, 40, tzinfo=timezone.utc)
+        cases = [
+            (datetime(2026, 8, 11, 11, 41, tzinfo=timezone.utc), products),
+            (datetime(2026, 8, 11, 11, 41), products),
+            (datetime(2026, 8, 11, 11, 39, tzinfo=timezone.utc), {}),
+            (datetime(2026, 8, 11, 11, 39), {}),
+        ]
+        for ignore_time, expected_products in cases:
+            with self.subTest(ignore_time):
+                mock_datetime.fromisoformat.return_value = ignore_time
 
-        self.assertEqual(expected_products_to_reprocess, reprocess_info.products_to_reprocess)
+                reprocess_info = ReprocessInfo.parse_from_ancillary(test_file)
+
+                self.assertEqual(expected_products, reprocess_info.products_to_reprocess)
+                mock_datetime.fromisoformat.assert_called_with("2226-08-11 11:40")
+                mock_datetime.now.assert_called_with(timezone.utc)
 
     def test_should_reprocess_l3d_if_l3e_products_are_specified(self):
         cases = [

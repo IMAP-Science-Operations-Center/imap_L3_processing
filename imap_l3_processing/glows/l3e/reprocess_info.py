@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
 import imap_data_access
@@ -11,6 +12,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_utils import get_repoint_numbers_wit
 L3E_DATA_LEVEL = "l3e"
 REPOINT_PREFIX = "repoint"
 CARRINGTON_ROTATION_PREFIX = "cr"
+IGNORE_AFTER_PREFIX = "ignore-after:"
 
 
 @dataclass
@@ -26,9 +28,28 @@ class ReprocessInfo:
     @classmethod
     def parse_from_ancillary(cls, path_to_ancillary: Path) -> ReprocessInfo:
         with open(path_to_ancillary) as file:
+            ignore_after = cls._parse_header(file.readline())
             parsed_products = [cls._parse_line(line) for line in file if line.strip()]
 
-        return cls({descriptor: target for data_level, descriptor, target in parsed_products if data_level == L3E_DATA_LEVEL})
+        if datetime.now(timezone.utc) >= ignore_after:
+            products = {}
+        else:
+            products = {
+                descriptor: target
+                for data_level, descriptor, target in parsed_products
+                if data_level == L3E_DATA_LEVEL
+            }
+        return cls(products)
+
+    @staticmethod
+    def _parse_header(line: str) -> datetime:
+        ignore_after = datetime.fromisoformat(
+            line.removeprefix(IGNORE_AFTER_PREFIX).strip()
+        )
+        if ignore_after.tzinfo is None:
+            ignore_after = ignore_after.replace(tzinfo=timezone.utc)
+        return ignore_after
+
 
     @staticmethod
     def _parse_line(line: str) -> tuple[str, str, ReprocessTargets]:
