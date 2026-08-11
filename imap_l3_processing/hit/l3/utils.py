@@ -2,7 +2,6 @@ from datetime import timedelta
 from pathlib import Path
 from typing import Union
 
-import numpy as np
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
@@ -11,17 +10,9 @@ from imap_l3_processing.hit.l3.models import HitL2Data
 
 def read_l2_hit_data(cdf_file_path: Union[str, Path]) -> HitL2Data:
     with CDF(str(cdf_file_path)) as cdf:
-        epoch = cdf["epoch"][...]
-
-        half_epoch_diff = np.diff(epoch) / 2
-        variance = np.max(half_epoch_diff) - np.min(half_epoch_diff)
-        assert variance < timedelta(milliseconds=1), \
-            "L2 epochs are not evenly spaced, failed to synthesize epoch deltas"
-        fabricated_epoch_deltas = np.repeat(half_epoch_diff[0], len(epoch))
-
         return HitL2Data(
             epoch=cdf["epoch"][...],
-            epoch_delta=fabricated_epoch_deltas,
+            epoch_delta=cdf["epoch_delta"][...] / 1e9 * timedelta(seconds=1),
             azimuth=read_numeric_variable(cdf["azimuth"]),
             zenith=read_numeric_variable(cdf["zenith"]),
             h=read_numeric_variable(cdf["h_macropixel_intensity"]),
