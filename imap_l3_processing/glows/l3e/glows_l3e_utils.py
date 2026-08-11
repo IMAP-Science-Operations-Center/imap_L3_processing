@@ -129,16 +129,13 @@ def identify_versions_for_l3e_output_files(start_cr_of_mission: int, end_cr_of_m
             new_major_version = version_map.lookup(descriptor).major
             if pointing_number in existing_file_versions:
                 previous_version = existing_file_versions[pointing_number]
+                higher_major_version_given = new_major_version > previous_version.major
 
-                if previous_version.major is None:
-                    if new_major_version or pointing_number in repointings_to_process:
-                        new_file_versions[pointing_number] = Version(new_major_version, previous_version.minor + 1)
-
-                elif new_major_version is not None:
-                    higher_major_version_given = new_major_version > previous_version.major
-                    same_major_but_updated = new_major_version == previous_version.major and pointing_number in repointings_to_process
-                    if higher_major_version_given or same_major_but_updated:
-                        new_file_versions[pointing_number] = Version(new_major_version, previous_version.minor + 1)
+                if (
+                    higher_major_version_given
+                    or pointing_number in repointings_to_process
+                ):
+                    new_file_versions[pointing_number] = Version(new_major_version, previous_version.minor + 1)
 
             else:
                 new_file_versions[pointing_number] = Version(new_major_version, 1)
