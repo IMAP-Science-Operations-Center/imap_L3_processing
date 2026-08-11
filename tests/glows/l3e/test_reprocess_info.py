@@ -24,7 +24,9 @@ class TestReprocessInfo(unittest.TestCase):
             "survival-probability-ul-hf": ReprocessTargets([243], []),
             "solar-hist": ReprocessTargets([], []),
         }
-        test_file: Path = get_test_data_folder() / 'glows' / 'glows_reprocessing_ancillary_file.txt'
+        test_file: Path = (
+            get_test_data_folder() / "glows" / "glows_reprocessing_ancillary_file.dat"
+        )
         mock_datetime.now.return_value = datetime(2026, 8, 11, 11, 40, tzinfo=timezone.utc)
         cases = [
             (datetime(2026, 8, 11, 11, 41, tzinfo=timezone.utc), products),
@@ -105,7 +107,7 @@ class TestReprocessInfo(unittest.TestCase):
             AncillaryInput(f"imap_glows_{GLOWS_REPROCESSING_DESCRIPTOR}_20250101_v000.dat"),
             RepointInput("imap_2026_269_12.repoint.csv"),
         )
-        path_to_downloaded_ancillary = get_test_data_folder() / 'glows' / 'glows_reprocessing_ancillary_file.txt'
+        path_to_downloaded_ancillary = get_test_data_folder() / 'glows' / 'glows_reprocessing_ancillary_file.dat'
         mock_download.return_value = path_to_downloaded_ancillary
 
         reprocess_info = fetch_reprocess_info(processing_input)
