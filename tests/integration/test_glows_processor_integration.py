@@ -320,7 +320,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
 
     @run_periodically(timedelta(days=14))
     @run_test_in_docker
-    def test_l3bcde_reprocessing(self):
+    def test_l3bcde_automatic_reprocessing(self):
         new_l3a_file = GLOWS_TEST_DATA / "imap_glows_l3a_hist_20251118-repoint00052_v001.cdf"
         l3bcde_input_files = [
             GLOWS_TEST_DATA / "imap_glows_l3a_hist_20251113-repoint00047_v001.cdf",
@@ -495,15 +495,39 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
     @skipIf(os.getenv("IMAP_API_KEY") is None, "Only runs with prod IMAP_API_KEY")
     @run_test_in_docker
     def test_run_glows_l3be_against_prod(self):
+        logging.basicConfig(force=True, level=logging.INFO,
+                            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+        imap_data_access.config["DATA_DIR"] = get_run_local_data_path("glows_l3bcde_prod")
+
+        test_reprocessing_file = get_test_data_path("glows/imap_glows_force-reprocessing-config_20250101_v000.csv")
+        shutil.copy(test_reprocessing_file, AncillaryFilePath(test_reprocessing_file.name).construct_path())
+
+        repoint_file_name = "imap_2026_147_01.repoint"
+        processing_input = ProcessingInputCollection(RepointInput(repoint_file_name), AncillaryInput(test_reprocessing_file.name))
+
+        descriptors_to_produce = [
+            "ion-rate-profile",
+            "sw-profile",
+            "solar-hist",
+            "survival-probability-hi-45",
+            "survival-probability-hi-90",
+            "survival-probability-lo",
+            "survival-probability-ul-sf",
+            "survival-probability-ul-hf",
+        ]
+
+        dependency = {
+            "dependency": json.loads(processing_input.serialize()),
+            "version": {
+                desc: {
+                    "major_version": 1,
+                    "minor_version": 1,
+                } for desc in descriptors_to_produce
+            }
+        }
+
         with patch("imap_l3_data_processor._parse_cli_arguments") as mock_parse_cli_arguments:
-            logging.basicConfig(force=True, level=logging.INFO,
-                                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-            imap_data_access.config["DATA_DIR"] = get_run_local_data_path("glows_l3bcde_prod")
-
-            repoint_file_name = "imap_2026_147_01.repoint"
-            processing_input = ProcessingInputCollection(RepointInput(repoint_file_name))
-
             mock_arguments = Mock()
             mock_arguments.instrument = "glows"
             mock_arguments.data_level = "l3b"
@@ -512,7 +536,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             mock_arguments.end_date = None
             mock_arguments.repointing = None
             mock_arguments.version = "v001"
-            mock_arguments.dependency = processing_input.serialize()
+            mock_arguments.dependency = json.dumps(dependency)
             mock_arguments.upload_to_sdc = False
             mock_parse_cli_arguments.return_value = mock_arguments
             imap_l3_data_processor.imap_l3_processor()
