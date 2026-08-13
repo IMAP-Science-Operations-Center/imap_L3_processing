@@ -41,7 +41,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializ
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, get_lo_pivot_angles, \
-    compute_glows_flags_for_window, determine_spacecraft_info_using_predict_if_needed
+    compute_glows_flags_for_repoint, determine_spacecraft_info_using_predict_if_needed
 from imap_l3_processing.glows.l3e.reprocess_info import fetch_reprocess_info
 from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.processor import Processor
@@ -280,8 +280,9 @@ def process_l3e(initializer_data: GlowsL3EInitializerOutput):
         with SwallowExceptionAndLog(f"Exception encountered when processing L3e for repointing {repointing}"):
             start_repointing, end_repointing = get_pointing_date_range(repointing)
             epoch_delta: timedelta = (end_repointing - start_repointing) / 2
-            glows_flags = compute_glows_flags_for_window(initializer_data.l3d_cdf_path, start_repointing, end_repointing)
-            spacecraft_info, predict_flag, kernel_names = determine_spacecraft_info_using_predict_if_needed(start_repointing + epoch_delta, initializer_data.metakernel_with_predict_ephem, initializer_data.metakernel_without_predict_ephem)
+            repointing_midpoint = start_repointing + epoch_delta
+            glows_flags = compute_glows_flags_for_repoint(initializer_data.l3d_cdf_path, repointing_midpoint)
+            spacecraft_info, predict_flag, kernel_names = determine_spacecraft_info_using_predict_if_needed(repointing_midpoint, initializer_data.metakernel_with_predict_ephem, initializer_data.metakernel_without_predict_ephem)
             glows_flags |= predict_flag
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e lo for repointing {repointing}"):

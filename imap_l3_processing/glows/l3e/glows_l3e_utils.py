@@ -153,16 +153,22 @@ def identify_versions_for_l3e_output_files(start_cr_of_mission: int, end_cr_of_m
                                           )
 
 
-def compute_glows_flags_for_window(l3d_cdf_path: Path, window_start: datetime, window_end: datetime) -> int:
+def compute_glows_flags_for_repoint(l3d_cdf_path: Path, repoint_midpoint: datetime) -> int:
     with CDF(str(l3d_cdf_path)) as cdf:
-        epochs = cdf['epoch'][...]
-        epoch_deltas = cdf['epoch_delta'][...] / 1e9 * timedelta(seconds=1)
+        cr_epochs = cdf['epoch'][...]
         flags = cdf['glows_flags'][...]
-    cr_starts = epochs - epoch_deltas
-    cr_ends = epochs + epoch_deltas
 
-    cr_intersects_window = (window_start < cr_ends) & (cr_starts < window_end)
-    selected = flags[cr_intersects_window]
+    cr_after_repoint = np.searchsorted(cr_epochs, repoint_midpoint)
+    cr_before_repoint = cr_after_repoint - 1
+
+    relevant_crs = [cr_before_repoint]
+    if cr_after_repoint < len(cr_epochs):
+        if cr_epochs[cr_after_repoint] != repoint_midpoint:
+            relevant_crs.append(cr_after_repoint)
+        else:
+            relevant_crs = [cr_after_repoint]
+
+    selected = flags[relevant_crs]
 
     return int(np.bitwise_or.reduce(selected.astype(np.uint16), initial=0))
 
