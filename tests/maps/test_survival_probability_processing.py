@@ -8,6 +8,7 @@ from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies
 from imap_l3_processing.maps.map_descriptors import PixelSize, parse_map_descriptor, ReferenceFrame
+from imap_l3_processing.maps.quality_flags import MapL3Flags
 from imap_l3_processing.maps.survival_probability_processing import process_survival_probabilities
 from tests.maps.test_builders import create_rectangular_intensity_map_data, create_l1c_pset, create_l3e_pset
 from tests.spice_test_case import SpiceTestCase
@@ -48,7 +49,9 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
         mock_survival_probability_pointing_set.side_effect = [sentinel.pset_1, sentinel.pset_2, sentinel.pset_3]
 
         computed_survival_probabilities = rng.random((1, 9, 90, 45))
-        pred_ephemeris_flag = rng.random((1, 9, 90, 45)) > 0.8
+        quality_flags = np.full((1, 9, 90, 45), MapL3Flags.NONE)
+        quality_flags[rng.random((1, 9, 90, 45)) > 0.8] = MapL3Flags.PREDICTIVE_EPHEMERIS
+        quality_flags[rng.random((1, 9, 90, 45)) > 0.7] = MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO
 
         mock_survival_skymap.return_value.to_dataset.return_value = xr.Dataset(
             data_vars={
@@ -61,15 +64,15 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
                     ],
                     computed_survival_probabilities
                 ),
-                "predicted_ephemeris_flag": (
+                "quality_flags": (
                     [
                         CoordNames.TIME.value,
                         CoordNames.ENERGY_ULTRA_L1C.value,
                         CoordNames.AZIMUTH_L2.value,
                         CoordNames.ELEVATION_L2.value,
                     ],
-                    pred_ephemeris_flag
-                )
+                    quality_flags
+                ),
             },
             coords={
                 CoordNames.TIME.value: [epoch],
@@ -150,7 +153,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
         np.testing.assert_array_equal(survival_data.intensity_map_data.obs_date_range,
                                       intensity_map_data.obs_date_range)
         np.testing.assert_array_equal(survival_data.intensity_map_data.solid_angle, intensity_map_data.solid_angle)
-        np.testing.assert_array_equal(survival_data.intensity_map_data.predicted_ephemeris_flag, pred_ephemeris_flag)
+        np.testing.assert_array_equal(survival_data.intensity_map_data.quality_flags, quality_flags)
 
     @patch('imap_l3_processing.maps.survival_probability_processing.RectangularSurvivalProbabilitySkyMap')
     @patch('imap_l3_processing.maps.survival_probability_processing.RectangularSurvivalProbabilityPointingSet')
@@ -186,7 +189,8 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
             mock_survival_probability_pointing_set.side_effect = [sentinel.pset_1, sentinel.pset_2, sentinel.pset_3]
 
             computed_survival_probabilities = rng.random((1, 9, 90, 45))
-            predicted_ephemeris_flag = rng.random((1, 9, 90, 45)) > 0.7
+            quality_flags = np.full_like(computed_survival_probabilities, MapL3Flags.NONE)
+
             mock_survival_skymap.return_value.to_dataset.return_value = xr.Dataset({
                 "exposure_weighted_survival_probabilities": (
                     [
@@ -197,15 +201,15 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
                     ],
                     computed_survival_probabilities
                 ),
-                "predicted_ephemeris_flag": (
+                "quality_flags": (
                     [
                         CoordNames.TIME.value,
                         CoordNames.ENERGY_ULTRA_L1C.value,
                         CoordNames.AZIMUTH_L2.value,
                         CoordNames.ELEVATION_L2.value,
                     ],
-                    predicted_ephemeris_flag
-                )
+                    quality_flags
+                ),
             },
                 coords={
                     CoordNames.TIME.value: [epoch],

@@ -9,6 +9,7 @@ from imap_processing.spice.geometry import SpiceFrame
 from imap_l3_processing.glows.quality_flags import GlowsL3Flags
 from imap_l3_processing.maps.map_descriptors import Sensor, SpinPhase
 from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet
+from imap_l3_processing.maps.quality_flags import MapL3Flags
 
 
 def interpolate_angular_data_to_nearest_neighbor(input_azimuths: np.array, glows_azimuths: np.array,
@@ -174,6 +175,15 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                 CoordNames.AZIMUTH_L1C.value,
             ],
         )
+        nominal_alpha_proton_flag_set = flag_value & GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO != 0
+        dataset["nominal_alpha_proton_ratio_flag"] = xr.DataArray(
+            exposure * nominal_alpha_proton_flag_set,
+            dims=[
+                CoordNames.TIME.value,
+                CoordNames.ENERGY_ULTRA_L1C.value,
+                CoordNames.AZIMUTH_L1C.value,
+            ]
+        )
 
         frame = SpiceFrame.IMAP_HAE
         super().__init__(dataset, frame)
@@ -183,12 +193,17 @@ class RectangularSurvivalProbabilitySkyMap(RectangularSkyMap):
     def __init__(self, survival_probability_pointing_sets: list[RectangularSurvivalProbabilityPointingSet],
                  spacing_degree: float, spice_frame: SpiceFrame):
         super().__init__(spacing_degree, spice_frame)
-        for sp_pset in survival_probability_pointing_sets:
-            value_keys = ["survival_probability_times_exposure", "exposure", "predicted_ephemeris_flag"]
+        for  sp_pset in survival_probability_pointing_sets:
+            value_keys = ["survival_probability_times_exposure", "exposure", "predicted_ephemeris_flag", "nominal_alpha_proton_ratio_flag"]
             self.project_pset_values_to_map(sp_pset, value_keys, pset_valid_mask=sp_pset.data["directional_mask"])
+
+        predicted_ephemeris_set = self.data_1d["predicted_ephemeris_flag"] != 0
+        nominal_alpha_proton_ratio_set = self.data_1d["nominal_alpha_proton_ratio_flag"] != 0
+        quality_flags_1d = (predicted_ephemeris_set * MapL3Flags.PREDICTIVE_EPHEMERIS) | \
+                           (nominal_alpha_proton_ratio_set * MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO)
 
         self.data_1d = xr.Dataset({
             "exposure_weighted_survival_probabilities": self.data_1d["survival_probability_times_exposure"] /
                                                         self.data_1d["exposure"],
-            "predicted_ephemeris_flag": self.data_1d["predicted_ephemeris_flag"] != 0,
+            "quality_flags": quality_flags_1d,
         })
