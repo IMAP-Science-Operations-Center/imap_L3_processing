@@ -10,9 +10,10 @@ import numpy as np
 from imap_data_access import config
 from imap_data_access.file_validation import Version
 from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection
-from imap_processing.spice.geometry import SpiceFrame
+from imap_processing.spice.geometry import SpiceFrame, imap_state, get_rotation_matrix
 from requests import RequestException
 from spacepy.pycdf import CDF
+from spiceypy import KernelPool, spiceypy
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH, TT2000_EPOCH
 from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet, \
@@ -36,15 +37,20 @@ from imap_l3_processing.utils import (
     filter_bad_days,
     get_version_from_query_result,
     get_temp_cache_dir,
+    PredictedEphemerisTracker,
 )
 from imap_l3_processing.version import VERSION
 from tests.cdf.test_cdf_utils import TestDataProduct
-from tests.maps.test_builders import create_rectangular_spectral_index_map_data, create_rectangular_intensity_map_data
+from tests.maps.test_builders import (
+    create_rectangular_spectral_index_map_data,
+    create_rectangular_intensity_map_data,
+)
 from tests.test_helpers import (
     get_spice_data_path,
     with_tempdir,
     create_dataclass_mock,
     create_mock_version_map,
+    get_integration_test_spice_data_path,
 )
 
 
@@ -686,3 +692,32 @@ class TestUtils(TestCase):
         self.assertEqual(cache_temp_dir, second_cache_temp_dir)
 
         self.assertTrue(cache_temp_dir.is_relative_to(Path(tempfile.gettempdir())))
+
+    def test_spice_runner_determines_if_kernels_need_predicted_ephemeris(self):
+        spice_file_names = [
+            "imap_recon_20250415_20260415_v01.bsp",
+            "naif0012.tls",
+            "imap_sclk_0171.tsc",
+            "imap_science_120.tf",
+            "imap_pred_od039_20260810_20260921_v01.bsp",
+            "de440.bsp"
+        ]
+        spice_test_paths = [str(get_integration_test_spice_data_path(file_name)) for file_name in spice_file_names]
+
+        with KernelPool(spice_test_paths):
+            et_no_predict = spiceypy.datetime2et(datetime(2025,8,12))
+            et_requiring_predict = spiceypy.datetime2et(datetime(2026,10,12))
+            print("no predict: ", imap_state(et_no_predict, SpiceFrame.ECLIPJ2000))
+            print("with predict: ", imap_state(et_requiring_predict, SpiceFrame.ECLIPJ2000))
+
+            tracker = PredictedEphemerisTracker()
+            state1 = tracker.run(imap_state, et_no_predict, SpiceFrame.ECLIPJ2000)
+            self.assertFalse(tracker.used_predict)
+            state2 = tracker.run(imap_state, et_requiring_predict, SpiceFrame.ECLIPJ2000)
+            self.assertTrue(tracker.used_predict)
+
+            expected_state_no_predict = [1.13516799e+08, -9.82515706e+07, 9.09317184e+03, 1.87743385e+01, 2.21606733e+01, -4.36934126e-02]
+            expected_state_requiring_predict = [1.40259445e+08, 4.65640242e+07, -9.71045392e+04, -9.78272997e+00, 2.79668899e+01, 1.88675730e-02]
+
+            self.assertEqual(expected_state_no_predict, state1)
+            self.assertEqual(expected_state_requiring_predict, state2)

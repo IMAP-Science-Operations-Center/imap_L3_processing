@@ -8,12 +8,13 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Optional, Union, TypeVar
 from urllib.parse import urlparse
+from spiceypy import KernelPool, spiceypy, SpiceyError
 
 import imap_data_access
 import numpy as np
 import requests
 import spiceypy
-from imap_data_access import ScienceFilePath, download
+from imap_data_access import ScienceFilePath, download, SPICEFilePath
 from imap_data_access.file_validation import Version
 from imap_data_access.processing_input import ProcessingInputCollection
 from requests import RequestException
@@ -351,6 +352,34 @@ def read_cdf_parents(server_file_name: str) -> set[str]:
 
 def get_version_from_query_result(science_file_query_result):
     if "major_version" in science_file_query_result:
-        return Version(science_file_query_result["major_version"], science_file_query_result["minor_version"])
+        return Version(
+            science_file_query_result["major_version"],
+            science_file_query_result["minor_version"],
+        )
     else:
         return Version.from_version(science_file_query_result["version"])
+
+class PredictedEphemerisTracker:
+    kernels_without_predict: list[str]
+    used_predict: bool
+
+    def __init__(self):
+        self.used_predict = False
+        all_kernels = []
+        for i in range(spiceypy.ktotal("ALL")):
+            data = spiceypy.kdata(i, "ALL")
+            all_kernels.append(data[0])
+        self.kernels_without_predict = [
+            k for k in all_kernels
+            if SPICEFilePath(k).spice_metadata != "ephemeris_predicted"
+        ]
+
+
+    def run(self, func, *args, **kwargs):
+        try:
+            with KernelPool(self.kernels_without_predict):
+                result = func(*args, **kwargs)
+        except SpiceyError:
+            result = func(*args, **kwargs)
+            self.used_predict = True
+        return result
