@@ -7,6 +7,7 @@ from imap_data_access.processing_input import ScienceInput, ProcessingInputColle
 
 from imap_l3_processing.hi.hi_spectral_fit_dependencies import HiSpectralIndexDependencies
 from imap_l3_processing.maps.map_models import RectangularIntensityMapData, IntensityMapData
+from imap_l3_processing.maps.quality_flags import MapL3Flags
 
 
 class TestHiSpectralFitDependencies(unittest.TestCase):
@@ -83,5 +84,5 @@ def _create_intensity_map_data(
         obs_date=None,
         obs_date_range=None,
         solid_angle=None,
-        predicted_ephemeris_flag=np.full(full_shape, False)
+        quality_flags=np.full(full_shape, MapL3Flags.NONE),
     )

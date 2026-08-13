@@ -15,6 +15,7 @@ from imap_l3_processing.constants import (
     SECONDS_PER_DAY,
 )
 from imap_l3_processing.glows.quality_flags import GlowsL3Flags
+from imap_l3_processing.maps.quality_flags import MapL3Flags
 from imap_l3_processing.ultra.models import UltraL1CPSet, UltraGlowsL3eData
 from imap_l3_processing.ultra.science.ultra_survival_probability import UltraSurvivalProbability, \
     UltraSurvivalProbabilitySkyMap
@@ -109,19 +110,20 @@ class TestUltraSurvivalProbability(unittest.TestCase):
     @patch('imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim')
     @patch('imap_l3_processing.ultra.science.ultra_survival_probability.geometry.frame_transform_az_el')
     @patch.object(UltraConstants, 'PSET_ENERGY_BIN_EDGES', new=[.1, 10])
-    def test_ultra_survival_probability_pset_includes_predicted_ephem_flag(self, mock_frame_transform_az_el, _):
-        unflagged = np.array([[[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]])
-        flagged = np.array([[[2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0]]])
+    def test_ultra_survival_probability_pset_includes_quality_flags(self, mock_frame_transform_az_el, _):
+        exposure = np.array([[[2] * 6 + [0] * 6]])
+
+        expected_unflagged = np.array([[[0] * 12]])
+        expected_flagged = exposure.copy()
         cases = [
-            (GlowsL3Flags.NONE, unflagged),
-            (GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO, unflagged),
-            (GlowsL3Flags.PREDICTIVE_EPHEMERIS, flagged),
-            (GlowsL3Flags.PREDICTIVE_EPHEMERIS | GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO, flagged),
+            (GlowsL3Flags.NONE, expected_unflagged, expected_unflagged),
+            (GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO, expected_unflagged, expected_flagged),
+            (GlowsL3Flags.PREDICTIVE_EPHEMERIS, expected_flagged, expected_unflagged),
+            (GlowsL3Flags.PREDICTIVE_EPHEMERIS | GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO, expected_flagged, expected_flagged),
         ]
-        for flag, expected in cases:
+        for flag, expected_predicted_ephem_flag, expected_nominal_alpha_proton_ratio_flag in cases:
             with self.subTest(flag):
                 glows_energies = np.array([1])
-                exposure = np.array([[[2] * 6 + [0] * 6]])
                 input_l1c_pset = _create_ultra_l1c_pset(glows_energies, exposure)
                 glows_surv_prob = np.full((1, 1, 12), 2)
 
@@ -134,13 +136,19 @@ class TestUltraSurvivalProbability(unittest.TestCase):
                 )
 
                 np.testing.assert_array_equal(
-                    prod.data["predicted_ephemeris_flag"], expected
+                    prod.data["predicted_ephemeris_flag"], expected_predicted_ephem_flag
                 )
                 self.assertEqual(
                     prod.data["predicted_ephemeris_flag"].dims,
                     prod.data["survival_probability_times_exposure"].dims,
                 )
-
+                np.testing.assert_array_equal(
+                    prod.data["nominal_alpha_proton_ratio_flag"], expected_nominal_alpha_proton_ratio_flag
+                )
+                self.assertEqual(
+                    prod.data["nominal_alpha_proton_ratio_flag"].dims,
+                    prod.data["survival_probability_times_exposure"].dims,
+                )
 
     @patch('imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim')
     @patch('imap_l3_processing.ultra.science.ultra_survival_probability.geometry.frame_transform_az_el')
@@ -226,7 +234,7 @@ class TestUltraSurvivalProbabilitySkyMap(SpiceTestCase):
                                              nside=pointing_set_nside, flags=GlowsL3Flags.PREDICTIVE_EPHEMERIS)
         l1c_2 = _create_ultra_l1c_pset(energy=np.array([1]), exposure_factor=l1c_exposure_2)
         l3e_glows_2 = _build_glows_l3e_ultra(survival_probabilities=l3e_sp_2, energies=glows_energies,
-                                             nside=pointing_set_nside)
+                                             nside=pointing_set_nside, flags=GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO)
 
         pset_1 = UltraSurvivalProbability(l1c_1, l3e_glows_1, bin_groups=[0, 1])
         pset_2 = UltraSurvivalProbability(l1c_2, l3e_glows_2, bin_groups=[0, 1])
@@ -241,10 +249,9 @@ class TestUltraSurvivalProbabilitySkyMap(SpiceTestCase):
         expected_exposure_weighted_survival_probabilities = np.full((1, 1, expected_output_pixels), 1 / 3)
         np.testing.assert_array_almost_equal(exposure_weighted_survival_probabilities,
                                              expected_exposure_weighted_survival_probabilities)
-        predicted_ephemeris_flag = prod.data_1d["predicted_ephemeris_flag"].values
-        expected_ephemeris_flag = np.full((1, 1, expected_output_pixels), True)
-        np.testing.assert_equal(predicted_ephemeris_flag, expected_ephemeris_flag)
-
+        actual_quality_flags = prod.data_1d["quality_flags"].values
+        expected_quality_flag = GlowsL3Flags.PREDICTIVE_EPHEMERIS | GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO
+        np.testing.assert_equal(actual_quality_flags, np.full((1, 1, expected_output_pixels), expected_quality_flag))
 
 
     def test_ultra_survival_probability_skymap_ignores_nan_survival_probabilities(self):

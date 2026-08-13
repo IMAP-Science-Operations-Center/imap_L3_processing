@@ -8,6 +8,7 @@ from scipy.stats import linregress
 
 from imap_l3_processing.maps.map_models import IntensityMapData, RectangularIntensityMapData
 from imap_l3_processing.maps.mpfit import mpfit
+from imap_l3_processing.maps.quality_flags import MapL3Flags
 from imap_l3_processing.maps.spectral_fit import power_law, fit_arrays_to_power_law, fit_spectral_index_map, \
     calculate_spectral_index_for_multiple_ranges, slice_energy_range_by_bin
 from tests.test_helpers import get_test_data_path
@@ -123,7 +124,7 @@ class TestSpectralFit(unittest.TestCase):
             ena_intensity=np.array(flux_data).reshape(full_shape),
             ena_intensity_sys_err=np.array([]),
             ena_intensity_stat_uncert=np.array(errors).reshape(full_shape),
-            predicted_ephemeris_flag=np.full(full_shape, False),
+            quality_flags=np.full(full_shape, MapL3Flags.NONE),
         )
 
         spectral_intensity_map = fit_spectral_index_map(data)
@@ -158,9 +159,11 @@ class TestSpectralFit(unittest.TestCase):
         longitude = np.arange(0, 360, 45)
 
         input_shape = (1, 3, len(longitude), len(latitude))
-        predicted_ephemeris_flag = np.full(input_shape, False)
-        predicted_ephemeris_flag[0, 0, 1:3] = True
-        predicted_ephemeris_flag[0, 1, 3] = True
+        quality_flags = np.full(input_shape, MapL3Flags.NONE)
+        quality_flags[0, 0, 1:3] = MapL3Flags.PREDICTIVE_EPHEMERIS
+        quality_flags[0, 1, 3] = MapL3Flags.PREDICTIVE_EPHEMERIS
+
+        quality_flags[0, 2, 0:2] = MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO
 
         input_map = IntensityMapData(
             epoch=np.array([datetime.now()]),
@@ -178,7 +181,7 @@ class TestSpectralFit(unittest.TestCase):
             ena_intensity=np.full(input_shape, 1),
             ena_intensity_sys_err=np.full(input_shape, 1),
             ena_intensity_stat_uncert=np.full(input_shape, 1),
-            predicted_ephemeris_flag=predicted_ephemeris_flag
+            quality_flags=quality_flags
         )
 
         input_map.obs_date[0, 0] = datetime(2025, 1, 1)
@@ -208,10 +211,12 @@ class TestSpectralFit(unittest.TestCase):
         np.testing.assert_array_equal(output.obs_date_range, np.full(expected_ena_shape, 2))
         np.testing.assert_array_equal(output.exposure_factor, np.full(expected_ena_shape, 6))
 
-        expected_predicted_ephem_flag = np.full(expected_ena_shape, False)
-        expected_predicted_ephem_flag[0, 0, 1:4] = True
+        expected_quality_flags = np.full(expected_ena_shape, MapL3Flags.NONE)
+        expected_quality_flags[0, 0, 0] = MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO
+        expected_quality_flags[0, 0, 1] = MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO | MapL3Flags.PREDICTIVE_EPHEMERIS
+        expected_quality_flags[0, 0, 2:4] = MapL3Flags.PREDICTIVE_EPHEMERIS
 
-        np.testing.assert_array_equal(output.predicted_ephemeris_flag, expected_predicted_ephem_flag)
+        np.testing.assert_array_equal(output.quality_flags, expected_quality_flags)
 
     def test_finds_best_fit_with_nan_in_flux(self):
         energies = np.geomspace(1, 10, 23)
@@ -268,7 +273,7 @@ class TestSpectralFit(unittest.TestCase):
             ena_intensity=np.array(flux_data).reshape(full_shape),
             ena_intensity_sys_err=np.array([]),
             ena_intensity_stat_uncert=np.array(errors).reshape(full_shape),
-            predicted_ephemeris_flag=np.full(full_shape, False),
+            quality_flags=np.full(full_shape, MapL3Flags.NONE),
         )
 
         spectral_intensity_map = fit_spectral_index_map(data)
@@ -457,6 +462,19 @@ class TestSpectralFit(unittest.TestCase):
         variance = np.concat((errors_range_1, errors_range_2)).reshape(full_shape)
         flux = np.concat((flux_data_range_1, flux_data_range_2)).reshape(full_shape)
 
+        quality_flags_range_1 = np.full((11,), MapL3Flags.NONE)
+        quality_flags_range_1[0] = MapL3Flags.PREDICTIVE_EPHEMERIS
+
+        quality_flags_range_2 = np.full((12,), MapL3Flags.NONE)
+        quality_flags_range_2[1] = MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO
+        quality_flags_range_2[2] = MapL3Flags.PREDICTIVE_EPHEMERIS
+        quality_flags = np.concat((quality_flags_range_1, quality_flags_range_2)).reshape(full_shape)
+
+        expected_quality_flags = np.array([
+            MapL3Flags.PREDICTIVE_EPHEMERIS,
+            MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO | MapL3Flags.PREDICTIVE_EPHEMERIS
+        ]).reshape((1, 2, 1, 1))
+
         data = IntensityMapData(
             epoch=epoch,
             epoch_delta=np.array([10000]),
@@ -475,7 +493,7 @@ class TestSpectralFit(unittest.TestCase):
             ena_intensity=flux,
             ena_intensity_sys_err=np.zeros_like(flux),
             ena_intensity_stat_uncert=np.array(variance).reshape(full_shape),
-            predicted_ephemeris_flag=np.full_like(flux, False),
+            quality_flags=quality_flags,
         )
 
         output_energies = np.array([[1, 100.5], [100.5, 10000.5]])
@@ -510,8 +528,8 @@ class TestSpectralFit(unittest.TestCase):
                                       np.full((1, 2, 1, 1), datetime(year=2010, month=1, day=1)))
         np.testing.assert_array_equal(spectral_index_map_data.obs_date_range, np.full((1, 2, 1, 1), 100000))
 
-        self.assertEqual((1, 2, 1, 1), spectral_index_map_data.predicted_ephemeris_flag.shape)
-        np.testing.assert_array_equal(spectral_index_map_data.predicted_ephemeris_flag, np.full((1,2,1,1), False), )
+        self.assertEqual((1, 2, 1, 1), spectral_index_map_data.quality_flags.shape)
+        np.testing.assert_array_equal(spectral_index_map_data.quality_flags, expected_quality_flags)
 
     @patch('imap_l3_processing.maps.spectral_fit.mpfit')
     def test_spectral_fit_returns_nan_if_fit_status_is_not_positive_or_equal_to_five(self, mock_mpfit):
@@ -619,7 +637,7 @@ class TestSpectralFit(unittest.TestCase):
                 np.testing.assert_allclose(output_data.ena_spectral_index_scalar_coefficient_stat_uncert[0, 0],
                                            expected_a_sigma, atol=1e-3)
                 np.testing.assert_allclose(output_data.ena_spectral_index_chisq[0, 0], expected_chisq)
-                np.testing.assert_allclose(output_data.predicted_ephemeris_flag, np.full((1,1,90,45), False))
+                np.testing.assert_allclose(output_data.quality_flags, np.full((1,1,90,45), MapL3Flags.NONE))
 
     def test_slice_energy_range_by_bin(self):
         def build_array(*values):
@@ -650,7 +668,13 @@ class TestSpectralFit(unittest.TestCase):
             ena_intensity=build_array(100, 200, 300, 400, 500),
             ena_intensity_stat_uncert=build_array(11, 12, 13, 14, 15),
             ena_intensity_sys_err=build_array(21, 22, 23, 24, 25),
-            predicted_ephemeris_flag=build_array(False, False, True, True, False),
+            quality_flags=build_array(
+                MapL3Flags.NONE,
+                MapL3Flags.NONE,
+                MapL3Flags.PREDICTIVE_EPHEMERIS,
+                MapL3Flags.PREDICTIVE_EPHEMERIS,
+                MapL3Flags.NONE
+            ),
         )
 
         expected_data = IntensityMapData(
@@ -672,7 +696,7 @@ class TestSpectralFit(unittest.TestCase):
             ena_intensity=build_array(100, 200, 300),
             ena_intensity_stat_uncert=build_array(11, 12, 13),
             ena_intensity_sys_err=build_array(21, 22, 23),
-            predicted_ephemeris_flag=build_array(False, False, True,),
+            quality_flags=build_array(MapL3Flags.NONE, MapL3Flags.NONE, MapL3Flags.PREDICTIVE_EPHEMERIS),
         )
 
         actual = slice_energy_range_by_bin(input_data, 1, 3)
@@ -710,7 +734,13 @@ class TestSpectralFit(unittest.TestCase):
             ena_intensity=build_array(100, 200, 300, 400, 500),
             ena_intensity_stat_uncert=build_array(11, 12, 13, 14, 15),
             ena_intensity_sys_err=build_array(21, 22, 23, 24, 25),
-            predicted_ephemeris_flag=build_array(False, False, True, True, False),
+            quality_flags=build_array(
+                MapL3Flags.NONE,
+                MapL3Flags.NONE,
+                MapL3Flags.PREDICTIVE_EPHEMERIS,
+                MapL3Flags.PREDICTIVE_EPHEMERIS,
+                MapL3Flags.NONE
+            ),
         )
         cases = [
             (1, 10),
