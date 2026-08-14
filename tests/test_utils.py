@@ -770,6 +770,18 @@ class TestUtils(TestCase):
             self.assertEqual(2, mock_spice_function_1.call_count)
             self.assertEqual(1, mock_spice_function_2.call_count)
 
+
+    def test_predicted_ephemeris_tracker_skips_retry_if_no_predict_kernel(self):
+        other_kernel = get_integration_test_spice_data_path(
+            "imap_2025_105_2026_105_01.ah.bc"
+        )
+        with KernelPool([str(other_kernel)]):
+            mock_spice_function_1 = Mock(side_effect=SpiceyError())
+            tracker = PredictedEphemerisTracker()
+            with self.assertRaises(SpiceyError):
+                tracker.run(mock_spice_function_1)
+            self.assertEqual(1, mock_spice_function_1.call_count)
+
     def test_predicted_ephemeris_tracker_allows_unknown_kernel_names(self):
         kernels = [str(x) for x in get_spice_data_path("").iterdir()]
 

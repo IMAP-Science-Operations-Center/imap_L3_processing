@@ -364,24 +364,26 @@ def get_version_from_query_result(science_file_query_result):
 class PredictedEphemerisTracker:
     kernels_without_predict: list[str]
     used_predict: bool
+    predict_kernel_available: bool
 
     def __init__(self):
         self.used_predict = False
-        all_kernels = []
+        self.predict_kernel_available = False
+        self.kernels_without_predict = []
         for i in range(spiceypy.ktotal("ALL")):
             data = spiceypy.kdata(i, "ALL")
-            all_kernels.append(data[0])
-        self.kernels_without_predict = []
-        for k in all_kernels:
+            kernel = data[0]
             try:
-                kernel_type = SPICEFilePath(k).spice_metadata["type"]
-                if kernel_type != "ephemeris_predicted":
-                    self.kernels_without_predict.append(k)
+                kernel_type = SPICEFilePath(kernel).spice_metadata["type"]
+                if kernel_type == "ephemeris_predicted":
+                    self.predict_kernel_available = True
+                else:
+                    self.kernels_without_predict.append(kernel)
             except SPICEFilePath.InvalidImapFileError:
-                self.kernels_without_predict.append(k)
+                self.kernels_without_predict.append(kernel)
 
     def run[T, **P](self, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
-        if self.used_predict:
+        if self.used_predict or not self.predict_kernel_available:
             result = func(*args, **kwargs)
         else:
             try:
