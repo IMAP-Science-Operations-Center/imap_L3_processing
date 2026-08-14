@@ -1,6 +1,7 @@
 import enum
 import json
 import logging
+from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, date, timedelta
@@ -359,6 +360,7 @@ def get_version_from_query_result(science_file_query_result):
     else:
         return Version.from_version(science_file_query_result["version"])
 
+
 class PredictedEphemerisTracker:
     kernels_without_predict: list[str]
     used_predict: bool
@@ -371,11 +373,15 @@ class PredictedEphemerisTracker:
             all_kernels.append(data[0])
         self.kernels_without_predict = [
             k for k in all_kernels
-            if SPICEFilePath(k).spice_metadata != "ephemeris_predicted"
+            if SPICEFilePath(k).spice_metadata["type"] != "ephemeris_predicted"
         ]
 
-
-    def run(self, func, *args, **kwargs):
+    def run[T, **P](
+        self,
+        func: Callable[P, T],
+        *args: P.args,
+        **kwargs: P.kwargs
+    ) -> T:
         try:
             with KernelPool(self.kernels_without_predict):
                 result = func(*args, **kwargs)
