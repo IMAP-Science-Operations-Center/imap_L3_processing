@@ -371,11 +371,14 @@ class PredictedEphemerisTracker:
         for i in range(spiceypy.ktotal("ALL")):
             data = spiceypy.kdata(i, "ALL")
             all_kernels.append(data[0])
-        self.kernels_without_predict = [
-            k
-            for k in all_kernels
-            if SPICEFilePath(k).spice_metadata["type"] != "ephemeris_predicted"
-        ]
+        self.kernels_without_predict = []
+        for k in all_kernels:
+            try:
+                kernel_type = SPICEFilePath(k).spice_metadata["type"]
+                if kernel_type != "ephemeris_predicted":
+                    self.kernels_without_predict.append(k)
+            except SPICEFilePath.InvalidImapFileError:
+                self.kernels_without_predict.append(k)
 
     def run[T, **P](self, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
         if self.used_predict:

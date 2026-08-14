@@ -722,25 +722,42 @@ class TestUtils(TestCase):
                 tracker.run(imap_state, et_no_coverage, SpiceFrame.ECLIPJ2000)
             self.assertFalse(tracker.used_predict)
 
-            state2 = tracker.run(imap_state, et_requiring_predict, SpiceFrame.ECLIPJ2000)
+            state2 = tracker.run(
+                imap_state, et_requiring_predict, SpiceFrame.ECLIPJ2000
+            )
             self.assertTrue(tracker.used_predict)
 
-            expected_state_no_predict = [ 1.40439489e+08,  4.72855667e+07,  8.22993201e+04, -1.02614632e+01,
-                                          2.79858385e+01,  6.54239949e-03]
-            expected_state_requiring_predict = [ 1.46205788e+08, -2.88643896e+07,  9.66721867e+04,  5.22302215e+00,
-                                                 2.88895439e+01,  1.19768410e-02]
+            expected_state_no_predict = [
+                1.40439489e08,
+                4.72855667e07,
+                8.22993201e04,
+                -1.02614632e01,
+                2.79858385e01,
+                6.54239949e-03,
+            ]
+            expected_state_requiring_predict = [
+                1.46205788e08,
+                -2.88643896e07,
+                9.66721867e04,
+                5.22302215e00,
+                2.88895439e01,
+                1.19768410e-02,
+            ]
 
             np.testing.assert_allclose(expected_state_no_predict, state1)
             np.testing.assert_allclose(expected_state_requiring_predict, state2)
 
-
     def test_predicted_ephemeris_tracker_skips_check_if_predict_already_used(self):
-        predict_kernel = get_integration_test_spice_data_path("imap_pred_od039_20260810_20260921_v01.bsp")
+        predict_kernel = get_integration_test_spice_data_path(
+            "imap_pred_od039_20260810_20260921_v01.bsp"
+        )
         with KernelPool([str(predict_kernel)]):
+
             def requires_predict():
                 if spiceypy.ktotal("ALL") == 0:
                     raise SpiceyError()
                 return "ok"
+
             mock_spice_function_1 = Mock(side_effect=requires_predict)
             mock_spice_function_2 = Mock(side_effect=requires_predict)
             tracker = PredictedEphemerisTracker()
@@ -749,6 +766,13 @@ class TestUtils(TestCase):
             self.assertEqual("ok", result_1)
             result_2 = tracker.run(mock_spice_function_2)
             self.assertEqual("ok", result_2)
-            
+
             self.assertEqual(2, mock_spice_function_1.call_count)
             self.assertEqual(1, mock_spice_function_2.call_count)
+
+    def test_predicted_ephemeris_tracker_allows_unknown_kernel_names(self):
+        kernels = [str(x) for x in get_spice_data_path("").iterdir()]
+
+        with KernelPool(kernels):
+            tracker = PredictedEphemerisTracker()
+            tracker.run(spiceypy.spkezr, "IMAP", spiceypy.datetime2et(datetime(2025,10, 10)), "ECLIPJ2000", "NONE", "SUN")
