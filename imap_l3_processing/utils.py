@@ -372,20 +372,19 @@ class PredictedEphemerisTracker:
             data = spiceypy.kdata(i, "ALL")
             all_kernels.append(data[0])
         self.kernels_without_predict = [
-            k for k in all_kernels
+            k
+            for k in all_kernels
             if SPICEFilePath(k).spice_metadata["type"] != "ephemeris_predicted"
         ]
 
-    def run[T, **P](
-        self,
-        func: Callable[P, T],
-        *args: P.args,
-        **kwargs: P.kwargs
-    ) -> T:
-        try:
-            with KernelPool(self.kernels_without_predict):
-                result = func(*args, **kwargs)
-        except SpiceyError:
+    def run[T, **P](self, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
+        if self.used_predict:
             result = func(*args, **kwargs)
-            self.used_predict = True
+        else:
+            try:
+                with KernelPool(self.kernels_without_predict):
+                    result = func(*args, **kwargs)
+            except SpiceyError:
+                result = func(*args, **kwargs)
+                self.used_predict = True
         return result
