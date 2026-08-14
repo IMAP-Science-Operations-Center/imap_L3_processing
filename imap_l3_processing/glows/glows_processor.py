@@ -237,13 +237,22 @@ def process_l3d(
 
     last_processed_cr = None
     logger.info(f"Preparing to process CR: {dependencies.end_cr}")
-    output: subprocess.CompletedProcess = run(
-        [sys.executable, "./generate_l3d.py", f"{dependencies.end_cr}", json.dumps(file_manifest),],
-        cwd=str(PATH_TO_L3D_TOOLKIT),
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+    try:
+        output: subprocess.CompletedProcess = run(
+            [
+                sys.executable,
+                "./generate_l3d.py",
+                f"{dependencies.end_cr}",
+                json.dumps(file_manifest),
+            ],
+            cwd=str(PATH_TO_L3D_TOOLKIT),
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except subprocess.CalledProcessError as e:
+        logger.warning("generate_l3d.py error: %s /// %s", e.output, e.stderr)
+        raise
     if output.stdout:
         last_processed_cr = int(output.stdout.split('= ')[-1])
 
