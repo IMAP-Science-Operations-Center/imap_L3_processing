@@ -1,10 +1,11 @@
-import platform
 import unittest
 from datetime import datetime
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, create_autospec
 import platform
 
 import numpy as np
+from imap_processing.spice.time import str_yyyymmdd_to_ttj2000ns
+from spiceypy import KernelPool
 from uncertainties import ufloat
 
 from imap_l3_processing.constants import (
@@ -46,7 +47,10 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindPara
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
     ProtonSolarWindFitResult,
 )
-from imap_l3_processing.swapi.l3a.utils import get_swapi_geometry
+from imap_l3_processing.swapi.l3a.utils import (
+    get_swapi_geometry,
+    get_spacecraft_velocity_rtn,
+)
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 from imap_l3_processing.swapi.constants import (
@@ -58,10 +62,10 @@ from imap_l3_processing.swapi.constants import (
     SWAPI_SCIENCE_BINS,
 )
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
+from imap_l3_processing.utils import PredictedEphemerisTracker
 from tests.spice_test_case import SpiceTestCase
 from tests.swapi._helpers import REALISTIC_ESA_VOLTAGES
-from tests.test_helpers import get_test_instrument_team_data_path
-
+from tests.test_helpers import get_test_instrument_team_data_path, get_integration_test_spice_data_path
 
 _N_SWEEPS = 5
 _N_BINS = 72
@@ -305,6 +309,15 @@ def _zero_chunk():
     )
 
 
+def _chunk_at_time(t):
+    return SwapiL2Data(
+        sci_start_time=np.array([t], dtype=np.int64),
+        energy=np.zeros((1, _N_BINS)),
+        coincidence_count_rate=np.zeros((1, _N_BINS)),
+        coincidence_count_rate_uncertainty=np.zeros((1, _N_BINS)),
+    )
+
+
 # 10**18 ns ≈ 31.7 years past `_EPOCH_TT2000` — beyond every kernel in
 # `spice_kernels/`, so SPICE raises `SpiceSPKINSUFFDATA` for this chunk.
 _OUT_OF_COVERAGE_START_TIME = _EPOCH_TT2000 + 10**18
@@ -327,7 +340,7 @@ class TestProtonChunkFitterPrecomputeGeometry(SpiceTestCase):
 
     def test_success_returns_epoch_rotations_and_sc_velocity(self):
         """At an in-coverage chunk, precompute_geometry returns the chunk midpoint epoch, a per-bin rotation array of the right shape, and a 3-vector spacecraft velocity."""
-        [(epoch, rotation_matrices, spacecraft_velocity)] = (
+        [(epoch, rotation_matrices, spacecraft_velocity, flags)] = (
             ProtonChunkFitter().precompute_geometry([_zero_chunk()])
         )
 
@@ -335,16 +348,78 @@ class TestProtonChunkFitterPrecomputeGeometry(SpiceTestCase):
         assert rotation_matrices is not None and spacecraft_velocity is not None
         self.assertEqual(rotation_matrices.shape, (_N_BINS - 1, 3, 3))
         self.assertEqual(spacecraft_velocity.shape, (3,))
+        self.assertEqual(flags, SwapiL3Flags.NONE)
 
     def test_spice_failure_yields_none_for_both_outputs(self):
         """If the chunk falls outside SPICE coverage, the proton fitter returns None for both rotations and spacecraft velocity."""
-        [(_, rotation_matrices, spacecraft_velocity)] = (
+        [(_, rotation_matrices, spacecraft_velocity, flags)] = (
             ProtonChunkFitter().precompute_geometry([_out_of_coverage_chunk()])
         )
 
         self.assertIsNone(rotation_matrices)
         self.assertIsNone(spacecraft_velocity)
+        self.assertEqual(flags, SwapiL3Flags.NONE)
 
+    def test_flags_chunks_that_need_predicted_ephemeris(self):
+        spice_file_names = [
+            "imap_recon_20250925_20260511_v01.bsp",
+            "naif0012.tls",
+            "imap_sclk_0171.tsc",
+            "imap_science_120.tf",
+            "imap_130.tf",
+            "imap_pred_od037_20260706_20260817_v01.bsp",
+            "de440.bsp",
+            "pck00011.tpc",
+            "imap_2025_105_2026_105_01.ah.bc",
+            "imap_2026_189_2026_189_001.ah.bc"
+        ]
+        spice_test_paths = [str(get_integration_test_spice_data_path(file_name)) for file_name in spice_file_names]
+
+        chunk_needing_predict = _chunk_at_time(
+            str_yyyymmdd_to_ttj2000ns("20260708")
+            + 12*3600*1e9
+        )
+        chunk_not_needing_predict = _chunk_at_time(
+            str_yyyymmdd_to_ttj2000ns("20260120")
+            + 12*3600*1e9
+        )
+        chunks = [chunk_needing_predict, chunk_not_needing_predict]
+
+        with KernelPool(spice_test_paths):
+            [geom1, geom2] = ProtonChunkFitter().precompute_geometry(chunks)
+            epoch1, rotation_matrices1, spacecraft_velocity1, flags1 = geom1
+            epoch2, rotation_matrices2, spacecraft_velocity2, flags2 = geom2
+
+            self.assertEqual(SwapiL3Flags.PREDICTIVE_EPHEMERIS, flags1)
+            self.assertEqual(SwapiL3Flags.NONE, flags2)
+
+    @patch("imap_l3_processing.swapi.l3a.chunk_fits.PredictedEphemerisTracker")
+    def test_uses_predicted_ephemeris_tracker(self, mock_tracker_class):
+        mock_tracker_1 = create_autospec(PredictedEphemerisTracker, used_predict=False)
+        mock_tracker_2 = create_autospec(PredictedEphemerisTracker, used_predict=False)
+        mock_tracker_class.side_effect = [
+            mock_tracker_1,
+            mock_tracker_2,
+        ]
+        chunk_needing_predict = _chunk_at_time(
+            str_yyyymmdd_to_ttj2000ns("20260308")
+            + 12*3600*1e9
+        )
+        chunk_not_needing_predict = _chunk_at_time(
+            str_yyyymmdd_to_ttj2000ns("20260120")
+            + 12*3600*1e9
+        )
+        chunks = [chunk_needing_predict, chunk_not_needing_predict]
+
+        ProtonChunkFitter().precompute_geometry(chunks)
+        self.assertEqual(2, mock_tracker_class.call_count)
+        self.assertEqual(2, mock_tracker_1.run.call_count)
+        self.assertEqual(get_swapi_geometry, mock_tracker_1.run.call_args_list[0].args[0])
+        self.assertEqual(get_spacecraft_velocity_rtn, mock_tracker_1.run.call_args_list[1].args[0])
+
+        self.assertEqual(2, mock_tracker_2.run.call_count)
+        self.assertEqual(get_swapi_geometry, mock_tracker_2.run.call_args_list[0].args[0])
+        self.assertEqual(get_spacecraft_velocity_rtn, mock_tracker_2.run.call_args_list[1].args[0])
 
 class TestProtonChunkFitterFitChunk(SpiceTestCase):
     """Tests for `ProtonChunkFitter.fit_chunk` — end-to-end proton fit plus
@@ -358,7 +433,7 @@ class TestProtonChunkFitterFitChunk(SpiceTestCase):
         _populate_shared(cls.response, efficiency_table)
         cls.chunk, cls.rotations, cls.true_proton_velocity_rtn, _ = _build_truth_chunk(cls.response, efficiency_table)
         cls.result = ProtonChunkFitter().fit_chunk(
-            cls.chunk, _CHUNK_EPOCH, cls.rotations, _SC_VELOCITY_RTN.copy()
+            cls.chunk, _CHUNK_EPOCH, cls.rotations, _SC_VELOCITY_RTN.copy(), SwapiL3Flags.NONE,
         )
 
     @classmethod
@@ -432,7 +507,7 @@ class TestProtonChunkFitterFitChunk(SpiceTestCase):
     def test_missing_sc_velocity_fills_only_sun_frame_outputs(self):
         """Calling fit_chunk with no SC velocity still runs the proton fit normally: density, temperature, SC-frame bulk velocity, covariance, and peak speed are populated from the fit; only the sun-frame outputs (`proton_sw_speed_sun`, `proton_sw_velocity_rtn_sun`) are fill values."""
         result = ProtonChunkFitter().fit_chunk(
-            self.chunk, _CHUNK_EPOCH, self.rotations, None
+            self.chunk, _CHUNK_EPOCH, self.rotations, None, SwapiL3Flags.NONE,
         )
         self.assertEqual(result["quality_flags"], SwapiL3Flags.NONE)
 
@@ -457,6 +532,13 @@ class TestProtonChunkFitterFitChunk(SpiceTestCase):
             np.all(np.isfinite(result["proton_sw_velocity_rtn_covariance"]))
         )
         self.assertTrue(np.isfinite(result["proton_sw_speed"]))
+
+    def test_uses_quality_flag_from_geometry(self):
+        result = ProtonChunkFitter().fit_chunk(
+            self.chunk, _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN.copy(), SwapiL3Flags.PREDICTIVE_EPHEMERIS,
+        )
+        self.assertEqual(result["quality_flags"], SwapiL3Flags.PREDICTIVE_EPHEMERIS)
+
 
 
 # ----- AlphaChunkFitter -----------------------------------------------------
@@ -693,7 +775,7 @@ class TestProtonChunkFitterQualityFlags(SpiceTestCase):
 
     def _fit(self, chunk):
         return self.fitter.fit_chunk(
-            chunk, _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN.copy()
+            chunk, _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN.copy(), SwapiL3Flags.NONE,
         )
 
     def test_bad_fit_when_peak_does_not_match_maxwellian(self):
@@ -751,7 +833,7 @@ class TestProtonChunkFitterQualityFlags(SpiceTestCase):
 
     def test_no_flag_when_rotations_missing(self):
         """Calling fit_chunk with no rotations reports a NONE quality flag (ephemeris gaps are treated as data gaps without a dedicated flag) and falls back to peak-bin ESA voltage as `proton_sw_speed`; every other science field NaN-fills."""
-        result = self.fitter.fit_chunk(self.chunk, _CHUNK_EPOCH, None, _SC_VELOCITY_RTN)
+        result = self.fitter.fit_chunk(self.chunk, _CHUNK_EPOCH, None, _SC_VELOCITY_RTN, SwapiL3Flags.NONE)
         _assert_proton_flag_and_peak_fallback(self, result, SwapiL3Flags.NONE)
 
     def test_no_flag_when_count_rate_has_nan(self):
@@ -770,6 +852,22 @@ class TestProtonChunkFitterQualityFlags(SpiceTestCase):
         self.assertAlmostEqual(
             result["proton_sw_speed"], _TRUE_BULK_SPEED, delta=0.05 * _TRUE_BULK_SPEED
         )
+
+
+    def test_combines_geometry_and_fitting_flags(self):
+        peak_bin = int(np.argmax(self.chunk.coincidence_count_rate.mean(axis=0)))
+        single_bin = np.zeros_like(self.chunk.coincidence_count_rate)
+        single_bin[:, peak_bin] = 100.0
+
+        result = self.fitter.fit_chunk(
+            _with_count_rate(self.chunk, single_bin),
+            _CHUNK_EPOCH,
+            self.rotations,
+            _SC_VELOCITY_RTN.copy(),
+            SwapiL3Flags.PREDICTIVE_EPHEMERIS,
+        )
+        self.assertEqual(SwapiL3Flags.FIT_ERROR | SwapiL3Flags.PREDICTIVE_EPHEMERIS, result["quality_flags"])
+
 
 
 # ----- Alpha quality flags --------------------------------------------------

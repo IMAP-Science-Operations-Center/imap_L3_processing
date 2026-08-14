@@ -62,6 +62,7 @@ from imap_l3_processing.swapi.l3a.utils import (
     measurement_times,
 )
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
+from imap_l3_processing.utils import PredictedEphemerisTracker
 
 logger = logging.getLogger(__name__)
 
@@ -113,8 +114,9 @@ class ProtonChunkFitter(ChunkFitter):
             epoch = chunk_epoch(chunk)
             rm = None
             sc_vel = None
+            tracker = PredictedEphemerisTracker()
             try:
-                rm = get_swapi_geometry(measurement_times(chunk, SWAPI_SCIENCE_BINS))
+                rm = tracker.run(get_swapi_geometry, measurement_times(chunk, SWAPI_SCIENCE_BINS))
             except Exception:
                 logger.warning(
                     "SPICE gap in rotation matrices.",
@@ -123,14 +125,15 @@ class ProtonChunkFitter(ChunkFitter):
 
             if rm is not None:
                 try:
-                    sc_vel = get_spacecraft_velocity_rtn(epoch)
+                    sc_vel = tracker.run(get_spacecraft_velocity_rtn, epoch)
                 except Exception:
                     logger.warning(
                         "SPICE gap in spacecraft velocity.",
                         exc_info=True,
                     )
+            flags = SwapiL3Flags.PREDICTIVE_EPHEMERIS if tracker.used_predict else SwapiL3Flags.NONE
+            geometries.append((epoch, rm, sc_vel, flags))
 
-            geometries.append((epoch, rm, sc_vel))
         return geometries
 
     def fit_chunk(
@@ -139,10 +142,12 @@ class ProtonChunkFitter(ChunkFitter):
         epoch,
         rotation_matrices,
         sc_velocity_rtn,
+        geometry_quality_flags: SwapiL3Flags,
     ):
         result = _fit_proton(data_chunk, epoch, rotation_matrices)
-        return _proton_moments_from_fit(result, epoch, data_chunk, sc_velocity_rtn)
-
+        moments = _proton_moments_from_fit(result, epoch, data_chunk, sc_velocity_rtn)
+        moments["quality_flags"] |= geometry_quality_flags
+        return moments
 
 class AlphaChunkFitter(ChunkFitter):
     def __init__(self, mag_data):
