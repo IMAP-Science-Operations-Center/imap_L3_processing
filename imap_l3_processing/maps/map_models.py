@@ -298,6 +298,10 @@ class HealPixIntensityMapData:
                     full_shape,
                     self.intensity_map_data.quality_flags & MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
                 ),
+                "persisted_last_point_flag": (
+                    full_shape,
+                    self.intensity_map_data.quality_flags & MapL3Flags.PERSISTED_LAST_POINT,
+                )
 
             },
             coords={

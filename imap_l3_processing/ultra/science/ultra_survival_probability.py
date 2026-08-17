@@ -28,12 +28,16 @@ class UltraSurvivalProbability(UltraPointingSet):
             energy_interpolated_sp = np.ones((num_energies, num_pixels))
             predicted_ephemeris = np.zeros((1,num_energies, num_pixels))
             nominal_alpha_proton_ratio = np.zeros((1,num_energies, num_pixels))
+            persisted_last_point = np.zeros((1,num_energies, num_pixels))
         else:
             predicted_ephemeris = (
                 l3e_glows.flags & GlowsL3Flags.PREDICTIVE_EPHEMERIS > 0
             )
             nominal_alpha_proton_ratio = (
                     l3e_glows.flags & GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO > 0
+            )
+            persisted_last_point = (
+                    l3e_glows.flags & GlowsL3Flags.PERSISTED_LAST_POINT > 0
             )
 
             l1c_epoch_in_et = spiceypy.unitim(
@@ -89,6 +93,15 @@ class UltraSurvivalProbability(UltraPointingSet):
             nominal_alpha_proton_ratio * coarse_bins.exposure_factor.data
         )
 
+        self.data["persisted_last_point_flag"] = (
+            [
+                CoordNames.TIME.value,
+                CoordNames.ENERGY_ULTRA_L1C.value,
+                CoordNames.HEALPIX_INDEX.value
+            ],
+            persisted_last_point * coarse_bins.exposure_factor.data
+        )
+
         self.data["epoch_delta"] = [l1c_pset.epoch_delta]
 
 
@@ -97,16 +110,18 @@ class UltraSurvivalProbabilitySkyMap(HealpixSkyMap):
         super().__init__(nside, spice_frame)
         for sp_pset in sp:
             values_to_project = ["survival_probability_times_exposure", "exposure_factor", "predicted_ephemeris_flag",
-                      "nominal_alpha_proton_ratio_flag"]
+                      "nominal_alpha_proton_ratio_flag", "persisted_last_point_flag"]
             self.project_pset_values_to_map(sp_pset, values_to_project,
                                             pset_valid_mask=np.isfinite(
                                                 sp_pset.data["survival_probability_times_exposure"]))
 
         predicted_ephemeris_set = self.data_1d["predicted_ephemeris_flag"] > 0
         nominal_proton_alpha_ratio_set = self.data_1d["nominal_alpha_proton_ratio_flag"] > 0
+        persisted_last_point_set = self.data_1d["persisted_last_point_flag"] > 0
 
         quality_flags = (predicted_ephemeris_set * MapL3Flags.PREDICTIVE_EPHEMERIS) | \
-                        (nominal_proton_alpha_ratio_set * MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO)
+                        (nominal_proton_alpha_ratio_set * MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO) | \
+                        (persisted_last_point_set * MapL3Flags.PERSISTED_LAST_POINT)
 
         self.data_1d = Dataset({
             "exposure_weighted_survival_probabilities": self.data_1d["survival_probability_times_exposure"] /

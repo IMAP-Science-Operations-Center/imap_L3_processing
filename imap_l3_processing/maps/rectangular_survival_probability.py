@@ -185,6 +185,16 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
             ]
         )
 
+        persisted_last_point_flag_set = flag_value & GlowsL3Flags.PERSISTED_LAST_POINT != 0
+        dataset["persisted_last_point_flag"] = xr.DataArray(
+            exposure * persisted_last_point_flag_set,
+            dims=[
+                CoordNames.TIME.value,
+                CoordNames.ENERGY_ULTRA_L1C.value,
+                CoordNames.AZIMUTH_L1C.value,
+            ]
+        )
+
         frame = SpiceFrame.IMAP_HAE
         super().__init__(dataset, frame)
 
@@ -194,13 +204,15 @@ class RectangularSurvivalProbabilitySkyMap(RectangularSkyMap):
                  spacing_degree: float, spice_frame: SpiceFrame):
         super().__init__(spacing_degree, spice_frame)
         for  sp_pset in survival_probability_pointing_sets:
-            value_keys = ["survival_probability_times_exposure", "exposure", "predicted_ephemeris_flag", "nominal_alpha_proton_ratio_flag"]
+            value_keys = ["survival_probability_times_exposure", "exposure", "predicted_ephemeris_flag", "nominal_alpha_proton_ratio_flag", "persisted_last_point_flag"]
             self.project_pset_values_to_map(sp_pset, value_keys, pset_valid_mask=sp_pset.data["directional_mask"])
 
         predicted_ephemeris_set = self.data_1d["predicted_ephemeris_flag"] != 0
         nominal_alpha_proton_ratio_set = self.data_1d["nominal_alpha_proton_ratio_flag"] != 0
+        persisted_last_point_set = self.data_1d["persisted_last_point_flag"] != 0
         quality_flags_1d = (predicted_ephemeris_set * MapL3Flags.PREDICTIVE_EPHEMERIS) | \
-                           (nominal_alpha_proton_ratio_set * MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO)
+                           (nominal_alpha_proton_ratio_set * MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO) | \
+                           (persisted_last_point_set * MapL3Flags.PERSISTED_LAST_POINT)
 
         self.data_1d = xr.Dataset({
             "exposure_weighted_survival_probabilities": self.data_1d["survival_probability_times_exposure"] /

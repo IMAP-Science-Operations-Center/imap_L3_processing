@@ -727,7 +727,8 @@ class TestMapModels(unittest.TestCase):
         input_quality_flags = np.full(map_data_shape, MapL3Flags.NONE)
         input_quality_flags[0, :, 83, :] = MapL3Flags.PREDICTIVE_EPHEMERIS
         input_quality_flags[0, :, 84, :] = MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO
-        input_quality_flags[0, :, 85, :] = MapL3Flags.PREDICTIVE_EPHEMERIS | MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO
+        input_quality_flags[0, :, 85, :] = MapL3Flags.PERSISTED_LAST_POINT
+        input_quality_flags[0, :, 86, :] = MapL3Flags.PREDICTIVE_EPHEMERIS | MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO | MapL3Flags.PERSISTED_LAST_POINT
 
         cases = (
             ("includes quality flags", input_quality_flags, input_quality_flags),
@@ -954,9 +955,11 @@ class TestMapModels(unittest.TestCase):
         quality_flags = np.full_like(fake_data_per_energy_per_pixel, MapL3Flags.NONE)
         quality_flags[0, :, 43] = MapL3Flags.PREDICTIVE_EPHEMERIS
         quality_flags[0, :, 37] = MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO
+        quality_flags[0, :, 18] = MapL3Flags.PERSISTED_LAST_POINT
 
         expected_pred_ephem = quality_flags & MapL3Flags.PREDICTIVE_EPHEMERIS
         expected_nominal_alpha_proton = quality_flags & MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO
+        expected_persisted_last_point = quality_flags & MapL3Flags.PERSISTED_LAST_POINT
 
         intensity_map_data = IntensityMapData(
             epoch=np.array([np.datetime64('1970-01-01T00:00:00')]),
@@ -1013,8 +1016,9 @@ class TestMapModels(unittest.TestCase):
         np.testing.assert_array_equal(actual_dataset.data_vars["survival_probability"].values, intensity_map_data.survival_probability)
         np.testing.assert_array_equal(actual_dataset.data_vars["predicted_ephemeris_flag"].values, expected_pred_ephem)
         np.testing.assert_array_equal(actual_dataset.data_vars["nominal_alpha_proton_ratio_flag"].values, expected_nominal_alpha_proton)
+        np.testing.assert_array_equal(actual_dataset.data_vars["persisted_last_point_flag"].values, expected_persisted_last_point)
 
-        for key in [ "obs_date", "obs_date_range", "exposure_factor", "ena_intensity", "ena_intensity_stat_uncert", "ena_intensity_sys_err", "survival_probability", "predicted_ephemeris_flag", "nominal_alpha_proton_ratio_flag"]:
+        for key in [ "obs_date", "obs_date_range", "exposure_factor", "ena_intensity", "ena_intensity_stat_uncert", "ena_intensity_sys_err", "survival_probability", "predicted_ephemeris_flag", "nominal_alpha_proton_ratio_flag", "persisted_last_point_flag" ]:
             self.assertEqual((CoordNames.TIME.value, CoordNames.ENERGY_L2.value, CoordNames.GENERIC_PIXEL.value), actual_dataset.data_vars[key].dims)
         for key in [ "latitude", "longitude", "solid_angle" ]:
             self.assertEqual((CoordNames.GENERIC_PIXEL.value,), actual_dataset.data_vars[key].dims)

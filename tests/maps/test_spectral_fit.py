@@ -6,7 +6,7 @@ from unittest.mock import patch, Mock, sentinel
 import numpy as np
 from scipy.stats import linregress
 
-from imap_l3_processing.maps.map_models import IntensityMapData, RectangularIntensityMapData
+from imap_l3_processing.maps.map_models import IntensityMapData, RectangularIntensityMapData, QUALITY_FLAGS_VAR_NAME
 from imap_l3_processing.maps.mpfit import mpfit
 from imap_l3_processing.maps.quality_flags import MapL3Flags
 from imap_l3_processing.maps.spectral_fit import power_law, fit_arrays_to_power_law, fit_spectral_index_map, \
@@ -161,6 +161,7 @@ class TestSpectralFit(unittest.TestCase):
         input_shape = (1, 3, len(longitude), len(latitude))
         quality_flags = np.full(input_shape, MapL3Flags.NONE)
         quality_flags[0, 0, 1:3] = MapL3Flags.PREDICTIVE_EPHEMERIS
+        quality_flags[0, 2, 4] = MapL3Flags.PERSISTED_LAST_POINT
         quality_flags[0, 1, 3] = MapL3Flags.PREDICTIVE_EPHEMERIS
 
         quality_flags[0, 2, 0:2] = MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO
@@ -215,6 +216,7 @@ class TestSpectralFit(unittest.TestCase):
         expected_quality_flags[0, 0, 0] = MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO
         expected_quality_flags[0, 0, 1] = MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO | MapL3Flags.PREDICTIVE_EPHEMERIS
         expected_quality_flags[0, 0, 2:4] = MapL3Flags.PREDICTIVE_EPHEMERIS
+        expected_quality_flags[0, 0, 4] = MapL3Flags.PERSISTED_LAST_POINT
 
         np.testing.assert_array_equal(output.quality_flags, expected_quality_flags)
 
