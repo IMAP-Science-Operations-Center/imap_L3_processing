@@ -553,7 +553,7 @@ class TestAlphaChunkFitterPrecomputeGeometry(SpiceTestCase):
 
     def test_success_returns_rotations_sc_velocity_and_b_hat(self):
         """With both SPICE and MAG available, alpha precompute_geometry returns the chunk epoch, a science-bin rotation array of the right shape (matching the proton fit it shares with proton-sw), the spacecraft velocity, and the median B̂ in the chunk window."""
-        [(epoch, rotation_matrices, sc_velocity, b_hat)] = AlphaChunkFitter(
+        [(epoch, rotation_matrices, sc_velocity, b_hat, flag)] = AlphaChunkFitter(
             self._mag_centered_on(_CHUNK_EPOCH)
         ).precompute_geometry([_zero_chunk()])
 
@@ -564,12 +564,13 @@ class TestAlphaChunkFitterPrecomputeGeometry(SpiceTestCase):
             (SWAPI_SCIENCE_BINS.stop - SWAPI_SCIENCE_BINS.start, 3, 3),
         )
         self.assertEqual(sc_velocity.shape, (3,))
+        self.assertEqual(SwapiL3Flags.NONE, flag)
         np.testing.assert_allclose(b_hat, _B_HAT_RTN)
 
     def test_spice_failure_yields_none_rotations_and_sc_velocity_but_keeps_b_hat(self):
         """When the chunk falls outside SPICE coverage, alpha precompute returns None rotations and None spacecraft velocity, but B̂ is still computed from MAG since that path is independent."""
         out_of_coverage_chunk_epoch = _OUT_OF_COVERAGE_START_TIME + THIRTY_SECONDS_IN_NANOSECONDS
-        [(_, rotation_matrices, sc_velocity, b_hat)] = AlphaChunkFitter(
+        [(_, rotation_matrices, sc_velocity, b_hat, _)] = AlphaChunkFitter(
             self._mag_centered_on(out_of_coverage_chunk_epoch)
         ).precompute_geometry([_out_of_coverage_chunk()])
         self.assertIsNone(rotation_matrices)
@@ -579,10 +580,74 @@ class TestAlphaChunkFitterPrecomputeGeometry(SpiceTestCase):
     def test_empty_mag_window_yields_nan_b_hat(self):
         """When no MAG samples fall inside the chunk window, B̂ comes back as NaN even though rotations were successfully computed."""
         far_future = _EPOCH_TT2000 + 10**18
-        [(_, _, _, b_hat)] = AlphaChunkFitter(
+        [(_, _, _, b_hat, _)] = AlphaChunkFitter(
             self._mag_centered_on(far_future)
         ).precompute_geometry([_zero_chunk()])
         self.assertTrue(np.all(np.isnan(b_hat)))
+
+    @patch('imap_l3_processing.swapi.l3a.chunk_fits.compute_direction_of_mean_magnetic_field_over_chunk')
+    def test_flags_chunks_that_need_predicted_ephemeris(self, _):
+        spice_file_names = [
+            "imap_recon_20250925_20260511_v01.bsp",
+            "naif0012.tls",
+            "imap_sclk_0171.tsc",
+            "imap_science_120.tf",
+            "imap_130.tf",
+            "imap_pred_od037_20260706_20260817_v01.bsp",
+            "de440.bsp",
+            "pck00011.tpc",
+            "imap_2025_105_2026_105_01.ah.bc",
+            "imap_2026_189_2026_189_001.ah.bc"
+        ]
+        spice_test_paths = [str(get_integration_test_spice_data_path(file_name)) for file_name in spice_file_names]
+
+        chunk_needing_predict = _chunk_at_time(
+            str_yyyymmdd_to_ttj2000ns("20260708")
+            + 12*3600*1e9
+        )
+        chunk_not_needing_predict = _chunk_at_time(
+            str_yyyymmdd_to_ttj2000ns("20260120")
+            + 12*3600*1e9
+        )
+        chunks = [chunk_needing_predict, chunk_not_needing_predict]
+
+        with KernelPool(spice_test_paths):
+            [geom1, geom2] = AlphaChunkFitter(None).precompute_geometry(chunks)
+            epoch1, rotation_matrices1, spacecraft_velocity1, bhat1, flags1 = geom1
+            epoch2, rotation_matrices2, spacecraft_velocity2, bhat2, flags2 = geom2
+
+            self.assertEqual(SwapiL3Flags.PREDICTIVE_EPHEMERIS, flags1)
+            self.assertEqual(SwapiL3Flags.NONE, flags2)
+
+    @patch('imap_l3_processing.swapi.l3a.chunk_fits.compute_direction_of_mean_magnetic_field_over_chunk')
+    @patch("imap_l3_processing.swapi.l3a.chunk_fits.PredictedEphemerisTracker")
+    def test_uses_predicted_ephemeris_tracker(self, mock_tracker_class, _):
+        mock_tracker_1 = create_autospec(PredictedEphemerisTracker, used_predict=False)
+        mock_tracker_2 = create_autospec(PredictedEphemerisTracker, used_predict=False)
+        mock_tracker_class.side_effect = [
+            mock_tracker_1,
+            mock_tracker_2,
+        ]
+        chunk_needing_predict = _chunk_at_time(
+            str_yyyymmdd_to_ttj2000ns("20260308")
+            + 12*3600*1e9
+        )
+        chunk_not_needing_predict = _chunk_at_time(
+            str_yyyymmdd_to_ttj2000ns("20260120")
+            + 12*3600*1e9
+        )
+        chunks = [chunk_needing_predict, chunk_not_needing_predict]
+
+        AlphaChunkFitter(None).precompute_geometry(chunks)
+        self.assertEqual(2, mock_tracker_class.call_count)
+        self.assertEqual(2, mock_tracker_1.run.call_count)
+        self.assertEqual(get_swapi_geometry, mock_tracker_1.run.call_args_list[0].args[0])
+        self.assertEqual(get_spacecraft_velocity_rtn, mock_tracker_1.run.call_args_list[1].args[0])
+
+        self.assertEqual(2, mock_tracker_2.run.call_count)
+        self.assertEqual(get_swapi_geometry, mock_tracker_2.run.call_args_list[0].args[0])
+        self.assertEqual(get_spacecraft_velocity_rtn, mock_tracker_2.run.call_args_list[1].args[0])
+
 
 
 class TestAlphaChunkFitterFitChunk(SpiceTestCase):
@@ -601,7 +666,7 @@ class TestAlphaChunkFitterFitChunk(SpiceTestCase):
         cls.rotations = _spice_rotations(SWAPI_SCIENCE_BINS)
         cls.fitter = AlphaChunkFitter(mag_data=None)
         cls.happy_result = cls.fitter.fit_chunk(
-            cls.chunk, _CHUNK_EPOCH, cls.rotations, _SC_VELOCITY_RTN, _B_HAT_RTN
+            cls.chunk, _CHUNK_EPOCH, cls.rotations, _SC_VELOCITY_RTN, _B_HAT_RTN, SwapiL3Flags.NONE
         )
 
     @classmethod
@@ -646,7 +711,7 @@ class TestAlphaChunkFitterFitChunk(SpiceTestCase):
     def test_missing_sc_velocity_fills_only_sun_frame_outputs(self):
         """Calling fit_chunk with no SC velocity still recovers the alpha moments; only the sun-frame outputs (`alpha_sw_speed_sun`, `alpha_sw_velocity_rtn_sun`) are fill values."""
         result = self.fitter.fit_chunk(
-            self.chunk, _CHUNK_EPOCH, self.rotations, None, _B_HAT_RTN
+            self.chunk, _CHUNK_EPOCH, self.rotations, None, _B_HAT_RTN, SwapiL3Flags.NONE
         )
         self.assertEqual(int(result["quality_flags"]), int(SwapiL3Flags.NONE))
 
@@ -663,6 +728,13 @@ class TestAlphaChunkFitterFitChunk(SpiceTestCase):
         self.assertEqual(
             int(self.happy_result["quality_flags"]), int(SwapiL3Flags.NONE)
         )
+
+    def test_uses_quality_flag_from_geometry(self):
+        result = AlphaChunkFitter(None).fit_chunk(
+            self.chunk, _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN.copy(), _B_HAT_RTN.copy(), SwapiL3Flags.PREDICTIVE_EPHEMERIS,
+        )
+        self.assertEqual(result["quality_flags"], SwapiL3Flags.PREDICTIVE_EPHEMERIS)
+
 
 
 # ----- ParallelChunkRunner --------------------------------------------------
@@ -800,7 +872,7 @@ class TestProtonChunkFitterQualityFlags(SpiceTestCase):
             density=nan,
             temperature=nan,
             velocity_rtn=(nan, nan, nan),
-            bad_fit_flag=int(SwapiL3Flags.FIT_ERROR),
+            quality_flag=int(SwapiL3Flags.FIT_ERROR),
         )
 
         result = self._fit(self.chunk)
@@ -903,6 +975,7 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
             self.rotations,
             _SC_VELOCITY_RTN,
             _B_HAT_RTN,
+            SwapiL3Flags.NONE,
         )
 
         self.assertEqual(int(result["quality_flags"]), int(SwapiL3Flags.BAD_FIT))
@@ -945,23 +1018,26 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
                 np.testing.assert_array_equal(passed_quality_flags, [expected_flag])
 
     def test_no_flag_when_rotations_missing(self):
-        """Calling fit_chunk with no rotations NaN-fills every alpha field and reports a NONE bad_fit_flag — ephemeris gaps are treated as data gaps without a dedicated flag."""
-        result = self.fitter.fit_chunk(self.chunk, _CHUNK_EPOCH, None, None, _B_HAT_RTN)
+        result = self.fitter.fit_chunk(self.chunk, _CHUNK_EPOCH, None, None, _B_HAT_RTN, SwapiL3Flags.NONE)
         _assert_alpha_flag_and_all_nan(self, result, SwapiL3Flags.NONE)
 
-    def test_no_flag_when_b_hat_is_nan(self):
-        """A NaN-valued B̂ NaN-fills every alpha field and reports a NONE bad_fit_flag — MAG gaps are treated as data gaps without a dedicated flag, since the field-aligned drift constraint cannot be evaluated."""
-        result = self.fitter.fit_chunk(
-            self.chunk, _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN, np.full(3, np.nan)
-        )
-        _assert_alpha_flag_and_all_nan(self, result, SwapiL3Flags.NONE)
+    def test_flags_when_b_hat_is_nan(self):
+        cases = (SwapiL3Flags.PREDICTIVE_EPHEMERIS, SwapiL3Flags.NONE)
+        for flag in cases:
+            with self.subTest(flag=flag):
+                result = self.fitter.fit_chunk(
+                    self.chunk, _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN, np.full(3, np.nan), flag
+                )
+                _assert_alpha_flag_and_all_nan(self, result, flag)
 
-    def test_no_flag_when_b_hat_is_none(self):
-        """Passing None for B̂ NaN-fills every alpha field and reports a NONE bad_fit_flag, mirroring the NaN case."""
-        result = self.fitter.fit_chunk(
-            self.chunk, _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN, None
-        )
-        _assert_alpha_flag_and_all_nan(self, result, SwapiL3Flags.NONE)
+    def test_flags_when_b_hat_is_none(self):
+        cases = (SwapiL3Flags.PREDICTIVE_EPHEMERIS, SwapiL3Flags.NONE)
+        for flag in cases:
+            with self.subTest(flag=flag):
+                result = self.fitter.fit_chunk(
+                    self.chunk, _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN, None, flag
+                )
+                _assert_alpha_flag_and_all_nan(self, result, flag)
 
     def test_no_flag_when_count_rate_has_nan(self):
         """A NaN in the alpha count rate is treated as an L2 data gap: every alpha field NaN-fills and bad_fit_flag is NONE."""
@@ -971,6 +1047,7 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
             self.rotations,
             _SC_VELOCITY_RTN,
             _B_HAT_RTN,
+            SwapiL3Flags.NONE,
         )
         _assert_alpha_flag_and_all_nan(self, result, SwapiL3Flags.NONE)
 
@@ -983,9 +1060,24 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
             self.rotations,
             _SC_VELOCITY_RTN,
             _B_HAT_RTN,
+            SwapiL3Flags.NONE,
         )
         _assert_alpha_flag_and_all_nan(self, result, SwapiL3Flags.FIT_ERROR)
 
+    def test_combines_geometry_and_fitting_flags(self):
+        peak_bin = int(np.argmax(self.chunk.coincidence_count_rate.mean(axis=0)))
+        single_bin = np.zeros_like(self.chunk.coincidence_count_rate)
+        single_bin[:, peak_bin] = 100.0
+
+        result = self.fitter.fit_chunk(
+            _with_count_rate(self.chunk, single_bin),
+            _CHUNK_EPOCH,
+            self.rotations,
+            _SC_VELOCITY_RTN.copy(),
+            _B_HAT_RTN.copy(),
+            SwapiL3Flags.PREDICTIVE_EPHEMERIS,
+        )
+        self.assertEqual(SwapiL3Flags.FIT_ERROR | SwapiL3Flags.PREDICTIVE_EPHEMERIS, result["quality_flags"])
 
 # ----- PuiChunkFitter -------------------------------------------------------
 

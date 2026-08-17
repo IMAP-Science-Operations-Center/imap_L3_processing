@@ -159,8 +159,9 @@ class AlphaChunkFitter(ChunkFitter):
             epoch = chunk_epoch(chunk)
             rm = None
             sc_vel = None
+            tracker = PredictedEphemerisTracker()
             try:
-                rm = get_swapi_geometry(measurement_times(chunk, SWAPI_SCIENCE_BINS))
+                rm = tracker.run(get_swapi_geometry, measurement_times(chunk, SWAPI_SCIENCE_BINS))
             except Exception:
                 logger.info(
                     f"Missing SPICE information at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}, continuing with fill value"
@@ -168,7 +169,7 @@ class AlphaChunkFitter(ChunkFitter):
 
             if rm is not None:
                 try:
-                    sc_vel = get_spacecraft_velocity_rtn(epoch)
+                    sc_vel = tracker.run(get_spacecraft_velocity_rtn, epoch)
                 except Exception:
                     logger.warning(
                         "SPICE gap in spacecraft velocity.",
@@ -178,7 +179,8 @@ class AlphaChunkFitter(ChunkFitter):
             b_hat = compute_direction_of_mean_magnetic_field_over_chunk(
                 self.mag_data, int(epoch), int(THIRTY_SECONDS_IN_NANOSECONDS)
             )
-            geometries.append((epoch, rm, sc_vel, b_hat))
+            flags = SwapiL3Flags.PREDICTIVE_EPHEMERIS if tracker.used_predict else SwapiL3Flags.NONE
+            geometries.append((epoch, rm, sc_vel, b_hat, flags))
         return geometries
 
     def fit_chunk(
@@ -188,11 +190,14 @@ class AlphaChunkFitter(ChunkFitter):
         rotation_matrices,
         sc_velocity_rtn,
         magnetic_field_direction,
+        geometry_quality_flags: SwapiL3Flags,
     ):
         result = _fit_alpha(
-            data_chunk, epoch, rotation_matrices, magnetic_field_direction
+            data_chunk, epoch, rotation_matrices, magnetic_field_direction, geometry_quality_flags
         )
-        return _alpha_moments_from_fit(result, epoch, sc_velocity_rtn)
+        moments = _alpha_moments_from_fit(result, epoch, sc_velocity_rtn)
+        moments["quality_flags"] |= geometry_quality_flags
+        return moments
 
 
 class PuiChunkFitter(ChunkFitter):
@@ -416,7 +421,7 @@ def _proton_moments_from_fit(result, epoch, data_chunk, sc_velocity_rtn):
         proton_sw_velocity_rtn_sun=velocity_rtn_sun,
         proton_sw_velocity_rtn=velocity_rtn_sc,
         proton_sw_velocity_rtn_covariance=velocity_rtn_covariance,
-        quality_flags=result.bad_fit_flag,
+        quality_flags=result.quality_flag,
     )
 
 
@@ -454,7 +459,7 @@ def _alpha_moments_from_fit(result, epoch, sc_velocity_rtn):
         alpha_sw_velocity_rtn_sun=velocity_rtn_sun,
         alpha_sw_velocity_rtn=velocity_rtn_sc,
         alpha_sw_velocity_rtn_covariance=velocity_rtn_covariance,
-        quality_flags=result.bad_fit_flag,
+        quality_flags=result.quality_flag,
     )
 
 
@@ -594,7 +599,7 @@ def _nan_proton_result(flag) -> ProtonSolarWindFitResult:
         density=nan,
         temperature=nan,
         velocity_rtn=(nan, nan, nan),
-        bad_fit_flag=int(flag),
+        quality_flag=int(flag),
     )
 
 
@@ -608,7 +613,7 @@ class AlphaChunkFitResult:
     alpha_moments: AlphaSolarWindFitResult
     proton_moments: ProtonSolarWindFitResult
     b_hat_rtn: np.ndarray
-    bad_fit_flag: int
+    quality_flag: int
 
 
 def _nan_alpha_fit_result(flag) -> AlphaSolarWindFitResult:
@@ -618,7 +623,7 @@ def _nan_alpha_fit_result(flag) -> AlphaSolarWindFitResult:
         temperature=nan,
         velocity_rtn=(nan, nan, nan),
         delta_v=nan,
-        bad_fit_flag=int(flag),
+        quality_flag=int(flag),
     )
 
 
@@ -627,6 +632,7 @@ def _fit_alpha(
     epoch,
     rotation_matrices,
     magnetic_field_direction,
+    flag
 ) -> AlphaChunkFitResult:
     nan_b_hat = np.full(3, np.nan)
     if (
@@ -640,7 +646,7 @@ def _fit_alpha(
             alpha_moments=_nan_alpha_fit_result(SwapiL3Flags.NONE),
             proton_moments=_nan_proton_result(SwapiL3Flags.NONE),
             b_hat_rtn=nan_b_hat,
-            bad_fit_flag=int(SwapiL3Flags.NONE),
+            quality_flag=int(SwapiL3Flags.NONE) | flag,
         )
 
     proton_moments = _fit_proton(data_chunk, epoch, rotation_matrices)
@@ -650,10 +656,10 @@ def _fit_alpha(
         )
     ):
         return AlphaChunkFitResult(
-            alpha_moments=_nan_alpha_fit_result(proton_moments.bad_fit_flag),
+            alpha_moments=_nan_alpha_fit_result(proton_moments.quality_flag),
             proton_moments=proton_moments,
             b_hat_rtn=nan_b_hat,
-            bad_fit_flag=int(proton_moments.bad_fit_flag),
+            quality_flag=int(proton_moments.quality_flag) | flag,
         )
 
     swapi_response = _shared["swapi_response"]
@@ -697,12 +703,12 @@ def _fit_alpha(
             alpha_moments=_nan_alpha_fit_result(SwapiL3Flags.FIT_ERROR),
             proton_moments=proton_moments,
             b_hat_rtn=nan_b_hat,
-            bad_fit_flag=int(SwapiL3Flags.FIT_ERROR),
+            quality_flag=int(SwapiL3Flags.FIT_ERROR),
         )
 
     return AlphaChunkFitResult(
         alpha_moments=alpha_moments,
         proton_moments=proton_moments,
         b_hat_rtn=magnetic_field_direction,
-        bad_fit_flag=int(alpha_moments.bad_fit_flag),
+        quality_flag=int(alpha_moments.quality_flag),
     )
