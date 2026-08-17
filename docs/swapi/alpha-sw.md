@@ -87,6 +87,14 @@ Finally, the `alpha-sw` CDF variables are derived from the fitted parameter vect
 | `alpha_sw_speed`                      | $`\lvert\mathbf{v}^{\alpha,\text{SC}}\rvert`$         | $`\lvert\mathbf{v}^{\alpha,\text{SC}}\rvert`$                                                                                 |
 | `alpha_sw_speed_uncert`               | $`\sigma_{\lvert\mathbf{v}^{\alpha,\text{SC}}\rvert}`$ | propagated through `uncertainties` from $`\mathbf{v}^{\alpha,\text{SC}}`$                                                     |
 | `alpha_sw_velocity_rtn_sun`           | $`\mathbf{v}^{\alpha,\text{sun}}`$                    | $`\mathbf{v}^{\alpha,\text{SC}} + \mathbf{v}_{\text{sc}}^{\text{sun}}`$                                                                   |
+| `alpha_sw_velocity_gse`               | $`\mathbf{v}^{\alpha,\text{SC}}_{\text{GSE}}`$       | RTN spacecraft-frame velocity rotated to GSE coordinates |
+| `alpha_sw_velocity_gse_sun`           | $`\mathbf{v}^{\alpha,\text{sun}}_{\text{GSE}}`$      | RTN Sun-frame velocity rotated to GSE coordinates |
+| `alpha_sw_velocity_gse_covariance`    | $`\Sigma_{\mathbf{v}^{\alpha},\text{GSE}}`$          | $`R_{\text{GSE}}\Sigma_{\mathbf{v}^{\alpha}}R_{\text{GSE}}^{\top}`$ |
+| `alpha_sw_velocity_gse_uncert`        | $`\sigma_{\mathbf{v}^{\alpha},\text{GSE}}`$          | $`\sqrt{\operatorname{diag}(\Sigma_{\mathbf{v}^{\alpha},\text{GSE}})}`$ |
+| `alpha_sw_velocity_gsm`               | $`\mathbf{v}^{\alpha,\text{SC}}_{\text{GSM}}`$       | RTN spacecraft-frame velocity rotated to GSM coordinates |
+| `alpha_sw_velocity_gsm_sun`           | $`\mathbf{v}^{\alpha,\text{sun}}_{\text{GSM}}`$      | RTN Sun-frame velocity rotated to GSM coordinates |
+| `alpha_sw_velocity_gsm_covariance`    | $`\Sigma_{\mathbf{v}^{\alpha},\text{GSM}}`$          | $`R_{\text{GSM}}\Sigma_{\mathbf{v}^{\alpha}}R_{\text{GSM}}^{\top}`$ |
+| `alpha_sw_velocity_gsm_uncert`        | $`\sigma_{\mathbf{v}^{\alpha},\text{GSM}}`$          | $`\sqrt{\operatorname{diag}(\Sigma_{\mathbf{v}^{\alpha},\text{GSM}})}`$ |
 | `alpha_sw_speed_sun`                  | $`\lvert\mathbf{v}^{\alpha,\text{sun}}\rvert`$        | $`\lvert\mathbf{v}^{\alpha,\text{sun}}\rvert`$                                                                                |
 | `alpha_sw_speed_sun_uncert`           | $`\sigma_{\lvert\mathbf{v}^{\alpha,\text{sun}}\rvert}`$ | propagated through `uncertainties` from $`\mathbf{v}^{\alpha,\text{sun}}`$                                                    |
 | `swp_flags`                           |                                                   | quality flag bitmask (see `SwapiL3Flags`)                                                                                 |
