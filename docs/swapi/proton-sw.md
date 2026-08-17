@@ -198,6 +198,14 @@ The `proton-sw` CDF variables are derived from $`\mathbf{x}`$ and $`\Sigma_\math
 | `proton_sw_speed`                             | $`\lvert\mathbf{v}_{b}^{\text{SC}}\rvert`$ | $`\lvert\mathbf{v}_{b}^{\text{SC}}\rvert`$                                                                  |
 | `proton_sw_speed_uncert`                      | $`\sigma_{\lvert\mathbf{v}_{b}^{\text{SC}}\rvert}`$ | propagated through `uncertainties` from $`\mathbf{v}_{b}^{\text{SC}}`$                            |
 | `proton_sw_velocity_rtn_sun`             | $`\mathbf{v}_{b}^{\text{sun}}`$ | $`\mathbf{v}_{b}^{\text{SC}} + \mathbf{v}_{\text{sc}}^{\text{sun}}`$ <sup>[2](#fn-vsc)</sup>                                          |
+| `proton_sw_velocity_gse`                 | $`\mathbf{v}_{b,\text{GSE}}^{\text{SC}}`$ | RTN spacecraft-frame velocity rotated to GSE coordinates |
+| `proton_sw_velocity_gse_sun`             | $`\mathbf{v}_{b,\text{GSE}}^{\text{sun}}`$ | RTN Sun-frame velocity rotated to GSE coordinates |
+| `proton_sw_velocity_gse_covariance`      | $`\Sigma_{\mathbf{v},\text{GSE}}`$ | $`R_{\text{GSE}}\Sigma_{\mathbf{v}}R_{\text{GSE}}^{\top}`$ |
+| `proton_sw_velocity_gse_uncert`          | $`\sigma_{\mathbf{v},\text{GSE}}`$ | $`\sqrt{\operatorname{diag}(\Sigma_{\mathbf{v},\text{GSE}})}`$ |
+| `proton_sw_velocity_gsm`                 | $`\mathbf{v}_{b,\text{GSM}}^{\text{SC}}`$ | RTN spacecraft-frame velocity rotated to GSM coordinates |
+| `proton_sw_velocity_gsm_sun`             | $`\mathbf{v}_{b,\text{GSM}}^{\text{sun}}`$ | RTN Sun-frame velocity rotated to GSM coordinates |
+| `proton_sw_velocity_gsm_covariance`      | $`\Sigma_{\mathbf{v},\text{GSM}}`$ | $`R_{\text{GSM}}\Sigma_{\mathbf{v}}R_{\text{GSM}}^{\top}`$ |
+| `proton_sw_velocity_gsm_uncert`          | $`\sigma_{\mathbf{v},\text{GSM}}`$ | $`\sqrt{\operatorname{diag}(\Sigma_{\mathbf{v},\text{GSM}})}`$ |
 | `proton_sw_speed_sun`                         | $`v_{\text{sun}}`$          | $`\lvert\mathbf{v}_{b}^{\text{sun}}\rvert`$                                                                 |
 | `proton_sw_speed_sun_uncert`                  | $`\sigma_{v_{\text{sun}}}`$ | propagated through `uncertainties` from $`\mathbf{v}_{b}^{\text{sun}}`$                                       |
 | `swp_flags`                                   |                         | quality flag bitmask (see `SwapiL3Flags`)                                                            |
@@ -207,4 +215,3 @@ The `proton-sw` CDF variables are derived from $`\mathbf{x}`$ and $`\Sigma_\math
 <a id="fn-velcov"></a>[1]: The square root of the diagonal of $`\Sigma_{\mathbf{v}}`$ yields the standard error of the $`v_{R}, v_{T}, v_{N}`$ components. The covariance is the same for `proton_sw_velocity_rtn_sun`.
 
 <a id="fn-vsc"></a>[2]: $`\mathbf{v}_{\text{sc}}^{\text{sun}}`$ is the spacecraft velocity in the Sun's inertial frame.
-
