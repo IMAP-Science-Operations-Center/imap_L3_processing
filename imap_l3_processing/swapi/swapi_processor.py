@@ -26,6 +26,10 @@ from imap_l3_processing.swapi.constants import (
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
 from imap_l3_processing.swapi.l3a.utils import (
     chunk_l2_data,
+    convert_velocity_covariance_rtn_to_gse,
+    convert_velocity_covariance_rtn_to_gsm,
+    convert_velocity_rtn_to_gse,
+    convert_velocity_rtn_to_gsm,
 )
 from imap_l3_processing.swapi.l3b.models import SwapiL3BCombinedVDF
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_differential_flux import (
@@ -85,9 +89,32 @@ class SwapiProcessor(Processor):
             dependencies.swapi_response, dependencies.efficiency_calibration_table
         )
 
+        result = runner.run(chunks, ProtonChunkFitter())
+        result["proton_sw_velocity_gse_sun"] = convert_velocity_rtn_to_gse(
+            result["epoch"], result["proton_sw_velocity_rtn_sun"]
+        )
+        result["proton_sw_velocity_gse"] = convert_velocity_rtn_to_gse(
+            result["epoch"], result["proton_sw_velocity_rtn"]
+        )
+        result["proton_sw_velocity_gse_covariance"] = (
+            convert_velocity_covariance_rtn_to_gse(
+                result["epoch"], result["proton_sw_velocity_rtn_covariance"]
+            )
+        )
+        result["proton_sw_velocity_gsm_sun"] = convert_velocity_rtn_to_gsm(
+            result["epoch"], result["proton_sw_velocity_rtn_sun"]
+        )
+        result["proton_sw_velocity_gsm"] = convert_velocity_rtn_to_gsm(
+            result["epoch"], result["proton_sw_velocity_rtn"]
+        )
+        result["proton_sw_velocity_gsm_covariance"] = (
+            convert_velocity_covariance_rtn_to_gsm(
+                result["epoch"], result["proton_sw_velocity_rtn_covariance"]
+            )
+        )
+
         return SwapiL3ProtonSolarWindData(
-            replace(self.input_metadata, descriptor="proton-sw"),
-            **runner.run(chunks, ProtonChunkFitter()),
+            replace(self.input_metadata, descriptor="proton-sw"), **result
         )
 
     def process_l3a_alpha(self, data, dependencies) -> SwapiL3AlphaSolarWindData:
@@ -104,6 +131,29 @@ class SwapiProcessor(Processor):
 
         fitter = AlphaChunkFitter(dependencies.mag_data)
         result = runner.run(chunks, fitter)
+
+        result["alpha_sw_velocity_gse_sun"] = convert_velocity_rtn_to_gse(
+            result["epoch"], result["alpha_sw_velocity_rtn_sun"]
+        )
+        result["alpha_sw_velocity_gse"] = convert_velocity_rtn_to_gse(
+            result["epoch"], result["alpha_sw_velocity_rtn"]
+        )
+        result["alpha_sw_velocity_gse_covariance"] = (
+            convert_velocity_covariance_rtn_to_gse(
+                result["epoch"], result["alpha_sw_velocity_rtn_covariance"]
+            )
+        )
+        result["alpha_sw_velocity_gsm_sun"] = convert_velocity_rtn_to_gsm(
+            result["epoch"], result["alpha_sw_velocity_rtn_sun"]
+        )
+        result["alpha_sw_velocity_gsm"] = convert_velocity_rtn_to_gsm(
+            result["epoch"], result["alpha_sw_velocity_rtn"]
+        )
+        result["alpha_sw_velocity_gsm_covariance"] = (
+            convert_velocity_covariance_rtn_to_gsm(
+                result["epoch"], result["alpha_sw_velocity_rtn_covariance"]
+            )
+        )
         
         if dependencies.mag_is_preliminary:
             result["quality_flags"] = result["quality_flags"] | int(SwapiL3Flags.PRELIMINARY_MAG)
