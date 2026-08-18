@@ -50,6 +50,12 @@ def get_spice_data_path(filename: str) -> Path:
     return Path(tests.__file__).parent.parent / "spice_kernels" / filename
 
 
+def get_integration_test_spice_data_path(filename: str) -> Path:
+    return (
+        Path(tests.__file__).parent / "integration" / "test_data" / "spice" / filename
+    )
+
+
 def get_test_data_folder() -> Path:
     return Path(tests.__file__).parent / "test_data"
 
