@@ -600,6 +600,78 @@ proton_sw_velocity_gsm_uncert:
   VALIDMAX: 10000
   FILLVAL: -1.000000e+31
   SCALETYP: linear
+proton_sw_velocity_hae_sun:
+  NAME: proton_sw_velocity_hae_sun
+  DATA_TYPE: CDF_REAL4
+  FIELDNAM: Proton Solar Wind Velocity (HAE, Sun Frame)
+  CATDESC: Solar wind proton bulk velocity vector in HAE coordinates (Sun frame)
+  DEPEND_0: epoch
+  LABL_PTR_1: proton_sw_velocity_hae_sun_label
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FORMAT: F19.3
+  LABLAXIS: Vp HAE Sun
+  UNITS: km/s
+  VALIDMIN: -10000
+  VALIDMAX: 10000
+  FILLVAL: -1.000000e+31
+  SCALETYP: linear
+  DELTA_PLUS_VAR: proton_sw_velocity_hae_uncert
+  DELTA_MINUS_VAR: proton_sw_velocity_hae_uncert
+proton_sw_velocity_hae:
+  NAME: proton_sw_velocity_hae
+  DATA_TYPE: CDF_REAL4
+  FIELDNAM: Proton Solar Wind Velocity (HAE)
+  CATDESC: Solar wind proton bulk velocity vector in HAE coordinates (spacecraft frame)
+  DEPEND_0: epoch
+  LABL_PTR_1: proton_sw_velocity_hae_label
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FORMAT: F19.3
+  LABLAXIS: Vp HAE SC
+  UNITS: km/s
+  VALIDMIN: -10000
+  VALIDMAX: 10000
+  FILLVAL: -1.000000e+31
+  SCALETYP: linear
+  DELTA_PLUS_VAR: proton_sw_velocity_hae_uncert
+  DELTA_MINUS_VAR: proton_sw_velocity_hae_uncert
+proton_sw_velocity_hae_covariance:
+  NAME: proton_sw_velocity_hae_covariance
+  DATA_TYPE: CDF_REAL4
+  FIELDNAM: Proton Solar Wind Velocity Covariance (HAE)
+  CATDESC: Covariance matrix in HAE coordinates, with standard errors given by the square root of the diagonal
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FORMAT: F19.3
+  LABLAXIS: cov Vp
+  UNITS: km^2/s^2
+  VALIDMIN: -1.0e+8
+  VALIDMAX: 1.0e+8
+  FILLVAL: -1.000000e+31
+  LABL_PTR_1: velocity_hae_label
+  LABL_PTR_2: velocity_hae_label
+proton_sw_velocity_hae_uncert:
+  NAME: proton_sw_velocity_hae_uncert
+  DATA_TYPE: CDF_REAL4
+  FIELDNAM: Proton Solar Wind Velocity Uncertainty (HAE)
+  CATDESC: 1-sigma standard error
+  DEPEND_0: epoch
+  LABL_PTR_1: velocity_hae_label
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FORMAT: F19.3
+  LABLAXIS: Vp HAE Err
+  UNITS: km/s
+  VALIDMIN: 0
+  VALIDMAX: 10000
+  FILLVAL: -1.000000e+31
+  SCALETYP: linear
 alpha_sw_speed:
   NAME: alpha_sw_speed
   DATA_TYPE: CDF_REAL4
@@ -956,6 +1028,78 @@ alpha_sw_velocity_gsm_uncert:
   VALIDMAX: 10000
   FILLVAL: -1.000000e+31
   SCALETYP: linear
+alpha_sw_velocity_hae_sun:
+  NAME: alpha_sw_velocity_hae_sun
+  DATA_TYPE: CDF_REAL4
+  FIELDNAM: Alpha Solar Wind Velocity (HAE, Sun Frame)
+  CATDESC: Solar wind alpha-particle bulk velocity vector in HAE coordinates (Sun frame)
+  DEPEND_0: epoch
+  LABL_PTR_1: alpha_sw_velocity_hae_sun_label
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FORMAT: F19.3
+  LABLAXIS: Va HAE Sun
+  UNITS: km/s
+  VALIDMIN: -10000
+  VALIDMAX: 10000
+  FILLVAL: -1.000000e+31
+  SCALETYP: linear
+  DELTA_PLUS_VAR: alpha_sw_velocity_hae_uncert
+  DELTA_MINUS_VAR: alpha_sw_velocity_hae_uncert
+alpha_sw_velocity_hae:
+  NAME: alpha_sw_velocity_hae
+  DATA_TYPE: CDF_REAL4
+  FIELDNAM: Alpha Solar Wind Velocity (HAE)
+  CATDESC: Solar wind alpha-particle bulk velocity vector in HAE coordinates (spacecraft frame)
+  DEPEND_0: epoch
+  LABL_PTR_1: alpha_sw_velocity_hae_label
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FORMAT: F19.3
+  LABLAXIS: Va HAE SC
+  UNITS: km/s
+  VALIDMIN: -10000
+  VALIDMAX: 10000
+  FILLVAL: -1.000000e+31
+  SCALETYP: linear
+  DELTA_PLUS_VAR: alpha_sw_velocity_hae_uncert
+  DELTA_MINUS_VAR: alpha_sw_velocity_hae_uncert
+alpha_sw_velocity_hae_covariance:
+  NAME: alpha_sw_velocity_hae_covariance
+  DATA_TYPE: CDF_REAL4
+  FIELDNAM: Alpha Solar Wind Velocity Covariance (HAE)
+  CATDESC: Covariance matrix in HAE coordinates, with standard errors given by the square root of the diagonal
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FORMAT: F19.3
+  LABLAXIS: cov Va
+  UNITS: km^2/s^2
+  VALIDMIN: -1.0e+8
+  VALIDMAX: 1.0e+8
+  FILLVAL: -1.000000e+31
+  LABL_PTR_1: velocity_hae_label
+  LABL_PTR_2: velocity_hae_label
+alpha_sw_velocity_hae_uncert:
+  NAME: alpha_sw_velocity_hae_uncert
+  DATA_TYPE: CDF_REAL4
+  FIELDNAM: Alpha Solar Wind Velocity Uncertainty (HAE)
+  CATDESC: 1-sigma standard error
+  DEPEND_0: epoch
+  LABL_PTR_1: velocity_hae_label
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FORMAT: F19.3
+  LABLAXIS: Va HAE Err
+  UNITS: km/s
+  VALIDMIN: 0
+  VALIDMAX: 10000
+  FILLVAL: -1.000000e+31
+  SCALETYP: linear
 swp_flags:
   NAME: swp_flags
   DATA_TYPE: CDF_UINT2
@@ -1002,6 +1146,15 @@ velocity_gsm_label:
   DATA_TYPE: CDF_CHAR
   FIELDNAM: Velocity GSM Label
   CATDESC: Label for Geocentric Solar Magnetospheric (GSM) velocity components
+  VAR_TYPE: metadata
+  RECORD_VARYING: NRV
+  FORMAT: a20
+  FILLVAL: ' '
+velocity_hae_label:
+  NAME: velocity_hae_label
+  DATA_TYPE: CDF_CHAR
+  FIELDNAM: Velocity HAE Label
+  CATDESC: Label for Heliocentric Aries Ecliptic (HAE) velocity components
   VAR_TYPE: metadata
   RECORD_VARYING: NRV
   FORMAT: a20
@@ -1078,6 +1231,24 @@ alpha_sw_velocity_gsm_sun_label:
   RECORD_VARYING: NRV
   FORMAT: a20
   FILLVAL: ' '
+alpha_sw_velocity_hae_label:
+  NAME: alpha_sw_velocity_hae_label
+  DATA_TYPE: CDF_CHAR
+  FIELDNAM: Velocity HAE Label
+  CATDESC: Label for alpha solar wind velocity components in HAE coordinates
+  VAR_TYPE: metadata
+  RECORD_VARYING: NRV
+  FORMAT: a20
+  FILLVAL: ' '
+alpha_sw_velocity_hae_sun_label:
+  NAME: alpha_sw_velocity_hae_sun_label
+  DATA_TYPE: CDF_CHAR
+  FIELDNAM: Velocity HAE Label
+  CATDESC: Label for Sun-frame alpha solar wind velocity components in HAE coordinates
+  VAR_TYPE: metadata
+  RECORD_VARYING: NRV
+  FORMAT: a20
+  FILLVAL: ' '
 proton_sw_velocity_gse_label:
   NAME: proton_sw_velocity_gse_label
   DATA_TYPE: CDF_CHAR
@@ -1110,6 +1281,24 @@ proton_sw_velocity_gsm_sun_label:
   DATA_TYPE: CDF_CHAR
   FIELDNAM: Velocity GSM Label
   CATDESC: Label for Sun-frame proton solar wind velocity components in GSM coordinates
+  VAR_TYPE: metadata
+  RECORD_VARYING: NRV
+  FORMAT: a20
+  FILLVAL: ' '
+proton_sw_velocity_hae_label:
+  NAME: proton_sw_velocity_hae_label
+  DATA_TYPE: CDF_CHAR
+  FIELDNAM: Velocity HAE Label
+  CATDESC: Label for proton solar wind velocity components in HAE coordinates
+  VAR_TYPE: metadata
+  RECORD_VARYING: NRV
+  FORMAT: a20
+  FILLVAL: ' '
+proton_sw_velocity_hae_sun_label:
+  NAME: proton_sw_velocity_hae_sun_label
+  DATA_TYPE: CDF_CHAR
+  FIELDNAM: Velocity HAE Label
+  CATDESC: Label for Sun-frame proton solar wind velocity components in HAE coordinates
   VAR_TYPE: metadata
   RECORD_VARYING: NRV
   FORMAT: a20

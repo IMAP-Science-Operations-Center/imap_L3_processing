@@ -2,9 +2,11 @@ import os
 from datetime import datetime
 from pathlib import Path
 from unittest import TestCase
+from unittest.mock import patch
 
 import numpy as np
 import spacepy.pycdf
+from imap_processing.spice.geometry import SpiceFrame
 from spacepy.pycdf import CDF
 from uncertainties import UFloat, ufloat
 
@@ -25,6 +27,8 @@ from imap_l3_processing.swapi.constants import (
 )
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.utils import (
+    convert_velocity_covariance_rtn_to_frame,
+    convert_velocity_rtn_to_frame,
     velocity_components_to_angles_in_instrument_frame,
     calculate_sw_speed,
     chunk_l2_data,
@@ -298,6 +302,40 @@ class TestSwapiSpiceHelpers(SpiceTestCase):
         speed = float(np.linalg.norm(velocity_rtn))
         self.assertGreater(speed, 10.0)
         self.assertLess(speed, 60.0)
+
+    @patch("imap_l3_processing.swapi.l3a.utils.get_rotation_matrix")
+    @patch("imap_l3_processing.swapi.l3a.utils.ttj2000ns_to_et")
+    def test_convert_velocity_and_covariance_rtn_to_frame(
+        self, mock_time_conversion, mock_get_rotation_matrix
+    ):
+        epochs = np.array([1, 2])
+        ephemeris_times = np.array([3.0, 4.0])
+        rotations = np.array(
+            [
+                np.eye(3),
+                [[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]],
+            ]
+        )
+        velocities = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+        covariances = np.array([np.diag([1.0, 2.0, 3.0]), np.diag([4.0, 5.0, 6.0])])
+        mock_time_conversion.return_value = ephemeris_times
+        mock_get_rotation_matrix.return_value = rotations
+
+        actual_velocities = convert_velocity_rtn_to_frame(
+            epochs, velocities, SpiceFrame.IMAP_GSE
+        )
+        actual_covariances = convert_velocity_covariance_rtn_to_frame(
+            epochs, covariances, SpiceFrame.IMAP_GSE
+        )
+
+        expected_velocities = (rotations @ velocities[..., np.newaxis])[..., 0]
+        expected_covariances = rotations @ covariances @ rotations.swapaxes(1, 2)
+        np.testing.assert_allclose(actual_velocities, expected_velocities)
+        np.testing.assert_allclose(actual_covariances, expected_covariances)
+        self.assertEqual(2, mock_get_rotation_matrix.call_count)
+        mock_get_rotation_matrix.assert_called_with(
+            ephemeris_times, SpiceFrame.IMAP_RTN, SpiceFrame.IMAP_GSE
+        )
 
 
 class TestVelocityComponentsToAnglesInInstrumentFrame(TestCase):
