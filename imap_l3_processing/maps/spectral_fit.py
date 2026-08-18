@@ -48,8 +48,8 @@ def calculate_spectral_index_for_multiple_ranges(intensity_data: IntensityMapDat
         ena_spectral_index_chisq=np.concat(
             [m.ena_spectral_index_chisq for m in spectral_maps], axis=1
         ),
-        predicted_ephemeris_flag=np.concat(
-            [m.predicted_ephemeris_flag for m in spectral_maps], axis=1
+        quality_flags=np.concat(
+            [m.quality_flags for m in spectral_maps], axis=1
         ),
     )
 
@@ -66,7 +66,8 @@ def slice_energy_range(data: IntensityMapData, start: float, end: float) -> Inte
                                obs_date_range=data.obs_date_range[:, energy_mask],
                                ena_intensity=data.ena_intensity[:, energy_mask],
                                ena_intensity_sys_err=data.ena_intensity_sys_err[:, energy_mask],
-                               ena_intensity_stat_uncert=data.ena_intensity_stat_uncert[:, energy_mask]
+                               ena_intensity_stat_uncert=data.ena_intensity_stat_uncert[:, energy_mask],
+                               quality_flags=data.quality_flags[:, energy_mask],
                                )
 
 def slice_energy_range_by_bin(data: IntensityMapData, start_bin_id: int, end_bin_id: int) -> IntensityMapData:
@@ -89,7 +90,7 @@ def slice_energy_range_by_bin(data: IntensityMapData, start_bin_id: int, end_bin
         ena_intensity=data.ena_intensity[:, energy_slice],
         ena_intensity_sys_err=data.ena_intensity_sys_err[:, energy_slice],
         ena_intensity_stat_uncert=data.ena_intensity_stat_uncert[:, energy_slice],
-        predicted_ephemeris_flag=data.predicted_ephemeris_flag[:, energy_slice],
+        quality_flags=data.quality_flags[:, energy_slice],
     )
 
 def fit_spectral_index_map(intensity_data: IntensityMapData) -> SpectralIndexMapData:
@@ -115,7 +116,7 @@ def fit_spectral_index_map(intensity_data: IntensityMapData) -> SpectralIndexMap
     output_scalar_coefficients[positive_gammas] = np.nan
     output_gamma_errors[positive_gammas] = np.nan
     chisq[positive_gammas] = np.nan
-    predicted_ephemeris_flag = np.any(intensity_data.predicted_ephemeris_flag, axis=1, keepdims=True)
+    quality_flags = np.bitwise_or.reduce(intensity_data.quality_flags, axis=1, keepdims=True)
 
     return SpectralIndexMapData(
         epoch=intensity_data.epoch,
@@ -135,7 +136,7 @@ def fit_spectral_index_map(intensity_data: IntensityMapData) -> SpectralIndexMap
         ena_spectral_index_scalar_coefficient=output_scalar_coefficients,
         ena_spectral_index_scalar_coefficient_stat_uncert=output_scalar_errors,
         ena_spectral_index_chisq=chisq,
-        predicted_ephemeris_flag=predicted_ephemeris_flag
+        quality_flags=quality_flags
     )
 
 

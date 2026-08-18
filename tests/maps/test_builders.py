@@ -6,6 +6,7 @@ import spiceypy
 
 from imap_l3_processing.maps.map_models import RectangularIntensityMapData, IntensityMapData, RectangularCoords, \
     InputRectangularPointingSet, GlowsL3eRectangularMapInputData, RectangularSpectralIndexMapData, SpectralIndexMapData
+from imap_l3_processing.maps.quality_flags import MapL3Flags
 
 
 def create_intensity_map_data(epoch=None, epoch_delta=None, lon=None, lat=None, energy=None,
@@ -50,7 +51,7 @@ def create_intensity_map_data(epoch=None, epoch_delta=None, lon=None, lat=None, 
         bg_intensity=flux * 0.01,
         bg_intensity_stat_uncert=intensity_stat_uncert * 0.01,
         bg_intensity_sys_err=flux * 0.01 * 0.001,
-        predicted_ephemeris_flag=np.full_like(flux, False),
+        quality_flags=np.full_like(flux, MapL3Flags.NONE),
     )
 
 
@@ -102,7 +103,7 @@ def create_rectangular_intensity_map_data(epoch=None, epoch_delta=None, lon=None
             bg_intensity_sys_err=flux * .01 * .001,
             ena_intensity_sys_err_minus=ena_intensity_sys_err_minus,
             ena_intensity_sys_err_plus=ena_intensity_sys_err_plus,
-            predicted_ephemeris_flag=np.full_like(flux, False)
+            quality_flags=np.full_like(flux, MapL3Flags.NONE),
         ),
         coords=RectangularCoords(
             latitude_delta=np.full_like(lat, 0),
@@ -151,7 +152,7 @@ def construct_intensity_data_with_all_zero_fields(num_pixels: int = 1) -> Intens
         bg_intensity_sys_err=np.array([0] * num_pixels),
         bg_intensity_stat_uncert=np.array([0] * num_pixels),
         survival_probability=np.array([0] * num_pixels),
-        predicted_ephemeris_flag=np.array([0] * num_pixels),
+        quality_flags=np.array([MapL3Flags.NONE] * num_pixels),
     )
 
 
@@ -199,7 +200,7 @@ def create_rectangular_spectral_index_map_data(epoch=None, epoch_delta=None, lon
             ena_spectral_index_scalar_coefficient=ena_spectral_index_scalar_coefficient,
             ena_spectral_index_scalar_coefficient_stat_uncert=ena_spectral_index_scalar_coefficient_stat_unc,
             ena_spectral_index_chisq=ena_spectral_index_chisq,
-            predicted_ephemeris_flag=np.full(more_real_flux.shape, False),
+            quality_flags=np.full(more_real_flux.shape, MapL3Flags.NONE),
         ),
         coords=RectangularCoords(
             latitude_delta=np.full_like(lat, 0),
