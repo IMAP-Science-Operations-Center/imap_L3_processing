@@ -193,7 +193,7 @@ class AlphaChunkFitter(ChunkFitter):
         geometry_quality_flags: SwapiL3Flags,
     ):
         result = _fit_alpha(
-            data_chunk, epoch, rotation_matrices, magnetic_field_direction, geometry_quality_flags
+            data_chunk, epoch, rotation_matrices, magnetic_field_direction
         )
         moments = _alpha_moments_from_fit(result, epoch, sc_velocity_rtn)
         moments["quality_flags"] |= geometry_quality_flags
@@ -635,7 +635,6 @@ def _fit_alpha(
     epoch,
     rotation_matrices,
     magnetic_field_direction,
-    flag
 ) -> AlphaChunkFitResult:
     nan_b_hat = np.full(3, np.nan)
     if (
@@ -649,7 +648,7 @@ def _fit_alpha(
             alpha_moments=_nan_alpha_fit_result(SwapiL3Flags.NONE),
             proton_moments=_nan_proton_result(SwapiL3Flags.NONE),
             b_hat_rtn=nan_b_hat,
-            quality_flag=int(SwapiL3Flags.NONE) | flag,
+            quality_flag=int(SwapiL3Flags.NONE),
         )
 
     proton_moments = _fit_proton(data_chunk, epoch, rotation_matrices)
@@ -662,7 +661,7 @@ def _fit_alpha(
             alpha_moments=_nan_alpha_fit_result(proton_moments.quality_flag),
             proton_moments=proton_moments,
             b_hat_rtn=nan_b_hat,
-            quality_flag=int(proton_moments.quality_flag) | flag,
+            quality_flag=int(proton_moments.quality_flag),
         )
 
     swapi_response = _shared["swapi_response"]
