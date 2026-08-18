@@ -138,6 +138,7 @@ def convert_velocity_covariance_rtn_to_frame(
     rotation_matrices = get_rotation_matrix(
         ephemeris_times, SpiceFrame.IMAP_RTN, target_frame
     )
+    # This is equivalent to R C R^T
     return np.einsum(
         "nij,njk,nlk->nil",
         rotation_matrices,
