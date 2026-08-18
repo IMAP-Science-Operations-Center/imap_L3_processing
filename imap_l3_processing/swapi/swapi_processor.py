@@ -3,6 +3,7 @@ from dataclasses import replace
 
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
+from imap_processing.spice.geometry import SpiceFrame
 from uncertainties.unumpy import uarray
 
 from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
@@ -26,10 +27,8 @@ from imap_l3_processing.swapi.constants import (
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
 from imap_l3_processing.swapi.l3a.utils import (
     chunk_l2_data,
-    convert_velocity_covariance_rtn_to_gse,
-    convert_velocity_covariance_rtn_to_gsm,
-    convert_velocity_rtn_to_gse,
-    convert_velocity_rtn_to_gsm,
+    convert_velocity_covariance_rtn_to_frame,
+    convert_velocity_rtn_to_frame,
 )
 from imap_l3_processing.swapi.l3b.models import SwapiL3BCombinedVDF
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_differential_flux import (
@@ -46,6 +45,38 @@ from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.utils import save_data
 
 logger = logging.getLogger(__name__)
+
+_VELOCITY_TARGET_FRAMES = (
+    ("gse", SpiceFrame.IMAP_GSE),
+    ("gsm", SpiceFrame.IMAP_GSM),
+    ("hae", SpiceFrame.ECLIPJ2000),
+)
+
+
+def _add_velocity_products_in_target_frames(
+    result: dict[str, np.ndarray], species: str
+) -> None:
+    """Add velocity vectors and covariance in each requested output frame."""
+    prefix = f"{species}_sw_velocity"
+
+    for frame_name, target_frame in _VELOCITY_TARGET_FRAMES:
+        result[f"{prefix}_{frame_name}"] = convert_velocity_rtn_to_frame(
+            result["epoch"],
+            result[f"{prefix}_rtn"],
+            target_frame,
+        )
+        result[f"{prefix}_{frame_name}_sun"] = convert_velocity_rtn_to_frame(
+            result["epoch"],
+            result[f"{prefix}_rtn_sun"],
+            target_frame,
+        )
+        result[f"{prefix}_{frame_name}_covariance"] = (
+            convert_velocity_covariance_rtn_to_frame(
+                result["epoch"],
+                result[f"{prefix}_rtn_covariance"],
+                target_frame,
+            )
+        )
 
 
 class SwapiProcessor(Processor):
@@ -90,28 +121,7 @@ class SwapiProcessor(Processor):
         )
 
         result = runner.run(chunks, ProtonChunkFitter())
-        result["proton_sw_velocity_gse_sun"] = convert_velocity_rtn_to_gse(
-            result["epoch"], result["proton_sw_velocity_rtn_sun"]
-        )
-        result["proton_sw_velocity_gse"] = convert_velocity_rtn_to_gse(
-            result["epoch"], result["proton_sw_velocity_rtn"]
-        )
-        result["proton_sw_velocity_gse_covariance"] = (
-            convert_velocity_covariance_rtn_to_gse(
-                result["epoch"], result["proton_sw_velocity_rtn_covariance"]
-            )
-        )
-        result["proton_sw_velocity_gsm_sun"] = convert_velocity_rtn_to_gsm(
-            result["epoch"], result["proton_sw_velocity_rtn_sun"]
-        )
-        result["proton_sw_velocity_gsm"] = convert_velocity_rtn_to_gsm(
-            result["epoch"], result["proton_sw_velocity_rtn"]
-        )
-        result["proton_sw_velocity_gsm_covariance"] = (
-            convert_velocity_covariance_rtn_to_gsm(
-                result["epoch"], result["proton_sw_velocity_rtn_covariance"]
-            )
-        )
+        _add_velocity_products_in_target_frames(result, "proton")
 
         return SwapiL3ProtonSolarWindData(
             replace(self.input_metadata, descriptor="proton-sw"), **result
@@ -132,29 +142,8 @@ class SwapiProcessor(Processor):
         fitter = AlphaChunkFitter(dependencies.mag_data)
         result = runner.run(chunks, fitter)
 
-        result["alpha_sw_velocity_gse_sun"] = convert_velocity_rtn_to_gse(
-            result["epoch"], result["alpha_sw_velocity_rtn_sun"]
-        )
-        result["alpha_sw_velocity_gse"] = convert_velocity_rtn_to_gse(
-            result["epoch"], result["alpha_sw_velocity_rtn"]
-        )
-        result["alpha_sw_velocity_gse_covariance"] = (
-            convert_velocity_covariance_rtn_to_gse(
-                result["epoch"], result["alpha_sw_velocity_rtn_covariance"]
-            )
-        )
-        result["alpha_sw_velocity_gsm_sun"] = convert_velocity_rtn_to_gsm(
-            result["epoch"], result["alpha_sw_velocity_rtn_sun"]
-        )
-        result["alpha_sw_velocity_gsm"] = convert_velocity_rtn_to_gsm(
-            result["epoch"], result["alpha_sw_velocity_rtn"]
-        )
-        result["alpha_sw_velocity_gsm_covariance"] = (
-            convert_velocity_covariance_rtn_to_gsm(
-                result["epoch"], result["alpha_sw_velocity_rtn_covariance"]
-            )
-        )
-        
+        _add_velocity_products_in_target_frames(result, "alpha")
+
         if dependencies.mag_is_preliminary:
             result["quality_flags"] = result["quality_flags"] | int(SwapiL3Flags.PRELIMINARY_MAG)
         
