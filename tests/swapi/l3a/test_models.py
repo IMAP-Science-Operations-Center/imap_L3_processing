@@ -32,6 +32,20 @@ from imap_l3_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, EPOC
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
+_FRAME_ROTATIONS = {
+    "gse": np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]]),
+    "gsm": np.array([[0, 0, 1], [-1, 0, 0], [0, -1, 0]]),
+    "hae": np.array([[-1, 0, 0], [0, 0, 1], [0, 1, 0]]),
+}
+
+
+def _rotate_velocity_frame(velocity_sun, velocity_sc, covariance, rotation):
+    return (
+        velocity_sun @ rotation.T,
+        velocity_sc @ rotation.T,
+        rotation @ covariance @ rotation.T,
+    )
+
 
 class TestModels(CdfModelTestCase):
 
@@ -52,9 +66,15 @@ class TestModels(CdfModelTestCase):
         bulk_v_rtn_sc = np.arange(100, 100 + n * 3, dtype=float).reshape(n, 3)
         bulk_v_rtn_cov = np.arange(200, 200 + n * 9, dtype=float).reshape(n, 3, 3)
         velocity_frames = {
-            "gse": (bulk_v_rtn_sun + 300, bulk_v_rtn_sc + 300, bulk_v_rtn_cov + 300),
-            "gsm": (bulk_v_rtn_sun + 400, bulk_v_rtn_sc + 400, bulk_v_rtn_cov + 400),
-            "hae": (bulk_v_rtn_sun + 500, bulk_v_rtn_sc + 500, bulk_v_rtn_cov + 500),
+            "gse": _rotate_velocity_frame(
+                bulk_v_rtn_sun, bulk_v_rtn_sc, bulk_v_rtn_cov, _FRAME_ROTATIONS["gse"]
+            ),
+            "gsm": _rotate_velocity_frame(
+                bulk_v_rtn_sun, bulk_v_rtn_sc, bulk_v_rtn_cov, _FRAME_ROTATIONS["gsm"]
+            ),
+            "hae": _rotate_velocity_frame(
+                bulk_v_rtn_sun, bulk_v_rtn_sc, bulk_v_rtn_cov, _FRAME_ROTATIONS["hae"]
+            ),
         }
 
         quality_flags = np.full(n, SwapiL3Flags.NONE)
@@ -143,9 +163,15 @@ class TestModels(CdfModelTestCase):
         velocity_rtn_sc = np.arange(100, 100 + n * 3, dtype=float).reshape(n, 3)
         velocity_rtn_cov = np.arange(n * 9, dtype=float).reshape(n, 3, 3)
         velocity_frames = {
-            "gse": (velocity_rtn_sun + 300, velocity_rtn_sc + 300, velocity_rtn_cov + 300),
-            "gsm": (velocity_rtn_sun + 400, velocity_rtn_sc + 400, velocity_rtn_cov + 400),
-            "hae": (velocity_rtn_sun + 500, velocity_rtn_sc + 500, velocity_rtn_cov + 500),
+            "gse": _rotate_velocity_frame(
+                velocity_rtn_sun, velocity_rtn_sc, velocity_rtn_cov, _FRAME_ROTATIONS["gse"]
+            ),
+            "gsm": _rotate_velocity_frame(
+                velocity_rtn_sun, velocity_rtn_sc, velocity_rtn_cov, _FRAME_ROTATIONS["gsm"]
+            ),
+            "hae": _rotate_velocity_frame(
+                velocity_rtn_sun, velocity_rtn_sc, velocity_rtn_cov, _FRAME_ROTATIONS["hae"]
+            ),
         }
 
         quality_flags = np.full_like(epoch_data, SwapiL3Flags.NONE)

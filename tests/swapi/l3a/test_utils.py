@@ -317,7 +317,12 @@ class TestSwapiSpiceHelpers(SpiceTestCase):
             ]
         )
         velocities = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
-        covariances = np.array([np.diag([1.0, 2.0, 3.0]), np.diag([4.0, 5.0, 6.0])])
+        covariances = np.array(
+            [
+                np.diag([1.0, 2.0, 3.0]),
+                [[4.0, 1.0, -2.0], [1.0, 5.0, 3.0], [-2.0, 3.0, 6.0]],
+            ]
+        )
         mock_time_conversion.return_value = ephemeris_times
         mock_get_rotation_matrix.return_value = rotations
 
