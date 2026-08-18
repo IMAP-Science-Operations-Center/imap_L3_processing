@@ -445,9 +445,9 @@ class TestUtils(TestCase):
 
     def test_combine_glows_l3e_with_l1c_pointing(self):
         glows_l3e_data = [
+            create_dataclass_mock(GlowsL3eRectangularMapInputData, repointing=0),
+            create_dataclass_mock(GlowsL3eRectangularMapInputData, repointing=0),
             create_dataclass_mock(GlowsL3eRectangularMapInputData, repointing=1),
-            create_dataclass_mock(GlowsL3eRectangularMapInputData, repointing=0),
-            create_dataclass_mock(GlowsL3eRectangularMapInputData, repointing=0),
             create_dataclass_mock(GlowsL3eRectangularMapInputData, repointing=3),
         ]
 
@@ -459,10 +459,8 @@ class TestUtils(TestCase):
         ]
 
         expected = [
-            (hi_l1c_data[0], glows_l3e_data[0]),
-            (hi_l1c_data[1], None),
+            (hi_l1c_data[0], glows_l3e_data[2]),
             (hi_l1c_data[2], glows_l3e_data[3]),
-            (hi_l1c_data[3], None),
         ]
 
         actual = combine_glows_l3e_with_l1c_pointing(glows_l3e_data, hi_l1c_data)

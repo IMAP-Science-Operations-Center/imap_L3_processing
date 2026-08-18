@@ -262,7 +262,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
                                                            Mock())
 
         expected_sky_strip = np.full(45, 2.0)
-        default_sp_sky_strip = np.full(45, 1.0)
+        default_sp_sky_strip = np.full(45, np.nan)
 
         output_map = process_survival_probabilities(survival_dependencies, SpiceFrame.IMAP_HAE)
         np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 76, :], expected_sky_strip)

@@ -25,7 +25,7 @@ def interpolate_angular_data_to_nearest_neighbor(input_azimuths: np.array, glows
 
 class RectangularSurvivalProbabilityPointingSet(PointingSet):
     def __init__(self, l1c_dataset: InputRectangularPointingSet, sensor: Sensor, spin_phase: SpinPhase,
-                 glows_dataset: GlowsL3eRectangularMapInputData | None, energies: np.ndarray, cg_corrected: bool = False):
+                 glows_dataset: GlowsL3eRectangularMapInputData, energies: np.ndarray, cg_corrected: bool = False):
         num_spin_angle_bins = l1c_dataset.exposure_times.shape[-1]
 
         deg_spacing = 360 / num_spin_angle_bins
@@ -98,7 +98,6 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                 closest_energy_bin_index = np.argmin(distance_to_bins)
 
                 exposure[0, energy_i, spin_angle_i] = l1c_dataset.exposure_times[0, closest_energy_bin_index, spin_angle_i]
-
         else:
             self.az_el_points = hae_az_el_points
             exposure = l1c_dataset.exposure_times
@@ -110,44 +109,40 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
         else:
             dataset["directional_mask"] = ~dataset["ram_mask"]
 
-        if glows_dataset is not None:
-            if cg_corrected:
-                sp_interpolated_to_pset_angles = interpolate_angular_data_to_nearest_neighbor(
-                    self.azimuths, glows_dataset.spin_angle, glows_dataset.probability_of_survival[0])
-                log_sc_frame_energies = np.log10(spacecraft_frame_energies_in_kev[0])
+        if cg_corrected:
+            sp_interpolated_to_pset_angles = interpolate_angular_data_to_nearest_neighbor(
+                self.azimuths, glows_dataset.spin_angle, glows_dataset.probability_of_survival[0])
+            log_sc_frame_energies = np.log10(spacecraft_frame_energies_in_kev[0])
 
-                sp_final = np.empty((1, len(energies), num_spin_angle_bins))
-                for spin_angle_index in range(num_spin_angle_bins):
-                    sp_final[0, :, spin_angle_index] = np.interp(
-                        log_sc_frame_energies[:, spin_angle_index],
-                        np.log10(glows_dataset.energy),
-                        sp_interpolated_to_pset_angles[:, spin_angle_index]
-                    )
-            else:
-                glows_spin_bin_count = len(glows_dataset.spin_angle)
-                sp_interpolated_to_hi_energies = np.empty(shape=(len(energies), glows_spin_bin_count))
-                for spin_angle_index in range(glows_spin_bin_count):
-                    sp_interpolated_to_hi_energies[:, spin_angle_index] = np.interp(
-                        np.log10(energies),
-                        np.log10(glows_dataset.energy),
-                        glows_dataset.probability_of_survival[0, :, spin_angle_index],
-                    )
-
-                sp_interpolated_to_pset_angles = np.zeros(
-                    (1, len(energies), num_spin_angle_bins)
+            sp_final = np.empty((1, len(energies), num_spin_angle_bins))
+            for spin_angle_index in range(num_spin_angle_bins):
+                sp_final[0, :, spin_angle_index] = np.interp(
+                    log_sc_frame_energies[:, spin_angle_index],
+                    np.log10(glows_dataset.energy),
+                    sp_interpolated_to_pset_angles[:, spin_angle_index]
                 )
-                sp_interpolated_to_pset_angles[0] = (
-                    interpolate_angular_data_to_nearest_neighbor(
-                        self.azimuths,
-                        glows_dataset.spin_angle,
-                        sp_interpolated_to_hi_energies,
-                    )
-                )
-                sp_final = sp_interpolated_to_pset_angles
-            flag_value = glows_dataset.flags[0]
         else:
-            sp_final = np.ones((1, len(energies), 3600))
-            flag_value = 0
+            glows_spin_bin_count = len(glows_dataset.spin_angle)
+            sp_interpolated_to_hi_energies = np.empty(shape=(len(energies), glows_spin_bin_count))
+            for spin_angle_index in range(glows_spin_bin_count):
+                sp_interpolated_to_hi_energies[:, spin_angle_index] = np.interp(
+                    np.log10(energies),
+                    np.log10(glows_dataset.energy),
+                    glows_dataset.probability_of_survival[0, :, spin_angle_index],
+                )
+
+            sp_interpolated_to_pset_angles = np.zeros(
+                (1, len(energies), num_spin_angle_bins)
+            )
+            sp_interpolated_to_pset_angles[0] = (
+                interpolate_angular_data_to_nearest_neighbor(
+                    self.azimuths,
+                    glows_dataset.spin_angle,
+                    sp_interpolated_to_hi_energies,
+                )
+            )
+            sp_final = sp_interpolated_to_pset_angles
+        flag_value = glows_dataset.flags[0]
 
         dataset["survival_probability_times_exposure"] = xr.DataArray(
             sp_final * exposure,
