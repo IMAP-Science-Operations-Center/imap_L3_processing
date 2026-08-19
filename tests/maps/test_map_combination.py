@@ -419,9 +419,15 @@ class TestMapCombination(unittest.TestCase):
         )
         map_1.survival_probability = np.array([0.9, 1, 1, 1, np.nan, 1, 1, 1, 1])
         map_1.quality_flags = np.array([
-            MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO, MapL3Flags.PREDICTIVE_EPHEMERIS, MapL3Flags.NONE,
-            MapL3Flags.NONE, MapL3Flags.NONE, MapL3Flags.PREDICTIVE_EPHEMERIS,
-            MapL3Flags.NONE, MapL3Flags.NONE, MapL3Flags.NONE
+            MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
+            MapL3Flags.PREDICTIVE_EPHEMERIS,
+            MapL3Flags.NONE,
+            MapL3Flags.NONE,
+            MapL3Flags.NONE,
+            MapL3Flags.PREDICTIVE_EPHEMERIS,
+            MapL3Flags.NONE,
+            MapL3Flags.NONE,
+            MapL3Flags.NONE
         ])
 
         map_2 = construct_intensity_data_with_all_zero_fields()
@@ -443,9 +449,15 @@ class TestMapCombination(unittest.TestCase):
             DATETIME_FILL)
         map_2.survival_probability = np.array([0.1, 1, 1, 1, 0.2, 0.2, 1, 0.8, 0])
         map_2.quality_flags = np.array([
-            MapL3Flags.PREDICTIVE_EPHEMERIS, MapL3Flags.NONE, MapL3Flags.NONE,
-            MapL3Flags.PREDICTIVE_EPHEMERIS, MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO, MapL3Flags.NONE,
-            MapL3Flags.NONE, MapL3Flags.PREDICTIVE_EPHEMERIS, MapL3Flags.NONE
+            MapL3Flags.PREDICTIVE_EPHEMERIS,
+            MapL3Flags.NONE,
+            MapL3Flags.PERSISTED_LAST_POINT,
+            MapL3Flags.PREDICTIVE_EPHEMERIS,
+            MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
+            MapL3Flags.PERSISTED_LAST_POINT,
+            MapL3Flags.NONE,
+            MapL3Flags.PREDICTIVE_EPHEMERIS,
+            MapL3Flags.NONE
         ])
 
         expected_combined_intensity = [3, np.nan, 5, 6, np.nan, 100, 4.5, 5, 12]
@@ -454,9 +466,15 @@ class TestMapCombination(unittest.TestCase):
         expected_obs_date = datetime(2025, 5, 11)
         expected_survival_probability = [0.5, np.nan, 1, 1, 0.2, 0.6, 1, 1, 0.5]
         expected_quality_flags = [
-            MapL3Flags.PREDICTIVE_EPHEMERIS | MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO, MapL3Flags.PREDICTIVE_EPHEMERIS, MapL3Flags.NONE,
-            MapL3Flags.PREDICTIVE_EPHEMERIS, MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO, MapL3Flags.PREDICTIVE_EPHEMERIS,
-            MapL3Flags.NONE, MapL3Flags.PREDICTIVE_EPHEMERIS, MapL3Flags.NONE]
+            MapL3Flags.PREDICTIVE_EPHEMERIS | MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
+            MapL3Flags.PREDICTIVE_EPHEMERIS,
+            MapL3Flags.PERSISTED_LAST_POINT,
+            MapL3Flags.PREDICTIVE_EPHEMERIS,
+            MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
+            MapL3Flags.PREDICTIVE_EPHEMERIS | MapL3Flags.PERSISTED_LAST_POINT,
+            MapL3Flags.NONE,
+            MapL3Flags.PREDICTIVE_EPHEMERIS,
+            MapL3Flags.NONE]
 
         exposure_unweighted_strategy = UnweightedCombination()
 

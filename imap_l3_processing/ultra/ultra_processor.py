@@ -185,6 +185,7 @@ class UltraProcessor(MapProcessor):
             "ena_intensity_sys_err",
             "predicted_ephemeris_flag",
             "nominal_alpha_proton_ratio_flag",
+            "persisted_last_point_flag",
         ]
 
         if has_survival_data:
@@ -198,9 +199,11 @@ class UltraProcessor(MapProcessor):
 
         predicted_ephemeris_set = rectangular_map_xarray_dataset["predicted_ephemeris_flag"].values > 0
         nominal_alpha_proton_ratio_set = rectangular_map_xarray_dataset["nominal_alpha_proton_ratio_flag"].values > 0
+        persisted_last_point_set = rectangular_map_xarray_dataset["persisted_last_point_flag"].values > 0
 
         quality_flags = (predicted_ephemeris_set * MapL3Flags.PREDICTIVE_EPHEMERIS) | \
-                         (nominal_alpha_proton_ratio_set * MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO)
+                        (nominal_alpha_proton_ratio_set * MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO) | \
+                        (persisted_last_point_set * MapL3Flags.PERSISTED_LAST_POINT)
 
         intensity_map_data = IntensityMapData(
             epoch=rect_l2_data.epoch,

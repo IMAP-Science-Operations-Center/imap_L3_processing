@@ -113,6 +113,7 @@ class TestUltraProcessor(unittest.TestCase):
         expected_quality_flags = np.full((1, 9, healpix_indices.shape[0]), MapL3Flags.NONE)
         expected_quality_flags[rng.random((1, 9, healpix_indices.shape[0])) > 0.8] = MapL3Flags.PREDICTIVE_EPHEMERIS
         expected_quality_flags[rng.random((1, 9, healpix_indices.shape[0])) > 0.7] = MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO
+        expected_quality_flags[rng.random((1, 9, healpix_indices.shape[0])) > 0.75] = MapL3Flags.PERSISTED_LAST_POINT
 
         mock_survival_skymap.return_value.to_dataset.return_value = xr.Dataset(
             {
@@ -393,6 +394,7 @@ class TestUltraProcessor(unittest.TestCase):
 
         rectangular_predicted_ephemeris_data = np.array([0.73, 0.24, 0, 0.99, 1, 0])
         nominal_alpha_proton_ratio_data = np.full_like(rectangular_predicted_ephemeris_data, 0.0)
+        persisted_last_point_data = np.full_like(rectangular_predicted_ephemeris_data, 0.0)
 
         expected_quality_flags = np.array([
             MapL3Flags.PREDICTIVE_EPHEMERIS,
@@ -421,7 +423,8 @@ class TestUltraProcessor(unittest.TestCase):
             "predicted_ephemeris_flag": Mock(
                 values=rectangular_predicted_ephemeris_data
             ),
-            "nominal_alpha_proton_ratio_flag": Mock(values=nominal_alpha_proton_ratio_data)
+            "nominal_alpha_proton_ratio_flag": Mock(values=nominal_alpha_proton_ratio_data),
+            "persisted_last_point_flag": Mock(values=persisted_last_point_data)
         }
 
         mock_rectangular_sky_map = Mock(spec=RectangularSkyMap)
@@ -442,6 +445,7 @@ class TestUltraProcessor(unittest.TestCase):
             "ena_intensity_sys_err",
             "predicted_ephemeris_flag",
             "nominal_alpha_proton_ratio_flag",
+            "persisted_last_point_flag",
             "survival_probability",
         ])
 
@@ -537,14 +541,15 @@ class TestUltraProcessor(unittest.TestCase):
 
         predicted_ephemeris_rectangular_values = np.array([0.243, 0, 1, 0, 0.993, 0])
         nominal_alpha_proton_ratio_rectangular_values = np.array([0, 0.34, 0.8, 0, 0, 0])
+        persisted_last_point_rectangular_values = np.array([0, 0, 0.4, 0, 0, 1])
 
         expected_quality_flags = np.array([
             MapL3Flags.PREDICTIVE_EPHEMERIS,
             MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
-            MapL3Flags.PREDICTIVE_EPHEMERIS | MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
+            MapL3Flags.PREDICTIVE_EPHEMERIS | MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO | MapL3Flags.PERSISTED_LAST_POINT,
             MapL3Flags.NONE,
             MapL3Flags.PREDICTIVE_EPHEMERIS,
-            MapL3Flags.NONE
+            MapL3Flags.PERSISTED_LAST_POINT
         ])
         converted_rectangular_skymap.to_dataset.return_value = {
             "ena_intensity": Mock(values=sentinel.rectangular_ena_intensity),
@@ -552,6 +557,7 @@ class TestUltraProcessor(unittest.TestCase):
             "ena_intensity_sys_err": Mock(values=sentinel.rectangular_ena_intensity_sys_err),
             "predicted_ephemeris_flag": Mock(values=predicted_ephemeris_rectangular_values),
             "nominal_alpha_proton_ratio_flag": Mock(values=nominal_alpha_proton_ratio_rectangular_values),
+            "persisted_last_point_flag": Mock(values=persisted_last_point_rectangular_values),
         }
 
         processor = UltraProcessor(sentinel.dependencies, input_metadata)
@@ -576,6 +582,7 @@ class TestUltraProcessor(unittest.TestCase):
                 "ena_intensity_sys_err",
                 "predicted_ephemeris_flag",
                 "nominal_alpha_proton_ratio_flag",
+                "persisted_last_point_flag",
             ]
         )
 
@@ -740,6 +747,7 @@ class TestUltraProcessor(unittest.TestCase):
             "survival_probability": Mock(values=sentinel.rectangular_survival_probability),
             "predicted_ephemeris_flag": Mock(values=np.array([])),
             "nominal_alpha_proton_ratio_flag": Mock(values=np.array([])),
+            "persisted_last_point_flag": Mock(values=np.array([])),
         }
 
         mock_rectangular_sky_map = Mock(spec=RectangularSkyMap)
