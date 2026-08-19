@@ -165,7 +165,6 @@ class TestModels(CdfModelTestCase):
                                       cr=sentinel.cr,
                                       uv_anisotropy_factor=sentinel.uv_anisotropy_factor,
                                       lat_grid=sentinel.lat_grid,
-                                      lat_grid_delta=sentinel.lat_grid_delta,
                                       sum_rate=sentinel.sum_rate,
                                       ph_rate=sentinel.ph_rate,
                                       cx_rate=sentinel.cx_rate,
@@ -179,7 +178,7 @@ class TestModels(CdfModelTestCase):
                                       )
 
         variables = data.to_data_product_variables()
-        self.assertEqual(17, len(variables))
+        self.assertEqual(16, len(variables))
 
         variables = iter(variables)
         self.assert_variable_attributes(next(variables), sentinel.epoch, "epoch")
@@ -188,7 +187,6 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(next(variables), sentinel.cr, "cr")
         self.assert_variable_attributes(next(variables), sentinel.uv_anisotropy_factor, "uv_anisotropy_factor")
         self.assert_variable_attributes(next(variables), sentinel.lat_grid, "lat_grid")
-        self.assert_variable_attributes(next(variables), sentinel.lat_grid_delta, "lat_grid_delta")
         self.assert_variable_attributes(next(variables), sentinel.sum_rate, "sum_rate")
         self.assert_variable_attributes(next(variables), sentinel.ph_rate, "ph_rate")
         self.assert_variable_attributes(next(variables), sentinel.cx_rate, "cx_rate")
@@ -232,7 +230,6 @@ class TestModels(CdfModelTestCase):
         np.testing.assert_equal(
             ['-90°', '-80°', '-70°', '-60°', '-50°', '-40°', '-30°', '-20°', '-10°', '0°', '10°', '20°', '30°', '40°',
              '50°', '60°', '70°', '80°', '90°'], result.lat_grid_label)
-        self.assertEqual(latitude_grid.shape, result.lat_grid_delta.shape)
         self.assertEqual([
             'imap_glows_WawHelioIonMP_v002.json',
             'imap_glows_bad-days-list_v001.dat',
@@ -259,7 +256,6 @@ class TestModels(CdfModelTestCase):
                                  epoch_delta_minus=sentinel.epoch_delta_minus,
                                  cr=sentinel.cr,
                                  lat_grid=sentinel.lat_grid,
-                                 lat_grid_delta=sentinel.lat_grid_delta,
                                  lat_grid_label=sentinel.lat_grid_label,
                                  plasma_speed_ecliptic=sentinel.plasma_speed_ecliptic,
                                  proton_density_ecliptic=sentinel.proton_density_ecliptic,
@@ -270,7 +266,7 @@ class TestModels(CdfModelTestCase):
                                  )
 
         variables = data.to_data_product_variables()
-        self.assertEqual(13, len(variables))
+        self.assertEqual(12, len(variables))
 
         variables = iter(variables)
         self.assert_variable_attributes(next(variables), sentinel.epoch, "epoch",
@@ -281,8 +277,6 @@ class TestModels(CdfModelTestCase):
                                         expected_data_type=pycdf.const.CDF_INT8)
         self.assert_variable_attributes(next(variables), sentinel.cr, "cr", expected_data_type=pycdf.const.CDF_INT2)
         self.assert_variable_attributes(next(variables), sentinel.lat_grid, "lat_grid",
-                                        expected_data_type=pycdf.const.CDF_FLOAT, expected_record_varying=False)
-        self.assert_variable_attributes(next(variables), sentinel.lat_grid_delta, "lat_grid_delta",
                                         expected_data_type=pycdf.const.CDF_FLOAT, expected_record_varying=False)
         self.assert_variable_attributes(next(variables), sentinel.lat_grid_label, "lat_grid_label",
                                         expected_data_type=pycdf.const.CDF_CHAR, expected_record_varying=False)
@@ -320,7 +314,6 @@ class TestModels(CdfModelTestCase):
         self.assertEqual(
             ['-90°', '-80°', '-70°', '-60°', '-50°', '-40°', '-30°', '-20°', '-10°', '0°', '10°', '20°', '30°', '40°',
              '50°', '60°', '70°', '80°', '90°'], result.lat_grid_label)
-        self.assertEqual((19,), result.lat_grid_delta.shape)
         np.testing.assert_equal([model["solar_wind_profile"]["plasma_speed"]], result.plasma_speed_profile)
         np.testing.assert_equal([model["solar_wind_profile"]["proton_density"]], result.proton_density_profile)
 
