@@ -503,7 +503,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         test_reprocessing_file = get_test_data_path("glows/imap_glows_force-reprocessing-config_20250101_v000.csv")
         shutil.copy(test_reprocessing_file, AncillaryFilePath(test_reprocessing_file.name).construct_path())
 
-        repoint_file_name = "imap_2026_147_01.repoint"
+        repoint_file_name = "imap_2026_227_01.repoint"
         processing_input = ProcessingInputCollection(RepointInput(repoint_file_name), AncillaryInput(test_reprocessing_file.name))
 
         descriptors_to_produce = [
