@@ -243,10 +243,12 @@ class TestModels(CdfModelTestCase):
             'imap_glows_electron-density-2010a_v003.dat',
             'f107_fluxtable.txt'
         ], result.parent_file_names)
-        np.testing.assert_equal(result.used_l3a, np.array([[
+        np.testing.assert_equal(result.used_l3a[0, :3], np.array([
             "imap_glows_l3a_20100101000000_orbX_modX_p_v00.json",
             "imap_glows_l3a_20100102000000_orbX_modX_p_v00.json",
-            "imap_glows_l3a_20100103000000_orbX_modX_p_v00.json"]]))
+            "imap_glows_l3a_20100103000000_orbX_modX_p_v00.json"]))
+        self.assertEqual((1, 50), result.used_l3a.shape)
+        np.testing.assert_array_equal(result.used_l3a[0, 3:], "")
         np.testing.assert_equal([instrument_team_l3b_dict["glows_flags"]], result.glows_flags)
 
     def test_l3c_to_data_product_variables(self):

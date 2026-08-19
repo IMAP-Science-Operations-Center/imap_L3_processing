@@ -22,6 +22,7 @@ from imap_l3_processing.utils import download_external_dependency
 F107_FLUX_TABLE_URL = "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/fluxtable.txt"
 LYMAN_ALPHA_COMPOSITE_INDEX_URL = "https://lasp.colorado.edu/data/timed_see/composite_lya/lyman_alpha_composite.nc"
 OMNI2_URL = "https://spdf.gsfc.nasa.gov/pub/data/omni/low_res_omni/omni2_all_years.dat"
+MAX_USED_L3A_FILES = 50
 
 
 @dataclass
@@ -178,6 +179,11 @@ class GlowsL3BIonizationRate(DataProduct):
         epoch_delta_minus = (mean_time - start_of_cr).total_seconds() * 1e9
 
         l3a_file_names = [Path(f).name for f in model["header"]["l3a_input_files_name"]]
+        if len(l3a_file_names) > MAX_USED_L3A_FILES:
+            raise ValueError(f"GLOWS L3b cannot reference more than {MAX_USED_L3A_FILES} L3a files")
+
+        # Pad the CDF used_l3a length to a fixed size.
+        l3a_file_names += [""] * (MAX_USED_L3A_FILES - len(l3a_file_names))
 
         parent_file_names = []
         parent_file_names += collect_file_names(model['header']['ancillary_data_files'])
