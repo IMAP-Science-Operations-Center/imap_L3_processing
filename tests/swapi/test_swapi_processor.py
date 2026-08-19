@@ -22,11 +22,64 @@ from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SWAPI_L2_DESCRIPTOR, SwapiL3ADependencies
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_vdf import DeltaMinusPlus
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
-from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
+from imap_l3_processing.swapi.swapi_processor import (
+    SwapiProcessor,
+    _add_velocity_products_in_target_frames,
+)
 from tests.test_helpers import create_mock_version_map
 
 
 class TestSwapiProcessor(TestCase):
+    @patch(
+        "imap_l3_processing.swapi.swapi_processor.convert_velocity_covariance_rtn_to_frame"
+    )
+    @patch("imap_l3_processing.swapi.swapi_processor.convert_velocity_rtn_to_frame")
+    def test_target_frame_conversion_fills_only_epoch_with_spice_gap(
+        self, mock_convert_velocity, mock_convert_covariance
+    ):
+        result = {
+            "epoch": np.array([1, 2, 3]),
+            "proton_sw_velocity_rtn": np.ones((3, 3)),
+            "proton_sw_velocity_rtn_sun": np.full((3, 3), 2.0),
+            "proton_sw_velocity_rtn_covariance": np.repeat(
+                np.eye(3)[np.newaxis, ...], 3, axis=0
+            ),
+        }
+
+        def convert_velocity(epoch, value, _target_frame):
+            if epoch[0] == 2:
+                raise RuntimeError("SPICE gap")
+            return value * 10
+
+        mock_convert_velocity.side_effect = convert_velocity
+        mock_convert_covariance.side_effect = lambda epoch, value, frame: value * 10
+
+        with self.assertLogs(
+            "imap_l3_processing.swapi.swapi_processor", level="WARNING"
+        ):
+            _add_velocity_products_in_target_frames(result, "proton")
+
+        for frame in ("gse", "gsm", "hae"):
+            np.testing.assert_array_equal(
+                result[f"proton_sw_velocity_{frame}"][[0, 2]], 10
+            )
+            np.testing.assert_array_equal(
+                result[f"proton_sw_velocity_{frame}_sun"][[0, 2]], 20
+            )
+            np.testing.assert_array_equal(
+                result[f"proton_sw_velocity_{frame}_covariance"][[0, 2]],
+                np.repeat((np.eye(3) * 10)[np.newaxis, ...], 2, axis=0),
+            )
+            self.assertTrue(np.all(np.isnan(result[f"proton_sw_velocity_{frame}"][1])))
+            self.assertTrue(
+                np.all(np.isnan(result[f"proton_sw_velocity_{frame}_sun"][1]))
+            )
+            self.assertTrue(
+                np.all(
+                    np.isnan(result[f"proton_sw_velocity_{frame}_covariance"][1])
+                )
+            )
+
     @patch('imap_l3_processing.utils.ImapAttributeManager')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3PickupIonData')
     @patch('imap_l3_processing.utils.write_cdf')

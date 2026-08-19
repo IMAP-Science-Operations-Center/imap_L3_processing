@@ -53,6 +53,32 @@ _VELOCITY_TARGET_FRAMES = (
 )
 
 
+def _convert_velocity_products_at_epoch(
+    result: dict[str, np.ndarray],
+    prefix: str,
+    index: int,
+    target_frame: SpiceFrame,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Convert velocity, Sun-relative velocity, and covariance for one epoch."""
+    epoch_slice = result["epoch"][index : index + 1]
+    velocity = convert_velocity_rtn_to_frame(
+        epoch_slice,
+        result[f"{prefix}_rtn"][index : index + 1],
+        target_frame,
+    )[0]
+    velocity_sun = convert_velocity_rtn_to_frame(
+        epoch_slice,
+        result[f"{prefix}_rtn_sun"][index : index + 1],
+        target_frame,
+    )[0]
+    covariance = convert_velocity_covariance_rtn_to_frame(
+        epoch_slice,
+        result[f"{prefix}_rtn_covariance"][index : index + 1],
+        target_frame,
+    )[0]
+    return velocity, velocity_sun, covariance
+
+
 def _add_velocity_products_in_target_frames(
     result: dict[str, np.ndarray], species: str
 ) -> None:
@@ -60,23 +86,28 @@ def _add_velocity_products_in_target_frames(
     prefix = f"{species}_sw_velocity"
 
     for frame_name, target_frame in _VELOCITY_TARGET_FRAMES:
-        result[f"{prefix}_{frame_name}"] = convert_velocity_rtn_to_frame(
-            result["epoch"],
-            result[f"{prefix}_rtn"],
-            target_frame,
-        )
-        result[f"{prefix}_{frame_name}_sun"] = convert_velocity_rtn_to_frame(
-            result["epoch"],
-            result[f"{prefix}_rtn_sun"],
-            target_frame,
-        )
-        result[f"{prefix}_{frame_name}_covariance"] = (
-            convert_velocity_covariance_rtn_to_frame(
-                result["epoch"],
-                result[f"{prefix}_rtn_covariance"],
-                target_frame,
-            )
-        )
+        velocity = np.full(result[f"{prefix}_rtn"].shape, np.nan)
+        velocity_sun = np.full(result[f"{prefix}_rtn_sun"].shape, np.nan)
+        covariance = np.full(result[f"{prefix}_rtn_covariance"].shape, np.nan)
+
+        for index, epoch in enumerate(result["epoch"]):
+            try:
+                converted_products = _convert_velocity_products_at_epoch(
+                    result, prefix, index, target_frame
+                )
+            except Exception:
+                logger.warning(
+                    f"SPICE gap converting {species} velocity products at epoch "
+                    f"{epoch} to {target_frame}; using fill values.",
+                    exc_info=True,
+                )
+                continue
+
+            velocity[index], velocity_sun[index], covariance[index] = converted_products
+
+        result[f"{prefix}_{frame_name}"] = velocity
+        result[f"{prefix}_{frame_name}_sun"] = velocity_sun
+        result[f"{prefix}_{frame_name}_covariance"] = covariance
 
 
 class SwapiProcessor(Processor):
