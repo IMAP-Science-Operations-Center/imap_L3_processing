@@ -359,7 +359,7 @@ def process_l3e_lo(
 
     output_path = Path(f'probSur.Imap.Lo_{l3e_args.formatted_date}_{l3e_args.decimal_date[:8]}_{elongation_in_filename}.dat')
     lo_data = GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product(input_metadata, output_path,
-                                                                 repointing_midpoint, elongation_value_as_int, l3e_args)
+                                                                 repointing_midpoint, epoch_delta, elongation_value_as_int, l3e_args)
 
     lo_data.parent_file_names = parent_file_names
     lo_data.glows_flags = np.array([glows_flags], dtype=np.uint16)
@@ -403,7 +403,7 @@ def process_l3e_ul_sf(parent_file_names: list[str], repointing: int, repointing_
 
     output_path = Path(f'probSur.Imap.Ul_{call_args[0]}_{call_args[1][:8]}.dat')
     ul_data = GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product(input_metadata, output_path,
-                                                                    repointing_midpoint, call_args_object)
+                                                                    repointing_midpoint, epoch_delta, call_args_object)
 
     ul_data.parent_file_names = parent_file_names
     ul_data.glows_flags = np.array([glows_flags], dtype=np.uint16)
@@ -453,7 +453,7 @@ def process_l3e_ul_hf(parent_file_names: list[str], repointing: int, repointing_
 
     output_path = Path(f'probSur.Imap.Ul.V0_{call_args[0]}_{call_args[1][:8]}.dat')
     ul_data = GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product(input_metadata, output_path,
-                                                                    repointing_midpoint, call_args_object)
+                                                                    repointing_midpoint, epoch_delta, call_args_object)
 
     ul_data.parent_file_names = parent_file_names
     ul_data.glows_flags = np.array([glows_flags], dtype=np.uint16)
@@ -495,6 +495,7 @@ def process_l3e_hi(parent_file_names: list[str], repointing: int, repointing_sta
         input_metadata,
         output_path,
         repointing_midpoint,
+        epoch_delta,
         l3e_hi_args
     )
     hi_data.parent_file_names = parent_file_names
