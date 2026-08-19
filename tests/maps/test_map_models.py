@@ -72,7 +72,7 @@ class TestMapModels(unittest.TestCase):
                     ena_spectral_index_scalar_coefficient=sentinel.ena_spectral_index_scalar_coefficient,
                     ena_spectral_index_scalar_coefficient_stat_uncert=sentinel.ena_spectral_index_scalar_coefficient_stat_uncert,
                     ena_spectral_index_chisq=sentinel.ena_spectral_index_chisq,
-                    predicted_ephemeris_flag=np.array([True]),
+                    quality_flags=sentinel.quality_flags,
                 ),
                 coords=RectangularCoords(
                     latitude_delta=sentinel.latitude_delta,
@@ -130,7 +130,7 @@ class TestMapModels(unittest.TestCase):
             ),
             DataProductVariable(
                 map_models.QUALITY_FLAGS_VAR_NAME,
-                np.array([MapL3Flags.PREDICTIVE_EPHEMERIS])
+                sentinel.quality_flags
             ),
             DataProductVariable(
                 map_models.LATITUDE_DELTA_VAR_NAME, sentinel.latitude_delta
@@ -230,7 +230,7 @@ class TestMapModels(unittest.TestCase):
                             ena_intensity=sentinel.ena_intensity,
                             ena_intensity_stat_uncert=sentinel.ena_intensity_stat_uncert,
                             ena_intensity_sys_err=sentinel.ena_intensity_sys_err,
-                            predicted_ephemeris_flag=np.array([False, False, True, False]),
+                            quality_flags=sentinel.quality_flags,
                             **additional_inputs
                         ),
                         coords=RectangularCoords(
@@ -293,17 +293,7 @@ class TestMapModels(unittest.TestCase):
                     ),
                     DataProductVariable(
                         map_models.QUALITY_FLAGS_VAR_NAME,
-                        NumpyArrayMatcher(
-                            np.array(
-                                [
-                                    MapL3Flags.NONE,
-                                    MapL3Flags.NONE,
-                                    MapL3Flags.PREDICTIVE_EPHEMERIS,
-                                    MapL3Flags.NONE,
-                                ],
-                                dtype=np.uint16,
-                            )
-                        ),
+                        sentinel.quality_flags,
                     ),
                     *expected_additional_data_products_vars,
                     DataProductVariable(
@@ -543,7 +533,7 @@ class TestMapModels(unittest.TestCase):
         np.testing.assert_array_equal(
             input_xarray["energy_label"], output.intensity_map_data.energy_label
         )
-        np.testing.assert_array_equal(output.intensity_map_data.predicted_ephemeris_flag, np.full((2, 15, 12),False), strict=True)
+        np.testing.assert_array_equal(output.intensity_map_data.quality_flags, np.full((2, 15, 12),MapL3Flags.NONE), strict=True)
 
     def test_read_intensity_map_with_rectangular_cords_data_from_cdf(self):
 
@@ -720,14 +710,13 @@ class TestMapModels(unittest.TestCase):
                             self.assertIsNone(map_data.ena_intensity_sys_err_minus)
                             self.assertIsNone(map_data.ena_intensity_sys_err_plus)
 
-    def test_read_intensity_map_with_rectangular_cords_data_from_cdf_missing_flags(
+    def test_read_intensity_map_with_rectangular_coords_data_from_cdf_missing_flags(
         self,
     ):
 
         rng = np.random.default_rng()
 
         map_data_shape = (1, 9, 90, 45)
-        obs_date_datetime = np.full(map_data_shape, datetime.now())
         obs_date_fillval = -sys.maxsize - 1
         obs_date_in_cdf = (np.full(map_data_shape, 1e9, dtype=int),)
         expected_obs_date = (
@@ -735,21 +724,20 @@ class TestMapModels(unittest.TestCase):
         )
         expected_obs_date_mask = (np.full(map_data_shape, False),)
 
-        predicted_ephemeris_flag_with_flagged_pset = np.full(map_data_shape, False)
-        predicted_ephemeris_flag_with_flagged_pset[0, :, 83, :] = True
+        input_quality_flags = np.full(map_data_shape, MapL3Flags.NONE)
+        input_quality_flags[0, :, 83, :] = MapL3Flags.PREDICTIVE_EPHEMERIS
+        input_quality_flags[0, :, 84, :] = MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO
+        input_quality_flags[0, :, 85, :] = MapL3Flags.PERSISTED_LAST_POINT
+        input_quality_flags[0, :, 86, :] = MapL3Flags.PREDICTIVE_EPHEMERIS | MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO | MapL3Flags.PERSISTED_LAST_POINT
 
         cases = (
-            (
-                "includes predicted quality flags",
-                True,
-                predicted_ephemeris_flag_with_flagged_pset,
-            ),
-            ("does not include quality flags", False, np.full(map_data_shape, False)),
+            ("includes quality flags", input_quality_flags, input_quality_flags),
+            ("does not include quality flags", None, np.full(map_data_shape, MapL3Flags.NONE)),
         )
         for (
             case_name,
-            includes_predicted_ephemeris_flag,
-            expected_predicted_ephemeris_flag,
+            input_quality_flags,
+            expected_quality_flags
         ) in cases:
             with tempfile.TemporaryDirectory() as temp_dir, self.subTest(case_name):
                 pathname = os.path.join(temp_dir, "test_cdf")
@@ -832,13 +820,8 @@ class TestMapModels(unittest.TestCase):
                         ena_intensity_sys_err_plus,
                         recVary=True,
                     )
-                    if includes_predicted_ephemeris_flag:
-                        quality_flag = np.where(
-                            expected_predicted_ephemeris_flag,
-                            MapL3Flags.PREDICTIVE_EPHEMERIS,
-                            MapL3Flags.NONE,
-                        )
-                        cdf.new(QUALITY_FLAGS_VAR_NAME, quality_flag, recVary=True)
+                    if input_quality_flags is not None:
+                        cdf.new(QUALITY_FLAGS_VAR_NAME, input_quality_flags, recVary=True)
 
                     for var in cdf:
                         cdf[var].attrs["FILLVAL"] = 1000000
@@ -904,7 +887,7 @@ class TestMapModels(unittest.TestCase):
                                                   ena_intensity_sys_err_minus)
                     np.testing.assert_array_equal(map_data.ena_intensity_sys_err_plus,
                                                   ena_intensity_sys_err_plus)
-                    np.testing.assert_array_equal(map_data.predicted_ephemeris_flag, expected_predicted_ephemeris_flag, strict=True)
+                    np.testing.assert_array_equal(map_data.quality_flags, expected_quality_flags, strict=True)
 
     def test_fill_values_in_read_rectangular_intensity_map_data_from_cdf(self):
         path = get_test_data_folder() / "hi" / "map_with_fill_values.cdf"
@@ -969,8 +952,14 @@ class TestMapModels(unittest.TestCase):
 
         fake_data_per_pixel = np.arange(num_healpix_indices)
 
-        expected_predicted_ephemeris_flag = np.full_like(fake_data_per_energy_per_pixel, False)
-        expected_predicted_ephemeris_flag[0,:,43] = True
+        quality_flags = np.full_like(fake_data_per_energy_per_pixel, MapL3Flags.NONE)
+        quality_flags[0, :, 43] = MapL3Flags.PREDICTIVE_EPHEMERIS
+        quality_flags[0, :, 37] = MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO
+        quality_flags[0, :, 18] = MapL3Flags.PERSISTED_LAST_POINT
+
+        expected_pred_ephem = quality_flags & MapL3Flags.PREDICTIVE_EPHEMERIS
+        expected_nominal_alpha_proton = quality_flags & MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO
+        expected_persisted_last_point = quality_flags & MapL3Flags.PERSISTED_LAST_POINT
 
         intensity_map_data = IntensityMapData(
             epoch=np.array([np.datetime64('1970-01-01T00:00:00')]),
@@ -989,7 +978,7 @@ class TestMapModels(unittest.TestCase):
             ena_intensity_stat_uncert=fake_data_per_energy_per_pixel * 2.3,
             ena_intensity_sys_err=fake_data_per_energy_per_pixel * 2.4,
             survival_probability=fake_data_per_energy_per_pixel * 0.01,
-            predicted_ephemeris_flag=expected_predicted_ephemeris_flag,
+            quality_flags=quality_flags,
         )
 
         healpix_intensity_map_data = HealPixIntensityMapData(
@@ -1025,9 +1014,11 @@ class TestMapModels(unittest.TestCase):
         np.testing.assert_array_equal(actual_dataset.data_vars["ena_intensity_sys_err"].values, intensity_map_data.ena_intensity_sys_err)
 
         np.testing.assert_array_equal(actual_dataset.data_vars["survival_probability"].values, intensity_map_data.survival_probability)
-        np.testing.assert_array_equal(actual_dataset.data_vars["predicted_ephemeris_flag"].values, expected_predicted_ephemeris_flag)
+        np.testing.assert_array_equal(actual_dataset.data_vars["predicted_ephemeris_flag"].values, expected_pred_ephem)
+        np.testing.assert_array_equal(actual_dataset.data_vars["nominal_alpha_proton_ratio_flag"].values, expected_nominal_alpha_proton)
+        np.testing.assert_array_equal(actual_dataset.data_vars["persisted_last_point_flag"].values, expected_persisted_last_point)
 
-        for key in [ "obs_date", "obs_date_range", "exposure_factor", "ena_intensity", "ena_intensity_stat_uncert", "ena_intensity_sys_err", "survival_probability", "predicted_ephemeris_flag"]:
+        for key in [ "obs_date", "obs_date_range", "exposure_factor", "ena_intensity", "ena_intensity_stat_uncert", "ena_intensity_sys_err", "survival_probability", "predicted_ephemeris_flag", "nominal_alpha_proton_ratio_flag", "persisted_last_point_flag" ]:
             self.assertEqual((CoordNames.TIME.value, CoordNames.ENERGY_L2.value, CoordNames.GENERIC_PIXEL.value), actual_dataset.data_vars[key].dims)
         for key in [ "latitude", "longitude", "solid_angle" ]:
             self.assertEqual((CoordNames.GENERIC_PIXEL.value,), actual_dataset.data_vars[key].dims)
@@ -1063,7 +1054,7 @@ class TestMapModels(unittest.TestCase):
             ena_intensity=fake_data_per_energy_per_pixel * 2.2,
             ena_intensity_stat_uncert=fake_data_per_energy_per_pixel * 2.3,
             ena_intensity_sys_err=fake_data_per_energy_per_pixel * 2.4,
-            predicted_ephemeris_flag=np.full_like(fake_data_per_energy_per_pixel, False),
+            quality_flags=np.full_like(fake_data_per_energy_per_pixel, MapL3Flags.NONE),
         )
 
         healpix_intensity_map_data = HealPixIntensityMapData(

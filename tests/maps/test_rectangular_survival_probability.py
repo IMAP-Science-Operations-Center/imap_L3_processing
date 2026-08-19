@@ -14,6 +14,7 @@ from imap_processing.spice.geometry import SpiceFrame
 from imap_l3_processing.glows.quality_flags import GlowsL3Flags
 from imap_l3_processing.maps.map_descriptors import SpinPhase
 from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet
+from imap_l3_processing.maps.quality_flags import MapL3Flags
 from imap_l3_processing.maps.rectangular_survival_probability import Sensor, \
     RectangularSurvivalProbabilitySkyMap, RectangularSurvivalProbabilityPointingSet, \
     interpolate_angular_data_to_nearest_neighbor
@@ -371,24 +372,6 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                     expected_mask
                 )
 
-    def test_uses_default_survival_probability_of_one_when_glows_is_none(self):
-        pointing_set = RectangularSurvivalProbabilityPointingSet(
-            self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
-            glows_dataset=None, energies=self.hi_energies)
-
-        sp_times_exposure = pointing_set.data["survival_probability_times_exposure"].values
-        expected = np.ones((1, self.num_energies, 3600)) * self.l1c_hi_dataset.exposure_times
-        np.testing.assert_array_equal(sp_times_exposure, expected)
-
-    def test_predicted_ephemeris_flag_not_set_when_glows_is_none(self):
-        pointing_set = RectangularSurvivalProbabilityPointingSet(
-            self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
-            glows_dataset=None, energies=self.hi_energies)
-
-        pset_values = pointing_set.data["predicted_ephemeris_flag"].values
-        expected = np.zeros((1, self.num_energies, 3600))
-        np.testing.assert_array_equal(pset_values, expected)
-
     def test_exposure_weighted_survivals_are_repeated_to_match_l1c_shape(self):
         pointing_set = RectangularSurvivalProbabilityPointingSet(self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
                                                                  self.glows_data,
@@ -538,16 +521,20 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                     corresponding_glows_data * exposure_times,
                 )
 
-    def test_survival_probability_pointing_set_propagates_predicted_ephemeris_flag(
+    def test_survival_probability_pointing_set_propagates_flags(
         self,
     ):
-        cases = {
-            GlowsL3Flags.NONE: 0.0,
-            GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO: 0.0,
-            GlowsL3Flags.PREDICTIVE_EPHEMERIS: 1.0,
-            GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO | GlowsL3Flags.PREDICTIVE_EPHEMERIS: 1.0,
-        }
-        for flag_value, expected_pset_value in cases.items():
+        cases = [
+            (GlowsL3Flags.NONE, 0.0, 0.0, 0.0),
+            (GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO, 0.0, 1.0, 0.0),
+            (GlowsL3Flags.PREDICTIVE_EPHEMERIS, 1.0, 0.0, 0.0),
+            (GlowsL3Flags.PERSISTED_LAST_POINT, 0.0, 0.0, 1.0),
+            (GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO | GlowsL3Flags.PREDICTIVE_EPHEMERIS, 1.0, 1.0, 0.0),
+            (GlowsL3Flags.PERSISTED_LAST_POINT | GlowsL3Flags.PREDICTIVE_EPHEMERIS, 1.0, 0.0, 1.0),
+            (GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO | GlowsL3Flags.PERSISTED_LAST_POINT, 0.0, 1.0, 1.0),
+            (GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO | GlowsL3Flags.PERSISTED_LAST_POINT | GlowsL3Flags.PREDICTIVE_EPHEMERIS, 1.0, 1.0, 1.0),
+        ]
+        for flag_value, expected_pred_ephem_value, expected_nominal_alpha_proton_value, expected_persisted_last_point_value in cases:
             with self.subTest(flag_value):
                 exposure_array = np.full(self.l1c_hi_dataset.exposure_times.shape, 1.0)
                 exposure_array[:, :, 1000] = 0.0
@@ -557,11 +544,25 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                     self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
                     glows_dataset=self.glows_data, energies=self.hi_energies)
         
-                pset_values = pointing_set.data["predicted_ephemeris_flag"].values
-                expected = np.full((1, self.num_energies, 3600), expected_pset_value)
-                expected[:, :, 1000] = 0
-                np.testing.assert_array_equal(pset_values, expected, strict=True)
+                actual_pred_ephem = pointing_set.data["predicted_ephemeris_flag"].values
+                expected_pred_ephem = np.full((1, self.num_energies, 3600), expected_pred_ephem_value)
+                expected_pred_ephem[:, :, 1000] = 0
+                np.testing.assert_array_equal(actual_pred_ephem, expected_pred_ephem, strict=True)
                 self.assertEqual(pointing_set.data["predicted_ephemeris_flag"].dims,
+                                 pointing_set.data["survival_probability_times_exposure"].dims)
+
+                actual_nominal_alpha_proton = pointing_set.data["nominal_alpha_proton_ratio_flag"].values
+                expected_nominal_alpha_proton = np.full((1, self.num_energies, 3600), expected_nominal_alpha_proton_value)
+                expected_nominal_alpha_proton[:, :, 1000] = 0
+                np.testing.assert_array_equal(actual_nominal_alpha_proton, expected_nominal_alpha_proton, strict=True)
+                self.assertEqual(pointing_set.data["nominal_alpha_proton_ratio_flag"].dims,
+                                 pointing_set.data["survival_probability_times_exposure"].dims)
+
+                actual_persisted_last_point = pointing_set.data["persisted_last_point_flag"].values
+                expected_persisted_last_point = np.full((1, self.num_energies, 3600), expected_persisted_last_point_value)
+                expected_persisted_last_point[:, :, 1000] = 0
+                np.testing.assert_array_equal(actual_persisted_last_point, expected_persisted_last_point, strict=True)
+                self.assertEqual(pointing_set.data["persisted_last_point_flag"].dims,
                                  pointing_set.data["survival_probability_times_exposure"].dims)
 
     def test_interpolate_angular_data_to_nearest_neighbor(self):
@@ -610,11 +611,11 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
 
         mock_skymap_constructor.assert_called_with(sentinel.spacing_deg, sentinel.spice_frame)
 
+        expected_values_to_project = ["survival_probability_times_exposure", "exposure", "predicted_ephemeris_flag",
+                 "nominal_alpha_proton_ratio_flag", "persisted_last_point_flag"]
         mock_project_pset.assert_has_calls([
-            call(pset_1, ["survival_probability_times_exposure", "exposure", "predicted_ephemeris_flag"],
-                 pset_valid_mask=pset_1.data['directional_mask']),
-            call(pset_2, ["survival_probability_times_exposure", "exposure", "predicted_ephemeris_flag"],
-                 pset_valid_mask=pset_2.data['directional_mask']),
+            call(pset_1, expected_values_to_project, pset_valid_mask=pset_1.data['directional_mask']),
+            call(pset_2, expected_values_to_project, pset_valid_mask=pset_2.data['directional_mask']),
         ])
 
     def test_survival_probability_sky_map_returns_exposure_weighted_survival_probabilities(self):
@@ -665,7 +666,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                                              survival_probability_dataset[
                                                  "exposure_weighted_survival_probabilities"].values)
 
-    def test_survival_probability_sky_map_returns_predicted_ephemeris_flag(self):
+    def test_survival_probability_sky_map_returns_flags(self):
         self.l1c_hi_dataset.hae_longitude = np.concat([
             np.full((1, 1800), 30.05),
             np.full((1, 1800), 210.05)
@@ -678,14 +679,45 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
         self.ram_mask = np.concat((np.full(1800, True), np.full(1800, False)))
 
         cases = {
-            (GlowsL3Flags.PREDICTIVE_EPHEMERIS, 0, True),
-            (GlowsL3Flags.PREDICTIVE_EPHEMERIS, GlowsL3Flags.PREDICTIVE_EPHEMERIS, True),
-            (0, 0, False),
-            (GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO | GlowsL3Flags.PREDICTIVE_EPHEMERIS, 0, True),
+            (
+                GlowsL3Flags.NONE,
+                GlowsL3Flags.NONE,
+                MapL3Flags.NONE
+            ),
+            (
+                GlowsL3Flags.PREDICTIVE_EPHEMERIS,
+                GlowsL3Flags.NONE,
+                MapL3Flags.PREDICTIVE_EPHEMERIS
+            ),
+            (
+                GlowsL3Flags.PREDICTIVE_EPHEMERIS,
+                GlowsL3Flags.PREDICTIVE_EPHEMERIS,
+                MapL3Flags.PREDICTIVE_EPHEMERIS
+            ),
+            (
+                GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
+                GlowsL3Flags.NONE,
+                GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO
+            ),
+            (
+                GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO | GlowsL3Flags.PREDICTIVE_EPHEMERIS,
+                GlowsL3Flags.NONE,
+                MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO | MapL3Flags.PREDICTIVE_EPHEMERIS
+            ),
+            (
+                GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
+                GlowsL3Flags.PREDICTIVE_EPHEMERIS,
+                MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO | MapL3Flags.PREDICTIVE_EPHEMERIS
+            ),
+            (
+                GlowsL3Flags.PREDICTIVE_EPHEMERIS,
+                GlowsL3Flags.PERSISTED_LAST_POINT,
+                MapL3Flags.PREDICTIVE_EPHEMERIS | MapL3Flags.PERSISTED_LAST_POINT
+            )
         }
 
-        for pset1_flags, pset2_flags, expected in cases:
-            with self.subTest(pset1_flags=pset1_flags, pset2_flags=pset2_flags, expected=expected):
+        for pset1_flags, pset2_flags, expected_quality_flags in cases:
+            with self.subTest(pset1_flags=pset1_flags, pset2_flags=pset2_flags, expected=expected_quality_flags):
                 pset1_glows = copy.deepcopy(self.glows_data)
                 pset1_glows.flags[0] = pset1_flags
                 pset1_l1c = pset2_l1c = self.l1c_hi_dataset
@@ -704,18 +736,10 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                                                                      0.1, spice_frame)
                 survival_probability_dataset = actual_skymap.to_dataset()
 
-                predicted_ephemeris_in_skygrid_shape = np.full((1, 2, 3600, 1800), False)
-                predicted_ephemeris_in_skygrid_shape[:, :, 300, :] = expected
+                expected_flags_in_full_shape = np.full((1, 2, 3600, 1800), MapL3Flags.NONE)
+                expected_flags_in_full_shape[:, :, 300, :] = expected_quality_flags
 
-                self.assertIn("predicted_ephemeris_flag", survival_probability_dataset)
-                self.assertEqual((1, 2, 3600, 1800),
-                                 survival_probability_dataset["predicted_ephemeris_flag"].values.shape)
+                self.assertIn("quality_flags", survival_probability_dataset)
+                self.assertEqual((1, 2, 3600, 1800), survival_probability_dataset["quality_flags"].values.shape)
 
-                actual_sp_at_relevant_long = survival_probability_dataset["predicted_ephemeris_flag"].values[:,
-                                             :, 300, :]
-
-                np.testing.assert_array_equal(np.full((1, 2, 1800), expected), actual_sp_at_relevant_long)
-
-                np.testing.assert_array_equal(predicted_ephemeris_in_skygrid_shape,
-                                                     survival_probability_dataset[
-                                                         "predicted_ephemeris_flag"].values)
+                np.testing.assert_array_equal(expected_flags_in_full_shape, survival_probability_dataset["quality_flags"].values)

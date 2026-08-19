@@ -1,5 +1,5 @@
 import unittest
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import sentinel, Mock, MagicMock
 
 import numpy as np
@@ -32,6 +32,7 @@ class TestL3eUltraModel(unittest.TestCase):
                 l3e_ultra: GlowsL3EUltraData = GlowsL3EUltraData(
                     Mock(),
                     sentinel.epoch,
+                    sentinel.epoch_delta,
                     energy_array,
                     healpix_index_array,
                     sentinel.probability_of_survival,
@@ -53,6 +54,7 @@ class TestL3eUltraModel(unittest.TestCase):
 
                 expected_data_products = [
                     DataProductVariable("epoch", sentinel.epoch),
+                    DataProductVariable("epoch_delta", sentinel.epoch_delta),
                     DataProductVariable("energy_grid", energy_array),
                     DataProductVariable("healpix_index", healpix_index_array),
                     DataProductVariable("surv_prob", sentinel.probability_of_survival),
@@ -78,6 +80,8 @@ class TestL3eUltraModel(unittest.TestCase):
     def test_convert_dat_to_glows_l3e_ul_product(self):
         ul_file_path = get_test_instrument_team_data_path("glows/probSur.Imap.Ul_20250420_000000_2025.300.txt")
         expected_epoch = datetime(year=2009, month=1, day=1)
+        epoch_delta = timedelta(hours=10)
+        expected_epoch_delta_in_nanoseconds = 10*3600*1e9
 
         expected_energy = np.array(
             [2.3751086, 3.0917682, 4.0246710, 5.2390656, 6.8198887, 8.8777057, 11.5564435, 15.0434572, 19.5826341,
@@ -130,9 +134,11 @@ class TestL3eUltraModel(unittest.TestCase):
         l3e_ul_product: GlowsL3EUltraData = GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product(mock_metadata,
                                                                                                   ul_file_path,
                                                                                                   expected_epoch,
+                                                                                                  epoch_delta,
                                                                                                   args)
 
         np.testing.assert_equal([expected_epoch], l3e_ul_product.epoch, strict=True)
+        np.testing.assert_equal([expected_epoch_delta_in_nanoseconds], l3e_ul_product.epoch_delta, strict=True)
 
         np.testing.assert_equal(l3e_ul_product.energy, expected_energy, strict=True)
 

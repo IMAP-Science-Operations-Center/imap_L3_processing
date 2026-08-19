@@ -1076,7 +1076,7 @@ class TestGlowsProcessor(unittest.TestCase):
                         np.testing.assert_allclose(actual[0], first_line)
                         np.testing.assert_allclose(actual[-1], last_line)
 
-    @patch('imap_l3_processing.glows.glows_processor.compute_glows_flags_for_window')
+    @patch('imap_l3_processing.glows.glows_processor.compute_glows_flags_for_repoint')
     @patch('imap_l3_processing.glows.glows_processor.get_lo_pivot_angles')
     @patch('imap_l3_processing.glows.glows_processor.get_pointing_date_range')
     @patch('imap_l3_processing.glows.glows_processor.determine_spacecraft_info_using_predict_if_needed')
@@ -1088,7 +1088,7 @@ class TestGlowsProcessor(unittest.TestCase):
                          mock_determine_spacecraft_info,
                          mock_get_pointing_date_range,
                          mock_get_lo_pivot_angles,
-                         mock_compute_glows_flags_for_window,
+                         mock_compute_glows_flags_for_repoint,
                          ):
         mock_process_hi.side_effect = [
             [Path('path/to/first_hi_l3e')],
@@ -1098,7 +1098,7 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_process_ultra.return_value = [Path('path/to/ultra_l3e')]
         mock_process_ultra_hf.return_value = [Path('path/to/ultra_l3e_hf')]
         mock_get_lo_pivot_angles.return_value = {25: LoPivotAngle("l1b_nhk.cdf", 75)}
-        mock_compute_glows_flags_for_window.return_value = 4
+        mock_compute_glows_flags_for_repoint.return_value = 4
         mock_determine_spacecraft_info.return_value = sentinel.spacecraft_info, GlowsL3Flags.PREDICTIVE_EPHEMERIS, ["spice kernel"]
 
         expected_l3e_products = [
@@ -1111,6 +1111,7 @@ class TestGlowsProcessor(unittest.TestCase):
         start_epoch = datetime(2020, 1, 1)
         end_epoch = datetime(2020, 1, 2)
         epoch_delta = timedelta(hours=12)
+        repointing_midpoint = datetime(2020, 1, 1, 12)
         mock_get_pointing_date_range.return_value = (start_epoch, end_epoch)
 
         mock_dependencies = Mock()
@@ -1137,7 +1138,7 @@ class TestGlowsProcessor(unittest.TestCase):
 
         actual_l3e_products = process_l3e(initializer_data)
         mock_get_pointing_date_range.assert_called_once_with(25)
-        mock_compute_glows_flags_for_window.assert_called_once_with(l3d_cdf_path, start_epoch, end_epoch)
+        mock_compute_glows_flags_for_repoint.assert_called_once_with(l3d_cdf_path, repointing_midpoint)
         mock_determine_spacecraft_info.assert_called_once_with(
             datetime(2020, 1, 1, 12),
             initializer_data.metakernel_with_predict_ephem,
@@ -1182,7 +1183,7 @@ class TestGlowsProcessor(unittest.TestCase):
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_ul_sf')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_hi')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_lo')
-    @patch('imap_l3_processing.glows.glows_processor.compute_glows_flags_for_window')
+    @patch('imap_l3_processing.glows.glows_processor.compute_glows_flags_for_repoint')
     @patch('imap_l3_processing.glows.glows_processor.get_pointing_date_range')
     @patch('imap_l3_processing.glows.glows_processor.process_l3d')
     def test_process_l3e_invoked_from_top_level_process(self, mock_process_l3d, mock_get_pointing_date_range, mock_compute_flags,
@@ -1401,7 +1402,7 @@ class TestGlowsProcessor(unittest.TestCase):
         output_data_path = Path("probSur.Imap.Ul_20241007_000000_date.001.dat")
 
         mock_convert_dat_to_glows_l3e_ul_product.assert_called_once_with(
-            expected_input_metadata, output_data_path, expected_repointing_midpoint, call_args_object)
+            expected_input_metadata, output_data_path, expected_repointing_midpoint, epoch_delta, call_args_object)
 
         expected_first_data_path = AncillaryFilePath(
             "imap_glows_survival-probability-ul-sf-raw_20241007_v012.dat").construct_path()
@@ -1488,7 +1489,7 @@ class TestGlowsProcessor(unittest.TestCase):
         output_data_path = Path("probSur.Imap.Ul.V0_20241007_000000_date.001.dat")
 
         mock_convert_dat_to_glows_l3e_ul_product.assert_called_once_with(
-            input_metadata, output_data_path, expected_repointing_midpoint, expected_rest_frame_args)
+            input_metadata, output_data_path, expected_repointing_midpoint, epoch_delta, expected_rest_frame_args)
 
         expected_first_data_path = AncillaryFilePath(
             "imap_glows_survival-probability-ul-hf-raw_20241007_v012.dat").construct_path()
@@ -1571,6 +1572,7 @@ class TestGlowsProcessor(unittest.TestCase):
                     expected_input_metadata,
                     first_output_data_path,
                     expected_repointing_midpoint,
+                    epoch_delta,
                     mock_call_args_object
                 )
 
@@ -1661,6 +1663,7 @@ class TestGlowsProcessor(unittest.TestCase):
                 mock_convert_dat_to_glows_l3e_lo_product.assert_called_once_with(expected_input_metadata,
                                                                                  first_output_file_path,
                                                                                  expected_repointing_midpoint,
+                                                                                 epoch_delta,
                                                                                  elongation, l3e_args)
 
                 expected_first_output_file_path = AncillaryFilePath(
@@ -1685,7 +1688,7 @@ class TestGlowsProcessor(unittest.TestCase):
                 mock_convert_dat_to_glows_l3e_lo_product.reset_mock()
                 mock_save_data.reset_mock()
 
-    @patch('imap_l3_processing.glows.glows_processor.compute_glows_flags_for_window')
+    @patch('imap_l3_processing.glows.glows_processor.compute_glows_flags_for_repoint')
     @patch('imap_l3_processing.glows.glows_processor.get_lo_pivot_angles')
     @patch('imap_l3_processing.glows.glows_processor.get_pointing_date_range')
     @patch('imap_l3_processing.glows.glows_processor.process_l3e_hi')
@@ -1697,8 +1700,8 @@ class TestGlowsProcessor(unittest.TestCase):
                                                        mock_process_lo,
                                                        mock_process_hi, mock_get_pointing_date_range,
                                                        mock_get_lo_pivot_angles,
-                                                       mock_compute_glows_flags_for_window):
-        mock_compute_glows_flags_for_window.return_value = 0
+                                                       mock_compute_glows_flags_for_repoint):
+        mock_compute_glows_flags_for_repoint.return_value = 0
 
         mock_process_hi.side_effect = [
             ValueError("Failed to generate hi"), [Path('path/to/first_hi-45_l3e')],

@@ -22,6 +22,7 @@ from imap_l3_processing.maps.map_models import (
     RectangularSpectralIndexMapData,
     RectangularIntensityMapData,
 )
+from imap_l3_processing.maps.quality_flags import MapL3Flags
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.ultra.ultra_l3_dependencies import (
     UltraL3Dependencies,
@@ -109,7 +110,11 @@ class TestUltraProcessor(unittest.TestCase):
             sentinel.pset_3,
         ]
         computed_survival_probabilities = rng.random((1, 9, healpix_indices.shape[0]))
-        expected_predicted_ephemeris_flag = rng.random((1, 9, healpix_indices.shape[0])) > 0.8
+        expected_quality_flags = np.full((1, 9, healpix_indices.shape[0]), MapL3Flags.NONE)
+        expected_quality_flags[rng.random((1, 9, healpix_indices.shape[0])) > 0.8] = MapL3Flags.PREDICTIVE_EPHEMERIS
+        expected_quality_flags[rng.random((1, 9, healpix_indices.shape[0])) > 0.7] = MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO
+        expected_quality_flags[rng.random((1, 9, healpix_indices.shape[0])) > 0.75] = MapL3Flags.PERSISTED_LAST_POINT
+
         mock_survival_skymap.return_value.to_dataset.return_value = xr.Dataset(
             {
                 "exposure_weighted_survival_probabilities": (
@@ -120,13 +125,13 @@ class TestUltraProcessor(unittest.TestCase):
                     ],
                     computed_survival_probabilities,
                 ),
-                "predicted_ephemeris_flag": (
+                "quality_flags": (
                     [
                         CoordNames.TIME.value,
                         CoordNames.ENERGY_ULTRA_L1C.value,
                         CoordNames.HEALPIX_INDEX.value,
                     ],
-                    expected_predicted_ephemeris_flag,
+                    expected_quality_flags,
                 ),
             },
             coords={
@@ -182,7 +187,7 @@ class TestUltraProcessor(unittest.TestCase):
         np.testing.assert_array_equal(actual_intensity_map_data.obs_date, intensity_data.obs_date)
         np.testing.assert_array_equal(actual_intensity_map_data.obs_date_range, intensity_data.obs_date_range)
         np.testing.assert_array_equal(actual_intensity_map_data.solid_angle, intensity_data.solid_angle)
-        np.testing.assert_array_equal(actual_intensity_map_data.predicted_ephemeris_flag, expected_predicted_ephemeris_flag)
+        np.testing.assert_array_equal(actual_intensity_map_data.quality_flags, expected_quality_flags)
         coords = healpix_intensity_map_data.coords
         np.testing.assert_array_equal(
             coords.pixel_index, input_l2_healpix_map.coords.pixel_index
@@ -239,7 +244,6 @@ class TestUltraProcessor(unittest.TestCase):
         )
 
         computed_survival_probabilities = rng.random((1, 9, healpix_indices.shape[0]))
-        expected_predicted_ephemeris_flag = rng.random((1, 9, healpix_indices.shape[0])) > 0.8
 
         mock_survival_skymap.return_value.to_dataset.return_value = xr.Dataset(
             {
@@ -251,13 +255,13 @@ class TestUltraProcessor(unittest.TestCase):
                     ],
                     computed_survival_probabilities,
                 ),
-                "predicted_ephemeris_flag": (
+                "quality_flags": (
                     [
                         CoordNames.TIME.value,
                         CoordNames.ENERGY_ULTRA_L1C.value,
                         CoordNames.HEALPIX_INDEX.value,
                     ],
-                    expected_predicted_ephemeris_flag,
+                    np.full_like(computed_survival_probabilities, MapL3Flags.NONE),
                 ),
             },
             coords={
@@ -389,7 +393,18 @@ class TestUltraProcessor(unittest.TestCase):
         )
 
         rectangular_predicted_ephemeris_data = np.array([0.73, 0.24, 0, 0.99, 1, 0])
-        expected_predicted_ephemeris_flag = np.array([True, True, False, True, True, False])
+        nominal_alpha_proton_ratio_data = np.full_like(rectangular_predicted_ephemeris_data, 0.0)
+        persisted_last_point_data = np.full_like(rectangular_predicted_ephemeris_data, 0.0)
+
+        expected_quality_flags = np.array([
+            MapL3Flags.PREDICTIVE_EPHEMERIS,
+            MapL3Flags.PREDICTIVE_EPHEMERIS,
+            MapL3Flags.NONE,
+            MapL3Flags.PREDICTIVE_EPHEMERIS,
+            MapL3Flags.PREDICTIVE_EPHEMERIS,
+            MapL3Flags.NONE
+        ])
+
         mock_healpix_map_data = mock_correct_healpix_data_for_survival_probability.return_value
         mock_healpix_skymap = Mock()
         mock_healpix_map_data.to_healpix_skymap = Mock(return_value=mock_healpix_skymap)
@@ -408,6 +423,8 @@ class TestUltraProcessor(unittest.TestCase):
             "predicted_ephemeris_flag": Mock(
                 values=rectangular_predicted_ephemeris_data
             ),
+            "nominal_alpha_proton_ratio_flag": Mock(values=nominal_alpha_proton_ratio_data),
+            "persisted_last_point_flag": Mock(values=persisted_last_point_data)
         }
 
         mock_rectangular_sky_map = Mock(spec=RectangularSkyMap)
@@ -427,6 +444,8 @@ class TestUltraProcessor(unittest.TestCase):
             "ena_intensity_stat_uncert",
             "ena_intensity_sys_err",
             "predicted_ephemeris_flag",
+            "nominal_alpha_proton_ratio_flag",
+            "persisted_last_point_flag",
             "survival_probability",
         ])
 
@@ -445,7 +464,7 @@ class TestUltraProcessor(unittest.TestCase):
         self.assertEqual(sentinel.rectangular_ena_intensity_stat_uncert, actual_rectangular_data.intensity_map_data.ena_intensity_stat_uncert)
         self.assertEqual(sentinel.rectangular_ena_intensity_sys_err, actual_rectangular_data.intensity_map_data.ena_intensity_sys_err)
         self.assertEqual(sentinel.rectangular_survival_probability, actual_rectangular_data.intensity_map_data.survival_probability)
-        np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.predicted_ephemeris_flag, expected_predicted_ephemeris_flag, strict=True)
+        np.testing.assert_array_equal(actual_rectangular_data.intensity_map_data.quality_flags, expected_quality_flags, strict=True)
 
         expected_passthrough = input_l2_rectangular_map.intensity_map_data
         self.assertIs(expected_passthrough.epoch, actual_rectangular_data.intensity_map_data.epoch)
@@ -520,13 +539,25 @@ class TestUltraProcessor(unittest.TestCase):
             sentinel.who_even_knows_what_this_is,
         )
 
-        predicted_ephemeris_rectangular_values = np.array([0.243, 0.34, 1, 0, 0.993, 0])
-        expected_predicted_ephemeris = np.array([True, True, True, False, True, False])
+        predicted_ephemeris_rectangular_values = np.array([0.243, 0, 1, 0, 0.993, 0])
+        nominal_alpha_proton_ratio_rectangular_values = np.array([0, 0.34, 0.8, 0, 0, 0])
+        persisted_last_point_rectangular_values = np.array([0, 0, 0.4, 0, 0, 1])
+
+        expected_quality_flags = np.array([
+            MapL3Flags.PREDICTIVE_EPHEMERIS,
+            MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
+            MapL3Flags.PREDICTIVE_EPHEMERIS | MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO | MapL3Flags.PERSISTED_LAST_POINT,
+            MapL3Flags.NONE,
+            MapL3Flags.PREDICTIVE_EPHEMERIS,
+            MapL3Flags.PERSISTED_LAST_POINT
+        ])
         converted_rectangular_skymap.to_dataset.return_value = {
             "ena_intensity": Mock(values=sentinel.rectangular_ena_intensity),
             "ena_intensity_stat_uncert": Mock(values=sentinel.rectangular_ena_intensity_stat_uncert),
             "ena_intensity_sys_err": Mock(values=sentinel.rectangular_ena_intensity_sys_err),
             "predicted_ephemeris_flag": Mock(values=predicted_ephemeris_rectangular_values),
+            "nominal_alpha_proton_ratio_flag": Mock(values=nominal_alpha_proton_ratio_rectangular_values),
+            "persisted_last_point_flag": Mock(values=persisted_last_point_rectangular_values),
         }
 
         processor = UltraProcessor(sentinel.dependencies, input_metadata)
@@ -550,6 +581,8 @@ class TestUltraProcessor(unittest.TestCase):
                 "ena_intensity_stat_uncert",
                 "ena_intensity_sys_err",
                 "predicted_ephemeris_flag",
+                "nominal_alpha_proton_ratio_flag",
+                "persisted_last_point_flag",
             ]
         )
 
@@ -566,7 +599,7 @@ class TestUltraProcessor(unittest.TestCase):
             sentinel.rectangular_ena_intensity_sys_err,
             actual_data_product.data.intensity_map_data.ena_intensity_sys_err,
         )
-        np.testing.assert_array_equal(actual_data_product.data.intensity_map_data.predicted_ephemeris_flag, expected_predicted_ephemeris)
+        np.testing.assert_array_equal(actual_data_product.data.intensity_map_data.quality_flags, expected_quality_flags)
         self.assertEqual(rectangular_combination_return_value.intensity_map_data.obs_date, actual_data_product.data.intensity_map_data.obs_date)
         self.assertEqual(rectangular_combination_return_value.intensity_map_data.obs_date_range, actual_data_product.data.intensity_map_data.obs_date_range)
         self.assertEqual(rectangular_combination_return_value.intensity_map_data.solid_angle, actual_data_product.data.intensity_map_data.solid_angle)
@@ -713,6 +746,8 @@ class TestUltraProcessor(unittest.TestCase):
             "ena_intensity_sys_err": Mock(values=sentinel.rectangular_ena_intensity_sys_err),
             "survival_probability": Mock(values=sentinel.rectangular_survival_probability),
             "predicted_ephemeris_flag": Mock(values=np.array([])),
+            "nominal_alpha_proton_ratio_flag": Mock(values=np.array([])),
+            "persisted_last_point_flag": Mock(values=np.array([])),
         }
 
         mock_rectangular_sky_map = Mock(spec=RectangularSkyMap)
@@ -891,7 +926,7 @@ def _create_ultra_l2_healpix_data(epoch=None, lon=None, lat=None, energy=None, e
             ena_intensity=flux,
             ena_intensity_stat_uncert=intensity_stat_uncert,
             ena_intensity_sys_err=np.full_like(flux, 0),
-            predicted_ephemeris_flag=np.full_like(flux, False)
+            quality_flags=np.full_like(flux, MapL3Flags.NONE)
         ),
         HealPixCoords(
             pixel_index=healpix_indices,

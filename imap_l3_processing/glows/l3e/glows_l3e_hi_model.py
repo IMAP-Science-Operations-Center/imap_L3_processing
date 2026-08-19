@@ -1,14 +1,16 @@
 import re
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import numpy as np
 
+from imap_l3_processing.constants import ONE_SECOND_IN_NANOSECONDS
 from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
 from imap_l3_processing.models import DataProduct, DataProductVariable, InputMetadata
 
 EPOCH_CDF_VAR_NAME = "epoch"
+EPOCH_DELTA_CDF_VAR_NAME = "epoch_delta"
 ENERGY_VAR_NAME = "energy_grid"
 SPIN_ANGLE_VAR_NAME = "spin_angle"
 PROBABILITY_OF_SURVIVAL_VAR_NAME = "surv_prob"
@@ -30,6 +32,7 @@ GLOWS_FLAGS_VAR_NAME = "glows_flags"
 @dataclass
 class GlowsL3EHiData(DataProduct):
     epoch: np.ndarray[datetime]
+    epoch_delta: np.ndarray
     energy: np.ndarray
     spin_angle: np.ndarray
     probability_of_survival: np.ndarray
@@ -47,7 +50,9 @@ class GlowsL3EHiData(DataProduct):
 
     @classmethod
     def convert_dat_to_glows_l3e_hi_product(cls, input_metadata: InputMetadata, file_path: Path,
-                                            epoch: datetime, args: GlowsL3eCallArguments):
+                                            epoch: datetime,
+                                            epoch_delta: timedelta,
+                                            args: GlowsL3eCallArguments):
         with open(file_path) as input_data:
             lines = input_data.readlines()
 
@@ -63,6 +68,7 @@ class GlowsL3EHiData(DataProduct):
 
         return cls(input_metadata,
                    epoch=np.array([epoch]),
+                   epoch_delta=np.array([epoch_delta.total_seconds() * ONE_SECOND_IN_NANOSECONDS]),
                    energy=energies,
                    spin_angle=spin_angles,
                    probability_of_survival=survival_probabilities,
@@ -84,6 +90,7 @@ class GlowsL3EHiData(DataProduct):
         energy_labels = [f"{i:.2f}" for i in self.energy]
         return [
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch),
+            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, self.epoch_delta),
             DataProductVariable(ENERGY_VAR_NAME, self.energy),
             DataProductVariable(SPIN_ANGLE_VAR_NAME, self.spin_angle),
             DataProductVariable(PROBABILITY_OF_SURVIVAL_VAR_NAME, self.probability_of_survival),

@@ -31,7 +31,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_utils import (
     get_lo_pivot_angles,
     get_lo_pivot_angle_from_l1b_file,
     LoPivotAngle,
-    compute_glows_flags_for_window,
+    compute_glows_flags_for_repoint,
     get_repoint_numbers_within_cr_window,
     determine_spacecraft_info_for_l3e_executable,
     determine_spacecraft_info_using_predict_if_needed,
@@ -297,38 +297,40 @@ class TestGlowsL3EUtils(unittest.TestCase):
                     actual = get_lo_pivot_angle_from_l1b_file(cdf_path)
                     self.assertEqual(expected, actual)
 
-    def test_compute_glows_flags_for_window(self):
+    def test_compute_glows_flags_for_repoint(self):
         epochs = [
             datetime(2025, 5, 6, 0, 0),
             datetime(2025, 5, 16, 0, 0),
             datetime(2025, 5, 26, 0, 0),
             datetime(2025, 6, 5, 0, 0),
+            datetime(2025, 6, 15, 0, 0),
         ]
-        epoch_deltas = [
-            timedelta(days=5).total_seconds()*ONE_SECOND_IN_NANOSECONDS,
-            timedelta(days=5).total_seconds()*ONE_SECOND_IN_NANOSECONDS,
-            timedelta(days=5).total_seconds()*ONE_SECOND_IN_NANOSECONDS,
-            timedelta(days=5).total_seconds()*ONE_SECOND_IN_NANOSECONDS,
+        flags = [
+            GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
+            GlowsL3Flags.NONE,
+            GlowsL3Flags.NONE,
+            GlowsL3Flags.PREDICTIVE_EPHEMERIS,
+            GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO | GlowsL3Flags.PREDICTIVE_EPHEMERIS,
         ]
-        flags = [3, 6, 8, 16]
 
         cases = [
-            ("ORs multiple CRs inside window", datetime(2025, 5, 10, 12, 0), datetime(2025, 5, 11, 12, 0), 7),
-            ("window exists in only a single CR", datetime(2025, 5, 11, 12, 0), datetime(2025, 5, 12, 12, 0), 6),
-            ("does not include CRs when only touching the boundary", datetime(2025, 5, 21, 0, 0), datetime(2025, 5, 30, 0, 0), 8),
-            ("returns zero when no CRs intersect window", datetime(2025, 4, 5, 0, 0), datetime(2025, 4, 6, 0, 0), 0),
+            ("between crs 1 and 2", datetime(2025, 5, 10), GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO),
+            ("between crs 2 and 3", datetime(2025, 5, 25, 23), GlowsL3Flags.NONE),
+            ("between crs 3 and 4", datetime(2025, 5, 26, 1), GlowsL3Flags.PREDICTIVE_EPHEMERIS),
+            ("exactly on cr 4", datetime(2025, 6, 5), GlowsL3Flags.PREDICTIVE_EPHEMERIS),
+            ("between cr 4 and 5", datetime(2025, 6, 7), GlowsL3Flags.PREDICTIVE_EPHEMERIS | GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO),
+            ("after last data point", datetime(2025, 6, 15, 1), GlowsL3Flags.PREDICTIVE_EPHEMERIS | GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO)
         ]
 
-        for name, window_start, window_end, expected in cases:
+        for name, repoint_midpoint, expected in cases:
             with self.subTest(name):
                 with tempfile.TemporaryDirectory() as tmp_dir:
                     cdf_path = Path(tmp_dir, "l3d.cdf")
                     with CDF(str(cdf_path), create=True) as cdf:
                         cdf["epoch"] = epochs
-                        cdf["epoch_delta"] = epoch_deltas
                         cdf.new("glows_flags", data=flags, type=const.CDF_UINT2, recVary=True)
 
-                    actual = compute_glows_flags_for_window(cdf_path, window_start, window_end)
+                    actual = compute_glows_flags_for_repoint(cdf_path, repoint_midpoint)
 
                     self.assertIsInstance(actual, int)
                     self.assertEqual(expected, actual)

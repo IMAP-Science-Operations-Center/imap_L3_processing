@@ -8,6 +8,7 @@ from imap_l3_processing.maps.map_combination import UnweightedCombination, Combi
     ExposureWeightedCombination, UncertaintyWeightedCombination
 from imap_l3_processing.maps.map_models import IntensityMapData, RectangularIntensityMapData, RectangularCoords, \
     HealPixIntensityMapData, HealPixCoords
+from imap_l3_processing.maps.quality_flags import MapL3Flags
 from tests.maps.test_builders import construct_intensity_data_with_all_zero_fields, create_rectangular_intensity_map
 
 
@@ -104,7 +105,7 @@ class TestMapCombination(unittest.TestCase):
             "survival_probability",
             "ena_intensity_sys_err_minus",
             "ena_intensity_sys_err_plus",
-            "predicted_ephemeris_flag",
+            "quality_flags",
         }
 
         alternate_values_by_type = {datetime: datetime(2025, 5, 6), str: "label"}
@@ -417,7 +418,17 @@ class TestMapCombination(unittest.TestCase):
             DATETIME_FILL,
         )
         map_1.survival_probability = np.array([0.9, 1, 1, 1, np.nan, 1, 1, 1, 1])
-        map_1.predicted_ephemeris_flag = np.array([False, True, False, False, False, True, False, False, False])
+        map_1.quality_flags = np.array([
+            MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
+            MapL3Flags.PREDICTIVE_EPHEMERIS,
+            MapL3Flags.NONE,
+            MapL3Flags.NONE,
+            MapL3Flags.NONE,
+            MapL3Flags.PREDICTIVE_EPHEMERIS,
+            MapL3Flags.NONE,
+            MapL3Flags.NONE,
+            MapL3Flags.NONE
+        ])
 
         map_2 = construct_intensity_data_with_all_zero_fields()
         map_2.ena_intensity = np.array([5, 6, 7, 8, np.nan, 100, 9, 10, 11])
@@ -437,15 +448,33 @@ class TestMapCombination(unittest.TestCase):
              ],
             DATETIME_FILL)
         map_2.survival_probability = np.array([0.1, 1, 1, 1, 0.2, 0.2, 1, 0.8, 0])
-        map_2.predicted_ephemeris_flag = np.array([True, False, False, True, False, False, False, True, False])
-
+        map_2.quality_flags = np.array([
+            MapL3Flags.PREDICTIVE_EPHEMERIS,
+            MapL3Flags.NONE,
+            MapL3Flags.PERSISTED_LAST_POINT,
+            MapL3Flags.PREDICTIVE_EPHEMERIS,
+            MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
+            MapL3Flags.PERSISTED_LAST_POINT,
+            MapL3Flags.NONE,
+            MapL3Flags.PREDICTIVE_EPHEMERIS,
+            MapL3Flags.NONE
+        ])
 
         expected_combined_intensity = [3, np.nan, 5, 6, np.nan, 100, 4.5, 5, 12]
         expected_sys_err = [2.5, np.nan, np.nan, 6.5, np.nan, 1, np.nan, np.nan, np.nan]
         expected_stat_unc = [5, np.nan, np.nan, 13, np.nan, 1, np.nan, np.nan, np.nan]
         expected_obs_date = datetime(2025, 5, 11)
         expected_survival_probability = [0.5, np.nan, 1, 1, 0.2, 0.6, 1, 1, 0.5]
-        expected_predicted_ephemeris_flag = [True, True, False, True, False, True, False, True, False]
+        expected_quality_flags = [
+            MapL3Flags.PREDICTIVE_EPHEMERIS | MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
+            MapL3Flags.PREDICTIVE_EPHEMERIS,
+            MapL3Flags.PERSISTED_LAST_POINT,
+            MapL3Flags.PREDICTIVE_EPHEMERIS,
+            MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
+            MapL3Flags.PREDICTIVE_EPHEMERIS | MapL3Flags.PERSISTED_LAST_POINT,
+            MapL3Flags.NONE,
+            MapL3Flags.PREDICTIVE_EPHEMERIS,
+            MapL3Flags.NONE]
 
         exposure_unweighted_strategy = UnweightedCombination()
 
@@ -460,7 +489,7 @@ class TestMapCombination(unittest.TestCase):
         np.testing.assert_equal(combine_two.intensity_map_data.ena_intensity_stat_uncert, expected_stat_unc)
         np.testing.assert_equal(combine_two.intensity_map_data.obs_date[-1], expected_obs_date)
         np.testing.assert_equal(combine_two.intensity_map_data.survival_probability, expected_survival_probability)
-        np.testing.assert_equal(combine_two.intensity_map_data.predicted_ephemeris_flag, expected_predicted_ephemeris_flag)
+        np.testing.assert_equal(combine_two.intensity_map_data.quality_flags, expected_quality_flags)
 
     def test_combine_rectangular_intensity_map_data_errors_if_coords_not_matching(self):
         delta_array = np.array([1])
@@ -631,7 +660,7 @@ class TestMapCombination(unittest.TestCase):
 
                 self.assertIsNone(combined_map.intensity_map_data.survival_probability)
 
-    def test_combination_handles_predict_ephem_flag(self):
+    def test_combination_handles_quality_flag(self):
         test_cases = [
             ExposureWeightedCombination,
             UncertaintyWeightedCombination,
@@ -641,14 +670,35 @@ class TestMapCombination(unittest.TestCase):
         for combination_strategy in test_cases:
             with self.subTest(combination_strategy.__name__):
                 map_1 = construct_intensity_data_with_all_zero_fields()
-                map_1.predicted_ephemeris_flag = np.array([False, True, False, True])
+                map_1.quality_flags = np.array([
+                    MapL3Flags.NONE,
+                    MapL3Flags.PREDICTIVE_EPHEMERIS,
+                    MapL3Flags.NONE,
+                    MapL3Flags.PREDICTIVE_EPHEMERIS,
+                    MapL3Flags.NONE,
+                    MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
+                ])
 
                 map_2 = construct_intensity_data_with_all_zero_fields()
-                map_2.predicted_ephemeris_flag = np.array([False, False, True, True])
+                map_2.quality_flags = np.array([
+                    MapL3Flags.NONE,
+                    MapL3Flags.NONE,
+                    MapL3Flags.PREDICTIVE_EPHEMERIS,
+                    MapL3Flags.PREDICTIVE_EPHEMERIS,
+                    MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
+                    MapL3Flags.PREDICTIVE_EPHEMERIS,
+                ])
 
                 combined_map = combination_strategy().combine_rectangular_intensity_map_data([
                     create_rectangular_intensity_map(map_1),
                     create_rectangular_intensity_map(map_2)
                 ])
 
-                np.testing.assert_equal(combined_map.intensity_map_data.predicted_ephemeris_flag, [False, True, True, True])
+                np.testing.assert_equal(combined_map.intensity_map_data.quality_flags, [
+                    MapL3Flags.NONE,
+                    MapL3Flags.PREDICTIVE_EPHEMERIS,
+                    MapL3Flags.PREDICTIVE_EPHEMERIS,
+                    MapL3Flags.PREDICTIVE_EPHEMERIS,
+                    MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
+                    MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO | MapL3Flags.PREDICTIVE_EPHEMERIS,
+                ])

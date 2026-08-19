@@ -41,7 +41,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_initializer import GlowsL3EInitializ
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
 from imap_l3_processing.glows.l3e.glows_l3e_utils import determine_call_args_for_l3e_executable, get_lo_pivot_angles, \
-    compute_glows_flags_for_window, determine_spacecraft_info_using_predict_if_needed
+    compute_glows_flags_for_repoint, determine_spacecraft_info_using_predict_if_needed
 from imap_l3_processing.glows.l3e.reprocess_info import fetch_reprocess_info
 from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.processor import Processor
@@ -289,8 +289,9 @@ def process_l3e(initializer_data: GlowsL3EInitializerOutput):
         with SwallowExceptionAndLog(f"Exception encountered when processing L3e for repointing {repointing}"):
             start_repointing, end_repointing = get_pointing_date_range(repointing)
             epoch_delta: timedelta = (end_repointing - start_repointing) / 2
-            glows_flags = compute_glows_flags_for_window(initializer_data.l3d_cdf_path, start_repointing, end_repointing)
-            spacecraft_info, predict_flag, kernel_names = determine_spacecraft_info_using_predict_if_needed(start_repointing + epoch_delta, initializer_data.metakernel_with_predict_ephem, initializer_data.metakernel_without_predict_ephem)
+            repointing_midpoint = start_repointing + epoch_delta
+            glows_flags = compute_glows_flags_for_repoint(initializer_data.l3d_cdf_path, repointing_midpoint)
+            spacecraft_info, predict_flag, kernel_names = determine_spacecraft_info_using_predict_if_needed(repointing_midpoint, initializer_data.metakernel_with_predict_ephem, initializer_data.metakernel_without_predict_ephem)
             glows_flags |= predict_flag
 
             with SwallowExceptionAndLog(f"Exception encountered when processing L3e lo for repointing {repointing}"):
@@ -367,7 +368,7 @@ def process_l3e_lo(
 
     output_path = Path(f'probSur.Imap.Lo_{l3e_args.formatted_date}_{l3e_args.decimal_date[:8]}_{elongation_in_filename}.dat')
     lo_data = GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product(input_metadata, output_path,
-                                                                 repointing_midpoint, elongation_value_as_int, l3e_args)
+                                                                 repointing_midpoint, epoch_delta, elongation_value_as_int, l3e_args)
 
     lo_data.parent_file_names = parent_file_names
     lo_data.glows_flags = np.array([glows_flags], dtype=np.uint16)
@@ -411,7 +412,7 @@ def process_l3e_ul_sf(parent_file_names: list[str], repointing: int, repointing_
 
     output_path = Path(f'probSur.Imap.Ul_{call_args[0]}_{call_args[1][:8]}.dat')
     ul_data = GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product(input_metadata, output_path,
-                                                                    repointing_midpoint, call_args_object)
+                                                                    repointing_midpoint, epoch_delta, call_args_object)
 
     ul_data.parent_file_names = parent_file_names
     ul_data.glows_flags = np.array([glows_flags], dtype=np.uint16)
@@ -461,7 +462,7 @@ def process_l3e_ul_hf(parent_file_names: list[str], repointing: int, repointing_
 
     output_path = Path(f'probSur.Imap.Ul.V0_{call_args[0]}_{call_args[1][:8]}.dat')
     ul_data = GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product(input_metadata, output_path,
-                                                                    repointing_midpoint, call_args_object)
+                                                                    repointing_midpoint, epoch_delta, call_args_object)
 
     ul_data.parent_file_names = parent_file_names
     ul_data.glows_flags = np.array([glows_flags], dtype=np.uint16)
@@ -503,6 +504,7 @@ def process_l3e_hi(parent_file_names: list[str], repointing: int, repointing_sta
         input_metadata,
         output_path,
         repointing_midpoint,
+        epoch_delta,
         l3e_hi_args
     )
     hi_data.parent_file_names = parent_file_names

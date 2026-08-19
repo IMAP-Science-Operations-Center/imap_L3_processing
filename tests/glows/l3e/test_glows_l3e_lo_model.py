@@ -1,5 +1,5 @@
 import unittest
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import sentinel, Mock, MagicMock
 
 import numpy as np
@@ -32,6 +32,7 @@ class TestL3eLoModel(unittest.TestCase):
                 l3e_lo: GlowsL3ELoData = GlowsL3ELoData(
                         Mock(),
                         sentinel.epoch,
+                        sentinel.epoch_delta,
                         energy_array,
                         spin_angle_array,
                         sentinel.probability_of_survival,
@@ -51,6 +52,7 @@ class TestL3eLoModel(unittest.TestCase):
 
                 expected_data_products = [
                         DataProductVariable("epoch", sentinel.epoch),
+                        DataProductVariable("epoch_delta", sentinel.epoch_delta),
                         DataProductVariable("energy_grid", energy_array),
                         DataProductVariable("spin_angle", spin_angle_array),
                         DataProductVariable("surv_prob", sentinel.probability_of_survival),
@@ -74,6 +76,8 @@ class TestL3eLoModel(unittest.TestCase):
     def test_convert_dat_to_glows_l3e_lo_product(self):
         lo_file_path = get_test_instrument_team_data_path("glows/probSur.Imap.Lo_20090101_010101_2009.000_60.00.txt")
         epoch = datetime(year=2009, month=1, day=1)
+        epoch_delta = timedelta(hours=3)
+        expected_epoch_delta_in_nanoseconds = 3*3600*1e9
         expected_energy = [0.1700000, 0.2212954, 0.2880685, 0.3749897, 0.4881381, 0.6354278, 0.8271602, 1.0767456,
                            1.4016403, 1.8245678, 2.3751086, 3.0917682, 4.0246710]
 
@@ -167,10 +171,12 @@ class TestL3eLoModel(unittest.TestCase):
 
         l3e_lo_product: GlowsL3ELoData = GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product(mock_metadata, lo_file_path,
                                                                                             epoch,
+                                                                                            epoch_delta,
                                                                                             elongation_value,
                                                                                             args)
 
         np.testing.assert_equal([epoch], l3e_lo_product.epoch, strict=True)
+        np.testing.assert_equal([expected_epoch_delta_in_nanoseconds], l3e_lo_product.epoch_delta, strict=True)
         np.testing.assert_equal(l3e_lo_product.energy, expected_energy, strict=True)
         np.testing.assert_equal(l3e_lo_product.spin_angle, expected_spin_angle, strict=True)
         np.testing.assert_equal(l3e_lo_product.probability_of_survival.shape, expected_survival_probability_shape,

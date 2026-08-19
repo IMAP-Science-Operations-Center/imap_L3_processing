@@ -137,7 +137,6 @@ class GlowsL3BIonizationRate(DataProduct):
     cr: np.ndarray[float]
     uv_anisotropy_factor: np.ndarray[float]
     lat_grid: np.ndarray[float]
-    lat_grid_delta: np.ndarray[float]
     sum_rate: np.ndarray[float]
     ph_rate: np.ndarray[float]
     cx_rate: np.ndarray[float]
@@ -156,7 +155,6 @@ class GlowsL3BIonizationRate(DataProduct):
                 DataProductVariable("cr", self.cr),
                 DataProductVariable("uv_anisotropy_factor", self.uv_anisotropy_factor),
                 DataProductVariable("lat_grid", self.lat_grid),
-                DataProductVariable("lat_grid_delta", self.lat_grid_delta),
                 DataProductVariable("sum_rate", self.sum_rate),
                 DataProductVariable("ph_rate", self.ph_rate),
                 DataProductVariable("cx_rate", self.cx_rate),
@@ -193,7 +191,6 @@ class GlowsL3BIonizationRate(DataProduct):
             cr=np.array([model["CR"]]),
             uv_anisotropy_factor=np.array([model["uv_anisotropy_factor"]]),
             lat_grid=np.array(latitude_grid),
-            lat_grid_delta=np.zeros(len(latitude_grid)),
             sum_rate=np.array([model["ion_rate_profile"]["sum_rate"]]),
             ph_rate=np.array([model["ion_rate_profile"]["ph_rate"]]),
             cx_rate=np.array([model["ion_rate_profile"]["cx_rate"]]),
@@ -221,7 +218,6 @@ class GlowsL3CSolarWind(DataProduct):
     epoch_delta_minus: np.ndarray[int]
     cr: np.ndarray[float]
     lat_grid: np.ndarray[float]
-    lat_grid_delta: np.ndarray[float]
     lat_grid_label: list[str]
     plasma_speed_ecliptic: np.ndarray[float]
     proton_density_ecliptic: np.ndarray[float]
@@ -237,8 +233,6 @@ class GlowsL3CSolarWind(DataProduct):
             DataProductVariable("epoch_delta_minus", self.epoch_delta_minus, cdf_data_type=pycdf.const.CDF_INT8),
             DataProductVariable("cr", self.cr, cdf_data_type=pycdf.const.CDF_INT2),
             DataProductVariable("lat_grid", self.lat_grid, cdf_data_type=pycdf.const.CDF_FLOAT, record_varying=False),
-            DataProductVariable("lat_grid_delta", self.lat_grid_delta, cdf_data_type=pycdf.const.CDF_FLOAT,
-                                record_varying=False),
             DataProductVariable("lat_grid_label", self.lat_grid_label, cdf_data_type=pycdf.const.CDF_CHAR,
                                 record_varying=False),
             DataProductVariable("plasma_speed_ecliptic", self.plasma_speed_ecliptic,
@@ -273,7 +267,6 @@ class GlowsL3CSolarWind(DataProduct):
             epoch_delta_minus=np.array([epoch_delta_minus]),
             cr=np.array([model['CR']]),
             lat_grid=np.array(latitude_grid),
-            lat_grid_delta=np.zeros(len(latitude_grid)),
             lat_grid_label=[f"{x}°" for x in latitude_grid],
             plasma_speed_ecliptic=np.array([model["solar_wind_ecliptic"]['plasma_speed']]),
             proton_density_ecliptic=np.array([model["solar_wind_ecliptic"]['proton_density']]),
