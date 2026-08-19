@@ -206,6 +206,10 @@ The `proton-sw` CDF variables are derived from $`\mathbf{x}`$ and $`\Sigma_\math
 | `proton_sw_velocity_gsm_sun`             | $`\mathbf{v}_{b,\text{GSM}}^{\text{sun}}`$ | RTN Sun-frame velocity rotated to GSM coordinates |
 | `proton_sw_velocity_gsm_covariance`      | $`\Sigma_{\mathbf{v},\text{GSM}}`$ | $`R_{\text{GSM}}\Sigma_{\mathbf{v}}R_{\text{GSM}}^{\top}`$ |
 | `proton_sw_velocity_gsm_uncert`          | $`\sigma_{\mathbf{v},\text{GSM}}`$ | $`\sqrt{\operatorname{diag}(\Sigma_{\mathbf{v},\text{GSM}})}`$ |
+| `proton_sw_velocity_hae`                 | $`\mathbf{v}_{b,\text{HAE-J2000}}^{\text{SC}}`$ | RTN spacecraft-frame velocity rotated to HAE-J2000 coordinates |
+| `proton_sw_velocity_hae_sun`             | $`\mathbf{v}_{b,\text{HAE-J2000}}^{\text{sun}}`$ | RTN Sun-frame velocity rotated to HAE-J2000 coordinates |
+| `proton_sw_velocity_hae_covariance`      | $`\Sigma_{\mathbf{v},\text{HAE-J2000}}`$ | $`R_{\text{HAE-J2000}}\Sigma_{\mathbf{v}}R_{\text{HAE-J2000}}^{\top}`$ |
+| `proton_sw_velocity_hae_uncert`          | $`\sigma_{\mathbf{v},\text{HAE-J2000}}`$ | $`\sqrt{\operatorname{diag}(\Sigma_{\mathbf{v},\text{HAE-J2000}})}`$ |
 | `proton_sw_speed_sun`                         | $`v_{\text{sun}}`$          | $`\lvert\mathbf{v}_{b}^{\text{sun}}\rvert`$                                                                 |
 | `proton_sw_speed_sun_uncert`                  | $`\sigma_{v_{\text{sun}}}`$ | propagated through `uncertainties` from $`\mathbf{v}_{b}^{\text{sun}}`$                                       |
 | `swp_flags`                                   |                         | quality flag bitmask (see `SwapiL3Flags`)                                                            |
