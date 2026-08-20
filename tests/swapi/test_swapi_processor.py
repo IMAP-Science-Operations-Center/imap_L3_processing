@@ -7,6 +7,7 @@ import numpy as np
 from imap_data_access import config
 from imap_data_access.file_validation import Version
 from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput, AncillaryInput
+from spiceypy.utils.exceptions import SpiceyError
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 from imap_l3_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS, \
@@ -22,11 +23,79 @@ from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SWAPI_L2_DESCRIPTOR, SwapiL3ADependencies
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_vdf import DeltaMinusPlus
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
-from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
+from imap_l3_processing.swapi.swapi_processor import (
+    SwapiProcessor,
+    _add_velocity_products_in_target_frames,
+)
 from tests.test_helpers import create_mock_version_map
 
 
 class TestSwapiProcessor(TestCase):
+    @patch(
+        "imap_l3_processing.swapi.swapi_processor.convert_velocity_covariance_rtn_to_frame"
+    )
+    @patch("imap_l3_processing.swapi.swapi_processor.convert_velocity_rtn_to_frame")
+    def test_target_frame_conversion_fills_only_epoch_with_spice_gap(
+        self, mock_convert_velocity, mock_convert_covariance
+    ):
+        result = {
+            "epoch": np.array([1, 2, 3]),
+            "proton_sw_velocity_rtn": np.ones((3, 3)),
+            "proton_sw_velocity_rtn_sun": np.full((3, 3), 2.0),
+            "proton_sw_velocity_rtn_covariance": np.repeat(
+                np.eye(3)[np.newaxis, ...], 3, axis=0
+            ),
+        }
+
+        def convert_velocity(epoch, value, _target_frame):
+            if epoch[0] == 2:
+                raise SpiceyError("SPICE gap")
+            return value * 10
+
+        mock_convert_velocity.side_effect = convert_velocity
+        mock_convert_covariance.side_effect = lambda epoch, value, frame: value * 10
+
+        with self.assertLogs(
+            "imap_l3_processing.swapi.swapi_processor", level="WARNING"
+        ):
+            _add_velocity_products_in_target_frames(result, "proton")
+
+        for frame in ("gse", "gsm", "hae"):
+            np.testing.assert_array_equal(
+                result[f"proton_sw_velocity_{frame}"][[0, 2]], 10
+            )
+            np.testing.assert_array_equal(
+                result[f"proton_sw_velocity_{frame}_sun"][[0, 2]], 20
+            )
+            np.testing.assert_array_equal(
+                result[f"proton_sw_velocity_{frame}_covariance"][[0, 2]],
+                np.repeat((np.eye(3) * 10)[np.newaxis, ...], 2, axis=0),
+            )
+            self.assertTrue(np.all(np.isnan(result[f"proton_sw_velocity_{frame}"][1])))
+            self.assertTrue(
+                np.all(np.isnan(result[f"proton_sw_velocity_{frame}_sun"][1]))
+            )
+            self.assertTrue(
+                np.all(
+                    np.isnan(result[f"proton_sw_velocity_{frame}_covariance"][1])
+                )
+            )
+
+    @patch(
+        "imap_l3_processing.swapi.swapi_processor._convert_velocity_products_at_epoch",
+        side_effect=RuntimeError("unexpected failure"),
+    )
+    def test_target_frame_conversion_propagates_unexpected_errors(self, _mock_convert):
+        result = {
+            "epoch": np.array([1]),
+            "proton_sw_velocity_rtn": np.ones((1, 3)),
+            "proton_sw_velocity_rtn_sun": np.ones((1, 3)),
+            "proton_sw_velocity_rtn_covariance": np.ones((1, 3, 3)),
+        }
+
+        with self.assertRaisesRegex(RuntimeError, "unexpected failure"):
+            _add_velocity_products_in_target_frames(result, "proton")
+
     @patch('imap_l3_processing.utils.ImapAttributeManager')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3PickupIonData')
     @patch('imap_l3_processing.utils.write_cdf')
@@ -193,6 +262,8 @@ class TestSwapiProcessor(TestCase):
         mock_write_cdf.assert_called_once_with(str(expected_cdf_path), pickup_ion_data, mock_manager)
         self.assertEqual([expected_cdf_path], product)
 
+    @patch('imap_l3_processing.swapi.swapi_processor.convert_velocity_covariance_rtn_to_frame')
+    @patch('imap_l3_processing.swapi.swapi_processor.convert_velocity_rtn_to_frame')
     @patch('imap_l3_processing.utils.ImapAttributeManager')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3ProtonSolarWindData')
     @patch('imap_l3_processing.utils.write_cdf')
@@ -206,7 +277,9 @@ class TestSwapiProcessor(TestCase):
                                 mock_parallel_chunk_runner_class,
                                 mock_write_cdf,
                                 mock_proton_solar_wind_data_constructor,
-                                mock_imap_attribute_manager):
+                                mock_imap_attribute_manager,
+                                mock_convert_velocity,
+                                mock_convert_covariance):
         instrument = 'swapi'
         incoming_data_level = 'l2'
         dependency_start_date = datetime.strftime(datetime(2025, 1, 1), "%Y%m%d")
@@ -258,6 +331,8 @@ class TestSwapiProcessor(TestCase):
         )
         mock_runner = mock_parallel_chunk_runner_class.return_value
         mock_runner.run.return_value = runner_result
+        mock_convert_velocity.side_effect = lambda epoch, value, frame: value
+        mock_convert_covariance.side_effect = lambda epoch, value, frame: value
 
         input_file_names = [
             f'imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
@@ -314,6 +389,12 @@ class TestSwapiProcessor(TestCase):
         self.assertEqual(expected_proton_metadata, actual_positional[0])
         for key, expected_val in runner_result.items():
             np.testing.assert_array_equal(expected_val, actual_kwargs[key])
+        for frame in ("gse", "gsm", "hae"):
+            self.assertIn(f"proton_sw_velocity_{frame}", actual_kwargs)
+            self.assertIn(f"proton_sw_velocity_{frame}_sun", actual_kwargs)
+            self.assertIn(f"proton_sw_velocity_{frame}_covariance", actual_kwargs)
+        self.assertEqual(6, mock_convert_velocity.call_count)
+        self.assertEqual(3, mock_convert_covariance.call_count)
 
         mock_manager.add_global_attribute.assert_has_calls([call("Data_version", outgoing_version),
                                                             call("Generation_date",
@@ -330,6 +411,8 @@ class TestSwapiProcessor(TestCase):
         mock_write_cdf.assert_called_once_with(str(expected_cdf_path), proton_solar_wind_data, mock_manager)
         self.assertEqual([expected_cdf_path], product)
 
+    @patch('imap_l3_processing.swapi.swapi_processor.convert_velocity_covariance_rtn_to_frame')
+    @patch('imap_l3_processing.swapi.swapi_processor.convert_velocity_rtn_to_frame')
     @patch('imap_l3_processing.utils.ImapAttributeManager')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3AlphaSolarWindData')
     @patch('imap_l3_processing.utils.write_cdf')
@@ -343,7 +426,9 @@ class TestSwapiProcessor(TestCase):
                                mock_parallel_chunk_runner_class,
                                mock_write_cdf,
                                mock_alpha_solar_wind_data_constructor,
-                               mock_imap_attribute_manager):
+                               mock_imap_attribute_manager,
+                               mock_convert_velocity,
+                               mock_convert_covariance):
         instrument = 'swapi'
         incoming_data_level = 'l2'
         dependency_start_date = datetime.strftime(datetime(2025, 1, 1), "%Y%m%d")
@@ -385,6 +470,8 @@ class TestSwapiProcessor(TestCase):
         )
         mock_runner = mock_parallel_chunk_runner_class.return_value
         mock_runner.run.return_value = runner_result
+        mock_convert_velocity.side_effect = lambda epoch, value, frame: value
+        mock_convert_covariance.side_effect = lambda epoch, value, frame: value
 
         science_input = ScienceInput(
             f'imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf')
@@ -441,6 +528,12 @@ class TestSwapiProcessor(TestCase):
         self.assertEqual(expected_alpha_metadata, actual_positional[0])
         for key, expected_val in runner_result.items():
             np.testing.assert_array_equal(expected_val, actual_kwargs[key])
+        for frame in ("gse", "gsm", "hae"):
+            self.assertIn(f"alpha_sw_velocity_{frame}", actual_kwargs)
+            self.assertIn(f"alpha_sw_velocity_{frame}_sun", actual_kwargs)
+            self.assertIn(f"alpha_sw_velocity_{frame}_covariance", actual_kwargs)
+        self.assertEqual(6, mock_convert_velocity.call_count)
+        self.assertEqual(3, mock_convert_covariance.call_count)
 
         mock_manager.add_global_attribute.assert_has_calls([
             call("Data_version", outgoing_version),
