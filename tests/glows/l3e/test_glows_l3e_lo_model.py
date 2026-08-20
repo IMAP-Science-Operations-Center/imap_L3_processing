@@ -1,5 +1,5 @@
 import unittest
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import sentinel, Mock, MagicMock, patch
 
 import numpy as np
@@ -10,7 +10,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData, SPIN
     PROBABILITY_OF_SURVIVAL_VAR_NAME, ENERGY_LABEL_VAR_NAME, SPIN_ANGLE_LABEL_VAR_NAME, ELONGATION_VAR_NAME, \
     PROGRAM_VERSION_VAR_NAME, SPACECRAFT_RADIUS_VAR_NAME, SPACECRAFT_LONGITUDE_VAR_NAME, SPACECRAFT_LATITUDE_VAR_NAME, \
     SPACECRAFT_VELOCITY_X_VAR_NAME, SPACECRAFT_VELOCITY_Y_VAR_NAME, SPACECRAFT_VELOCITY_Z_VAR_NAME, \
-    GLOWS_FLAGS_VAR_NAME, ENERGY_DELTA_PLUS_VAR_NAME, ENERGY_DELTA_MINUS_VAR_NAME
+    GLOWS_FLAGS_VAR_NAME, ENERGY_DELTA_PLUS_VAR_NAME, ENERGY_DELTA_MINUS_VAR_NAME, EPOCH_DELTA_CDF_VAR_NAME
 from imap_l3_processing.models import DataProductVariable
 from tests.test_helpers import get_test_instrument_team_data_path, NumpyArrayMatcher
 
@@ -37,6 +37,7 @@ class TestL3eLoModel(unittest.TestCase):
                 l3e_lo: GlowsL3ELoData = GlowsL3ELoData(
                         Mock(),
                         sentinel.epoch,
+                        sentinel.epoch_delta,
                         energy_array,
                         sentinel.energy_delta_plus,
                         sentinel.energy_delta_minus,
@@ -59,6 +60,7 @@ class TestL3eLoModel(unittest.TestCase):
 
                 expected_data_products = [
                         DataProductVariable(EPOCH_CDF_VAR_NAME, sentinel.epoch),
+                        DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, sentinel.epoch_delta),
                         DataProductVariable(ENERGY_VAR_NAME, energy_array),
                         DataProductVariable(ENERGY_DELTA_PLUS_VAR_NAME, sentinel.energy_delta_plus),
                         DataProductVariable(ENERGY_DELTA_MINUS_VAR_NAME, sentinel.energy_delta_minus),
@@ -84,6 +86,8 @@ class TestL3eLoModel(unittest.TestCase):
     def test_convert_dat_to_glows_l3e_lo_product(self, mock_calculate_energy_deltas):
         lo_file_path = get_test_instrument_team_data_path("glows/probSur.Imap.Lo_20090101_010101_2009.000_60.00.txt")
         epoch = datetime(year=2009, month=1, day=1)
+        epoch_delta = timedelta(hours=3)
+        expected_epoch_delta_in_nanoseconds = 3*3600*1e9
         expected_energy = [0.1700000, 0.2212954, 0.2880685, 0.3749897, 0.4881381, 0.6354278, 0.8271602, 1.0767456,
                            1.4016403, 1.8245678, 2.3751086, 3.0917682, 4.0246710]
 
@@ -179,12 +183,14 @@ class TestL3eLoModel(unittest.TestCase):
 
         l3e_lo_product: GlowsL3ELoData = GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product(mock_metadata, lo_file_path,
                                                                                             epoch,
+                                                                                            epoch_delta,
                                                                                             elongation_value,
                                                                                             args)
 
         mock_calculate_energy_deltas.assert_called_once_with(NumpyArrayMatcher(l3e_lo_product.energy))
 
         np.testing.assert_equal([epoch], l3e_lo_product.epoch, strict=True)
+        np.testing.assert_equal([expected_epoch_delta_in_nanoseconds], l3e_lo_product.epoch_delta, strict=True)
         np.testing.assert_equal(l3e_lo_product.energy, expected_energy, strict=True)
         np.testing.assert_equal(l3e_lo_product.energy_delta_plus, sentinel.energy_delta_plus)
         np.testing.assert_equal(l3e_lo_product.energy_delta_minus, sentinel.energy_delta_minus,)

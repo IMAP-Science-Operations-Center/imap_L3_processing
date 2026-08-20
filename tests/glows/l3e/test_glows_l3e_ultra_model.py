@@ -1,11 +1,11 @@
 import unittest
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import sentinel, Mock, MagicMock, patch
 
 import numpy as np
 
 from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments, GlowsL3eSpacecraftInfo
-from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData, EPOCH_CDF_VAR_NAME, ENERGY_VAR_NAME, \
+from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData, EPOCH_CDF_VAR_NAME, EPOCH_DELTA_CDF_VAR_NAME, ENERGY_VAR_NAME, \
     PROBABILITY_OF_SURVIVAL_VAR_NAME, HEALPIX_INDEX_VAR_NAME, ENERGY_LABEL_VAR_NAME, PIXEL_INDEX_LABEL_VAR_NAME, \
     SPIN_AXIS_LATITUDE_VAR_NAME, SPIN_AXIS_LONGITUDE_VAR_NAME, PROGRAM_VERSION_VAR_NAME, SPACECRAFT_RADIUS_VAR_NAME, \
     SPACECRAFT_LONGITUDE_VAR_NAME, SPACECRAFT_LATITUDE_VAR_NAME, SPACECRAFT_VELOCITY_X_VAR_NAME, \
@@ -39,6 +39,7 @@ class TestL3eUltraModel(unittest.TestCase):
                 l3e_ultra: GlowsL3EUltraData = GlowsL3EUltraData(
                     Mock(),
                     sentinel.epoch,
+                    sentinel.epoch_delta,
                     energy_array,
                     sentinel.energy_delta_plus,
                     sentinel.energy_delta_minus,
@@ -62,6 +63,7 @@ class TestL3eUltraModel(unittest.TestCase):
 
                 expected_data_products = [
                     DataProductVariable(EPOCH_CDF_VAR_NAME, sentinel.epoch),
+                    DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, sentinel.epoch_delta),
                     DataProductVariable(ENERGY_VAR_NAME, energy_array),
                     DataProductVariable(ENERGY_DELTA_PLUS_VAR_NAME, sentinel.energy_delta_plus),
                     DataProductVariable(ENERGY_DELTA_MINUS_VAR_NAME, sentinel.energy_delta_minus),
@@ -90,6 +92,9 @@ class TestL3eUltraModel(unittest.TestCase):
     def test_convert_dat_to_glows_l3e_ul_product(self, mock_calculate_energy_deltas):
         ul_file_path = get_test_instrument_team_data_path("glows/probSur.Imap.Ul_20250420_000000_2025.300.txt")
         expected_epoch = datetime(year=2009, month=1, day=1)
+        epoch_delta = timedelta(hours=10)
+        expected_epoch_delta_in_nanoseconds = 10*3600*1e9
+
         mock_calculate_energy_deltas.return_value = sentinel.energy_delta_plus, sentinel.energy_delta_minus
         expected_energy = np.array(
             [2.3751086, 3.0917682, 4.0246710, 5.2390656, 6.8198887, 8.8777057, 11.5564435, 15.0434572, 19.5826341,
@@ -142,11 +147,13 @@ class TestL3eUltraModel(unittest.TestCase):
         l3e_ul_product: GlowsL3EUltraData = GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product(mock_metadata,
                                                                                                   ul_file_path,
                                                                                                   expected_epoch,
+                                                                                                  epoch_delta,
                                                                                                   args)
 
         mock_calculate_energy_deltas.assert_called_once_with(NumpyArrayMatcher(l3e_ul_product.energy),)
 
         np.testing.assert_equal([expected_epoch], l3e_ul_product.epoch, strict=True)
+        np.testing.assert_equal([expected_epoch_delta_in_nanoseconds], l3e_ul_product.epoch_delta, strict=True)
 
         np.testing.assert_equal(l3e_ul_product.energy, expected_energy, strict=True)
         np.testing.assert_equal(l3e_ul_product.energy_delta_plus, sentinel.energy_delta_plus, strict=True)

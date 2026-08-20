@@ -13,10 +13,28 @@ epoch:
   FILLVAL: 9999-12-31T23:59:59.999999999
   TIME_BASE: J2000
   TIME_SCALE: TT
+  DELTA_PLUS_VAR: epoch_delta
+  DELTA_MINUS_VAR: epoch_delta
   MONOTON: INCREASE
   REFERENCE_POSITION: Rotating Earth Geoid
   SCALETYP: linear
   SI_CONVERSION: 1e-9>seconds
+epoch_delta:
+  NAME: epoch_delta
+  CATDESC: Epoch delta
+  FIELDNAM: Epoch Delta
+  DATA_TYPE: CDF_INT8
+  FORMAT: I15
+  UNITS: ns
+  VALIDMIN: 0
+  VALIDMAX: 999999999999999
+  FILLVAL: -9223372036854775808
+  SCALETYP: linear
+  LABLAXIS: Epoch delta
+  DEPEND_0: epoch
+  RECORD_VARYING: RV
+  VAR_TYPE: support_data
+  VAR_NOTES: Time duration of the IMAP spacecraft pointing for which this grid is valid.
 energy_grid:
   NAME: energy_grid
   DATA_TYPE: CDF_DOUBLE
@@ -95,6 +113,7 @@ surv_prob:
   FILLVAL: -1.0000E+31
   LABL_PTR_1: energy_label
   LABL_PTR_2: healpix_index_label
+  VAR_NOTES: Calculated from model at given point in time, space, and energy.
 spin_axis_latitude:
   NAME: spin_axis_latitude
   DATA_TYPE: CDF_FLOAT

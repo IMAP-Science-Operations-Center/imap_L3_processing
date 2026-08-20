@@ -1402,7 +1402,7 @@ class TestGlowsProcessor(unittest.TestCase):
         output_data_path = Path("probSur.Imap.Ul_20241007_000000_date.001.dat")
 
         mock_convert_dat_to_glows_l3e_ul_product.assert_called_once_with(
-            expected_input_metadata, output_data_path, expected_repointing_midpoint, call_args_object)
+            expected_input_metadata, output_data_path, expected_repointing_midpoint, epoch_delta, call_args_object)
 
         expected_first_data_path = AncillaryFilePath(
             "imap_glows_survival-probability-ul-sf-raw_20241007_v012.dat").construct_path()
@@ -1489,7 +1489,7 @@ class TestGlowsProcessor(unittest.TestCase):
         output_data_path = Path("probSur.Imap.Ul.V0_20241007_000000_date.001.dat")
 
         mock_convert_dat_to_glows_l3e_ul_product.assert_called_once_with(
-            input_metadata, output_data_path, expected_repointing_midpoint, expected_rest_frame_args)
+            input_metadata, output_data_path, expected_repointing_midpoint, epoch_delta, expected_rest_frame_args)
 
         expected_first_data_path = AncillaryFilePath(
             "imap_glows_survival-probability-ul-hf-raw_20241007_v012.dat").construct_path()
@@ -1572,6 +1572,7 @@ class TestGlowsProcessor(unittest.TestCase):
                     expected_input_metadata,
                     first_output_data_path,
                     expected_repointing_midpoint,
+                    epoch_delta,
                     mock_call_args_object
                 )
 
@@ -1662,6 +1663,7 @@ class TestGlowsProcessor(unittest.TestCase):
                 mock_convert_dat_to_glows_l3e_lo_product.assert_called_once_with(expected_input_metadata,
                                                                                  first_output_file_path,
                                                                                  expected_repointing_midpoint,
+                                                                                 epoch_delta,
                                                                                  elongation, l3e_args)
 
                 expected_first_output_file_path = AncillaryFilePath(

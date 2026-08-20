@@ -1,15 +1,17 @@
 import re
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import numpy as np
 
+from imap_l3_processing.constants import ONE_SECOND_IN_NANOSECONDS
 from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
 from imap_l3_processing.glows.l3e.glows_l3e_utils import calculate_energy_deltas
 from imap_l3_processing.models import DataProduct, DataProductVariable, InputMetadata
 
 EPOCH_CDF_VAR_NAME = "epoch"
+EPOCH_DELTA_CDF_VAR_NAME = "epoch_delta"
 ENERGY_VAR_NAME = "energy_grid"
 ENERGY_DELTA_PLUS_VAR_NAME = "energy_delta_plus"
 ENERGY_DELTA_MINUS_VAR_NAME = "energy_delta_minus"
@@ -35,6 +37,7 @@ GLOWS_FLAGS_VAR_NAME = "glows_flags"
 @dataclass
 class GlowsL3EUltraData(DataProduct):
     epoch: np.ndarray[datetime]
+    epoch_delta: np.ndarray
     energy: np.ndarray
     energy_delta_plus: np.ndarray
     energy_delta_minus: np.ndarray
@@ -57,6 +60,7 @@ class GlowsL3EUltraData(DataProduct):
     @classmethod
     def convert_dat_to_glows_l3e_ul_product(cls, input_metadata: InputMetadata, file_path: Path,
                                             epoch: datetime,
+                                            epoch_delta: timedelta,
                                             args: GlowsL3eCallArguments):
         with open(file_path) as input_data:
             lines = input_data.readlines()
@@ -93,6 +97,7 @@ class GlowsL3EUltraData(DataProduct):
         return cls(
             input_metadata,
             epoch=np.array([epoch]),
+            epoch_delta=np.array([epoch_delta.total_seconds() * ONE_SECOND_IN_NANOSECONDS]),
             energy=energies,
             energy_delta_plus=energy_delta_plus,
             energy_delta_minus=energy_delta_minus,
@@ -118,6 +123,7 @@ class GlowsL3EUltraData(DataProduct):
         pixel_labels = [f"{i:.0f}" for i in self.healpix_index]
         return [
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch),
+            DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, self.epoch_delta),
             DataProductVariable(ENERGY_VAR_NAME, self.energy),
             DataProductVariable(ENERGY_DELTA_PLUS_VAR_NAME, self.energy_delta_plus),
             DataProductVariable(ENERGY_DELTA_MINUS_VAR_NAME, self.energy_delta_minus),
