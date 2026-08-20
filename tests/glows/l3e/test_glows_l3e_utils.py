@@ -34,7 +34,7 @@ from imap_l3_processing.glows.l3e.glows_l3e_utils import (
     compute_glows_flags_for_repoint,
     get_repoint_numbers_within_cr_window,
     determine_spacecraft_info_for_l3e_executable,
-    determine_spacecraft_info_using_predict_if_needed,
+    determine_spacecraft_info_using_predict_if_needed, calculate_energy_deltas,
 )
 from imap_l3_processing.glows.l3e.reprocess_info import ReprocessInfo, ReprocessTargets
 from imap_l3_processing.glows.quality_flags import GlowsL3Flags
@@ -677,3 +677,14 @@ class TestGlowsL3EUtils(unittest.TestCase):
 
         self.assertEqual([repoint_number], result.repointing_numbers)
         self.assertEqual(expected_versions_for_lo_repoint_number, result.lo_repointings)
+
+
+    def test_calculate_energy_deltas(self):
+        centers = np.array([10, 1000, 100000])
+        expected_energy_delta_minus = np.array([9, 900, 90000])
+        expected_energy_delta_plus = np.array([90, 9000, 900000])
+
+        actual_energy_delta_plus, actual_energy_delta_minus = calculate_energy_deltas(centers)
+
+        np.testing.assert_array_equal(actual_energy_delta_plus, expected_energy_delta_plus)
+        np.testing.assert_array_equal(actual_energy_delta_minus, expected_energy_delta_minus)

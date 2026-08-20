@@ -1,12 +1,30 @@
+from typing import Union, TypeVar
+
+import numpy as np
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies
 from imap_l3_processing.maps.map_descriptors import ReferenceFrame
-from imap_l3_processing.maps.map_models import RectangularIntensityMapData, IntensityMapData
+from imap_l3_processing.maps.map_models import RectangularIntensityMapData, IntensityMapData, \
+    InputRectangularPointingSet, GlowsL3eRectangularMapInputData
 from imap_l3_processing.maps.rectangular_survival_probability import RectangularSurvivalProbabilityPointingSet, \
     RectangularSurvivalProbabilitySkyMap
-from imap_l3_processing.utils import combine_glows_l3e_with_l1c_pointing, filter_bad_days
+from imap_l3_processing.ultra.models import UltraGlowsL3eData, UltraL1CPSet
 
+L1CPointingSet = TypeVar("L1CPointingSet", bound=Union[InputRectangularPointingSet, UltraL1CPSet])
+GlowsL3eData = TypeVar("GlowsL3eData", bound=Union[GlowsL3eRectangularMapInputData, UltraGlowsL3eData])
+
+
+def combine_glows_l3e_with_l1c_pointing(glows_l3e_data: list[GlowsL3eData], l1c_data: list[L1CPointingSet]) -> list[
+    tuple[L1CPointingSet, GlowsL3eData]]:
+    l1c_by_repoint = {l1c.repointing: l1c for l1c in l1c_data}
+    glows_by_repoint = {l3e.repointing: l3e for l3e in glows_l3e_data}
+
+    return [(l1c_by_repoint[repoint], glows_by_repoint[repoint])
+            for repoint in l1c_by_repoint.keys() if repoint in glows_by_repoint]
+
+def filter_bad_days(input_psets: list[L1CPointingSet]) -> list[L1CPointingSet]:
+    return [pset for pset in input_psets if not np.all(pset.exposure_times == 0.0)]
 
 def process_survival_probabilities(survival_probabilities_dependencies: HiLoL3SurvivalDependencies,
                                    spice_frame_name: SpiceFrame, cg_corrected: bool = None) \

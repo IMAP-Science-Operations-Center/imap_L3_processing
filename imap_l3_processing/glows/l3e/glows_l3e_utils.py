@@ -257,4 +257,14 @@ def get_repoint_numbers_within_cr_window(start_cr_number: int | None, end_cr_num
 
     return repoint_numbers
 
+def calculate_energy_deltas(centers: np.ndarray):
+    edges = np.empty_like(centers, shape=(len(centers) + 1,))
+    edges[1:-1] = np.sqrt(centers[1:] * centers[:-1])
+    edges[0] = np.sqrt(centers[0] / centers[1]) * centers[0]
+    edges[-1] = np.sqrt(centers[-1] / centers[-2]) * centers[-1]
+
+    delta_plus = edges[1:] - centers
+    delta_minus = centers - edges[:-1]
+
+    return delta_plus, delta_minus
 

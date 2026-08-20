@@ -10,14 +10,13 @@ import numpy as np
 from imap_data_access import config
 from imap_data_access.file_validation import Version
 from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection
-from imap_processing.spice.geometry import SpiceFrame, imap_state, get_rotation_matrix
+from imap_processing.spice.geometry import SpiceFrame, imap_state
 from requests import RequestException
 from spacepy.pycdf import CDF
 from spiceypy import KernelPool, spiceypy, SpiceyError
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH, TT2000_EPOCH
-from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet, \
-    RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct
+from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct
 from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
@@ -26,7 +25,6 @@ from imap_l3_processing.utils import (
     read_mag_data,
     save_data,
     download_external_dependency,
-    combine_glows_l3e_with_l1c_pointing,
     furnish_local_spice,
     get_spice_parent_file_names,
     furnish_spice_metakernel,
@@ -34,7 +32,6 @@ from imap_l3_processing.utils import (
     FurnishMetakernelOutput,
     read_cdf_parents,
     get_dependency_paths_by_descriptor,
-    filter_bad_days,
     get_version_from_query_result,
     get_temp_cache_dir,
     PredictedEphemerisTracker,
@@ -48,13 +45,9 @@ from tests.maps.test_builders import (
 from tests.test_helpers import (
     get_spice_data_path,
     with_tempdir,
-    create_dataclass_mock,
     create_mock_version_map,
     get_integration_test_spice_data_path,
 )
-
-
-
 
 
 class TestUtils(TestCase):
@@ -448,45 +441,6 @@ class TestUtils(TestCase):
 
                 np.testing.assert_array_equal(epoch, results.epoch)
                 np.testing.assert_array_equal(trimmed_vectors, results.mag_data)
-
-    def test_combine_glows_l3e_with_l1c_pointing(self):
-        glows_l3e_data = [
-            create_dataclass_mock(GlowsL3eRectangularMapInputData, repointing=0),
-            create_dataclass_mock(GlowsL3eRectangularMapInputData, repointing=0),
-            create_dataclass_mock(GlowsL3eRectangularMapInputData, repointing=1),
-            create_dataclass_mock(GlowsL3eRectangularMapInputData, repointing=3),
-        ]
-
-        hi_l1c_data = [
-            create_dataclass_mock(InputRectangularPointingSet, repointing=1),
-            create_dataclass_mock(InputRectangularPointingSet, repointing=2),
-            create_dataclass_mock(InputRectangularPointingSet, repointing=3),
-            create_dataclass_mock(InputRectangularPointingSet, repointing=4)
-        ]
-
-        expected = [
-            (hi_l1c_data[0], glows_l3e_data[2]),
-            (hi_l1c_data[2], glows_l3e_data[3]),
-        ]
-
-        actual = combine_glows_l3e_with_l1c_pointing(glows_l3e_data, hi_l1c_data)
-
-        self.assertEqual(expected, actual)
-
-    def test_filter_bad_days(self):
-        good_day_exposures = np.full((1, 7, 3600, 40), 100.0)
-        bad_day_exposures = np.zeros((1, 7, 3600, 40))
-
-        hi_l1c_data = [
-            create_dataclass_mock(InputRectangularPointingSet, exposure_times=good_day_exposures.copy()),
-            create_dataclass_mock(InputRectangularPointingSet, exposure_times=bad_day_exposures.copy()),
-            create_dataclass_mock(InputRectangularPointingSet, exposure_times=good_day_exposures.copy()),
-            create_dataclass_mock(InputRectangularPointingSet, exposure_times=bad_day_exposures.copy())
-        ]
-
-        filtered_psets = filter_bad_days(hi_l1c_data)
-
-        self.assertEqual([hi_l1c_data[0], hi_l1c_data[2]], filtered_psets)
 
     @patch("imap_l3_processing.utils.spiceypy")
     def test_furnish_local_spice(self, mock_spiceypy):

@@ -6,10 +6,13 @@ from pathlib import Path
 import numpy as np
 
 from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
+from imap_l3_processing.glows.l3e.glows_l3e_utils import calculate_energy_deltas
 from imap_l3_processing.models import DataProduct, DataProductVariable, InputMetadata
 
 EPOCH_CDF_VAR_NAME = "epoch"
 ENERGY_VAR_NAME = "energy_grid"
+ENERGY_DELTA_PLUS_VAR_NAME = "energy_delta_plus"
+ENERGY_DELTA_MINUS_VAR_NAME = "energy_delta_minus"
 PROBABILITY_OF_SURVIVAL_VAR_NAME = "surv_prob"
 HEALPIX_INDEX_VAR_NAME = "healpix_index"
 ENERGY_LABEL_VAR_NAME = "energy_label"
@@ -33,6 +36,8 @@ GLOWS_FLAGS_VAR_NAME = "glows_flags"
 class GlowsL3EUltraData(DataProduct):
     epoch: np.ndarray[datetime]
     energy: np.ndarray
+    energy_delta_plus: np.ndarray
+    energy_delta_minus: np.ndarray
     healpix_index: np.ndarray
     probability_of_survival: np.ndarray
     spin_axis_lat: np.ndarray
@@ -83,10 +88,14 @@ class GlowsL3EUltraData(DataProduct):
 
         transposed_prob_sur = np.array([probability_of_survival_to_return])
 
+        energy_delta_plus, energy_delta_minus = calculate_energy_deltas(energies)
+
         return cls(
             input_metadata,
             epoch=np.array([epoch]),
             energy=energies,
+            energy_delta_plus=energy_delta_plus,
+            energy_delta_minus=energy_delta_minus,
             healpix_index=healpix_indexes,
             probability_of_survival=transposed_prob_sur,
             spin_axis_lat=np.array([args.spacecraft_info.spin_axis_latitude]),
@@ -110,6 +119,8 @@ class GlowsL3EUltraData(DataProduct):
         return [
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch),
             DataProductVariable(ENERGY_VAR_NAME, self.energy),
+            DataProductVariable(ENERGY_DELTA_PLUS_VAR_NAME, self.energy_delta_plus),
+            DataProductVariable(ENERGY_DELTA_MINUS_VAR_NAME, self.energy_delta_minus),
             DataProductVariable(HEALPIX_INDEX_VAR_NAME, self.healpix_index),
             DataProductVariable(PROBABILITY_OF_SURVIVAL_VAR_NAME, self.probability_of_survival),
             DataProductVariable(ENERGY_LABEL_VAR_NAME, energy_labels),

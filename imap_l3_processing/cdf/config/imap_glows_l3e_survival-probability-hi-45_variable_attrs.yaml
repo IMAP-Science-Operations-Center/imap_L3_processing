@@ -31,6 +31,37 @@ energy_grid:
   VALIDMAX: 10000000000
   FILLVAL: -1.0000E+31
   SCALETYP: log
+  DELTA_PLUS_VAR: energy_delta_plus
+  DELTA_MINUS_VAR: energy_delta_minus
+  VAR_NOTES: Calculated by interpolation to this specific point energy. Bin width is for ease of plotting and does not represent a range of measurement energies.
+energy_delta_plus:
+  NAME: energy_delta_plus
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Energies delta plus associated with the survival probabilities for IMAP-Hi
+  VAR_TYPE: support_data
+  RECORD_VARYING: NRV
+  FIELDNAM: Energy delta plus
+  FORMAT: g9.3
+  LABLAXIS: energy
+  UNITS: keV
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.0000E+31
+  SCALETYP: log
+energy_delta_minus:
+  NAME: energy_delta_minus
+  DATA_TYPE: CDF_FLOAT
+  CATDESC: Energies delta minus associated with the survival probabilities for IMAP-Hi
+  VAR_TYPE: support_data
+  RECORD_VARYING: NRV
+  FIELDNAM: Energy delta minus
+  FORMAT: g9.3
+  LABLAXIS: energy
+  UNITS: keV
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.0000E+31
+  SCALETYP: log
 spin_angle:
   NAME: spin_angle
   DATA_TYPE: CDF_FLOAT

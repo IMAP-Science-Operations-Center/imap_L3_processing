@@ -35,6 +35,7 @@ from imap_l3_processing.maps.map_processor import MapProcessor
 from imap_l3_processing.maps.quality_flags import MapL3Flags
 from imap_l3_processing.maps.spectral_fit import calculate_spectral_index_for_multiple_ranges, \
     slice_energy_range_by_bin, fit_spectral_index_map
+from imap_l3_processing.maps.survival_probability_processing import combine_glows_l3e_with_l1c_pointing
 from imap_l3_processing.ultra.science.ultra_survival_probability import UltraSurvivalProbabilitySkyMap, \
     UltraSurvivalProbability
 from imap_l3_processing.ultra.ultra_l3_dependencies import (
@@ -44,7 +45,6 @@ from imap_l3_processing.ultra.ultra_l3_dependencies import (
 )
 from imap_l3_processing.utils import (
     save_data,
-    combine_glows_l3e_with_l1c_pointing,
     get_temp_cache_dir,
 )
 

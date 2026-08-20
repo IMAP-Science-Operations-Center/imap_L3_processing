@@ -8,10 +8,13 @@ from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import HiLoL3SurvivalDependencies
 from imap_l3_processing.maps.map_descriptors import PixelSize, parse_map_descriptor, ReferenceFrame
+from imap_l3_processing.maps.map_models import GlowsL3eRectangularMapInputData, InputRectangularPointingSet
 from imap_l3_processing.maps.quality_flags import MapL3Flags
-from imap_l3_processing.maps.survival_probability_processing import process_survival_probabilities
+from imap_l3_processing.maps.survival_probability_processing import process_survival_probabilities, \
+    combine_glows_l3e_with_l1c_pointing, filter_bad_days
 from tests.maps.test_builders import create_rectangular_intensity_map_data, create_l1c_pset, create_l3e_pset
 from tests.spice_test_case import SpiceTestCase
+from tests.test_helpers import create_dataclass_mock
 
 
 class TestSurvivalProbabilityProcessing(SpiceTestCase):
@@ -269,3 +272,42 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
         np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 78, :], expected_sky_strip)
         np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 79, :], default_sp_sky_strip)
         np.testing.assert_equal(output_map.intensity_map_data.ena_intensity[0, 0, 80, :], expected_sky_strip)
+
+    def test_combine_glows_l3e_with_l1c_pointing(self):
+        glows_l3e_data = [
+            create_dataclass_mock(GlowsL3eRectangularMapInputData, repointing=0),
+            create_dataclass_mock(GlowsL3eRectangularMapInputData, repointing=0),
+            create_dataclass_mock(GlowsL3eRectangularMapInputData, repointing=1),
+            create_dataclass_mock(GlowsL3eRectangularMapInputData, repointing=3),
+        ]
+
+        hi_l1c_data = [
+            create_dataclass_mock(InputRectangularPointingSet, repointing=1),
+            create_dataclass_mock(InputRectangularPointingSet, repointing=2),
+            create_dataclass_mock(InputRectangularPointingSet, repointing=3),
+            create_dataclass_mock(InputRectangularPointingSet, repointing=4)
+        ]
+
+        expected = [
+            (hi_l1c_data[0], glows_l3e_data[2]),
+            (hi_l1c_data[2], glows_l3e_data[3]),
+        ]
+
+        actual = combine_glows_l3e_with_l1c_pointing(glows_l3e_data, hi_l1c_data)
+
+        self.assertEqual(expected, actual)
+
+    def test_filter_bad_days(self):
+        good_day_exposures = np.full((1, 7, 3600, 40), 100.0)
+        bad_day_exposures = np.zeros((1, 7, 3600, 40))
+
+        hi_l1c_data = [
+            create_dataclass_mock(InputRectangularPointingSet, exposure_times=good_day_exposures.copy()),
+            create_dataclass_mock(InputRectangularPointingSet, exposure_times=bad_day_exposures.copy()),
+            create_dataclass_mock(InputRectangularPointingSet, exposure_times=good_day_exposures.copy()),
+            create_dataclass_mock(InputRectangularPointingSet, exposure_times=bad_day_exposures.copy())
+        ]
+
+        filtered_psets = filter_bad_days(hi_l1c_data)
+
+        self.assertEqual([hi_l1c_data[0], hi_l1c_data[2]], filtered_psets)

@@ -6,10 +6,13 @@ from pathlib import Path
 import numpy as np
 
 from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments
+from imap_l3_processing.glows.l3e.glows_l3e_utils import calculate_energy_deltas
 from imap_l3_processing.models import DataProduct, DataProductVariable, InputMetadata
 
 EPOCH_CDF_VAR_NAME = "epoch"
 ENERGY_VAR_NAME = "energy_grid"
+ENERGY_DELTA_PLUS_VAR_NAME = "energy_delta_plus"
+ENERGY_DELTA_MINUS_VAR_NAME = "energy_delta_minus"
 SPIN_ANGLE_VAR_NAME = "spin_angle"
 PROBABILITY_OF_SURVIVAL_VAR_NAME = "surv_prob"
 ENERGY_LABEL_VAR_NAME = "energy_label"
@@ -31,6 +34,8 @@ GLOWS_FLAGS_VAR_NAME = "glows_flags"
 class GlowsL3ELoData(DataProduct):
     epoch: np.ndarray[datetime]
     energy: np.ndarray
+    energy_delta_plus: np.ndarray
+    energy_delta_minus: np.ndarray
     spin_angle: np.ndarray
     probability_of_survival: np.ndarray
     elongation: np.ndarray
@@ -62,10 +67,14 @@ class GlowsL3ELoData(DataProduct):
         spin_angles = spin_angle_and_survival_probabilities[:, 0]
         survival_probabilities = np.array([spin_angle_and_survival_probabilities[:, 1:].T])
 
+        energy_delta_plus, energy_delta_minus = calculate_energy_deltas(energies)
+
         return cls(
             input_metadata=input_metadata,
             epoch=np.array([epoch]),
             energy=energies,
+            energy_delta_plus=energy_delta_plus,
+            energy_delta_minus=energy_delta_minus,
             spin_angle=spin_angles,
             probability_of_survival=survival_probabilities,
             elongation=np.array([elongation]),
@@ -88,6 +97,8 @@ class GlowsL3ELoData(DataProduct):
         return [
             DataProductVariable(EPOCH_CDF_VAR_NAME, self.epoch),
             DataProductVariable(ENERGY_VAR_NAME, self.energy),
+            DataProductVariable(ENERGY_DELTA_PLUS_VAR_NAME, self.energy_delta_plus),
+            DataProductVariable(ENERGY_DELTA_MINUS_VAR_NAME, self.energy_delta_minus),
             DataProductVariable(SPIN_ANGLE_VAR_NAME, self.spin_angle),
             DataProductVariable(PROBABILITY_OF_SURVIVAL_VAR_NAME, self.probability_of_survival),
             DataProductVariable(ENERGY_LABEL_VAR_NAME, energy_labels),
