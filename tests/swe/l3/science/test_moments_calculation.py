@@ -391,49 +391,49 @@ class TestMomentsCalculation(unittest.TestCase):
         np.testing.assert_array_equal(actual_weights, [3, 1e-36, 10, 11, 12])
         np.testing.assert_array_equal(yreg, [np.log(3), -80.6, np.log(10), np.log(11), np.log(12)])
 
+    def test_rotate_dps_vector_to_rtn(self):
+        dsp_vector = np.array([0, 1, 0])
+        rotation_matrix = np.array([[0, 0, 1], [1, 0, 0], [0, 1, 0]])
+
+        cases = [
+            (rotation_matrix, rotation_matrix @ dsp_vector),
+            (np.full((3, 3), np.nan), np.full(3, np.nan)),
+        ]
+
+        for input_rotation_matrix, expected_rtn_vector in cases:
+            with self.subTest(input_rotation_matrix):
+                rtn_vector = rotate_dps_vector_to_rtn(input_rotation_matrix, dsp_vector)
+                np.testing.assert_array_equal(rtn_vector, expected_rtn_vector)
+
     @patch('imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.pxform')
     @patch('imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.datetime2et')
-    def test_rotate_dps_vector_to_rtn(self, mock_datetime2et, mock_pxform):
+    def test_get_dps_to_rtn_rotation_matrix_returns_pxform_result(self, mock_datetime2et, mock_pxform):
         epoch = datetime(year=2020, month=3, day=10)
-        dsp_vector = np.array([0, 1, 0])
         rotation_matrix = np.array([[0, 0, 1], [1, 0, 0], [0, 1, 0]])
         mock_pxform.return_value = rotation_matrix
 
-        rtn_vector = rotate_dps_vector_to_rtn(epoch, dsp_vector)
+        actual_rotation_matrix = moment_calculations.get_dps_to_rtn_rotation_matrix(epoch)
         mock_datetime2et.assert_called_once_with(epoch)
-
         mock_pxform.assert_called_once_with("IMAP_DPS", "IMAP_RTN", mock_datetime2et.return_value)
-
-        np.testing.assert_array_equal(rtn_vector, rotation_matrix @ dsp_vector)
+        np.testing.assert_array_equal(actual_rotation_matrix, rotation_matrix)
 
     @patch('imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.pxform')
     @patch('imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.datetime2et')
-    def test_rotate_dps_vector_to_rtn_excepts_and_catches(self, mock_datetime2et, mock_pxform):
+    def test_get_dps_to_rtn_rotation_matrix_propagates_spice_errors(self, mock_datetime2et, mock_pxform):
         epoch = datetime(year=2020, month=3, day=10)
-        dsp_vector = np.array([0, 1, 0])
         mock_pxform.side_effect = spiceypy.utils.exceptions.SpiceyError("Missing coverage for IMAP_DPS")
 
-        rtn_vector = rotate_dps_vector_to_rtn(epoch, dsp_vector)
-        mock_datetime2et.assert_called_once_with(epoch)
+        with self.assertRaises(spiceypy.utils.exceptions.SpiceyError):
+            moment_calculations.get_dps_to_rtn_rotation_matrix(epoch)
 
+        mock_datetime2et.assert_called_once_with(epoch)
         mock_pxform.assert_called_once_with("IMAP_DPS", "IMAP_RTN", mock_datetime2et.return_value)
 
-        np.testing.assert_array_equal(rtn_vector, np.full(3, np.nan))
-
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.pxform')
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.datetime2et')
-    def test_rotate_temperature(self, mock_datetime2et, mock_pxform):
-        epoch = datetime(year=2020, month=3, day=11)
+    def test_rotate_temperature(self):
         temperature_alpha = math.pi / 4
         temperature_beta = math.pi / 8
 
         rotation_matrix = np.array([[0, 0, 1], [1, 0, 0], [0, 1, 0]])
-        mock_pxform.return_value = rotation_matrix
-
-        theta, phi = rotate_temperature(epoch, temperature_alpha, temperature_beta)
-        mock_datetime2et.assert_called_once_with(epoch)
-
-        mock_pxform.assert_called_once_with("IMAP_DPS", "IMAP_RTN", mock_datetime2et.return_value)
 
         sin_dec = np.sin(temperature_beta)
         x = sin_dec * np.cos(temperature_alpha)
@@ -443,8 +443,21 @@ class TestMomentsCalculation(unittest.TestCase):
         expected_rtn_temperature = rotation_matrix @ np.array([x, y, z])
         expected_rtn_temperature /= np.linalg.norm(expected_rtn_temperature)
 
-        self.assertEqual(np.asin(expected_rtn_temperature[2]), theta)
-        self.assertEqual(np.atan2(expected_rtn_temperature[1], expected_rtn_temperature[0]), phi)
+        cases = [
+            (
+                rotation_matrix,
+                np.array([
+                    np.asin(expected_rtn_temperature[2]),
+                    np.atan2(expected_rtn_temperature[1], expected_rtn_temperature[0]),
+                ]),
+            ),
+            (np.full((3, 3), np.nan), np.full(2, np.nan)),
+        ]
+
+        for input_rotation_matrix, expected_angles in cases:
+            with self.subTest(input_rotation_matrix):
+                theta, phi = rotate_temperature(input_rotation_matrix, temperature_alpha, temperature_beta)
+                np.testing.assert_array_equal([theta, phi], expected_angles)
 
     def test_momscale(self):
         core_halo_break = 125.6
@@ -818,30 +831,23 @@ class TestMomentsCalculation(unittest.TestCase):
         np.testing.assert_allclose(np.array([-67.071986, 60.433456, -14.211044, 129.49805, 161.93695, 72.622535]),
                                    scaled_density.temperature, rtol=3e-5)
 
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.pxform')
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.datetime2et')
-    def test_rotate_heat_flux(self, mock_datetime2et, mock_pxform):
+    def test_rotate_heat_flux(self):
+        rotation_matrix = np.array([[0, 0, 1], [1, 0, 0], [0, 1, 0]])
+        nan_rotation_matrix = np.full((3, 3), np.nan)
         cases = [
-            ([0, 1, 0], 1, math.pi / 2, 0),
-            ([0, 0, 0], 0, 0, 0),
-            ([2, 0, 0], 2, 0, math.pi / 2),
-            ([0, 0, -1], 1, 0, math.pi),
+            (rotation_matrix, [0, 1, 0], 1, math.pi / 2, 0),
+            (rotation_matrix, [0, 0, 0], 0, 0, 0),
+            (rotation_matrix, [2, 0, 0], 2, 0, math.pi / 2),
+            (rotation_matrix, [0, 0, -1], 1, 0, math.pi),
+            (nan_rotation_matrix, [2, 0, 0], 2, np.nan, np.nan),
         ]
-        for input, expected_mag, expected_theta, expected_phi in cases:
-            mock_datetime2et.reset_mock()
+        for input_rotation_matrix, input, expected_mag, expected_theta, expected_phi in cases:
             with self.subTest(input):
-                epoch = datetime(year=2020, month=3, day=10)
                 dsp_vector = np.array(input)
-                rotation_matrix = np.array([[0, 0, 1], [1, 0, 0], [0, 1, 0]])
-                mock_pxform.return_value = rotation_matrix
 
-                magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(epoch, dsp_vector)
+                magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(input_rotation_matrix, dsp_vector)
 
-                mock_datetime2et.assert_called_once_with(epoch)
-
-                self.assertEqual(expected_mag, magnitude)
-                self.assertEqual(expected_theta, theta)
-                self.assertEqual(expected_phi, phi)
+                np.testing.assert_array_equal([magnitude, theta, phi], [expected_mag, expected_theta, expected_phi])
 
     def test_calculate_primary_eigenvector(self):
         cases = [

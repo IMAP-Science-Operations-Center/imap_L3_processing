@@ -374,14 +374,12 @@ def filter_and_flatten_regress_parameters(corrected_energy_bins: np.ndarray,
     return velocity_vectors[valid_mask], weights[valid_mask], yreg
 
 
-def rotate_dps_vector_to_rtn(epoch: datetime, vector: np.ndarray) -> np.ndarray:
-    et_time = spiceypy.datetime2et(epoch)
-    try:
-        rotation_matrix = spiceypy.pxform("IMAP_DPS", "IMAP_RTN", et_time)
-        return rotation_matrix @ vector
-    except spiceypy.SpiceyError as e:
-        logger.info(f"Failed to rotate the vector using the rotation matrix from pxform. Error:\n{e}")
-        return np.full(3, np.nan)
+def get_dps_to_rtn_rotation_matrix(epoch: datetime) -> np.ndarray:
+    return spiceypy.pxform("IMAP_DPS", "IMAP_RTN", spiceypy.datetime2et(epoch))
+
+
+def rotate_dps_vector_to_rtn(rotation_matrix: np.ndarray, vector: np.ndarray) -> np.ndarray:
+    return rotation_matrix @ vector
 
 
 def rotate_rtn_vectors_to_dps(epochs: np.ndarray, vectors_rtn: np.ndarray) -> np.ndarray:
@@ -397,13 +395,13 @@ def rotate_rtn_vectors_to_dps(epochs: np.ndarray, vectors_rtn: np.ndarray) -> np
     return result
 
 
-def rotate_temperature(epoch: datetime, alpha: float, beta: float) -> tuple[float, float]:
+def rotate_temperature(rotation_matrix: np.ndarray, alpha: float, beta: float) -> tuple[float, float]:
     sin_dec = np.sin(beta)
     x = sin_dec * np.cos(alpha)
     y = sin_dec * np.sin(alpha)
     z = np.cos(beta)
 
-    rtn_temperature = rotate_dps_vector_to_rtn(epoch, np.array([x, y, z]))
+    rtn_temperature = rotate_dps_vector_to_rtn(rotation_matrix, np.array([x, y, z]))
 
     theta = np.asin(rtn_temperature[2])
     phi = np.atan2(rtn_temperature[1], rtn_temperature[0])
@@ -411,8 +409,9 @@ def rotate_temperature(epoch: datetime, alpha: float, beta: float) -> tuple[floa
     return theta, phi
 
 
-def rotate_vector_to_rtn_spherical_coordinates(epoch: datetime, heat_flux: np.ndarray) -> tuple[float, float, float]:
-    r, t, n = rotate_dps_vector_to_rtn(epoch, heat_flux)
+def rotate_vector_to_rtn_spherical_coordinates(rotation_matrix: np.ndarray, heat_flux: np.ndarray) -> tuple[
+    float, float, float]:
+    r, t, n = rotate_dps_vector_to_rtn(rotation_matrix, heat_flux)
     magnitude = np.linalg.norm(heat_flux, axis=-1)
     rt = np.sqrt(r * r + t * t)
     theta = np.arctan2(n, rt)

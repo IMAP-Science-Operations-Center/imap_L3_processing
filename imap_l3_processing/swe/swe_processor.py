@@ -5,6 +5,7 @@ from dataclasses import replace
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 from imap_processing.quality_flags import SweL1bFlags
+from spiceypy import SpiceyError
 
 from imap_l3_processing.data_utils import find_closest_neighbor
 from imap_l3_processing.models import InputMetadata
@@ -31,6 +32,7 @@ from imap_l3_processing.swe.l3.science.moment_calculations import (
     calculate_primary_eigenvector,
     ScaleDensityOutput,
     rotate_temperature_tensor_to_mag,
+    get_dps_to_rtn_rotation_matrix,
 )
 from imap_l3_processing.swe.l3.science.pitch_calculations import (
     average_over_look_directions,
@@ -422,6 +424,12 @@ class SweProcessor(Processor):
                 )
 
                 current_epoch = swe_l2_data.epoch[i]
+                try:
+                    dps_to_rtn = get_dps_to_rtn_rotation_matrix(current_epoch)
+                except SpiceyError:
+                    logger.info(f"No IMAP_DPS to IMAP_RTN rotation available at epoch index {i}. Using fill values.")
+                    dps_to_rtn = np.full((3, 3), np.nan)
+
                 if core_moment_fit_result is not None:
                     core_moment = core_moment_fit_result.moments
                     core_moments[i] = core_moment
@@ -434,7 +442,7 @@ class SweProcessor(Processor):
                     ]
 
                     core_rtn_velocity[i] = rotate_dps_vector_to_rtn(
-                        current_epoch,
+                        dps_to_rtn,
                         np.array(
                             [
                                 core_moment.velocity_x,
@@ -445,7 +453,7 @@ class SweProcessor(Processor):
                     )
 
                     core_temp_theta_rtn, core_temp_phi_rtn = rotate_temperature(
-                        current_epoch, core_moment.alpha, core_moment.beta
+                        dps_to_rtn, core_moment.alpha, core_moment.beta
                     )
                     core_temp_theta_rtns[i] = core_temp_theta_rtn
                     core_temp_phi_rtns[i] = core_temp_phi_rtn
@@ -489,7 +497,7 @@ class SweProcessor(Processor):
                                 scale_core_density_output.density
                             )
                             core_velocity_integrated[i] = rotate_dps_vector_to_rtn(
-                                current_epoch, scale_core_density_output.velocity
+                                dps_to_rtn, scale_core_density_output.velocity
                             )
                             core_temperature_tensor_integrated[i] = (
                                 scale_core_density_output.temperature
@@ -497,7 +505,7 @@ class SweProcessor(Processor):
 
                             magnitude, theta, phi = (
                                 rotate_vector_to_rtn_spherical_coordinates(
-                                    current_epoch, core_integrate_result.heat_flux
+                                    dps_to_rtn, core_integrate_result.heat_flux
                                 )
                             )
 
@@ -519,7 +527,7 @@ class SweProcessor(Processor):
 
                             magnitude, theta, phi = (
                                 rotate_vector_to_rtn_spherical_coordinates(
-                                    current_epoch, core_primary_eigen_vector
+                                    dps_to_rtn, core_primary_eigen_vector
                                 )
                             )
                             core_temperature_theta_rtn_integrated[i] = theta
@@ -560,7 +568,7 @@ class SweProcessor(Processor):
                                 total_integration_output.density
                             )
                             total_velocity_integrated[i] = rotate_dps_vector_to_rtn(
-                                current_epoch, total_integration_output.velocity
+                                dps_to_rtn, total_integration_output.velocity
                             )
                             total_temperature_tensor_integrated[i] = (
                                 total_integration_output.temperature
@@ -568,7 +576,7 @@ class SweProcessor(Processor):
 
                             magnitude, theta, phi = (
                                 rotate_vector_to_rtn_spherical_coordinates(
-                                    current_epoch, total_integration_output.heat_flux
+                                    dps_to_rtn, total_integration_output.heat_flux
                                 )
                             )
 
@@ -590,7 +598,7 @@ class SweProcessor(Processor):
 
                             magnitude, theta, phi = (
                                 rotate_vector_to_rtn_spherical_coordinates(
-                                    current_epoch, total_primary_eigen_vector
+                                    dps_to_rtn, total_primary_eigen_vector
                                 )
                             )
                             total_temperature_theta_rtn_integrated[i] = theta
@@ -646,7 +654,7 @@ class SweProcessor(Processor):
                     ]
 
                     halo_rtn_velocity[i] = rotate_dps_vector_to_rtn(
-                        current_epoch,
+                        dps_to_rtn,
                         np.array(
                             [
                                 halo_moment.velocity_x,
@@ -657,7 +665,7 @@ class SweProcessor(Processor):
                     )
 
                     halo_temp_theta_rtn, halo_temp_phi_rtn = rotate_temperature(
-                        current_epoch, halo_moment.alpha, halo_moment.beta
+                        dps_to_rtn, halo_moment.alpha, halo_moment.beta
                     )
                     halo_temp_theta_rtns[i] = halo_temp_theta_rtn
                     halo_temp_phi_rtns[i] = halo_temp_phi_rtn
@@ -699,7 +707,7 @@ class SweProcessor(Processor):
                                 scale_halo_density_output.density
                             )
                             halo_velocity_integrated[i] = rotate_dps_vector_to_rtn(
-                                current_epoch, scale_halo_density_output.velocity
+                                dps_to_rtn, scale_halo_density_output.velocity
                             )
                             halo_temperature_tensor_integrated[i] = (
                                 scale_halo_density_output.temperature
@@ -707,7 +715,7 @@ class SweProcessor(Processor):
 
                             magnitude, theta, phi = (
                                 rotate_vector_to_rtn_spherical_coordinates(
-                                    current_epoch, halo_integrate_result.heat_flux
+                                    dps_to_rtn, halo_integrate_result.heat_flux
                                 )
                             )
 
@@ -729,7 +737,7 @@ class SweProcessor(Processor):
 
                             magnitude, theta, phi = (
                                 rotate_vector_to_rtn_spherical_coordinates(
-                                    current_epoch, halo_primary_eigen_vector
+                                    dps_to_rtn, halo_primary_eigen_vector
                                 )
                             )
                             halo_temperature_theta_rtn_integrated[i] = theta
@@ -885,12 +893,16 @@ class SweProcessor(Processor):
         swapi_max_distance = np.timedelta64(
             int(config["max_swapi_offset_in_minutes"] * 60e9), "ns"
         )
+
+        quality_flags_on_swapi_epoch = [1, 2, 3]
+
         rebinned_solar_wind_vectors, swapi_indices = find_closest_neighbor(
             from_epoch=swapi_epoch,
             from_data=solar_wind_vectors,
             to_epoch=swe_epoch,
             maximum_distance=swapi_max_distance,
         )
+
 
         kept_after_nan_filter = ~np.any(np.isnan(solar_wind_vectors), axis=1)
         fallback_at_swe = fallback_to_speed[kept_after_nan_filter][swapi_indices]
