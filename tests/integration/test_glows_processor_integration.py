@@ -276,13 +276,13 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             processor.process()
 
             expected_files = [
-                ScienceFilePath('imap_glows_l3b_ion-rate-profile_20251102-cr02304_v001.cdf'),
-                ScienceFilePath('imap_glows_l3b_ion-rate-profile_20251130-cr02305_v001.cdf'),
+                ScienceFilePath('imap_glows_l3b_ion-rate-profile_20251102-cr02304_v000.0001.cdf'),
+                ScienceFilePath('imap_glows_l3b_ion-rate-profile_20251130-cr02305_v000.0001.cdf'),
 
-                ScienceFilePath('imap_glows_l3c_sw-profile_20251102-cr02304_v001.cdf'),
-                ScienceFilePath('imap_glows_l3c_sw-profile_20251130-cr02305_v001.cdf'),
+                ScienceFilePath('imap_glows_l3c_sw-profile_20251102-cr02304_v000.0001.cdf'),
+                ScienceFilePath('imap_glows_l3c_sw-profile_20251130-cr02305_v000.0001.cdf'),
 
-                ScienceFilePath('imap_glows_l3d_solar-hist_19470303-cr02306_v001.cdf'),
+                ScienceFilePath('imap_glows_l3d_solar-hist_19470303-cr02306_v002.0001.cdf'),
                 AncillaryFilePath('imap_glows_uv-anis_19470303_20260110_v001.dat'),
                 AncillaryFilePath('imap_glows_lya_19470303_20260110_v001.dat'),
                 AncillaryFilePath('imap_glows_e-dens_19470303_20260110_v001.dat'),
@@ -290,28 +290,28 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
                 AncillaryFilePath('imap_glows_speed_19470303_20260110_v001.dat'),
                 AncillaryFilePath('imap_glows_phion_19470303_20260110_v001.dat'),
 
-                ScienceFilePath('imap_glows_l3e_survival-probability-ul-sf_20251102-repoint00036_v001.0000.cdf'),
-                ScienceFilePath('imap_glows_l3e_survival-probability-ul-sf_20251115-repoint00049_v001.cdf'),
+                ScienceFilePath('imap_glows_l3e_survival-probability-ul-sf_20251102-repoint00036_v006.0001.cdf'),
+                ScienceFilePath('imap_glows_l3e_survival-probability-ul-sf_20251115-repoint00049_v006.0001.cdf'),
                 AncillaryFilePath('imap_glows_survival-probability-ul-sf-raw_20251102_v001.dat'),
                 AncillaryFilePath('imap_glows_survival-probability-ul-sf-raw_20251115_v001.dat'),
 
-                ScienceFilePath('imap_glows_l3e_survival-probability-ul-hf_20251102-repoint00036_v001.0000.cdf'),
-                ScienceFilePath('imap_glows_l3e_survival-probability-ul-hf_20251115-repoint00049_v001.cdf'),
+                ScienceFilePath('imap_glows_l3e_survival-probability-ul-hf_20251102-repoint00036_v007.0001.cdf'),
+                ScienceFilePath('imap_glows_l3e_survival-probability-ul-hf_20251115-repoint00049_v007.0001.cdf'),
                 AncillaryFilePath('imap_glows_survival-probability-ul-hf-raw_20251102_v001.dat'),
                 AncillaryFilePath('imap_glows_survival-probability-ul-hf-raw_20251115_v001.dat'),
 
-                ScienceFilePath('imap_glows_l3e_survival-probability-hi-45_20251102-repoint00036_v001.0000.cdf'),
-                ScienceFilePath('imap_glows_l3e_survival-probability-hi-45_20251115-repoint00049_v001.cdf'),
+                ScienceFilePath('imap_glows_l3e_survival-probability-hi-45_20251102-repoint00036_v003.0001.cdf'),
+                ScienceFilePath('imap_glows_l3e_survival-probability-hi-45_20251115-repoint00049_v003.0001.cdf'),
                 AncillaryFilePath('imap_glows_survival-probability-hi-45-raw_20251102_v001.dat'),
                 AncillaryFilePath('imap_glows_survival-probability-hi-45-raw_20251115_v001.dat'),
 
-                ScienceFilePath('imap_glows_l3e_survival-probability-hi-90_20251102-repoint00036_v001.0000.cdf'),
-                ScienceFilePath('imap_glows_l3e_survival-probability-hi-90_20251115-repoint00049_v001.cdf'),
+                ScienceFilePath('imap_glows_l3e_survival-probability-hi-90_20251102-repoint00036_v004.0001.cdf'),
+                ScienceFilePath('imap_glows_l3e_survival-probability-hi-90_20251115-repoint00049_v004.0001.cdf'),
                 AncillaryFilePath('imap_glows_survival-probability-hi-90-raw_20251102_v001.dat'),
                 AncillaryFilePath('imap_glows_survival-probability-hi-90-raw_20251115_v001.dat'),
 
-                ScienceFilePath('imap_glows_l3e_survival-probability-lo_20251102-repoint00036_v001.0000.cdf'),
-                ScienceFilePath('imap_glows_l3e_survival-probability-lo_20251115-repoint00049_v001.cdf'),
+                ScienceFilePath('imap_glows_l3e_survival-probability-lo_20251102-repoint00036_v005.0001.cdf'),
+                ScienceFilePath('imap_glows_l3e_survival-probability-lo_20251115-repoint00049_v005.0001.cdf'),
                 AncillaryFilePath('imap_glows_survival-probability-lo-raw_20251102_v001.dat'),
                 AncillaryFilePath('imap_glows_survival-probability-lo-raw_20251115_v001.dat'),
             ]
@@ -391,19 +391,19 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
 
                 ScienceFilePath('imap_glows_l3c_sw-profile_20251102-cr02304_v001.0002.cdf'),
 
-                ScienceFilePath('imap_glows_l3d_solar-hist_19470303-cr02304_v001.0002.cdf'),
-                AncillaryFilePath('imap_glows_uv-anis_19470303_20251116_v002.dat'),
-                AncillaryFilePath('imap_glows_lya_19470303_20251116_v002.dat'),
-                AncillaryFilePath('imap_glows_e-dens_19470303_20251116_v002.dat'),
-                AncillaryFilePath('imap_glows_p-dens_19470303_20251116_v002.dat'),
-                AncillaryFilePath('imap_glows_speed_19470303_20251116_v002.dat'),
-                AncillaryFilePath('imap_glows_phion_19470303_20251116_v002.dat'),
+                ScienceFilePath('imap_glows_l3d_solar-hist_19470303-cr02306_v001.0002.cdf'),
+                AncillaryFilePath('imap_glows_uv-anis_19470303_20260110_v002.dat'),
+                AncillaryFilePath('imap_glows_lya_19470303_20260110_v002.dat'),
+                AncillaryFilePath('imap_glows_e-dens_19470303_20260110_v002.dat'),
+                AncillaryFilePath('imap_glows_p-dens_19470303_20260110_v002.dat'),
+                AncillaryFilePath('imap_glows_speed_19470303_20260110_v002.dat'),
+                AncillaryFilePath('imap_glows_phion_19470303_20260110_v002.dat'),
 
-                ScienceFilePath("imap_glows_l3e_survival-probability-hi-45_20251102-repoint00036_v001.0002.cdf"),
-                ScienceFilePath("imap_glows_l3e_survival-probability-hi-90_20251102-repoint00036_v001.0002.cdf"),
-                ScienceFilePath("imap_glows_l3e_survival-probability-lo_20251102-repoint00036_v001.0002.cdf"),
-                ScienceFilePath("imap_glows_l3e_survival-probability-ul-hf_20251102-repoint00036_v001.0002.cdf"),
-                ScienceFilePath("imap_glows_l3e_survival-probability-ul-sf_20251102-repoint00036_v001.0002.cdf"),
+                ScienceFilePath("imap_glows_l3e_survival-probability-hi-45_20251102-repoint00036_v001.0001.cdf"),
+                ScienceFilePath("imap_glows_l3e_survival-probability-hi-90_20251102-repoint00036_v001.0001.cdf"),
+                ScienceFilePath("imap_glows_l3e_survival-probability-lo_20251102-repoint00036_v001.0001.cdf"),
+                ScienceFilePath("imap_glows_l3e_survival-probability-ul-hf_20251102-repoint00036_v001.0001.cdf"),
+                ScienceFilePath("imap_glows_l3e_survival-probability-ul-sf_20251102-repoint00036_v001.0001.cdf"),
             ]
 
             for file_path in expected_files:
