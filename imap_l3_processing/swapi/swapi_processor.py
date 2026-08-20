@@ -4,6 +4,7 @@ from dataclasses import replace
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 from imap_processing.spice.geometry import SpiceFrame
+from spiceypy.utils.exceptions import SpiceyError
 from uncertainties.unumpy import uarray
 
 from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
@@ -95,7 +96,7 @@ def _add_velocity_products_in_target_frames(
                 converted_products = _convert_velocity_products_at_epoch(
                     result, prefix, index, target_frame
                 )
-            except Exception:
+            except SpiceyError:
                 logger.warning(
                     f"SPICE gap converting {species} velocity products at epoch "
                     f"{epoch} to {target_frame}; using fill values.",
