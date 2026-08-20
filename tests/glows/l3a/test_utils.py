@@ -161,8 +161,9 @@ class TestUtils(unittest.TestCase):
                 result.extra_heliospheric_background,
                 result.time_dependent_background,
             ):
-                np.testing.assert_array_equal(values[0, 65:], -1e31)
-            np.testing.assert_array_equal(result.raw_histogram[0, 65:], np.iinfo(np.uint32).max)
+                np.testing.assert_array_equal(np.isnan(values[0, 65:]), True)
+            np.testing.assert_array_equal(result.raw_histogram.mask[0, :65], False)
+            np.testing.assert_array_equal(result.raw_histogram.mask[0, 65:], True)
 
             self.assertEqual(input_metadata, result.input_metadata)
 
