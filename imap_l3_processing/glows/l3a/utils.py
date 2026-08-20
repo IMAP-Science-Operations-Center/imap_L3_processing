@@ -11,19 +11,23 @@ from imap_l3_processing.glows.l3a.models import GlowsL2Data, GlowsL2LightCurve, 
 from imap_l3_processing.models import InputMetadata, Instrument
 
 MAX_SPIN_ANGLE_BINS = 90
-FLOAT_FILL_VALUE = -1e31
-RAW_HISTOGRAM_FILL_VALUE = np.iinfo(np.uint32).max
 
 
-def _pad_lightcurve(values, fill_value=FLOAT_FILL_VALUE) -> np.ndarray:
+def _pad_lightcurve(values) -> np.ndarray:
     """Pad a lightcurve variable to the fixed L3a spin-angle dimension."""
     values = np.asarray(values)
     if len(values) > MAX_SPIN_ANGLE_BINS:
         raise ValueError(f"GLOWS L3a lightcurve cannot exceed {MAX_SPIN_ANGLE_BINS} bins")
+
+    if np.issubdtype(values.dtype, np.integer):
+        padded_values = np.ma.masked_all(MAX_SPIN_ANGLE_BINS, dtype=values.dtype)
+        padded_values[:len(values)] = values
+        return padded_values.reshape(1, -1)
+
     return np.pad(
         values,
         (0, MAX_SPIN_ANGLE_BINS - len(values)),
-        constant_values=fill_value,
+        constant_values=np.nan,
     ).reshape(1, -1)
 
 
@@ -115,7 +119,7 @@ def create_glows_l3a_from_dictionary(data: dict, input_metadata: InputMetadata) 
         end_time=data["end_time"],
         photon_flux=_pad_lightcurve(data["daily_lightcurve"]["photon_flux"]),
         photon_flux_uncertainty=_pad_lightcurve(data["daily_lightcurve"]["flux_uncertainties"]),
-        raw_histogram=_pad_lightcurve(data["daily_lightcurve"]["raw_histogram"], RAW_HISTOGRAM_FILL_VALUE),
+        raw_histogram=_pad_lightcurve(data["daily_lightcurve"]["raw_histogram"]),
         exposure_times=_pad_lightcurve(data["daily_lightcurve"]["exposure_times"]),
         spin_angle=_pad_lightcurve(data["daily_lightcurve"]["spin_angle"]),
         spin_angle_delta=_pad_lightcurve(data["daily_lightcurve"]["spin_angle_delta"]),
