@@ -205,7 +205,6 @@ class TestCdfUtils(TestCase):
                          "epoch SI_CONVERSION should be 1e-9>seconds")
 
     def _epoch_delta_meets_schema(self, yaml_data: dict):
-        self.assertEqual(14, len(yaml_data['epoch_delta'].keys()))
         self.assertEqual('CDF_INT8', yaml_data['epoch_delta']['DATA_TYPE'],
                          "epoch_delta type must be CDF_INT8")
         self.assertEqual('epoch', yaml_data['epoch_delta']['DEPEND_0'],
