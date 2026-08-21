@@ -1,21 +1,19 @@
 import enum
 import json
 import logging
-from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, date, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Optional, Union, TypeVar
+from typing import Optional, Union
 from urllib.parse import urlparse
-from spiceypy import KernelPool, spiceypy, SpiceyError
+from spiceypy import spiceypy
 
 import imap_data_access
-import numpy as np
 import requests
 import spiceypy
-from imap_data_access import ScienceFilePath, download, SPICEFilePath
+from imap_data_access import ScienceFilePath, download
 from imap_data_access.file_validation import Version
 from imap_data_access.processing_input import ProcessingInputCollection
 from requests import RequestException
@@ -26,8 +24,6 @@ from imap_l3_processing.cdf.cdf_utils import write_cdf, read_numeric_variable
 from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_l3_processing.constants import TT2000_EPOCH
 from imap_l3_processing.maps.map_models import (
-    GlowsL3eRectangularMapInputData,
-    InputRectangularPointingSet,
     RectangularSpectralIndexMapData,
     RectangularIntensityMapData,
     HealPixIntensityMapData,
@@ -344,35 +340,3 @@ def get_version_from_query_result(science_file_query_result):
         return Version.from_version(science_file_query_result["version"])
 
 
-class PredictedEphemerisTracker:
-    kernels_without_predict: list[str]
-    used_predict: bool
-    predict_kernel_available: bool
-
-    def __init__(self):
-        self.used_predict = False
-        self.predict_kernel_available = False
-        self.kernels_without_predict = []
-        for i in range(spiceypy.ktotal("ALL")):
-            data = spiceypy.kdata(i, "ALL")
-            kernel = data[0]
-            try:
-                kernel_type = SPICEFilePath(kernel).spice_metadata["type"]
-                if kernel_type == "ephemeris_predicted":
-                    self.predict_kernel_available = True
-                else:
-                    self.kernels_without_predict.append(kernel)
-            except SPICEFilePath.InvalidImapFileError:
-                self.kernels_without_predict.append(kernel)
-
-    def run[T, **P](self, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
-        if self.used_predict or not self.predict_kernel_available:
-            result = func(*args, **kwargs)
-        else:
-            try:
-                with KernelPool(self.kernels_without_predict):
-                    result = func(*args, **kwargs)
-            except SpiceyError:
-                result = func(*args, **kwargs)
-                self.used_predict = True
-        return result
