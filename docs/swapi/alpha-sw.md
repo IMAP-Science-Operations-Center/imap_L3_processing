@@ -66,7 +66,10 @@ J^{\alpha}
 Some notes on error handling:
 - If the proton fit fails, fill values are reported and the proton quality flag is propagated.
 - If the alpha fit fails at any point, fill values are reported and `FIT_ERROR` is set.
+- If the ratio of the fitted alpha and proton model peak energies per charge is outside the range configured by `MIN_ALPHA_TO_PROTON_PEAK_ENERGY_RATIO` and `MAX_ALPHA_TO_PROTON_PEAK_ENERGY_RATIO`, fill values are reported and `BAD_FIT` is set.
 - If the alpha fit converges but $`R^{2} < 0.9`$, fill values are reported and `BAD_FIT` is set.
+
+The proton and alpha peak locations are calculated from their separate forward-model coincidence-rate curves over the full coarse ESA grid. Both component curves include the deadtime correction from their combined rate and are averaged over the five sweeps before their maxima are located.
 
 `R^{2}`$ is computed using the sweep-averaged coincidence rate for the points used in the alpha fit.
 
