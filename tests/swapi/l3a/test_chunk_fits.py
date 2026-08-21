@@ -64,7 +64,7 @@ from imap_l3_processing.swapi.constants import (
     SWAPI_SCIENCE_BINS,
 )
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
-from imap_l3_processing.utils import PredictedEphemerisTracker
+from imap_l3_processing.predicted_ephemeris_tracker import PredictedEphemerisTracker
 from tests.spice_test_case import SpiceTestCase
 from tests.swapi._helpers import REALISTIC_ESA_VOLTAGES
 from tests.test_helpers import get_test_instrument_team_data_path, get_integration_test_spice_data_path
