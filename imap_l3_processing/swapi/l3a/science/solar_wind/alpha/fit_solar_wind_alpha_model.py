@@ -6,7 +6,6 @@ import scipy.optimize
 from numpy import ndarray
 from uncertainties import UFloat, covariance_matrix, ufloat
 
-from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.calculate_initial_guess import (
     calculate_initial_guess,
 )
@@ -34,7 +33,6 @@ from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 
 MIN_ALPHA_TO_PROTON_PEAK_ENERGY_RATIO = 1.7
-MAX_ALPHA_TO_PROTON_PEAK_ENERGY_RATIO = 2.3
 
 
 @dataclass
@@ -121,8 +119,6 @@ def fit_solar_wind_alpha_model(
     return _construct_alpha_fit_result(
         result=result,
         alpha_ctx_peak=alpha_ctx_peak,
-        alpha_ctx=alpha_ctx,
-        proton_true_rate=proton_true_rate,
         n_peak_bins=peak_bin_idx.size,
         n_sweeps=n_sweeps,
         proton_moments=proton_moments,
@@ -146,8 +142,6 @@ def _nan_alpha_fit_result(flag: int) -> AlphaSolarWindFitResult:
 def _construct_alpha_fit_result(
     result: scipy.optimize.OptimizeResult,
     alpha_ctx_peak: SolarWindFitContext,
-    alpha_ctx: SolarWindFitContext,
-    proton_true_rate: ndarray,
     n_peak_bins: int,
     n_sweeps: int,
     proton_moments: ProtonSolarWindFitResult,
@@ -163,24 +157,12 @@ def _construct_alpha_fit_result(
     delta_v_fit = float(result.x[2])
     velocity_rtn = proton_bulk + delta_v_fit * magnetic_field_direction
 
-    alpha_true_rate, _ = model_solar_wind_ideal_coincidence_rates(
-        SolarWindParams(
-            density=alpha_density_fit,
-            velocity_rtn=velocity_rtn,
-            temperature=alpha_temperature_fit,
-            mass=alpha_ctx.mass_kg,
-        ),
-        alpha_ctx,
-    )
-    peak_energy_ratio = _modeled_alpha_to_proton_peak_energy_ratio(
-        proton_true_rate=proton_true_rate,
-        alpha_true_rate=alpha_true_rate,
-        esa_voltage=alpha_ctx.esa_voltage,
-    )
-    if not (
-        MIN_ALPHA_TO_PROTON_PEAK_ENERGY_RATIO
-        <= peak_energy_ratio
-        <= MAX_ALPHA_TO_PROTON_PEAK_ENERGY_RATIO
+    peak_energy_ratio = 2 * (
+        np.linalg.norm(velocity_rtn) / np.linalg.norm(proton_bulk)
+    ) ** 2
+    if (
+        not np.isfinite(peak_energy_ratio)
+        or peak_energy_ratio < MIN_ALPHA_TO_PROTON_PEAK_ENERGY_RATIO
     ):
         return _nan_alpha_fit_result(bad_fit_flag | SwapiL3Flags.BAD_FIT)
 
@@ -223,25 +205,6 @@ def _alpha_r_squared(
         residuals.reshape(n_sweeps, n_peak_bins), axis=0
     )
     return r_squared(averaged_residual, averaged_count_rate)
-
-
-def _modeled_alpha_to_proton_peak_energy_ratio(
-    proton_true_rate: ndarray,
-    alpha_true_rate: ndarray,
-    esa_voltage: ndarray,
-) -> float:
-    """Return the alpha/proton fitted-curve peak ratio in the E/q domain."""
-    total_true_rate = proton_true_rate + alpha_true_rate
-    deadtime = deadtime_factor(total_true_rate)
-    proton_rate = (proton_true_rate * deadtime).reshape(esa_voltage.shape)
-    alpha_rate = (alpha_true_rate * deadtime).reshape(esa_voltage.shape)
-    proton_rate_avg = np.mean(proton_rate, axis=0)
-    alpha_rate_avg = np.mean(alpha_rate, axis=0)
-    energy_per_charge_avg = SWAPI_K_FACTOR * np.mean(np.abs(esa_voltage), axis=0)
-
-    proton_peak_energy = energy_per_charge_avg[np.argmax(proton_rate_avg)]
-    alpha_peak_energy = energy_per_charge_avg[np.argmax(alpha_rate_avg)]
-    return float(alpha_peak_energy / proton_peak_energy)
 
 
 class _AlphaEvaluator:
