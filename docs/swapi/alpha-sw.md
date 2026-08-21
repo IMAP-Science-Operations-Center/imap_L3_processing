@@ -66,7 +66,7 @@ J^{\alpha}
 Some notes on error handling:
 - If the proton fit fails, fill values are reported and the proton quality flag is propagated.
 - If the alpha fit fails at any point, fill values are reported and `FIT_ERROR` is set.
-- If the ratio of the fitted alpha and proton peak energies per charge is less than 1.7, fill values are reported and `BAD_FIT` is set. There is no upper limit.
+- If the ratio of the fitted alpha and proton peak energies per charge (inferred from the fitted bulk speeds) is less than 1.7, fill values are reported and `BAD_FIT` is set. There is currently no upper limit.
 - If the alpha fit converges but $`R^{2} < 0.9`$, fill values are reported and `BAD_FIT` is set.
 
 `R^{2}`$ is computed using the sweep-averaged coincidence rate for the points used in the alpha fit.
