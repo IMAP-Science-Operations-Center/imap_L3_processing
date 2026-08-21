@@ -18,7 +18,6 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.alpha import (
     calculate_initial_guess as alpha_initial_guess_module,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_solar_wind_alpha_model import (
-    MAX_ALPHA_TO_PROTON_PEAK_ENERGY_RATIO,
     MIN_ALPHA_TO_PROTON_PEAK_ENERGY_RATIO,
     AlphaSolarWindFitResult,
     _AlphaEvaluator,
@@ -408,19 +407,19 @@ class TestFitAlphaMomentsRecoversTruth(
 class TestAlphaPeakEnergyRatioGuard(
     _SyntheticAlphaSpectrumFixture, unittest.TestCase
 ):
-    """Fitted alpha peaks outside the configured ratio range are rejected."""
+    """Only fitted alpha peaks below the minimum energy ratio are rejected."""
 
-    def test_out_of_range_fitted_alpha_peaks_return_bad_fit(self):
+    def test_peak_energy_ratio_has_a_lower_bound_but_no_upper_bound(self):
         proton_speed = np.linalg.norm(_TRUE_PROTON_VELOCITY_RTN)
-        out_of_range_ratios = (
-            MIN_ALPHA_TO_PROTON_PEAK_ENERGY_RATIO - 0.1,
-            MAX_ALPHA_TO_PROTON_PEAK_ENERGY_RATIO + 0.1,
+        cases = (
+            (MIN_ALPHA_TO_PROTON_PEAK_ENERGY_RATIO - 0.1, SwapiL3Flags.BAD_FIT),
+            (2.4, SwapiL3Flags.NONE),
         )
 
-        for out_of_range_ratio in out_of_range_ratios:
-            with self.subTest(peak_energy_ratio=out_of_range_ratio):
+        for peak_energy_ratio, expected_flag in cases:
+            with self.subTest(peak_energy_ratio=peak_energy_ratio):
                 alpha_speed = proton_speed * np.sqrt(
-                    out_of_range_ratio / ALPHA_MASS_PER_CHARGE_M_P_PER_E
+                    peak_energy_ratio / ALPHA_MASS_PER_CHARGE_M_P_PER_E
                 )
                 observed, _, _ = _synthesize_proton_plus_alpha_count_rate(
                     response=self.response,
@@ -442,8 +441,11 @@ class TestAlphaPeakEnergyRatioGuard(
                     magnetic_field_direction=_B_HAT_RTN,
                 )
 
-                self.assertEqual(result.quality_flag, int(SwapiL3Flags.BAD_FIT))
-                _assert_moments_are_nan_filled(self, result)
+                self.assertEqual(result.quality_flag, int(expected_flag))
+                if expected_flag == SwapiL3Flags.BAD_FIT:
+                    _assert_moments_are_nan_filled(self, result)
+                else:
+                    self.assertTrue(np.isfinite(result.density.nominal_value))
 
 
 class TestFitAlphaMomentsAlphaVelocityFollowsBHat(unittest.TestCase):
