@@ -8,6 +8,7 @@ from imap_data_access.processing_input import ScienceInput, ProcessingInputColle
 from imap_processing.quality_flags import SweL1bFlags
 from spiceypy import SpiceyError
 
+from imap_l3_processing.data_utils import NearestInterpolator
 from imap_l3_processing.models import MagData, InputMetadata
 from imap_l3_processing.predicted_ephemeris_tracker import PredictedEphemerisTracker
 from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData, SweL1bData
@@ -153,6 +154,16 @@ class TestSweProcessor(unittest.TestCase):
         )
 
         mock_moment_data = build_swe_moment_data(len(epochs))
+        mock_moment_data.quality_flags = np.array([
+            SweL3Flags.NONE,
+            SweL3Flags.NONE,
+            SweL3Flags.PREDICTIVE_EPHEMERIS,
+            SweL3Flags.NONE,
+            SweL3Flags.PREDICTIVE_EPHEMERIS,
+            SweL3Flags.NONE,
+            SweL3Flags.NONE,
+        ], dtype=np.uint16)
+
         mock_calculate_moment_products.return_value = mock_moment_data
 
         negative_moment_flags_return = np.array([SweL3Flags.NONE] * len(epochs), dtype=np.uint16)
@@ -161,6 +172,7 @@ class TestSweProcessor(unittest.TestCase):
 
         calculate_pitch_angle_flags = np.array([SweL3Flags.NONE] * len(epochs), dtype=np.uint16)
         calculate_pitch_angle_flags[0] = SweL3Flags.FALLBACK_SWAPI_SPEED
+        calculate_pitch_angle_flags[2] = SweL3Flags.FALLBACK_SWAPI_SPEED
 
         expected_phase_space_density_by_pitch_angle = np.full((7, 3, 3), physical_psd_value)
         expected_phase_space_density_by_pitch_angle[1, 0, 0] = unphysical_psd_value
@@ -319,9 +331,9 @@ class TestSweProcessor(unittest.TestCase):
         expected_quality_flags = np.array([
             SweL3Flags.FALLBACK_SWAPI_SPEED | SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE | SweL3Flags.POTENTIAL_FIT_UNCONVERGED | SweL3Flags.PRELIMINARY_MAG,
             SweL3Flags.PRELIMINARY_MAG | SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED | SweL3Flags.UNPHYSICAL_PSD,
-            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED | SweL3Flags.UNPHYSICAL_PSD,
+            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED | SweL3Flags.UNPHYSICAL_PSD | SweL3Flags.PREDICTIVE_EPHEMERIS | SweL3Flags.FALLBACK_SWAPI_SPEED,
             SweL3Flags.FALLBACK_POTENTIAL_ESTIMATE | SweL3Flags.PRELIMINARY_MAG | SweL3Flags.UNPHYSICAL_PSD,
-            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.NEGATIVE_MOMENT | SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED | SweL3Flags.UNPHYSICAL_PSD,
+            SweL3Flags.PRELIMINARY_MAG | SweL3Flags.NEGATIVE_MOMENT | SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED | SweL3Flags.UNPHYSICAL_PSD | SweL3Flags.PREDICTIVE_EPHEMERIS,
             SweL3Flags.PRELIMINARY_MAG | SweL3Flags.UNPHYSICAL_PSD,
             SweL3Flags.PRELIMINARY_MAG | SweL3Flags.UNPHYSICAL_PSD,
         ])
@@ -427,8 +439,8 @@ class TestSweProcessor(unittest.TestCase):
     @patch('imap_l3_processing.swe.swe_processor.correct_and_rebin')
     @patch('imap_l3_processing.swe.swe_processor.integrate_distribution_to_get_1d_spectrum')
     @patch('imap_l3_processing.swe.swe_processor.integrate_distribution_to_get_inbound_and_outbound_1d_spectrum')
-    @patch('imap_l3_processing.swe.swe_processor.find_closest_neighbor')
-    def test_calculate_pitch_angle_and_gyrophase_products(self, mock_find_closest_neighbor,
+    @patch('imap_l3_processing.swe.swe_processor.NearestInterpolator')
+    def test_calculate_pitch_angle_and_gyrophase_products(self, mock_nearest_interpolator,
                                                           mock_integrate_distribution_to_get_inbound_and_outbound_1d_spectrum,
                                                           mock_integrate_distribution_to_get_1d_spectrum,
                                                           mock_correct_and_rebin,
@@ -436,9 +448,9 @@ class TestSweProcessor(unittest.TestCase):
                                                           _,
                                                           mock_average_over_look_directions,
                                                           mock_calculate_velocities, mock_swe_rebin_intensity):
-        epochs = datetime.now() + np.arange(3) * timedelta(minutes=1)
-        mag_epochs = datetime.now() - timedelta(seconds=15) + np.arange(10) * timedelta(minutes=.5)
-        swapi_epochs = datetime.now() - timedelta(seconds=15) + np.arange(10) * timedelta(minutes=.5)
+        epochs = np.arange(3) * timedelta(minutes=1) + datetime.now()
+        mag_epochs = np.arange(10) * timedelta(minutes=.5) + datetime.now() - timedelta(seconds=15)
+        swapi_epochs = np.arange(10) * timedelta(minutes=.5) + datetime.now() - timedelta(seconds=15)
         spacecraft_potential = np.array([12, 16, 19])
         energies = np.array([2, 4, 6])
 
@@ -482,17 +494,22 @@ class TestSweProcessor(unittest.TestCase):
             swp_flags=np.zeros(10),
         )
         rotated_dps_vectors = np.arange(30).reshape(10, 3).astype(float)
-        rotated_dps_vectors[3] = np.nan
-        rotated_dps_vectors[4] = np.nan
-        mock_rotate_rtn_vectors_to_dps.return_value = rotated_dps_vectors
+        rotated_dps_vectors[3, :] = np.nan
+        rotated_dps_vectors[4, :] = np.nan
+
+        mock_rotate_rtn_vectors_to_dps.return_value = rotated_dps_vectors, sentinel.solar_wind_uses_pred_ephem_flags
         counts = swe_l1b_data.count_rates * swe_l2_data.acquisition_duration[:, :, np.newaxis] / 1e6
         mock_average_over_look_directions.return_value = np.array([5, 10, 15])
         closest_mag_data = np.arange(9).reshape(3, 3)
         closest_swapi_data = np.arange(8, 17).reshape(3, 3)
-        mock_find_closest_neighbor.side_effect = [
-            (closest_mag_data, sentinel.mag_best_indices),
-            (closest_swapi_data, np.array([3,4,5]))
-        ]
+
+        mock_interpolator_mag = create_autospec(NearestInterpolator, best_indices=sentinel.mag_best_indices)
+        mock_interpolator_swapi = create_autospec(NearestInterpolator, best_indices=np.array([3,4,5]))
+
+        mock_interpolator_mag.interpolate_data.return_value = closest_mag_data
+        mock_interpolator_swapi.interpolate_data.return_value = closest_swapi_data
+
+        mock_nearest_interpolator.side_effect = [mock_interpolator_mag, mock_interpolator_swapi]
 
         rebinned_by_pitch_list = [
             i + np.arange(len(swe_l2_data.energy) * len(pitch_angle_bins)).reshape(len(swe_l2_data.energy),
@@ -552,6 +569,11 @@ class TestSweProcessor(unittest.TestCase):
         swel3_dependency = SweL3Dependencies(swe_l2_data, swe_l1b_data, mag_l1d_data, swapi_l3a_proton_data, swe_config)
         swe_processor = SweProcessor(dependencies=[], input_metadata=input_metadata)
 
+        mock_interpolator_swapi.interpolate_flags.side_effect = [
+            np.array([True, True, False]),
+            np.array([False, True, False]),
+        ]
+
         actual_phase_space_density_by_pitch_angle, actual_phase_space_density_by_pa_and_gyrophase, actual_energy_spectrum, actual_energy_spectrum_inbound, actual_energy_spectrum_outbound, \
             actual_intensity_by_pa_and_gyro, actual_intensity_by_pa, actual_uncertainty_by_pa_and_gyro, actual_uncertainty_by_pa, actual_swe_flags \
             = swe_processor.calculate_pitch_angle_products(swel3_dependency, corrected_energy_bins)
@@ -565,7 +587,7 @@ class TestSweProcessor(unittest.TestCase):
         expected_dps_vectors_after_speed_fallback = rotated_dps_vectors.copy()
         expected_dps_vectors_after_speed_fallback[3] = [0.0, 0.0, -400.0]
         expected_dps_vectors_after_speed_fallback[4] = [0.0, 0.0, -400.0]
-        mock_find_closest_neighbor.assert_has_calls([
+        mock_nearest_interpolator.assert_has_calls([
             call(
                 from_epoch=mag_epochs,
                 from_data=mag_l1d_data.mag_data,
@@ -579,7 +601,16 @@ class TestSweProcessor(unittest.TestCase):
                 maximum_distance=np.timedelta64(5, 'm')
             )
         ])
-        expected_flags = np.array([SweL3Flags.FALLBACK_SWAPI_SPEED, SweL3Flags.FALLBACK_SWAPI_SPEED, SweL3Flags.NONE])
+
+        mock_interpolator_swapi.interpolate_flags.call_args_list[0][0]
+
+        expected_fallback_flags = [False, False, False, True, True, False, False, False, False, False,]
+
+        self.assertEqual(2, mock_interpolator_swapi.interpolate_flags.call_count)
+        mock_interpolator_swapi.interpolate_flags.assert_has_calls([call(NumpyArrayMatcher(expected_fallback_flags)), call(sentinel.solar_wind_uses_pred_ephem_flags)], any_order=False)
+
+
+        expected_flags = np.array([SweL3Flags.FALLBACK_SWAPI_SPEED, SweL3Flags.FALLBACK_SWAPI_SPEED | SweL3Flags.PREDICTIVE_EPHEMERIS, SweL3Flags.NONE])
 
         np.testing.assert_array_equal(actual_phase_space_density_by_pitch_angle, rebinned_by_pitch_list)
         np.testing.assert_array_equal(actual_phase_space_density_by_pa_and_gyrophase,
@@ -662,7 +693,7 @@ class TestSweProcessor(unittest.TestCase):
             datetime(2025, 3, 6, 0, 10, 30),
         ])
         swapi_epochs = np.array([datetime(2025, 3, 6)])
-        mock_rotate_rtn_vectors_to_dps.return_value = np.tile([0.0, 0.0, -400.0], (len(swapi_epochs), 1))
+        mock_rotate_rtn_vectors_to_dps.return_value = np.tile([0.0, 0.0, -400.0], (len(swapi_epochs), 1)), np.zeros(len(swapi_epochs), dtype=bool)
 
         pitch_angle_bins = [70, 100, 130]
 
@@ -767,7 +798,7 @@ class TestSweProcessor(unittest.TestCase):
         swapi_epochs = np.array([datetime(2025, 3, 6), datetime(2025, 3, 10)])
         swp_flags = np.zeros(2)
         mock_calculate_moments.return_value = build_swe_moment_data(len(epochs))
-        mock_rotate_rtn_vectors_to_dps.return_value = np.full((len(swapi_epochs), 3), np.nan)
+        mock_rotate_rtn_vectors_to_dps.return_value = np.full((len(swapi_epochs), 3), np.nan), np.zeros(len(swapi_epochs), dtype=bool)
         pitch_angle_bins = [70, 100, 130]
 
         num_energies = 9
@@ -1687,6 +1718,7 @@ class TestSweProcessor(unittest.TestCase):
         _assert_fields_finite_everywhere(self, swe_moment_data, finite_field_names)
 
         np.testing.assert_array_equal(swe_moment_data.quality_flags, np.array([SweL3Flags.NONE, SweL3Flags.NONE, SweL3Flags.PREDICTIVE_EPHEMERIS]))
+        self.assertEqual(np.uint16, swe_moment_data.quality_flags.dtype)
 
     def test_calculate_moment_products_handles_bad_fit_indices_and_continues(self):
         epochs = np.array([datetime.now()])

@@ -1,29 +1,34 @@
 import dataclasses
 import unittest
 from datetime import datetime
-from unittest.mock import patch, call, sentinel
+from unittest.mock import patch, call, sentinel, create_autospec
 
 import math
 import numpy as np
 import spiceypy
+from spiceypy import SpiceyError
 
+from imap_l3_processing.predicted_ephemeris_tracker import PredictedEphemerisTracker
 from imap_l3_processing.swe.l3.science import moment_calculations
 from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
     filter_and_flatten_regress_parameters, regress, calculate_fit_temperature_density_velocity, rotate_temperature, \
     apply_rotation_matrix, Moments, halotrunc, compute_density_scale, core_fit_moments_retrying_on_failure, \
     halo_fit_moments_retrying_on_failure, scale_halo_density, rotate_vector_to_rtn_spherical_coordinates, \
-    calculate_primary_eigenvector, rotation_matrix_builder, rotate_temperature_tensor_to_mag, MomentFitResults
+    calculate_primary_eigenvector, rotation_matrix_builder, rotate_temperature_tensor_to_mag, MomentFitResults, \
+    rotate_rtn_vectors_to_dps
 from tests.test_helpers import create_dataclass_mock
 from tests.test_helpers import get_test_data_path
 from imap_l3_processing.swe.swe_processor import check_temperature_outlier_flag
 from imap_l3_processing.swe.quality_flags import SweL3Flags
 
+MODULE = 'imap_l3_processing.swe.l3.science.moment_calculations'
 
 class TestMomentsCalculation(unittest.TestCase):
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.halotrunc')
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.regress')
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.calculate_fit_temperature_density_velocity')
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.filter_and_flatten_regress_parameters')
+
+    @patch(f'{MODULE}.halotrunc')
+    @patch(f'{MODULE}.regress')
+    @patch(f'{MODULE}.calculate_fit_temperature_density_velocity')
+    @patch(f'{MODULE}.filter_and_flatten_regress_parameters')
     def test_halo_fit_moments_retrying_on_failure(self, mock_filter_and_flatten_regress_parameters,
                                                   mock_calculate_fit_temp_dens_velocity, mock_regress, mock_halotrunc):
 
@@ -102,9 +107,9 @@ class TestMomentsCalculation(unittest.TestCase):
         self.assertEqual(sentinel.chisq_3, moment_fit_result.chisq)
         self.assertEqual(6, moment_fit_result.number_of_points)
 
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.regress')
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.calculate_fit_temperature_density_velocity')
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.filter_and_flatten_regress_parameters')
+    @patch(f'{MODULE}.regress')
+    @patch(f'{MODULE}.calculate_fit_temperature_density_velocity')
+    @patch(f'{MODULE}.filter_and_flatten_regress_parameters')
     def test_fit_moments_retrying_on_failure(self, mock_filter_and_flatten_regress_parameters,
                                              mock_calculate_fit_temp_dens_velocity, mock_regress):
 
@@ -167,9 +172,9 @@ class TestMomentsCalculation(unittest.TestCase):
         self.assertEqual(sentinel.chisq_3, moment_fit_result.chisq)
         self.assertEqual(6, moment_fit_result.number_of_points)
 
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.regress')
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.calculate_fit_temperature_density_velocity')
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.filter_and_flatten_regress_parameters')
+    @patch(f'{MODULE}.regress')
+    @patch(f'{MODULE}.calculate_fit_temperature_density_velocity')
+    @patch(f'{MODULE}.filter_and_flatten_regress_parameters')
     def test_fit_moments_retrying_on_failure_should_stop_retrying_with_few_energies_and_return_none_if_negative_density(
             self,
             mock_filter_and_flatten_regress_parameters,
@@ -212,9 +217,9 @@ class TestMomentsCalculation(unittest.TestCase):
             call(sentinel.fit_function_1),
         ])
 
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.regress')
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.calculate_fit_temperature_density_velocity')
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.filter_and_flatten_regress_parameters')
+    @patch(f'{MODULE}.regress')
+    @patch(f'{MODULE}.calculate_fit_temperature_density_velocity')
+    @patch(f'{MODULE}.filter_and_flatten_regress_parameters')
     def test_fit_moments_retrying_on_failure_should_stop_retrying_with_few_energies_but_return_results_if_high_density(
             self,
             mock_filter_and_flatten_regress_parameters,
@@ -260,9 +265,9 @@ class TestMomentsCalculation(unittest.TestCase):
             call(sentinel.fit_function_1),
         ])
 
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.regress')
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.calculate_fit_temperature_density_velocity')
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.filter_and_flatten_regress_parameters')
+    @patch(f'{MODULE}.regress')
+    @patch(f'{MODULE}.calculate_fit_temperature_density_velocity')
+    @patch(f'{MODULE}.filter_and_flatten_regress_parameters')
     def test_fit_moments_retrying_on_failure_should_stop_retrying_with_few_energies_and_return_none_if_no_density(
             self,
             mock_filter_and_flatten_regress_parameters,
@@ -405,8 +410,8 @@ class TestMomentsCalculation(unittest.TestCase):
                 rtn_vector = apply_rotation_matrix(input_rotation_matrix, dsp_vector)
                 np.testing.assert_array_equal(rtn_vector, expected_rtn_vector)
 
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.pxform')
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.datetime2et')
+    @patch(f'{MODULE}.spiceypy.pxform')
+    @patch(f'{MODULE}.spiceypy.datetime2et')
     def test_get_dps_to_rtn_rotation_matrix_returns_pxform_result(self, mock_datetime2et, mock_pxform):
         epoch = datetime(year=2020, month=3, day=10)
         rotation_matrix = np.array([[0, 0, 1], [1, 0, 0], [0, 1, 0]])
@@ -417,8 +422,8 @@ class TestMomentsCalculation(unittest.TestCase):
         mock_pxform.assert_called_once_with("IMAP_DPS", "IMAP_RTN", mock_datetime2et.return_value)
         np.testing.assert_array_equal(actual_rotation_matrix, rotation_matrix)
 
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.pxform')
-    @patch('imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.datetime2et')
+    @patch(f'{MODULE}.spiceypy.pxform')
+    @patch(f'{MODULE}.spiceypy.datetime2et')
     def test_get_dps_to_rtn_rotation_matrix_propagates_spice_errors(self, mock_datetime2et, mock_pxform):
         epoch = datetime(year=2020, month=3, day=10)
         mock_pxform.side_effect = spiceypy.utils.exceptions.SpiceyError("Missing coverage for IMAP_DPS")
@@ -950,7 +955,60 @@ class TestMomentsCalculation(unittest.TestCase):
         expected_values = expected_values.astype(int).astype(SweL3Flags)
         expected_values[expected_values == 0] = SweL3Flags.NONE
         expected_values[expected_values == 1] = SweL3Flags.TEMPERATURE_OUTLIER
-        
+
         tof_flags = check_temperature_outlier_flag(temperatures)
         for i in np.arange(len(tof_flags)):
             self.assertEqual(expected_values[i], tof_flags[i])
+
+    @patch(f"spiceypy.datetime2et")
+    @patch(f"spiceypy.pxform")
+    @patch(f"{MODULE}.PredictedEphemerisTracker")
+    def test_rotate_rtn_vectors_to_dps(self, mock_predicted_ephemeris_tracker_class, mock_pxform, mock_datetime2et):
+        pred_tracker_1 = create_autospec(PredictedEphemerisTracker, used_predict=False)
+        pred_tracker_1.run.return_value = np.eye(3) * 2
+
+        pred_tracker_2 = create_autospec(PredictedEphemerisTracker, used_predict=True)
+        pred_tracker_2.run.return_value = np.eye(3) * 3
+
+        pred_tracker_3 = create_autospec(PredictedEphemerisTracker, used_predict=False)
+        pred_tracker_3.run.side_effect = SpiceyError("No SPICE data!")
+
+        mock_predicted_ephemeris_tracker_class.side_effect = [
+            pred_tracker_1,
+            pred_tracker_2,
+            pred_tracker_3,
+        ]
+
+        epochs = np.array([
+            datetime(2020, 1, 1),
+            datetime(2020, 1, 2),
+            datetime(2020, 1, 3)
+        ])
+        rtn_vectors = np.array([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]
+        ])
+        mock_datetime2et.side_effect = (sentinel.et_1, sentinel.et_2, sentinel.et_3)
+
+        dps_vectors, used_predict = rotate_rtn_vectors_to_dps(epochs, rtn_vectors)
+
+        self.assertEqual(3, mock_predicted_ephemeris_tracker_class.call_count)
+
+
+        self.assertEqual(epochs[0], mock_datetime2et.call_args_list[0].args[0])
+        self.assertEqual(epochs[1], mock_datetime2et.call_args_list[1].args[0])
+        self.assertEqual(epochs[2], mock_datetime2et.call_args_list[2].args[0])
+
+        pred_tracker_1.run.assert_called_once_with(mock_pxform, "IMAP_RTN", "IMAP_DPS", sentinel.et_1)
+        pred_tracker_2.run.assert_called_once_with(mock_pxform, "IMAP_RTN", "IMAP_DPS", sentinel.et_2)
+        pred_tracker_3.run.assert_called_once_with(mock_pxform, "IMAP_RTN", "IMAP_DPS", sentinel.et_3)
+
+        expected_dps_vectors = np.array([
+            [2, 4, 6],
+            [12, 15, 18],
+            [np.nan, np.nan, np.nan]
+        ])
+
+        np.testing.assert_array_equal(dps_vectors, expected_dps_vectors)
+        np.testing.assert_array_equal(used_predict, [False, True, False])

@@ -2,7 +2,7 @@ import logging
 import math
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
 
 import numpy as np
 import spiceypy
@@ -11,6 +11,7 @@ from imap_l3_processing.constants import ELECTRON_MASS_KG, \
     BOLTZMANN_CONSTANT_JOULES_PER_KELVIN, METERS_PER_KILOMETER, \
     CENTIMETERS_PER_METER, PROTON_CHARGE_COULOMBS, GRAMS_PER_KILOGRAM
 from imap_l3_processing.pitch_angles import calculate_unit_vector
+from imap_l3_processing.predicted_ephemeris_tracker import PredictedEphemerisTracker
 
 ELECTRON_MASS_OVER_BOLTZMANN_IN_CGS_UNITS = ELECTRON_MASS_KG / BOLTZMANN_CONSTANT_JOULES_PER_KELVIN * 1e-4
 NUMBER_OF_DETECTORS = 7
@@ -382,17 +383,21 @@ def apply_rotation_matrix(rotation_matrix: np.ndarray, vector: np.ndarray) -> np
     return rotation_matrix @ vector
 
 
-def rotate_rtn_vectors_to_dps(epochs: np.ndarray, vectors_rtn: np.ndarray) -> np.ndarray:
+def rotate_rtn_vectors_to_dps(epochs: np.ndarray, vectors_rtn: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     result = np.full_like(vectors_rtn, np.nan, dtype=float)
+    predicted_ephemeris_flags = np.zeros_like(epochs, dtype=bool)
     for i, epoch in enumerate(epochs):
+        tracker = PredictedEphemerisTracker()
         try:
             et_time = spiceypy.datetime2et(epoch)
-            rotation_matrix = spiceypy.pxform("IMAP_RTN", "IMAP_DPS", et_time)
+            rotation_matrix = tracker.run(spiceypy.pxform,"IMAP_RTN", "IMAP_DPS", et_time)
         except spiceypy.SpiceyError as e:
             logger.info(f"Failed to rotate RTN→DPS at epoch {epoch}: {e}")
             continue
         result[i] = rotation_matrix @ vectors_rtn[i]
-    return result
+
+        predicted_ephemeris_flags[i] = tracker.used_predict
+    return result, predicted_ephemeris_flags
 
 
 def rotate_temperature(rotation_matrix: np.ndarray, alpha: float, beta: float) -> tuple[float, float]:

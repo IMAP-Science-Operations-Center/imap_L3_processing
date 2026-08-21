@@ -7,7 +7,7 @@ from imap_data_access.processing_input import ProcessingInputCollection
 from imap_processing.quality_flags import SweL1bFlags
 from spiceypy import SpiceyError
 
-from imap_l3_processing.data_utils import find_closest_neighbor
+from imap_l3_processing.data_utils import NearestInterpolator
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.predicted_ephemeris_tracker import PredictedEphemerisTracker
 from imap_l3_processing.processor import Processor
@@ -216,6 +216,8 @@ class SweProcessor(Processor):
             corrected_energy_bins,
             config,
         )
+        swe_quality_flags |= swe_l3_moments_data.quality_flags
+
         negative_moment_flags = check_and_mask_negative_moments(swe_l3_moments_data)
         swe_quality_flags |= negative_moment_flags
 
@@ -370,7 +372,7 @@ class SweProcessor(Processor):
         core_temperature_tensor_integrated = np.full((number_of_points, 6), np.nan)
         halo_temperature_tensor_integrated = np.full((number_of_points, 6), np.nan)
         total_temperature_tensor_integrated = np.full((number_of_points, 6), np.nan)
-        quality_flags = np.full(number_of_points, SweL3Flags.NONE)
+        quality_flags = np.full(number_of_points, SweL3Flags.NONE, dtype=np.uint16)
 
         sin_theta = np.sin(np.deg2rad(90 - swe_l2_data.inst_el))
         cos_theta = np.cos(np.deg2rad(90 - swe_l2_data.inst_el))
@@ -434,7 +436,7 @@ class SweProcessor(Processor):
                 except SpiceyError:
                     logger.info(f"No IMAP_DPS to IMAP_RTN rotation available at epoch index {i}. Using fill values.")
                     dps_to_rtn = np.full((3, 3), np.nan)
-                quality_flags[i] |= SweL3Flags.PREDICTIVE_EPHEMERIS * predicted_tracker.used_predict
+                quality_flags[i] |= np.uint16(SweL3Flags.PREDICTIVE_EPHEMERIS * predicted_tracker.used_predict)
 
                 if core_moment_fit_result is not None:
                     core_moment = core_moment_fit_result.moments
@@ -873,16 +875,17 @@ class SweProcessor(Processor):
             int(config["max_mag_offset_in_minutes"] * 60e9), "ns"
         )
 
-        rebinned_mag_data, indices = find_closest_neighbor(
+        mag_nearest_interpolator = NearestInterpolator(
             from_epoch=dependencies.mag_data.epoch,
             from_data=dependencies.mag_data.mag_data,
             to_epoch=swe_l2_data.acquisition_time,
             maximum_distance=mag_max_distance,
         )
+        rebinned_mag_data = mag_nearest_interpolator.interpolate_data()
 
         swapi_l3a_proton_data = dependencies.swapi_l3a_proton_data
         swapi_epoch = swapi_l3a_proton_data.epoch
-        solar_wind_vectors = rotate_rtn_vectors_to_dps(
+        solar_wind_vectors, used_predict_to_rotate_solar_wind = rotate_rtn_vectors_to_dps(
             swapi_epoch,
             swapi_l3a_proton_data.proton_sw_velocity_rtn,
         )
@@ -901,7 +904,7 @@ class SweProcessor(Processor):
             int(config["max_swapi_offset_in_minutes"] * 60e9), "ns"
         )
 
-        rebinned_solar_wind_vectors, swapi_indices = find_closest_neighbor(
+        solar_wind_interpolator = NearestInterpolator(
             from_epoch=swapi_epoch,
             from_data=solar_wind_vectors,
             to_epoch=swe_epoch,
@@ -909,11 +912,14 @@ class SweProcessor(Processor):
         )
 
 
-        kept_after_nan_filter = ~np.any(np.isnan(solar_wind_vectors), axis=1)
-        fallback_at_swe = fallback_to_speed[kept_after_nan_filter][swapi_indices]
-        within_window = ~np.any(np.isnan(rebinned_solar_wind_vectors), axis=1)
+        rebinned_solar_wind_vectors = solar_wind_interpolator.interpolate_data()
+
+        rebinned_fallback_to_speed = solar_wind_interpolator.interpolate_flags(fallback_to_speed)
+        rebinned_used_predict_to_rotate_solar_wind = solar_wind_interpolator.interpolate_flags(used_predict_to_rotate_solar_wind)
+
         swe_flags = np.full(len(swe_epoch), SweL3Flags.NONE, dtype=np.uint16)
-        swe_flags[fallback_at_swe & within_window] = SweL3Flags.FALLBACK_SWAPI_SPEED
+        swe_flags[rebinned_fallback_to_speed] |= np.uint16(SweL3Flags.FALLBACK_SWAPI_SPEED)
+        swe_flags[rebinned_used_predict_to_rotate_solar_wind] |= np.uint16(SweL3Flags.PREDICTIVE_EPHEMERIS)
 
         counts = dependencies.swe_l1b_data.count_rates * (
             swe_l2_data.acquisition_duration[..., np.newaxis] / 1e6
