@@ -412,7 +412,7 @@ class TestAlphaPeakEnergyRatioGuard(
     def test_peak_energy_ratio_has_a_lower_bound_but_no_upper_bound(self):
         proton_speed = np.linalg.norm(_TRUE_PROTON_VELOCITY_RTN)
         cases = (
-            (MIN_ALPHA_TO_PROTON_PEAK_ENERGY_RATIO - 0.1, SwapiL3Flags.BAD_FIT),
+            (MIN_ALPHA_TO_PROTON_PEAK_ENERGY_RATIO - 0.01, SwapiL3Flags.BAD_FIT),
             (2.4, SwapiL3Flags.NONE),
         )
 
