@@ -18,6 +18,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.alpha import (
     calculate_initial_guess as alpha_initial_guess_module,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_solar_wind_alpha_model import (
+    MIN_ALPHA_TO_PROTON_PEAK_ENERGY_RATIO,
     AlphaSolarWindFitResult,
     _AlphaEvaluator,
     fit_solar_wind_alpha_model,
@@ -401,6 +402,50 @@ class TestFitAlphaMomentsRecoversTruth(
             self.alpha_velocity_rtn,
             atol=1.0,
         )
+
+
+class TestAlphaPeakEnergyRatioGuard(
+    _SyntheticAlphaSpectrumFixture, unittest.TestCase
+):
+    """Only fitted alpha peaks below the minimum energy ratio are rejected."""
+
+    def test_peak_energy_ratio_has_a_lower_bound_but_no_upper_bound(self):
+        proton_speed = np.linalg.norm(_TRUE_PROTON_VELOCITY_RTN)
+        cases = (
+            (MIN_ALPHA_TO_PROTON_PEAK_ENERGY_RATIO - 0.01, SwapiL3Flags.BAD_FIT),
+            (2.4, SwapiL3Flags.NONE),
+        )
+
+        for peak_energy_ratio, expected_flag in cases:
+            with self.subTest(peak_energy_ratio=peak_energy_ratio):
+                alpha_speed = proton_speed * np.sqrt(
+                    peak_energy_ratio / ALPHA_MASS_PER_CHARGE_M_P_PER_E
+                )
+                observed, _, _ = _synthesize_proton_plus_alpha_count_rate(
+                    response=self.response,
+                    voltage=self.voltage,
+                    rotation_matrices=self.rotation_matrices,
+                    delta_v=alpha_speed - proton_speed,
+                )
+                proton_ctx, alpha_ctx = _build_proton_and_alpha_contexts(
+                    response=self.response,
+                    count_rate=observed,
+                    voltage=self.voltage,
+                    rotation_matrices=self.rotation_matrices,
+                )
+
+                result = fit_solar_wind_alpha_model(
+                    proton_ctx=proton_ctx,
+                    alpha_ctx=alpha_ctx,
+                    proton_moments=_build_proton_fit_result(),
+                    magnetic_field_direction=_B_HAT_RTN,
+                )
+
+                self.assertEqual(result.quality_flag, int(expected_flag))
+                if expected_flag == SwapiL3Flags.BAD_FIT:
+                    _assert_moments_are_nan_filled(self, result)
+                else:
+                    self.assertTrue(np.isfinite(result.density.nominal_value))
 
 
 class TestFitAlphaMomentsAlphaVelocityFollowsBHat(unittest.TestCase):
