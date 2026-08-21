@@ -6,6 +6,7 @@ import scipy.optimize
 from numpy import ndarray
 from uncertainties import UFloat, covariance_matrix, ufloat
 
+from imap_l3_processing.constants import ALPHA_MASS_PER_CHARGE_M_P_PER_E
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.calculate_initial_guess import (
     calculate_initial_guess,
 )
@@ -157,7 +158,7 @@ def _construct_alpha_fit_result(
     delta_v_fit = float(result.x[2])
     velocity_rtn = proton_bulk + delta_v_fit * magnetic_field_direction
 
-    peak_energy_ratio = 2 * (
+    peak_energy_ratio = ALPHA_MASS_PER_CHARGE_M_P_PER_E * (
         np.linalg.norm(velocity_rtn) / np.linalg.norm(proton_bulk)
     ) ** 2
     if (
