@@ -10,7 +10,7 @@ import spiceypy
 from imap_l3_processing.swe.l3.science import moment_calculations
 from imap_l3_processing.swe.l3.science.moment_calculations import compute_maxwellian_weight_factors, \
     filter_and_flatten_regress_parameters, regress, calculate_fit_temperature_density_velocity, rotate_temperature, \
-    rotate_dps_vector_to_rtn, Moments, halotrunc, compute_density_scale, core_fit_moments_retrying_on_failure, \
+    apply_rotation_matrix, Moments, halotrunc, compute_density_scale, core_fit_moments_retrying_on_failure, \
     halo_fit_moments_retrying_on_failure, scale_halo_density, rotate_vector_to_rtn_spherical_coordinates, \
     calculate_primary_eigenvector, rotation_matrix_builder, rotate_temperature_tensor_to_mag, MomentFitResults
 from tests.test_helpers import create_dataclass_mock
@@ -402,7 +402,7 @@ class TestMomentsCalculation(unittest.TestCase):
 
         for input_rotation_matrix, expected_rtn_vector in cases:
             with self.subTest(input_rotation_matrix):
-                rtn_vector = rotate_dps_vector_to_rtn(input_rotation_matrix, dsp_vector)
+                rtn_vector = apply_rotation_matrix(input_rotation_matrix, dsp_vector)
                 np.testing.assert_array_equal(rtn_vector, expected_rtn_vector)
 
     @patch('imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.pxform')

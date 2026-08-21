@@ -378,7 +378,7 @@ def get_dps_to_rtn_rotation_matrix(epoch: datetime) -> np.ndarray:
     return spiceypy.pxform("IMAP_DPS", "IMAP_RTN", spiceypy.datetime2et(epoch))
 
 
-def rotate_dps_vector_to_rtn(rotation_matrix: np.ndarray, vector: np.ndarray) -> np.ndarray:
+def apply_rotation_matrix(rotation_matrix: np.ndarray, vector: np.ndarray) -> np.ndarray:
     return rotation_matrix @ vector
 
 
@@ -401,7 +401,7 @@ def rotate_temperature(rotation_matrix: np.ndarray, alpha: float, beta: float) -
     y = sin_dec * np.sin(alpha)
     z = np.cos(beta)
 
-    rtn_temperature = rotate_dps_vector_to_rtn(rotation_matrix, np.array([x, y, z]))
+    rtn_temperature = apply_rotation_matrix(rotation_matrix, np.array([x, y, z]))
 
     theta = np.asin(rtn_temperature[2])
     phi = np.atan2(rtn_temperature[1], rtn_temperature[0])
@@ -411,7 +411,7 @@ def rotate_temperature(rotation_matrix: np.ndarray, alpha: float, beta: float) -
 
 def rotate_vector_to_rtn_spherical_coordinates(rotation_matrix: np.ndarray, heat_flux: np.ndarray) -> tuple[
     float, float, float]:
-    r, t, n = rotate_dps_vector_to_rtn(rotation_matrix, heat_flux)
+    r, t, n = apply_rotation_matrix(rotation_matrix, heat_flux)
     magnitude = np.linalg.norm(heat_flux, axis=-1)
     rt = np.sqrt(r * r + t * t)
     theta = np.arctan2(n, rt)
