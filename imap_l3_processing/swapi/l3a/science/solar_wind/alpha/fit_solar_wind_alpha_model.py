@@ -159,12 +159,10 @@ def _construct_alpha_fit_result(
     velocity_rtn = proton_bulk + delta_v_fit * magnetic_field_direction
 
     peak_energy_ratio = ALPHA_MASS_PER_CHARGE_M_P_PER_E * (
-        np.linalg.norm(velocity_rtn) / np.linalg.norm(proton_bulk)
+        np.linalg.norm(velocity_rtn, axis=-1)
+        / np.linalg.norm(proton_bulk, axis=-1)
     ) ** 2
-    if (
-        not np.isfinite(peak_energy_ratio)
-        or peak_energy_ratio < MIN_ALPHA_TO_PROTON_PEAK_ENERGY_RATIO
-    ):
+    if peak_energy_ratio < MIN_ALPHA_TO_PROTON_PEAK_ENERGY_RATIO:
         return _nan_alpha_fit_result(bad_fit_flag | SwapiL3Flags.BAD_FIT)
 
     fit_r_squared = _alpha_r_squared(
