@@ -69,15 +69,6 @@ Some notes on error handling:
 - If the ratio of the fitted alpha and proton peak energies per charge is less than 1.7, fill values are reported and `BAD_FIT` is set. There is no upper limit.
 - If the alpha fit converges but $`R^{2} < 0.9`$, fill values are reported and `BAD_FIT` is set.
 
-The approximate peak-energy ratio is calculated directly from the fitted bulk velocity magnitudes:
-```math
-\frac{(E/q)_{\alpha}}{(E/q)_{p}}
-= \frac{m_{\alpha}/q_{\alpha}}{m_{p}/q_{p}}
-  \frac{|\mathbf{v}^{\alpha}|^{2}}{|\mathbf{v}^{p}|^{2}}
-\approx 2\frac{|\mathbf{v}^{\alpha}|^{2}}{|\mathbf{v}^{p}|^{2}},
-```
-where an alpha particle has approximately twice the mass per charge of a proton.
-
 `R^{2}`$ is computed using the sweep-averaged coincidence rate for the points used in the alpha fit.
 
 
