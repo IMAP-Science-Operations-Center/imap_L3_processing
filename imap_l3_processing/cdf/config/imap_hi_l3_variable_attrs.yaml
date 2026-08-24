@@ -499,4 +499,6 @@ quality_flags:
   LABLAXIS: Quality flags for Hi
   VAR_NOTES: >-
     Each bit corresponds to a specific potential concern. See release notes for details.
+    Bit 2: Survival probability was calculated using a nominal Solar wind alpha/proton density ratio.
+    Bit 3: Survival probability was calculated from GLOWS L3d data that was repeated from previous CRs. 
     Bit 15: Survival probability calculated using predicted ephemeris.
