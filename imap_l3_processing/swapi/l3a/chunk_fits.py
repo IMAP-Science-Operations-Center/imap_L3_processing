@@ -62,7 +62,7 @@ from imap_l3_processing.swapi.l3a.utils import (
     measurement_times,
 )
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
-from imap_l3_processing.utils import PredictedEphemerisTracker
+from imap_l3_processing.predicted_ephemeris_tracker import PredictedEphemerisTracker
 
 logger = logging.getLogger(__name__)
 
