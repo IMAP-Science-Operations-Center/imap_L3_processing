@@ -15,7 +15,6 @@ from imap_l3_processing.codice.l3.lo.models import (
     CodiceLoL3aDirectEventDataProduct,
     CodiceLoL1aSWPriorityRates,
     CodiceLoL1aNSWPriorityRates,
-    CodiceLo3dData,
     CODICE_LO_L2_NUM_PRIORITIES,
     CodiceLoL3aRatiosDataProduct,
     CodiceLoPartialDensityData,
@@ -530,17 +529,9 @@ class TestModels(CdfModelTestCase):
                                           cdf["st_bias_gain_mode"][...])
             np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.spin_period, cdf["spin_period"][...])
 
-    def test_codice_lo_3d_data_get_3d_distribution(self):
-        data_in_bins = np.arange(16).reshape((2, 2, 2, 2))
-        mass_bin_lookup = Mock()
-        mass_bin_lookup.get_species_index.return_value = 1
-        codice_lo_3d_data = CodiceLo3dData(data_in_bins, mass_bin_lookup, Mock(), Mock(), Mock())
-
-        expected_species_data = data_in_bins[1, :, :, ...]
-        actual_species_data = codice_lo_3d_data.get_3d_distribution("H+")
-
     def test_codice_lo_3d_distributions_data_product(self):
         species = "hplus"
+        species_uncertainty = "hplus_stat_uncert"
 
         elevation = np.array([10, 20, 30])
         spin_angle = np.array([40, 50, 60])
@@ -559,10 +550,11 @@ class TestModels(CdfModelTestCase):
             energy_delta_minus=sentinel.energy_delta_minus,
             species=species,
             species_data=sentinel.species_data,
+            species_data_stat_uncert=sentinel.uncertainties
         )
 
         actual_data_product_variables = data_product.to_data_product_variables()
-        self.assertEqual(13, len(actual_data_product_variables))
+        self.assertEqual(14, len(actual_data_product_variables))
         actual_variables = iter(actual_data_product_variables)
 
         self.assert_variable_attributes(next(actual_variables), sentinel.epoch, EPOCH_VAR_NAME)
@@ -580,6 +572,7 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(next(actual_variables), energy.astype(str), ENERGY_LABEL_VAR_NAME)
         self.assert_variable_attributes(next(actual_variables), spin_angle.astype(str), SPIN_ANGLE_LABEL_VAR_NAME)
         self.assert_variable_attributes(next(actual_variables), elevation.astype(str), ELEVATION_ANGLE_LABEL_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), sentinel.uncertainties, species_uncertainty)
 
     def test_codice_lo_l2_direct_events_reads_from_correct_float_data(self):
         all_fill_l2_cdf_path = get_test_data_path('codice/imap_codice_l2_lo-direct-events_20260307_v003-all-fill.cdf')

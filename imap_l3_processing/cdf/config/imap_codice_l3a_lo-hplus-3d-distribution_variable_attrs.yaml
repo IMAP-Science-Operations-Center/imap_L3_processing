@@ -12,7 +12,6 @@ float_data: &float_data
 species_3d_distribution: &species_3d_distribution
   <<: *float_data
   UNITS: "#/(cm^2-s-sr-keV/q)"
-  VAR_TYPE: data
   DISPLAY_TYPE: spectrogram
   RECORD_VARYING: RV
   SCALETYP: linear
@@ -23,7 +22,6 @@ species_3d_distribution: &species_3d_distribution
   LABL_PTR_1: energy_label
   LABL_PTR_2: spin_angle_label
   LABL_PTR_3: elevation_label
-  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
 
 epoch:
   NAME: epoch
@@ -149,6 +147,18 @@ hplus:
   CATDESC: H+ Intensity 3d distribution
   FIELDNAM: H+ Intensity
   LABLAXIS: H+ Intensity
+  DELTA_PLUS_VAR: hplus_stat_uncert
+  DELTA_MINUS_VAR: hplus_stat_uncert
+  VAR_TYPE: data
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+
+hplus_stat_uncert:
+  <<: *species_3d_distribution
+  NAME: hplus
+  CATDESC: H+ Intensity 3d distribution statistical uncertainty
+  FIELDNAM: H+ Intensity Statistical Uncertainty
+  LABLAXIS: H+ Intensity Statistical Uncertainty
+  VAR_TYPE: support_data
 
 elevation_label:
   NAME: elevation_label

@@ -1126,8 +1126,11 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         mock_mass_bin_lookup.get_species_index.return_value = sentinel.species_index
 
+        expected_uncertainty = np.random.random(size=(77, 128, 24, 13))
+        counts_for_species = expected_uncertainty ** 2
+
         counts_3d_distribution = mock_rebin.return_value
-        counts_3d_distribution.__getitem__.return_value = sentinel.counts_for_species
+        counts_3d_distribution.__getitem__.return_value = counts_for_species
 
         processor = CodiceLoProcessor(dependencies=Mock(), input_metadata=input_metadata)
         mock_rebin_3d_distribution_azimuth_to_elevation.return_value = np.random.random(size=(77, 128, 24, 13))
@@ -1140,7 +1143,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             mass_species_bin_lookup=dependencies.mass_species_bin_lookup,
         )
 
-        mock_combine_priorities_for_species_and_convert_to_rate.assert_called_once_with(sentinel.counts_for_species,
+        mock_combine_priorities_for_species_and_convert_to_rate.assert_called_once_with(counts_for_species,
                                                                                         sentinel.acquisition_time)
 
         mock_compute_geometric_factors = mock_geometric_factor_lut.get_geometric_factors
@@ -1178,6 +1181,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         np.testing.assert_array_equal(np.flip(mock_rebin_3d_distribution_azimuth_to_elevation.return_value, axis=1),
                                       l3a_3d_distribution_data_product.species_data)
+        np.testing.assert_array_equal(np.flip(expected_uncertainty, axis=1), l3a_3d_distribution_data_product.species_data_stat_uncert)
         self.assertEqual(sentinel.species, l3a_3d_distribution_data_product.species)
 
     def test_process_3d_distributions_save_for_each_species(self):
