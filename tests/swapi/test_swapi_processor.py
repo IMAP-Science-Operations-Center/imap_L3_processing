@@ -7,7 +7,6 @@ import numpy as np
 from imap_data_access import config
 from imap_data_access.file_validation import Version
 from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput, AncillaryInput
-from spiceypy.utils.exceptions import SpiceyError
 from uncertainties.unumpy import uarray, nominal_values, std_devs
 
 from imap_l3_processing.constants import THIRTY_SECONDS_IN_NANOSECONDS, \
@@ -35,7 +34,7 @@ class TestSwapiProcessor(TestCase):
         "imap_l3_processing.swapi.swapi_processor.convert_velocity_covariance_rtn_to_frame"
     )
     @patch("imap_l3_processing.swapi.swapi_processor.convert_velocity_rtn_to_frame")
-    def test_target_frame_conversion_fills_only_epoch_with_spice_gap(
+    def test_target_frame_conversion_fills_and_flags_only_failed_epoch(
         self, mock_convert_velocity, mock_convert_covariance
     ):
         result = {
@@ -45,11 +44,14 @@ class TestSwapiProcessor(TestCase):
             "proton_sw_velocity_rtn_covariance": np.repeat(
                 np.eye(3)[np.newaxis, ...], 3, axis=0
             ),
+            "quality_flags": np.array(
+                [SwapiL3Flags.NONE, SwapiL3Flags.BAD_FIT, SwapiL3Flags.NONE]
+            ),
         }
 
         def convert_velocity(epoch, value, _target_frame):
             if epoch[0] == 2:
-                raise SpiceyError("SPICE gap")
+                raise RuntimeError("conversion failed")
             return value * 10
 
         mock_convert_velocity.side_effect = convert_velocity
@@ -80,21 +82,14 @@ class TestSwapiProcessor(TestCase):
                     np.isnan(result[f"proton_sw_velocity_{frame}_covariance"][1])
                 )
             )
-
-    @patch(
-        "imap_l3_processing.swapi.swapi_processor._convert_velocity_products_at_epoch",
-        side_effect=RuntimeError("unexpected failure"),
-    )
-    def test_target_frame_conversion_propagates_unexpected_errors(self, _mock_convert):
-        result = {
-            "epoch": np.array([1]),
-            "proton_sw_velocity_rtn": np.ones((1, 3)),
-            "proton_sw_velocity_rtn_sun": np.ones((1, 3)),
-            "proton_sw_velocity_rtn_covariance": np.ones((1, 3, 3)),
-        }
-
-        with self.assertRaisesRegex(RuntimeError, "unexpected failure"):
-            _add_velocity_products_in_target_frames(result, "proton")
+        np.testing.assert_array_equal(
+            result["quality_flags"],
+            [
+                SwapiL3Flags.NONE,
+                SwapiL3Flags.BAD_FIT | SwapiL3Flags.FIT_ERROR,
+                SwapiL3Flags.NONE,
+            ],
+        )
 
     @patch('imap_l3_processing.utils.ImapAttributeManager')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3PickupIonData')

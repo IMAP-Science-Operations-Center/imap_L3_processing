@@ -32,6 +32,46 @@ from tests.integration.integration_test_helpers import stage_input_file
 SWAPI_INTEGRATION_DATA_DIR = Path(__file__).parent / "test_data" / "swapi"
 
 
+def assert_velocity_frames_are_physically_consistent(test_case, cdf, prefix, index):
+    """Check the transformed vectors against the geometry expected on January 1."""
+    for sun_suffix in ("", "_sun"):
+        rtn = cdf[f"{prefix}_rtn{sun_suffix}"][index]
+        gse = cdf[f"{prefix}_gse{sun_suffix}"][index]
+        gsm = cdf[f"{prefix}_gsm{sun_suffix}"][index]
+        hae = cdf[f"{prefix}_hae{sun_suffix}"][index]
+
+        # A rotation changes coordinates, not the speed.
+        for transformed in (gse, gsm, hae):
+            numpy.testing.assert_allclose(
+                numpy.linalg.norm(transformed),
+                numpy.linalg.norm(rtn),
+                rtol=1e-6,
+            )
+
+        # GSE +X points from Earth toward the Sun, opposite the predominantly
+        # anti-sunward solar-wind flow. GSM is a rotation about that same X axis.
+        test_case.assertLess(gse[0], 0)
+        test_case.assertGreater(abs(gse[0]), numpy.linalg.norm(gse[1:]))
+        numpy.testing.assert_allclose(gsm[0], gse[0], rtol=1e-6)
+
+        # Near January 1, Earth's anti-sunward radial direction in HAE is
+        # predominantly +Y (Earth's heliocentric ecliptic longitude is ~100 deg).
+        test_case.assertGreater(hae[1], 0)
+        test_case.assertGreater(abs(hae[1]), abs(hae[0]))
+        test_case.assertGreater(abs(hae[1]), abs(hae[2]))
+
+    rtn_covariance = cdf[f"{prefix}_rtn_covariance"][index]
+    for frame in ("gse", "gsm", "hae"):
+        covariance = cdf[f"{prefix}_{frame}_covariance"][index]
+        numpy.testing.assert_allclose(covariance, covariance.T, rtol=1e-6, atol=1e-6)
+        numpy.testing.assert_allclose(
+            numpy.linalg.eigvalsh(covariance),
+            numpy.linalg.eigvalsh(rtn_covariance),
+            rtol=1e-5,
+            atol=1e-5,
+        )
+
+
 class SwapiProcessorIntegration(unittest.TestCase):
     @skipUnless(os.environ.get("IMAP_API_KEY"), "requires production API key")
     def test_proton_sw_with_production_data(self):
@@ -53,6 +93,12 @@ class SwapiProcessorIntegration(unittest.TestCase):
             'proton_sw_density_uncert': 0.049651436507701874,
             'proton_sw_velocity_rtn_sun': [474.1429748535156, 31.2506103515625, 15.421923637390137],
             'proton_sw_velocity_rtn': [474.2013854980469, 1.6974985599517822, 18.847949981689453],
+            'proton_sw_velocity_gse': [-474.21169142, -0.48161806, 18.65798744],
+            'proton_sw_velocity_gse_sun': [-474.09292141, -30.23247255, 18.65198256],
+            'proton_sw_velocity_gsm': [-474.21169142, -5.07181642, 17.96187990],
+            'proton_sw_velocity_gsm_sun': [-474.09292141, -33.90076411, 10.61306001],
+            'proton_sw_velocity_hae': [-84.52581716, 466.61913283, 18.62932749],
+            'proton_sw_velocity_hae_sun': [-113.78456481, 461.22903633, 18.62379766],
             'proton_sw_velocity_rtn_covariance': [[0.11774054169654846, -0.029444590210914612, 0.13579009473323822],
                                                            [-0.029444590210914612, 0.8430156111717224, -0.22263257205486298],
                                                            [0.13579009473323822, -0.22263257205486298, 1.3417274951934814]],
@@ -107,6 +153,9 @@ class SwapiProcessorIntegration(unittest.TestCase):
                     )
                 except TypeError:
                     self.assertEqual(expected_values[key], actual_value, msg=key)
+            assert_velocity_frames_are_physically_consistent(
+                self, cdf, "proton_sw_velocity", 0
+            )
 
 
 
@@ -135,6 +184,12 @@ class SwapiProcessorIntegration(unittest.TestCase):
             'alpha_sw_temperature_uncert': 1141809.75,
             'alpha_sw_velocity_rtn': [473.010009765625, -9.928609848022461, 16.30108070373535],
             'alpha_sw_velocity_rtn_sun': [472.9515686035156, 19.624502182006836, 12.875075340270996],
+            'alpha_sw_velocity_gse': [-473.04103169, 10.77708246, 14.79218361],
+            'alpha_sw_velocity_gse_sun': [-472.92223443, -18.97376979, 14.78618060],
+            'alpha_sw_velocity_gsm': [-473.04103169, 6.79540805, 16.99342908],
+            'alpha_sw_velocity_gsm_sun': [-472.92223443, -22.03470465, 9.64919000],
+            'alpha_sw_velocity_hae': [-73.24367583, 467.46141800, 14.76341745],
+            'alpha_sw_velocity_hae_sun': [-102.50234989, 462.07093380, 14.75788951],
             'alpha_sw_velocity_rtn_covariance': [
                 [0.13386771082878113, 0.23742027580738068, 0.1489003300666809],
                 [0.23742027580738068, 13.923757553100586, 7.167418003082275],
@@ -190,6 +245,9 @@ class SwapiProcessorIntegration(unittest.TestCase):
                     )
                 except TypeError:
                     self.assertEqual(expected_values[key], actual_value, msg=key)
+            assert_velocity_frames_are_physically_consistent(
+                self, cdf, "alpha_sw_velocity", sample_index
+            )
 
 
     @skipUnless(os.environ.get("IMAP_API_KEY"), "requires production API key")
