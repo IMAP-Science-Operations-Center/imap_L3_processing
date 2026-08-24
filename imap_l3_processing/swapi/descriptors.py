@@ -9,6 +9,7 @@ AZIMUTHAL_TRANSMISSION_DESCRIPTOR = "azimuthal-transmission"
 CENTRAL_EFFECTIVE_AREA_DESCRIPTOR = "central-effective-area"
 PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR = "passband-fit-coefficients"
 
+SWAPI_L3A_PROTON_SW_DESCRIPTOR = "proton-sw"
 SWAPI_L3A_ALPHA_SW_DESCRIPTOR = "alpha-sw"
 
 MAG_RTN_DESCRIPTOR = "norm-rtn"

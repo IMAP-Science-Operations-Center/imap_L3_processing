@@ -33,11 +33,11 @@ from imap_l3_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, EPOC
     PUI_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME, SWAPI_QUALITY_FLAGS_CDF_VAR_NAME, VELOCITY_RTN_LABEL_CDF_VAR_NAME, \
     ALPHA_VELOCITY_RTN_SUN_LABEL_CDF_VAR_NAME, ALPHA_VELOCITY_RTN_LABEL_CDF_VAR_NAME, \
     PROTON_SOLAR_WIND_VELOCITY_RTN_SUN_LABEL_CDF_VAR_NAME, PROTON_SOLAR_WIND_VELOCITY_RTN_LABEL_CDF_VAR_NAME, \
-    SwapiL3aProtonDataFromCDF
+    SwapiL3aProtonDataFromCDF, SwapiL3aProtonDataChunk
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.utils import save_data
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
-from tests.test_helpers import with_tempdir
+from tests.test_helpers import with_tempdir, NumpyArrayMatcher
 
 
 class TestModels(CdfModelTestCase):
@@ -277,3 +277,38 @@ class TestModels(CdfModelTestCase):
             np.testing.assert_equal(loaded.density, initial_data.proton_sw_density)
             np.testing.assert_equal(loaded.temperature, initial_data.proton_sw_temperature)
             np.testing.assert_equal(loaded.quality_flags, initial_data.quality_flags)
+
+    def test_make_chunks(self):
+        proton_data = SwapiL3aProtonDataFromCDF(
+            l2_parent_file_name="imap_swapi_l2_sci_something.cdf",
+            velocity_rtn=np.array([
+                [1, 2, 3],
+                [4, 5, 6],
+            ]),
+            velocity_rtn_covariance=np.array([
+                1 * np.eye(3),
+                2 * np.eye(3),
+            ]),
+            density=np.array([7, 8]),
+            temperature=np.array([9, 10]),
+            quality_flags=np.array([11, 12]),
+        )
+
+        expected_proton_chunk_1 = SwapiL3aProtonDataChunk(
+            velocity_rtn=NumpyArrayMatcher([1, 2, 3]),
+            velocity_rtn_covariance=NumpyArrayMatcher(1 * np.eye(3)),
+            density=7,
+            temperature=9,
+            quality_flags=11,
+        )
+
+        expected_proton_chunk_2 = SwapiL3aProtonDataChunk(
+            velocity_rtn=NumpyArrayMatcher([4,5,6]),
+            velocity_rtn_covariance=NumpyArrayMatcher(2 * np.eye(3)),
+            density=8,
+            temperature=10,
+            quality_flags=12,
+        )
+
+        chunks = proton_data.make_chunks()
+        self.assertEqual([expected_proton_chunk_1, expected_proton_chunk_2], chunks)

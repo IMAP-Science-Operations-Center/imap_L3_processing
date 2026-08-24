@@ -96,7 +96,12 @@ class SwapiProcessor(Processor):
                 "alpha-sw requires MAG RTN data (L2 preferred, L1D fallback); "
                 "none was provided in the dependency collection."
             )
-        chunks = list(chunk_l2_data(data, 5))
+        chunks = list(
+            zip(
+                chunk_l2_data(data, 5),
+                dependencies.l3a_proton_data.make_chunks(),
+            )
+        )
         dependencies.swapi_response.warm_cache(data.energy / SWAPI_L2_K_FACTOR)
         runner = ParallelChunkRunner(
             dependencies.swapi_response, dependencies.efficiency_calibration_table

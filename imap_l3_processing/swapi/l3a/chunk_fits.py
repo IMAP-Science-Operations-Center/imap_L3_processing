@@ -7,9 +7,10 @@ from typing import Any
 
 import numpy as np
 import spiceypy
+import uncertainties
 from spacepy import pycdf
 from spiceypy.utils.exceptions import SpiceyError
-from uncertainties import ufloat
+from uncertainties import ufloat, UFloat
 
 from imap_l3_processing.constants import (
     ALPHA_MASS_PER_CHARGE_M_P_PER_E,
@@ -21,6 +22,7 @@ from imap_l3_processing.constants import (
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
     THIRTY_SECONDS_IN_NANOSECONDS,
 )
+from imap_l3_processing.swapi.l3a.models import SwapiL3aProtonDataChunk
 from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_pickup_ion_values import (
     calculate_pickup_ion_values,
 )
@@ -155,13 +157,13 @@ class AlphaChunkFitter(ChunkFitter):
 
     def precompute_geometry(self, chunks):
         geometries = []
-        for chunk in chunks:
-            epoch = chunk_epoch(chunk)
+        for l2_chunk, l3_chunk in chunks:
+            epoch = chunk_epoch(l2_chunk)
             rm = None
             sc_vel = None
             tracker = PredictedEphemerisTracker()
             try:
-                rm = tracker.run(get_swapi_geometry, measurement_times(chunk, SWAPI_SCIENCE_BINS))
+                rm = tracker.run(get_swapi_geometry, measurement_times(l2_chunk, SWAPI_SCIENCE_BINS))
             except Exception:
                 logger.info(
                     f"Missing SPICE information at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}, continuing with fill value"
@@ -185,15 +187,16 @@ class AlphaChunkFitter(ChunkFitter):
 
     def fit_chunk(
         self,
-        data_chunk,
+        data_chunks,
         epoch,
         rotation_matrices,
         sc_velocity_rtn,
         magnetic_field_direction,
         geometry_quality_flags: SwapiL3Flags,
     ):
+        l2_chunk, l3_chunk = data_chunks
         result = _fit_alpha(
-            data_chunk, epoch, rotation_matrices, magnetic_field_direction
+            l2_chunk, l3_chunk, epoch, rotation_matrices, magnetic_field_direction
         )
         moments = _alpha_moments_from_fit(result, epoch, sc_velocity_rtn)
         moments["quality_flags"] |= geometry_quality_flags
@@ -631,7 +634,8 @@ def _nan_alpha_fit_result(flag) -> AlphaSolarWindFitResult:
 
 
 def _fit_alpha(
-    data_chunk,
+    l2_data_chunk,
+    l3a_proton_data_chunk: SwapiL3aProtonDataChunk,
     epoch,
     rotation_matrices,
     magnetic_field_direction,
@@ -650,8 +654,17 @@ def _fit_alpha(
             b_hat_rtn=nan_b_hat,
             quality_flag=int(SwapiL3Flags.NONE),
         )
-
-    proton_moments = _fit_proton(data_chunk, epoch, rotation_matrices)
+    proton_moments = ProtonSolarWindFitResult(
+        density=ufloat(l3a_proton_data_chunk.density,0),
+        temperature=ufloat(l3a_proton_data_chunk.temperature, 0),
+        velocity_rtn=(
+            uncertainties.correlated_values(
+                l3a_proton_data_chunk.velocity_rtn,
+                l3a_proton_data_chunk.velocity_rtn_covariance
+            )
+        ),
+        quality_flag=l3a_proton_data_chunk.quality_flags,
+    )
     if not np.all(
         np.isfinite(
             [component.nominal_value for component in proton_moments.velocity_rtn]
@@ -667,10 +680,10 @@ def _fit_alpha(
     swapi_response = _shared["swapi_response"]
     efficiency_table = _shared["efficiency_table"]
     try:
-        count_rates = data_chunk.coincidence_count_rate[:, SWAPI_COARSE_SWEEP_BINS]
-        voltages = data_chunk.energy[:, SWAPI_COARSE_SWEEP_BINS] / SWAPI_L2_K_FACTOR
+        count_rates = l2_data_chunk.coincidence_count_rate[:, SWAPI_COARSE_SWEEP_BINS]
+        voltages = l2_data_chunk.energy[:, SWAPI_COARSE_SWEEP_BINS] / SWAPI_L2_K_FACTOR
         coarse_rotation_matrices = _coarse_subset_of_science_rotations(
-            rotation_matrices, n_sweeps=data_chunk.sci_start_time.shape[0]
+            rotation_matrices, n_sweeps=l2_data_chunk.sci_start_time.shape[0]
         )
         proton_ctx = build_solar_wind_fit_context(
             count_rate=count_rates,

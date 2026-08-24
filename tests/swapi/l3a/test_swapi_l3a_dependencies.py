@@ -9,7 +9,7 @@ from imap_l3_processing.swapi.descriptors import SWAPI_L2_DESCRIPTOR, DENSITY_OF
     EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR, \
     HYDROGEN_INFLOW_VECTOR_DESCRIPTOR, HELIUM_INFLOW_VECTOR_DESCRIPTOR, \
     AZIMUTHAL_TRANSMISSION_DESCRIPTOR, CENTRAL_EFFECTIVE_AREA_DESCRIPTOR, PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR, \
-    MAG_RTN_DESCRIPTOR
+    MAG_RTN_DESCRIPTOR, SWAPI_L3A_PROTON_SW_DESCRIPTOR
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
 
 
@@ -87,6 +87,7 @@ class TestSwapiL3ADependencies(unittest.TestCase):
 
         mock_from_file_paths.assert_called_with(
             sentinel.swapi_l2_data,
+            None,
             sentinel.efficiency_file,
             sentinel.neutral_helium_table,
             sentinel.hydrogen_vector,
@@ -137,8 +138,44 @@ class TestSwapiL3ADependencies(unittest.TestCase):
 
         _, kwargs = mock_from_file_paths.call_args
         args = mock_from_file_paths.call_args.args
-        self.assertEqual(sentinel.mag_path, args[8])
-        self.assertEqual(True, args[9])
+        self.assertEqual(sentinel.mag_path, args[9])
+        self.assertEqual(True, args[10])
+
+    @patch("imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.select_mag_path")
+    @patch("imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.SwapiL3ADependencies.from_file_paths")
+    @patch("imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.download")
+    def test_fetch_dependencies_with_l3a_proton_sw(self, mock_download, mock_from_file_paths, mock_select_mag_path):
+        start_date = '20100105'
+        version = 'v010'
+        input_collection = ProcessingInputCollection()
+        proton_file_name = f"imap_swapi_l3a_proton-sw_{start_date}_{version}.cdf"
+        def download(file):
+            if Path(file).name == proton_file_name:
+                return sentinel.swapi_l3a_proton_data
+            else:
+                return sentinel.other_file
+        mock_download.side_effect = download
+        mock_select_mag_path.return_value = (sentinel.mag_path, "l1d")
+
+        descriptors = [
+            ("imap_swapi_l2", SWAPI_L2_DESCRIPTOR, ScienceInput),
+            ("imap_swapi_l3a", SWAPI_L3A_PROTON_SW_DESCRIPTOR, ScienceInput),
+            ("imap_swapi", EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR, AncillaryInput),
+            ("imap_swapi", DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR, AncillaryInput),
+            ("imap_swapi", HYDROGEN_INFLOW_VECTOR_DESCRIPTOR, AncillaryInput),
+            ("imap_swapi", HELIUM_INFLOW_VECTOR_DESCRIPTOR, AncillaryInput),
+            ("imap_swapi", AZIMUTHAL_TRANSMISSION_DESCRIPTOR, AncillaryInput),
+            ("imap_swapi", CENTRAL_EFFECTIVE_AREA_DESCRIPTOR, AncillaryInput),
+            ("imap_swapi", PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR, AncillaryInput),
+        ]
+        for prefix, desc, cls in descriptors:
+            input_collection.add([cls(f"{prefix}_{desc}_{start_date}_{version}.cdf")])
+
+        SwapiL3ADependencies.fetch_dependencies(input_collection)
+
+        _, kwargs = mock_from_file_paths.call_args
+        args = mock_from_file_paths.call_args.args
+        self.assertEqual(sentinel.swapi_l3a_proton_data, args[1])
 
     @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.read_mag_rtn_data')
     @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.SwapiResponse.from_files')
@@ -146,12 +183,15 @@ class TestSwapiL3ADependencies(unittest.TestCase):
     @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.InflowVector.from_file')
     @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.EfficiencyCalibrationTable')
     @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.DensityOfNeutralHeliumLookupTable.from_file')
+    @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.SwapiL3aProtonDataFromCDF.from_file')
     @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.read_l2_swapi_data')
-    def test_from_file_paths(self, mock_read_l2_swapi, mock_neutral_helium_from_file,
+    def test_from_file_paths(self, mock_read_l2_swapi, mock_read_proton_sw_from_file,
+                             mock_neutral_helium_from_file,
                              mock_efficiency_lookup_class,
                              mock_inflow_vector_from_file, mock_CDF,
                              mock_swapi_response_from_files, mock_read_mag_rtn_data):
         science_path = Path("imap_swapi_l2_sci_20100105_v010.cdf")
+        proton_sw_path = Path("imap_swapi_l3a_proton-sw_20100105_v0.10.cdf")
         efficiency_path = Path("imap_swapi_efficiency_20100105_v010.cdf")
         neutral_helium_path = Path("imap_swapi_neutral_he_20100105_v010.cdf")
         hydrogen_vector_path = Path("imap_swapi_h_inflow_20100105_v010.dat")
@@ -162,6 +202,7 @@ class TestSwapiL3ADependencies(unittest.TestCase):
         mag_path = Path("imap_mag_l2_norm-rtn_20100105_v010.cdf")
 
         mock_read_l2_swapi.return_value = sentinel.swapi_l2_data
+        mock_read_proton_sw_from_file.return_value = sentinel.swapi_l3a_proton_data
         mock_efficiency_lookup_class.return_value = sentinel.efficiency_lookup
         mock_neutral_helium_from_file.return_value = sentinel.neutral_helium_data
         mock_inflow_vector_from_file.side_effect = [sentinel.hydrogen_vector, sentinel.helium_vector]
@@ -170,6 +211,7 @@ class TestSwapiL3ADependencies(unittest.TestCase):
 
         expected_dependencies = SwapiL3ADependencies(
             data=sentinel.swapi_l2_data,
+            l3a_proton_data=sentinel.swapi_l3a_proton_data,
             efficiency_calibration_table=sentinel.efficiency_lookup,
             density_of_neutral_helium_calibration_table=sentinel.neutral_helium_data,
             hydrogen_inflow_vector=sentinel.hydrogen_vector,
@@ -181,6 +223,7 @@ class TestSwapiL3ADependencies(unittest.TestCase):
 
         actual_dependencies = SwapiL3ADependencies.from_file_paths(
             science_path,
+            proton_sw_path,
             efficiency_path,
             neutral_helium_path,
             hydrogen_vector_path,
@@ -194,6 +237,7 @@ class TestSwapiL3ADependencies(unittest.TestCase):
 
         mock_CDF.assert_called_once_with(str(science_path))
         mock_read_l2_swapi.assert_called_once_with(mock_CDF.return_value)
+        mock_read_proton_sw_from_file.assert_called_once_with(proton_sw_path)
         mock_efficiency_lookup_class.assert_called_once_with(efficiency_path)
         mock_neutral_helium_from_file.assert_called_once_with(neutral_helium_path)
         mock_inflow_vector_from_file.assert_has_calls(
@@ -210,14 +254,17 @@ class TestSwapiL3ADependencies(unittest.TestCase):
     @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.InflowVector.from_file')
     @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.EfficiencyCalibrationTable')
     @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.DensityOfNeutralHeliumLookupTable.from_file')
+    @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.SwapiL3aProtonDataFromCDF.from_file')
     @patch('imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.read_l2_swapi_data')
-    def test_from_file_paths_without_mag(self, mock_read_l2_swapi, mock_neutral_helium_from_file,
-                                         mock_efficiency_lookup_class, mock_inflow_vector_from_file, mock_CDF,
-                                         mock_swapi_response_from_files, mock_read_mag_rtn_data):
+    def test_from_file_paths_without_mag_or_proton_sw(self, mock_read_l2_swapi, mock_proton_sw_from_file,
+                                                mock_neutral_helium_from_file,
+                                                mock_efficiency_lookup_class, mock_inflow_vector_from_file, mock_CDF,
+                                                mock_swapi_response_from_files, mock_read_mag_rtn_data):
         mock_inflow_vector_from_file.side_effect = [sentinel.hydrogen_vector, sentinel.helium_vector]
 
         actual = SwapiL3ADependencies.from_file_paths(
             Path("science.cdf"),
+            None,
             Path("efficiency.cdf"),
             Path("neutral_helium.cdf"),
             Path("h_inflow.dat"),
@@ -227,6 +274,8 @@ class TestSwapiL3ADependencies(unittest.TestCase):
             Path("passband_fit_coefficients.cdf"),
         )
 
+        self.assertIsNone(actual.l3a_proton_data)
         self.assertIsNone(actual.mag_data)
         self.assertFalse(actual.mag_is_preliminary)
+        mock_proton_sw_from_file.assert_not_called()
         mock_read_mag_rtn_data.assert_not_called()

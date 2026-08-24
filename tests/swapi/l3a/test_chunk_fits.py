@@ -27,7 +27,7 @@ from imap_l3_processing.swapi.l3a.chunk_fits import (
     ChunkFitter,
     ParallelChunkRunner,
     ProtonChunkFitter,
-    PuiChunkFitter,
+    PuiChunkFitter, _fit_proton,
 )
 from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_pickup_ion_values import (
     PickupIonFitResult,
@@ -38,7 +38,7 @@ from imap_l3_processing.swapi.l3a.science.pickup_ion.vasyliunas_siscoe_distribut
 from imap_l3_processing.swapi.response.efficiency_calibration_table import (
     EfficiencyCalibrationTable,
 )
-from imap_l3_processing.swapi.l3a.models import SwapiL2Data
+from imap_l3_processing.swapi.l3a.models import SwapiL2Data, SwapiL3aProtonDataChunk, SwapiL3aProtonDataFromCDF
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
 )
@@ -571,9 +571,10 @@ class TestAlphaChunkFitterPrecomputeGeometry(SpiceTestCase):
 
     def test_success_returns_rotations_sc_velocity_and_b_hat(self):
         """With both SPICE and MAG available, alpha precompute_geometry returns the chunk epoch, a science-bin rotation array of the right shape (matching the proton fit it shares with proton-sw), the spacecraft velocity, and the median B̂ in the chunk window."""
+        zero_proton_l3a_data = Mock()
         [(epoch, rotation_matrices, sc_velocity, b_hat, flag)] = AlphaChunkFitter(
             self._mag_centered_on(_CHUNK_EPOCH)
-        ).precompute_geometry([_zero_chunk()])
+        ).precompute_geometry([(_zero_chunk(), zero_proton_l3a_data)])
 
         self.assertEqual(epoch, _CHUNK_EPOCH)
         assert rotation_matrices is not None and sc_velocity is not None
@@ -590,7 +591,7 @@ class TestAlphaChunkFitterPrecomputeGeometry(SpiceTestCase):
         out_of_coverage_chunk_epoch = _OUT_OF_COVERAGE_START_TIME + THIRTY_SECONDS_IN_NANOSECONDS
         [(_, rotation_matrices, sc_velocity, b_hat, _)] = AlphaChunkFitter(
             self._mag_centered_on(out_of_coverage_chunk_epoch)
-        ).precompute_geometry([_out_of_coverage_chunk()])
+        ).precompute_geometry([(_out_of_coverage_chunk(), Mock())])
         self.assertIsNone(rotation_matrices)
         self.assertIsNone(sc_velocity)
         np.testing.assert_allclose(b_hat, _B_HAT_RTN)
@@ -600,7 +601,7 @@ class TestAlphaChunkFitterPrecomputeGeometry(SpiceTestCase):
         far_future = _EPOCH_TT2000 + 10**18
         [(_, _, _, b_hat, _)] = AlphaChunkFitter(
             self._mag_centered_on(far_future)
-        ).precompute_geometry([_zero_chunk()])
+        ).precompute_geometry([(_zero_chunk(), Mock())])
         self.assertTrue(np.all(np.isnan(b_hat)))
 
     @patch('imap_l3_processing.swapi.l3a.chunk_fits.compute_direction_of_mean_magnetic_field_over_chunk')
@@ -627,7 +628,7 @@ class TestAlphaChunkFitterPrecomputeGeometry(SpiceTestCase):
             str_yyyymmdd_to_ttj2000ns("20260120")
             + 12*3600*1e9
         )
-        chunks = [chunk_needing_predict, chunk_not_needing_predict]
+        chunks = [(chunk_needing_predict, Mock()), (chunk_not_needing_predict, Mock())]
 
         with KernelPool(spice_test_paths):
             [geom1, geom2] = AlphaChunkFitter(None).precompute_geometry(chunks)
@@ -654,7 +655,7 @@ class TestAlphaChunkFitterPrecomputeGeometry(SpiceTestCase):
             str_yyyymmdd_to_ttj2000ns("20260120")
             + 12*3600*1e9
         )
-        chunks = [chunk_needing_predict, chunk_not_needing_predict]
+        chunks = [(chunk_needing_predict, Mock()), (chunk_not_needing_predict, Mock())]
 
         AlphaChunkFitter(None).precompute_geometry(chunks)
         self.assertEqual(2, mock_tracker_class.call_count)
@@ -682,15 +683,49 @@ class TestAlphaChunkFitterFitChunk(SpiceTestCase):
         # `SWAPI_SCIENCE_BINS`, so the rotations passed in must span the full
         # science range; AlphaChunkFitter slices down to coarse for Stage 2.
         cls.rotations = _spice_rotations(SWAPI_SCIENCE_BINS)
+        proton_fit_result = _fit_proton(cls.chunk, _CHUNK_EPOCH, cls.rotations)
+        cls.l3a_proton_chunk = SwapiL3aProtonDataChunk(
+            velocity_rtn=proton_fit_result.velocity_rtn_nominal(),
+        velocity_rtn_covariance=proton_fit_result.velocity_rtn_covariance(),
+        density=proton_fit_result.density.n,
+        temperature=proton_fit_result.temperature.n,
+        quality_flags=proton_fit_result.quality_flag,
+        )
         cls.fitter = AlphaChunkFitter(mag_data=None)
         cls.happy_result = cls.fitter.fit_chunk(
-            cls.chunk, _CHUNK_EPOCH, cls.rotations, _SC_VELOCITY_RTN, _B_HAT_RTN, SwapiL3Flags.NONE
+            (cls.chunk, cls.l3a_proton_chunk), _CHUNK_EPOCH, cls.rotations, _SC_VELOCITY_RTN, _B_HAT_RTN, SwapiL3Flags.NONE
         )
 
     @classmethod
     def tearDownClass(cls):
         _clear_shared()
         super().tearDownClass()
+
+    @patch("imap_l3_processing.swapi.l3a.chunk_fits._fit_proton")
+    def test_does_not_use_fit_proton(self, mock_fit_proton):
+        mock_fit_proton.side_effect = Exception("no")
+        result = AlphaChunkFitter(mag_data=None).fit_chunk(
+            (self.chunk, self.l3a_proton_chunk), _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN, _B_HAT_RTN, SwapiL3Flags.NONE
+        )
+        self.assertAlmostEqual(
+            result["alpha_sw_density"],
+            _TRUE_ALPHA_DENSITY,
+            delta=0.10 * _TRUE_ALPHA_DENSITY,
+        )
+        self.assertAlmostEqual(
+            result["alpha_sw_temperature"],
+            _TRUE_ALPHA_TEMPERATURE_K,
+            delta=0.10 * _TRUE_ALPHA_TEMPERATURE_K,
+        )
+        np.testing.assert_allclose(
+            result["alpha_sw_velocity_rtn"], self.true_alpha_velocity_rtn, atol=5.0
+        )
+        np.testing.assert_allclose(
+            result["alpha_sw_speed"],
+            np.linalg.norm(self.true_alpha_velocity_rtn),
+            atol=5.0,
+        )
+        mock_fit_proton.assert_not_called()
 
     def test_recovers_alpha_truth_moments(self):
         """Fitting a forward-modeled proton+alpha chunk recovers the true alpha density, temperature, and bulk velocity within a few percent."""
@@ -729,7 +764,7 @@ class TestAlphaChunkFitterFitChunk(SpiceTestCase):
     def test_missing_sc_velocity_fills_only_sun_frame_outputs(self):
         """Calling fit_chunk with no SC velocity still recovers the alpha moments; only the sun-frame outputs (`alpha_sw_speed_sun`, `alpha_sw_velocity_rtn_sun`) are fill values."""
         result = self.fitter.fit_chunk(
-            self.chunk, _CHUNK_EPOCH, self.rotations, None, _B_HAT_RTN, SwapiL3Flags.NONE
+            (self.chunk, self.l3a_proton_chunk), _CHUNK_EPOCH, self.rotations, None, _B_HAT_RTN, SwapiL3Flags.NONE
         )
         self.assertEqual(int(result["quality_flags"]), int(SwapiL3Flags.NONE))
 
@@ -749,7 +784,7 @@ class TestAlphaChunkFitterFitChunk(SpiceTestCase):
 
     def test_uses_quality_flag_from_geometry(self):
         result = AlphaChunkFitter(None).fit_chunk(
-            self.chunk, _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN.copy(), _B_HAT_RTN.copy(), SwapiL3Flags.PREDICTIVE_EPHEMERIS,
+            (self.chunk, self.l3a_proton_chunk), _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN.copy(), _B_HAT_RTN.copy(), SwapiL3Flags.PREDICTIVE_EPHEMERIS,
         )
         self.assertEqual(result["quality_flags"], SwapiL3Flags.PREDICTIVE_EPHEMERIS)
 
@@ -1014,11 +1049,14 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
         for mag_is_preliminary, expected_flag in cases:
             with self.subTest(mag_is_preliminary=mag_is_preliminary):
                 mock_chunk_l2_data.return_value = [Mock()]
+                l3a_proton_data = Mock(spec=SwapiL3aProtonDataFromCDF)
+                l3a_proton_data.make_chunks.return_value = [Mock()]
                 mock_runner_class.return_value.run.return_value = {
                     "quality_flags": np.array([runner_flag])
                 }
                 dependencies = Mock(
                     mag_data=Mock(),
+                    l3a_proton_data=l3a_proton_data,
                     mag_is_preliminary=mag_is_preliminary,
                     swapi_response=Mock(),
                     efficiency_calibration_table=Mock(),

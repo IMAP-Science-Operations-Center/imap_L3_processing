@@ -17,8 +17,9 @@ from imap_l3_processing.swapi.descriptors import DENSITY_OF_NEUTRAL_HELIUM_DESCR
     GEOMETRIC_FACTOR_SW_LOOKUP_TABLE_DESCRIPTOR, \
     HYDROGEN_INFLOW_VECTOR_DESCRIPTOR, HELIUM_INFLOW_VECTOR_DESCRIPTOR, \
     AZIMUTHAL_TRANSMISSION_DESCRIPTOR, CENTRAL_EFFECTIVE_AREA_DESCRIPTOR, \
-    PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR
-from imap_l3_processing.swapi.l3a.models import SwapiL2Data
+    PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR, SWAPI_L3A_PROTON_SW_DESCRIPTOR
+from imap_l3_processing.swapi.l3a.chunk_fits import AlphaChunkFitter
+from imap_l3_processing.swapi.l3a.models import SwapiL2Data, SwapiL3aProtonDataFromCDF, SwapiL3aProtonDataChunk
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SWAPI_L2_DESCRIPTOR, SwapiL3ADependencies
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_vdf import DeltaMinusPlus
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
@@ -343,7 +344,7 @@ class TestSwapiProcessor(TestCase):
                                mock_parallel_chunk_runner_class,
                                mock_write_cdf,
                                mock_alpha_solar_wind_data_constructor,
-                               mock_imap_attribute_manager):
+                               mock_imap_attribute_manager,):
         instrument = 'swapi'
         incoming_data_level = 'l2'
         dependency_start_date = datetime.strftime(datetime(2025, 1, 1), "%Y%m%d")
@@ -368,6 +369,15 @@ class TestSwapiProcessor(TestCase):
         chunk_of_five = SwapiL2Data(epoch, energy, coincidence_count_rate,
                                     coincidence_count_rate_uncertainty)
 
+        l2_chunk_2 = SwapiL2Data(epoch, energy, coincidence_count_rate,
+                                    coincidence_count_rate_uncertainty)
+
+        proton_l3a_data = Mock(spec=SwapiL3aProtonDataFromCDF)
+        proton_l3a_data.make_chunks.return_value = [
+            sentinel.proton_chunk_1,
+            sentinel.proton_chunk_2,
+        ]
+
         runner_result = dict(
             epoch=np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]),
             alpha_sw_speed=np.array([450.0]),
@@ -389,16 +399,20 @@ class TestSwapiProcessor(TestCase):
         science_input = ScienceInput(
             f'imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf')
 
+        proton_sw_input = ScienceInput(
+            f'imap_{instrument}_l3a_{SWAPI_L3A_PROTON_SW_DESCRIPTOR}_{dependency_start_date}_{version}.cdf')
+
         input_file_names = [
             f'imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
+            f'imap_{instrument}_l3a_{SWAPI_L3A_PROTON_SW_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{AZIMUTHAL_TRANSMISSION_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{CENTRAL_EFFECTIVE_AREA_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
             f'imap_{instrument}_{PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR}_{dependency_start_date}_{version}.cdf',
         ]
 
-        ancillary_inputs = [AncillaryInput(file_name) for file_name in input_file_names[1:]]
-        dependencies = ProcessingInputCollection(science_input, *ancillary_inputs)
+        ancillary_inputs = [AncillaryInput(file_name) for file_name in input_file_names[2:]]
+        dependencies = ProcessingInputCollection(science_input, proton_sw_input, *ancillary_inputs)
 
         input_metadata = InputMetadata(instrument, outgoing_data_level, start_date, end_date, input_version)
 
@@ -411,12 +425,13 @@ class TestSwapiProcessor(TestCase):
         expected_cdf_path = (config["DATA_DIR"] / "imap" / "swapi" / "l3a" / "2025" / "08" /
                              f"imap_swapi_l3a_alpha-sw_{start_date_as_str}_v123.cdf")
 
-        mock_chunk_l2_data.return_value = [chunk_of_five]
+        mock_chunk_l2_data.return_value = [chunk_of_five, l2_chunk_2]
 
         swapi_l3a_dependencies = create_swapi_l3a_dependencies_with_mocks()
         swapi_l3a_dependencies.data = Mock(energy=energy)
         swapi_l3a_dependencies.mag_data = Mock()
         swapi_l3a_dependencies.mag_is_preliminary = False
+        swapi_l3a_dependencies.l3a_proton_data = proton_l3a_data
         mock_swapi_l3_dependencies_class.fetch_dependencies.return_value = swapi_l3a_dependencies
 
         mock_manager = mock_imap_attribute_manager.return_value
@@ -434,8 +449,14 @@ class TestSwapiProcessor(TestCase):
         )
         mock_runner.run.assert_called_once()
         actual_chunks = mock_runner.run.call_args.args[0]
-        self.assertEqual([chunk_of_five], actual_chunks)
-
+        self.assertEqual([
+            (chunk_of_five, sentinel.proton_chunk_1),
+            (l2_chunk_2, sentinel.proton_chunk_2)
+        ], actual_chunks)
+        actual_fitter = mock_runner.run.call_args.args[1]
+        self.assertIsInstance(actual_fitter, AlphaChunkFitter)
+        self.assertEqual(swapi_l3a_dependencies.mag_data, actual_fitter.mag_data)
+        mock_chunk_l2_data.assert_called_with(swapi_l3a_dependencies.data, 5)
         actual_kwargs = mock_alpha_solar_wind_data_constructor.call_args.kwargs
         actual_positional = mock_alpha_solar_wind_data_constructor.call_args.args
         self.assertEqual(expected_alpha_metadata, actual_positional[0])

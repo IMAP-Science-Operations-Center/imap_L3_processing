@@ -301,6 +301,14 @@ class SwapiL2Data:
 
 
 @dataclass
+class SwapiL3aProtonDataChunk:
+    velocity_rtn: np.ndarray
+    velocity_rtn_covariance: np.ndarray
+    density: float
+    temperature: float
+    quality_flags: SwapiL3Flags
+
+@dataclass
 class SwapiL3aProtonDataFromCDF:
     l2_parent_file_name: str
     velocity_rtn: np.ndarray
@@ -326,3 +334,17 @@ class SwapiL3aProtonDataFromCDF:
             temperature,
             quality_flags
         )
+
+    def make_chunks(self) -> list[SwapiL3aProtonDataChunk]:
+        output_list = []
+        for i in range(len(self.velocity_rtn)):
+            output_list.append(
+                SwapiL3aProtonDataChunk(
+                    velocity_rtn=self.velocity_rtn[i],
+                    velocity_rtn_covariance=self.velocity_rtn_covariance[i],
+                    density=self.density[i],
+                    temperature=self.temperature[i],
+                    quality_flags=self.quality_flags[i],
+                )
+            )
+        return output_list

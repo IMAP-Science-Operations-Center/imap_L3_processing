@@ -11,8 +11,8 @@ from imap_l3_processing.swapi.descriptors import SWAPI_L2_DESCRIPTOR, \
     DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR, EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR, HYDROGEN_INFLOW_VECTOR_DESCRIPTOR, \
     HELIUM_INFLOW_VECTOR_DESCRIPTOR, AZIMUTHAL_TRANSMISSION_DESCRIPTOR, \
     CENTRAL_EFFECTIVE_AREA_DESCRIPTOR, PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR, \
-    MAG_RTN_DESCRIPTOR
-from imap_l3_processing.swapi.l3a.models import SwapiL2Data
+    MAG_RTN_DESCRIPTOR, SWAPI_L3A_PROTON_SW_DESCRIPTOR
+from imap_l3_processing.swapi.l3a.models import SwapiL2Data, SwapiL3aProtonDataFromCDF
 from imap_l3_processing.swapi.l3a.science.pickup_ion.density_of_neutral_helium_lookup_table import \
     DensityOfNeutralHeliumLookupTable
 from imap_l3_processing.swapi.l3a.science.pickup_ion.inflow_vector import InflowVector
@@ -30,6 +30,7 @@ class SwapiL3ADependencies:
     hydrogen_inflow_vector: InflowVector
     helium_inflow_vector: InflowVector
     swapi_response: SwapiResponse
+    l3a_proton_data: Optional[SwapiL3aProtonDataFromCDF] = None
     mag_data: Optional[MagData] = None
     mag_is_preliminary: bool = False
 
@@ -49,8 +50,12 @@ class SwapiL3ADependencies:
         mag_path, mag_level = select_mag_path(dependencies, MAG_RTN_DESCRIPTOR)
         mag_is_preliminary = mag_level == "l1d"
 
+        proton_dependency_paths = dependencies.get_file_paths(source="swapi", descriptor=SWAPI_L3A_PROTON_SW_DESCRIPTOR)
+        proton_dependency_path = download(proton_dependency_paths[0]) if proton_dependency_paths != [] else None
+
         return cls.from_file_paths(
             download(science_dependency_file[0]),
+            proton_dependency_path,
             download(efficiency_calibration_table[0]),
             download(neutral_helium_table[0]),
             download(hydrogen_vector_paths[0]),
@@ -64,6 +69,7 @@ class SwapiL3ADependencies:
 
     @classmethod
     def from_file_paths(cls, science_dependency_path: Path,
+                        proton_dependency_path: Optional[Path],
                         efficiency_calibration_path: Path,
                         neutral_helium_path: Path, hydrogen_inflow_vector_path: Path,
                         helium_inflow_vector_path: Path, azimuthal_transmission_path: Path,
@@ -79,6 +85,8 @@ class SwapiL3ADependencies:
             helium_inflow_vector=InflowVector.from_file(helium_inflow_vector_path),
             swapi_response=SwapiResponse.from_files(
                 azimuthal_transmission_path, central_effective_area_path, passband_fit_coefficients_path),
+            l3a_proton_data=SwapiL3aProtonDataFromCDF.from_file(proton_dependency_path)
+                            if proton_dependency_path is not None else None,
             mag_data=read_mag_rtn_data(mag_path) if mag_path is not None else None,
             mag_is_preliminary=mag_is_preliminary,
         )
