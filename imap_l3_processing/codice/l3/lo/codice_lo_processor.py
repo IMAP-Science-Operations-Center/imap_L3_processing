@@ -248,13 +248,9 @@ class CodiceLoProcessor(Processor):
         stacked_priorities = np.concatenate([
             np.ma.filled(sw_aligned, np.nan), np.ma.filled(nsw_aligned, np.nan)], axis=1)
 
-        normalization = calculate_normalization_factor(
-            stacked_priorities,
-            codice_direct_events.num_events,
-            codice_direct_events.energy_step,
-            codice_direct_events.spin_sector,
-            codice_direct_events.apd_id,
-        )
+        normalization = calculate_normalization_factor(stacked_priorities, codice_direct_events.num_events,
+                                                       codice_direct_events.energy_step,
+                                                       codice_direct_events.spin_sector)
         normalization_per_event = lookup_normalization_per_event(
             normalization,
             codice_direct_events.num_events,
