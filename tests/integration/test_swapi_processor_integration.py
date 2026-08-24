@@ -21,12 +21,14 @@ from pathlib import Path
 from unittest import skipUnless
 
 import imap_data_access
+import numpy as np
 import numpy.testing
 from imap_data_access import ScienceFilePath
 from spacepy.pycdf import CDF
 import datetime
 
 import imap_l3_processing
+from imap_l3_processing.swapi.constants import SWAPI_COARSE_SWEEP_BINS
 from tests.integration.integration_test_helpers import stage_input_file
 
 SWAPI_INTEGRATION_DATA_DIR = Path(__file__).parent / "test_data" / "swapi"
@@ -300,7 +302,7 @@ class SwapiProcessorIntegration(unittest.TestCase):
         self.assertTrue(expected_file_path.exists())
 
         l2_file_path = ScienceFilePath(
-            "imap_swapi_l2_sci_20260101_v001.cdf"
+            "imap_swapi_l2_sci_20260101_v001.0001.cdf"
         ).construct_path()
         self.assertTrue(l2_file_path.exists())
 

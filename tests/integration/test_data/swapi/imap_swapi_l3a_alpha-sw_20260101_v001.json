@@ -1,6 +1,6 @@
 [
-  {"type": "science", "files": ["imap_swapi_l2_sci_20260101_v001.cdf"]},
-  {"type": "science", "files": ["imap_mag_l2_norm-rtn_20260101_v001.cdf"]},
+  {"type": "science", "files": ["imap_swapi_l2_sci_20260101_v001.0001.cdf"]},
+  {"type": "science", "files": ["imap_mag_l2_norm-rtn_20260101_v001.0001.cdf"]},
   {"type": "ancillary", "files": ["imap_swapi_efficiency-lut_20241020_v002.dat"]},
   {"type": "ancillary", "files": ["imap_swapi_density-of-neutral-helium-lut_20241023_v002.dat"]},
   {"type": "ancillary", "files": ["imap_swapi_hydrogen-inflow-vector_20100101_v001.dat"]},

@@ -1,0 +1,5 @@
+[
+  {"type": "science", "files": ["imap_swapi_l2_sci_20260101_v001.0001.cdf"]},
+  {"type": "ancillary", "files": ["imap_swapi_energy-gf-sw-lut_20250924_v004.csv"]},
+  {"type": "ancillary", "files": ["imap_swapi_efficiency-lut_20241020_v002.dat"]}
+]
