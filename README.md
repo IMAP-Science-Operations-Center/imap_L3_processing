@@ -56,9 +56,49 @@ Alternatively, running run_local_using_docker.sh in Git Bash will execute the ab
 ### Getting data from Dev data from SDC (Science Data Center)
 
 We created a tool to retrieve the latest data from the SDC to assist with testing. The tool takes in command line
-arguements, the instrument level, and the number of files to retrieve. For example:
+arguments, the instrument level, and the number of files to retrieve. For example:
 
 `python fetch_latest_data.py --instrument swapi --level l3a --count 4`
 
 This will copy the .cdf files into your repo folder under the data folder. 
 
+## Development
+
+This project uses [`uv`](https://docs.astral.sh/uv/) for dependency management.
+
+### Setup
+
+- `uv sync --extra test` installs the runtime dependencies plus unit-testing tools (`pytest`, `pytest-xdist`).
+- `uv sync --extra dev` installs formatting/linting tools (`ruff`) plus other developer dependencies.
+- `uv sync --extra test,dev` installs both.
+
+### Test data (Git LFS)
+
+Many test fixtures (`.dat`, `.bsp`, `.tls`, `.tsc`, `.tf` files — calibration tables and SPICE
+kernels) are stored via [Git LFS](https://git-lfs.com/), not checked directly into git. Before
+running the test suite for the first time:
+
+- Install the `git-lfs` CLI (e.g. `brew install git-lfs`, or see the link above).
+- Run `git lfs install` once per machine — this registers the LFS filters with git; without it,
+  `git lfs pull` silently fetches objects but does not check them out.
+- Run `git lfs pull` to replace the LFS-tracked files with their real content.
+
+If this step is skipped, those files stay as small text pointer stubs (starting with
+`version https://git-lfs.github.com/spec/v1`), and tests that read them fail with confusing
+errors that don't look LFS-related, e.g. `ValueError: could not convert string 'version' to
+float64...` or `spiceypy` errors like `SpiceNOLEAPSECONDS`/`SpiceMISSINGTIMEINFO`.
+
+### Running tests
+
+- `uv run pytest -n auto` runs the full suite in parallel. This is the preferred way to run tests.
+- `uv run pytest` (without `-n auto`) and `uv run python -m unittest discover tests` also work,
+  since the suite is written with `unittest.TestCase`.
+- To run tests for a single instrument, point any of the above at its directory, e.g.
+  `uv run pytest -n auto tests/swapi`.
+- Integration tests live under `tests/integration/` and require external data and/or SPICE
+  kernels; they are not expected to pass in a clean environment without that data.
+
+### Linting
+
+- `uv run ruff check .` lints the codebase.
+- `uv run ruff format --check .` checks formatting without modifying files (drop `--check` to apply formatting).

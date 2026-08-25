@@ -1,4 +1,3 @@
-import os
 import tempfile
 from datetime import datetime, date
 from pathlib import Path
@@ -48,14 +47,6 @@ from tests.test_helpers import (
 
 
 class TestUtils(TestCase):
-    def setUp(self) -> None:
-        if os.path.exists('test_cdf.cdf'):
-            os.remove('test_cdf.cdf')
-
-    def tearDown(self) -> None:
-        if os.path.exists('test_cdf.cdf'):
-            os.remove('test_cdf.cdf')
-
     @patch("imap_l3_processing.utils.ImapAttributeManager")
     @patch("imap_l3_processing.utils.date")
     @patch("imap_l3_processing.utils.write_cdf")
@@ -417,27 +408,28 @@ class TestUtils(TestCase):
         self.assertIsNone(returned)
 
     def test_read_l1d_mag_data(self):
-        file_name_as_str = "test_cdf.cdf"
-        file_name_as_path = Path(file_name_as_str)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            file_name_as_path = Path(tmpdir) / "test_cdf.cdf"
+            file_name_as_str = str(file_name_as_path)
 
-        epoch = np.array([datetime(2010, 1, 1, 0, 0, 46)])
-        vectors_with_magnitudes = np.array([[0, 1, 2, 0], [255, 255, 255, 255], [6, 7, 8, 0]], dtype=np.float64)
-        trimmed_vectors = np.array([[0, 1, 2], [np.nan, np.nan, np.nan], [6, 7, 8]])
-        with CDF(file_name_as_str, "") as mag_cdf:
-            mag_cdf["epoch"] = epoch
-            mag_cdf["b_dsrf"] = vectors_with_magnitudes
-            mag_cdf["b_dsrf"].attrs['FILLVAL'] = 255.0
+            epoch = np.array([datetime(2010, 1, 1, 0, 0, 46)])
+            vectors_with_magnitudes = np.array([[0, 1, 2, 0], [255, 255, 255, 255], [6, 7, 8, 0]], dtype=np.float64)
+            trimmed_vectors = np.array([[0, 1, 2], [np.nan, np.nan, np.nan], [6, 7, 8]])
+            with CDF(file_name_as_str, "") as mag_cdf:
+                mag_cdf["epoch"] = epoch
+                mag_cdf["b_dsrf"] = vectors_with_magnitudes
+                mag_cdf["b_dsrf"].attrs['FILLVAL'] = 255.0
 
-        cases = [
-            ("file name as str", file_name_as_str),
-            ("file name as Path", file_name_as_path)
-        ]
-        for name, path in cases:
-            with self.subTest(name):
-                results = read_mag_data(path)
+            cases = [
+                ("file name as str", file_name_as_str),
+                ("file name as Path", file_name_as_path)
+            ]
+            for name, path in cases:
+                with self.subTest(name):
+                    results = read_mag_data(path)
 
-                np.testing.assert_array_equal(epoch, results.epoch)
-                np.testing.assert_array_equal(trimmed_vectors, results.mag_data)
+                    np.testing.assert_array_equal(epoch, results.epoch)
+                    np.testing.assert_array_equal(trimmed_vectors, results.mag_data)
 
     @patch("imap_l3_processing.utils.spiceypy")
     def test_furnish_local_spice(self, mock_spiceypy):
