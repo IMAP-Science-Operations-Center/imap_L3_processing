@@ -70,7 +70,7 @@ This project uses [`uv`](https://docs.astral.sh/uv/) for dependency management.
 
 - `uv sync --extra test` installs the runtime dependencies plus unit-testing tools (`pytest`, `pytest-xdist`).
 - `uv sync --extra dev` installs formatting/linting tools (`ruff`) plus other developer dependencies.
-- `uv sync --extra test,dev` installs both.
+- `uv sync --extra test --extra dev` installs both.
 
 ### Test data (Git LFS)
 
