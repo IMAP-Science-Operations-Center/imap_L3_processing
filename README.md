@@ -90,18 +90,14 @@ float64...` or `spiceypy` errors like `SpiceNOLEAPSECONDS`/`SpiceMISSINGTIMEINFO
 
 ### Running tests
 
-- Running the **full** suite requires the Git LFS data described above: run `git lfs pull`
-  first. This is especially true for integration tests (under `tests/integration/`), which need
-  the real SPICE kernels and other fixtures LFS provides. Without them, they fail with the
-  confusing errors mentioned in that section.
+- Running the test suite requires the Git LFS data described above: run `git lfs pull` first.
+  Skipping this step will cause tests to fail.
 - `uv run pytest` runs the full suite. `uv run python -m unittest discover tests` also works,
   since the suite is written with `unittest.TestCase`.
-- If you haven't run `git lfs pull`, exclude the integration tests instead:
-  `uv run pytest --ignore=tests/integration`.
 - To run tests for a single instrument, point either of the above at its directory, e.g.
   `uv run pytest tests/swapi`.
-- `pytest-xdist` is installed (`-n auto`), but is not currently used in CI or recommended locally:
-  some tests are not yet safe to run in parallel.
+- `pytest-xdist` is installed (`-n auto`), but is not currently used in CI or recommended locally,
+  as some tests are not yet safe to run in parallel (TODO).
 
 ### Linting
 
