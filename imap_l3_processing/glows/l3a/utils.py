@@ -75,7 +75,7 @@ def read_l2_glows_data(cdf: CDF) -> GlowsL2Data:
                        start_time=cdf['start_time'][0],
                        end_time=cdf['end_time'][0],
                        daily_lightcurve=light_curve,
-                       number_of_bins=cdf['number_of_bins'][...],
+                       number_of_bins=cdf['number_of_bins'][0],
                        spin_axis_orientation_average=spin_axis_average,
                        spin_axis_orientation_std_dev=spin_axis_std_dev,
                        filter_temperature_average=cdf['filter_temperature_average'][0],
@@ -157,7 +157,7 @@ def create_glows_l3a_dictionary_from_cdf(cdf_file_path: Path) -> dict:
     time_delta = timedelta(seconds=cdf['epoch_delta'][0] / 1e9)
     start_time = cdf['epoch'][0] - time_delta
     end_time = cdf['epoch'][0] + time_delta
-    valid_bin_count = int(np.asarray(cdf['number_of_bins'][0]).item())
+    valid_bin_count = cdf['number_of_bins'][0]
     return {
         'filename': f'{os.path.basename(cdf_file_path)}',
         'start_time': start_time.strftime("%Y-%m-%d %H:%M:%S"),
