@@ -1007,8 +1007,17 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
         cls.response = _swapi_response_with_warm_cache(np.tile(REALISTIC_ESA_VOLTAGES, _N_SWEEPS))
         efficiency_table = _efficiency_table()
         _populate_shared(cls.response, efficiency_table)
-        cls.chunk, cls.rotations, _, _ = _build_truth_chunk(cls.response, efficiency_table)
+        cls.l2_chunk, cls.rotations, _, _ = _build_truth_chunk(cls.response, efficiency_table)
         cls.fitter = AlphaChunkFitter(mag_data=None)
+        proton_fit_result = _fit_proton(cls.l2_chunk, _CHUNK_EPOCH, cls.rotations)
+        cls.l3a_proton_chunk = SwapiL3aProtonDataChunk(
+            velocity_rtn=proton_fit_result.velocity_rtn_nominal(),
+            velocity_rtn_covariance=proton_fit_result.velocity_rtn_covariance(),
+            density=proton_fit_result.density.n,
+            temperature=proton_fit_result.temperature.n,
+            quality_flags=proton_fit_result.quality_flag,
+        )
+        cls.chunk = (cls.l2_chunk, cls.l3a_proton_chunk)
 
     @classmethod
     def tearDownClass(cls):
@@ -1019,11 +1028,11 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
         """Scrambling and amplifying the alpha-bump bins leaves the proton peak intact but yields a Stage-2 residual the alpha LM cannot describe (the BAD_FIT quality guard fires); the chunk fitter surfaces `BAD_FIT` with every alpha moment NaN-filled."""
         rng = np.random.default_rng(0)
         permuted = rng.permutation(np.arange(_ALPHA_BUMP_BINS.start, _ALPHA_BUMP_BINS.stop))
-        corrupted = self.chunk.coincidence_count_rate.copy()
+        corrupted = self.l2_chunk.coincidence_count_rate.copy()
         corrupted[:, _ALPHA_BUMP_BINS] = corrupted[:, permuted] * 3.0
 
         result = self.fitter.fit_chunk(
-            _with_count_rate(self.chunk, corrupted),
+            (_with_count_rate(self.l2_chunk, corrupted), self.l3a_proton_chunk),
             _CHUNK_EPOCH,
             self.rotations,
             _SC_VELOCITY_RTN,
@@ -1098,7 +1107,10 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
     def test_no_flag_when_count_rate_has_nan(self):
         """A NaN in the alpha count rate is treated as an L2 data gap: every alpha field NaN-fills and bad_fit_flag is NONE."""
         result = self.fitter.fit_chunk(
-            _with_nan_at(self.chunk, 0, 5),
+            (
+                _with_nan_at(self.l2_chunk, 0, 5),
+                self.l3a_proton_chunk,
+            ),
             _CHUNK_EPOCH,
             self.rotations,
             _SC_VELOCITY_RTN,
@@ -1111,7 +1123,7 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
         """Coarse-sweep bins shouldn't carry zero voltages in production, but if one does `build_solar_wind_fit_context` raises rather than silently flattening the alpha context to 1D and breaking the per-sweep aggregations. The chunk fitter's try/except catches the raise and surfaces `FIT_ERROR` with every alpha moment NaN-filled."""
         coarse_bin = SWAPI_COARSE_SWEEP_BINS.start + 5
         result = self.fitter.fit_chunk(
-            _with_zero_energy_at(self.chunk, 0, coarse_bin),
+            (_with_zero_energy_at(self.l2_chunk, 0, coarse_bin), self.l3a_proton_chunk),
             _CHUNK_EPOCH,
             self.rotations,
             _SC_VELOCITY_RTN,
@@ -1121,12 +1133,12 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
         _assert_alpha_flag_and_all_nan(self, result, SwapiL3Flags.FIT_ERROR)
 
     def test_combines_geometry_and_fitting_flags(self):
-        peak_bin = int(np.argmax(self.chunk.coincidence_count_rate.mean(axis=0)))
-        single_bin = np.zeros_like(self.chunk.coincidence_count_rate)
+        peak_bin = int(np.argmax(self.l2_chunk.coincidence_count_rate.mean(axis=0)))
+        single_bin = np.zeros_like(self.l2_chunk.coincidence_count_rate)
         single_bin[:, peak_bin] = 100.0
 
         result = self.fitter.fit_chunk(
-            _with_count_rate(self.chunk, single_bin),
+            (_with_count_rate(self.l2_chunk, single_bin), self.l3a_proton_chunk),
             _CHUNK_EPOCH,
             self.rotations,
             _SC_VELOCITY_RTN.copy(),

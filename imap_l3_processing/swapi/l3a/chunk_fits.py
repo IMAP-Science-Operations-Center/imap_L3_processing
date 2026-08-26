@@ -10,7 +10,7 @@ import spiceypy
 import uncertainties
 from spacepy import pycdf
 from spiceypy.utils.exceptions import SpiceyError
-from uncertainties import ufloat, UFloat
+from uncertainties import ufloat
 
 from imap_l3_processing.constants import (
     ALPHA_MASS_PER_CHARGE_M_P_PER_E,
@@ -665,11 +665,10 @@ def _fit_alpha(
         ),
         quality_flag=l3a_proton_data_chunk.quality_flags,
     )
-    if not np.all(
-        np.isfinite(
-            [component.nominal_value for component in proton_moments.velocity_rtn]
-        )
-    ):
+    any_missing_velocity_rtn = not np.all(np.isfinite([component.nominal_value for component in proton_moments.velocity_rtn]))
+    missing_rotation_matrices = rotation_matrices is None
+    any_missing_count_rates = not np.all(np.isfinite(l2_data_chunk.coincidence_count_rate[:, SWAPI_COARSE_SWEEP_BINS]))
+    if any_missing_velocity_rtn or missing_rotation_matrices or any_missing_count_rates:
         return AlphaChunkFitResult(
             alpha_moments=_nan_alpha_fit_result(proton_moments.quality_flag),
             proton_moments=proton_moments,
