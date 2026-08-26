@@ -9,7 +9,7 @@ on:
 
 jobs:
   test:
-    name: "${{ matrix.suite }}/${{ matrix.instrument }}"
+    name: "${{ matrix.instrument }}::${{ matrix.suite }}"
     # This is advisory for now and should not block pull requests
     continue-on-error: true
     runs-on: ${{ matrix.os }}
