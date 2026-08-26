@@ -15,10 +15,7 @@ from requests import RequestException
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH, TT2000_EPOCH
-from imap_l3_processing.maps.map_models import (
-    RectangularSpectralIndexDataProduct,
-    RectangularIntensityDataProduct,
-)
+from imap_l3_processing.maps.map_models import RectangularSpectralIndexDataProduct, RectangularIntensityDataProduct
 from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
@@ -52,59 +49,42 @@ from tests.test_helpers import (
 
 class TestUtils(TestCase):
     def setUp(self) -> None:
-        if os.path.exists("test_cdf.cdf"):
-            os.remove("test_cdf.cdf")
+        if os.path.exists('test_cdf.cdf'):
+            os.remove('test_cdf.cdf')
 
     def tearDown(self) -> None:
-        if os.path.exists("test_cdf.cdf"):
-            os.remove("test_cdf.cdf")
+        if os.path.exists('test_cdf.cdf'):
+            os.remove('test_cdf.cdf')
 
     @patch("imap_l3_processing.utils.ImapAttributeManager")
     @patch("imap_l3_processing.utils.date")
     @patch("imap_l3_processing.utils.write_cdf")
     @patch("imap_l3_processing.utils.ScienceFilePath")
-    def test_save_data(
-        self,
-        mock_science_file_path_class,
-        mock_write_cdf,
-        mock_today,
-        mock_attribute_manager,
-    ):
+    def test_save_data(self, mock_science_file_path_class, mock_write_cdf, mock_today, mock_attribute_manager):
         mock_today.today.return_value = date(2024, 9, 16)
 
-        input_metadata = InputMetadata(
-            "swapi",
-            "l2",
-            datetime(2024, 9, 17),
-            datetime(2024, 9, 18),
-            VersionMap({"descriptor": Version(1, 2)}),
-            "descriptor",
-            repointing=None,
-        )
+        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), VersionMap({"descriptor":Version(1,2)}),
+                                       "descriptor", repointing=None)
         epoch = np.array([1, 2, 3])
 
-        data_product = SwapiL3AlphaSolarWindData(
-            input_metadata=input_metadata,
-            epoch=epoch,
-            alpha_sw_speed=np.array([450.0, 460.0, 470.0]),
-            alpha_sw_speed_uncert=np.array([1.0, 1.0, 1.0]),
-            alpha_sw_speed_sun=np.array([470.0, 480.0, 490.0]),
-            alpha_sw_speed_sun_uncert=np.array([1.3, 1.4, 1.5]),
-            alpha_sw_density=np.array([5, 5, 5]),
-            alpha_sw_density_uncert=np.array([0.1, 0.1, 0.1]),
-            alpha_sw_temperature=np.array([4, 3, 5]),
-            alpha_sw_temperature_uncert=np.array([0.1, 0.1, 0.1]),
-            alpha_sw_velocity_rtn_sun=np.zeros((3, 3)),
-            alpha_sw_velocity_rtn=np.zeros((3, 3)),
-            alpha_sw_velocity_rtn_covariance=np.zeros((3, 3, 3)),
-            parent_file_names=sentinel.parent_files,
-            quality_flags=sentinel.quality_flags,
-        )
+        data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata, epoch=epoch,
+                                                 alpha_sw_speed=np.array([450.0, 460.0, 470.0]),
+                                                 alpha_sw_speed_uncert=np.array([1.0, 1.0, 1.0]),
+                                                 alpha_sw_speed_sun=np.array([470.0, 480.0, 490.0]),
+                                                 alpha_sw_speed_sun_uncert=np.array([1.3, 1.4, 1.5]),
+                                                 alpha_sw_density=np.array([5, 5, 5]),
+                                                 alpha_sw_density_uncert=np.array([0.1, 0.1, 0.1]),
+                                                 alpha_sw_temperature=np.array([4, 3, 5]),
+                                                 alpha_sw_temperature_uncert=np.array([0.1, 0.1, 0.1]),
+                                                 alpha_sw_velocity_rtn_sun=np.zeros((3, 3)),
+                                                 alpha_sw_velocity_rtn=np.zeros((3, 3)),
+                                                 alpha_sw_velocity_rtn_covariance=np.zeros((3, 3, 3)),
+                                                 parent_file_names=sentinel.parent_files,
+                                                 quality_flags=sentinel.quality_flags,
+                                                 )
 
         mock_science_file_path = Mock()
-        mock_science_file_path_class.generate_from_inputs.return_value = (
-            mock_science_file_path
-        )
+        mock_science_file_path_class.generate_from_inputs.return_value = mock_science_file_path
 
         expected_file_path = mock_science_file_path.construct_path.return_value
 
@@ -123,20 +103,17 @@ class TestUtils(TestCase):
 
         mock_science_file_path.construct_path.assert_called_once()
 
-        mock_write_cdf.assert_called_once_with(
-            str(expected_file_path), data_product, mock_attribute_manager.return_value
-        )
+        mock_write_cdf.assert_called_once_with(str(expected_file_path), data_product,
+                                               mock_attribute_manager.return_value)
 
-        mock_attribute_manager.return_value.add_global_attribute.assert_has_calls(
-            [
-                call("Data_version", "001.0002"),
-                call("Generation_date", "20240916"),
-                call("Logical_source", "imap_swapi_l2_descriptor"),
-                call("Logical_file_id", expected_file_path.stem),
-                call("ground_software_version", VERSION),
-                call("Parents", sentinel.parent_files),
-            ]
-        )
+        mock_attribute_manager.return_value.add_global_attribute.assert_has_calls([
+            call("Data_version", "001.0002"),
+            call("Generation_date", "20240916"),
+            call("Logical_source", "imap_swapi_l2_descriptor"),
+            call("Logical_file_id", expected_file_path.stem),
+            call("ground_software_version", VERSION),
+            call("Parents", sentinel.parent_files),
+        ])
 
         mock_attribute_manager.return_value.add_instrument_attrs.assert_called_with(
             "swapi", "l2", input_metadata.descriptor
@@ -144,12 +121,11 @@ class TestUtils(TestCase):
 
         self.assertEqual(expected_file_path, returned_file_path)
 
+
     @patch("imap_l3_processing.utils.ImapAttributeManager")
     @patch("imap_l3_processing.utils.date")
     @patch("imap_l3_processing.utils.write_cdf")
-    def test_save_data_adds_global_attrs_if_present(
-        self, _, mock_today, mock_attribute_manager
-    ):
+    def test_save_data_adds_global_attrs_if_present(self, _, mock_today, mock_attribute_manager):
         mock_today.today.return_value = date(2024, 9, 16)
         data_product = TestDataProduct()
         data_product.global_metadata_attrs = {
@@ -158,24 +134,21 @@ class TestUtils(TestCase):
         }
         _ = save_data(data_product)
 
-        mock_attribute_manager.return_value.add_global_attribute.assert_has_calls(
-            [
-                call("Data_version", "003"),
-                call("Generation_date", "20240916"),
-                call("Logical_source", "imap_glows_l3_descriptor"),
-                call("Logical_file_id", "imap_glows_l3_descriptor_20250510_v003"),
-                call("ground_software_version", VERSION),
-                call("flight_software_version", 131848),
-                call("ground_software_version", "0.3"),
-            ]
-        )
+        mock_attribute_manager.return_value.add_global_attribute.assert_has_calls([
+            call("Data_version", "003"),
+            call("Generation_date", "20240916"),
+            call("Logical_source", "imap_glows_l3_descriptor"),
+            call("Logical_file_id",
+                 f"imap_glows_l3_descriptor_20250510_v003"),
+            call("ground_software_version", VERSION),
+            call("flight_software_version", 131848),
+            call("ground_software_version", "0.3"),
+        ])
 
     @patch("imap_l3_processing.utils.ImapAttributeManager")
     @patch("imap_l3_processing.utils.date")
     @patch("imap_l3_processing.utils.write_cdf")
-    def test_save_data_adds_repointing_if_present(
-        self, mock_write_cdf, mock_today, mock_attribute_manager
-    ):
+    def test_save_data_adds_repointing_if_present(self, mock_write_cdf, mock_today, mock_attribute_manager):
         mock_today.today.return_value = date(2024, 9, 16)
 
         expected_repointing = 2
@@ -183,39 +156,25 @@ class TestUtils(TestCase):
         data_product.input_metadata.repointing = expected_repointing
         returned_file_path = save_data(data_product)
 
-        mock_write_cdf.assert_called_once_with(
-            str(returned_file_path), data_product, mock_attribute_manager.return_value
-        )
+        mock_write_cdf.assert_called_once_with(str(returned_file_path), data_product,
+                                               mock_attribute_manager.return_value)
 
-        expected_file_path = (
-            config["DATA_DIR"]
-            / "imap"
-            / "glows"
-            / "l3"
-            / "2025"
-            / "05"
-            / f"imap_glows_l3_descriptor_20250510-repoint0000{expected_repointing}_v003.cdf"
-        )
+        expected_file_path = (config["DATA_DIR"] / "imap" / "glows" / "l3" / "2025" / "05" /
+                              f"imap_glows_l3_descriptor_20250510-repoint0000{expected_repointing}_v003.cdf")
         self.assertEqual(expected_file_path, returned_file_path)
 
-        mock_attribute_manager.return_value.add_global_attribute.assert_has_calls(
-            [
-                call("Data_version", "003"),
-                call("Generation_date", "20240916"),
-                call("Logical_source", "imap_glows_l3_descriptor"),
-                call(
-                    "Logical_file_id",
-                    f"imap_glows_l3_descriptor_20250510-repoint0000{expected_repointing}_v003",
-                ),
-            ]
-        )
+        mock_attribute_manager.return_value.add_global_attribute.assert_has_calls([
+            call("Data_version", "003"),
+            call("Generation_date", "20240916"),
+            call("Logical_source", "imap_glows_l3_descriptor"),
+            call("Logical_file_id",
+                 f"imap_glows_l3_descriptor_20250510-repoint0000{expected_repointing}_v003")
+        ])
 
     @patch("imap_l3_processing.utils.ImapAttributeManager")
     @patch("imap_l3_processing.utils.date")
     @patch("imap_l3_processing.utils.write_cdf")
-    def test_save_data_adds_CR_if_present(
-        self, mock_write_cdf, mock_today, mock_attribute_manager
-    ):
+    def test_save_data_adds_CR_if_present(self, mock_write_cdf, mock_today, mock_attribute_manager):
         mock_today.today.return_value = date(2024, 9, 16)
 
         expected_cr = 2
@@ -223,28 +182,17 @@ class TestUtils(TestCase):
         data_product.input_metadata.repointing = None
         returned_file_path = save_data(data_product, cr_number=expected_cr)
 
-        expected_file_path = (
-            config["DATA_DIR"]
-            / "imap"
-            / "glows"
-            / "l3"
-            / "2025"
-            / "05"
-            / f"imap_glows_l3_descriptor_20250510-cr0000{expected_cr}_v003.cdf"
-        )
+        expected_file_path = (config["DATA_DIR"] / "imap" / "glows" / "l3" / "2025" / "05" /
+                              f"imap_glows_l3_descriptor_20250510-cr0000{expected_cr}_v003.cdf")
         self.assertEqual(expected_file_path, returned_file_path)
 
-        mock_attribute_manager.return_value.add_global_attribute.assert_has_calls(
-            [
-                call("Data_version", "003"),
-                call("Generation_date", "20240916"),
-                call("Logical_source", "imap_glows_l3_descriptor"),
-                call(
-                    "Logical_file_id",
-                    f"imap_glows_l3_descriptor_20250510-cr0000{expected_cr}_v003",
-                ),
-            ]
-        )
+        mock_attribute_manager.return_value.add_global_attribute.assert_has_calls([
+            call("Data_version", "003"),
+            call("Generation_date", "20240916"),
+            call("Logical_source", "imap_glows_l3_descriptor"),
+            call("Logical_file_id",
+                 f"imap_glows_l3_descriptor_20250510-cr0000{expected_cr}_v003")
+        ])
 
     @patch("imap_l3_processing.utils.ImapAttributeManager")
     @patch("imap_l3_processing.utils.date")
@@ -258,62 +206,48 @@ class TestUtils(TestCase):
         with self.assertRaises(AssertionError) as exception_manager:
             save_data(data_product, cr_number=cr)
 
-        self.assertEqual(
-            str(exception_manager.exception),
-            "You cannot call save_data with both a repointing in the metadata while passing in a CR number",
-        )
+        self.assertEqual(str(exception_manager.exception),
+                         "You cannot call save_data with both a repointing in the metadata while passing in a CR number")
 
     @patch("imap_l3_processing.utils.ImapAttributeManager")
     @patch("imap_l3_processing.utils.date")
     @patch("imap_l3_processing.utils.write_cdf")
-    def test_save_data_does_not_add_parent_attribute_if_empty(
-        self, mock_write_cdf, mock_today, _
-    ):
+    def test_save_data_does_not_add_parent_attribute_if_empty(self, mock_write_cdf, mock_today, _):
         mock_today.today.return_value = date(2024, 9, 16)
 
         descriptor = "descriptor"
-        input_metadata = InputMetadata(
-            "swapi",
-            "l2",
-            datetime(2024, 9, 17),
-            datetime(2024, 9, 18),
-            create_mock_version_map(descriptor=descriptor, minor_version=2),
-            descriptor,
-        )
+        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), create_mock_version_map(descriptor=descriptor, minor_version=2),
+                                       descriptor)
         epoch = np.array([1, 2, 3])
         quality_flags = np.repeat([SwapiL3Flags.NONE], 3)
 
-        data_product = SwapiL3AlphaSolarWindData(
-            input_metadata=input_metadata,
-            epoch=epoch,
-            alpha_sw_speed=np.array([450.0, 460.0, 470.0]),
-            alpha_sw_speed_uncert=np.array([1.0, 1.0, 1.0]),
-            alpha_sw_speed_sun=np.array([470.0, 480.0, 490.0]),
-            alpha_sw_speed_sun_uncert=np.array([1.3, 1.4, 1.5]),
-            alpha_sw_density=np.array([5, 5, 5]),
-            alpha_sw_density_uncert=np.array([0.1, 0.1, 0.1]),
-            alpha_sw_temperature=np.array([4, 3, 5]),
-            alpha_sw_temperature_uncert=np.array([0.1, 0.1, 0.1]),
-            alpha_sw_velocity_rtn_sun=np.zeros((3, 3)),
-            alpha_sw_velocity_rtn=np.zeros((3, 3)),
-            alpha_sw_velocity_rtn_covariance=np.zeros((3, 3, 3)),
-            quality_flags=quality_flags,
-        )
+        data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata,
+                                                 epoch=epoch,
+                                                 alpha_sw_speed=np.array([450.0, 460.0, 470.0]),
+                                                 alpha_sw_speed_uncert=np.array([1.0, 1.0, 1.0]),
+                                                 alpha_sw_speed_sun=np.array([470.0, 480.0, 490.0]),
+                                                 alpha_sw_speed_sun_uncert=np.array([1.3, 1.4, 1.5]),
+                                                 alpha_sw_density=np.array([5, 5, 5]),
+                                                 alpha_sw_density_uncert=np.array([0.1, 0.1, 0.1]),
+                                                 alpha_sw_temperature=np.array([4, 3, 5]),
+                                                 alpha_sw_temperature_uncert=np.array([0.1, 0.1, 0.1]),
+                                                 alpha_sw_velocity_rtn_sun=np.zeros((3, 3)),
+                                                 alpha_sw_velocity_rtn=np.zeros((3, 3)),
+                                                 alpha_sw_velocity_rtn_covariance=np.zeros((3, 3, 3)),
+                                                 quality_flags=quality_flags,
+                                                 )
         save_data(data_product)
 
         mock_write_cdf.assert_called_once()
         actual_attribute_manager = mock_write_cdf.call_args.args[2]
 
-        self.assertEqual(
-            [
-                call("Data_version", "002"),
-                call("Generation_date", "20240916"),
-                call("Logical_source", "imap_swapi_l2_descriptor"),
-                call("Logical_file_id", "imap_swapi_l2_descriptor_20240917_v002"),
-                call("ground_software_version", VERSION),
-            ],
-            actual_attribute_manager.add_global_attribute.call_args_list,
-        )
+        self.assertEqual([
+            call("Data_version", "002"),
+            call("Generation_date", "20240916"),
+            call("Logical_source", "imap_swapi_l2_descriptor"),
+            call("Logical_file_id", "imap_swapi_l2_descriptor_20240917_v002"),
+            call("ground_software_version", VERSION)
+        ], actual_attribute_manager.add_global_attribute.call_args_list)
 
     @patch("imap_l3_processing.utils.ImapAttributeManager")
     @patch("imap_l3_processing.utils.date")
@@ -322,33 +256,26 @@ class TestUtils(TestCase):
         mock_today.today.return_value = date(2024, 9, 16)
 
         descriptor = "descriptor"
-        input_metadata = InputMetadata(
-            "swapi",
-            "l2",
-            datetime(2024, 9, 17),
-            datetime(2024, 9, 18),
-            create_mock_version_map(descriptor=descriptor, minor_version=2),
-            descriptor,
-        )
+        input_metadata = InputMetadata("swapi", "l2", datetime(2024, 9, 17), datetime(2024, 9, 18), create_mock_version_map(descriptor=descriptor, minor_version=2),
+                                       descriptor)
         epoch = np.array([1, 2, 3])
         quality_flags = np.repeat([SwapiL3Flags.NONE], 3)
 
-        data_product = SwapiL3AlphaSolarWindData(
-            input_metadata=input_metadata,
-            epoch=epoch,
-            alpha_sw_speed=np.array([450.0, 460.0, 470.0]),
-            alpha_sw_speed_uncert=np.array([1.0, 1.0, 1.0]),
-            alpha_sw_speed_sun=np.array([470.0, 480.0, 490.0]),
-            alpha_sw_speed_sun_uncert=np.array([1.3, 1.4, 1.5]),
-            alpha_sw_density=np.array([5, 5, 5]),
-            alpha_sw_density_uncert=np.array([0.1, 0.1, 0.1]),
-            alpha_sw_temperature=np.array([4, 3, 5]),
-            alpha_sw_temperature_uncert=np.array([0.1, 0.1, 0.1]),
-            alpha_sw_velocity_rtn_sun=np.zeros((3, 3)),
-            alpha_sw_velocity_rtn=np.zeros((3, 3)),
-            alpha_sw_velocity_rtn_covariance=np.zeros((3, 3, 3)),
-            quality_flags=quality_flags,
-        )
+        data_product = SwapiL3AlphaSolarWindData(input_metadata=input_metadata,
+                                                 epoch=epoch,
+                                                 alpha_sw_speed=np.array([450.0, 460.0, 470.0]),
+                                                 alpha_sw_speed_uncert=np.array([1.0, 1.0, 1.0]),
+                                                 alpha_sw_speed_sun=np.array([470.0, 480.0, 490.0]),
+                                                 alpha_sw_speed_sun_uncert=np.array([1.3, 1.4, 1.5]),
+                                                 alpha_sw_density=np.array([5, 5, 5]),
+                                                 alpha_sw_density_uncert=np.array([0.1, 0.1, 0.1]),
+                                                 alpha_sw_temperature=np.array([4, 3, 5]),
+                                                 alpha_sw_temperature_uncert=np.array([0.1, 0.1, 0.1]),
+                                                 alpha_sw_velocity_rtn_sun=np.zeros((3, 3)),
+                                                 alpha_sw_velocity_rtn=np.zeros((3, 3)),
+                                                 alpha_sw_velocity_rtn_covariance=np.zeros((3, 3, 3)),
+                                                 quality_flags=quality_flags,
+                                                 )
 
         custom_path = TEMP_CDF_FOLDER_PATH / "fancy_path"
         returned_file_path = save_data(data_product, folder_path=custom_path)
@@ -363,23 +290,13 @@ class TestUtils(TestCase):
 
     @patch("imap_l3_processing.utils.write_cdf")
     @patch("imap_l3_processing.utils.ImapAttributeManager.add_global_attribute")
-    def test_save_data_procedurally_generates_map_global_metadata(
-        self, mock_add_global_attr, _
-    ):
+    def test_save_data_procedurally_generates_map_global_metadata(self, mock_add_global_attr, _):
         descriptor = "descriptor"
-        input_metadata = InputMetadata(
-            "ultra",
-            "l3",
-            datetime(2025, 1, 1),
-            datetime(2025, 1, 1),
-            create_mock_version_map(descriptor=descriptor, minor_version=1),
-            descriptor,
-        )
+        input_metadata = InputMetadata("ultra", "l3", datetime(2025, 1, 1), datetime(2025, 1, 1), create_mock_version_map(descriptor=descriptor, minor_version=1),
+                                       descriptor)
 
         epoch_as_datetime = np.array([datetime(2025, 1, 1)])
-        epoch_as_int = np.array(
-            [(datetime(2025, 1, 1) - TT2000_EPOCH).total_seconds() * 1e9]
-        )
+        epoch_as_int = np.array([(datetime(2025, 1, 1) - TT2000_EPOCH).total_seconds() * 1e9])
         epoch_delta = np.array([86400 * 1e9])
 
         cases = [
@@ -390,140 +307,72 @@ class TestUtils(TestCase):
         for case, epoch in cases:
             mock_add_global_attr.reset_mock()
             with self.subTest(case=case):
-                rectangular_spectral_index_map_data = (
-                    create_rectangular_spectral_index_map_data(
-                        epoch=epoch, epoch_delta=epoch_delta
-                    )
-                )
-                data_product = RectangularSpectralIndexDataProduct(
-                    input_metadata=input_metadata,
-                    data=rectangular_spectral_index_map_data,
-                    spice_frame_name=SpiceFrame.ECLIPJ2000,
-                )
+                rectangular_spectral_index_map_data = create_rectangular_spectral_index_map_data(epoch=epoch,
+                                                                                                 epoch_delta=epoch_delta)
+                data_product = RectangularSpectralIndexDataProduct(input_metadata=input_metadata,
+                                                                   data=rectangular_spectral_index_map_data,
+                                                                   spice_frame_name=SpiceFrame.ECLIPJ2000)
 
                 save_data(data_product)
 
-                mock_add_global_attr.assert_has_calls(
-                    [
-                        call("start_date", "2025-01-01T00:00:00"),
-                        call("end_date", "2025-01-02T00:00:00"),
-                        call("Spice_reference_frame", "ECLIPJ2000"),
-                    ],
-                    any_order=True,
-                )
+                mock_add_global_attr.assert_has_calls([
+                    call("start_date", "2025-01-01T00:00:00"),
+                    call("end_date", "2025-01-02T00:00:00"),
+                    call("Spice_reference_frame", 'ECLIPJ2000')
+                ], any_order=True)
 
-    @patch(
-        "imap_l3_processing.utils.ImapAttributeManager.add_instrument_attrs",
-        autospec=True,
-    )
+    @patch("imap_l3_processing.utils.ImapAttributeManager.add_instrument_attrs", autospec=True)
     @patch("imap_l3_processing.utils.write_cdf")
-    def test_save_data_procedurally_generates_all_map_global_metadata_if_absent(
-        self, mock_write_cdf, mock_add_instrument_attrs
-    ):
+    def test_save_data_procedurally_generates_all_map_global_metadata_if_absent(self, mock_write_cdf,
+                                                                                mock_add_instrument_attrs):
         descriptor = "descriptor"
-        non_map_input_metadata = InputMetadata(
-            "swapi",
-            "l3",
-            datetime(2024, 9, 17),
-            datetime(2024, 9, 18),
-            create_mock_version_map(descriptor=descriptor, minor_version=2),
-            descriptor,
-        )
+        non_map_input_metadata = InputMetadata("swapi", "l3", datetime(2024, 9, 17), datetime(2024, 9, 18), create_mock_version_map(descriptor=descriptor, minor_version=2) ,
+                                               descriptor)
 
         def add_swapi_attrs_from_file(attr_manager, instrument, level, descriptor):
-            for logical_source in [
-                "imap_swapi_l3_descriptor",
-                "imap_ultra_l3_ena-map-descriptor",
-            ]:
-                attr_manager.add_global_attribute(
-                    logical_source,
-                    {
-                        "Data_level": "Data_level from file",
-                        "Data_type": "Data_type from file",
-                        "Logical_source_description": "Logical_source_description from file",
-                    },
-                )
+            for logical_source in ["imap_swapi_l3_descriptor", "imap_ultra_l3_ena-map-descriptor"]:
+                attr_manager.add_global_attribute(logical_source, {
+                    "Data_level": "Data_level from file",
+                    "Data_type": "Data_type from file",
+                    "Logical_source_description": "Logical_source_description from file"
+                })
 
         mock_add_instrument_attrs.side_effect = add_swapi_attrs_from_file
 
-        map_input_metadata = InputMetadata(
-            "hi",
-            "l3b",
-            datetime(2024, 9, 17),
-            datetime(2024, 9, 18),
-            create_mock_version_map(descriptor="spx-map-descriptor", minor_version=2),
-            "spx-map-descriptor",
-        )
+        map_input_metadata = InputMetadata("hi", "l3b", datetime(2024, 9, 17), datetime(2024, 9, 18), create_mock_version_map(descriptor="spx-map-descriptor", minor_version=2),
+                                           "spx-map-descriptor")
 
-        map_input_metadata_with_existing_global_attrs = InputMetadata(
-            "ultra",
-            "l3",
-            datetime(2024, 9, 17),
-            datetime(2024, 9, 18),
-            create_mock_version_map(descriptor="ena-map-descriptor", minor_version=2),
-            "ena-map-descriptor",
-        )
+        map_input_metadata_with_existing_global_attrs = InputMetadata("ultra", "l3", datetime(2024, 9, 17),
+                                                                      datetime(2024, 9, 18), create_mock_version_map(descriptor="ena-map-descriptor", minor_version=2),
+                                                                      "ena-map-descriptor")
 
         cases = [
-            (
-                non_map_input_metadata,
-                [
-                    ("Data_level", "Data_level from file"),
-                    ("Data_type", "Data_type from file"),
-                    (
-                        "Logical_source_description",
-                        "Logical_source_description from file",
-                    ),
-                ],
-            ),
-            (
-                map_input_metadata,
-                [
-                    ("Data_level", "3b"),
-                    (
-                        "Data_type",
-                        "L3b_spx-map-descriptor>Level-3b Spectral Fit Index Map",
-                    ),
-                    (
-                        "Logical_source_description",
-                        "IMAP-hi Level-3b Spectral Fit Index Map",
-                    ),
-                    ("Spice_reference_frame", "ECLIPJ2000"),
-                ],
-            ),
-            (
-                map_input_metadata_with_existing_global_attrs,
-                [
-                    ("Data_level", "Data_level from file"),
-                    ("Data_type", "Data_type from file"),
-                    (
-                        "Logical_source_description",
-                        "Logical_source_description from file",
-                    ),
-                    ("Spice_reference_frame", "ECLIPJ2000"),
-                ],
-            ),
+            (non_map_input_metadata, [("Data_level", "Data_level from file"), ("Data_type", "Data_type from file"),
+                                      ("Logical_source_description", "Logical_source_description from file")]),
+            (map_input_metadata,
+             [("Data_level", "3b"), ("Data_type", "L3b_spx-map-descriptor>Level-3b Spectral Fit Index Map"),
+              ("Logical_source_description", "IMAP-hi Level-3b Spectral Fit Index Map"),
+              ("Spice_reference_frame", "ECLIPJ2000")]),
+            (map_input_metadata_with_existing_global_attrs,
+             [("Data_level", "Data_level from file"), ("Data_type", "Data_type from file"),
+              ("Logical_source_description", "Logical_source_description from file"),
+              ("Spice_reference_frame", "ECLIPJ2000")]
+             )
         ]
         for input_metadata, expected_global_metadata in cases:
             with self.subTest(name=input_metadata.logical_source):
                 mock_write_cdf.reset_mock()
 
-                data_product = RectangularIntensityDataProduct(
-                    input_metadata=input_metadata,
-                    data=create_rectangular_intensity_map_data(),
-                    spice_frame_name=SpiceFrame.ECLIPJ2000,
-                )
+                data_product = RectangularIntensityDataProduct(input_metadata=input_metadata,
+                                                               data=create_rectangular_intensity_map_data(),
+                                                               spice_frame_name=SpiceFrame.ECLIPJ2000)
                 save_data(data_product)
 
                 mock_write_cdf.assert_called_once()
 
-                [_file_path, _data, attribute_manager] = mock_write_cdf.call_args_list[
-                    0
-                ].args
+                [_file_path, _data, attribute_manager] = mock_write_cdf.call_args_list[0].args
 
-                global_metadata = attribute_manager.try_load_global_metadata(
-                    input_metadata.logical_source
-                )
+                global_metadata = attribute_manager.try_load_global_metadata(input_metadata.logical_source)
                 self.assertIsNotNone(global_metadata)
 
                 for metadata_field, metadata_value in expected_global_metadata:
@@ -538,7 +387,7 @@ class TestUtils(TestCase):
         self.assertEqual(None, actual_time)
 
     @patch("imap_l3_processing.utils.requests")
-    @patch("builtins.open")
+    @patch('builtins.open')
     def test_download_external_dependency(self, mock_open_file, mock_requests):
         expected_url = "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/fluxtable.txt"
         expected_filename = "f107_fluxtable.txt"
@@ -572,18 +421,16 @@ class TestUtils(TestCase):
         file_name_as_path = Path(file_name_as_str)
 
         epoch = np.array([datetime(2010, 1, 1, 0, 0, 46)])
-        vectors_with_magnitudes = np.array(
-            [[0, 1, 2, 0], [255, 255, 255, 255], [6, 7, 8, 0]], dtype=np.float64
-        )
+        vectors_with_magnitudes = np.array([[0, 1, 2, 0], [255, 255, 255, 255], [6, 7, 8, 0]], dtype=np.float64)
         trimmed_vectors = np.array([[0, 1, 2], [np.nan, np.nan, np.nan], [6, 7, 8]])
         with CDF(file_name_as_str, "") as mag_cdf:
             mag_cdf["epoch"] = epoch
             mag_cdf["b_dsrf"] = vectors_with_magnitudes
-            mag_cdf["b_dsrf"].attrs["FILLVAL"] = 255.0
+            mag_cdf["b_dsrf"].attrs['FILLVAL'] = 255.0
 
         cases = [
             ("file name as str", file_name_as_str),
-            ("file name as Path", file_name_as_path),
+            ("file name as Path", file_name_as_path)
         ]
         for name, path in cases:
             with self.subTest(name):
@@ -595,78 +442,60 @@ class TestUtils(TestCase):
     @patch("imap_l3_processing.utils.spiceypy")
     def test_furnish_local_spice(self, mock_spiceypy):
         mock_spiceypy.kdata.side_effect = [
-            (
-                "/Users/harrison/Development/imap_L3_processing/spice_kernels/naif0012.tls",
-                "TEXT",
-                "",
-                0,
-            )
+            ("/Users/harrison/Development/imap_L3_processing/spice_kernels/naif0012.tls", "TEXT", '', 0)
         ]
         mock_spiceypy.ktotal.return_value = 1
 
         furnish_local_spice()
 
-        mock_spiceypy.ktotal.assert_called_once_with("ALL")
-        mock_spiceypy.kdata.assert_called_once_with(0, "ALL")
+        mock_spiceypy.ktotal.assert_called_once_with('ALL')
+        mock_spiceypy.kdata.assert_called_once_with(0, 'ALL')
 
         self.assertEqual(10, mock_spiceypy.furnsh.call_count)
-        mock_spiceypy.furnsh.assert_has_calls(
-            [
-                call(str(get_spice_data_path("de440s.bsp"))),
-                call(str(get_spice_data_path("imap_science_0001.tf"))),
-                call(str(get_spice_data_path("imap_science_draft.tf"))),
-                call(str(get_spice_data_path("imap_sclk_0000.tsc"))),
-                call(
-                    str(
-                        get_spice_data_path(
-                            "imap_sim_ck_2hr_2secsampling_with_nutation.bc"
-                        )
-                    )
-                ),
-                call(str(get_spice_data_path("imap_spk_demo.bsp"))),
-                call(str(get_spice_data_path("imap_wkcp.tf"))),
-                call(str(get_spice_data_path("pck00011.tpc"))),
-                call(str(get_spice_data_path("sim_1yr_imap_attitude.bc"))),
-                call(str(get_spice_data_path("sim_1yr_imap_pointing_frame.bc"))),
-            ],
-            any_order=True,
-        )
+        mock_spiceypy.furnsh.assert_has_calls([
+            call(str(get_spice_data_path("de440s.bsp"))),
+            call(str(get_spice_data_path("imap_science_0001.tf"))),
+            call(str(get_spice_data_path("imap_science_draft.tf"))),
+            call(str(get_spice_data_path("imap_sclk_0000.tsc"))),
+            call(str(get_spice_data_path("imap_sim_ck_2hr_2secsampling_with_nutation.bc"))),
+            call(str(get_spice_data_path("imap_spk_demo.bsp"))),
+            call(str(get_spice_data_path("imap_wkcp.tf"))),
+            call(str(get_spice_data_path("pck00011.tpc"))),
+            call(str(get_spice_data_path("sim_1yr_imap_attitude.bc"))),
+            call(str(get_spice_data_path("sim_1yr_imap_pointing_frame.bc"))),
+        ], any_order=True)
 
     @patch("imap_l3_processing.utils.spiceypy")
     def test_get_spice_parent_file_names(self, mock_spicepy):
         mock_spicepy.ktotal.return_value = 2
         mock_spicepy.kdata.side_effect = [
-            [Path("some_spice_1.tf"), "type", "source", "handle"],
-            [Path("some_spice_2.kf"), "type", "source", "handle"],
+            [Path("some_spice_1.tf"), 'type', 'source', 'handle'],
+            [Path("some_spice_2.kf"), 'type', 'source', 'handle'],
         ]
 
         actual_spice_parents = get_spice_parent_file_names()
 
-        mock_spicepy.ktotal.assert_called_once_with("ALL")
-        mock_spicepy.kdata.assert_has_calls([call(0, "ALL"), call(1, "ALL")])
+        mock_spicepy.ktotal.assert_called_once_with('ALL')
+        mock_spicepy.kdata.assert_has_calls([
+            call(0, 'ALL'),
+            call(1, 'ALL')
+        ])
 
         self.assertEqual(["some_spice_1.tf", "some_spice_2.kf"], actual_spice_parents)
 
     @patch("imap_l3_processing.utils.imap_data_access.download")
     @patch("imap_l3_processing.utils.spiceypy")
     @patch("imap_l3_processing.utils.requests")
-    def test_furnish_spice_metakernel(
-        self, mock_requests, mock_spiceypy, mock_download
-    ):
+    def test_furnish_spice_metakernel(self, mock_requests, mock_spiceypy, mock_download):
 
-        metakernel_bytes = (
-            b"\n\\begintext\n\nThis is the most up to date Metakernel as of ..."
-        )
+        metakernel_bytes = b"\n\\begintext\n\nThis is the most up to date Metakernel as of ..."
 
         mock_requests.get.side_effect = [
             Mock(content=metakernel_bytes),
-            Mock(text='["naif0012.tls", "imap_001.tf"]'),
+            Mock(text='["naif0012.tls", "imap_001.tf"]')
         ]
 
-        mock_download.side_effect = [
-            sentinel.naif_downloaded_path,
-            sentinel.imap_downloaded_path,
-        ]
+        mock_download.side_effect = [sentinel.naif_downloaded_path, sentinel.imap_downloaded_path]
 
         start_date = datetime(2010, 1, 1)
         end_date = datetime(2010, 3, 1)
@@ -682,19 +511,9 @@ class TestUtils(TestCase):
             mock_data_dir = tmp_dir / "some_data_directory"
             mock_data_access_url = "https://imap-mission.com/api-key"
 
-            fake_imap_data_access_config = {
-                "DATA_DIR": mock_data_dir,
-                "DATA_ACCESS_URL": mock_data_access_url,
-            }
-            with patch.object(
-                imap_data_access, "config", new=fake_imap_data_access_config
-            ):
-                actual_output = furnish_spice_metakernel(
-                    start_date,
-                    end_date,
-                    kernel_types,
-                    metakernel_file_name="metakernel_file.txt",
-                )
+            fake_imap_data_access_config = {"DATA_DIR": mock_data_dir, "DATA_ACCESS_URL": mock_data_access_url}
+            with patch.object(imap_data_access, "config", new=fake_imap_data_access_config):
+                actual_output = furnish_spice_metakernel(start_date, end_date, kernel_types, metakernel_file_name="metakernel_file.txt")
 
                 expected_request_params = {
                     "file_types": ["leapseconds", "imap_frames"],
@@ -702,43 +521,26 @@ class TestUtils(TestCase):
                     "end_time": "320673600",
                 }
 
-                mock_requests.get.assert_has_calls(
-                    [
-                        call(
-                            "https://imap-mission.com/metakernel",
-                            params={
-                                **expected_request_params,
-                                "spice_path": mock_data_dir / "imap" / "spice",
-                            },
-                        ),
-                        call(
-                            "https://imap-mission.com/metakernel",
-                            params={**expected_request_params, "list_files": "true"},
-                        ),
-                    ]
-                )
+                mock_requests.get.assert_has_calls([
+                    call("https://imap-mission.com/metakernel",
+                         params={**expected_request_params, "spice_path": mock_data_dir / "imap" / "spice"}),
+                    call("https://imap-mission.com/metakernel",
+                         params={**expected_request_params, "list_files": "true"})
+                ])
 
-                mock_download.assert_has_calls(
-                    [call("naif0012.tls"), call("imap_001.tf")]
-                )
+                mock_download.assert_has_calls([
+                    call('naif0012.tls'),
+                    call('imap_001.tf')
+                ])
 
-                expected_metakernel_path = (
-                    mock_data_dir / "metakernel" / "metakernel_file.txt"
-                )
-                self.assertEqual(
-                    metakernel_bytes, expected_metakernel_path.read_bytes()
-                )
+                expected_metakernel_path = mock_data_dir / "metakernel" / "metakernel_file.txt"
+                self.assertEqual(metakernel_bytes, expected_metakernel_path.read_bytes())
 
-                mock_spiceypy.furnsh.assert_called_once_with(
-                    str(expected_metakernel_path)
-                )
+                mock_spiceypy.furnsh.assert_called_once_with(str(expected_metakernel_path))
 
                 expected_output = FurnishMetakernelOutput(
                     metakernel_path=expected_metakernel_path,
-                    spice_kernel_paths=[
-                        sentinel.naif_downloaded_path,
-                        sentinel.imap_downloaded_path,
-                    ],
+                    spice_kernel_paths=[sentinel.naif_downloaded_path, sentinel.imap_downloaded_path]
                 )
 
                 self.assertEqual(expected_output, actual_output)
@@ -752,48 +554,33 @@ class TestUtils(TestCase):
         cases = [
             (
                 "base case",
-                ProcessingInputCollection(
-                    ScienceInput(filename1),
-                    ScienceInput(filename2),
-                    ScienceInput(filename3),
-                ),
+                ProcessingInputCollection(ScienceInput(filename1), ScienceInput(filename2), ScienceInput(filename3)),
                 ["u90", "u45"],
-                {"u45": [filename2], "u90": [filename1, filename3]},
+                {"u45": [filename2], "u90": [filename1, filename3]}
             ),
             (
                 "no matching filenames for a descriptor",
-                ProcessingInputCollection(
-                    ScienceInput(filename1), ScienceInput(filename3)
-                ),
+                ProcessingInputCollection(ScienceInput(filename1), ScienceInput(filename3)),
                 ["u90", "u45"],
-                {"u45": [], "u90": [filename1, filename3]},
+                {"u45": [], "u90": [filename1, filename3]}
             ),
             (
                 "extra science file",
-                ProcessingInputCollection(
-                    ScienceInput(filename1), ScienceInput(filename4)
-                ),
+                ProcessingInputCollection(ScienceInput(filename1), ScienceInput(filename4)),
                 ["u90", "u45"],
-                {"u45": [], "u90": [filename1]},
+                {"u45": [], "u90": [filename1]}
             ),
         ]
-        for case_name, input_collection, descriptors, expected_output in cases:
+        for (case_name, input_collection, descriptors, expected_output) in cases:
             with self.subTest(case_name):
-                actual_output = get_dependency_paths_by_descriptor(
-                    input_collection, descriptors
-                )
+                actual_output = get_dependency_paths_by_descriptor(input_collection, descriptors)
 
-                self.assertEqual(
-                    sorted(expected_output.keys()), sorted(actual_output.keys())
-                )
+                self.assertEqual(sorted(expected_output.keys()), sorted(actual_output.keys()))
 
                 for i, output_key in enumerate(expected_output.keys()):
-                    self.assertEqual(
-                        sorted(expected_output[output_key]),
-                        sorted(actual_output[output_key]),
-                        f"output not equal for key {output_key}"
-                        + f", expected: {sorted(expected_output[output_key])} actual {sorted(actual_output[output_key])}",
-                    )
+                    self.assertEqual(sorted(expected_output[output_key]),
+                                     sorted(actual_output[output_key]), f"output not equal for key {output_key}" + \
+                                     f", expected: {sorted(expected_output[output_key])} actual {sorted(actual_output[output_key])}")
 
     @patch("imap_l3_processing.glows.l3bc.utils.imap_data_access.download")
     @with_tempdir
@@ -836,9 +623,7 @@ class TestUtils(TestCase):
         }
 
         science_file_version = get_version_from_query_result(science_file_query_result)
-        ancillary_file_version = get_version_from_query_result(
-            ancillary_file_query_result
-        )
+        ancillary_file_version = get_version_from_query_result(ancillary_file_query_result)
 
         self.assertIsInstance(science_file_version, Version)
         self.assertIsInstance(ancillary_file_version, Version)
@@ -856,3 +641,4 @@ class TestUtils(TestCase):
         self.assertEqual(cache_temp_dir, second_cache_temp_dir)
 
         self.assertTrue(cache_temp_dir.is_relative_to(Path(tempfile.gettempdir())))
+
