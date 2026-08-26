@@ -79,7 +79,7 @@ kernels) are stored via [Git LFS](https://git-lfs.com/), not checked directly in
 running the test suite for the first time:
 
 - Install the `git-lfs` CLI (e.g. `brew install git-lfs`, or see the link above).
-- Run `git lfs install` once per machine — this registers the LFS filters with git; without it,
+- Run `git lfs install` once per machine to register the LFS filters with git. Without it,
   `git lfs pull` silently fetches objects but does not check them out.
 - Run `git lfs pull` to replace the LFS-tracked files with their real content.
 
@@ -90,13 +90,18 @@ float64...` or `spiceypy` errors like `SpiceNOLEAPSECONDS`/`SpiceMISSINGTIMEINFO
 
 ### Running tests
 
-- `uv run pytest -n auto` runs the full suite in parallel. This is the preferred way to run tests.
-- `uv run pytest` (without `-n auto`) and `uv run python -m unittest discover tests` also work,
+- Running the **full** suite requires the Git LFS data described above: run `git lfs pull`
+  first. This is especially true for integration tests (under `tests/integration/`), which need
+  the real SPICE kernels and other fixtures LFS provides. Without them, they fail with the
+  confusing errors mentioned in that section.
+- `uv run pytest` runs the full suite. `uv run python -m unittest discover tests` also works,
   since the suite is written with `unittest.TestCase`.
-- To run tests for a single instrument, point any of the above at its directory, e.g.
-  `uv run pytest -n auto tests/swapi`.
-- Integration tests live under `tests/integration/` and require external data and/or SPICE
-  kernels; they are not expected to pass in a clean environment without that data.
+- If you haven't run `git lfs pull`, exclude the integration tests instead:
+  `uv run pytest --ignore=tests/integration`.
+- To run tests for a single instrument, point either of the above at its directory, e.g.
+  `uv run pytest tests/swapi`.
+- `pytest-xdist` is installed (`-n auto`), but is not currently used in CI or recommended locally:
+  some tests are not yet safe to run in parallel.
 
 ### Linting
 
