@@ -68,10 +68,10 @@ jobs:
             name="${{ matrix.instrument }}"
             # the "maps" instrument's integration test file is named "test_map_...", singular
             [[ "$name" == "maps" ]] && name="map"
-            path="tests/integration/test_${name}_processor_integration.py"
+            paths=("tests/integration/test_${name}_processor_integration.py")
           elif [[ "${{ matrix.instrument }}" == "core" ]]; then
-            path="tests/test_*.py"
+            paths=(tests/test_*.py tests/cdf tests/scripts)
           else
-            path="tests/${{ matrix.instrument }}"
+            paths=("tests/${{ matrix.instrument }}")
           fi
-          uv run pytest -n auto $path
+          uv run pytest "${paths[@]}"
