@@ -6,6 +6,7 @@ import scipy.optimize
 from numpy import ndarray
 from uncertainties import UFloat, covariance_matrix, ufloat
 
+from imap_l3_processing.swapi.l3a.models import SwapiL3aProtonDataChunk
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.calculate_initial_guess import (
     calculate_initial_guess,
 )
@@ -20,9 +21,6 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     LOG_TEMPERATURE_IDX,
     SolarWindParams,
     VELOCITY_SLICE,
-)
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
-    ProtonSolarWindFitResult,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.uncertainties import (
     compute_hc3_parameter_covariance,
@@ -51,7 +49,7 @@ class AlphaSolarWindFitResult:
 def fit_solar_wind_alpha_model(
     proton_ctx: SolarWindFitContext,
     alpha_ctx: SolarWindFitContext,
-    proton_moments: ProtonSolarWindFitResult,
+    proton_chunk: SwapiL3aProtonDataChunk,
     magnetic_field_direction: ndarray,
 ) -> AlphaSolarWindFitResult:
     if alpha_ctx.count_rate.ndim != 2:
@@ -60,8 +58,8 @@ def fit_solar_wind_alpha_model(
             f"{alpha_ctx.count_rate.shape}"
         )
 
-    bad_fit_flag = int(proton_moments.quality_flag)
-    proton_bulk_rtn = proton_moments.velocity_rtn_nominal()
+    bad_fit_flag = int(proton_chunk.quality_flags)
+    proton_bulk_rtn = proton_chunk.velocity_rtn
 
     if not np.all(np.isfinite(proton_bulk_rtn)):
         return _nan_alpha_fit_result(bad_fit_flag)
@@ -72,9 +70,9 @@ def fit_solar_wind_alpha_model(
 
     proton_true_rate, _ = model_solar_wind_ideal_coincidence_rates(
         SolarWindParams(
-            density=proton_moments.density.nominal_value,
+            density=proton_chunk.density,
             velocity_rtn=proton_bulk_rtn,
-            temperature=proton_moments.temperature.nominal_value,
+            temperature=proton_chunk.temperature,
             mass=proton_ctx.mass_kg,
         ),
         proton_ctx,
@@ -83,7 +81,7 @@ def fit_solar_wind_alpha_model(
     seed = calculate_initial_guess(
         alpha_ctx=alpha_ctx,
         proton_true_rate=proton_true_rate,
-        proton_temperature=proton_moments.temperature.nominal_value,
+        proton_temperature=proton_chunk.temperature,
         proton_velocity_rtn=proton_bulk_rtn,
     )
     if seed is None:
@@ -119,7 +117,7 @@ def fit_solar_wind_alpha_model(
         alpha_ctx_peak=alpha_ctx_peak,
         n_peak_bins=peak_bin_idx.size,
         n_sweeps=n_sweeps,
-        proton_moments=proton_moments,
+        proton_velocity_covariance=proton_chunk.velocity_rtn_covariance,
         proton_bulk=proton_bulk_rtn,
         magnetic_field_direction=magnetic_field_direction,
         bad_fit_flag=bad_fit_flag,
@@ -142,7 +140,7 @@ def _construct_alpha_fit_result(
     alpha_ctx_peak: SolarWindFitContext,
     n_peak_bins: int,
     n_sweeps: int,
-    proton_moments: ProtonSolarWindFitResult,
+    proton_velocity_covariance: np.ndarray,
     proton_bulk: ndarray,
     magnetic_field_direction: ndarray,
     bad_fit_flag: int,
@@ -171,8 +169,8 @@ def _construct_alpha_fit_result(
 
     sigma_dv2 = max(cov_x[2, 2], 0.0)
     velocity_covariance_rtn = (
-        proton_moments.velocity_rtn_covariance()
-        + sigma_dv2 * np.outer(magnetic_field_direction, magnetic_field_direction)
+            proton_velocity_covariance
+            + sigma_dv2 * np.outer(magnetic_field_direction, magnetic_field_direction)
     )
 
     return AlphaSolarWindFitResult(

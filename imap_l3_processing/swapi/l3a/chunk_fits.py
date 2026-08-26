@@ -617,7 +617,6 @@ class AlphaChunkFitResult:
     (missing B̂, proton fit, alpha LM)."""
 
     alpha_moments: AlphaSolarWindFitResult
-    proton_moments: ProtonSolarWindFitResult
     b_hat_rtn: np.ndarray
     quality_flag: int
 
@@ -650,7 +649,6 @@ def _fit_alpha(
         )
         return AlphaChunkFitResult(
             alpha_moments=_nan_alpha_fit_result(SwapiL3Flags.NONE),
-            proton_moments=_nan_proton_result(SwapiL3Flags.NONE),
             b_hat_rtn=nan_b_hat,
             quality_flag=int(SwapiL3Flags.NONE),
         )
@@ -671,7 +669,6 @@ def _fit_alpha(
     if any_missing_velocity_rtn or missing_rotation_matrices or any_missing_count_rates:
         return AlphaChunkFitResult(
             alpha_moments=_nan_alpha_fit_result(proton_moments.quality_flag),
-            proton_moments=proton_moments,
             b_hat_rtn=nan_b_hat,
             quality_flag=int(proton_moments.quality_flag),
         )
@@ -705,7 +702,7 @@ def _fit_alpha(
         alpha_moments = fit_solar_wind_alpha_model(
             proton_ctx=proton_ctx,
             alpha_ctx=alpha_ctx,
-            proton_moments=proton_moments,
+            proton_chunk=l3a_proton_data_chunk,
             magnetic_field_direction=magnetic_field_direction,
         )
     except Exception:
@@ -715,14 +712,12 @@ def _fit_alpha(
         )
         return AlphaChunkFitResult(
             alpha_moments=_nan_alpha_fit_result(SwapiL3Flags.FIT_ERROR),
-            proton_moments=proton_moments,
             b_hat_rtn=nan_b_hat,
             quality_flag=int(SwapiL3Flags.FIT_ERROR),
         )
 
     return AlphaChunkFitResult(
         alpha_moments=alpha_moments,
-        proton_moments=proton_moments,
         b_hat_rtn=magnetic_field_direction,
         quality_flag=int(alpha_moments.quality_flag),
     )

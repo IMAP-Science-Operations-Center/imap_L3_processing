@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import numba
 import numpy as np
+import uncertainties
 from uncertainties import ufloat
 
 from imap_l3_processing.constants import (
@@ -13,6 +14,7 @@ from imap_l3_processing.constants import (
     PROTON_MASS_KG,
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
 )
+from imap_l3_processing.swapi.l3a.models import SwapiL3aProtonDataChunk
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha import (
     fit_solar_wind_alpha_model as alpha_module,
     calculate_initial_guess as alpha_initial_guess_module,
@@ -148,27 +150,24 @@ def _build_proton_and_alpha_contexts(
     return proton_ctx, alpha_ctx
 
 
-def _build_proton_fit_result(
+def _build_proton_data_chunk(
     *,
     density: float = _TRUE_PROTON_DENSITY_CM3,
     temperature: float = _TRUE_PROTON_TEMPERATURE_K,
     velocity_rtn=_TRUE_PROTON_VELOCITY_RTN,
     bad_fit_flag: int = int(SwapiL3Flags.NONE),
-) -> ProtonSolarWindFitResult:
-    """Build a `ProtonSolarWindFitResult` (Stage-1 output) with small but
+) -> SwapiL3aProtonDataChunk:
+    """Build a `SwapiL3aProtonDataChunk` (Stage-1 output) with small but
     nonzero uncertainties so `velocity_rtn_covariance` is well-defined
     and Stage-2 has something to add `σ_Δv²·B̂B̂ᵀ` to."""
-    return ProtonSolarWindFitResult(
-        density=ufloat(density, _STAGE1_PROTON_DENSITY_SIGMA_CM3),
-        temperature=ufloat(temperature, _STAGE1_PROTON_TEMPERATURE_SIGMA_K),
-        velocity_rtn=(
-            ufloat(velocity_rtn[0], _STAGE1_PROTON_VELOCITY_SIGMA_KM_S),
-            ufloat(velocity_rtn[1], _STAGE1_PROTON_VELOCITY_SIGMA_KM_S),
-            ufloat(velocity_rtn[2], _STAGE1_PROTON_VELOCITY_SIGMA_KM_S),
-        ),
-        quality_flag=int(bad_fit_flag),
-    )
 
+    return SwapiL3aProtonDataChunk(
+        density=density,
+        temperature=temperature,
+        velocity_rtn=velocity_rtn,
+        quality_flags=SwapiL3Flags(bad_fit_flag),
+        velocity_rtn_covariance=_STAGE1_PROTON_VELOCITY_SIGMA_KM_S * np.identity(3)
+    )
 
 def _assert_moments_are_nan_filled(test, result) -> None:
     """Assert that every moment field on an `AlphaSolarWindFitResult`
@@ -283,52 +282,52 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
 
     def test_proton_fill_values_propagate_proton_flag_to_alpha(self):
         """When the Stage-1 proton fit returned NaN moments (fill values), the alpha result inherits the proton's `bad_fit_flag` unchanged — no separate alpha-side flag is added for "stage 1 failed"."""
-        proton_moments = _build_proton_fit_result(
+        proton_chunk = _build_proton_data_chunk(
             velocity_rtn=np.array([np.nan, np.nan, np.nan]),
             bad_fit_flag=int(SwapiL3Flags.FIT_ERROR),
         )
         result = fit_solar_wind_alpha_model(
             proton_ctx=self.proton_ctx,
             alpha_ctx=self.alpha_ctx,
-            proton_moments=proton_moments,
+            proton_chunk=proton_chunk,
             magnetic_field_direction=_B_HAT_RTN,
         )
         self.assertEqual(result.quality_flag, int(SwapiL3Flags.FIT_ERROR))
 
     def test_proton_fill_values_return_nan_filled_alpha_moments(self):
         """When the Stage-1 proton fit returned NaN moments, every alpha moment field is filled with NaN so downstream consumers can distinguish "no fit attempted" from "fit succeeded with degenerate values"."""
-        proton_moments = _build_proton_fit_result(
+        proton_chunk = _build_proton_data_chunk(
             velocity_rtn=np.array([np.nan, np.nan, np.nan]),
             bad_fit_flag=int(SwapiL3Flags.FIT_ERROR),
         )
         result = fit_solar_wind_alpha_model(
             proton_ctx=self.proton_ctx,
             alpha_ctx=self.alpha_ctx,
-            proton_moments=proton_moments,
+            proton_chunk=proton_chunk,
             magnetic_field_direction=_B_HAT_RTN,
         )
         _assert_moments_are_nan_filled(self, result)
 
     def test_mag_gap_propagates_proton_flag_with_no_dedicated_bit(self):
         """A NaN component in `magnetic_field_direction` is treated as an ordinary data gap: the fitter short-circuits and propagates the proton's flag unchanged with no dedicated MAG-gap bit added."""
-        proton_moments = _build_proton_fit_result()
+        proton_chunk = _build_proton_data_chunk()
         nan_b_hat = np.array([np.nan, 0.0, 0.0])
         result = fit_solar_wind_alpha_model(
             proton_ctx=self.proton_ctx,
             alpha_ctx=self.alpha_ctx,
-            proton_moments=proton_moments,
+             proton_chunk=proton_chunk,
             magnetic_field_direction=nan_b_hat,
         )
         self.assertEqual(result.quality_flag, int(SwapiL3Flags.NONE))
 
     def test_nan_magnetic_field_direction_returns_nan_filled_moments(self):
         """A NaN B̂ short-circuits before any forward-model call and every moment field is filled with NaN, mirroring the Stage-1-failure guard."""
-        proton_moments = _build_proton_fit_result()
+        proton_chunk = _build_proton_data_chunk()
         nan_b_hat = np.array([np.nan, 0.0, 0.0])
         result = fit_solar_wind_alpha_model(
             proton_ctx=self.proton_ctx,
             alpha_ctx=self.alpha_ctx,
-            proton_moments=proton_moments,
+            proton_chunk=proton_chunk,
             magnetic_field_direction=nan_b_hat,
         )
         _assert_moments_are_nan_filled(self, result)
@@ -345,7 +344,7 @@ class TestFitAlphaMomentsRecoversTruth(
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.proton_moments = _build_proton_fit_result()
+        cls.proton_chunk = _build_proton_data_chunk()
         proton_ctx, alpha_ctx = _build_proton_and_alpha_contexts(
             response=cls.response,
             count_rate=cls.observed_count_rate,
@@ -355,7 +354,7 @@ class TestFitAlphaMomentsRecoversTruth(
         cls.result = fit_solar_wind_alpha_model(
             proton_ctx=proton_ctx,
             alpha_ctx=alpha_ctx,
-            proton_moments=cls.proton_moments,
+            proton_chunk=cls.proton_chunk,
             magnetic_field_direction=_B_HAT_RTN,
         )
 
@@ -424,7 +423,7 @@ class TestFitAlphaMomentsAlphaVelocityFollowsBHat(unittest.TestCase):
             b_hat=cls.b_hat,
         )
         cls.alpha_velocity_truth = alpha_v
-        cls.proton_moments = _build_proton_fit_result(
+        cls.proton_chunk = _build_proton_data_chunk(
             velocity_rtn=cls.proton_velocity_rtn
         )
         proton_ctx, alpha_ctx = _build_proton_and_alpha_contexts(
@@ -435,7 +434,7 @@ class TestFitAlphaMomentsAlphaVelocityFollowsBHat(unittest.TestCase):
         cls.result = fit_solar_wind_alpha_model(
             proton_ctx=proton_ctx,
             alpha_ctx=alpha_ctx,
-            proton_moments=cls.proton_moments,
+            proton_chunk=cls.proton_chunk,
             magnetic_field_direction=cls.b_hat,
         )
 
@@ -531,7 +530,7 @@ class TestFitAlphaMomentsLMFailureFlag(unittest.TestCase):
 
     def test_fit_error_flag_set_when_least_squares_does_not_converge(self):
         """A non-converged LM result triggers the fit-quality guard: density and the other moments are NaN-filled and `FIT_ERROR` is reported alone."""
-        proton_moments = _build_proton_fit_result()
+        proton_chunk = _build_proton_data_chunk()
 
         x_fit = np.array([np.log(0.2), np.log(4.0e5), 30.0])
         residual_norm = np.full(_N_MEAS, 1.0)
@@ -567,7 +566,7 @@ class TestFitAlphaMomentsLMFailureFlag(unittest.TestCase):
             result = fit_solar_wind_alpha_model(
                 proton_ctx=proton_ctx,
                 alpha_ctx=alpha_ctx,
-                proton_moments=proton_moments,
+                proton_chunk=proton_chunk,
                 magnetic_field_direction=_B_HAT_RTN,
             )
 
@@ -596,7 +595,7 @@ class TestFitAlphaMomentsInitialGuessFailures(unittest.TestCase):
         return fit_solar_wind_alpha_model(
             proton_ctx=proton_ctx,
             alpha_ctx=alpha_ctx,
-            proton_moments=_build_proton_fit_result(),
+            proton_chunk=_build_proton_data_chunk(),
             magnetic_field_direction=_B_HAT_RTN,
         )
 
@@ -844,7 +843,7 @@ class TestFitAlphaMomentsPassesAnalyticJacobianToLM(
 
     def test_least_squares_receives_jac_callable_and_no_diff_step(self):
         """LM is called with a `jac` callable (the evaluator's analytic Jacobian) and without `diff_step` — finite-difference Jacobian estimation is no longer needed."""
-        proton_moments = _build_proton_fit_result()
+        proton_chunk = _build_proton_data_chunk()
 
         peak_bin_idx = np.array([10, 11, 12])
         n_peak_residuals = _N_SWEEPS * peak_bin_idx.size
@@ -885,7 +884,7 @@ class TestFitAlphaMomentsPassesAnalyticJacobianToLM(
             fit_solar_wind_alpha_model(
                 proton_ctx=proton_ctx,
                 alpha_ctx=alpha_ctx,
-                proton_moments=proton_moments,
+                proton_chunk=proton_chunk,
                 magnetic_field_direction=_B_HAT_RTN,
             )
 
