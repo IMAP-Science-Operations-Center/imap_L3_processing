@@ -38,6 +38,7 @@ test = [
 ]
 dev = [
     "dotenv>=0.9.9",
+    "pre-commit>=4.0",
     "ruff==0.15.2",
 ]
 

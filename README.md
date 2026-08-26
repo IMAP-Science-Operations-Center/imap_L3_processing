@@ -102,3 +102,14 @@ float64...` or `spiceypy` errors like `SpiceNOLEAPSECONDS`/`SpiceMISSINGTIMEINFO
 
 - `uv run ruff check .` lints the codebase.
 - `uv run ruff format --check .` checks formatting without modifying files (drop `--check` to apply formatting).
+
+### Pre-commit hooks
+
+This repo uses [`pre-commit`](https://pre-commit.com/) to run `ruff check` and `ruff format` on
+staged files before each commit (see `.pre-commit-config.yaml`).
+
+- `uv run pre-commit install` sets up the git hook once per clone.
+- `uv run pre-commit run --all-files` runs the hooks against the whole repo (useful the first
+  time, or after changing the hook config).
+
+Both hooks also run in CI, so failures caught locally would otherwise fail there too.
