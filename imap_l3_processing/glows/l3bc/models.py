@@ -180,7 +180,10 @@ class GlowsL3BIonizationRate(DataProduct):
 
         l3a_file_names = [Path(f).name for f in model["header"]["l3a_input_files_name"]]
         if len(l3a_file_names) > MAX_USED_L3A_FILES:
-            raise ValueError(f"GLOWS L3b cannot reference more than {MAX_USED_L3A_FILES} L3a files")
+            raise ValueError(
+                f"GLOWS L3b referenced L3a files ({len(l3a_file_names)}) exceed "
+                f"the allowed maximum ({MAX_USED_L3A_FILES})."
+            )
 
         # Pad the CDF used_l3a length to a fixed size.
         l3a_file_names += [""] * (MAX_USED_L3A_FILES - len(l3a_file_names))

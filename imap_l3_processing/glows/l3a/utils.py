@@ -17,7 +17,10 @@ def _pad_lightcurve(values) -> np.ndarray:
     """Pad a lightcurve variable to the fixed L3a spin-angle dimension."""
     values = np.asarray(values)
     if len(values) > MAX_SPIN_ANGLE_BINS:
-        raise ValueError(f"GLOWS L3a lightcurve cannot exceed {MAX_SPIN_ANGLE_BINS} bins")
+        raise ValueError(
+                f"GLOWS L3a lightcurve bins ({len(values)}) exceed "
+                f"the allowed maximum ({MAX_SPIN_ANGLE_BINS})."
+        )
 
     if np.issubdtype(values.dtype, np.integer):
         padded_values = np.ma.masked_all(MAX_SPIN_ANGLE_BINS, dtype=values.dtype)
@@ -154,7 +157,7 @@ def create_glows_l3a_dictionary_from_cdf(cdf_file_path: Path) -> dict:
     time_delta = timedelta(seconds=cdf['epoch_delta'][0] / 1e9)
     start_time = cdf['epoch'][0] - time_delta
     end_time = cdf['epoch'][0] + time_delta
-    valid_bin_count = int(np.asarray(cdf['number_of_bins'][...]).item())
+    valid_bin_count = int(np.asarray(cdf['number_of_bins'][0]).item())
     return {
         'filename': f'{os.path.basename(cdf_file_path)}',
         'start_time': start_time.strftime("%Y-%m-%d %H:%M:%S"),
