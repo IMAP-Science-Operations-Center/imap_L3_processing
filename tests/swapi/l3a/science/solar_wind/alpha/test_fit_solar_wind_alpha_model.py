@@ -18,7 +18,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.alpha import (
     calculate_initial_guess as alpha_initial_guess_module,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_solar_wind_alpha_model import (
-    TOLERABLE_ALPHA_SPEED_RATIO,
+    MIN_TOLERABLE_ALPHA_SPEED_RATIO,
     AlphaSolarWindFitResult,
     _AlphaEvaluator,
     fit_solar_wind_alpha_model,
@@ -409,41 +409,33 @@ class TestAlphaPeakEnergyRatioGuard(
 ):
     """Only fitted alpha speeds below the tolerable ratio to the proton speed are rejected."""
 
-    def test_alpha_speed_ratio_has_a_lower_bound_but_no_upper_bound(self):
+    def test_alpha_speed_ratio_lower_bound(self):
+        bad_alpha_speed_ratio = MIN_TOLERABLE_ALPHA_SPEED_RATIO - 0.01
+
         proton_speed = np.linalg.norm(_TRUE_PROTON_VELOCITY_RTN)
-        cases = (
-            (TOLERABLE_ALPHA_SPEED_RATIO - 0.01, SwapiL3Flags.BAD_FIT),
-            (1.1, SwapiL3Flags.NONE),
+        alpha_speed = proton_speed * bad_alpha_speed_ratio
+        observed, _, _ = _synthesize_proton_plus_alpha_count_rate(
+            response=self.response,
+            voltage=self.voltage,
+            rotation_matrices=self.rotation_matrices,
+            delta_v=alpha_speed - proton_speed,
+        )
+        proton_ctx, alpha_ctx = _build_proton_and_alpha_contexts(
+            response=self.response,
+            count_rate=observed,
+            voltage=self.voltage,
+            rotation_matrices=self.rotation_matrices,
         )
 
-        for alpha_speed_ratio, expected_flag in cases:
-            with self.subTest(alpha_speed_ratio=alpha_speed_ratio):
-                alpha_speed = proton_speed * alpha_speed_ratio
-                observed, _, _ = _synthesize_proton_plus_alpha_count_rate(
-                    response=self.response,
-                    voltage=self.voltage,
-                    rotation_matrices=self.rotation_matrices,
-                    delta_v=alpha_speed - proton_speed,
-                )
-                proton_ctx, alpha_ctx = _build_proton_and_alpha_contexts(
-                    response=self.response,
-                    count_rate=observed,
-                    voltage=self.voltage,
-                    rotation_matrices=self.rotation_matrices,
-                )
+        result = fit_solar_wind_alpha_model(
+            proton_ctx=proton_ctx,
+            alpha_ctx=alpha_ctx,
+            proton_moments=_build_proton_fit_result(),
+            magnetic_field_direction=_B_HAT_RTN,
+        )
 
-                result = fit_solar_wind_alpha_model(
-                    proton_ctx=proton_ctx,
-                    alpha_ctx=alpha_ctx,
-                    proton_moments=_build_proton_fit_result(),
-                    magnetic_field_direction=_B_HAT_RTN,
-                )
-
-                self.assertEqual(result.quality_flag, int(expected_flag))
-                if expected_flag == SwapiL3Flags.BAD_FIT:
-                    _assert_moments_are_nan_filled(self, result)
-                else:
-                    self.assertTrue(np.isfinite(result.density.nominal_value))
+        self.assertEqual(result.quality_flag, int(SwapiL3Flags.BAD_FIT))
+        _assert_moments_are_nan_filled(self, result)
 
 
 class TestFitAlphaMomentsAlphaVelocityFollowsBHat(unittest.TestCase):

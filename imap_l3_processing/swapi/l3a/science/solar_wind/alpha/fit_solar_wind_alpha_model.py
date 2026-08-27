@@ -36,7 +36,7 @@ from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 # reject alpha fits where the speed is less than 90% of
 # the proton speed, to avoid cases where the proton shoulder
 # is confused for the alpha population
-TOLERABLE_ALPHA_SPEED_RATIO = 0.9
+MIN_TOLERABLE_ALPHA_SPEED_RATIO = 0.9
 
 
 @dataclass
@@ -165,7 +165,7 @@ def _construct_alpha_fit_result(
         np.linalg.norm(velocity_rtn, axis=-1)
         / np.linalg.norm(proton_bulk, axis=-1)
     )
-    if speed_ratio < TOLERABLE_ALPHA_SPEED_RATIO:
+    if speed_ratio < MIN_TOLERABLE_ALPHA_SPEED_RATIO:
         return _nan_alpha_fit_result(bad_fit_flag | SwapiL3Flags.BAD_FIT)
 
     fit_r_squared = _alpha_r_squared(
