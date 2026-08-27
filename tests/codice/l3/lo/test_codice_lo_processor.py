@@ -1097,12 +1097,13 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         input_metadata = InputMetadata('codice', "l3a", datetime(2026, 5, 13), Mock(spec=datetime), 'v02')
 
+        l3a_de_half_spin_per_esa_step = np.array([[3, 2, 1]])
         mock_l3a_direct_event_data = Mock(
             acquisition_time_per_esa_step=sentinel.acquisition_time,
             rgfo_half_spin=sentinel.rgfo_half_spin,
             rgfo_spin_sector=sentinel.rgfo_spin_sector,
             rgfo_esa_step=sentinel.rgfo_esa_step,
-            half_spin_per_esa_step=sentinel.half_spin,
+            half_spin_per_esa_step=l3a_de_half_spin_per_esa_step,
             spin_angle=sentinel.spin_angle,
             spin_angle_bin_delta=sentinel.spin_angle_bin_delta,
             spin_angle_bin=sentinel.spin_angle_bin,
@@ -1151,7 +1152,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             sentinel.rgfo_half_spin,
             sentinel.rgfo_spin_sector,
             sentinel.rgfo_esa_step,
-            sentinel.half_spin,
+            NumpyArrayMatcher(l3a_de_half_spin_per_esa_step),
             date(2026, 5, 13)
         )
         mock_convert_count_rate_to_intensity.assert_called_once_with(
@@ -1163,16 +1164,23 @@ class TestCodiceLoProcessor(unittest.TestCase):
         mock_rebin_3d_distribution_azimuth_to_elevation.assert_called_once_with(
             mock_convert_count_rate_to_intensity.return_value,
             NumpyArrayMatcher(np.arange(1, 25)),
-            mock_elevation_lookup, sentinel.half_spin)
+            mock_elevation_lookup, NumpyArrayMatcher(l3a_de_half_spin_per_esa_step),)
 
         self.assertIsInstance(l3a_3d_distribution_data_product, CodiceLoL3a3dDistributionDataProduct)
         self.assertEqual(processor.input_metadata, l3a_3d_distribution_data_product.input_metadata)
         self.assertEqual(mock_l3a_direct_event_data.epoch, l3a_3d_distribution_data_product.epoch)
         self.assertEqual(mock_l3a_direct_event_data.epoch_delta, l3a_3d_distribution_data_product.epoch_delta)
+        self.assertEqual(mock_l3a_direct_event_data.rgfo_esa_step, l3a_3d_distribution_data_product.rgfo_esa_step)
+        self.assertEqual(mock_l3a_direct_event_data.rgfo_spin_sector, l3a_3d_distribution_data_product.rgfo_spin_sector)
+        self.assertEqual(mock_l3a_direct_event_data.rgfo_half_spin, l3a_3d_distribution_data_product.rgfo_half_spin)
+        np.testing.assert_array_equal(l3a_3d_distribution_data_product.half_spin_per_esa_step,
+                                      np.flip(mock_l3a_direct_event_data.half_spin_per_esa_step, axis=1))
+
         self.assertEqual(mock_elevation_lookup.bin_centers, l3a_3d_distribution_data_product.elevation)
         self.assertEqual(mock_elevation_lookup.bin_deltas, l3a_3d_distribution_data_product.elevation_delta)
         self.assertEqual(sentinel.spin_angle_bin, l3a_3d_distribution_data_product.spin_angle)
         self.assertEqual(sentinel.spin_angle_bin_delta, l3a_3d_distribution_data_product.spin_angle_delta)
+
         np.testing.assert_array_equal(np.flip(mock_energy_lookup.bin_centers), l3a_3d_distribution_data_product.energy)
         np.testing.assert_array_equal(np.flip(mock_energy_lookup.delta_plus),
                                       l3a_3d_distribution_data_product.energy_delta_plus)

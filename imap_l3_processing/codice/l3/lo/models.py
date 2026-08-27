@@ -31,6 +31,10 @@ MG_PARTIAL_DENSITY_VAR_NAME = "mg_partial_density"
 SI_PARTIAL_DENSITY_VAR_NAME = "si_partial_density"
 FE_LOW_PARTIAL_DENSITY_VAR_NAME = "fe_loq_partial_density"
 FE_HIGH_PARTIAL_DENSITY_VAR_NAME = "fe_hiq_partial_density"
+RGFO_ESA_STEP_VAR_NAME = "rgfo_esa_step"
+RGFO_SPIN_SECTOR_VAR_NAME = "rgfo_spin_sector"
+RGFO_HALF_SPIN_VAR_NAME = "rgfo_half_spin"
+HALF_SPIN_PER_ESA_STEP_VAR_NAME = "half_spin_per_esa_step"
 
 
 @dataclass
@@ -551,6 +555,10 @@ class CodiceLoL3a3dDistributionDataProduct(DataProduct):
     species: str
     species_data: np.ndarray
     species_data_stat_uncert: np.ndarray
+    rgfo_esa_step: np.ndarray
+    rgfo_spin_sector: np.ndarray
+    rgfo_half_spin: np.ndarray
+    half_spin_per_esa_step: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -567,5 +575,9 @@ class CodiceLoL3a3dDistributionDataProduct(DataProduct):
             DataProductVariable(ENERGY_LABEL_VAR_NAME, self.energy.astype(str)),
             DataProductVariable(SPIN_ANGLE_LABEL_VAR_NAME, self.spin_angle.astype(str)),
             DataProductVariable(ELEVATION_ANGLE_LABEL_VAR_NAME, self.elevation.astype(str)),
-            DataProductVariable(f"{self.species}_stat_uncert", self.species_data_stat_uncert)
+            DataProductVariable(f"{self.species}_stat_uncert", self.species_data_stat_uncert),
+            DataProductVariable(RGFO_ESA_STEP_VAR_NAME, self.rgfo_esa_step),
+            DataProductVariable(RGFO_SPIN_SECTOR_VAR_NAME, self.rgfo_spin_sector),
+            DataProductVariable(RGFO_HALF_SPIN_VAR_NAME, self.rgfo_half_spin),
+            DataProductVariable(HALF_SPIN_PER_ESA_STEP_VAR_NAME, self.half_spin_per_esa_step),
         ]

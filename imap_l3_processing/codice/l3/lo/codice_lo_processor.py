@@ -345,7 +345,11 @@ class CodiceLoProcessor(Processor):
             energy_delta_minus=np.flip(energy_lut.delta_minus),
             species=dependencies.species,
             species_data=np.flip(intensity, axis=1),
-            species_data_stat_uncert=np.flip(np.sqrt(counts_for_species), axis=1)
+            species_data_stat_uncert=np.flip(np.sqrt(counts_for_species), axis=1),
+            rgfo_esa_step=dependencies.l3a_direct_event_data.rgfo_esa_step,
+            rgfo_spin_sector=dependencies.l3a_direct_event_data.rgfo_spin_sector,
+            rgfo_half_spin=dependencies.l3a_direct_event_data.rgfo_half_spin,
+            half_spin_per_esa_step=np.flip(dependencies.l3a_direct_event_data.half_spin_per_esa_step),
         )
 
 

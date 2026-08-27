@@ -30,6 +30,7 @@ from imap_l3_processing.codice.l3.lo.models import (
     ENERGY_DELTA_MINUS_VAR_NAME,
     ELEVATION_ANGLE_LABEL_VAR_NAME,
     ENERGY_LABEL_VAR_NAME, SPIN_ANGLE_DELTA_VAR_NAME, SPIN_ANGLE_VAR_NAME, SPIN_ANGLE_LABEL_VAR_NAME,
+    RGFO_ESA_STEP_VAR_NAME, RGFO_SPIN_SECTOR_VAR_NAME, RGFO_HALF_SPIN_VAR_NAME, HALF_SPIN_PER_ESA_STEP_VAR_NAME,
 )
 from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.utils import save_data
@@ -550,11 +551,15 @@ class TestModels(CdfModelTestCase):
             energy_delta_minus=sentinel.energy_delta_minus,
             species=species,
             species_data=sentinel.species_data,
-            species_data_stat_uncert=sentinel.uncertainties
+            species_data_stat_uncert=sentinel.uncertainties,
+            rgfo_esa_step=sentinel.rgfo_esa_step,
+            rgfo_spin_sector=sentinel.rgfo_spin_sector,
+            rgfo_half_spin=sentinel.rgfo_half_spin,
+            half_spin_per_esa_step=sentinel.half_spin_per_esa_step,
         )
 
         actual_data_product_variables = data_product.to_data_product_variables()
-        self.assertEqual(14, len(actual_data_product_variables))
+        self.assertEqual(18, len(actual_data_product_variables))
         actual_variables = iter(actual_data_product_variables)
 
         self.assert_variable_attributes(next(actual_variables), sentinel.epoch, EPOCH_VAR_NAME)
@@ -573,6 +578,10 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(next(actual_variables), spin_angle.astype(str), SPIN_ANGLE_LABEL_VAR_NAME)
         self.assert_variable_attributes(next(actual_variables), elevation.astype(str), ELEVATION_ANGLE_LABEL_VAR_NAME)
         self.assert_variable_attributes(next(actual_variables), sentinel.uncertainties, species_uncertainty)
+        self.assert_variable_attributes(next(actual_variables), sentinel.rgfo_esa_step, RGFO_ESA_STEP_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), sentinel.rgfo_spin_sector, RGFO_SPIN_SECTOR_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), sentinel.rgfo_half_spin, RGFO_HALF_SPIN_VAR_NAME)
+        self.assert_variable_attributes(next(actual_variables), sentinel.half_spin_per_esa_step, HALF_SPIN_PER_ESA_STEP_VAR_NAME)
 
     def test_codice_lo_l2_direct_events_reads_from_correct_float_data(self):
         all_fill_l2_cdf_path = get_test_data_path('codice/imap_codice_l2_lo-direct-events_20260307_v003-all-fill.cdf')
