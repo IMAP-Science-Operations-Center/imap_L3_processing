@@ -18,7 +18,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.alpha import (
     calculate_initial_guess as alpha_initial_guess_module,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_solar_wind_alpha_model import (
-    MIN_ALPHA_TO_PROTON_PEAK_ENERGY_RATIO,
+    TOLERABLE_ALPHA_SPEED_RATIO,
     AlphaSolarWindFitResult,
     _AlphaEvaluator,
     fit_solar_wind_alpha_model,
@@ -407,20 +407,18 @@ class TestFitAlphaMomentsRecoversTruth(
 class TestAlphaPeakEnergyRatioGuard(
     _SyntheticAlphaSpectrumFixture, unittest.TestCase
 ):
-    """Only fitted alpha peaks below the minimum energy ratio are rejected."""
+    """Only fitted alpha speeds below the tolerable ratio to the proton speed are rejected."""
 
-    def test_peak_energy_ratio_has_a_lower_bound_but_no_upper_bound(self):
+    def test_alpha_speed_ratio_has_a_lower_bound_but_no_upper_bound(self):
         proton_speed = np.linalg.norm(_TRUE_PROTON_VELOCITY_RTN)
         cases = (
-            (MIN_ALPHA_TO_PROTON_PEAK_ENERGY_RATIO - 0.01, SwapiL3Flags.BAD_FIT),
-            (2.4, SwapiL3Flags.NONE),
+            (TOLERABLE_ALPHA_SPEED_RATIO - 0.01, SwapiL3Flags.BAD_FIT),
+            (1.1, SwapiL3Flags.NONE),
         )
 
-        for peak_energy_ratio, expected_flag in cases:
-            with self.subTest(peak_energy_ratio=peak_energy_ratio):
-                alpha_speed = proton_speed * np.sqrt(
-                    peak_energy_ratio / ALPHA_MASS_PER_CHARGE_M_P_PER_E
-                )
+        for alpha_speed_ratio, expected_flag in cases:
+            with self.subTest(alpha_speed_ratio=alpha_speed_ratio):
+                alpha_speed = proton_speed * alpha_speed_ratio
                 observed, _, _ = _synthesize_proton_plus_alpha_count_rate(
                     response=self.response,
                     voltage=self.voltage,

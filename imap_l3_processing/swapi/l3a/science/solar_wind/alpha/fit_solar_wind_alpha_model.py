@@ -33,7 +33,10 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.uncertainties import (
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 
-MIN_ALPHA_TO_PROTON_PEAK_ENERGY_RATIO = 1.7
+# reject alpha fits where the speed is less than 90% of
+# the proton speed, to avoid cases where the proton shoulder
+# is confused for the alpha population
+TOLERABLE_ALPHA_SPEED_RATIO = 0.9
 
 
 @dataclass
@@ -162,7 +165,8 @@ def _construct_alpha_fit_result(
         np.linalg.norm(velocity_rtn, axis=-1)
         / np.linalg.norm(proton_bulk, axis=-1)
     ) ** 2
-    if peak_energy_ratio < MIN_ALPHA_TO_PROTON_PEAK_ENERGY_RATIO:
+    # convert energy-per-charge to speed for comparison
+    if np.sqrt(peak_energy_ratio / ALPHA_MASS_PER_CHARGE_M_P_PER_E) < TOLERABLE_ALPHA_SPEED_RATIO:
         return _nan_alpha_fit_result(bad_fit_flag | SwapiL3Flags.BAD_FIT)
 
     fit_r_squared = _alpha_r_squared(
