@@ -154,7 +154,7 @@ heplusplus:
 
 heplusplus_stat_uncert:
   <<: *species_3d_distribution
-  NAME: heplusplus
+  NAME: heplusplus_stat_uncert
   CATDESC: He++ Intensity 3d distribution statistical uncertainty
   FIELDNAM: He++ Intensity Statistical Uncertainty
   LABLAXIS: He++ Intensity Statistical Uncertainty

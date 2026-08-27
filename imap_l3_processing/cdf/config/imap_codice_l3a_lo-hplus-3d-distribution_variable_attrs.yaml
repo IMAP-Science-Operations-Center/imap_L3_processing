@@ -154,7 +154,7 @@ hplus:
 
 hplus_stat_uncert:
   <<: *species_3d_distribution
-  NAME: hplus
+  NAME: hplus_stat_uncert
   CATDESC: H+ Intensity 3d distribution statistical uncertainty
   FIELDNAM: H+ Intensity Statistical Uncertainty
   LABLAXIS: H+ Intensity Statistical Uncertainty
