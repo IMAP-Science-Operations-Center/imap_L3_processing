@@ -66,7 +66,7 @@ J^{\alpha}
 Some notes on error handling:
 - If the proton fit fails, fill values are reported and the proton quality flag is propagated.
 - If the alpha fit fails at any point, fill values are reported and `FIT_ERROR` is set.
-- If the fitted alpha bulk speed is less than 90% of the fitted proton bulk speed, fill values are reported and `BAD_FIT` is set. This guards against the proton shoulder being confused for the alpha population.
+- If the fitted alpha bulk speed is less than 90% of the fitted proton bulk speed, fill values are reported and `BAD_FIT` is set. This is intended to avoid confusing the proton beam population for the alpha population.
 - If the alpha fit converges but $`R^{2} < 0.9`$, fill values are reported and `BAD_FIT` is set.
 
 `R^{2}`$ is computed using the sweep-averaged coincidence rate for the points used in the alpha fit.
