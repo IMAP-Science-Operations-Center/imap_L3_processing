@@ -284,11 +284,11 @@ class SwapiProcessorIntegration(unittest.TestCase):
         data_dir = root_dir / "data"
         imap_data_access.config["DATA_DIR"] = data_dir
 
-        dependency_filename = "imap_swapi_l3b_20260101_v001.json"
+        dependency_filename = "imap_swapi_l3b_combined_20260101_v001.json"
         stage_input_file(SWAPI_INTEGRATION_DATA_DIR / dependency_filename)
 
         expected_file_path = ScienceFilePath(
-            "imap_swapi_l3b_combined_20260101_v001.cdf"
+            "imap_swapi_l3b_combined_20260101_v001.0001.cdf"
         ).construct_path()
         if expected_file_path.parent.exists():
             expected_file_path.unlink(missing_ok=True)
