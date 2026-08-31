@@ -6,6 +6,7 @@ import scipy.optimize
 from numpy import ndarray
 from uncertainties import UFloat, covariance_matrix, ufloat
 
+from imap_l3_processing.constants import ALPHA_MASS_PER_CHARGE_M_P_PER_E
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.calculate_initial_guess import (
     calculate_initial_guess,
 )
@@ -31,6 +32,11 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.uncertainties import (
 )
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
+
+# reject alpha fits where the speed is less than 90% of
+# the proton speed, to avoid cases where the proton shoulder
+# is confused for the alpha population
+MIN_TOLERABLE_ALPHA_SPEED_RATIO = 0.9
 
 
 @dataclass
@@ -154,6 +160,13 @@ def _construct_alpha_fit_result(
     alpha_temperature_fit = float(np.exp(result.x[1]))
     delta_v_fit = float(result.x[2])
     velocity_rtn = proton_bulk + delta_v_fit * magnetic_field_direction
+
+    speed_ratio = (
+        np.linalg.norm(velocity_rtn, axis=-1)
+        / np.linalg.norm(proton_bulk, axis=-1)
+    )
+    if speed_ratio < MIN_TOLERABLE_ALPHA_SPEED_RATIO:
+        return _nan_alpha_fit_result(bad_fit_flag | SwapiL3Flags.BAD_FIT)
 
     fit_r_squared = _alpha_r_squared(
         residuals=result.fun,
