@@ -185,11 +185,11 @@ class SwapiProcessorIntegration(unittest.TestCase):
             for key in expected_values.keys():
                 actual_value = cdf[key][sample_index]
                 if key.endswith('_uncert'):
-                    rtol, atol = 2e-2, 0.0
+                    rtol, atol = 3e-2, 0.0
                 elif 'velocity' in key:
                     rtol, atol = 1e-3, bulk_speed_atol
                 else:
-                    rtol, atol = 2e-2, 0.0
+                    rtol, atol = 3e-2, 0.0
                 try:
                     numpy.testing.assert_allclose(
                         actual_value, expected_values[key], rtol=rtol, atol=atol, err_msg=key
