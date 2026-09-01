@@ -170,10 +170,10 @@ SPIN_ANGLE = TypeVar("SPIN_ANGLE")
 ENERGY = TypeVar("ENERGY")
 
 
-def combine_priorities_for_species_and_convert_to_rate(
-        counts: np.ndarray[(EPOCH, PRIORITY, POSITION, SPIN_ANGLE, ENERGY)],
-        acquisition_times: np.ndarray[(EPOCH, ENERGY,)]) -> np.ndarray:
-    return np.sum(counts, axis=1) / (acquisition_times[:, :, np.newaxis, np.newaxis])
+def combine_priorities_for_species_and_calculate_count_uncertainty(
+        counts: np.ndarray[(EPOCH, PRIORITY, POSITION, SPIN_ANGLE, ENERGY)]) -> tuple[np.ndarray, np.ndarray]:
+    combined_counts = np.sum(counts, axis=1)
+    return combined_counts, np.sqrt(combined_counts)
 
 
 def rebin_3d_distribution_azimuth_to_elevation(intensity_data: np.ndarray,
@@ -202,10 +202,12 @@ def rebin_3d_distribution_azimuth_to_elevation(intensity_data: np.ndarray,
     return rebinned
 
 
-def convert_count_rate_to_intensity(count_rates: np.ndarray,
-                                    energy_per_charge: EnergyLookup,
-                                    efficiency_lookup: EfficiencyLookup,
-                                    geometric_factor: np.ndarray[(EPOCH, ENERGY, SPIN_ANGLE, POSITION)]) -> np.ndarray:
+def convert_counts_to_intensity(counts: np.ndarray,
+                                acquisition_times:  np.ndarray[(EPOCH, ENERGY,)],
+                                energy_per_charge: EnergyLookup,
+                                efficiency_lookup: EfficiencyLookup,
+                                geometric_factor: np.ndarray[(EPOCH, ENERGY, SPIN_ANGLE, POSITION)]) -> np.ndarray:
+    count_rates = counts / acquisition_times[:, :, np.newaxis, np.newaxis]
     reshaped_efficiency_data = efficiency_lookup.efficiency_data[np.newaxis, :, np.newaxis, :]
     denominator = geometric_factor * energy_per_charge.bin_centers[np.newaxis, :, np.newaxis,
                                      np.newaxis] * reshaped_efficiency_data
