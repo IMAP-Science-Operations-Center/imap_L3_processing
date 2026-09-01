@@ -57,7 +57,7 @@ class TestUtils(TestCase):
                 np.testing.assert_array_equal(iron_data, result.fe)
 
                 np.testing.assert_array_equal(epoch_data, result.epoch)
-                np.testing.assert_array_equal([timedelta(minutes=2.5), timedelta(minutes=2.5), timedelta(minutes=2.5)],
+                np.testing.assert_array_equal([timedelta(minutes=5), timedelta(minutes=5), timedelta(minutes=5)],
                                               result.epoch_delta)
 
                 np.testing.assert_array_equal([0, 1, 2], result.h_energy)
@@ -128,39 +128,6 @@ class TestUtils(TestCase):
                 np.testing.assert_array_equal(result.delta_plus_fe, np.full_like(iron_data, np.nan))
                 np.testing.assert_array_equal(result.delta_minus_fe, np.full_like(iron_data, np.nan))
 
-    def test_read_l2_hit_throws_error_when_it_cannot_fabricate_deltas(self):
-        rng = np.random.default_rng()
-
-        start_time = datetime(2010, 1, 1, 0, 5)
-
-        epoch_data = np.array(
-            [start_time, start_time + timedelta(minutes=5), start_time + timedelta(minutes=10, microseconds=2001)])
-
-        hydrogen_data = rng.random((3, 3, 15, 8))
-        helium_data = rng.random((3, 2, 15, 8))
-        cno_data = rng.random((3, 2, 15, 8))
-        nemgsi_data = rng.random((3, 2, 15, 8))
-        iron_data = rng.random((3, 1, 15, 8))
-
-        hydrogen_delta = hydrogen_data * 0.1
-        helium_delta = helium_data * 0.1
-        cno_delta = cno_data * 0.1
-        nemgsi_delta = nemgsi_data * 0.1
-        iron_delta = iron_data * 0.1
-
-        pathname = self.write_test_data_file(epoch_data, hydrogen_data, helium_data, cno_data, nemgsi_data, iron_data,
-                                             hydrogen_delta,
-                                             helium_delta,
-                                             cno_delta,
-                                             nemgsi_delta,
-                                             iron_delta,
-                                             )
-        with self.assertRaises(AssertionError) as exc_ctx:
-            read_l2_hit_data(pathname)
-
-        expected_error_message = "L2 epochs are not evenly spaced, failed to synthesize epoch deltas"
-        self.assertEqual(expected_error_message, str(exc_ctx.exception))
-
     def write_test_data_file(self, epoch_data, hydrogen_data, helium_data, cno_data, nemgsi_data, iron_data,
                              hydrogen_delta,
                              helium_delta,
@@ -182,6 +149,7 @@ class TestUtils(TestCase):
             cdf["fe_macropixel_intensity"] = iron_data
 
             cdf["epoch"] = epoch_data
+            cdf["epoch_delta"] = np.full(len(epoch_data), 300_000_000_000)
 
             cdf.new("h_energy_mean", np.arange(3), recVary=False)
             cdf.new("he4_energy_mean", np.arange(2), recVary=False)
