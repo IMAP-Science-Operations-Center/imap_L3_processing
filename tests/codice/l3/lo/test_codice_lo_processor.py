@@ -7,6 +7,7 @@ from unittest.mock import Mock, patch, call, sentinel, MagicMock
 
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
+from imap_processing.spice.geometry import get_spacecraft_to_instrument_spin_phase_offset
 
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_3d_distributions_dependencies import \
     CodiceLoL3a3dDistributionsDependencies
@@ -1106,7 +1107,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             half_spin_per_esa_step=l3a_de_half_spin_per_esa_step,
             spin_angle=sentinel.spin_angle,
             spin_angle_bin_delta=sentinel.spin_angle_bin_delta,
-            spin_angle_bin=sentinel.spin_angle_bin,
+            spin_angle_bin=np.array([30, 90, 170, 350]),
         )
 
         mock_geometric_factor_lut = Mock(spec=GeometricFactorLookup)
@@ -1166,6 +1167,14 @@ class TestCodiceLoProcessor(unittest.TestCase):
             NumpyArrayMatcher(np.arange(1, 25)),
             mock_elevation_lookup, NumpyArrayMatcher(l3a_de_half_spin_per_esa_step),)
 
+        expected_offset = 45.9086
+        expected_spin_angles = np.array([
+            30 + expected_offset,
+            90 + expected_offset,
+            170 + expected_offset,
+            350 + expected_offset - 360
+        ])
+
         self.assertIsInstance(l3a_3d_distribution_data_product, CodiceLoL3a3dDistributionDataProduct)
         self.assertEqual(processor.input_metadata, l3a_3d_distribution_data_product.input_metadata)
         self.assertEqual(mock_l3a_direct_event_data.epoch, l3a_3d_distribution_data_product.epoch)
@@ -1178,7 +1187,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         self.assertEqual(mock_elevation_lookup.bin_centers, l3a_3d_distribution_data_product.elevation)
         self.assertEqual(mock_elevation_lookup.bin_deltas, l3a_3d_distribution_data_product.elevation_delta)
-        self.assertEqual(sentinel.spin_angle_bin, l3a_3d_distribution_data_product.spin_angle)
+        np.testing.assert_array_equal(l3a_3d_distribution_data_product.spin_angle, expected_spin_angles)
         self.assertEqual(sentinel.spin_angle_bin_delta, l3a_3d_distribution_data_product.spin_angle_delta)
 
         np.testing.assert_array_equal(np.flip(mock_energy_lookup.bin_centers), l3a_3d_distribution_data_product.energy)

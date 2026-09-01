@@ -98,6 +98,7 @@ spin_angle:
   SCALETYP: linear
   DELTA_PLUS_VAR: spin_angle_delta
   DELTA_MINUS_VAR: spin_angle_delta
+  VAR_NOTES: Measured from +X axis in DPS frame, increasing in direction of spacecraft rotation
 
 spin_angle_delta:
   <<: *support_data

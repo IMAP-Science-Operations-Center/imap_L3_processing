@@ -2,6 +2,7 @@ from collections import namedtuple
 
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
+from imap_processing.spice.geometry import get_spacecraft_to_instrument_spin_phase_offset, SpiceFrame
 
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_3d_distributions_dependencies import \
     CodiceLoL3a3dDistributionsDependencies
@@ -331,14 +332,15 @@ class CodiceLoProcessor(Processor):
 
         intensity = rebin_3d_distribution_azimuth_to_elevation(intensities, np.arange(1, 25), position_elevation_lut,
                                                                dependencies.l3a_direct_event_data.half_spin_per_esa_step)
-
+        offset_degrees = get_spacecraft_to_instrument_spin_phase_offset(SpiceFrame.IMAP_CODICE)*360 - 180
+        spin_angle_bins_in_dps = (dependencies.l3a_direct_event_data.spin_angle_bin + offset_degrees) % 360
         return CodiceLoL3a3dDistributionDataProduct(
             input_metadata=self.input_metadata,
             epoch=dependencies.l3a_direct_event_data.epoch,
             epoch_delta=dependencies.l3a_direct_event_data.epoch_delta,
             elevation=position_elevation_lut.bin_centers,
             elevation_delta=position_elevation_lut.bin_deltas,
-            spin_angle=dependencies.l3a_direct_event_data.spin_angle_bin,
+            spin_angle=spin_angle_bins_in_dps,
             spin_angle_delta=dependencies.l3a_direct_event_data.spin_angle_bin_delta,
             energy=np.flip(energy_lut.bin_centers),
             energy_delta_plus=np.flip(energy_lut.delta_plus),
