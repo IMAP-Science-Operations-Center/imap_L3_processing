@@ -2,6 +2,7 @@ from collections import namedtuple
 
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
+from imap_processing.spice.geometry import get_spacecraft_to_instrument_spin_phase_offset, SpiceFrame
 
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_3d_distributions_dependencies import \
     CodiceLoL3a3dDistributionsDependencies
@@ -15,8 +16,8 @@ from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityData
     CodiceLoL3aDirectEventDataProduct, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct, \
     CodiceLoL3ChargeStateDistributionsDataProduct, CodiceLoL3a3dDistributionDataProduct
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
-    calculate_mass, calculate_mass_per_charge, convert_count_rate_to_intensity, \
-    rebin_to_counts_by_species_elevation_and_spin_sector, combine_priorities_for_species_and_convert_to_rate, \
+    calculate_mass, calculate_mass_per_charge,convert_counts_to_intensity, \
+    rebin_to_counts_by_species_elevation_and_spin_sector, combine_priorities_for_species_and_calculate_count_uncertainty, \
     calculate_normalization_factor, lookup_normalization_per_event, rebin_3d_distribution_azimuth_to_elevation
 from imap_l3_processing.data_utils import safe_divide
 from imap_l3_processing.models import InputMetadata
@@ -316,36 +317,42 @@ class CodiceLoProcessor(Processor):
 
         species_index = mass_species_bin_lookup.get_species_index(dependencies.species)
         counts_for_species = counts_3d_data[species_index]
-        normalized_count_rates = combine_priorities_for_species_and_convert_to_rate(counts_for_species,
-                                                                                    dependencies.l3a_direct_event_data.acquisition_time_per_esa_step)
-
+        normalized_counts, counts_uncertainty = combine_priorities_for_species_and_calculate_count_uncertainty(counts_for_species)
         geometric_factors = geometric_factor_lut.get_geometric_factors(
             dependencies.l3a_direct_event_data.rgfo_half_spin, dependencies.l3a_direct_event_data.rgfo_spin_sector,
             dependencies.l3a_direct_event_data.rgfo_esa_step, dependencies.l3a_direct_event_data.half_spin_per_esa_step,
             self.input_metadata.start_date.date()
         )
-        intensities = convert_count_rate_to_intensity(normalized_count_rates,
+        intensities = convert_counts_to_intensity(normalized_counts, dependencies.l3a_direct_event_data.acquisition_time_per_esa_step,
+                                                      dependencies.energy_per_charge_lut,
+                                                      dependencies.efficiency_factors_lut,
+                                                      geometric_factors)
+        intensities_uncertainty = convert_counts_to_intensity(counts_uncertainty, dependencies.l3a_direct_event_data.acquisition_time_per_esa_step,
                                                       dependencies.energy_per_charge_lut,
                                                       dependencies.efficiency_factors_lut,
                                                       geometric_factors)
 
-        intensity = rebin_3d_distribution_azimuth_to_elevation(intensities, np.arange(1, 25), position_elevation_lut,
+        rebinned_intensity = rebin_3d_distribution_azimuth_to_elevation(intensities, np.arange(1, 25), position_elevation_lut,
                                                                dependencies.l3a_direct_event_data.half_spin_per_esa_step)
 
+        rebinned_intensity_uncertainty = rebin_3d_distribution_azimuth_to_elevation(intensities_uncertainty, np.arange(1, 25), position_elevation_lut,
+                                                               dependencies.l3a_direct_event_data.half_spin_per_esa_step)
+        offset_degrees = get_spacecraft_to_instrument_spin_phase_offset(SpiceFrame.IMAP_CODICE)*360 - 180
+        spin_angle_bins_in_dps = (dependencies.l3a_direct_event_data.spin_angle_bin + offset_degrees) % 360
         return CodiceLoL3a3dDistributionDataProduct(
             input_metadata=self.input_metadata,
             epoch=dependencies.l3a_direct_event_data.epoch,
             epoch_delta=dependencies.l3a_direct_event_data.epoch_delta,
             elevation=position_elevation_lut.bin_centers,
             elevation_delta=position_elevation_lut.bin_deltas,
-            spin_angle=dependencies.l3a_direct_event_data.spin_angle_bin,
+            spin_angle=spin_angle_bins_in_dps,
             spin_angle_delta=dependencies.l3a_direct_event_data.spin_angle_bin_delta,
             energy=np.flip(energy_lut.bin_centers),
             energy_delta_plus=np.flip(energy_lut.delta_plus),
             energy_delta_minus=np.flip(energy_lut.delta_minus),
             species=dependencies.species,
-            species_data=np.flip(intensity, axis=1),
-            species_data_stat_uncert=np.flip(np.sqrt(counts_for_species), axis=1),
+            species_data=np.flip(rebinned_intensity, axis=1),
+            species_data_stat_uncert=np.flip(rebinned_intensity_uncertainty, axis=1),
             rgfo_esa_step=dependencies.l3a_direct_event_data.rgfo_esa_step,
             rgfo_spin_sector=dependencies.l3a_direct_event_data.rgfo_spin_sector,
             rgfo_half_spin=dependencies.l3a_direct_event_data.rgfo_half_spin,

@@ -12,8 +12,8 @@ from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, CodiceLoD
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
     calculate_total_number_of_events, calculate_mass, calculate_mass_per_charge, \
     rebin_to_counts_by_species_elevation_and_spin_sector, rebin_direct_events_by_energy_and_spin_sector, \
-    CODICE_LO_NUM_AZIMUTH_BINS, combine_priorities_for_species_and_convert_to_rate, \
-    rebin_3d_distribution_azimuth_to_elevation, convert_count_rate_to_intensity, rebin_direct_events_for_normalization, \
+    CODICE_LO_NUM_AZIMUTH_BINS, combine_priorities_for_species_and_calculate_count_uncertainty, \
+    rebin_3d_distribution_azimuth_to_elevation, convert_counts_to_intensity, rebin_direct_events_for_normalization, \
     calculate_normalization_factor, lookup_normalization_per_event
 
 
@@ -501,7 +501,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         np.testing.assert_array_equal(normalization_per_event, expected_normalization_per_event)
 
-    def test_combine_priorities_for_species_and_convert_to_rate(self):
+    def test_combine_priorities_for_species_and_calculate_count_uncertainty(self):
         num_epochs = 2
         num_energies = 7
         num_spin_sectors = 6
@@ -514,21 +514,14 @@ class TestCodiceLoCalculations(unittest.TestCase):
 
         counts = np.stack((priority_1, priority_2, priority_3), axis=1)
 
-        acquisition_durations_in_seconds = rng.random((num_epochs, num_energies,))
-
-        actual_count_rates = combine_priorities_for_species_and_convert_to_rate(counts,
-                                                                                acquisition_durations_in_seconds)
+        actual_counts, actual_count_uncertainty = combine_priorities_for_species_and_calculate_count_uncertainty(counts)
         expected_summed_counts = priority_1 + priority_2 + priority_3
 
         self.assertEqual((num_epochs, num_energies, num_spin_sectors, num_azimuth_bins),
-                         actual_count_rates.shape)
+                         actual_counts.shape)
 
-        for index in np.ndindex(num_epochs, num_spin_sectors, num_azimuth_bins):
-            epoch, spin, azimuth = index
-            expected_count_rate_per_epoch_spin_azimuth = expected_summed_counts[epoch, :, spin, azimuth] / \
-                                                         acquisition_durations_in_seconds[epoch]
-            np.testing.assert_array_almost_equal(actual_count_rates[epoch, :, spin, azimuth],
-                                                 expected_count_rate_per_epoch_spin_azimuth)
+        np.testing.assert_array_equal(actual_counts, expected_summed_counts)
+        np.testing.assert_array_equal(actual_count_uncertainty, np.sqrt(expected_summed_counts))
 
     def test_convert_count_rate_to_intensity(self):
         num_epochs = 3
@@ -537,7 +530,8 @@ class TestCodiceLoCalculations(unittest.TestCase):
         num_energies = 6
 
         rng = np.random.default_rng()
-        count_rates = rng.random((num_epochs, num_energies, num_spin_angles, num_position_bins))
+        counts = rng.random((num_epochs, num_energies, num_spin_angles, num_position_bins))
+        acquisition_times = rng.random((num_epochs, num_energies,))
         energy_per_charge = EnergyLookup(bin_centers=rng.random(num_energies),
                                          delta_plus=rng.random(num_energies),
                                          delta_minus=rng.random(num_energies))
@@ -548,14 +542,14 @@ class TestCodiceLoCalculations(unittest.TestCase):
         mock_efficiency_lookup = Mock()
         mock_efficiency_lookup.efficiency_data = efficiency
 
-        intensity_data = convert_count_rate_to_intensity(count_rates, energy_per_charge, mock_efficiency_lookup,
+        intensity_data = convert_counts_to_intensity(counts, acquisition_times, energy_per_charge, mock_efficiency_lookup,
                                                          geometric_factor)
 
         expected_denominator = (energy_per_charge.bin_centers[np.newaxis, :, np.newaxis, np.newaxis]
                                 * geometric_factor
                                 * efficiency[np.newaxis, :, np.newaxis, :])
 
-        np.testing.assert_array_almost_equal(intensity_data * expected_denominator, count_rates)
+        np.testing.assert_array_almost_equal(intensity_data * expected_denominator, counts/acquisition_times[:,:,np.newaxis, np.newaxis])
 
     def test_rebin_azimuth_to_elevation(self):
         num_epochs = 3

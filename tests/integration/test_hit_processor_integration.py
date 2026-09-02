@@ -13,7 +13,7 @@ class HitProcessorIntegration(unittest.TestCase):
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_hit_macropixel_product(self, mock_parse_cli_arguments):
         input_files = [
-            get_test_data_path("hit/imap_hit_l2_macropixel-intensity_20260228_v002.cdf"),
+            get_test_data_path("hit/imap_hit_l2_macropixel-intensity_20260228_v001.0002.cdf"),
             get_test_data_path("hit/imap_mag_l1d_norm-dsrf_20260228_v005.cdf"),
             get_test_data_path("hit/imap_mag_l2_norm-dsrf_20260228_v002.cdf"),
         ]

@@ -7,6 +7,7 @@ from unittest.mock import Mock, patch, call, sentinel, MagicMock
 
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
+from imap_processing.spice.geometry import get_spacecraft_to_instrument_spin_phase_offset
 
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_3d_distributions_dependencies import \
     CodiceLoL3a3dDistributionsDependencies
@@ -1085,13 +1086,13 @@ class TestCodiceLoProcessor(unittest.TestCase):
             self.assertTrue(np.all(result_var.mask[3] == False))
 
     @patch(f'{MODULE}.rebin_3d_distribution_azimuth_to_elevation')
-    @patch(f'{MODULE}.combine_priorities_for_species_and_convert_to_rate')
+    @patch(f'{MODULE}.combine_priorities_for_species_and_calculate_count_uncertainty')
     @patch(f'{MODULE}.PositionToElevationLookup')
     @patch(f'{MODULE}.rebin_to_counts_by_species_elevation_and_spin_sector')
-    @patch(f'{MODULE}.convert_count_rate_to_intensity')
-    def test_process_l3a_3d_distributions(self, mock_convert_count_rate_to_intensity, mock_rebin,
+    @patch(f'{MODULE}.convert_counts_to_intensity')
+    def test_process_l3a_3d_distributions(self, mock_convert_counts_to_intensity, mock_rebin,
                                           mock_elevation_angle_lookup_class,
-                                          mock_combine_priorities_for_species_and_convert_to_rate,
+                                          mock_combine_priorities_for_species_and_calculate_uncertainty,
                                           mock_rebin_3d_distribution_azimuth_to_elevation):
         mock_elevation_lookup = mock_elevation_angle_lookup_class.return_value
 
@@ -1106,7 +1107,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             half_spin_per_esa_step=l3a_de_half_spin_per_esa_step,
             spin_angle=sentinel.spin_angle,
             spin_angle_bin_delta=sentinel.spin_angle_bin_delta,
-            spin_angle_bin=sentinel.spin_angle_bin,
+            spin_angle_bin=np.array([30, 90, 170, 350]),
         )
 
         mock_geometric_factor_lut = Mock(spec=GeometricFactorLookup)
@@ -1125,16 +1126,19 @@ class TestCodiceLoProcessor(unittest.TestCase):
             species=sentinel.species
         )
 
+        counts = np.array([])
+        count_uncerts = np.array([])
+        mock_combine_priorities_for_species_and_calculate_uncertainty.return_value = (counts, count_uncerts)
         mock_mass_bin_lookup.get_species_index.return_value = sentinel.species_index
-
-        expected_uncertainty = np.random.random(size=(77, 128, 24, 13))
-        counts_for_species = expected_uncertainty ** 2
+        mock_convert_counts_to_intensity.side_effect = [sentinel.intensity, sentinel.intensity_uncert]
+        mock_rebinned_intensity = np.arange(25).reshape(5, 5)
+        mock_rebinned_uncert = np.arange(25, 50).reshape(5, 5)
+        mock_rebin_3d_distribution_azimuth_to_elevation.side_effect = [mock_rebinned_intensity, mock_rebinned_uncert]
 
         counts_3d_distribution = mock_rebin.return_value
-        counts_3d_distribution.__getitem__.return_value = counts_for_species
+        counts_3d_distribution.__getitem__.return_value = sentinel.counts_for_species_by_priority
 
         processor = CodiceLoProcessor(dependencies=Mock(), input_metadata=input_metadata)
-        mock_rebin_3d_distribution_azimuth_to_elevation.return_value = np.random.random(size=(77, 128, 24, 13))
         l3a_3d_distribution_data_product = processor.process_l3a_3d_distribution_product(dependencies)
 
         mock_elevation_angle_lookup_class.assert_called_once()
@@ -1144,8 +1148,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             mass_species_bin_lookup=dependencies.mass_species_bin_lookup,
         )
 
-        mock_combine_priorities_for_species_and_convert_to_rate.assert_called_once_with(counts_for_species,
-                                                                                        sentinel.acquisition_time)
+        mock_combine_priorities_for_species_and_calculate_uncertainty.assert_called_once_with(sentinel.counts_for_species_by_priority)
 
         mock_compute_geometric_factors = mock_geometric_factor_lut.get_geometric_factors
         mock_compute_geometric_factors.assert_called_once_with(
@@ -1155,16 +1158,23 @@ class TestCodiceLoProcessor(unittest.TestCase):
             NumpyArrayMatcher(l3a_de_half_spin_per_esa_step),
             date(2026, 5, 13)
         )
-        mock_convert_count_rate_to_intensity.assert_called_once_with(
-            mock_combine_priorities_for_species_and_convert_to_rate.return_value,
-            mock_energy_lookup,
-            mock_efficiency_lut,
-            mock_compute_geometric_factors.return_value)
+        mock_convert_counts_to_intensity.assert_has_calls([
+            call(counts, sentinel.acquisition_time, mock_energy_lookup, mock_efficiency_lut, mock_compute_geometric_factors.return_value),
+            call(count_uncerts, sentinel.acquisition_time, mock_energy_lookup, mock_efficiency_lut, mock_compute_geometric_factors.return_value),
+        ])
 
-        mock_rebin_3d_distribution_azimuth_to_elevation.assert_called_once_with(
-            mock_convert_count_rate_to_intensity.return_value,
-            NumpyArrayMatcher(np.arange(1, 25)),
-            mock_elevation_lookup, NumpyArrayMatcher(l3a_de_half_spin_per_esa_step),)
+        mock_rebin_3d_distribution_azimuth_to_elevation.assert_has_calls([
+            call(sentinel.intensity, NumpyArrayMatcher(np.arange(1, 25)), mock_elevation_lookup, NumpyArrayMatcher(l3a_de_half_spin_per_esa_step)),
+            call(sentinel.intensity_uncert, NumpyArrayMatcher(np.arange(1, 25)), mock_elevation_lookup, NumpyArrayMatcher(l3a_de_half_spin_per_esa_step))]
+        )
+
+        expected_offset = 45.9086
+        expected_spin_angles = np.array([
+            30 + expected_offset,
+            90 + expected_offset,
+            170 + expected_offset,
+            350 + expected_offset - 360
+        ])
 
         self.assertIsInstance(l3a_3d_distribution_data_product, CodiceLoL3a3dDistributionDataProduct)
         self.assertEqual(processor.input_metadata, l3a_3d_distribution_data_product.input_metadata)
@@ -1178,7 +1188,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         self.assertEqual(mock_elevation_lookup.bin_centers, l3a_3d_distribution_data_product.elevation)
         self.assertEqual(mock_elevation_lookup.bin_deltas, l3a_3d_distribution_data_product.elevation_delta)
-        self.assertEqual(sentinel.spin_angle_bin, l3a_3d_distribution_data_product.spin_angle)
+        np.testing.assert_array_equal(l3a_3d_distribution_data_product.spin_angle, expected_spin_angles)
         self.assertEqual(sentinel.spin_angle_bin_delta, l3a_3d_distribution_data_product.spin_angle_delta)
 
         np.testing.assert_array_equal(np.flip(mock_energy_lookup.bin_centers), l3a_3d_distribution_data_product.energy)
@@ -1187,9 +1197,9 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(np.flip(mock_energy_lookup.delta_minus),
                                       l3a_3d_distribution_data_product.energy_delta_minus)
 
-        np.testing.assert_array_equal(np.flip(mock_rebin_3d_distribution_azimuth_to_elevation.return_value, axis=1),
+        np.testing.assert_array_equal(np.flip(mock_rebinned_intensity, axis=1),
                                       l3a_3d_distribution_data_product.species_data)
-        np.testing.assert_array_equal(np.flip(expected_uncertainty, axis=1), l3a_3d_distribution_data_product.species_data_stat_uncert)
+        np.testing.assert_array_equal(np.flip(mock_rebinned_uncert, axis=1), l3a_3d_distribution_data_product.species_data_stat_uncert)
         self.assertEqual(sentinel.species, l3a_3d_distribution_data_product.species)
 
     def test_process_3d_distributions_save_for_each_species(self):
