@@ -8,8 +8,6 @@ from tests.test_helpers import get_test_data_path
 
 
 class TestEfficiencyCalibrationTable(unittest.TestCase):
-    """Tests for `EfficiencyCalibrationTable`, which reads the relative proton and helium detector efficiencies for a given time out of the calibration table."""
-
     def test_loads_calibration_table_and_returns_proton_efficiency_for_a_time(self):
         """Each queried time returns the proton efficiency from the most recent row that precedes it, unscaled."""
         calibration_table_path = get_test_data_path("swapi/imap_swapi_efficiency-lut-test_20241020_v001.dat")

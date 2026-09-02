@@ -3,12 +3,6 @@ from spacepy import pycdf
 
 
 class EfficiencyCalibrationTable:
-    """Detector efficiencies over the mission, relative to the lab calibration.
-
-    The response multiplies the lab central effective area by these values
-    directly, so a table holding absolute efficiencies is not valid input.
-    """
-
     def __init__(self, path):
         self.data = np.loadtxt(path, dtype=[("time", "M8[ns]"), ("MET", "i8"), ("proton efficiency", "f8"), ("helium efficiency", "f8")], ndmin=1)
 
