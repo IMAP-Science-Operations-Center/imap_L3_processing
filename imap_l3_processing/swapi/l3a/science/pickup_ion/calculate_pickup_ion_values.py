@@ -11,7 +11,7 @@ from numpy import ndarray
 from scipy.linalg import inv
 from uncertainties import ufloat
 
-from imap_l3_processing.constants import ONE_AU_IN_KM
+from imap_l3_processing.constants import HE_PUI_PARTICLE_MASS_PER_CHARGE_M_P_PER_E, ONE_AU_IN_KM
 from imap_l3_processing.swapi.constants import SWAPI_L2_K_FACTOR
 from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_coincidence_rate import (
     calculate_coincidence_rate,
@@ -32,7 +32,7 @@ from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 
 
 _COARSE_SWEEP_LEN = 62
-_HELIUM_MASS_PER_CHARGE_M_P_PER_E = 4.0
+_HELIUM_MASS_PER_CHARGE_M_P_PER_E = HE_PUI_PARTICLE_MASS_PER_CHARGE_M_P_PER_E
 
 
 @dataclass
