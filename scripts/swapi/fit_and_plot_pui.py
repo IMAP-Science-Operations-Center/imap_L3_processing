@@ -87,7 +87,7 @@ def replay_chunk_spectrum(dependencies, data_chunk, center_of_epoch,
         :, SWAPI_COARSE_SWEEP_BINS].flatten()
     central_effective_area_scale = (
         dependencies.efficiency_calibration_table
-        .central_effective_area_scale_for(center_of_epoch, "helium"))
+        .relative_helium_efficiency(center_of_epoch))
 
     voltages_2d = voltages_flat.reshape(-1, _COARSE_SWEEP_LEN)
     count_rates_2d = count_rates_flat.reshape(-1, _COARSE_SWEEP_LEN)

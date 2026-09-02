@@ -46,22 +46,22 @@ The detector efficiency degrades with time and is species-dependent.
 Therefore, an efficiency calibration table (see `EfficiencyCalibrationTable`) is used to scale the central effective area.
 
 The efficiency calibration table has two columns: $\varepsilon_\text{H}$ for hydrogen and $\varepsilon_\text{He}$ for helium.
-They are used as follows:
+Both hold efficiencies already expressed relative to the lab calibration, so they scale the lab central effective area directly:
 
 **Protons ($`\text{H}^+`$)**
 ```math
-\mathcal{A}_{0}^{\text{H}^+}\!(V) = \mathcal{A}_{0,\text{(lab)}}^{\text{H}^+}\!(V) \dfrac{\varepsilon_\text{H}(t)}{\varepsilon_\text{H}(t_{\text{lab}})},
+\mathcal{A}_{0}^{\text{H}^+}\!(V) = \mathcal{A}_{0,\text{(lab)}}^{\text{H}^+}\!(V)\, \varepsilon_\text{H}(t),
 ```
-where $`\varepsilon_\text{H}(t_{\text{lab}})`$ is the first proton entry in the table on or after 2025-11-01 and $`\varepsilon_\text{H}(t)`$ is the most recent entry whose timestamp precedes $t$.
+where $`\varepsilon_\text{H}(t)`$ is the most recent entry whose timestamp precedes $t$.
 
 **Alphas ($`\text{He}^{++}`$) & PUIs ($`\text{He}^{+}`$)**
 ```math
 \mathcal{A}_{0}^{\text{He}^{++}}\!(V)
 = \mathcal{A}_{0}^{\text{He}^{+}}\!(V)
-= \mathcal{A}_{0,\text{(lab)}}^{\text{H}^+}\!(V) \dfrac{\varepsilon_\text{He}(t)}{\varepsilon_\text{H}(t_{\text{lab}})}
+= \mathcal{A}_{0,\text{(lab)}}^{\text{H}^+}\!(V)\, \varepsilon_\text{He}(t)
 ```
 
-Only the relative values are used here, so this is agnostic to whether the values in the table are scaled to an absolute efficiency in the future.
+A table of absolute efficiencies is therefore not valid input: it would suppress the modelled count rates by the lab efficiency.
 
 Initially, the hydrogen column is set to $1$, and the helium column is set to $1.05$.
 The ratio of $1.05$ for helium comes from the high-energy limit observed in the lab for $\text{He}^+$ versus $\text{H}^+$.
