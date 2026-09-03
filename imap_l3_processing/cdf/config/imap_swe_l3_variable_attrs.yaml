@@ -1142,11 +1142,11 @@ core_temperature_tensor_integrated:
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Core Temperature Tensor Integrated
-  FORMAT: F15.3
+  FORMAT: F9.0
   LABLAXIS: Core t tensor integrated
-  UNITS: 10^4 K
-  VALIDMIN: -1000
-  VALIDMAX: 1000
+  UNITS: K
+  VALIDMIN: -1.0E+7
+  VALIDMAX: 1.0E+7
   FILLVAL: -1.00E+31
   LABL_PTR_1: core_temperature_tensor_integrated_label
   VAR_NOTES: Calculated by integration over the measured phase space distribution
@@ -1161,11 +1161,11 @@ halo_temperature_tensor_integrated:
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Halo Temperature Tensor Integrated
-  FORMAT: F15.3
+  FORMAT: F9.0
   LABLAXIS: Halo t tensor integrated
-  UNITS: 10^4 K
-  VALIDMIN: -1000
-  VALIDMAX: 1000
+  UNITS: K
+  VALIDMIN: -1.0E+7
+  VALIDMAX: 1.0E+7
   FILLVAL: -1.00E+31
   LABL_PTR_1: halo_temperature_tensor_integrated_label
   VAR_NOTES: Calculated by integration over the measured phase space distribution
@@ -1180,11 +1180,11 @@ total_temperature_tensor_integrated:
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FIELDNAM: Total Temperature Tensor Integrated
-  FORMAT: F15.3
+  FORMAT: F9.0
   LABLAXIS: Total t tensor integrated
-  UNITS: 10^4 K
-  VALIDMIN: -1000
-  VALIDMAX: 1000
+  UNITS: K
+  VALIDMIN: -1.0E+7
+  VALIDMAX: 1.0E+7
   FILLVAL: -1.00E+31
   LABL_PTR_1: total_temperature_tensor_integrated_label
   VAR_NOTES: Calculated by integration over the measured phase space distribution
