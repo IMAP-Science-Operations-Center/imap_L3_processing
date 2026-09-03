@@ -56,7 +56,6 @@ from uncertainties import ufloat
 
 from imap_l3_processing.constants import (
     FIVE_MINUTES_IN_NANOSECONDS,
-    ONE_AU_IN_KM,
     ONE_SECOND_IN_NANOSECONDS,
 )
 from imap_l3_processing.swapi.constants import (
@@ -473,12 +472,12 @@ def _evaluate_fitted_total_rate(
     same deadtime factor used to build the truth fixture. Mirrors the truth
     construction so rows 1 and 3 are directly comparable.
 
-    `calculate_pickup_ion_values` masks bins to the production PUI fit window
-    (above the proton-PUI cutoff and below 1.2× the helium-PUI cutoff); we
-    rebuild the chunk response over the full voltage grid so the spectrogram
-    covers the same axis as rows 1 and 2. Below the proton-PUI cutoff the PUI
-    model contributes ~0, so the full-grid extension just zero-pads the
-    low-energy tail.
+    `calculate_pickup_ion_values` masks bins to the production PUI fit window,
+    which it derives from the peak-rate step energy of the sweep-mean spectrum
+    rather than from the inflow geometry; we rebuild the chunk response over
+    the full voltage grid so the spectrogram covers the same axis as rows 1 and
+    2. Below that window the PUI model contributes ~0, so the full-grid
+    extension just zero-pads the low-energy tail.
     """
     cooling_index, ionization_rate, cutoff_speed_kms, background_rate = example_fits
     chunk_ephemeris_time = spiceypy.unitim(
@@ -495,11 +494,6 @@ def _evaluate_fitted_total_rate(
     # Production fit uses sw_speed * 1.2 as the v' grid ceiling; widen if the
     # fitted cutoff landed above that so the grid still reaches the cutoff.
     cutoff_speed_max_kms = max(sw_speed_kms * 1.2, cutoff_speed_kms)
-    radius_in_au = vasyliunas_siscoe_distribution.distance_km / ONE_AU_IN_KM
-    min_speed_kms = max(
-        1.0,
-        sw_speed_kms * 0.8 * density_lookup_table.get_minimum_distance() / radius_in_au,
-    )
 
     chunk_response_full = build_chunk_collapsed_response(
         swapi_response=swapi_response,
@@ -507,7 +501,6 @@ def _evaluate_fitted_total_rate(
         bulk_sw_per_bin_kms=bulk_sw_per_bin_swapi_kms,
         mass_per_charge_m_p_per_e=_HELIUM_MASS_PER_CHARGE_M_P_PER_E,
         cutoff_speed_max_kms=cutoff_speed_max_kms,
-        min_speed_kms=min_speed_kms,
         central_effective_area_scale=helium_efficiency_ratio,
     )
 

@@ -81,9 +81,6 @@ def compute_production_rates(voltages_v: np.ndarray) -> np.ndarray:
         background_count_rate=_BACKGROUND_RATE_HZ,
     )
     lut = DensityOfNeutralHeliumLookupTable.from_file(_DENSITY_LUT_PATH)
-    min_speed_kms = max(
-        1.0, _CUTOFF_SPEED_KMS * lut.get_minimum_distance() / _HELIO_DIST_AU
-    )
     vasyliunas_siscoe_distribution = VasyliunasSiscoeDistribution(
         ephemeris_time=0.0,
         solar_wind_speed_inertial_frame=_SW_SPEED_INERTIAL_KMS,
@@ -111,7 +108,6 @@ def compute_production_rates(voltages_v: np.ndarray) -> np.ndarray:
         bulk_sw_per_bin_kms=bulk_sw_per_bin,
         mass_per_charge_m_p_per_e=_HELIUM_MASS_PER_CHARGE_M_P_PER_E,
         cutoff_speed_max_kms=_CUTOFF_SPEED_KMS,
-        min_speed_kms=min_speed_kms,
         central_effective_area_scale=_HELIUM_EFFICIENCY_RATIO,
     )
     return calculate_coincidence_rate(chunk_response, vasyliunas_siscoe_distribution, fitting_params)[0]
