@@ -100,7 +100,11 @@ def calculate_pickup_ion_values(
 def _calculate_pickup_ion_fit_energy_range(
     energies_per_step: ndarray, count_rates_per_step: ndarray
 ) -> tuple[float, float]:
-    proton_peak_energy = energies_per_step[np.argmax(count_rates_per_step)]
+    argsort = np.argsort(energies_per_step)
+    count_rates_sorted = count_rates_per_step[argsort]
+    energies_sorted = energies_per_step[argsort]
+
+    proton_peak_energy = energies_sorted[np.argmax(count_rates_sorted)]
 
     # assumes alpha solar wind has the same bulk speed as proton solar wind
     nominal_alpha_peak = 2 * proton_peak_energy

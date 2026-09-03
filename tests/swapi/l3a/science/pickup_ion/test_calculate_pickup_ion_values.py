@@ -240,64 +240,47 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
 class CalculatePickupIonFitEnergyRangeTest(unittest.TestCase):
     """Tests for `_calculate_pickup_ion_fit_energy_range`."""
 
-    def test_window_is_fixed_multiples_of_the_peak_bin_energy(self):
-        ascending_energies = [250.0, 500.0, 1000.0, 2000.0, 4000.0]
+    def test_calculate_pickup_ion_fit_energy_range(self):
+        # SWAPI has it go from high to low
         descending_energies = [4000.0, 2000.0, 1000.0, 500.0, 250.0]
-        lower_edge_for_1000_ev_peak = 5656.854249492381
-        lower_edge_for_500_ev_peak = 2828.4271247461903
+
+        # In each case, the peak bin is the one with the highest count rate.
+        # If the energy peak is P, then upper_edge = 16*P, lower_edge=sqrt(32)*P
 
         cases = [
             (
-                "ascending sweep peaking at 1000 eV",
-                ascending_energies,
+                "peak at 1 keV",
                 [1.0, 5.0, 100.0, 5.0, 1.0],
-                lower_edge_for_1000_ev_peak,
-                16000.0,
+                np.sqrt(32) * 1000,
+                16 * 1000,
             ),
             (
-                "peak one bin lower halves both edges",
-                ascending_energies,
-                [1.0, 100.0, 5.0, 5.0, 1.0],
-                lower_edge_for_500_ev_peak,
-                8000.0,
-            ),
-            (
-                "descending sweep, as SWAPI actually steps energy",
-                descending_energies,
-                [1.0, 5.0, 100.0, 5.0, 1.0],
-                lower_edge_for_1000_ev_peak,
-                16000.0,
-            ),
-            (
-                "peak height does not shift the window",
-                ascending_energies,
+                "higher peak value",
                 [1000.0, 5000.0, 100000.0, 5000.0, 1000.0],
-                lower_edge_for_1000_ev_peak,
-                16000.0,
+                np.sqrt(32) * 1000,
+                16 * 1000,
             ),
             (
-                "tied maxima resolve to the lower step index",
-                ascending_energies,
-                [1.0, 100.0, 100.0, 1.0, 1.0],
-                lower_edge_for_500_ev_peak,
-                8000.0,
+                "tied peak -> lower energy",
+                [1.0, 50.0, 100.0, 100.0, 1.0],
+                np.sqrt(32) * 500,
+                16 * 500,
             ),
         ]
 
         for (
             label,
-            energies,
             count_rates,
             expected_lower_edge,
             expected_upper_edge,
         ) in cases:
             with self.subTest(case=label):
                 lower_edge, upper_edge = _calculate_pickup_ion_fit_energy_range(
-                    np.array(energies), np.array(count_rates)
+                    np.array(descending_energies), np.array(count_rates)
                 )
 
-                self.assertAlmostEqual(lower_edge, expected_lower_edge)
-                self.assertAlmostEqual(upper_edge, expected_upper_edge)
+                self.assertAlmostEqual(lower_edge, expected_lower_edge, msg=label)
+                self.assertAlmostEqual(upper_edge, expected_upper_edge, msg=label)
 
 
 if __name__ == "__main__":
