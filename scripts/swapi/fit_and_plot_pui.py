@@ -33,14 +33,16 @@ from spacepy.pycdf import CDF
 from spacepy.pycdf import lib as cdf_library
 from uncertainties import unumpy
 
-from imap_l3_processing.constants import ONE_SECOND_IN_NANOSECONDS
+from imap_l3_processing.constants import (
+    HE_PUI_PARTICLE_MASS_KG,
+    ONE_AU_IN_KM,
+    ONE_SECOND_IN_NANOSECONDS,
+    PROTON_MASS_KG,
+)
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.constants import SWAPI_COARSE_SWEEP_BINS, SWAPI_L2_K_FACTOR
 from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_coincidence_rate import (
     calculate_coincidence_rate,
-)
-from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_pickup_ion_values import (
-    calculate_pickup_ion_fit_energy_range,
 )
 from imap_l3_processing.swapi.l3a.science.pickup_ion.collapsed_response_grid import (
     build_chunk_collapsed_response,
@@ -56,6 +58,7 @@ from imap_l3_processing.swapi.l3a.chunk_fits import (
 )
 from imap_l3_processing.swapi.l3a.models import SwapiL3PickupIonData
 from imap_l3_processing.swapi.l3a.science.pickup_ion.utils import (
+    calculate_pui_energy_cutoff,
     rotate_rtn_velocity_to_swapi_per_bin,
 )
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
@@ -92,9 +95,14 @@ def replay_chunk_spectrum(dependencies, data_chunk, center_of_epoch,
         data_chunk, sw_velocity_rtn_kms
     )
 
+    lower_energy_cutoff = 1.25 * calculate_pui_energy_cutoff(
+        PROTON_MASS_KG, chunk_ephemeris_time,
+        sw_velocity_rtn_kms, dependencies.hydrogen_inflow_vector)
+    upper_energy_cutoff = 1.2 * calculate_pui_energy_cutoff(
+        HE_PUI_PARTICLE_MASS_KG, chunk_ephemeris_time,
+        sw_velocity_rtn_kms, dependencies.helium_inflow_vector)
     voltages_per_step = np.mean(voltages_2d, axis=0)
-    energies_per_step = np.abs(voltages_per_step) * SWAPI_L2_K_FACTOR
-    lower_energy_cutoff, upper_energy_cutoff = calculate_pickup_ion_fit_energy_range(sw_velocity_kms)
+    energies_per_step = voltages_per_step * SWAPI_L2_K_FACTOR
     bin_mask = ((energies_per_step > lower_energy_cutoff)
                 & (energies_per_step < upper_energy_cutoff))
 
@@ -124,7 +132,7 @@ def replay_chunk_spectrum(dependencies, data_chunk, center_of_epoch,
     modeled_per_sweep = calculate_coincidence_rate(
         chunk_response, vasyliunas_siscoe_distribution, fit_params_no_uncertainty)
     return {
-        "energies_ev": energies_per_step[bin_mask],
+        "energies_ev": extracted_voltages * SWAPI_L2_K_FACTOR,
         "observed_rate_per_sweep": extracted_rates,
         "modeled_rate_per_sweep": modeled_per_sweep,
         "bin_mask": bin_mask,

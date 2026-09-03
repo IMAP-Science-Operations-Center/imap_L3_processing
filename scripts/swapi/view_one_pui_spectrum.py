@@ -6,8 +6,7 @@ production-model spectrograms, fit parameters, per-chunk SW velocity) and
 evaluates the xarray reference model for the selected chunk against the same
 SWAPI calibration the fit used. Both PUI forward models are plotted with the
 fitted background count rate added, so they are directly comparable to the
-observed coincidence rate. The energy range the PUI fit was restricted to is
-shaded on the spectrum panel; the two spectrograms below cover that range only.
+observed coincidence rate.
 
 Usage:
     scripts/swapi/view_one_pui_spectrum.py <YYYY-MM-DD> <HH:MM[:SS]> [--offline]
@@ -42,9 +41,6 @@ from imap_l3_processing.swapi.descriptors import (
     CENTRAL_EFFECTIVE_AREA_DESCRIPTOR,
     DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR,
     PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR,
-)
-from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_pickup_ion_values import (
-    calculate_pickup_ion_fit_energy_range,
 )
 from imap_l3_processing.swapi.l3a.science.pickup_ion.utils import (
     rotate_rtn_velocity_to_swapi_per_bin,
@@ -268,12 +264,6 @@ chunk_observed_uncertainty = np.sqrt(
 
 pickup_ion_window_bin_mask = ~np.all(np.isnan(chunk_model_per_sweep), axis=0)
 
-fit_window_lower_ev, fit_window_upper_ev = calculate_pickup_ion_fit_energy_range(
-    float(np.linalg.norm(sw_velocity_rtn_kms)))
-steps_in_fit_window = int(np.count_nonzero(pickup_ion_window_bin_mask))
-print(f"PUI fit window: {fit_window_lower_ev:.0f} - {fit_window_upper_ev:.0f} eV "
-      f"({steps_in_fit_window} of {pickup_ion_window_bin_mask.size} coarse steps)")
-
 xarray_energies_ev = pui_xarray_context.voltages_v * SWAPI_L2_K_FACTOR
 
 mean_energies_ev_per_step = np.nanmean(
@@ -314,14 +304,6 @@ line_axis.plot(chunk_energies_mean_ev, chunk_model_mean + background_offset_hz,
                "x-", color="tab:orange", label="Model (Optimized) + background")
 line_axis.plot(xarray_energies_ev, xarray_rate_per_step + background_offset_hz,
                "+-", color="tab:green", label="Model (Reference) + background")
-line_axis.axvspan(
-    fit_window_lower_ev, fit_window_upper_ev,
-    color="tab:red", alpha=0.10, lw=0, zorder=0,
-    label=f"PUI fit window ({steps_in_fit_window} steps, "
-          f"{fit_window_lower_ev:.0f}-{fit_window_upper_ev:.0f} eV)")
-for window_edge_ev in (fit_window_lower_ev, fit_window_upper_ev):
-    line_axis.axvline(window_edge_ev, color="tab:red", ls="--", lw=0.9, alpha=0.6,
-                      zorder=0)
 line_axis.set_xscale("log")
 line_axis.set_yscale("log")
 line_axis.set_xlabel("Energy / eV")
