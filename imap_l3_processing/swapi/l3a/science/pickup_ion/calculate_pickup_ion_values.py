@@ -114,7 +114,7 @@ def _calculate_pickup_ion_fit_energy_range(
     # together, that's a factor of 2^2*4=4x4=16
     nominal_pui_he_cutoff = 16 * proton_peak_energy
 
-# geometric mean (logarithmic midpoint) between estimated alpha peak and nominal PUI cutoff
+    # geometric mean (logarithmic midpoint) between estimated alpha peak and nominal PUI cutoff
     lower_edge = np.sqrt(nominal_alpha_peak * nominal_pui_he_cutoff)
 
     # use nominal PUI cutoff as the upper edge for the fitting range
