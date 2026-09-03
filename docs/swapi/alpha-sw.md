@@ -76,21 +76,33 @@ Finally, the `alpha-sw` CDF variables are derived from the fitted parameter vect
 
 | CDF variable                          | Symbol                                            | Definition                                                                                                                |
 |---------------------------------------|---------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
-| `epoch`                               | $`t_{\text{center}}`$                                 | center time of the 5-sweep chunk                                                                                          |
-| `epoch_delta`                         |                                                   | $`30\thinspace \text{s}`$ (half-width of the 5-sweep chunk)                                                                       |
-| `alpha_sw_density`                    | $`n^{\alpha}`$                                        | $`\exp(x^{\alpha}_{0})`$                                                                                                      |
-| `alpha_sw_density_uncert`             | $`\sigma_{n^{\alpha}}`$                               | $`n^{\alpha}\thinspace \sqrt{\Sigma_{x^{\alpha}}[0, 0]}`$                                                                               |
-| `alpha_sw_temperature`                | $`T^{\alpha}`$                                        | $`\exp(x^{\alpha}_{1})`$                                                                                                      |
-| `alpha_sw_temperature_uncert`         | $`\sigma_{T^{\alpha}}`$                               | $`T^{\alpha}\thinspace \sqrt{\Sigma_{x^{\alpha}}[1, 1]}`$                                                                               |
-| `alpha_sw_velocity_rtn`               | $`\mathbf{v}^{\alpha,\text{SC}}`$                     | $`\mathbf{v}_{b}^{\text{SC}} + x^{\alpha}_{2}\thinspace \hat{\mathbf{B}}`$ <sup>[1](#fn-vp)</sup>                                            |
-| `alpha_sw_velocity_rtn_covariance`    | $`\Sigma_{\mathbf{v}^{\alpha}}`$                      | $`\Sigma_{\mathbf{v}^{p}} + \Sigma_{x^{\alpha}}[2,2 ]\thinspace \hat{\mathbf{B}}\hat{\mathbf{B}}^{\top}`$ |
-| `alpha_sw_velocity_rtn_uncert`        | $`\sigma_{\mathbf{v}^{\alpha}}`$                      | $`\sqrt{\operatorname{diag}(\Sigma_{\mathbf{v}^{\alpha}})}`$ (same for `alpha_sw_velocity_rtn_sun`)                       |
-| `alpha_sw_speed`                      | $`\lvert\mathbf{v}^{\alpha,\text{SC}}\rvert`$         | $`\lvert\mathbf{v}^{\alpha,\text{SC}}\rvert`$                                                                                 |
-| `alpha_sw_speed_uncert`               | $`\sigma_{\lvert\mathbf{v}^{\alpha,\text{SC}}\rvert}`$ | propagated through `uncertainties` from $`\mathbf{v}^{\alpha,\text{SC}}`$                                                     |
-| `alpha_sw_velocity_rtn_sun`           | $`\mathbf{v}^{\alpha,\text{sun}}`$                    | $`\mathbf{v}^{\alpha,\text{SC}} + \mathbf{v}_{\text{sc}}^{\text{sun}}`$                                                                   |
-| `alpha_sw_speed_sun`                  | $`\lvert\mathbf{v}^{\alpha,\text{sun}}\rvert`$        | $`\lvert\mathbf{v}^{\alpha,\text{sun}}\rvert`$                                                                                |
+| `epoch`                               | $`t_{\text{center}}`$                                   | center time of the 5-sweep chunk                                                                                          |
+| `epoch_delta`                         |                                                         | $`30\thinspace \text{s}`$ (half-width of the 5-sweep chunk)                                                                       |
+| `alpha_sw_density`                    | $`n^{\alpha}`$                                          | $`\exp(x^{\alpha}_{0})`$                                                                                                      |
+| `alpha_sw_density_uncert`             | $`\sigma_{n^{\alpha}}`$                                 | $`n^{\alpha}\thinspace \sqrt{\Sigma_{x^{\alpha}}[0, 0]}`$                                                                               |
+| `alpha_sw_temperature`                | $`T^{\alpha}`$                                          | $`\exp(x^{\alpha}_{1})`$                                                                                                      |
+| `alpha_sw_temperature_uncert`         | $`\sigma_{T^{\alpha}}`$                                 | $`T^{\alpha}\thinspace \sqrt{\Sigma_{x^{\alpha}}[1, 1]}`$                                                                               |
+| `alpha_sw_velocity_rtn`               | $`\mathbf{v}^{\alpha,\text{SC}}`$                       | $`\mathbf{v}_{b}^{\text{SC}} + x^{\alpha}_{2}\thinspace \hat{\mathbf{B}}`$ <sup>[1](#fn-vp)</sup>                                            |
+| `alpha_sw_velocity_rtn_covariance`    | $`\Sigma_{\mathbf{v}^{\alpha}}`$                        | $`\Sigma_{\mathbf{v}^{p}} + \Sigma_{x^{\alpha}}[2,2 ]\thinspace \hat{\mathbf{B}}\hat{\mathbf{B}}^{\top}`$ |
+| `alpha_sw_velocity_rtn_uncert`        | $`\sigma_{\mathbf{v}^{\alpha}}`$                        | $`\sqrt{\operatorname{diag}(\Sigma_{\mathbf{v}^{\alpha}})}`$ (same for `alpha_sw_velocity_rtn_sun`)                       |
+| `alpha_sw_speed`                      | $`\lvert\mathbf{v}^{\alpha,\text{SC}}\rvert`$           | $`\lvert\mathbf{v}^{\alpha,\text{SC}}\rvert`$                                                                                 |
+| `alpha_sw_speed_uncert`               | $`\sigma_{\lvert\mathbf{v}^{\alpha,\text{SC}}\rvert}`$  | propagated through `uncertainties` from $`\mathbf{v}^{\alpha,\text{SC}}`$                                                     |
+| `alpha_sw_velocity_rtn_sun`           | $`\mathbf{v}^{\alpha,\text{sun}}`$                      | $`\mathbf{v}^{\alpha,\text{SC}} + \mathbf{v}_{\text{sc}}^{\text{sun}}`$                                                                   |
+| `alpha_sw_velocity_gse`               | $`\mathbf{v}^{\alpha,\text{SC}}_{\text{GSE}}`$          | RTN spacecraft-frame velocity rotated to GSE coordinates |
+| `alpha_sw_velocity_gse_sun`           | $`\mathbf{v}^{\alpha,\text{sun}}_{\text{GSE}}`$         | RTN Sun-frame velocity rotated to GSE coordinates |
+| `alpha_sw_velocity_gse_covariance`    | $`\Sigma_{\mathbf{v}^{\alpha},\text{GSE}}`$             | $`R_{\text{GSE}}\Sigma_{\mathbf{v}^{\alpha}}R_{\text{GSE}}^{\top}`$ |
+| `alpha_sw_velocity_gse_uncert`        | $`\sigma_{\mathbf{v}^{\alpha},\text{GSE}}`$             | $`\sqrt{\operatorname{diag}(\Sigma_{\mathbf{v}^{\alpha},\text{GSE}})}`$ |
+| `alpha_sw_velocity_gsm`               | $`\mathbf{v}^{\alpha,\text{SC}}_{\text{GSM}}`$          | RTN spacecraft-frame velocity rotated to GSM coordinates |
+| `alpha_sw_velocity_gsm_sun`           | $`\mathbf{v}^{\alpha,\text{sun}}_{\text{GSM}}`$         | RTN Sun-frame velocity rotated to GSM coordinates |
+| `alpha_sw_velocity_gsm_covariance`    | $`\Sigma_{\mathbf{v}^{\alpha},\text{GSM}}`$             | $`R_{\text{GSM}}\Sigma_{\mathbf{v}^{\alpha}}R_{\text{GSM}}^{\top}`$ |
+| `alpha_sw_velocity_gsm_uncert`        | $`\sigma_{\mathbf{v}^{\alpha},\text{GSM}}`$             | $`\sqrt{\operatorname{diag}(\Sigma_{\mathbf{v}^{\alpha},\text{GSM}})}`$ |
+| `alpha_sw_velocity_hae`               | $`\mathbf{v}^{\alpha,\text{SC}}_{\text{HAE-J2000}}`$    | RTN spacecraft-frame velocity rotated to HAE-J2000 coordinates |
+| `alpha_sw_velocity_hae_sun`           | $`\mathbf{v}^{\alpha,\text{sun}}_{\text{HAE-J2000}}`$   | RTN Sun-frame velocity rotated to HAE-J2000 coordinates |
+| `alpha_sw_velocity_hae_covariance`    | $`\Sigma_{\mathbf{v}^{\alpha},\text{HAE-J2000}}`$       | $`R_{\text{HAE-J2000}}\Sigma_{\mathbf{v}^{\alpha}}R_{\text{HAE-J2000}}^{\top}`$ |
+| `alpha_sw_velocity_hae_uncert`        | $`\sigma_{\mathbf{v}^{\alpha},\text{HAE-J2000}}`$       | $`\sqrt{\operatorname{diag}(\Sigma_{\mathbf{v}^{\alpha},\text{HAE-J2000}})}`$ |
+| `alpha_sw_speed_sun`                  | $`\lvert\mathbf{v}^{\alpha,\text{sun}}\rvert`$          | $`\lvert\mathbf{v}^{\alpha,\text{sun}}\rvert`$                                                                                |
 | `alpha_sw_speed_sun_uncert`           | $`\sigma_{\lvert\mathbf{v}^{\alpha,\text{sun}}\rvert}`$ | propagated through `uncertainties` from $`\mathbf{v}^{\alpha,\text{sun}}`$                                                    |
-| `swp_flags`                           |                                                   | quality flag bitmask (see `SwapiL3Flags`)                                                                                 |
+| `swp_flags`                           |                                                         | quality flag bitmask (see `SwapiL3Flags`)                                                                                 |
 
 
 

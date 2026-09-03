@@ -999,11 +999,12 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
         self.assertEqual(int(result["quality_flags"]), int(SwapiL3Flags.BAD_FIT))
         _assert_all_nan(self, result, _ALPHA_SCALAR_KEYS, _ALPHA_ARRAY_KEYS)
 
+    @patch("imap_l3_processing.swapi.swapi_processor._add_velocity_products_in_target_frames")
     @patch("imap_l3_processing.swapi.swapi_processor.SwapiL3AlphaSolarWindData")
     @patch("imap_l3_processing.swapi.swapi_processor.ParallelChunkRunner")
     @patch("imap_l3_processing.swapi.swapi_processor.chunk_l2_data")
     def test_preliminary_mag_bit_set_iff_mag_is_preliminary(
-        self, mock_chunk_l2_data, mock_runner_class, mock_alpha_data_class
+        self, mock_chunk_l2_data, mock_runner_class, mock_alpha_data_class, _
     ):
         """The `PRELIMINARY_MAG` bit is OR'd onto every per-chunk quality flag when `mag_is_preliminary=True` (preserving any underlying `BAD_FIT`), and the per-chunk flags pass through untouched when `mag_is_preliminary=False`. Mocked at the processor seam because the bit-OR is processor-level wiring, not chunk-fitter behavior."""
         runner_flag = int(SwapiL3Flags.BAD_FIT)

@@ -39,6 +39,20 @@ from imap_l3_processing.utils import save_data
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 from tests.test_helpers import with_tempdir
 
+_FRAME_ROTATIONS = {
+    "gse": np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]]),
+    "gsm": np.array([[0, 0, 1], [-1, 0, 0], [0, -1, 0]]),
+    "hae": np.array([[-1, 0, 0], [0, 0, 1], [0, 1, 0]]),
+}
+
+
+def _rotate_velocity_frame(velocity_sun, velocity_sc, covariance, rotation):
+    return (
+        velocity_sun @ rotation.T,
+        velocity_sc @ rotation.T,
+        rotation @ covariance @ rotation.T,
+    )
+
 
 class TestModels(CdfModelTestCase):
 
@@ -58,6 +72,17 @@ class TestModels(CdfModelTestCase):
         bulk_v_rtn_sun = np.arange(n * 3, dtype=float).reshape(n, 3)
         bulk_v_rtn_sc = np.arange(100, 100 + n * 3, dtype=float).reshape(n, 3)
         bulk_v_rtn_cov = np.arange(200, 200 + n * 9, dtype=float).reshape(n, 3, 3)
+        velocity_frames = {
+            "gse": _rotate_velocity_frame(
+                bulk_v_rtn_sun, bulk_v_rtn_sc, bulk_v_rtn_cov, _FRAME_ROTATIONS["gse"]
+            ),
+            "gsm": _rotate_velocity_frame(
+                bulk_v_rtn_sun, bulk_v_rtn_sc, bulk_v_rtn_cov, _FRAME_ROTATIONS["gsm"]
+            ),
+            "hae": _rotate_velocity_frame(
+                bulk_v_rtn_sun, bulk_v_rtn_sc, bulk_v_rtn_cov, _FRAME_ROTATIONS["hae"]
+            ),
+        }
 
         quality_flags = np.full(n, SwapiL3Flags.NONE)
         quality_flags[3:5] |= SwapiL3Flags.FIT_ERROR
@@ -69,6 +94,9 @@ class TestModels(CdfModelTestCase):
             temperature, temperature_uncert,
             density, density_uncert,
             bulk_v_rtn_sun, bulk_v_rtn_sc, bulk_v_rtn_cov,
+            *velocity_frames["gse"],
+            *velocity_frames["gsm"],
+            *velocity_frames["hae"],
             quality_flags,
         )
 
@@ -98,10 +126,30 @@ class TestModels(CdfModelTestCase):
         expected_velocity_uncert = np.sqrt(np.diagonal(bulk_v_rtn_cov, axis1=1, axis2=2))
         self.assert_variable_attributes(next(var_iter), expected_velocity_uncert,
                                         PROTON_SOLAR_WIND_VELOCITY_RTN_UNCERTAINTY_CDF_VAR_NAME)
+        for frame, (velocity_sun, velocity_sc, covariance) in velocity_frames.items():
+            self.assert_variable_attributes(next(var_iter), velocity_sun,
+                                            f"proton_sw_velocity_{frame}_sun")
+            self.assert_variable_attributes(next(var_iter), velocity_sc,
+                                            f"proton_sw_velocity_{frame}")
+            self.assert_variable_attributes(next(var_iter), covariance,
+                                            f"proton_sw_velocity_{frame}_covariance")
+            self.assert_variable_attributes(
+                next(var_iter),
+                np.sqrt(np.diagonal(covariance, axis1=1, axis2=2)),
+                f"proton_sw_velocity_{frame}_uncert",
+            )
         self.assert_variable_attributes(next(var_iter), quality_flags, SWAPI_QUALITY_FLAGS_CDF_VAR_NAME)
         self.assert_variable_attributes(next(var_iter), ["R", "T", "N"], VELOCITY_RTN_LABEL_CDF_VAR_NAME)
+        for frame in velocity_frames:
+            self.assert_variable_attributes(next(var_iter), ["X", "Y", "Z"],
+                                            f"velocity_{frame}_label")
         self.assert_variable_attributes(next(var_iter), ["Vp SC R", "Vp SC T", "Vp SC N"], PROTON_SOLAR_WIND_VELOCITY_RTN_LABEL_CDF_VAR_NAME)
         self.assert_variable_attributes(next(var_iter), ["Vp Sun R", "Vp Sun T", "Vp Sun N"], PROTON_SOLAR_WIND_VELOCITY_RTN_SUN_LABEL_CDF_VAR_NAME)
+        for frame in velocity_frames:
+            self.assert_variable_attributes(next(var_iter), ["Vp SC X", "Vp SC Y", "Vp SC Z"],
+                                            f"proton_sw_velocity_{frame}_label")
+            self.assert_variable_attributes(next(var_iter), ["Vp Sun X", "Vp Sun Y", "Vp Sun Z"],
+                                            f"proton_sw_velocity_{frame}_sun_label")
 
         self.assertIs(sentinel.done, next(var_iter, sentinel.done))
 
@@ -121,6 +169,17 @@ class TestModels(CdfModelTestCase):
         velocity_rtn_sun = np.arange(n * 3, dtype=float).reshape(n, 3)
         velocity_rtn_sc = np.arange(100, 100 + n * 3, dtype=float).reshape(n, 3)
         velocity_rtn_cov = np.arange(n * 9, dtype=float).reshape(n, 3, 3)
+        velocity_frames = {
+            "gse": _rotate_velocity_frame(
+                velocity_rtn_sun, velocity_rtn_sc, velocity_rtn_cov, _FRAME_ROTATIONS["gse"]
+            ),
+            "gsm": _rotate_velocity_frame(
+                velocity_rtn_sun, velocity_rtn_sc, velocity_rtn_cov, _FRAME_ROTATIONS["gsm"]
+            ),
+            "hae": _rotate_velocity_frame(
+                velocity_rtn_sun, velocity_rtn_sc, velocity_rtn_cov, _FRAME_ROTATIONS["hae"]
+            ),
+        }
 
         quality_flags = np.full_like(epoch_data, SwapiL3Flags.NONE)
         quality_flags[:n // 2] = SwapiL3Flags.BAD_FIT
@@ -132,6 +191,9 @@ class TestModels(CdfModelTestCase):
             density, density_uncert,
             temperature, temperature_uncert,
             velocity_rtn_sun, velocity_rtn_sc, velocity_rtn_cov,
+            *velocity_frames["gse"],
+            *velocity_frames["gsm"],
+            *velocity_frames["hae"],
             quality_flags,
         )
         variables = data.to_data_product_variables()
@@ -160,10 +222,30 @@ class TestModels(CdfModelTestCase):
         expected_velocity_uncert = np.sqrt(np.diagonal(velocity_rtn_cov, axis1=1, axis2=2))
         self.assert_variable_attributes(next(var_iter), expected_velocity_uncert,
                                         ALPHA_SOLAR_WIND_VELOCITY_RTN_UNCERTAINTY_CDF_VAR_NAME)
+        for frame, (velocity_sun, velocity_sc, covariance) in velocity_frames.items():
+            self.assert_variable_attributes(next(var_iter), velocity_sun,
+                                            f"alpha_sw_velocity_{frame}_sun")
+            self.assert_variable_attributes(next(var_iter), velocity_sc,
+                                            f"alpha_sw_velocity_{frame}")
+            self.assert_variable_attributes(next(var_iter), covariance,
+                                            f"alpha_sw_velocity_{frame}_covariance")
+            self.assert_variable_attributes(
+                next(var_iter),
+                np.sqrt(np.diagonal(covariance, axis1=1, axis2=2)),
+                f"alpha_sw_velocity_{frame}_uncert",
+            )
         self.assert_variable_attributes(next(var_iter), quality_flags, SWAPI_QUALITY_FLAGS_CDF_VAR_NAME)
         self.assert_variable_attributes(next(var_iter), ["R", "T", "N"], VELOCITY_RTN_LABEL_CDF_VAR_NAME)
+        for frame in velocity_frames:
+            self.assert_variable_attributes(next(var_iter), ["X", "Y", "Z"],
+                                            f"velocity_{frame}_label")
         self.assert_variable_attributes(next(var_iter), ['Va SC R', 'Va SC T', 'Va SC N'], ALPHA_VELOCITY_RTN_LABEL_CDF_VAR_NAME)
         self.assert_variable_attributes(next(var_iter), ['Va Sun R', 'Va Sun T', 'Va Sun N'], ALPHA_VELOCITY_RTN_SUN_LABEL_CDF_VAR_NAME)
+        for frame in velocity_frames:
+            self.assert_variable_attributes(next(var_iter), ["Va SC X", "Va SC Y", "Va SC Z"],
+                                            f"alpha_sw_velocity_{frame}_label")
+            self.assert_variable_attributes(next(var_iter), ["Va Sun X", "Va Sun Y", "Va Sun Z"],
+                                            f"alpha_sw_velocity_{frame}_sun_label")
 
         self.assertIs(sentinel.done, next(var_iter, sentinel.done))
 
