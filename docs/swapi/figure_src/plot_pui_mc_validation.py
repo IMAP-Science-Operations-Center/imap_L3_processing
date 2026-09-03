@@ -467,18 +467,6 @@ def _evaluate_fitted_total_rate(
     helium_inflow_vector,
     example_fits: np.ndarray,
 ) -> np.ndarray:
-    """Forward-model row 3: truth proton/alpha ideal rate + fitted PUI ideal
-    rate (over the full voltage grid) + fitted background, all wrapped in the
-    same deadtime factor used to build the truth fixture. Mirrors the truth
-    construction so rows 1 and 3 are directly comparable.
-
-    `calculate_pickup_ion_values` masks bins to the production PUI fit window,
-    which it derives from the peak-rate step energy of the sweep-mean spectrum
-    rather than from the inflow geometry; we rebuild the chunk response over
-    the full voltage grid so the spectrogram covers the same axis as rows 1 and
-    2. Below that window the PUI model contributes ~0, so the full-grid
-    extension just zero-pads the low-energy tail.
-    """
     cooling_index, ionization_rate, cutoff_speed_kms, background_rate = example_fits
     chunk_ephemeris_time = spiceypy.unitim(
         epoch / ONE_SECOND_IN_NANOSECONDS, "TT", "ET"
