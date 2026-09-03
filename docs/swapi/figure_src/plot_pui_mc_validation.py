@@ -245,7 +245,7 @@ class _FitOnlyPuiChunkFitter(PuiChunkFitter):
             count_rates = count_rates_window.flatten()
             central_effective_area_scale = _shared[
                 "efficiency_table"
-            ].relative_helium_efficiency(epoch)
+            ].central_effective_area_scale_for(epoch, "helium")
             fit_result = calculate_pickup_ion_values(
                 _shared["swapi_response"],
                 voltages,
@@ -364,7 +364,7 @@ def main():
 
     # Efficiency table with alpha/proton ratio matching the h5 fixture. The
     # ParallelChunkRunner reads this out of `_shared` in workers.
-    proton_eff = 1.0
+    proton_eff = 0.02348
     alpha_eff = proton_eff * helium_efficiency_ratio
     efficiency_file = tempfile.NamedTemporaryFile(
         mode="w", suffix=".dat", delete=False
