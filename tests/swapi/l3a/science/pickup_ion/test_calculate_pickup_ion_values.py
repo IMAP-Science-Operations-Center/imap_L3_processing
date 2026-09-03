@@ -1,10 +1,3 @@
-"""Post-fit fill-value branches of `calculate_pickup_ion_values`.
-
-End-to-end optimizer/Hessian/coincidence-rate behavior is exercised by the MC
-parameter-recovery test in `test_monte_carlo_fit_pickup_ion.py`. These tests
-mock those three seams so each assertion isolates one of the post-fit guards
-(`BAD_FIT` short-circuit, background > 1 Hz fill)."""
-
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -12,6 +5,7 @@ import numpy as np
 
 from imap_l3_processing.constants import ONE_AU_IN_KM
 from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_pickup_ion_values import (
+    _calculate_pickup_ion_fit_energy_range,
     calculate_pickup_ion_values,
 )
 from imap_l3_processing.swapi.l3a.science.pickup_ion.vasyliunas_siscoe_distribution import (
@@ -28,12 +22,15 @@ _SW_VELOCITY_RTN_KMS = np.array([400.0, 0.0, 0.0])
 _VOLTAGE_PER_STEP = np.linspace(100.0, 8000.0, _N_COARSE_BINS)
 
 
-def _spice_state_passing_every_bin():
-    """Energy cutoffs that admit every coarse bin and a Vasyliunas–Siscoe
-    distribution with a finite distance so `min_speed_kms` calculation runs."""
+_ENERGY_RANGE_ADMITTING_EVERY_BIN = (0.0, 1.0e9)
+
+
+def _vasyliunas_siscoe_distribution():
+    """A Vasyliunas-Siscoe distribution with a finite distance so the
+    `min_speed_kms` calculation runs."""
     distribution = MagicMock(spec=VasyliunasSiscoeDistribution)
     distribution.distance_km = ONE_AU_IN_KM
-    return 0.0, 1.0e9, distribution
+    return distribution
 
 
 def _density_lookup_table():
@@ -99,11 +96,11 @@ def _run_calculate_with_mocked_fit(
         f"{_MODULE_PATH}.ndt.Hessian", return_value=lambda _: np.eye(4)
     ), patch(
         f"{_MODULE_PATH}.calculate_coincidence_rate", return_value=modeled_rates
+    ), patch(
+        f"{_MODULE_PATH}._calculate_pickup_ion_fit_energy_range",
+        return_value=_ENERGY_RANGE_ADMITTING_EVERY_BIN,
     ):
         mock_build.return_value = MagicMock()
-        lower_energy_cutoff, upper_energy_cutoff, vasyliunas_siscoe_distribution = (
-            _spice_state_passing_every_bin()
-        )
         return calculate_pickup_ion_values(
             swapi_response=MagicMock(),
             voltages=voltages,
@@ -111,9 +108,7 @@ def _run_calculate_with_mocked_fit(
             sw_velocity_rtn_kms=_SW_VELOCITY_RTN_KMS,
             bulk_sw_per_bin_swapi_kms=bulk_sw_per_bin_swapi_kms,
             density_of_neutral_helium_lookup_table=_density_lookup_table(),
-            lower_energy_cutoff=lower_energy_cutoff,
-            upper_energy_cutoff=upper_energy_cutoff,
-            vasyliunas_siscoe_distribution=vasyliunas_siscoe_distribution,
+            vasyliunas_siscoe_distribution=_vasyliunas_siscoe_distribution(),
         )
 
 
@@ -129,6 +124,10 @@ def _assert_all_nan_params(tc, fitting_params):
 
 
 class CalculatePickupIonValuesFillTest(unittest.TestCase):
+    """Tests for the post-fit guards in `calculate_pickup_ion_values`, with the
+    optimizer, Hessian and coincidence-rate seams mocked so each test isolates
+    one guard."""
+
     def test_zero_variance_observations_fill_all_params_with_bad_fit(self):
         """When every observed count rate is identical the total sum of
         squares is zero and R² is undefined; `BAD_FIT` is set and every
@@ -236,6 +235,69 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
         ):
             self.assertTrue(np.isfinite(value.nominal_value))
             self.assertTrue(np.isfinite(value.std_dev))
+
+
+class CalculatePickupIonFitEnergyRangeTest(unittest.TestCase):
+    """Tests for `_calculate_pickup_ion_fit_energy_range`."""
+
+    def test_window_is_fixed_multiples_of_the_peak_bin_energy(self):
+        ascending_energies = [250.0, 500.0, 1000.0, 2000.0, 4000.0]
+        descending_energies = [4000.0, 2000.0, 1000.0, 500.0, 250.0]
+        lower_edge_for_1000_ev_peak = 5656.854249492381
+        lower_edge_for_500_ev_peak = 2828.4271247461903
+
+        cases = [
+            (
+                "ascending sweep peaking at 1000 eV",
+                ascending_energies,
+                [1.0, 5.0, 100.0, 5.0, 1.0],
+                lower_edge_for_1000_ev_peak,
+                16000.0,
+            ),
+            (
+                "peak one bin lower halves both edges",
+                ascending_energies,
+                [1.0, 100.0, 5.0, 5.0, 1.0],
+                lower_edge_for_500_ev_peak,
+                8000.0,
+            ),
+            (
+                "descending sweep, as SWAPI actually steps energy",
+                descending_energies,
+                [1.0, 5.0, 100.0, 5.0, 1.0],
+                lower_edge_for_1000_ev_peak,
+                16000.0,
+            ),
+            (
+                "peak height does not shift the window",
+                ascending_energies,
+                [1000.0, 5000.0, 100000.0, 5000.0, 1000.0],
+                lower_edge_for_1000_ev_peak,
+                16000.0,
+            ),
+            (
+                "tied maxima resolve to the lower step index",
+                ascending_energies,
+                [1.0, 100.0, 100.0, 1.0, 1.0],
+                lower_edge_for_500_ev_peak,
+                8000.0,
+            ),
+        ]
+
+        for (
+            label,
+            energies,
+            count_rates,
+            expected_lower_edge,
+            expected_upper_edge,
+        ) in cases:
+            with self.subTest(case=label):
+                lower_edge, upper_edge = _calculate_pickup_ion_fit_energy_range(
+                    np.array(energies), np.array(count_rates)
+                )
+
+                self.assertAlmostEqual(lower_edge, expected_lower_edge)
+                self.assertAlmostEqual(upper_edge, expected_upper_edge)
 
 
 if __name__ == "__main__":

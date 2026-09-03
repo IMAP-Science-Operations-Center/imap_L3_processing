@@ -33,6 +33,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import traceback
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
@@ -55,10 +56,8 @@ from uncertainties import ufloat
 
 from imap_l3_processing.constants import (
     FIVE_MINUTES_IN_NANOSECONDS,
-    HE_PUI_PARTICLE_MASS_KG,
     ONE_AU_IN_KM,
     ONE_SECOND_IN_NANOSECONDS,
-    PROTON_MASS_KG,
 )
 from imap_l3_processing.swapi.constants import (
     SWAPI_COARSE_SWEEP_BINS,
@@ -80,9 +79,6 @@ from imap_l3_processing.swapi.l3a.science.pickup_ion.density_of_neutral_helium_l
     DensityOfNeutralHeliumLookupTable,
 )
 from imap_l3_processing.swapi.l3a.science.pickup_ion.inflow_vector import InflowVector
-from imap_l3_processing.swapi.l3a.science.pickup_ion.utils import (
-    calculate_pui_energy_cutoff,
-)
 from imap_l3_processing.swapi.l3a.science.pickup_ion.vasyliunas_siscoe_distribution import (
     FittingParameters,
     build_vasyliunas_siscoe_distribution,
@@ -175,18 +171,6 @@ class _FitOnlyPuiChunkFitter(PuiChunkFitter):
         chunk_ephemeris_time = spiceypy.unitim(
             first_epoch / ONE_SECOND_IN_NANOSECONDS, "TT", "ET"
         )
-        lower_energy_cutoff = 1.25 * calculate_pui_energy_cutoff(
-            PROTON_MASS_KG,
-            chunk_ephemeris_time,
-            self._sw_velocity_rtn,
-            self.hydrogen_inflow_vector,
-        )
-        upper_energy_cutoff = 1.2 * calculate_pui_energy_cutoff(
-            HE_PUI_PARTICLE_MASS_KG,
-            chunk_ephemeris_time,
-            self._sw_velocity_rtn,
-            self.helium_inflow_vector,
-        )
         vasyliunas_siscoe_distribution = build_vasyliunas_siscoe_distribution(
             chunk_ephemeris_time,
             self._sw_velocity_rtn,
@@ -204,8 +188,6 @@ class _FitOnlyPuiChunkFitter(PuiChunkFitter):
                 self._sw_velocity_rtn,
                 self._bulk_sw_per_bin_swapi,
                 0,
-                lower_energy_cutoff,
-                upper_energy_cutoff,
                 vasyliunas_siscoe_distribution,
             ))
         return geometries
@@ -217,8 +199,6 @@ class _FitOnlyPuiChunkFitter(PuiChunkFitter):
         sw_velocity_rtn,
         bulk_sw_per_bin_swapi,
         proton_sw_quality_flag,
-        lower_energy_cutoff,
-        upper_energy_cutoff,
         vasyliunas_siscoe_distribution,
     ):
         _ensure_spice_furnished_in_worker()
@@ -253,8 +233,6 @@ class _FitOnlyPuiChunkFitter(PuiChunkFitter):
                 sw_velocity_rtn,
                 bulk_sw_per_bin_swapi,
                 self.density_of_neutral_helium_lookup_table,
-                lower_energy_cutoff,
-                upper_energy_cutoff,
                 vasyliunas_siscoe_distribution,
                 central_effective_area_scale=central_effective_area_scale,
             )
@@ -264,7 +242,9 @@ class _FitOnlyPuiChunkFitter(PuiChunkFitter):
             cutoff_speed = fit_params.cutoff_speed
             background_rate = fit_params.background_count_rate
         except Exception:
-            pass
+            # Claude: a silent pass here turned a signature mismatch into a
+            # whole MC run of NaNs, so report what went wrong.
+            traceback.print_exc()
 
         return dict(
             epoch=epoch,

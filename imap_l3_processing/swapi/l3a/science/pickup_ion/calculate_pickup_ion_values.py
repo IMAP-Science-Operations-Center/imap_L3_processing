@@ -49,8 +49,6 @@ def calculate_pickup_ion_values(
     sw_velocity_rtn_kms: ndarray,
     bulk_sw_per_bin_swapi_kms: ndarray,
     density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable,
-    lower_energy_cutoff: float,
-    upper_energy_cutoff: float,
     vasyliunas_siscoe_distribution: VasyliunasSiscoeDistribution,
     central_effective_area_scale: float = 1.0,
 ) -> PickupIonFitResult:
@@ -61,7 +59,13 @@ def calculate_pickup_ion_values(
     ).reshape(-1, _COARSE_SWEEP_LEN, 3)
 
     voltages_per_step = np.mean(voltages, axis=0)
-    energies_per_step = voltages_per_step * SWAPI_L2_K_FACTOR
+    energies_per_step = np.abs(voltages_per_step) * SWAPI_L2_K_FACTOR
+    count_rates_per_step = np.mean(count_rates, axis=0)
+
+    lower_energy_cutoff, upper_energy_cutoff = _calculate_pickup_ion_fit_energy_range(
+        energies_per_step, count_rates_per_step
+    )
+
     bin_mask = (energies_per_step > lower_energy_cutoff) & (
         energies_per_step < upper_energy_cutoff
     )
@@ -91,6 +95,28 @@ def calculate_pickup_ion_values(
         chunk_response=chunk_response,
         vasyliunas_siscoe_distribution=vasyliunas_siscoe_distribution,
     )
+
+
+def _calculate_pickup_ion_fit_energy_range(
+    energies_per_step: ndarray, count_rates_per_step: ndarray
+) -> tuple[float, float]:
+    proton_peak_energy = energies_per_step[np.argmax(count_rates_per_step)]
+
+    # assumes alpha solar wind has the same bulk speed as proton solar wind
+    nominal_alpha_peak = 2 * proton_peak_energy
+
+    # assumes that the PUI cutoff speed is 2x the solar wind speed (4x the energy) in the SC frame
+    # accounts for the 4x mass per charge of He+ compared to protons
+    # together, that's a factor of 2^2*4=4x4=16
+    nominal_pui_he_cutoff = 16 * proton_peak_energy
+
+    # geometric mean (logarithmic midpoint) between estimated alpha peak and nominal PUI peak
+    lower_edge = float(np.sqrt(nominal_alpha_peak * nominal_pui_he_cutoff))
+
+    # use nominal PUI cutoff as the upper edge for the fitting range
+    upper_edge = float(nominal_pui_he_cutoff)
+
+    return float(lower_edge), float(upper_edge)
 
 
 def _fit_pickup_ion_parameters(
