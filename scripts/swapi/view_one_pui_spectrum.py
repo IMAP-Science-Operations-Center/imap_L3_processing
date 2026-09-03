@@ -44,7 +44,7 @@ from imap_l3_processing.swapi.descriptors import (
     PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR,
 )
 from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_pickup_ion_values import (
-    _calculate_pickup_ion_fit_energy_range,
+    calculate_pickup_ion_fit_energy_range,
 )
 from imap_l3_processing.swapi.l3a.science.pickup_ion.utils import (
     rotate_rtn_velocity_to_swapi_per_bin,
@@ -268,10 +268,8 @@ chunk_observed_uncertainty = np.sqrt(
 
 pickup_ion_window_bin_mask = ~np.all(np.isnan(chunk_model_per_sweep), axis=0)
 
-# Claude: only the spectrum panel spans every coarse step, so it is the one panel
-# that needs the window drawn; the spectrograms below are already clipped to it.
-fit_window_lower_ev, fit_window_upper_ev = _calculate_pickup_ion_fit_energy_range(
-    chunk_energies_mean_ev, chunk_observed_mean)
+fit_window_lower_ev, fit_window_upper_ev = calculate_pickup_ion_fit_energy_range(
+    float(np.linalg.norm(sw_velocity_rtn_kms)))
 steps_in_fit_window = int(np.count_nonzero(pickup_ion_window_bin_mask))
 print(f"PUI fit window: {fit_window_lower_ev:.0f} - {fit_window_upper_ev:.0f} eV "
       f"({steps_in_fit_window} of {pickup_ion_window_bin_mask.size} coarse steps)")

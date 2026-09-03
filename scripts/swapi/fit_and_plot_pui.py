@@ -40,7 +40,7 @@ from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_coincidence_rate 
     calculate_coincidence_rate,
 )
 from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_pickup_ion_values import (
-    _calculate_pickup_ion_fit_energy_range,
+    calculate_pickup_ion_fit_energy_range,
 )
 from imap_l3_processing.swapi.l3a.science.pickup_ion.collapsed_response_grid import (
     build_chunk_collapsed_response,
@@ -94,9 +94,7 @@ def replay_chunk_spectrum(dependencies, data_chunk, center_of_epoch,
 
     voltages_per_step = np.mean(voltages_2d, axis=0)
     energies_per_step = np.abs(voltages_per_step) * SWAPI_L2_K_FACTOR
-    count_rates_per_step = np.mean(count_rates_2d, axis=0)
-    lower_energy_cutoff, upper_energy_cutoff = _calculate_pickup_ion_fit_energy_range(
-        energies_per_step, count_rates_per_step)
+    lower_energy_cutoff, upper_energy_cutoff = calculate_pickup_ion_fit_energy_range(sw_velocity_kms)
     bin_mask = ((energies_per_step > lower_energy_cutoff)
                 & (energies_per_step < upper_energy_cutoff))
 

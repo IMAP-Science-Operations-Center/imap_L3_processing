@@ -63,7 +63,7 @@ For each sweep $i \in \{1, \dots, 50\}$ and step $j \in \{1, \dots, 62\}$, the P
 - Measured coincidence rate $C_{ij}$;
 - Chunk-mean proton solar wind bulk velocity vector rotated from RTN to instrument coordinates $\mathbf{v}_{\text{sw},ij}$.
 
-For PUIs, only the coarse steps are used. Furthermore, the energy range is limited as follows, where $`E_\text{p}`$ is the energy per charge $`k_\text{L2}|V_j|`$ of the ESA step with the peak chunk-mean coincidence rate (using the lower energy in case of a tie):
+For PUIs, only the coarse steps are used. Furthermore, the energy range is limited as follows (where $`E_\text{p}`$ is the proton kinetic energy corresponding to the provided proton solar wind bulk speed):
 - Upper limit: the approximate $`\mathrm{He^+}`$ pickup ion cutoff, $`16 E_\text{p}`$ (accounts for the mass per charge being 4x higher and the cutoff speed being twice the solar wind speed, or four times the energy per charge, in the spacecraft frame).
 - Lower limit: the geometric mean of the nominal alpha peak, $`2 E_\text{p}`$ (assuming the alpha solar wind shares the proton bulk speed), and the nominal PUI cutoff.
 

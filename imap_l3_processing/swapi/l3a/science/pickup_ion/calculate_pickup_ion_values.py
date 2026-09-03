@@ -11,7 +11,12 @@ from numpy import ndarray
 from scipy.linalg import inv
 from uncertainties import ufloat
 
-from imap_l3_processing.constants import ONE_AU_IN_KM
+from imap_l3_processing.constants import (
+    METERS_PER_KILOMETER,
+    ONE_AU_IN_KM,
+    PROTON_CHARGE_COULOMBS,
+    PROTON_MASS_KG,
+)
 from imap_l3_processing.swapi.constants import SWAPI_L2_K_FACTOR
 from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_coincidence_rate import (
     calculate_coincidence_rate,
@@ -60,10 +65,11 @@ def calculate_pickup_ion_values(
 
     voltages_per_step = np.mean(voltages, axis=0)
     energies_per_step = np.abs(voltages_per_step) * SWAPI_L2_K_FACTOR
-    count_rates_per_step = np.mean(count_rates, axis=0)
 
-    lower_energy_cutoff, upper_energy_cutoff = _calculate_pickup_ion_fit_energy_range(
-        energies_per_step, count_rates_per_step
+    sw_velocity_kms = float(np.linalg.norm(sw_velocity_rtn_kms))
+
+    lower_energy_cutoff, upper_energy_cutoff = calculate_pickup_ion_fit_energy_range(
+        sw_velocity_kms
     )
 
     bin_mask = (energies_per_step > lower_energy_cutoff) & (
@@ -72,8 +78,6 @@ def calculate_pickup_ion_values(
     extracted_voltages = voltages_per_step[bin_mask]
     extracted_count_rates = count_rates[:, bin_mask]
     extracted_bulk_sw_per_bin_swapi_kms = bulk_sw_per_bin_swapi_kms[:, bin_mask]
-
-    sw_velocity_kms = float(np.linalg.norm(sw_velocity_rtn_kms))
 
     chunk_response = build_chunk_collapsed_response(
         swapi_response=swapi_response,
@@ -97,22 +101,23 @@ def calculate_pickup_ion_values(
     )
 
 
-def _calculate_pickup_ion_fit_energy_range(
-    energies_per_step: ndarray, count_rates_per_step: ndarray
+def calculate_pickup_ion_fit_energy_range(
+    solar_wind_bulk_speed_kms: float,
 ) -> tuple[float, float]:
-    argsort = np.argsort(energies_per_step)
-    count_rates_sorted = count_rates_per_step[argsort]
-    energies_sorted = energies_per_step[argsort]
-
-    proton_peak_energy = energies_sorted[np.argmax(count_rates_sorted)]
+    proton_energy_per_charge_ev = (
+        0.5
+        * PROTON_MASS_KG
+        * (solar_wind_bulk_speed_kms * METERS_PER_KILOMETER) ** 2
+        / PROTON_CHARGE_COULOMBS
+    )
 
     # assumes alpha solar wind has the same bulk speed as proton solar wind
-    nominal_alpha_peak = 2 * proton_peak_energy
+    nominal_alpha_peak = 2 * proton_energy_per_charge_ev
 
     # assumes that the PUI cutoff speed is 2x the solar wind speed (4x the energy) in the SC frame
     # accounts for the 4x mass per charge of He+ compared to protons
     # together, that's a factor of 2^2*4=4x4=16
-    nominal_pui_he_cutoff = 16 * proton_peak_energy
+    nominal_pui_he_cutoff = 16 * proton_energy_per_charge_ev
 
     # geometric mean (logarithmic midpoint) between estimated alpha peak and nominal PUI cutoff
     lower_edge = np.sqrt(nominal_alpha_peak * nominal_pui_he_cutoff)

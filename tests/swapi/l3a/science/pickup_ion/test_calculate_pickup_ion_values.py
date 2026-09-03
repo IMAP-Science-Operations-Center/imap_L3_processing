@@ -2,10 +2,11 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 import numpy as np
+from astropy import constants, units
 
 from imap_l3_processing.constants import ONE_AU_IN_KM
 from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_pickup_ion_values import (
-    _calculate_pickup_ion_fit_energy_range,
+    calculate_pickup_ion_fit_energy_range,
     calculate_pickup_ion_values,
 )
 from imap_l3_processing.swapi.l3a.science.pickup_ion.vasyliunas_siscoe_distribution import (
@@ -97,7 +98,7 @@ def _run_calculate_with_mocked_fit(
     ), patch(
         f"{_MODULE_PATH}.calculate_coincidence_rate", return_value=modeled_rates
     ), patch(
-        f"{_MODULE_PATH}._calculate_pickup_ion_fit_energy_range",
+        f"{_MODULE_PATH}.calculate_pickup_ion_fit_energy_range",
         return_value=_ENERGY_RANGE_ADMITTING_EVERY_BIN,
     ):
         mock_build.return_value = MagicMock()
@@ -238,49 +239,63 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
 
 
 class CalculatePickupIonFitEnergyRangeTest(unittest.TestCase):
-    """Tests for `_calculate_pickup_ion_fit_energy_range`."""
+    """Tests for `calculate_pickup_ion_fit_energy_range`."""
 
-    def test_calculate_pickup_ion_fit_energy_range(self):
-        # SWAPI has it go from high to low
-        descending_energies = [4000.0, 2000.0, 1000.0, 500.0, 250.0]
-
-        # In each case, the peak bin is the one with the highest count rate.
-        # If the energy peak is P, then upper_edge = 16*P, lower_edge=sqrt(32)*P
-
-        cases = [
-            (
-                "peak at 1 keV",
-                [1.0, 5.0, 100.0, 5.0, 1.0],
-                np.sqrt(32) * 1000,
-                16 * 1000,
-            ),
-            (
-                "higher peak value",
-                [1000.0, 5000.0, 100000.0, 5000.0, 1000.0],
-                np.sqrt(32) * 1000,
-                16 * 1000,
-            ),
-            (
-                "tied peak -> lower energy",
-                [1.0, 50.0, 100.0, 100.0, 1.0],
-                np.sqrt(32) * 500,
-                16 * 500,
-            ),
-        ]
-
-        for (
-            label,
-            count_rates,
-            expected_lower_edge,
-            expected_upper_edge,
-        ) in cases:
+    def test_edges_are_scaled_from_the_proton_energy_of_the_given_bulk_speed(self):
+        for label, solar_wind_bulk_speed_kms in [
+            ("slow wind", 300.0),
+            ("nominal wind", 400.0),
+            ("fast wind", 750.0),
+        ]:
             with self.subTest(case=label):
-                lower_edge, upper_edge = _calculate_pickup_ion_fit_energy_range(
-                    np.array(descending_energies), np.array(count_rates)
+                bulk_speed = solar_wind_bulk_speed_kms * units.km / units.s
+                proton_energy_per_charge_volts = (
+                    (0.5 * constants.m_p * bulk_speed**2 / constants.e.si)
+                    .to(units.V)
+                    .value
+                )
+                nominal_alpha_peak = 2 * proton_energy_per_charge_volts
+                nominal_pickup_ion_cutoff = 16 * proton_energy_per_charge_volts
+                expected_upper_edge = nominal_pickup_ion_cutoff
+                expected_lower_edge = np.sqrt(
+                    nominal_alpha_peak * nominal_pickup_ion_cutoff
                 )
 
-                self.assertAlmostEqual(lower_edge, expected_lower_edge, msg=label)
-                self.assertAlmostEqual(upper_edge, expected_upper_edge, msg=label)
+                lower_edge, upper_edge = calculate_pickup_ion_fit_energy_range(
+                    solar_wind_bulk_speed_kms
+                )
+
+                self.assertAlmostEqual(
+                    lower_edge,
+                    expected_lower_edge,
+                    delta=expected_lower_edge * 1e-6,
+                    msg=label,
+                )
+                self.assertAlmostEqual(
+                    upper_edge,
+                    expected_upper_edge,
+                    delta=expected_upper_edge * 1e-6,
+                    msg=label,
+                )
+
+    def test_edges_scale_with_the_square_of_the_bulk_speed(self):
+        """Doubling the bulk speed quadruples both window edges, since the edges
+        are fixed multiples of a kinetic energy."""
+        lower_edge, upper_edge = calculate_pickup_ion_fit_energy_range(350.0)
+        doubled_lower_edge, doubled_upper_edge = calculate_pickup_ion_fit_energy_range(
+            700.0
+        )
+
+        self.assertAlmostEqual(doubled_lower_edge / lower_edge, 4.0)
+        self.assertAlmostEqual(doubled_upper_edge / upper_edge, 4.0)
+
+    def test_lower_edge_is_the_geometric_mean_of_the_alpha_peak_and_the_cutoff(self):
+        """The lower edge sits at the logarithmic midpoint between the nominal
+        alpha peak (2 E_p) and the nominal He+ cutoff (16 E_p), so it is
+        `sqrt(2/16)` of the upper edge."""
+        lower_edge, upper_edge = calculate_pickup_ion_fit_energy_range(425.0)
+
+        self.assertAlmostEqual(lower_edge / upper_edge, np.sqrt(2.0 / 16.0))
 
 
 if __name__ == "__main__":
