@@ -81,7 +81,7 @@ pui_ionization_rate:
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FORMAT: E19.3
   LABLAXIS: Ion Rate
-  UNITS: "#/s"
+  UNITS: 1/s
   VALIDMIN: 0
   VALIDMAX: 1.0
   FILLVAL: -1.000000e+31
@@ -100,7 +100,7 @@ pui_ionization_rate_uncert:
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   FORMAT: E19.3
-  UNITS: "#/s"
+  UNITS: 1/s
   VALIDMIN: 0
   VALIDMAX: 1.0
   FILLVAL: -1.000000e+31
