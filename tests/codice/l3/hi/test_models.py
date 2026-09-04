@@ -99,6 +99,7 @@ class TestModels(unittest.TestCase):
             multi_flag=rng.random(event_data_shape),
             num_events=rng.random(event_data_shape),
             ssd_energy=rng.random(event_data_shape),
+            incident_ion_energy=rng.random(event_data_shape),
             ssd_id=rng.random(event_data_shape),
             spin_angle=rng.random(event_data_shape),
             spin_number=rng.random(event_data_shape),

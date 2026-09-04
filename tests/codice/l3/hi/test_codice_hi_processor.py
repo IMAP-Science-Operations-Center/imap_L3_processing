@@ -137,6 +137,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
             multi_flag=sentinel.expected_multi_flag,
             num_events=number_of_events,
             ssd_energy=l2_ssd_energy,
+            incident_ion_energy=expected_incident_ion_energy,
             ssd_id=l2_ssd_id,
             spin_angle=sentinel.expected_spin_angle,
             spin_number=sentinel.expected_spin_number,
@@ -163,7 +164,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
             [0, 2], [4, 3]
         ])
 
-        expected_ssd_energy = np.array([
+        expected_ssd_energy = np.ma.masked_equal(np.array([
             [
                 [255, 255, 255, 255],
                 [5, 6, 255, 255]
@@ -172,7 +173,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
                 [1, 2, 3, 4],
                 [5, 6, 2, 255]
             ]
-        ], dtype=float)
+        ], dtype=float), 255)
 
         expected_energy_per_nuc = np.array([
             [
@@ -223,6 +224,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
             multi_flag=sentinel.expected_multi_flag,
             num_events=expected_number_of_events,
             ssd_energy=expected_ssd_energy,
+            incident_ion_energy=expected_ssd_energy,
             ssd_id=np.ones((2, 2, 4)),
             spin_angle=sentinel.expected_spin_angle,
             spin_number=sentinel.expected_spin_number,

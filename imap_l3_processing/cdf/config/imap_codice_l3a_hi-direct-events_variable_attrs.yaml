@@ -125,6 +125,17 @@ ssd_energy:
   SCALEMIN: 1.0e-2
   SCALEMAX: 1.0e+2
 
+incident_ion_energy:
+  <<: *per_event_data
+  <<: *float_data
+  NAME: incident_ion_energy
+  CATDESC: Incident ion energy
+  FIELDNAM: Incident Ion Energy
+  LABLAXIS: Incident ion energy
+  UNITS: MeV
+  SCALETYP: log
+  SCALEMIN: 1.0e-2
+  SCALEMAX: 1.0e+2
 
 ssd_id:
   <<: *per_event_data

@@ -82,6 +82,7 @@ class CodiceHiProcessor(Processor):
             multi_flag=l2_data.multi_flag,
             num_events=l2_data.number_of_events,
             ssd_energy=l2_data.ssd_energy,
+            incident_ion_energy=incident_ion_energy,
             ssd_id=l2_data.ssd_id,
             spin_angle=l2_data.spin_angle,
             spin_number=l2_data.spin_number,

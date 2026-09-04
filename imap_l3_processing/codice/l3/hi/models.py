@@ -59,6 +59,7 @@ class CodiceL2HiDirectEventData:
 
 EPOCH_VAR_NAME = "epoch"
 DATA_QUALITY_VAR_NAME = "data_quality"
+INCIDENT_ION_ENERGY_VAR_NAME = "incident_ion_energy"
 MULTI_FLAG_VAR_NAME = "multi_flag"
 NUM_EVENTS_VAR_NAME = "num_events"
 SSD_ENERGY_VAR_NAME = "ssd_energy"
@@ -118,6 +119,7 @@ class CodiceL3HiDirectEvents(DataProduct):
     multi_flag: ndarray
     num_events: ndarray
     ssd_energy: ndarray
+    incident_ion_energy: ndarray
     ssd_id: ndarray
     spin_angle: ndarray
     spin_number: ndarray
@@ -147,6 +149,7 @@ class CodiceL3HiDirectEvents(DataProduct):
             DataProductVariable(MULTI_FLAG_VAR_NAME, self.multi_flag),
             DataProductVariable(NUM_EVENTS_VAR_NAME, self.num_events),
             DataProductVariable(SSD_ENERGY_VAR_NAME, self.ssd_energy),
+            DataProductVariable(INCIDENT_ION_ENERGY_VAR_NAME, self.incident_ion_energy),
             DataProductVariable(SSD_ID_VAR_NAME, self.ssd_id),
             DataProductVariable(SPIN_ANGLE_VAR_NAME, self.spin_angle),
             DataProductVariable(SPIN_NUMBER_VAR_NAME, self.spin_number),
