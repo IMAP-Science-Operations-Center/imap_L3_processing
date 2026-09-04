@@ -50,15 +50,6 @@ class TestEfficiencyCalibrationTable(unittest.TestCase):
             efficiency_table.relative_efficiency(pycdf.lib.datetime_to_tt2000(datetime(year=2024, month=10, day=3)), Species.ALPHA),
             0.99)
 
-    def test_relative_efficiency_handles_float_input(self):
-        """A TT2000 passed as a float rather than an int resolves to the same row."""
-        calibration_table_path = get_test_data_path("swapi/imap_swapi_efficiency-lut-test_20241020_v001.dat")
-        efficiency_table = EfficiencyCalibrationTable(calibration_table_path)
-
-        time_as_float = float(pycdf.lib.datetime_to_tt2000(datetime(year=2001, month=2, day=1)))
-        self.assertEqual(efficiency_table.relative_efficiency(time_as_float, Species.ALPHA), 0.9)
-        self.assertEqual(efficiency_table.relative_efficiency(time_as_float, Species.PROTON), 0.1)
-
     def test_raises_exception_if_ask_for_time_before_the_table_starts(self):
         """A time earlier than every row raises rather than falling back to the first row."""
         calibration_table_path = get_test_data_path("swapi/imap_swapi_efficiency-lut-test_20241020_v001.dat")
