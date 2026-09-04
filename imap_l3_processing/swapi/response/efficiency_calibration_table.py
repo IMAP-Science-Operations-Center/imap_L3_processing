@@ -1,36 +1,28 @@
 import numpy as np
 from spacepy import pycdf
 
+from imap_l3_processing.swapi.species import Species
+
+_PROTON_EFFICIENCY_COLUMN = "proton efficiency"
+_HELIUM_EFFICIENCY_COLUMN = "helium efficiency"
+
+_EFFICIENCY_COLUMN_BY_SPECIES = {
+    Species.PROTON: _PROTON_EFFICIENCY_COLUMN,
+    Species.ALPHA: _HELIUM_EFFICIENCY_COLUMN,
+    Species.HELIUM_PLUS: _HELIUM_EFFICIENCY_COLUMN,
+}
+
 
 class EfficiencyCalibrationTable:
     def __init__(self, path):
-        self.data = np.loadtxt(path, dtype=[("time", "M8[ns]"), ("MET", "i8"), ("proton efficiency", "f8"), ("alpha efficiency", "f8")], ndmin=1)
+        self.data = np.loadtxt(path, dtype=[("time", "M8[ns]"), ("MET", "i8"), (_PROTON_EFFICIENCY_COLUMN, "f8"), (_HELIUM_EFFICIENCY_COLUMN, "f8")], ndmin=1)
 
-    def get_proton_efficiency_for(self, time_as_tt2000) -> float:
-        return self._get_efficiency_for_index("proton efficiency", time_as_tt2000)
+    def relative_efficiency(self, time_as_tt2000: int, species: Species) -> float:
+        return self._get_entry_for(time_as_tt2000, _EFFICIENCY_COLUMN_BY_SPECIES[species])
 
-    def get_alpha_efficiency_for(self, time_as_tt2000) -> float:
-        return self._get_efficiency_for_index("alpha efficiency", time_as_tt2000)
-
-    @property
-    def eps_p_lab(self) -> float:
-        cutoff = np.datetime64("2025-11-01", "ns")
-        for d in self.data:
-            if d["time"] >= cutoff:
-                return float(d["proton efficiency"])
-        return float(self.data[0]["proton efficiency"])
-
-    def central_effective_area_scale_for(self, time_as_tt2000, species: str) -> float:
-        eps_lab = float(self.eps_p_lab)
-        if species == "proton":
-            return float(self.get_proton_efficiency_for(time_as_tt2000)) / eps_lab
-        if species == "helium":
-            return float(self.get_alpha_efficiency_for(time_as_tt2000)) / eps_lab
-        raise ValueError(f"Unknown species {species!r}; expected 'proton' or 'helium'.")
-
-    def _get_efficiency_for_index(self, name, time_as_tt2000) -> float:
+    def _get_entry_for(self, time_as_tt2000, column: str) -> float:
         for d in reversed(self.data):
             if d["time"] < np.datetime64(pycdf.lib.tt2000_to_datetime(int(time_as_tt2000)), "ns"):
-                return d[name]
+                return float(d[column])
 
         raise ValueError(f"No efficiency data for {pycdf.lib.tt2000_to_datetime(time_as_tt2000)}")
