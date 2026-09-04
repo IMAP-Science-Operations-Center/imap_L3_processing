@@ -39,12 +39,41 @@ class CodiceHiProcessor(Processor):
 
     def process_l3a_direct_event(self, dependencies: CodiceHiL3aDirectEventsDependencies) -> CodiceL3HiDirectEvents:
         l2_data = dependencies.codice_l2_hi_data
+        l1a_data = dependencies.codice_l1a_hi_data
+        hi_mass_correction_lookup = dependencies.codice_hi_mass_correction_lut_ancillary
 
+        incident_ion_energy = np.full_like(l2_data.ssd_energy, fill_value=np.nan)
         estimated_mass = np.full_like(l2_data.energy_per_nuc, fill_value=np.nan)
+
         for i in range(l2_data.energy_per_nuc.shape[0]):
             for j in range(l2_data.energy_per_nuc.shape[1]):
                 npts = l2_data.number_of_events[i, j]
-                estimated_mass[i, j, :npts] = l2_data.ssd_energy[i, j, :npts] / l2_data.energy_per_nuc[i, j, :npts]
+                gain = l2_data.gain[i, j, :npts]
+                ssd_id = l2_data.ssd_id[i, j, :npts]
+                l2_energy = l2_data.ssd_energy[i, j, :npts]
+                energy_channel = l1a_data.ssd_energy[i, j, :npts]
+                tof = l1a_data.tof[i, j, :npts]
+
+                correction_factors = np.ones(npts, dtype=float)
+                high_gain = gain == 3
+
+                correction_factors[high_gain] = [
+                    hi_mass_correction_lookup.lookup_correction_factor(
+                        ssd_id = ssd,
+                        energy_channel = energy,
+                        tof = tof_channel
+                    )
+                    for ssd, energy, tof_channel in zip(
+                        ssd_id[high_gain],
+                        energy_channel[high_gain],
+                        tof[high_gain]
+                    )
+                ]
+
+                incident_ion_energy[i, j, :npts] = l2_energy * correction_factors
+                estimated_mass[i, j, :npts] = incident_ion_energy[i, j, :npts] / l2_data.energy_per_nuc[i, j, :npts]
+
+
         return CodiceL3HiDirectEvents(
             input_metadata=self.input_metadata,
             epoch=l2_data.epoch,

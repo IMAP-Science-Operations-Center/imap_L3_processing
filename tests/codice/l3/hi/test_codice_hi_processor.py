@@ -9,7 +9,7 @@ import numpy as np
 from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcessor
 from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3a_direct_events_dependencies import \
     CodiceHiL3aDirectEventsDependencies
-from imap_l3_processing.codice.l3.hi.models import CodiceL2HiDirectEventData, CodiceHiL2SectoredIntensitiesData, \
+from imap_l3_processing.codice.l3.hi.models import CodiceL1aHiDirectEvents, CodiceL2HiDirectEventData, CodiceHiL2SectoredIntensitiesData, \
     CodiceL3HiDirectEvents
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import CodicePitchAngleDependencies
 from imap_l3_processing.codice.l3.lo.constants import CODICE_INSTRUMENT_TO_SC_FRAME_SPIN_ANGLE_OFFSET
@@ -42,82 +42,110 @@ class TestCodiceHiProcessor(unittest.TestCase):
         self.assertEqual(['parent_file_1'], mock_processed_direct_events.parent_file_names)
 
     def test_process_l3a_with_small_dataset(self):
+        high_gain_events = {
+            (0, 1, 0): {"ssd_id": 11, "energy_channel": 1, "tof": 21, "l2_energy": 5, "factor": 0.5},
+            (0, 1, 1): {"ssd_id": 12, "energy_channel": 2, "tof": 22, "l2_energy": 6, "factor": 1.0},
+            (1, 0, 2): {"ssd_id": 13, "energy_channel": 3, "tof": 23, "l2_energy": 3, "factor": 2.0},
+        }
+        expected_factors = {
+            (event["ssd_id"], event["energy_channel"], event["tof"]): event["factor"]
+            for event in high_gain_events.values()
+        }
+
+        def lookup_factor(ssd_id, energy_channel, tof):
+            key = (int(ssd_id), int(energy_channel), int(tof))
+            if key not in expected_factors:
+                self.fail(f"Expected factor not found for key: {key}")
+            return expected_factors.pop(key)
+
+        mock_codice_hi_mass_correction_lut_ancillary = Mock()
+        mock_codice_hi_mass_correction_lut_ancillary.lookup_correction_factor.side_effect = lookup_factor
 
         codice_hi_processor = CodiceHiProcessor(sentinel.processing_input_collection,
                                                 input_metadata=sentinel.input_metadata)
 
-        expected_number_of_events = np.array([
-            [0, 2], [4, 3]
-        ])
+        number_of_events = np.array([[0, 2], [4, 3]])
+        shape = (2, 2, 4)
 
-        expected_ssd_energy = np.array([
-            [
-                [np.nan, np.nan, np.nan, np.nan],
-                [5, 6, np.nan, np.nan]
-            ],
-            [
-                [1, 2, 3, 4],
-                [5, 6, 2, np.nan]
-            ]
-        ], dtype=float)
+        l2_ssd_id = np.full(shape, np.nan)
+        l1a_energy_channel = np.full(shape, np.nan)
+        l1a_tof_channel = np.full(shape, np.nan)
+        l2_ssd_energy = np.full(shape, np.nan)
+        l2_gain = np.full(shape, np.nan)
+        l2_energy_per_nuc = np.full(shape, np.nan)
 
-        expected_energy_per_nuc = np.array([
-            [
-                [np.nan, np.nan, np.nan, np.nan],
-                [15, 16, np.nan, np.nan]
-            ],
-            [
-                [11, 12, 13, 14],
-                [15, 16, 12, np.nan]
-            ]
-        ], dtype=float)
+        rng = np.random.default_rng(0)
+        for i in range(shape[0]):
+            for j in range(shape[1]):
+                npts = number_of_events[i, j]
+                l2_gain[i, j, :npts] = 1
+                l2_ssd_id[i, j, :npts] = rng.integers(0, 16, size=npts)
+                l1a_energy_channel[i, j, :npts] = rng.integers(0, 2048, size=npts)
+                l1a_tof_channel[i, j, :npts] = rng.integers(0, 1024, size=npts)
+                l2_ssd_energy[i, j, :npts] = rng.uniform(1, 10, size=npts)
+                l2_energy_per_nuc[i, j, :npts] = rng.uniform(10, 20, size=npts)
+
+        for (i, j, k), event in high_gain_events.items():
+            l2_gain[i, j, k] = 3
+            l2_ssd_id[i, j, k] = event["ssd_id"]
+            l1a_energy_channel[i, j, k] = event["energy_channel"]
+            l1a_tof_channel[i, j, k] = event["tof"]
+            l2_ssd_energy[i, j, k] = event["l2_energy"]
+
+        l1a_data = CodiceL1aHiDirectEvents(
+            epoch=sentinel.expected_epoch,
+            ssd_energy=l1a_energy_channel,
+            tof=l1a_tof_channel,
+        )
 
         l2_data = CodiceL2HiDirectEventData(
             epoch=sentinel.expected_epoch,
             epoch_delta_plus=sentinel.expected_epoch_delta_plus,
             data_quality=sentinel.expected_data_quality,
             multi_flag=sentinel.expected_multi_flag,
-            number_of_events=expected_number_of_events,
-            ssd_energy=expected_ssd_energy,
-            ssd_id=np.ones((2, 2, 4)),
+            number_of_events=number_of_events,
+            ssd_energy=l2_ssd_energy,
+            ssd_id=l2_ssd_id,
             spin_angle=sentinel.expected_spin_angle,
             spin_number=sentinel.expected_spin_number,
             time_of_flight=sentinel.expected_time_of_flight,
             type=sentinel.expected_type,
-            energy_per_nuc=expected_energy_per_nuc,
+            energy_per_nuc=l2_energy_per_nuc,
             elevation_angle=sentinel.l2_elevation_angle,
-            gain=sentinel.l2_gain,
+            gain=l2_gain,
             spin_sector=sentinel.l2_spin_sector,
         )
         dependencies = CodiceHiL3aDirectEventsDependencies(
-            codice_l2_hi_data=l2_data
+            codice_l2_hi_data=l2_data,
+            codice_l1a_hi_data=l1a_data,
+            codice_hi_mass_correction_lut_ancillary=mock_codice_hi_mass_correction_lut_ancillary
         )
+
+        expected_incident_ion_energy = np.full(shape, np.nan)
+        for i in range(shape[0]):
+            for j in range(shape[1]):
+                npts = number_of_events[i, j]
+                expected_incident_ion_energy[i, j, :npts] = l2_ssd_energy[i, j, :npts]
+        for (i, j, k), event in high_gain_events.items():
+            expected_incident_ion_energy[i, j, k] = event["l2_energy"] * event["factor"]
+
         expected_output = CodiceL3HiDirectEvents(
             input_metadata=sentinel.input_metadata,
             epoch=sentinel.expected_epoch,
             epoch_delta=sentinel.expected_epoch_delta_plus,
             data_quality=sentinel.expected_data_quality,
             multi_flag=sentinel.expected_multi_flag,
-            num_events=expected_number_of_events,
-            ssd_energy=expected_ssd_energy,
-            ssd_id=np.ones((2, 2, 4)),
+            num_events=number_of_events,
+            ssd_energy=l2_ssd_energy,
+            ssd_id=l2_ssd_id,
             spin_angle=sentinel.expected_spin_angle,
             spin_number=sentinel.expected_spin_number,
             tof=sentinel.expected_time_of_flight,
             type=sentinel.expected_type,
-            energy_per_nuc=expected_energy_per_nuc,
-            estimated_mass=np.array([
-                [
-                    [np.nan, np.nan, np.nan, np.nan],
-                    [5 / 15, 6 / 16, np.nan, np.nan]
-                ],
-                [
-                    [1 / 11, 2 / 12, 3 / 13, 4 / 14],
-                    [5 / 15, 6 / 16, 2 / 12, np.nan]
-                ]
-            ]),
+            energy_per_nuc=l2_energy_per_nuc,
+            estimated_mass=expected_incident_ion_energy / l2_energy_per_nuc,
             elevation_angle=sentinel.l2_elevation_angle,
-            gain=sentinel.l2_gain,
+            gain=l2_gain,
             spin_sector=sentinel.l2_spin_sector,
         )
 
@@ -125,8 +153,9 @@ class TestCodiceHiProcessor(unittest.TestCase):
         for field in dataclasses.fields(CodiceL3HiDirectEvents):
             np.testing.assert_equal(getattr(actual_output, field.name), getattr(expected_output, field.name))
 
-    def test_process_l3a_only_calculates_events_within_num_events(self):
+        self.assertEqual(0, len(expected_factors))
 
+    def test_process_l3a_only_calculates_events_within_num_events(self):
         codice_hi_processor = CodiceHiProcessor(sentinel.processing_input_collection,
                                                 input_metadata=sentinel.input_metadata)
 
@@ -156,6 +185,14 @@ class TestCodiceHiProcessor(unittest.TestCase):
             ]
         ], dtype=float)
 
+        l2_gain = np.ones_like(expected_ssd_energy)
+        l1a_data = CodiceL1aHiDirectEvents(
+            epoch=sentinel.expected_epoch,
+            ssd_energy=np.ones_like(expected_ssd_energy),
+            tof=np.ones_like(expected_ssd_energy),
+        )
+        mock_lut = Mock()
+
         l2_data = CodiceL2HiDirectEventData(
             epoch=sentinel.expected_epoch,
             epoch_delta_plus=sentinel.expected_epoch_delta_plus,
@@ -170,11 +207,13 @@ class TestCodiceHiProcessor(unittest.TestCase):
             type=sentinel.expected_type,
             energy_per_nuc=expected_energy_per_nuc,
             elevation_angle=sentinel.l2_elevation_angle,
-            gain=sentinel.l2_gain,
+            gain=l2_gain,
             spin_sector=sentinel.l2_spin_sector,
         )
         dependencies = CodiceHiL3aDirectEventsDependencies(
-            codice_l2_hi_data=l2_data
+            codice_l2_hi_data=l2_data,
+            codice_l1a_hi_data=l1a_data,
+            codice_hi_mass_correction_lut_ancillary=mock_lut,
         )
         expected_output = CodiceL3HiDirectEvents(
             input_metadata=sentinel.input_metadata,
@@ -201,11 +240,12 @@ class TestCodiceHiProcessor(unittest.TestCase):
                 ]
             ]),
             elevation_angle=sentinel.l2_elevation_angle,
-            gain=sentinel.l2_gain,
+            gain=l2_gain,
             spin_sector=sentinel.l2_spin_sector,
         )
 
         actual_output = codice_hi_processor.process_l3a_direct_event(dependencies=dependencies)
+        mock_lut.lookup_correction_factor.assert_not_called()
         for field in dataclasses.fields(CodiceL3HiDirectEvents):
             np.testing.assert_equal(getattr(actual_output, field.name), getattr(expected_output, field.name))
 
@@ -443,9 +483,11 @@ class TestCodiceHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(codice_hi_data_product.parent_file_names, expected_parents)
 
     def test_integration_test(self):
-        l2_direct_event_sci_path = get_test_data_path("codice/imap_codice_l2_hi-direct-events_20250814_v001.cdf")
-
-        codice_hi_dependencies = CodiceHiL3aDirectEventsDependencies.from_file_paths(l2_direct_event_sci_path)
+        l2_direct_event_sci_path = get_test_data_path("codice/imap_codice_l2_hi-direct-events_20260831_v001.0003.cdf")
+        l1a_direct_event_sci_path = get_test_data_path("codice/imap_codice_l1a_hi-direct-events_20260831_v001.0003.cdf")
+        mass_correction_lut_ancillary_path = get_test_data_path("codice/imap_codice_l3-hi-mass-correction-lut-truncated_20251008_v001.xlsx")
+        
+        codice_hi_dependencies = CodiceHiL3aDirectEventsDependencies.from_file_paths(l2_direct_event_sci_path, l1a_direct_event_sci_path, mass_correction_lut_ancillary_path)
 
         input_metadata = InputMetadata(instrument='codice',
                                        data_level="l3a",

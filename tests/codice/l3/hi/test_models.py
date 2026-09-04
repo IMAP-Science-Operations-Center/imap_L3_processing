@@ -9,7 +9,7 @@ import numpy as np
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.codice.l3.hi.models import CodiceL2HiDirectEventData, CodiceL3HiDirectEvents, \
-    CodiceHiL2SectoredIntensitiesData, CodiceHiL3PitchAngleDataProduct
+    CodiceHiL2SectoredIntensitiesData, CodiceHiL3PitchAngleDataProduct, CodiceL1aHiDirectEvents
 from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path, with_tempdir
 
 
@@ -201,6 +201,15 @@ class TestModels(unittest.TestCase):
                 np.testing.assert_array_equal(data_product_var.value, getattr(data_product, data_product_var.name))
             else:
                 np.testing.assert_array_equal(data_product_var.value, np.array([10 * 1e9]))
+
+    def test_codice_hi_l1a_direct_event_read_from_sdc_cdf(self):
+        l1a_path = get_test_data_path("codice/imap_codice_l1a_hi-direct-events_20260831_v001.0003.cdf")
+        l1a_hi_direct_events = CodiceL1aHiDirectEvents.read_from_cdf(l1a_path)
+
+        with CDF(str(l1a_path)) as cdf:
+            np.testing.assert_array_equal(l1a_hi_direct_events.epoch, cdf['epoch'][...])
+            np.testing.assert_array_equal(l1a_hi_direct_events.ssd_energy, cdf['ssd_energy'][...])
+            np.testing.assert_array_equal(l1a_hi_direct_events.tof, cdf['tof'][...])
 
     def test_l2_sectored_intensities_read_from_sdc_cdf(self):
         l2_path = get_test_instrument_team_data_path("codice/hi/imap_codice_l2_hi-sectored_20251206_v002.cdf")

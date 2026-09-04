@@ -1,0 +1,14 @@
+[
+  {
+    "type": "science",
+    "files": ["imap_codice_l1a_hi-direct-events_20260831_v001.0003.cdf"]
+  },
+  {
+    "type": "science",
+    "files": ["imap_codice_l2_hi-direct-events_20260831_v001.0003.cdf"]
+  },
+  {
+    "type": "ancillary",
+    "files": ["imap_codice_l3-hi-mass-correction-lut-truncated_20251008_v001.xlsx"]
+  }
+]

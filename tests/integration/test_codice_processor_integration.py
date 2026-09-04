@@ -159,26 +159,28 @@ class CodiceProcessorIntegration(unittest.TestCase):
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_codice_hi_direct_events(self, mock_parse_cli_arguments):
         input_files = [
-            INTEGRATION_DATA_DIR / "imap_codice_l2_hi-direct-events_20260301_v003.cdf",
-            INTEGRATION_DATA_DIR / "imap_codice_l3a_hi-direct-events-e968219e_20260301_v001.json",
+            CODICE_TEST_DATA_DIR / "imap_codice_l1a_hi-direct-events_20260831_v001.0003.cdf",
+            CODICE_TEST_DATA_DIR / "imap_codice_l2_hi-direct-events_20260831_v001.0003.cdf",
+            CODICE_TEST_DATA_DIR / "imap_codice_l3-hi-mass-correction-lut-truncated_20251008_v001.xlsx",
+            INTEGRATION_DATA_DIR / "imap_codice_l3a_hi-direct-events-e968219e_20260831_v001.json",
         ]
         with mock_imap_data_access(OUTPUT_DIR, input_files):
             mock_arguments = Mock()
             mock_arguments.instrument = "codice"
             mock_arguments.data_level = "l3a"
             mock_arguments.descriptor = "hi-direct-events"
-            mock_arguments.start_date = "20260301"
+            mock_arguments.start_date = "20260831"
             mock_arguments.end_date = None
             mock_arguments.repointing = None
             mock_arguments.version = "v001"
-            mock_arguments.dependency = "imap_codice_l3a_hi-direct-events-e968219e_20260301_v001.json"
+            mock_arguments.dependency = "imap_codice_l3a_hi-direct-events-e968219e_20260831_v001.json"
             mock_arguments.upload_to_sdc = False
             mock_parse_cli_arguments.return_value = mock_arguments
 
             imap_l3_data_processor.imap_l3_processor()
 
             expected_output_path = ScienceFilePath(
-                "imap_codice_l3a_hi-direct-events_20260301_v001.cdf"
+                "imap_codice_l3a_hi-direct-events_20260831_v001.cdf"
             ).construct_path()
             self.assertTrue(expected_output_path.exists())
 

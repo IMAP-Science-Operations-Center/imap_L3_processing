@@ -300,3 +300,18 @@ class CodiceHiL2SectoredIntensitiesData:
                        energy_he3he4_plus=cdf['energy_he3he4_plus'][...],
                        energy_he3he4_minus=cdf['energy_he3he4_minus'][...],
                        )
+
+@dataclass
+class CodiceL1aHiDirectEvents:
+    epoch: ndarray
+    ssd_energy: ndarray
+    tof: ndarray
+
+    @classmethod
+    def read_from_cdf(cls, l1a_hi_direct_events_cdf):
+        with CDF(str(l1a_hi_direct_events_cdf)) as cdf:
+            return cls(
+                epoch=cdf["epoch"][...],
+                ssd_energy=cdf["ssd_energy"][...],
+                tof=cdf["tof"][...]
+            )

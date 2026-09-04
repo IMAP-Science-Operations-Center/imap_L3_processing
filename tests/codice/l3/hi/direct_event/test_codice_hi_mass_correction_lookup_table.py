@@ -9,13 +9,13 @@ from tests.test_helpers import get_test_data_path
 
 class TestCodiceHiMassCorrectionLookupTable(unittest.TestCase):
     def test_from_file(self):
-        file_path = get_test_data_path("codice/truncated_codice_l3-hi-mass-correction-lut_20251008_v001.xlsx")
+        file_path = get_test_data_path("codice/imap_codice_l3-hi-mass-correction-lut-truncated_20251008_v001.xlsx")
         mass_correction_lookup = CodiceHiMassCorrectionLookupTable.from_file(file_path)
 
         self.assertIsInstance(mass_correction_lookup, CodiceHiMassCorrectionLookupTable)
 
     def test_lookup_correction_factor(self):
-        file_path = get_test_data_path("codice/truncated_codice_l3-hi-mass-correction-lut_20251008_v001.xlsx")
+        file_path = get_test_data_path("codice/imap_codice_l3-hi-mass-correction-lut-truncated_20251008_v001.xlsx")
         mass_correction_lookup = CodiceHiMassCorrectionLookupTable.from_file(file_path)
 
         self.assertEqual(0.753777, mass_correction_lookup.lookup_correction_factor(ssd_id=7, energy_channel=40, tof=6))
