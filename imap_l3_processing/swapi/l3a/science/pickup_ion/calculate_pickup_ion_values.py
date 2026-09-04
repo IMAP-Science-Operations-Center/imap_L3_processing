@@ -11,7 +11,7 @@ from numpy import ndarray
 from scipy.linalg import inv
 from uncertainties import ufloat
 
-from imap_l3_processing.constants import HE_PUI_PARTICLE_MASS_PER_CHARGE_M_P_PER_E, ONE_AU_IN_KM
+from imap_l3_processing.constants import ONE_AU_IN_KM
 from imap_l3_processing.swapi.constants import SWAPI_L2_K_FACTOR
 from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_coincidence_rate import (
     calculate_coincidence_rate,
@@ -29,10 +29,11 @@ from imap_l3_processing.swapi.l3a.science.pickup_ion.vasyliunas_siscoe_distribut
 )
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
+from imap_l3_processing.swapi.species import Species
 
 
 _COARSE_SWEEP_LEN = 62
-_HELIUM_MASS_PER_CHARGE_M_P_PER_E = HE_PUI_PARTICLE_MASS_PER_CHARGE_M_P_PER_E
+_PICKUP_ION_SPECIES = Species.HELIUM_PLUS
 
 
 @dataclass
@@ -52,7 +53,7 @@ def calculate_pickup_ion_values(
     lower_energy_cutoff: float,
     upper_energy_cutoff: float,
     vasyliunas_siscoe_distribution: VasyliunasSiscoeDistribution,
-    central_effective_area_scale: float = 1.0,
+    time_as_tt2000: int,
 ) -> PickupIonFitResult:
     voltages = np.asarray(voltages, dtype=float).reshape(-1, _COARSE_SWEEP_LEN)
     count_rates = np.asarray(count_rates, dtype=float).reshape(-1, _COARSE_SWEEP_LEN)
@@ -75,9 +76,9 @@ def calculate_pickup_ion_values(
         swapi_response=swapi_response,
         voltages_v=extracted_voltages,
         bulk_sw_per_bin_kms=extracted_bulk_sw_per_bin_swapi_kms,
-        mass_per_charge_m_p_per_e=_HELIUM_MASS_PER_CHARGE_M_P_PER_E,
+        time_as_tt2000=time_as_tt2000,
+        species=_PICKUP_ION_SPECIES,
         cutoff_speed_max_kms=sw_velocity_kms * 1.2,
-        central_effective_area_scale=central_effective_area_scale,
     )
 
     fitting_params = _fit_pickup_ion_parameters(

@@ -18,6 +18,7 @@ from imap_l3_processing.swapi.l3a.science.pickup_ion.vasyliunas_siscoe_distribut
     VasyliunasSiscoeDistribution,
 )
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
+from tests.swapi._helpers import NOMINAL_TEST_EPOCH_TT2000
 
 _MODULE_PATH = (
     "imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_pickup_ion_values"
@@ -114,6 +115,7 @@ def _run_calculate_with_mocked_fit(
             lower_energy_cutoff=lower_energy_cutoff,
             upper_energy_cutoff=upper_energy_cutoff,
             vasyliunas_siscoe_distribution=vasyliunas_siscoe_distribution,
+            time_as_tt2000=NOMINAL_TEST_EPOCH_TT2000,
         )
 
 
