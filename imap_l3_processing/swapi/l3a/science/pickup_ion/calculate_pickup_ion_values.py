@@ -9,10 +9,11 @@ from imap_processing.swapi.l2 import swapi_l2
 from lmfit import Parameters
 from numpy import ndarray
 from scipy.linalg import inv
-from uncertainties import ufloat
-
+from uncertainties import ufloat, nominal_value
+from dataclasses import astuple
 from imap_l3_processing.constants import ONE_AU_IN_KM
 from imap_l3_processing.swapi.constants import (
+    SWAPI_BACKGROUND_RATE,
     SWAPI_COARSE_SWEEP_BINS,
     SWAPI_L2_K_FACTOR,
 )
@@ -120,31 +121,19 @@ def calculate_pickup_ion_values(
     )
 
     if not (int(fitting_params.flags) & int(SwapiL3Flags.BAD_FIT)):
-        background_free_params = FittingParameters(
-            cooling_index=fitting_params.cooling_index.nominal_value,
-            ionization_rate=fitting_params.ionization_rate.nominal_value,
-            cutoff_speed=fitting_params.cutoff_speed.nominal_value,
-            background_count_rate=0.0,
-        )
-        fitted_background_count_rate = (
-            fitting_params.background_count_rate.nominal_value
-        )
+        nominal_params = FittingParameters(*map(nominal_value, astuple(fitting_params)))
         full_sweep_model_rates = calculate_coincidence_rate(
-            full_sweep_response, vasyliunas_siscoe_distribution, background_free_params
+            full_sweep_response, vasyliunas_siscoe_distribution, nominal_params
         )
-        if is_good_fit(
+        if not is_good_fit(
             esa_energies=coarse_energies,
             model_rates=full_sweep_model_rates,
             observed_rates=coarse_count_rates,
-            cutoff_speed_kms=background_free_params.cutoff_speed,
-            background_rate=fitted_background_count_rate,
+            cutoff_speed_kms=nominal_params.cutoff_speed,
             min_fitting_energy=lower_energy_cutoff,
         ):
-            _set_background_to_fill_if_too_high(fitting_params)
-        else:
             nan_param = ufloat(np.nan, np.nan)
             fitting_params = FittingParameters(
-                nan_param,
                 nan_param,
                 nan_param,
                 nan_param,
@@ -201,26 +190,23 @@ def _fit_pickup_ion_parameters(
         min=sw_speed_kms * 0.8,
         max=sw_speed_kms * 1.2,
     )
-    params.add("background_count_rate", value=0.1, min=0, max=10.0)
 
     def map_to_internal(value, param):
         return np.arcsin(2 * (value - param.min) / (param.max - param.min) - 1)
 
-    def simplex_vertex(cooling_index, ionization_rate, cutoff_speed, background):
+    def simplex_vertex(cooling_index, ionization_rate, cutoff_speed):
         return [
             map_to_internal(cooling_index, params["cooling_index"]),
             map_to_internal(ionization_rate, params["ionization_rate"]),
             map_to_internal(cutoff_speed, params["cutoff_speed"]),
-            map_to_internal(background, params["background_count_rate"]),
         ]
 
     initial_simplex = np.array(
         [
-            simplex_vertex(1.5, 1e-7, sw_speed_kms, 0.1),
-            simplex_vertex(5.0, 1e-7, sw_speed_kms, 0.1),
-            simplex_vertex(1.5, 2.1e-7, sw_speed_kms, 0.1),
-            simplex_vertex(1.5, 1e-7, sw_speed_kms * 1.2, 0.1),
-            simplex_vertex(1.5, 1e-7, sw_speed_kms, 0.2),
+            simplex_vertex(1.5, 1e-7, sw_speed_kms),
+            simplex_vertex(5.0, 1e-7, sw_speed_kms),
+            simplex_vertex(1.5, 2.1e-7, sw_speed_kms),
+            simplex_vertex(1.5, 1e-7, sw_speed_kms * 1.2),
         ]
     )
 
@@ -250,9 +236,7 @@ def _fit_pickup_ion_parameters(
 
     if flags & SwapiL3Flags.BAD_FIT:
         nan_param = ufloat(np.nan, np.nan)
-        return FittingParameters(
-            nan_param, nan_param, nan_param, nan_param, flags,
-        )
+        return FittingParameters(nan_param, nan_param, nan_param, flags)
 
     param_vals = {
         name: ufloat(nominal_values[name], std_err)
@@ -263,7 +247,6 @@ def _fit_pickup_ion_parameters(
         param_vals["cooling_index"],
         param_vals["ionization_rate"],
         param_vals["cutoff_speed"],
-        param_vals["background_count_rate"],
         flags,
     )
 
@@ -279,17 +262,15 @@ def _calculate_poisson_negative_log_likelihood(
         cooling_index=parvals["cooling_index"],
         ionization_rate=parvals["ionization_rate"],
         cutoff_speed=parvals["cutoff_speed"],
-        background_count_rate=parvals["background_count_rate"],
     )
 
-    modeled_rates = calculate_coincidence_rate(
-        chunk_response, vasyliunas_siscoe_distribution, fitting_params
+    modeled_rates = (
+        calculate_coincidence_rate(
+            chunk_response, vasyliunas_siscoe_distribution, fitting_params
+        )
+        + SWAPI_BACKGROUND_RATE
     )
     modeled_counts = modeled_rates * swapi_l2.SWAPI_LIVETIME
     observed_counts = observed_count_rates * swapi_l2.SWAPI_LIVETIME
     return float(np.sum(modeled_counts - observed_counts * np.log(modeled_counts)))
 
-
-def _set_background_to_fill_if_too_high(fitting_params: FittingParameters) -> None:
-    if fitting_params.background_count_rate.nominal_value > 1.0:
-        fitting_params.background_count_rate = ufloat(np.nan, np.nan)

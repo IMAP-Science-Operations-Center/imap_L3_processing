@@ -20,7 +20,6 @@ class FittingParameters:
     cooling_index: float
     ionization_rate: float
     cutoff_speed: float
-    background_count_rate: float
     flags: int = SwapiL3Flags.NONE
 
 

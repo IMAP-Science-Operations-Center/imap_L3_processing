@@ -137,7 +137,7 @@ class CalculatePuiDensityAndTemperatureTest(SpiceTestCase):
     def test_density_matches_scipy_quad_reference(self):
         epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 6, 6, 12))
         sw_velocity_vector = np.array([0.0, 0.0, -500.0])
-        fitting_params = FittingParameters(1.5, 1e-7, 520.0, 0.1)
+        fitting_params = FittingParameters(1.5, 1e-7, 520.0)
 
         distribution = self._build_distribution(epoch, sw_velocity_vector)
         chunk_response = _build_moment_chunk_response(
@@ -159,7 +159,6 @@ class CalculatePuiDensityAndTemperatureTest(SpiceTestCase):
             ufloat(1.5, 0.1),
             ufloat(1e-7, 1e-8),
             ufloat(520, 5),
-            ufloat(0.1, 0.01),
         )
         distribution = self._build_distribution(epoch, sw_velocity_vector)
         chunk_response = _build_moment_chunk_response(
@@ -170,61 +169,17 @@ class CalculatePuiDensityAndTemperatureTest(SpiceTestCase):
             chunk_response, distribution, fitting_params
         )
 
-        nominal_params = FittingParameters(1.5, 1e-7, 520.0, 0.1)
+        nominal_params = FittingParameters(1.5, 1e-7, 520.0)
         expected_nominal = _quad_density_reference(
             distribution, nominal_params, self.density_of_neutral_helium_lookup_table
         )
         np.testing.assert_allclose(result.n, expected_nominal, rtol=1e-3)
         self.assertGreater(result.s, 0.0)
 
-    def test_density_uncertainty_survives_fill_background(self):
-        """A filled (NaN) background does not poison the density uncertainty, since the integral is independent of background."""
-        epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 6, 6, 12))
-        sw_velocity_vector = np.array([0.0, 0.0, -500.0])
-        fitting_params = FittingParameters(
-            ufloat(1.5, 0.1),
-            ufloat(1e-7, 1e-8),
-            ufloat(520, 5),
-            ufloat(np.nan, np.nan),
-        )
-        distribution = self._build_distribution(epoch, sw_velocity_vector)
-        chunk_response = _build_moment_chunk_response(
-            float(np.linalg.norm(sw_velocity_vector))
-        )
-
-        result = calculate_helium_pui_density(
-            chunk_response, distribution, fitting_params
-        )
-
-        self.assertTrue(np.isfinite(result.n))
-        self.assertGreater(result.s, 0.0)
-
-    def test_temperature_uncertainty_survives_fill_background(self):
-        """A filled (NaN) background does not poison the temperature uncertainty, since the integral is independent of background."""
-        epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 6, 6, 12))
-        sw_velocity_vector = np.array([0.0, 0.0, -500.0])
-        fitting_params = FittingParameters(
-            ufloat(1.5, 0.1),
-            ufloat(1e-7, 1e-8),
-            ufloat(500, 5),
-            ufloat(np.nan, np.nan),
-        )
-        distribution = self._build_distribution(epoch, sw_velocity_vector)
-        chunk_response = _build_moment_chunk_response(
-            float(np.linalg.norm(sw_velocity_vector))
-        )
-
-        result = calculate_helium_pui_temperature(
-            chunk_response, distribution, fitting_params
-        )
-
-        self.assertTrue(np.isfinite(result.n))
-        self.assertGreater(result.s, 0.0)
-
     def test_temperature_matches_scipy_quad_reference(self):
         epoch = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 6, 6, 12))
         sw_velocity_vector = np.array([0.0, 0.0, -500.0])
-        fitting_params = FittingParameters(1.5, 1e-7, 500.0, 0.1)
+        fitting_params = FittingParameters(1.5, 1e-7, 500.0)
 
         distribution = self._build_distribution(epoch, sw_velocity_vector)
         chunk_response = _build_moment_chunk_response(
@@ -246,7 +201,6 @@ class CalculatePuiDensityAndTemperatureTest(SpiceTestCase):
             ufloat(1.5, 0.1),
             ufloat(1e-7, 1e-8),
             ufloat(500, 5),
-            ufloat(0.1, 0.01),
         )
         distribution = self._build_distribution(epoch, sw_velocity_vector)
         chunk_response = _build_moment_chunk_response(
@@ -257,7 +211,7 @@ class CalculatePuiDensityAndTemperatureTest(SpiceTestCase):
             chunk_response, distribution, fitting_params
         )
 
-        nominal_params = FittingParameters(1.5, 1e-7, 500.0, 0.1)
+        nominal_params = FittingParameters(1.5, 1e-7, 500.0)
         expected_nominal = _quad_temperature_reference(
             distribution, nominal_params, self.density_of_neutral_helium_lookup_table
         )

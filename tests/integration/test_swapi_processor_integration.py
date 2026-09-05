@@ -216,8 +216,6 @@ class SwapiProcessorIntegration(unittest.TestCase):
             'pui_ionization_rate_uncert': 8.772070181350955e-09,
             'pui_cutoff_speed': 487.0067443847656,
             'pui_cutoff_speed_uncert': 3.6022517681121826,
-            'pui_background_count_rate': 0.4269343912601471,
-            'pui_background_count_rate_uncert': 0.28466859459877014,
             'pui_density': 0.0006195620517246425,
             'pui_density_uncert': 6.075883356970735e-05,
             'pui_temperature': 19154838.0,

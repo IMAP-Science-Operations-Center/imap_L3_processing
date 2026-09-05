@@ -39,7 +39,6 @@ class VasyliunasSiscoeDistributionFTest(unittest.TestCase):
             cooling_index=0.1,
             ionization_rate=0.47,
             cutoff_speed=500,
-            background_count_rate=23,
         )
         ephemeris_time = 1_234_567.1
         solar_wind_speed_inertial_frame = 456
@@ -95,7 +94,6 @@ class VasyliunasSiscoeDistributionFTest(unittest.TestCase):
             cooling_index=0.1,
             ionization_rate=0.47,
             cutoff_speed=500,
-            background_count_rate=23,
         )
         distance_km = 0.99 * ONE_AU_IN_KM
         vasyliunas_siscoe_distribution = VasyliunasSiscoeDistribution(

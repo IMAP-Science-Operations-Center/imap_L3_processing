@@ -2,6 +2,7 @@ from unittest import TestCase
 
 import numpy as np
 
+from imap_l3_processing.swapi.constants import SWAPI_BACKGROUND_RATE
 from imap_l3_processing.swapi.l3a.science.pickup_ion.goodness_of_fit import (
     MAX_CUTOFF_SPEED_KMS,
     CUTOFF_DROP_RATIO,
@@ -39,8 +40,7 @@ def _make_pui_model(
 class TestGoodnessOfFit(TestCase):
     def test_fit_acceptance_criteria(self):
         esa_energies, model_rates = _make_pui_model()
-        background_count_rate = 0.1
-        observed_rates = model_rates + background_count_rate
+        observed_rates = model_rates + SWAPI_BACKGROUND_RATE
 
         max_cutoff = MAX_CUTOFF_SPEED_KMS
         defaults = dict(
@@ -48,7 +48,6 @@ class TestGoodnessOfFit(TestCase):
             model_rates=model_rates,
             observed_rates=observed_rates,
             cutoff_speed_kms=max_cutoff - 50.0,
-            background_rate=background_count_rate,
             min_fitting_energy=esa_energies[1],
         )
 

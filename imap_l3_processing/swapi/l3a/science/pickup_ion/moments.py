@@ -36,9 +36,7 @@ def calculate_helium_pui_density(
         ionization_rate: float,
         cutoff_speed: float,
     ):
-        params = FittingParameters(
-            cooling_index, ionization_rate, cutoff_speed, background_count_rate=0.0
-        )
+        params = FittingParameters(cooling_index, ionization_rate, cutoff_speed)
         f_pui = np.asarray(
             vasyliunas_siscoe_distribution.f(
                 speed_in_sw_frame, params, apply_cutoff=False
@@ -72,9 +70,7 @@ def calculate_helium_pui_temperature(
         ionization_rate: float,
         cutoff_speed: float,
     ):
-        params = FittingParameters(
-            cooling_index, ionization_rate, cutoff_speed, background_count_rate=0.0
-        )
+        params = FittingParameters(cooling_index, ionization_rate, cutoff_speed)
         f_pui = np.asarray(
             vasyliunas_siscoe_distribution.f(
                 speed_in_sw_frame, params, apply_cutoff=False

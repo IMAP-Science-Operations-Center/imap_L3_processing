@@ -163,6 +163,7 @@ Using $W_{ijk}$, the model coincidence rate is given by
 C_{ij}^\text{(model)}(\mathbf{x}) = C_\text{bg} + \sum_k W_{ijk} f_\text{PUI}(v'_k; \mathbf{x}),
 ```
 a single tensor operation after evaluating $`f_\text{PUI}(v'_k; \mathbf{x})`$ on the grid only one time for all sweeps and steps.
+Here $`C_\text{bg} = 0.1`$ Hz is the instrument background, assumed constant.
 
 It is essential to ensure continuity in derivatives with respect to the cutoff speed $v_b$ despite the discrete grid so that uncertainties can be estimated.
 The numerical integration setup is equivalent to a midpoint rule, so $v'_j$ represents the bin center.
@@ -189,7 +190,7 @@ Below, the optimized 1D integral is validated by comparing it to a reference 3D 
 
 ## Optimization Strategy
 
-The PUI parameters to be determined are $\mathbf{x} = (\alpha_\text{PUI}, \beta_E, v_b, C_\text{bg})$.
+The PUI parameters to be determined are $\mathbf{x} = (\alpha_\text{PUI}, \beta_E, v_b)$.
 To enable the application of physical constraints on the parameters, the constrained optimization problem in $\mathbf{x}$ is posed as an unconstrained problem in $\tilde{x}$, given by
 ```math
 \tilde{\mathbf{x}} = \arcsin\!\left( \dfrac{2 (\mathbf{x} - \mathbf{x}_\text{min})}{\mathbf{x}_\text{max} - \mathbf{x}_\text{min}} - 1 \right),
@@ -200,9 +201,8 @@ with bounds defined in the table below.
 | $\alpha_\text{PUI}$ | 1.0 | 5.0 | 1.5 |
 | $\beta_E$ | $0.6 \times 10^{-9}$ s⁻¹ | $8 \times 10^{-7}$ s⁻¹ | $10^{-7}$ s⁻¹ |
 | $v_b$ | $0.8 \, v_\text{sw}$ | $1.2 \, v_\text{sw}$ | $v_\text{sw}$ |
-| $C_\text{bg}$ | 0 | 10 Hz | 0.1 Hz |
 
-The Nelder-Mead method is used for optimization, with a heuristic five-vertex simplex specified explicitly  .
+The Nelder-Mead method is used for optimization, with a heuristic four-vertex simplex specified explicitly.
 
 The optimal parameters are estimated by maximizing the Poisson likelihood—yielding optimal parameters $`\hat{\mathbf{x}}`$—through minimization of
 ```math
@@ -221,8 +221,6 @@ and then the covariance matrix for the PUI parameters $`\mathbf{x}`$ is given by
 where $J = \partial \mathbf{x}/\partial \tilde{\mathbf{x}}$.
 
 ## Failure Cases
-
-When $C_\text{bg}$ is higher than 1 Hz, a fill value is reported for $C_\text{bg}$ because of the probable influence of suprathermal populations, but the other parameters are kept.
 
 For evaluation of the fit quality, the energy range is different.
 Instead of the nominal PUI cutoff, the model is used to evaluate the upper edge.

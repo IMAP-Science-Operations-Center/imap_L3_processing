@@ -50,7 +50,6 @@ def _good_nominal(**overrides):
         "cooling_index": 1.5,
         "ionization_rate": 1e-7,
         "cutoff_speed": 450.0,
-        "background_count_rate": 0.1,
     }
     base.update(overrides)
     return base
@@ -66,7 +65,7 @@ def _run_calculate_with_mocked_fit(
     *,
     nominal,
     observed_per_step=1.0,
-    cov_external_diag=(1.0, 1.0, 1.0, 1.0),
+    cov_external_diag=(1.0, 1.0, 1.0),
     fit_is_good=True,
 ):
     """Drive `calculate_pickup_ion_values` through its post-fit branches.
@@ -90,9 +89,8 @@ def _run_calculate_with_mocked_fit(
         "cooling_index",
         "ionization_rate",
         "cutoff_speed",
-        "background_count_rate",
     ]
-    fake_result.x = np.zeros(4)
+    fake_result.x = np.zeros(3)
     fake_result.params.valuesdict.return_value = nominal
     fake_minimizer = MagicMock()
     fake_minimizer.minimize.return_value = fake_result
@@ -101,7 +99,7 @@ def _run_calculate_with_mocked_fit(
     with patch(f"{_MODULE_PATH}.build_chunk_collapsed_response") as mock_build, patch(
         f"{_MODULE_PATH}.lmfit.Minimizer", return_value=fake_minimizer
     ), patch(
-        f"{_MODULE_PATH}.ndt.Hessian", return_value=lambda _: np.eye(4)
+        f"{_MODULE_PATH}.ndt.Hessian", return_value=lambda _: np.eye(3)
     ), patch(
         f"{_MODULE_PATH}.calculate_coincidence_rate", return_value=_MODELED_RATES
     ) as mock_calculate_coincidence_rate, patch(
@@ -132,7 +130,6 @@ def _assert_all_nan_params(tc, fitting_params):
         fitting_params.cooling_index,
         fitting_params.ionization_rate,
         fitting_params.cutoff_speed,
-        fitting_params.background_count_rate,
     ):
         tc.assertTrue(np.isnan(value.nominal_value))
         tc.assertTrue(np.isnan(value.std_dev))
@@ -182,9 +179,7 @@ class CalculatePickupIonValuesShapeTest(unittest.TestCase):
 
 
 class CalculatePickupIonValuesFillTest(unittest.TestCase):
-    """Tests for the post-fit guards in `calculate_pickup_ion_values`, with the
-    response builder, optimizer, Hessian, coincidence-rate model and
-    goodness-of-fit check mocked so each test isolates one guard."""
+    """Tests for fill value logic in `calculate_pickup_ion_values`."""
 
     def test_non_positive_definite_hessian_fills_all_params_with_bad_fit(self):
         """A non-positive-definite Hessian gives a covariance with negative
@@ -192,7 +187,7 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
         parameter is NaN ± NaN, and the goodness-of-fit check never runs."""
         run = _run_calculate_with_mocked_fit(
             nominal=_good_nominal(),
-            cov_external_diag=(-1.0, -1.0, -1.0, -1.0),
+            cov_external_diag=(-1.0, -1.0, -1.0),
         )
 
         self.assertEqual(
@@ -214,19 +209,16 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
         )
         _assert_all_nan_params(self, run.fit_result.fitting_params)
 
-    def test_goodness_of_fit_judges_a_background_free_model_on_the_whole_coarse_sweep(
+    def test_is_good_fit_receives_correct_input(
         self,
     ):
-        """The goodness-of-fit check is handed model rates evaluated with the
-        background zeroed out, the fitted background as a separate scalar, and
-        observations across all 62 coarse steps rather than the fit window."""
+        """Ensure is_good_fit receives the correct input."""
         run = _run_calculate_with_mocked_fit(
-            nominal=_good_nominal(background_count_rate=0.4),
+            nominal=_good_nominal(cooling_index=1.5, cutoff_speed=450.0),
             observed_per_step=2.0,
         )
 
         modeled_params = run.calculate_coincidence_rate_mock.call_args.args[2]
-        self.assertEqual(modeled_params.background_count_rate, 0.0)
         self.assertEqual(modeled_params.cooling_index, 1.5)
         self.assertEqual(modeled_params.cutoff_speed, 450.0)
 
@@ -234,7 +226,6 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
         np.testing.assert_array_equal(
             goodness_of_fit_args["model_rates"], _MODELED_RATES
         )
-        self.assertEqual(goodness_of_fit_args["background_rate"], 0.4)
         self.assertEqual(goodness_of_fit_args["cutoff_speed_kms"], 450.0)
         np.testing.assert_allclose(
             goodness_of_fit_args["observed_rates"], np.full((_N_SWEEPS, _N_COARSE_BINS), 2.0)
@@ -247,42 +238,9 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
             _ENERGY_RANGE_ADMITTING_EVERY_BIN[0],
         )
 
-    def test_background_above_one_hz_fills_background_only(self):
-        """When the fitted background exceeds 1 Hz the flat term is absorbing
-        real signal; the background is reported as NaN ± NaN, the other three
-        parameters are unchanged, and the fit flag stays NONE."""
-        run = _run_calculate_with_mocked_fit(
-            nominal=_good_nominal(background_count_rate=1.5),
-        )
-        fitting_params = run.fit_result.fitting_params
-
-        self.assertEqual(int(fitting_params.flags), int(SwapiL3Flags.NONE))
-        self.assertTrue(np.isnan(fitting_params.background_count_rate.nominal_value))
-        self.assertTrue(np.isnan(fitting_params.background_count_rate.std_dev))
-        for value in (
-            fitting_params.cooling_index,
-            fitting_params.ionization_rate,
-            fitting_params.cutoff_speed,
-        ):
-            self.assertTrue(np.isfinite(value.nominal_value))
-            self.assertTrue(np.isfinite(value.std_dev))
-
-    def test_background_at_one_hz_is_not_filled(self):
-        """The background guard uses a strict inequality (`> 1.0`); a fit
-        sitting exactly at 1 Hz is retained."""
-        run = _run_calculate_with_mocked_fit(
-            nominal=_good_nominal(background_count_rate=1.0),
-        )
-        fitting_params = run.fit_result.fitting_params
-
-        self.assertEqual(int(fitting_params.flags), int(SwapiL3Flags.NONE))
-        self.assertEqual(fitting_params.background_count_rate.nominal_value, 1.0)
-        self.assertTrue(np.isfinite(fitting_params.background_count_rate.std_dev))
 
     def test_accepted_fit_returns_all_finite_params_with_no_flag(self):
-        """A converged fit that passes the goodness-of-fit check with a
-        background ≤ 1 Hz returns all four parameters with finite nominal and σ̂
-        and the fit flag NONE — the baseline the fill branches deviate from."""
+        """A successful fit is all green."""
         run = _run_calculate_with_mocked_fit(nominal=_good_nominal())
         fitting_params = run.fit_result.fitting_params
 
@@ -291,7 +249,6 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
             fitting_params.cooling_index,
             fitting_params.ionization_rate,
             fitting_params.cutoff_speed,
-            fitting_params.background_count_rate,
         ):
             self.assertTrue(np.isfinite(value.nominal_value))
             self.assertTrue(np.isfinite(value.std_dev))

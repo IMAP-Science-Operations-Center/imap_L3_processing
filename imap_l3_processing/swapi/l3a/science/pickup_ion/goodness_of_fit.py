@@ -1,6 +1,8 @@
 import numpy as np
 from numpy.typing import NDArray
 
+from imap_l3_processing.swapi.constants import SWAPI_BACKGROUND_RATE
+
 MAX_CUTOFF_SPEED_KMS = 550.0
 MAX_MEAN_RELATIVE_ERROR = 0.12
 MAX_PAST_PEAK_RATIO = 0.4
@@ -12,7 +14,6 @@ def is_good_fit(
     model_rates: NDArray,
     observed_rates: NDArray,
     cutoff_speed_kms: float,
-    background_rate: float,
     min_fitting_energy: float,
 ) -> bool:
     """
@@ -30,8 +31,6 @@ def is_good_fit(
         The (50, 62) array of observed count rates.
     cutoff_speed_kms : scalar float
         The model cutoff speed in km/s.
-    background_rate: scalar float
-        The model background rate.
     min_fitting_energy: scalar float
         The minimum energy required to fit the model.
     """
@@ -56,8 +55,8 @@ def is_good_fit(
     in_range = ~past_range & (esa_energies > min_fitting_energy)
 
     mean_absolute_percent_error = (
-        np.abs(chunk_mean_model_rates + background_rate - chunk_mean_observed_rates)
-        / (chunk_mean_model_rates + background_rate)
+        np.abs(chunk_mean_model_rates + SWAPI_BACKGROUND_RATE - chunk_mean_observed_rates)
+        / (chunk_mean_model_rates + SWAPI_BACKGROUND_RATE)
     )[in_range].mean()
 
     past_cutoff_ratio = (

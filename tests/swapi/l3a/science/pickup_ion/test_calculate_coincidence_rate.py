@@ -47,7 +47,6 @@ _SW_ELEVATION_DEG = -10.0
 _COOLING_INDEX = 2.0
 _CUTOFF_SPEED_KMS = 450.0
 _IONIZATION_RATE_HZ = 2e-7
-_BACKGROUND_RATE_HZ = 0.0
 _HELIO_DIST_AU = 1.0
 _SW_SPEED_INERTIAL_KMS = 450.0
 _INFLOW_PSI_DEG = 75.0
@@ -63,7 +62,6 @@ class CalculateCoincidenceRateAgainstReferenceTest(unittest.TestCase):
             cooling_index=_COOLING_INDEX,
             ionization_rate=_IONIZATION_RATE_HZ,
             cutoff_speed=_CUTOFF_SPEED_KMS,
-            background_count_rate=_BACKGROUND_RATE_HZ,
         )
         lut = DensityOfNeutralHeliumLookupTable.from_file(_DENSITY_LUT_PATH)
         min_speed_kms = max(
