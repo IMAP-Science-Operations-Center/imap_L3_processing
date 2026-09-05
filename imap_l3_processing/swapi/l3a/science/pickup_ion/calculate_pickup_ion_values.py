@@ -12,7 +12,10 @@ from scipy.linalg import inv
 from uncertainties import ufloat
 
 from imap_l3_processing.constants import ONE_AU_IN_KM
-from imap_l3_processing.swapi.constants import SWAPI_L2_K_FACTOR
+from imap_l3_processing.swapi.constants import (
+    SWAPI_COARSE_SWEEP_BINS,
+    SWAPI_L2_K_FACTOR,
+)
 from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_coincidence_rate import (
     calculate_coincidence_rate,
 )
@@ -20,19 +23,19 @@ from imap_l3_processing.swapi.l3a.science.pickup_ion.collapsed_response_grid imp
     ChunkCollapsedResponse,
     build_chunk_collapsed_response,
 )
-from imap_l3_processing.swapi.l3a.science.pickup_ion.density_of_neutral_helium_lookup_table import (
-    DensityOfNeutralHeliumLookupTable,
-)
+from imap_l3_processing.swapi.l3a.science.pickup_ion.goodness_of_fit import is_good_fit
 from imap_l3_processing.swapi.l3a.science.pickup_ion.vasyliunas_siscoe_distribution import (
     FittingParameters,
     VasyliunasSiscoeDistribution,
 )
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
+from imap_l3_processing.swapi.species import Species
 
-
+_SWEEPS_PER_CHUNK = 50
+_SWEEP_LEN = 72
 _COARSE_SWEEP_LEN = 62
-_HELIUM_MASS_PER_CHARGE_M_P_PER_E = 4.0
+_PICKUP_ION_SPECIES = Species.HELIUM_PLUS
 
 
 @dataclass
@@ -44,53 +47,137 @@ class PickupIonFitResult:
 
 def calculate_pickup_ion_values(
     swapi_response: SwapiResponse,
-    voltages: np.ndarray,
+    esa_energies: np.ndarray,
     count_rates: np.ndarray,
-    sw_velocity_rtn_kms: ndarray,
     bulk_sw_per_bin_swapi_kms: ndarray,
-    density_of_neutral_helium_lookup_table: DensityOfNeutralHeliumLookupTable,
-    lower_energy_cutoff: float,
-    upper_energy_cutoff: float,
     vasyliunas_siscoe_distribution: VasyliunasSiscoeDistribution,
-    central_effective_area_scale: float = 1.0,
+    time_as_tt2000: int,
 ) -> PickupIonFitResult:
-    voltages = np.asarray(voltages, dtype=float).reshape(-1, _COARSE_SWEEP_LEN)
-    count_rates = np.asarray(count_rates, dtype=float).reshape(-1, _COARSE_SWEEP_LEN)
-    bulk_sw_per_bin_swapi_kms = np.asarray(
-        bulk_sw_per_bin_swapi_kms, dtype=float
-    ).reshape(-1, _COARSE_SWEEP_LEN, 3)
+    """
+    Fit the Vasyliunas-Siscoe helium PUI model to one 10-minute chunk.
 
-    voltages_per_step = np.mean(voltages, axis=0)
-    energies_per_step = voltages_per_step * SWAPI_L2_K_FACTOR
-    bin_mask = (energies_per_step > lower_energy_cutoff) & (
-        energies_per_step < upper_energy_cutoff
+    Parameters
+    ----------
+    esa_energies : ndarray of floats
+        The (50, 72) array of L2 `esa_energy` values. Only the 62 coarse steps
+        are used; the fine sweep and the discarded bin 0 are dropped here.
+    count_rates : ndarray of floats
+        The (50, 72) array of coincidence count rates, on the same full sweep.
+    bulk_sw_per_bin_swapi_kms : ndarray of floats
+        The (50, 62, 3) array of bulk solar wind velocity vectors in the SWAPI
+        frame, at each coarse-step measurement time.
+    vasyliunas_siscoe_distribution: TODO
+    time_as_tt2000: TODO
+    """
+    if esa_energies.shape != (_SWEEPS_PER_CHUNK, _SWEEP_LEN):
+        raise ValueError(esa_energies.shape)
+
+    if count_rates.shape != (_SWEEPS_PER_CHUNK, _SWEEP_LEN):
+        raise ValueError(count_rates.shape)
+
+    if bulk_sw_per_bin_swapi_kms.shape != (_SWEEPS_PER_CHUNK, _COARSE_SWEEP_LEN, 3):
+        raise ValueError(bulk_sw_per_bin_swapi_kms.shape)
+
+    coarse_energies = np.abs(
+        np.asarray(esa_energies[:, SWAPI_COARSE_SWEEP_BINS], dtype=float).mean(axis=0)
     )
-    extracted_voltages = voltages_per_step[bin_mask]
-    extracted_count_rates = count_rates[:, bin_mask]
-    extracted_bulk_sw_per_bin_swapi_kms = bulk_sw_per_bin_swapi_kms[:, bin_mask]
+    coarse_count_rates = np.asarray(
+        count_rates[:, SWAPI_COARSE_SWEEP_BINS], dtype=float
+    )
 
-    sw_velocity_kms = float(np.linalg.norm(sw_velocity_rtn_kms))
+    lower_energy_cutoff, upper_energy_cutoff = _calculate_pickup_ion_fit_energy_range(
+        coarse_energies, coarse_count_rates.mean(axis=0)
+    )
 
-    chunk_response = build_chunk_collapsed_response(
+    bin_mask = (coarse_energies > lower_energy_cutoff) & (
+        coarse_energies < upper_energy_cutoff
+    )
+
+    sw_velocity_kms = float(np.linalg.norm(bulk_sw_per_bin_swapi_kms, axis=-1).mean())
+
+    # precomputed instrument response across all coarse ESA steps
+    coarse_voltages = coarse_energies / SWAPI_L2_K_FACTOR
+    full_sweep_response = build_chunk_collapsed_response(
         swapi_response=swapi_response,
-        voltages_v=extracted_voltages,
-        bulk_sw_per_bin_kms=extracted_bulk_sw_per_bin_swapi_kms,
-        mass_per_charge_m_p_per_e=_HELIUM_MASS_PER_CHARGE_M_P_PER_E,
+        voltages_v=coarse_voltages,
+        bulk_sw_per_bin_kms=bulk_sw_per_bin_swapi_kms,
+        time_as_tt2000=time_as_tt2000,
+        species=_PICKUP_ION_SPECIES,
         cutoff_speed_max_kms=sw_velocity_kms * 1.2,
-        central_effective_area_scale=central_effective_area_scale,
+    )
+
+    # subset used for fitting
+    fit_window_response = ChunkCollapsedResponse(
+        speed_in_sw_frame=full_sweep_response.speed_in_sw_frame,
+        bin_weights=full_sweep_response.bin_weights[:, bin_mask],
     )
 
     fitting_params = _fit_pickup_ion_parameters(
-        chunk_response=chunk_response,
+        chunk_response=fit_window_response,
         vasyliunas_siscoe_distribution=vasyliunas_siscoe_distribution,
-        observed_count_rates=extracted_count_rates,
+        observed_count_rates=coarse_count_rates[:, bin_mask],
         sw_speed_kms=sw_velocity_kms,
     )
+
+    if not (int(fitting_params.flags) & int(SwapiL3Flags.BAD_FIT)):
+        background_free_params = FittingParameters(
+            cooling_index=fitting_params.cooling_index.nominal_value,
+            ionization_rate=fitting_params.ionization_rate.nominal_value,
+            cutoff_speed=fitting_params.cutoff_speed.nominal_value,
+            background_count_rate=0.0,
+        )
+        fitted_background_count_rate = (
+            fitting_params.background_count_rate.nominal_value
+        )
+        full_sweep_model_rates = calculate_coincidence_rate(
+            full_sweep_response, vasyliunas_siscoe_distribution, background_free_params
+        )
+        if is_good_fit(
+            esa_energies=coarse_energies,
+            model_rates=full_sweep_model_rates,
+            observed_rates=coarse_count_rates,
+            cutoff_speed_kms=background_free_params.cutoff_speed,
+            background_rate=fitted_background_count_rate,
+            min_fitting_energy=lower_energy_cutoff,
+        ):
+            _set_background_to_fill_if_too_high(fitting_params)
+        else:
+            nan_param = ufloat(np.nan, np.nan)
+            fitting_params = FittingParameters(
+                nan_param,
+                nan_param,
+                nan_param,
+                nan_param,
+                fitting_params.flags | SwapiL3Flags.BAD_FIT,
+            )
+
     return PickupIonFitResult(
         fitting_params=fitting_params,
-        chunk_response=chunk_response,
+        chunk_response=fit_window_response,
         vasyliunas_siscoe_distribution=vasyliunas_siscoe_distribution,
     )
+
+
+def _calculate_pickup_ion_fit_energy_range(
+    energies_per_step: ndarray, count_rates_per_step: ndarray
+) -> tuple[float, float]:
+    proton_peak_energy = energies_per_step[np.argmax(count_rates_per_step)]
+
+    # assumes alpha solar wind has the same bulk speed as proton solar wind
+    nominal_alpha_peak = 2 * proton_peak_energy
+
+    # assumes that the PUI cutoff speed is 2x the solar wind speed (4x the energy) in the SC frame
+    # accounts for the 4x mass per charge of He+ compared to protons
+    # together, that's a factor of 2^2*4=4x4=16
+    nominal_pui_he_cutoff = 16 * proton_peak_energy
+
+    # geometric mean (logarithmic midpoint) between estimated alpha peak and nominal PUI peak
+    lower_edge = float(np.sqrt(nominal_alpha_peak * nominal_pui_he_cutoff))
+
+    # use nominal PUI cutoff as the upper edge for the fitting range
+    upper_edge = float(nominal_pui_he_cutoff)
+
+    return float(lower_edge), float(upper_edge)
 
 
 def _fit_pickup_ion_parameters(
@@ -161,33 +248,6 @@ def _fit_pickup_ion_parameters(
     if not np.all(np.isfinite(standard_errors)):
         flags |= SwapiL3Flags.BAD_FIT
 
-    best_fit_params = FittingParameters(
-        cooling_index=nominal_values["cooling_index"],
-        ionization_rate=nominal_values["ionization_rate"],
-        cutoff_speed=nominal_values["cutoff_speed"],
-        background_count_rate=nominal_values["background_count_rate"],
-    )
-    best_fit_rates = calculate_coincidence_rate(
-        chunk_response, vasyliunas_siscoe_distribution, best_fit_params
-    )
-    
-    # R^2 on the sweep-averaged spectrum.
-    observed_sweep_average = np.nanmean(observed_count_rates, axis=0)
-    best_fit_sweep_average = np.nanmean(best_fit_rates, axis=0)
-    total_sum_of_squares = float(
-        np.nansum((observed_sweep_average - np.nanmean(observed_sweep_average)) ** 2)
-    )
-    
-    if total_sum_of_squares == 0:
-        flags |= SwapiL3Flags.BAD_FIT
-    else:
-        residual_sum_of_squares = float(
-            np.nansum((observed_sweep_average - best_fit_sweep_average) ** 2)
-        )
-        r_squared = 1.0 - residual_sum_of_squares / total_sum_of_squares
-        if r_squared < 0.9:
-            flags |= SwapiL3Flags.BAD_FIT
-
     if flags & SwapiL3Flags.BAD_FIT:
         nan_param = ufloat(np.nan, np.nan)
         return FittingParameters(
@@ -198,8 +258,6 @@ def _fit_pickup_ion_parameters(
         name: ufloat(nominal_values[name], std_err)
         for name, std_err in zip(result.var_names, standard_errors)
     }
-
-    _set_background_to_fill_if_too_high(param_vals)
 
     return FittingParameters(
         param_vals["cooling_index"],
@@ -232,7 +290,6 @@ def _calculate_poisson_negative_log_likelihood(
     return float(np.sum(modeled_counts - observed_counts * np.log(modeled_counts)))
 
 
-def _set_background_to_fill_if_too_high(param_vals):
-    background = param_vals["background_count_rate"]
-    if background.nominal_value > 1.0:
-        param_vals["background_count_rate"] = ufloat(np.nan, np.nan)
+def _set_background_to_fill_if_too_high(fitting_params: FittingParameters) -> None:
+    if fitting_params.background_count_rate.nominal_value > 1.0:
+        fitting_params.background_count_rate = ufloat(np.nan, np.nan)
