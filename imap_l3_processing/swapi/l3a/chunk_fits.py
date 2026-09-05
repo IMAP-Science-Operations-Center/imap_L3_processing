@@ -12,13 +12,9 @@ from spiceypy.utils.exceptions import SpiceyError
 from uncertainties import ufloat
 
 from imap_l3_processing.constants import (
-    ALPHA_MASS_PER_CHARGE_M_P_PER_E,
-    ALPHA_PARTICLE_MASS_KG,
     FIVE_MINUTES_IN_NANOSECONDS,
-    HE_PUI_PARTICLE_MASS_KG,
     ONE_SECOND_IN_NANOSECONDS,
     PROTON_MASS_KG,
-    PROTON_MASS_PER_CHARGE_M_P_PER_E,
     THIRTY_SECONDS_IN_NANOSECONDS,
 )
 from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_pickup_ion_values import (
@@ -29,7 +25,6 @@ from imap_l3_processing.swapi.l3a.science.pickup_ion.moments import (
     calculate_helium_pui_temperature,
 )
 from imap_l3_processing.swapi.l3a.science.pickup_ion.utils import (
-    calculate_pui_energy_cutoff,
     calculate_ten_minute_velocities,
     rotate_rtn_velocity_to_swapi_per_bin,
 )
@@ -48,6 +43,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proto
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
 )
+from imap_l3_processing.swapi.species import Species
 from imap_l3_processing.swapi.constants import (
     SWAPI_COARSE_SWEEP_BINS,
     SWAPI_L2_K_FACTOR,
@@ -239,8 +235,6 @@ class PuiChunkFitter(ChunkFitter):
             proton_sw_quality_flag = int(flag)
             n_sweeps = chunk.sci_start_time.shape[0]
 
-            lower_energy_cutoff: float | None = None
-            upper_energy_cutoff: float | None = None
             vasyliunas_siscoe_distribution: VasyliunasSiscoeDistribution | None = None
 
             tracker = PredictedEphemerisTracker()
@@ -262,18 +256,6 @@ class PuiChunkFitter(ChunkFitter):
                     chunk_ephemeris_time = spiceypy.unitim(
                         epoch / ONE_SECOND_IN_NANOSECONDS, "TT", "ET"
                     )
-                    lower_energy_cutoff = 1.25 * tracker.run(calculate_pui_energy_cutoff,
-                        PROTON_MASS_KG,
-                        chunk_ephemeris_time,
-                        ten_minute_rtn,
-                        self.hydrogen_inflow_vector,
-                    )
-                    upper_energy_cutoff = 1.2 * tracker.run(calculate_pui_energy_cutoff,
-                        HE_PUI_PARTICLE_MASS_KG,
-                        chunk_ephemeris_time,
-                        ten_minute_rtn,
-                        self.helium_inflow_vector,
-                    )
                     vasyliunas_siscoe_distribution = tracker.run(build_vasyliunas_siscoe_distribution,
                         chunk_ephemeris_time,
                         ten_minute_rtn,
@@ -285,8 +267,6 @@ class PuiChunkFitter(ChunkFitter):
                         f"SPICE gap precomputing PUI chunk state at epoch {epoch};"
                         " using fill value."
                     )
-                    lower_energy_cutoff = None
-                    upper_energy_cutoff = None
                     vasyliunas_siscoe_distribution = None
 
             flag = SwapiL3Flags.PREDICTIVE_EPHEMERIS if tracker.used_predict else SwapiL3Flags.NONE
@@ -296,8 +276,6 @@ class PuiChunkFitter(ChunkFitter):
                 ten_minute_rtn,
                 bulk_sw_per_bin_swapi,
                 proton_sw_quality_flag | flag,
-                lower_energy_cutoff,
-                upper_energy_cutoff,
                 vasyliunas_siscoe_distribution,
             ))
         return geometries
@@ -309,8 +287,6 @@ class PuiChunkFitter(ChunkFitter):
         sw_velocity_rtn,
         bulk_sw_per_bin_swapi,
         quality_flag,
-        lower_energy_cutoff,
-        upper_energy_cutoff,
         vasyliunas_siscoe_distribution,
     ):
         count_rates_window = data_chunk.coincidence_count_rate[
@@ -332,23 +308,13 @@ class PuiChunkFitter(ChunkFitter):
             )
 
         try:
-            voltages = (
-                data_chunk.energy[:, SWAPI_COARSE_SWEEP_BINS] / SWAPI_L2_K_FACTOR
-            ).flatten()
-            central_effective_area_scale = _shared[
-                "efficiency_table"
-            ].central_effective_area_scale_for(epoch, "helium")
             fit_result = calculate_pickup_ion_values(
                 _shared["swapi_response"],
-                voltages,
-                count_rates_window.flatten(),
-                sw_velocity_rtn,
+                data_chunk.energy,
+                data_chunk.coincidence_count_rate,
                 bulk_sw_per_bin_swapi,
-                self.density_of_neutral_helium_lookup_table,
-                lower_energy_cutoff,
-                upper_energy_cutoff,
                 vasyliunas_siscoe_distribution,
-                central_effective_area_scale=central_effective_area_scale,
+                time_as_tt2000=epoch,
             )
         except Exception:
             logger.warning(
@@ -373,10 +339,8 @@ class PuiChunkFitter(ChunkFitter):
 
         return dict(
             epoch=epoch,
-            cooling_index=fit_params.cooling_index,
             ionization_rate=fit_params.ionization_rate,
             cutoff_speed=fit_params.cutoff_speed,
-            background_rate=fit_params.background_count_rate,
             density=density,
             temperature=temperature,
             quality_flags=int(quality_flag) | int(fit_params.flags),
@@ -534,7 +498,6 @@ def _fit_proton(
         return _nan_proton_result(SwapiL3Flags.NONE)
   
     swapi_response = _shared["swapi_response"]
-    efficiency_table = _shared["efficiency_table"]
     count_rates = data_chunk.coincidence_count_rate[:, SWAPI_SCIENCE_BINS]
     voltages = data_chunk.energy[:, SWAPI_SCIENCE_BINS] / SWAPI_L2_K_FACTOR
     voltage_valid = (voltages > 0) & np.isfinite(voltages)
@@ -560,10 +523,9 @@ def _fit_proton(
         count_rate=count_rates,
         esa_voltage=voltages,
         swapi_response=swapi_response,
-        central_effective_area_scale=efficiency_table.central_effective_area_scale_for(epoch, "proton"),
+        time_as_tt2000=epoch,
+        species=Species.PROTON,
         rotation_matrices=rotation_matrices,
-        mass_kg=PROTON_MASS_KG,
-        mass_per_charge_m_p_per_e=PROTON_MASS_PER_CHARGE_M_P_PER_E,
     )
     try:
         result = fit_solar_wind_proton_model(ctx)
@@ -586,10 +548,8 @@ def _pui_fill_result(epoch, proton_sw_quality_flag, reason=None) -> dict:
     nan = ufloat(np.nan, np.nan)
     return dict(
         epoch=epoch,
-        cooling_index=nan,
         ionization_rate=nan,
         cutoff_speed=nan,
-        background_rate=nan,
         density=nan,
         temperature=nan,
         quality_flags=int(proton_sw_quality_flag),
@@ -665,7 +625,6 @@ def _fit_alpha(
         )
 
     swapi_response = _shared["swapi_response"]
-    efficiency_table = _shared["efficiency_table"]
     try:
         count_rates = data_chunk.coincidence_count_rate[:, SWAPI_COARSE_SWEEP_BINS]
         voltages = data_chunk.energy[:, SWAPI_COARSE_SWEEP_BINS] / SWAPI_L2_K_FACTOR
@@ -676,19 +635,17 @@ def _fit_alpha(
             count_rate=count_rates,
             esa_voltage=voltages,
             swapi_response=swapi_response,
-            central_effective_area_scale=efficiency_table.central_effective_area_scale_for(epoch, "proton"),
+            time_as_tt2000=epoch,
+            species=Species.PROTON,
             rotation_matrices=coarse_rotation_matrices,
-            mass_kg=PROTON_MASS_KG,
-            mass_per_charge_m_p_per_e=PROTON_MASS_PER_CHARGE_M_P_PER_E,
         )
         alpha_ctx = build_solar_wind_fit_context(
             count_rate=count_rates,
             esa_voltage=voltages,
             swapi_response=swapi_response,
-            central_effective_area_scale=efficiency_table.central_effective_area_scale_for(epoch, "helium"),
+            time_as_tt2000=epoch,
+            species=Species.ALPHA,
             rotation_matrices=coarse_rotation_matrices,
-            mass_kg=ALPHA_PARTICLE_MASS_KG,
-            mass_per_charge_m_p_per_e=ALPHA_MASS_PER_CHARGE_M_P_PER_E,
         )
         alpha_moments = fit_solar_wind_alpha_model(
             proton_ctx=proton_ctx,

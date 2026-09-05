@@ -7,8 +7,13 @@ import pandas as pd
 from imap_l3_processing.swapi.l3a.science.pickup_ion.collapsed_response_grid import (
     build_collapsed_response_grid,
 )
+from imap_l3_processing.swapi.species import Species
 from scripts.swapi.generate_collapsed_response_grid_reference import shell_integral_h
-from tests.swapi._helpers import build_default_v_prime_grid_kms, load_swapi_response
+from tests.swapi._helpers import (
+    NOMINAL_TEST_EPOCH_TT2000,
+    build_default_v_prime_grid_kms,
+    load_swapi_response,
+)
 
 _REFERENCE_CSV_PATH = (
     Path(__file__).resolve().parents[4]
@@ -20,7 +25,7 @@ _REFERENCE_CSV_PATH = (
 # Must match the fixed condition baked into the reference CSV (see
 # scripts/swapi/generate_collapsed_response_grid_reference.py).
 _ESA_VOLTAGE = 5000.0
-_MASS_PER_CHARGE = 4.0
+_SPECIES = Species.HELIUM_PLUS
 _BULK_SPEED = 450.0
 _BULK_AZIMUTH = 5.0
 _BULK_ELEVATION = -10.0
@@ -33,8 +38,7 @@ class BuildCollapsedResponseGridTest(unittest.TestCase):
             warm_cache_voltages=np.array([_ESA_VOLTAGE])
         )
         cls.response_grid = swapi_response.get_response_grid(
-            esa_voltage=_ESA_VOLTAGE,
-            mass_per_charge_m_p_per_e=_MASS_PER_CHARGE,
+            NOMINAL_TEST_EPOCH_TT2000, _ESA_VOLTAGE, _SPECIES
         )
         reference = pd.read_csv(_REFERENCE_CSV_PATH, comment="#")
         cls.reference_v_prime = reference["v_prime_kms"].to_numpy()
@@ -121,8 +125,7 @@ class BuildCollapsedResponseGridTest(unittest.TestCase):
             warm_cache_voltages=np.array([esa_voltage])
         )
         response_grid = swapi_response.get_response_grid(
-            esa_voltage=esa_voltage,
-            mass_per_charge_m_p_per_e=_MASS_PER_CHARGE,
+            NOMINAL_TEST_EPOCH_TT2000, esa_voltage, _SPECIES
         )
         bulk_speed = _BULK_SPEED
         central_speed = response_grid.central_speed

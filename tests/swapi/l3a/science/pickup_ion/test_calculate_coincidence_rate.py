@@ -30,7 +30,8 @@ from imap_l3_processing.swapi.l3a.science.pickup_ion.vasyliunas_siscoe_distribut
     FittingParameters,
     VasyliunasSiscoeDistribution,
 )
-from tests.swapi._helpers import load_swapi_response
+from imap_l3_processing.swapi.species import Species
+from tests.swapi._helpers import NOMINAL_TEST_EPOCH_TT2000, load_swapi_response
 from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path
 
 _REFERENCE_CSV_PATH = get_test_data_path("swapi/pui_count_rate_reference.csv")
@@ -43,15 +44,11 @@ _DENSITY_LUT_PATH = get_test_instrument_team_data_path(
 _SW_SPEED_KMS = 450.0
 _SW_AZIMUTH_DEG = 0.0
 _SW_ELEVATION_DEG = -10.0
-_COOLING_INDEX = 2.0
 _CUTOFF_SPEED_KMS = 450.0
 _IONIZATION_RATE_HZ = 2e-7
-_BACKGROUND_RATE_HZ = 0.0
 _HELIO_DIST_AU = 1.0
 _SW_SPEED_INERTIAL_KMS = 450.0
 _INFLOW_PSI_DEG = 75.0
-_HELIUM_MASS_PER_CHARGE_M_P_PER_E = 4.0
-_HELIUM_EFFICIENCY_RATIO = 1.05
 
 
 class CalculateCoincidenceRateAgainstReferenceTest(unittest.TestCase):
@@ -61,10 +58,8 @@ class CalculateCoincidenceRateAgainstReferenceTest(unittest.TestCase):
         reference_rate_hz = reference.iloc[:, 1].to_numpy()
 
         fitting_params = FittingParameters(
-            cooling_index=_COOLING_INDEX,
             ionization_rate=_IONIZATION_RATE_HZ,
             cutoff_speed=_CUTOFF_SPEED_KMS,
-            background_count_rate=_BACKGROUND_RATE_HZ,
         )
         lut = DensityOfNeutralHeliumLookupTable.from_file(_DENSITY_LUT_PATH)
         min_speed_kms = max(
@@ -98,9 +93,9 @@ class CalculateCoincidenceRateAgainstReferenceTest(unittest.TestCase):
             swapi_response=swapi_response,
             voltages_v=voltage_v.astype(float),
             bulk_sw_per_bin_kms=bulk_sw_per_bin,
-            mass_per_charge_m_p_per_e=_HELIUM_MASS_PER_CHARGE_M_P_PER_E,
+            time_as_tt2000=NOMINAL_TEST_EPOCH_TT2000,
+            species=Species.HELIUM_PLUS,
             cutoff_speed_max_kms=_CUTOFF_SPEED_KMS,
-            central_effective_area_scale=_HELIUM_EFFICIENCY_RATIO,
         )
 
         production_rate_hz = calculate_coincidence_rate(
