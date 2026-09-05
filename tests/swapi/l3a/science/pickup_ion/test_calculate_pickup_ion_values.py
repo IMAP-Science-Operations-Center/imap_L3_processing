@@ -47,7 +47,6 @@ def _vasyliunas_siscoe_distribution():
 
 def _good_nominal(**overrides):
     base = {
-        "cooling_index": 1.5,
         "ionization_rate": 1e-7,
         "cutoff_speed": 450.0,
     }
@@ -65,7 +64,7 @@ def _run_calculate_with_mocked_fit(
     *,
     nominal,
     observed_per_step=1.0,
-    cov_external_diag=(1.0, 1.0, 1.0),
+    cov_external_diag=(1.0, 1.0),
     fit_is_good=True,
 ):
     """Drive `calculate_pickup_ion_values` through its post-fit branches.
@@ -86,11 +85,10 @@ def _run_calculate_with_mocked_fit(
 
     fake_result = MagicMock()
     fake_result.var_names = [
-        "cooling_index",
         "ionization_rate",
         "cutoff_speed",
     ]
-    fake_result.x = np.zeros(3)
+    fake_result.x = np.zeros(2)
     fake_result.params.valuesdict.return_value = nominal
     fake_minimizer = MagicMock()
     fake_minimizer.minimize.return_value = fake_result
@@ -99,7 +97,7 @@ def _run_calculate_with_mocked_fit(
     with patch(f"{_MODULE_PATH}.build_chunk_collapsed_response") as mock_build, patch(
         f"{_MODULE_PATH}.lmfit.Minimizer", return_value=fake_minimizer
     ), patch(
-        f"{_MODULE_PATH}.ndt.Hessian", return_value=lambda _: np.eye(3)
+        f"{_MODULE_PATH}.ndt.Hessian", return_value=lambda _: np.eye(2)
     ), patch(
         f"{_MODULE_PATH}.calculate_coincidence_rate", return_value=_MODELED_RATES
     ) as mock_calculate_coincidence_rate, patch(
@@ -127,7 +125,6 @@ def _run_calculate_with_mocked_fit(
 
 def _assert_all_nan_params(tc, fitting_params):
     for value in (
-        fitting_params.cooling_index,
         fitting_params.ionization_rate,
         fitting_params.cutoff_speed,
     ):
@@ -187,7 +184,7 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
         parameter is NaN ± NaN, and the goodness-of-fit check never runs."""
         run = _run_calculate_with_mocked_fit(
             nominal=_good_nominal(),
-            cov_external_diag=(-1.0, -1.0, -1.0),
+            cov_external_diag=(-1.0, -1.0),
         )
 
         self.assertEqual(
@@ -214,12 +211,12 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
     ):
         """Ensure is_good_fit receives the correct input."""
         run = _run_calculate_with_mocked_fit(
-            nominal=_good_nominal(cooling_index=1.5, cutoff_speed=450.0),
+            nominal=_good_nominal(ionization_rate=1e-7, cutoff_speed=450.0),
             observed_per_step=2.0,
         )
 
         modeled_params = run.calculate_coincidence_rate_mock.call_args.args[2]
-        self.assertEqual(modeled_params.cooling_index, 1.5)
+        self.assertEqual(modeled_params.ionization_rate, 1e-7)
         self.assertEqual(modeled_params.cutoff_speed, 450.0)
 
         goodness_of_fit_args = run.is_good_fit_mock.call_args.kwargs
@@ -246,7 +243,6 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
 
         self.assertEqual(int(fitting_params.flags), int(SwapiL3Flags.NONE))
         for value in (
-            fitting_params.cooling_index,
             fitting_params.ionization_rate,
             fitting_params.cutoff_speed,
         ):

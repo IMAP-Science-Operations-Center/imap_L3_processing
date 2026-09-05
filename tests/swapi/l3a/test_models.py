@@ -25,9 +25,9 @@ from imap_l3_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, EPOC
     ALPHA_SOLAR_WIND_VELOCITY_RTN_SUN_CDF_VAR_NAME, ALPHA_SOLAR_WIND_VELOCITY_RTN_CDF_VAR_NAME, \
     ALPHA_SOLAR_WIND_VELOCITY_RTN_COVARIANCE_CDF_VAR_NAME, \
     ALPHA_SOLAR_WIND_VELOCITY_RTN_UNCERTAINTY_CDF_VAR_NAME, \
-    SwapiL3PickupIonData, PUI_COOLING_INDEX_CDF_VAR_NAME, \
+    SwapiL3PickupIonData, \
     PUI_IONIZATION_RATE_CDF_VAR_NAME, PUI_CUTOFF_SPEED_CDF_VAR_NAME, \
-    PUI_DENSITY_CDF_VAR_NAME, PUI_TEMPERATURE_CDF_VAR_NAME, PUI_COOLING_INDEX_UNCERTAINTY_CDF_VAR_NAME, \
+    PUI_DENSITY_CDF_VAR_NAME, PUI_TEMPERATURE_CDF_VAR_NAME, \
     PUI_IONIZATION_RATE_UNCERTAINTY_CDF_VAR_NAME, PUI_CUTOFF_SPEED_UNCERTAINTY_CDF_VAR_NAME, \
     PUI_DENSITY_UNCERTAINTY_CDF_VAR_NAME, \
     PUI_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME, SWAPI_QUALITY_FLAGS_CDF_VAR_NAME, VELOCITY_RTN_LABEL_CDF_VAR_NAME, \
@@ -170,10 +170,6 @@ class TestModels(CdfModelTestCase):
     def test_getting_pui_data_product_variables(self):
         epoch_data = np.arange(20, step=2)
         expected_epoch_delta = np.full(10, FIVE_MINUTES_IN_NANOSECONDS)
-        expected_cooling_index_nominal = np.arange(10, step=1.)
-        expected_cooling_index_std_dev = np.arange(.1, step=.01)
-        expected_cooling_index = uarray(expected_cooling_index_nominal, expected_cooling_index_std_dev)
-
         expected_ionization_rate_nominal = np.arange(300000, step=30000.)
         expected_ionization_rate_std_dev = np.arange(10, step=1.)
         expected_ionization_rate = uarray(expected_ionization_rate_nominal, expected_ionization_rate_std_dev)
@@ -192,35 +188,31 @@ class TestModels(CdfModelTestCase):
 
         expected_quality_flags = np.full(20, 0)
 
-        data = SwapiL3PickupIonData(Mock(), epoch_data, expected_cooling_index, expected_ionization_rate,
+        data = SwapiL3PickupIonData(Mock(), epoch_data, expected_ionization_rate,
                                     expected_cutoff_speed, expected_density, expected_temperature,
                                     expected_quality_flags)
         variables = data.to_data_product_variables()
 
-        self.assertEqual(13, len(variables))
+        self.assertEqual(11, len(variables))
         self.assert_variable_attributes(variables[0], epoch_data, EPOCH_CDF_VAR_NAME)
         self.assert_variable_attributes(variables[1], expected_epoch_delta, EPOCH_DELTA_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[2], expected_cooling_index_nominal,
-                                        PUI_COOLING_INDEX_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[3], expected_cooling_index_std_dev,
-                                        PUI_COOLING_INDEX_UNCERTAINTY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[4], expected_ionization_rate_nominal,
+        self.assert_variable_attributes(variables[2], expected_ionization_rate_nominal,
                                         PUI_IONIZATION_RATE_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[5], expected_ionization_rate_std_dev,
+        self.assert_variable_attributes(variables[3], expected_ionization_rate_std_dev,
                                         PUI_IONIZATION_RATE_UNCERTAINTY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[6], expected_cutoff_speed_nominal,
+        self.assert_variable_attributes(variables[4], expected_cutoff_speed_nominal,
                                         PUI_CUTOFF_SPEED_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[7], expected_cutoff_speed_std_dev,
+        self.assert_variable_attributes(variables[5], expected_cutoff_speed_std_dev,
                                         PUI_CUTOFF_SPEED_UNCERTAINTY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[8], expected_density_nominal,
+        self.assert_variable_attributes(variables[6], expected_density_nominal,
                                         PUI_DENSITY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[9], expected_density_std_dev,
+        self.assert_variable_attributes(variables[7], expected_density_std_dev,
                                         PUI_DENSITY_UNCERTAINTY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[10], expected_temperature_nominal,
+        self.assert_variable_attributes(variables[8], expected_temperature_nominal,
                                         PUI_TEMPERATURE_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[11], expected_temperature_std_dev,
+        self.assert_variable_attributes(variables[9], expected_temperature_std_dev,
                                         PUI_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME)
-        self.assert_variable_attributes(variables[12], expected_quality_flags,
+        self.assert_variable_attributes(variables[10], expected_quality_flags,
                                         SWAPI_QUALITY_FLAGS_CDF_VAR_NAME)
 
 

@@ -27,10 +27,11 @@ f_\text{PUI}\!\left( r, \psi, w \right)
 The free parameters are:
 
 * Cutoff speed $v_{b}$.
-* Cooling index $\alpha_{\text{PUI}}$.
 * Ionization rate $\beta_{E}$.
 
 The additional terms are:
+
+* The cooling index, assumed to be the adiabatic-case $`\alpha_\text{PUI} = 1.5`$.
 
 * $`v_\text{sw}`$ is the solar wind speed in the inertial frame.
 * $`w_k \equiv v'/v_{b}`$, where $`v' \equiv \|\mathbf{v} - \mathbf{v}_\text{sw}\|`$ is the speed in the solar-wind frame.
@@ -190,7 +191,7 @@ Below, the optimized 1D integral is validated by comparing it to a reference 3D 
 
 ## Optimization Strategy
 
-The PUI parameters to be determined are $\mathbf{x} = (\alpha_\text{PUI}, \beta_E, v_b)$.
+The PUI parameters to be determined are $\mathbf{x} = (\beta_E, v_b)$.
 To enable the application of physical constraints on the parameters, the constrained optimization problem in $\mathbf{x}$ is posed as an unconstrained problem in $\tilde{x}$, given by
 ```math
 \tilde{\mathbf{x}} = \arcsin\!\left( \dfrac{2 (\mathbf{x} - \mathbf{x}_\text{min})}{\mathbf{x}_\text{max} - \mathbf{x}_\text{min}} - 1 \right),
@@ -198,11 +199,10 @@ To enable the application of physical constraints on the parameters, the constra
 with bounds defined in the table below.
 | Parameter | $`x_\text{min}`$ | $`x_\text{max}`$ | Initial |
 |---|---|---|---|
-| $\alpha_\text{PUI}$ | 1.0 | 5.0 | 1.5 |
 | $\beta_E$ | $0.6 \times 10^{-9}$ s⁻¹ | $8 \times 10^{-7}$ s⁻¹ | $10^{-7}$ s⁻¹ |
 | $v_b$ | $0.8 \, v_\text{sw}$ | $1.2 \, v_\text{sw}$ | $v_\text{sw}$ |
 
-The Nelder-Mead method is used for optimization, with a heuristic four-vertex simplex specified explicitly.
+The Nelder-Mead method is used for optimization, with a heuristic three-vertex simplex specified explicitly.
 
 The optimal parameters are estimated by maximizing the Poisson likelihood—yielding optimal parameters $`\hat{\mathbf{x}}`$—through minimization of
 ```math

@@ -1077,7 +1077,6 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
 
 _PUI_RESULT_KEYS = [
     "epoch",
-    "cooling_index",
     "ionization_rate",
     "cutoff_speed",
     "density",
@@ -1400,7 +1399,7 @@ class TestPuiChunkFitterFitChunk(unittest.TestCase):
         self, mock_calculate_pickup_ion, mock_density, mock_temperature
     ):
         """On a clean chunk the fitter forwards the fit parameters and the moment-helper outputs verbatim, and the PUI chunk-center epoch is handed to the fit so the response picks the He+ efficiency for that time."""
-        fit_params = FittingParameters(1.5, 1e-7, 450.0, int(SwapiL3Flags.NONE))
+        fit_params = FittingParameters(1e-7, 450.0, int(SwapiL3Flags.NONE))
         mock_calculate_pickup_ion.return_value = PickupIonFitResult(
             fitting_params=fit_params,
             chunk_response=Mock(),
@@ -1421,7 +1420,6 @@ class TestPuiChunkFitterFitChunk(unittest.TestCase):
         )
 
         self.assertEqual(result["epoch"], self.epoch)
-        self.assertEqual(result["cooling_index"], 1.5)
         self.assertEqual(result["ionization_rate"], 1e-7)
         self.assertEqual(result["cutoff_speed"], 450.0)
         self.assertIs(result["density"], density_result)
@@ -1438,7 +1436,7 @@ class TestPuiChunkFitterFitChunk(unittest.TestCase):
         nan = ufloat(np.nan, np.nan)
         mock_calculate_pickup_ion.return_value = PickupIonFitResult(
             fitting_params=FittingParameters(
-                nan, nan, nan, int(SwapiL3Flags.BAD_FIT)
+                nan, nan, int(SwapiL3Flags.BAD_FIT)
             ),
             chunk_response=Mock(),
             vasyliunas_siscoe_distribution=Mock(),
@@ -1465,7 +1463,7 @@ class TestPuiChunkFitterFitChunk(unittest.TestCase):
         nan = ufloat(np.nan, np.nan)
         mock_calculate_pickup_ion.return_value = PickupIonFitResult(
             fitting_params=FittingParameters(
-                nan, nan, nan, int(SwapiL3Flags.BAD_FIT)
+                nan, nan, int(SwapiL3Flags.BAD_FIT)
             ),
             chunk_response=Mock(),
             vasyliunas_siscoe_distribution=Mock(),
@@ -1506,7 +1504,7 @@ class TestPuiChunkFitterFitChunk(unittest.TestCase):
         mock_calculate_pickup_ion.assert_not_called()
         mock_density.assert_not_called()
         mock_temperature.assert_not_called()
-        for key in ("cooling_index", "ionization_rate", "cutoff_speed",
+        for key in ("ionization_rate", "cutoff_speed",
                     "density", "temperature"):
             self.assertTrue(np.isnan(result[key].nominal_value), msg=key)
             self.assertTrue(np.isnan(result[key].std_dev), msg=key)
@@ -1526,7 +1524,7 @@ class TestPuiChunkFitterFitChunk(unittest.TestCase):
         )
 
         mock_calculate_pickup_ion.assert_not_called()
-        for key in ("cooling_index", "ionization_rate", "cutoff_speed",
+        for key in ("ionization_rate", "cutoff_speed",
                     "density", "temperature"):
             self.assertTrue(np.isnan(result[key].nominal_value), msg=key)
         self.assertEqual(result["quality_flags"], int(SwapiL3Flags.NONE))
@@ -1545,7 +1543,7 @@ class TestPuiChunkFitterFitChunk(unittest.TestCase):
         )
 
         mock_calculate_pickup_ion.assert_not_called()
-        for key in ("cooling_index", "ionization_rate", "cutoff_speed",
+        for key in ("ionization_rate", "cutoff_speed",
                     "density", "temperature"):
             self.assertTrue(np.isnan(result[key].nominal_value), msg=key)
         self.assertEqual(result["quality_flags"], int(SwapiL3Flags.NONE))

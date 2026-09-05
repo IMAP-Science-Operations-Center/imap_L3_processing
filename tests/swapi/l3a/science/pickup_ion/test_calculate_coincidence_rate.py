@@ -44,7 +44,6 @@ _DENSITY_LUT_PATH = get_test_instrument_team_data_path(
 _SW_SPEED_KMS = 450.0
 _SW_AZIMUTH_DEG = 0.0
 _SW_ELEVATION_DEG = -10.0
-_COOLING_INDEX = 2.0
 _CUTOFF_SPEED_KMS = 450.0
 _IONIZATION_RATE_HZ = 2e-7
 _HELIO_DIST_AU = 1.0
@@ -59,7 +58,6 @@ class CalculateCoincidenceRateAgainstReferenceTest(unittest.TestCase):
         reference_rate_hz = reference.iloc[:, 1].to_numpy()
 
         fitting_params = FittingParameters(
-            cooling_index=_COOLING_INDEX,
             ionization_rate=_IONIZATION_RATE_HZ,
             cutoff_speed=_CUTOFF_SPEED_KMS,
         )

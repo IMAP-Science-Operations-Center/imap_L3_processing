@@ -25,3 +25,6 @@ SWAPI_LIVETIME_CENTER_OFFSET_S = (SWAPI_BIN_PERIOD_S - SWAPI_LIVETIME_S) + SWAPI
 
 # baseline instrument background is approximately 0.1 Hz
 SWAPI_BACKGROUND_RATE = 0.1
+
+# assumes adiabatic cooling
+SWAPI_PUI_COOLING_INDEX = 1.5

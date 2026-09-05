@@ -52,12 +52,10 @@ ALPHA_SOLAR_WIND_VELOCITY_RTN_UNCERTAINTY_CDF_VAR_NAME = (
     "alpha_sw_velocity_rtn_uncert"
 )
 
-PUI_COOLING_INDEX_CDF_VAR_NAME = "pui_cooling_index"
 PUI_IONIZATION_RATE_CDF_VAR_NAME = "pui_ionization_rate"
 PUI_CUTOFF_SPEED_CDF_VAR_NAME = "pui_cutoff_speed"
 PUI_DENSITY_CDF_VAR_NAME = "pui_density"
 PUI_TEMPERATURE_CDF_VAR_NAME = "pui_temperature"
-PUI_COOLING_INDEX_UNCERTAINTY_CDF_VAR_NAME = "pui_cooling_index_uncert"
 PUI_IONIZATION_RATE_UNCERTAINTY_CDF_VAR_NAME = "pui_ionization_rate_uncert"
 PUI_CUTOFF_SPEED_UNCERTAINTY_CDF_VAR_NAME = "pui_cutoff_speed_uncert"
 PUI_DENSITY_UNCERTAINTY_CDF_VAR_NAME = "pui_density_uncert"
@@ -234,7 +232,6 @@ class SwapiL3AlphaSolarWindData(DataProduct):
 @dataclass
 class SwapiL3PickupIonData(DataProduct):
     epoch: np.ndarray[float]
-    cooling_index: np.ndarray[float]
     ionization_rate: np.ndarray[float]
     cutoff_speed: np.ndarray[float]
     density: np.ndarray[float]
@@ -247,12 +244,6 @@ class SwapiL3PickupIonData(DataProduct):
             DataProductVariable(
                 EPOCH_DELTA_CDF_VAR_NAME,
                 np.full_like(self.epoch, FIVE_MINUTES_IN_NANOSECONDS),
-            ),
-            DataProductVariable(
-                PUI_COOLING_INDEX_CDF_VAR_NAME, nominal_values(self.cooling_index)
-            ),
-            DataProductVariable(
-                PUI_COOLING_INDEX_UNCERTAINTY_CDF_VAR_NAME, std_devs(self.cooling_index)
             ),
             DataProductVariable(
                 PUI_IONIZATION_RATE_CDF_VAR_NAME, nominal_values(self.ionization_rate)

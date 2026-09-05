@@ -176,7 +176,7 @@ passband_full = xr.where(az_is_sg, passband_per_region.sel(region="SG"),
 SW_SPEED_KMS = 450.0
 SW_AZ_DEG = 0.0
 SW_EL_DEG = -10.0
-COOLING_INDEX = 2.0       # α
+COOLING_INDEX = 1.5       # α
 CUTOFF_SPEED_KMS = 450.0  # v_b
 IONIZATION_RATE_HZ = 2e-7 # β_E at 1 AU
 HELIO_DIST_AU = 1.0       # r

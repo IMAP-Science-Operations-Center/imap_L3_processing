@@ -260,7 +260,11 @@ if __name__ == "__main__":
         PROTON_MASS_KG,
         PROTON_MASS_PER_CHARGE_M_P_PER_E,
     )
-    from imap_l3_processing.swapi.constants import SWAPI_L2_K_FACTOR
+    from imap_l3_processing.swapi.constants import (
+        SWAPI_BACKGROUND_RATE,
+        SWAPI_L2_K_FACTOR,
+        SWAPI_PUI_COOLING_INDEX,
+    )
     from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
         build_solar_wind_fit_context,
     )
@@ -295,18 +299,18 @@ if __name__ == "__main__":
 
     # Truth values are chosen well inside every fit bound so frozen-value
     # integration tests are not sensitive to LM termination next to a wall:
-    #   cooling_index ∈ [1.0, 5.0]           → 2.5 (centered)
     #   ionization_rate ∈ [0.6e-9, 8e-7]     → 1e-7 (comfortable margin from both ends)
     #   cutoff_speed ∈ [0.8·sw, 1.2·sw]      → 1.05·sw_speed (clear of both edges)
-    #   background_count_rate cap at 1.0 Hz  → 0.3 Hz (no post-fit fill)
+    # Claude: the cooling index and background rate are no longer fitted, so
+    # both must be generated at the values production assumes.
     SW_SPEED_KMS = 450.0
-    COOLING_INDEX = 2.5
+    COOLING_INDEX = SWAPI_PUI_COOLING_INDEX
     CUTOFF_SPEED_KMS = 1.05 * SW_SPEED_KMS
     IONIZATION_RATE_HZ = 1e-7
     HELIO_DIST_AU = 1.0
     INFLOW_PSI_DEG = 75.0
     SW_SPEED_INERTIAL_KMS = 450.0
-    BACKGROUND_RATE_HZ = 0.3
+    BACKGROUND_RATE_HZ = SWAPI_BACKGROUND_RATE
     HELIUM_MASS_PER_CHARGE_M_P_PER_E = 4.0
 
     # Proton + alpha Maxwellian shoulder truth.

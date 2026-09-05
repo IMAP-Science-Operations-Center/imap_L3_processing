@@ -136,7 +136,6 @@ def calculate_pickup_ion_values(
             fitting_params = FittingParameters(
                 nan_param,
                 nan_param,
-                nan_param,
                 fitting_params.flags | SwapiL3Flags.BAD_FIT,
             )
 
@@ -182,7 +181,6 @@ def _fit_pickup_ion_parameters(
     residual constructs a `FittingParameters` from each iteration's lmfit values.
     """
     params = Parameters()
-    params.add("cooling_index", value=1.5, min=1.0, max=5.0)
     params.add("ionization_rate", value=1e-7, min=0.6e-9, max=8.0e-7)
     params.add(
         "cutoff_speed",
@@ -194,19 +192,17 @@ def _fit_pickup_ion_parameters(
     def map_to_internal(value, param):
         return np.arcsin(2 * (value - param.min) / (param.max - param.min) - 1)
 
-    def simplex_vertex(cooling_index, ionization_rate, cutoff_speed):
+    def simplex_vertex(ionization_rate, cutoff_speed):
         return [
-            map_to_internal(cooling_index, params["cooling_index"]),
             map_to_internal(ionization_rate, params["ionization_rate"]),
             map_to_internal(cutoff_speed, params["cutoff_speed"]),
         ]
 
     initial_simplex = np.array(
         [
-            simplex_vertex(1.5, 1e-7, sw_speed_kms),
-            simplex_vertex(5.0, 1e-7, sw_speed_kms),
-            simplex_vertex(1.5, 2.1e-7, sw_speed_kms),
-            simplex_vertex(1.5, 1e-7, sw_speed_kms * 1.2),
+            simplex_vertex(1e-7, sw_speed_kms),
+            simplex_vertex(2.1e-7, sw_speed_kms),
+            simplex_vertex(1e-7, sw_speed_kms * 1.2),
         ]
     )
 
@@ -236,7 +232,7 @@ def _fit_pickup_ion_parameters(
 
     if flags & SwapiL3Flags.BAD_FIT:
         nan_param = ufloat(np.nan, np.nan)
-        return FittingParameters(nan_param, nan_param, nan_param, flags)
+        return FittingParameters(nan_param, nan_param, flags)
 
     param_vals = {
         name: ufloat(nominal_values[name], std_err)
@@ -244,7 +240,6 @@ def _fit_pickup_ion_parameters(
     }
 
     return FittingParameters(
-        param_vals["cooling_index"],
         param_vals["ionization_rate"],
         param_vals["cutoff_speed"],
         flags,
@@ -259,7 +254,6 @@ def _calculate_poisson_negative_log_likelihood(
 ) -> float:
     parvals = params.valuesdict()
     fitting_params = FittingParameters(
-        cooling_index=parvals["cooling_index"],
         ionization_rate=parvals["ionization_rate"],
         cutoff_speed=parvals["cutoff_speed"],
     )

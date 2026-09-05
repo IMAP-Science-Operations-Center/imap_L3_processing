@@ -210,8 +210,6 @@ class SwapiProcessorIntegration(unittest.TestCase):
         expected_values = {
             'epoch': datetime.datetime(2026, 1, 1, 16, 24, 4, 954000),
             'epoch_delta': 300000000000,
-            'pui_cooling_index': 1.5282666683197021,
-            'pui_cooling_index_uncert': 0.24946478009223938,
             'pui_ionization_rate': 8.944940788069289e-08,
             'pui_ionization_rate_uncert': 8.772070181350955e-09,
             'pui_cutoff_speed': 487.0067443847656,
