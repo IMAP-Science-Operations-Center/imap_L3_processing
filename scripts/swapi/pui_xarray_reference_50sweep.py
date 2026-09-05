@@ -255,10 +255,8 @@ if __name__ == "__main__":
     import spiceypy
 
     from imap_l3_processing.constants import (
-        ALPHA_MASS_PER_CHARGE_M_P_PER_E,
         ALPHA_PARTICLE_MASS_KG,
         PROTON_MASS_KG,
-        PROTON_MASS_PER_CHARGE_M_P_PER_E,
     )
     from imap_l3_processing.swapi.constants import (
         SWAPI_BACKGROUND_RATE,
@@ -273,6 +271,7 @@ if __name__ == "__main__":
     )
     from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
     from imap_l3_processing.swapi.response.deadtime import deadtime_factor
+    from imap_l3_processing.swapi.species import Species
     from imap_l3_processing.utils import SpiceKernelTypes, furnish_spice_metakernel
     from tests.swapi._helpers import load_swapi_response
     from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path
@@ -399,22 +398,29 @@ if __name__ == "__main__":
             solar_wind_speed_inertial_kms=SW_SPEED_INERTIAL_KMS,
         )
 
+    # Per-sweep TT2000 timestamps (nanoseconds from J2000.0 TT epoch).
+    sci_start_time_tt2000_ns = np.array(
+        [int(spiceypy.unitim(et, "ET", "TT") * 1e9) for et in sweep_starts_et],
+        dtype=np.int64,
+    )
+
     print("Computing proton + alpha Maxwellian shoulder via production forward model...")
     voltage_repeated = np.broadcast_to(
         pui_context.voltages_v, (N_SWEEPS, N_ESA_STEPS_PER_SWEEP)
     ).ravel()
     rotation_flat = swapi_to_rtn_rotation_per_bin.reshape(-1, 3, 3)
+
     swapi_response = load_swapi_response(warm_cache_voltages=pui_context.voltages_v)
 
     proton_truth = SolarWindParams(
         density=PROTON_DENSITY_CM3,
-        bulk_velocity_rtn=BULK_SW_RTN_KMS.copy(),
+        velocity_rtn=BULK_SW_RTN_KMS.copy(),
         temperature=PROTON_TEMPERATURE_K,
         mass=PROTON_MASS_KG,
     )
     alpha_truth = SolarWindParams(
         density=ALPHA_DENSITY_CM3,
-        bulk_velocity_rtn=BULK_SW_RTN_KMS.copy(),
+        velocity_rtn=BULK_SW_RTN_KMS.copy(),
         temperature=ALPHA_TEMPERATURE_K,
         mass=ALPHA_PARTICLE_MASS_KG,
     )
@@ -422,19 +428,17 @@ if __name__ == "__main__":
         count_rate=np.zeros(voltage_repeated.size),
         esa_voltage=voltage_repeated,
         swapi_response=swapi_response,
-        central_effective_area_scale=1.0,
+        time_as_tt2000=int(sci_start_time_tt2000_ns[0]),
+        species=Species.PROTON,
         rotation_matrices=rotation_flat,
-        mass_kg=PROTON_MASS_KG,
-        mass_per_charge_m_p_per_e=PROTON_MASS_PER_CHARGE_M_P_PER_E,
     )
     alpha_ctx = build_solar_wind_fit_context(
         count_rate=np.zeros(voltage_repeated.size),
         esa_voltage=voltage_repeated,
         swapi_response=swapi_response,
-        central_effective_area_scale=HELIUM_EFFICIENCY_RATIO,
+        time_as_tt2000=int(sci_start_time_tt2000_ns[0]),
+        species=Species.ALPHA,
         rotation_matrices=rotation_flat,
-        mass_kg=ALPHA_PARTICLE_MASS_KG,
-        mass_per_charge_m_p_per_e=ALPHA_MASS_PER_CHARGE_M_P_PER_E,
     )
     proton_ideal, _ = model_solar_wind_ideal_coincidence_rates(proton_truth, proton_ctx)
     alpha_ideal, _ = model_solar_wind_ideal_coincidence_rates(alpha_truth, alpha_ctx)
@@ -448,12 +452,6 @@ if __name__ == "__main__":
         + BACKGROUND_RATE_HZ
     )
     expected_count_rate_per_sweep = ideal_total_rate * deadtime_factor(ideal_total_rate)
-
-    # Per-sweep TT2000 timestamps (nanoseconds from J2000.0 TT epoch).
-    sci_start_time_tt2000_ns = np.array(
-        [int(spiceypy.unitim(et, "ET", "TT") * 1e9) for et in sweep_starts_et],
-        dtype=np.int64,
-    )
 
     # ESA energy per step: voltage * L2 k-factor.
     energy_ev = pui_context.voltages_v * SWAPI_L2_K_FACTOR
