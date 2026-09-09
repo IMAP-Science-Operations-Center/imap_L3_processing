@@ -380,6 +380,7 @@ def process_l3e_lo(
         instrument="glows",
         descriptor=f"{cdf_science_file_path.descriptor}-raw",
         start_time=cdf_science_file_path.start_date,
+        repointing=repointing,
         version=str(Version(None, version.minor)),
         extension="dat"
     ).construct_path()
@@ -425,6 +426,7 @@ def process_l3e_ul_sf(parent_file_names: list[str], repointing: int, repointing_
         instrument="glows",
         descriptor=f"{cdf_science_file_path.descriptor}-raw",
         start_time=cdf_science_file_path.start_date,
+        repointing=repointing,
         version=str(Version(None, version.minor)),
         extension="dat"
     ).construct_path()
@@ -475,6 +477,7 @@ def process_l3e_ul_hf(parent_file_names: list[str], repointing: int, repointing_
         instrument="glows",
         descriptor=f"{cdf_science_file_path.descriptor}-raw",
         start_time=cdf_science_file_path.start_date,
+        repointing=repointing,
         version=str(Version(None, version.minor)),
         extension="dat"
     ).construct_path()
@@ -517,6 +520,7 @@ def process_l3e_hi(parent_file_names: list[str], repointing: int, repointing_sta
         instrument="glows",
         descriptor=f"{cdf_science_file_path.descriptor}-raw",
         start_time=cdf_science_file_path.start_date,
+        repointing=repointing,
         version=str(Version(None, version.minor)),
         extension="dat"
     ).construct_path()
