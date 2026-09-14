@@ -9,12 +9,10 @@ from spiceypy import KernelPool
 from uncertainties import ufloat
 
 from imap_l3_processing.constants import (
-    ALPHA_MASS_PER_CHARGE_M_P_PER_E,
     ALPHA_PARTICLE_MASS_KG,
     FIVE_MINUTES_IN_NANOSECONDS,
     ONE_SECOND_IN_NANOSECONDS,
     PROTON_MASS_KG,
-    PROTON_MASS_PER_CHARGE_M_P_PER_E,
     THIRTY_SECONDS_IN_NANOSECONDS,
 )
 from imap_l3_processing.models import InputMetadata, MagData
@@ -62,11 +60,15 @@ from imap_l3_processing.swapi.constants import (
     SWAPI_LIVETIME_CENTER_OFFSET_S,
     SWAPI_SCIENCE_BINS,
 )
-from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 from imap_l3_processing.predicted_ephemeris_tracker import PredictedEphemerisTracker
+from imap_l3_processing.swapi.species import Species
 from tests.spice_test_case import SpiceTestCase
-from tests.swapi._helpers import REALISTIC_ESA_VOLTAGES
-from tests.test_helpers import get_test_instrument_team_data_path, get_integration_test_spice_data_path
+from tests.swapi._helpers import (
+    REALISTIC_ESA_VOLTAGES,
+    SWAPI_EFFICIENCY_TABLE_PATH,
+    load_swapi_response,
+)
+from tests.test_helpers import get_integration_test_spice_data_path
 
 _N_SWEEPS = 5
 _N_BINS = 72
@@ -116,16 +118,6 @@ _ALPHA_ARRAY_KEYS = [
 _ALPHA_BUMP_BINS = slice(24, 31)
 
 
-def _swapi_response_with_warm_cache(voltages):
-    resp = SwapiResponse.from_files(
-        get_test_instrument_team_data_path("swapi/imap_swapi_azimuthal-transmission_20260425_v001.csv"),
-        get_test_instrument_team_data_path("swapi/imap_swapi_central-effective-area_20260425_v001.csv"),
-        get_test_instrument_team_data_path("swapi/imap_swapi_passband-fit-coefficients_20260425_v001.csv"),
-    )
-    resp.warm_cache(voltages)
-    return resp
-
-
 def _spice_rotations(bin_slice):
     """SPICE-derived SWAPI→RTN rotations at the synthetic chunk's measurement
     times over `bin_slice`."""
@@ -152,22 +144,9 @@ def _truth_velocity_rtn(rotations):
 
 
 def _efficiency_table():
-    """Synthetic `EfficiencyCalibrationTable` holding proton efficiency 1.0 and
-    helium efficiency 1.25, both relative to the lab calibration."""
-    table = EfficiencyCalibrationTable.__new__(EfficiencyCalibrationTable)
-    table.data = np.array(
-        [
-            (np.datetime64("2024-01-01", "ns"), 0, 1.0, 1.25),
-            (np.datetime64("2025-11-01", "ns"), 0, 1.0, 1.25),
-        ],
-        dtype=[
-            ("time", "M8[ns]"),
-            ("MET", "i8"),
-            ("proton efficiency", "f8"),
-            ("helium efficiency", "f8"),
-        ],
-    )
-    return table
+    """`EfficiencyCalibrationTable` over the same relative efficiencies the
+    `SwapiResponse` under test is built from."""
+    return EfficiencyCalibrationTable(SWAPI_EFFICIENCY_TABLE_PATH)
 
 
 def _populate_shared(response, table):
@@ -178,10 +157,10 @@ def _clear_shared():
     chunk_fits._shared.clear()
 
 
-def _synthesize_chunk(*, response, rotations, proton_velocity_rtn, alpha_velocity_rtn, efficiency_table):
+def _synthesize_chunk(*, response, rotations, proton_velocity_rtn, alpha_velocity_rtn):
     """Forward-model a 5-sweep proton + alpha chunk at the truth params over
     the full 71-bin science axis. Per-species effective-area scales come from
-    `efficiency_table` so synthesis and the fitter share the same calibration."""
+    `response` so synthesis and the fitter share the same calibration."""
     n = SWAPI_SCIENCE_BINS.stop - SWAPI_SCIENCE_BINS.start
     voltages = np.tile(REALISTIC_ESA_VOLTAGES, _N_SWEEPS)
 
@@ -189,19 +168,17 @@ def _synthesize_chunk(*, response, rotations, proton_velocity_rtn, alpha_velocit
         count_rate=np.zeros(len(voltages)),
         esa_voltage=voltages,
         swapi_response=response,
-        central_effective_area_scale=efficiency_table.relative_proton_efficiency(_CHUNK_EPOCH),
+        time_as_tt2000=_CHUNK_EPOCH,
+        species=Species.PROTON,
         rotation_matrices=rotations,
-        mass_kg=PROTON_MASS_KG,
-        mass_per_charge_m_p_per_e=PROTON_MASS_PER_CHARGE_M_P_PER_E,
     )
     alpha_ctx = build_solar_wind_fit_context(
         count_rate=np.zeros(len(voltages)),
         esa_voltage=voltages,
         swapi_response=response,
-        central_effective_area_scale=efficiency_table.relative_helium_efficiency(_CHUNK_EPOCH),
+        time_as_tt2000=_CHUNK_EPOCH,
+        species=Species.ALPHA,
         rotation_matrices=rotations,
-        mass_kg=ALPHA_PARTICLE_MASS_KG,
-        mass_per_charge_m_p_per_e=ALPHA_MASS_PER_CHARGE_M_P_PER_E,
     )
     proton_truth = SolarWindParams(
         density=_TRUE_DENSITY,
@@ -230,7 +207,7 @@ def _synthesize_chunk(*, response, rotations, proton_velocity_rtn, alpha_velocit
     return chunk
 
 
-def _build_truth_chunk(response, efficiency_table):
+def _build_truth_chunk(response):
     """Forward-model a clean proton+alpha chunk from `response` over the science
     bin range, returning the chunk plus the rotations and truth velocities used
     to synthesize it. The alpha truth velocity is constructed here so all three
@@ -243,7 +220,6 @@ def _build_truth_chunk(response, efficiency_table):
         rotations=science_rotations,
         proton_velocity_rtn=proton_velocity_rtn,
         alpha_velocity_rtn=alpha_velocity_rtn,
-        efficiency_table=efficiency_table,
     )
     return chunk, science_rotations, proton_velocity_rtn, alpha_velocity_rtn
 
@@ -445,10 +421,10 @@ class TestProtonChunkFitterFitChunk(SpiceTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.response = _swapi_response_with_warm_cache(np.tile(REALISTIC_ESA_VOLTAGES, _N_SWEEPS))
+        cls.response = load_swapi_response(np.tile(REALISTIC_ESA_VOLTAGES, _N_SWEEPS))
         efficiency_table = _efficiency_table()
         _populate_shared(cls.response, efficiency_table)
-        cls.chunk, cls.rotations, cls.true_proton_velocity_rtn, _ = _build_truth_chunk(cls.response, efficiency_table)
+        cls.chunk, cls.rotations, cls.true_proton_velocity_rtn, _ = _build_truth_chunk(cls.response)
         cls.result = ProtonChunkFitter().fit_chunk(
             cls.chunk, _CHUNK_EPOCH, cls.rotations, _SC_VELOCITY_RTN.copy(), SwapiL3Flags.NONE,
         )
@@ -673,10 +649,10 @@ class TestAlphaChunkFitterFitChunk(SpiceTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.response = _swapi_response_with_warm_cache(np.tile(REALISTIC_ESA_VOLTAGES, _N_SWEEPS))
+        cls.response = load_swapi_response(np.tile(REALISTIC_ESA_VOLTAGES, _N_SWEEPS))
         efficiency_table = _efficiency_table()
         _populate_shared(cls.response, efficiency_table)
-        cls.chunk, _, cls.true_proton_velocity_rtn, cls.true_alpha_velocity_rtn = _build_truth_chunk(cls.response, efficiency_table)
+        cls.chunk, _, cls.true_proton_velocity_rtn, cls.true_alpha_velocity_rtn = _build_truth_chunk(cls.response)
         # AlphaChunkFitter and ProtonChunkFitter share the same proton fit on
         # `SWAPI_SCIENCE_BINS`, so the rotations passed in must span the full
         # science range; AlphaChunkFitter slices down to coarse for Stage 2.
@@ -809,7 +785,7 @@ class TestParallelChunkRunnerOrchestration(unittest.TestCase):
             _make_chunk_with_start_time(_EPOCH_TT2000 + 12_000_000_000),
         ]
         runner = ParallelChunkRunner(
-            swapi_response=_swapi_response_with_warm_cache(np.tile(REALISTIC_ESA_VOLTAGES, _N_SWEEPS)),
+            swapi_response=load_swapi_response(np.tile(REALISTIC_ESA_VOLTAGES, _N_SWEEPS)),
             efficiency_table=_efficiency_table(),
         )
 
@@ -824,7 +800,7 @@ class TestParallelChunkRunnerOrchestration(unittest.TestCase):
     def test_workers_see_parent_warm_cache_under_fork(self):
         """A passband grid cache populated in the parent before `runner.run` is visible inside each fork-spawned worker at the same size."""
         voltages = np.array([10.0, 50.0, 100.0])
-        response = _swapi_response_with_warm_cache(voltages)
+        response = load_swapi_response(voltages)
         parent_cache_size = len(response._passband_grid_cache)
         self.assertEqual(parent_cache_size, len(voltages))
 
@@ -851,10 +827,10 @@ class TestProtonChunkFitterQualityFlags(SpiceTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.response = _swapi_response_with_warm_cache(np.tile(REALISTIC_ESA_VOLTAGES, _N_SWEEPS))
+        cls.response = load_swapi_response(np.tile(REALISTIC_ESA_VOLTAGES, _N_SWEEPS))
         efficiency_table = _efficiency_table()
         _populate_shared(cls.response, efficiency_table)
-        cls.chunk, cls.rotations, _, _ = _build_truth_chunk(cls.response, efficiency_table)
+        cls.chunk, cls.rotations, _, _ = _build_truth_chunk(cls.response)
         cls.fitter = ProtonChunkFitter()
 
     @classmethod
@@ -968,10 +944,10 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.response = _swapi_response_with_warm_cache(np.tile(REALISTIC_ESA_VOLTAGES, _N_SWEEPS))
+        cls.response = load_swapi_response(np.tile(REALISTIC_ESA_VOLTAGES, _N_SWEEPS))
         efficiency_table = _efficiency_table()
         _populate_shared(cls.response, efficiency_table)
-        cls.chunk, cls.rotations, _, _ = _build_truth_chunk(cls.response, efficiency_table)
+        cls.chunk, cls.rotations, _, _ = _build_truth_chunk(cls.response)
         cls.fitter = AlphaChunkFitter(mag_data=None)
 
     @classmethod
@@ -1101,10 +1077,8 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
 
 _PUI_RESULT_KEYS = [
     "epoch",
-    "cooling_index",
     "ionization_rate",
     "cutoff_speed",
-    "background_rate",
     "density",
     "temperature",
     "quality_flags",
@@ -1407,7 +1381,6 @@ class TestPuiChunkFitterFitChunk(unittest.TestCase):
         self.vasyliunas_siscoe_distribution = Mock()
         self.swapi_response = Mock()
         self.efficiency_table = Mock()
-        self.efficiency_table.relative_helium_efficiency.return_value = 0.42
         _populate_shared(self.swapi_response, self.efficiency_table)
         self.density_lut = Mock()
         self.hydrogen_inflow = Mock()
@@ -1425,8 +1398,8 @@ class TestPuiChunkFitterFitChunk(unittest.TestCase):
     def test_clean_chunk_passes_through_fit_parameters_and_moment_helpers(
         self, mock_calculate_pickup_ion, mock_density, mock_temperature
     ):
-        """On a clean chunk the fitter forwards the fit parameters and the moment-helper outputs verbatim, and the helium-channel effective-area scale lookup happens at the PUI chunk-center epoch."""
-        fit_params = FittingParameters(1.5, 1e-7, 450.0, 0.3, int(SwapiL3Flags.NONE))
+        """On a clean chunk the fitter forwards the fit parameters and the moment-helper outputs verbatim, and the PUI chunk-center epoch is handed to the fit so the response picks the He+ efficiency for that time."""
+        fit_params = FittingParameters(1e-7, 450.0, int(SwapiL3Flags.NONE))
         mock_calculate_pickup_ion.return_value = PickupIonFitResult(
             fitting_params=fit_params,
             chunk_response=Mock(),
@@ -1447,19 +1420,14 @@ class TestPuiChunkFitterFitChunk(unittest.TestCase):
         )
 
         self.assertEqual(result["epoch"], self.epoch)
-        self.assertEqual(result["cooling_index"], 1.5)
         self.assertEqual(result["ionization_rate"], 1e-7)
         self.assertEqual(result["cutoff_speed"], 450.0)
-        self.assertEqual(result["background_rate"], 0.3)
         self.assertIs(result["density"], density_result)
         self.assertIs(result["temperature"], temperature_result)
         self.assertEqual(result["quality_flags"], int(SwapiL3Flags.NONE))
 
-        self.efficiency_table.relative_helium_efficiency.assert_called_once_with(
-            self.epoch
-        )
         pickup_kwargs = mock_calculate_pickup_ion.call_args.kwargs
-        self.assertEqual(pickup_kwargs["central_effective_area_scale"], 0.42)
+        self.assertEqual(pickup_kwargs["time_as_tt2000"], self.epoch)
 
     def test_combines_pui_fit_flag_with_upstream_proton_flag(
         self, mock_calculate_pickup_ion, mock_density, mock_temperature
@@ -1468,7 +1436,7 @@ class TestPuiChunkFitterFitChunk(unittest.TestCase):
         nan = ufloat(np.nan, np.nan)
         mock_calculate_pickup_ion.return_value = PickupIonFitResult(
             fitting_params=FittingParameters(
-                nan, nan, nan, nan, int(SwapiL3Flags.BAD_FIT)
+                nan, nan, int(SwapiL3Flags.BAD_FIT)
             ),
             chunk_response=Mock(),
             vasyliunas_siscoe_distribution=Mock(),
@@ -1495,7 +1463,7 @@ class TestPuiChunkFitterFitChunk(unittest.TestCase):
         nan = ufloat(np.nan, np.nan)
         mock_calculate_pickup_ion.return_value = PickupIonFitResult(
             fitting_params=FittingParameters(
-                nan, nan, nan, nan, int(SwapiL3Flags.BAD_FIT)
+                nan, nan, int(SwapiL3Flags.BAD_FIT)
             ),
             chunk_response=Mock(),
             vasyliunas_siscoe_distribution=Mock(),
@@ -1536,8 +1504,8 @@ class TestPuiChunkFitterFitChunk(unittest.TestCase):
         mock_calculate_pickup_ion.assert_not_called()
         mock_density.assert_not_called()
         mock_temperature.assert_not_called()
-        for key in ("cooling_index", "ionization_rate", "cutoff_speed",
-                    "background_rate", "density", "temperature"):
+        for key in ("ionization_rate", "cutoff_speed",
+                    "density", "temperature"):
             self.assertTrue(np.isnan(result[key].nominal_value), msg=key)
             self.assertTrue(np.isnan(result[key].std_dev), msg=key)
         self.assertEqual(result["quality_flags"], int(SwapiL3Flags.NONE))
@@ -1556,8 +1524,8 @@ class TestPuiChunkFitterFitChunk(unittest.TestCase):
         )
 
         mock_calculate_pickup_ion.assert_not_called()
-        for key in ("cooling_index", "ionization_rate", "cutoff_speed",
-                    "background_rate", "density", "temperature"):
+        for key in ("ionization_rate", "cutoff_speed",
+                    "density", "temperature"):
             self.assertTrue(np.isnan(result[key].nominal_value), msg=key)
         self.assertEqual(result["quality_flags"], int(SwapiL3Flags.NONE))
 
@@ -1575,8 +1543,8 @@ class TestPuiChunkFitterFitChunk(unittest.TestCase):
         )
 
         mock_calculate_pickup_ion.assert_not_called()
-        for key in ("cooling_index", "ionization_rate", "cutoff_speed",
-                    "background_rate", "density", "temperature"):
+        for key in ("ionization_rate", "cutoff_speed",
+                    "density", "temperature"):
             self.assertTrue(np.isnan(result[key].nominal_value), msg=key)
         self.assertEqual(result["quality_flags"], int(SwapiL3Flags.NONE))
 
