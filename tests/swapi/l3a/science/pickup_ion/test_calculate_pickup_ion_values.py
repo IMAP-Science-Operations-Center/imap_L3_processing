@@ -6,138 +6,141 @@ import numpy as np
 from astropy import constants, units
 
 from imap_l3_processing.constants import ONE_AU_IN_KM
-from imap_l3_processing.swapi.constants import SWAPI_L2_K_FACTOR
+from imap_l3_processing.swapi.constants import (
+    SWAPI_BACKGROUND_RATE,
+    SWAPI_L2_K_FACTOR,
+    SWAPI_SWEEP_BIN_COUNT,
+)
+from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_coincidence_rate import (
+    calculate_coincidence_rate,
+)
 from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_pickup_ion_values import (
     PickupIonFitInputData,
     PickupIonFitResult,
     calculate_pickup_ion_fit_energy_range,
     calculate_pickup_ion_values,
 )
+from imap_l3_processing.swapi.l3a.science.pickup_ion.collapsed_response_grid import (
+    build_chunk_collapsed_response,
+)
+from imap_l3_processing.swapi.l3a.science.pickup_ion.density_of_neutral_helium_lookup_table import (
+    DensityOfNeutralHeliumLookupTable,
+)
+from imap_l3_processing.swapi.l3a.science.pickup_ion.goodness_of_fit import (
+    MAX_CUTOFF_SPEED_RATIO,
+)
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
-from tests.swapi._helpers import NOMINAL_TEST_EPOCH_TT2000
-
-_MODULE_PATH = (
-    "imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_pickup_ion_values"
+from imap_l3_processing.swapi.species import Species
+from tests.swapi._helpers import (
+    NOMINAL_SWAPI_TO_RTN_ROTATION,
+    NOMINAL_TEST_EPOCH_TT2000,
+    REALISTIC_ESA_VOLTAGES,
+    load_swapi_response,
 )
+from tests.test_helpers import get_test_instrument_team_data_path
+
 _N_SWEEPS = 50
-_SWEEP_LEN = 72
 _N_COARSE_BINS = 62
-_BULK_SW_VELOCITY_SWAPI_KMS = np.array([400.0, 0.0, 0.0])
-_SOLAR_WIND_VELOCITY_RTN_SUN_KMS = np.array([-400.0, 30.0, 0.0])
-_SOLAR_WIND_SPEED_INERTIAL_KMS = float(
-    np.linalg.norm(_SOLAR_WIND_VELOCITY_RTN_SUN_KMS)
+
+_SOLAR_WIND_VELOCITY_RTN_SUN_KMS = np.array([400.0, 0.0, 0.0])
+_SPACECRAFT_VELOCITY_RTN_SUN_KMS = np.array([0.0, 30.0, 0.0])
+_SOLAR_WIND_VELOCITY_RTN_SPACECRAFT_KMS = (
+    _SOLAR_WIND_VELOCITY_RTN_SUN_KMS - _SPACECRAFT_VELOCITY_RTN_SUN_KMS
 )
-_DISTANCE_KM = ONE_AU_IN_KM
+_SOLAR_WIND_SPEED_INERTIAL_KMS = np.linalg.norm(_SOLAR_WIND_VELOCITY_RTN_SUN_KMS)
+_BULK_SW_VELOCITY_SWAPI_KMS = (
+    NOMINAL_SWAPI_TO_RTN_ROTATION.T @ _SOLAR_WIND_VELOCITY_RTN_SPACECRAFT_KMS
+)
 _INFLOW_ANGLE_DEG = 75.0
-_ENERGY_PER_COARSE_STEP = np.linspace(100.0, 8000.0, _N_COARSE_BINS)
-
-_ENERGY_RANGE_ADMITTING_EVERY_BIN = (0.0, 1.0e9)
-_MODELED_RATES = np.full((_N_SWEEPS, _N_COARSE_BINS), 3.0)
-_CHUNK_CENTER_TT2000 = NOMINAL_TEST_EPOCH_TT2000
 
 
-def _good_nominal(**overrides):
-    base = {
-        "ionization_rate": 1e-7,
-        "cutoff_speed": 450.0,
-    }
-    base.update(overrides)
-    return base
+class CalculatePickupIonValuesNoiselessRecoveryTest(unittest.TestCase):
+    """Sanity check on the fit with simple, noiseless input with ground truth."""
 
-
-class _MockedFitRun(NamedTuple):
-    fit_result: PickupIonFitResult
-    build_collapsed_response_mock: MagicMock
-    is_good_fit_mock: MagicMock
-    calculate_coincidence_rate_mock: MagicMock
-    calculate_density_mock: MagicMock
-    calculate_temperature_mock: MagicMock
-
-
-def _run_calculate_with_mocked_fit(
-    *,
-    nominal,
-    observed_per_step=1.0,
-    bulk_sw_per_bin_swapi_kms=None,
-    log_parameter_variances=(0.04, 0.01),
-    fit_succeeded=True,
-    fit_is_good=True,
-):
-    """Drive `calculate_pickup_ion_values` through its post-fit branches.
-
-    The response builder, optimizer, HC3 covariance, coincidence-rate model,
-    goodness-of-fit check and the two moment integrals are all mocked, so
-    `nominal` sets what the fit reports and `fit_is_good` picks which post-fit
-    branch is taken.
-    `log_parameter_variances` becomes the diagonal of the mocked log-space
-    parameter covariance — passing NaN entries exercises the branch where the
-    uncertainty estimate is unusable."""
-    esa_energies = _ENERGY_PER_COARSE_STEP
-    count_rates = np.broadcast_to(
-        np.asarray(observed_per_step, dtype=float), (_N_SWEEPS, _N_COARSE_BINS)
+    COARSE_ENERGY_PER_STEP = REALISTIC_ESA_VOLTAGES[:_N_COARSE_BINS] * SWAPI_L2_K_FACTOR
+    TRUTH_IONIZATION_RATE_PER_S = 2.5e-7
+    TRUTH_CUTOFF_SPEED_KMS = 450.0
+    DENSITY_OF_NEUTRAL_HELIUM_LOOKUP_TABLE_PATH = get_test_instrument_team_data_path(
+        "swapi/density-of-neutral-helium-lut.dat"
     )
-    if bulk_sw_per_bin_swapi_kms is None:
+
+    @classmethod
+    def setUpClass(cls):
+        voltages_v = cls.COARSE_ENERGY_PER_STEP / SWAPI_L2_K_FACTOR
+        cls.swapi_response = load_swapi_response(warm_cache_voltages=voltages_v)
+        cls.density_lookup_table = DensityOfNeutralHeliumLookupTable.from_file(
+            cls.DENSITY_OF_NEUTRAL_HELIUM_LOOKUP_TABLE_PATH
+        )
         bulk_sw_per_bin_swapi_kms = np.tile(
             _BULK_SW_VELOCITY_SWAPI_KMS, (_N_SWEEPS, _N_COARSE_BINS, 1)
         )
 
-    fake_result = MagicMock()
-    fake_result.x = np.log(
-        [nominal["ionization_rate"], nominal["cutoff_speed"]]
-    )
-    fake_result.success = fit_succeeded
-    fake_result.jac = np.eye(2)
-    fake_result.fun = np.zeros(2)
-
-    with patch(f"{_MODULE_PATH}.build_chunk_collapsed_response") as mock_build, patch(
-        f"{_MODULE_PATH}.scipy.optimize.least_squares", return_value=fake_result
-    ), patch(
-        f"{_MODULE_PATH}.compute_hc3_parameter_covariance",
-        return_value=np.diag(log_parameter_variances),
-    ), patch(
-        f"{_MODULE_PATH}.calculate_coincidence_rate", return_value=_MODELED_RATES
-    ) as mock_calculate_coincidence_rate, patch(
-        f"{_MODULE_PATH}.calculate_pickup_ion_fit_energy_range",
-        return_value=_ENERGY_RANGE_ADMITTING_EVERY_BIN,
-    ), patch(
-        f"{_MODULE_PATH}.is_good_fit", return_value=fit_is_good
-    ) as mock_is_good_fit, patch(
-        f"{_MODULE_PATH}.calculate_helium_pui_density"
-    ) as mock_calculate_density, patch(
-        f"{_MODULE_PATH}.calculate_helium_pui_temperature"
-    ) as mock_calculate_temperature:
-        mock_build.return_value = MagicMock()
-        fit_result = calculate_pickup_ion_values(
-            fit_input=PickupIonFitInputData(
-                time_as_tt2000=_CHUNK_CENTER_TT2000,
-                esa_energies=esa_energies,
-                coincidence_count_rates=count_rates,
-                bulk_sw_per_bin_swapi_kms=bulk_sw_per_bin_swapi_kms,
-                solar_wind_velocity_rtn_sun=_SOLAR_WIND_VELOCITY_RTN_SUN_KMS,
-                distance=_DISTANCE_KM,
+        chunk_response = build_chunk_collapsed_response(
+            swapi_response=cls.swapi_response,
+            voltages_v=voltages_v,
+            bulk_sw_per_bin_kms=bulk_sw_per_bin_swapi_kms,
+            time_as_tt2000=NOMINAL_TEST_EPOCH_TT2000,
+            species=Species.HELIUM_PLUS,
+            cutoff_speed_max_kms=_SOLAR_WIND_SPEED_INERTIAL_KMS
+            * MAX_CUTOFF_SPEED_RATIO
+            * 1.1,
+        )
+        noiseless_count_rates = (
+            calculate_coincidence_rate(
+                chunk_response,
+                ionization_rate=cls.TRUTH_IONIZATION_RATE_PER_S,
+                cutoff_speed=cls.TRUTH_CUTOFF_SPEED_KMS,
+                distance=ONE_AU_IN_KM,
                 inflow_angle=_INFLOW_ANGLE_DEG,
-            ),
-            swapi_response=MagicMock(),
-            density_of_neutral_helium_lookup_table=MagicMock(),
+                solar_wind_speed_inertial_frame=_SOLAR_WIND_SPEED_INERTIAL_KMS,
+                density_of_neutral_helium_lookup_table=cls.density_lookup_table,
+            )
+            + SWAPI_BACKGROUND_RATE
         )
 
-    return _MockedFitRun(
-        fit_result=fit_result,
-        build_collapsed_response_mock=mock_build,
-        is_good_fit_mock=mock_is_good_fit,
-        calculate_coincidence_rate_mock=mock_calculate_coincidence_rate,
-        calculate_density_mock=mock_calculate_density,
-        calculate_temperature_mock=mock_calculate_temperature,
-    )
+        cls.fit_result = calculate_pickup_ion_values(
+            fit_input=PickupIonFitInputData(
+                time_as_tt2000=NOMINAL_TEST_EPOCH_TT2000,
+                esa_energies=cls.COARSE_ENERGY_PER_STEP,
+                coincidence_count_rates=noiseless_count_rates,
+                bulk_sw_per_bin_swapi_kms=bulk_sw_per_bin_swapi_kms,
+                solar_wind_velocity_rtn_sun=_SOLAR_WIND_VELOCITY_RTN_SUN_KMS,
+                distance=ONE_AU_IN_KM,
+                inflow_angle=_INFLOW_ANGLE_DEG,
+            ),
+            swapi_response=cls.swapi_response,
+            density_of_neutral_helium_lookup_table=cls.density_lookup_table,
+        )
 
+    def test_recovers_the_generating_parameters(self):
+        for name, fitted, truth in [
+            (
+                "ionization_rate",
+                self.fit_result.ionization_rate,
+                self.TRUTH_IONIZATION_RATE_PER_S,
+            ),
+            (
+                "cutoff_speed",
+                self.fit_result.cutoff_speed,
+                self.TRUTH_CUTOFF_SPEED_KMS,
+            ),
+        ]:
+            with self.subTest(parameter=name):
+                self.assertAlmostEqual(
+                    fitted.nominal_value, truth, delta=truth * 1e-6, msg=name
+                )
 
-def _assert_all_nan_params(tc, fit_result):
-    for value in (
-        fit_result.ionization_rate,
-        fit_result.cutoff_speed,
-    ):
-        tc.assertTrue(np.isnan(value.nominal_value))
-        tc.assertTrue(np.isnan(value.std_dev))
+    def test_the_fit_is_accepted_and_every_reported_value_is_finite(self):
+        self.assertEqual(int(self.fit_result.flags), int(SwapiL3Flags.NONE))
+        for name, value in [
+            ("ionization_rate", self.fit_result.ionization_rate),
+            ("cutoff_speed", self.fit_result.cutoff_speed),
+            ("density", self.fit_result.density),
+            ("temperature", self.fit_result.temperature),
+        ]:
+            with self.subTest(parameter=name):
+                self.assertTrue(np.isfinite(value.nominal_value), msg=name)
+                self.assertTrue(np.isfinite(value.std_dev), msg=name)
 
 
 class PickupIonFitInputDataTest(unittest.TestCase):
@@ -158,11 +161,15 @@ class PickupIonFitInputDataTest(unittest.TestCase):
             ),
             (
                 "esa_energies given on the full sweep instead of the coarse sweep",
-                {"esa_energies": np.zeros(_SWEEP_LEN)},
+                {"esa_energies": np.zeros(SWAPI_SWEEP_BIN_COUNT)},
             ),
             (
                 "count rates given on the full sweep instead of the coarse sweep",
-                {"coincidence_count_rates": np.zeros((_N_SWEEPS, _SWEEP_LEN))},
+                {
+                    "coincidence_count_rates": np.zeros(
+                        (_N_SWEEPS, SWAPI_SWEEP_BIN_COUNT)
+                    )
+                },
             ),
             (
                 "count rates holding a number of sweeps other than the 50 in a window",
@@ -170,7 +177,11 @@ class PickupIonFitInputDataTest(unittest.TestCase):
             ),
             (
                 "bulk velocities given on the full sweep instead of the coarse sweep",
-                {"bulk_sw_per_bin_swapi_kms": np.zeros((_N_SWEEPS, _SWEEP_LEN, 3))},
+                {
+                    "bulk_sw_per_bin_swapi_kms": np.zeros(
+                        (_N_SWEEPS, SWAPI_SWEEP_BIN_COUNT, 3)
+                    )
+                },
             ),
             (
                 "bulk velocities missing their component axis",
@@ -185,12 +196,12 @@ class PickupIonFitInputDataTest(unittest.TestCase):
         for label, override in cases:
             with self.subTest(case=label):
                 fields = {
-                    "time_as_tt2000": _CHUNK_CENTER_TT2000,
+                    "time_as_tt2000": NOMINAL_TEST_EPOCH_TT2000,
                     "esa_energies": np.zeros(_N_COARSE_BINS),
                     "coincidence_count_rates": coarse_sweep,
                     "bulk_sw_per_bin_swapi_kms": coarse_sweep_vectors,
                     "solar_wind_velocity_rtn_sun": _SOLAR_WIND_VELOCITY_RTN_SUN_KMS,
-                    "distance": _DISTANCE_KM,
+                    "distance": ONE_AU_IN_KM,
                     "inflow_angle": _INFLOW_ANGLE_DEG,
                 }
                 fields.update(override)
@@ -201,47 +212,150 @@ class PickupIonFitInputDataTest(unittest.TestCase):
 class CalculatePickupIonValuesFillTest(unittest.TestCase):
     """Tests for fill value logic in `calculate_pickup_ion_values`."""
 
+    MODULE_PATH = (
+        "imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_pickup_ion_values"
+    )
+    ENERGY_PER_COARSE_STEP = np.linspace(100.0, 8000.0, _N_COARSE_BINS)
+    ENERGY_RANGE_ADMITTING_EVERY_BIN = (0.0, 1.0e9)
+    MODELED_RATES = np.full((_N_SWEEPS, _N_COARSE_BINS), 3.0)
+
+    class MockedFitRun(NamedTuple):
+        fit_result: PickupIonFitResult
+        build_collapsed_response_mock: MagicMock
+        is_good_fit_mock: MagicMock
+        calculate_coincidence_rate_mock: MagicMock
+        calculate_density_mock: MagicMock
+        calculate_temperature_mock: MagicMock
+
+    @staticmethod
+    def _good_nominal(**overrides):
+        base = {
+            "ionization_rate": 1e-7,
+            "cutoff_speed": 450.0,
+        }
+        base.update(overrides)
+        return base
+
+    def _run_calculate_with_mocked_fit(
+        self,
+        *,
+        nominal,
+        observed_per_step=1.0,
+        bulk_sw_per_bin_swapi_kms=None,
+        log_parameter_variances=(0.04, 0.01),
+        fit_succeeded=True,
+        fit_is_good=True,
+    ) -> MockedFitRun:
+        module_path = self.MODULE_PATH
+        esa_energies = self.ENERGY_PER_COARSE_STEP
+        count_rates = np.broadcast_to(
+            np.asarray(observed_per_step, dtype=float), (_N_SWEEPS, _N_COARSE_BINS)
+        )
+        if bulk_sw_per_bin_swapi_kms is None:
+            bulk_sw_per_bin_swapi_kms = np.tile(
+                _BULK_SW_VELOCITY_SWAPI_KMS, (_N_SWEEPS, _N_COARSE_BINS, 1)
+            )
+
+        fake_result = MagicMock()
+        fake_result.x = np.log([nominal["ionization_rate"], nominal["cutoff_speed"]])
+        fake_result.success = fit_succeeded
+        fake_result.jac = np.eye(2)
+        fake_result.fun = np.zeros(2)
+
+        with (
+            patch(f"{module_path}.build_chunk_collapsed_response") as mock_build,
+            patch(
+                f"{module_path}.scipy.optimize.least_squares", return_value=fake_result
+            ),
+            patch(
+                f"{module_path}.compute_hc3_parameter_covariance",
+                return_value=np.diag(log_parameter_variances),
+            ),
+            patch(
+                f"{module_path}.calculate_coincidence_rate",
+                return_value=self.MODELED_RATES,
+            ) as mock_calculate_coincidence_rate,
+            patch(
+                f"{module_path}.calculate_pickup_ion_fit_energy_range",
+                return_value=self.ENERGY_RANGE_ADMITTING_EVERY_BIN,
+            ),
+            patch(
+                f"{module_path}.is_good_fit", return_value=fit_is_good
+            ) as mock_is_good_fit,
+            patch(
+                f"{module_path}.calculate_helium_pui_density"
+            ) as mock_calculate_density,
+            patch(
+                f"{module_path}.calculate_helium_pui_temperature"
+            ) as mock_calculate_temperature,
+        ):
+            mock_build.return_value = MagicMock()
+            fit_result = calculate_pickup_ion_values(
+                fit_input=PickupIonFitInputData(
+                    time_as_tt2000=NOMINAL_TEST_EPOCH_TT2000,
+                    esa_energies=esa_energies,
+                    coincidence_count_rates=count_rates,
+                    bulk_sw_per_bin_swapi_kms=bulk_sw_per_bin_swapi_kms,
+                    solar_wind_velocity_rtn_sun=_SOLAR_WIND_VELOCITY_RTN_SUN_KMS,
+                    distance=ONE_AU_IN_KM,
+                    inflow_angle=_INFLOW_ANGLE_DEG,
+                ),
+                swapi_response=MagicMock(),
+                density_of_neutral_helium_lookup_table=MagicMock(),
+            )
+
+        return self.MockedFitRun(
+            fit_result=fit_result,
+            build_collapsed_response_mock=mock_build,
+            is_good_fit_mock=mock_is_good_fit,
+            calculate_coincidence_rate_mock=mock_calculate_coincidence_rate,
+            calculate_density_mock=mock_calculate_density,
+            calculate_temperature_mock=mock_calculate_temperature,
+        )
+
+    def _assert_all_nan_params(self, fit_result):
+        for value in (
+            fit_result.ionization_rate,
+            fit_result.cutoff_speed,
+        ):
+            self.assertTrue(np.isnan(value.nominal_value))
+            self.assertTrue(np.isnan(value.std_dev))
+
     def test_non_finite_covariance_fills_all_params_with_bad_fit(self):
         """When the HC3 covariance is not finite the uncertainty estimate is
         unusable, so `BAD_FIT` is set, every parameter is NaN ± NaN, and the
         goodness-of-fit check never runs."""
-        run = _run_calculate_with_mocked_fit(
-            nominal=_good_nominal(),
+        run = self._run_calculate_with_mocked_fit(
+            nominal=self._good_nominal(),
             log_parameter_variances=(np.nan, np.nan),
         )
 
-        self.assertEqual(
-            int(run.fit_result.flags), int(SwapiL3Flags.BAD_FIT)
-        )
-        _assert_all_nan_params(self, run.fit_result)
+        self.assertEqual(int(run.fit_result.flags), int(SwapiL3Flags.BAD_FIT))
+        self._assert_all_nan_params(run.fit_result)
         run.is_good_fit_mock.assert_not_called()
 
     def test_unconverged_optimization_fills_all_params_with_bad_fit(self):
         """An optimizer that reports failure yields `BAD_FIT` and NaN ± NaN
         parameters, even though the covariance itself came back finite."""
-        run = _run_calculate_with_mocked_fit(
-            nominal=_good_nominal(),
+        run = self._run_calculate_with_mocked_fit(
+            nominal=self._good_nominal(),
             fit_succeeded=False,
         )
 
-        self.assertEqual(
-            int(run.fit_result.flags), int(SwapiL3Flags.BAD_FIT)
-        )
-        _assert_all_nan_params(self, run.fit_result)
+        self.assertEqual(int(run.fit_result.flags), int(SwapiL3Flags.BAD_FIT))
+        self._assert_all_nan_params(run.fit_result)
         run.is_good_fit_mock.assert_not_called()
 
     def test_rejected_goodness_of_fit_fills_all_params_with_bad_fit(self):
         """When the goodness-of-fit check rejects a converged fit, `BAD_FIT` is
         set and every parameter is reported as NaN ± NaN rather than retained."""
-        run = _run_calculate_with_mocked_fit(
-            nominal=_good_nominal(),
+        run = self._run_calculate_with_mocked_fit(
+            nominal=self._good_nominal(),
             fit_is_good=False,
         )
 
-        self.assertEqual(
-            int(run.fit_result.flags), int(SwapiL3Flags.BAD_FIT)
-        )
-        _assert_all_nan_params(self, run.fit_result)
+        self.assertEqual(int(run.fit_result.flags), int(SwapiL3Flags.BAD_FIT))
+        self._assert_all_nan_params(run.fit_result)
 
     def test_coarse_quantities_are_used_as_given(self):
         """The fit works on the coarse-sweep arrays it is handed.
@@ -256,15 +370,15 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
             (_N_SWEEPS, _N_COARSE_BINS, 3),
         )
 
-        run = _run_calculate_with_mocked_fit(
-            nominal=_good_nominal(),
+        run = self._run_calculate_with_mocked_fit(
+            nominal=self._good_nominal(),
             observed_per_step=count_rates_per_step,
             bulk_sw_per_bin_swapi_kms=bulk_sw_per_bin_swapi_kms,
         )
 
         response_args = run.build_collapsed_response_mock.call_args.kwargs
         np.testing.assert_allclose(
-            response_args["voltages_v"], _ENERGY_PER_COARSE_STEP / SWAPI_L2_K_FACTOR
+            response_args["voltages_v"], self.ENERGY_PER_COARSE_STEP / SWAPI_L2_K_FACTOR
         )
         np.testing.assert_allclose(
             response_args["bulk_sw_per_bin_kms"], bulk_sw_per_bin_swapi_kms
@@ -277,19 +391,19 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
     def test_response_is_built_at_the_chunk_center_time(self):
         """The instrument response is evaluated at the chunk's center time, so
         it picks up the He+ efficiency in force at that time."""
-        run = _run_calculate_with_mocked_fit(nominal=_good_nominal())
+        run = self._run_calculate_with_mocked_fit(nominal=self._good_nominal())
 
         self.assertEqual(
             run.build_collapsed_response_mock.call_args.kwargs["time_as_tt2000"],
-            _CHUNK_CENTER_TT2000,
+            NOMINAL_TEST_EPOCH_TT2000,
         )
 
     def test_is_good_fit_receives_correct_input(
         self,
     ):
         """Ensure is_good_fit receives the correct input."""
-        run = _run_calculate_with_mocked_fit(
-            nominal=_good_nominal(ionization_rate=1e-7, cutoff_speed=450.0),
+        run = self._run_calculate_with_mocked_fit(
+            nominal=self._good_nominal(ionization_rate=1e-7, cutoff_speed=450.0),
             observed_per_step=2.0,
         )
 
@@ -299,7 +413,7 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
 
         goodness_of_fit_args = run.is_good_fit_mock.call_args.kwargs
         np.testing.assert_array_equal(
-            goodness_of_fit_args["model_rates"], _MODELED_RATES
+            goodness_of_fit_args["model_rates"], self.MODELED_RATES
         )
         np.testing.assert_allclose(goodness_of_fit_args["cutoff_speed_kms"], 450.0)
         np.testing.assert_allclose(goodness_of_fit_args["ionization_rate"], 1e-7)
@@ -307,19 +421,19 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
             goodness_of_fit_args["sw_speed_kms"], _SOLAR_WIND_SPEED_INERTIAL_KMS
         )
         np.testing.assert_allclose(
-            goodness_of_fit_args["observed_rates"], np.full((_N_SWEEPS, _N_COARSE_BINS), 2.0)
+            goodness_of_fit_args["observed_rates"],
+            np.full((_N_SWEEPS, _N_COARSE_BINS), 2.0),
         )
         np.testing.assert_allclose(
-            goodness_of_fit_args["esa_energies"], _ENERGY_PER_COARSE_STEP
+            goodness_of_fit_args["esa_energies"], self.ENERGY_PER_COARSE_STEP
         )
-
 
     def test_bad_fit_skips_the_moment_integrals_and_fills_density_and_temperature(self):
         """A `BAD_FIT` leaves the parameters NaN, so the moments are never
         integrated (a NaN cutoff speed would otherwise crash them) and density
         and temperature come back as NaN fill."""
-        run = _run_calculate_with_mocked_fit(
-            nominal=_good_nominal(),
+        run = self._run_calculate_with_mocked_fit(
+            nominal=self._good_nominal(),
             fit_is_good=False,
         )
 
@@ -331,7 +445,7 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
     def test_accepted_fit_reports_the_moment_integrals(self):
         """On an accepted fit the density and temperature reported are the
         moment integrals evaluated at the fitted parameters."""
-        run = _run_calculate_with_mocked_fit(nominal=_good_nominal())
+        run = self._run_calculate_with_mocked_fit(nominal=self._good_nominal())
 
         self.assertIs(run.fit_result.density, run.calculate_density_mock.return_value)
         self.assertIs(
@@ -342,7 +456,7 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
         """The model is defined against the Sun-frame solar wind speed, which is
         the norm of the spacecraft-frame velocity plus IMAP's own velocity —
         both already in IMAP_RTN, so no frame transform is needed."""
-        run = _run_calculate_with_mocked_fit(nominal=_good_nominal())
+        run = self._run_calculate_with_mocked_fit(nominal=self._good_nominal())
 
         for call_kwargs in (
             run.calculate_coincidence_rate_mock.call_args.kwargs,
@@ -355,7 +469,7 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
 
     def test_accepted_fit_returns_all_finite_params_with_no_flag(self):
         """A successful fit is all green."""
-        run = _run_calculate_with_mocked_fit(nominal=_good_nominal())
+        run = self._run_calculate_with_mocked_fit(nominal=self._good_nominal())
         fit_result = run.fit_result
 
         self.assertEqual(int(fit_result.flags), int(SwapiL3Flags.NONE))
@@ -369,8 +483,8 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
     def test_accepted_fit_reports_parameters_exponentiated_out_of_log_space(self):
         """The optimizer works in log space, so the reported nominal values are
         the exponentiated solution."""
-        run = _run_calculate_with_mocked_fit(
-            nominal=_good_nominal(ionization_rate=3e-7, cutoff_speed=475.0)
+        run = self._run_calculate_with_mocked_fit(
+            nominal=self._good_nominal(ionization_rate=3e-7, cutoff_speed=475.0)
         )
         fit_result = run.fit_result
 
@@ -380,8 +494,8 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
     def test_accepted_fit_scales_log_space_sigmas_by_the_delta_method(self):
         """A log-space standard deviation is converted to the parameter itself
         by the delta method, σ(x) = x σ(ln x)."""
-        run = _run_calculate_with_mocked_fit(
-            nominal=_good_nominal(ionization_rate=2e-7, cutoff_speed=500.0),
+        run = self._run_calculate_with_mocked_fit(
+            nominal=self._good_nominal(ionization_rate=2e-7, cutoff_speed=500.0),
             log_parameter_variances=(0.04, 0.01),
         )
         fit_result = run.fit_result
