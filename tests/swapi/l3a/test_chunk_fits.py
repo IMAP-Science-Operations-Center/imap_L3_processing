@@ -16,7 +16,6 @@ from imap_l3_processing.constants import (
     THIRTY_SECONDS_IN_NANOSECONDS,
 )
 from imap_l3_processing.models import InputMetadata, MagData
-from imap_l3_processing.swapi.l3a.science.pickup_ion.utils import rotate_rtn_velocity_to_swapi_per_bin
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swapi.l3a import chunk_fits
 from imap_l3_processing.swapi.l3a.chunk_fits import (
@@ -78,11 +77,13 @@ _TRUE_TEMPERATURE_K = 1.0e5
 _TRUE_BULK_SPEED = 450.0
 # Sunward Parker spiral, off-nominal: 55° from -R toward +T (vs. nominal
 # 45° from +R toward -T), tilted 10° out of the ecliptic toward +N.
-_B_HAT_RTN = np.array([
-    -np.cos(np.radians(55.0)) * np.cos(np.radians(10.0)),
-    np.sin(np.radians(55.0)) * np.cos(np.radians(10.0)),
-    np.sin(np.radians(10.0)),
-])
+_B_HAT_RTN = np.array(
+    [
+        -np.cos(np.radians(55.0)) * np.cos(np.radians(10.0)),
+        np.sin(np.radians(55.0)) * np.cos(np.radians(10.0)),
+        np.sin(np.radians(10.0)),
+    ]
+)
 _TRUE_ALPHA_DENSITY = 0.2
 _TRUE_ALPHA_TEMPERATURE_K = 4.0e5
 _TRUE_DELTA_V_KM_S = 30.0
@@ -93,10 +94,14 @@ _SCI_START_TIME = _EPOCH_TT2000 + np.arange(_N_SWEEPS, dtype=np.int64) * 12_000_
 
 # Every non-flag, non-epoch field must NaN-fill on short-circuit branches.
 _PROTON_SCALAR_KEYS = [
-    "proton_sw_speed", "proton_sw_speed_uncert",
-    "proton_sw_speed_sun", "proton_sw_speed_sun_uncert",
-    "proton_sw_temperature", "proton_sw_temperature_uncert",
-    "proton_sw_density", "proton_sw_density_uncert",
+    "proton_sw_speed",
+    "proton_sw_speed_uncert",
+    "proton_sw_speed_sun",
+    "proton_sw_speed_sun_uncert",
+    "proton_sw_temperature",
+    "proton_sw_temperature_uncert",
+    "proton_sw_density",
+    "proton_sw_density_uncert",
 ]
 _PROTON_ARRAY_KEYS = [
     "proton_sw_velocity_rtn_sun",
@@ -104,10 +109,14 @@ _PROTON_ARRAY_KEYS = [
     "proton_sw_velocity_rtn_covariance",
 ]
 _ALPHA_SCALAR_KEYS = [
-    "alpha_sw_speed", "alpha_sw_speed_uncert",
-    "alpha_sw_speed_sun", "alpha_sw_speed_sun_uncert",
-    "alpha_sw_density", "alpha_sw_density_uncert",
-    "alpha_sw_temperature", "alpha_sw_temperature_uncert",
+    "alpha_sw_speed",
+    "alpha_sw_speed_uncert",
+    "alpha_sw_speed_sun",
+    "alpha_sw_speed_sun_uncert",
+    "alpha_sw_density",
+    "alpha_sw_density_uncert",
+    "alpha_sw_temperature",
+    "alpha_sw_temperature_uncert",
 ]
 _ALPHA_ARRAY_KEYS = [
     "alpha_sw_velocity_rtn_sun",
@@ -121,10 +130,11 @@ def _spice_rotations(bin_slice):
     """SPICE-derived SWAPI→RTN rotations at the synthetic chunk's measurement
     times over `bin_slice`."""
     bin_indices = np.arange(bin_slice.start, bin_slice.stop)
-    seconds_into_sweep = bin_indices * SWAPI_BIN_PERIOD_S + SWAPI_LIVETIME_CENTER_OFFSET_S
+    seconds_into_sweep = (
+        bin_indices * SWAPI_BIN_PERIOD_S + SWAPI_LIVETIME_CENTER_OFFSET_S
+    )
     measurement_times = (
-        _SCI_START_TIME[:, np.newaxis]
-        + seconds_into_sweep * ONE_SECOND_IN_NANOSECONDS
+        _SCI_START_TIME[:, np.newaxis] + seconds_into_sweep * ONE_SECOND_IN_NANOSECONDS
     ).flatten()
     return get_swapi_geometry(measurement_times)
 
@@ -321,7 +331,9 @@ def _predicted_ephemeris_kernel_paths():
         "imap_2025_105_2026_105_01.ah.bc",
         "imap_2026_189_2026_189_001.ah.bc",
     ]
-    return [str(get_integration_test_spice_data_path(name)) for name in spice_file_names]
+    return [
+        str(get_integration_test_spice_data_path(name)) for name in spice_file_names
+    ]
 
 
 # ----- ProtonChunkFitter ----------------------------------------------------
@@ -363,17 +375,18 @@ class TestProtonChunkFitterPrecomputeGeometry(SpiceTestCase):
             "de440.bsp",
             "pck00011.tpc",
             "imap_2025_105_2026_105_01.ah.bc",
-            "imap_2026_189_2026_189_001.ah.bc"
+            "imap_2026_189_2026_189_001.ah.bc",
         ]
-        spice_test_paths = [str(get_integration_test_spice_data_path(file_name)) for file_name in spice_file_names]
+        spice_test_paths = [
+            str(get_integration_test_spice_data_path(file_name))
+            for file_name in spice_file_names
+        ]
 
         chunk_needing_predict = _chunk_at_time(
-            str_yyyymmdd_to_ttj2000ns("20260708")
-            + 12*3600*1e9
+            str_yyyymmdd_to_ttj2000ns("20260708") + 12 * 3600 * 1e9
         )
         chunk_not_needing_predict = _chunk_at_time(
-            str_yyyymmdd_to_ttj2000ns("20260120")
-            + 12*3600*1e9
+            str_yyyymmdd_to_ttj2000ns("20260120") + 12 * 3600 * 1e9
         )
         chunks = [chunk_needing_predict, chunk_not_needing_predict]
 
@@ -398,24 +411,31 @@ class TestProtonChunkFitterPrecomputeGeometry(SpiceTestCase):
             mock_tracker_2,
         ]
         chunk_needing_predict = _chunk_at_time(
-            str_yyyymmdd_to_ttj2000ns("20260308")
-            + 12*3600*1e9
+            str_yyyymmdd_to_ttj2000ns("20260308") + 12 * 3600 * 1e9
         )
         chunk_not_needing_predict = _chunk_at_time(
-            str_yyyymmdd_to_ttj2000ns("20260120")
-            + 12*3600*1e9
+            str_yyyymmdd_to_ttj2000ns("20260120") + 12 * 3600 * 1e9
         )
         chunks = [chunk_needing_predict, chunk_not_needing_predict]
 
         ProtonChunkFitter().precompute_geometry(chunks)
         self.assertEqual(2, mock_tracker_class.call_count)
         self.assertEqual(2, mock_tracker_1.run.call_count)
-        self.assertEqual(get_swapi_geometry, mock_tracker_1.run.call_args_list[0].args[0])
-        self.assertEqual(get_spacecraft_velocity_rtn, mock_tracker_1.run.call_args_list[1].args[0])
+        self.assertEqual(
+            get_swapi_geometry, mock_tracker_1.run.call_args_list[0].args[0]
+        )
+        self.assertEqual(
+            get_spacecraft_velocity_rtn, mock_tracker_1.run.call_args_list[1].args[0]
+        )
 
         self.assertEqual(2, mock_tracker_2.run.call_count)
-        self.assertEqual(get_swapi_geometry, mock_tracker_2.run.call_args_list[0].args[0])
-        self.assertEqual(get_spacecraft_velocity_rtn, mock_tracker_2.run.call_args_list[1].args[0])
+        self.assertEqual(
+            get_swapi_geometry, mock_tracker_2.run.call_args_list[0].args[0]
+        )
+        self.assertEqual(
+            get_spacecraft_velocity_rtn, mock_tracker_2.run.call_args_list[1].args[0]
+        )
+
 
 class TestProtonChunkFitterFitChunk(SpiceTestCase):
     """Tests for `ProtonChunkFitter.fit_chunk` — end-to-end proton fit plus
@@ -427,9 +447,15 @@ class TestProtonChunkFitterFitChunk(SpiceTestCase):
         cls.response = load_swapi_response(np.tile(REALISTIC_ESA_VOLTAGES, _N_SWEEPS))
         efficiency_table = _efficiency_table()
         _populate_shared(cls.response, efficiency_table)
-        cls.chunk, cls.rotations, cls.true_proton_velocity_rtn, _ = _build_truth_chunk(cls.response)
+        cls.chunk, cls.rotations, cls.true_proton_velocity_rtn, _ = _build_truth_chunk(
+            cls.response
+        )
         cls.result = ProtonChunkFitter().fit_chunk(
-            cls.chunk, _CHUNK_EPOCH, cls.rotations, _SC_VELOCITY_RTN.copy(), SwapiL3Flags.NONE,
+            cls.chunk,
+            _CHUNK_EPOCH,
+            cls.rotations,
+            _SC_VELOCITY_RTN.copy(),
+            SwapiL3Flags.NONE,
         )
 
     @classmethod
@@ -453,7 +479,9 @@ class TestProtonChunkFitterFitChunk(SpiceTestCase):
             delta=0.05 * _TRUE_TEMPERATURE_K,
         )
         np.testing.assert_allclose(
-            self.result["proton_sw_velocity_rtn"], self.true_proton_velocity_rtn, atol=5.0
+            self.result["proton_sw_velocity_rtn"],
+            self.true_proton_velocity_rtn,
+            atol=5.0,
         )
 
     def test_uncertainties_are_strictly_positive(self):
@@ -503,7 +531,11 @@ class TestProtonChunkFitterFitChunk(SpiceTestCase):
     def test_missing_sc_velocity_fills_only_sun_frame_outputs(self):
         """Calling fit_chunk with no SC velocity still runs the proton fit normally: density, temperature, SC-frame bulk velocity, covariance, and peak speed are populated from the fit; only the sun-frame outputs (`proton_sw_speed_sun`, `proton_sw_velocity_rtn_sun`) are fill values."""
         result = ProtonChunkFitter().fit_chunk(
-            self.chunk, _CHUNK_EPOCH, self.rotations, None, SwapiL3Flags.NONE,
+            self.chunk,
+            _CHUNK_EPOCH,
+            self.rotations,
+            None,
+            SwapiL3Flags.NONE,
         )
         self.assertEqual(result["quality_flags"], SwapiL3Flags.NONE)
 
@@ -531,10 +563,13 @@ class TestProtonChunkFitterFitChunk(SpiceTestCase):
 
     def test_uses_quality_flag_from_geometry(self):
         result = ProtonChunkFitter().fit_chunk(
-            self.chunk, _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN.copy(), SwapiL3Flags.PREDICTIVE_EPHEMERIS,
+            self.chunk,
+            _CHUNK_EPOCH,
+            self.rotations,
+            _SC_VELOCITY_RTN.copy(),
+            SwapiL3Flags.PREDICTIVE_EPHEMERIS,
         )
         self.assertEqual(result["quality_flags"], SwapiL3Flags.PREDICTIVE_EPHEMERIS)
-
 
 
 # ----- AlphaChunkFitter -----------------------------------------------------
@@ -565,7 +600,9 @@ class TestAlphaChunkFitterPrecomputeGeometry(SpiceTestCase):
 
     def test_spice_failure_yields_none_rotations_and_sc_velocity_but_keeps_b_hat(self):
         """When the chunk falls outside SPICE coverage, alpha precompute returns None rotations and None spacecraft velocity, but B̂ is still computed from MAG since that path is independent."""
-        out_of_coverage_chunk_epoch = _OUT_OF_COVERAGE_START_TIME + THIRTY_SECONDS_IN_NANOSECONDS
+        out_of_coverage_chunk_epoch = (
+            _OUT_OF_COVERAGE_START_TIME + THIRTY_SECONDS_IN_NANOSECONDS
+        )
         [(_, rotation_matrices, sc_velocity, b_hat, _)] = AlphaChunkFitter(
             self._mag_centered_on(out_of_coverage_chunk_epoch)
         ).precompute_geometry([_out_of_coverage_chunk()])
@@ -581,7 +618,9 @@ class TestAlphaChunkFitterPrecomputeGeometry(SpiceTestCase):
         ).precompute_geometry([_zero_chunk()])
         self.assertTrue(np.all(np.isnan(b_hat)))
 
-    @patch('imap_l3_processing.swapi.l3a.chunk_fits.compute_direction_of_mean_magnetic_field_over_chunk')
+    @patch(
+        "imap_l3_processing.swapi.l3a.chunk_fits.compute_direction_of_mean_magnetic_field_over_chunk"
+    )
     def test_flags_chunks_that_need_predicted_ephemeris(self, _):
         spice_file_names = [
             "imap_recon_20250925_20260511_v01.bsp",
@@ -593,17 +632,18 @@ class TestAlphaChunkFitterPrecomputeGeometry(SpiceTestCase):
             "de440.bsp",
             "pck00011.tpc",
             "imap_2025_105_2026_105_01.ah.bc",
-            "imap_2026_189_2026_189_001.ah.bc"
+            "imap_2026_189_2026_189_001.ah.bc",
         ]
-        spice_test_paths = [str(get_integration_test_spice_data_path(file_name)) for file_name in spice_file_names]
+        spice_test_paths = [
+            str(get_integration_test_spice_data_path(file_name))
+            for file_name in spice_file_names
+        ]
 
         chunk_needing_predict = _chunk_at_time(
-            str_yyyymmdd_to_ttj2000ns("20260708")
-            + 12*3600*1e9
+            str_yyyymmdd_to_ttj2000ns("20260708") + 12 * 3600 * 1e9
         )
         chunk_not_needing_predict = _chunk_at_time(
-            str_yyyymmdd_to_ttj2000ns("20260120")
-            + 12*3600*1e9
+            str_yyyymmdd_to_ttj2000ns("20260120") + 12 * 3600 * 1e9
         )
         chunks = [chunk_needing_predict, chunk_not_needing_predict]
 
@@ -615,7 +655,9 @@ class TestAlphaChunkFitterPrecomputeGeometry(SpiceTestCase):
             self.assertEqual(SwapiL3Flags.PREDICTIVE_EPHEMERIS, flags1)
             self.assertEqual(SwapiL3Flags.NONE, flags2)
 
-    @patch('imap_l3_processing.swapi.l3a.chunk_fits.compute_direction_of_mean_magnetic_field_over_chunk')
+    @patch(
+        "imap_l3_processing.swapi.l3a.chunk_fits.compute_direction_of_mean_magnetic_field_over_chunk"
+    )
     @patch("imap_l3_processing.swapi.l3a.chunk_fits.PredictedEphemerisTracker")
     def test_uses_predicted_ephemeris_tracker(self, mock_tracker_class, _):
         mock_tracker_1 = create_autospec(PredictedEphemerisTracker, used_predict=False)
@@ -629,25 +671,30 @@ class TestAlphaChunkFitterPrecomputeGeometry(SpiceTestCase):
             mock_tracker_2,
         ]
         chunk_needing_predict = _chunk_at_time(
-            str_yyyymmdd_to_ttj2000ns("20260308")
-            + 12*3600*1e9
+            str_yyyymmdd_to_ttj2000ns("20260308") + 12 * 3600 * 1e9
         )
         chunk_not_needing_predict = _chunk_at_time(
-            str_yyyymmdd_to_ttj2000ns("20260120")
-            + 12*3600*1e9
+            str_yyyymmdd_to_ttj2000ns("20260120") + 12 * 3600 * 1e9
         )
         chunks = [chunk_needing_predict, chunk_not_needing_predict]
 
         AlphaChunkFitter(None).precompute_geometry(chunks)
         self.assertEqual(2, mock_tracker_class.call_count)
         self.assertEqual(2, mock_tracker_1.run.call_count)
-        self.assertEqual(get_swapi_geometry, mock_tracker_1.run.call_args_list[0].args[0])
-        self.assertEqual(get_spacecraft_velocity_rtn, mock_tracker_1.run.call_args_list[1].args[0])
+        self.assertEqual(
+            get_swapi_geometry, mock_tracker_1.run.call_args_list[0].args[0]
+        )
+        self.assertEqual(
+            get_spacecraft_velocity_rtn, mock_tracker_1.run.call_args_list[1].args[0]
+        )
 
         self.assertEqual(2, mock_tracker_2.run.call_count)
-        self.assertEqual(get_swapi_geometry, mock_tracker_2.run.call_args_list[0].args[0])
-        self.assertEqual(get_spacecraft_velocity_rtn, mock_tracker_2.run.call_args_list[1].args[0])
-
+        self.assertEqual(
+            get_swapi_geometry, mock_tracker_2.run.call_args_list[0].args[0]
+        )
+        self.assertEqual(
+            get_spacecraft_velocity_rtn, mock_tracker_2.run.call_args_list[1].args[0]
+        )
 
 
 class TestAlphaChunkFitterFitChunk(SpiceTestCase):
@@ -659,14 +706,21 @@ class TestAlphaChunkFitterFitChunk(SpiceTestCase):
         cls.response = load_swapi_response(np.tile(REALISTIC_ESA_VOLTAGES, _N_SWEEPS))
         efficiency_table = _efficiency_table()
         _populate_shared(cls.response, efficiency_table)
-        cls.chunk, _, cls.true_proton_velocity_rtn, cls.true_alpha_velocity_rtn = _build_truth_chunk(cls.response)
+        cls.chunk, _, cls.true_proton_velocity_rtn, cls.true_alpha_velocity_rtn = (
+            _build_truth_chunk(cls.response)
+        )
         # AlphaChunkFitter and ProtonChunkFitter share the same proton fit on
         # `SWAPI_SCIENCE_BINS`, so the rotations passed in must span the full
         # science range; AlphaChunkFitter slices down to coarse for Stage 2.
         cls.rotations = _spice_rotations(SWAPI_SCIENCE_BINS)
         cls.fitter = AlphaChunkFitter(mag_data=None)
         cls.happy_result = cls.fitter.fit_chunk(
-            cls.chunk, _CHUNK_EPOCH, cls.rotations, _SC_VELOCITY_RTN, _B_HAT_RTN, SwapiL3Flags.NONE
+            cls.chunk,
+            _CHUNK_EPOCH,
+            cls.rotations,
+            _SC_VELOCITY_RTN,
+            _B_HAT_RTN,
+            SwapiL3Flags.NONE,
         )
 
     @classmethod
@@ -687,7 +741,9 @@ class TestAlphaChunkFitterFitChunk(SpiceTestCase):
             delta=0.10 * _TRUE_ALPHA_TEMPERATURE_K,
         )
         np.testing.assert_allclose(
-            self.happy_result["alpha_sw_velocity_rtn"], self.true_alpha_velocity_rtn, atol=5.0
+            self.happy_result["alpha_sw_velocity_rtn"],
+            self.true_alpha_velocity_rtn,
+            atol=5.0,
         )
         np.testing.assert_allclose(
             self.happy_result["alpha_sw_speed"],
@@ -711,7 +767,12 @@ class TestAlphaChunkFitterFitChunk(SpiceTestCase):
     def test_missing_sc_velocity_fills_only_sun_frame_outputs(self):
         """Calling fit_chunk with no SC velocity still recovers the alpha moments; only the sun-frame outputs (`alpha_sw_speed_sun`, `alpha_sw_velocity_rtn_sun`) are fill values."""
         result = self.fitter.fit_chunk(
-            self.chunk, _CHUNK_EPOCH, self.rotations, None, _B_HAT_RTN, SwapiL3Flags.NONE
+            self.chunk,
+            _CHUNK_EPOCH,
+            self.rotations,
+            None,
+            _B_HAT_RTN,
+            SwapiL3Flags.NONE,
         )
         self.assertEqual(int(result["quality_flags"]), int(SwapiL3Flags.NONE))
 
@@ -731,10 +792,14 @@ class TestAlphaChunkFitterFitChunk(SpiceTestCase):
 
     def test_uses_quality_flag_from_geometry(self):
         result = AlphaChunkFitter(None).fit_chunk(
-            self.chunk, _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN.copy(), _B_HAT_RTN.copy(), SwapiL3Flags.PREDICTIVE_EPHEMERIS,
+            self.chunk,
+            _CHUNK_EPOCH,
+            self.rotations,
+            _SC_VELOCITY_RTN.copy(),
+            _B_HAT_RTN.copy(),
+            SwapiL3Flags.PREDICTIVE_EPHEMERIS,
         )
         self.assertEqual(result["quality_flags"], SwapiL3Flags.PREDICTIVE_EPHEMERIS)
-
 
 
 # ----- ParallelChunkRunner --------------------------------------------------
@@ -792,7 +857,9 @@ class TestParallelChunkRunnerOrchestration(unittest.TestCase):
             _make_chunk_with_start_time(_EPOCH_TT2000 + 12_000_000_000),
         ]
         runner = ParallelChunkRunner(
-            swapi_response=load_swapi_response(np.tile(REALISTIC_ESA_VOLTAGES, _N_SWEEPS)),
+            swapi_response=load_swapi_response(
+                np.tile(REALISTIC_ESA_VOLTAGES, _N_SWEEPS)
+            ),
             efficiency_table=_efficiency_table(),
         )
 
@@ -818,7 +885,6 @@ class TestParallelChunkRunnerOrchestration(unittest.TestCase):
         result = runner.run(
             [_make_chunk_with_start_time(_EPOCH_TT2000)], _WarmCacheProbeChunkFitter()
         )
-
 
         np.testing.assert_array_equal(
             result["worker_cache_size"], np.array([parent_cache_size])
@@ -847,7 +913,11 @@ class TestProtonChunkFitterQualityFlags(SpiceTestCase):
 
     def _fit(self, chunk):
         return self.fitter.fit_chunk(
-            chunk, _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN.copy(), SwapiL3Flags.NONE,
+            chunk,
+            _CHUNK_EPOCH,
+            self.rotations,
+            _SC_VELOCITY_RTN.copy(),
+            SwapiL3Flags.NONE,
         )
 
     def test_bad_fit_when_peak_does_not_match_maxwellian(self):
@@ -879,7 +949,9 @@ class TestProtonChunkFitterQualityFlags(SpiceTestCase):
 
         _assert_proton_flag_and_peak_fallback(self, result, SwapiL3Flags.FIT_ERROR)
 
-    @patch("imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model.calculate_initial_guess")
+    @patch(
+        "imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model.calculate_initial_guess"
+    )
     def test_fit_error_when_initial_guess_is_nan(self, mock_initial_guess):
         """A NaN-valued initial guess causes scipy `least_squares` to reject `x0` as infeasible; the chunk fitter catches the exception, surfaces `FIT_ERROR`, and falls back to peak-bin speed. Mocked because `calculate_initial_guess` never returns NaN from real inputs (it raises instead)."""
         mock_initial_guess.return_value = SolarWindParams(
@@ -905,7 +977,9 @@ class TestProtonChunkFitterQualityFlags(SpiceTestCase):
 
     def test_no_flag_when_rotations_missing(self):
         """Calling fit_chunk with no rotations reports a NONE quality flag (ephemeris gaps are treated as data gaps without a dedicated flag) and falls back to peak-bin ESA voltage as `proton_sw_speed`; every other science field NaN-fills."""
-        result = self.fitter.fit_chunk(self.chunk, _CHUNK_EPOCH, None, _SC_VELOCITY_RTN, SwapiL3Flags.NONE)
+        result = self.fitter.fit_chunk(
+            self.chunk, _CHUNK_EPOCH, None, _SC_VELOCITY_RTN, SwapiL3Flags.NONE
+        )
         _assert_proton_flag_and_peak_fallback(self, result, SwapiL3Flags.NONE)
 
     def test_no_flag_when_count_rate_has_nan(self):
@@ -925,7 +999,6 @@ class TestProtonChunkFitterQualityFlags(SpiceTestCase):
             result["proton_sw_speed"], _TRUE_BULK_SPEED, delta=0.05 * _TRUE_BULK_SPEED
         )
 
-
     def test_combines_geometry_and_fitting_flags(self):
         peak_bin = int(np.argmax(self.chunk.coincidence_count_rate.mean(axis=0)))
         single_bin = np.zeros_like(self.chunk.coincidence_count_rate)
@@ -938,8 +1011,10 @@ class TestProtonChunkFitterQualityFlags(SpiceTestCase):
             _SC_VELOCITY_RTN.copy(),
             SwapiL3Flags.PREDICTIVE_EPHEMERIS,
         )
-        self.assertEqual(SwapiL3Flags.FIT_ERROR | SwapiL3Flags.PREDICTIVE_EPHEMERIS, result["quality_flags"])
-
+        self.assertEqual(
+            SwapiL3Flags.FIT_ERROR | SwapiL3Flags.PREDICTIVE_EPHEMERIS,
+            result["quality_flags"],
+        )
 
 
 # ----- Alpha quality flags --------------------------------------------------
@@ -965,7 +1040,9 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
     def test_bad_fit_when_alpha_bump_does_not_match_maxwellian(self):
         """Scrambling and amplifying the alpha-bump bins leaves the proton peak intact but yields a Stage-2 residual the alpha LM cannot describe (the BAD_FIT quality guard fires); the chunk fitter surfaces `BAD_FIT` with every alpha moment NaN-filled."""
         rng = np.random.default_rng(0)
-        permuted = rng.permutation(np.arange(_ALPHA_BUMP_BINS.start, _ALPHA_BUMP_BINS.stop))
+        permuted = rng.permutation(
+            np.arange(_ALPHA_BUMP_BINS.start, _ALPHA_BUMP_BINS.stop)
+        )
         corrupted = self.chunk.coincidence_count_rate.copy()
         corrupted[:, _ALPHA_BUMP_BINS] = corrupted[:, permuted] * 3.0
 
@@ -1018,7 +1095,9 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
                 np.testing.assert_array_equal(passed_quality_flags, [expected_flag])
 
     def test_no_flag_when_rotations_missing(self):
-        result = self.fitter.fit_chunk(self.chunk, _CHUNK_EPOCH, None, None, _B_HAT_RTN, SwapiL3Flags.NONE)
+        result = self.fitter.fit_chunk(
+            self.chunk, _CHUNK_EPOCH, None, None, _B_HAT_RTN, SwapiL3Flags.NONE
+        )
         _assert_alpha_flag_and_all_nan(self, result, SwapiL3Flags.NONE)
 
     def test_flags_when_b_hat_is_nan(self):
@@ -1026,7 +1105,12 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
         for flag in cases:
             with self.subTest(flag=flag):
                 result = self.fitter.fit_chunk(
-                    self.chunk, _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN, np.full(3, np.nan), flag
+                    self.chunk,
+                    _CHUNK_EPOCH,
+                    self.rotations,
+                    _SC_VELOCITY_RTN,
+                    np.full(3, np.nan),
+                    flag,
                 )
                 _assert_alpha_flag_and_all_nan(self, result, flag)
 
@@ -1035,7 +1119,12 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
         for flag in cases:
             with self.subTest(flag=flag):
                 result = self.fitter.fit_chunk(
-                    self.chunk, _CHUNK_EPOCH, self.rotations, _SC_VELOCITY_RTN, None, flag
+                    self.chunk,
+                    _CHUNK_EPOCH,
+                    self.rotations,
+                    _SC_VELOCITY_RTN,
+                    None,
+                    flag,
                 )
                 _assert_alpha_flag_and_all_nan(self, result, flag)
 
@@ -1077,7 +1166,11 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
             _B_HAT_RTN.copy(),
             SwapiL3Flags.PREDICTIVE_EPHEMERIS,
         )
-        self.assertEqual(SwapiL3Flags.FIT_ERROR | SwapiL3Flags.PREDICTIVE_EPHEMERIS, result["quality_flags"])
+        self.assertEqual(
+            SwapiL3Flags.FIT_ERROR | SwapiL3Flags.PREDICTIVE_EPHEMERIS,
+            result["quality_flags"],
+        )
+
 
 # ----- PuiChunkFitter -------------------------------------------------------
 
@@ -1099,7 +1192,8 @@ def _pui_chunk(start_time, count_rates=None):
     if count_rates is None:
         count_rates = np.full((n_sweeps, _N_BINS), 5.0)
     sci_start_time = (
-        start_time + np.arange(n_sweeps, dtype=np.int64) * 12 * ONE_SECOND_IN_NANOSECONDS
+        start_time
+        + np.arange(n_sweeps, dtype=np.int64) * 12 * ONE_SECOND_IN_NANOSECONDS
     )
     return SwapiL2Data(
         sci_start_time=sci_start_time,
@@ -1136,7 +1230,9 @@ class TestPuiChunkFitterPrecomputeGeometry(SpiceTestCase):
         )
 
     @patch("imap_l3_processing.swapi.l3a.chunk_fits.get_spacecraft_velocity_rtn")
-    @patch("imap_l3_processing.swapi.l3a.chunk_fits.rotate_rtn_velocity_to_swapi_per_bin")
+    @patch(
+        "imap_l3_processing.swapi.l3a.chunk_fits.rotate_rtn_velocity_to_swapi_per_bin"
+    )
     @patch.object(PuiChunkFitter, "_calculate_ten_minute_velocities")
     @patch("imap_l3_processing.swapi.l3a.chunk_fits.spiceypy")
     def test_returns_one_geometry_per_chunk(
@@ -1157,11 +1253,13 @@ class TestPuiChunkFitterPrecomputeGeometry(SpiceTestCase):
         )
         mock_rotate_rtn_velocity_to_swapi_per_bin.return_value = per_bin
         self._stub_chunk_position(mock_spiceypy)
-        fitter = self._make_fitter({
-            "proton_sw_velocity_rtn": np.array([[1.0, 2.0, 3.0]]),
-            "proton_sw_velocity_rtn_sun": np.array([[1.0, 32.0, 3.0]]),
-            "quality_flags": np.array([int(SwapiL3Flags.BAD_FIT)]),
-        })
+        fitter = self._make_fitter(
+            {
+                "proton_sw_velocity_rtn": np.array([[1.0, 2.0, 3.0]]),
+                "proton_sw_velocity_rtn_sun": np.array([[1.0, 32.0, 3.0]]),
+                "quality_flags": np.array([int(SwapiL3Flags.BAD_FIT)]),
+            }
+        )
 
         [(fit_input, quality_flag)] = fitter.precompute_geometry([chunk])
 
@@ -1186,7 +1284,9 @@ class TestPuiChunkFitterPrecomputeGeometry(SpiceTestCase):
         mock_get_spacecraft_velocity_rtn.assert_not_called()
 
     @patch("imap_l3_processing.swapi.l3a.chunk_fits.get_spacecraft_velocity_rtn")
-    @patch("imap_l3_processing.swapi.l3a.chunk_fits.rotate_rtn_velocity_to_swapi_per_bin")
+    @patch(
+        "imap_l3_processing.swapi.l3a.chunk_fits.rotate_rtn_velocity_to_swapi_per_bin"
+    )
     @patch("imap_l3_processing.swapi.l3a.chunk_fits.spiceypy")
     def test_averages_the_proton_fits_over_each_ten_minute_window(
         self,
@@ -1201,11 +1301,13 @@ class TestPuiChunkFitterPrecomputeGeometry(SpiceTestCase):
             _pui_chunk(_EPOCH_TT2000),
             _pui_chunk(_EPOCH_TT2000 + 2 * FIVE_MINUTES_IN_NANOSECONDS),
         ]
-        per_fit_velocities = np.transpose([
-            np.arange(1.0, 21.0),
-            np.arange(10.0, 201.0, 10.0),
-            np.zeros(20),
-        ])
+        per_fit_velocities = np.transpose(
+            [
+                np.arange(1.0, 21.0),
+                np.arange(10.0, 201.0, 10.0),
+                np.zeros(20),
+            ]
+        )
         per_fit_velocities_sun = per_fit_velocities + np.array([0.0, 30.0, 0.0])
         per_fit_flags = np.full(20, int(SwapiL3Flags.NONE))
         per_fit_flags[3] = int(SwapiL3Flags.FIT_ERROR)
@@ -1215,11 +1317,13 @@ class TestPuiChunkFitterPrecomputeGeometry(SpiceTestCase):
             (50, 72, 3), 0.5
         )
         self._stub_chunk_position(mock_spiceypy)
-        fitter = self._make_fitter({
-            "proton_sw_velocity_rtn": per_fit_velocities,
-            "proton_sw_velocity_rtn_sun": per_fit_velocities_sun,
-            "quality_flags": per_fit_flags,
-        })
+        fitter = self._make_fitter(
+            {
+                "proton_sw_velocity_rtn": per_fit_velocities,
+                "proton_sw_velocity_rtn_sun": per_fit_velocities_sun,
+                "quality_flags": per_fit_flags,
+            }
+        )
 
         geometries = fitter.precompute_geometry(chunks)
 
@@ -1241,12 +1345,65 @@ class TestPuiChunkFitterPrecomputeGeometry(SpiceTestCase):
             mock_rotate_rtn_velocity_to_swapi_per_bin.call_args_list,
             (per_fit_velocities[:10], per_fit_velocities[10:]),
         ):
-            np.testing.assert_array_equal(
-                call.args[1], expected_window.mean(axis=0)
-            )
+            np.testing.assert_array_equal(call.args[1], expected_window.mean(axis=0))
+
+    @patch(
+        "imap_l3_processing.swapi.l3a.chunk_fits.rotate_rtn_velocity_to_swapi_per_bin"
+    )
+    @patch("imap_l3_processing.swapi.l3a.chunk_fits.spiceypy")
+    def test_drops_unusable_proton_fits_until_too_few_remain(
+        self,
+        mock_spiceypy,
+        mock_rotate_rtn_velocity_to_swapi_per_bin,
+    ):
+        """Use only the proton solar wind fits with finite velocities.
+        If fewer than 7 remain, report fill values.
+        Propagate flags appropriately."""
+        # Dims: (sw chunk, cartesian component)
+        # Shape: (10, 3)
+        original_velocities = np.transpose([np.arange(1.0, 11.0)] * 3)
+
+        for failed_minutes, expected_flag in [
+            ([], SwapiL3Flags.NONE),
+            ([0, 4, 6], SwapiL3Flags.NONE),
+            ([0, 3, 4, 6], SwapiL3Flags.BAD_FIT),
+        ]:
+            with self.subTest(usable_minutes=10 - len(failed_minutes)):
+                per_fit_velocities = original_velocities.copy()
+                per_fit_velocities[failed_minutes] = np.nan
+                expected_velocity = np.delete(
+                    original_velocities, failed_minutes, axis=0
+                ).mean(axis=0)
+                per_fit_flags = np.full(10, int(SwapiL3Flags.NONE))
+                per_fit_flags[failed_minutes] = int(SwapiL3Flags.BAD_FIT)
+                mock_rotate_rtn_velocity_to_swapi_per_bin.return_value = np.full(
+                    (50, 72, 3), 0.5
+                )
+                self._stub_chunk_position(mock_spiceypy)
+                fitter = self._make_fitter(
+                    {
+                        "proton_sw_velocity_rtn": per_fit_velocities,
+                        "proton_sw_velocity_rtn_sun": per_fit_velocities,
+                        "quality_flags": per_fit_flags,
+                    }
+                )
+
+                [(fit_input, quality_flag)] = fitter.precompute_geometry(
+                    [_pui_chunk(_EPOCH_TT2000)]
+                )
+
+                self.assertEqual(quality_flag, int(expected_flag))
+                if expected_flag == SwapiL3Flags.BAD_FIT:
+                    self.assertIsNone(fit_input)
+                else:
+                    np.testing.assert_array_equal(
+                        fit_input.solar_wind_velocity_rtn_sun, expected_velocity
+                    )
 
     @patch("imap_l3_processing.swapi.l3a.chunk_fits.spiceypy")
-    @patch("imap_l3_processing.swapi.l3a.chunk_fits.rotate_rtn_velocity_to_swapi_per_bin")
+    @patch(
+        "imap_l3_processing.swapi.l3a.chunk_fits.rotate_rtn_velocity_to_swapi_per_bin"
+    )
     @patch.object(PuiChunkFitter, "_calculate_ten_minute_velocities")
     def test_spice_gap_on_rotate_yields_no_fit_input(
         self,
@@ -1264,17 +1421,21 @@ class TestPuiChunkFitterPrecomputeGeometry(SpiceTestCase):
         )
         mock_rotate_rtn_velocity_to_swapi_per_bin.side_effect = _SpiceyError("gap")
         self._stub_chunk_position(mock_spiceypy)
-        fitter = self._make_fitter({
-            "proton_sw_velocity_rtn": np.array([[1.0, 2.0, 3.0]]),
-            "proton_sw_velocity_rtn_sun": np.array([[1.0, 32.0, 3.0]]),
-            "quality_flags": np.array([int(SwapiL3Flags.NONE)]),
-        })
+        fitter = self._make_fitter(
+            {
+                "proton_sw_velocity_rtn": np.array([[1.0, 2.0, 3.0]]),
+                "proton_sw_velocity_rtn_sun": np.array([[1.0, 32.0, 3.0]]),
+                "quality_flags": np.array([int(SwapiL3Flags.NONE)]),
+            }
+        )
 
         [(fit_input, _)] = fitter.precompute_geometry([chunk])
 
         self.assertIsNone(fit_input)
 
-    @patch("imap_l3_processing.swapi.l3a.chunk_fits.rotate_rtn_velocity_to_swapi_per_bin")
+    @patch(
+        "imap_l3_processing.swapi.l3a.chunk_fits.rotate_rtn_velocity_to_swapi_per_bin"
+    )
     @patch.object(PuiChunkFitter, "_calculate_ten_minute_velocities")
     @patch("imap_l3_processing.swapi.l3a.chunk_fits.spiceypy")
     def test_nan_ten_minute_velocity_skips_spice_state(
@@ -1292,11 +1453,13 @@ class TestPuiChunkFitterPrecomputeGeometry(SpiceTestCase):
         mock_rotate_rtn_velocity_to_swapi_per_bin.return_value = np.full(
             (50, 72, 3), 0.0
         )
-        fitter = self._make_fitter({
-            "proton_sw_velocity_rtn": np.array([[1.0, 2.0, 3.0]]),
-            "proton_sw_velocity_rtn_sun": np.array([[1.0, 32.0, 3.0]]),
-            "quality_flags": np.array([int(SwapiL3Flags.NONE)]),
-        })
+        fitter = self._make_fitter(
+            {
+                "proton_sw_velocity_rtn": np.array([[1.0, 2.0, 3.0]]),
+                "proton_sw_velocity_rtn_sun": np.array([[1.0, 32.0, 3.0]]),
+                "quality_flags": np.array([int(SwapiL3Flags.NONE)]),
+            }
+        )
 
         [(fit_input, _)] = fitter.precompute_geometry([chunk])
 
@@ -1304,9 +1467,10 @@ class TestPuiChunkFitterPrecomputeGeometry(SpiceTestCase):
         mock_spiceypy.unitim.assert_not_called()
         mock_spiceypy.spkezr.assert_not_called()
 
-
     @patch("imap_l3_processing.swapi.l3a.chunk_fits.spiceypy")
-    @patch("imap_l3_processing.swapi.l3a.chunk_fits.rotate_rtn_velocity_to_swapi_per_bin")
+    @patch(
+        "imap_l3_processing.swapi.l3a.chunk_fits.rotate_rtn_velocity_to_swapi_per_bin"
+    )
     @patch.object(PuiChunkFitter, "_calculate_ten_minute_velocities")
     def test_spice_gap_on_precompute_spice_state_yields_none(
         self,
@@ -1326,11 +1490,13 @@ class TestPuiChunkFitterPrecomputeGeometry(SpiceTestCase):
             (50, 72, 3), 0.0
         )
         mock_spiceypy.spkezr.side_effect = _SpiceyError("gap")
-        fitter = self._make_fitter({
-            "proton_sw_velocity_rtn": np.array([[1.0, 2.0, 3.0]]),
-            "proton_sw_velocity_rtn_sun": np.array([[1.0, 32.0, 3.0]]),
-            "quality_flags": np.array([int(SwapiL3Flags.NONE)]),
-        })
+        fitter = self._make_fitter(
+            {
+                "proton_sw_velocity_rtn": np.array([[1.0, 2.0, 3.0]]),
+                "proton_sw_velocity_rtn_sun": np.array([[1.0, 32.0, 3.0]]),
+                "quality_flags": np.array([int(SwapiL3Flags.NONE)]),
+            }
+        )
 
         [(fit_input, _)] = fitter.precompute_geometry([chunk])
 
@@ -1338,8 +1504,8 @@ class TestPuiChunkFitterPrecomputeGeometry(SpiceTestCase):
 
     @patch.object(PuiChunkFitter, "_calculate_ten_minute_velocities")
     def test_flags_chunks_that_need_predicted_ephemeris(
-            self,
-            mock_calculate_ten_minute_velocities,
+        self,
+        mock_calculate_ten_minute_velocities,
     ):
         mock_calculate_ten_minute_velocities.return_value = (
             np.array([[400.0, 10.0, 5.0], [400.0, 10.0, 5.0]]),
@@ -1348,21 +1514,21 @@ class TestPuiChunkFitterPrecomputeGeometry(SpiceTestCase):
         )
 
         chunk_needing_predict = _pui_chunk(
-            str_yyyymmdd_to_ttj2000ns("20260708")
-            + 12*3600*1e9
+            str_yyyymmdd_to_ttj2000ns("20260708") + 12 * 3600 * 1e9
         )
         chunk_not_needing_predict = _pui_chunk(
-            str_yyyymmdd_to_ttj2000ns("20260120")
-            + 12*3600*1e9
+            str_yyyymmdd_to_ttj2000ns("20260120") + 12 * 3600 * 1e9
         )
         chunks = [chunk_needing_predict, chunk_not_needing_predict]
 
         with KernelPool(_predicted_ephemeris_kernel_paths()):
-            fitter = self._make_fitter({
-                "proton_sw_velocity_rtn": np.array([[1.0, 2.0, 3.0]]),
-                "proton_sw_velocity_rtn_sun": np.array([[1.0, 32.0, 3.0]]),
-                "quality_flags": [],
-            })
+            fitter = self._make_fitter(
+                {
+                    "proton_sw_velocity_rtn": np.array([[1.0, 2.0, 3.0]]),
+                    "proton_sw_velocity_rtn_sun": np.array([[1.0, 32.0, 3.0]]),
+                    "quality_flags": [],
+                }
+            )
 
             [(_, quality_flag1), (_, quality_flag2)] = fitter.precompute_geometry(
                 chunks
@@ -1373,8 +1539,8 @@ class TestPuiChunkFitterPrecomputeGeometry(SpiceTestCase):
 
     @patch.object(PuiChunkFitter, "_calculate_ten_minute_velocities")
     def test_combines_upstream_proton_and_predicted_ephemeris_flags(
-            self,
-            mock_calculate_ten_minute_velocities,
+        self,
+        mock_calculate_ten_minute_velocities,
     ):
         mock_calculate_ten_minute_velocities.return_value = (
             np.array([[400.0, 10.0, 5.0], [400.0, 10.0, 5.0]]),
@@ -1383,21 +1549,21 @@ class TestPuiChunkFitterPrecomputeGeometry(SpiceTestCase):
         )
 
         chunk_needing_predict = _pui_chunk(
-            str_yyyymmdd_to_ttj2000ns("20260708")
-            + 12*3600*1e9
+            str_yyyymmdd_to_ttj2000ns("20260708") + 12 * 3600 * 1e9
         )
         chunk_not_needing_predict = _pui_chunk(
-            str_yyyymmdd_to_ttj2000ns("20260120")
-            + 12*3600*1e9
+            str_yyyymmdd_to_ttj2000ns("20260120") + 12 * 3600 * 1e9
         )
         chunks = [chunk_needing_predict, chunk_not_needing_predict]
 
         with KernelPool(_predicted_ephemeris_kernel_paths()):
-            fitter = self._make_fitter({
-                "proton_sw_velocity_rtn": np.array([[1.0, 2.0, 3.0]]),
-                "proton_sw_velocity_rtn_sun": np.array([[1.0, 32.0, 3.0]]),
-                "quality_flags": [],
-            })
+            fitter = self._make_fitter(
+                {
+                    "proton_sw_velocity_rtn": np.array([[1.0, 2.0, 3.0]]),
+                    "proton_sw_velocity_rtn_sun": np.array([[1.0, 32.0, 3.0]]),
+                    "quality_flags": [],
+                }
+            )
 
             [(_, quality_flag1), (_, quality_flag2)] = fitter.precompute_geometry(
                 chunks
@@ -1410,15 +1576,17 @@ class TestPuiChunkFitterPrecomputeGeometry(SpiceTestCase):
             self.assertEqual(SwapiL3Flags.BAD_FIT, quality_flag2)
 
     @patch("imap_l3_processing.swapi.l3a.chunk_fits.get_spacecraft_velocity_rtn")
-    @patch("imap_l3_processing.swapi.l3a.chunk_fits.rotate_rtn_velocity_to_swapi_per_bin")
+    @patch(
+        "imap_l3_processing.swapi.l3a.chunk_fits.rotate_rtn_velocity_to_swapi_per_bin"
+    )
     @patch.object(PuiChunkFitter, "_calculate_ten_minute_velocities")
     @patch("imap_l3_processing.swapi.l3a.chunk_fits.PredictedEphemerisTracker")
     def test_uses_predicted_ephemeris_tracker(
-            self,
-            mock_tracker_class,
-            mock_calculate_ten_minute_velocities,
-            mock_rotate_rtn_velocity_to_swapi_per_bin,
-            mock_get_spacecraft_velocity_rtn,
+        self,
+        mock_tracker_class,
+        mock_calculate_ten_minute_velocities,
+        mock_rotate_rtn_velocity_to_swapi_per_bin,
+        mock_get_spacecraft_velocity_rtn,
     ):
         mock_calculate_ten_minute_velocities.return_value = (
             np.array([[400.0, 10.0, 5.0], [400.0, 10.0, 5.0]]),
@@ -1438,20 +1606,20 @@ class TestPuiChunkFitterPrecomputeGeometry(SpiceTestCase):
             mock_tracker_2,
         ]
         chunk_needing_predict = _pui_chunk(
-            str_yyyymmdd_to_ttj2000ns("20260308")
-            + 12*3600*1e9
+            str_yyyymmdd_to_ttj2000ns("20260308") + 12 * 3600 * 1e9
         )
         chunk_not_needing_predict = _pui_chunk(
-            str_yyyymmdd_to_ttj2000ns("20260120")
-            + 12*3600*1e9
+            str_yyyymmdd_to_ttj2000ns("20260120") + 12 * 3600 * 1e9
         )
         chunks = [chunk_needing_predict, chunk_not_needing_predict]
 
-        fitter = self._make_fitter({
-            "proton_sw_velocity_rtn": np.array([[1.0, 2.0, 3.0]]),
-            "proton_sw_velocity_rtn_sun": np.array([[1.0, 32.0, 3.0]]),
-            "quality_flags": [],
-        })
+        fitter = self._make_fitter(
+            {
+                "proton_sw_velocity_rtn": np.array([[1.0, 2.0, 3.0]]),
+                "proton_sw_velocity_rtn_sun": np.array([[1.0, 32.0, 3.0]]),
+                "quality_flags": [],
+            }
+        )
 
         fitter.precompute_geometry(chunks)
         self.assertEqual(2, mock_tracker_class.call_count)
@@ -1467,7 +1635,9 @@ class TestPuiChunkFitterPrecomputeGeometry(SpiceTestCase):
             )
 
 
-def _pui_fit_result(ionization_rate, cutoff_speed, flags, density=None, temperature=None):
+def _pui_fit_result(
+    ionization_rate, cutoff_speed, flags, density=None, temperature=None
+):
     nan = ufloat(np.nan, np.nan)
     return PickupIonFitResult(
         ionization_rate=ionization_rate,
@@ -1522,9 +1692,7 @@ class TestPuiChunkFitterFitChunk(unittest.TestCase):
             inflow_angle=self.inflow_angle,
         )
 
-    def test_clean_chunk_passes_through_the_fit_result(
-        self, mock_calculate_pickup_ion
-    ):
+    def test_clean_chunk_passes_through_the_fit_result(self, mock_calculate_pickup_ion):
         """On a clean chunk the fitter forwards every field of the fit result verbatim."""
         density_result = ufloat(5.0, 0.5)
         temperature_result = ufloat(1e6, 1e5)
@@ -1582,8 +1750,7 @@ class TestPuiChunkFitterFitChunk(unittest.TestCase):
         )
 
         mock_calculate_pickup_ion.assert_not_called()
-        for key in ("ionization_rate", "cutoff_speed",
-                    "density", "temperature"):
+        for key in ("ionization_rate", "cutoff_speed", "density", "temperature"):
             self.assertTrue(np.isnan(result[key].nominal_value), msg=key)
             self.assertTrue(np.isnan(result[key].std_dev), msg=key)
         self.assertEqual(result["quality_flags"], int(SwapiL3Flags.NONE))
@@ -1597,8 +1764,7 @@ class TestPuiChunkFitterFitChunk(unittest.TestCase):
         result = self.fitter.fit_chunk(chunk, None, int(SwapiL3Flags.NONE))
 
         mock_calculate_pickup_ion.assert_not_called()
-        for key in ("ionization_rate", "cutoff_speed",
-                    "density", "temperature"):
+        for key in ("ionization_rate", "cutoff_speed", "density", "temperature"):
             self.assertTrue(np.isnan(result[key].nominal_value), msg=key)
         self.assertEqual(result["quality_flags"], int(SwapiL3Flags.NONE))
 
