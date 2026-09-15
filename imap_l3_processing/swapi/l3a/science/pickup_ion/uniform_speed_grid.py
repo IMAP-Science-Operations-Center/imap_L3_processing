@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import numpy as np
 from numpy.typing import NDArray
 
@@ -28,9 +26,7 @@ class UniformSpeedGrid:
         Build the grid spanning from just above zero up to ``max_center_speed`` [km/s].
         """
         min_speed = max_center_speed * _LOWEST_SPEED_AS_FRACTION_OF_MAX
-        self.centers: NDArray = np.linspace(
-            min_speed, max_center_speed, _CELL_COUNT
-        )
+        self.centers: NDArray = np.linspace(min_speed, max_center_speed, _CELL_COUNT)
         self.spacing: float = float(self.centers[1] - self.centers[0])
         self.size: int = int(self.centers.size)
         self.spherical_shell_integration_weights: NDArray = (
