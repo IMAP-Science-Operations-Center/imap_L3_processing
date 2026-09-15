@@ -57,17 +57,28 @@ class PickupIonFitInputData:
     """Center of the chunk [ns since J2000 TT]."""
 
     esa_energies: NDArray
-    """Sweep-averaged coarse ESA energies, shape (62,) [eV/e]."""
+    """Sweep-averaged coarse ESA energies [eV/e].
+
+    Dims: (coarse energy step,)
+    """
 
     coincidence_count_rates: NDArray
-    """Coarse-sweep coincidence count rates, shape (50, 62) [counts/s]."""
+    """Coarse-sweep coincidence count rates [counts/s].
+
+    Dims: (sweep, coarse energy step)
+    """
 
     solar_wind_velocity_rtn_sun: NDArray
-    """Chunk-mean solar wind bulk velocity (Sun frame, RTN coords), shape (3,) [km/s]."""
+    """Chunk-mean solar wind bulk velocity (Sun frame, RTN coords) [km/s].
+
+    Dims: (RTN,)
+    """
 
     bulk_sw_per_bin_swapi_kms: NDArray
-    """Rotated chunk-mean solar wind bulk velocity (SC frame, SWAPI coords),
-    shape (50, 62, 3) [km/s]."""
+    """Rotated chunk-mean solar wind bulk velocity (SC frame, SWAPI coords) [km/s].
+
+    Dims: (sweep, coarse energy step, SWAPI XYZ)
+    """
 
     distance: float
     """IMAP's heliocentric distance [km]."""
