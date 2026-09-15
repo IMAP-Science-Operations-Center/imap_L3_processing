@@ -115,6 +115,38 @@ def get_spacecraft_velocity_rtn(epoch_tt2000_ns: float) -> ndarray:
     return np.einsum("ij,j->i", rtn_from_eclipj2000, state_eclipj2000[3:])
 
 
+def convert_velocity_rtn_to_frame(
+    epoch_tt2000_ns: ndarray,
+    velocity_rtn: ndarray,
+    target_frame: SpiceFrame,
+) -> ndarray:
+    """Express RTN velocity vectors in another coordinate frame."""
+    ephemeris_times = ttj2000ns_to_et(epoch_tt2000_ns)
+    rotation_matrices = get_rotation_matrix(
+        ephemeris_times, SpiceFrame.IMAP_RTN, target_frame
+    )
+    return np.einsum("nij,nj->ni", rotation_matrices, velocity_rtn)
+
+
+def convert_velocity_covariance_rtn_to_frame(
+    epoch_tt2000_ns: ndarray,
+    covariance_rtn: ndarray,
+    target_frame: SpiceFrame,
+) -> ndarray:
+    """Express RTN velocity covariance matrices in another coordinate frame."""
+    ephemeris_times = ttj2000ns_to_et(epoch_tt2000_ns)
+    rotation_matrices = get_rotation_matrix(
+        ephemeris_times, SpiceFrame.IMAP_RTN, target_frame
+    )
+    # This is equivalent to R C R^T
+    return np.einsum(
+        "nij,njk,nlk->nil",
+        rotation_matrices,
+        covariance_rtn,
+        rotation_matrices,
+    )
+
+
 @numba.njit
 def velocity_components_to_angles_in_instrument_frame(vx: float, vy: float, vz: float):
     """Convert a Cartesian flow-direction velocity to (azimuth_deg, elevation_deg)
