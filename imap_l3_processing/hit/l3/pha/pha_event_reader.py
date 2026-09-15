@@ -113,8 +113,8 @@ class PHAEventReader:
         extended_stim_header = None
         stim_block = None
         if long_event_flag and not stim_tag:
-            e_prime_index = event_bitstream.read("uint:7")
             delta_e_index = event_bitstream.read("uint:9")
+            e_prime_index = event_bitstream.read("uint:7")
             detector_flags = event_bitstream.read("uint:8")
             extended_header = PHAExtendedHeader(detector_flags, delta_e_index, e_prime_index)
 

@@ -12,30 +12,15 @@ from spiceypy.utils.exceptions import SpiceyError
 from uncertainties import ufloat
 
 from imap_l3_processing.constants import (
-    ALPHA_MASS_PER_CHARGE_M_P_PER_E,
-    ALPHA_PARTICLE_MASS_KG,
-    FIVE_MINUTES_IN_NANOSECONDS,
-    HE_PUI_PARTICLE_MASS_KG,
     ONE_SECOND_IN_NANOSECONDS,
-    PROTON_MASS_KG,
-    PROTON_MASS_PER_CHARGE_M_P_PER_E,
     THIRTY_SECONDS_IN_NANOSECONDS,
 )
 from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_pickup_ion_values import (
+    PickupIonFitInputData,
     calculate_pickup_ion_values,
 )
-from imap_l3_processing.swapi.l3a.science.pickup_ion.moments import (
-    calculate_helium_pui_density,
-    calculate_helium_pui_temperature,
-)
 from imap_l3_processing.swapi.l3a.science.pickup_ion.utils import (
-    calculate_pui_energy_cutoff,
-    calculate_ten_minute_velocities,
     rotate_rtn_velocity_to_swapi_per_bin,
-)
-from imap_l3_processing.swapi.l3a.science.pickup_ion.vasyliunas_siscoe_distribution import (
-    VasyliunasSiscoeDistribution,
-    build_vasyliunas_siscoe_distribution,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_solar_wind_alpha_model import (
     AlphaSolarWindFitResult,
@@ -48,18 +33,20 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proto
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
 )
+from imap_l3_processing.swapi.species import Species
 from imap_l3_processing.swapi.constants import (
     SWAPI_COARSE_SWEEP_BINS,
     SWAPI_L2_K_FACTOR,
     SWAPI_SCIENCE_BINS,
 )
 from imap_l3_processing.swapi.l3a.utils import (
-    chunk_epoch,
     compute_direction_of_mean_magnetic_field_over_chunk,
     esa_voltage_to_proton_speed,
     get_spacecraft_velocity_rtn,
     get_swapi_geometry,
     measurement_times,
+    pickup_ion_chunk_epoch,
+    solar_wind_chunk_epoch,
 )
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.predicted_ephemeris_tracker import PredictedEphemerisTracker
@@ -111,12 +98,13 @@ class ProtonChunkFitter(ChunkFitter):
     def precompute_geometry(self, chunks):
         geometries = []
         for chunk in chunks:
-            epoch = chunk_epoch(chunk)
+            epoch = solar_wind_chunk_epoch(chunk)
             rm = None
             sc_vel = None
             tracker = PredictedEphemerisTracker()
             try:
-                rm = tracker.run(get_swapi_geometry, measurement_times(chunk, SWAPI_SCIENCE_BINS))
+                science_bin_times = measurement_times(chunk.sci_start_time)[:, SWAPI_SCIENCE_BINS]
+                rm = tracker.run(get_swapi_geometry, science_bin_times.ravel())
             except Exception:
                 logger.warning(
                     "SPICE gap in rotation matrices.",
@@ -156,12 +144,13 @@ class AlphaChunkFitter(ChunkFitter):
     def precompute_geometry(self, chunks):
         geometries = []
         for chunk in chunks:
-            epoch = chunk_epoch(chunk)
+            epoch = solar_wind_chunk_epoch(chunk)
             rm = None
             sc_vel = None
             tracker = PredictedEphemerisTracker()
             try:
-                rm = tracker.run(get_swapi_geometry, measurement_times(chunk, SWAPI_SCIENCE_BINS))
+                science_bin_times = measurement_times(chunk.sci_start_time)[:, SWAPI_SCIENCE_BINS]
+                rm = tracker.run(get_swapi_geometry, science_bin_times.ravel())
             except Exception:
                 logger.info(
                     f"Missing SPICE information at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}, continuing with fill value"
@@ -206,113 +195,133 @@ class PuiChunkFitter(ChunkFitter):
         density_of_neutral_helium_lookup_table,
         hydrogen_inflow_vector,
         helium_inflow_vector,
-        proton_results: dict,
+        proton_sw_results: dict,
     ):
         self.density_of_neutral_helium_lookup_table = (
             density_of_neutral_helium_lookup_table
         )
         self.hydrogen_inflow_vector = hydrogen_inflow_vector
         self.helium_inflow_vector = helium_inflow_vector
-        self.proton_results = proton_results
-        self.sw_velocity_rtn_by_chunk_epoch: dict[int, np.ndarray] = {}
+        self.proton_sw_results = proton_sw_results
 
-    def precompute_geometry(self, chunks):
-        """Average the 5-minute proton fits into the 10-minute cadence used by
-        50-sweep PUI chunks, rotate each 10-minute RTN average into IMAP_SWAPI
-        at every coarse-bin measurement time, and precompute the chunk SPICE
-        state. SPICE gaps fall back to NaN/None fills so they propagate to fill
-        values in the downstream fit."""
-        ten_minute_sw_velocities_rtn, proton_sw_quality_flags = (
-            calculate_ten_minute_velocities(
-                self.proton_results["proton_sw_velocity_rtn"],
-                list(self.proton_results["quality_flags"]),
+    def _calculate_ten_minute_velocities(
+        self,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Average the 1-minute proton bulk SW velocity vectors over
+            10-minute chunks and compute the bitwise-OR of the per-minute flags."""
+        velocities_rtn = self.proton_sw_results["proton_sw_velocity_rtn"]
+        velocities_rtn_sun = self.proton_sw_results["proton_sw_velocity_rtn_sun"]
+        quality_flags = list(self.proton_sw_results["quality_flags"])
+
+        ten_minute_velocities_rtn = []
+        ten_minute_velocities_rtn_sun = []
+        ten_minute_quality_flags = []
+        for left_slice in range(0, len(velocities_rtn), 10):
+            ten_min_slice = slice(left_slice, left_slice + 10)
+
+            ten_minute_velocities_rtn.append(
+                np.mean(velocities_rtn[ten_min_slice], axis=0)
             )
+            ten_minute_velocities_rtn_sun.append(
+                np.mean(velocities_rtn_sun[ten_min_slice], axis=0)
+            )
+            ten_minute_quality_flags.append(
+                np.bitwise_or.reduce(quality_flags[ten_min_slice])
+            )
+        return (
+            np.array(ten_minute_velocities_rtn),
+            np.array(ten_minute_velocities_rtn_sun),
+            np.array(ten_minute_quality_flags),
         )
 
-        n_coarse_bins = SWAPI_COARSE_SWEEP_BINS.stop - SWAPI_COARSE_SWEEP_BINS.start
-        geometries = []
-        for chunk, ten_minute_rtn, flag in zip(
-            chunks, ten_minute_sw_velocities_rtn, proton_sw_quality_flags
-        ):
-            epoch = int(chunk.sci_start_time[0]) + FIVE_MINUTES_IN_NANOSECONDS
-            self.sw_velocity_rtn_by_chunk_epoch[epoch] = ten_minute_rtn
-            proton_sw_quality_flag = int(flag)
-            n_sweeps = chunk.sci_start_time.shape[0]
+    def precompute_geometry(self, chunks):
+        (
+            ten_minute_sw_velocities_rtn,
+            ten_minute_sw_velocities_rtn_sun,
+            proton_sw_quality_flags,
+        ) = self._calculate_ten_minute_velocities()
 
-            lower_energy_cutoff: float | None = None
-            upper_energy_cutoff: float | None = None
-            vasyliunas_siscoe_distribution: VasyliunasSiscoeDistribution | None = None
+        input_data_list = []
+        for chunk, sw_velocity_rtn_sc, sw_velocity_rtn_sun, sw_flags in zip(
+            chunks,
+            ten_minute_sw_velocities_rtn,
+            ten_minute_sw_velocities_rtn_sun,
+            proton_sw_quality_flags,
+        ):
+            epoch = pickup_ion_chunk_epoch(chunk)
+            proton_sw_quality_flag = int(sw_flags)
+
+            if (
+                np.any(np.isnan(sw_velocity_rtn_sc))
+                or np.any(np.isnan(sw_velocity_rtn_sun))
+            ):
+                logger.info(f"solar wind velocity gap at {epoch}")
+                input_data_list.append((None, proton_sw_quality_flag))
+                continue
 
             tracker = PredictedEphemerisTracker()
 
-            if np.any(np.isnan(ten_minute_rtn)):
-                bulk_sw_per_bin_swapi = np.full((n_sweeps, n_coarse_bins, 3), np.nan)
-            else:
-                try:
-                    bulk_sw_per_bin_swapi = tracker.run(rotate_rtn_velocity_to_swapi_per_bin,
-                    chunk, ten_minute_rtn)
-                except SpiceyError:
-                    logger.info(
-                        "SPICE gap when rotating proton SW velocity to IMAP_SWAPI "
-                        f"in PUI chunk at epoch {epoch}; using fill value."
-                    )
-                    bulk_sw_per_bin_swapi = np.full((n_sweeps, n_coarse_bins, 3), np.nan)
+            try:
+                bulk_sw_per_bin_swapi = tracker.run(
+                    rotate_rtn_velocity_to_swapi_per_bin,
+                    chunk,
+                    sw_velocity_rtn_sc
+                )
 
-                try:
-                    chunk_ephemeris_time = spiceypy.unitim(
-                        epoch / ONE_SECOND_IN_NANOSECONDS, "TT", "ET"
-                    )
-                    lower_energy_cutoff = 1.25 * tracker.run(calculate_pui_energy_cutoff,
-                        PROTON_MASS_KG,
-                        chunk_ephemeris_time,
-                        ten_minute_rtn,
-                        self.hydrogen_inflow_vector,
-                    )
-                    upper_energy_cutoff = 1.2 * tracker.run(calculate_pui_energy_cutoff,
-                        HE_PUI_PARTICLE_MASS_KG,
-                        chunk_ephemeris_time,
-                        ten_minute_rtn,
-                        self.helium_inflow_vector,
-                    )
-                    vasyliunas_siscoe_distribution = tracker.run(build_vasyliunas_siscoe_distribution,
-                        chunk_ephemeris_time,
-                        ten_minute_rtn,
-                        self.density_of_neutral_helium_lookup_table,
-                        self.helium_inflow_vector,
-                    )
-                except SpiceyError:
-                    logger.info(
-                        f"SPICE gap precomputing PUI chunk state at epoch {epoch};"
-                        " using fill value."
-                    )
-                    lower_energy_cutoff = None
-                    upper_energy_cutoff = None
-                    vasyliunas_siscoe_distribution = None
+                chunk_ephemeris_time = spiceypy.unitim(
+                    epoch / ONE_SECOND_IN_NANOSECONDS, "TT", "ET"
+                )
 
-            flag = SwapiL3Flags.PREDICTIVE_EPHEMERIS if tracker.used_predict else SwapiL3Flags.NONE
+                def compute_chunk_position(ephemeris_time: float) -> tuple[float, float]:
+                    imap_position_eclipj2000_frame = spiceypy.spkezr(
+                        "IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN"
+                    )[0][0:3]
+                    distance_km, longitude, _latitude = spiceypy.reclat(
+                        imap_position_eclipj2000_frame
+                    )
+                    inflow_angle = (
+                        np.rad2deg(longitude)
+                        - self.helium_inflow_vector.longitude_deg_eclipj2000
+                    )
+                    return distance_km, inflow_angle
+                distance, inflow_angle = tracker.run(
+                    compute_chunk_position, chunk_ephemeris_time
+                )
+            except SpiceyError:
+                logger.info(f"SPICE gap at {epoch}")
+                input_data_list.append((None, proton_sw_quality_flag))
+                continue
 
-            geometries.append((
-                epoch,
-                ten_minute_rtn,
-                bulk_sw_per_bin_swapi,
-                proton_sw_quality_flag | flag,
-                lower_energy_cutoff,
-                upper_energy_cutoff,
-                vasyliunas_siscoe_distribution,
+            if tracker.used_predict:
+                proton_sw_quality_flag |= SwapiL3Flags.PREDICTIVE_EPHEMERIS
+
+            input_data_list.append((
+                PickupIonFitInputData(
+                    time_as_tt2000=epoch,
+                    esa_energies=chunk.energy[:, SWAPI_COARSE_SWEEP_BINS].mean(axis=0),
+                    coincidence_count_rates=chunk.coincidence_count_rate[
+                        :, SWAPI_COARSE_SWEEP_BINS
+                    ],
+                    bulk_sw_per_bin_swapi_kms=bulk_sw_per_bin_swapi[
+                        :, SWAPI_COARSE_SWEEP_BINS, :
+                    ],
+                    solar_wind_velocity_rtn_sun=sw_velocity_rtn_sun,
+                    distance=distance,
+                    inflow_angle=inflow_angle,
+                ),
+                proton_sw_quality_flag,
             ))
-        return geometries
+
+        return input_data_list
 
     def fit_chunk(
         self,
         data_chunk,
-        epoch,
-        sw_velocity_rtn,
-        bulk_sw_per_bin_swapi,
-        quality_flag,
-        lower_energy_cutoff,
-        upper_energy_cutoff,
-        vasyliunas_siscoe_distribution,
+        fit_input: PickupIonFitInputData | None,
+        quality_flag: SwapiL3Flags,
     ):
+        epoch = pickup_ion_chunk_epoch(data_chunk)
+
         count_rates_window = data_chunk.coincidence_count_rate[
             :, SWAPI_COARSE_SWEEP_BINS
         ]
@@ -320,35 +329,19 @@ class PuiChunkFitter(ChunkFitter):
             return _pui_fill_result(
                 epoch, quality_flag, "gap in L2 coincidence count rate"
             )
-        if np.any(np.isnan(sw_velocity_rtn)):
+        if fit_input is None:
             return _pui_fill_result(
                 epoch, quality_flag,
-                "gap in 10-minute proton solar wind velocity (no usable proton fit in the window)",
-            )
-        if vasyliunas_siscoe_distribution is None:
-            return _pui_fill_result(
-                epoch, quality_flag,
-                "no neutral-helium Vasyliunas-Siscoe distribution (SPICE gap building chunk state)",
+                "failed to load input data",
             )
 
         try:
-            voltages = (
-                data_chunk.energy[:, SWAPI_COARSE_SWEEP_BINS] / SWAPI_L2_K_FACTOR
-            ).flatten()
-            central_effective_area_scale = _shared[
-                "efficiency_table"
-            ].central_effective_area_scale_for(epoch, "helium")
             fit_result = calculate_pickup_ion_values(
-                _shared["swapi_response"],
-                voltages,
-                count_rates_window.flatten(),
-                sw_velocity_rtn,
-                bulk_sw_per_bin_swapi,
-                self.density_of_neutral_helium_lookup_table,
-                lower_energy_cutoff,
-                upper_energy_cutoff,
-                vasyliunas_siscoe_distribution,
-                central_effective_area_scale=central_effective_area_scale,
+                fit_input,
+                swapi_response=_shared["swapi_response"],
+                density_of_neutral_helium_lookup_table=(
+                    self.density_of_neutral_helium_lookup_table
+                ),
             )
         except Exception:
             logger.warning(
@@ -357,29 +350,13 @@ class PuiChunkFitter(ChunkFitter):
             )
             return _pui_fill_result(epoch, quality_flag)
 
-        fit_params = fit_result.fitting_params
-        density = temperature = ufloat(np.nan, np.nan)
-        if not (int(fit_params.flags) & int(SwapiL3Flags.BAD_FIT)):
-            density = calculate_helium_pui_density(
-                fit_result.chunk_response,
-                fit_result.vasyliunas_siscoe_distribution,
-                fit_params,
-            )
-            temperature = calculate_helium_pui_temperature(
-                fit_result.chunk_response,
-                fit_result.vasyliunas_siscoe_distribution,
-                fit_params,
-            )
-
         return dict(
             epoch=epoch,
-            cooling_index=fit_params.cooling_index,
-            ionization_rate=fit_params.ionization_rate,
-            cutoff_speed=fit_params.cutoff_speed,
-            background_rate=fit_params.background_count_rate,
-            density=density,
-            temperature=temperature,
-            quality_flags=int(quality_flag) | int(fit_params.flags),
+            ionization_rate=fit_result.ionization_rate,
+            cutoff_speed=fit_result.cutoff_speed,
+            density=fit_result.density,
+            temperature=fit_result.temperature,
+            quality_flags=int(quality_flag) | int(fit_result.flags),
         )
 
 
@@ -534,7 +511,6 @@ def _fit_proton(
         return _nan_proton_result(SwapiL3Flags.NONE)
   
     swapi_response = _shared["swapi_response"]
-    efficiency_table = _shared["efficiency_table"]
     count_rates = data_chunk.coincidence_count_rate[:, SWAPI_SCIENCE_BINS]
     voltages = data_chunk.energy[:, SWAPI_SCIENCE_BINS] / SWAPI_L2_K_FACTOR
     voltage_valid = (voltages > 0) & np.isfinite(voltages)
@@ -560,10 +536,9 @@ def _fit_proton(
         count_rate=count_rates,
         esa_voltage=voltages,
         swapi_response=swapi_response,
-        central_effective_area_scale=efficiency_table.central_effective_area_scale_for(epoch, "proton"),
+        time_as_tt2000=epoch,
+        species=Species.PROTON,
         rotation_matrices=rotation_matrices,
-        mass_kg=PROTON_MASS_KG,
-        mass_per_charge_m_p_per_e=PROTON_MASS_PER_CHARGE_M_P_PER_E,
     )
     try:
         result = fit_solar_wind_proton_model(ctx)
@@ -586,10 +561,8 @@ def _pui_fill_result(epoch, proton_sw_quality_flag, reason=None) -> dict:
     nan = ufloat(np.nan, np.nan)
     return dict(
         epoch=epoch,
-        cooling_index=nan,
         ionization_rate=nan,
         cutoff_speed=nan,
-        background_rate=nan,
         density=nan,
         temperature=nan,
         quality_flags=int(proton_sw_quality_flag),
@@ -665,7 +638,6 @@ def _fit_alpha(
         )
 
     swapi_response = _shared["swapi_response"]
-    efficiency_table = _shared["efficiency_table"]
     try:
         count_rates = data_chunk.coincidence_count_rate[:, SWAPI_COARSE_SWEEP_BINS]
         voltages = data_chunk.energy[:, SWAPI_COARSE_SWEEP_BINS] / SWAPI_L2_K_FACTOR
@@ -676,19 +648,17 @@ def _fit_alpha(
             count_rate=count_rates,
             esa_voltage=voltages,
             swapi_response=swapi_response,
-            central_effective_area_scale=efficiency_table.central_effective_area_scale_for(epoch, "proton"),
+            time_as_tt2000=epoch,
+            species=Species.PROTON,
             rotation_matrices=coarse_rotation_matrices,
-            mass_kg=PROTON_MASS_KG,
-            mass_per_charge_m_p_per_e=PROTON_MASS_PER_CHARGE_M_P_PER_E,
         )
         alpha_ctx = build_solar_wind_fit_context(
             count_rate=count_rates,
             esa_voltage=voltages,
             swapi_response=swapi_response,
-            central_effective_area_scale=efficiency_table.central_effective_area_scale_for(epoch, "helium"),
+            time_as_tt2000=epoch,
+            species=Species.ALPHA,
             rotation_matrices=coarse_rotation_matrices,
-            mass_kg=ALPHA_PARTICLE_MASS_KG,
-            mass_per_charge_m_p_per_e=ALPHA_MASS_PER_CHARGE_M_P_PER_E,
         )
         alpha_moments = fit_solar_wind_alpha_model(
             proton_ctx=proton_ctx,

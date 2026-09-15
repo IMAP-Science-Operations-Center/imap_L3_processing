@@ -11,14 +11,16 @@ from imap_l3_processing.constants import (
     CENTIMETERS_PER_METER,
     METERS_PER_KILOMETER,
 )
+from imap_l3_processing.swapi.l3a.science.pickup_ion.uniform_speed_grid import UniformSpeedGrid
 from imap_l3_processing.swapi.l3a.utils import velocity_components_to_angles_in_instrument_frame
 from imap_l3_processing.swapi.response.passband_grid import interpolate_passband
 from imap_l3_processing.swapi.response.swapi_response import ResponseGrid, SwapiResponse
+from imap_l3_processing.swapi.species import Species
 from imap_l3_processing.swapi.response.azimuthal_transmission import interpolate_azimuthal_transmission
 
 
 class ChunkCollapsedResponse(NamedTuple):
-    speed_in_sw_frame: NDArray[float]  # (N,) shared v' grid
+    speed_grid: UniformSpeedGrid       # shared v' grid of N cells
     bin_weights: NDArray[float]        # (n_sweeps, n_steps, N); count_rate = bin_weights @ f(v')
 
 
@@ -29,16 +31,15 @@ class CollapsedResponseGrid(NamedTuple):
 
 _ELEVATION_RESOLUTION = 32
 _SPEED_RATIO_RESOLUTION = 32
-_CHUNK_GRID_POINTS = 256
 
 
 def build_chunk_collapsed_response(
     swapi_response: SwapiResponse,
     voltages_v: NDArray,
     bulk_sw_per_bin_kms: NDArray,
-    mass_per_charge_m_p_per_e: float,
+    time_as_tt2000: int,
+    species: Species,
     cutoff_speed_max_kms: float,
-    central_effective_area_scale: float = 1.0,
 ) -> ChunkCollapsedResponse:
     """
     Input shapes:
@@ -55,13 +56,10 @@ def build_chunk_collapsed_response(
         )
     bulk_speeds = np.linalg.norm(bulk_sw_per_bin_kms, axis=-1)  # (n_sweeps, n_steps)
 
-    speed_in_sw_frame = np.linspace(
-        cutoff_speed_max_kms * 1e-3, cutoff_speed_max_kms, _CHUNK_GRID_POINTS
-    )
-    delta_v_prime = speed_in_sw_frame[1] - speed_in_sw_frame[0]
-    integration_weights = speed_in_sw_frame ** 2 * delta_v_prime
+    speed_grid = UniformSpeedGrid(cutoff_speed_max_kms)
+    integration_weights = speed_grid.spherical_shell_integration_weights
 
-    bin_weights = np.zeros((n_sweeps, n_steps, _CHUNK_GRID_POINTS))
+    bin_weights = np.zeros((n_sweeps, n_steps, speed_grid.size))
     for sweep_index in range(n_sweeps):
         for step_index in range(n_steps):
             voltage = float(voltages_v[step_index])
@@ -71,24 +69,20 @@ def build_chunk_collapsed_response(
                 bulk_vec[0], bulk_vec[1], bulk_vec[2]
             )
             response_grid = swapi_response.get_response_grid(
-                esa_voltage=voltage,
-                mass_per_charge_m_p_per_e=mass_per_charge_m_p_per_e,
-                central_effective_area_scale=central_effective_area_scale,
+                time_as_tt2000, voltage, species
             )
             collapsed = build_collapsed_response_grid(
                 response_grid,
                 bulk_speed,
                 bulk_azimuth_deg,
                 bulk_elevation_deg,
-                speed_in_sw_frame=speed_in_sw_frame,
+                speed_in_sw_frame=speed_grid.centers,
             )
             bin_weights[sweep_index, step_index, :] = (
                 collapsed.values * integration_weights
             )
 
-    return ChunkCollapsedResponse(
-        speed_in_sw_frame=speed_in_sw_frame, bin_weights=bin_weights
-    )
+    return ChunkCollapsedResponse(speed_grid=speed_grid, bin_weights=bin_weights)
 
 
 def build_collapsed_response_grid(

@@ -1,16 +1,11 @@
-from unittest.mock import patch, sentinel
+from unittest.mock import patch
 
 import numpy as np
 
-from imap_l3_processing.constants import PROTON_CHARGE_COULOMBS, PROTON_MASS_KG, HE_PUI_PARTICLE_MASS_KG
-from imap_l3_processing.swapi.l3a.science.pickup_ion.inflow_vector import InflowVector
 from imap_l3_processing.swapi.l3a.science.pickup_ion.utils import (
-    calculate_pui_energy_cutoff,
-    calculate_ten_minute_velocities,
     convert_velocity_relative_to_imap,
     convert_velocity_to_reference_frame,
 )
-from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from tests.spice_test_case import SpiceTestCase
 
 _UTILS_MODULE = "imap_l3_processing.swapi.l3a.science.pickup_ion.utils"
@@ -25,53 +20,6 @@ _FAKE_SXFORM_ROTATION = np.array(
         [1.26218156e-07, 5.29395592e-23, 3.76211978e-09, -0.029793255, 0.0, 0.999556082],
     ]
 )
-
-
-class CalculatePuiEnergyCutoffTest(SpiceTestCase):
-    @patch(f"{_UTILS_MODULE}.convert_velocity_relative_to_imap")
-    @patch(f"{_UTILS_MODULE}.spiceypy")
-    def test_returns_proton_charge_normalized_kinetic_energy_at_cutoff(
-        self, mock_spice, mock_convert_velocity
-    ):
-        for particle_mass in (PROTON_MASS_KG, HE_PUI_PARTICLE_MASS_KG):
-            with self.subTest(particle_mass=particle_mass):
-                mock_spice.spkezr.return_value = (np.array([0, 0, 0, 4, 0, 0]), 1233.002)
-                mock_spice.latrec.return_value = np.array([0, 2, 0])
-
-                mock_convert_velocity.return_value = np.array([1, 2, 4])
-
-                sw_velocity_rtn_kms = np.array([22, 33, 44])
-                inflow_speed = 102
-                hydrogen_inflow_vector = InflowVector(
-                    inflow_speed, sentinel.inflow_lon, sentinel.inflow_lat
-                )
-                ephemeris_time = 100_000_000
-
-                energy_cutoff = calculate_pui_energy_cutoff(
-                    particle_mass,
-                    ephemeris_time,
-                    sw_velocity_rtn_kms,
-                    hydrogen_inflow_vector,
-                )
-
-                mock_spice.spkezr.assert_called_with(
-                    "IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN"
-                )
-                mock_spice.latrec.assert_called_with(
-                    -inflow_speed, sentinel.inflow_lon, sentinel.inflow_lat
-                )
-                mock_convert_velocity.assert_called_with(
-                    sw_velocity_rtn_kms, ephemeris_time, "IMAP_RTN", "ECLIPJ2000"
-                )
-
-                # (sw - particle - imap) = (1,2,4) - (0,2,0) - (4,0,0) = (-3,0,4); norm=5
-                velocity_cutoff_norm = 5
-                expected = (
-                    0.5
-                    * (particle_mass / PROTON_CHARGE_COULOMBS)
-                    * (2 * velocity_cutoff_norm * 1000) ** 2
-                )
-                self.assertAlmostEqual(expected, energy_cutoff)
 
 
 class ConvertVelocityRelativeToImapTest(SpiceTestCase):
@@ -122,65 +70,3 @@ class ConvertVelocityToReferenceFrameTest(SpiceTestCase):
             input_2d[0], ephemeris_time, "FROM", "TO"
         )
         np.testing.assert_array_almost_equal(expected_row, result_1d)
-
-
-class CalculateTenMinuteVelocitiesTest(SpiceTestCase):
-    def _velocities(self):
-        x = np.arange(1, 22)
-        y = np.arange(10, 211, 10)
-        z = np.arange(10, 211, 10)
-        return np.transpose([x, y, z]).astype(float)
-
-    def test_averages_per_minute_velocities_in_ten_minute_windows(self):
-        velocities = self._velocities()
-        quality_flags = np.repeat(SwapiL3Flags.NONE, 21)
-
-        averaged, ten_minute_flags = calculate_ten_minute_velocities(
-            velocities, list(quality_flags)
-        )
-
-        expected_velocities = np.array(
-            [[5.5, 55.0, 55.0], [15.5, 155.0, 155.0], [21.0, 210.0, 210.0]]
-        )
-        np.testing.assert_array_equal(averaged, expected_velocities)
-        np.testing.assert_array_equal(
-            ten_minute_flags, np.repeat(SwapiL3Flags.NONE, 3)
-        )
-
-    def test_ors_per_minute_quality_flags_within_window(self):
-        velocities = self._velocities()
-        quality_flags = np.repeat(SwapiL3Flags.NONE, 21)
-        quality_flags[13] = SwapiL3Flags.FIT_ERROR
-
-        _, ten_minute_flags = calculate_ten_minute_velocities(
-            velocities, list(quality_flags)
-        )
-
-        np.testing.assert_array_equal(
-            ten_minute_flags,
-            np.array(
-                [SwapiL3Flags.NONE, SwapiL3Flags.FIT_ERROR, SwapiL3Flags.NONE]
-            ),
-        )
-
-    def test_combines_multiple_per_minute_quality_flags_within_window(self):
-        velocities = self._velocities()
-        quality_flags = np.repeat(SwapiL3Flags.NONE, 21)
-        other_flag = 1 << 3
-        quality_flags[13] = SwapiL3Flags.FIT_ERROR
-        quality_flags[14] = other_flag
-
-        _, ten_minute_flags = calculate_ten_minute_velocities(
-            velocities, list(quality_flags)
-        )
-
-        np.testing.assert_array_equal(
-            ten_minute_flags,
-            np.array(
-                [
-                    SwapiL3Flags.NONE,
-                    SwapiL3Flags.FIT_ERROR | other_flag,
-                    SwapiL3Flags.NONE,
-                ]
-            ),
-        )

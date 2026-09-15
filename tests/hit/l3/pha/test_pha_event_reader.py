@@ -116,8 +116,8 @@ class TestPHAEventReader(unittest.TestCase):
         expected_e_prime_index = 105
 
         extended_header_binary = "".join([
-            BitArray(uint=expected_e_prime_index, length=7).bin,
             BitArray(uint=expected_delta_e_index, length=9).bin,
+            BitArray(uint=expected_e_prime_index, length=7).bin,
             BitArray(uint=expected_detector_flags, length=8).bin,
         ])
 
