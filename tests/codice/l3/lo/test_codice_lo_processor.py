@@ -9,8 +9,8 @@ import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 from imap_processing.spice.geometry import get_spacecraft_to_instrument_spin_phase_offset
 
-from imap_l3_processing.codice.l3.lo.codice_lo_l3a_3d_distributions_dependencies import \
-    CodiceLoL3a3dDistributionsDependencies
+from imap_l3_processing.codice.l3.lo.codice_lo_l3b_3d_distributions_dependencies import \
+    CodiceLoL3b3dDistributionsDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies import CodiceLoL3aDirectEventsDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencies import \
     CodiceLoL3aPartialDensitiesDependencies
@@ -23,7 +23,7 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_look
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, CodiceLoL2DirectEventData, \
     CodiceLoL3aDirectEventDataProduct, CodiceLoL2SWSpeciesData, \
     CodiceLoL1aSWPriorityRates, CodiceLoL1aNSWPriorityRates, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct, \
-    CODICE_LO_L2_NUM_PRIORITIES, CodiceLoL3ChargeStateDistributionsDataProduct, CodiceLoL3a3dDistributionDataProduct
+    CODICE_LO_L2_NUM_PRIORITIES, CodiceLoL3ChargeStateDistributionsDataProduct, CodiceLoL3b3dDistributionDataProduct
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
@@ -1090,7 +1090,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
     @patch(f'{MODULE}.PositionToElevationLookup')
     @patch(f'{MODULE}.rebin_to_counts_by_species_elevation_and_spin_sector')
     @patch(f'{MODULE}.convert_counts_to_intensity')
-    def test_process_l3a_3d_distributions(self, mock_convert_counts_to_intensity, mock_rebin,
+    def test_process_l3b_3d_distributions(self, mock_convert_counts_to_intensity, mock_rebin,
                                           mock_elevation_angle_lookup_class,
                                           mock_combine_priorities_for_species_and_calculate_uncertainty,
                                           mock_rebin_3d_distribution_azimuth_to_elevation):
@@ -1117,7 +1117,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         mock_energy_lookup.delta_plus = np.geomspace(288, 1, 128)
         mock_energy_lookup.bin_centers = np.geomspace(14100, 88.082825, 128)
         mock_mass_bin_lookup = Mock()
-        dependencies = CodiceLoL3a3dDistributionsDependencies(
+        dependencies = CodiceLoL3b3dDistributionsDependencies(
             l3a_direct_event_data=mock_l3a_direct_event_data,
             mass_species_bin_lookup=mock_mass_bin_lookup,
             geometric_factors_lookup=mock_geometric_factor_lut,
@@ -1139,7 +1139,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         counts_3d_distribution.__getitem__.return_value = sentinel.counts_for_species_by_priority
 
         processor = CodiceLoProcessor(dependencies=Mock(), input_metadata=input_metadata)
-        l3a_3d_distribution_data_product = processor.process_l3a_3d_distribution_product(dependencies)
+        l3b_3d_distribution_data_product = processor.process_l3b_3d_distribution_product(dependencies)
 
         mock_elevation_angle_lookup_class.assert_called_once()
         counts_3d_distribution.__getitem__.assert_called_once_with(sentinel.species_index)
@@ -1176,31 +1176,31 @@ class TestCodiceLoProcessor(unittest.TestCase):
             350 + expected_offset - 360
         ])
 
-        self.assertIsInstance(l3a_3d_distribution_data_product, CodiceLoL3a3dDistributionDataProduct)
-        self.assertEqual(processor.input_metadata, l3a_3d_distribution_data_product.input_metadata)
-        self.assertEqual(mock_l3a_direct_event_data.epoch, l3a_3d_distribution_data_product.epoch)
-        self.assertEqual(mock_l3a_direct_event_data.epoch_delta, l3a_3d_distribution_data_product.epoch_delta)
-        self.assertEqual(mock_l3a_direct_event_data.rgfo_esa_step, l3a_3d_distribution_data_product.rgfo_esa_step)
-        self.assertEqual(mock_l3a_direct_event_data.rgfo_spin_sector, l3a_3d_distribution_data_product.rgfo_spin_sector)
-        self.assertEqual(mock_l3a_direct_event_data.rgfo_half_spin, l3a_3d_distribution_data_product.rgfo_half_spin)
-        np.testing.assert_array_equal(l3a_3d_distribution_data_product.half_spin_per_esa_step,
+        self.assertIsInstance(l3b_3d_distribution_data_product, CodiceLoL3b3dDistributionDataProduct)
+        self.assertEqual(processor.input_metadata, l3b_3d_distribution_data_product.input_metadata)
+        self.assertEqual(mock_l3a_direct_event_data.epoch, l3b_3d_distribution_data_product.epoch)
+        self.assertEqual(mock_l3a_direct_event_data.epoch_delta, l3b_3d_distribution_data_product.epoch_delta)
+        self.assertEqual(mock_l3a_direct_event_data.rgfo_esa_step, l3b_3d_distribution_data_product.rgfo_esa_step)
+        self.assertEqual(mock_l3a_direct_event_data.rgfo_spin_sector, l3b_3d_distribution_data_product.rgfo_spin_sector)
+        self.assertEqual(mock_l3a_direct_event_data.rgfo_half_spin, l3b_3d_distribution_data_product.rgfo_half_spin)
+        np.testing.assert_array_equal(l3b_3d_distribution_data_product.half_spin_per_esa_step,
                                       np.flip(mock_l3a_direct_event_data.half_spin_per_esa_step, axis=1))
 
-        self.assertEqual(mock_elevation_lookup.bin_centers, l3a_3d_distribution_data_product.elevation)
-        self.assertEqual(mock_elevation_lookup.bin_deltas, l3a_3d_distribution_data_product.elevation_delta)
-        np.testing.assert_array_equal(l3a_3d_distribution_data_product.spin_angle, expected_spin_angles)
-        self.assertEqual(sentinel.spin_angle_bin_delta, l3a_3d_distribution_data_product.spin_angle_delta)
+        self.assertEqual(mock_elevation_lookup.bin_centers, l3b_3d_distribution_data_product.elevation)
+        self.assertEqual(mock_elevation_lookup.bin_deltas, l3b_3d_distribution_data_product.elevation_delta)
+        np.testing.assert_array_equal(l3b_3d_distribution_data_product.spin_angle, expected_spin_angles)
+        self.assertEqual(sentinel.spin_angle_bin_delta, l3b_3d_distribution_data_product.spin_angle_delta)
 
-        np.testing.assert_array_equal(np.flip(mock_energy_lookup.bin_centers), l3a_3d_distribution_data_product.energy)
+        np.testing.assert_array_equal(np.flip(mock_energy_lookup.bin_centers), l3b_3d_distribution_data_product.energy)
         np.testing.assert_array_equal(np.flip(mock_energy_lookup.delta_plus),
-                                      l3a_3d_distribution_data_product.energy_delta_plus)
+                                      l3b_3d_distribution_data_product.energy_delta_plus)
         np.testing.assert_array_equal(np.flip(mock_energy_lookup.delta_minus),
-                                      l3a_3d_distribution_data_product.energy_delta_minus)
+                                      l3b_3d_distribution_data_product.energy_delta_minus)
 
         np.testing.assert_array_equal(np.flip(mock_rebinned_intensity, axis=1),
-                                      l3a_3d_distribution_data_product.species_data)
-        np.testing.assert_array_equal(np.flip(mock_rebinned_uncert, axis=1), l3a_3d_distribution_data_product.species_data_stat_uncert)
-        self.assertEqual(sentinel.species, l3a_3d_distribution_data_product.species)
+                                      l3b_3d_distribution_data_product.species_data)
+        np.testing.assert_array_equal(np.flip(mock_rebinned_uncert, axis=1), l3b_3d_distribution_data_product.species_data_stat_uncert)
+        self.assertEqual(sentinel.species, l3b_3d_distribution_data_product.species)
 
     def test_process_3d_distributions_save_for_each_species(self):
 
@@ -1208,12 +1208,12 @@ class TestCodiceLoProcessor(unittest.TestCase):
             with self.subTest(species=species):
                 self._test_process_3d_distributions_save(species)
 
-    @patch(f'{MODULE}.CodiceLoL3a3dDistributionsDependencies.fetch_dependencies')
-    @patch(f'{MODULE}.CodiceLoProcessor.process_l3a_3d_distribution_product')
+    @patch(f'{MODULE}.CodiceLoL3b3dDistributionsDependencies.fetch_dependencies')
+    @patch(f'{MODULE}.CodiceLoProcessor.process_l3b_3d_distribution_product')
     @patch(f'{MODULE}.save_data')
     @patch('imap_l3_processing.processor.spiceypy')
     def _test_process_3d_distributions_save(self, species, mock_spiceypy, mock_save_data,
-                                            mock_process_l3a_3d_distribution_product,
+                                            mock_process_l3b_3d_distribution_product,
                                             mock_fetch_dependencies):
         input_collection = MagicMock()
         input_collection.get_file_paths.return_value = [Path('path/to/parent_file_1'), Path('path/to/parent_file_2')]
@@ -1229,12 +1229,12 @@ class TestCodiceLoProcessor(unittest.TestCase):
         product = processor.process()
 
         mock_fetch_dependencies.assert_called_once_with(processor.dependencies, species)
-        mock_process_l3a_3d_distribution_product.assert_called_once_with(mock_fetch_dependencies.return_value)
+        mock_process_l3b_3d_distribution_product.assert_called_once_with(mock_fetch_dependencies.return_value)
 
-        mock_save_data.assert_called_once_with(mock_process_l3a_3d_distribution_product.return_value)
+        mock_save_data.assert_called_once_with(mock_process_l3b_3d_distribution_product.return_value)
 
         self.assertEqual(['parent_file_1', 'parent_file_2'],
-                         mock_process_l3a_3d_distribution_product.return_value.parent_file_names)
+                         mock_process_l3b_3d_distribution_product.return_value.parent_file_names)
         self.assertEqual([mock_save_data.return_value], product)
 
     def test_process_l3a_direct_events_all_fill_integration(self):
