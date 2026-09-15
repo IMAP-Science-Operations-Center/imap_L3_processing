@@ -60,7 +60,7 @@ T_\text{PUI} = \frac{m}{3 k_B}
 
 The PUI fitting procedure is applied to ten-minute chunks, each chunk containing fifty 12-second sweeps, each sweep having 72 ESA steps.
 The [proton model](./proton-sw.md) is fit to each one-minute chunk within the ten-minute chunk and then the mean of the fitted proton solar wind parameters is used to inform the PUI model.
-Solar wind fits with fill values are left out of that mean unless fewer than seven of the ten remain.
+Solar wind fits with fill values are left out of that mean unless fewer than eight of the ten remain.
 When the solar wind fits are dropped, they do not effect the quality flag.
 Otherwise, flags set by any of the solar wind fits in a chunk are are propagated to the PUI flags (vai bitwise-OR).
 

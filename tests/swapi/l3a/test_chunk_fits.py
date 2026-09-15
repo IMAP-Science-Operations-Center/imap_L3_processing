@@ -1357,7 +1357,7 @@ class TestPuiChunkFitterPrecomputeGeometry(SpiceTestCase):
         mock_rotate_rtn_velocity_to_swapi_per_bin,
     ):
         """Use only the proton solar wind fits with finite velocities.
-        If fewer than 7 remain, report fill values.
+        If fewer than 8 remain, report fill values.
         Propagate flags appropriately."""
         # Dims: (sw chunk, cartesian component)
         # Shape: (10, 3)
@@ -1365,8 +1365,8 @@ class TestPuiChunkFitterPrecomputeGeometry(SpiceTestCase):
 
         for failed_minutes, expected_flag in [
             ([], SwapiL3Flags.NONE),
-            ([0, 4, 6], SwapiL3Flags.NONE),
-            ([0, 3, 4, 6], SwapiL3Flags.BAD_FIT),
+            ([0, 4], SwapiL3Flags.NONE),
+            ([0, 3, 4], SwapiL3Flags.BAD_FIT),
         ]:
             with self.subTest(usable_minutes=10 - len(failed_minutes)):
                 per_fit_velocities = original_velocities.copy()

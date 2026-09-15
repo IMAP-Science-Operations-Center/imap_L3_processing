@@ -217,7 +217,7 @@ class PuiChunkFitter(ChunkFitter):
         self.helium_inflow_vector = helium_inflow_vector
         self.proton_sw_results = proton_sw_results
 
-    MIN_SOLAR_WIND_FITS_PER_CHUNK = 7
+    MIN_SOLAR_WIND_FITS_PER_CHUNK = 8
 
     def _calculate_ten_minute_velocities(
         self,
