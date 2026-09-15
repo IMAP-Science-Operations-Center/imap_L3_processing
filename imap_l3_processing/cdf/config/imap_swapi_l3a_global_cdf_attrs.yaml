@@ -14,7 +14,7 @@ instrument_description: &instrument_description >
 imap_swapi_l3a_proton-sw:
   <<: *instrument_base
   Data_type: L3a_PROTON-SW>Level-3a Proton Solar Wind
-  Logical_source_description: SWAPI Instrument Proton Solar Wind Parameters
+  Logical_source_description: IMAP Mission SWAPI Instrument Proton Solar Wind Parameters
   TEXT:
     - *instrument_description
     - >
@@ -25,7 +25,7 @@ imap_swapi_l3a_proton-sw:
 imap_swapi_l3a_alpha-sw:
   <<: *instrument_base
   Data_type: L3a_ALPHA-SW>Level-3a Alpha Solar Wind
-  Logical_source_description: SWAPI Instrument Alpha Solar Wind Parameters
+  Logical_source_description: IMAP Mission SWAPI Instrument Alpha Solar Wind Parameters
   TEXT:
     - *instrument_description
     - >
@@ -38,7 +38,7 @@ imap_swapi_l3a_alpha-sw:
 imap_swapi_l3a_pui-he:
   <<: *instrument_base
   Data_type: L3a_PUI-HE>Level-3a Pickup Ion
-  Logical_source_description: SWAPI Instrument Pickup Ion Parameters
+  Logical_source_description: IMAP Mission SWAPI Instrument Pickup Ion Parameters
   TEXT:
     - *instrument_description
     - >
