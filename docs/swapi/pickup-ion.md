@@ -59,10 +59,7 @@ T_\text{PUI} = \frac{m}{3 k_B}
 ## Model Inputs
 
 The PUI fitting procedure is applied to ten-minute chunks, each chunk containing fifty 12-second sweeps, each sweep having 72 ESA steps.
-The [proton model](./proton-sw.md) is fit to each one-minute chunk within the ten-minute chunk and then the mean of the fitted proton solar wind parameters is used to inform the PUI model.
-Solar wind fits with fill values are left out of that mean unless fewer than eight of the ten remain.
-When the solar wind fits are dropped, they do not effect the quality flag.
-Otherwise, flags set by any of the solar wind fits in a chunk are are propagated to the PUI flags (vai bitwise-OR).
+The [proton model](./proton-sw.md) is fit to each one-minute chunk within the ten-minute chunk and then the mean of the fitted proton solar wind velocity vector is used to inform the PUI model.
 
 For each sweep $i \in \{1, \dots, 50\}$ and step $j \in \{1, \dots, 62\}$, the PUI fitting procedure takes:
 - ESA voltage $V_j$;
@@ -221,6 +218,10 @@ The optimal parameters are found by minimizing:
 To estimate the uncertainty, the [HC3 method](./parameter-uncertainty.md) is used with a finite-difference approximation to the Jacobian.
 
 ## Failure Cases
+
+To handle gaps when evaluating the mean solar wind velocity, fill values in the one-minute solar wind fits within a ten-minute chunk are left out.
+If the non-fill samples have flags set, they are propagated to the PUI flags (via bitwise OR).
+If more than two values are fill, the PUI model is not computed and PUI outputs are fill.
 
 The fit-quality evaluation uses a model-derived upper energy boundary, $E_{1/4}$.
 This is the highest energy at which the modeled PUI rate, summed over sweeps and excluding background, is at least 25% of its peak:

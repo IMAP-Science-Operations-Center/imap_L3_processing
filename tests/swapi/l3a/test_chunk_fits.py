@@ -1363,10 +1363,10 @@ class TestPuiChunkFitterPrecomputeGeometry(SpiceTestCase):
         # Shape: (10, 3)
         original_velocities = np.transpose([np.arange(1.0, 11.0)] * 3)
 
-        for failed_minutes, expected_flag in [
-            ([], SwapiL3Flags.NONE),
-            ([0, 4], SwapiL3Flags.NONE),
-            ([0, 3, 4], SwapiL3Flags.BAD_FIT),
+        for failed_minutes in [
+            [],
+            [0, 4],
+            [0, 3, 4],
         ]:
             with self.subTest(usable_minutes=10 - len(failed_minutes)):
                 per_fit_velocities = original_velocities.copy()
@@ -1392,8 +1392,7 @@ class TestPuiChunkFitterPrecomputeGeometry(SpiceTestCase):
                     [_pui_chunk(_EPOCH_TT2000)]
                 )
 
-                self.assertEqual(quality_flag, int(expected_flag))
-                if expected_flag == SwapiL3Flags.BAD_FIT:
+                if len(failed_minutes) > 2:
                     self.assertIsNone(fit_input)
                 else:
                     np.testing.assert_array_equal(

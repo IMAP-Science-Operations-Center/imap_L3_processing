@@ -264,9 +264,7 @@ class PuiChunkFitter(ChunkFitter):
                 ten_minute_velocities_rtn_sun.append(
                     np.full(chunk_velocities_rtn_sun.shape[1], np.nan)
                 )
-                ten_minute_quality_flags.append(
-                    np.bitwise_or.reduce(chunk_quality_flags)
-                )
+                ten_minute_quality_flags.append(SwapiL3Flags.NONE)
         return (
             np.array(ten_minute_velocities_rtn),
             np.array(ten_minute_velocities_rtn_sun),
