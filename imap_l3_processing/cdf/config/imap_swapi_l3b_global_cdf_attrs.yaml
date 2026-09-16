@@ -2,7 +2,7 @@ imap_swapi_l3b_combined:
   Instrument_type: Particles (space)
   Data_level: "3b"
   Data_type: L3B_COMBINED>Level-3 Science data
-  Logical_source_description: SWAPI Instrument Combined VDF and Differential Flux
+  Logical_source_description: IMAP Mission SWAPI Instrument Combined VDF and Differential Flux
   TEXT: >
     The Solar Wind and Pickup Ion (SWAPI) instrument
     onboard the Interstellar Mapping and Acceleration Probe (IMAP)

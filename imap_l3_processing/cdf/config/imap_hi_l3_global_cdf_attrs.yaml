@@ -2,7 +2,7 @@ imap_hi_l3_hic-ena-h-hf-nsp-full-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi Combined, ENA Intensity,
     Hydrogen, Heliospheric Frame, Non-Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 6 degree, 12 Month Map
   Map_descriptor: hic-ena-h-hf-nsp-full-hae-6deg-1yr
@@ -17,7 +17,7 @@ imap_hi_l3_hic-ena-h-hf-sp-full-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi Combined, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 6 degree, 12 Month Map
   Map_descriptor: hic-ena-h-hf-sp-full-hae-6deg-1yr
@@ -32,7 +32,7 @@ imap_hi_l3_h90-ena-h-sf-sp-ram-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 90
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Ram, HAE, Rectangular
     6 degree, 12 Month Map
   Map_descriptor: h90-ena-h-sf-sp-ram-hae-6deg-1yr
@@ -47,7 +47,7 @@ imap_hi_l3_h90-ena-h-hf-sp-ram-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 90
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Ram, HAE, Rectangular
     6 degree, 12 Month Map
   Map_descriptor: h90-ena-h-hf-sp-ram-hae-6deg-1yr
@@ -62,7 +62,7 @@ imap_hi_l3_h90-ena-h-sf-sp-anti-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 90
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Anti-Ram, HAE, Rectangular
     6 degree, 12 Month Map
   Map_descriptor: h90-ena-h-sf-sp-anti-hae-6deg-1yr
@@ -77,7 +77,7 @@ imap_hi_l3_h90-ena-h-hf-sp-anti-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 90
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Anti-Ram, HAE, Rectangular
     6 degree, 12 Month Map
   Map_descriptor: h90-ena-h-hf-sp-anti-hae-6deg-1yr
@@ -92,7 +92,7 @@ imap_hi_l3_h90-ena-h-sf-sp-full-hae-6deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Hi 90
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     6 degree, 6 Month Map
   Map_descriptor: h90-ena-h-sf-sp-full-hae-6deg-6mo
@@ -107,7 +107,7 @@ imap_hi_l3_h90-ena-h-hf-sp-full-hae-6deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Hi 90
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 6 degree, 6 Month Map
   Map_descriptor: h90-ena-h-hf-sp-full-hae-6deg-6mo
@@ -122,7 +122,7 @@ imap_hi_l3_h45-ena-h-sf-sp-ram-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 45
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Ram, HAE, Rectangular
     6 degree, 12 Month Map
   Map_descriptor: h45-ena-h-sf-sp-ram-hae-6deg-1yr
@@ -137,7 +137,7 @@ imap_hi_l3_h45-ena-h-hf-sp-ram-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 45
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Ram, HAE, Rectangular
     6 degree, 12 Month Map
   Map_descriptor: h45-ena-h-hf-sp-ram-hae-6deg-1yr
@@ -152,7 +152,7 @@ imap_hi_l3_h45-ena-h-sf-sp-anti-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 45
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Anti-Ram, HAE, Rectangular
     6 degree, 12 Month Map
   Map_descriptor: h45-ena-h-sf-sp-anti-hae-6deg-1yr
@@ -167,7 +167,7 @@ imap_hi_l3_h45-ena-h-hf-sp-anti-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 45
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Anti-Ram, HAE, Rectangular
     6 degree, 12 Month Map
   Map_descriptor: h45-ena-h-hf-sp-anti-hae-6deg-1yr
@@ -182,7 +182,7 @@ imap_hi_l3_h45-ena-h-sf-sp-full-hae-6deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Hi 45
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     6 degree, 6 Month Map
   Map_descriptor: h45-ena-h-sf-sp-full-hae-6deg-6mo
@@ -197,7 +197,7 @@ imap_hi_l3_h45-ena-h-hf-sp-full-hae-6deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Hi 45
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 6 degree, 6 Month Map
   Map_descriptor: h45-ena-h-hf-sp-full-hae-6deg-6mo
@@ -212,7 +212,7 @@ imap_hi_l3_hic-ena-h-hf-nsp-full-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi Combined, ENA Intensity,
     Hydrogen, Heliospheric Frame, Non-Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 4 degree, 12 Month Map
   Map_descriptor: hic-ena-h-hf-nsp-full-hae-4deg-1yr
@@ -227,7 +227,7 @@ imap_hi_l3_hic-ena-h-hf-sp-full-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi Combined, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 4 degree, 12 Month Map
   Map_descriptor: hic-ena-h-hf-sp-full-hae-4deg-1yr
@@ -242,7 +242,7 @@ imap_hi_l3_h90-ena-h-sf-sp-ram-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 90
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Ram, HAE, Rectangular
     4 degree, 12 Month Map
   Map_descriptor: h90-ena-h-sf-sp-ram-hae-4deg-1yr
@@ -257,7 +257,7 @@ imap_hi_l3_h90-ena-h-hf-sp-ram-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 90
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Ram, HAE, Rectangular
     4 degree, 12 Month Map
   Map_descriptor: h90-ena-h-hf-sp-ram-hae-4deg-1yr
@@ -272,7 +272,7 @@ imap_hi_l3_h90-ena-h-sf-sp-anti-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 90
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Anti-Ram, HAE, Rectangular
     4 degree, 12 Month Map
   Map_descriptor: h90-ena-h-sf-sp-anti-hae-4deg-1yr
@@ -287,7 +287,7 @@ imap_hi_l3_h90-ena-h-hf-sp-anti-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 90
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Anti-Ram, HAE, Rectangular
     4 degree, 12 Month Map
   Map_descriptor: h90-ena-h-hf-sp-anti-hae-4deg-1yr
@@ -302,7 +302,7 @@ imap_hi_l3_h90-ena-h-sf-sp-full-hae-4deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Hi 90
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     4 degree, 6 Month Map
   Map_descriptor: h90-ena-h-sf-sp-full-hae-4deg-6mo
@@ -317,7 +317,7 @@ imap_hi_l3_h90-ena-h-hf-sp-full-hae-4deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Hi 90
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-90 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 4 degree, 6 Month Map
   Map_descriptor: h90-ena-h-hf-sp-full-hae-4deg-6mo
@@ -332,7 +332,7 @@ imap_hi_l3_h45-ena-h-sf-sp-ram-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 45
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Ram, HAE, Rectangular
     4 degree, 12 Month Map
   Map_descriptor: h45-ena-h-sf-sp-ram-hae-4deg-1yr
@@ -347,7 +347,7 @@ imap_hi_l3_h45-ena-h-hf-sp-ram-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 45
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Ram, HAE, Rectangular
     4 degree, 12 Month Map
   Map_descriptor: h45-ena-h-hf-sp-ram-hae-4deg-1yr
@@ -362,7 +362,7 @@ imap_hi_l3_h45-ena-h-sf-sp-anti-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 45
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Anti-Ram, HAE, Rectangular
     4 degree, 12 Month Map
   Map_descriptor: h45-ena-h-sf-sp-anti-hae-4deg-1yr
@@ -377,7 +377,7 @@ imap_hi_l3_h45-ena-h-hf-sp-anti-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 45
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Anti-Ram, HAE, Rectangular
     4 degree, 12 Month Map
   Map_descriptor: h45-ena-h-hf-sp-anti-hae-4deg-1yr
@@ -392,7 +392,7 @@ imap_hi_l3_h45-ena-h-sf-sp-full-hae-4deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Hi 45
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     4 degree, 6 Month Map
   Map_descriptor: h45-ena-h-sf-sp-full-hae-4deg-6mo
@@ -407,7 +407,7 @@ imap_hi_l3_h45-ena-h-hf-sp-full-hae-4deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Hi 45
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-45 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 4 degree, 6 Month Map
   Map_descriptor: h45-ena-h-hf-sp-full-hae-4deg-6mo
@@ -422,7 +422,7 @@ imap_hi_l3_hic-spx-h-hf-sp-full-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi Combined, Spectral Index,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi Combined, Spectral Index,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 6 degree, 12 Month Map
   Map_descriptor: hic-spx-h-hf-sp-full-hae-6deg-1yr
@@ -437,7 +437,7 @@ imap_hi_l3_h45-spx-h-hf-sp-ram-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 45
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-45 Sensor, Spectral Index,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-45 Sensor, Spectral Index,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Ram, HAE, Rectangular
     6 degree, 12 Month Map
   Map_descriptor: h45-spx-h-hf-sp-ram-hae-6deg-1yr
@@ -452,7 +452,7 @@ imap_hi_l3_h45-spx-h-hf-sp-anti-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 45
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-45 Sensor, Spectral Index,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-45 Sensor, Spectral Index,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Anti-Ram, HAE, Rectangular
     6 degree, 12 Month Map
   Map_descriptor: h45-spx-h-hf-sp-anti-hae-6deg-1yr
@@ -467,7 +467,7 @@ imap_hi_l3_h45-spx-h-hf-sp-full-hae-6deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Hi 45
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-45 Sensor, Spectral Index,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-45 Sensor, Spectral Index,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 6 degree, 6 Month Map
   Map_descriptor: h45-spx-h-hf-sp-full-hae-6deg-6mo
@@ -482,7 +482,7 @@ imap_hi_l3_h90-spx-h-hf-sp-ram-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 90
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-90 Sensor, Spectral Index,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-90 Sensor, Spectral Index,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Ram, HAE, Rectangular
     6 degree, 12 Month Map
   Map_descriptor: h90-spx-h-hf-sp-ram-hae-6deg-1yr
@@ -497,7 +497,7 @@ imap_hi_l3_h90-spx-h-hf-sp-anti-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 90
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-90 Sensor, Spectral Index,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-90 Sensor, Spectral Index,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Anti-Ram, HAE, Rectangular
     6 degree, 12 Month Map
   Map_descriptor: h90-spx-h-hf-sp-anti-hae-6deg-1yr
@@ -512,7 +512,7 @@ imap_hi_l3_h90-spx-h-hf-sp-full-hae-6deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Hi 90
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-90 Sensor, Spectral Index,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-90 Sensor, Spectral Index,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 6 degree, 6 Month Map
   Map_descriptor: h90-spx-h-hf-sp-full-hae-6deg-6mo
@@ -527,7 +527,7 @@ imap_hi_l3_hic-spx-h-hf-sp-full-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi Combined, Spectral Index,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi Combined, Spectral Index,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 4 degree, 12 Month Map
   Map_descriptor: hic-spx-h-hf-sp-full-hae-4deg-1yr
@@ -542,7 +542,7 @@ imap_hi_l3_h45-spx-h-hf-sp-ram-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 45
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-45 Sensor, Spectral Index,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-45 Sensor, Spectral Index,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Ram, HAE, Rectangular
     4 degree, 12 Month Map
   Map_descriptor: h45-spx-h-hf-sp-ram-hae-4deg-1yr
@@ -557,7 +557,7 @@ imap_hi_l3_h45-spx-h-hf-sp-anti-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 45
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-45 Sensor, Spectral Index,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-45 Sensor, Spectral Index,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Anti-Ram, HAE, Rectangular
     4 degree, 12 Month Map
   Map_descriptor: h45-spx-h-hf-sp-anti-hae-4deg-1yr
@@ -572,7 +572,7 @@ imap_hi_l3_h45-spx-h-hf-sp-full-hae-4deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Hi 45
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-45 Sensor, Spectral Index,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-45 Sensor, Spectral Index,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 4 degree, 6 Month Map
   Map_descriptor: h45-spx-h-hf-sp-full-hae-4deg-6mo
@@ -587,7 +587,7 @@ imap_hi_l3_h90-spx-h-hf-sp-ram-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 90
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-90 Sensor, Spectral Index,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-90 Sensor, Spectral Index,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Ram, HAE, Rectangular
     4 degree, 12 Month Map
   Map_descriptor: h90-spx-h-hf-sp-ram-hae-4deg-1yr
@@ -602,7 +602,7 @@ imap_hi_l3_h90-spx-h-hf-sp-anti-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Hi 90
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-90 Sensor, Spectral Index,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-90 Sensor, Spectral Index,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Anti-Ram, HAE, Rectangular
     4 degree, 12 Month Map
   Map_descriptor: h90-spx-h-hf-sp-anti-hae-4deg-1yr
@@ -617,7 +617,7 @@ imap_hi_l3_h90-spx-h-hf-sp-full-hae-4deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Hi 90
-  Logical_source_description: IMAP Hi Instrument Level 3 Hi-90 Sensor, Spectral Index,
+  Logical_source_description: IMAP Mission Hi Instrument Level 3 Hi-90 Sensor, Spectral Index,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 4 degree, 6 Month Map
   Map_descriptor: h90-spx-h-hf-sp-full-hae-4deg-6mo
