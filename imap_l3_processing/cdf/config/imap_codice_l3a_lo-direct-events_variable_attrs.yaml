@@ -69,25 +69,6 @@ epoch_delta:
   RECORD_VARYING: RV
   VAR_TYPE: support_data
 
-acquisition_time_per_esa_step:
-  NAME: acquisition_time_per_esa_step
-  CATDESC: Acquisition time for each step of energy
-  DEPEND_0: epoch
-  DEPEND_1: esa_step
-  DISPLAY_TYPE: spectrogram
-  FIELDNAM: Acquisition Time
-  DATA_TYPE: CDF_DOUBLE
-  FILLVAL: -1.0e+31
-  FORMAT: F10.3
-  LABLAXIS: Acquisition Time
-  SCALETYP: linear
-  UNITS: ms
-  VALIDMAX: 625.0
-  VALIDMIN: 0.0
-  VAR_TYPE: data
-  RECORD_VARYING: RV
-  VAR_TYPE: support_data
-
 event_index:
   <<: *support_data
   NAME: event_index
@@ -185,7 +166,6 @@ energy_per_charge:
   VALIDMAX: 200.0
   VALIDMIN: 0.0
 
-
 normalization:
   <<: *per_priority
   <<: *float_data
@@ -204,7 +184,7 @@ normalization:
   SCALEMAX: 10
   LABL_PTR_2: energy_bin_label
   LABL_PTR_3: spin_angle_bin_label
-  DISPLAY_TYPE: spectrogram
+  DISPLAY_TYPE: stack_plot
 
 normalization_per_event:
   <<: *per_event
@@ -221,7 +201,7 @@ normalization_per_event:
   SCALEMIN: 0
   SCALEMAX: 10
   DATA_TYPE: CDF_FLOAT
-  DISPLAY_TYPE: spectrogram
+  DISPLAY_TYPE: stack_plot
 
 mass_per_charge:
   <<: *per_event
@@ -232,6 +212,7 @@ mass_per_charge:
   FIELDNAM: Mass per charge
   LABLAXIS: m/q
   UNITS: amu/q
+  DISPLAY_TYPE: stack_plot
 
 mass:
   <<: *per_event
@@ -242,6 +223,7 @@ mass:
   FIELDNAM: Mass
   LABLAXIS: m
   UNITS: amu
+  DISPLAY_TYPE: stack_plot
 
 apd_energy:
   <<: *per_event
@@ -309,39 +291,6 @@ multi_flag:
   VALIDMAX: 1
   FILLVAL: 255
 
-num_events:
-  <<: *per_priority
-  NAME: num_events
-  VAR_TYPE: data
-  CATDESC: Number of events
-  FIELDNAM: Number of events
-  LABLAXIS: Num. events
-  DATA_TYPE: CDF_UINT2
-  FORMAT: I5
-  UNITS: " "
-  VALIDMIN: 0
-  VALIDMAX: 10000
-  FILLVAL: 65535
-
-data_quality:
-  <<: *per_priority
-  NAME: data_quality
-  VAR_TYPE: data
-  DISPLAY_TYPE: time_series
-  SCALETYP: linear
-  CATDESC: "Data quality (0=good, 1=suspect)"
-  FIELDNAM: Data quality
-  LABLAXIS: Data quality
-  DATA_TYPE: CDF_UINT1
-  FORMAT: I1
-  UNITS: "0=good 1=suspect"
-  VALIDMIN: 0
-  VALIDMAX: 1
-  FILLVAL: 255
-  VAR_NOTES: >-
-    Propagated from packet-level suspect bit via level 2. 0=good packet group.
-    1=suspect packet group.
-
 tof:
   <<: *per_event
   <<: *float_data
@@ -353,42 +302,6 @@ tof:
   UNITS: ns
   SCALEMIN: 1
   SCALEMAX: 1.0e+3
-
-priority_index_label:
-  NAME: priority_index_label
-  CATDESC: Label for priority index
-  FIELDNAM: Priority index label
-  DATA_TYPE: CDF_CHAR
-  FORMAT: a20
-  VAR_TYPE: metadata
-  FILLVAL: ' '
-
-event_index_label:
-  NAME: event_index_label
-  CATDESC: Label for event index
-  FIELDNAM: Event index label
-  DATA_TYPE: CDF_CHAR
-  FORMAT: a20
-  VAR_TYPE: metadata
-  FILLVAL: ' '
-
-energy_bin_label:
-  NAME: energy_bin_label
-  CATDESC: Label for energy bin
-  FIELDNAM: Energy bin label
-  DATA_TYPE: CDF_CHAR
-  FORMAT: a20
-  VAR_TYPE: metadata
-  FILLVAL: ' '
-
-spin_angle_bin_label:
-  NAME: spin_angle_bin_label
-  CATDESC: Label for spin angle bin
-  FIELDNAM: Spin angle bin label
-  DATA_TYPE: CDF_CHAR
-  FORMAT: a20
-  VAR_TYPE: metadata
-  FILLVAL: ' '
 
 spin_angle:
   <<: *per_event
@@ -445,6 +358,93 @@ position:
   SCALETYP: linear
   FORMAT: I3
 
+num_events:
+  <<: *per_priority
+  NAME: num_events
+  VAR_TYPE: data
+  CATDESC: Number of events
+  FIELDNAM: Number of events
+  LABLAXIS: Num. events
+  DATA_TYPE: CDF_UINT2
+  FORMAT: I5
+  UNITS: " "
+  VALIDMIN: 0
+  VALIDMAX: 10000
+  FILLVAL: 65535
+
+data_quality:
+  <<: *per_priority
+  NAME: data_quality
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+  SCALETYP: linear
+  CATDESC: "Data quality (0=good, 1=suspect)"
+  FIELDNAM: Data quality
+  LABLAXIS: Data quality
+  DATA_TYPE: CDF_UINT1
+  FORMAT: I1
+  UNITS: "0=good 1=suspect"
+  VALIDMIN: 0
+  VALIDMAX: 1
+  FILLVAL: 255
+  VAR_NOTES: >-
+    Propagated from packet-level suspect bit via level 2. 0=good packet group.
+    1=suspect packet group.
+
+priority_index_label:
+  NAME: priority_index_label
+  CATDESC: Label for priority index
+  FIELDNAM: Priority index label
+  DATA_TYPE: CDF_CHAR
+  FORMAT: a20
+  VAR_TYPE: metadata
+  FILLVAL: ' '
+
+event_index_label:
+  NAME: event_index_label
+  CATDESC: Label for event index
+  FIELDNAM: Event index label
+  DATA_TYPE: CDF_CHAR
+  FORMAT: a20
+  VAR_TYPE: metadata
+  FILLVAL: ' '
+
+energy_bin_label:
+  NAME: energy_bin_label
+  CATDESC: Label for energy bin
+  FIELDNAM: Energy bin label
+  DATA_TYPE: CDF_CHAR
+  FORMAT: a20
+  VAR_TYPE: metadata
+  FILLVAL: ' '
+
+spin_angle_bin_label:
+  NAME: spin_angle_bin_label
+  CATDESC: Label for spin angle bin
+  FIELDNAM: Spin angle bin label
+  DATA_TYPE: CDF_CHAR
+  FORMAT: a20
+  VAR_TYPE: metadata
+  FILLVAL: ' '
+
+acquisition_time_per_esa_step:
+  NAME: acquisition_time_per_esa_step
+  CATDESC: Acquisition time for each step of energy
+  DEPEND_0: epoch
+  DEPEND_1: esa_step
+  DISPLAY_TYPE: spectrogram
+  FIELDNAM: Acquisition Time
+  DATA_TYPE: CDF_DOUBLE
+  FILLVAL: -1.0e+31
+  FORMAT: F10.3
+  LABLAXIS: Acquisition Time
+  SCALETYP: linear
+  UNITS: ms
+  VALIDMAX: 625.0
+  VALIDMIN: 0.0
+  RECORD_VARYING: RV
+  VAR_TYPE: support_data
+
 half_spin_per_esa_step:
   NAME: half_spin_per_esa_step
   CATDESC: Half spin number for each step of energy
@@ -460,7 +460,6 @@ half_spin_per_esa_step:
   UNITS: " "
   VALIDMIN: 0
   VALIDMAX: 31
-  VAR_TYPE: data
   RECORD_VARYING: RV
   VAR_TYPE: support_data
 
