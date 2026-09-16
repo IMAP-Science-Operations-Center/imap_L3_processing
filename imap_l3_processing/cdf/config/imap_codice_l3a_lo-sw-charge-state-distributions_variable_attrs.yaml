@@ -3,12 +3,7 @@ primary_data_variable: &primary_data_variable
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   DEPEND_0: epoch
   RECORD_VARYING: RV
-  DISPLAY_TYPE: time_series
-
-support_data: &support_data
-  VAR_TYPE: support_data
-  DEPEND_0: epoch
-  RECORD_VARYING: RV
+  DISPLAY_TYPE: stack_plot
 
 float_data: &float_data
   DATA_TYPE: CDF_FLOAT
@@ -65,7 +60,6 @@ oxygen_charge_state_distribution:
   SCALEMAX: 3
   SCALEMIN: 0.001
   SCALETYP: log
-  DISPLAY_TYPE: spectrogram
   UNITS: ' '
 
 carbon_charge_state_distribution:
@@ -80,7 +74,6 @@ carbon_charge_state_distribution:
   SCALEMAX: 3
   SCALEMIN: 0.001
   SCALETYP: log
-  DISPLAY_TYPE: spectrogram
   UNITS: ' '
 
 carbon_charge_state:
