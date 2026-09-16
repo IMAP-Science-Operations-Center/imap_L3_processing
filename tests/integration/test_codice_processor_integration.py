@@ -140,7 +140,7 @@ class CodiceProcessorIntegration(unittest.TestCase):
 
                     mock_arguments = Mock()
                     mock_arguments.instrument = "codice"
-                    mock_arguments.data_level = "l3a"
+                    mock_arguments.data_level = "l3b"
                     mock_arguments.descriptor = descriptor
                     mock_arguments.start_date = "20260504"
                     mock_arguments.end_date = None
@@ -152,7 +152,7 @@ class CodiceProcessorIntegration(unittest.TestCase):
                     imap_l3_data_processor.imap_l3_processor()
 
                     expected_output_path = ScienceFilePath(
-                        f"imap_codice_l3a_{descriptor}_20260504_v003.cdf"
+                        f"imap_codice_l3b_{descriptor}_20260504_v003.cdf"
                     ).construct_path()
                     self.assertTrue(expected_output_path.exists())
 

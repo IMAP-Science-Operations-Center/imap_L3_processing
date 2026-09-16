@@ -18,7 +18,7 @@ EFFICIENCY_FACTOR_LOOKUP_DESCRIPTOR = "l3-lo-efficiency"
 
 
 @dataclass
-class CodiceLoL3a3dDistributionsDependencies:
+class CodiceLoL3b3dDistributionsDependencies:
     l3a_direct_event_data: CodiceLoDirectEventData
     mass_species_bin_lookup: MassSpeciesBinLookup
     geometric_factors_lookup: GeometricFactorLookup
