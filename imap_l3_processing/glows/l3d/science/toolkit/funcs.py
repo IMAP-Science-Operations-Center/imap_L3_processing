@@ -109,7 +109,7 @@ def check_nan(data):
     data - dictionary with the data product
     '''
     for key in data:
-            if np.any((np.isnan(np.array(data[key])))): 
+            if np.any((np.isnan(np.array(data[key])))):
                 raise Exception("There are NaN in the output data")
 
 def cr_from_l3b_fn(fn):
@@ -348,7 +348,7 @@ def process_omni_param(omni_raw, cr_grid, param_settings):
 
     # Scale parameter to 1au. OMNI Observations are done at different distance and we need to scale proton density
     if param_settings['scale']: param[:,3]=scale_density(date,param[:,3])
-    
+
     param_v=param[:,3]  # values of the parameter
 
     # fill alpha abudance from the end of the measurements to the last point in cr_grid by constant value 0.04 based on Ulysses data McComas et al. 2000
@@ -358,7 +358,7 @@ def process_omni_param(omni_raw, cr_grid, param_settings):
         date_cr=np.append(date_cr,cr_grid[-1])
         used_nominal_per_cr = cr_grid > original_last_date
         param_v=np.append(param_v,CONST_ALPHA_TO_PROTON)
-    
+
     # split array into 1-Carrington chunks
     param_cr, idx_param=np.unique(np.floor(date_cr), return_index=True,axis=0)
     param_s=np.split(param_v,idx_param)[1:]

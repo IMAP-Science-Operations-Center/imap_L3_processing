@@ -36,7 +36,7 @@ Each region is integrated using nested Gauss-Legendre quadrature with fixed numb
 
 ### Speed Limits
 
-The speed integral is limited to the overlap between the passband's speed width and the VDF-driven interval 
+The speed integral is limited to the overlap between the passband's speed width and the VDF-driven interval
 ```math
 [v_{b} - \Delta v_{\text{VDF}},\thinspace  v_{b} + \Delta v_{\text{VDF}}], \qquad \Delta v_{\text{VDF}} = 6v_{\text{th}},
 ```

@@ -717,7 +717,7 @@ class TestSwapiProcessor(TestCase):
             swapi_processor.process_l3a_alpha(dependencies.data, dependencies)
         self.assertIn("alpha-sw requires MAG RTN data", str(cm.exception))
 
-        
+
 def create_swapi_l3a_dependencies_with_mocks():
     return SwapiL3ADependencies(
         data=Mock(),

@@ -13,13 +13,13 @@ from dataclasses import dataclass
 class SolarParamsHistory():
     '''
     Class for an Ionization files generator
-    Text files (solar wind speed, density, uv-anisotropy, Lyman-alpha irradiance, photoionization, and electron density) 
+    Text files (solar wind speed, density, uv-anisotropy, Lyman-alpha irradiance, photoionization, and electron density)
     are requaried as a input files for L3e processing
     Methods
     -------
-    _check_ini_data(self) 
+    _check_ini_data(self)
     find_fn_initial(self)
-    _generate_cr_solar_params(self,CR, data_l3b, data_l3c)  
+    _generate_cr_solar_params(self,CR, data_l3b, data_l3c)
     generate_initial_history(self,fn_list)
     generate_hdr_txt_ini(self,fn_dict)
     generate_hdr_txt(self,fn_dict)
@@ -28,7 +28,7 @@ class SolarParamsHistory():
     _generate_hdr_lya(self,hdr_temp,hdr_ini_str,fn_out)
     _generate_hdr_phion(self,hdr_temp,hdr_ini_str,fn_out)
     _generate_hdr_speed_dens(self,hdr_temp,hdr_ini_str,fn_out)
-    _generate_hdr_uv_anis(self,hdr_temp,hdr_ini_str,fn_out)  
+    _generate_hdr_uv_anis(self,hdr_temp,hdr_ini_str,fn_out)
     _generate_hdr_template(self)
     _read_ecliptic(self,fn)
     _read_files(self,fn_list)
@@ -49,9 +49,9 @@ class SolarParamsHistory():
 
         Parameters
         -----------
-        anc_input_from_instr_team: dict 
+        anc_input_from_instr_team: dict
             Dictionary containing input from the instrument team.
-        ext_dependencies: dict 
+        ext_dependencies: dict
             Dictionary containing external dependencies (e.g., Lya raw data path).
 
         Attributes
@@ -147,10 +147,10 @@ class SolarParamsHistory():
         # Last CR in every file should be the same
         eps=0.001
         diff=np.array([self.ini_data['time'][k][-1]-self.ini_data['time']['lya'][-1] for k in self.ini_data['time']])
-        if (diff>eps).any(): 
+        if (diff>eps).any():
             raise Exception('Incorrect format of the input files. Last CR is not the same in all files')
         else: return True
-    
+
     def find_fn_initial(self):
         '''
         Finds text files from the previous CR that now are initial files for the current CR.
@@ -173,15 +173,15 @@ class SolarParamsHistory():
         Calculates solar parameters (plasma speed, proton density, photoionization, electron density, and uv anisotropy)
         interpolated on the center of a given CR
         '''
-        
+
         cr_params={}
         # find indexes of the closest to the current CR and the next CR where L3bc are available
 
         t_CR = Time(fun.jd_fm_Carrington(CR),format='jd')
-    
+
         CR_list_b=[data['CR'] for data in data_l3b]
         CR_list_c=[data['CR'] for data in data_l3b]
-        
+
         idx_read_b = fun.find_CR_idx(CR, CR_list_b)  # two value vector with idx of the current CR and the next
         idx_read_c = fun.find_CR_idx(CR, CR_list_c)
 
@@ -189,7 +189,7 @@ class SolarParamsHistory():
         # but we can make a temporary entry with values copied from L3bc as they are (not exactly at CR.5)
         Nmid=int(len(data_l3b[0]['ion_rate_profile']['lat_grid'])/2)  # idx of the middle bin in phion
         idx_current=idx_read_b[0]
-        # Patched temporary record of L3d 
+        # Patched temporary record of L3d
         if int(CR)==CR_list_b[-1]:
             idx_read_b=[idx_read_b[0]]
             idx_read_c=[idx_read_c[0]]
@@ -208,7 +208,7 @@ class SolarParamsHistory():
             # mean time based on the light curves that were actually used during L3b processing (after removing bad-days and bad-seasons)
             t_b=Time(np.array([data_l3b[i]['date'] for i in idx_read_b]))
             t_c=Time(np.array([data_l3b[i]['date'] for i in idx_read_c]))
-    
+
             # time nodes that will be used for interpolation. The first one is the last time stamp from the previous CR, the second and the third are next available L3bc dates
             # Usually t_b=t_c, but there could be a cases when for a current CR L3b was generated and L3c is not. Then we can still generate L3d if we have both L3b and L3c for later CR
             t_nods_b=np.concatenate([[fun.jd_fm_Carrington(self.ini_data['CR_last'])],t_b.jd])
@@ -234,7 +234,7 @@ class SolarParamsHistory():
             a_abundance_ecl=np.array([data_l3c[i]['solar_wind_ecliptic']['alpha_abundance'] for i in idx_read_c])
             e_dens_ecl=np.concatenate([[self.ini_data['data']['e-dens'][-1]],p_dens_ecl*(1+2*a_abundance_ecl)])
             cr_params['e-dens']=np.interp(t_CR.jd,t_nods_c,e_dens_ecl)
-        
+
         return cr_params, idx_read_b, idx_read_c
 
     def generate_initial_history(self,fn_list):
@@ -243,25 +243,25 @@ class SolarParamsHistory():
         Function fills ini_data structure that will be passed to the next text file
         '''
         fill_value=self.settings['WawHelioIonGlows_fill_value']
-        
+
         self._read_files(fn_list)
         self._check_ini_data()
 
         # Find file that has the longest history
         k_max=max(self.ini_data['time'],key=lambda k: len(self.ini_data['time'][k]))
-        
+
         # Time grid is taken from the file with the logest history
         self.time_grid=self.ini_data['time'][k_max]
         self.CR_grid=[np.round(fun.carrington(t.jd),2) for t in self.time_grid]
         self.ini_data['CR_last']=self.CR_grid[-1]
-        
+
         # Dimensions of the ionization parameters on common grid
         Nt=len(self.time_grid)
         Nl=len(self.lat_grid)
 
         # Initialization of the ionization parameters on common grid.
         # At first all values are set at fill value defined in pipeline settings
-        
+
         for f in fn_list:
             if np.logical_or(np.logical_or(f=='speed',f=='p-dens'),f=='uv-anis'):
                 self.solar_params[f]=np.ones((Nt,Nl))*fill_value
@@ -274,11 +274,11 @@ class SolarParamsHistory():
         for k,v in self.ini_data['time'].items(): idx[k]=np.abs(self.time_grid-v[0]).argmin()
 
         # solar_params structure is filled by values from the ini_data on the uniform time grid
-        
+
 
         for f in fn_list:
             self.solar_params[f][idx[f]:]=self.ini_data['data'][f]
-    
+
 
         # Flags are in the 3 ionization files
         for k in ['speed', 'uv-anis', 'p-dens']:
@@ -291,7 +291,7 @@ class SolarParamsHistory():
         Generates text header for a text L3d files from prievious L3d text files
         '''
         hdr_dict={}
-    
+
         for f in fn_dict:
             hdr=self._generate_hdr_template()
             hdr_dict[f]=self._generate_hdr_txt_glows(hdr, self.ini_data['hdr_txt'][f],fn_dict[f])
@@ -306,14 +306,14 @@ class SolarParamsHistory():
         hdr_temp[1]='filename: ' + fn_out+'\n'
         hdr_temp[2:4]=hdr_ini_str[2:4]
         hdr_temp[16:29]=hdr_ini_str[16:29]
-        
+
         return hdr_temp
-    
+
     def _generate_hdr_template(self):
         '''
         Generates unified header for the L3d text files
         '''
-        
+
         # Elements in the header that are common for all files
         N=self.settings['hdr_txt_lines_number']
         # initialize uniform header structure
@@ -329,7 +329,7 @@ class SolarParamsHistory():
         hdr_temp[29]='###############################################'
         return hdr_temp
 
-    
+
     def _read_ecliptic(self,fn):
         '''
         Reads L3d text files that are 1D value in the ecliptic plane
@@ -354,7 +354,7 @@ class SolarParamsHistory():
                 self.ini_data['time'][f], self.ini_data['data'][f], self.ini_data['flags'][f]=self._read_profile(fn_list[f])
             elif np.logical_or(np.logical_or(f=='lya',f=='phion'),f=='e-dens'):
                 self.ini_data['time'][f], self.ini_data['data'][f]=self._read_ecliptic(fn_list[f])
-        
+
     def _read_profile(self,fn):
         '''
         Reads L3d text files that are 2D profiles (on the time, latitude grid)
@@ -380,7 +380,7 @@ class SolarParamsHistory():
             name of the output file
         '''
 
-        
+
         output={}
         output['header']=self.header
         output['lat_grid']=self.lat_grid
@@ -401,7 +401,7 @@ class SolarParamsHistory():
         '''
         Write to the text file
         '''
-        
+
         for f in fn_out:
             if np.logical_or(np.logical_or(f=='speed',f=='p-dens'),f=='uv-anis'):
                 self._save_to_txt_profile(fn_out[f],f,hdr[f])
@@ -422,7 +422,7 @@ class SolarParamsHistory():
 
         np.savetxt(fn,output,fmt='%4.12f %.15e %4.2f',header=('').join(hdr))
         return 0
-    
+
     def _save_to_txt_profile(self,fn,k,hdr):
         '''
         Write to the text file parameters that are profiles on the latitudinal grid
@@ -438,7 +438,7 @@ class SolarParamsHistory():
 
         np.savetxt(fn,output,fmt='%4.12f '+ (Ncol-3)*'%.15e ' + '%4.2f' + '%7d',header=('').join(hdr))
         return 0
-    
+
 
     def _update_l3bc_data(self,data_l3b,data_l3c,CR):
         '''
@@ -451,7 +451,7 @@ class SolarParamsHistory():
 
         # add a row with values for current CR
         for k in self.ini_data['label']:
-            
+
             if np.logical_or(np.logical_or(k=='speed',k=='p-dens'),k=='uv-anis'):
                 self.solar_params[k] = np.r_[self.solar_params[k],[cr_params[k]]]
             elif np.logical_or(k=='phion',k=='e-dens'):
@@ -459,10 +459,10 @@ class SolarParamsHistory():
 
         # define source flags for p-dens and speed that are result of the GLOWS analysis
         # we have want to flag those values that are based on generated L3b and L3c, as well as those that are interpolated
-        
+
         if int(data_l3b[idx_read_b[0]]['CR'])==int(CR):
             # there is L3b for a current CR
-            
+
             self.flags['uv-anis']=np.append(self.flags['uv-anis'],data_l3b[idx_read_b[0]]['uv_anisotropy_flag'])
             self.glows_flags=np.append(self.glows_flags,np.uint16(data_l3b[idx_read_b[0]]['glows_flags']))
         else:
@@ -478,16 +478,16 @@ class SolarParamsHistory():
             # there is no L3c for a current CR
             self.flags['speed']=np.append(self.flags['speed'],self.settings['l3d_source_flags']['speed_GLOWS_interpolated'])
             self.flags['p-dens']=np.append(self.flags['p-dens'],self.settings['l3d_source_flags']['dens_from_speed_interpolated'])
-    
-    
+
+
     def _freeze_l3bc_data(self,data_l3b,data_l3c):
 
         # add a row with values copied from the last CR generated from the GLOWS data
         for k in self.ini_data['label']:
-            
+
             if np.logical_or(np.logical_or(k=='speed',k=='p-dens'),k=='uv-anis'):
                 self.solar_params[k] = np.r_[self.solar_params[k],[self.solar_params[k][-1]]]
-                
+
             elif np.logical_or(k=='phion',k=='e-dens'):
                 self.solar_params[k] = np.append(self.solar_params[k], self.solar_params[k][-1])
         # add flags
@@ -515,10 +515,10 @@ class SolarParamsHistory():
         Updates structure by calculating parameters values from last CR in the initial data until currently processed CR
         '''
         CR_l3b_last=np.round(fun.carrington(Time(data_l3b[-1]['date']).jd),2)
-        
+
         #for CR in np.arange(self.ini_data['CR_last']+1,CR_current+1.5):
         CR=self.ini_data['CR_last'] + 1
-        
+
         while(int(CR)<CR_l3b_last):
             # update CR grid
             if int(CR)==int(CR_l3b_last): self.CR_grid = np.append(self.CR_grid, CR_l3b_last)
@@ -537,7 +537,7 @@ class SolarParamsHistory():
             # update last CR
             self.CR_last=CR
             CR=CR+1
-          
+
         while(int(CR)<=CR_current):
             # update CR grid
             self.CR_grid = np.append(self.CR_grid, CR)
@@ -555,5 +555,5 @@ class SolarParamsHistory():
             # update last CR
             self.CR_last=CR
             CR=CR+1
-        
+
 

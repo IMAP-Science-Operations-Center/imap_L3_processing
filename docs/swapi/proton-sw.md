@@ -59,7 +59,7 @@ To associate measurements with the spacecraft orientation at that time that the 
 The start time for each $12\,\text{s}$ sweep, denoted $`t_{\text{start}}`$, is available from the CDF (`sci_start_time`).
 The start time for step $i \in [0, 71]$ is thus given by
 ```math
-t_{i,\text{start}} = t_\text{start} + i \cdot \frac{12}{72}\,\text{s} 
+t_{i,\text{start}} = t_\text{start} + i \cdot \frac{12}{72}\,\text{s}
 ```
 
 Counts accumulate during the $`145\,\text{ms}`$ livetime at the end of each $`\frac{12}{72}\,\text{s} = 166.\overline{6}\,\text{ms}`$ step.

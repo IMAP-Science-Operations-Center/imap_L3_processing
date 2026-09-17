@@ -19,7 +19,7 @@ def format_job(job) -> str:
         start_date: {job["start_date"]}
         version: {job['version']}
         status: {job["status"]}
-        processing_input: 
+        processing_input:
 {processing_input}
     """
 

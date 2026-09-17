@@ -20,7 +20,7 @@ logging.basicConfig(level=logging.ERROR)
 
 
 ##########################
-# Exceptions 
+# Exceptions
 ##########################
 class ArrayShapeError(Exception):
     pass
@@ -38,7 +38,7 @@ class WawHelioIonMPError(Exception):
 class DailyIonizationRate():
     '''
     Class for a GLOWS daily ionization rate
-    Contains original light curve, parameters used to convert light curve into 
+    Contains original light curve, parameters used to convert light curve into
     ionization profile and ionization rate profile
 
     Attributes
@@ -83,7 +83,7 @@ class DailyIonizationRate():
         params_hion: dict
             hion_order: int
                 order of the ionization profile decomposition into Legendre’s polynomials]
-            hion_filtration: int 
+            hion_filtration: int
                 number of significant terms in ionization expansion
             hion_const: float 1D vector [size: hion_order-1-hion_filtration]
                 constant vector that completes ionization coefficients vector
@@ -119,7 +119,7 @@ class DailyIonizationRate():
     ion: dict
         ionization rate profile
         ion_grid: float 1D vector
-            latitudinal grid 
+            latitudinal grid
         ion_rate: float 1D vector
             ionization rate value [#/s]
         decomposition_coeff: 1D vector
@@ -228,8 +228,8 @@ class DailyIonizationRate():
 
         Parameters
         -----------
-        ion_profile_fun 
-    
+        ion_profile_fun
+
         '''
 
         bins = np.arange(-90, 100, 10)  # latitude in deg
@@ -331,11 +331,11 @@ class DailyIonizationRate():
         Parameters:
         -----------
         anc_input_from_instr_team : dict
-            ANC_INPUT_FROM_INSTRUMENT_TEAM from the toolkit.constants 
+            ANC_INPUT_FROM_INSTRUMENT_TEAM from the toolkit.constants
             Filenames of the anillary files
 
         Output:
-        returns flag that is non 0 if light curve can't be converted to the ionization rate due to the gap in 
+        returns flag that is non 0 if light curve can't be converted to the ionization rate due to the gap in
         WawHelioIon-MP
         '''
 

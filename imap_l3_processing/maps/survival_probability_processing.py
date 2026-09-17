@@ -87,5 +87,5 @@ def process_survival_probabilities(survival_probabilities_dependencies: HiLoL3Su
     if input_data.ena_intensity_sys_err_minus is not None:
         map_data.intensity_map_data.ena_intensity_sys_err_minus = input_data.ena_intensity_sys_err_minus / survival_probabilities
         map_data.intensity_map_data.ena_intensity_sys_err_plus = input_data.ena_intensity_sys_err_plus / survival_probabilities
-    
+
     return map_data
