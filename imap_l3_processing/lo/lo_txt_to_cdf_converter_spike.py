@@ -326,7 +326,7 @@ if __name__ == "__main__":
 
     l1c_paths = []
     local_l1c_input = lo_input_data_dir / "l1c"
-    
+
     download_all_l1c(local_l1c_input)
     for file in local_l1c_input.rglob("*.cdf"):
         sfp = ScienceFilePath(file.name)

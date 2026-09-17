@@ -9,7 +9,7 @@ from imap_l3_processing.maps.map_models import ISNRateData
 @dataclass
 class LoL3ISNBackgroundSubtractedDependencies:
     map_data: ISNRateData
-    
+
     @classmethod
     def fetch_dependencies(cls, processing_input_collection: ProcessingInputCollection):
         file_names = processing_input_collection.get_file_paths(source="lo")

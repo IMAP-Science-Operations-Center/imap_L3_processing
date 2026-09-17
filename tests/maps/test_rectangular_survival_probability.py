@@ -543,7 +543,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                 pointing_set = RectangularSurvivalProbabilityPointingSet(
                     self.l1c_hi_dataset, Sensor.Hi90, SpinPhase.RamOnly,
                     glows_dataset=self.glows_data, energies=self.hi_energies)
-        
+
                 actual_pred_ephem = pointing_set.data["predicted_ephemeris_flag"].values
                 expected_pred_ephem = np.full((1, self.num_energies, 3600), expected_pred_ephem_value)
                 expected_pred_ephem[:, :, 1000] = 0

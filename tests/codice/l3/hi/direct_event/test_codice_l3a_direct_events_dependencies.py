@@ -19,7 +19,7 @@ class TestCodiceHiL3aDirectEventDependencies(unittest.TestCase):
 
         expected_codice_l2_direct_event_science_file_download_path = "imap/codice/l2/2010/01/imap_codice_l2_hi-direct-events_20100105_v010.cdf"
         codice_l2_direct_event_input_file_name = "imap_codice_l2_hi-direct-events_20100105_v010.cdf"
-        
+
         expected_codice_l1a_direct_event_science_file_download_path = "imap/codice/l1a/2010/10/imap_codice_l1a_hi-direct-events_20101005_v010.cdf"
         codice_l1a_direct_event_input_file_name = "imap_codice_l1a_hi-direct-events_20101005_v010.cdf"
 
@@ -44,15 +44,15 @@ class TestCodiceHiL3aDirectEventDependencies(unittest.TestCase):
         expected_download_codice_l2_direct_event_science_path = data_dir / expected_codice_l2_direct_event_science_file_download_path
         expected_download_codice_l1a_direct_event_science_path = data_dir / expected_codice_l1a_direct_event_science_file_download_path
         expected_download_codice_hi_mass_correction_lut_ancillary_path = data_dir / "imap/ancillary" / expected_codice_hi_mass_correction_lut_ancillary_file_download_path
-        
-        
+
+
         mock_download.assert_has_calls([
             call(expected_download_codice_l2_direct_event_science_path),
             call(expected_download_codice_l1a_direct_event_science_path),
             call(expected_download_codice_hi_mass_correction_lut_ancillary_path),
         ])
 
-        
+
         mock_from_file_paths.assert_called_with(
             expected_download_codice_l2_direct_event_science_path,
             expected_download_codice_l1a_direct_event_science_path,

@@ -38,12 +38,12 @@ def mec_breakpoint_finder(energies: np.ndarray, averaged_psd: np.ndarray) -> tup
         return_value = 2.5
     else:
         FALLBACK_POTENTIAL_ESTIMATE = SweL3Flags.NONE
-    
+
     # Use a smoothed spline on log_psd for spectral break finding routine as a fall back only!
     # Mirror real point as fake point to left of first energy bin to improve spline concavity
     ewidth = np.nanmean(log_energy[1:] - log_energy[:-1])
     from scipy.interpolate import UnivariateSpline as uspline
-    spline = uspline(np.concatenate([[log_energy[0]-ewidth],log_energy]), 
+    spline = uspline(np.concatenate([[log_energy[0]-ewidth],log_energy]),
                      np.concatenate([[log_psd[2]],log_psd]), s=.25)
     spline_energies = np.geomspace(energies.min()*np.exp(-ewidth), energies.max(), 100)
     spline_derivative = spline.derivative(2)
@@ -64,7 +64,7 @@ def mec_breakpoint_finder(energies: np.ndarray, averaged_psd: np.ndarray) -> tup
         Modified Piecewise to fit Potential and Core-Halo Break separately
         The breakpoint is b2
         """
-        return np.piecewise(x, [x<=b2, x>b2], 
+        return np.piecewise(x, [x<=b2, x>b2],
                                [lambda x: b0 - b1*x, lambda x: b0 + b2*(b3-b1) - b3*x])
 
     def refine_breakpoint_value(energy, psd, breakpoint_value, num_points):
@@ -95,7 +95,7 @@ def mec_breakpoint_finder(energies: np.ndarray, averaged_psd: np.ndarray) -> tup
             # Refined breakpoint lies outside of expected range
             return breakpoint_value
         return refined_breakpoint
-    
+
     # Prepare masking for the two separate fits
     mask_sc = log_energy <= np.log(30)
     mask_ch = (log_energy > np.log(30)) & (log_energy < np.log(400))
@@ -111,7 +111,7 @@ def mec_breakpoint_finder(energies: np.ndarray, averaged_psd: np.ndarray) -> tup
             initial_guess = [log_psd[0],1,7,1]
             z, cov = scipy.optimize.curve_fit(fitting_model, np.exp(log_energy_sc), log_psd_sc, p0=initial_guess)
             # Make sure the fit converged
-            if ((z[0] == initial_guess[0]) | (z[1] == initial_guess[1]) 
+            if ((z[0] == initial_guess[0]) | (z[1] == initial_guess[1])
                 | (z[2] == initial_guess[2]) | (z[3] == initial_guess[3])):
                 # Fall back on Spline method
                 # Fit did not converge
@@ -137,7 +137,7 @@ def mec_breakpoint_finder(energies: np.ndarray, averaged_psd: np.ndarray) -> tup
         initial_guess = [log_psd_ch[0],1,65,1]
         z, cov = scipy.optimize.curve_fit(fitting_model, np.exp(log_energy_ch), log_psd_ch, p0=initial_guess)
         # Make sure the fit converged
-        if ((z[0] == initial_guess[0]) & (z[1] == initial_guess[1]) 
+        if ((z[0] == initial_guess[0]) & (z[1] == initial_guess[1])
             & (z[2] == initial_guess[2]) & (z[3] == initial_guess[3])):
             # Fall back on Spline method
             # Fit did not converge

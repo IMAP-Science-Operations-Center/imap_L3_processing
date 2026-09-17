@@ -35,7 +35,7 @@ class EclipticSolarWind():
         mean value of the proton density in the ecliptic plane for each CR [#/cm^3]
     alpha_abundance :  float 1D vector
         mean value of the alpha particle to proton ratio in the ecliptic plane for each CR [#/cm^3]
-        
+
     Methods
     -------
     calculate_invariant(self,ext_dependencies)
@@ -98,7 +98,7 @@ class EclipticSolarWind():
     def _read_OMNI_data(self, ext_dependencies):
         '''
         Reads 3 types of data from OMNI2 database: solar wind speed, density and alpha-particles abundance in the ecliptic plane
-        
+
         Parameters:
         ------------
         ext_dependencies : dict
@@ -142,7 +142,7 @@ class EclipticSolarWind():
         Output:
         ----------------------
         proton_dens_cr : float 1D vector
-            list of available CR 
+            list of available CR
         proton_dens_carr : float 1D vector
             Carrington-period averaged proton densites adjusted to 1au
         plasma_speed_carr : float 1D vector
@@ -173,7 +173,7 @@ class EclipticSolarWind():
             proton density data in the ecliptic plane averaged over Carrington rotation period [#/cm^3]
         p_alpha : float 1D vector
             alpha particle abundance wrt protons data in the ecliptic plane averaged over Carrington rotation period
-        
+
         '''
         sw_ecliptic_source = self.settings['sw_ecliptic_source']
 

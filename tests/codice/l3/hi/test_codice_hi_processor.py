@@ -488,7 +488,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
         l2_direct_event_sci_path = get_test_data_path("codice/imap_codice_l2_hi-direct-events_20260831_v001.0003.cdf")
         l1a_direct_event_sci_path = get_test_data_path("codice/imap_codice_l1a_hi-direct-events_20260831_v001.0003.cdf")
         mass_correction_lut_ancillary_path = get_test_data_path("codice/imap_codice_l3-hi-mass-correction-lut-truncated_20251008_v001.xlsx")
-        
+
         codice_hi_dependencies = CodiceHiL3aDirectEventsDependencies.from_file_paths(l2_direct_event_sci_path, l1a_direct_event_sci_path, mass_correction_lut_ancillary_path)
 
         input_metadata = InputMetadata(instrument='codice',
