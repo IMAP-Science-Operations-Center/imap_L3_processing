@@ -1405,7 +1405,7 @@ class TestGlowsProcessor(unittest.TestCase):
             expected_input_metadata, output_data_path, expected_repointing_midpoint, epoch_delta, call_args_object)
 
         expected_first_data_path = AncillaryFilePath(
-            "imap_glows_survival-probability-ul-sf-raw_20241007_v012.dat").construct_path()
+            "imap_glows_survival-probability-ul-sf-raw_20241007-repoint00020_v012.dat").construct_path()
 
         mock_shutil.move.assert_called_once_with(output_data_path, expected_first_data_path)
 
@@ -1492,7 +1492,7 @@ class TestGlowsProcessor(unittest.TestCase):
             input_metadata, output_data_path, expected_repointing_midpoint, epoch_delta, expected_rest_frame_args)
 
         expected_first_data_path = AncillaryFilePath(
-            "imap_glows_survival-probability-ul-hf-raw_20241007_v012.dat").construct_path()
+            "imap_glows_survival-probability-ul-hf-raw_20241007-repoint00020_v012.dat").construct_path()
 
         mock_shutil.move.assert_called_once_with(output_data_path, expected_first_data_path)
 
@@ -1584,7 +1584,7 @@ class TestGlowsProcessor(unittest.TestCase):
                                               np.array([glows_flags], dtype=np.uint16))
 
                 expected_output_data_path = AncillaryFilePath(
-                    f"imap_glows_survival-probability-hi-{descriptor_elongation}-raw_20241007_v012.dat"
+                    f"imap_glows_survival-probability-hi-{descriptor_elongation}-raw_20241007-repoint00020_v012.dat"
                 ).construct_path()
 
                 mock_shutil.move.assert_called_once_with(first_output_data_path, expected_output_data_path)
@@ -1667,7 +1667,7 @@ class TestGlowsProcessor(unittest.TestCase):
                                                                                  elongation, l3e_args)
 
                 expected_first_output_file_path = AncillaryFilePath(
-                    "imap_glows_survival-probability-lo-raw_20241007_v012.dat"
+                    "imap_glows_survival-probability-lo-raw_20241007-repoint00020_v012.dat"
                 ).construct_path()
 
                 mock_shutil.move.assert_called_once_with(first_output_file_path, expected_first_output_file_path)

@@ -292,28 +292,28 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
 
                 ScienceFilePath('imap_glows_l3e_survival-probability-ul-sf_20251102-repoint00036_v006.0001.cdf'),
                 ScienceFilePath('imap_glows_l3e_survival-probability-ul-sf_20251115-repoint00049_v006.0001.cdf'),
-                AncillaryFilePath('imap_glows_survival-probability-ul-sf-raw_20251102_v001.dat'),
-                AncillaryFilePath('imap_glows_survival-probability-ul-sf-raw_20251115_v001.dat'),
+                AncillaryFilePath('imap_glows_survival-probability-ul-sf-raw_20251102-repoint00036_v001.dat'),
+                AncillaryFilePath('imap_glows_survival-probability-ul-sf-raw_20251115-repoint00049_v001.dat'),
 
                 ScienceFilePath('imap_glows_l3e_survival-probability-ul-hf_20251102-repoint00036_v007.0001.cdf'),
                 ScienceFilePath('imap_glows_l3e_survival-probability-ul-hf_20251115-repoint00049_v007.0001.cdf'),
-                AncillaryFilePath('imap_glows_survival-probability-ul-hf-raw_20251102_v001.dat'),
-                AncillaryFilePath('imap_glows_survival-probability-ul-hf-raw_20251115_v001.dat'),
+                AncillaryFilePath('imap_glows_survival-probability-ul-hf-raw_20251102-repoint00036_v001.dat'),
+                AncillaryFilePath('imap_glows_survival-probability-ul-hf-raw_20251115-repoint00049_v001.dat'),
 
                 ScienceFilePath('imap_glows_l3e_survival-probability-hi-45_20251102-repoint00036_v003.0001.cdf'),
                 ScienceFilePath('imap_glows_l3e_survival-probability-hi-45_20251115-repoint00049_v003.0001.cdf'),
-                AncillaryFilePath('imap_glows_survival-probability-hi-45-raw_20251102_v001.dat'),
-                AncillaryFilePath('imap_glows_survival-probability-hi-45-raw_20251115_v001.dat'),
+                AncillaryFilePath('imap_glows_survival-probability-hi-45-raw_20251102-repoint00036_v001.dat'),
+                AncillaryFilePath('imap_glows_survival-probability-hi-45-raw_20251115-repoint00049_v001.dat'),
 
                 ScienceFilePath('imap_glows_l3e_survival-probability-hi-90_20251102-repoint00036_v004.0001.cdf'),
                 ScienceFilePath('imap_glows_l3e_survival-probability-hi-90_20251115-repoint00049_v004.0001.cdf'),
-                AncillaryFilePath('imap_glows_survival-probability-hi-90-raw_20251102_v001.dat'),
-                AncillaryFilePath('imap_glows_survival-probability-hi-90-raw_20251115_v001.dat'),
+                AncillaryFilePath('imap_glows_survival-probability-hi-90-raw_20251102-repoint00036_v001.dat'),
+                AncillaryFilePath('imap_glows_survival-probability-hi-90-raw_20251115-repoint00049_v001.dat'),
 
                 ScienceFilePath('imap_glows_l3e_survival-probability-lo_20251102-repoint00036_v005.0001.cdf'),
                 ScienceFilePath('imap_glows_l3e_survival-probability-lo_20251115-repoint00049_v005.0001.cdf'),
-                AncillaryFilePath('imap_glows_survival-probability-lo-raw_20251102_v001.dat'),
-                AncillaryFilePath('imap_glows_survival-probability-lo-raw_20251115_v001.dat'),
+                AncillaryFilePath('imap_glows_survival-probability-lo-raw_20251102-repoint00036_v001.dat'),
+                AncillaryFilePath('imap_glows_survival-probability-lo-raw_20251115-repoint00049_v001.dat'),
             ]
 
             for file_path in expected_files:
