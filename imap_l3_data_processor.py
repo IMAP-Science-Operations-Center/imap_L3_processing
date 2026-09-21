@@ -151,7 +151,7 @@ def imap_l3_processor():
         if args.descriptor.startswith("hi") and args.data_level in ['l3a', 'l3b']:
             processor = CodiceHiProcessor(processing_input_collection, input_dependency)
             paths = processor.process()
-        elif args.descriptor.startswith("lo") and args.data_level == 'l3a':
+        elif args.descriptor.startswith("lo") and args.data_level in ['l3a', 'l3b']:
             processor = CodiceLoProcessor(processing_input_collection, input_dependency)
             paths = processor.process()
         else:

@@ -18,26 +18,6 @@ imap_codice_l3a_lo-sw-charge-state-distributions:
   Data_type: L3A_lo-sw-charge-state-distributions>Level-3A charge state distributions
   Logical_source_description: IMAP Mission CoDICE Instrument Charge State Distributions
 
-imap_codice_l3a_lo-hplus-3d-distribution:
-  Data_level: "3a"
-  Data_type: L3A_lo-hplus-3d-distribution>Level-3A H+ 3d distribution
-  Logical_source_description: IMAP Mission CoDICE Lo H+ 3d Instrument Frame Distributions
-
-imap_codice_l3a_lo-heplus-3d-distribution:
-  Data_level: "3a"
-  Data_type: L3A_lo-heplus-3d-distribution>Level-3A He+ 3d distribution
-  Logical_source_description: IMAP Mission CoDICE Lo He+ 3d Instrument Frame Distributions
-
-imap_codice_l3a_lo-heplusplus-3d-distribution:
-  Data_level: "3a"
-  Data_type: L3A_lo-heplusplus-3d-distribution>Level-3A He++ 3d distribution
-  Logical_source_description: IMAP Mission CoDICE Lo He++ 3d Instrument Frame Distributions
-
-imap_codice_l3a_lo-oplus6-3d-distribution:
-  Data_level: "3a"
-  Data_type: L3A_lo-oplus6-3d-distribution>Level-3A O+6 3d distribution
-  Logical_source_description: IMAP Mission CoDICE Lo O+6 3d Instrument Frame Distributions
-
 imap_codice_l3a_hi-direct-events:
   Data_level: "3a"
   Data_type: L3A_hi-direct-events>Level-3A direct events

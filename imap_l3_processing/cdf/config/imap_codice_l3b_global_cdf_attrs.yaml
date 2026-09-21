@@ -2,3 +2,23 @@ imap_codice_l3b_hi-pitch-angle:
   Data_level: "3b"
   Data_type: L3B_hi-pitch-angle>Level-3b pitch angle
   Logical_source_description: IMAP Mission CoDICE Hi Instrument Pitch Angle
+
+imap_codice_l3b_lo-hplus-3d-distribution:
+  Data_level: "3b"
+  Data_type: L3B_lo-hplus-3d-distribution>Level-3B H+ 3d distribution
+  Logical_source_description: IMAP Mission CoDICE Lo H+ 3d Instrument Frame Distributions
+
+imap_codice_l3b_lo-heplus-3d-distribution:
+  Data_level: "3b"
+  Data_type: L3B_lo-heplus-3d-distribution>Level-3B He+ 3d distribution
+  Logical_source_description: IMAP Mission CoDICE Lo He+ 3d Instrument Frame Distributions
+
+imap_codice_l3b_lo-heplusplus-3d-distribution:
+  Data_level: "3b"
+  Data_type: L3B_lo-heplusplus-3d-distribution>Level-3B He++ 3d distribution
+  Logical_source_description: IMAP Mission CoDICE Lo He++ 3d Instrument Frame Distributions
+
+imap_codice_l3b_lo-oplus6-3d-distribution:
+  Data_level: "3b"
+  Data_type: L3B_lo-oplus6-3d-distribution>Level-3B O+6 3d distribution
+  Logical_source_description: IMAP Mission CoDICE Lo O+6 3d Instrument Frame Distributions

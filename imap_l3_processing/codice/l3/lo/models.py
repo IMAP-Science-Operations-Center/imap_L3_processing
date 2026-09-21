@@ -542,7 +542,7 @@ ELEVATION_ANGLE_LABEL_VAR_NAME = "elevation_label"
 
 
 @dataclass
-class CodiceLoL3a3dDistributionDataProduct(DataProduct):
+class CodiceLoL3b3dDistributionDataProduct(DataProduct):
     epoch: np.ndarray
     epoch_delta: np.ndarray
     elevation: np.ndarray

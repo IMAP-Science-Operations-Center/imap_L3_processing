@@ -25,7 +25,7 @@ from imap_l3_processing.codice.l3.lo.models import (
     ELEVATION_VAR_NAME,
     ENERGY_VAR_NAME,
     ELEVATION_DELTA_VAR_NAME,
-    CodiceLoL3a3dDistributionDataProduct,
+    CodiceLoL3b3dDistributionDataProduct,
     ENERGY_DELTA_PLUS_VAR_NAME,
     ENERGY_DELTA_MINUS_VAR_NAME,
     ELEVATION_ANGLE_LABEL_VAR_NAME,
@@ -538,7 +538,7 @@ class TestModels(CdfModelTestCase):
         spin_angle = np.array([40, 50, 60])
         energy = np.array([70, 80, 90])
 
-        data_product = CodiceLoL3a3dDistributionDataProduct(
+        data_product = CodiceLoL3b3dDistributionDataProduct(
             input_metadata=Mock(),
             epoch=sentinel.epoch,
             epoch_delta=sentinel.epoch_delta,

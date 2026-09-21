@@ -4,8 +4,8 @@ import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 from imap_processing.spice.geometry import get_spacecraft_to_instrument_spin_phase_offset, SpiceFrame
 
-from imap_l3_processing.codice.l3.lo.codice_lo_l3a_3d_distributions_dependencies import \
-    CodiceLoL3a3dDistributionsDependencies
+from imap_l3_processing.codice.l3.lo.codice_lo_l3b_3d_distributions_dependencies import \
+    CodiceLoL3b3dDistributionsDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies import CodiceLoL3aDirectEventsDependencies
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencies import \
     CodiceLoL3aPartialDensitiesDependencies
@@ -14,7 +14,7 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import S
     PositionToElevationLookup
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL3aPartialDensityDataProduct, \
     CodiceLoL3aDirectEventDataProduct, CodiceLoPartialDensityData, CodiceLoL3aRatiosDataProduct, \
-    CodiceLoL3ChargeStateDistributionsDataProduct, CodiceLoL3a3dDistributionDataProduct
+    CodiceLoL3ChargeStateDistributionsDataProduct, CodiceLoL3b3dDistributionDataProduct
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
     calculate_mass, calculate_mass_per_charge,convert_counts_to_intensity, \
     rebin_to_counts_by_species_elevation_and_spin_sector, combine_priorities_for_species_and_calculate_count_uncertainty, \
@@ -46,8 +46,8 @@ class CodiceLoProcessor(Processor):
             data_product = self.process_l3a_charge_state_distributions(dependencies)
         elif "3d-distribution" in self.input_metadata.descriptor:
             species = self.input_metadata.descriptor.split('-')[1]
-            dependencies = CodiceLoL3a3dDistributionsDependencies.fetch_dependencies(self.dependencies, species)
-            data_product = self.process_l3a_3d_distribution_product(dependencies)
+            dependencies = CodiceLoL3b3dDistributionsDependencies.fetch_dependencies(self.dependencies, species)
+            data_product = self.process_l3b_3d_distribution_product(dependencies)
         else:
             raise NotImplementedError(
                 f"Unknown data level and descriptor for CoDICE: {self.input_metadata.data_level}, {self.input_metadata.descriptor}")
@@ -306,7 +306,7 @@ class CodiceLoProcessor(Processor):
             type=codice_direct_events.type,
         )
 
-    def process_l3a_3d_distribution_product(self, dependencies: CodiceLoL3a3dDistributionsDependencies):
+    def process_l3b_3d_distribution_product(self, dependencies: CodiceLoL3b3dDistributionsDependencies):
         mass_species_bin_lookup = dependencies.mass_species_bin_lookup
         position_elevation_lut = PositionToElevationLookup()
         energy_lut = dependencies.energy_per_charge_lut
@@ -339,7 +339,7 @@ class CodiceLoProcessor(Processor):
                                                                dependencies.l3a_direct_event_data.half_spin_per_esa_step)
         offset_degrees = get_spacecraft_to_instrument_spin_phase_offset(SpiceFrame.IMAP_CODICE)*360 - 180
         spin_angle_bins_in_dps = (dependencies.l3a_direct_event_data.spin_angle_bin + offset_degrees) % 360
-        return CodiceLoL3a3dDistributionDataProduct(
+        return CodiceLoL3b3dDistributionDataProduct(
             input_metadata=self.input_metadata,
             epoch=dependencies.l3a_direct_event_data.epoch,
             epoch_delta=dependencies.l3a_direct_event_data.epoch_delta,
