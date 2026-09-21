@@ -24,7 +24,7 @@ per_priority: &per_priority
   DEPEND_1: priority_index
   SCALETYP: linear
   LABL_PTR_1: priority_index_label
-  DISPLAY_TYPE: spectrogram
+  DISPLAY_TYPE: stack_plot
 
 per_event: &per_event
   <<: *per_priority
@@ -184,7 +184,6 @@ normalization:
   SCALEMAX: 10
   LABL_PTR_2: energy_bin_label
   LABL_PTR_3: spin_angle_bin_label
-  DISPLAY_TYPE: stack_plot
 
 normalization_per_event:
   <<: *per_event
@@ -201,7 +200,6 @@ normalization_per_event:
   SCALEMIN: 0
   SCALEMAX: 10
   DATA_TYPE: CDF_FLOAT
-  DISPLAY_TYPE: stack_plot
 
 mass_per_charge:
   <<: *per_event
@@ -212,7 +210,6 @@ mass_per_charge:
   FIELDNAM: Mass per charge
   LABLAXIS: m/q
   UNITS: amu/q
-  DISPLAY_TYPE: stack_plot
 
 mass:
   <<: *per_event
@@ -223,7 +220,6 @@ mass:
   FIELDNAM: Mass
   LABLAXIS: m
   UNITS: amu
-  DISPLAY_TYPE: stack_plot
 
 apd_energy:
   <<: *per_event
@@ -432,7 +428,7 @@ acquisition_time_per_esa_step:
   CATDESC: Acquisition time for each step of energy
   DEPEND_0: epoch
   DEPEND_1: esa_step
-  DISPLAY_TYPE: spectrogram
+  DISPLAY_TYPE: stack_plot
   FIELDNAM: Acquisition Time
   DATA_TYPE: CDF_DOUBLE
   FILLVAL: -1.0e+31
@@ -450,7 +446,7 @@ half_spin_per_esa_step:
   CATDESC: Half spin number for each step of energy
   DEPEND_0: epoch
   DEPEND_1: esa_step
-  DISPLAY_TYPE: spectrogram
+  DISPLAY_TYPE: stack_plot
   FIELDNAM: Half Spin Number
   DATA_TYPE: CDF_UINT1
   FILLVAL: 255
