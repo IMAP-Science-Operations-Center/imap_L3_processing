@@ -1,4 +1,7 @@
 name: Docker image build and publish
+
+run-name: "Build and Publish Docker Image for ${{ inputs.instrument_name }}"
+
 on:
   workflow_dispatch:
     inputs:
