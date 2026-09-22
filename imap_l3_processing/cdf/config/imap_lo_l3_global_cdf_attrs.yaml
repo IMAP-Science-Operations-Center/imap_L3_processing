@@ -3,7 +3,7 @@ imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo:
   Data_level: '3'
   Data_type: L3_12mo>Level-3 12mo
   Instrument: Lo
-  Logical_source_description: IMAP Mission Lo Instrument Level 3 Lo-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Lo Instrument Level 3 Lo-90 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Ram, HAE, Rectangular
     6 degree, 12 Month Map
   Map_descriptor: l090-ena-h-sf-sp-ram-hae-6deg-12mo
@@ -19,7 +19,7 @@ imap_lo_l3_l090-ena-h-hf-sp-ram-hae-6deg-12mo:
   Data_level: '3'
   Data_type: L3_12mo>Level-3 12mo
   Instrument: Lo
-  Logical_source_description: IMAP Mission Lo Instrument Level 3 Lo-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Lo Instrument Level 3 Lo-90 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Ram, HAE, Rectangular
     6 degree, 12 Month Map
   Map_descriptor: l090-ena-h-hf-sp-ram-hae-6deg-12mo
@@ -36,7 +36,7 @@ imap_lo_l3_l090-spx-h-sf-nsp-ram-hae-6deg-12mo:
   Data_level: '3'
   Data_type: L3_12mo>Level-3 12mo
   Instrument: Lo
-  Logical_source_description: IMAP Mission Lo Instrument Level 3 Lo-90 Sensor, Spectral Index,
+  Logical_source_description: IMAP Mission IMAP-Lo Instrument Level 3 Lo-90 Sensor, Spectral Index,
     Hydrogen, Spacecraft Frame, Non-Survival Probability-Corrected, Ram, HAE, Rectangular
     6 degree, 12 Month Map
   Map_descriptor: l090-spx-h-sf-nsp-ram-hae-6deg-12mo
@@ -52,7 +52,7 @@ imap_lo_l3_l090-spx-h-sf-sp-ram-hae-6deg-12mo:
   Data_level: '3'
   Data_type: L3_12mo>Level-3 12mo
   Instrument: Lo
-  Logical_source_description: IMAP Mission Lo Instrument Level 3 Lo-90 Sensor, Spectral Index,
+  Logical_source_description: IMAP Mission IMAP-Lo Instrument Level 3 Lo-90 Sensor, Spectral Index,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Ram, HAE, Rectangular
     6 degree, 12 Month Map
   Map_descriptor: l090-spx-h-sf-sp-ram-hae-6deg-12mo
@@ -68,7 +68,7 @@ imap_lo_l3_l090-spx-h-hf-nsp-ram-hae-6deg-12mo:
   Data_level: '3'
   Data_type: L3_12mo>Level-3 12mo
   Instrument: Lo
-  Logical_source_description: IMAP Mission Lo Instrument Level 3 Lo-90 Sensor, Spectral Index,
+  Logical_source_description: IMAP Mission IMAP-Lo Instrument Level 3 Lo-90 Sensor, Spectral Index,
     Hydrogen, Heliospheric Frame, Non-Survival Probability-Corrected, Ram, HAE, Rectangular
     6 degree, 12 Month Map
   Map_descriptor: l090-spx-h-hf-nsp-ram-hae-6deg-12mo
@@ -84,7 +84,7 @@ imap_lo_l3_l090-spx-h-hf-sp-ram-hae-6deg-12mo:
   Data_level: '3'
   Data_type: L3_12mo>Level-3 12mo
   Instrument: Lo
-  Logical_source_description: IMAP Mission Lo Instrument Level 3 Lo-90 Sensor, Spectral Index,
+  Logical_source_description: IMAP Mission IMAP-Lo Instrument Level 3 Lo-90 Sensor, Spectral Index,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Ram, HAE, Rectangular
     6 degree, 12 Month Map
   Map_descriptor: l090-spx-h-hf-sp-ram-hae-6deg-12mo
