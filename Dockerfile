@@ -43,6 +43,9 @@ COPY imap_l3_data_processor.py .
 # from the current working directory, so expose them at the WORKDIR root.
 RUN cp imap_l3_processing/glows/l3e/l3e_toolkit/survProb* .
 
+# Make sure executables have appropriate permissions
+RUN chmod +x survProbLo survProbHi survProbUltra
+
 # Working directories expected at runtime.
 RUN mkdir -p temp_cdf_data /mnt/spice
 
