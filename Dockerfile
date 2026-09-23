@@ -46,7 +46,7 @@ RUN cp imap_l3_processing/glows/l3e/l3e_toolkit/survProb* .
 # Make sure executables have appropriate permissions
 RUN chmod +x survProbLo survProbHi survProbUltra
 
-# Working directories expected at runtime.
-RUN mkdir -p temp_cdf_data /mnt/spice
+# Working directory expected at runtime.
+RUN mkdir -p temp_cdf_data
 
 ENTRYPOINT ["python", "imap_l3_data_processor.py"]
