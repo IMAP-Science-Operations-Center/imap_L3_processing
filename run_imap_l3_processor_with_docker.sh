@@ -7,8 +7,9 @@ if [[ -z "$IMAP_API_KEY" ]]; then
 fi
 
 if [[ -z "$IMAP_DATA_DIR" ]]; then
-    IMAP_DATA_DIR="$PWD"
-    echo "Warning: IMAP_DATA_DIR not set; using current directory ('$IMAP_DATA_DIR')"
+    IMAP_DATA_DIR="$PWD/data"
+    mkdir -p "$IMAP_DATA_DIR"
+    echo "Warning: IMAP_DATA_DIR not set; using default directory ('$IMAP_DATA_DIR')"
 fi
 
 if ! docker image inspect imap-l3 >/dev/null 2>&1; then
