@@ -341,7 +341,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
         num_events = np.zeros((num_epochs, num_priorities), dtype=int)
         spin_sectors = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=int)
         energy_steps = np.zeros((num_epochs, num_priorities, event_buffer_len), dtype=int)
-        
+
 
         num_events[0, 0] = 4
         spin_sectors[0, 0, :4] = [0, 2, 12, 0]

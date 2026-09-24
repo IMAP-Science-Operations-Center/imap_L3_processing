@@ -464,7 +464,7 @@ class L2DataHistogram():
         data = copy.deepcopy(self.data)
 
         # some fields need to be temporarily converted to string arrays, because we want to force
-        # them to be saved as one-liners (i.e., without \n after each element) or we want them to 
+        # them to be saved as one-liners (i.e., without \n after each element) or we want them to
         # be printed with a specific format by json.dumps()
         # so we convert variables to strings as defined in fmt
         for key in fmt['daily_lightcurve'].keys():

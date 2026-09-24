@@ -195,7 +195,7 @@ class TestL3eHiModel(unittest.TestCase):
         spin_axis_lon = 90.0
 
         args = MagicMock(spec=GlowsL3eCallArguments)
-        
+
         spacecraft_info = MagicMock(spec=GlowsL3eSpacecraftInfo)
         spacecraft_info.spin_axis_latitude = spin_axis_lat
         spacecraft_info.spin_axis_longitude = spin_axis_lon

@@ -12,7 +12,13 @@ repos:
       - id: detect-private-key
       - id: mixed-line-ending
       - id: trailing-whitespace
-        exclude: ^imap_L3_processing/tests/.*\.(dat|tf)$
+        exclude: |
+            (?x)^(
+              (instrument_team_data|tests/test_data)/  # data file trees
+              | tests/.*\.txt$                         # other test text files
+              | .*\.(cdf|csf|csv|dat|tf|tls|ts|tsc)$   # data files anywhere
+              | docs/.*\.(svg|png)$                    # documentation images
+            )
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: "v0.15.2"
     hooks:

@@ -60,7 +60,7 @@ arguments, the instrument level, and the number of files to retrieve. For exampl
 
 `python fetch_latest_data.py --instrument swapi --level l3a --count 4`
 
-This will copy the .cdf files into your repo folder under the data folder. 
+This will copy the .cdf files into your repo folder under the data folder.
 
 ## Development
 

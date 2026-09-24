@@ -1325,7 +1325,7 @@ class mpfit:
                 # Check for over/underflow
                 if ~numpy.all(numpy.isfinite(wa1) & numpy.isfinite(wa2) & \
                               numpy.isfinite(x)) or ~numpy.isfinite(ratio):
-                    errmsg = ('''ERROR: parameter or function value(s) have become 
+                    errmsg = ('''ERROR: parameter or function value(s) have become
 						'infinite; check model function for over- 'and underflow''')
                     self.status = -16
                     break

@@ -54,9 +54,9 @@ class TestRangeFitLookup(unittest.TestCase):
 
                     path_to_populate = os.path.join(tempdir, file_to_populate)
                     with open(path_to_populate, 'w') as range_file:
-                        range_file.write("""# 
+                        range_file.write("""#
 # Format: ion_charge, a1, b1, a2, b2, gamma
-# 
+#
 """)
                         csv_writer = csv.writer(range_file)
                         csv_writer.writerow(expected_charges[0:1] + charge1_parameters)

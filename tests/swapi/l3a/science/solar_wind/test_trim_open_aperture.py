@@ -77,7 +77,7 @@ def _trim(
 ):
     if rotation_matrix is None:
         rotation_matrix = NOMINAL_SWAPI_TO_RTN_ROTATION
-  
+
     return trim_open_aperture(
         rg,
         sw,
