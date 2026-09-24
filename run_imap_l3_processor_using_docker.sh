@@ -12,8 +12,13 @@ if [[ -z "$IMAP_DATA_DIR" ]]; then
     echo "Warning: IMAP_DATA_DIR not set; using default directory ('$IMAP_DATA_DIR')"
 fi
 
-if ! docker image inspect imap-l3 >/dev/null 2>&1; then
-    echo "Docker image 'imap-l3' not found; building it..."
+image_arch="$(docker image inspect --format '{{.Architecture}}' imap-l3 2>/dev/null || true)"
+if [[ "$image_arch" != "amd64" ]]; then
+    if [[ -z "$image_arch" ]]; then
+        echo "Docker image 'imap-l3' not found; building it..."
+    else
+        echo "Docker image 'imap-l3' built for '$image_arch'; rebuilding for linux/amd64..."
+    fi
     docker build --platform=linux/amd64 -t imap-l3 .
     echo "Done!"
 fi
