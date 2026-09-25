@@ -248,11 +248,12 @@ def get_repoint_numbers_within_cr_window(start_cr_number: int | None, end_cr_num
     vectorized_date_conv = np.vectorize(lambda d: (Time(d, format="iso").to_datetime(
         leap_second_strict='silent') - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS)
     repoint_starts = vectorized_date_conv(repointing_data["repoint_start_utc"])
+    repoint_ends = vectorized_date_conv(repointing_data["repoint_end_utc"])
     repoint_ids = repointing_data["repoint_id"]
 
     repoint_numbers = []
     for i in range(len(repoint_ids)):
-        if i + 1 < len(repoint_ids) and start_ns < (repoint_starts[i + 1] + repoint_starts[i])/2 < end_ns:
+        if i + 1 < len(repoint_ids) and start_ns < (repoint_starts[i + 1] + repoint_ends[i])/2 < end_ns:
             repoint_numbers.append(int(repoint_ids[i]))
 
     return repoint_numbers
