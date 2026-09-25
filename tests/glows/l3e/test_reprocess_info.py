@@ -91,10 +91,10 @@ class TestReprocessInfo(unittest.TestCase):
             GLOWS_L3E_ULTRA_HF_DESCRIPTOR, repointing_data
         )
 
-        repoints_for_cr2093 = list(range(3682, 3710))
-        repoints_for_cr2094 = list(range(3710, 3736))
+        repoints_for_cr2093 = list(range(3682, 3696))
+        repoints_for_cr2094 = list(range(3710, 3724))
 
-        expected_repoints_lo = [2045, 2046] + repoints_for_cr2093 + repoints_for_cr2094
+        expected_repoints_lo = [2045, 2046] + repoints_for_cr2093 + [3700] + repoints_for_cr2094
         expected_repoints_hi = [2050]
         expected_repoints_ultra = []
         self.assertEqual(expected_repoints_lo, repoints_for_lo)

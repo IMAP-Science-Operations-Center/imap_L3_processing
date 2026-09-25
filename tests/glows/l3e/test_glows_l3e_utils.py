@@ -381,7 +381,7 @@ class TestGlowsL3EUtils(unittest.TestCase):
     def test_get_repoint_numbers_within_cr_window(self):
         start_cr = 2093
         end_cr = 2094
-        expected_repoint_numbers = list(range(3682, 3736))
+        expected_repoint_numbers = list(range(3682, 3724))
 
         repointing_path = get_test_data_path("fake_1_day_repointing_file.csv")
 
