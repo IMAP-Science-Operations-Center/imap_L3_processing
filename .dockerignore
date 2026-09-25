@@ -1,0 +1,15 @@
+# Allowlist approach: ignore everything, then re-include only what the image
+# needs. This keeps the build context to a few MB instead of several GB
+# (.git, .venv, tests/, data/, run_local_input_data/, spice_kernels/, ...).
+*
+
+# Files required to build the image
+!pyproject.toml
+!uv.lock
+!imap_l3_data_processor.py
+!imap_l3_processing/
+
+# Strip Python caches that may live inside the package tree
+imap_l3_processing/**/__pycache__/
+**/*.pyc
+**/*.pyo
