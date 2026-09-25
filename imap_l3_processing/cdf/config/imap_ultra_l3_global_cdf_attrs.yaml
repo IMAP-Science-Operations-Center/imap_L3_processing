@@ -2,7 +2,7 @@ imap_ultra_l3_ulc-ena-h-hf-sp-full-hae-2deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 2 degree, 3 Month Map
   Map_descriptor: ulc-ena-h-hf-sp-full-hae-2deg-3mo
@@ -17,7 +17,7 @@ imap_ultra_l3_ulc-ena-h-sf-sp-full-hae-2deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     2 degree, 3 Month Map
   Map_descriptor: ulc-ena-h-sf-sp-full-hae-2deg-3mo
@@ -32,7 +32,7 @@ imap_ultra_l3_ulc-ena-h-hf-sp-full-hae-4deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 4 degree, 3 Month Map
   Map_descriptor: ulc-ena-h-hf-sp-full-hae-4deg-3mo
@@ -47,7 +47,7 @@ imap_ultra_l3_ulc-ena-h-sf-sp-full-hae-4deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     4 degree, 3 Month Map
   Map_descriptor: ulc-ena-h-sf-sp-full-hae-4deg-3mo
@@ -62,7 +62,7 @@ imap_ultra_l3_ulc-ena-h-hf-sp-full-hae-6deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 6 degree, 3 Month Map
   Map_descriptor: ulc-ena-h-hf-sp-full-hae-6deg-3mo
@@ -77,7 +77,7 @@ imap_ultra_l3_ulc-ena-h-sf-sp-full-hae-6deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     6 degree, 3 Month Map
   Map_descriptor: ulc-ena-h-sf-sp-full-hae-6deg-3mo
@@ -92,7 +92,7 @@ imap_ultra_l3_ulc-ena-h-hf-nsp-full-hae-2deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Heliospheric Frame, Non-Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 2 degree, 3 Month Map
   Map_descriptor: ulc-ena-h-hf-nsp-full-hae-2deg-3mo
@@ -107,7 +107,7 @@ imap_ultra_l3_ulc-ena-h-sf-nsp-full-hae-2deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Spacecraft Frame, Non-Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 2 degree, 3 Month Map
   Map_descriptor: ulc-ena-h-sf-nsp-full-hae-2deg-3mo
@@ -122,7 +122,7 @@ imap_ultra_l3_ulc-ena-h-hf-nsp-full-hae-4deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Heliospheric Frame, Non-Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 4 degree, 3 Month Map
   Map_descriptor: ulc-ena-h-hf-nsp-full-hae-4deg-3mo
@@ -137,7 +137,7 @@ imap_ultra_l3_ulc-ena-h-sf-nsp-full-hae-4deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Spacecraft Frame, Non-Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 4 degree, 3 Month Map
   Map_descriptor: ulc-ena-h-sf-nsp-full-hae-4deg-3mo
@@ -152,7 +152,7 @@ imap_ultra_l3_ulc-ena-h-hf-nsp-full-hae-6deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Heliospheric Frame, Non-Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 6 degree, 3 Month Map
   Map_descriptor: ulc-ena-h-hf-nsp-full-hae-6deg-3mo
@@ -167,7 +167,7 @@ imap_ultra_l3_ulc-ena-h-sf-nsp-full-hae-6deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Spacecraft Frame, Non-Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 6 degree, 3 Month Map
   Map_descriptor: ulc-ena-h-sf-nsp-full-hae-6deg-3mo
@@ -182,7 +182,7 @@ imap_ultra_l3_u90-ena-h-hf-sp-full-hae-2deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 2 degree, 3 Month Map
   Map_descriptor: u90-ena-h-hf-sp-full-hae-2deg-3mo
@@ -197,7 +197,7 @@ imap_ultra_l3_u90-ena-h-sf-sp-full-hae-2deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     2 degree, 3 Month Map
   Map_descriptor: u90-ena-h-sf-sp-full-hae-2deg-3mo
@@ -212,7 +212,7 @@ imap_ultra_l3_u90-ena-h-hf-sp-full-hae-4deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 4 degree, 3 Month Map
   Map_descriptor: u90-ena-h-hf-sp-full-hae-4deg-3mo
@@ -227,7 +227,7 @@ imap_ultra_l3_u90-ena-h-sf-sp-full-hae-4deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     4 degree, 3 Month Map
   Map_descriptor: u90-ena-h-sf-sp-full-hae-4deg-3mo
@@ -242,7 +242,7 @@ imap_ultra_l3_u90-ena-h-hf-sp-full-hae-6deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 6 degree, 3 Month Map
   Map_descriptor: u90-ena-h-hf-sp-full-hae-6deg-3mo
@@ -257,7 +257,7 @@ imap_ultra_l3_u90-ena-h-sf-sp-full-hae-6deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     6 degree, 3 Month Map
   Map_descriptor: u90-ena-h-sf-sp-full-hae-6deg-3mo
@@ -272,7 +272,7 @@ imap_ultra_l3_u45-ena-h-hf-sp-full-hae-2deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 2 degree, 3 Month Map
   Map_descriptor: u45-ena-h-hf-sp-full-hae-2deg-3mo
@@ -287,7 +287,7 @@ imap_ultra_l3_u45-ena-h-sf-sp-full-hae-2deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     2 degree, 3 Month Map
   Map_descriptor: u45-ena-h-sf-sp-full-hae-2deg-3mo
@@ -302,7 +302,7 @@ imap_ultra_l3_u45-ena-h-hf-sp-full-hae-4deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 4 degree, 3 Month Map
   Map_descriptor: u45-ena-h-hf-sp-full-hae-4deg-3mo
@@ -317,7 +317,7 @@ imap_ultra_l3_u45-ena-h-sf-sp-full-hae-4deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     4 degree, 3 Month Map
   Map_descriptor: u45-ena-h-sf-sp-full-hae-4deg-3mo
@@ -332,7 +332,7 @@ imap_ultra_l3_u45-ena-h-hf-sp-full-hae-6deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 6 degree, 3 Month Map
   Map_descriptor: u45-ena-h-hf-sp-full-hae-6deg-3mo
@@ -347,7 +347,7 @@ imap_ultra_l3_u45-ena-h-sf-sp-full-hae-6deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     6 degree, 3 Month Map
   Map_descriptor: u45-ena-h-sf-sp-full-hae-6deg-3mo
@@ -362,7 +362,7 @@ imap_ultra_l3_ulc-ena-h-hf-sp-full-hae-2deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 2 degree, 6 Month Map
   Map_descriptor: ulc-ena-h-hf-sp-full-hae-2deg-6mo
@@ -377,7 +377,7 @@ imap_ultra_l3_ulc-ena-h-sf-sp-full-hae-2deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     2 degree, 6 Month Map
   Map_descriptor: ulc-ena-h-sf-sp-full-hae-2deg-6mo
@@ -392,7 +392,7 @@ imap_ultra_l3_ulc-ena-h-hf-sp-full-hae-4deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 4 degree, 6 Month Map
   Map_descriptor: ulc-ena-h-hf-sp-full-hae-4deg-6mo
@@ -407,7 +407,7 @@ imap_ultra_l3_ulc-ena-h-sf-sp-full-hae-4deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     4 degree, 6 Month Map
   Map_descriptor: ulc-ena-h-sf-sp-full-hae-4deg-6mo
@@ -422,7 +422,7 @@ imap_ultra_l3_ulc-ena-h-hf-sp-full-hae-6deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 6 degree, 6 Month Map
   Map_descriptor: ulc-ena-h-hf-sp-full-hae-6deg-6mo
@@ -437,7 +437,7 @@ imap_ultra_l3_ulc-ena-h-sf-sp-full-hae-6deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     6 degree, 6 Month Map
   Map_descriptor: ulc-ena-h-sf-sp-full-hae-6deg-6mo
@@ -452,7 +452,7 @@ imap_ultra_l3_ulc-ena-h-hf-nsp-full-hae-2deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Heliospheric Frame, Non-Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 2 degree, 6 Month Map
   Map_descriptor: ulc-ena-h-hf-nsp-full-hae-2deg-6mo
@@ -467,7 +467,7 @@ imap_ultra_l3_ulc-ena-h-sf-nsp-full-hae-2deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Spacecraft Frame, Non-Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 2 degree, 6 Month Map
   Map_descriptor: ulc-ena-h-sf-nsp-full-hae-2deg-6mo
@@ -482,7 +482,7 @@ imap_ultra_l3_ulc-ena-h-hf-nsp-full-hae-4deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Heliospheric Frame, Non-Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 4 degree, 6 Month Map
   Map_descriptor: ulc-ena-h-hf-nsp-full-hae-4deg-6mo
@@ -497,7 +497,7 @@ imap_ultra_l3_ulc-ena-h-sf-nsp-full-hae-4deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Spacecraft Frame, Non-Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 4 degree, 6 Month Map
   Map_descriptor: ulc-ena-h-sf-nsp-full-hae-4deg-6mo
@@ -512,7 +512,7 @@ imap_ultra_l3_ulc-ena-h-hf-nsp-full-hae-6deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Heliospheric Frame, Non-Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 6 degree, 6 Month Map
   Map_descriptor: ulc-ena-h-hf-nsp-full-hae-6deg-6mo
@@ -527,7 +527,7 @@ imap_ultra_l3_ulc-ena-h-sf-nsp-full-hae-6deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Spacecraft Frame, Non-Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 6 degree, 6 Month Map
   Map_descriptor: ulc-ena-h-sf-nsp-full-hae-6deg-6mo
@@ -542,7 +542,7 @@ imap_ultra_l3_u90-ena-h-hf-sp-full-hae-2deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 2 degree, 6 Month Map
   Map_descriptor: u90-ena-h-hf-sp-full-hae-2deg-6mo
@@ -557,7 +557,7 @@ imap_ultra_l3_u90-ena-h-sf-sp-full-hae-2deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     2 degree, 6 Month Map
   Map_descriptor: u90-ena-h-sf-sp-full-hae-2deg-6mo
@@ -572,7 +572,7 @@ imap_ultra_l3_u90-ena-h-hf-sp-full-hae-4deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 4 degree, 6 Month Map
   Map_descriptor: u90-ena-h-hf-sp-full-hae-4deg-6mo
@@ -587,7 +587,7 @@ imap_ultra_l3_u90-ena-h-sf-sp-full-hae-4deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     4 degree, 6 Month Map
   Map_descriptor: u90-ena-h-sf-sp-full-hae-4deg-6mo
@@ -602,7 +602,7 @@ imap_ultra_l3_u90-ena-h-hf-sp-full-hae-6deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 6 degree, 6 Month Map
   Map_descriptor: u90-ena-h-hf-sp-full-hae-6deg-6mo
@@ -617,7 +617,7 @@ imap_ultra_l3_u90-ena-h-sf-sp-full-hae-6deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     6 degree, 6 Month Map
   Map_descriptor: u90-ena-h-sf-sp-full-hae-6deg-6mo
@@ -632,7 +632,7 @@ imap_ultra_l3_u45-ena-h-hf-sp-full-hae-2deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 2 degree, 6 Month Map
   Map_descriptor: u45-ena-h-hf-sp-full-hae-2deg-6mo
@@ -647,7 +647,7 @@ imap_ultra_l3_u45-ena-h-sf-sp-full-hae-2deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     2 degree, 6 Month Map
   Map_descriptor: u45-ena-h-sf-sp-full-hae-2deg-6mo
@@ -662,7 +662,7 @@ imap_ultra_l3_u45-ena-h-hf-sp-full-hae-4deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 4 degree, 6 Month Map
   Map_descriptor: u45-ena-h-hf-sp-full-hae-4deg-6mo
@@ -677,7 +677,7 @@ imap_ultra_l3_u45-ena-h-sf-sp-full-hae-4deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     4 degree, 6 Month Map
   Map_descriptor: u45-ena-h-sf-sp-full-hae-4deg-6mo
@@ -692,7 +692,7 @@ imap_ultra_l3_u45-ena-h-hf-sp-full-hae-6deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 6 degree, 6 Month Map
   Map_descriptor: u45-ena-h-hf-sp-full-hae-6deg-6mo
@@ -707,7 +707,7 @@ imap_ultra_l3_u45-ena-h-sf-sp-full-hae-6deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     6 degree, 6 Month Map
   Map_descriptor: u45-ena-h-sf-sp-full-hae-6deg-6mo
@@ -722,7 +722,7 @@ imap_ultra_l3_ulc-ena-h-hf-sp-full-hae-2deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 2 degree, 12 Month Map
   Map_descriptor: ulc-ena-h-hf-sp-full-hae-2deg-1yr
@@ -737,7 +737,7 @@ imap_ultra_l3_ulc-ena-h-sf-sp-full-hae-2deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     2 degree, 12 Month Map
   Map_descriptor: ulc-ena-h-sf-sp-full-hae-2deg-1yr
@@ -752,7 +752,7 @@ imap_ultra_l3_ulc-ena-h-hf-sp-full-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 4 degree, 12 Month Map
   Map_descriptor: ulc-ena-h-hf-sp-full-hae-4deg-1yr
@@ -767,7 +767,7 @@ imap_ultra_l3_ulc-ena-h-sf-sp-full-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     4 degree, 12 Month Map
   Map_descriptor: ulc-ena-h-sf-sp-full-hae-4deg-1yr
@@ -782,7 +782,7 @@ imap_ultra_l3_ulc-ena-h-hf-sp-full-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 6 degree, 12 Month Map
   Map_descriptor: ulc-ena-h-hf-sp-full-hae-6deg-1yr
@@ -797,7 +797,7 @@ imap_ultra_l3_ulc-ena-h-sf-sp-full-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     6 degree, 12 Month Map
   Map_descriptor: ulc-ena-h-sf-sp-full-hae-6deg-1yr
@@ -812,7 +812,7 @@ imap_ultra_l3_ulc-ena-h-hf-nsp-full-hae-2deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Heliospheric Frame, Non-Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 2 degree, 12 Month Map
   Map_descriptor: ulc-ena-h-hf-nsp-full-hae-2deg-1yr
@@ -827,7 +827,7 @@ imap_ultra_l3_ulc-ena-h-sf-nsp-full-hae-2deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Spacecraft Frame, Non-Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 2 degree, 12 Month Map
   Map_descriptor: ulc-ena-h-sf-nsp-full-hae-2deg-1yr
@@ -842,7 +842,7 @@ imap_ultra_l3_ulc-ena-h-hf-nsp-full-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Heliospheric Frame, Non-Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 4 degree, 12 Month Map
   Map_descriptor: ulc-ena-h-hf-nsp-full-hae-4deg-1yr
@@ -857,7 +857,7 @@ imap_ultra_l3_ulc-ena-h-sf-nsp-full-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Spacecraft Frame, Non-Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 4 degree, 12 Month Map
   Map_descriptor: ulc-ena-h-sf-nsp-full-hae-4deg-1yr
@@ -872,7 +872,7 @@ imap_ultra_l3_ulc-ena-h-hf-nsp-full-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Heliospheric Frame, Non-Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 6 degree, 12 Month Map
   Map_descriptor: ulc-ena-h-hf-nsp-full-hae-6deg-1yr
@@ -887,7 +887,7 @@ imap_ultra_l3_ulc-ena-h-sf-nsp-full-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, ENA Intensity,
     Hydrogen, Spacecraft Frame, Non-Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 6 degree, 12 Month Map
   Map_descriptor: ulc-ena-h-sf-nsp-full-hae-6deg-1yr
@@ -902,7 +902,7 @@ imap_ultra_l3_u90-ena-h-hf-sp-full-hae-2deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 2 degree, 12 Month Map
   Map_descriptor: u90-ena-h-hf-sp-full-hae-2deg-1yr
@@ -917,7 +917,7 @@ imap_ultra_l3_u90-ena-h-sf-sp-full-hae-2deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     2 degree, 12 Month Map
   Map_descriptor: u90-ena-h-sf-sp-full-hae-2deg-1yr
@@ -932,7 +932,7 @@ imap_ultra_l3_u90-ena-h-hf-sp-full-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 4 degree, 12 Month Map
   Map_descriptor: u90-ena-h-hf-sp-full-hae-4deg-1yr
@@ -947,7 +947,7 @@ imap_ultra_l3_u90-ena-h-sf-sp-full-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     4 degree, 12 Month Map
   Map_descriptor: u90-ena-h-sf-sp-full-hae-4deg-1yr
@@ -962,7 +962,7 @@ imap_ultra_l3_u90-ena-h-hf-sp-full-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 6 degree, 12 Month Map
   Map_descriptor: u90-ena-h-hf-sp-full-hae-6deg-1yr
@@ -977,7 +977,7 @@ imap_ultra_l3_u90-ena-h-sf-sp-full-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     6 degree, 12 Month Map
   Map_descriptor: u90-ena-h-sf-sp-full-hae-6deg-1yr
@@ -992,7 +992,7 @@ imap_ultra_l3_u45-ena-h-hf-sp-full-hae-2deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 2 degree, 12 Month Map
   Map_descriptor: u45-ena-h-hf-sp-full-hae-2deg-1yr
@@ -1007,7 +1007,7 @@ imap_ultra_l3_u45-ena-h-sf-sp-full-hae-2deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     2 degree, 12 Month Map
   Map_descriptor: u45-ena-h-sf-sp-full-hae-2deg-1yr
@@ -1022,7 +1022,7 @@ imap_ultra_l3_u45-ena-h-hf-sp-full-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 4 degree, 12 Month Map
   Map_descriptor: u45-ena-h-hf-sp-full-hae-4deg-1yr
@@ -1037,7 +1037,7 @@ imap_ultra_l3_u45-ena-h-sf-sp-full-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     4 degree, 12 Month Map
   Map_descriptor: u45-ena-h-sf-sp-full-hae-4deg-1yr
@@ -1052,7 +1052,7 @@ imap_ultra_l3_u45-ena-h-hf-sp-full-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
     Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin, HAE,
     Rectangular 6 degree, 12 Month Map
   Map_descriptor: u45-ena-h-hf-sp-full-hae-6deg-1yr
@@ -1067,7 +1067,7 @@ imap_ultra_l3_u45-ena-h-sf-sp-full-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, ENA Intensity,
     Hydrogen, Spacecraft Frame, Survival Probability-Corrected, Full Spin, HAE, Rectangular
     6 degree, 12 Month Map
   Map_descriptor: u45-ena-h-sf-sp-full-hae-6deg-1yr
@@ -1082,7 +1082,7 @@ imap_ultra_l3_ulc-spx-h-hf-sp-full-hae-2deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 2 degree, 3 Month Map
   Map_descriptor: ulc-spx-h-hf-sp-full-hae-2deg-3mo
@@ -1097,7 +1097,7 @@ imap_ultra_l3_u90-spx-h-hf-sp-full-hae-2deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 2 degree, 3 Month Map
   Map_descriptor: u90-spx-h-hf-sp-full-hae-2deg-3mo
@@ -1112,7 +1112,7 @@ imap_ultra_l3_u45-spx-h-hf-sp-full-hae-2deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 2 degree, 3 Month Map
   Map_descriptor: u45-spx-h-hf-sp-full-hae-2deg-3mo
@@ -1127,7 +1127,7 @@ imap_ultra_l3_ulc-spx-h-hf-sp-full-hae-4deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 4 degree, 3 Month Map
   Map_descriptor: ulc-spx-h-hf-sp-full-hae-4deg-3mo
@@ -1142,7 +1142,7 @@ imap_ultra_l3_u90-spx-h-hf-sp-full-hae-4deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 4 degree, 3 Month Map
   Map_descriptor: u90-spx-h-hf-sp-full-hae-4deg-3mo
@@ -1157,7 +1157,7 @@ imap_ultra_l3_u45-spx-h-hf-sp-full-hae-4deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 4 degree, 3 Month Map
   Map_descriptor: u45-spx-h-hf-sp-full-hae-4deg-3mo
@@ -1172,7 +1172,7 @@ imap_ultra_l3_ulc-spx-h-hf-sp-full-hae-6deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 6 degree, 3 Month Map
   Map_descriptor: ulc-spx-h-hf-sp-full-hae-6deg-3mo
@@ -1187,7 +1187,7 @@ imap_ultra_l3_u90-spx-h-hf-sp-full-hae-6deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 6 degree, 3 Month Map
   Map_descriptor: u90-spx-h-hf-sp-full-hae-6deg-3mo
@@ -1202,7 +1202,7 @@ imap_ultra_l3_u45-spx-h-hf-sp-full-hae-6deg-3mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_3mo>Level-3 3mo
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 6 degree, 3 Month Map
   Map_descriptor: u45-spx-h-hf-sp-full-hae-6deg-3mo
@@ -1217,7 +1217,7 @@ imap_ultra_l3_ulc-spx-h-hf-sp-full-hae-2deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 2 degree, 6 Month Map
   Map_descriptor: ulc-spx-h-hf-sp-full-hae-2deg-6mo
@@ -1232,7 +1232,7 @@ imap_ultra_l3_u90-spx-h-hf-sp-full-hae-2deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 2 degree, 6 Month Map
   Map_descriptor: u90-spx-h-hf-sp-full-hae-2deg-6mo
@@ -1247,7 +1247,7 @@ imap_ultra_l3_u45-spx-h-hf-sp-full-hae-2deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 2 degree, 6 Month Map
   Map_descriptor: u45-spx-h-hf-sp-full-hae-2deg-6mo
@@ -1262,7 +1262,7 @@ imap_ultra_l3_ulc-spx-h-hf-sp-full-hae-4deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 4 degree, 6 Month Map
   Map_descriptor: ulc-spx-h-hf-sp-full-hae-4deg-6mo
@@ -1277,7 +1277,7 @@ imap_ultra_l3_u90-spx-h-hf-sp-full-hae-4deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 4 degree, 6 Month Map
   Map_descriptor: u90-spx-h-hf-sp-full-hae-4deg-6mo
@@ -1292,7 +1292,7 @@ imap_ultra_l3_u45-spx-h-hf-sp-full-hae-4deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 4 degree, 6 Month Map
   Map_descriptor: u45-spx-h-hf-sp-full-hae-4deg-6mo
@@ -1307,7 +1307,7 @@ imap_ultra_l3_ulc-spx-h-hf-sp-full-hae-6deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 6 degree, 6 Month Map
   Map_descriptor: ulc-spx-h-hf-sp-full-hae-6deg-6mo
@@ -1322,7 +1322,7 @@ imap_ultra_l3_u90-spx-h-hf-sp-full-hae-6deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 6 degree, 6 Month Map
   Map_descriptor: u90-spx-h-hf-sp-full-hae-6deg-6mo
@@ -1337,7 +1337,7 @@ imap_ultra_l3_u45-spx-h-hf-sp-full-hae-6deg-6mo:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_6mo>Level-3 6mo
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 6 degree, 6 Month Map
   Map_descriptor: u45-spx-h-hf-sp-full-hae-6deg-6mo
@@ -1352,7 +1352,7 @@ imap_ultra_l3_ulc-spx-h-hf-sp-full-hae-2deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 2 degree, 12 Month Map
   Map_descriptor: ulc-spx-h-hf-sp-full-hae-2deg-1yr
@@ -1367,7 +1367,7 @@ imap_ultra_l3_u90-spx-h-hf-sp-full-hae-2deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 2 degree, 12 Month Map
   Map_descriptor: u90-spx-h-hf-sp-full-hae-2deg-1yr
@@ -1382,7 +1382,7 @@ imap_ultra_l3_u45-spx-h-hf-sp-full-hae-2deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 2 degree, 12 Month Map
   Map_descriptor: u45-spx-h-hf-sp-full-hae-2deg-1yr
@@ -1397,7 +1397,7 @@ imap_ultra_l3_ulc-spx-h-hf-sp-full-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 4 degree, 12 Month Map
   Map_descriptor: ulc-spx-h-hf-sp-full-hae-4deg-1yr
@@ -1412,7 +1412,7 @@ imap_ultra_l3_u90-spx-h-hf-sp-full-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 4 degree, 12 Month Map
   Map_descriptor: u90-spx-h-hf-sp-full-hae-4deg-1yr
@@ -1427,7 +1427,7 @@ imap_ultra_l3_u45-spx-h-hf-sp-full-hae-4deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 4 degree, 12 Month Map
   Map_descriptor: u45-spx-h-hf-sp-full-hae-4deg-1yr
@@ -1442,7 +1442,7 @@ imap_ultra_l3_ulc-spx-h-hf-sp-full-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra Combined, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra Combined, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 6 degree, 12 Month Map
   Map_descriptor: ulc-spx-h-hf-sp-full-hae-6deg-1yr
@@ -1457,7 +1457,7 @@ imap_ultra_l3_u90-spx-h-hf-sp-full-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra 90
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-90 Sensor, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 6 degree, 12 Month Map
   Map_descriptor: u90-spx-h-hf-sp-full-hae-6deg-1yr
@@ -1472,7 +1472,7 @@ imap_ultra_l3_u45-spx-h-hf-sp-full-hae-6deg-1yr:
   Coordinate_system: ECLIPJ2000 (HAE)
   Data_type: L3_1yr>Level-3 1yr
   Instrument: Ultra 45
-  Logical_source_description: IMAP Ultra Instrument Level 3 Ultra-45 Sensor, Spectral
+  Logical_source_description: IMAP Mission IMAP-Ultra Instrument Level 3 Ultra-45 Sensor, Spectral
     Index, Hydrogen, Heliospheric Frame, Survival Probability-Corrected, Full Spin,
     HAE, Rectangular 6 degree, 12 Month Map
   Map_descriptor: u45-spx-h-hf-sp-full-hae-6deg-1yr
