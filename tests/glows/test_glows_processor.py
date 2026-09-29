@@ -995,6 +995,26 @@ class TestGlowsProcessor(unittest.TestCase):
 
         glows_l3d_output = process_l3d(l3d_dependencies, Version(1, 4))
 
+        expected_parents = {
+            "imap_glows_l3b_ion-rate-profile_20100422_v013.cdf",
+            "imap_glows_l3b_ion-rate-profile_20100519_v013.cdf",
+            "imap_glows_l3c_sw-profile_20100422_v012.cdf",
+            "imap_glows_l3c_sw-profile_20100519_v012.cdf",
+            "imap_glows_plasma-speed-2010a_20100101_v003.dat",
+            "imap_glows_proton-density-2010a_20100101_v003.dat",
+            "imap_glows_uv-anisotropy-2010a_20100101_v003.dat",
+            "imap_glows_photoion-2010a_20100101_v003.dat",
+            "imap_glows_lya-2010a_20100101_v003.dat",
+            "imap_glows_electron-density-2010a_20100101_v003.dat",
+            "imap_glows_pipeline-settings-l3bcde_20100101_v006.json",
+            "lyman_alpha_composite.nc",
+        }
+
+        self.assertEqual(1, mock_save_data.call_count)
+        [data_product] = mock_save_data.call_args_list[0].args
+
+        self.assertEqual(expected_parents, set(data_product.parent_file_names))
+
         expected_txt_filenames = ["imap_glows_e-dens_19470303_20100629_v004.dat",
                                   "imap_glows_lya_19470303_20100629_v004.dat",
                                   "imap_glows_p-dens_19470303_20100629_v004.dat",

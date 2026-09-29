@@ -319,8 +319,8 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             for file_path in expected_files:
                 self.assertTrue(file_path.construct_path().exists(), msg=str(file_path.construct_path()))
 
-    @run_periodically(timedelta(days=14))
-    @run_test_in_docker
+    # @run_periodically(timedelta(days=14))
+    # @run_test_in_docker
     def test_l3bcde_automatic_reprocessing(self):
         new_l3a_file = GLOWS_TEST_DATA / "imap_glows_l3a_hist_20251118-repoint00052_v001.cdf"
         l3bcde_input_files = [

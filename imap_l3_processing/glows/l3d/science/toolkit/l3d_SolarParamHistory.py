@@ -108,8 +108,8 @@ class SolarParamsHistory():
             'filename': None,
             'ancillary_data_files': None,
             'external_dependeciens': ext_dependencies['lya_raw_data'],
-            'l3b_input_filename': None,
-            'l3c_input_filename': None
+            'l3b_input_filename': [],
+            'l3c_input_filename': []
         }
 
         self.ini_data={}
@@ -446,8 +446,8 @@ class SolarParamsHistory():
         '''
         cr_params, idx_read_b, idx_read_c = self._generate_cr_solar_params(CR, data_l3b, data_l3c)
 
-        self.header['l3b_input_filename']=[data_l3b[i]['header']['filename'] for i in idx_read_b]
-        self.header['l3c_input_filename']=[data_l3c[i]['header']['filename'] for i in idx_read_c]
+        self.header['l3b_input_filename'].extend(data_l3b[i]['header']['filename'] for i in idx_read_b)
+        self.header['l3c_input_filename'].extend(data_l3c[i]['header']['filename'] for i in idx_read_c)
 
         # add a row with values for current CR
         for k in self.ini_data['label']:
