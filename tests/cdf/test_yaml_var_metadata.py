@@ -88,6 +88,29 @@ class TestCdfUtils(TestCase):
                 if variable['VAR_TYPE'] in ("data", "support_data"):
                     self.assertIn("UNITS", variable.keys())
 
+    def test_swe_l3_integrated_temperatures_have_kelvin_units(self):
+        temperature_vars = {f"{population}_t_{direction}_integrated"
+                            for population in ("core", "halo", "total")
+                            for direction in ("parallel", "perpendicular")}
+        found = set()
+        for filename, yaml_data, variable_key, variable in self.test_cases_variable:
+            if "swe_l3" in filename and variable_key in temperature_vars:
+                found.add(variable_key)
+                with self.subTest(f"{filename}:{variable_key}"):
+                    self.assertEqual("K", variable["UNITS"], f"{variable_key} UNITS should be 'K'")
+        self.assertEqual(temperature_vars, found, "did not find all SWE L3 integrated temperature variables")
+
+    def test_swe_l3_total_integrated_speed_has_kilometers_per_second_units(self):
+        variable_name = "total_speed_integrated"
+        matching_variables = [
+            variable
+            for filename, _, variable_key, variable in self.test_cases_variable
+            if "swe_l3" in filename and variable_key == variable_name
+        ]
+
+        self.assertEqual(1, len(matching_variables), f"did not find exactly one SWE L3 {variable_name} variable")
+        self.assertEqual("km/s", matching_variables[0]["UNITS"], f"{variable_name} UNITS should be 'km/s'")
+
     def test_metadata_never_has_empty_string_as_value(self):
         for filename, yaml_data, variable_key, variable in self.test_cases_variable:
             with self.subTest(f"{filename}:{variable_key}"):
