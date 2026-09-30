@@ -871,7 +871,7 @@ total_speed_integrated:
   FIELDNAM: Total Speed Integrated
   FORMAT: F15.3
   LABLAXIS: Total speed integrated
-  UNITS: ' '
+  UNITS: km/s
   VALIDMIN: 0
   VALIDMAX: 5000
   FILLVAL: -1.00E+31
@@ -888,7 +888,7 @@ core_t_parallel_integrated:
   FIELDNAM: Core T Parallel Integrated
   FORMAT: F15.3
   LABLAXIS: Core t parallel integrated
-  UNITS: ' '
+  UNITS: K
   VALIDMIN: 0
   VALIDMAX: 10000000000
   FILLVAL: -1.00E+31
@@ -905,7 +905,7 @@ halo_t_parallel_integrated:
   FIELDNAM: Halo T Parallel Integrated
   FORMAT: F15.3
   LABLAXIS: Halo t parallel integrated
-  UNITS: ' '
+  UNITS: K
   VALIDMIN: 0
   VALIDMAX: 10000000000
   FILLVAL: -1.00E+31
@@ -922,7 +922,7 @@ total_t_parallel_integrated:
   FIELDNAM: Total T Parallel Integrated
   FORMAT: F15.3
   LABLAXIS: Total t parallel integrated
-  UNITS: ' '
+  UNITS: K
   VALIDMIN: 0
   VALIDMAX: 10000000000
   FILLVAL: -1.00E+31
