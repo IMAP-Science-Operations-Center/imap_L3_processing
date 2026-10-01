@@ -94,9 +94,9 @@ class TestReprocessInfo(unittest.TestCase):
         repoints_for_cr2093 = list(range(3682, 3696))
         repoints_for_cr2094 = list(range(3710, 3724))
 
-        expected_repoints_lo = [2045, 2046] + repoints_for_cr2093 + [3700] + repoints_for_cr2094
-        expected_repoints_hi = [2050]
-        expected_repoints_ultra = []
+        expected_repoints_lo = set([2045, 2046] + repoints_for_cr2093 + [3700] + repoints_for_cr2094)
+        expected_repoints_hi = {2050}
+        expected_repoints_ultra = set()
         self.assertEqual(expected_repoints_lo, repoints_for_lo)
         self.assertEqual(expected_repoints_hi, repoints_for_hi)
         self.assertEqual(expected_repoints_ultra, repoints_for_ultra)

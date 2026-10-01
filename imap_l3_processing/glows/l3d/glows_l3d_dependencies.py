@@ -17,7 +17,7 @@ class GlowsL3DDependencies:
     ancillary_files: dict[str, Path | dict[str, Path]]
     l3b_file_paths: list[Path]
     l3c_file_paths: list[Path]
-    end_cr: float
+    end_cr: int
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection, external_dependencies: ExternalDependencies):

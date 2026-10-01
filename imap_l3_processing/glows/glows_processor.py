@@ -1,3 +1,4 @@
+import collections
 import json
 import logging
 import os
@@ -26,7 +27,7 @@ from imap_l3_processing.glows.l3a.utils import create_glows_l3a_from_dictionary
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.glows_l3bc_initializer import GlowsL3BCInitializer, GlowsL3BCInitializerData
 from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind, GlowsL3BCProcessorOutput, \
-    ExternalDependencies, read_pipeline_settings
+    ExternalDependencies
 from imap_l3_processing.glows.l3bc.science.filter_out_bad_days import filter_l3a_files
 from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
 from imap_l3_processing.glows.l3bc.utils import get_pointing_date_range
@@ -104,6 +105,8 @@ class GlowsProcessor(Processor):
             for txt_file in process_l3d_result.l3d_text_file_paths:
                 logger.info(f"Saved L3d text file output to: {txt_file}")
 
+            products_list.extend([*process_l3d_result.l3d_text_file_paths, process_l3d_result.l3d_cdf_file_path])
+
             l3e_initializer_output = GlowsL3EInitializer.get_repointings_to_process(
                 process_l3d_result,
                 old_l3d,
@@ -114,7 +117,6 @@ class GlowsProcessor(Processor):
 
             if l3e_initializer_output is not None:
                 logger.info(f"Processing L3e for repointings: {l3e_initializer_output.repointings.repointing_numbers}")
-                products_list.extend([*process_l3d_result.l3d_text_file_paths, process_l3d_result.l3d_cdf_file_path])
                 l3e_products = process_l3e(l3e_initializer_output)
                 products_list.extend(l3e_products)
             else:
@@ -216,11 +218,18 @@ def process_l3d(
     dependencies: GlowsL3DDependencies, version: Version
 ) -> Optional[GlowsL3DProcessorOutput]:
 
-    [create_glows_l3b_json_file_from_cdf(l3b) for l3b in dependencies.l3b_file_paths]
-    [create_glows_l3c_json_file_from_cdf(l3c) for l3c in dependencies.l3c_file_paths]
+    collections.deque((create_glows_l3b_json_file_from_cdf(l3b) for l3b in dependencies.l3b_file_paths), maxlen=0)
+    collections.deque((create_glows_l3c_json_file_from_cdf(l3c) for l3c in dependencies.l3c_file_paths), maxlen=0)
 
     os.makedirs(PATH_TO_L3D_TOOLKIT / "data_l3d", exist_ok=True)
     os.makedirs(PATH_TO_L3D_TOOLKIT / "data_l3d_txt", exist_ok=True)
+
+    start_date = datetime(1947, 3, 3)
+    data_product_metadata = InputMetadata(instrument="glows", data_level="l3d", descriptor=GLOWS_L3D_DESCRIPTOR,
+                                          start_date=start_date, end_date=start_date,
+                                          version=VersionMap({GLOWS_L3D_DESCRIPTOR: version}))
+
+    output_l3d_cdf_filename = data_product_metadata.to_science_file_path(cr_number=dependencies.end_cr).construct_path().name
 
     file_manifest = {
         "external_files": {
@@ -233,6 +242,7 @@ def process_l3d(
                 for key, val in dependencies.ancillary_files["WawHelioIon"].items()
             },
         },
+        "l3d_cdf_filename": output_l3d_cdf_filename
     }
 
     last_processed_cr = None
@@ -256,7 +266,7 @@ def process_l3d(
     if output.stdout:
         last_processed_cr = int(output.stdout.split('= ')[-1])
 
-    if last_processed_cr:
+    if last_processed_cr == dependencies.end_cr:
         output_text_files = []
         for text_file in os.listdir(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt'):
             if str(last_processed_cr) in text_file:
@@ -269,14 +279,11 @@ def process_l3d(
 
         file_name = f'imap_glows_l3d_solar-params-history_19470303-cr0{last_processed_cr}_v00.json'
 
-        start_date = datetime(1947, 3, 3)
-        data_product_metadata = InputMetadata(instrument="glows", data_level="l3d", descriptor=GLOWS_L3D_DESCRIPTOR,
-                                              start_date=start_date, end_date=start_date, version=VersionMap({GLOWS_L3D_DESCRIPTOR: version}))
         parent_file_names = get_parent_file_names_from_l3d_json(PATH_TO_L3D_TOOLKIT / 'data_l3d')
 
         l3d_data_product = convert_json_to_l3d_data_product(PATH_TO_L3D_TOOLKIT / 'data_l3d' / file_name,
                                                             data_product_metadata, parent_file_names)
-        l3d_data_product_path = save_data(l3d_data_product, cr_number=last_processed_cr)
+        l3d_data_product_path = save_data(l3d_data_product, cr_number=dependencies.end_cr)
 
         return GlowsL3DProcessorOutput(l3d_data_product_path, txt_files_with_correct_version, last_processed_cr)
     return None

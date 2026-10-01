@@ -79,17 +79,17 @@ class ReprocessInfo:
 
     def get_repoints_for_descriptor(
         self, descriptor: str, repointing_data
-    ) -> list[int]:
+    ) -> set[int]:
         reprocess_targets = self.products_to_reprocess.get(descriptor, None)
         if reprocess_targets is None:
-            return []
+            return set()
 
         repoints = set(reprocess_targets.repoints)
 
         for cr in reprocess_targets.carrington_rotations:
             repoints.update(get_repoint_numbers_within_cr_window(cr, cr, repointing_data))
 
-        return sorted(repoints)
+        return repoints
 
 def fetch_reprocess_info(input_collection: ProcessingInputCollection) -> ReprocessInfo:
     [reprocessing_file_path] = input_collection.get_file_paths(source="glows", descriptor=GLOWS_REPROCESSING_DESCRIPTOR)

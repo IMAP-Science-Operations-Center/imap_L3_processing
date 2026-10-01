@@ -59,7 +59,7 @@ class TestUtils(TestCase):
     @patch("imap_l3_processing.utils.ImapAttributeManager")
     @patch("imap_l3_processing.utils.date")
     @patch("imap_l3_processing.utils.write_cdf")
-    @patch("imap_l3_processing.utils.ScienceFilePath")
+    @patch("imap_l3_processing.models.ScienceFilePath")
     def test_save_data(self, mock_science_file_path_class, mock_write_cdf, mock_today, mock_attribute_manager):
         mock_today.today.return_value = date(2024, 9, 16)
 

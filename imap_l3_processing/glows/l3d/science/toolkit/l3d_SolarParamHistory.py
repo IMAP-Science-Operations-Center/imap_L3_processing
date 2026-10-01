@@ -65,10 +65,10 @@ class SolarParamsHistory():
                 list of ancillary files used in calculations
             external_dependeciens : str
                 list of external dependeciens files
-            l3b_input_filename: str
-                Input L3b ionization rate profiles file
-            l3c_input_filename: str
-                Input L3c solar wind speed and density profiles file
+            l3b_input_filename: list[str]
+                All the filenames of input L3b ionization rate profiles file
+            l3c_input_filename: list[str]
+                All the filenames of input L3c solar wind speed and density profiles file
         settings : dict
             pipeline settings
         ini_data: dict
@@ -108,8 +108,8 @@ class SolarParamsHistory():
             'filename': None,
             'ancillary_data_files': None,
             'external_dependeciens': ext_dependencies['lya_raw_data'],
-            'l3b_input_filename': None,
-            'l3c_input_filename': None
+            'l3b_input_filename': [],
+            'l3c_input_filename': []
         }
 
         self.ini_data={}
@@ -321,7 +321,7 @@ class SolarParamsHistory():
         hdr_temp[0]='lines in header: '+str(N)+'\n'
         hdr_temp[4]='ground software version: '+VERSION+'\n'
         hdr_temp[5]='creation date: '+ Time.now().iso +'\n'
-        hdr_temp[6]='input files: ' + ', '.join(self.header['l3b_input_filename']) + ', ' + ', '.join(self.header['l3c_input_filename']) +'\n'
+        hdr_temp[6]='input files: ' + self.header['l3d_cdf_filename'] + "\n"
         hdr_temp[7]='external dependencies: ' + self.header['external_dependeciens'] + '\n'
         hdr_temp[8]='last CR: '+ str(self.CR_last) + '\n'
         hdr_temp[9]='fill value: '+ str(self.settings['WawHelioIonGlows_fill_value']) + '\n'
@@ -446,8 +446,8 @@ class SolarParamsHistory():
         '''
         cr_params, idx_read_b, idx_read_c = self._generate_cr_solar_params(CR, data_l3b, data_l3c)
 
-        self.header['l3b_input_filename']=[data_l3b[i]['header']['filename'] for i in idx_read_b]
-        self.header['l3c_input_filename']=[data_l3c[i]['header']['filename'] for i in idx_read_c]
+        self.header['l3b_input_filename'].extend(data_l3b[i]['header']['filename'] for i in idx_read_b)
+        self.header['l3c_input_filename'].extend(data_l3c[i]['header']['filename'] for i in idx_read_c)
 
         # add a row with values for current CR
         for k in self.ini_data['label']:
