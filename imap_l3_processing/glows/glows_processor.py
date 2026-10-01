@@ -1,3 +1,4 @@
+import collections
 import json
 import logging
 import os
@@ -216,21 +217,18 @@ def process_l3d(
     dependencies: GlowsL3DDependencies, version: Version
 ) -> Optional[GlowsL3DProcessorOutput]:
 
-    [create_glows_l3b_json_file_from_cdf(l3b) for l3b in dependencies.l3b_file_paths]
-    [create_glows_l3c_json_file_from_cdf(l3c) for l3c in dependencies.l3c_file_paths]
+    collections.deque((create_glows_l3b_json_file_from_cdf(l3b) for l3b in dependencies.l3b_file_paths), maxlen=0)
+    collections.deque((create_glows_l3c_json_file_from_cdf(l3c) for l3c in dependencies.l3c_file_paths), maxlen=0)
 
     os.makedirs(PATH_TO_L3D_TOOLKIT / "data_l3d", exist_ok=True)
     os.makedirs(PATH_TO_L3D_TOOLKIT / "data_l3d_txt", exist_ok=True)
 
-    output_l3d_cdf_filename = ScienceFilePath.generate_from_inputs(
-        instrument="glows",
-        data_level="l3d",
-        descriptor=GLOWS_L3D_DESCRIPTOR,
-        start_time="19470303",
-        major_version=version.major,
-        minor_version=version.minor,
-        cr=dependencies.end_cr,
-    ).construct_path().name
+    start_date = datetime(1947, 3, 3)
+    data_product_metadata = InputMetadata(instrument="glows", data_level="l3d", descriptor=GLOWS_L3D_DESCRIPTOR,
+                                          start_date=start_date, end_date=start_date,
+                                          version=VersionMap({GLOWS_L3D_DESCRIPTOR: version}))
+
+    output_l3d_cdf_filename = data_product_metadata.to_science_file_path(cr_number=dependencies.end_cr).construct_path().name
 
     file_manifest = {
         "external_files": {
@@ -267,7 +265,7 @@ def process_l3d(
     if output.stdout:
         last_processed_cr = int(output.stdout.split('= ')[-1])
 
-    if last_processed_cr:
+    if last_processed_cr == dependencies.end_cr:
         output_text_files = []
         for text_file in os.listdir(PATH_TO_L3D_TOOLKIT / 'data_l3d_txt'):
             if str(last_processed_cr) in text_file:
@@ -280,14 +278,11 @@ def process_l3d(
 
         file_name = f'imap_glows_l3d_solar-params-history_19470303-cr0{last_processed_cr}_v00.json'
 
-        start_date = datetime(1947, 3, 3)
-        data_product_metadata = InputMetadata(instrument="glows", data_level="l3d", descriptor=GLOWS_L3D_DESCRIPTOR,
-                                              start_date=start_date, end_date=start_date, version=VersionMap({GLOWS_L3D_DESCRIPTOR: version}))
         parent_file_names = get_parent_file_names_from_l3d_json(PATH_TO_L3D_TOOLKIT / 'data_l3d')
 
         l3d_data_product = convert_json_to_l3d_data_product(PATH_TO_L3D_TOOLKIT / 'data_l3d' / file_name,
                                                             data_product_metadata, parent_file_names)
-        l3d_data_product_path = save_data(l3d_data_product, cr_number=last_processed_cr)
+        l3d_data_product_path = save_data(l3d_data_product, cr_number=dependencies.end_cr)
 
         return GlowsL3DProcessorOutput(l3d_data_product_path, txt_files_with_correct_version, last_processed_cr)
     return None

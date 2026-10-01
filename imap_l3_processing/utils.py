@@ -66,20 +66,7 @@ class SpiceKernelTypes(enum.Enum):
 
 def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: Path = None,
               cr_number=None) -> Path:
-    assert data.input_metadata.repointing is None or cr_number is None, "You cannot call save_data with both a repointing in the metadata while passing in a CR number"
-    formatted_start_date = data.input_metadata.start_date.strftime("%Y%m%d")
-    version = data.input_metadata.version.lookup(data.input_metadata.descriptor)
-    science_file_path = ScienceFilePath.generate_from_inputs(
-        instrument=data.input_metadata.instrument,
-        data_level=data.input_metadata.data_level,
-        descriptor=data.input_metadata.descriptor,
-        start_time=formatted_start_date,
-        repointing=data.input_metadata.repointing,
-        cr=cr_number,
-        major_version=version.major,
-        minor_version=version.minor,
-    )
-
+    science_file_path = data.input_metadata.to_science_file_path(cr_number=cr_number)
     file_path = science_file_path.construct_path()
     if folder_path is not None:
         file_path = folder_path / file_path.name

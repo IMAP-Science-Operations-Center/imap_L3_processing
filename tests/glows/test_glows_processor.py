@@ -1227,7 +1227,6 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_process_l3d.return_value = process_l3d_result
         mock_determine_spacecraft_info.return_value = sentinel.spacecraft_info, GlowsL3Flags.PREDICTIVE_EPHEMERIS, ["spice kernel"]
 
-
         input_major_version = 5
 
         input_version_map = VersionMap(
