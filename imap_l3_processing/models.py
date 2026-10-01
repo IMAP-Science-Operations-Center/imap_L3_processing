@@ -38,7 +38,7 @@ class InputMetadata:
     def logical_source(self):
         return f"imap_{self.instrument}_{self.data_level}_{self.descriptor}"
 
-    def to_science_file_path(self, cr_number: Optional[int] = None, extension: str = "cdf") -> ScienceFilePath:
+    def to_science_file_path(self, cr_number: Optional[int] = None) -> ScienceFilePath:
         assert self.repointing is None or cr_number is None, "You cannot call save_data with both a repointing in the metadata while passing in a CR number"
         formatted_start_date = self.start_date.strftime("%Y%m%d")
         version = self.version.lookup(self.descriptor)
@@ -50,7 +50,6 @@ class InputMetadata:
             start_time=formatted_start_date,
             major_version=version.major,
             minor_version=version.minor,
-            extension=extension,
             repointing=self.repointing,
             cr=cr_number,
         )
