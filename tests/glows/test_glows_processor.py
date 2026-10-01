@@ -628,6 +628,11 @@ class TestGlowsProcessor(unittest.TestCase):
 
         self.assertEqual(set(expected_parents), set(l3b_data_product.parent_file_names))
 
+    @patch("imap_l3_processing.glows.glows_processor.GlowsL3EInitializer.get_repointings_to_process")
+    def test_process_l3d_uploads_even_if_no_l3e_needs_to_be_produced(self, mock_l3e_initializer_get_repoints):
+        mock_l3e_initializer_get_repoints.return_value = None
+        self.test_process_l3d()
+
     @patch("imap_l3_processing.glows.glows_processor.process_l3e")
     @patch("imap_l3_processing.glows.glows_processor.create_glows_l3b_json_file_from_cdf")
     @patch("imap_l3_processing.glows.glows_processor.create_glows_l3c_json_file_from_cdf")
@@ -1141,31 +1146,11 @@ class TestGlowsProcessor(unittest.TestCase):
         repointing_midpoint = datetime(2020, 1, 1, 12)
         mock_get_pointing_date_range.return_value = (start_epoch, end_epoch)
 
-        mock_dependencies = Mock()
-
-        mock_dependencies.get_hi_parents.return_value = ["hi_ancillary.dat"]
-        mock_dependencies.get_lo_parents.return_value = ["lo_ancillary.dat"]
-        mock_dependencies.get_ul_parents.return_value = ["ul_ancillary.dat"]
-
-        l3d_cdf_path = Path("path/to/l3d.cdf")
-        initializer_data = GlowsL3EInitializerOutput(
-            dependencies=mock_dependencies,
-            repointings=GlowsL3eVersionsForRepointings(
-                repointing_numbers=[25],
-                hi_90_repointings={25: Version(None, 1)},
-                hi_45_repointings={25: Version(None, 2)},
-                lo_repointings={25: Version(None, 3)},
-                ultra_sf_repointings={25: Version(None, 4)},
-                ultra_hf_repointings={25: Version(None, 4)},
-            ),
-            l3d_cdf_path=l3d_cdf_path,
-            metakernel_with_predict_ephem=Mock(),
-            metakernel_without_predict_ephem=Mock(),
-        )
+        initializer_data = self._build_l3e_initializer_output()
 
         actual_l3e_products = process_l3e(initializer_data)
         mock_get_pointing_date_range.assert_called_once_with(25)
-        mock_compute_glows_flags_for_repoint.assert_called_once_with(l3d_cdf_path, repointing_midpoint)
+        mock_compute_glows_flags_for_repoint.assert_called_once_with(initializer_data.l3d_cdf_path, repointing_midpoint)
         mock_determine_spacecraft_info.assert_called_once_with(
             datetime(2020, 1, 1, 12),
             initializer_data.metakernel_with_predict_ephem,
@@ -1936,6 +1921,28 @@ class TestGlowsProcessor(unittest.TestCase):
         ])
         mock_zip_file.writestr.assert_called_once_with(expected_json_filename, mock_json.dumps.return_value)
 
+    def _build_l3e_initializer_output(self) -> GlowsL3EInitializerOutput:
+        mock_dependencies = Mock()
+
+        mock_dependencies.get_hi_parents.return_value = ["hi_ancillary.dat"]
+        mock_dependencies.get_lo_parents.return_value = ["lo_ancillary.dat"]
+        mock_dependencies.get_ul_parents.return_value = ["ul_ancillary.dat"]
+
+        l3d_cdf_path = Path("path/to/l3d.cdf")
+        return GlowsL3EInitializerOutput(
+            dependencies=mock_dependencies,
+            repointings=GlowsL3eVersionsForRepointings(
+                repointing_numbers=[25],
+                hi_90_repointings={25: Version(None, 1)},
+                hi_45_repointings={25: Version(None, 2)},
+                lo_repointings={25: Version(None, 3)},
+                ultra_sf_repointings={25: Version(None, 4)},
+                ultra_hf_repointings={25: Version(None, 4)},
+            ),
+            l3d_cdf_path=l3d_cdf_path,
+            metakernel_with_predict_ephem=Mock(),
+            metakernel_without_predict_ephem=Mock(),
+        )
 
 
 if __name__ == '__main__':

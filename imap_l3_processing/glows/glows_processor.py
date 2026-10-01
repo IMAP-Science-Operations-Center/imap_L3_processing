@@ -105,6 +105,8 @@ class GlowsProcessor(Processor):
             for txt_file in process_l3d_result.l3d_text_file_paths:
                 logger.info(f"Saved L3d text file output to: {txt_file}")
 
+            products_list.extend([*process_l3d_result.l3d_text_file_paths, process_l3d_result.l3d_cdf_file_path])
+
             l3e_initializer_output = GlowsL3EInitializer.get_repointings_to_process(
                 process_l3d_result,
                 old_l3d,
@@ -115,7 +117,6 @@ class GlowsProcessor(Processor):
 
             if l3e_initializer_output is not None:
                 logger.info(f"Processing L3e for repointings: {l3e_initializer_output.repointings.repointing_numbers}")
-                products_list.extend([*process_l3d_result.l3d_text_file_paths, process_l3d_result.l3d_cdf_file_path])
                 l3e_products = process_l3e(l3e_initializer_output)
                 products_list.extend(l3e_products)
             else:
