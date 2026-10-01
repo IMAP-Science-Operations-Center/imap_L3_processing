@@ -26,7 +26,7 @@ from imap_l3_processing.glows.l3a.utils import create_glows_l3a_from_dictionary
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.glows_l3bc_initializer import GlowsL3BCInitializer, GlowsL3BCInitializerData
 from imap_l3_processing.glows.l3bc.models import GlowsL3BIonizationRate, GlowsL3CSolarWind, GlowsL3BCProcessorOutput, \
-    ExternalDependencies, read_pipeline_settings
+    ExternalDependencies
 from imap_l3_processing.glows.l3bc.science.filter_out_bad_days import filter_l3a_files
 from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
 from imap_l3_processing.glows.l3bc.utils import get_pointing_date_range
@@ -222,6 +222,16 @@ def process_l3d(
     os.makedirs(PATH_TO_L3D_TOOLKIT / "data_l3d", exist_ok=True)
     os.makedirs(PATH_TO_L3D_TOOLKIT / "data_l3d_txt", exist_ok=True)
 
+    output_l3d_cdf_filename = ScienceFilePath.generate_from_inputs(
+        instrument="glows",
+        data_level="l3d",
+        descriptor=GLOWS_L3D_DESCRIPTOR,
+        start_time="19470303",
+        major_version=version.major,
+        minor_version=version.minor,
+        cr=dependencies.end_cr,
+    ).construct_path().name
+
     file_manifest = {
         "external_files": {
             key: str(val) for key, val in dependencies.external_files.items()
@@ -233,6 +243,7 @@ def process_l3d(
                 for key, val in dependencies.ancillary_files["WawHelioIon"].items()
             },
         },
+        "l3d_cdf_filename": output_l3d_cdf_filename
     }
 
     last_processed_cr = None

@@ -140,7 +140,6 @@ def rename_l3d_text_outputs(paths: list[Path], version: str) -> list[Path]:
         out_paths.append(new_path)
     return out_paths
 
-
 def query_for_most_recent_l3d(descriptor: str) -> Optional[dict]:
     query_result = imap_data_access.query(instrument="glows", data_level="l3d", descriptor=descriptor)
     sorted_query_result = sorted(

@@ -65,10 +65,10 @@ class SolarParamsHistory():
                 list of ancillary files used in calculations
             external_dependeciens : str
                 list of external dependeciens files
-            l3b_input_filename: str
-                Input L3b ionization rate profiles file
-            l3c_input_filename: str
-                Input L3c solar wind speed and density profiles file
+            l3b_input_filename: list[str]
+                All the filenames of input L3b ionization rate profiles file
+            l3c_input_filename: list[str]
+                All the filenames of input L3c solar wind speed and density profiles file
         settings : dict
             pipeline settings
         ini_data: dict
@@ -321,7 +321,7 @@ class SolarParamsHistory():
         hdr_temp[0]='lines in header: '+str(N)+'\n'
         hdr_temp[4]='ground software version: '+VERSION+'\n'
         hdr_temp[5]='creation date: '+ Time.now().iso +'\n'
-        hdr_temp[6]='input files: ' + ', '.join(self.header['l3b_input_filename']) + ', ' + ', '.join(self.header['l3c_input_filename']) +'\n'
+        hdr_temp[6]='input files: ' + self.header['l3d_cdf_filename'] + "\n"
         hdr_temp[7]='external dependencies: ' + self.header['external_dependeciens'] + '\n'
         hdr_temp[8]='last CR: '+ str(self.CR_last) + '\n'
         hdr_temp[9]='fill value: '+ str(self.settings['WawHelioIonGlows_fill_value']) + '\n'
