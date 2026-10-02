@@ -92,13 +92,16 @@ Finally, the `alpha-sw` CDF variables are derived from the fitted parameter vect
 | `alpha_sw_velocity_rtn_sun`           | $`\mathbf{v}^{\alpha,\text{sun}}`$                    | $`\mathbf{v}^{\alpha,\text{SC}} + \mathbf{v}_{\text{sc}}^{\text{sun}}`$                                                                   |
 | `alpha_sw_speed_sun`                  | $`\lvert\mathbf{v}^{\alpha,\text{sun}}\rvert`$        | $`\lvert\mathbf{v}^{\alpha,\text{sun}}\rvert`$                                                                                |
 | `alpha_sw_speed_sun_uncert`           | $`\sigma_{\lvert\mathbf{v}^{\alpha,\text{sun}}\rvert}`$ | propagated through `uncertainties` from $`\mathbf{v}^{\alpha,\text{sun}}`$                                                    |
+| `alpha_sw_velocity_gse_earth`         | $`\mathbf{v}^{\alpha,\text{earth,GSE}}`$ | $`\mathbf{v}^{\alpha,\text{sun}}`$ in GSE axes (Earth frame) <sup>[2](#fn-gse)</sup> |
 | `alpha_sw_velocity_gse_sun`           | $`\mathbf{v}^{\alpha,\text{sun,GSE}}`$ | $`\mathbf{v}^{\alpha,\text{sun}}`$ in GSE axes (Sun frame) <sup>[2](#fn-gse)</sup> |
-| `alpha_sw_velocity_gse_sun_covariance` | $`\Sigma_{\mathbf{v}^{\alpha}}^{\text{GSE}}`$ | $`M\thinspace \Sigma_{\mathbf{v}^{\alpha}}\thinspace M^{\top}`$ <sup>[2](#fn-gse)</sup> |
-| `alpha_sw_velocity_gse_sun_uncert`     | $`\sigma_{\mathbf{v}^{\alpha}}^{\text{GSE}}`$ | $`\sqrt{\operatorname{diag}(\Sigma_{\mathbf{v}^{\alpha}}^{\text{GSE}})}`$ |
+| `alpha_sw_velocity_gse_covariance`    | $`\Sigma_{\mathbf{v}^{\alpha}}^{\text{GSE}}`$ | $`M\thinspace \Sigma_{\mathbf{v}^{\alpha}}\thinspace M^{\top}`$ <sup>[2](#fn-gse)</sup> |
+| `alpha_sw_velocity_gse_uncert`        | $`\sigma_{\mathbf{v}^{\alpha}}^{\text{GSE}}`$ | $`\sqrt{\operatorname{diag}(\Sigma_{\mathbf{v}^{\alpha}}^{\text{GSE}})}`$ |
 | `swp_flags`                           |                                                   | quality flag bitmask (see `SwapiL3Flags`)                                                                                 |
 
 
 
 <a id="fn-vp"></a>[1]: $`\mathbf{v}_{b}^{\text{SC}}`$ is the proton bulk velocity in the spacecraft frame.
+
+<a id="fn-gse"></a>[2]: GSE axes with the Earth as origin. `alpha_sw_velocity_gse_earth` uses the Earth as the standard of rest and `alpha_sw_velocity_gse_sun` uses the Sun. They differ by the Earth's orbital velocity (about 30 km/s, mostly along GSE $`Y`$). Both are obtained from $`\mathbf{v}^{\alpha,\text{sun}}`$ with a full 6D state transform (SPICE `sxform`) from ECLIPJ2000 to GSE, using the IMAP position relative to the Earth. $`M`$ is the RTN-to-GSE rotation, and the covariance is the same for both.
 
 > **Note**: The proton fit's own uncertainty is not fully propagated into the alpha uncertainty. This is a reasonable approximation because the proton peak has much higher counts, but more sophisticated error analysis may be done in a future update.
