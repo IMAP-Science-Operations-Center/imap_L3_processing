@@ -16,8 +16,8 @@ imap_swapi_l3a_proton-sw:
   Data_type: L3a_PROTON-SW>Level-3a Proton Solar Wind
   MODS:
     - >-
-      Major version 2: Add proton velocity, covariance, and uncertainty in GSE
-      coordinates (Sun frame).
+      Major version 2: Add proton velocity in GSE coordinates (Earth and Sun
+      frames), with covariance and uncertainty.
   Logical_source_description: IMAP Mission SWAPI Instrument Proton Solar Wind Parameters
   TEXT:
     - *instrument_description
@@ -34,8 +34,8 @@ imap_swapi_l3a_alpha-sw:
   Data_type: L3a_ALPHA-SW>Level-3a Alpha Solar Wind
   MODS:
     - >-
-      Major version 2: Add alpha velocity, covariance, and uncertainty in GSE
-      coordinates (Sun frame).
+      Major version 2: Add alpha velocity in GSE coordinates (Earth and Sun
+      frames), with covariance and uncertainty.
   Logical_source_description: IMAP Mission SWAPI Instrument Alpha Solar Wind Parameters
   TEXT:
     - *instrument_description
