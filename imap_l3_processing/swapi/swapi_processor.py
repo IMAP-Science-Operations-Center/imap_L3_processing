@@ -26,7 +26,7 @@ from imap_l3_processing.swapi.constants import (
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
 from imap_l3_processing.swapi.l3a.utils import (
     chunk_l2_data,
-    convert_sun_velocity_rtn_to_gse_sun,
+    convert_sun_velocity_rtn_to_gse,
 )
 from imap_l3_processing.swapi.l3b.models import SwapiL3BCombinedVDF
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_differential_flux import (
@@ -46,23 +46,24 @@ from imap_l3_processing.utils import save_data
 logger = logging.getLogger(__name__)
 
 
-def _add_gse_sun_velocity(result: dict[str, np.ndarray], species: str) -> None:
-    """Add the Sun-frame GSE velocity and its covariance to `result`.
+def _add_gse_velocities(result: dict[str, np.ndarray], species: str) -> None:
+    """Add the Earth-frame and Sun-frame GSE velocities and their covariance.
 
     Epochs without a Sun-frame RTN velocity are left as fill. Epochs where the
     SPICE transform fails are left as fill and flagged FIT_ERROR.
     """
     velocities_rtn_sun = result[f"{species}_sw_velocity_rtn_sun"]
     covariances_rtn = result[f"{species}_sw_velocity_rtn_covariance"]
+    velocities_gse_earth = np.full_like(velocities_rtn_sun, np.nan)
     velocities_gse_sun = np.full_like(velocities_rtn_sun, np.nan)
-    covariances_gse_sun = np.full_like(covariances_rtn, np.nan)
+    covariances_gse = np.full_like(covariances_rtn, np.nan)
 
     for i, epoch in enumerate(result["epoch"]):
         if np.any(np.isnan(velocities_rtn_sun[i])):
             continue
         try:
-            velocities_gse_sun[i], covariances_gse_sun[i] = (
-                convert_sun_velocity_rtn_to_gse_sun(
+            velocities_gse_earth[i], velocities_gse_sun[i], covariances_gse[i] = (
+                convert_sun_velocity_rtn_to_gse(
                     epoch, velocities_rtn_sun[i], covariances_rtn[i]
                 )
             )
@@ -73,8 +74,9 @@ def _add_gse_sun_velocity(result: dict[str, np.ndarray], species: str) -> None:
             )
             result["quality_flags"][i] |= int(SwapiL3Flags.FIT_ERROR)
 
+    result[f"{species}_sw_velocity_gse_earth"] = velocities_gse_earth
     result[f"{species}_sw_velocity_gse_sun"] = velocities_gse_sun
-    result[f"{species}_sw_velocity_gse_sun_covariance"] = covariances_gse_sun
+    result[f"{species}_sw_velocity_gse_covariance"] = covariances_gse
 
 
 class SwapiProcessor(Processor):
@@ -119,7 +121,7 @@ class SwapiProcessor(Processor):
         )
 
         result = runner.run(chunks, ProtonChunkFitter())
-        _add_gse_sun_velocity(result, "proton")
+        _add_gse_velocities(result, "proton")
 
         return SwapiL3ProtonSolarWindData(
             replace(self.input_metadata, descriptor="proton-sw"), **result
@@ -139,7 +141,7 @@ class SwapiProcessor(Processor):
 
         fitter = AlphaChunkFitter(dependencies.mag_data)
         result = runner.run(chunks, fitter)
-        _add_gse_sun_velocity(result, "alpha")
+        _add_gse_velocities(result, "alpha")
 
         if dependencies.mag_is_preliminary:
             result["quality_flags"] = result["quality_flags"] | int(

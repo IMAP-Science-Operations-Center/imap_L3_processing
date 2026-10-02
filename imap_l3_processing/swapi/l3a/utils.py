@@ -119,15 +119,16 @@ def get_spacecraft_velocity_rtn(epoch_tt2000_ns: float) -> ndarray:
     return np.einsum("ij,j->i", rtn_from_eclipj2000, state_eclipj2000[3:])
 
 
-def convert_sun_velocity_rtn_to_gse_sun(
+def convert_sun_velocity_rtn_to_gse(
     epoch_tt2000_ns: float, velocity_rtn_sun: ndarray, covariance_rtn: ndarray
-) -> tuple[ndarray, ndarray]:
+) -> tuple[ndarray, ndarray, ndarray]:
     """Convert a Sun-frame RTN velocity and its covariance to GSE.
 
-    The result is in GSE axes with the Earth as origin, but the Sun remains the
-    standard of rest. The velocity is first rotated into inertial ECLIPJ2000;
-    then the full 6D state (IMAP position relative to Earth, velocity) is
-    transformed to GSE, which adds the rotating-frame term.
+    Returns the velocity in GSE axes with the Earth as origin, once with the Earth
+    as the standard of rest and once with the Sun as the standard of rest, plus
+    their (shared) covariance. The velocity is first rotated into inertial
+    ECLIPJ2000; then the full 6D state (IMAP position relative to Earth,
+    velocity) is transformed to GSE, which adds the rotating-frame term.
     """
     et = float(ttj2000ns_to_et(epoch_tt2000_ns))
     eclipj2000_from_rtn = get_rotation_matrix(
@@ -139,17 +140,22 @@ def convert_sun_velocity_rtn_to_gse_sun(
     position_from_earth = imap_state(
         et, SpiceFrame.ECLIPJ2000, observer=SpiceBody.EARTH
     )[:3]
+    earth_velocity_from_sun = spiceypy.spkezr(
+        SpiceBody.EARTH.name, et, SpiceFrame.ECLIPJ2000.name, "NONE", SpiceBody.SUN.name
+    )[0][3:]
 
-    state = np.concatenate(
-        [position_from_earth, eclipj2000_from_rtn @ velocity_rtn_sun]
-    )
-    velocity_gse_sun = (gse_from_eclipj2000 @ state)[3:]
+    velocity_from_sun = eclipj2000_from_rtn @ velocity_rtn_sun
+    velocity_from_earth = velocity_from_sun - earth_velocity_from_sun
+    state_earth = np.concatenate([position_from_earth, velocity_from_earth])
+    state_sun = np.concatenate([position_from_earth, velocity_from_sun])
+    velocity_gse_earth = (gse_from_eclipj2000 @ state_earth)[3:]
+    velocity_gse_sun = (gse_from_eclipj2000 @ state_sun)[3:]
 
-    # The rotating-frame term does not depend on velocity, so the covariance
-    # only sees the rotation.
+    # The rotating-frame term and the change of standard of rest do not depend
+    # on the measured velocity, so the covariance only sees the rotation.
     gse_from_rtn = gse_from_eclipj2000[3:, 3:] @ eclipj2000_from_rtn
-    covariance_gse_sun = gse_from_rtn @ covariance_rtn @ gse_from_rtn.T
-    return velocity_gse_sun, covariance_gse_sun
+    covariance_gse = gse_from_rtn @ covariance_rtn @ gse_from_rtn.T
+    return velocity_gse_earth, velocity_gse_sun, covariance_gse
 
 
 @numba.njit
