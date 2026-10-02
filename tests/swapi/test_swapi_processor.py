@@ -175,7 +175,7 @@ class TestSwapiProcessor(TestCase):
                                                             call("Generation_date",
                                                                  date.today().strftime("%Y%m%d")),
                                                             call("Logical_source",
-                                                                 f"imap_swapi_l3a_pui-he"),
+                                                                 "imap_swapi_l3a_pui-he"),
                                                             call("Logical_file_id",
                                                                  f"imap_swapi_l3a_pui-he_{start_date_as_str}_v123"),
                                                             ])
@@ -324,7 +324,7 @@ class TestSwapiProcessor(TestCase):
                                                             call("Generation_date",
                                                                  date.today().strftime("%Y%m%d")),
                                                             call("Logical_source",
-                                                                 f"imap_swapi_l3a_proton-sw"),
+                                                                 "imap_swapi_l3a_proton-sw"),
                                                             call("Logical_file_id",
                                                                  f"imap_swapi_l3a_proton-sw_{start_date_as_str}_v123"),
                                                             ])

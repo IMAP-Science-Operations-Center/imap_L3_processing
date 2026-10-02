@@ -141,7 +141,7 @@ class TestUtils(TestCase):
             call("Generation_date", "20240916"),
             call("Logical_source", "imap_glows_l3_descriptor"),
             call("Logical_file_id",
-                 f"imap_glows_l3_descriptor_20250510_v003"),
+                 "imap_glows_l3_descriptor_20250510_v003"),
             call("ground_software_version", VERSION),
             call("flight_software_version", 131848),
             call("ground_software_version", "0.3"),
