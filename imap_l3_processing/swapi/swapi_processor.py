@@ -142,7 +142,9 @@ class SwapiProcessor(Processor):
         _add_gse_sun_velocity(result, "alpha")
 
         if dependencies.mag_is_preliminary:
-            result["quality_flags"] = result["quality_flags"] | int(SwapiL3Flags.PRELIMINARY_MAG)
+            result["quality_flags"] = result["quality_flags"] | int(
+                SwapiL3Flags.PRELIMINARY_MAG
+            )
 
         metadata = replace(self.input_metadata, descriptor="alpha-sw")
         return SwapiL3AlphaSolarWindData(metadata, **result)
@@ -196,8 +198,12 @@ class SwapiProcessor(Processor):
                 data_chunk.coincidence_count_rate,
                 data_chunk.coincidence_count_rate_uncertainty,
             )
-            coarse_rates = coincidence_count_rates_with_uncertainty[:, SWAPI_COARSE_SWEEP_BINS]
-            average_coincident_count_rates = np.sum(coarse_rates, axis=0) / len(coarse_rates)
+            coarse_rates = coincidence_count_rates_with_uncertainty[
+                :, SWAPI_COARSE_SWEEP_BINS
+            ]
+            average_coincident_count_rates = np.sum(coarse_rates, axis=0) / len(
+                coarse_rates
+            )
             energies = np.mean(data_chunk.energy[:, SWAPI_COARSE_SWEEP_BINS], axis=0)
             proton_velocities, proton_probabilities = calculate_proton_solar_wind_vdf(
                 energies,
