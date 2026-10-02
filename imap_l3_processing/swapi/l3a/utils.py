@@ -5,6 +5,7 @@ from typing import Iterable
 import numba
 import numpy as np
 import scipy.optimize
+import spiceypy
 from numpy import ndarray
 from numpy.typing import ArrayLike
 from spacepy import pycdf
@@ -32,6 +33,7 @@ from imap_l3_processing.swapi.constants import (
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_processing.spice.geometry import (
+    SpiceBody,
     SpiceFrame,
     get_rotation_matrix,
     imap_state,
@@ -117,6 +119,45 @@ def get_spacecraft_velocity_rtn(epoch_tt2000_ns: float) -> ndarray:
     return np.einsum("ij,j->i", rtn_from_eclipj2000, state_eclipj2000[3:])
 
 
+def convert_sun_velocity_rtn_to_gse(
+    epoch_tt2000_ns: float, velocity_rtn_sun: ndarray, covariance_rtn: ndarray
+) -> tuple[ndarray, ndarray, ndarray]:
+    """Convert a Sun-frame RTN velocity and its covariance to GSE.
+
+    Returns the velocity in GSE axes with the Earth as origin, once with the Earth
+    as the standard of rest and once with the Sun as the standard of rest, plus
+    their (shared) covariance. The velocity is first rotated into inertial
+    ECLIPJ2000; then the full 6D state (IMAP position relative to Earth,
+    velocity) is transformed to GSE, which adds the rotating-frame term.
+    """
+    et = float(ttj2000ns_to_et(epoch_tt2000_ns))
+    eclipj2000_from_rtn = get_rotation_matrix(
+        et, SpiceFrame.IMAP_RTN, SpiceFrame.ECLIPJ2000
+    )
+    gse_from_eclipj2000 = spiceypy.sxform(
+        SpiceFrame.ECLIPJ2000.name, SpiceFrame.IMAP_GSE.name, et
+    )
+    position_from_earth = imap_state(
+        et, SpiceFrame.ECLIPJ2000, observer=SpiceBody.EARTH
+    )[:3]
+    earth_velocity_from_sun = spiceypy.spkezr(
+        SpiceBody.EARTH.name, et, SpiceFrame.ECLIPJ2000.name, "NONE", SpiceBody.SUN.name
+    )[0][3:]
+
+    velocity_from_sun = eclipj2000_from_rtn @ velocity_rtn_sun
+    velocity_from_earth = velocity_from_sun - earth_velocity_from_sun
+    state_earth = np.concatenate([position_from_earth, velocity_from_earth])
+    state_sun = np.concatenate([position_from_earth, velocity_from_sun])
+    velocity_gse_earth = (gse_from_eclipj2000 @ state_earth)[3:]
+    velocity_gse_sun = (gse_from_eclipj2000 @ state_sun)[3:]
+
+    # The rotating-frame term and the change of standard of rest do not depend
+    # on the measured velocity, so the covariance only sees the rotation.
+    gse_from_rtn = gse_from_eclipj2000[3:, 3:] @ eclipj2000_from_rtn
+    covariance_gse = gse_from_rtn @ covariance_rtn @ gse_from_rtn.T
+    return velocity_gse_earth, velocity_gse_sun, covariance_gse
+
+
 @numba.njit
 def velocity_components_to_angles_in_instrument_frame(vx: float, vy: float, vz: float):
     """Convert a Cartesian flow-direction velocity to (azimuth_deg, elevation_deg)
@@ -150,7 +191,9 @@ def velocity_to_angles_in_instrument_frame(
     flow-vs-look sign convention.
     """
     v_xyz = rotation_xyz_to_rtn.T @ sw_params.velocity_rtn
-    return velocity_components_to_angles_in_instrument_frame(v_xyz[0], v_xyz[1], v_xyz[2])
+    return velocity_components_to_angles_in_instrument_frame(
+        v_xyz[0], v_xyz[1], v_xyz[2]
+    )
 
 
 def compute_direction_of_mean_magnetic_field_over_chunk(

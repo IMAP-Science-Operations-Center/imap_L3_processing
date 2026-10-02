@@ -190,6 +190,10 @@ The `proton-sw` CDF variables are derived from $`\mathbf{x}`$ and $`\Sigma_\math
 | `proton_sw_velocity_rtn_sun`             | $`\mathbf{v}_{b}^{\text{sun}}`$ | $`\mathbf{v}_{b}^{\text{SC}} + \mathbf{v}_{\text{sc}}^{\text{sun}}`$ <sup>[2](#fn-vsc)</sup>                                          |
 | `proton_sw_speed_sun`                         | $`v_{\text{sun}}`$          | $`\lvert\mathbf{v}_{b}^{\text{sun}}\rvert`$                                                                 |
 | `proton_sw_speed_sun_uncert`                  | $`\sigma_{v_{\text{sun}}}`$ | propagated through `uncertainties` from $`\mathbf{v}_{b}^{\text{sun}}`$                                       |
+| `proton_sw_velocity_gse_earth`               | $`\mathbf{v}_{b}^{\text{earth,GSE}}`$ | $`\mathbf{v}_{b}^{\text{sun}}`$ in GSE axes (Earth frame) <sup>[3](#fn-gse)</sup> |
+| `proton_sw_velocity_gse_sun`                 | $`\mathbf{v}_{b}^{\text{sun,GSE}}`$ | $`\mathbf{v}_{b}^{\text{sun}}`$ in GSE axes (Sun frame) <sup>[3](#fn-gse)</sup> |
+| `proton_sw_velocity_gse_covariance`          | $`\Sigma_{\mathbf{v}}^{\text{GSE}}`$ | $`M\thinspace \Sigma_{\mathbf{v}}\thinspace M^{\top}`$ <sup>[3](#fn-gse)</sup> |
+| `proton_sw_velocity_gse_uncert`              | $`\sigma_{\mathbf{v}_{b}}^{\text{GSE}}`$ | $`\sqrt{\operatorname{diag}(\Sigma_{\mathbf{v}}^{\text{GSE}})}`$ |
 | `swp_flags`                                   |                         | quality flag bitmask (see `SwapiL3Flags`)                                                            |
 
 
@@ -198,3 +202,4 @@ The `proton-sw` CDF variables are derived from $`\mathbf{x}`$ and $`\Sigma_\math
 
 <a id="fn-vsc"></a>[2]: $`\mathbf{v}_{\text{sc}}^{\text{sun}}`$ is the spacecraft velocity in the Sun's inertial frame.
 
+<a id="fn-gse"></a>[3]: GSE axes with the Earth as origin. `proton_sw_velocity_gse_earth` uses the Earth as the standard of rest and `proton_sw_velocity_gse_sun` uses the Sun. They differ by the Earth's orbital velocity (about 30 km/s, mostly along GSE $`Y`$). Both are obtained from $`\mathbf{v}_{b}^{\text{sun}}`$ with a full 6D state transform (SPICE `sxform`) from ECLIPJ2000 to GSE, using the IMAP position relative to the Earth. $`M`$ is the RTN-to-GSE rotation, and the covariance is the same for both.
