@@ -5,6 +5,8 @@ from unittest import TestCase
 
 import numpy as np
 import spacepy.pycdf
+import spiceypy
+from imap_processing.spice.time import ttj2000ns_to_et
 from spacepy.pycdf import CDF
 from uncertainties import UFloat, ufloat
 
@@ -31,6 +33,7 @@ from imap_l3_processing.swapi.l3a.utils import (
     esa_voltage_to_alpha_speed,
     esa_voltage_to_proton_speed,
     get_spacecraft_velocity_rtn,
+    convert_sun_velocity_rtn_to_gse_sun,
     get_swapi_geometry,
     measurement_times,
     pickup_ion_chunk_epoch,
@@ -298,6 +301,31 @@ class TestSwapiSpiceHelpers(SpiceTestCase):
         speed = float(np.linalg.norm(velocity_rtn))
         self.assertGreater(speed, 10.0)
         self.assertLess(speed, 60.0)
+
+    def test_convert_sun_velocity_rtn_to_gse_sun_matches_spice_state_of_imap(self):
+        """For IMAP's own Sun-relative velocity, the GSE (Sun frame) velocity equals IMAP's Earth-relative GSE velocity from SPICE (which includes the rotating-frame term) plus Earth's Sun-relative velocity in GSE axes. The covariance is only rotated."""
+        et = float(ttj2000ns_to_et(self._EPOCH_TT2000_NS))
+        covariance_rtn = np.array([[4.0, 1.0, 0.5], [1.0, 9.0, 2.0], [0.5, 2.0, 16.0]])
+
+        velocity_gse_sun, covariance_gse_sun = convert_sun_velocity_rtn_to_gse_sun(
+            self._EPOCH_TT2000_NS,
+            get_spacecraft_velocity_rtn(self._EPOCH_TT2000_NS),
+            covariance_rtn,
+        )
+
+        imap_velocity_from_earth_gse = spiceypy.spkezr("IMAP", et, "IMAP_GSE", "NONE", "EARTH")[0][3:]
+        earth_velocity_from_sun_gse = (
+            spiceypy.pxform("ECLIPJ2000", "IMAP_GSE", et)
+            @ spiceypy.spkezr("EARTH", et, "ECLIPJ2000", "NONE", "SUN")[0][3:]
+        )
+        np.testing.assert_allclose(
+            imap_velocity_from_earth_gse + earth_velocity_from_sun_gse, velocity_gse_sun, atol=1e-9
+        )
+
+        gse_from_rtn = spiceypy.pxform("IMAP_RTN", "IMAP_GSE", et)
+        np.testing.assert_allclose(
+            gse_from_rtn @ covariance_rtn @ gse_from_rtn.T, covariance_gse_sun, atol=1e-9
+        )
 
 
 class TestVelocityComponentsToAnglesInInstrumentFrame(TestCase):
