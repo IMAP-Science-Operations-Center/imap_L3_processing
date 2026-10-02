@@ -38,7 +38,7 @@ from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.species import Species
 from imap_l3_processing.swapi.swapi_processor import (
     SwapiProcessor,
-    _add_gse_sun_velocity,
+    _add_gse_velocities,
 )
 from tests.test_helpers import create_mock_version_map
 
@@ -260,7 +260,7 @@ class TestSwapiProcessor(TestCase):
         )
         self.assertEqual([expected_cdf_path], product)
 
-    @patch("imap_l3_processing.swapi.swapi_processor._add_gse_sun_velocity")
+    @patch("imap_l3_processing.swapi.swapi_processor._add_gse_velocities")
     @patch("imap_l3_processing.utils.ImapAttributeManager")
     @patch("imap_l3_processing.swapi.swapi_processor.SwapiL3ProtonSolarWindData")
     @patch("imap_l3_processing.utils.write_cdf")
@@ -277,7 +277,7 @@ class TestSwapiProcessor(TestCase):
         mock_write_cdf,
         mock_proton_solar_wind_data_constructor,
         mock_imap_attribute_manager,
-        mock_add_gse_sun_velocity,
+        mock_add_gse_velocities,
     ):
         instrument = "swapi"
         incoming_data_level = "l2"
@@ -409,9 +409,9 @@ class TestSwapiProcessor(TestCase):
         actual_chunks = mock_runner.run.call_args.args[0]
         self.assertEqual([chunk_of_five], actual_chunks)
 
-        mock_add_gse_sun_velocity.assert_called_once()
-        self.assertIs(runner_result, mock_add_gse_sun_velocity.call_args.args[0])
-        self.assertEqual("proton", mock_add_gse_sun_velocity.call_args.args[1])
+        mock_add_gse_velocities.assert_called_once()
+        self.assertIs(runner_result, mock_add_gse_velocities.call_args.args[0])
+        self.assertEqual("proton", mock_add_gse_velocities.call_args.args[1])
 
         actual_kwargs = mock_proton_solar_wind_data_constructor.call_args.kwargs
         actual_positional = mock_proton_solar_wind_data_constructor.call_args.args
@@ -441,7 +441,7 @@ class TestSwapiProcessor(TestCase):
         )
         self.assertEqual([expected_cdf_path], product)
 
-    @patch("imap_l3_processing.swapi.swapi_processor._add_gse_sun_velocity")
+    @patch("imap_l3_processing.swapi.swapi_processor._add_gse_velocities")
     @patch("imap_l3_processing.utils.ImapAttributeManager")
     @patch("imap_l3_processing.swapi.swapi_processor.SwapiL3AlphaSolarWindData")
     @patch("imap_l3_processing.utils.write_cdf")
@@ -458,7 +458,7 @@ class TestSwapiProcessor(TestCase):
         mock_write_cdf,
         mock_alpha_solar_wind_data_constructor,
         mock_imap_attribute_manager,
-        mock_add_gse_sun_velocity,
+        mock_add_gse_velocities,
     ):
         instrument = "swapi"
         incoming_data_level = "l2"
@@ -577,9 +577,9 @@ class TestSwapiProcessor(TestCase):
         actual_chunks = mock_runner.run.call_args.args[0]
         self.assertEqual([chunk_of_five], actual_chunks)
 
-        mock_add_gse_sun_velocity.assert_called_once()
-        self.assertIs(runner_result, mock_add_gse_sun_velocity.call_args.args[0])
-        self.assertEqual("alpha", mock_add_gse_sun_velocity.call_args.args[1])
+        mock_add_gse_velocities.assert_called_once()
+        self.assertIs(runner_result, mock_add_gse_velocities.call_args.args[0])
+        self.assertEqual("alpha", mock_add_gse_velocities.call_args.args[1])
 
         actual_kwargs = mock_alpha_solar_wind_data_constructor.call_args.kwargs
         actual_positional = mock_alpha_solar_wind_data_constructor.call_args.args
@@ -1083,8 +1083,8 @@ class TestSwapiProcessor(TestCase):
         self.assertIn("alpha-sw requires MAG RTN data", str(cm.exception))
 
 
-@patch("imap_l3_processing.swapi.swapi_processor.convert_sun_velocity_rtn_to_gse_sun")
-class TestAddGseSunVelocity(TestCase):
+@patch("imap_l3_processing.swapi.swapi_processor.convert_sun_velocity_rtn_to_gse")
+class TestAddGseVelocities(TestCase):
     def _result(self, velocity_rtn_sun):
         return {
             "epoch": np.array([10]),
@@ -1093,21 +1093,33 @@ class TestAddGseSunVelocity(TestCase):
             "quality_flags": np.array([int(SwapiL3Flags.PREDICTIVE_EPHEMERIS)]),
         }
 
-    def test_adds_converted_velocity_and_covariance(self, mock_convert):
-        result = self._result([400.0, 1.0, 2.0])
-        mock_convert.return_value = (np.array([-400.0, -1.0, 2.0]), 2 * np.eye(3))
+    def _assert_all_fill(self, result):
+        self.assertTrue(np.all(np.isnan(result["proton_sw_velocity_gse_earth"])))
+        self.assertTrue(np.all(np.isnan(result["proton_sw_velocity_gse_sun"])))
+        self.assertTrue(np.all(np.isnan(result["proton_sw_velocity_gse_covariance"])))
 
-        _add_gse_sun_velocity(result, "proton")
+    def test_adds_converted_velocities_and_covariance(self, mock_convert):
+        result = self._result([400.0, 1.0, 2.0])
+        mock_convert.return_value = (
+            np.array([-400.0, 29.0, 2.0]),
+            np.array([-400.0, -1.0, 2.0]),
+            2 * np.eye(3),
+        )
+
+        _add_gse_velocities(result, "proton")
 
         epoch, velocity, covariance = mock_convert.call_args.args
         self.assertEqual(10, epoch)
         np.testing.assert_array_equal([400.0, 1.0, 2.0], velocity)
         np.testing.assert_array_equal(np.eye(3), covariance)
         np.testing.assert_array_equal(
+            [[-400.0, 29.0, 2.0]], result["proton_sw_velocity_gse_earth"]
+        )
+        np.testing.assert_array_equal(
             [[-400.0, -1.0, 2.0]], result["proton_sw_velocity_gse_sun"]
         )
         np.testing.assert_array_equal(
-            [2 * np.eye(3)], result["proton_sw_velocity_gse_sun_covariance"]
+            [2 * np.eye(3)], result["proton_sw_velocity_gse_covariance"]
         )
         self.assertEqual(
             int(SwapiL3Flags.PREDICTIVE_EPHEMERIS), result["quality_flags"][0]
@@ -1117,12 +1129,9 @@ class TestAddGseSunVelocity(TestCase):
         result = self._result([400.0, 1.0, 2.0])
         mock_convert.side_effect = RuntimeError("SPICE gap")
 
-        _add_gse_sun_velocity(result, "proton")
+        _add_gse_velocities(result, "proton")
 
-        self.assertTrue(np.all(np.isnan(result["proton_sw_velocity_gse_sun"])))
-        self.assertTrue(
-            np.all(np.isnan(result["proton_sw_velocity_gse_sun_covariance"]))
-        )
+        self._assert_all_fill(result)
         self.assertEqual(
             int(SwapiL3Flags.PREDICTIVE_EPHEMERIS | SwapiL3Flags.FIT_ERROR),
             result["quality_flags"][0],
@@ -1131,13 +1140,10 @@ class TestAddGseSunVelocity(TestCase):
     def test_missing_rtn_velocity_gives_fill_without_new_flag(self, mock_convert):
         result = self._result([np.nan, np.nan, np.nan])
 
-        _add_gse_sun_velocity(result, "proton")
+        _add_gse_velocities(result, "proton")
 
         mock_convert.assert_not_called()
-        self.assertTrue(np.all(np.isnan(result["proton_sw_velocity_gse_sun"])))
-        self.assertTrue(
-            np.all(np.isnan(result["proton_sw_velocity_gse_sun_covariance"]))
-        )
+        self._assert_all_fill(result)
         self.assertEqual(
             int(SwapiL3Flags.PREDICTIVE_EPHEMERIS), result["quality_flags"][0]
         )

@@ -1058,7 +1058,7 @@ class TestAlphaChunkFitterQualityFlags(SpiceTestCase):
         self.assertEqual(int(result["quality_flags"]), int(SwapiL3Flags.BAD_FIT))
         _assert_all_nan(self, result, _ALPHA_SCALAR_KEYS, _ALPHA_ARRAY_KEYS)
 
-    @patch("imap_l3_processing.swapi.swapi_processor._add_gse_sun_velocity")
+    @patch("imap_l3_processing.swapi.swapi_processor._add_gse_velocities")
     @patch("imap_l3_processing.swapi.swapi_processor.SwapiL3AlphaSolarWindData")
     @patch("imap_l3_processing.swapi.swapi_processor.ParallelChunkRunner")
     @patch("imap_l3_processing.swapi.swapi_processor.chunk_l2_data")
