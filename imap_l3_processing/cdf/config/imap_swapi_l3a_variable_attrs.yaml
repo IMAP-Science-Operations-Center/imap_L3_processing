@@ -386,6 +386,58 @@ proton_sw_velocity_rtn_uncert:
   VALIDMAX: 10000
   FILLVAL: -1.000000e+31
   SCALETYP: linear
+proton_sw_velocity_gse_sun:
+  NAME: proton_sw_velocity_gse_sun
+  DATA_TYPE: CDF_REAL4
+  FIELDNAM: Proton Solar Wind Velocity (GSE, Sun Frame)
+  CATDESC: Solar wind proton bulk velocity vector in GSE coordinates (Sun frame)
+  DEPEND_0: epoch
+  LABL_PTR_1: proton_sw_velocity_gse_sun_label
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FORMAT: F19.3
+  LABLAXIS: Vp GSE Sun
+  UNITS: km/s
+  VALIDMIN: -10000
+  VALIDMAX: 10000
+  FILLVAL: -1.000000e+31
+  SCALETYP: linear
+  DELTA_PLUS_VAR: proton_sw_velocity_gse_sun_uncert
+  DELTA_MINUS_VAR: proton_sw_velocity_gse_sun_uncert
+proton_sw_velocity_gse_sun_covariance:
+  NAME: proton_sw_velocity_gse_sun_covariance
+  DATA_TYPE: CDF_REAL4
+  FIELDNAM: Proton Solar Wind Velocity Covariance (GSE)
+  CATDESC: Covariance matrix in GSE coordinates (frame-independent), with standard errors given by the square root of the diagonal
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FORMAT: F19.3
+  LABLAXIS: cov Vp
+  UNITS: km^2/s^2
+  VALIDMIN: -1.0e+8
+  VALIDMAX: 1.0e+8
+  FILLVAL: -1.000000e+31
+  LABL_PTR_1: velocity_gse_label
+  LABL_PTR_2: velocity_gse_label
+proton_sw_velocity_gse_sun_uncert:
+  NAME: proton_sw_velocity_gse_sun_uncert
+  DATA_TYPE: CDF_REAL4
+  FIELDNAM: Proton Solar Wind Velocity Uncertainty (GSE)
+  CATDESC: 1-sigma standard error
+  DEPEND_0: epoch
+  LABL_PTR_1: velocity_gse_label
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FORMAT: F19.3
+  LABLAXIS: Vp GSE Err
+  UNITS: km/s
+  VALIDMIN: 0
+  VALIDMAX: 10000
+  FILLVAL: -1.000000e+31
+  SCALETYP: linear
 alpha_sw_speed:
   NAME: alpha_sw_speed
   DATA_TYPE: CDF_REAL4
@@ -598,6 +650,58 @@ alpha_sw_velocity_rtn_uncert:
   VALIDMAX: 10000
   FILLVAL: -1.000000e+31
   SCALETYP: linear
+alpha_sw_velocity_gse_sun:
+  NAME: alpha_sw_velocity_gse_sun
+  DATA_TYPE: CDF_REAL4
+  FIELDNAM: Alpha Solar Wind Velocity (GSE, Sun Frame)
+  CATDESC: Solar wind alpha-particle bulk velocity vector in GSE coordinates (Sun frame)
+  DEPEND_0: epoch
+  LABL_PTR_1: alpha_sw_velocity_gse_sun_label
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FORMAT: F19.3
+  LABLAXIS: Va GSE Sun
+  UNITS: km/s
+  VALIDMIN: -10000
+  VALIDMAX: 10000
+  FILLVAL: -1.000000e+31
+  SCALETYP: linear
+  DELTA_PLUS_VAR: alpha_sw_velocity_gse_sun_uncert
+  DELTA_MINUS_VAR: alpha_sw_velocity_gse_sun_uncert
+alpha_sw_velocity_gse_sun_covariance:
+  NAME: alpha_sw_velocity_gse_sun_covariance
+  DATA_TYPE: CDF_REAL4
+  FIELDNAM: Alpha Solar Wind Velocity Covariance (GSE)
+  CATDESC: Covariance matrix in GSE coordinates (frame-independent), with standard errors given by the square root of the diagonal
+  DEPEND_0: epoch
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FORMAT: F19.3
+  LABLAXIS: cov Va
+  UNITS: km^2/s^2
+  VALIDMIN: -1.0e+8
+  VALIDMAX: 1.0e+8
+  FILLVAL: -1.000000e+31
+  LABL_PTR_1: velocity_gse_label
+  LABL_PTR_2: velocity_gse_label
+alpha_sw_velocity_gse_sun_uncert:
+  NAME: alpha_sw_velocity_gse_sun_uncert
+  DATA_TYPE: CDF_REAL4
+  FIELDNAM: Alpha Solar Wind Velocity Uncertainty (GSE)
+  CATDESC: 1-sigma standard error
+  DEPEND_0: epoch
+  LABL_PTR_1: velocity_gse_label
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FORMAT: F19.3
+  LABLAXIS: Va GSE Err
+  UNITS: km/s
+  VALIDMIN: 0
+  VALIDMAX: 10000
+  FILLVAL: -1.000000e+31
+  SCALETYP: linear
 swp_flags:
   NAME: swp_flags
   DATA_TYPE: CDF_UINT2
@@ -630,6 +734,15 @@ velocity_rtn_label:
   RECORD_VARYING: NRV
   FORMAT: a20
   FILLVAL: ' '
+velocity_gse_label:
+  NAME: velocity_gse_label
+  DATA_TYPE: CDF_CHAR
+  FIELDNAM: Velocity GSE Label
+  CATDESC: Label for Geocentric Solar Ecliptic (GSE) velocity components
+  VAR_TYPE: metadata
+  RECORD_VARYING: NRV
+  FORMAT: a20
+  FILLVAL: ' '
 alpha_sw_velocity_rtn_label:
   NAME: alpha_sw_velocity_rtn_label
   DATA_TYPE: CDF_CHAR
@@ -644,6 +757,15 @@ alpha_sw_velocity_rtn_sun_label:
   DATA_TYPE: CDF_CHAR
   FIELDNAM: Velocity RTN Label
   CATDESC: Label for Radial-Tangential-Normal (RTN) velocity components
+  VAR_TYPE: metadata
+  RECORD_VARYING: NRV
+  FORMAT: a20
+  FILLVAL: ' '
+alpha_sw_velocity_gse_sun_label:
+  NAME: alpha_sw_velocity_gse_sun_label
+  DATA_TYPE: CDF_CHAR
+  FIELDNAM: Velocity GSE Label
+  CATDESC: Label for Geocentric Solar Ecliptic (GSE) velocity components
   VAR_TYPE: metadata
   RECORD_VARYING: NRV
   FORMAT: a20
@@ -667,3 +789,12 @@ proton_sw_velocity_rtn_sun_label:
   FORMAT: a20
   FILLVAL: ' '
 
+proton_sw_velocity_gse_sun_label:
+  NAME: proton_sw_velocity_gse_sun_label
+  DATA_TYPE: CDF_CHAR
+  FIELDNAM: Velocity GSE Label
+  CATDESC: Label for Geocentric Solar Ecliptic (GSE) velocity components
+  VAR_TYPE: metadata
+  RECORD_VARYING: NRV
+  FORMAT: a20
+  FILLVAL: ' '
