@@ -23,7 +23,7 @@ from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SWAPI_L2_DESCRIP
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_vdf import DeltaMinusPlus
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.species import Species
-from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
+from imap_l3_processing.swapi.swapi_processor import SwapiProcessor, _add_gse_sun_velocity
 from tests.test_helpers import create_mock_version_map
 
 
@@ -192,6 +192,7 @@ class TestSwapiProcessor(TestCase):
         mock_write_cdf.assert_called_once_with(str(expected_cdf_path), pickup_ion_data, mock_manager)
         self.assertEqual([expected_cdf_path], product)
 
+    @patch('imap_l3_processing.swapi.swapi_processor._add_gse_sun_velocity')
     @patch('imap_l3_processing.utils.ImapAttributeManager')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3ProtonSolarWindData')
     @patch('imap_l3_processing.utils.write_cdf')
@@ -205,7 +206,8 @@ class TestSwapiProcessor(TestCase):
                                 mock_parallel_chunk_runner_class,
                                 mock_write_cdf,
                                 mock_proton_solar_wind_data_constructor,
-                                mock_imap_attribute_manager):
+                                mock_imap_attribute_manager,
+                                mock_add_gse_sun_velocity):
         instrument = 'swapi'
         incoming_data_level = 'l2'
         dependency_start_date = datetime.strftime(datetime(2025, 1, 1), "%Y%m%d")
@@ -308,6 +310,10 @@ class TestSwapiProcessor(TestCase):
         actual_chunks = mock_runner.run.call_args.args[0]
         self.assertEqual([chunk_of_five], actual_chunks)
 
+        mock_add_gse_sun_velocity.assert_called_once()
+        self.assertIs(runner_result, mock_add_gse_sun_velocity.call_args.args[0])
+        self.assertEqual("proton", mock_add_gse_sun_velocity.call_args.args[1])
+
         actual_kwargs = mock_proton_solar_wind_data_constructor.call_args.kwargs
         actual_positional = mock_proton_solar_wind_data_constructor.call_args.args
         self.assertEqual(expected_proton_metadata, actual_positional[0])
@@ -329,6 +335,7 @@ class TestSwapiProcessor(TestCase):
         mock_write_cdf.assert_called_once_with(str(expected_cdf_path), proton_solar_wind_data, mock_manager)
         self.assertEqual([expected_cdf_path], product)
 
+    @patch('imap_l3_processing.swapi.swapi_processor._add_gse_sun_velocity')
     @patch('imap_l3_processing.utils.ImapAttributeManager')
     @patch('imap_l3_processing.swapi.swapi_processor.SwapiL3AlphaSolarWindData')
     @patch('imap_l3_processing.utils.write_cdf')
@@ -342,7 +349,8 @@ class TestSwapiProcessor(TestCase):
                                mock_parallel_chunk_runner_class,
                                mock_write_cdf,
                                mock_alpha_solar_wind_data_constructor,
-                               mock_imap_attribute_manager):
+                               mock_imap_attribute_manager,
+                               mock_add_gse_sun_velocity):
         instrument = 'swapi'
         incoming_data_level = 'l2'
         dependency_start_date = datetime.strftime(datetime(2025, 1, 1), "%Y%m%d")
@@ -434,6 +442,10 @@ class TestSwapiProcessor(TestCase):
         mock_runner.run.assert_called_once()
         actual_chunks = mock_runner.run.call_args.args[0]
         self.assertEqual([chunk_of_five], actual_chunks)
+
+        mock_add_gse_sun_velocity.assert_called_once()
+        self.assertIs(runner_result, mock_add_gse_sun_velocity.call_args.args[0])
+        self.assertEqual("alpha", mock_add_gse_sun_velocity.call_args.args[1])
 
         actual_kwargs = mock_alpha_solar_wind_data_constructor.call_args.kwargs
         actual_positional = mock_alpha_solar_wind_data_constructor.call_args.args
@@ -716,6 +728,52 @@ class TestSwapiProcessor(TestCase):
         with self.assertRaises(ValueError) as cm:
             swapi_processor.process_l3a_alpha(dependencies.data, dependencies)
         self.assertIn("alpha-sw requires MAG RTN data", str(cm.exception))
+
+
+@patch('imap_l3_processing.swapi.swapi_processor.convert_sun_velocity_rtn_to_gse_sun')
+class TestAddGseSunVelocity(TestCase):
+    def _result(self, velocity_rtn_sun):
+        return {
+            "epoch": np.array([10]),
+            "proton_sw_velocity_rtn_sun": np.array([velocity_rtn_sun]),
+            "proton_sw_velocity_rtn_covariance": np.array([np.eye(3)]),
+            "quality_flags": np.array([int(SwapiL3Flags.PREDICTIVE_EPHEMERIS)]),
+        }
+
+    def test_adds_converted_velocity_and_covariance(self, mock_convert):
+        result = self._result([400.0, 1.0, 2.0])
+        mock_convert.return_value = (np.array([-400.0, -1.0, 2.0]), 2 * np.eye(3))
+
+        _add_gse_sun_velocity(result, "proton")
+
+        epoch, velocity, covariance = mock_convert.call_args.args
+        self.assertEqual(10, epoch)
+        np.testing.assert_array_equal([400.0, 1.0, 2.0], velocity)
+        np.testing.assert_array_equal(np.eye(3), covariance)
+        np.testing.assert_array_equal([[-400.0, -1.0, 2.0]], result["proton_sw_velocity_gse_sun"])
+        np.testing.assert_array_equal([2 * np.eye(3)], result["proton_sw_velocity_gse_sun_covariance"])
+        self.assertEqual(int(SwapiL3Flags.PREDICTIVE_EPHEMERIS), result["quality_flags"][0])
+
+    def test_conversion_failure_gives_fill_and_fit_error(self, mock_convert):
+        result = self._result([400.0, 1.0, 2.0])
+        mock_convert.side_effect = RuntimeError("SPICE gap")
+
+        _add_gse_sun_velocity(result, "proton")
+
+        self.assertTrue(np.all(np.isnan(result["proton_sw_velocity_gse_sun"])))
+        self.assertTrue(np.all(np.isnan(result["proton_sw_velocity_gse_sun_covariance"])))
+        self.assertEqual(int(SwapiL3Flags.PREDICTIVE_EPHEMERIS | SwapiL3Flags.FIT_ERROR),
+                         result["quality_flags"][0])
+
+    def test_missing_rtn_velocity_gives_fill_without_new_flag(self, mock_convert):
+        result = self._result([np.nan, np.nan, np.nan])
+
+        _add_gse_sun_velocity(result, "proton")
+
+        mock_convert.assert_not_called()
+        self.assertTrue(np.all(np.isnan(result["proton_sw_velocity_gse_sun"])))
+        self.assertTrue(np.all(np.isnan(result["proton_sw_velocity_gse_sun_covariance"])))
+        self.assertEqual(int(SwapiL3Flags.PREDICTIVE_EPHEMERIS), result["quality_flags"][0])
 
 
 def create_swapi_l3a_dependencies_with_mocks():

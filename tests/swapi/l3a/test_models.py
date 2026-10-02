@@ -33,7 +33,11 @@ from imap_l3_processing.swapi.l3a.models import SwapiL3ProtonSolarWindData, EPOC
     PUI_TEMPERATURE_UNCERTAINTY_CDF_VAR_NAME, SWAPI_QUALITY_FLAGS_CDF_VAR_NAME, VELOCITY_RTN_LABEL_CDF_VAR_NAME, \
     ALPHA_VELOCITY_RTN_SUN_LABEL_CDF_VAR_NAME, ALPHA_VELOCITY_RTN_LABEL_CDF_VAR_NAME, \
     PROTON_SOLAR_WIND_VELOCITY_RTN_SUN_LABEL_CDF_VAR_NAME, PROTON_SOLAR_WIND_VELOCITY_RTN_LABEL_CDF_VAR_NAME, \
-    SwapiL3aProtonDataFromCDF
+    SwapiL3aProtonDataFromCDF, VELOCITY_GSE_LABEL_CDF_VAR_NAME, \
+    PROTON_SOLAR_WIND_VELOCITY_GSE_SUN_CDF_VAR_NAME, PROTON_SOLAR_WIND_VELOCITY_GSE_SUN_COVARIANCE_CDF_VAR_NAME, \
+    PROTON_SOLAR_WIND_VELOCITY_GSE_SUN_UNCERTAINTY_CDF_VAR_NAME, PROTON_SOLAR_WIND_VELOCITY_GSE_SUN_LABEL_CDF_VAR_NAME, \
+    ALPHA_SOLAR_WIND_VELOCITY_GSE_SUN_CDF_VAR_NAME, ALPHA_SOLAR_WIND_VELOCITY_GSE_SUN_COVARIANCE_CDF_VAR_NAME, \
+    ALPHA_SOLAR_WIND_VELOCITY_GSE_SUN_UNCERTAINTY_CDF_VAR_NAME, ALPHA_VELOCITY_GSE_SUN_LABEL_CDF_VAR_NAME
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.utils import save_data
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
@@ -58,6 +62,8 @@ class TestModels(CdfModelTestCase):
         bulk_v_rtn_sun = np.arange(n * 3, dtype=float).reshape(n, 3)
         bulk_v_rtn_sc = np.arange(100, 100 + n * 3, dtype=float).reshape(n, 3)
         bulk_v_rtn_cov = np.arange(200, 200 + n * 9, dtype=float).reshape(n, 3, 3)
+        bulk_v_gse_sun = np.arange(300, 300 + n * 3, dtype=float).reshape(n, 3)
+        bulk_v_gse_sun_cov = np.arange(400, 400 + n * 9, dtype=float).reshape(n, 3, 3)
 
         quality_flags = np.full(n, SwapiL3Flags.NONE)
         quality_flags[3:5] |= SwapiL3Flags.FIT_ERROR
@@ -69,6 +75,7 @@ class TestModels(CdfModelTestCase):
             temperature, temperature_uncert,
             density, density_uncert,
             bulk_v_rtn_sun, bulk_v_rtn_sc, bulk_v_rtn_cov,
+            bulk_v_gse_sun, bulk_v_gse_sun_cov,
             quality_flags,
         )
 
@@ -98,10 +105,18 @@ class TestModels(CdfModelTestCase):
         expected_velocity_uncert = np.sqrt(np.diagonal(bulk_v_rtn_cov, axis1=1, axis2=2))
         self.assert_variable_attributes(next(var_iter), expected_velocity_uncert,
                                         PROTON_SOLAR_WIND_VELOCITY_RTN_UNCERTAINTY_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), bulk_v_gse_sun,
+                                        PROTON_SOLAR_WIND_VELOCITY_GSE_SUN_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), bulk_v_gse_sun_cov,
+                                        PROTON_SOLAR_WIND_VELOCITY_GSE_SUN_COVARIANCE_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), np.sqrt(np.diagonal(bulk_v_gse_sun_cov, axis1=1, axis2=2)),
+                                        PROTON_SOLAR_WIND_VELOCITY_GSE_SUN_UNCERTAINTY_CDF_VAR_NAME)
         self.assert_variable_attributes(next(var_iter), quality_flags, SWAPI_QUALITY_FLAGS_CDF_VAR_NAME)
         self.assert_variable_attributes(next(var_iter), ["R", "T", "N"], VELOCITY_RTN_LABEL_CDF_VAR_NAME)
         self.assert_variable_attributes(next(var_iter), ["Vp SC R", "Vp SC T", "Vp SC N"], PROTON_SOLAR_WIND_VELOCITY_RTN_LABEL_CDF_VAR_NAME)
         self.assert_variable_attributes(next(var_iter), ["Vp Sun R", "Vp Sun T", "Vp Sun N"], PROTON_SOLAR_WIND_VELOCITY_RTN_SUN_LABEL_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), ["GSE X", "GSE Y", "GSE Z"], VELOCITY_GSE_LABEL_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), ["Vp Sun GSE X", "Vp Sun GSE Y", "Vp Sun GSE Z"], PROTON_SOLAR_WIND_VELOCITY_GSE_SUN_LABEL_CDF_VAR_NAME)
 
         self.assertIs(sentinel.done, next(var_iter, sentinel.done))
 
@@ -121,6 +136,8 @@ class TestModels(CdfModelTestCase):
         velocity_rtn_sun = np.arange(n * 3, dtype=float).reshape(n, 3)
         velocity_rtn_sc = np.arange(100, 100 + n * 3, dtype=float).reshape(n, 3)
         velocity_rtn_cov = np.arange(n * 9, dtype=float).reshape(n, 3, 3)
+        velocity_gse_sun = np.arange(300, 300 + n * 3, dtype=float).reshape(n, 3)
+        velocity_gse_sun_cov = np.arange(400, 400 + n * 9, dtype=float).reshape(n, 3, 3)
 
         quality_flags = np.full_like(epoch_data, SwapiL3Flags.NONE)
         quality_flags[:n // 2] = SwapiL3Flags.BAD_FIT
@@ -132,6 +149,7 @@ class TestModels(CdfModelTestCase):
             density, density_uncert,
             temperature, temperature_uncert,
             velocity_rtn_sun, velocity_rtn_sc, velocity_rtn_cov,
+            velocity_gse_sun, velocity_gse_sun_cov,
             quality_flags,
         )
         variables = data.to_data_product_variables()
@@ -160,10 +178,18 @@ class TestModels(CdfModelTestCase):
         expected_velocity_uncert = np.sqrt(np.diagonal(velocity_rtn_cov, axis1=1, axis2=2))
         self.assert_variable_attributes(next(var_iter), expected_velocity_uncert,
                                         ALPHA_SOLAR_WIND_VELOCITY_RTN_UNCERTAINTY_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), velocity_gse_sun,
+                                        ALPHA_SOLAR_WIND_VELOCITY_GSE_SUN_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), velocity_gse_sun_cov,
+                                        ALPHA_SOLAR_WIND_VELOCITY_GSE_SUN_COVARIANCE_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), np.sqrt(np.diagonal(velocity_gse_sun_cov, axis1=1, axis2=2)),
+                                        ALPHA_SOLAR_WIND_VELOCITY_GSE_SUN_UNCERTAINTY_CDF_VAR_NAME)
         self.assert_variable_attributes(next(var_iter), quality_flags, SWAPI_QUALITY_FLAGS_CDF_VAR_NAME)
         self.assert_variable_attributes(next(var_iter), ["R", "T", "N"], VELOCITY_RTN_LABEL_CDF_VAR_NAME)
         self.assert_variable_attributes(next(var_iter), ['Va SC R', 'Va SC T', 'Va SC N'], ALPHA_VELOCITY_RTN_LABEL_CDF_VAR_NAME)
         self.assert_variable_attributes(next(var_iter), ['Va Sun R', 'Va Sun T', 'Va Sun N'], ALPHA_VELOCITY_RTN_SUN_LABEL_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), ["GSE X", "GSE Y", "GSE Z"], VELOCITY_GSE_LABEL_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(var_iter), ["Va Sun GSE X", "Va Sun GSE Y", "Va Sun GSE Z"], ALPHA_VELOCITY_GSE_SUN_LABEL_CDF_VAR_NAME)
 
         self.assertIs(sentinel.done, next(var_iter, sentinel.done))
 
@@ -251,6 +277,8 @@ class TestModels(CdfModelTestCase):
                     [[40, 20, 10],[30, 30, 30],[np.nan, 14, 18]],
                     [[40, 20, 10],[30, 30, 30],[np.nan, 14, 18]],
                 ],
+                proton_sw_velocity_gse_sun=np.full((2, 3), np.nan),
+                proton_sw_velocity_gse_sun_covariance=np.full((2, 3, 3), np.nan),
                 quality_flags = [0, SwapiL3Flags.PREDICTIVE_EPHEMERIS],
             )
             path = save_data(initial_data)
