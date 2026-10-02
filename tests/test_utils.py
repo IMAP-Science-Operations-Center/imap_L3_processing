@@ -79,6 +79,8 @@ class TestUtils(TestCase):
                                                  alpha_sw_velocity_rtn_sun=np.zeros((3, 3)),
                                                  alpha_sw_velocity_rtn=np.zeros((3, 3)),
                                                  alpha_sw_velocity_rtn_covariance=np.zeros((3, 3, 3)),
+                                                 alpha_sw_velocity_gse_sun=np.zeros((3, 3)),
+                                                 alpha_sw_velocity_gse_sun_covariance=np.zeros((3, 3, 3)),
                                                  parent_file_names=sentinel.parent_files,
                                                  quality_flags=sentinel.quality_flags,
                                                  )
@@ -234,6 +236,8 @@ class TestUtils(TestCase):
                                                  alpha_sw_velocity_rtn_sun=np.zeros((3, 3)),
                                                  alpha_sw_velocity_rtn=np.zeros((3, 3)),
                                                  alpha_sw_velocity_rtn_covariance=np.zeros((3, 3, 3)),
+                                                 alpha_sw_velocity_gse_sun=np.zeros((3, 3)),
+                                                 alpha_sw_velocity_gse_sun_covariance=np.zeros((3, 3, 3)),
                                                  quality_flags=quality_flags,
                                                  )
         save_data(data_product)
@@ -274,6 +278,8 @@ class TestUtils(TestCase):
                                                  alpha_sw_velocity_rtn_sun=np.zeros((3, 3)),
                                                  alpha_sw_velocity_rtn=np.zeros((3, 3)),
                                                  alpha_sw_velocity_rtn_covariance=np.zeros((3, 3, 3)),
+                                                 alpha_sw_velocity_gse_sun=np.zeros((3, 3)),
+                                                 alpha_sw_velocity_gse_sun_covariance=np.zeros((3, 3, 3)),
                                                  quality_flags=quality_flags,
                                                  )
 
