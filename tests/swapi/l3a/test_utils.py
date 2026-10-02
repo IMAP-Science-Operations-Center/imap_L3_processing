@@ -33,7 +33,7 @@ from imap_l3_processing.swapi.l3a.utils import (
     esa_voltage_to_alpha_speed,
     esa_voltage_to_proton_speed,
     get_spacecraft_velocity_rtn,
-    convert_sun_velocity_rtn_to_gse_sun,
+    convert_sun_velocity_rtn_to_gse,
     get_swapi_geometry,
     measurement_times,
     pickup_ion_chunk_epoch,
@@ -348,15 +348,17 @@ class TestSwapiSpiceHelpers(SpiceTestCase):
         self.assertGreater(speed, 10.0)
         self.assertLess(speed, 60.0)
 
-    def test_convert_sun_velocity_rtn_to_gse_sun_matches_spice_state_of_imap(self):
-        """For IMAP's own Sun-relative velocity, the GSE (Sun frame) velocity equals IMAP's Earth-relative GSE velocity from SPICE (which includes the rotating-frame term) plus Earth's Sun-relative velocity in GSE axes. The covariance is only rotated."""
+    def test_convert_sun_velocity_rtn_to_gse_matches_spice_state_of_imap(self):
+        """For IMAP's own Sun-relative velocity, the GSE (Earth frame) velocity equals IMAP's Earth-relative GSE velocity from SPICE (which includes the rotating-frame term), and the GSE (Sun frame) velocity adds Earth's Sun-relative velocity in GSE axes. The covariance is only rotated."""
         et = float(ttj2000ns_to_et(self._EPOCH_TT2000_NS))
         covariance_rtn = np.array([[4.0, 1.0, 0.5], [1.0, 9.0, 2.0], [0.5, 2.0, 16.0]])
 
-        velocity_gse_sun, covariance_gse_sun = convert_sun_velocity_rtn_to_gse_sun(
-            self._EPOCH_TT2000_NS,
-            get_spacecraft_velocity_rtn(self._EPOCH_TT2000_NS),
-            covariance_rtn,
+        velocity_gse_earth, velocity_gse_sun, covariance_gse = (
+            convert_sun_velocity_rtn_to_gse(
+                self._EPOCH_TT2000_NS,
+                get_spacecraft_velocity_rtn(self._EPOCH_TT2000_NS),
+                covariance_rtn,
+            )
         )
 
         imap_velocity_from_earth_gse = spiceypy.spkezr(
@@ -367,6 +369,9 @@ class TestSwapiSpiceHelpers(SpiceTestCase):
             @ spiceypy.spkezr("EARTH", et, "ECLIPJ2000", "NONE", "SUN")[0][3:]
         )
         np.testing.assert_allclose(
+            imap_velocity_from_earth_gse, velocity_gse_earth, atol=1e-9
+        )
+        np.testing.assert_allclose(
             imap_velocity_from_earth_gse + earth_velocity_from_sun_gse,
             velocity_gse_sun,
             atol=1e-9,
@@ -375,7 +380,7 @@ class TestSwapiSpiceHelpers(SpiceTestCase):
         gse_from_rtn = spiceypy.pxform("IMAP_RTN", "IMAP_GSE", et)
         np.testing.assert_allclose(
             gse_from_rtn @ covariance_rtn @ gse_from_rtn.T,
-            covariance_gse_sun,
+            covariance_gse,
             atol=1e-9,
         )
 
