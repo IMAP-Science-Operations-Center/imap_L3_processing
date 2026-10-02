@@ -140,7 +140,9 @@ def convert_sun_velocity_rtn_to_gse_sun(
         et, SpiceFrame.ECLIPJ2000, observer=SpiceBody.EARTH
     )[:3]
 
-    state = np.concatenate([position_from_earth, eclipj2000_from_rtn @ velocity_rtn_sun])
+    state = np.concatenate(
+        [position_from_earth, eclipj2000_from_rtn @ velocity_rtn_sun]
+    )
     velocity_gse_sun = (gse_from_eclipj2000 @ state)[3:]
 
     # The rotating-frame term does not depend on velocity, so the covariance
@@ -183,7 +185,9 @@ def velocity_to_angles_in_instrument_frame(
     flow-vs-look sign convention.
     """
     v_xyz = rotation_xyz_to_rtn.T @ sw_params.velocity_rtn
-    return velocity_components_to_angles_in_instrument_frame(v_xyz[0], v_xyz[1], v_xyz[2])
+    return velocity_components_to_angles_in_instrument_frame(
+        v_xyz[0], v_xyz[1], v_xyz[2]
+    )
 
 
 def compute_direction_of_mean_magnetic_field_over_chunk(
