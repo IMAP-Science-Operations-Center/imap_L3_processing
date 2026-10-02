@@ -5,6 +5,7 @@ from typing import Iterable
 import numba
 import numpy as np
 import scipy.optimize
+import spiceypy
 from numpy import ndarray
 from numpy.typing import ArrayLike
 from spacepy import pycdf
@@ -32,6 +33,7 @@ from imap_l3_processing.swapi.constants import (
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_processing.spice.geometry import (
+    SpiceBody,
     SpiceFrame,
     get_rotation_matrix,
     imap_state,
@@ -115,6 +117,37 @@ def get_spacecraft_velocity_rtn(epoch_tt2000_ns: float) -> ndarray:
         et, SpiceFrame.ECLIPJ2000, SpiceFrame.IMAP_RTN
     )
     return np.einsum("ij,j->i", rtn_from_eclipj2000, state_eclipj2000[3:])
+
+
+def convert_sun_velocity_rtn_to_gse_sun(
+    epoch_tt2000_ns: float, velocity_rtn_sun: ndarray, covariance_rtn: ndarray
+) -> tuple[ndarray, ndarray]:
+    """Convert a Sun-frame RTN velocity and its covariance to GSE.
+
+    The result is in GSE axes with the Earth as origin, but the Sun remains the
+    standard of rest. The velocity is first rotated into inertial ECLIPJ2000;
+    then the full 6D state (IMAP position relative to Earth, velocity) is
+    transformed to GSE, which adds the rotating-frame term.
+    """
+    et = float(ttj2000ns_to_et(epoch_tt2000_ns))
+    eclipj2000_from_rtn = get_rotation_matrix(
+        et, SpiceFrame.IMAP_RTN, SpiceFrame.ECLIPJ2000
+    )
+    gse_from_eclipj2000 = spiceypy.sxform(
+        SpiceFrame.ECLIPJ2000.name, SpiceFrame.IMAP_GSE.name, et
+    )
+    position_from_earth = imap_state(
+        et, SpiceFrame.ECLIPJ2000, observer=SpiceBody.EARTH
+    )[:3]
+
+    state = np.concatenate([position_from_earth, eclipj2000_from_rtn @ velocity_rtn_sun])
+    velocity_gse_sun = (gse_from_eclipj2000 @ state)[3:]
+
+    # The rotating-frame term does not depend on velocity, so the covariance
+    # only sees the rotation.
+    gse_from_rtn = gse_from_eclipj2000[3:, 3:] @ eclipj2000_from_rtn
+    covariance_gse_sun = gse_from_rtn @ covariance_rtn @ gse_from_rtn.T
+    return velocity_gse_sun, covariance_gse_sun
 
 
 @numba.njit
