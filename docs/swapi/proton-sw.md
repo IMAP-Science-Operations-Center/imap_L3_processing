@@ -190,6 +190,9 @@ The `proton-sw` CDF variables are derived from $`\mathbf{x}`$ and $`\Sigma_\math
 | `proton_sw_velocity_rtn_sun`             | $`\mathbf{v}_{b}^{\text{sun}}`$ | $`\mathbf{v}_{b}^{\text{SC}} + \mathbf{v}_{\text{sc}}^{\text{sun}}`$ <sup>[2](#fn-vsc)</sup>                                          |
 | `proton_sw_speed_sun`                         | $`v_{\text{sun}}`$          | $`\lvert\mathbf{v}_{b}^{\text{sun}}\rvert`$                                                                 |
 | `proton_sw_speed_sun_uncert`                  | $`\sigma_{v_{\text{sun}}}`$ | propagated through `uncertainties` from $`\mathbf{v}_{b}^{\text{sun}}`$                                       |
+| `proton_sw_velocity_gse_sun`                 | $`\mathbf{v}_{b}^{\text{sun,GSE}}`$ | $`\mathbf{v}_{b}^{\text{sun}}`$ in GSE axes (Sun frame) <sup>[3](#fn-gse)</sup> |
+| `proton_sw_velocity_gse_sun_covariance`      | $`\Sigma_{\mathbf{v}}^{\text{GSE}}`$ | $`M\thinspace \Sigma_{\mathbf{v}}\thinspace M^{\top}`$ <sup>[3](#fn-gse)</sup> |
+| `proton_sw_velocity_gse_sun_uncert`          | $`\sigma_{\mathbf{v}_{b}}^{\text{GSE}}`$ | $`\sqrt{\operatorname{diag}(\Sigma_{\mathbf{v}}^{\text{GSE}})}`$ |
 | `swp_flags`                                   |                         | quality flag bitmask (see `SwapiL3Flags`)                                                            |
 
 
