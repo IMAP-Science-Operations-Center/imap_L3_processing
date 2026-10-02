@@ -92,6 +92,9 @@ Finally, the `alpha-sw` CDF variables are derived from the fitted parameter vect
 | `alpha_sw_velocity_rtn_sun`           | $`\mathbf{v}^{\alpha,\text{sun}}`$                    | $`\mathbf{v}^{\alpha,\text{SC}} + \mathbf{v}_{\text{sc}}^{\text{sun}}`$                                                                   |
 | `alpha_sw_speed_sun`                  | $`\lvert\mathbf{v}^{\alpha,\text{sun}}\rvert`$        | $`\lvert\mathbf{v}^{\alpha,\text{sun}}\rvert`$                                                                                |
 | `alpha_sw_speed_sun_uncert`           | $`\sigma_{\lvert\mathbf{v}^{\alpha,\text{sun}}\rvert}`$ | propagated through `uncertainties` from $`\mathbf{v}^{\alpha,\text{sun}}`$                                                    |
+| `alpha_sw_velocity_gse_sun`           | $`\mathbf{v}^{\alpha,\text{sun,GSE}}`$ | $`\mathbf{v}^{\alpha,\text{sun}}`$ in GSE axes (Sun frame) <sup>[2](#fn-gse)</sup> |
+| `alpha_sw_velocity_gse_sun_covariance` | $`\Sigma_{\mathbf{v}^{\alpha}}^{\text{GSE}}`$ | $`M\thinspace \Sigma_{\mathbf{v}^{\alpha}}\thinspace M^{\top}`$ <sup>[2](#fn-gse)</sup> |
+| `alpha_sw_velocity_gse_sun_uncert`     | $`\sigma_{\mathbf{v}^{\alpha}}^{\text{GSE}}`$ | $`\sqrt{\operatorname{diag}(\Sigma_{\mathbf{v}^{\alpha}}^{\text{GSE}})}`$ |
 | `swp_flags`                           |                                                   | quality flag bitmask (see `SwapiL3Flags`)                                                                                 |
 
 
