@@ -29,19 +29,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
 import types
 
+import matplotlib
 import numpy as np
 import pandas as pd
 from uncertainties import UFloat
-import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-
-from imap_l3_processing.constants import (
-    PROTON_MASS_KG,
-    PROTON_MASS_PER_CHARGE_M_P_PER_E,
-)
-from imap_l3_processing.swapi.constants import SWAPI_LIVETIME_S
 from figure_utils import (
     COARSE_BIN_INDICES_IN_SWEEP,
     COARSE_SWEEP_VOLTAGES_MEAN_V,
@@ -50,20 +44,26 @@ from figure_utils import (
     load_swapi_response,
     run_parallel_map,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
-    fit_solar_wind_proton_model,
+
+from imap_l3_processing.constants import (
+    PROTON_MASS_KG,
+    PROTON_MASS_PER_CHARGE_M_P_PER_E,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.calculate_initial_guess import (
-    calculate_initial_guess,
+from imap_l3_processing.swapi.constants import SWAPI_LIVETIME_S
+from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
+    build_solar_wind_fit_context,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
 )
-from imap_l3_processing.swapi.response.deadtime import deadtime_factor
-from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
-    build_solar_wind_fit_context,
-)
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.calculate_initial_guess import (
+    calculate_initial_guess,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
+    fit_solar_wind_proton_model,
+)
+from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 
 _N_SWEEPS = 5
 _N_BINS = len(COARSE_SWEEP_VOLTAGES_MEAN_V)
@@ -188,10 +188,11 @@ def _process_one(i):
         result = fit_solar_wind_proton_model(fit_ctx)
     except Exception as e:
         print(f"  case {i}: fit failed ({type(e).__name__}: {e}); flagging bad")
+        from uncertainties import ufloat
+
         from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
             ProtonSolarWindFitResult,
         )
-        from uncertainties import ufloat
 
         nan_uf = ufloat(float("nan"), float("nan"))
         result = ProtonSolarWindFitResult(
@@ -315,7 +316,7 @@ def _plot_results(data: pd.DataFrame) -> None:
             marker="o",
             zorder=2,
             label="Initial guess",
-            rasterized=True
+            rasterized=True,
         )
         ax.errorbar(
             truth[good],
@@ -344,7 +345,7 @@ def _plot_results(data: pd.DataFrame) -> None:
                 edgecolors="k",
                 linewidths=0.4,
                 zorder=4,
-                rasterized=True
+                rasterized=True,
             )
             ax.scatter(
                 truth[~good],
@@ -356,7 +357,7 @@ def _plot_results(data: pd.DataFrame) -> None:
                 edgecolors="k",
                 linewidths=0.4,
                 zorder=4,
-                rasterized=True
+                rasterized=True,
             )
 
         ax.set_xlabel(f"True {label}", fontsize=9)

@@ -15,10 +15,10 @@ def fix_fieldnam():
         with open(variable_yaml, mode="r") as file:
             yaml_data = yaml.safe_load(file)
             for key, item in yaml_data.items():
-                if 'NAME' not in item.keys():
+                if "NAME" not in item.keys():
                     continue
-                if "_" in yaml_data[key]['FIELDNAM']:
-                    yaml_data[key]['FIELDNAM'] = key.replace("_", " ").title()
+                if "_" in item["FIELDNAM"]:
+                    yaml_data[key]["FIELDNAM"] = key.replace("_", " ").title()
                 if len(key) > 30:
                     print("key over 30", variable_yaml, key)
 
@@ -29,8 +29,11 @@ def fix_fieldnam():
 def get_variable_yaml_paths() -> list[Path]:
     yaml_path = Path(cdf.__file__).parent / "config"
 
-    return [yaml_path / str(filename) for filename in os.listdir(yaml_path) if
-            "variable_attrs" in str(filename)]
+    return [
+        yaml_path / str(filename)
+        for filename in os.listdir(yaml_path)
+        if "variable_attrs" in str(filename)
+    ]
 
 
 if __name__ == "__main__":

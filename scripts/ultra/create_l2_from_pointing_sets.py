@@ -32,8 +32,11 @@ def create_input_file(sensor: str, start: datetime, end: datetime) -> str:
     date = start
     while date < end:
         repointing = int((date - start_repointings) / timedelta(days=1))
-        inputs.add(generate_imap_input(
-            f"imap_ultra_l1c_{sensor}sensor-heliopset_{date.strftime('%Y%m%d')}-repoint{repointing:05}_v000.cdf"))
+        inputs.add(
+            generate_imap_input(
+                f"imap_ultra_l1c_{sensor}sensor-heliopset_{date.strftime('%Y%m%d')}-repoint{repointing:05}_v000.cdf"
+            )
+        )
         date += timedelta(days=1)
     dependency_file = f"imap_ultra_l2_{sensor}sensor-de-{start.strftime('%Y%m%d')}-{end.strftime('%Y%m%d')}_{start.strftime('%Y%m%d')}_v001.json"
     dependency_path = generate_imap_file_path(dependency_file).construct_path()
@@ -43,7 +46,7 @@ def create_input_file(sensor: str, start: datetime, end: datetime) -> str:
 
 
 def generate_map(descriptor: str, start: datetime, end: datetime):
-    sensor = descriptor.split('-')[0][1:]
+    sensor = descriptor.split("-")[0][1:]
     dependency_file = create_input_file(sensor, start, end)
 
     env = {
@@ -53,7 +56,7 @@ def generate_map(descriptor: str, start: datetime, end: datetime):
     }
 
     version = "v000"
-    formatted_start_date = start_date.strftime('%Y%m%d')
+    formatted_start_date = start_date.strftime("%Y%m%d")
     output_filename = f"imap_ultra_l2_{descriptor}_{formatted_start_date}_{version}.cdf"
     command = f"imap_cli --instrument ultra --data-level l2 --descriptor {descriptor} --start-date {formatted_start_date} --version {version} --dependency {dependency_file}"
     print(command)
@@ -69,8 +72,8 @@ if __name__ == "__main__":
     start_date = datetime(2025, 4, 16)
     end_date = datetime(2025, 10, 15)
 
-    duration = '6mo'
-    descriptor = f"u90-ena-h-hf-nsp-full-hae-2deg-6mo"
+    duration = "6mo"
+    descriptor = "u90-ena-h-hf-nsp-full-hae-2deg-6mo"
     generate_map(descriptor, start_date, end_date)
     # for sensor in [45, 90]:
     #     for side in ['ram', 'anti', 'full']:

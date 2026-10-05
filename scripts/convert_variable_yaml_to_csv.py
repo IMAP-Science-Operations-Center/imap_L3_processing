@@ -11,9 +11,17 @@ if __name__ == "__main__":
     with open(yaml_path) as yaml_file:
         yaml_data = yaml.safe_load(yaml_file)
 
-    all_headers = {key: '' for key in
-                   set(chain.from_iterable([yaml_data[variable].keys() for variable in yaml_data.keys()]))}
-    valid_variables = [yaml_data[var] for var in yaml_data.keys() if 'NAME' in yaml_data[var]]
+    all_headers = {
+        key: ""
+        for key in set(
+            chain.from_iterable(
+                [yaml_data[variable].keys() for variable in yaml_data.keys()]
+            )
+        )
+    }
+    valid_variables = [
+        yaml_data[var] for var in yaml_data.keys() if "NAME" in yaml_data[var]
+    ]
     with open(outpath, "w") as out_file:
         writer = csv.DictWriter(out_file, fieldnames=all_headers.keys())
         writer.writeheader()

@@ -5,7 +5,8 @@ import numpy as np
 
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     SolarWindParams,
-    bulk_speed, thermal_speed,
+    bulk_speed,
+    thermal_speed,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.utils import (
     count_rate_conversion_factor,
@@ -20,7 +21,6 @@ from imap_l3_processing.swapi.response.passband_grid import (
     speed_ratio_range_at_elevation,
 )
 from imap_l3_processing.swapi.response.swapi_response import ResponseGrid
-
 
 OA_SCAN_THRESHOLD = 1e-6
 OA_SCAN_RESOLUTION = 64
@@ -62,9 +62,11 @@ def trim_open_aperture(
             break
 
     dphi_deg = scan_azimuths[1] - scan_azimuths[0]
-    transmission_az_integral = float(np.trapezoid(
-        transmission_x_maxwellian[lower_index : upper_index + 1], dx=dphi_deg
-    ))
+    transmission_az_integral = float(
+        np.trapezoid(
+            transmission_x_maxwellian[lower_index : upper_index + 1], dx=dphi_deg
+        )
+    )
     upper_bound = _oa_rate_upper_bound(
         response_grid,
         sw_params,
@@ -88,15 +90,16 @@ def _evaluate_oa_integrand_along_azimuth(
     sigma = thermal_speed(sw_params)
     speed = bulk_speed(sw_params)
     central_speed = response_grid.central_speed
-    bulk_az, bulk_el = velocity_to_angles_in_instrument_frame(sw_params, rotation_matrix)
+    bulk_az, bulk_el = velocity_to_angles_in_instrument_frame(
+        sw_params, rotation_matrix
+    )
 
     sin_bulk_el = math.sin(np.radians(bulk_el))
     cos_bulk_el = math.cos(np.radians(bulk_el))
     sin_scan_el = math.sin(np.radians(scan_elevation))
     cos_scan_el = math.cos(np.radians(scan_elevation))
-    cos_view_to_bulk = (
-        sin_bulk_el * sin_scan_el + cos_bulk_el * cos_scan_el
-        * np.cos(np.radians(scan_azimuths - bulk_az))
+    cos_view_to_bulk = sin_bulk_el * sin_scan_el + cos_bulk_el * cos_scan_el * np.cos(
+        np.radians(scan_azimuths - bulk_az)
     )
     delta_v_sq = (
         central_speed**2 + speed**2 - 2.0 * central_speed * speed * cos_view_to_bulk
@@ -125,9 +128,9 @@ def _oa_rate_upper_bound(
     ratio_lo, ratio_hi = speed_ratio_range_at_elevation(response_grid.oa_passband, 0.0)
     delta_v = central_speed * (ratio_hi - ratio_lo)
     return (
-            count_rate_conversion_factor(sw_params, response_grid)
-            * central_speed ** 3
-            * delta_theta_deg
-            * delta_v
-            * transmission_az_integral
+        count_rate_conversion_factor(sw_params, response_grid)
+        * central_speed**3
+        * delta_theta_deg
+        * delta_v
+        * transmission_az_integral
     )

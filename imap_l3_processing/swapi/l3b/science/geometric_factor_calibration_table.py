@@ -14,5 +14,5 @@ class GeometricFactorCalibrationTable:
 
     @classmethod
     def from_file(cls, file_path) -> GeometricFactorCalibrationTable:
-        data = np.loadtxt(file_path, skiprows=1, delimiter=',')
+        data = np.loadtxt(file_path, skiprows=1, delimiter=",")
         return cls(data)

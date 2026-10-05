@@ -7,6 +7,7 @@ from imap_data_access import ProcessingInputCollection
 
 from imap_l3_processing.maps.map_models import RectangularIntensityMapData
 
+
 @dataclass
 class LoCombinedDependencies:
     map_data: list[RectangularIntensityMapData]
@@ -15,7 +16,9 @@ class LoCombinedDependencies:
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection) -> Self:
         lo_inputs = dependencies.get_file_paths(source="lo")
 
-        assert len(lo_inputs) == 3, f"Expected 3 input lo maps to produce combined map! got {len(lo_inputs)}"
+        assert len(lo_inputs) == 3, (
+            f"Expected 3 input lo maps to produce combined map! got {len(lo_inputs)}"
+        )
 
         downloaded_paths = [imap_data_access.download(Path(i).name) for i in lo_inputs]
 
@@ -23,5 +26,6 @@ class LoCombinedDependencies:
 
     @classmethod
     def from_file_paths(cls, file_paths: list[Path]) -> Self:
-        return cls(map_data=[RectangularIntensityMapData.read_from_path(p) for p in file_paths])
-
+        return cls(
+            map_data=[RectangularIntensityMapData.read_from_path(p) for p in file_paths]
+        )

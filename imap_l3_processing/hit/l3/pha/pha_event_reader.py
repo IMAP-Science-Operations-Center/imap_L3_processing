@@ -1,7 +1,7 @@
 import csv
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Literal
+from typing import Literal
 
 from bitstring import BitStream
 
@@ -22,7 +22,9 @@ class Detector:
     @classmethod
     def from_address(cls, address: int):
         if cls.detector_mapping == {}:
-            with open(Path(__file__).parent / "address_to_detector.csv") as detector_mapping_file:
+            with open(
+                Path(__file__).parent / "address_to_detector.csv"
+            ) as detector_mapping_file:
                 reader = csv.reader(detector_mapping_file)
                 next(reader)
                 for name, address_str, group in reader:
@@ -33,14 +35,22 @@ class Detector:
         if detector_name_and_group is not None:
             detector_name, group = detector_name_and_group
             layer = int(detector_name[1])
-            return cls(layer=layer,
-                       side=detector_name[2],
-                       segment=detector_name[3:],
-                       address=address,
-                       group=group)
+            return cls(
+                layer=layer,
+                side=detector_name[2],
+                segment=detector_name[3:],
+                address=address,
+                group=group,
+            )
 
         else:
-            return cls(layer=4, side="A", segment=f"UNKNOWN_{address}", address=address, group="Unknown")
+            return cls(
+                layer=4,
+                side="A",
+                segment=f"UNKNOWN_{address}",
+                address=address,
+                group="Unknown",
+            )
 
 
 @dataclass
@@ -86,9 +96,9 @@ class RawPHAEvent:
     culling_flag: bool
     spare: bool
     pha_words: list[PHAWord]
-    extended_header: Optional[PHAExtendedHeader] = None
-    stim_block: Optional[StimBlock] = None
-    extended_stim_header: Optional[ExtendedStimHeader] = None
+    extended_header: PHAExtendedHeader | None = None
+    stim_block: StimBlock | None = None
+    extended_stim_header: ExtendedStimHeader | None = None
 
 
 class PHAEventReader:
@@ -116,7 +126,9 @@ class PHAEventReader:
             delta_e_index = event_bitstream.read("uint:9")
             e_prime_index = event_bitstream.read("uint:7")
             detector_flags = event_bitstream.read("uint:8")
-            extended_header = PHAExtendedHeader(detector_flags, delta_e_index, e_prime_index)
+            extended_header = PHAExtendedHeader(
+                detector_flags, delta_e_index, e_prime_index
+            )
 
         elif stim_tag:
             if long_event_flag:
@@ -128,7 +140,12 @@ class PHAEventReader:
             unused = event_bitstream.read("uint:2")
             stim_gain = event_bitstream.read("uint:1")
             stim_step = event_bitstream.read("uint:4")
-            stim_block = StimBlock(stim_step=stim_step, stim_gain=stim_gain, unused=unused, a_l_stim=a_l_stim)
+            stim_block = StimBlock(
+                stim_step=stim_step,
+                stim_gain=stim_gain,
+                unused=unused,
+                a_l_stim=a_l_stim,
+            )
 
         reading_pha = True
         pha_words = []
@@ -140,30 +157,34 @@ class PHAEventReader:
             adc_value = event_bitstream.read("uint:11")
             reading_pha = not is_last_event
 
-            pha_word = PHAWord(adc_overflow=adc_overflow, adc_value=adc_value,
-                               detector=Detector.from_address(adc_detector_address),
-                               is_last_pha=is_last_event,
-                               is_low_gain=is_low_gain)
+            pha_word = PHAWord(
+                adc_overflow=adc_overflow,
+                adc_value=adc_value,
+                detector=Detector.from_address(adc_detector_address),
+                is_last_pha=is_last_event,
+                is_low_gain=is_low_gain,
+            )
             pha_words.append(pha_word)
 
         if len(pha_words) % 2 == 1:
             event_bitstream.read("uint:4")
 
-        return RawPHAEvent(particle_id=particle_id,
-                           priority_buffer_num=priority_buffer_num,
-                           stim_tag=stim_tag,
-                           haz_tag=haz_tag,
-                           time_tag=time_tag,
-                           a_b_side_flag=a_b_side_flag,
-                           has_unread_adcs=has_unread_adcs,
-                           long_event_flag=long_event_flag,
-                           culling_flag=culling_flag,
-                           spare=spare,
-                           pha_words=pha_words,
-                           extended_header=extended_header,
-                           extended_stim_header=extended_stim_header,
-                           stim_block=stim_block
-                           )
+        return RawPHAEvent(
+            particle_id=particle_id,
+            priority_buffer_num=priority_buffer_num,
+            stim_tag=stim_tag,
+            haz_tag=haz_tag,
+            time_tag=time_tag,
+            a_b_side_flag=a_b_side_flag,
+            has_unread_adcs=has_unread_adcs,
+            long_event_flag=long_event_flag,
+            culling_flag=culling_flag,
+            spare=spare,
+            pha_words=pha_words,
+            extended_header=extended_header,
+            extended_stim_header=extended_stim_header,
+            stim_block=stim_block,
+        )
 
     @classmethod
     def read_all_pha_events(cls, binary_pha_events: str) -> list[RawPHAEvent]:

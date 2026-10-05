@@ -7,6 +7,7 @@ from imap_l3_processing.constants import PROTON_MASS_KG
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     SolarWindFitContext,
 )
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton import (
     escape_local_minimum as escape_local_minimum_module,
 )
@@ -18,7 +19,6 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.proton.escape_local_minimum
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.optimize_solar_wind_proton_params import (
     OptimizeSolarWindProtonParamsResult,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from tests.swapi._helpers import proton_params as _shared_proton_params
 
 
@@ -78,13 +78,17 @@ class TestEscapeLocalMinimum(unittest.TestCase):
         flipped_mse_far_above_gate = lm1.mse * self._GATE_FACTOR * 10.0
         flipped_params = _proton_params(velocity_rtn=(450.0, 0.0, 0.0))
 
-        with patch.object(
-            escape_local_minimum_module,
-            "flipped_seed",
-            return_value=(flipped_mse_far_above_gate, flipped_params),
-        ) as mock_flipped, patch.object(
-            escape_local_minimum_module, "_restart_from_flipped_params",
-        ) as mock_opt:
+        with (
+            patch.object(
+                escape_local_minimum_module,
+                "flipped_seed",
+                return_value=(flipped_mse_far_above_gate, flipped_params),
+            ) as mock_flipped,
+            patch.object(
+                escape_local_minimum_module,
+                "_restart_from_flipped_params",
+            ) as mock_opt,
+        ):
             out = escape_local_minimum(lm1, ctx)
 
         self.assertIs(out, lm1)
@@ -99,13 +103,16 @@ class TestEscapeLocalMinimum(unittest.TestCase):
         lm1 = _result(_proton_params(), mse=1.0)
         flipped_mse_at_gate = lm1.mse * self._GATE_FACTOR
 
-        with patch.object(
-            escape_local_minimum_module,
-            "flipped_seed",
-            return_value=(flipped_mse_at_gate, _proton_params()),
-        ), patch.object(
-            escape_local_minimum_module, "_restart_from_flipped_params"
-        ) as mock_opt:
+        with (
+            patch.object(
+                escape_local_minimum_module,
+                "flipped_seed",
+                return_value=(flipped_mse_at_gate, _proton_params()),
+            ),
+            patch.object(
+                escape_local_minimum_module, "_restart_from_flipped_params"
+            ) as mock_opt,
+        ):
             out = escape_local_minimum(lm1, ctx)
 
         self.assertIs(out, lm1)
@@ -126,18 +133,21 @@ class TestEscapeLocalMinimum(unittest.TestCase):
         flipped_seed_mse_iter1 = lm1.mse * (self._GATE_FACTOR / 2.0)
         flipped_seed_mse_iter2 = better_lm2.mse * (self._GATE_FACTOR * 2.0)
 
-        with patch.object(
-            escape_local_minimum_module,
-            "flipped_seed",
-            side_effect=[
-                (flipped_seed_mse_iter1, better_params),
-                (flipped_seed_mse_iter2, better_params),
-            ],
-        ) as mock_flipped, patch.object(
-            escape_local_minimum_module,
-            "_restart_from_flipped_params",
-            return_value=better_lm2,
-        ) as mock_opt:
+        with (
+            patch.object(
+                escape_local_minimum_module,
+                "flipped_seed",
+                side_effect=[
+                    (flipped_seed_mse_iter1, better_params),
+                    (flipped_seed_mse_iter2, better_params),
+                ],
+            ) as mock_flipped,
+            patch.object(
+                escape_local_minimum_module,
+                "_restart_from_flipped_params",
+                return_value=better_lm2,
+            ) as mock_opt,
+        ):
             out = escape_local_minimum(lm1, ctx)
 
         self.assertIs(out, better_lm2)
@@ -157,15 +167,18 @@ class TestEscapeLocalMinimum(unittest.TestCase):
 
         # Flipped seed clears the cheap gate (within threshold²×current).
         flipped_seed_mse = lm1.mse * (self._GATE_FACTOR / 2.0)
-        with patch.object(
-            escape_local_minimum_module,
-            "flipped_seed",
-            return_value=(flipped_seed_mse, worse_params),
-        ), patch.object(
-            escape_local_minimum_module,
-            "_restart_from_flipped_params",
-            return_value=worse_lm2,
-        ) as mock_opt:
+        with (
+            patch.object(
+                escape_local_minimum_module,
+                "flipped_seed",
+                return_value=(flipped_seed_mse, worse_params),
+            ),
+            patch.object(
+                escape_local_minimum_module,
+                "_restart_from_flipped_params",
+                return_value=worse_lm2,
+            ) as mock_opt,
+        ):
             out = escape_local_minimum(lm1, ctx)
 
         self.assertIs(out, lm1)
@@ -189,19 +202,22 @@ class TestEscapeLocalMinimum(unittest.TestCase):
         ]
         lm1 = results[0]
         gate_factor = self._GATE_FACTOR
-        with patch.object(
-            escape_local_minimum_module,
-            "flipped_seed",
-            # Always within gate (factor / 2 < gate_factor), always with a fresh seed.
-            side_effect=[
-                (results[i].mse * (gate_factor / 2.0), results[i].sw_params)
-                for i in range(chain_length - 1)
-            ],
-        ), patch.object(
-            escape_local_minimum_module,
-            "_restart_from_flipped_params",
-            side_effect=results[1:],
-        ) as mock_opt:
+        with (
+            patch.object(
+                escape_local_minimum_module,
+                "flipped_seed",
+                # Always within gate (factor / 2 < gate_factor), always with a fresh seed.
+                side_effect=[
+                    (results[i].mse * (gate_factor / 2.0), results[i].sw_params)
+                    for i in range(chain_length - 1)
+                ],
+            ),
+            patch.object(
+                escape_local_minimum_module,
+                "_restart_from_flipped_params",
+                side_effect=results[1:],
+            ) as mock_opt,
+        ):
             out = escape_local_minimum(lm1, ctx)
 
         # Pin the cap from the source constant — never hardcode the number.

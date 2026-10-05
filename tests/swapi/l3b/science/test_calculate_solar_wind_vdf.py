@@ -3,9 +3,13 @@ from unittest.mock import create_autospec
 
 import numpy as np
 
-from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_vdf import calculate_proton_solar_wind_vdf, \
-    GeometricFactorCalibrationTable, calculate_alpha_solar_wind_vdf, calculate_pui_solar_wind_vdf, \
-    calculate_delta_minus_plus
+from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_vdf import (
+    GeometricFactorCalibrationTable,
+    calculate_alpha_solar_wind_vdf,
+    calculate_delta_minus_plus,
+    calculate_proton_solar_wind_vdf,
+    calculate_pui_solar_wind_vdf,
+)
 
 
 class TestCalculateSolarWindVDF(TestCase):
@@ -14,13 +18,16 @@ class TestCalculateSolarWindVDF(TestCase):
         count_rates = np.array([10, 20, 30])
         efficiency = 0.0882
         mock_geometric_factor_table = create_autospec(GeometricFactorCalibrationTable)
-        mock_geometric_factor_table.lookup_geometric_factor.return_value = np.array([1e-12, 1e-13, 1e-14])
+        mock_geometric_factor_table.lookup_geometric_factor.return_value = np.array(
+            [1e-12, 1e-13, 1e-14]
+        )
 
         expected_velocities = [437.6947142244463, 379.05474162054054, 309.496900517614]
         expected_probabilities = [0.001487, 0.039664, 0.892442]
 
-        velocities, probabilities = calculate_proton_solar_wind_vdf(energies, count_rates, efficiency,
-                                                                    mock_geometric_factor_table)
+        velocities, probabilities = calculate_proton_solar_wind_vdf(
+            energies, count_rates, efficiency, mock_geometric_factor_table
+        )
 
         np.testing.assert_array_equal(velocities, expected_velocities)
         np.testing.assert_array_almost_equal(probabilities, expected_probabilities)
@@ -49,13 +56,16 @@ class TestCalculateSolarWindVDF(TestCase):
         count_rates = np.array([10, 20, 30])
         efficiency = 0.0882
         mock_geometric_factor_table = create_autospec(GeometricFactorCalibrationTable)
-        mock_geometric_factor_table.lookup_geometric_factor.return_value = np.array([1e-12, 1e-13, 1e-14])
+        mock_geometric_factor_table.lookup_geometric_factor.return_value = np.array(
+            [1e-12, 1e-13, 1e-14]
+        )
 
         expected_velocities = [310.5624166704235, 268.95494229727456, 219.6007908093385]
         expected_probabilities = [0.002954, 0.078785, 1.772657]
 
-        velocities, probabilities = calculate_alpha_solar_wind_vdf(energies, count_rates, efficiency,
-                                                                   mock_geometric_factor_table)
+        velocities, probabilities = calculate_alpha_solar_wind_vdf(
+            energies, count_rates, efficiency, mock_geometric_factor_table
+        )
 
         np.testing.assert_array_equal(velocities, expected_velocities)
         np.testing.assert_array_almost_equal(probabilities, expected_probabilities)
@@ -66,13 +76,20 @@ class TestCalculateSolarWindVDF(TestCase):
         count_rates = np.array([10, 20, 30])
         efficiency = 0.0882
         mock_geometric_factor_table = create_autospec(GeometricFactorCalibrationTable)
-        mock_geometric_factor_table.lookup_geometric_factor.return_value = np.array([1e-12, 1e-13, 1e-14])
+        mock_geometric_factor_table.lookup_geometric_factor.return_value = np.array(
+            [1e-12, 1e-13, 1e-14]
+        )
 
-        expected_velocities = [219.58573945228636, 190.16682867447082, 155.27056541857408]
+        expected_velocities = [
+            219.58573945228636,
+            190.16682867447082,
+            155.27056541857408,
+        ]
         expected_probabilities = [0.00591, 0.157591, 3.5458]
 
-        velocities, probabilities = calculate_pui_solar_wind_vdf(energies, count_rates, efficiency,
-                                                                 mock_geometric_factor_table)
+        velocities, probabilities = calculate_pui_solar_wind_vdf(
+            energies, count_rates, efficiency, mock_geometric_factor_table
+        )
 
         np.testing.assert_array_equal(velocities, expected_velocities)
         np.testing.assert_array_almost_equal(probabilities, expected_probabilities)

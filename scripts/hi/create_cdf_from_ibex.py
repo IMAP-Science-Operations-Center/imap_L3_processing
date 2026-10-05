@@ -1,5 +1,5 @@
 import argparse
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -16,10 +16,10 @@ folder = Path(args.map_folder)
 
 
 def extract_data(lines: list[str]):
-    start_row, dimension_string = lines[0][2:10].split(':')
-    data_lines = lines[int(start_row):]
-    data = np.fromstring('\t'.join(data_lines), dtype=float, sep='\t')
-    return data.reshape(tuple(int(x) for x in dimension_string.split('x'))).T
+    start_row, dimension_string = lines[0][2:10].split(":")
+    data_lines = lines[int(start_row) :]
+    data = np.fromstring("\t".join(data_lines), dtype=float, sep="\t")
+    return data.reshape(tuple(int(x) for x in dimension_string.split("x"))).T
 
 
 fluxes = []
@@ -28,17 +28,21 @@ variances = []
 
 for file in folder.iterdir():
     if file.parts[-1].endswith("flux.txt") and not "mono" in file.parts[-1]:
-        group_file_name_prefix = '-'.join(file.parts[-1].split('-')[:-1])
+        group_file_name_prefix = "-".join(file.parts[-1].split("-")[:-1])
 
-        with open(file.parent / (group_file_name_prefix + "-flux.txt"), "r") as flux_file:
+        with open(
+            file.parent / (group_file_name_prefix + "-flux.txt"), "r"
+        ) as flux_file:
             fluxes.append(extract_data(flux_file.readlines()))
-        with open(file.parent / (group_file_name_prefix + "-fvar.txt"), "r") as variance_file:
+        with open(
+            file.parent / (group_file_name_prefix + "-fvar.txt"), "r"
+        ) as variance_file:
             variances.append(extract_data(variance_file.readlines()))
 
 rng = np.random.default_rng()
 pathname = f"C://Users//Harrison//Development//imap_L3_processing//tests//test_data//{folder.name}.cdf"
 
-with CDF(pathname, '') as cdf:
+with CDF(pathname, "") as cdf:
     cdf.col_major(True)
 
     flux_data = np.stack(fluxes, axis=-1)

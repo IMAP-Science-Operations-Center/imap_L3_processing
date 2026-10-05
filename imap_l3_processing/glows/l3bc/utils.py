@@ -1,36 +1,26 @@
-from datetime import timedelta, datetime
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
-import imap_data_access
 import numpy as np
 import pandas as pd
 from imap_processing.spice.repoint import get_repoint_data
-from spacepy.pycdf import CDF
-
-from imap_l3_processing.glows.l3a.models import GlowsL3LightCurve, PHOTON_FLUX_UNCERTAINTY_CDF_VAR_NAME, \
-    PHOTON_FLUX_CDF_VAR_NAME, RAW_HISTOGRAM_CDF_VAR_NAME, EXPOSURE_TIMES_CDF_VAR_NAME, EPOCH_CDF_VAR_NAME, \
-    EPOCH_DELTA_CDF_VAR_NAME, SPIN_ANGLE_CDF_VAR_NAME, SPIN_ANGLE_DELTA_CDF_VAR_NAME, LATITUDE_CDF_VAR_NAME, \
-    LONGITUDE_CDF_VAR_NAME, EXTRA_HELIOSPHERIC_BACKGROUND_CDF_VAR_NAME, TIME_DEPENDENT_BACKGROUND_CDF_VAR_NAME, \
-    SPACECRAFT_VELOCITY_STD_DEV_CDF_VAR_NAME, FILTER_TEMPERATURE_AVERAGE_CDF_VAR_NAME, \
-    FILTER_TEMPERATURE_STD_DEV_CDF_VAR_NAME, HV_VOLTAGE_AVERAGE_CDF_VAR_NAME, HV_VOLTAGE_STD_DEV_CDF_VAR_NAME, \
-    SPIN_PERIOD_AVERAGE_CDF_VAR_NAME, SPIN_PERIOD_STD_DEV_CDF_VAR_NAME, SPIN_PERIOD_GROUND_AVERAGE_CDF_VAR_NAME, \
-    SPIN_PERIOD_GROUND_STD_DEV_CDF_VAR_NAME, PULSE_LENGTH_AVERAGE_CDF_VAR_NAME, PULSE_LENGTH_STD_DEV_CDF_VAR_NAME, \
-    POSITION_ANGLE_OFFSET_AVERAGE_CDF_VAR_NAME, POSITION_ANGLE_OFFSET_STD_DEV_CDF_VAR_NAME, \
-    SPIN_AXIS_ORIENTATION_AVERAGE_CDF_VAR_NAME, SPIN_AXIS_ORIENTATION_STD_DEV_CDF_VAR_NAME, \
-    SPACECRAFT_LOCATION_AVERAGE_CDF_VAR_NAME, SPACECRAFT_LOCATION_STD_DEV_CDF_VAR_NAME, \
-    SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME, NUM_OF_BINS_CDF_VAR_NAME
 
 
-def get_best_ancillary(start_date: datetime, end_date: datetime, ancillary_query_results: list[dict]) -> Optional[str]:
+def get_best_ancillary(
+    start_date: datetime, end_date: datetime, ancillary_query_results: list[dict]
+) -> str | None:
     valid_ancillaries = []
     for ancillary_file in ancillary_query_results:
         ancillary_start_date = datetime.strptime(ancillary_file["start_date"], "%Y%m%d")
-        ancillary_end_date = datetime.strptime(ancillary_file["end_date"], "%Y%m%d") if ancillary_file[
-            "end_date"] else None
+        ancillary_end_date = (
+            datetime.strptime(ancillary_file["end_date"], "%Y%m%d")
+            if ancillary_file["end_date"]
+            else None
+        )
 
-        if ancillary_start_date <= end_date and (ancillary_end_date is None or ancillary_end_date >= start_date):
+        if ancillary_start_date <= end_date and (
+            ancillary_end_date is None or ancillary_end_date >= start_date
+        ):
             valid_ancillaries.append(ancillary_file)
 
     if len(valid_ancillaries) == 0:
@@ -44,26 +34,37 @@ carrington_first = 1
 first_carrington_start_date = datetime(1853, 11, 9, 19, 53, 45, 600000)
 carrington_length = timedelta(days=27.2753)
 
+
 def get_date_range_of_cr(cr_number: int) -> tuple[datetime, datetime]:
-    start_date = first_carrington_start_date + (cr_number - carrington_first) * carrington_length
+    start_date = (
+        first_carrington_start_date + (cr_number - carrington_first) * carrington_length
+    )
     return start_date, start_date + carrington_length
+
 
 def get_midpoint_of_cr(cr_number: int) -> datetime:
     start, _ = get_date_range_of_cr(cr_number)
     return start + carrington_length / 2
 
+
 def get_cr_for_date_time(datetime_to_check: datetime) -> int:
-    return int(carrington_first + (datetime_to_check - first_carrington_start_date) / carrington_length)
+    return int(
+        carrington_first
+        + (datetime_to_check - first_carrington_start_date) / carrington_length
+    )
+
 
 def get_pointing_date_range(repointing: int) -> (datetime, datetime):
     repointing_df: pd.DataFrame = get_repoint_data()
-    matching_rows_start = repointing_df[repointing_df['repoint_id'] == repointing]
-    matching_rows_end = repointing_df[repointing_df['repoint_id'] == repointing + 1]
+    matching_rows_start = repointing_df[repointing_df["repoint_id"] == repointing]
+    matching_rows_end = repointing_df[repointing_df["repoint_id"] == repointing + 1]
     if len(matching_rows_start) == 0 or len(matching_rows_end) == 0:
         raise ValueError(f"No pointing found for pointing: {repointing}")
     repointing_data_start = matching_rows_start.iloc[0]
     repointing_data_end = matching_rows_end.iloc[0]
-    start_time = repointing_data_start['repoint_end_utc']
-    end_time = repointing_data_end['repoint_start_utc']
+    start_time = repointing_data_start["repoint_end_utc"]
+    end_time = repointing_data_end["repoint_start_utc"]
 
-    return np.datetime64(start_time).astype(datetime), np.datetime64(end_time).astype(datetime)
+    return np.datetime64(start_time).astype(datetime), np.datetime64(end_time).astype(
+        datetime
+    )

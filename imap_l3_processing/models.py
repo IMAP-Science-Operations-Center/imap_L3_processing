@@ -4,7 +4,7 @@ import enum
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Union, Optional, TypeVar, Generic
+from typing import Generic, TypeVar
 
 import numpy as np
 from imap_data_access.file_validation import Version
@@ -29,10 +29,10 @@ class InputMetadata:
     instrument: str
     data_level: str
     start_date: datetime
-    end_date: Optional[datetime]
+    end_date: datetime | None
     version: VersionMap
     descriptor: str = ""
-    repointing: Optional[int] = None
+    repointing: int | None = None
 
     @property
     def logical_source(self):
@@ -42,12 +42,13 @@ class InputMetadata:
 @dataclass
 class DataProductVariable:
     name: str
-    value: Union[np.ndarray, int, float, list[str], list[int]]
+    value: np.ndarray | int | float | list[str] | list[int]
     cdf_data_type: ctypes.c_long = None
     record_varying: bool = None
 
 
 D = TypeVar("D")
+
 
 @dataclass
 class DataProduct(abc.ABC, Generic[D]):
@@ -57,13 +58,15 @@ class DataProduct(abc.ABC, Generic[D]):
 
     @abc.abstractmethod
     def to_data_product_variables(self) -> list[DataProductVariable]:
-        raise NotImplemented
+        raise NotImplementedError
 
     def add_paths_to_parents(self, paths: list[Path]):
         self.add_filenames_to_parents([path.name for path in paths])
 
     def add_filenames_to_parents(self, filenames):
-        self.parent_file_names.extend(filename for filename in filenames if filename not in self.parent_file_names)
+        self.parent_file_names.extend(
+            filename for filename in filenames if filename not in self.parent_file_names
+        )
 
 
 @dataclass
@@ -71,7 +74,9 @@ class MagData:
     epoch: np.ndarray
     mag_data: np.ndarray
 
-    def rebin_to(self, epoch: np.ndarray[float], epoch_delta: np.ndarray[float]) -> np.ndarray[float]:
+    def rebin_to(
+        self, epoch: np.ndarray[float], epoch_delta: np.ndarray[float]
+    ) -> np.ndarray[float]:
         return rebin(self.epoch, self.mag_data, epoch, epoch_delta)
 
 

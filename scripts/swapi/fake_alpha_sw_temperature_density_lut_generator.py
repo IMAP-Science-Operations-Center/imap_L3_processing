@@ -9,7 +9,9 @@ clock_angles = np.arange(0, 365, 360)
 densities = np.arange(1, 6.5, 0.5)
 temps = np.arange(1e4, 1.6e5, 1e4)
 
-with open("imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240905_v002.cdf", 'w') as f:
+with open(
+    "imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240905_v002.cdf", "w"
+) as f:
     f.write("#\n")
     f.write(f"# Created on: {today()}\n")
     f.write("#\n")
@@ -17,6 +19,7 @@ with open("imap_swapi_l2_alpha-density-temperature-lut-text-not-cdf_20240905_v00
     f.write("#\n")
     f.write("#   u_sw     n     density (cm^-3)     T     temperature (K)\n")
 
-    for u_sw, density, temp in itertools.product(u_sw_values, densities, temps):
-        f.write(
-            f"{u_sw}  {density}  {density * 1.021:.4f}  {temp:.4e}  {temp / 1.025:0.4e}\n")
+    f.writelines(
+        f"{u_sw}  {density}  {density * 1.021:.4f}  {temp:.4e}  {temp / 1.025:0.4e}\n"
+        for u_sw, density, temp in itertools.product(u_sw_values, densities, temps)
+    )

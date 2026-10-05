@@ -16,14 +16,14 @@ DEFAULT_RECT_SPACING_DEG_L1C = 0.5
 DEFAULT_HEALPIX_NSIDE_L1C = 16
 
 
-def create_example_ultra_l2_map(  # noqa: PLR0913
-        nside: int = DEFAULT_HEALPIX_NSIDE_L1C,
-        stripe_center_lat: int = 0,
-        width_scale: float = 180.0,
-        counts_scaling_params: tuple[int, float] = (100, 0.01),
-        peak_exposure: float = 1000.0,
-        timestr: str = "2025-09-01T00:00:00",
-        head: str = "45",
+def create_example_ultra_l2_map(
+    nside: int = DEFAULT_HEALPIX_NSIDE_L1C,
+    stripe_center_lat: int = 0,
+    width_scale: float = 180.0,
+    counts_scaling_params: tuple[int, float] = (100, 0.01),
+    peak_exposure: float = 1000.0,
+    timestr: str = "2025-09-01T00:00:00",
+    head: str = "45",
 ) -> xr.Dataset:
     """
     Mock the L1C PSET product with recognizable but unrealistic counts.
@@ -94,7 +94,7 @@ def create_example_ultra_l2_map(  # noqa: PLR0913
     # Calculate probability based on distance from target latitude
     lat_diff = np.abs(lat_pix - stripe_center_lat)
     prob_scaling_factor = counts_scaling_params[1] * np.exp(
-        -(lat_diff ** 2) / (2 * width_scale ** 2)
+        -(lat_diff**2) / (2 * width_scale**2)
     )
     # Generate counts using binomial distribution
     rng = np.random.default_rng(seed=42)
@@ -134,7 +134,7 @@ def create_example_ultra_l2_map(  # noqa: PLR0913
                 [
                     CoordNames.TIME.value,
                     CoordNames.ENERGY_ULTRA_L1C.value,
-                    CoordNames.HEALPIX_INDEX.value
+                    CoordNames.HEALPIX_INDEX.value,
                 ],
                 exposure_time,
             ),
@@ -156,9 +156,7 @@ def create_example_ultra_l2_map(  # noqa: PLR0913
             ),
         },
         coords={
-            CoordNames.TIME.value: [
-                tt_j2000ns
-            ],
+            CoordNames.TIME.value: [tt_j2000ns],
             CoordNames.ENERGY_ULTRA_L1C.value: energy_bin_midpoints,
             CoordNames.HEALPIX_INDEX.value: pix_indices,
         },
@@ -168,7 +166,7 @@ def create_example_ultra_l2_map(  # noqa: PLR0913
                 f"{timestr[5:7]}{timestr[8:10]}-repointNNNNN_vNNN"
             ),
             "Logical_source": f"imap_ultra_l2_{head}sensor-map",
-            "Data_version": "v001"
+            "Data_version": "v001",
         },
     )
 
@@ -179,13 +177,19 @@ def create_example_ultra_l2_map(  # noqa: PLR0913
     pset_product[CoordNames.ELEVATION_L1C.value].attrs["VAR_TYPE"] = "data"
 
     pset_product.coords[CoordNames.TIME.value].attrs["VAR_TYPE"] = "support_data"
-    pset_product.coords[CoordNames.ENERGY_ULTRA_L1C.value].attrs["VAR_TYPE"] = "support_data"
-    pset_product.coords[CoordNames.HEALPIX_INDEX.value].attrs["VAR_TYPE"] = "support_data"
+    pset_product.coords[CoordNames.ENERGY_ULTRA_L1C.value].attrs["VAR_TYPE"] = (
+        "support_data"
+    )
+    pset_product.coords[CoordNames.HEALPIX_INDEX.value].attrs["VAR_TYPE"] = (
+        "support_data"
+    )
 
     return pset_product
 
 
-def _write_ultra_l2_cdf_with_parents(out_path=get_run_local_data_path("ultra/fake_l2_maps/test_l2_map.cdf")):
+def _write_ultra_l2_cdf_with_parents(
+    out_path=get_run_local_data_path("ultra/fake_l2_maps/test_l2_map.cdf"),
+):
     out_xarray = create_example_ultra_l2_map(nside=2)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.unlink(missing_ok=True)
@@ -194,32 +198,75 @@ def _write_ultra_l2_cdf_with_parents(out_path=get_run_local_data_path("ultra/fak
         cdf.new("ena_intensity", out_xarray["counts"].values)
         cdf.new("exposure_factor", out_xarray["exposure_time"].values)
         cdf.new("sensitivity", out_xarray["sensitivity"].values)
-        cdf.new("latitude", out_xarray[CoordNames.ELEVATION_L1C.value].values, recVary=False)
-        cdf.new("longitude", out_xarray[CoordNames.AZIMUTH_L1C.value].values, recVary=False)
-        cdf.new("epoch", out_xarray[CoordNames.TIME.value].values, recVary=False,
-                type=pycdf.const.CDF_TIME_TT2000.value)
-        cdf.new("energy", out_xarray[CoordNames.ENERGY_ULTRA_L1C.value].values, recVary=False)
-        cdf.new("pixel_index", out_xarray[CoordNames.HEALPIX_INDEX.value].values, recVary=False)
+        cdf.new(
+            "latitude", out_xarray[CoordNames.ELEVATION_L1C.value].values, recVary=False
+        )
+        cdf.new(
+            "longitude", out_xarray[CoordNames.AZIMUTH_L1C.value].values, recVary=False
+        )
+        cdf.new(
+            "epoch",
+            out_xarray[CoordNames.TIME.value].values,
+            recVary=False,
+            type=pycdf.const.CDF_TIME_TT2000.value,
+        )
+        cdf.new(
+            "energy",
+            out_xarray[CoordNames.ENERGY_ULTRA_L1C.value].values,
+            recVary=False,
+        )
+        cdf.new(
+            "pixel_index",
+            out_xarray[CoordNames.HEALPIX_INDEX.value].values,
+            recVary=False,
+        )
         cdf.new("epoch_delta", np.array([0]))
-        cdf.new("energy_delta_plus", np.full_like(out_xarray[CoordNames.ENERGY_ULTRA_L1C.value].values, 1))
-        cdf.new("energy_delta_minus", np.full_like(out_xarray[CoordNames.ENERGY_ULTRA_L1C.value].values, 1))
-        cdf.new("energy_label", [str(val) for val in out_xarray[CoordNames.ENERGY_ULTRA_L1C.value].values])
-        cdf.new("obs_date", np.full(out_xarray["counts"].shape,
-                                    spiceypy.unitim(datetime.datetime.now().timestamp(), "ET", "TT") * 1e9),
-                type=pycdf.const.CDF_TIME_TT2000.value)
+        cdf.new(
+            "energy_delta_plus",
+            np.full_like(out_xarray[CoordNames.ENERGY_ULTRA_L1C.value].values, 1),
+        )
+        cdf.new(
+            "energy_delta_minus",
+            np.full_like(out_xarray[CoordNames.ENERGY_ULTRA_L1C.value].values, 1),
+        )
+        cdf.new(
+            "energy_label",
+            [str(val) for val in out_xarray[CoordNames.ENERGY_ULTRA_L1C.value].values],
+        )
+        cdf.new(
+            "obs_date",
+            np.full(
+                out_xarray["counts"].shape,
+                spiceypy.unitim(datetime.datetime.now().timestamp(), "ET", "TT") * 1e9,
+            ),
+            type=pycdf.const.CDF_TIME_TT2000.value,
+        )
         cdf.new("obs_date_range", np.full_like(out_xarray["counts"].values, 1))
-        cdf.new("solid_angle", np.full_like(out_xarray[CoordNames.HEALPIX_INDEX.value].values, 1))
-        cdf.new("ena_intensity_stat_uncert", np.full_like(out_xarray["counts"].values, 1))
+        cdf.new(
+            "solid_angle",
+            np.full_like(out_xarray[CoordNames.HEALPIX_INDEX.value].values, 1),
+        )
+        cdf.new(
+            "ena_intensity_stat_uncert", np.full_like(out_xarray["counts"].values, 1)
+        )
         cdf.new("ena_intensity_sys_err", np.full_like(out_xarray["counts"].values, 1))
-        cdf.new("pixel_index_label", [str(val) for val in out_xarray[CoordNames.HEALPIX_INDEX.value].values])
+        cdf.new(
+            "pixel_index_label",
+            [str(val) for val in out_xarray[CoordNames.HEALPIX_INDEX.value].values],
+        )
 
         for var in cdf:
             if cdf[var].type() == pycdf.const.CDF_TIME_TT2000.value:
-                cdf[var].attrs['FILLVAL'] = datetime.datetime.fromisoformat("9999-12-31T23:59:59.999999999")
+                cdf[var].attrs["FILLVAL"] = datetime.datetime.fromisoformat(
+                    "9999-12-31T23:59:59.999999999"
+                )
             elif cdf[var].type() == pycdf.const.CDF_INT8.value:
-                cdf[var].attrs['FILLVAL'] = -9223372036854775808
-            elif cdf[var].type() == pycdf.const.CDF_FLOAT.value or pycdf.const.CDF_DOUBLE.value:
-                cdf[var].attrs['FILLVAL'] = -1e31
+                cdf[var].attrs["FILLVAL"] = -9223372036854775808
+            elif (
+                cdf[var].type() == pycdf.const.CDF_FLOAT.value
+                or pycdf.const.CDF_DOUBLE.value
+            ):
+                cdf[var].attrs["FILLVAL"] = -1e31
 
 
 if __name__ == "__main__":

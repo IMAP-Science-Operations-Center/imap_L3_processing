@@ -22,11 +22,13 @@ def canonicalize(thetas, phis):
 
 def read_numeric_variable(var: pycdf.Var) -> np.ndarray:
     assert np.issubdtype(var.dtype, np.number)
-    return np.where(var[...] == var.attrs['FILLVAL'], np.nan, var[...])
+    return np.where(var[...] == var.attrs["FILLVAL"], np.nan, var[...])
 
 
-OUTPUT_PATH = Path(__file__).parent.parent.parent / 'comparisons' / 'interpolated_calibration'
-HERITAGE_PATH = r'instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf'
+OUTPUT_PATH = (
+    Path(__file__).parent.parent.parent / "comparisons" / "interpolated_calibration"
+)
+HERITAGE_PATH = r"instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf"
 
 variable_mapping = {
     "spacecraft_potential": "potential",
@@ -102,21 +104,25 @@ def get_heritage_variable(path, variable_spec):
     l3_swe_e = l3_vs.attach("swepam_e")
     match variable_spec:
         case (heritage_name, index):
-            heritage_data = np.array([x[l3_swe_e.field(heritage_name)._index][index] for x in l3_swe_e[:]])
+            heritage_data = np.array(
+                [x[l3_swe_e.field(heritage_name)._index][index] for x in l3_swe_e[:]]
+            )
         case heritage_name:
-            heritage_data = np.array([x[l3_swe_e.field(heritage_name)._index] for x in l3_swe_e[:]])
+            heritage_data = np.array(
+                [x[l3_swe_e.field(heritage_name)._index] for x in l3_swe_e[:]]
+            )
     return heritage_data
 
 
 def plot_heritage_variable(name):
     heritage_data = get_heritage_variable(HERITAGE_PATH, variable_mapping[name])
-    plt.plot(heritage_data, label=f'Heritage: {name}')
+    plt.plot(heritage_data, label=f"Heritage: {name}")
 
 
 def plot_modern_variable(name):
-    l3_output_cdf = CDF('data/imap/swe/l3/2025/06/imap_swe_l3_sci_20250629_v000.cdf')
+    l3_output_cdf = CDF("data/imap/swe/l3/2025/06/imap_swe_l3_sci_20250629_v000.cdf")
     modern_data = read_numeric_variable(l3_output_cdf[name])
-    plt.plot(modern_data, label=f'Modern: {name}')
+    plt.plot(modern_data, label=f"Modern: {name}")
 
 
 def compare_parallel_perp():
@@ -136,22 +142,25 @@ def compare_parallel_perp():
 compare_parallel_perp()
 
 for modern_name, heritage_info in variable_mapping.items():
-
-    l3_hdf = HDF(r'instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf')
+    l3_hdf = HDF(r"instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf")
     l3_vs = l3_hdf.vstart()
     l3_swe_e = l3_vs.attach("swepam_e")
     match heritage_info:
         case (heritage_name, index):
-            heritage_data = np.array([x[l3_swe_e.field(heritage_name)._index][index] for x in l3_swe_e[:]])
+            heritage_data = np.array(
+                [x[l3_swe_e.field(heritage_name)._index][index] for x in l3_swe_e[:]]
+            )
         case heritage_name:
-            heritage_data = np.array([x[l3_swe_e.field(heritage_info)._index] for x in l3_swe_e[:]])
-    l3_output_cdf = CDF('data/imap/swe/l3/2025/06/imap_swe_l3_sci_20250629_v000.cdf')
+            heritage_data = np.array(
+                [x[l3_swe_e.field(heritage_info)._index] for x in l3_swe_e[:]]
+            )
+    l3_output_cdf = CDF("data/imap/swe/l3/2025/06/imap_swe_l3_sci_20250629_v000.cdf")
 
     modern_data = read_numeric_variable(l3_output_cdf[modern_name])
     if "tensor" in modern_name:
         for i in range(6):
-            plt.plot(heritage_data[:, i], label=f'Heritage: {heritage_name} {i}')
-            plt.plot(modern_data[:, i], label=f'Modern: {modern_name} {i}')
+            plt.plot(heritage_data[:, i], label=f"Heritage: {heritage_name} {i}")
+            plt.plot(modern_data[:, i], label=f"Modern: {modern_name} {i}")
 
             plt.legend()
             plt.savefig(OUTPUT_PATH / f"{modern_name}_{i}.png")
@@ -164,8 +173,8 @@ for modern_name, heritage_info in variable_mapping.items():
                 continue
             heritage_data = np.convolve(heritage_data, window_size, mode="same")
             modern_data = np.convolve(modern_data, window_size, mode="same")
-        plt.plot(heritage_data, label=f'Heritage: {heritage_name}')
-        plt.plot(modern_data, label=f'Modern: {modern_name}')
+        plt.plot(heritage_data, label=f"Heritage: {heritage_name}")
+        plt.plot(modern_data, label=f"Modern: {modern_name}")
 
         plt.legend()
         plt.savefig(OUTPUT_PATH / f"{modern_name}.png")
@@ -174,17 +183,17 @@ for modern_name, heritage_info in variable_mapping.items():
             ratio = heritage_data / modern_data
             smooth_ratio = np.convolve(ratio, np.ones(5) / 5, mode="same")
             plt.plot(smooth_ratio)
-            plt.savefig(OUTPUT_PATH / f"density_ratio.png")
+            plt.savefig(OUTPUT_PATH / "density_ratio.png")
             plt.clf()
     l3_output_cdf.close()
 
 
 def compute_canonicalized_data(population: str):
-    l3_hdf = HDF(r'instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf')
+    l3_hdf = HDF(r"instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf")
     l3_vs = l3_hdf.vstart()
     l3_swe_e = l3_vs.attach("swepam_e")
 
-    l3_output_cdf = CDF('data/imap/swe/l3/2025/06/imap_swe_l3_sci_20250629_v000.cdf')
+    l3_output_cdf = CDF("data/imap/swe/l3/2025/06/imap_swe_l3_sci_20250629_v000.cdf")
 
     if population == "core":
         theta_rtn_integrated = "core_temperature_theta_rtn_integrated"
@@ -206,26 +215,40 @@ def compute_canonicalized_data(population: str):
     temp_phi = read_numeric_variable(l3_output_cdf[phi_rtn_integrated])
 
     heritage_theta_rtn_integrated_data = np.array(
-        [x[l3_swe_e.field(heritage_theta_rtn_integrated)._index] for x in l3_swe_e[:]])
+        [x[l3_swe_e.field(heritage_theta_rtn_integrated)._index] for x in l3_swe_e[:]]
+    )
     heritage_phi_rtn_integrated_data = np.array(
-        [x[l3_swe_e.field(heritage_phi_rtn_integrated)._index] for x in l3_swe_e[:]])
+        [x[l3_swe_e.field(heritage_phi_rtn_integrated)._index] for x in l3_swe_e[:]]
+    )
 
     canonical_theta, canonical_phi = canonicalize(temp_theta, temp_phi)
-    heritage_canonical_theta, heritage_canonical_phi = canonicalize(heritage_theta_rtn_integrated_data,
-                                                                    heritage_phi_rtn_integrated_data)
+    heritage_canonical_theta, heritage_canonical_phi = canonicalize(
+        heritage_theta_rtn_integrated_data, heritage_phi_rtn_integrated_data
+    )
 
-    plt.plot(heritage_canonical_theta, '.', label=f'Heritage: {heritage_theta_rtn_integrated}')
-    plt.plot(canonical_theta, '.', label=f'Modern {theta_rtn_integrated}')
+    plt.plot(
+        heritage_canonical_theta,
+        ".",
+        label=f"Heritage: {heritage_theta_rtn_integrated}",
+    )
+    plt.plot(canonical_theta, ".", label=f"Modern {theta_rtn_integrated}")
     plt.legend()
     plt.savefig(OUTPUT_PATH / f"{population}_temperature_rtn_theta.png")
     plt.clf()
 
-    plt.plot(heritage_canonical_phi, '.', label=f'Heritage: {heritage_phi_rtn_integrated}')
-    plt.plot(canonical_phi, '.', label=f'Modern {phi_rtn_integrated}')
+    plt.plot(
+        heritage_canonical_phi, ".", label=f"Heritage: {heritage_phi_rtn_integrated}"
+    )
+    plt.plot(canonical_phi, ".", label=f"Modern {phi_rtn_integrated}")
     plt.legend()
     plt.savefig(OUTPUT_PATH / f"{population}_temperature_rtn_phi.png")
     plt.clf()
-    return canonical_theta, canonical_phi, heritage_theta_rtn_integrated_data, heritage_phi_rtn_integrated_data
+    return (
+        canonical_theta,
+        canonical_phi,
+        heritage_theta_rtn_integrated_data,
+        heritage_phi_rtn_integrated_data,
+    )
 
 
 def compare_eigenvector_directions_with_canonicalization():

@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch, sentinel, call
+from unittest.mock import call, patch, sentinel
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
@@ -9,10 +9,15 @@ from imap_l3_processing.glows.l3bc.models import CRToProcess, ExternalDependenci
 
 
 class TestGlowsL3BCDependencies(unittest.TestCase):
-
-    @patch('imap_l3_processing.glows.l3bc.glows_l3bc_dependencies.create_glows_l3a_dictionary_from_cdf')
-    @patch('imap_l3_processing.glows.l3bc.glows_l3bc_dependencies.imap_data_access.download')
-    def test_download_from_cr_to_process(self, mock_download, mock_create_dictionary_from_cdf):
+    @patch(
+        "imap_l3_processing.glows.l3bc.glows_l3bc_dependencies.create_glows_l3a_dictionary_from_cdf"
+    )
+    @patch(
+        "imap_l3_processing.glows.l3bc.glows_l3bc_dependencies.imap_data_access.download"
+    )
+    def test_download_from_cr_to_process(
+        self, mock_download, mock_create_dictionary_from_cdf
+    ):
         mock_download.side_effect = [
             sentinel.uv_anisotropy_downloaded_path,
             sentinel.waw_downloaded_path,
@@ -40,35 +45,64 @@ class TestGlowsL3BCDependencies(unittest.TestCase):
         )
 
         external_dependencies = ExternalDependencies(
-            f107_index_file_path=TEMP_CDF_FOLDER_PATH / 'f107_fluxtable.txt',
-            omni2_data_path=TEMP_CDF_FOLDER_PATH / 'omni2_all_years.dat',
+            f107_index_file_path=TEMP_CDF_FOLDER_PATH / "f107_fluxtable.txt",
+            omni2_data_path=TEMP_CDF_FOLDER_PATH / "omni2_all_years.dat",
             lyman_alpha_path=Path("not used"),
         )
 
-        dependency: GlowsL3BCDependencies = GlowsL3BCDependencies.download_from_cr_to_process(cr_to_process,
-                                                                                              sentinel.version,
-                                                                                              external_dependencies,
-                                                                                              repointing_file_path)
+        dependency: GlowsL3BCDependencies = (
+            GlowsL3BCDependencies.download_from_cr_to_process(
+                cr_to_process,
+                sentinel.version,
+                external_dependencies,
+                repointing_file_path,
+            )
+        )
 
-        self.assertEqual([call(sentinel.l3a_downloaded_path_1), call(sentinel.l3a_downloaded_path_2)],
-                         mock_create_dictionary_from_cdf.call_args_list)
+        self.assertEqual(
+            [
+                call(sentinel.l3a_downloaded_path_1),
+                call(sentinel.l3a_downloaded_path_2),
+            ],
+            mock_create_dictionary_from_cdf.call_args_list,
+        )
 
-        mock_download.assert_has_calls([
-            call("uv_anisotropy_path"),
-            call("waw_path"),
-            call("bad_days_list_path"),
-            call("pipeline_settings_path"),
-            call("l3a_path_1"),
-            call("l3a_path_2")
-        ])
+        mock_download.assert_has_calls(
+            [
+                call("uv_anisotropy_path"),
+                call("waw_path"),
+                call("bad_days_list_path"),
+                call("pipeline_settings_path"),
+                call("l3a_path_1"),
+                call("l3a_path_2"),
+            ]
+        )
 
-        self.assertEqual(TEMP_CDF_FOLDER_PATH / 'f107_fluxtable.txt', dependency.external_files['f107_raw_data'])
-        self.assertEqual(TEMP_CDF_FOLDER_PATH / 'omni2_all_years.dat', dependency.external_files['omni_raw_data'])
+        self.assertEqual(
+            TEMP_CDF_FOLDER_PATH / "f107_fluxtable.txt",
+            dependency.external_files["f107_raw_data"],
+        )
+        self.assertEqual(
+            TEMP_CDF_FOLDER_PATH / "omni2_all_years.dat",
+            dependency.external_files["omni_raw_data"],
+        )
 
-        self.assertEqual(sentinel.uv_anisotropy_downloaded_path, dependency.ancillary_files['uv_anisotropy'])
-        self.assertEqual(sentinel.waw_downloaded_path, dependency.ancillary_files['WawHelioIonMP_parameters'])
-        self.assertEqual(sentinel.bad_day_list_downloaded_path, dependency.ancillary_files['bad_days_list'])
-        self.assertEqual(sentinel.settings_downloaded_path, dependency.ancillary_files['pipeline_settings'])
+        self.assertEqual(
+            sentinel.uv_anisotropy_downloaded_path,
+            dependency.ancillary_files["uv_anisotropy"],
+        )
+        self.assertEqual(
+            sentinel.waw_downloaded_path,
+            dependency.ancillary_files["WawHelioIonMP_parameters"],
+        )
+        self.assertEqual(
+            sentinel.bad_day_list_downloaded_path,
+            dependency.ancillary_files["bad_days_list"],
+        )
+        self.assertEqual(
+            sentinel.settings_downloaded_path,
+            dependency.ancillary_files["pipeline_settings"],
+        )
 
         self.assertEqual(sentinel.l3a_dictionary_1, dependency.l3a_data[0])
         self.assertEqual(sentinel.l3a_dictionary_2, dependency.l3a_data[1])

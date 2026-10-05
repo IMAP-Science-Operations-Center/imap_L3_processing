@@ -37,29 +37,15 @@ import matplotlib.pyplot as plt
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
+import scipy.optimize
+from figure_utils import FIGURES_DIR, REPO_ROOT, load_swapi_response
+
 from imap_l3_processing.constants import (
     BOLTZMANN_CONSTANT_JOULES_PER_KELVIN,
     ONE_SECOND_IN_NANOSECONDS,
     PROTON_MASS_KG,
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
 )
-import scipy.optimize
-
-from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
-    build_solar_wind_fit_context,
-)
-from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
-    model_solar_wind_ideal_coincidence_rates,
-)
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
-    fit_solar_wind_proton_model,
-)
-from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
-from imap_l3_processing.swapi.l3a.utils import (
-    get_spacecraft_velocity_rtn,
-    get_swapi_geometry,
-)
-from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 from imap_l3_processing.swapi.constants import (
     SWAPI_BIN_PERIOD_S,
     SWAPI_COARSE_SWEEP_BINS,
@@ -69,8 +55,22 @@ from imap_l3_processing.swapi.constants import (
     SWAPI_LIVETIME_CENTER_OFFSET_S,
     SWAPI_SCIENCE_BINS,
 )
+from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
+    build_solar_wind_fit_context,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
+    model_solar_wind_ideal_coincidence_rates,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
+    fit_solar_wind_proton_model,
+)
+from imap_l3_processing.swapi.l3a.utils import (
+    get_spacecraft_velocity_rtn,
+    get_swapi_geometry,
+)
+from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 from imap_l3_processing.utils import SpiceKernelTypes
-from figure_utils import FIGURES_DIR, REPO_ROOT, load_swapi_response
 
 _DOC_PATH = REPO_ROOT / "docs" / "swapi" / "proton-sw.md"
 _TABLE_BEGIN = "<!-- BEGIN: real_data_table"
@@ -120,22 +120,18 @@ def main():
 
     sc_velocity_rtn = get_spacecraft_velocity_rtn(chunk_center_ns)
     science_result["velocity_rtn_sun"] = (
-        np.array(
-            [c.nominal_value for c in science_result["fit_result"].velocity_rtn]
-        )
+        np.array([c.nominal_value for c in science_result["fit_result"].velocity_rtn])
         + sc_velocity_rtn
     )
     coarse_result["velocity_rtn_sun"] = (
-        np.array(
-            [c.nominal_value for c in coarse_result["fit_result"].velocity_rtn]
-        )
+        np.array([c.nominal_value for c in coarse_result["fit_result"].velocity_rtn])
         + sc_velocity_rtn
     )
 
     print("\n--- Fit results ---")
-    print(f"  Science bins (1..71, includes fine):")
+    print("  Science bins (1..71, includes fine):")
     _print_fit(science_result, sc_velocity_rtn)
-    print(f"  Coarse-only bins (1..62):")
+    print("  Coarse-only bins (1..62):")
     _print_fit(coarse_result, sc_velocity_rtn)
 
     print("\n--- Bootstrap σ on the all-bins fit (B=300, warm-LM, xtol=1e-3) ---")
@@ -283,7 +279,9 @@ def _read_5_sweep_block(
 def _measurement_times_ns(epoch_ns: np.ndarray, bin_slice: slice) -> np.ndarray:
     bins = np.arange(bin_slice.start, bin_slice.stop)
     seconds_into_sweep = bins * SWAPI_BIN_PERIOD_S + SWAPI_LIVETIME_CENTER_OFFSET_S
-    return (epoch_ns[:, None] + seconds_into_sweep * ONE_SECOND_IN_NANOSECONDS).flatten()
+    return (
+        epoch_ns[:, None] + seconds_into_sweep * ONE_SECOND_IN_NANOSECONDS
+    ).flatten()
 
 
 # --------------------------------------------------------------------------- #
@@ -561,9 +559,7 @@ def _model_rates_with_deadtime(
     )
     sw = SolarWindParams(
         density=fit_result.density.nominal_value,
-        velocity_rtn=np.array(
-            [c.nominal_value for c in fit_result.velocity_rtn]
-        ),
+        velocity_rtn=np.array([c.nominal_value for c in fit_result.velocity_rtn]),
         temperature=fit_result.temperature.nominal_value,
         mass=PROTON_MASS_KG,
     )

@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 
 from imap_l3_processing.constants import PROTON_MASS_KG
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.l3a.science.solar_wind.azimuthal_regions import (
     REGION_OPEN_APERTURE_NEG,
     REGION_OPEN_APERTURE_POS,
@@ -15,7 +16,6 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.integration_limits import (
     speed_window_misses_passband,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
-    SolarWindParams,
     bulk_speed,
     thermal_speed,
     thermal_speed_to_temperature,
@@ -24,7 +24,6 @@ from imap_l3_processing.swapi.response.passband_grid import (
     interpolate_passband,
     speed_ratio_range_at_elevation,
 )
-from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.species import Species
 from tests.swapi._helpers import (
     NOMINAL_SWAPI_TO_RTN_ROTATION,
@@ -205,9 +204,7 @@ class TestGetAngularQuadratureOpenAperturePositive(unittest.TestCase):
         cls.identity = np.eye(3)
         # Bulk pointed at az=+90°: identity rotation makes v_inst = (-v, 0, 0),
         # giving azimuth = atan2(v, 0) = 90° and elevation = 0°.
-        cls.sw_bulk_at_90 = proton_params(
-            velocity_rtn=(-_BULK_SPEED_KM_S, 0.0, 0.0)
-        )
+        cls.sw_bulk_at_90 = proton_params(velocity_rtn=(-_BULK_SPEED_KM_S, 0.0, 0.0))
 
     def test_oa_positive_region_is_active_for_bulk_at_90_deg_azimuth(self):
         """A bulk at az ≈ +90° lies inside the OA+ band, so the region is active and a quadrature is returned."""
@@ -230,12 +227,8 @@ class TestGetAngularQuadratureOpenAperturePositive(unittest.TestCase):
             self.identity,
             0.0,
         )
-        self.assertGreaterEqual(
-            quadrature.azimuth_points.min(), _OA_AZIMUTH_INNER_DEG
-        )
-        self.assertLessEqual(
-            quadrature.azimuth_points.max(), _OA_AZIMUTH_OUTER_DEG
-        )
+        self.assertGreaterEqual(quadrature.azimuth_points.min(), _OA_AZIMUTH_INNER_DEG)
+        self.assertLessEqual(quadrature.azimuth_points.max(), _OA_AZIMUTH_OUTER_DEG)
 
     def test_oa_negative_region_is_skipped_for_bulk_at_plus_90_deg_azimuth(self):
         """A bulk at az ≈ +90° is too far from the OA- band for a narrow Maxwellian to reach, so the OA- region is skipped."""
@@ -286,12 +279,8 @@ class TestGetAngularQuadratureOpenApertureNegative(unittest.TestCase):
             self.identity,
             0.0,
         )
-        self.assertGreaterEqual(
-            quadrature.azimuth_points.min(), -_OA_AZIMUTH_OUTER_DEG
-        )
-        self.assertLessEqual(
-            quadrature.azimuth_points.max(), -_OA_AZIMUTH_INNER_DEG
-        )
+        self.assertGreaterEqual(quadrature.azimuth_points.min(), -_OA_AZIMUTH_OUTER_DEG)
+        self.assertLessEqual(quadrature.azimuth_points.max(), -_OA_AZIMUTH_INNER_DEG)
 
     def test_oa_positive_region_is_skipped_for_bulk_at_minus_90_deg_azimuth(self):
         """A bulk at az ≈ -90° is too far from the OA+ band for a narrow Maxwellian to reach, so the OA+ region is skipped."""
@@ -374,9 +363,7 @@ class TestGetSpeedQuadrature(unittest.TestCase):
 
     def test_returns_skip_when_bulk_speed_window_does_not_overlap_passband(self):
         """A bulk so far above the passband that `bulk - k·σ` exceeds the upper edge yields skip=True and a `None` quadrature."""
-        sw = proton_params(
-            velocity_rtn=(0.0, -1500.0, 0.0), temperature=10_000.0
-        )
+        sw = proton_params(velocity_rtn=(0.0, -1500.0, 0.0), temperature=10_000.0)
         skip, speed_quadrature = get_speed_quadrature(
             sw, self.response_grid, REGION_SUNGLASSES, 0.0
         )
@@ -408,15 +395,15 @@ class TestGetSpeedQuadrature(unittest.TestCase):
         # silently caught here.
         self.assertNotEqual(sg_quad.points.min(), oa_quad.points.min())
 
-    def test_speed_cubed_times_passband_is_v3_times_normalized_passband_at_each_node(self):
+    def test_speed_cubed_times_passband_is_v3_times_normalized_passband_at_each_node(
+        self,
+    ):
         """The `speed_cubed_times_passband` array equals `v³ · P(θ, v/v0) / P(0, 1)` reconstructed from `interpolate_passband` at every GL node."""
         sw = proton_params()
         _, speed_quadrature = get_speed_quadrature(
             sw, self.response_grid, REGION_SUNGLASSES, 0.0
         )
-        on_axis_peak = interpolate_passband(
-            self.response_grid.sg_passband, 0.0, 1.0
-        )
+        on_axis_peak = interpolate_passband(self.response_grid.sg_passband, 0.0, 1.0)
         expected = np.array(
             [
                 v**3

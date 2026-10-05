@@ -34,10 +34,12 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
 from figure_utils import FIGURES_DIR, load_swapi_response
 
-from imap_l3_processing.constants import HE_PUI_PARTICLE_MASS_PER_CHARGE_M_P_PER_E, ONE_AU_IN_KM
+from imap_l3_processing.constants import (
+    HE_PUI_PARTICLE_MASS_PER_CHARGE_M_P_PER_E,
+    ONE_AU_IN_KM,
+)
 from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_coincidence_rate import (
     apply_partial_heaviside_at_cutoff,
     calculate_coincidence_rate,
@@ -53,7 +55,9 @@ from imap_l3_processing.swapi.l3a.science.pickup_ion.vasyliunas_siscoe_distribut
     FittingParameters,
     VasyliunasSiscoeDistribution,
 )
-from imap_l3_processing.swapi.l3a.utils import velocity_components_to_angles_in_instrument_frame
+from imap_l3_processing.swapi.l3a.utils import (
+    velocity_components_to_angles_in_instrument_frame,
+)
 
 _SW_SPEED_KMS = 450.0
 _SW_AZIMUTH_DEG = 0.0
@@ -90,9 +94,13 @@ def _params(cutoff_speed_kms: float) -> FittingParameters:
 
 
 def main():
-    voltages = pd.read_csv(
-        REPO_ROOT / "tests" / "test_data" / "swapi" / "pui_count_rate_reference.csv"
-    ).iloc[:, 0].to_numpy()
+    voltages = (
+        pd.read_csv(
+            REPO_ROOT / "tests" / "test_data" / "swapi" / "pui_count_rate_reference.csv"
+        )
+        .iloc[:, 0]
+        .to_numpy()
+    )
     voltage_index = int(np.argmin(np.abs(voltages - _ESA_VOLTAGE_V)))
 
     swapi_response = load_swapi_response()
@@ -109,11 +117,13 @@ def main():
 
     azimuth_rad = np.radians(_SW_AZIMUTH_DEG)
     elevation_rad = np.radians(_SW_ELEVATION_DEG)
-    bulk_vec = _SW_SPEED_KMS * np.array([
-        -np.cos(elevation_rad) * np.sin(azimuth_rad),
-        -np.cos(elevation_rad) * np.cos(azimuth_rad),
-        -np.sin(elevation_rad),
-    ])
+    bulk_vec = _SW_SPEED_KMS * np.array(
+        [
+            -np.cos(elevation_rad) * np.sin(azimuth_rad),
+            -np.cos(elevation_rad) * np.cos(azimuth_rad),
+            -np.sin(elevation_rad),
+        ]
+    )
     bulk_per_bin = np.broadcast_to(bulk_vec, (1, voltages.size, 3)).copy()
 
     chunk_response = build_chunk_collapsed_response(
@@ -130,8 +140,10 @@ def main():
     bin_weights = chunk_response.bin_weights[0, voltage_index, :]
 
     # Fine-grid reference response for the same voltage step.
-    bulk_azimuth_deg, bulk_elevation_deg = velocity_components_to_angles_in_instrument_frame(
-        bulk_vec[0], bulk_vec[1], bulk_vec[2]
+    bulk_azimuth_deg, bulk_elevation_deg = (
+        velocity_components_to_angles_in_instrument_frame(
+            bulk_vec[0], bulk_vec[1], bulk_vec[2]
+        )
     )
     fine_grid = np.linspace(1.0, _GRID_MAX_KMS, _FINE_GRID_POINTS)
     fine_collapsed = build_collapsed_response_grid(
@@ -145,9 +157,7 @@ def main():
         bulk_elevation_deg,
         speed_in_sw_frame=fine_grid,
     )
-    fine_weights = (
-        fine_collapsed.values * fine_grid**2 * (fine_grid[1] - fine_grid[0])
-    )
+    fine_weights = fine_collapsed.values * fine_grid**2 * (fine_grid[1] - fine_grid[0])
 
     # Below the neutral-helium LUT support the distribution is physically zero;
     # the LUT extrapolation returns non-finite values there, so clamp them.
@@ -190,15 +200,26 @@ def main():
     axis.axvline(grid_edges[0], color="0.85", lw=0.8, zorder=0, label="$v'$ grid edges")
 
     axis.plot(
-        _CUTOFF_SWEEP_KMS, rate_reference, "-", color="0.4", lw=1,
-        label=f"fine-grid reference",
+        _CUTOFF_SWEEP_KMS,
+        rate_reference,
+        "-",
+        color="0.4",
+        lw=1,
+        label="fine-grid reference",
     )
     axis.scatter(
-        _CUTOFF_SWEEP_KMS, rate_without, color="tab:red", s=10,
+        _CUTOFF_SWEEP_KMS,
+        rate_without,
+        color="tab:red",
+        s=10,
         label="no correction",
     )
     axis.scatter(
-        _CUTOFF_SWEEP_KMS, rate_with, color="tab:blue", s=10, marker='x',
+        _CUTOFF_SWEEP_KMS,
+        rate_with,
+        color="tab:blue",
+        s=10,
+        marker="x",
         label="with correction",
     )
 
@@ -207,7 +228,10 @@ def main():
     axis.set_xlim(_CUTOFF_SWEEP_KMS[0], _CUTOFF_SWEEP_KMS[-1])
     axis.annotate(
         rf"grid $\Delta v' = {delta_v_prime:.2f}$ km/s",
-        xy=(0.02, 0.04), xycoords="axes fraction", fontsize=9, color="0.3",
+        xy=(0.02, 0.04),
+        xycoords="axes fraction",
+        fontsize=9,
+        color="0.3",
     )
     axis.grid(True, alpha=0.3)
     axis.legend(loc="upper left")

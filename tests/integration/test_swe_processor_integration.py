@@ -11,8 +11,12 @@ from imap_data_access import (
 
 import imap_l3_processing
 from tests.integration.integration_test_helpers import mock_imap_data_access
-from tests.test_helpers import get_run_local_data_path, get_test_data_path, get_integration_test_data_path, \
-    run_periodically
+from tests.test_helpers import (
+    get_integration_test_data_path,
+    get_run_local_data_path,
+    get_test_data_path,
+    run_periodically,
+)
 
 SWE_OUTPUT_DATA_DIR = get_run_local_data_path("swe_integration")
 
@@ -39,7 +43,7 @@ class SweProcessorIntegration(unittest.TestCase):
             spice_test_data_dir / "imap_sclk_0171.tsc",
             spice_test_data_dir / "de440.bsp",
             spice_test_data_dir / "imap_recon_20250925_20260511_v01.bsp",
-            spice_test_data_dir / "imap_dps_2025_359_2026_131_002.ah.bc"
+            spice_test_data_dir / "imap_dps_2025_359_2026_131_002.ah.bc",
         ]
 
         with mock_imap_data_access(SWE_OUTPUT_DATA_DIR, input_files):
@@ -62,8 +66,9 @@ class SweProcessorIntegration(unittest.TestCase):
                 ],
             )
 
-            expected_file_path = ScienceFilePath("imap_swe_l3_sci_20260120_v001.cdf").construct_path()
+            expected_file_path = ScienceFilePath(
+                "imap_swe_l3_sci_20260120_v001.cdf"
+            ).construct_path()
 
             self.assertEqual(0, result.returncode)
             self.assertTrue(expected_file_path.exists())
-

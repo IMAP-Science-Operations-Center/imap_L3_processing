@@ -32,6 +32,7 @@ sys.path.insert(0, str(_REPO_ROOT / "docs" / "swapi" / "figure_src"))
 
 import numpy as np
 import pandas as pd
+from figure_utils import ANCHOR_ROTATION_SWAPI_TO_RTN
 
 from imap_l3_processing.constants import (
     METERS_PER_KILOMETER,
@@ -39,19 +40,16 @@ from imap_l3_processing.constants import (
     PROTON_MASS_KG,
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 from scripts.swapi.reference_integral import reference_integrals_batch
-from figure_utils import ANCHOR_ROTATION_SWAPI_TO_RTN
 
 _INSTRUMENT_DATA = _REPO_ROOT / "instrument_team_data" / "swapi"
 _WIND_SAMPLES_PATH = (
     _REPO_ROOT / "docs" / "swapi" / "figure_src" / "wind_solar_wind_samples_2025.csv"
 )
-_OUTPUT_PATH = (
-    _REPO_ROOT / "tests" / "test_data" / "swapi" / "reference_integrals.csv"
-)
+_OUTPUT_PATH = _REPO_ROOT / "tests" / "test_data" / "swapi" / "reference_integrals.csv"
 
 
 def _peak_voltage(bulk_speed_km_s: float) -> float:
@@ -90,9 +88,7 @@ def main():
         )
         for i in range(n_samples)
     ]
-    rotation_matrices = np.broadcast_to(
-        ANCHOR_ROTATION_SWAPI_TO_RTN, (n_samples, 3, 3)
-    )
+    rotation_matrices = np.broadcast_to(ANCHOR_ROTATION_SWAPI_TO_RTN, (n_samples, 3, 3))
     voltages = [_peak_voltage(float(v)) for v in bulk_speed]
     swapi_response.warm_cache(voltages)
     response_grids = [

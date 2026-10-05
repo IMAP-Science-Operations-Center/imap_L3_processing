@@ -12,8 +12,9 @@ from spacepy.pycdf import CDF
 from tests.test_helpers import get_test_data_path
 
 
-
-def fill_official_l2_cdf_with_json_values(output_folder: Path, input_path: Path) -> None:
+def fill_official_l2_cdf_with_json_values(
+    output_folder: Path, input_path: Path
+) -> None:
     official_l2_path = get_test_data_path(
         "glows/imap_glows_l2_hist_20260323-repoint00194_v005.cdf"
     )
@@ -27,7 +28,7 @@ def fill_official_l2_cdf_with_json_values(output_folder: Path, input_path: Path)
         epoch_window = end_of_epoch_window - start_of_epoch_window
         epoch = start_of_epoch_window + epoch_window / 2
 
-        repoint_id = int(re.search(r'repoint(\d{5})', input_path.name)[1])
+        repoint_id = int(re.search(r"repoint(\d{5})", input_path.name)[1])
         new_name = ScienceFilePath.generate_from_inputs(
             instrument="glows",
             data_level="l2",
@@ -109,8 +110,12 @@ def fill_official_l2_cdf_with_json_values(output_folder: Path, input_path: Path)
                 "number_of_all_l1b_files"
             ]
             cdf.attrs["pkts_file_name"] = instrument_data["header"]["pkts_file_name"]
-            cdf.attrs["ancillary_data_files"] = instrument_data["header"]["ancillary_data_files"]
-            cdf.attrs["flight_software_version"] = instrument_data["header"]["flight_software_version"]
+            cdf.attrs["ancillary_data_files"] = instrument_data["header"][
+                "ancillary_data_files"
+            ]
+            cdf.attrs["flight_software_version"] = instrument_data["header"][
+                "flight_software_version"
+            ]
 
 
 if __name__ == "__main__":
@@ -123,5 +128,5 @@ if __name__ == "__main__":
     for file_path in json_directory.iterdir():
         try:
             fill_official_l2_cdf_with_json_values(output_directory, file_path)
-        except Exception as e:
+        except Exception:
             traceback.print_exc()

@@ -20,18 +20,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
 import types
 
+import matplotlib
 import numpy as np
 import pandas as pd
-import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-
-from imap_l3_processing.constants import (
-    PROTON_MASS_KG,
-    PROTON_MASS_PER_CHARGE_M_P_PER_E,
-)
-from imap_l3_processing.swapi.constants import SWAPI_LIVETIME_S
 from figure_utils import (
     COARSE_BIN_INDICES_IN_SWEEP,
     COARSE_SWEEP_VOLTAGES_MEAN_V,
@@ -39,6 +33,24 @@ from figure_utils import (
     compute_per_bin_rotation_matrices,
     load_swapi_response,
     run_parallel_map,
+)
+
+from imap_l3_processing.constants import (
+    PROTON_MASS_KG,
+    PROTON_MASS_PER_CHARGE_M_P_PER_E,
+)
+from imap_l3_processing.swapi.constants import SWAPI_LIVETIME_S
+from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
+    build_solar_wind_fit_context,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
+    model_solar_wind_ideal_coincidence_rates,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
+    LOG_DENSITY_IDX,
+    LOG_TEMPERATURE_IDX,
+    VELOCITY_SLICE,
+    SolarWindParams,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.calculate_initial_guess import (
     calculate_initial_guess,
@@ -48,19 +60,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proto
     escape_local_minimum,
     optimize_solar_wind_proton_params,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
-    LOG_DENSITY_IDX,
-    LOG_TEMPERATURE_IDX,
-    VELOCITY_SLICE,
-    SolarWindParams,
-)
-from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
-    model_solar_wind_ideal_coincidence_rates,
-)
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
-from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
-    build_solar_wind_fit_context,
-)
 
 _N_SWEEPS = 5
 _N_BINS = len(COARSE_SWEEP_VOLTAGES_MEAN_V)

@@ -14,11 +14,15 @@ class EnergyLookup:
 
     @classmethod
     def read_from_csv(cls, path_to_csv: Path):
-        energy_lowers, energy_centers, energy_uppers = np.loadtxt(path_to_csv, delimiter=',', skiprows=1, usecols=(4, 5, 6)).T
+        energy_lowers, energy_centers, energy_uppers = np.loadtxt(
+            path_to_csv, delimiter=",", skiprows=1, usecols=(4, 5, 6)
+        ).T
 
-        return cls(bin_centers=energy_centers,
-                   delta_minus=energy_centers - energy_lowers,
-                   delta_plus=energy_uppers - energy_centers)
+        return cls(
+            bin_centers=energy_centers,
+            delta_minus=energy_centers - energy_lowers,
+            delta_plus=energy_uppers - energy_centers,
+        )
 
     @property
     def num_bins(self):

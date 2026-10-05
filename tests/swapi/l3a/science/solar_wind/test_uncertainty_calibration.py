@@ -47,12 +47,11 @@ from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 from imap_l3_processing.swapi.species import Species
 from tests.swapi._helpers import (
-    NOMINAL_TEST_EPOCH_TT2000,
     NOMINAL_SWAPI_TO_RTN_ROTATION,
+    NOMINAL_TEST_EPOCH_TT2000,
     load_swapi_response,
 )
 from tests.test_helpers import run_periodically
-
 
 _N_BINS_PER_SWEEP = 62
 _N_SWEEPS = 5
@@ -76,8 +75,7 @@ def _per_bin_rotation_matrices() -> np.ndarray:
     sweep_index = np.repeat(np.arange(_N_SWEEPS), _N_BINS_PER_SWEEP)
     bin_index_in_sweep = np.tile(np.arange(1, _N_BINS_PER_SWEEP + 1), _N_SWEEPS)
     sample_times_s = (
-        sweep_index * _SWEEP_DURATION_S
-        + bin_index_in_sweep * _SAMPLE_TIME_PER_BIN_S
+        sweep_index * _SWEEP_DURATION_S + bin_index_in_sweep * _SAMPLE_TIME_PER_BIN_S
     )
     spin_axis = NOMINAL_SWAPI_TO_RTN_ROTATION[:, 1]
     spin_axis = spin_axis / np.linalg.norm(spin_axis)
@@ -102,9 +100,7 @@ _ROTATION_MATRICES = _per_bin_rotation_matrices()
 _TRUE_BULK_SPEED_KM_S = 450.0
 _TRUE_PROTON_DENSITY_CM3 = 5.0
 _TRUE_PROTON_TEMPERATURE_K = 1.0e5
-_TRUE_PROTON_VELOCITY_RTN = (
-    -_TRUE_BULK_SPEED_KM_S * NOMINAL_SWAPI_TO_RTN_ROTATION[:, 1]
-)
+_TRUE_PROTON_VELOCITY_RTN = -_TRUE_BULK_SPEED_KM_S * NOMINAL_SWAPI_TO_RTN_ROTATION[:, 1]
 _TRUE_ALPHA_DENSITY_CM3 = 0.2
 _TRUE_ALPHA_TEMPERATURE_K = 4.0e5
 _TRUE_DELTA_V_KM_S = 30.0
@@ -144,7 +140,9 @@ def _build_truth_count_rates(response, *, with_alpha: bool) -> np.ndarray:
         species=Species.PROTON,
         rotation_matrices=_ROTATION_MATRICES,
     )
-    proton_rates, _ = model_solar_wind_ideal_coincidence_rates(proton_params, proton_ctx)
+    proton_rates, _ = model_solar_wind_ideal_coincidence_rates(
+        proton_params, proton_ctx
+    )
     total_rates = proton_rates
     if with_alpha:
         alpha_velocity = _TRUE_PROTON_VELOCITY_RTN + _TRUE_DELTA_V_KM_S * _B_HAT_RTN
@@ -162,7 +160,9 @@ def _build_truth_count_rates(response, *, with_alpha: bool) -> np.ndarray:
             species=Species.ALPHA,
             rotation_matrices=_ROTATION_MATRICES,
         )
-        alpha_rates, _ = model_solar_wind_ideal_coincidence_rates(alpha_params, alpha_ctx)
+        alpha_rates, _ = model_solar_wind_ideal_coincidence_rates(
+            alpha_params, alpha_ctx
+        )
         total_rates = proton_rates + alpha_rates
     deadtime_applied = total_rates * deadtime_factor(total_rates)
     return deadtime_applied.reshape(_VOLTAGE_AXIS.shape)
@@ -349,7 +349,9 @@ def _run_trial(trial_seed: int) -> dict | None:
         b_hat_rtn=_B_HAT_RTN.copy(),
         quality_flag=int(alpha_moments.quality_flag),
     )
-    return _alpha_moments_from_fit(chunk_result, epoch=0, sc_velocity_rtn=_SC_VELOCITY_RTN)
+    return _alpha_moments_from_fit(
+        chunk_result, epoch=0, sc_velocity_rtn=_SC_VELOCITY_RTN
+    )
 
 
 def _run_mc_in_parallel(n_trials: int) -> tuple[dict, int]:

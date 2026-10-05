@@ -1,4 +1,4 @@
-from imap_processing.quality_flags import FlagNameMixin, CommonFlags
+from imap_processing.quality_flags import CommonFlags, FlagNameMixin
 
 
 class SwapiL3Flags(FlagNameMixin):

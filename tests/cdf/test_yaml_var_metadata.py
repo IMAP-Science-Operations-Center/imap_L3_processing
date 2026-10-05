@@ -266,10 +266,7 @@ class TestCdfUtils(TestCase):
     def _epoch_meets_schema(self, yaml_data: dict):
         epoch_delta_types = ["epoch_delta", "epoch_delta_plus", "epoch_delta_minus"]
         if any(
-            [
-                epoch_delta_type in yaml_data.keys()
-                for epoch_delta_type in epoch_delta_types
-            ]
+            [epoch_delta_type in yaml_data for epoch_delta_type in epoch_delta_types]
         ):
             self.assertEqual(20, len(yaml_data["epoch"].keys()))
         else:

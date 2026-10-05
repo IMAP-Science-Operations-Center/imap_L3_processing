@@ -19,10 +19,12 @@ class InflowVector:
 
         loaded_vector = np.squeeze(np.loadtxt(path, dtype=float))
 
-        assert loaded_vector.shape == (3,), f"Failed to parse Inflow Vector from {path.name}"
+        assert loaded_vector.shape == (3,), (
+            f"Failed to parse Inflow Vector from {path.name}"
+        )
 
         return cls(
             speed_km_per_s=(loaded_vector[0]),
             longitude_deg_eclipj2000=loaded_vector[1],
-            latitude_deg_eclipj2000=loaded_vector[2]
+            latitude_deg_eclipj2000=loaded_vector[2],
         )

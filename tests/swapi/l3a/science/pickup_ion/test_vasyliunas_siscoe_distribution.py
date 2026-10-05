@@ -13,11 +13,14 @@ from imap_l3_processing.swapi.l3a.science.pickup_ion.density_of_neutral_helium_l
 from imap_l3_processing.swapi.l3a.science.pickup_ion.uniform_speed_grid import (
     UniformSpeedGrid,
 )
-from imap_l3_processing.swapi.l3a.science.pickup_ion.vasyliunas_siscoe_distribution import \
-    vasyliunas_siscoe_vdf
+from imap_l3_processing.swapi.l3a.science.pickup_ion.vasyliunas_siscoe_distribution import (
+    vasyliunas_siscoe_vdf,
+)
 from tests.test_helpers import NumpyArrayMatcher
 
-_VASYLIUNAS_SISCOE_MODULE = "imap_l3_processing.swapi.l3a.science.pickup_ion.vasyliunas_siscoe_distribution"
+_VASYLIUNAS_SISCOE_MODULE = (
+    "imap_l3_processing.swapi.l3a.science.pickup_ion.vasyliunas_siscoe_distribution"
+)
 
 _IONIZATION_RATE_HZ = 0.47
 _SOLAR_WIND_SPEED_INERTIAL_KMS = 456.0
@@ -56,7 +59,8 @@ class VasyliunasSiscoeVdfTest(unittest.TestCase):
         # closed form of the filled shell, with the mocked unit neutral
         # helium density converted from cm^-3 to km^-3.
         return (
-            SWAPI_PUI_COOLING_INDEX / (4 * np.pi)
+            SWAPI_PUI_COOLING_INDEX
+            / (4 * np.pi)
             * (_IONIZATION_RATE_HZ * ONE_AU_IN_KM**2)
             / (_DISTANCE_KM * _SOLAR_WIND_SPEED_INERTIAL_KMS * cutoff_speed**3)
             * (_SPEED_GRID.centers / cutoff_speed) ** (SWAPI_PUI_COOLING_INDEX - 3)
@@ -79,7 +83,7 @@ class VasyliunasSiscoeVdfTest(unittest.TestCase):
 
         expected = self._expected_uncut_filled_shell(cutoff_speed)
         expected[cutoff_index] *= fraction_below_cutoff
-        expected[cutoff_index + 1:] = 0.0
+        expected[cutoff_index + 1 :] = 0.0
         np.testing.assert_allclose(result, expected, rtol=1e-12)
 
         mock_density.assert_called_with(

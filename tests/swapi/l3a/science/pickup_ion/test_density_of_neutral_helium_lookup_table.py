@@ -2,8 +2,9 @@ from unittest import TestCase
 
 import numpy as np
 
-from imap_l3_processing.swapi.l3a.science.pickup_ion.density_of_neutral_helium_lookup_table import \
-    DensityOfNeutralHeliumLookupTable
+from imap_l3_processing.swapi.l3a.science.pickup_ion.density_of_neutral_helium_lookup_table import (
+    DensityOfNeutralHeliumLookupTable,
+)
 
 
 def _table_with_360_anchor():

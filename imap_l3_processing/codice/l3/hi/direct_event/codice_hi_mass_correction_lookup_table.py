@@ -6,7 +6,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-SSD_SHEET_NAME_FORMAT = "ssd(\d+)"
+SSD_SHEET_NAME_FORMAT = r"ssd(\d+)"
+
 
 @dataclass
 class CodiceHiMassCorrectionLookupTable:
@@ -23,13 +24,19 @@ class CodiceHiMassCorrectionLookupTable:
                 ssd = int(ssd_name_match.group(1))
                 data[ssd] = file[sheet_name].to_numpy()
             else:
-                logging.warning(f"Not using sheet {sheet_name} from {file_path.name} ancillary! Expected sheet names in the format: {SSD_SHEET_NAME_FORMAT}")
+                logging.warning(
+                    f"Not using sheet {sheet_name} from {file_path.name} ancillary! Expected sheet names in the format: {SSD_SHEET_NAME_FORMAT}"
+                )
 
-        assert len(data) > 0, f"Failed to read any correction factors from: {file_path.name}"
+        assert len(data) > 0, (
+            f"Failed to read any correction factors from: {file_path.name}"
+        )
 
         return cls(correction_factors=data)
 
-    def lookup_correction_factor(self, ssd_id: int, energy_channel: int, tof: int) -> float:
+    def lookup_correction_factor(
+        self, ssd_id: int, energy_channel: int, tof: int
+    ) -> float:
         data_for_ssd = self.correction_factors.get(ssd_id)
         if data_for_ssd is not None:
             return data_for_ssd[energy_channel, tof]

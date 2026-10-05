@@ -3,13 +3,22 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
+from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import (
+    MassCoefficientLookup,
+)
 
 
 class TestMassCoefficientLookup(unittest.TestCase):
     def test_mass_coefficient_lookup(self):
         mass_coefficient_lookup_csv_path = "mass_coefficient_lookup.csv"
-        coefficients = [[5.29633], [-1.5053], [-2.86483], [0.473693], [0.0900633], [0.0783456]]
+        coefficients = [
+            [5.29633],
+            [-1.5053],
+            [-2.86483],
+            [0.473693],
+            [0.0900633],
+            [0.0783456],
+        ]
 
         with tempfile.TemporaryDirectory() as tmpdir:
             temp_csv_file = Path(tmpdir) / mass_coefficient_lookup_csv_path

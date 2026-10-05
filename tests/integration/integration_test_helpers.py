@@ -2,19 +2,18 @@ import json
 import os
 import shutil
 from collections import defaultdict
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 from urllib.parse import urlparse
 
 import imap_data_access
 import requests
 from imap_data_access import AncillaryFilePath
 from imap_data_access.file_validation import (
-    generate_imap_file_path,
     ScienceFilePath,
     SPICEFilePath,
-    Version,
+    generate_imap_file_path,
 )
 from requests import Response
 
@@ -26,7 +25,7 @@ from tests.test_helpers import create_mock_query_results
 class ImapQueryPatcher:
     def __init__(self, input_files: list[Path | str]):
         self.input_files = input_files
-        self.patcher = patch.object(imap_data_access, 'query', new=self)
+        self.patcher = patch.object(imap_data_access, "query", new=self)
 
     def start(self):
         self.patcher.start()
@@ -36,8 +35,7 @@ class ImapQueryPatcher:
 
     def __call__(self, **kwargs):
         table = kwargs.get("table") or "science"
-        if "table" in kwargs:
-            del kwargs["table"]
+        kwargs.pop("table", None)
 
         use_latest = kwargs.get("version") == "latest"
         if kwargs.get("version") == "latest":
@@ -58,9 +56,13 @@ class ImapQueryPatcher:
                     raise ValueError(f"Unexpected file type: {input_file}")
 
         query_results = create_mock_query_results(filtered_by_type)
-        filtered_query_results = [qr for qr in query_results if desired_attributes.issubset(set(qr.items()))]
+        filtered_query_results = [
+            qr for qr in query_results if desired_attributes.issubset(set(qr.items()))
+        ]
         if use_latest:
-            filtered_query_results = self.filter_results_for_latest(filtered_query_results)
+            filtered_query_results = self.filter_results_for_latest(
+                filtered_query_results
+            )
         return filtered_query_results
 
     @staticmethod
@@ -68,7 +70,11 @@ class ImapQueryPatcher:
         query_results_by_date = defaultdict(list)
         for qr in query_results:
             query_results_by_date[qr["start_date"]].append(qr)
-        return [max(qrs, key=get_version_from_query_result) for qrs in query_results_by_date.values()]
+        return [
+            max(qrs, key=get_version_from_query_result)
+            for qrs in query_results_by_date.values()
+        ]
+
 
 def fake_download(file: Path | str):
     filename = Path(file).name
@@ -92,6 +98,7 @@ def stage_input_file(file_path: Path) -> Path:
     shutil.copy(file_path, destination)
     return destination
 
+
 METAKERNEL_TEMPLATE = """
 \\begindata
 
@@ -101,20 +108,24 @@ METAKERNEL_TEMPLATE = """
 """
 
 
-def create_metakernel(path_to_spice_dir: str, requested_spice_paths: list[SPICEFilePath]) -> str:
+def create_metakernel(
+    path_to_spice_dir: str, requested_spice_paths: list[SPICEFilePath]
+) -> str:
     all_spice_paths = []
     for spice_file in requested_spice_paths:
         spice_subdir_name = spice_file.construct_path().parent.name
         spice_file_name = spice_file.construct_path().name
         spice_path = str(Path(path_to_spice_dir) / spice_subdir_name / spice_file_name)
 
-        chunked_spice_path = [spice_path[i:i + 79] for i in range(0, len(spice_path), 79)]
+        chunked_spice_path = [
+            spice_path[i : i + 79] for i in range(0, len(spice_path), 79)
+        ]
         for i, chunk in enumerate(chunked_spice_path[:-1]):
             chunked_spice_path[i] = f"{chunk}+"
 
         all_spice_paths.extend(chunked_spice_path)
 
-    formatted_spice_file_names = ',\n'.join([f"'{spice}'" for spice in all_spice_paths])
+    formatted_spice_file_names = ",\n".join([f"'{spice}'" for spice in all_spice_paths])
     return METAKERNEL_TEMPLATE.format(kernels=formatted_spice_file_names)
 
 
@@ -137,9 +148,9 @@ class RequestsGetPatcher:
         parsed_url = urlparse(url)
         if "imap-mission" in url:
             if parsed_url.path == "/metakernel":
-                if 'params' in kwargs and kwargs['params'].get('list_files') == 'true':
+                if "params" in kwargs and kwargs["params"].get("list_files") == "true":
                     response.text = json.dumps(self.spice_file_names)
-                elif 'params' in kwargs:
+                elif "params" in kwargs:
                     prefix = kwargs["params"].get("spice_path") or ""
 
                     spice_file_paths = [
@@ -165,7 +176,9 @@ class RequestsGetPatcher:
 
 
 class mock_imap_data_access:
-    def __init__(self, data_dir: Path, input_files: list[Path], omni_file: Path | None = None):
+    def __init__(
+        self, data_dir: Path, input_files: list[Path], omni_file: Path | None = None
+    ):
         self.data_dir = data_dir
 
         valid_files = []
@@ -183,8 +196,12 @@ class mock_imap_data_access:
         self.input_files = valid_files
 
         self.env_patcher = patch.dict(os.environ, {"IMAP_DATA_DIR": str(self.data_dir)})
-        self.data_dir_patcher = patch.dict(imap_data_access.config, {"DATA_DIR": self.data_dir})
-        self.download_patcher = patch.object(imap_data_access, "download", new=fake_download)
+        self.data_dir_patcher = patch.dict(
+            imap_data_access.config, {"DATA_DIR": self.data_dir}
+        )
+        self.download_patcher = patch.object(
+            imap_data_access, "download", new=fake_download
+        )
         self.query_patcher = ImapQueryPatcher(self.input_files)
         self.requests_get_patcher = RequestsGetPatcher(spice_file_paths, omni_file)
 
@@ -195,7 +212,8 @@ class mock_imap_data_access:
         self.query_patcher.start()
         self.requests_get_patcher.start()
 
-        if self.data_dir.exists(): shutil.rmtree(self.data_dir)
+        if self.data_dir.exists():
+            shutil.rmtree(self.data_dir)
         self.data_dir.mkdir(exist_ok=True, parents=True)
 
         for file_path in self.input_files:
@@ -220,7 +238,14 @@ class mock_imap_data_access:
 
         return wrapped
 
+
 def run_istp_compliance_check(cdf_path: Path):
-    cdf_as_json = requests.post("https://skteditor.heliophysics.net/cgi-bin/cdf2json.cgi", files={"file": open(cdf_path, "rb")}).json()
+    cdf_as_json = requests.post(
+        "https://skteditor.heliophysics.net/cgi-bin/cdf2json.cgi",
+        files={"file": open(cdf_path, "rb")},
+    ).json()
     cdf_json = list(cdf_as_json.values())[0]
-    return requests.post("https://skteditor.heliophysics.net/cgi-bin/validate.cgi", json={cdf_path.name: cdf_json}).text
+    return requests.post(
+        "https://skteditor.heliophysics.net/cgi-bin/validate.cgi",
+        json={cdf_path.name: cdf_json},
+    ).text

@@ -27,7 +27,6 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
-
 from figure_utils import FIGURES_DIR
 
 from imap_l3_processing.constants import ONE_AU_IN_KM
@@ -92,7 +91,9 @@ def main():
         label=r"cutoff speed $v_b$",
     )
     axis.set_yscale("log")
-    axis.set_xlabel(r"Comoving speed $v' = \|\mathbf{v} - \mathbf{v}_\text{sw}\|$ [km/s]")
+    axis.set_xlabel(
+        r"Comoving speed $v' = \|\mathbf{v} - \mathbf{v}_\text{sw}\|$ [km/s]"
+    )
     axis.set_ylabel(r"$f_\text{PUI}(v')$ [s$^3$ km$^{-6}$]")
     axis.set_xlim(speed_in_sw_frame[0], speed_in_sw_frame[-1])
     axis.set_ylim(1e0, 1e4)

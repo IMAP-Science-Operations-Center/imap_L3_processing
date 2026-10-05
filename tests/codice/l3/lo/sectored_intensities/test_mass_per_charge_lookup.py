@@ -1,14 +1,20 @@
 import unittest
 
-from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import MassPerChargeLookup
+from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import (
+    MassPerChargeLookup,
+)
 from tests.test_helpers import get_test_data_path
 
 
 class TestMassPerChargeLookup(unittest.TestCase):
     def test_read_from_file(self):
-        mass_per_charge_csv_path = get_test_data_path("codice/imap_codice_mass-per-charge_20241110_v002.csv")
+        mass_per_charge_csv_path = get_test_data_path(
+            "codice/imap_codice_mass-per-charge_20241110_v002.csv"
+        )
 
-        mass_per_charge_lookup = MassPerChargeLookup.read_from_file(mass_per_charge_csv_path)
+        mass_per_charge_lookup = MassPerChargeLookup.read_from_file(
+            mass_per_charge_csv_path
+        )
 
         self.assertEqual(1, mass_per_charge_lookup.hplus)
         self.assertEqual(2, mass_per_charge_lookup.heplusplus)
@@ -26,5 +32,5 @@ class TestMassPerChargeLookup(unittest.TestCase):
         self.assertEqual(7.25, mass_per_charge_lookup.fe_hiq)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

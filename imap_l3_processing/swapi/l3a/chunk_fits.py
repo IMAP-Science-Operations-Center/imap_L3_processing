@@ -15,6 +15,12 @@ from imap_l3_processing.constants import (
     ONE_SECOND_IN_NANOSECONDS,
     THIRTY_SECONDS_IN_NANOSECONDS,
 )
+from imap_l3_processing.predicted_ephemeris_tracker import PredictedEphemerisTracker
+from imap_l3_processing.swapi.constants import (
+    SWAPI_COARSE_SWEEP_BINS,
+    SWAPI_L2_K_FACTOR,
+    SWAPI_SCIENCE_BINS,
+)
 from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_pickup_ion_values import (
     PickupIonFitInputData,
     calculate_pickup_ion_values,
@@ -26,18 +32,12 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_solar_wind_alpha_
     AlphaSolarWindFitResult,
     fit_solar_wind_alpha_model,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
-    ProtonSolarWindFitResult,
-    fit_solar_wind_proton_model,
-)
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
 )
-from imap_l3_processing.swapi.species import Species
-from imap_l3_processing.swapi.constants import (
-    SWAPI_COARSE_SWEEP_BINS,
-    SWAPI_L2_K_FACTOR,
-    SWAPI_SCIENCE_BINS,
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
+    ProtonSolarWindFitResult,
+    fit_solar_wind_proton_model,
 )
 from imap_l3_processing.swapi.l3a.utils import (
     compute_direction_of_mean_magnetic_field_over_chunk,
@@ -49,7 +49,7 @@ from imap_l3_processing.swapi.l3a.utils import (
     solar_wind_chunk_epoch,
 )
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
-from imap_l3_processing.predicted_ephemeris_tracker import PredictedEphemerisTracker
+from imap_l3_processing.swapi.species import Species
 
 logger = logging.getLogger(__name__)
 
