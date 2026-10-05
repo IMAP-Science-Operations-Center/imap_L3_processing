@@ -122,13 +122,25 @@ def get_spacecraft_velocity_rtn(epoch_tt2000_ns: float) -> ndarray:
 def convert_sun_velocity_rtn_to_gse(
     epoch_tt2000_ns: float, velocity_rtn_sun: ndarray, covariance_rtn: ndarray
 ) -> tuple[ndarray, ndarray, ndarray]:
-    """Convert a Sun-frame RTN velocity and its covariance to GSE.
+    """Convert a Sun-frame RTN velocity and its covariance to GSE coordinates.
 
-    Returns the velocity in GSE axes with the Earth as origin, once with the Earth
-    as the standard of rest and once with the Sun as the standard of rest, plus
-    their (shared) covariance. The velocity is first rotated into inertial
-    ECLIPJ2000; then the full 6D state (IMAP position relative to Earth,
-    velocity) is transformed to GSE, which adds the rotating-frame term.
+    Parameters
+    ----------
+    epoch_tt2000_ns : float [ns]
+        The TT2000 time of the measurement.
+    velocity_rtn_sun : (3,) ndarray [km/s]
+        The bulk velocity in RTN coordinates and the Sun rest frame.
+    covariance_rtn : (3, 3) ndarray [km^2/s^2]
+        The covariance of the bulk velocity in RTN coordinates.
+
+    Returns
+    -------
+    velocity_gse_earth : (3,) ndarray [km/s]
+        The bulk velocity in GSE coordinates and the Earth rest frame.
+    velocity_gse_sun : (3,) ndarray [km/s]
+        The bulk velocity in GSE coordinates and the Sun rest frame.
+    covariance_gse : (3, 3) ndarray [km^2/s^2]
+        The covariance of both GSE velocities.
     """
     et = float(ttj2000ns_to_et(epoch_tt2000_ns))
     eclipj2000_from_rtn = get_rotation_matrix(
@@ -151,8 +163,8 @@ def convert_sun_velocity_rtn_to_gse(
     velocity_gse_earth = (gse_from_eclipj2000 @ state_earth)[3:]
     velocity_gse_sun = (gse_from_eclipj2000 @ state_sun)[3:]
 
-    # The rotating-frame term and the change of standard of rest do not depend
-    # on the measured velocity, so the covariance only sees the rotation.
+    # The rotating-frame term and the change of rest frame do not depend on the
+    # measured velocity, so the covariance only sees the rotation.
     gse_from_rtn = gse_from_eclipj2000[3:, 3:] @ eclipj2000_from_rtn
     covariance_gse = gse_from_rtn @ covariance_rtn @ gse_from_rtn.T
     return velocity_gse_earth, velocity_gse_sun, covariance_gse
