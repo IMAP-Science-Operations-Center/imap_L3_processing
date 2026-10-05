@@ -358,7 +358,7 @@ proton_sw_velocity_rtn_covariance:
   NAME: proton_sw_velocity_rtn_covariance
   DATA_TYPE: CDF_REAL4
   FIELDNAM: Proton Solar Wind Velocity Covariance (RTN)
-  CATDESC: Covariance matrix in RTN coordinates (frame-independent), with standard errors given by the square root of the diagonal
+  CATDESC: Covariance matrix in RTN coordinates (independent of observational reference frame), with standard errors given by the square root of the diagonal
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
@@ -430,7 +430,7 @@ proton_sw_velocity_gse_covariance:
   NAME: proton_sw_velocity_gse_covariance
   DATA_TYPE: CDF_REAL4
   FIELDNAM: Proton Solar Wind Velocity Covariance (GSE)
-  CATDESC: Covariance matrix in GSE coordinates (frame-independent), with standard errors given by the square root of the diagonal
+  CATDESC: Covariance matrix in GSE coordinates (independent of observational reference frame), with standard errors given by the square root of the diagonal
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
@@ -642,7 +642,7 @@ alpha_sw_velocity_rtn_covariance:
   NAME: alpha_sw_velocity_rtn_covariance
   DATA_TYPE: CDF_REAL4
   FIELDNAM: Alpha Solar Wind Velocity Covariance (RTN)
-  CATDESC: Covariance matrix in RTN coordinates (frame-independent), with standard errors given by the square root of the diagonal
+  CATDESC: Covariance matrix in RTN coordinates (independent of observational reference frame), with standard errors given by the square root of the diagonal
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
@@ -714,7 +714,7 @@ alpha_sw_velocity_gse_covariance:
   NAME: alpha_sw_velocity_gse_covariance
   DATA_TYPE: CDF_REAL4
   FIELDNAM: Alpha Solar Wind Velocity Covariance (GSE)
-  CATDESC: Covariance matrix in GSE coordinates (frame-independent), with standard errors given by the square root of the diagonal
+  CATDESC: Covariance matrix in GSE coordinates (independent of observational reference frame), with standard errors given by the square root of the diagonal
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
