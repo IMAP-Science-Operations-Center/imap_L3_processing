@@ -13,21 +13,36 @@ from imap_data_access.processing_input import ProcessingInputCollection
 from imap_l3_processing.codice.l3.hi.codice_hi_processor import CodiceHiProcessor
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
-from imap_l3_processing.hi.hi_combined_initializer import HI_COMBINED_DESCRIPTORS, HiCombinedInitializer
+from imap_l3_processing.hi.hi_combined_initializer import (
+    HI_COMBINED_DESCRIPTORS,
+    HiCombinedInitializer,
+)
 from imap_l3_processing.hi.hi_processor import HiProcessor
-from imap_l3_processing.hi.hi_sp_initializer import HiSPInitializer, HI_SP_MAP_DESCRIPTORS
+from imap_l3_processing.hi.hi_sp_initializer import (
+    HI_SP_MAP_DESCRIPTORS,
+    HiSPInitializer,
+)
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
-from imap_l3_processing.lo.l3.lo_sp_initializer import LoSPInitializer, LO_SP_MAP_DESCRIPTORS
+from imap_l3_processing.lo.l3.lo_sp_initializer import (
+    LO_SP_MAP_DESCRIPTORS,
+    LoSPInitializer,
+)
 from imap_l3_processing.lo.lo_processor import LoProcessor
 from imap_l3_processing.maps.map_descriptors import parse_map_descriptor
 from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.swe_processor import SweProcessor
-from imap_l3_processing.ultra.ultra_combined_nsp_initializer import UltraCombinedNSPInitializer, \
-    ULTRA_COMBINED_NSP_DESCRIPTORS
+from imap_l3_processing.ultra.ultra_combined_nsp_initializer import (
+    ULTRA_COMBINED_NSP_DESCRIPTORS,
+    UltraCombinedNSPInitializer,
+)
 from imap_l3_processing.ultra.ultra_processor import UltraProcessor
-from imap_l3_processing.ultra.ultra_sp_initializer import UltraSPInitializer, ULTRA_45_DESCRIPTORS, \
-    ULTRA_90_DESCRIPTORS, ULTRA_COMBINED_SP_DESCRIPTORS
+from imap_l3_processing.ultra.ultra_sp_initializer import (
+    ULTRA_45_DESCRIPTORS,
+    ULTRA_90_DESCRIPTORS,
+    ULTRA_COMBINED_SP_DESCRIPTORS,
+    UltraSPInitializer,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -75,32 +90,68 @@ def imap_l3_processor():
         processing_input_collection.deserialize(args.dependency)
         version_map = VersionMap({}, Version(None, args.version))
     else:
-        processing_input_collection.deserialize(json.dumps(parsed_dependency["dependency"]))
-        version_map = VersionMap({k: Version(v["major_version"], v["minor_version"]) for k, v in parsed_dependency["version"].items()})
+        processing_input_collection.deserialize(
+            json.dumps(parsed_dependency["dependency"])
+        )
+        version_map = VersionMap(
+            {
+                k: Version(v["major_version"], v["minor_version"])
+                for k, v in parsed_dependency["version"].items()
+            }
+        )
 
     repointing_number = None
     if args.repointing is not None:
-        repointing_number_match = re.match(r"repoint(?P<repoint>\d{5})", args.repointing)
+        repointing_number_match = re.match(
+            r"repoint(?P<repoint>\d{5})", args.repointing
+        )
         if repointing_number_match is None:
             raise ValueError("Unexpected repointing number command line format!")
         repointing_number = int(repointing_number_match["repoint"])
 
     _furnish_spice_kernels(processing_input_collection)
-    input_dependency = InputMetadata(args.instrument,
-                                     args.data_level,
-                                     _convert_to_datetime(args.start_date),
-                                     _convert_to_datetime(args.end_date or args.start_date),
-                                     version_map, descriptor=args.descriptor, repointing=repointing_number)
-    if args.instrument in ["hi", "lo", "ultra"] and args.data_level == 'l3' and not parse_map_descriptor(
-            args.descriptor):
+    input_dependency = InputMetadata(
+        args.instrument,
+        args.data_level,
+        _convert_to_datetime(args.start_date),
+        _convert_to_datetime(args.end_date or args.start_date),
+        version_map,
+        descriptor=args.descriptor,
+        repointing=repointing_number,
+    )
+    if (
+        args.instrument in ["hi", "lo", "ultra"]
+        and args.data_level == "l3"
+        and not parse_map_descriptor(args.descriptor)
+    ):
         initializer_class, processor_class, descriptors = {
             ("hi", "sp-maps"): (HiSPInitializer, HiProcessor, HI_SP_MAP_DESCRIPTORS),
-            ("hi", "hic-maps"): (HiCombinedInitializer, HiProcessor, HI_COMBINED_DESCRIPTORS),
+            ("hi", "hic-maps"): (
+                HiCombinedInitializer,
+                HiProcessor,
+                HI_COMBINED_DESCRIPTORS,
+            ),
             ("lo", "all-maps"): (LoSPInitializer, LoProcessor, LO_SP_MAP_DESCRIPTORS),
-            ("ultra", "u45-maps"): (UltraSPInitializer, UltraProcessor, ULTRA_45_DESCRIPTORS),
-            ("ultra", "u90-maps"): (UltraSPInitializer, UltraProcessor, ULTRA_90_DESCRIPTORS),
-            ("ultra", "ulc-sp-maps"): (UltraSPInitializer, UltraProcessor, ULTRA_COMBINED_SP_DESCRIPTORS),
-            ("ultra", "ulc-nsp-maps"): (UltraCombinedNSPInitializer, UltraProcessor, ULTRA_COMBINED_NSP_DESCRIPTORS),
+            ("ultra", "u45-maps"): (
+                UltraSPInitializer,
+                UltraProcessor,
+                ULTRA_45_DESCRIPTORS,
+            ),
+            ("ultra", "u90-maps"): (
+                UltraSPInitializer,
+                UltraProcessor,
+                ULTRA_90_DESCRIPTORS,
+            ),
+            ("ultra", "ulc-sp-maps"): (
+                UltraSPInitializer,
+                UltraProcessor,
+                ULTRA_COMBINED_SP_DESCRIPTORS,
+            ),
+            ("ultra", "ulc-nsp-maps"): (
+                UltraCombinedNSPInitializer,
+                UltraProcessor,
+                ULTRA_COMBINED_NSP_DESCRIPTORS,
+            ),
         }[args.instrument, args.descriptor]
 
         initializer = initializer_class()
@@ -108,57 +159,75 @@ def imap_l3_processor():
         maps_to_produce = []
         for map_descriptor in descriptors:
             major_version_from_dependency = version_map.lookup(map_descriptor).major
-            maps_to_produce.extend(initializer.get_maps_that_should_be_produced(map_descriptor, major_version_from_dependency))
+            maps_to_produce.extend(
+                initializer.get_maps_that_should_be_produced(
+                    map_descriptor, major_version_from_dependency
+                )
+            )
 
-        logger.info(f"maps to produce {[m.input_metadata.descriptor for m in maps_to_produce]}")
+        logger.info(
+            f"maps to produce {[m.input_metadata.descriptor for m in maps_to_produce]}"
+        )
         if len(maps_to_produce) == 0:
-            logger.info(f"Did not find any maps to produce for instrument {args.instrument}")
+            logger.info(
+                f"Did not find any maps to produce for instrument {args.instrument}"
+            )
 
         for map_to_produce in maps_to_produce:
             logger.info(
-                f"Processing map {map_to_produce.input_metadata.descriptor}, {map_to_produce.input_metadata.start_date}")
+                f"Processing map {map_to_produce.input_metadata.descriptor}, {map_to_produce.input_metadata.start_date}"
+            )
             initializer.furnish_spice_dependencies(map_to_produce)
 
             try:
-                processor = processor_class(map_to_produce.processing_input_collection, map_to_produce.input_metadata)
+                processor = processor_class(
+                    map_to_produce.processing_input_collection,
+                    map_to_produce.input_metadata,
+                )
                 paths.extend(processor.process())
             except Exception as e:
                 logger.exception(
                     f"Failed to produce map {map_to_produce.input_metadata.descriptor}, {map_to_produce.input_metadata.start_date}!",
-                    exc_info=e)
-    elif args.instrument == 'swapi' and (args.data_level == 'l3a' or args.data_level == 'l3b'):
+                    exc_info=e,
+                )
+    elif args.instrument == "swapi" and (
+        args.data_level == "l3a" or args.data_level == "l3b"
+    ):
         processor = SwapiProcessor(processing_input_collection, input_dependency)
         paths = processor.process()
-    elif args.instrument == 'glows' and args.data_level in ['l3a', 'l3b']:
+    elif args.instrument == "glows" and args.data_level in ["l3a", "l3b"]:
         processor = GlowsProcessor(processing_input_collection, input_dependency)
         paths = processor.process()
-    elif args.instrument == 'swe' and args.data_level == 'l3':
+    elif args.instrument == "swe" and args.data_level == "l3":
         processor = SweProcessor(processing_input_collection, input_dependency)
         paths = processor.process()
-    elif args.instrument == 'hit' and args.data_level == 'l3':
+    elif args.instrument == "hit" and args.data_level == "l3":
         processor = HitProcessor(processing_input_collection, input_dependency)
         paths = processor.process()
-    elif args.instrument == 'hi' and args.data_level == 'l3':
+    elif args.instrument == "hi" and args.data_level == "l3":
         processor = HiProcessor(processing_input_collection, input_dependency)
         paths = processor.process()
-    elif args.instrument == 'ultra' and args.data_level == 'l3':
+    elif args.instrument == "ultra" and args.data_level == "l3":
         processor = UltraProcessor(processing_input_collection, input_dependency)
         paths = processor.process()
-    elif args.instrument == 'lo' and args.data_level == 'l3':
+    elif args.instrument == "lo" and args.data_level == "l3":
         processor = LoProcessor(processing_input_collection, input_dependency)
         paths = processor.process()
-    elif args.instrument == 'codice':
-        if args.descriptor.startswith("hi") and args.data_level in ['l3a', 'l3b']:
+    elif args.instrument == "codice":
+        if args.descriptor.startswith("hi") and args.data_level in ["l3a", "l3b"]:
             processor = CodiceHiProcessor(processing_input_collection, input_dependency)
             paths = processor.process()
-        elif args.descriptor.startswith("lo") and args.data_level in ['l3a', 'l3b']:
+        elif args.descriptor.startswith("lo") and args.data_level in ["l3a", "l3b"]:
             processor = CodiceLoProcessor(processing_input_collection, input_dependency)
             paths = processor.process()
         else:
-            raise NotImplementedError(f"Unknown descriptor '{args.descriptor}' for codice instrument")
+            raise NotImplementedError(
+                f"Unknown descriptor '{args.descriptor}' for codice instrument"
+            )
     else:
         raise NotImplementedError(
-            f'Level {args.data_level} data processing has not yet been implemented for {args.instrument}')
+            f"Level {args.data_level} data processing has not yet been implemented for {args.instrument}"
+        )
 
     if args.upload_to_sdc:
         exceptions = []
@@ -168,20 +237,23 @@ def imap_l3_processor():
             except Exception as e:
                 exceptions.append(e)
         if exceptions:
-            raise IOError(f"Failed to upload some files: {exceptions}")
+            raise OSError(f"Failed to upload some files: {exceptions}")
 
 
 def _furnish_spice_kernels(processing_input_collection):
-    spice_kernel_paths = processing_input_collection.get_file_paths(data_type='spice')
+    spice_kernel_paths = processing_input_collection.get_file_paths(data_type="spice")
     for kernel in spice_kernel_paths:
         kernel_path = imap_data_access.download(kernel)
         spiceypy.furnsh(str(kernel_path))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     with TemporaryDirectory() as dir:
-        logging.basicConfig(force=True, level=logging.INFO,
-                            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        logging.basicConfig(
+            force=True,
+            level=logging.INFO,
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        )
 
         try:
             imap_l3_processor()

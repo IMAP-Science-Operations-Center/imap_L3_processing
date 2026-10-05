@@ -1,7 +1,7 @@
 from __future__ import annotations
-from functools import partial
 
 from dataclasses import dataclass
+from functools import partial
 
 import numpy as np
 import scipy.optimize

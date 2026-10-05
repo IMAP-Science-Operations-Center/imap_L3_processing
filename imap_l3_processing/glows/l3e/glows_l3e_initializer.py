@@ -1,14 +1,13 @@
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 import imap_data_access
 from imap_data_access import (
-    ProcessingInputCollection,
     AncillaryInput,
-    ScienceInput,
+    ProcessingInputCollection,
     RepointInput,
+    ScienceInput,
 )
 
 from imap_l3_processing.glows.l3bc.utils import get_pointing_date_range
@@ -16,15 +15,16 @@ from imap_l3_processing.glows.l3d.models import GlowsL3DProcessorOutput
 from imap_l3_processing.glows.l3d.utils import get_most_recently_uploaded_ancillary
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
 from imap_l3_processing.glows.l3e.glows_l3e_utils import (
+    GlowsL3eVersionsForRepointings,
     find_first_updated_cr,
     identify_versions_for_l3e_output_files,
-    GlowsL3eVersionsForRepointings,
 )
 from imap_l3_processing.glows.l3e.reprocess_info import ReprocessInfo
 from imap_l3_processing.models import VersionMap
 from imap_l3_processing.utils import FurnishMetakernelOutput
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class GlowsL3EInitializerOutput:
@@ -38,18 +38,44 @@ class GlowsL3EInitializerOutput:
 class GlowsL3EInitializer:
     @staticmethod
     def get_repointings_to_process(
-            l3d_output: GlowsL3DProcessorOutput,
-            previous_l3d: Optional[str],
-            repointing_file_path: Path,
-            version_map: VersionMap,
-            reprocess_info: ReprocessInfo,
-    ) -> Optional[GlowsL3EInitializerOutput]:
-        pipeline_settings_l3bcde = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='pipeline-settings-l3bcde'))
-        energy_grid_lo = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='energy-grid-lo'))
-        tess_xyz_8 = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='tess-xyz-8'))
-        energy_grid_hi = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='energy-grid-hi'))
-        energy_grid_ultra = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='energy-grid-ultra'))
-        tess_ang_16 = get_most_recently_uploaded_ancillary(imap_data_access.query(table='ancillary', instrument='glows', descriptor='tess-ang-16'))
+        l3d_output: GlowsL3DProcessorOutput,
+        previous_l3d: str | None,
+        repointing_file_path: Path,
+        version_map: VersionMap,
+        reprocess_info: ReprocessInfo,
+    ) -> GlowsL3EInitializerOutput | None:
+        pipeline_settings_l3bcde = get_most_recently_uploaded_ancillary(
+            imap_data_access.query(
+                table="ancillary",
+                instrument="glows",
+                descriptor="pipeline-settings-l3bcde",
+            )
+        )
+        energy_grid_lo = get_most_recently_uploaded_ancillary(
+            imap_data_access.query(
+                table="ancillary", instrument="glows", descriptor="energy-grid-lo"
+            )
+        )
+        tess_xyz_8 = get_most_recently_uploaded_ancillary(
+            imap_data_access.query(
+                table="ancillary", instrument="glows", descriptor="tess-xyz-8"
+            )
+        )
+        energy_grid_hi = get_most_recently_uploaded_ancillary(
+            imap_data_access.query(
+                table="ancillary", instrument="glows", descriptor="energy-grid-hi"
+            )
+        )
+        energy_grid_ultra = get_most_recently_uploaded_ancillary(
+            imap_data_access.query(
+                table="ancillary", instrument="glows", descriptor="energy-grid-ultra"
+            )
+        )
+        tess_ang_16 = get_most_recently_uploaded_ancillary(
+            imap_data_access.query(
+                table="ancillary", instrument="glows", descriptor="tess-ang-16"
+            )
+        )
 
         processing_input_collection = ProcessingInputCollection(
             ScienceInput(l3d_output.l3d_cdf_file_path.name),
@@ -60,7 +86,7 @@ class GlowsL3EInitializer:
             AncillaryInput(str(energy_grid_hi["file_path"])),
             AncillaryInput(str(energy_grid_ultra["file_path"])),
             AncillaryInput(str(tess_ang_16["file_path"])),
-            RepointInput(str(repointing_file_path))
+            RepointInput(str(repointing_file_path)),
         )
 
         l3e_deps = GlowsL3EDependencies.fetch_dependencies(processing_input_collection)
@@ -70,7 +96,9 @@ class GlowsL3EInitializer:
 
         first_updated_cr = first_cr
         if previous_l3d is not None:
-            first_updated_cr = find_first_updated_cr(l3d_output.l3d_cdf_file_path, previous_l3d)
+            first_updated_cr = find_first_updated_cr(
+                l3d_output.l3d_cdf_file_path, previous_l3d
+            )
             if first_updated_cr is not None:
                 first_updated_cr -= 1
 
@@ -105,4 +133,3 @@ class GlowsL3EInitializer:
             metakernel_with_predict_ephem=furnished_metakernels[0],
             metakernel_without_predict_ephem=furnished_metakernels[1],
         )
-

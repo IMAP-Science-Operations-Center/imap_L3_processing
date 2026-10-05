@@ -3,11 +3,18 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 
-from imap_l3_processing.constants import ONE_AU_IN_KM, CENTIMETERS_PER_METER, METERS_PER_KILOMETER
+from imap_l3_processing.constants import (
+    CENTIMETERS_PER_METER,
+    METERS_PER_KILOMETER,
+    ONE_AU_IN_KM,
+)
 from imap_l3_processing.swapi.constants import SWAPI_PUI_COOLING_INDEX
-from imap_l3_processing.swapi.l3a.science.pickup_ion.density_of_neutral_helium_lookup_table import \
-    DensityOfNeutralHeliumLookupTable
-from imap_l3_processing.swapi.l3a.science.pickup_ion.uniform_speed_grid import UniformSpeedGrid
+from imap_l3_processing.swapi.l3a.science.pickup_ion.density_of_neutral_helium_lookup_table import (
+    DensityOfNeutralHeliumLookupTable,
+)
+from imap_l3_processing.swapi.l3a.science.pickup_ion.uniform_speed_grid import (
+    UniformSpeedGrid,
+)
 
 
 def vasyliunas_siscoe_vdf(
@@ -70,10 +77,8 @@ def _filled_shell_vdf_without_cutoff(
 ) -> NDArray:
     w = speed_in_sw_frame / cutoff_speed
     radius_in_au = distance / ONE_AU_IN_KM
-    neutral_helium_density_per_cm3 = (
-        density_of_neutral_helium_lookup_table.density(
-            inflow_angle, radius_in_au * w**SWAPI_PUI_COOLING_INDEX
-        )
+    neutral_helium_density_per_cm3 = density_of_neutral_helium_lookup_table.density(
+        inflow_angle, radius_in_au * w**SWAPI_PUI_COOLING_INDEX
     )
     neutral_helium_density_per_km3 = (
         neutral_helium_density_per_cm3
@@ -81,9 +86,7 @@ def _filled_shell_vdf_without_cutoff(
     )
     term1 = SWAPI_PUI_COOLING_INDEX / (4 * np.pi)
     term2 = (ionization_rate * ONE_AU_IN_KM**2) / (
-        distance
-        * solar_wind_speed_inertial_frame
-        * cutoff_speed**3
+        distance * solar_wind_speed_inertial_frame * cutoff_speed**3
     )
     term3 = w ** (SWAPI_PUI_COOLING_INDEX - 3)
     term4 = neutral_helium_density_per_km3
@@ -110,4 +113,4 @@ def _apply_partial_heaviside_at_cutoff(
     bin_min = speed_grid.centers[cutoff_index] - delta_v_prime / 2
     fraction_below_cutoff = (cutoff_speed - bin_min) / delta_v_prime
     f_pui[cutoff_index] *= fraction_below_cutoff
-    f_pui[cutoff_index + 1:] = 0.0
+    f_pui[cutoff_index + 1 :] = 0.0

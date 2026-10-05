@@ -17,9 +17,9 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from figure_utils import FIGURES_DIR, load_swapi_response
 
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
-from figure_utils import FIGURES_DIR, load_swapi_response
 
 _AREA_CSV = (
     Path(__file__).resolve().parents[3]

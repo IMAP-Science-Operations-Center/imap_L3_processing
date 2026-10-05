@@ -1,5 +1,5 @@
 import os
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import numpy as np
@@ -7,7 +7,14 @@ from bitstring import BitStream
 from spacepy.pycdf import CDF
 
 path = Path(__file__)
-binary_data_path = path.parent.parent.parent / "tests" / "test_data" / "hit" / "pha_events" / "pha_binary"
+binary_data_path = (
+    path.parent.parent.parent
+    / "tests"
+    / "test_data"
+    / "hit"
+    / "pha_events"
+    / "pha_binary"
+)
 
 start_time = datetime(year=2010, month=1, day=6)
 time_delta = timedelta(minutes=10)
@@ -23,7 +30,9 @@ for i, filename in enumerate(os.listdir(str(binary_data_path))):
     print(len(binary))
     pha_raw.append(binary)
 
-with CDF("tests/test_data/hit/pha_events/fake-menlo-imap_hit_l1a_pulse-height-events_20100106_v004",
-         masterpath='') as cdf:
+with CDF(
+    "tests/test_data/hit/pha_events/fake-menlo-imap_hit_l1a_pulse-height-events_20100106_v004",
+    masterpath="",
+) as cdf:
     cdf.new("epoch", np.array(epoch))
     cdf.new("pha_raw", pha_raw)

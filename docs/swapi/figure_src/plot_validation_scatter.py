@@ -21,6 +21,14 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from figure_utils import (
+    ANCHOR_ROTATION_SWAPI_TO_RTN,
+    FIGURES_DIR,
+    REPO_ROOT,
+    load_swapi_response,
+    peak_esa_voltage_for_proton_bulk_speed,
+    run_parallel_map,
+)
 
 from imap_l3_processing.constants import (
     PROTON_MASS_KG,
@@ -30,15 +38,6 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     calculate_integral,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
-
-from figure_utils import (
-    ANCHOR_ROTATION_SWAPI_TO_RTN,
-    FIGURES_DIR,
-    REPO_ROOT,
-    load_swapi_response,
-    peak_esa_voltage_for_proton_bulk_speed,
-    run_parallel_map,
-)
 
 _worker_state: types.SimpleNamespace | None = None
 
@@ -123,8 +122,13 @@ def _plot_scatter(reference: np.ndarray, optimized: np.ndarray) -> None:
         zorder=4,
     )
     ax.plot(
-        line, line, color="black", linestyle="--", linewidth=0.8,
-        label="1:1", zorder=5,
+        line,
+        line,
+        color="black",
+        linestyle="--",
+        linewidth=0.8,
+        label="1:1",
+        zorder=5,
     )
 
     ax.set_xscale("log")

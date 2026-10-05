@@ -3,18 +3,21 @@ import dataclasses
 import numpy as np
 import scipy
 
-from imap_l3_processing.maps.map_models import SpectralIndexMapData, IntensityMapData, \
-    calculate_datetime_weighted_average
+from imap_l3_processing.maps.map_models import (
+    IntensityMapData,
+    SpectralIndexMapData,
+    calculate_datetime_weighted_average,
+)
 from imap_l3_processing.maps.mpfit import mpfit
 
 
-def calculate_spectral_index_for_multiple_ranges(intensity_data: IntensityMapData, map_ranges) -> SpectralIndexMapData:
+def calculate_spectral_index_for_multiple_ranges(
+    intensity_data: IntensityMapData, map_ranges
+) -> SpectralIndexMapData:
     spectral_maps = []
     for start, end in map_ranges:
         spectral_maps.append(
-            fit_spectral_index_map(
-                slice_energy_range(intensity_data, start, end)
-            )
+            fit_spectral_index_map(slice_energy_range(intensity_data, start, end))
         )
     return SpectralIndexMapData(
         epoch=intensity_data.epoch,
@@ -48,31 +51,37 @@ def calculate_spectral_index_for_multiple_ranges(intensity_data: IntensityMapDat
         ena_spectral_index_chisq=np.concat(
             [m.ena_spectral_index_chisq for m in spectral_maps], axis=1
         ),
-        quality_flags=np.concat(
-            [m.quality_flags for m in spectral_maps], axis=1
-        ),
+        quality_flags=np.concat([m.quality_flags for m in spectral_maps], axis=1),
     )
 
 
-def slice_energy_range(data: IntensityMapData, start: float, end: float) -> IntensityMapData:
+def slice_energy_range(
+    data: IntensityMapData, start: float, end: float
+) -> IntensityMapData:
     energy_mask = np.logical_and(data.energy >= start, data.energy < end)
-    return dataclasses.replace(data,
-                               energy=data.energy[energy_mask],
-                               energy_delta_plus=data.energy_delta_plus[energy_mask],
-                               energy_delta_minus=data.energy_delta_minus[energy_mask],
-                               energy_label=data.energy_label[energy_mask],
-                               exposure_factor=data.exposure_factor[:, energy_mask],
-                               obs_date=data.obs_date[:, energy_mask],
-                               obs_date_range=data.obs_date_range[:, energy_mask],
-                               ena_intensity=data.ena_intensity[:, energy_mask],
-                               ena_intensity_sys_err=data.ena_intensity_sys_err[:, energy_mask],
-                               ena_intensity_stat_uncert=data.ena_intensity_stat_uncert[:, energy_mask],
-                               quality_flags=data.quality_flags[:, energy_mask],
-                               )
+    return dataclasses.replace(
+        data,
+        energy=data.energy[energy_mask],
+        energy_delta_plus=data.energy_delta_plus[energy_mask],
+        energy_delta_minus=data.energy_delta_minus[energy_mask],
+        energy_label=data.energy_label[energy_mask],
+        exposure_factor=data.exposure_factor[:, energy_mask],
+        obs_date=data.obs_date[:, energy_mask],
+        obs_date_range=data.obs_date_range[:, energy_mask],
+        ena_intensity=data.ena_intensity[:, energy_mask],
+        ena_intensity_sys_err=data.ena_intensity_sys_err[:, energy_mask],
+        ena_intensity_stat_uncert=data.ena_intensity_stat_uncert[:, energy_mask],
+        quality_flags=data.quality_flags[:, energy_mask],
+    )
 
-def slice_energy_range_by_bin(data: IntensityMapData, start_bin_id: int, end_bin_id: int) -> IntensityMapData:
+
+def slice_energy_range_by_bin(
+    data: IntensityMapData, start_bin_id: int, end_bin_id: int
+) -> IntensityMapData:
     max_bin_id = 1 + len(data.energy)
-    bin_ids_in_range =  (1 <= start_bin_id <= max_bin_id) and (1 <= end_bin_id <= max_bin_id)
+    bin_ids_in_range = (1 <= start_bin_id <= max_bin_id) and (
+        1 <= end_bin_id <= max_bin_id
+    )
     bin_ids_valid = bin_ids_in_range and start_bin_id < end_bin_id
     if not bin_ids_valid:
         raise ValueError(f"Error slicing energy bins {start_bin_id},{end_bin_id}")
@@ -93,6 +102,7 @@ def slice_energy_range_by_bin(data: IntensityMapData, start_bin_id: int, end_bin
         quality_flags=data.quality_flags[:, energy_slice],
     )
 
+
 def fit_spectral_index_map(intensity_data: IntensityMapData) -> SpectralIndexMapData:
     fluxes = intensity_data.ena_intensity
     uncertainty = intensity_data.ena_intensity_stat_uncert
@@ -103,20 +113,36 @@ def fit_spectral_index_map(intensity_data: IntensityMapData) -> SpectralIndexMap
     mean_energy = np.sqrt(min_energy * max_energy)
     new_energy_label = f"{min_energy} - {max_energy}"
 
-    output_scalar_coefficients, output_scalar_errors, output_gammas, output_gamma_errors, chisq = fit_arrays_to_power_law(fluxes, uncertainty, energy)
-    mean_obs_date = calculate_datetime_weighted_average(intensity_data.obs_date,
-                                                        weights=intensity_data.exposure_factor,
-                                                        axis=1, keepdims=True)
-    mean_obs_date_range = np.ma.average(intensity_data.obs_date_range, weights=intensity_data.exposure_factor,
-                                        axis=1,
-                                        keepdims=True)
-    total_exposure_factor = np.sum(intensity_data.exposure_factor, axis=1, keepdims=True)
+    (
+        output_scalar_coefficients,
+        output_scalar_errors,
+        output_gammas,
+        output_gamma_errors,
+        chisq,
+    ) = fit_arrays_to_power_law(fluxes, uncertainty, energy)
+    mean_obs_date = calculate_datetime_weighted_average(
+        intensity_data.obs_date,
+        weights=intensity_data.exposure_factor,
+        axis=1,
+        keepdims=True,
+    )
+    mean_obs_date_range = np.ma.average(
+        intensity_data.obs_date_range,
+        weights=intensity_data.exposure_factor,
+        axis=1,
+        keepdims=True,
+    )
+    total_exposure_factor = np.sum(
+        intensity_data.exposure_factor, axis=1, keepdims=True
+    )
     positive_gammas = output_gammas < 0
     output_gammas[positive_gammas] = np.nan
     output_scalar_coefficients[positive_gammas] = np.nan
     output_gamma_errors[positive_gammas] = np.nan
     chisq[positive_gammas] = np.nan
-    quality_flags = np.bitwise_or.reduce(intensity_data.quality_flags, axis=1, keepdims=True)
+    quality_flags = np.bitwise_or.reduce(
+        intensity_data.quality_flags, axis=1, keepdims=True
+    )
 
     return SpectralIndexMapData(
         epoch=intensity_data.epoch,
@@ -136,15 +162,16 @@ def fit_spectral_index_map(intensity_data: IntensityMapData) -> SpectralIndexMap
         ena_spectral_index_scalar_coefficient=output_scalar_coefficients,
         ena_spectral_index_scalar_coefficient_stat_uncert=output_scalar_errors,
         ena_spectral_index_chisq=chisq,
-        quality_flags=quality_flags
+        quality_flags=quality_flags,
     )
 
 
-def fit_arrays_to_power_law(fluxes: np.ndarray, uncertainties: np.ndarray, energy: np.ndarray) -> tuple[
-    np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def fit_arrays_to_power_law(
+    fluxes: np.ndarray, uncertainties: np.ndarray, energy: np.ndarray
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     par_info = [
-        {'limits': [0.0, 1000.0]},
-        {'limits': [0.0, 1000.0]},
+        {"limits": [0.0, 1000.0]},
+        {"limits": [0.0, 1000.0]},
     ]
 
     output_shape = (fluxes.shape[0], 1, *fluxes.shape[2:])
@@ -168,15 +195,24 @@ def fit_arrays_to_power_law(fluxes: np.ndarray, uncertainties: np.ndarray, energ
             flux = intensity[:, i]
             uncertainty = unc[:, i]
             flux_and_variance_are_zero = np.equal(flux, 0) & np.equal(uncertainty, 0)
-            flux_or_error_is_invalid = np.isnan(flux) | np.isnan(uncertainty) | flux_and_variance_are_zero
+            flux_or_error_is_invalid = (
+                np.isnan(flux) | np.isnan(uncertainty) | flux_and_variance_are_zero
+            )
             flux = flux[~flux_or_error_is_invalid]
             uncertainty = uncertainty[~flux_or_error_is_invalid]
             filtered_energy = energy[~flux_or_error_is_invalid]
 
             positive_flux = flux > 0
             if np.count_nonzero(positive_flux) > 1:
-                keywords = {'xval': filtered_energy, 'yval': flux, 'errval': uncertainty}
-                result = scipy.stats.linregress(np.log10(filtered_energy[positive_flux]), np.log10(flux[positive_flux]))
+                keywords = {
+                    "xval": filtered_energy,
+                    "yval": flux,
+                    "errval": uncertainty,
+                }
+                result = scipy.stats.linregress(
+                    np.log10(filtered_energy[positive_flux]),
+                    np.log10(flux[positive_flux]),
+                )
 
                 initial_parameters = (10**result.intercept, -result.slope)
 
@@ -192,17 +228,27 @@ def fit_arrays_to_power_law(fluxes: np.ndarray, uncertainties: np.ndarray, energ
                     chisqs[i] = fit.fnorm / fit.dof
         output_gammas[epoch, 0] = gammas.reshape(fluxes.shape[2:])
         output_gamma_errors[epoch, 0] = gamma_errors.reshape(fluxes.shape[2:])
-        output_scalar_coefficients[epoch, 0] = scalar_coefficients.reshape(fluxes.shape[2:])
-        output_scalar_coefficients_errors[epoch, 0] = scalar_coefficient_errors.reshape(fluxes.shape[2:])
+        output_scalar_coefficients[epoch, 0] = scalar_coefficients.reshape(
+            fluxes.shape[2:]
+        )
+        output_scalar_coefficients_errors[epoch, 0] = scalar_coefficient_errors.reshape(
+            fluxes.shape[2:]
+        )
         output_chisqs[epoch, 0] = chisqs.reshape(fluxes.shape[2:])
-    return output_scalar_coefficients, output_scalar_coefficients_errors, output_gammas, output_gamma_errors, output_chisqs
+    return (
+        output_scalar_coefficients,
+        output_scalar_coefficients_errors,
+        output_gammas,
+        output_gamma_errors,
+        output_chisqs,
+    )
 
 
 def power_law(params, **kwargs):
     A, B = params
-    x = kwargs['xval']
-    y = kwargs['yval']
-    err = kwargs['errval']
+    x = kwargs["xval"]
+    y = kwargs["yval"]
+    err = kwargs["errval"]
 
     model = A * np.power(x, -B)
 

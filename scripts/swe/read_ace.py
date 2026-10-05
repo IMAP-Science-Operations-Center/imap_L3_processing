@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Tue Mar 11 16:12:45 2025
 
 @author: hafijulislam
 """
+
 import shutil
 import sys
 from datetime import datetime
@@ -15,6 +15,7 @@ import xarray as xr
 from matplotlib.colors import LogNorm
 from pyhdf.HDF import *
 from pyhdf.SD import SD, SDC
+
 # import pyhdf.SD
 from pyhdf.VS import *
 from spacepy.pycdf import CDF
@@ -69,9 +70,9 @@ def decompressed_counts(cem_count: int) -> int:
     # the quotient
 
     return (
-            decompress_table[index]["base"]
-            + (multi * decompress_table[index]["step_size"])
-            + ((decompress_table[index]["step_size"] - 1) // 2)
+        decompress_table[index]["base"]
+        + (multi * decompress_table[index]["step_size"])
+        + ((decompress_table[index]["step_size"] - 1) // 2)
     )
 
 
@@ -140,13 +141,19 @@ def calculate_phase(phase, spin_period):
             sss = i // N_ENERGIES_LEVEL1
             f1 = N_PHI_LEVEL1 * sss + k + 1
             f2 = 120 * sss + N_ENERGIES_LEVEL1 * k + rrr + 1
-            offset = (0.0547645 + f1 * 0.0575027 + (f2 - 0.5) * K_FOR_THIS_MODE) * 12.0 / spin_period
+            offset = (
+                (0.0547645 + f1 * 0.0575027 + (f2 - 0.5) * K_FOR_THIS_MODE)
+                * 12.0
+                / spin_period
+            )
             phi[i][k] = phase + offset
     CONVERT_PHI_TO_IMAP_AZIMUTH = 270
     return (phi + CONVERT_PHI_TO_IMAP_AZIMUTH - SWE_MOUNTING_ANGLE) % 360
 
 
-def calculate_acquisition_time(phase: float, spin_period: float, epoch: datetime) -> np.ndarray:
+def calculate_acquisition_time(
+    phase: float, spin_period: float, epoch: datetime
+) -> np.ndarray:
     met = get_met_from_epoch(epoch)
 
     met_rounded = (met // 15) * 15
@@ -164,22 +171,26 @@ def plot_dnswe_data_from_hdf(file_path):
     # Open the HDF4 file for reading
     hdf = SD(file_path, SDC.READ)
     # Select the DNSWE_COUNT dataset
-    data = hdf.select('DNSWE_COUNT')[:]
+    data = hdf.select("DNSWE_COUNT")[:]
 
     # Print the shape and data for reference
     print(f"Shape of DNSWE_COUNT dataset: {data.shape}")
     print(f"Data:\n{data}")
 
     # For simplicity, let's plot the first 2D slice (you can change this depending on your needs)
-    data_slice = data[:, 0, 0, 0, :]  # Select a slice (e.g., first 2D slice from the 5D array)
+    data_slice = data[
+        :, 0, 0, 0, :
+    ]  # Select a slice (e.g., first 2D slice from the 5D array)
 
     # Plot the data
     plt.figure(figsize=(10, 6))
-    plt.imshow(data_slice, norm=LogNorm(), aspect='auto', cmap='viridis', origin='lower')
-    plt.colorbar(label='DNSWE Values')
-    plt.title('Plot of DNSWE_COUNT dataset slice')
-    plt.xlabel('Dimension 1')
-    plt.ylabel('Dimension 2')
+    plt.imshow(
+        data_slice, norm=LogNorm(), aspect="auto", cmap="viridis", origin="lower"
+    )
+    plt.colorbar(label="DNSWE Values")
+    plt.title("Plot of DNSWE_COUNT dataset slice")
+    plt.xlabel("Dimension 1")
+    plt.ylabel("Dimension 2")
     plt.show()
 
 
@@ -207,11 +218,22 @@ def get_epochs_from_output_file(filepath: str) -> tuple[np.array, np.array]:
 
     sc_data = np.array([x[sct_index] for x in dataset[:]])
 
-    correction_factor = (datetime(2025, 6, 30) - datetime(1999, 6, 8))
+    correction_factor = datetime(2025, 6, 30) - datetime(1999, 6, 8)
 
-    return np.array([datetime(year=x[years_index], month=x[month_index], day=x[day_index], hour=x[hour_index],
-                              minute=x[min_index], second=x[sec_index]) + correction_factor for x in
-                     dataset[:]]), sc_data
+    return np.array(
+        [
+            datetime(
+                year=x[years_index],
+                month=x[month_index],
+                day=x[day_index],
+                hour=x[hour_index],
+                minute=x[min_index],
+                second=x[sec_index],
+            )
+            + correction_factor
+            for x in dataset[:]
+        ]
+    ), sc_data
 
 
 initial_epoch = datetime.fromisoformat("2025-06-30T12:00:00")
@@ -219,24 +241,30 @@ initial_epoch_in_met_time = 488980803.0
 # File path to the HDF4 file
 file_path = "instrument_team_data/swe/ACE_LV1_1999-159.swepam.hdf"
 xarray_data = hdf4_to_xarray(file_path)
-new_ds = xarray_data['DNSWE_COUNT'].transpose('fakeDim32', 'fakeDim33', 'fakeDim35', 'fakeDim34', 'fakeDim36')
+new_ds = xarray_data["DNSWE_COUNT"].transpose(
+    "fakeDim32", "fakeDim33", "fakeDim35", "fakeDim34", "fakeDim36"
+)
 new_ds = new_ds.stack(merged_dim=("fakeDim33", "fakeDim35"))
 new_ds = new_ds.assign_coords({"merged_dim": range(20)})
-new_ds = new_ds.transpose('fakeDim32', 'merged_dim', 'fakeDim34', 'fakeDim36')
+new_ds = new_ds.transpose("fakeDim32", "merged_dim", "fakeDim34", "fakeDim36")
 
-epochs, sc_times = get_epochs_from_output_file("instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf")
+epochs, sc_times = get_epochs_from_output_file(
+    "instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf"
+)
 
 ds_expanded = xr.DataArray(
     new_ds.values,
     dims=("dim1", "dim2", "dim3", "dim4"),
     coords={
-        "dim1": 'epoch',  # Keep original coordinates
-        "dim2": 'energy',  # Update dim2 to be 0-23
-        "dim3": 'spin',
-        "dim4": 'cem'
-    }
+        "dim1": "epoch",  # Keep original coordinates
+        "dim2": "energy",  # Update dim2 to be 0-23
+        "dim3": "spin",
+        "dim4": "cem",
+    },
 )
-decompress_table = decompression_table = np.array([decompressed_counts(i) for i in range(256)])
+decompress_table = decompression_table = np.array(
+    [decompressed_counts(i) for i in range(256)]
+)
 counts = decompress_table[ds_expanded.values.astype(int)]
 sample_time = 0.10031
 sample_time_microseconds = int(sample_time * 1e6)
@@ -245,32 +273,22 @@ rates = deadtime_corrected / sample_time
 
 t0 = 55990787
 t1 = 56586115
-cal_t0, cal_t1 = np.array([
+cal_t0, cal_t1 = np.array(
     [
-        1.359617,
-        1.856468,
-        1.981586,
-        2.068891,
-        1.965609,
-        1.889478,
-        1.105694
-    ],
-    [
-        1.290341,
-        1.800907,
-        1.931721,
-        2.060242,
-        1.992930,
-        1.981554,
-        1.117602
+        [1.359617, 1.856468, 1.981586, 2.068891, 1.965609, 1.889478, 1.105694],
+        [1.290341, 1.800907, 1.931721, 2.060242, 1.992930, 1.981554, 1.117602],
     ]
-])
+)
 
-calibration = cal_t0 + ((sc_times - t0) / (t1 - t0))[:, np.newaxis, np.newaxis, np.newaxis] * (cal_t1 - cal_t0)
+calibration = cal_t0 + ((sc_times - t0) / (t1 - t0))[
+    :, np.newaxis, np.newaxis, np.newaxis
+] * (cal_t1 - cal_t0)
 
 rates *= calibration
 
-phase, spin = get_phase_and_spin('instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf')
+phase, spin = get_phase_and_spin(
+    "instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf"
+)
 
 acquisition_time = []
 
@@ -283,15 +301,36 @@ if len(sys.argv) > 1:
     truncate_to = int(sys.argv[1])
 else:
     truncate_to = len(epochs)
-settle_duration_needed_to_fill_time_between_points = time_between_data_points / (20 * 30) - sample_time_microseconds
+settle_duration_needed_to_fill_time_between_points = (
+    time_between_data_points / (20 * 30) - sample_time_microseconds
+)
 output_path = "tests/test_data/swe/imap_swe_l1b_sci_20250630_v003.cdf"
 shutil.copy("tests/test_data/swe/imap_swe_l1b_sci_20240510_v002.cdf", output_path)
 
-energy = np.array([2.55714286, 3.65142857, 5.16, 7.30571429,
-                   10.32857143, 14.34285714, 19.95714286, 27.42857143,
-                   38.37142857, 52.82857143, 73.32857143, 102.0,
-                   142.14285714, 196.57142857, 272., 372.71428571,
-                   519.0, 712.57142857, 987.14285714, 1370.0])
+energy = np.array(
+    [
+        2.55714286,
+        3.65142857,
+        5.16,
+        7.30571429,
+        10.32857143,
+        14.34285714,
+        19.95714286,
+        27.42857143,
+        38.37142857,
+        52.82857143,
+        73.32857143,
+        102.0,
+        142.14285714,
+        196.57142857,
+        272.0,
+        372.71428571,
+        519.0,
+        712.57142857,
+        987.14285714,
+        1370.0,
+    ]
+)
 
 esa_energy = np.full((truncate_to, 20, 30), np.nan)
 
@@ -299,21 +338,23 @@ esa_energy[:] = energy[np.newaxis, :, np.newaxis]
 
 energy = energy[:, np.newaxis, np.newaxis]
 with CDF(output_path, readonly=False) as cdf:
-    del cdf['science_data']
-    del cdf['acquisition_time']
-    del cdf['acq_duration']
-    del cdf['settle_duration']
-    del cdf['esa_step']
-    cdf['epoch'] = epochs[:truncate_to]
-    cdf['epoch'].attrs['VAR_TYPE'] = 'support_data'
-    del cdf['epoch'].attrs['DEPEND_0']
-    cdf['science_data'] = rates[:truncate_to, :, :, ::-1]
-    cdf['acquisition_time'] = np.array(acquisition_time[:truncate_to])
-    cdf['acq_duration'] = np.full((truncate_to, 20, 30), sample_time_microseconds)
-    cdf['settle_duration'] = np.full((truncate_to, 4), round(settle_duration_needed_to_fill_time_between_points))
-    cdf['esa_table_num'] = np.full((truncate_to, 4), 0)
-    cdf.new('esa_energy', esa_energy)
-    cdf.new('esa_step', np.arange(20), recVary=False)
-    cdf['esa_energy'].attrs['VAR_TYPE'] = 'support_data'
-    cdf['esa_step'].attrs['VAR_TYPE'] = 'support_data'
-    cdf['counts_stat_uncert'] = np.full(rates.shape, 1)
+    del cdf["science_data"]
+    del cdf["acquisition_time"]
+    del cdf["acq_duration"]
+    del cdf["settle_duration"]
+    del cdf["esa_step"]
+    cdf["epoch"] = epochs[:truncate_to]
+    cdf["epoch"].attrs["VAR_TYPE"] = "support_data"
+    del cdf["epoch"].attrs["DEPEND_0"]
+    cdf["science_data"] = rates[:truncate_to, :, :, ::-1]
+    cdf["acquisition_time"] = np.array(acquisition_time[:truncate_to])
+    cdf["acq_duration"] = np.full((truncate_to, 20, 30), sample_time_microseconds)
+    cdf["settle_duration"] = np.full(
+        (truncate_to, 4), round(settle_duration_needed_to_fill_time_between_points)
+    )
+    cdf["esa_table_num"] = np.full((truncate_to, 4), 0)
+    cdf.new("esa_energy", esa_energy)
+    cdf.new("esa_step", np.arange(20), recVary=False)
+    cdf["esa_energy"].attrs["VAR_TYPE"] = "support_data"
+    cdf["esa_step"].attrs["VAR_TYPE"] = "support_data"
+    cdf["counts_stat_uncert"] = np.full(rates.shape, 1)

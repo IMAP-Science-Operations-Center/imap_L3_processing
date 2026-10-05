@@ -1,20 +1,21 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-import numba
 import numpy as np
 from uncertainties import ufloat
 
 from imap_l3_processing.constants import (
     ALPHA_MASS_PER_CHARGE_M_P_PER_E,
-    ALPHA_PARTICLE_CHARGE_COULOMBS,
     ALPHA_PARTICLE_MASS_KG,
     PROTON_CHARGE_COULOMBS,
     PROTON_MASS_KG,
 )
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
+from imap_l3_processing.swapi.l3a.science.solar_wind.alpha import (
+    calculate_initial_guess as alpha_initial_guess_module,
+)
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha import (
     fit_solar_wind_alpha_model as alpha_module,
-    calculate_initial_guess as alpha_initial_guess_module,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_solar_wind_alpha_model import (
     MIN_TOLERABLE_ALPHA_SPEED_RATIO,
@@ -29,17 +30,15 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
 )
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
     ProtonSolarWindFitResult,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
-from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 from imap_l3_processing.swapi.species import Species
 from tests.swapi._helpers import NOMINAL_TEST_EPOCH_TT2000, load_swapi_response
-
 
 # ----- module-level fixture constants --------------------------------------
 
@@ -51,10 +50,10 @@ from tests.swapi._helpers import NOMINAL_TEST_EPOCH_TT2000, load_swapi_response
 # physical voltages SWAPI sweeps in flight.
 _N_BINS_PER_SWEEP = 62
 _N_SWEEPS = 5
-_ONE_SWEEP_VOLTAGE = np.logspace(
-    np.log10(3500.0), np.log10(140.0), _N_BINS_PER_SWEEP
-)
-_FIVE_SWEEP_VOLTAGE = np.broadcast_to(_ONE_SWEEP_VOLTAGE, (_N_SWEEPS, _N_BINS_PER_SWEEP)).copy()
+_ONE_SWEEP_VOLTAGE = np.logspace(np.log10(3500.0), np.log10(140.0), _N_BINS_PER_SWEEP)
+_FIVE_SWEEP_VOLTAGE = np.broadcast_to(
+    _ONE_SWEEP_VOLTAGE, (_N_SWEEPS, _N_BINS_PER_SWEEP)
+).copy()
 _N_MEAS = _FIVE_SWEEP_VOLTAGE.size
 
 # Slow-wind ground-truth moments. RTN +R points sunward, so a sunward solar
@@ -232,7 +231,9 @@ def _synthesize_proton_plus_alpha_count_rate(
             species=Species.ALPHA,
             rotation_matrices=rotation_matrices,
         )
-        alpha_true, _ = model_solar_wind_ideal_coincidence_rates(alpha_params, alpha_ctx)
+        alpha_true, _ = model_solar_wind_ideal_coincidence_rates(
+            alpha_params, alpha_ctx
+        )
         total_true = proton_true + alpha_true
     else:
         total_true = proton_true
@@ -386,8 +387,7 @@ class TestFitAlphaMomentsRecoversTruth(
         """The post-fit `velocity_rtn` satisfies the algebraic identity v_α = v_p* + Δv·B̂ exactly (not approximately) — the dataclass stores the constraint, not a free vector."""
         v_alpha = self.result.velocity_rtn_nominal()
         expected = (
-            _TRUE_PROTON_VELOCITY_RTN
-            + self.result.delta_v.nominal_value * _B_HAT_RTN
+            _TRUE_PROTON_VELOCITY_RTN + self.result.delta_v.nominal_value * _B_HAT_RTN
         )
         np.testing.assert_allclose(v_alpha, expected, atol=1e-9)
 
@@ -400,9 +400,7 @@ class TestFitAlphaMomentsRecoversTruth(
         )
 
 
-class TestAlphaPeakEnergyRatioGuard(
-    _SyntheticAlphaSpectrumFixture, unittest.TestCase
-):
+class TestAlphaPeakEnergyRatioGuard(_SyntheticAlphaSpectrumFixture, unittest.TestCase):
     """Only fitted alpha speeds below the tolerable ratio to the proton speed are rejected."""
 
     def test_alpha_speed_ratio_lower_bound(self):
@@ -472,9 +470,7 @@ class TestFitAlphaMomentsAlphaVelocityFollowsBHat(unittest.TestCase):
 
     def test_alpha_velocity_minus_proton_velocity_is_parallel_to_bhat(self):
         """For a tilted B̂, the recovered (v_α − v_p) lies along ±B̂ — equivalently, the cross product (v_α − v_p) × B̂ is zero up to numerical noise."""
-        delta = (
-            self.result.velocity_rtn_nominal() - self.proton_velocity_rtn
-        )
+        delta = self.result.velocity_rtn_nominal() - self.proton_velocity_rtn
         np.testing.assert_allclose(np.cross(delta, self.b_hat), 0.0, atol=1e-9)
 
     def test_recovered_delta_v_matches_dot_product_of_velocity_offset(self):
@@ -582,18 +578,22 @@ class TestFitAlphaMomentsLMFailureFlag(unittest.TestCase):
             count_rate=np.full(_FIVE_SWEEP_VOLTAGE.shape, 100.0),
         )
 
-        with patch.object(
-            alpha_module,
-            "calculate_initial_guess",
-            return_value=(0.2, 4.0e5, 0.0, np.array([10, 11, 12])),
-        ), patch.object(
-            alpha_module._AlphaEvaluator,
-            "residuals",
-            return_value=np.full(_N_MEAS, 1.0),
-        ), patch.object(
-            alpha_module.scipy.optimize,
-            "least_squares",
-            return_value=non_converged,
+        with (
+            patch.object(
+                alpha_module,
+                "calculate_initial_guess",
+                return_value=(0.2, 4.0e5, 0.0, np.array([10, 11, 12])),
+            ),
+            patch.object(
+                alpha_module._AlphaEvaluator,
+                "residuals",
+                return_value=np.full(_N_MEAS, 1.0),
+            ),
+            patch.object(
+                alpha_module.scipy.optimize,
+                "least_squares",
+                return_value=non_converged,
+            ),
         ):
             result = fit_solar_wind_alpha_model(
                 proton_ctx=proton_ctx,
@@ -757,13 +757,16 @@ class TestAlphaEvaluatorAnalyticJacobianMatchesFiniteDifference(
 
     def test_jacobian_shape_is_n_residuals_by_three(self):
         """The analytic Jacobian has shape (N_residuals, 3) — one row per measurement bin, one column per fit parameter (log n_α, log T_α, Δv)."""
-        self.assertEqual(self.analytic_jacobian.shape, (self.alpha_ctx.count_rate.size, 3))
+        self.assertEqual(
+            self.analytic_jacobian.shape, (self.alpha_ctx.count_rate.size, 3)
+        )
 
     def test_log_density_column_equals_alpha_only_rate_times_deadtime_squared(self):
         """Because the rate is linear in n_α, the analytic ∂(observable)/∂(log n_α) column equals 𝒟²(R_total) · R_α exactly with no quadrature slack — an identity check independent of finite-difference noise."""
         from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
             model_solar_wind_ideal_coincidence_rates,
         )
+
         alpha_only_params = SolarWindParams(
             density=_TRUE_ALPHA_DENSITY_CM3,
             velocity_rtn=_TRUE_PROTON_VELOCITY_RTN + _TRUE_DELTA_V_KM_S * _B_HAT_RTN,
@@ -893,24 +896,28 @@ class TestFitAlphaMomentsPassesAnalyticJacobianToLM(
             rotation_matrices=self.rotation_matrices,
         )
 
-        with patch.object(
-            alpha_module,
-            "calculate_initial_guess",
-            return_value=(
-                _TRUE_ALPHA_DENSITY_CM3,
-                _TRUE_ALPHA_TEMPERATURE_K,
-                0.0,
-                peak_bin_idx,
+        with (
+            patch.object(
+                alpha_module,
+                "calculate_initial_guess",
+                return_value=(
+                    _TRUE_ALPHA_DENSITY_CM3,
+                    _TRUE_ALPHA_TEMPERATURE_K,
+                    0.0,
+                    peak_bin_idx,
+                ),
             ),
-        ), patch.object(
-            alpha_module._AlphaEvaluator,
-            "residuals",
-            return_value=np.zeros(n_peak_residuals),
-        ), patch.object(
-            alpha_module.scipy.optimize,
-            "least_squares",
-            return_value=mock_result,
-        ) as mock_lm:
+            patch.object(
+                alpha_module._AlphaEvaluator,
+                "residuals",
+                return_value=np.zeros(n_peak_residuals),
+            ),
+            patch.object(
+                alpha_module.scipy.optimize,
+                "least_squares",
+                return_value=mock_result,
+            ) as mock_lm,
+        ):
             fit_solar_wind_alpha_model(
                 proton_ctx=proton_ctx,
                 alpha_ctx=alpha_ctx,

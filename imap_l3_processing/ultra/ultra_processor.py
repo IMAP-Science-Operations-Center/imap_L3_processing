@@ -2,11 +2,9 @@ import logging
 import pickle
 import re
 from dataclasses import dataclass
-from datetime import datetime, timedelta
 from hashlib import sha256
-from typing import Optional
 
-from imap_data_access import ScienceFilePath, ImapFilePath
+from imap_data_access import ImapFilePath, ScienceFilePath
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.map_combination import (
@@ -16,36 +14,43 @@ from imap_l3_processing.maps.map_combination import (
 from imap_l3_processing.maps.map_descriptors import (
     MapDescriptorParts,
     MapQuantity,
-    SurvivalCorrection,
-    parse_map_descriptor,
     PixelSize,
     Sensor,
+    SurvivalCorrection,
+    parse_map_descriptor,
 )
 from imap_l3_processing.maps.map_models import (
+    HealPixCoords,
     HealPixIntensityMapData,
     IntensityMapData,
-    HealPixCoords,
+    RectangularCoords,
     RectangularIntensityDataProduct,
     RectangularIntensityMapData,
-    RectangularCoords,
     RectangularSpectralIndexDataProduct,
     RectangularSpectralIndexMapData,
 )
 from imap_l3_processing.maps.map_processor import MapProcessor
 from imap_l3_processing.maps.quality_flags import MapL3Flags
-from imap_l3_processing.maps.spectral_fit import calculate_spectral_index_for_multiple_ranges, \
-    slice_energy_range_by_bin, fit_spectral_index_map
-from imap_l3_processing.maps.survival_probability_processing import combine_glows_l3e_with_l1c_pointing
-from imap_l3_processing.ultra.science.ultra_survival_probability import UltraSurvivalProbabilitySkyMap, \
-    UltraSurvivalProbability
+from imap_l3_processing.maps.spectral_fit import (
+    calculate_spectral_index_for_multiple_ranges,
+    fit_spectral_index_map,
+    slice_energy_range_by_bin,
+)
+from imap_l3_processing.maps.survival_probability_processing import (
+    combine_glows_l3e_with_l1c_pointing,
+)
+from imap_l3_processing.ultra.science.ultra_survival_probability import (
+    UltraSurvivalProbability,
+    UltraSurvivalProbabilitySkyMap,
+)
 from imap_l3_processing.ultra.ultra_l3_dependencies import (
+    UltraL3CombinedDependencies,
     UltraL3Dependencies,
     UltraL3SpectralIndexDependencies,
-    UltraL3CombinedDependencies,
 )
 from imap_l3_processing.utils import (
-    save_data,
     get_temp_cache_dir,
+    save_data,
 )
 
 logger = logging.getLogger(__name__)
@@ -57,34 +62,53 @@ class UltraProcessor(MapProcessor):
         parent_file_names = self.get_parent_file_names()
 
         match parsed_descriptor:
-            case MapDescriptorParts(quantity=MapQuantity.SpectralIndex,
-                                    grid=PixelSize.TwoDegrees | PixelSize.FourDegrees | PixelSize.SixDegrees):
-                ultra_l3_spectral_fit_dependencies = UltraL3SpectralIndexDependencies.fetch_dependencies(
-                    self.dependencies)
+            case MapDescriptorParts(
+                quantity=MapQuantity.SpectralIndex,
+                grid=PixelSize.TwoDegrees
+                | PixelSize.FourDegrees
+                | PixelSize.SixDegrees,
+            ):
+                ultra_l3_spectral_fit_dependencies = (
+                    UltraL3SpectralIndexDependencies.fetch_dependencies(
+                        self.dependencies
+                    )
+                )
                 spectral_index_map_data = self._process_spectral_index(
                     ultra_l3_spectral_fit_dependencies,
-                    parsed_descriptor.spectral_index_energy_range
+                    parsed_descriptor.spectral_index_energy_range,
                 )
-                data_product = RectangularSpectralIndexDataProduct(input_metadata=self.input_metadata,
-                                                                   data=spectral_index_map_data,
-                                                                   spice_frame_name=spice_frame_name)
-            case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
-                                    sensor=Sensor.Ultra45 | Sensor.Ultra90,
-                                    grid=PixelSize.TwoDegrees | PixelSize.FourDegrees | PixelSize.SixDegrees):
+                data_product = RectangularSpectralIndexDataProduct(
+                    input_metadata=self.input_metadata,
+                    data=spectral_index_map_data,
+                    spice_frame_name=spice_frame_name,
+                )
+            case MapDescriptorParts(
+                survival_correction=SurvivalCorrection.SurvivalCorrected,
+                sensor=Sensor.Ultra45 | Sensor.Ultra90,
+                grid=PixelSize.TwoDegrees
+                | PixelSize.FourDegrees
+                | PixelSize.SixDegrees,
+            ):
                 deps = UltraL3Dependencies.fetch_dependencies(self.dependencies)
                 healpix_intensity_map_data = (
                     correct_healpix_data_for_survival_probability(
                         deps, spice_frame_name
                     )
                 )
-                data_product = self._process_healpix_intensity_to_rectangular(healpix_intensity_map_data,
-                                                                              deps.ultra_l2_rectangular_map,
-                                                                              parsed_descriptor.grid,
-                                                                              spice_frame_name=spice_frame_name)
+                data_product = self._process_healpix_intensity_to_rectangular(
+                    healpix_intensity_map_data,
+                    deps.ultra_l2_rectangular_map,
+                    parsed_descriptor.grid,
+                    spice_frame_name=spice_frame_name,
+                )
                 data_product.add_paths_to_parents(deps.dependency_file_paths)
-            case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
-                                    sensor=Sensor.UltraCombined,
-                                    grid=PixelSize.TwoDegrees | PixelSize.FourDegrees | PixelSize.SixDegrees):
+            case MapDescriptorParts(
+                survival_correction=SurvivalCorrection.SurvivalCorrected,
+                sensor=Sensor.UltraCombined,
+                grid=PixelSize.TwoDegrees
+                | PixelSize.FourDegrees
+                | PixelSize.SixDegrees,
+            ):
                 combined_deps = UltraL3CombinedDependencies.fetch_dependencies(
                     self.dependencies
                 )
@@ -106,9 +130,13 @@ class UltraProcessor(MapProcessor):
                     combined_deps.u90_dependencies.dependency_file_paths
                 )
 
-            case MapDescriptorParts(sensor=Sensor.UltraCombined,
-                                    survival_correction=SurvivalCorrection.NotSurvivalCorrected,
-                                    grid=PixelSize.TwoDegrees | PixelSize.FourDegrees | PixelSize.SixDegrees):
+            case MapDescriptorParts(
+                sensor=Sensor.UltraCombined,
+                survival_correction=SurvivalCorrection.NotSurvivalCorrected,
+                grid=PixelSize.TwoDegrees
+                | PixelSize.FourDegrees
+                | PixelSize.SixDegrees,
+            ):
                 deps = UltraL3CombinedDependencies.fetch_dependencies(self.dependencies)
 
                 combination_strategy = ExposureWeightedCombination()
@@ -120,16 +148,27 @@ class UltraProcessor(MapProcessor):
                         ]
                     )
                 )
-                combined_rectangular = combination_strategy.combine_rectangular_intensity_map_data(
-                    [deps.u45_dependencies.ultra_l2_rectangular_map,
-                     deps.u90_dependencies.ultra_l2_rectangular_map])
+                combined_rectangular = (
+                    combination_strategy.combine_rectangular_intensity_map_data(
+                        [
+                            deps.u45_dependencies.ultra_l2_rectangular_map,
+                            deps.u90_dependencies.ultra_l2_rectangular_map,
+                        ]
+                    )
+                )
 
-                data_product = self._process_healpix_intensity_to_rectangular(combined_healpix,
-                                                                              combined_rectangular,
-                                                                              parsed_descriptor.grid,
-                                                                              spice_frame_name=spice_frame_name)
-                data_product.add_paths_to_parents(deps.u45_dependencies.dependency_file_paths)
-                data_product.add_paths_to_parents(deps.u90_dependencies.dependency_file_paths)
+                data_product = self._process_healpix_intensity_to_rectangular(
+                    combined_healpix,
+                    combined_rectangular,
+                    parsed_descriptor.grid,
+                    spice_frame_name=spice_frame_name,
+                )
+                data_product.add_paths_to_parents(
+                    deps.u45_dependencies.dependency_file_paths
+                )
+                data_product.add_paths_to_parents(
+                    deps.u90_dependencies.dependency_file_paths
+                )
             case _:
                 raise NotImplementedError
 
@@ -137,27 +176,41 @@ class UltraProcessor(MapProcessor):
         return [save_data(data_product)]
 
     def _process_combined_survival_probability(
-            self, deps: UltraL3CombinedDependencies, spice_frame_name: SpiceFrame,
+        self,
+        deps: UltraL3CombinedDependencies,
+        spice_frame_name: SpiceFrame,
     ) -> tuple[HealPixIntensityMapData, RectangularIntensityMapData]:
-        u45_survival_corrected = correct_healpix_data_for_survival_probability(deps.u45_dependencies, spice_frame_name)
-        u90_survival_corrected = correct_healpix_data_for_survival_probability(deps.u90_dependencies, spice_frame_name)
+        u45_survival_corrected = correct_healpix_data_for_survival_probability(
+            deps.u45_dependencies, spice_frame_name
+        )
+        u90_survival_corrected = correct_healpix_data_for_survival_probability(
+            deps.u90_dependencies, spice_frame_name
+        )
 
         combination_strategy = UncertaintyWeightedCombination()
         combined_healpix = combination_strategy.combine_healpix_intensity_map_data(
             [u45_survival_corrected, u90_survival_corrected]
         )
-        combined_rectangular = combination_strategy.combine_rectangular_intensity_map_data(
-            [deps.u45_dependencies.ultra_l2_rectangular_map, deps.u90_dependencies.ultra_l2_rectangular_map]
+        combined_rectangular = (
+            combination_strategy.combine_rectangular_intensity_map_data(
+                [
+                    deps.u45_dependencies.ultra_l2_rectangular_map,
+                    deps.u90_dependencies.ultra_l2_rectangular_map,
+                ]
+            )
         )
         return combined_healpix, combined_rectangular
 
-    def _process_spectral_index(self,
-                                dependencies: UltraL3SpectralIndexDependencies,
-                                spectral_index_range: Optional[tuple[int, int]]
-                                ) -> RectangularSpectralIndexMapData:
+    def _process_spectral_index(
+        self,
+        dependencies: UltraL3SpectralIndexDependencies,
+        spectral_index_range: tuple[int, int] | None,
+    ) -> RectangularSpectralIndexMapData:
         if spectral_index_range is not None:
             start, end = spectral_index_range
-            sliced = slice_energy_range_by_bin(dependencies.map_data.intensity_map_data, start, end)
+            sliced = slice_energy_range_by_bin(
+                dependencies.map_data.intensity_map_data, start, end
+            )
             map_data = fit_spectral_index_map(sliced)
         else:
             map_data = calculate_spectral_index_for_multiple_ranges(
@@ -192,18 +245,28 @@ class UltraProcessor(MapProcessor):
             variables_to_convert_to_rectangular.append("survival_probability")
 
         healpix_map = healpix_map_data.to_healpix_skymap()
-        rectangular_map, _ = healpix_map.to_rectangular_skymap(spacing_deg, variables_to_convert_to_rectangular)
+        rectangular_map, _ = healpix_map.to_rectangular_skymap(
+            spacing_deg, variables_to_convert_to_rectangular
+        )
         rectangular_map_xarray_dataset = rectangular_map.to_dataset()
 
         rect_l2_data = rect_l2_map.intensity_map_data
 
-        predicted_ephemeris_set = rectangular_map_xarray_dataset["predicted_ephemeris_flag"].values > 0
-        nominal_alpha_proton_ratio_set = rectangular_map_xarray_dataset["nominal_alpha_proton_ratio_flag"].values > 0
-        persisted_last_point_set = rectangular_map_xarray_dataset["persisted_last_point_flag"].values > 0
+        predicted_ephemeris_set = (
+            rectangular_map_xarray_dataset["predicted_ephemeris_flag"].values > 0
+        )
+        nominal_alpha_proton_ratio_set = (
+            rectangular_map_xarray_dataset["nominal_alpha_proton_ratio_flag"].values > 0
+        )
+        persisted_last_point_set = (
+            rectangular_map_xarray_dataset["persisted_last_point_flag"].values > 0
+        )
 
-        quality_flags = (predicted_ephemeris_set * MapL3Flags.PREDICTIVE_EPHEMERIS) | \
-                        (nominal_alpha_proton_ratio_set * MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO) | \
-                        (persisted_last_point_set * MapL3Flags.PERSISTED_LAST_POINT)
+        quality_flags = (
+            (predicted_ephemeris_set * MapL3Flags.PREDICTIVE_EPHEMERIS)
+            | (nominal_alpha_proton_ratio_set * MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO)
+            | (persisted_last_point_set * MapL3Flags.PERSISTED_LAST_POINT)
+        )
 
         intensity_map_data = IntensityMapData(
             epoch=rect_l2_data.epoch,
@@ -229,7 +292,9 @@ class UltraProcessor(MapProcessor):
         )
 
         if has_survival_data:
-            intensity_map_data.survival_probability = rectangular_map_xarray_dataset["survival_probability"].values
+            intensity_map_data.survival_probability = rectangular_map_xarray_dataset[
+                "survival_probability"
+            ].values
 
         rect_intensity_map_data = RectangularIntensityMapData(
             intensity_map_data,
@@ -241,12 +306,17 @@ class UltraProcessor(MapProcessor):
             ),
         )
 
-        return RectangularIntensityDataProduct(data=rect_intensity_map_data, input_metadata=self.input_metadata,
-                                               spice_frame_name=spice_frame_name)
+        return RectangularIntensityDataProduct(
+            data=rect_intensity_map_data,
+            input_metadata=self.input_metadata,
+            spice_frame_name=spice_frame_name,
+        )
+
 
 @dataclass
 class UltraMapDescriptorParts:
     grid_size: int
+
 
 def _make_cache_key_for_sp_corrected_data(deps: UltraL3Dependencies) -> str:
     pset_names = []
@@ -265,6 +335,7 @@ def _make_cache_key_for_sp_corrected_data(deps: UltraL3Dependencies) -> str:
             pass
     return str(sorted(pset_names)) + str(sorted(glows_names)) + l2_descriptor
 
+
 def correct_healpix_data_for_survival_probability(
     deps: UltraL3Dependencies, spice_frame_name: SpiceFrame
 ) -> HealPixIntensityMapData:
@@ -278,7 +349,9 @@ def correct_healpix_data_for_survival_probability(
 
     logger.info("Cached HEALPix SP-corrected data not found; building from inputs")
 
-    combined_psets = combine_glows_l3e_with_l1c_pointing(deps.glows_l3e_sp, deps.ultra_l1c_pset)
+    combined_psets = combine_glows_l3e_with_l1c_pointing(
+        deps.glows_l3e_sp, deps.ultra_l1c_pset
+    )
     survival_probability_psets = [
         UltraSurvivalProbability(_l1c, _l3e, bin_groups=deps.energy_bin_group_sizes)
         for _l1c, _l3e in combined_psets
@@ -290,7 +363,9 @@ def correct_healpix_data_for_survival_probability(
         survival_probability_psets, spice_frame_name, coords.nside
     )
     skymap_dataset = corrected_skymap.to_dataset()
-    survival_probability_map = skymap_dataset["exposure_weighted_survival_probabilities"].values
+    survival_probability_map = skymap_dataset[
+        "exposure_weighted_survival_probabilities"
+    ].values
 
     healpix_intensity_data = HealPixIntensityMapData(
         intensity_map_data=IntensityMapData(

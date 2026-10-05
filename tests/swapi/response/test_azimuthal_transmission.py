@@ -6,17 +6,17 @@ import numpy as np
 import pandas as pd
 
 from imap_l3_processing.swapi.response.azimuthal_transmission import (
-    AzimuthalTransmissionGrid,
     OA_PLATEAU_AZIMUTH_MAX_DEG,
     OA_PLATEAU_AZIMUTH_MIN_DEG,
     OA_PLATEAU_TRANSMISSION,
     SG_PLATEAU_AZIMUTH_MAX_DEG,
     SG_PLATEAU_TRANSMISSION,
+    AzimuthalTransmissionGrid,
     interpolate_azimuthal_transmission,
     validate_azimuthal_transmission_values,
 )
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
-from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path
+from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path
 
 _TRANSMISSION_CSV = get_test_instrument_team_data_path(
     "swapi/imap_swapi_azimuthal-transmission_20260425_v001.csv"
@@ -79,7 +79,9 @@ class TestInterpolateAzimuthalTransmission(unittest.TestCase):
         for fraction in [0.25, 0.7, 0.9]:
             with self.subTest(fraction=fraction):
                 az = az_lower + fraction * _SPACING_DEG
-                expected = (1 - fraction) * self.values[idx] + fraction * self.values[idx + 1]
+                expected = (1 - fraction) * self.values[idx] + fraction * self.values[
+                    idx + 1
+                ]
                 got = interpolate_azimuthal_transmission(self.grid, az)
                 self.assertAlmostEqual(got, float(expected))
 
@@ -170,7 +172,9 @@ class TestRealGridShape(unittest.TestCase):
         self.assertAlmostEqual(float(grid.values[0]), 1e-3)
 
 
-def _build_grid_satisfying_invariants(spacing: float = 0.1, n: int = 1801) -> np.ndarray:
+def _build_grid_satisfying_invariants(
+    spacing: float = 0.1, n: int = 1801
+) -> np.ndarray:
     """Build a synthetic values array that respects the SG-floor and OA-plateau
     invariants the interpolator's short-circuit branches assume. Cells outside
     those two ranges are set to a neutral 0.5 so a test can corrupt a single
@@ -178,7 +182,9 @@ def _build_grid_satisfying_invariants(spacing: float = 0.1, n: int = 1801) -> np
     azimuths = np.arange(n) * spacing
     values = np.full(n, 0.5)
     values[azimuths <= SG_PLATEAU_AZIMUTH_MAX_DEG] = SG_PLATEAU_TRANSMISSION
-    in_plateau = (azimuths >= OA_PLATEAU_AZIMUTH_MIN_DEG) & (azimuths <= OA_PLATEAU_AZIMUTH_MAX_DEG)
+    in_plateau = (azimuths >= OA_PLATEAU_AZIMUTH_MIN_DEG) & (
+        azimuths <= OA_PLATEAU_AZIMUTH_MAX_DEG
+    )
     values[in_plateau] = OA_PLATEAU_TRANSMISSION
     return values
 
@@ -239,9 +245,11 @@ class TestSwapiResponseRejectsInvalidTransmissionCsv(unittest.TestCase):
     silently driving the short-circuit branches in the interpolator to lie."""
 
     def test_from_files_raises_when_csv_violates_invariants(self):
-        df = pd.read_csv(get_test_instrument_team_data_path(
-            "swapi/imap_swapi_azimuthal-transmission_20260425_v001.csv"
-        ))
+        df = pd.read_csv(
+            get_test_instrument_team_data_path(
+                "swapi/imap_swapi_azimuthal-transmission_20260425_v001.csv"
+            )
+        )
         # Corrupt a single cell inside the OA plateau range.
         df.loc[500, "transmission"] = 0.5
 

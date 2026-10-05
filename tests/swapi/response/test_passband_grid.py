@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.response.passband_grid import (
     _PASSBAND_BOUNDARY_THRESHOLD,
     _TARGET_ELEVATIONS,
@@ -11,7 +12,6 @@ from imap_l3_processing.swapi.response.passband_grid import (
     interpolate_passband,
     speed_ratio_range_at_elevation,
 )
-from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 
 
 def _gaussian_values_df(
@@ -43,8 +43,7 @@ def _gaussian_values_df(
                 # round so that there are true zeros like the real SIMION-derived passband
                 np.exp(
                     -((elev - peak_elevation) ** 2) / (2.0 * sigma_el**2)
-                    - ((SWAPI_K_FACTOR * sr**2 - peak_er) ** 2)
-                    / (2.0 * sigma_er**2)
+                    - ((SWAPI_K_FACTOR * sr**2 - peak_er) ** 2) / (2.0 * sigma_er**2)
                 )
             ),
         }
@@ -96,11 +95,15 @@ class TestBuildPassbandGrid(unittest.TestCase):
                 continue
             with self.subTest(row=i):
                 np.testing.assert_allclose(
-                    np.interp(grid.min_boundary[i], _TARGET_SPEED_RATIOS, grid.values[i]),
+                    np.interp(
+                        grid.min_boundary[i], _TARGET_SPEED_RATIOS, grid.values[i]
+                    ),
                     cutoff,
                 )
                 np.testing.assert_allclose(
-                    np.interp(grid.max_boundary[i], _TARGET_SPEED_RATIOS, grid.values[i]),
+                    np.interp(
+                        grid.max_boundary[i], _TARGET_SPEED_RATIOS, grid.values[i]
+                    ),
                     cutoff,
                 )
 
@@ -159,9 +162,7 @@ class TestBuildPassbandGrid(unittest.TestCase):
         must produce a grid peaking at speed_ratio = 1.0."""
         grid = self.default_grid
 
-        row_at_peak_elevation = grid.values[
-            _row_index_for_elevation(grid, 0.0)
-        ]
+        row_at_peak_elevation = grid.values[_row_index_for_elevation(grid, 0.0)]
         peak_speed_ratio = _TARGET_SPEED_RATIOS[int(np.argmax(row_at_peak_elevation))]
 
         self.assertAlmostEqual(peak_speed_ratio, 1.0, places=2)
@@ -176,7 +177,7 @@ class TestInterpolatePassband(unittest.TestCase):
 
     def test_matches_corner_weighted_sum(self):
         """`interpolate_passband` returns the bilinear-weighted sum of the four
-            enclosing corner values."""
+        enclosing corner values."""
         cases = [
             # (elevation, speed_ratio, label)
             (0.0, 1.0, "on-node"),
@@ -194,9 +195,7 @@ class TestInterpolatePassband(unittest.TestCase):
                 i_lo, j_lo = int(i_float), int(j_float)
                 i_weight, j_weight = i_float - i_lo, j_float - j_lo
 
-                corners = self.grid.values[
-                    i_lo : i_lo + 2, j_lo : j_lo + 2
-                ]
+                corners = self.grid.values[i_lo : i_lo + 2, j_lo : j_lo + 2]
                 weights = np.array(
                     [
                         [(1 - i_weight) * (1 - j_weight), (1 - i_weight) * j_weight],

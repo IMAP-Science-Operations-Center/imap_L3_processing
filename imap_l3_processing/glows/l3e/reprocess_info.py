@@ -57,16 +57,22 @@ class ReprocessInfo:
             ignore_after = ignore_after.replace(tzinfo=timezone.utc)
         return ignore_after
 
-
     @staticmethod
     def _parse_line(line: str) -> tuple[str, str, ReprocessTargets]:
         product_name, _, remainder = line.strip().partition(" ")
         data_level, _, descriptor = product_name.partition("_")
 
         targets = remainder.replace(",", " ").split()
-        repoints = [int(target.removeprefix(REPOINT_PREFIX)) for target in targets if target.startswith(REPOINT_PREFIX)]
-        carrington_rotations = [int(target.removeprefix(CARRINGTON_ROTATION_PREFIX)) for target in targets if
-                                target.startswith(CARRINGTON_ROTATION_PREFIX)]
+        repoints = [
+            int(target.removeprefix(REPOINT_PREFIX))
+            for target in targets
+            if target.startswith(REPOINT_PREFIX)
+        ]
+        carrington_rotations = [
+            int(target.removeprefix(CARRINGTON_ROTATION_PREFIX))
+            for target in targets
+            if target.startswith(CARRINGTON_ROTATION_PREFIX)
+        ]
 
         return data_level, descriptor, ReprocessTargets(repoints, carrington_rotations)
 
@@ -87,11 +93,18 @@ class ReprocessInfo:
         repoints = set(reprocess_targets.repoints)
 
         for cr in reprocess_targets.carrington_rotations:
-            repoints.update(get_repoint_numbers_within_cr_window(cr, cr, repointing_data))
+            repoints.update(
+                get_repoint_numbers_within_cr_window(cr, cr, repointing_data)
+            )
 
         return sorted(repoints)
 
+
 def fetch_reprocess_info(input_collection: ProcessingInputCollection) -> ReprocessInfo:
-    [reprocessing_file_path] = input_collection.get_file_paths(source="glows", descriptor=GLOWS_REPROCESSING_DESCRIPTOR)
-    path_to_downloaded_ancillary = imap_data_access.download(reprocessing_file_path.name)
+    [reprocessing_file_path] = input_collection.get_file_paths(
+        source="glows", descriptor=GLOWS_REPROCESSING_DESCRIPTOR
+    )
+    path_to_downloaded_ancillary = imap_data_access.download(
+        reprocessing_file_path.name
+    )
     return ReprocessInfo.parse_from_ancillary(path_to_downloaded_ancillary)

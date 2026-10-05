@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import abc
 from dataclasses import dataclass
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Generic, Optional
+from typing import Generic
 
 import numpy as np
 import xarray
@@ -13,10 +13,13 @@ from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice.geometry import SpiceFrame
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.cdf.cdf_utils import read_variable_and_mask_fill_values, read_numeric_variable
+from imap_l3_processing.cdf.cdf_utils import (
+    read_numeric_variable,
+    read_variable_and_mask_fill_values,
+)
 from imap_l3_processing.constants import TT2000_EPOCH
 from imap_l3_processing.maps.quality_flags import MapL3Flags
-from imap_l3_processing.models import DataProduct, DataProductVariable, D
+from imap_l3_processing.models import D, DataProduct, DataProductVariable
 
 EPOCH_VAR_NAME = "epoch"
 EPOCH_DELTA_VAR_NAME = "epoch_delta"
@@ -39,7 +42,9 @@ SOLID_ANGLE_VAR_NAME = "solid_angle"
 ENA_SPECTRAL_INDEX_VAR_NAME = "ena_spectral_index"
 ENA_SPECTRAL_INDEX_STAT_UNC_VAR_NAME = "ena_spectral_index_stat_uncert"
 ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_VAR_NAME = "ena_spectral_scalar"
-ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_STAT_UNCERT_VAR_NAME = "ena_spectral_scalar_stat_uncert"
+ENA_SPECTRAL_INDEX_SCALAR_COEFFICIENT_STAT_UNCERT_VAR_NAME = (
+    "ena_spectral_scalar_stat_uncert"
+)
 ENA_SPECTRAL_INDEX_CHISQ_VAR_NAME = "ena_spectral_index_chisq"
 
 ENA_INTENSITY_VAR_NAME = "ena_intensity"
@@ -110,12 +115,12 @@ class IntensityMapData(MapData):
     ena_intensity_stat_uncert: np.ndarray
     ena_intensity_sys_err: np.ndarray
     quality_flags: np.ndarray
-    ena_intensity_sys_err_minus: Optional[np.ndarray] = None
-    ena_intensity_sys_err_plus: Optional[np.ndarray] = None
-    bg_intensity: Optional[np.ndarray] = None
-    bg_intensity_stat_uncert: Optional[np.ndarray] = None
-    bg_intensity_sys_err: Optional[np.ndarray] = None
-    survival_probability: Optional[np.ndarray] = None
+    ena_intensity_sys_err_minus: np.ndarray | None = None
+    ena_intensity_sys_err_plus: np.ndarray | None = None
+    bg_intensity: np.ndarray | None = None
+    bg_intensity_stat_uncert: np.ndarray | None = None
+    bg_intensity_sys_err: np.ndarray | None = None
+    survival_probability: np.ndarray | None = None
 
 
 @dataclass
@@ -195,42 +200,56 @@ class ISNRateData:
             if "obs_date" in cdf and "obs_date_range" in cdf:
                 masked_obs_date = read_variable_and_mask_fill_values(cdf["obs_date"])
                 if np.issubdtype(cdf["obs_date"].dtype, np.number):
-                    obs_date = convert_tt2000_time_to_datetime(masked_obs_date.filled(0))
-                    masked_obs_date = np.ma.masked_array(data=obs_date, mask=masked_obs_date.mask)
-                obs_date_range = read_variable_and_mask_fill_values(cdf["obs_date_range"])
+                    obs_date = convert_tt2000_time_to_datetime(
+                        masked_obs_date.filled(0)
+                    )
+                    masked_obs_date = np.ma.masked_array(
+                        data=obs_date, mask=masked_obs_date.mask
+                    )
+                obs_date_range = read_variable_and_mask_fill_values(
+                    cdf["obs_date_range"]
+                )
             else:
                 obs_date_shape = cdf["bg_rate"].shape
                 all_mask_array = np.full(obs_date_shape, True)
-                masked_obs_date = np.ma.masked_array(np.full(obs_date_shape, TT2000_EPOCH), mask=all_mask_array)
-                obs_date_range = np.ma.masked_array(np.full(obs_date_shape, 0),
-                                                    mask=all_mask_array,
-                                                    dtype=np.int64)
+                masked_obs_date = np.ma.masked_array(
+                    np.full(obs_date_shape, TT2000_EPOCH), mask=all_mask_array
+                )
+                obs_date_range = np.ma.masked_array(
+                    np.full(obs_date_shape, 0), mask=all_mask_array, dtype=np.int64
+                )
 
             return ISNRateData(
-                epoch=cdf['epoch'][...],
-                epoch_delta=read_variable_and_mask_fill_values(cdf['epoch_delta']),
+                epoch=cdf["epoch"][...],
+                epoch_delta=read_variable_and_mask_fill_values(cdf["epoch_delta"]),
                 obs_date=masked_obs_date,
                 obs_date_range=obs_date_range,
-                bg_rate=read_numeric_variable(cdf['bg_rate']),
-                bg_rate_stat_uncert=read_numeric_variable(cdf['bg_rate_stat_uncert']),
-                bg_rate_sys_err=read_numeric_variable(cdf['bg_rate_sys_err']),
-                ena_count_rate=read_numeric_variable(cdf['ena_count_rate']),
-                ena_count_rate_stat_uncert=read_numeric_variable(cdf['ena_count_rate_stat_uncert']),
-                latitude=(cdf['latitude'][...]),
-                latitude_delta=(cdf['latitude_delta'][...]),
-                latitude_label=(cdf['latitude_label'][...]),
-                longitude=(cdf['longitude'][...]),
-                longitude_delta=(cdf['longitude_delta'][...]),
-                longitude_label=(cdf['longitude_label'][...]),
-                ena_intensity=read_numeric_variable(cdf['ena_intensity']),
-                ena_intensity_stat_uncert=read_numeric_variable(cdf['ena_intensity_stat_uncert']),
-                ena_intensity_sys_err=read_numeric_variable(cdf['ena_intensity_sys_err']),
-                energy=(cdf['energy'][...]),
-                energy_delta_plus=(cdf['energy_delta_plus'][...]),
-                energy_delta_minus=(cdf['energy_delta_minus'][...]),
-                energy_label=(cdf['energy_label'][...]),
-                exposure_factor=read_numeric_variable(cdf['exposure_factor']),
-                solid_angle=read_numeric_variable(cdf['solid_angle'])
+                bg_rate=read_numeric_variable(cdf["bg_rate"]),
+                bg_rate_stat_uncert=read_numeric_variable(cdf["bg_rate_stat_uncert"]),
+                bg_rate_sys_err=read_numeric_variable(cdf["bg_rate_sys_err"]),
+                ena_count_rate=read_numeric_variable(cdf["ena_count_rate"]),
+                ena_count_rate_stat_uncert=read_numeric_variable(
+                    cdf["ena_count_rate_stat_uncert"]
+                ),
+                latitude=(cdf["latitude"][...]),
+                latitude_delta=(cdf["latitude_delta"][...]),
+                latitude_label=(cdf["latitude_label"][...]),
+                longitude=(cdf["longitude"][...]),
+                longitude_delta=(cdf["longitude_delta"][...]),
+                longitude_label=(cdf["longitude_label"][...]),
+                ena_intensity=read_numeric_variable(cdf["ena_intensity"]),
+                ena_intensity_stat_uncert=read_numeric_variable(
+                    cdf["ena_intensity_stat_uncert"]
+                ),
+                ena_intensity_sys_err=read_numeric_variable(
+                    cdf["ena_intensity_sys_err"]
+                ),
+                energy=(cdf["energy"][...]),
+                energy_delta_plus=(cdf["energy_delta_plus"][...]),
+                energy_delta_minus=(cdf["energy_delta_minus"][...]),
+                energy_label=(cdf["energy_label"][...]),
+                exposure_factor=read_numeric_variable(cdf["exposure_factor"]),
+                solid_angle=read_numeric_variable(cdf["solid_angle"]),
             )
 
 
@@ -292,17 +311,19 @@ class HealPixIntensityMapData:
                 ),
                 "predicted_ephemeris_flag": (
                     full_shape,
-                    self.intensity_map_data.quality_flags & MapL3Flags.PREDICTIVE_EPHEMERIS,
+                    self.intensity_map_data.quality_flags
+                    & MapL3Flags.PREDICTIVE_EPHEMERIS,
                 ),
                 "nominal_alpha_proton_ratio_flag": (
                     full_shape,
-                    self.intensity_map_data.quality_flags & MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
+                    self.intensity_map_data.quality_flags
+                    & MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
                 ),
                 "persisted_last_point_flag": (
                     full_shape,
-                    self.intensity_map_data.quality_flags & MapL3Flags.PERSISTED_LAST_POINT,
-                )
-
+                    self.intensity_map_data.quality_flags
+                    & MapL3Flags.PERSISTED_LAST_POINT,
+                ),
             },
             coords={
                 CoordNames.TIME.value: self.intensity_map_data.epoch,
@@ -313,12 +334,21 @@ class HealPixIntensityMapData:
 
         if self.intensity_map_data.survival_probability is not None:
             data_1d_with_sp = healpix_map.data_1d.assign(
-                survival_probability=(full_shape, self.intensity_map_data.survival_probability))
+                survival_probability=(
+                    full_shape,
+                    self.intensity_map_data.survival_probability,
+                )
+            )
             healpix_map.data_1d = data_1d_with_sp
 
-        healpix_map.data_1d = healpix_map.data_1d \
-            .assign({"obs_date": (full_shape, healpix_map.data_1d["obs_date"].values.astype(np.float64))}) \
-            .rename({CoordNames.HEALPIX_INDEX.value: CoordNames.GENERIC_PIXEL.value})
+        healpix_map.data_1d = healpix_map.data_1d.assign(
+            {
+                "obs_date": (
+                    full_shape,
+                    healpix_map.data_1d["obs_date"].values.astype(np.float64),
+                )
+            }
+        ).rename({CoordNames.HEALPIX_INDEX.value: CoordNames.GENERIC_PIXEL.value})
 
         return healpix_map
 
@@ -386,16 +416,26 @@ def _read_intensity_map_data_from_open_cdf(cdf: CDF) -> IntensityMapData:
     )
 
     if "survival_probability" in cdf:
-        map_intensity_data.survival_probability = read_numeric_variable(cdf["survival_probability"])
+        map_intensity_data.survival_probability = read_numeric_variable(
+            cdf["survival_probability"]
+        )
 
     if "bg_intensity" in cdf:
         map_intensity_data.bg_intensity = read_numeric_variable(cdf["bg_intensity"])
-        map_intensity_data.bg_intensity_sys_err = read_numeric_variable(cdf["bg_intensity_sys_err"])
-        map_intensity_data.bg_intensity_stat_uncert = read_numeric_variable(cdf["bg_intensity_stat_uncert"])
+        map_intensity_data.bg_intensity_sys_err = read_numeric_variable(
+            cdf["bg_intensity_sys_err"]
+        )
+        map_intensity_data.bg_intensity_stat_uncert = read_numeric_variable(
+            cdf["bg_intensity_stat_uncert"]
+        )
 
     if "ena_intensity_sys_err_minus" in cdf:
-        map_intensity_data.ena_intensity_sys_err_minus = read_numeric_variable(cdf["ena_intensity_sys_err_minus"])
-        map_intensity_data.ena_intensity_sys_err_plus = read_numeric_variable(cdf["ena_intensity_sys_err_plus"])
+        map_intensity_data.ena_intensity_sys_err_minus = read_numeric_variable(
+            cdf["ena_intensity_sys_err_minus"]
+        )
+        map_intensity_data.ena_intensity_sys_err_plus = read_numeric_variable(
+            cdf["ena_intensity_sys_err_plus"]
+        )
 
     return map_intensity_data
 
@@ -403,7 +443,7 @@ def _read_intensity_map_data_from_open_cdf(cdf: CDF) -> IntensityMapData:
 def _read_healpix_coords_from_open_cdf(cdf: CDF) -> HealPixCoords:
     return HealPixCoords(
         pixel_index=cdf["pixel_index"][...],
-        pixel_index_label=cdf["pixel_index_label"][...]
+        pixel_index_label=cdf["pixel_index_label"][...],
     )
 
 
@@ -414,7 +454,9 @@ def _read_intensity_map_data_from_xarray(dataset: xarray.Dataset) -> IntensityMa
         epoch_delta=_replace_fill_values_in_xarray(dataset, "epoch_delta"),
         energy=dataset.coords[CoordNames.ENERGY_L2.value].values,
         energy_delta_plus=_replace_fill_values_in_xarray(dataset, "energy_delta_plus"),
-        energy_delta_minus=_replace_fill_values_in_xarray(dataset, "energy_delta_minus"),
+        energy_delta_minus=_replace_fill_values_in_xarray(
+            dataset, "energy_delta_minus"
+        ),
         energy_label=_replace_fill_values_in_xarray(dataset, "energy_label"),
         latitude=_replace_fill_values_in_xarray(dataset, "latitude"),
         longitude=_replace_fill_values_in_xarray(dataset, "longitude"),
@@ -423,23 +465,30 @@ def _read_intensity_map_data_from_xarray(dataset: xarray.Dataset) -> IntensityMa
         obs_date_range=_replace_fill_values_in_xarray(dataset, "obs_date_range"),
         solid_angle=np.squeeze(_replace_fill_values_in_xarray(dataset, "solid_angle")),
         ena_intensity=intensity,
-        ena_intensity_stat_uncert=_replace_fill_values_in_xarray(dataset, "ena_intensity_stat_uncert"),
-        ena_intensity_sys_err=_replace_fill_values_in_xarray(dataset, "ena_intensity_sys_err"),
+        ena_intensity_stat_uncert=_replace_fill_values_in_xarray(
+            dataset, "ena_intensity_stat_uncert"
+        ),
+        ena_intensity_sys_err=_replace_fill_values_in_xarray(
+            dataset, "ena_intensity_sys_err"
+        ),
         quality_flags=np.full(intensity.shape, MapL3Flags.NONE),
     )
 
 
 def _replace_fill_values_in_xarray(dataset, variable):
-    if 'FILLVAL' in dataset[variable].attrs:
-        return np.where(dataset[variable].values == dataset[variable].attrs['FILLVAL'], np.nan,
-                        dataset[variable].values)
+    if "FILLVAL" in dataset[variable].attrs:
+        return np.where(
+            dataset[variable].values == dataset[variable].attrs["FILLVAL"],
+            np.nan,
+            dataset[variable].values,
+        )
     return dataset[variable].values
 
 
 def _read_healpix_coords_from_xarray(dataset: xarray.Dataset) -> HealPixCoords:
     return HealPixCoords(
         pixel_index=dataset[CoordNames.HEALPIX_INDEX.value].values,
-        pixel_index_label=dataset["pixel_index_label"].values
+        pixel_index_label=dataset["pixel_index_label"].values,
     )
 
 
@@ -462,50 +511,93 @@ class MapDataProduct(DataProduct[D], Generic[D]):
         raise NotImplementedError
 
 
-class RectangularSpectralIndexDataProduct(MapDataProduct[RectangularSpectralIndexMapData]):
+class RectangularSpectralIndexDataProduct(
+    MapDataProduct[RectangularSpectralIndexMapData]
+):
     data: RectangularSpectralIndexMapData
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
-        return _spectral_index_data_variables(self.data.spectral_index_map_data) \
-            + _rectangular_coords_to_variables(self.data.coords)
+        return _spectral_index_data_variables(
+            self.data.spectral_index_map_data
+        ) + _rectangular_coords_to_variables(self.data.coords)
 
 
 class RectangularIntensityDataProduct(MapDataProduct[RectangularIntensityMapData]):
     data: RectangularIntensityMapData
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
-        return _intensity_data_variables(self.data.intensity_map_data) \
-            + _rectangular_coords_to_variables(self.data.coords)
+        return _intensity_data_variables(
+            self.data.intensity_map_data
+        ) + _rectangular_coords_to_variables(self.data.coords)
 
 
-class ISNBackgroundSubtractedDataProduct(MapDataProduct[ISNBackgroundSubtractedMapData]):
+class ISNBackgroundSubtractedDataProduct(
+    MapDataProduct[ISNBackgroundSubtractedMapData]
+):
     data: ISNBackgroundSubtractedMapData
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
             DataProductVariable(EPOCH_VAR_NAME, self.data.isn_rate_map_data.epoch),
-            DataProductVariable(EPOCH_DELTA_VAR_NAME, self.data.isn_rate_map_data.epoch_delta),
+            DataProductVariable(
+                EPOCH_DELTA_VAR_NAME, self.data.isn_rate_map_data.epoch_delta
+            ),
             DataProductVariable(ENERGY_VAR_NAME, self.data.isn_rate_map_data.energy),
-            DataProductVariable(ENERGY_DELTA_PLUS_VAR_NAME, self.data.isn_rate_map_data.energy_delta_plus),
-            DataProductVariable(ENERGY_DELTA_MINUS_VAR_NAME, self.data.isn_rate_map_data.energy_delta_minus),
-            DataProductVariable(ENERGY_LABEL_VAR_NAME, self.data.isn_rate_map_data.energy_label),
-            DataProductVariable(EXPOSURE_FACTOR_VAR_NAME, self.data.isn_rate_map_data.exposure_factor),
-            DataProductVariable(SOLID_ANGLE_VAR_NAME, self.data.isn_rate_map_data.solid_angle),
+            DataProductVariable(
+                ENERGY_DELTA_PLUS_VAR_NAME,
+                self.data.isn_rate_map_data.energy_delta_plus,
+            ),
+            DataProductVariable(
+                ENERGY_DELTA_MINUS_VAR_NAME,
+                self.data.isn_rate_map_data.energy_delta_minus,
+            ),
+            DataProductVariable(
+                ENERGY_LABEL_VAR_NAME, self.data.isn_rate_map_data.energy_label
+            ),
+            DataProductVariable(
+                EXPOSURE_FACTOR_VAR_NAME, self.data.isn_rate_map_data.exposure_factor
+            ),
+            DataProductVariable(
+                SOLID_ANGLE_VAR_NAME, self.data.isn_rate_map_data.solid_angle
+            ),
             DataProductVariable(BG_RATE_VAR_NAME, self.data.isn_rate_map_data.bg_rate),
-            DataProductVariable(BG_RATE_STAT_UNCERT_VAR_NAME, self.data.isn_rate_map_data.bg_rate_stat_uncert),
-            DataProductVariable(BG_RATE_SYS_ERR_VAR_NAME, self.data.isn_rate_map_data.bg_rate_sys_err),
-            DataProductVariable(LATITUDE_VAR_NAME, self.data.isn_rate_map_data.latitude),
-            DataProductVariable(LATITUDE_DELTA_VAR_NAME, self.data.isn_rate_map_data.latitude_delta),
-            DataProductVariable(LATITUDE_LABEL_VAR_NAME, self.data.isn_rate_map_data.latitude_label),
-            DataProductVariable(LONGITUDE_VAR_NAME, self.data.isn_rate_map_data.longitude),
-            DataProductVariable(LONGITUDE_DELTA_VAR_NAME, self.data.isn_rate_map_data.longitude_delta),
-            DataProductVariable(LONGITUDE_LABEL_VAR_NAME, self.data.isn_rate_map_data.longitude_label),
-            DataProductVariable(ISN_BG_RATE_SUBTRACTED_VAR_NAME,
-                                self.data.isn_rate_map_data.isn_bg_rate_subtracted),
-            DataProductVariable(ISN_BG_RATE_SUBTRACTED_VAR_SYS_ERR_NAME,
-                                self.data.isn_rate_map_data.isn_bg_rate_subtracted_sys_err),
-            DataProductVariable(ISN_BG_RATE_SUBTRACTED_STAT_UNCERT_VAR_NAME,
-                                self.data.isn_rate_map_data.isn_bg_rate_subtracted_stat_uncert)
+            DataProductVariable(
+                BG_RATE_STAT_UNCERT_VAR_NAME,
+                self.data.isn_rate_map_data.bg_rate_stat_uncert,
+            ),
+            DataProductVariable(
+                BG_RATE_SYS_ERR_VAR_NAME, self.data.isn_rate_map_data.bg_rate_sys_err
+            ),
+            DataProductVariable(
+                LATITUDE_VAR_NAME, self.data.isn_rate_map_data.latitude
+            ),
+            DataProductVariable(
+                LATITUDE_DELTA_VAR_NAME, self.data.isn_rate_map_data.latitude_delta
+            ),
+            DataProductVariable(
+                LATITUDE_LABEL_VAR_NAME, self.data.isn_rate_map_data.latitude_label
+            ),
+            DataProductVariable(
+                LONGITUDE_VAR_NAME, self.data.isn_rate_map_data.longitude
+            ),
+            DataProductVariable(
+                LONGITUDE_DELTA_VAR_NAME, self.data.isn_rate_map_data.longitude_delta
+            ),
+            DataProductVariable(
+                LONGITUDE_LABEL_VAR_NAME, self.data.isn_rate_map_data.longitude_label
+            ),
+            DataProductVariable(
+                ISN_BG_RATE_SUBTRACTED_VAR_NAME,
+                self.data.isn_rate_map_data.isn_bg_rate_subtracted,
+            ),
+            DataProductVariable(
+                ISN_BG_RATE_SUBTRACTED_VAR_SYS_ERR_NAME,
+                self.data.isn_rate_map_data.isn_bg_rate_subtracted_sys_err,
+            ),
+            DataProductVariable(
+                ISN_BG_RATE_SUBTRACTED_STAT_UNCERT_VAR_NAME,
+                self.data.isn_rate_map_data.isn_bg_rate_subtracted_stat_uncert,
+            ),
         ]
 
 
@@ -526,7 +618,9 @@ def _map_data_to_variables(data: MapData) -> list[DataProductVariable]:
     ]
 
 
-def _spectral_index_data_variables(data: SpectralIndexMapData) -> list[DataProductVariable]:
+def _spectral_index_data_variables(
+    data: SpectralIndexMapData,
+) -> list[DataProductVariable]:
     variables = _map_data_to_variables(data) + [
         DataProductVariable(ENA_SPECTRAL_INDEX_VAR_NAME, data.ena_spectral_index),
         DataProductVariable(
@@ -551,7 +645,9 @@ def _spectral_index_data_variables(data: SpectralIndexMapData) -> list[DataProdu
 def _intensity_data_variables(data: IntensityMapData) -> list[DataProductVariable]:
     intensity_variables = [
         DataProductVariable(ENA_INTENSITY_VAR_NAME, data.ena_intensity),
-        DataProductVariable(ENA_INTENSITY_STAT_UNCERT_VAR_NAME, data.ena_intensity_stat_uncert),
+        DataProductVariable(
+            ENA_INTENSITY_STAT_UNCERT_VAR_NAME, data.ena_intensity_stat_uncert
+        ),
         DataProductVariable(ENA_INTENSITY_SYS_ERR_VAR_NAME, data.ena_intensity_sys_err),
         DataProductVariable(QUALITY_FLAGS_VAR_NAME, data.quality_flags),
     ]
@@ -568,17 +664,31 @@ def _intensity_data_variables(data: IntensityMapData) -> list[DataProductVariabl
             ]
         )
     if data.survival_probability is not None:
-        intensity_variables.extend([
-            DataProductVariable(SURVIVAL_PROBABILITY_VAR_NAME, data.survival_probability),
-        ])
+        intensity_variables.extend(
+            [
+                DataProductVariable(
+                    SURVIVAL_PROBABILITY_VAR_NAME, data.survival_probability
+                ),
+            ]
+        )
     if data.ena_intensity_sys_err_minus is not None:
         intensity_variables.extend(
-            [DataProductVariable(ENA_INTENSITY_SYS_ERR_MINUS_VAR_NAME, data.ena_intensity_sys_err_minus),
-             DataProductVariable(ENA_INTENSITY_SYS_ERR_PLUS_VAR_NAME, data.ena_intensity_sys_err_plus)])
+            [
+                DataProductVariable(
+                    ENA_INTENSITY_SYS_ERR_MINUS_VAR_NAME,
+                    data.ena_intensity_sys_err_minus,
+                ),
+                DataProductVariable(
+                    ENA_INTENSITY_SYS_ERR_PLUS_VAR_NAME, data.ena_intensity_sys_err_plus
+                ),
+            ]
+        )
     return _map_data_to_variables(data) + intensity_variables
 
 
-def _rectangular_coords_to_variables(coords: RectangularCoords) -> list[DataProductVariable]:
+def _rectangular_coords_to_variables(
+    coords: RectangularCoords,
+) -> list[DataProductVariable]:
     return [
         DataProductVariable(LATITUDE_DELTA_VAR_NAME, coords.latitude_delta),
         DataProductVariable(LATITUDE_LABEL_VAR_NAME, coords.latitude_label),
@@ -587,16 +697,17 @@ def _rectangular_coords_to_variables(coords: RectangularCoords) -> list[DataProd
     ]
 
 
-
-def calculate_datetime_weighted_average(data: np.ndarray, weights: np.ndarray, axis: int,
-                                        **kwargs) -> np.ma.masked_array:
+def calculate_datetime_weighted_average(
+    data: np.ndarray, weights: np.ndarray, axis: int, **kwargs
+) -> np.ma.masked_array:
     if isinstance(np.ravel(np.ma.getdata(data))[0], datetime):
         masked_indices = np.ma.getmask(data)
         masked_weights = weights.copy()
         masked_weights[masked_indices] = 0
 
-        epoch_based_dates = np.array((np.ma.getdata(data) - TT2000_EPOCH) / timedelta(seconds=1),
-                                     dtype=float)
+        epoch_based_dates = np.array(
+            (np.ma.getdata(data) - TT2000_EPOCH) / timedelta(seconds=1), dtype=float
+        )
 
         averaged_dates_as_seconds = np.ma.average(
             epoch_based_dates, weights=masked_weights, axis=axis, **kwargs
@@ -624,12 +735,12 @@ class GlowsL3eRectangularMapInputData:
 @dataclass
 class InputRectangularPointingSet:
     epoch: datetime
-    epoch_delta: Optional[np.ndarray]
+    epoch_delta: np.ndarray | None
     epoch_j2000: np.ndarray
     repointing: int
     exposure_times: np.ndarray
     esa_energy_step: np.ndarray
-    pointing_start_met: Optional[float]
-    pointing_end_met: Optional[float]
+    pointing_start_met: float | None
+    pointing_end_met: float | None
     hae_longitude: np.ndarray
     hae_latitude: np.ndarray

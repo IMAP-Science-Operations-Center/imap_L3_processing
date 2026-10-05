@@ -3,11 +3,24 @@ from unittest.mock import sentinel
 import numpy as np
 
 from imap_l3_processing.constants import CARRINGTON_ROTATION_IN_NANOSECONDS
-from imap_l3_processing.glows.l3d.models import GlowsL3DSolarParamsHistory, SPEED_CDF_VAR_NAME, PHION_CDF_VAR_NAME, \
-    EPOCH_CDF_VAR_NAME, EPOCH_DELTA_CDF_VAR_NAME, LATITUDE_CDF_CDF_VAR_NAME, \
-    LATITUDE_LABEL_CDF_VAR_NAME, CR_CDF_VAR_NAME, PROTON_DENSITY_CDF_VAR_NAME, UV_ANISOTROPY_CDF_VAR_NAME, \
-    LYMAN_ALPHA_CDF_VAR_NAME, ELECTRON_DENSITY_CDF_VAR_NAME, PLASMA_SPEED_FLAG_CDF_VAR_NAME, \
-    UV_ANISOTROPY_FLAG_CDF_VAR_NAME, PROTON_DENSITY_FLAG_CDF_VAR_NAME, GLOWS_FLAGS_CDF_VAR_NAME
+from imap_l3_processing.glows.l3d.models import (
+    CR_CDF_VAR_NAME,
+    ELECTRON_DENSITY_CDF_VAR_NAME,
+    EPOCH_CDF_VAR_NAME,
+    EPOCH_DELTA_CDF_VAR_NAME,
+    GLOWS_FLAGS_CDF_VAR_NAME,
+    LATITUDE_CDF_CDF_VAR_NAME,
+    LATITUDE_LABEL_CDF_VAR_NAME,
+    LYMAN_ALPHA_CDF_VAR_NAME,
+    PHION_CDF_VAR_NAME,
+    PLASMA_SPEED_FLAG_CDF_VAR_NAME,
+    PROTON_DENSITY_CDF_VAR_NAME,
+    PROTON_DENSITY_FLAG_CDF_VAR_NAME,
+    SPEED_CDF_VAR_NAME,
+    UV_ANISOTROPY_CDF_VAR_NAME,
+    UV_ANISOTROPY_FLAG_CDF_VAR_NAME,
+    GlowsL3DSolarParamsHistory,
+)
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
 
@@ -49,23 +62,49 @@ class TestModels(CdfModelTestCase):
 
         variables = data_product.to_data_product_variables()
 
-        expected_epoch_delta = np.full_like(epoch, CARRINGTON_ROTATION_IN_NANOSECONDS / 2)
-        expected_latitude_label = [f'{deg:.1f} degrees' for deg in latitude]
+        expected_epoch_delta = np.full_like(
+            epoch, CARRINGTON_ROTATION_IN_NANOSECONDS / 2
+        )
+        expected_latitude_label = [f"{deg:.1f} degrees" for deg in latitude]
 
         self.assertEqual(15, len(variables))
         variables = iter(variables)
         self.assert_variable_attributes(next(variables), epoch, EPOCH_CDF_VAR_NAME)
-        self.assert_variable_attributes(next(variables), expected_epoch_delta, EPOCH_DELTA_CDF_VAR_NAME)
-        self.assert_variable_attributes(next(variables), latitude, LATITUDE_CDF_CDF_VAR_NAME)
-        self.assert_variable_attributes(next(variables), expected_latitude_label, LATITUDE_LABEL_CDF_VAR_NAME)
+        self.assert_variable_attributes(
+            next(variables), expected_epoch_delta, EPOCH_DELTA_CDF_VAR_NAME
+        )
+        self.assert_variable_attributes(
+            next(variables), latitude, LATITUDE_CDF_CDF_VAR_NAME
+        )
+        self.assert_variable_attributes(
+            next(variables), expected_latitude_label, LATITUDE_LABEL_CDF_VAR_NAME
+        )
         self.assert_variable_attributes(next(variables), cr, CR_CDF_VAR_NAME)
-        self.assert_variable_attributes(next(variables), plasma_speed, SPEED_CDF_VAR_NAME)
-        self.assert_variable_attributes(next(variables), proton_density, PROTON_DENSITY_CDF_VAR_NAME)
-        self.assert_variable_attributes(next(variables), ultraviolet_anisotropy, UV_ANISOTROPY_CDF_VAR_NAME)
+        self.assert_variable_attributes(
+            next(variables), plasma_speed, SPEED_CDF_VAR_NAME
+        )
+        self.assert_variable_attributes(
+            next(variables), proton_density, PROTON_DENSITY_CDF_VAR_NAME
+        )
+        self.assert_variable_attributes(
+            next(variables), ultraviolet_anisotropy, UV_ANISOTROPY_CDF_VAR_NAME
+        )
         self.assert_variable_attributes(next(variables), phion, PHION_CDF_VAR_NAME)
-        self.assert_variable_attributes(next(variables), lyman_alpha, LYMAN_ALPHA_CDF_VAR_NAME)
-        self.assert_variable_attributes(next(variables), electron_density, ELECTRON_DENSITY_CDF_VAR_NAME)
-        self.assert_variable_attributes(next(variables), plasma_speed_flag, PLASMA_SPEED_FLAG_CDF_VAR_NAME)
-        self.assert_variable_attributes(next(variables), uv_anisotropy_flag, UV_ANISOTROPY_FLAG_CDF_VAR_NAME)
-        self.assert_variable_attributes(next(variables), proton_density_flag, PROTON_DENSITY_FLAG_CDF_VAR_NAME)
-        self.assert_variable_attributes(next(variables), glows_flags, GLOWS_FLAGS_CDF_VAR_NAME)
+        self.assert_variable_attributes(
+            next(variables), lyman_alpha, LYMAN_ALPHA_CDF_VAR_NAME
+        )
+        self.assert_variable_attributes(
+            next(variables), electron_density, ELECTRON_DENSITY_CDF_VAR_NAME
+        )
+        self.assert_variable_attributes(
+            next(variables), plasma_speed_flag, PLASMA_SPEED_FLAG_CDF_VAR_NAME
+        )
+        self.assert_variable_attributes(
+            next(variables), uv_anisotropy_flag, UV_ANISOTROPY_FLAG_CDF_VAR_NAME
+        )
+        self.assert_variable_attributes(
+            next(variables), proton_density_flag, PROTON_DENSITY_FLAG_CDF_VAR_NAME
+        )
+        self.assert_variable_attributes(
+            next(variables), glows_flags, GLOWS_FLAGS_CDF_VAR_NAME
+        )

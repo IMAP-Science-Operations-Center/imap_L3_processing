@@ -1,6 +1,6 @@
 import unittest
 from pathlib import Path
-from unittest.mock import Mock, sentinel, patch, call
+from unittest.mock import Mock, call, patch, sentinel
 
 from imap_data_access.processing_input import ProcessingInputCollection
 
@@ -11,15 +11,31 @@ from tests.test_helpers import get_test_data_path
 
 class TestGlowsL3DDependencies(unittest.TestCase):
     @patch("imap_l3_processing.glows.l3d.glows_l3d_dependencies.ScienceFilePath")
-    @patch('imap_l3_processing.glows.l3d.glows_l3d_dependencies.imap_data_access.download')
+    @patch(
+        "imap_l3_processing.glows.l3d.glows_l3d_dependencies.imap_data_access.download"
+    )
     def test_fetch_dependencies(self, mock_download, mock_science_file_path):
-        waw_helio_ion_mp_speed = get_test_data_path("glows/imap_glows_plasma-speed-2026d_20251113_v003.dat")
-        waw_helio_ion_mp_p_dens = get_test_data_path("glows/imap_glows_proton-density-2026d_20251113_v003.dat")
-        waw_helio_ion_mp_uv_anis = get_test_data_path("glows/imap_glows_uv-anisotropy-2026d_20251113_v003.dat")
-        waw_helio_ion_mp_phion = get_test_data_path("glows/imap_glows_photoion-2026d_20251113_v003.dat")
-        waw_helio_ion_mp_lya = get_test_data_path("glows/imap_glows_lya-2026d_20251113_v003.dat")
-        waw_helio_ion_mp_e_dens = get_test_data_path("glows/imap_glows_electron-density-2026d_20251113_v003.dat")
-        pipeline_settings = get_test_data_path("glows/imap_glows_pipeline-settings-l3bcde_20251113_v005.json")
+        waw_helio_ion_mp_speed = get_test_data_path(
+            "glows/imap_glows_plasma-speed-2026d_20251113_v003.dat"
+        )
+        waw_helio_ion_mp_p_dens = get_test_data_path(
+            "glows/imap_glows_proton-density-2026d_20251113_v003.dat"
+        )
+        waw_helio_ion_mp_uv_anis = get_test_data_path(
+            "glows/imap_glows_uv-anisotropy-2026d_20251113_v003.dat"
+        )
+        waw_helio_ion_mp_phion = get_test_data_path(
+            "glows/imap_glows_photoion-2026d_20251113_v003.dat"
+        )
+        waw_helio_ion_mp_lya = get_test_data_path(
+            "glows/imap_glows_lya-2026d_20251113_v003.dat"
+        )
+        waw_helio_ion_mp_e_dens = get_test_data_path(
+            "glows/imap_glows_electron-density-2026d_20251113_v003.dat"
+        )
+        pipeline_settings = get_test_data_path(
+            "glows/imap_glows_pipeline-settings-l3bcde_20251113_v005.json"
+        )
 
         mock_processing_input_collection = Mock(spec=ProcessingInputCollection)
 
@@ -55,66 +71,82 @@ class TestGlowsL3DDependencies(unittest.TestCase):
         ]
 
         mock_science_file_path.side_effect = [
-            Mock(cr = 2000.5),
-            Mock(cr = 4000.5),
-            Mock(cr = 2000.5),
-            Mock(cr = 3000.5),
+            Mock(cr=2000.5),
+            Mock(cr=4000.5),
+            Mock(cr=2000.5),
+            Mock(cr=3000.5),
         ]
 
         external_dependencies = ExternalDependencies(
             lyman_alpha_path=sentinel.lyman_alpha_path,
             f107_index_file_path=None,
-            omni2_data_path=None
+            omni2_data_path=None,
         )
 
-        actual_dependencies: GlowsL3DDependencies = GlowsL3DDependencies.fetch_dependencies(
-            mock_processing_input_collection,
-            external_dependencies
+        actual_dependencies: GlowsL3DDependencies = (
+            GlowsL3DDependencies.fetch_dependencies(
+                mock_processing_input_collection, external_dependencies
+            )
         )
 
-        mock_processing_input_collection.get_file_paths.assert_has_calls([
-            call(source='glows', descriptor="plasma-speed-2026d"),
-            call(source='glows', descriptor="proton-density-2026d"),
-            call(source='glows', descriptor="uv-anisotropy-2026d"),
-            call(source='glows', descriptor="photoion-2026d"),
-            call(source='glows', descriptor="lya-2026d"),
-            call(source='glows', descriptor="electron-density-2026d"),
-            call(source='glows', descriptor="pipeline-settings-l3bcde"),
-            call(source='glows', descriptor="ion-rate-profile"),
-            call(source='glows', descriptor="sw-profile"),
-        ])
+        mock_processing_input_collection.get_file_paths.assert_has_calls(
+            [
+                call(source="glows", descriptor="plasma-speed-2026d"),
+                call(source="glows", descriptor="proton-density-2026d"),
+                call(source="glows", descriptor="uv-anisotropy-2026d"),
+                call(source="glows", descriptor="photoion-2026d"),
+                call(source="glows", descriptor="lya-2026d"),
+                call(source="glows", descriptor="electron-density-2026d"),
+                call(source="glows", descriptor="pipeline-settings-l3bcde"),
+                call(source="glows", descriptor="ion-rate-profile"),
+                call(source="glows", descriptor="sw-profile"),
+            ]
+        )
 
-        mock_download.assert_has_calls([
-            call(str(sentinel.waw_helio_ion_mp_speed)),
-            call(str(sentinel.waw_helio_ion_mp_p_dens)),
-            call(str(sentinel.waw_helio_ion_mp_uv_anis)),
-            call(str(sentinel.waw_helio_ion_mp_phion)),
-            call(str(sentinel.waw_helio_ion_mp_lya)),
-            call(str(sentinel.waw_helio_ion_mp_e_dens)),
-            call(str(sentinel.pipeline_settings)),
-            call(l3b_file_1),
-            call(l3b_file_2),
-            call(l3c_file_1),
-            call(l3c_file_2),
-        ])
+        mock_download.assert_has_calls(
+            [
+                call(str(sentinel.waw_helio_ion_mp_speed)),
+                call(str(sentinel.waw_helio_ion_mp_p_dens)),
+                call(str(sentinel.waw_helio_ion_mp_uv_anis)),
+                call(str(sentinel.waw_helio_ion_mp_phion)),
+                call(str(sentinel.waw_helio_ion_mp_lya)),
+                call(str(sentinel.waw_helio_ion_mp_e_dens)),
+                call(str(sentinel.pipeline_settings)),
+                call(l3b_file_1),
+                call(l3b_file_2),
+                call(l3c_file_1),
+                call(l3c_file_2),
+            ]
+        )
 
-        self.assertEqual({
-            'pipeline_settings': pipeline_settings,
-            'WawHelioIon': {
-                'speed': waw_helio_ion_mp_speed,
-                'p-dens': waw_helio_ion_mp_p_dens,
-                'uv-anis': waw_helio_ion_mp_uv_anis,
-                'phion': waw_helio_ion_mp_phion,
-                'lya': waw_helio_ion_mp_lya,
-                'e-dens': waw_helio_ion_mp_e_dens
-            }}, actual_dependencies.ancillary_files)
+        self.assertEqual(
+            {
+                "pipeline_settings": pipeline_settings,
+                "WawHelioIon": {
+                    "speed": waw_helio_ion_mp_speed,
+                    "p-dens": waw_helio_ion_mp_p_dens,
+                    "uv-anis": waw_helio_ion_mp_uv_anis,
+                    "phion": waw_helio_ion_mp_phion,
+                    "lya": waw_helio_ion_mp_lya,
+                    "e-dens": waw_helio_ion_mp_e_dens,
+                },
+            },
+            actual_dependencies.ancillary_files,
+        )
 
-        self.assertEqual([sentinel.l3b_downloaded_path_1, sentinel.l3b_downloaded_path_2],
-                         actual_dependencies.l3b_file_paths)
+        self.assertEqual(
+            [sentinel.l3b_downloaded_path_1, sentinel.l3b_downloaded_path_2],
+            actual_dependencies.l3b_file_paths,
+        )
 
-        self.assertEqual([sentinel.l3c_downloaded_path_1, sentinel.l3c_downloaded_path_2],
-                         actual_dependencies.l3c_file_paths)
+        self.assertEqual(
+            [sentinel.l3c_downloaded_path_1, sentinel.l3c_downloaded_path_2],
+            actual_dependencies.l3c_file_paths,
+        )
 
         self.assertEqual(actual_dependencies.end_cr, 3001.5)
 
-        self.assertEqual({'lya_raw_data': sentinel.lyman_alpha_path}, actual_dependencies.external_files)
+        self.assertEqual(
+            {"lya_raw_data": sentinel.lyman_alpha_path},
+            actual_dependencies.external_files,
+        )

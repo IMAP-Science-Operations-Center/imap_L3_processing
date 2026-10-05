@@ -1,7 +1,7 @@
-from typing import Callable
+from collections.abc import Callable
 
 from imap_data_access import SPICEFilePath
-from spiceypy import spiceypy, KernelPool, SpiceyError
+from spiceypy import KernelPool, SpiceyError, spiceypy
 
 
 class PredictedEphemerisTracker:

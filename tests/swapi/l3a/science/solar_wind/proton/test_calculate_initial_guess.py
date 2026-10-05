@@ -8,31 +8,28 @@ from imap_l3_processing.constants import (
     PROTON_CHARGE_COULOMBS,
     PROTON_MASS_KG,
 )
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
 )
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
+    SolarWindParams,
+)
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.calculate_initial_guess import (
     INITIAL_TEMPERATURE_FLOOR_K,
     calculate_initial_guess,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
-    SolarWindParams,
-)
 from imap_l3_processing.swapi.l3a.utils import optimal_density_scale
-from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.species import Species
 from tests.swapi._helpers import NOMINAL_TEST_EPOCH_TT2000, load_swapi_response
-
 
 # RTN → SWAPI rotation. Body +Y (the SWAPI boresight / spin axis) in RTN is
 # column 1 of the transpose, i.e. -R̂_RTN. The solar wind direction (anti-
 # parallel to the spin axis) is therefore +R̂.
-_R_BASE_RTN_TO_SWAPI = np.array(
-    [[0.0, 1.0, 0.0], [-1.0, 0.0, 0.0], [0.0, 0.0, 1.0]]
-)
+_R_BASE_RTN_TO_SWAPI = np.array([[0.0, 1.0, 0.0], [-1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
 
 
 def _esa_voltage_for_proton_speed(speed_km_s: float) -> float:
@@ -71,17 +68,14 @@ def _build_proton_ctx(count_rate: np.ndarray, esa_voltage: np.ndarray):
     return ctx
 
 
-def _make_synthetic_ctx_at_known_truth(truth: SolarWindParams,
-                                       n_bins: int = 71):
+def _make_synthetic_ctx_at_known_truth(truth: SolarWindParams, n_bins: int = 71):
     """Build a context whose `count_rate` array is the noiseless ideal forward
     model evaluated at `truth`."""
     bulk_speed = float(np.linalg.norm(truth.velocity_rtn))
     # Wide enough to bracket ±5σ at T=1e5 K, narrow enough to keep all bins
     # on-instrument.
     speed_grid = np.linspace(0.4 * bulk_speed, 1.6 * bulk_speed, n_bins)
-    voltages = np.array(
-        [_esa_voltage_for_proton_speed(s) for s in speed_grid]
-    )
+    voltages = np.array([_esa_voltage_for_proton_speed(s) for s in speed_grid])
 
     # Build a placeholder ctx, evaluate the forward model at `truth` to get
     # ideal rates, then build the production ctx with those rates as
@@ -98,11 +92,8 @@ class TestCalculateInitialGuessSeeds(unittest.TestCase):
         """Build a context whose count-rate spectrum has its maximum at a
         bin whose ESA voltage corresponds to `peak_speed_kms`. The shape of
         the spectrum doesn't matter — we patch out the refiner."""
-        speed_grid = np.linspace(0.4 * peak_speed_kms, 1.6 * peak_speed_kms,
-                                 31)
-        voltages = np.array(
-            [_esa_voltage_for_proton_speed(s) for s in speed_grid]
-        )
+        speed_grid = np.linspace(0.4 * peak_speed_kms, 1.6 * peak_speed_kms, 31)
+        voltages = np.array([_esa_voltage_for_proton_speed(s) for s in speed_grid])
         peak_idx = len(speed_grid) // 2  # middle bin
         voltages[peak_idx] = _esa_voltage_for_proton_speed(peak_speed_kms)
         count_rate = np.linspace(0.1, 0.5, len(voltages))
@@ -138,8 +129,9 @@ class TestCalculateInitialGuessSeeds(unittest.TestCase):
 
         temperature_seed_arg = patched_refine.call_args.args[3]
         expected_temperature = 60_000.0 * (peak_speed / 400.0) ** 2
-        np.testing.assert_allclose(temperature_seed_arg, expected_temperature,
-                                   rtol=1e-12)
+        np.testing.assert_allclose(
+            temperature_seed_arg, expected_temperature, rtol=1e-12
+        )
 
     def test_temperature_seed_floors_at_one_ev(self):
         """At a low peak speed where 60_000·(v/400)² is below 1 eV, the temperature seed handed to the refiner is clamped to `INITIAL_TEMPERATURE_FLOOR_K`."""
@@ -162,9 +154,7 @@ class TestCalculateInitialGuessDirection(unittest.TestCase):
     def test_initial_velocity_is_anti_parallel_to_spin_axis(self):
         """With every rotation matrix aligning body +Y to -R̂, the returned bulk velocity points along +R̂ — the negation of the chunk-mean spin axis."""
         speed_grid = np.linspace(300.0, 600.0, 31)
-        voltages = np.array(
-            [_esa_voltage_for_proton_speed(s) for s in speed_grid]
-        )
+        voltages = np.array([_esa_voltage_for_proton_speed(s) for s in speed_grid])
         count_rate = np.linspace(0.1, 0.5, len(voltages))
         peak_idx = len(speed_grid) // 2  # middle bin
         count_rate[peak_idx] = 100.0
@@ -175,9 +165,7 @@ class TestCalculateInitialGuessDirection(unittest.TestCase):
         expected_axis = np.array([-1.0, 0.0, 0.0])
 
         guess = calculate_initial_guess(ctx)
-        v_unit = guess.velocity_rtn / np.linalg.norm(
-            guess.velocity_rtn
-        )
+        v_unit = guess.velocity_rtn / np.linalg.norm(guess.velocity_rtn)
         np.testing.assert_allclose(v_unit, -expected_axis, atol=1e-12)
 
     def test_velocity_magnitude_matches_truth_bulk_speed(self):
@@ -238,9 +226,7 @@ class TestCalculateInitialGuessRefinerFailure(unittest.TestCase):
         """A count-rate spectrum with an extreme isolated spike at the lowest-speed bin (1e10 surrounded by 1e-6) drives `curve_fit` past its `maxfev` budget; the refiner re-raises the resulting `RuntimeError` with a wrapped message that names the peak-bin seed, and the scipy error is preserved on `__cause__`."""
         peak_speed = 250.0
         speed_grid = np.linspace(peak_speed, peak_speed + 600.0, 71)
-        voltages = np.array(
-            [_esa_voltage_for_proton_speed(s) for s in speed_grid]
-        )
+        voltages = np.array([_esa_voltage_for_proton_speed(s) for s in speed_grid])
         count_rate = np.full(len(voltages), 1e-6)
         count_rate[0] = 1.0e10
         ctx = _build_proton_ctx(count_rate, voltages)

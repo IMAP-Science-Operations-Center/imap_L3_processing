@@ -6,13 +6,13 @@ import numpy as np
 from imap_l3_processing.swapi.l3a.science.solar_wind.azimuthal_regions import (
     AzimuthalRegion,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.trim_open_aperture import (
-    trim_open_aperture,
-)
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     SolarWindParams,
     bulk_speed,
     thermal_speed,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.trim_open_aperture import (
+    trim_open_aperture,
 )
 from imap_l3_processing.swapi.l3a.utils import (
     velocity_to_angles_in_instrument_frame,
@@ -113,9 +113,7 @@ def get_angular_quadrature(
     )
     transmission_azimuth = np.array(
         [
-            interpolate_azimuthal_transmission(
-                response_grid.azimuthal_transmission, az
-            )
+            interpolate_azimuthal_transmission(response_grid.azimuthal_transmission, az)
             for az in azimuth_points
         ]
     )
@@ -179,7 +177,9 @@ def _angular_limits(
     half_width = _maxwellian_angular_extent(
         sw_params, response_grid.central_speed, EPSILON
     )
-    bulk_az, bulk_el = velocity_to_angles_in_instrument_frame(sw_params, rotation_matrix)
+    bulk_az, bulk_el = velocity_to_angles_in_instrument_frame(
+        sw_params, rotation_matrix
+    )
 
     if region.is_sunglasses:
         el_lo, el_hi = response_grid.sg_passband.elevation_range

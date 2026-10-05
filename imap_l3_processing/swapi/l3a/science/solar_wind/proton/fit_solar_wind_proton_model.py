@@ -13,11 +13,11 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     LOG_TEMPERATURE_IDX,
     VELOCITY_SLICE,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.escape_local_minimum import (
-    escape_local_minimum,
-)
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.calculate_initial_guess import (
     calculate_initial_guess,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.escape_local_minimum import (
+    escape_local_minimum,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.optimize_solar_wind_proton_params import (
     OptimizeSolarWindProtonParamsResult,
@@ -29,7 +29,6 @@ from imap_l3_processing.swapi.l3a.science.uncertainties import (
     r_squared,
 )
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
-
 
 _R_SQUARED_PEAK_HALF_WIDTH = 4
 
@@ -62,10 +61,7 @@ def _construct_fit_result(final_result, ctx):
     fit_r_squared = _coarse_peak_averaged_r_squared(
         final_result.residuals, ctx.count_rate
     )
-    flag_bad = (
-        fit_r_squared < 0.9
-        or final_result.sw_params.temperature > 5.0e5
-    )
+    flag_bad = fit_r_squared < 0.9 or final_result.sw_params.temperature > 5.0e5
     if flag_bad:
         return _nan_proton_fit_result(int(SwapiL3Flags.BAD_FIT))
 

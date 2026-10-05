@@ -1,19 +1,25 @@
 import logging
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
-from imap_data_access.processing_input import ProcessingInputCollection, generate_imap_input, ScienceFilePath
+from imap_data_access.processing_input import (
+    ProcessingInputCollection,
+    ScienceFilePath,
+    generate_imap_input,
+)
 
 import imap_l3_data_processor
 from tests.integration.integration_test_helpers import mock_imap_data_access
-from tests.test_helpers import get_test_data_path, get_run_local_data_path
+from tests.test_helpers import get_run_local_data_path, get_test_data_path
 
 
 class HitProcessorIntegration(unittest.TestCase):
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_hit_macropixel_product(self, mock_parse_cli_arguments):
         input_files = [
-            get_test_data_path("hit/imap_hit_l2_macropixel-intensity_20260228_v001.0002.cdf"),
+            get_test_data_path(
+                "hit/imap_hit_l2_macropixel-intensity_20260228_v001.0002.cdf"
+            ),
             get_test_data_path("hit/imap_mag_l1d_norm-dsrf_20260228_v005.cdf"),
             get_test_data_path("hit/imap_mag_l2_norm-dsrf_20260228_v002.cdf"),
         ]
@@ -24,10 +30,12 @@ class HitProcessorIntegration(unittest.TestCase):
             logging.basicConfig(
                 force=True,
                 level=logging.INFO,
-                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             )
 
-            processing_input_collection = ProcessingInputCollection(*(generate_imap_input(f.name) for f in input_files))
+            processing_input_collection = ProcessingInputCollection(
+                *(generate_imap_input(f.name) for f in input_files)
+            )
 
             mock_arguments = Mock()
             mock_arguments.instrument = "hit"
@@ -45,5 +53,9 @@ class HitProcessorIntegration(unittest.TestCase):
             imap_l3_data_processor.imap_l3_processor()
 
             expected_output_path = ScienceFilePath(
-                "imap_hit_l3_macropixel_20260228_v001.cdf").construct_path()
-            self.assertTrue(expected_output_path.exists(), f"Expected file {expected_output_path.name} not found")
+                "imap_hit_l3_macropixel_20260228_v001.cdf"
+            ).construct_path()
+            self.assertTrue(
+                expected_output_path.exists(),
+                f"Expected file {expected_output_path.name} not found",
+            )

@@ -25,7 +25,6 @@ from imap_l3_processing.swapi.constants import (
 )
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.utils import (
-    velocity_components_to_angles_in_instrument_frame,
     calculate_sw_speed,
     chunk_l2_data,
     esa_voltage_to_alpha_speed,
@@ -36,15 +35,14 @@ from imap_l3_processing.swapi.l3a.utils import (
     pickup_ion_chunk_epoch,
     read_l2_swapi_data,
     read_mag_rtn_data,
+    velocity_components_to_angles_in_instrument_frame,
     velocity_to_angles_in_instrument_frame,
 )
 from tests.spice_test_case import SpiceTestCase
 from tests.swapi._helpers import proton_params
 
 
-def _analytic_speed_km_per_s(
-    voltage: float, mass_kg: float, charge_c: float
-) -> float:
+def _analytic_speed_km_per_s(voltage: float, mass_kg: float, charge_c: float) -> float:
     return float(
         np.sqrt(2 * SWAPI_K_FACTOR * charge_c * abs(voltage) / mass_kg)
         / METERS_PER_KILOMETER
@@ -57,43 +55,75 @@ class TestChunkL2Data(TestCase):
     def test_chunk_l2_data(self):
         """chunk_l2_data splits a 4-sweep L2 dataset into two 2-sweep chunks, copying epoch, energy, count rate, and uncertainty into each chunk."""
         epoch = np.array([0, 1, 2, 3])
-        energy = np.array([[15000, 16000, 17000, 18000, 19000],
-                           [25000, 26000, 27000, 28000, 29000],
-                           [35000, 36000, 37000, 38000, 39000],
-                           [45000, 46000, 47000, 48000, 49000], ]
-                          )
+        energy = np.array(
+            [
+                [15000, 16000, 17000, 18000, 19000],
+                [25000, 26000, 27000, 28000, 29000],
+                [35000, 36000, 37000, 38000, 39000],
+                [45000, 46000, 47000, 48000, 49000],
+            ]
+        )
         coincidence_count_rate = np.array(
-            [[4, 5, 6, 7, 8], [9, 10, 11, 12, 13], [14, 15, 16, 17, 18], [19, 20, 21, 22, 23]])
+            [
+                [4, 5, 6, 7, 8],
+                [9, 10, 11, 12, 13],
+                [14, 15, 16, 17, 18],
+                [19, 20, 21, 22, 23],
+            ]
+        )
         coincidence_count_rate_uncertainty = np.array(
-            [[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5],
-             [0.1, 0.2, 0.3, 0.4, 0.5]])
+            [
+                [0.1, 0.2, 0.3, 0.4, 0.5],
+                [0.1, 0.2, 0.3, 0.4, 0.5],
+                [0.1, 0.2, 0.3, 0.4, 0.5],
+                [0.1, 0.2, 0.3, 0.4, 0.5],
+            ]
+        )
 
-        data = SwapiL2Data(epoch, energy, coincidence_count_rate, coincidence_count_rate_uncertainty)
+        data = SwapiL2Data(
+            epoch, energy, coincidence_count_rate, coincidence_count_rate_uncertainty
+        )
         chunks = list(chunk_l2_data(data, 2))
 
-        expected_energy_chunk_1 = np.array([[15000, 16000, 17000, 18000, 19000],
-                                            [25000, 26000, 27000, 28000, 29000]])
-        expected_energy_chunk_2 = np.array([[35000, 36000, 37000, 38000, 39000],
-                                            [45000, 46000, 47000, 48000, 49000]])
+        expected_energy_chunk_1 = np.array(
+            [[15000, 16000, 17000, 18000, 19000], [25000, 26000, 27000, 28000, 29000]]
+        )
+        expected_energy_chunk_2 = np.array(
+            [[35000, 36000, 37000, 38000, 39000], [45000, 46000, 47000, 48000, 49000]]
+        )
 
         expected_count_rate_chunk_1 = np.array([[4, 5, 6, 7, 8], [9, 10, 11, 12, 13]])
-        expected_count_rate_uncertainty_chunk_1 = np.array([[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5]])
+        expected_count_rate_uncertainty_chunk_1 = np.array(
+            [[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5]]
+        )
         first_chunk = chunks[0]
 
         np.testing.assert_array_equal(first_chunk.sci_start_time, np.array([0, 1]))
         np.testing.assert_array_equal(expected_energy_chunk_1, first_chunk.energy)
-        np.testing.assert_array_equal(expected_count_rate_chunk_1, first_chunk.coincidence_count_rate)
-        np.testing.assert_array_equal(expected_count_rate_uncertainty_chunk_1,
-                                      first_chunk.coincidence_count_rate_uncertainty)
+        np.testing.assert_array_equal(
+            expected_count_rate_chunk_1, first_chunk.coincidence_count_rate
+        )
+        np.testing.assert_array_equal(
+            expected_count_rate_uncertainty_chunk_1,
+            first_chunk.coincidence_count_rate_uncertainty,
+        )
 
-        expected_count_rate_chunk_2 = np.array([[14, 15, 16, 17, 18], [19, 20, 21, 22, 23]])
-        expected_count_rate_uncertainty_chunk_2 = np.array([[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5]])
+        expected_count_rate_chunk_2 = np.array(
+            [[14, 15, 16, 17, 18], [19, 20, 21, 22, 23]]
+        )
+        expected_count_rate_uncertainty_chunk_2 = np.array(
+            [[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5]]
+        )
         second_chunk = chunks[1]
         np.testing.assert_array_equal(np.array([2, 3]), second_chunk.sci_start_time)
         np.testing.assert_array_equal(expected_energy_chunk_2, second_chunk.energy)
-        np.testing.assert_array_equal(expected_count_rate_chunk_2, second_chunk.coincidence_count_rate)
-        np.testing.assert_array_equal(expected_count_rate_uncertainty_chunk_2,
-                                      second_chunk.coincidence_count_rate_uncertainty)
+        np.testing.assert_array_equal(
+            expected_count_rate_chunk_2, second_chunk.coincidence_count_rate
+        )
+        np.testing.assert_array_equal(
+            expected_count_rate_uncertainty_chunk_2,
+            second_chunk.coincidence_count_rate_uncertainty,
+        )
 
     def test_chunk_l2_data_partial_trailing_chunk_is_dropped(self):
         """When the sweep count is not a multiple of the chunk size, the trailing partial chunk is dropped rather than yielded short."""
@@ -120,7 +150,9 @@ class TestMeasurementTimes(TestCase):
         times = measurement_times(sci_start_time)
 
         def expected(sweep_start, bin_index):
-            seconds_into_sweep = bin_index * SWAPI_BIN_PERIOD_S + SWAPI_LIVETIME_CENTER_OFFSET_S
+            seconds_into_sweep = (
+                bin_index * SWAPI_BIN_PERIOD_S + SWAPI_LIVETIME_CENTER_OFFSET_S
+            )
             return sweep_start + seconds_into_sweep * ONE_SECOND_IN_NANOSECONDS
 
         self.assertEqual(times.shape, (2, SWAPI_SWEEP_BIN_COUNT))
@@ -131,30 +163,36 @@ class TestMeasurementTimes(TestCase):
     def test_offset_is_the_livetime_center_not_its_start(self):
         """The per-bin offset lands half a livetime past the end of the ramp-up, i.e. at the center of the livetime window rather than its start."""
         ramp_up_s = SWAPI_BIN_PERIOD_S - SWAPI_LIVETIME_S
-        self.assertAlmostEqual(SWAPI_LIVETIME_CENTER_OFFSET_S, ramp_up_s + SWAPI_LIVETIME_S / 2)
-        self.assertAlmostEqual(SWAPI_LIVETIME_CENTER_OFFSET_S, SWAPI_BIN_PERIOD_S - SWAPI_LIVETIME_S / 2)
+        self.assertAlmostEqual(
+            SWAPI_LIVETIME_CENTER_OFFSET_S, ramp_up_s + SWAPI_LIVETIME_S / 2
+        )
+        self.assertAlmostEqual(
+            SWAPI_LIVETIME_CENTER_OFFSET_S, SWAPI_BIN_PERIOD_S - SWAPI_LIVETIME_S / 2
+        )
 
 
 class TestReadL2SwapiData(TestCase):
     """Tests for `read_l2_swapi_data`."""
 
     def tearDown(self) -> None:
-        if os.path.exists('temp_cdf.cdf'):
-            os.remove('temp_cdf.cdf')
+        if os.path.exists("temp_cdf.cdf"):
+            os.remove("temp_cdf.cdf")
 
     def test_reading_l2_data_into_model(self):
         """read_l2_swapi_data parses a CDF into SwapiL2Data, decoding the start time to TT2000 and replacing each variable's FILLVAL entries with NaN."""
-        path = Path('temp_cdf.cdf')
+        path = Path("temp_cdf.cdf")
         if path.exists():
             os.remove(path)
 
-        temp_cdf = CDF('temp_cdf', '')
-        temp_cdf["sci_start_time"] = np.array(['2010-01-01T00:00:46.000'])
+        temp_cdf = CDF("temp_cdf", "")
+        temp_cdf["sci_start_time"] = np.array(["2010-01-01T00:00:46.000"])
         temp_cdf["esa_energy"] = np.array([1, -1e31, 3, 4], dtype=float)
         temp_cdf["swp_coin_rate"] = np.array([5, 6, 7, -1e31], dtype=float)
-        temp_cdf["swp_coin_rate_stat_uncert_plus"] = np.array([2, 2, -1e31, 2, 2, 2, 2, 2], dtype=float)
+        temp_cdf["swp_coin_rate_stat_uncert_plus"] = np.array(
+            [2, 2, -1e31, 2, 2, 2, 2, 2], dtype=float
+        )
 
-        temp_cdf["sci_start_time"].attrs["FILLVAL"] = '0'
+        temp_cdf["sci_start_time"].attrs["FILLVAL"] = "0"
         temp_cdf["esa_energy"].attrs["FILLVAL"] = -1e31
         temp_cdf["swp_coin_rate"].attrs["FILLVAL"] = -1e31
         temp_cdf["swp_coin_rate_stat_uncert_plus"].attrs["FILLVAL"] = -1e31
@@ -164,11 +202,19 @@ class TestReadL2SwapiData(TestCase):
         actual_swapi_l2_data = read_l2_swapi_data(CDF("temp_cdf.cdf"))
 
         epoch_as_tt2000 = 315576112184000000
-        np.testing.assert_array_equal(np.array(epoch_as_tt2000), actual_swapi_l2_data.sci_start_time)
-        np.testing.assert_array_equal(np.array([1, np.nan, 3, 4]), actual_swapi_l2_data.energy)
-        np.testing.assert_array_equal(np.array([5, 6, 7, np.nan]), actual_swapi_l2_data.coincidence_count_rate)
-        np.testing.assert_array_equal(np.array([2, 2, np.nan, 2, 2, 2, 2, 2]),
-                                      actual_swapi_l2_data.coincidence_count_rate_uncertainty)
+        np.testing.assert_array_equal(
+            np.array(epoch_as_tt2000), actual_swapi_l2_data.sci_start_time
+        )
+        np.testing.assert_array_equal(
+            np.array([1, np.nan, 3, 4]), actual_swapi_l2_data.energy
+        )
+        np.testing.assert_array_equal(
+            np.array([5, 6, 7, np.nan]), actual_swapi_l2_data.coincidence_count_rate
+        )
+        np.testing.assert_array_equal(
+            np.array([2, 2, np.nan, 2, 2, 2, 2, 2]),
+            actual_swapi_l2_data.coincidence_count_rate_uncertainty,
+        )
 
 
 class TestCalculateSwSpeed(TestCase):
@@ -232,7 +278,7 @@ class TestReadMagRtnData(TestCase):
     """Tests for `read_mag_rtn_data`."""
 
     def setUp(self) -> None:
-        self.cdf_path = Path('temp_mag_cdf.cdf')
+        self.cdf_path = Path("temp_mag_cdf.cdf")
         if self.cdf_path.exists():
             os.remove(self.cdf_path)
 
@@ -242,13 +288,13 @@ class TestReadMagRtnData(TestCase):
 
     def test_reads_b_rtn_and_epoch_into_mag_data(self):
         """read_mag_rtn_data converts CDF epochs to TT2000 and keeps only the leading three vector components of b_rtn (dropping the magnitude column)."""
-        epochs = np.array([datetime(2026, 1, 1, 0, 0, 0),
-                           datetime(2026, 1, 1, 0, 0, 1)])
-        b_rtn = np.array(
-            [[1.0, 2.0, 3.0, 0.0],
-             [4.0, 5.0, 6.0, 0.0]],
+        epochs = np.array(
+            [datetime(2026, 1, 1, 0, 0, 0), datetime(2026, 1, 1, 0, 0, 1)]
         )
-        cdf = CDF(str(self.cdf_path.with_suffix("")), '')
+        b_rtn = np.array(
+            [[1.0, 2.0, 3.0, 0.0], [4.0, 5.0, 6.0, 0.0]],
+        )
+        cdf = CDF(str(self.cdf_path.with_suffix("")), "")
         cdf["epoch"] = epochs
         cdf["b_rtn"] = b_rtn
         cdf["b_rtn"].attrs["FILLVAL"] = -1e31
@@ -307,40 +353,54 @@ class TestVelocityComponentsToAnglesInInstrumentFrame(TestCase):
 
     def test_flow_along_minus_y_returns_zero_angles(self):
         """A flow along -Y means SWAPI looks toward +Y, which is the (azimuth=0, elevation=0) bore-sight in the instrument frame."""
-        azimuth, elevation = velocity_components_to_angles_in_instrument_frame(0.0, -450.0, 0.0)
+        azimuth, elevation = velocity_components_to_angles_in_instrument_frame(
+            0.0, -450.0, 0.0
+        )
         self.assertAlmostEqual(azimuth, 0.0)
         self.assertAlmostEqual(elevation, 0.0)
 
     def test_positive_x_flow_yields_negative_azimuth(self):
         """A flow with a positive X component (look direction in -X) gives a negative azimuth, since azimuth = atan2(-vx, -vy) < 0 when vx > 0 and vy < 0."""
-        azimuth, _ = velocity_components_to_angles_in_instrument_frame(50.0, -450.0, 0.0)
+        azimuth, _ = velocity_components_to_angles_in_instrument_frame(
+            50.0, -450.0, 0.0
+        )
         self.assertLess(azimuth, 0.0)
 
     def test_positive_z_flow_yields_negative_elevation(self):
         """A flow with a positive Z component (look direction in -Z) gives a negative elevation, since elevation = asin(-vz/|v|) < 0 when vz > 0."""
-        _, elevation = velocity_components_to_angles_in_instrument_frame(0.0, -450.0, 50.0)
+        _, elevation = velocity_components_to_angles_in_instrument_frame(
+            0.0, -450.0, 50.0
+        )
         self.assertLess(elevation, 0.0)
 
     def test_negative_z_flow_yields_positive_elevation(self):
         """A flow with a negative Z component (look direction in +Z) gives a positive elevation."""
-        _, elevation = velocity_components_to_angles_in_instrument_frame(0.0, -450.0, -50.0)
+        _, elevation = velocity_components_to_angles_in_instrument_frame(
+            0.0, -450.0, -50.0
+        )
         self.assertGreater(elevation, 0.0)
 
     def test_pure_plus_x_flow_yields_azimuth_minus_90_elevation_zero(self):
         """A pure +X flow has look direction along -X; azimuth = atan2(-450, 0) = -90 deg, elevation = 0."""
-        azimuth, elevation = velocity_components_to_angles_in_instrument_frame(450.0, 0.0, 0.0)
+        azimuth, elevation = velocity_components_to_angles_in_instrument_frame(
+            450.0, 0.0, 0.0
+        )
         self.assertAlmostEqual(azimuth, -90.0)
         self.assertAlmostEqual(elevation, 0.0)
 
     def test_pure_plus_y_flow_yields_azimuth_180(self):
         """A pure +Y flow (away from SWAPI) has look direction along -Y; azimuth = atan2(0, -450) = +/-180 deg, elevation = 0."""
-        azimuth, elevation = velocity_components_to_angles_in_instrument_frame(0.0, 450.0, 0.0)
+        azimuth, elevation = velocity_components_to_angles_in_instrument_frame(
+            0.0, 450.0, 0.0
+        )
         self.assertAlmostEqual(abs(azimuth), 180.0)
         self.assertAlmostEqual(elevation, 0.0)
 
     def test_pure_plus_z_flow_yields_elevation_minus_90(self):
         """A pure +Z flow has look direction along -Z; elevation = asin(-1) = -90 deg."""
-        _, elevation = velocity_components_to_angles_in_instrument_frame(0.0, 0.0, 450.0)
+        _, elevation = velocity_components_to_angles_in_instrument_frame(
+            0.0, 0.0, 450.0
+        )
         self.assertAlmostEqual(elevation, -90.0)
 
 
@@ -388,9 +448,7 @@ class TestEsaVoltageToProtonSpeed(TestCase):
             with self.subTest(voltage=V):
                 np.testing.assert_allclose(
                     esa_voltage_to_proton_speed(V),
-                    _analytic_speed_km_per_s(
-                        V, PROTON_MASS_KG, PROTON_CHARGE_COULOMBS
-                    ),
+                    _analytic_speed_km_per_s(V, PROTON_MASS_KG, PROTON_CHARGE_COULOMBS),
                     rtol=1e-12,
                 )
 
@@ -441,9 +499,8 @@ class TestPuiChunkEpoch(TestCase):
         start, so its center is 5 minutes in — matching the +/- 5 minute
         `epoch_delta` the chunk is reported with."""
         first_start = 800_000_000_000_000_000
-        sweep_starts = (
-            first_start
-            + np.arange(50, dtype=np.int64) * int(12 * ONE_SECOND_IN_NANOSECONDS)
+        sweep_starts = first_start + np.arange(50, dtype=np.int64) * int(
+            12 * ONE_SECOND_IN_NANOSECONDS
         )
         empty_sweeps = np.zeros((50, SWAPI_SWEEP_BIN_COUNT))
         chunk = SwapiL2Data(
@@ -454,7 +511,8 @@ class TestPuiChunkEpoch(TestCase):
         )
 
         self.assertEqual(
-            pickup_ion_chunk_epoch(chunk), first_start + 5 * 60 * ONE_SECOND_IN_NANOSECONDS
+            pickup_ion_chunk_epoch(chunk),
+            first_start + 5 * 60 * ONE_SECOND_IN_NANOSECONDS,
         )
 
     def test_center_is_half_a_sweep_past_the_midpoint_of_the_sweep_starts(self):
@@ -462,9 +520,8 @@ class TestPuiChunkEpoch(TestCase):
         center sits half a sweep beyond the midpoint of the start times — the
         half sweep that separates a sweep's start from its own center."""
         first_start = 800_000_000_000_000_000
-        sweep_starts = (
-            first_start
-            + np.arange(50, dtype=np.int64) * int(12 * ONE_SECOND_IN_NANOSECONDS)
+        sweep_starts = first_start + np.arange(50, dtype=np.int64) * int(
+            12 * ONE_SECOND_IN_NANOSECONDS
         )
         empty_sweeps = np.zeros((50, SWAPI_SWEEP_BIN_COUNT))
         chunk = SwapiL2Data(

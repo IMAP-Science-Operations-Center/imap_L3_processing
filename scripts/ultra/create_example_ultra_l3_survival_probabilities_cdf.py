@@ -7,16 +7,21 @@ from astropy_healpix import HEALPix
 from spacepy import pycdf
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import HEALPIX_INDEX_VAR_NAME, PROBABILITY_OF_SURVIVAL_VAR_NAME
+from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import (
+    HEALPIX_INDEX_VAR_NAME,
+    PROBABILITY_OF_SURVIVAL_VAR_NAME,
+)
 from tests.test_helpers import get_test_data_path
 
 
-def create_survival_probabilities_file(glows_file_path: Path, date_for_file: datetime, cdf_file_path: Path):
+def create_survival_probabilities_file(
+    glows_file_path: Path, date_for_file: datetime, cdf_file_path: Path
+):
     with open(glows_file_path) as input_data:
-        energy_line = [line for line in input_data.readlines() if line.startswith("#energy_grid")]
+        energy_line = [line for line in input_data if line.startswith("#energy_grid")]
         assert len(energy_line) == 1
         match = [float(x) for x in re.findall(r"\s+([0-9.]+)", energy_line[0])]
-        energy_units = re.search(r'\[(.+)]', energy_line[0]).group(1)
+        energy_units = re.search(r"\[(.+)]", energy_line[0]).group(1)
 
         energies = np.array(match)
 
@@ -30,9 +35,11 @@ def create_survival_probabilities_file(glows_file_path: Path, date_for_file: dat
     latitude = lats.value
     longitude = lons.value
     skips = 0
-    for i in range(0, 3072):
+    for i in range(3072):
         if i in healpix_index:
-            output_survival_probabilities[:, i] = spin_angle_and_survival_probabilities[i - skips, 3:-1].T
+            output_survival_probabilities[:, i] = spin_angle_and_survival_probabilities[
+                i - skips, 3:-1
+            ].T
         else:
             skips += 1
             output_survival_probabilities[:, i] = 0
@@ -40,16 +47,24 @@ def create_survival_probabilities_file(glows_file_path: Path, date_for_file: dat
     # Removing last column as it appears to be extra
     survival_probabilities = spin_angle_and_survival_probabilities[:, 3:-1].T
 
-    with CDF(str(cdf_file_path), '') as c:
+    with CDF(str(cdf_file_path), "") as c:
         c.new("epoch", [date_for_file], pycdf.const.CDF_TIME_TT2000)
         c.new("epoch_delta", [12 * 60 * 60 * 1e9], pycdf.const.CDF_INT8)
         c.new("energy_grid", energies, pycdf.const.CDF_FLOAT, recVary=False)
-        c['energy_grid'].attrs["UNITS"] = energy_units
+        c["energy_grid"].attrs["UNITS"] = energy_units
         c.new("latitude", latitude, pycdf.const.CDF_FLOAT, recVary=False)
         c.new("longitude", longitude, pycdf.const.CDF_FLOAT, recVary=False)
-        c.new(HEALPIX_INDEX_VAR_NAME, output_healpix_index, pycdf.const.CDF_INT2, recVary=False)
-        c.new(PROBABILITY_OF_SURVIVAL_VAR_NAME, np.array(output_survival_probabilities)[np.newaxis, ...],
-              pycdf.const.CDF_FLOAT)
+        c.new(
+            HEALPIX_INDEX_VAR_NAME,
+            output_healpix_index,
+            pycdf.const.CDF_INT2,
+            recVary=False,
+        )
+        c.new(
+            PROBABILITY_OF_SURVIVAL_VAR_NAME,
+            np.array(output_survival_probabilities)[np.newaxis, ...],
+            pycdf.const.CDF_FLOAT,
+        )
 
         c["energy_grid"].attrs["FILLVAL"] = -1e31
         c["latitude"].attrs["FILLVAL"] = -1e31
@@ -62,7 +77,12 @@ def create_survival_probabilities_file(glows_file_path: Path, date_for_file: dat
 
 if __name__ == "__main__":
     path = Path(__file__)
-    input_file_path = path.parent.parent.parent / "instrument_team_data" / "glows" / "probSur.Imap.Ul.V0_2009.000.dat"
+    input_file_path = (
+        path.parent.parent.parent
+        / "instrument_team_data"
+        / "glows"
+        / "probSur.Imap.Ul.V0_2009.000.dat"
+    )
 
     start_date = datetime(year=2025, month=4, day=15, hour=12)
     num_psets_to_generate = 4
@@ -70,7 +90,9 @@ if __name__ == "__main__":
     for i in range(num_psets_to_generate):
         date_to_set = start_date + timedelta(days=i)
         filename = f"imap_glows_l3e_survival-probability-ul_{date_to_set.strftime('%Y%m%d')}_v015.cdf"
-        cdf_file_path = get_test_data_path(f"ultra/fake_l3e_survival_probabilities/{filename}")
+        cdf_file_path = get_test_data_path(
+            f"ultra/fake_l3e_survival_probabilities/{filename}"
+        )
 
         cdf_file_path.unlink(missing_ok=True)
         create_survival_probabilities_file(input_file_path, date_to_set, cdf_file_path)

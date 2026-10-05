@@ -8,10 +8,10 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+from figure_utils import FIGURES_DIR, load_swapi_response
 
 from imap_l3_processing.swapi.response.passband_grid import PassbandGrid
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
-from figure_utils import FIGURES_DIR, load_swapi_response
 
 _ELEVATION_DISPLAY_LIMIT_DEG = 15.0
 _ACTIVE_ELEVATION_SAMPLE_COUNT = 300
@@ -85,9 +85,7 @@ def plot_region_panel(
         grid, grid.max_boundary, active_elevations, np.maximum
     )
 
-    image = draw_transmission_heatmap(
-        axis, grid.values, elevations, speed_ratios
-    )
+    image = draw_transmission_heatmap(axis, grid.values, elevations, speed_ratios)
     draw_integration_window_outline(
         axis, active_elevations, lower_speed_ratios, upper_speed_ratios
     )

@@ -1,17 +1,24 @@
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import numpy as np
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import PositionToElevationLookup
+from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import (
+    PositionToElevationLookup,
+)
 from imap_l3_processing.codice.l3.lo.models import CODICE_LO_L2_NUM_PRIORITIES
 from imap_l3_processing.constants import ONE_SECOND_IN_NANOSECONDS
 from scripts.time_shift_cdf import convert_epoch_time
-from tests.test_helpers import get_run_local_data_path, get_test_instrument_team_data_path
+from tests.test_helpers import (
+    get_run_local_data_path,
+    get_test_instrument_team_data_path,
+)
 
 
-def extend_priority_counts_to_24_spin_angles(template_cdf_path, priority_count_variables: list[str], output_dir):
+def extend_priority_counts_to_24_spin_angles(
+    template_cdf_path, priority_count_variables: list[str], output_dir
+):
     rng = np.random.default_rng()
 
     output_path = output_dir / template_cdf_path.name
@@ -29,8 +36,12 @@ def extend_priority_counts_to_24_spin_angles(template_cdf_path, priority_count_v
                     cdf[var] = template_cdf[var]
                 cdf[var].attrs = template_cdf[var].attrs
 
-            rgfo_half_spin = rng.integers(0, 33, size=template_cdf["rgfo_half_spin"].shape)
-            randomly_fill_value = rng.choice([False, True], size=template_cdf["rgfo_half_spin"].shape)
+            rgfo_half_spin = rng.integers(
+                0, 33, size=template_cdf["rgfo_half_spin"].shape
+            )
+            randomly_fill_value = rng.choice(
+                [False, True], size=template_cdf["rgfo_half_spin"].shape
+            )
 
             cdf["rgfo_half_spin"] = rgfo_half_spin
             # cdf["rgfo_half_spin"] = np.where(randomly_fill_value, cdf["rgfo_half_spin"].attrs["FILLVAL"],
@@ -38,8 +49,9 @@ def extend_priority_counts_to_24_spin_angles(template_cdf_path, priority_count_v
     return output_path
 
 
-def modify_l1a_priority_counts(instrument_team_l1a_nsw_path: Path, instrument_team_l1a_sw_path: Path) -> tuple[
-    Path, Path]:
+def modify_l1a_priority_counts(
+    instrument_team_l1a_nsw_path: Path, instrument_team_l1a_sw_path: Path
+) -> tuple[Path, Path]:
     output_dir = get_run_local_data_path("codice/lo")
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -48,8 +60,9 @@ def modify_l1a_priority_counts(instrument_team_l1a_nsw_path: Path, instrument_te
         "p6_hplus_heplusplus",
     ]
 
-    modified_l1a_nsw_path = extend_priority_counts_to_24_spin_angles(instrument_team_l1a_nsw_path,
-                                                                     l1a_nsw_priority_counts_vars, output_dir)
+    modified_l1a_nsw_path = extend_priority_counts_to_24_spin_angles(
+        instrument_team_l1a_nsw_path, l1a_nsw_priority_counts_vars, output_dir
+    )
 
     l1a_sw_priority_counts_vars = [
         "p0_tcrs",
@@ -59,12 +72,11 @@ def modify_l1a_priority_counts(instrument_team_l1a_nsw_path: Path, instrument_te
         "p4_dcrs",
     ]
 
-    modified_l1a_sw_path = extend_priority_counts_to_24_spin_angles(instrument_team_l1a_sw_path,
-                                                                    l1a_sw_priority_counts_vars,
-                                                                    output_dir)
+    modified_l1a_sw_path = extend_priority_counts_to_24_spin_angles(
+        instrument_team_l1a_sw_path, l1a_sw_priority_counts_vars, output_dir
+    )
 
-    return (modified_l1a_nsw_path,
-            modified_l1a_sw_path)
+    return (modified_l1a_nsw_path, modified_l1a_sw_path)
 
 
 def modify_l2_direct_events(instrument_team_l2_path: Path) -> Path:
@@ -81,7 +93,9 @@ def modify_l2_direct_events(instrument_team_l2_path: Path) -> Path:
 
     with CDF(str(instrument_team_l2_path)) as template_cdf:
         with CDF(str(output_path), masterpath="") as cdf:
-            epoch_delta = timedelta(minutes=2).total_seconds() * ONE_SECOND_IN_NANOSECONDS
+            epoch_delta = (
+                timedelta(minutes=2).total_seconds() * ONE_SECOND_IN_NANOSECONDS
+            )
             cdf["epoch_delta_plus"] = np.full(template_cdf["epoch"].shape, epoch_delta)
             cdf["epoch_delta_minus"] = np.full(template_cdf["epoch"].shape, epoch_delta)
 
@@ -89,14 +103,20 @@ def modify_l2_direct_events(instrument_team_l2_path: Path) -> Path:
                 elevation_var = f"p{priority_i}_elevation"
                 position_var = f"p{priority_i}_position"
 
-                cdf[position_var] = rng.integers(1, 25, size=template_cdf[position_var].shape)
+                cdf[position_var] = rng.integers(
+                    1, 25, size=template_cdf[position_var].shape
+                )
                 cdf[position_var].attrs["FILLVAL"] = int_fillval
 
-                cdf[elevation_var] = rng.choice(elevation_lookup.bin_centers, size=template_cdf[position_var].shape)
+                cdf[elevation_var] = rng.choice(
+                    elevation_lookup.bin_centers, size=template_cdf[position_var].shape
+                )
                 cdf[elevation_var].attrs["FILLVAL"] = float_fillval
 
                 for epoch_i in range(cdf[elevation_var].shape[0]):
-                    number_of_events = template_cdf[f"p{priority_i}_num_events"][epoch_i]
+                    number_of_events = template_cdf[f"p{priority_i}_num_events"][
+                        epoch_i
+                    ]
 
                     filled_position = cdf[position_var][...]
                     filled_position[epoch_i, number_of_events:] = int_fillval
@@ -118,20 +138,31 @@ if __name__ == "__main__":
     target_datetime = datetime(year=2024, month=11, day=11)
 
     template_l2_de_path = get_test_instrument_team_data_path(
-        "codice/lo/imap_codice_l2_lo-direct-events_20241110_v002.cdf")
+        "codice/lo/imap_codice_l2_lo-direct-events_20241110_v002.cdf"
+    )
     template_l1a_nsw_path = get_test_instrument_team_data_path(
-        'codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf')
+        "codice/lo/imap_codice_l1a_lo-nsw-priority_20241110_v002.cdf"
+    )
     template_l1a_sw_path = get_test_instrument_team_data_path(
-        'codice/lo/imap_codice_l1a_lo-sw-priority_20241110_v002.cdf')
+        "codice/lo/imap_codice_l1a_lo-sw-priority_20241110_v002.cdf"
+    )
 
     modified_l2_path = modify_l2_direct_events(template_l2_de_path)
-    l1a_nsw_path, l1a_sw_path = modify_l1a_priority_counts(template_l1a_nsw_path, template_l1a_sw_path)
+    l1a_nsw_path, l1a_sw_path = modify_l1a_priority_counts(
+        template_l1a_nsw_path, template_l1a_sw_path
+    )
 
     convert_epoch_time(modified_l2_path, target_datetime)
-    modified_l2_path.rename(modified_l2_path.parent / "imap_codice_l2_lo-direct-events_20241111_v000.cdf")
+    modified_l2_path.rename(
+        modified_l2_path.parent / "imap_codice_l2_lo-direct-events_20241111_v000.cdf"
+    )
 
     convert_epoch_time(l1a_nsw_path, target_datetime)
-    l1a_nsw_path.rename(l1a_nsw_path.parent / "imap_codice_l1a_lo-nsw-priority_20241111_v000.cdf")
+    l1a_nsw_path.rename(
+        l1a_nsw_path.parent / "imap_codice_l1a_lo-nsw-priority_20241111_v000.cdf"
+    )
 
     convert_epoch_time(l1a_sw_path, target_datetime)
-    l1a_sw_path.rename(l1a_sw_path.parent / "imap_codice_l1a_lo-sw-priority_20241111_v000.cdf")
+    l1a_sw_path.rename(
+        l1a_sw_path.parent / "imap_codice_l1a_lo-sw-priority_20241111_v000.cdf"
+    )

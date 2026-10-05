@@ -57,9 +57,7 @@ class TestSolarWindParamsFromVector(unittest.TestCase):
         )
         self.assertAlmostEqual(round_tripped.density, original.density)
         self.assertAlmostEqual(round_tripped.temperature, original.temperature)
-        np.testing.assert_array_equal(
-            round_tripped.velocity_rtn, original.velocity_rtn
-        )
+        np.testing.assert_array_equal(round_tripped.velocity_rtn, original.velocity_rtn)
         self.assertEqual(round_tripped.mass, original.mass)
 
     def test_from_vector_carries_mass_through_unchanged(self):

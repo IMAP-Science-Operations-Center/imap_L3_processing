@@ -7,11 +7,11 @@ import numpy as np
 from imap_l3_processing.models import DataProduct, DataProductVariable
 
 REPOINTING_CDF_VAR_NAME = "identifier"
-PHOTON_FLUX_CDF_VAR_NAME = 'photon_flux'
-PHOTON_FLUX_UNCERTAINTY_CDF_VAR_NAME = 'photon_flux_uncertainty'
-RAW_HISTOGRAM_CDF_VAR_NAME = 'raw_histogram'
-EXPOSURE_TIMES_CDF_VAR_NAME = 'exposure_times'
-NUM_OF_BINS_CDF_VAR_NAME = 'number_of_bins'
+PHOTON_FLUX_CDF_VAR_NAME = "photon_flux"
+PHOTON_FLUX_UNCERTAINTY_CDF_VAR_NAME = "photon_flux_uncertainty"
+RAW_HISTOGRAM_CDF_VAR_NAME = "raw_histogram"
+EXPOSURE_TIMES_CDF_VAR_NAME = "exposure_times"
+NUM_OF_BINS_CDF_VAR_NAME = "number_of_bins"
 EPOCH_CDF_VAR_NAME = "epoch"
 EPOCH_DELTA_CDF_VAR_NAME = "epoch_delta"
 START_TIME_CDF_VAR_NAME = "start_time"
@@ -142,7 +142,9 @@ class GlowsL3LightCurve(DataProduct):
         return [
             DataProductVariable(REPOINTING_CDF_VAR_NAME, [self.identifier]),
             DataProductVariable(PHOTON_FLUX_CDF_VAR_NAME, self.photon_flux),
-            DataProductVariable(PHOTON_FLUX_UNCERTAINTY_CDF_VAR_NAME, self.photon_flux_uncertainty),
+            DataProductVariable(
+                PHOTON_FLUX_UNCERTAINTY_CDF_VAR_NAME, self.photon_flux_uncertainty
+            ),
             DataProductVariable(RAW_HISTOGRAM_CDF_VAR_NAME, self.raw_histogram),
             DataProductVariable(EXPOSURE_TIMES_CDF_VAR_NAME, self.exposure_times),
             DataProductVariable(NUM_OF_BINS_CDF_VAR_NAME, self.number_of_bins),
@@ -154,28 +156,75 @@ class GlowsL3LightCurve(DataProduct):
             DataProductVariable(SPIN_ANGLE_DELTA_CDF_VAR_NAME, self.spin_angle_delta),
             DataProductVariable(LATITUDE_CDF_VAR_NAME, self.latitude),
             DataProductVariable(LONGITUDE_CDF_VAR_NAME, self.longitude),
-            DataProductVariable(EXTRA_HELIOSPHERIC_BACKGROUND_CDF_VAR_NAME, self.extra_heliospheric_background),
-            DataProductVariable(TIME_DEPENDENT_BACKGROUND_CDF_VAR_NAME, self.time_dependent_background),
-
-            DataProductVariable(FILTER_TEMPERATURE_AVERAGE_CDF_VAR_NAME, self.filter_temperature_average),
-            DataProductVariable(FILTER_TEMPERATURE_STD_DEV_CDF_VAR_NAME, self.filter_temperature_std_dev),
-            DataProductVariable(HV_VOLTAGE_AVERAGE_CDF_VAR_NAME, self.hv_voltage_average),
-            DataProductVariable(HV_VOLTAGE_STD_DEV_CDF_VAR_NAME, self.hv_voltage_std_dev),
-            DataProductVariable(SPIN_PERIOD_AVERAGE_CDF_VAR_NAME, self.spin_period_average),
-            DataProductVariable(SPIN_PERIOD_STD_DEV_CDF_VAR_NAME, self.spin_period_std_dev),
-            DataProductVariable(SPIN_PERIOD_GROUND_AVERAGE_CDF_VAR_NAME, self.spin_period_ground_average),
-            DataProductVariable(SPIN_PERIOD_GROUND_STD_DEV_CDF_VAR_NAME, self.spin_period_ground_std_dev),
-            DataProductVariable(PULSE_LENGTH_AVERAGE_CDF_VAR_NAME, self.pulse_length_average),
-            DataProductVariable(PULSE_LENGTH_STD_DEV_CDF_VAR_NAME, self.pulse_length_std_dev),
-            DataProductVariable(POSITION_ANGLE_OFFSET_AVERAGE_CDF_VAR_NAME, self.position_angle_offset_average),
-            DataProductVariable(POSITION_ANGLE_OFFSET_STD_DEV_CDF_VAR_NAME, self.position_angle_offset_std_dev),
-            DataProductVariable(SPIN_AXIS_ORIENTATION_AVERAGE_CDF_VAR_NAME, self.spin_axis_orientation_average),
-            DataProductVariable(SPIN_AXIS_ORIENTATION_STD_DEV_CDF_VAR_NAME, self.spin_axis_orientation_std_dev),
-            DataProductVariable(SPACECRAFT_LOCATION_AVERAGE_CDF_VAR_NAME, self.spacecraft_location_average),
-            DataProductVariable(SPACECRAFT_LOCATION_STD_DEV_CDF_VAR_NAME, self.spacecraft_location_std_dev),
-            DataProductVariable(SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME, self.spacecraft_velocity_average),
-            DataProductVariable(SPACECRAFT_VELOCITY_STD_DEV_CDF_VAR_NAME, self.spacecraft_velocity_std_dev),
-
+            DataProductVariable(
+                EXTRA_HELIOSPHERIC_BACKGROUND_CDF_VAR_NAME,
+                self.extra_heliospheric_background,
+            ),
+            DataProductVariable(
+                TIME_DEPENDENT_BACKGROUND_CDF_VAR_NAME, self.time_dependent_background
+            ),
+            DataProductVariable(
+                FILTER_TEMPERATURE_AVERAGE_CDF_VAR_NAME, self.filter_temperature_average
+            ),
+            DataProductVariable(
+                FILTER_TEMPERATURE_STD_DEV_CDF_VAR_NAME, self.filter_temperature_std_dev
+            ),
+            DataProductVariable(
+                HV_VOLTAGE_AVERAGE_CDF_VAR_NAME, self.hv_voltage_average
+            ),
+            DataProductVariable(
+                HV_VOLTAGE_STD_DEV_CDF_VAR_NAME, self.hv_voltage_std_dev
+            ),
+            DataProductVariable(
+                SPIN_PERIOD_AVERAGE_CDF_VAR_NAME, self.spin_period_average
+            ),
+            DataProductVariable(
+                SPIN_PERIOD_STD_DEV_CDF_VAR_NAME, self.spin_period_std_dev
+            ),
+            DataProductVariable(
+                SPIN_PERIOD_GROUND_AVERAGE_CDF_VAR_NAME, self.spin_period_ground_average
+            ),
+            DataProductVariable(
+                SPIN_PERIOD_GROUND_STD_DEV_CDF_VAR_NAME, self.spin_period_ground_std_dev
+            ),
+            DataProductVariable(
+                PULSE_LENGTH_AVERAGE_CDF_VAR_NAME, self.pulse_length_average
+            ),
+            DataProductVariable(
+                PULSE_LENGTH_STD_DEV_CDF_VAR_NAME, self.pulse_length_std_dev
+            ),
+            DataProductVariable(
+                POSITION_ANGLE_OFFSET_AVERAGE_CDF_VAR_NAME,
+                self.position_angle_offset_average,
+            ),
+            DataProductVariable(
+                POSITION_ANGLE_OFFSET_STD_DEV_CDF_VAR_NAME,
+                self.position_angle_offset_std_dev,
+            ),
+            DataProductVariable(
+                SPIN_AXIS_ORIENTATION_AVERAGE_CDF_VAR_NAME,
+                self.spin_axis_orientation_average,
+            ),
+            DataProductVariable(
+                SPIN_AXIS_ORIENTATION_STD_DEV_CDF_VAR_NAME,
+                self.spin_axis_orientation_std_dev,
+            ),
+            DataProductVariable(
+                SPACECRAFT_LOCATION_AVERAGE_CDF_VAR_NAME,
+                self.spacecraft_location_average,
+            ),
+            DataProductVariable(
+                SPACECRAFT_LOCATION_STD_DEV_CDF_VAR_NAME,
+                self.spacecraft_location_std_dev,
+            ),
+            DataProductVariable(
+                SPACECRAFT_VELOCITY_AVERAGE_CDF_VAR_NAME,
+                self.spacecraft_velocity_average,
+            ),
+            DataProductVariable(
+                SPACECRAFT_VELOCITY_STD_DEV_CDF_VAR_NAME,
+                self.spacecraft_velocity_std_dev,
+            ),
             DataProductVariable("lon_lat", np.arange(2)),
             DataProductVariable("lon_lat_labels", ["lon", "lat"]),
             DataProductVariable("x_y_z", np.arange(3)),

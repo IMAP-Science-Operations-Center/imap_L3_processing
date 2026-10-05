@@ -1,5 +1,3 @@
-from typing import Optional
-
 import numpy as np
 from numpy import ndarray
 
@@ -19,7 +17,7 @@ def calculate_initial_guess(
     proton_true_rate: ndarray,
     proton_temperature: float,
     proton_velocity_rtn: ndarray,
-) -> Optional[tuple[float, float, float, ndarray]]:
+) -> tuple[float, float, float, ndarray] | None:
     if alpha_ctx.count_rate.size == 0 or alpha_ctx.count_rate.ndim != 2:
         return None
 

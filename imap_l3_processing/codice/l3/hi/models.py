@@ -5,7 +5,10 @@ import numpy as np
 from numpy import ndarray
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.cdf.cdf_utils import read_numeric_variable, read_variable_and_mask_fill_values
+from imap_l3_processing.cdf.cdf_utils import (
+    read_numeric_variable,
+    read_variable_and_mask_fill_values,
+)
 from imap_l3_processing.models import DataProduct, DataProductVariable
 
 CODICE_HI_NUM_L2_PRIORITIES = 6
@@ -39,20 +42,46 @@ class CodiceL2HiDirectEventData:
         with CDF(str(filename)) as cdf:
             return cls(
                 epoch=cdf["epoch"][...],
-                epoch_delta_plus=cdf['epoch_delta_plus'][...],
-                data_quality=read_variable_and_mask_fill_values(cdf["data_quality"])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
-                multi_flag=read_variable_and_mask_fill_values(cdf["multi_flag"])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
-                number_of_events=read_variable_and_mask_fill_values(cdf["num_events"])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
-                ssd_energy=read_variable_and_mask_fill_values(cdf["ssd_energy"])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
-                ssd_id=read_variable_and_mask_fill_values(cdf["ssd_id"])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
-                spin_angle=read_numeric_variable(cdf["spin_angle"])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
-                spin_number=read_variable_and_mask_fill_values(cdf["spin_number"])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
-                time_of_flight=read_numeric_variable(cdf["tof"])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
-                type=read_variable_and_mask_fill_values(cdf["type"])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
-                energy_per_nuc=read_numeric_variable(cdf["energy_per_nuc"])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
-                elevation_angle=read_numeric_variable(cdf[ELEVATION_ANGLE_VAR_NAME])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
-                gain=read_variable_and_mask_fill_values(cdf[GAIN_VAR_NAME])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
-                spin_sector=read_variable_and_mask_fill_values(cdf[SPIN_SECTOR_VAR_NAME])[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
+                epoch_delta_plus=cdf["epoch_delta_plus"][...],
+                data_quality=read_variable_and_mask_fill_values(cdf["data_quality"])[
+                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
+                ],
+                multi_flag=read_variable_and_mask_fill_values(cdf["multi_flag"])[
+                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
+                ],
+                number_of_events=read_variable_and_mask_fill_values(cdf["num_events"])[
+                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
+                ],
+                ssd_energy=read_variable_and_mask_fill_values(cdf["ssd_energy"])[
+                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
+                ],
+                ssd_id=read_variable_and_mask_fill_values(cdf["ssd_id"])[
+                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
+                ],
+                spin_angle=read_numeric_variable(cdf["spin_angle"])[
+                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
+                ],
+                spin_number=read_variable_and_mask_fill_values(cdf["spin_number"])[
+                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
+                ],
+                time_of_flight=read_numeric_variable(cdf["tof"])[
+                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
+                ],
+                type=read_variable_and_mask_fill_values(cdf["type"])[
+                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
+                ],
+                energy_per_nuc=read_numeric_variable(cdf["energy_per_nuc"])[
+                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
+                ],
+                elevation_angle=read_numeric_variable(cdf[ELEVATION_ANGLE_VAR_NAME])[
+                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
+                ],
+                gain=read_variable_and_mask_fill_values(cdf[GAIN_VAR_NAME])[
+                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
+                ],
+                spin_sector=read_variable_and_mask_fill_values(
+                    cdf[SPIN_SECTOR_VAR_NAME]
+                )[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
             )
         # @formatter:on
 
@@ -95,13 +124,21 @@ PITCH_ANGLE_DELTA_VAR_NAME = "pitch_angle_delta"
 GYROPHASE_VAR_NAME = "gyrophase"
 GYROPHASE_DELTA_VAR_NAME = "gyrophase_delta"
 H_INTENSITY_BY_PITCH_ANGLE_VAR_NAME = "h_intensity_by_pitch_angle"
-H_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = "h_intensity_by_pitch_angle_and_gyrophase"
+H_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = (
+    "h_intensity_by_pitch_angle_and_gyrophase"
+)
 HE3HE4_INTENSITY_BY_PITCH_ANGLE_VAR_NAME = "he3he4_intensity_by_pitch_angle"
-HE3HE4_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = "he3he4_intensity_by_pitch_angle_and_gyrophase"
+HE3HE4_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = (
+    "he3he4_intensity_by_pitch_angle_and_gyrophase"
+)
 CNO_INTENSITY_BY_PITCH_ANGLE_VAR_NAME = "cno_intensity_by_pitch_angle"
-CNO_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = "cno_intensity_by_pitch_angle_and_gyrophase"
+CNO_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = (
+    "cno_intensity_by_pitch_angle_and_gyrophase"
+)
 FE_INTENSITY_BY_PITCH_ANGLE_VAR_NAME = "fe_intensity_by_pitch_angle"
-FE_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = "fe_intensity_by_pitch_angle_and_gyrophase"
+FE_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = (
+    "fe_intensity_by_pitch_angle_and_gyrophase"
+)
 ENERGY_H_LABEL_VAR_NAME = "energy_h_label"
 ENERGY_CNO_LABEL_VAR_NAME = "energy_cno_label"
 ENERGY_FE_LABEL_VAR_NAME = "energy_fe_label"
@@ -138,8 +175,12 @@ class CodiceL3HiDirectEvents(DataProduct):
     def __post_init__(self):
         self.priority_index = np.arange(CODICE_HI_NUM_L2_PRIORITIES)
         self.event_index = np.arange(self.ssd_id.shape[-1])
-        self.priority_index_label = np.array([str(i) for i in range(CODICE_HI_NUM_L2_PRIORITIES)])
-        self.event_index_label = np.array([str(i) for i in range(len(self.event_index))])
+        self.priority_index_label = np.array(
+            [str(i) for i in range(CODICE_HI_NUM_L2_PRIORITIES)]
+        )
+        self.event_index_label = np.array(
+            [str(i) for i in range(len(self.event_index))]
+        )
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -162,7 +203,9 @@ class CodiceL3HiDirectEvents(DataProduct):
             DataProductVariable(SPIN_SECTOR_VAR_NAME, self.spin_sector),
             DataProductVariable(PRIORITY_INDEX_VAR_NAME, self.priority_index),
             DataProductVariable(EVENT_INDEX_VAR_NAME, self.event_index),
-            DataProductVariable(PRIORITY_INDEX_LABEL_VAR_NAME, self.priority_index_label),
+            DataProductVariable(
+                PRIORITY_INDEX_LABEL_VAR_NAME, self.priority_index_label
+            ),
             DataProductVariable(EVENT_INDEX_LABEL_VAR_NAME, self.event_index_label),
         ]
 
@@ -215,7 +258,10 @@ class CodiceHiL3PitchAngleDataProduct(DataProduct):
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
             DataProductVariable(EPOCH_VAR_NAME, self.epoch),
-            DataProductVariable(EPOCH_DELTA_VAR_NAME, np.array([t.total_seconds() for t in self.epoch_delta]) * 1e9),
+            DataProductVariable(
+                EPOCH_DELTA_VAR_NAME,
+                np.array([t.total_seconds() for t in self.epoch_delta]) * 1e9,
+            ),
             DataProductVariable(ENERGY_H_VAR_NAME, self.energy_h),
             DataProductVariable(ENERGY_H_PLUS_VAR_NAME, self.energy_h_plus),
             DataProductVariable(ENERGY_H_MINUS_VAR_NAME, self.energy_h_minus),
@@ -232,18 +278,35 @@ class CodiceHiL3PitchAngleDataProduct(DataProduct):
             DataProductVariable(PITCH_ANGLE_DELTA_VAR_NAME, self.pitch_angle_delta),
             DataProductVariable(GYROPHASE_VAR_NAME, self.gyrophase),
             DataProductVariable(GYROPHASE_DELTA_VAR_NAME, self.gyrophase_delta),
-            DataProductVariable(H_INTENSITY_BY_PITCH_ANGLE_VAR_NAME, self.h_intensity_by_pitch_angle),
-            DataProductVariable(H_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME,
-                                self.h_intensity_by_pitch_angle_and_gyrophase),
-            DataProductVariable(HE3HE4_INTENSITY_BY_PITCH_ANGLE_VAR_NAME, self.he3he4_intensity_by_pitch_angle),
-            DataProductVariable(HE3HE4_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME,
-                                self.he3he4_intensity_by_pitch_angle_and_gyrophase),
-            DataProductVariable(CNO_INTENSITY_BY_PITCH_ANGLE_VAR_NAME, self.cno_intensity_by_pitch_angle),
-            DataProductVariable(CNO_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME,
-                                self.cno_intensity_by_pitch_angle_and_gyrophase),
-            DataProductVariable(FE_INTENSITY_BY_PITCH_ANGLE_VAR_NAME, self.fe_intensity_by_pitch_angle),
-            DataProductVariable(FE_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME,
-                                self.fe_intensity_by_pitch_angle_and_gyrophase),
+            DataProductVariable(
+                H_INTENSITY_BY_PITCH_ANGLE_VAR_NAME, self.h_intensity_by_pitch_angle
+            ),
+            DataProductVariable(
+                H_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME,
+                self.h_intensity_by_pitch_angle_and_gyrophase,
+            ),
+            DataProductVariable(
+                HE3HE4_INTENSITY_BY_PITCH_ANGLE_VAR_NAME,
+                self.he3he4_intensity_by_pitch_angle,
+            ),
+            DataProductVariable(
+                HE3HE4_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME,
+                self.he3he4_intensity_by_pitch_angle_and_gyrophase,
+            ),
+            DataProductVariable(
+                CNO_INTENSITY_BY_PITCH_ANGLE_VAR_NAME, self.cno_intensity_by_pitch_angle
+            ),
+            DataProductVariable(
+                CNO_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME,
+                self.cno_intensity_by_pitch_angle_and_gyrophase,
+            ),
+            DataProductVariable(
+                FE_INTENSITY_BY_PITCH_ANGLE_VAR_NAME, self.fe_intensity_by_pitch_angle
+            ),
+            DataProductVariable(
+                FE_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME,
+                self.fe_intensity_by_pitch_angle_and_gyrophase,
+            ),
             DataProductVariable(ENERGY_H_LABEL_VAR_NAME, self.energy_h_label),
             DataProductVariable(ENERGY_CNO_LABEL_VAR_NAME, self.energy_cno_label),
             DataProductVariable(ENERGY_FE_LABEL_VAR_NAME, self.energy_fe_label),
@@ -281,28 +344,32 @@ class CodiceHiL2SectoredIntensitiesData:
     @classmethod
     def read_from_cdf(cls, l2_sectored_intensities_cdf):
         with CDF(str(l2_sectored_intensities_cdf)) as cdf:
-            return cls(epoch=cdf["epoch"][...],
-                       epoch_delta_plus=np.array([timedelta(seconds=ns / 1e9) for ns in cdf["epoch_delta_plus"][...]]),
-                       spin_angles=cdf['spin_angle'][...],
-                       elevation_angle=cdf['elevation_angle'][...],
-                       data_quality=cdf['data_quality'][...],
-                       h_intensities=read_numeric_variable(cdf['h']),
-                       energy_h=cdf['energy_h'][...],
-                       energy_h_plus=cdf['energy_h_plus'][...],
-                       energy_h_minus=cdf['energy_h_minus'][...],
-                       cno_intensities=read_numeric_variable(cdf['cno']),
-                       energy_cno=cdf['energy_cno'][...],
-                       energy_cno_plus=cdf['energy_cno_plus'][...],
-                       energy_cno_minus=cdf['energy_cno_minus'][...],
-                       fe_intensities=read_numeric_variable(cdf['fe']),
-                       energy_fe=cdf['energy_fe'][...],
-                       energy_fe_plus=cdf['energy_fe_plus'][...],
-                       energy_fe_minus=cdf['energy_fe_minus'][...],
-                       he3he4_intensities=read_numeric_variable(cdf['he3he4']),
-                       energy_he3he4=cdf['energy_he3he4'][...],
-                       energy_he3he4_plus=cdf['energy_he3he4_plus'][...],
-                       energy_he3he4_minus=cdf['energy_he3he4_minus'][...],
-                       )
+            return cls(
+                epoch=cdf["epoch"][...],
+                epoch_delta_plus=np.array(
+                    [timedelta(seconds=ns / 1e9) for ns in cdf["epoch_delta_plus"][...]]
+                ),
+                spin_angles=cdf["spin_angle"][...],
+                elevation_angle=cdf["elevation_angle"][...],
+                data_quality=cdf["data_quality"][...],
+                h_intensities=read_numeric_variable(cdf["h"]),
+                energy_h=cdf["energy_h"][...],
+                energy_h_plus=cdf["energy_h_plus"][...],
+                energy_h_minus=cdf["energy_h_minus"][...],
+                cno_intensities=read_numeric_variable(cdf["cno"]),
+                energy_cno=cdf["energy_cno"][...],
+                energy_cno_plus=cdf["energy_cno_plus"][...],
+                energy_cno_minus=cdf["energy_cno_minus"][...],
+                fe_intensities=read_numeric_variable(cdf["fe"]),
+                energy_fe=cdf["energy_fe"][...],
+                energy_fe_plus=cdf["energy_fe_plus"][...],
+                energy_fe_minus=cdf["energy_fe_minus"][...],
+                he3he4_intensities=read_numeric_variable(cdf["he3he4"]),
+                energy_he3he4=cdf["energy_he3he4"][...],
+                energy_he3he4_plus=cdf["energy_he3he4_plus"][...],
+                energy_he3he4_minus=cdf["energy_he3he4_minus"][...],
+            )
+
 
 @dataclass
 class CodiceL1aHiDirectEvents:
@@ -316,5 +383,5 @@ class CodiceL1aHiDirectEvents:
             return cls(
                 epoch=cdf["epoch"][...],
                 ssd_energy=cdf["ssd_energy"][...],
-                tof=cdf["tof"][...]
+                tof=cdf["tof"][...],
             )

@@ -5,13 +5,19 @@ from scripts.convert_product_definition_to_yaml import convert_csv_to_yaml
 
 
 class TestConvertProductDefinitionToYamlTest(unittest.TestCase):
-
     def test_parse_required_for_data_with_multiple_depend(self):
         row_columns = {
-            "NAME": ["intensity_by_pitch_angle_and_gyrophase", "energy_label", "pitch_angle_label"],
+            "NAME": [
+                "intensity_by_pitch_angle_and_gyrophase",
+                "energy_label",
+                "pitch_angle_label",
+            ],
             "DATA_TYPE": ["float32", "str", "str"],
-            "CATDESC": ["Intensity organized by pitch angle and gyrophase",
-                        "energy label", "pitch angle label"],
+            "CATDESC": [
+                "Intensity organized by pitch angle and gyrophase",
+                "energy label",
+                "pitch angle label",
+            ],
             "VAR_TYPE": ["data", "metadata", "metadata"],
             "DEPEND_0": ["epoch", "", ""],
             "DEPEND_1": ["energy", "", ""],
@@ -26,18 +32,18 @@ class TestConvertProductDefinitionToYamlTest(unittest.TestCase):
             "LABL_PTR_1": ["energy_label", "", ""],
             "LABL_PTR_2": ["pitch_angle_label", "", ""],
             "VARIABLE_PURPOSE": ["primary var, summary", "", ""],
-            "RECORD_VARYING": ["rv", "nrv", "nrv"]
+            "RECORD_VARYING": ["rv", "nrv", "nrv"],
         }
 
         rows = [
-            [k for k in row_columns.keys()],
+            [k for k in row_columns],
             [v[0] for v in row_columns.values()],
             [v[1] for v in row_columns.values()],
             [v[2] for v in row_columns.values()],
         ]
 
         filePath = "csv_test_file.csv"
-        with open(filePath, "w", newline='') as csvfile:
+        with open(filePath, "w", newline="") as csvfile:
             test_csv_writer = csv.writer(csvfile)
             test_csv_writer.writerows(rows)
 
@@ -79,8 +85,22 @@ pitch_angle_label:
         self.assertEqual(expected_yaml, actual_yaml)
 
     def test_parse_required_for_data_only_depend_0(self):
-        required_for_data = ["NAME", "DATA_TYPE", "CATDESC", "VAR_TYPE", "RECORD_VARYING", "DEPEND_0", "DISPLAY_TYPE",
-                             "FIELDNAM", "FORMAT", "LABLAXIS", "UNITS", "VALIDMIN", "VALIDMAX", "FILLVAL"]
+        required_for_data = [
+            "NAME",
+            "DATA_TYPE",
+            "CATDESC",
+            "VAR_TYPE",
+            "RECORD_VARYING",
+            "DEPEND_0",
+            "DISPLAY_TYPE",
+            "FIELDNAM",
+            "FORMAT",
+            "LABLAXIS",
+            "UNITS",
+            "VALIDMIN",
+            "VALIDMAX",
+            "FILLVAL",
+        ]
 
         test_csv_values = [
             "core_fit_num_points",
@@ -96,10 +116,10 @@ pitch_angle_label:
             "",
             "",
             "",
-            "-1.00E+31"
+            "-1.00E+31",
         ]
         filePath = "csv_test_file.csv"
-        with open(filePath, "w", newline='') as csvfile:
+        with open(filePath, "w", newline="") as csvfile:
             test_csv_writer = csv.writer(csvfile)
             test_csv_writer.writerow(required_for_data)
             test_csv_writer.writerow(test_csv_values)
@@ -121,8 +141,21 @@ pitch_angle_label:
         self.assertEqual(expected_yaml, actual_yaml)
 
     def test_parse_required_for_support_data_non_rv(self):
-        required_for_data = ["NAME", "DATA_TYPE", "CATDESC", "VAR_TYPE", "RECORD_VARYING", "DISPLAY_TYPE",
-                             "FIELDNAM", "FORMAT", "LABLAXIS", "UNITS", "VALIDMIN", "VALIDMAX", "FILLVAL"]
+        required_for_data = [
+            "NAME",
+            "DATA_TYPE",
+            "CATDESC",
+            "VAR_TYPE",
+            "RECORD_VARYING",
+            "DISPLAY_TYPE",
+            "FIELDNAM",
+            "FORMAT",
+            "LABLAXIS",
+            "UNITS",
+            "VALIDMIN",
+            "VALIDMAX",
+            "FILLVAL",
+        ]
 
         test_csv_values = [
             "energy",
@@ -137,10 +170,10 @@ pitch_angle_label:
             "",
             "",
             "",
-            "-1.00E+31"
+            "-1.00E+31",
         ]
         filePath = "csv_test_file.csv"
-        with open(filePath, "w", newline='') as csvfile:
+        with open(filePath, "w", newline="") as csvfile:
             test_csv_writer = csv.writer(csvfile)
             test_csv_writer.writerow(required_for_data)
             test_csv_writer.writerow(test_csv_values)
@@ -161,9 +194,22 @@ pitch_angle_label:
         self.assertEqual(expected_yaml, actual_yaml)
 
     def test_parse_required_for_data_epoch(self):
-        required_for_data = ["NAME", "DATA_TYPE", "CATDESC", "VAR_TYPE", "DEPEND_0", "DISPLAY_TYPE",
-                             "FIELDNAM", "FORMAT", "LABLAXIS", "UNITS", "VALIDMIN", "VALIDMAX", "FILLVAL",
-                             "RECORD_VARYING"]
+        required_for_data = [
+            "NAME",
+            "DATA_TYPE",
+            "CATDESC",
+            "VAR_TYPE",
+            "DEPEND_0",
+            "DISPLAY_TYPE",
+            "FIELDNAM",
+            "FORMAT",
+            "LABLAXIS",
+            "UNITS",
+            "VALIDMIN",
+            "VALIDMAX",
+            "FILLVAL",
+            "RECORD_VARYING",
+        ]
 
         test_csv_values = [
             "epoch",
@@ -179,10 +225,10 @@ pitch_angle_label:
             "",
             "",
             "-1.00E+31",
-            "rv"
+            "rv",
         ]
         filePath = "csv_test_file.csv"
-        with open(filePath, "w", newline='') as csvfile:
+        with open(filePath, "w", newline="") as csvfile:
             test_csv_writer = csv.writer(csvfile)
             test_csv_writer.writerow(required_for_data)
             test_csv_writer.writerow(test_csv_values)
@@ -203,47 +249,48 @@ pitch_angle_label:
         self.assertEqual(expected_yaml, actual_yaml)
 
     def test_parse_does_not_include_columns_if_they_are_blank(self):
-        all_headers = ["NAME",
-                       "DATA_TYPE",
-                       "Data shape",
-                       "CATDESC",
-                       "VAR_TYPE",
-                       "RECORD_VARYING",
-                       "DEPEND_0",
-                       "DEPEND_1",
-                       "DEPEND_2",
-                       "DEPEND_3",
-                       "DISPLAY_TYPE",
-                       "FIELDNAM",
-                       "FORMAT",
-                       "LABLAXIS",
-                       "UNITS",
-                       "VALIDMIN",
-                       "VALIDMAX",
-                       "FILLVAL",
-                       "LABL_PTRS",
-                       "UNIT_PTR",
-                       "SCALE_TYP",
-                       "SCAL_PTR",
-                       "VAR_NOTES",
-                       "TIME_BASE",
-                       "TIME_SCALE",
-                       "LEAP_SECONDS_INCLUDED",
-                       "ABSOLUTE_ERROR",
-                       "AVG_TYPE",
-                       "BIN_LOCATION",
-                       "DELTA_PLUS_VAR",
-                       "DELTA_MINUS_VAR",
-                       "DERIVN",
-                       "DICT_KEY",
-                       "MONOTON",
-                       "SCALEMIN",
-                       "SCALEMAX",
-                       "REFERENCE_POSITION",
-                       "RELATIVE_ERROR",
-                       "RESOLUTION",
-                       "SI_CONVERSION"
-                       ]
+        all_headers = [
+            "NAME",
+            "DATA_TYPE",
+            "Data shape",
+            "CATDESC",
+            "VAR_TYPE",
+            "RECORD_VARYING",
+            "DEPEND_0",
+            "DEPEND_1",
+            "DEPEND_2",
+            "DEPEND_3",
+            "DISPLAY_TYPE",
+            "FIELDNAM",
+            "FORMAT",
+            "LABLAXIS",
+            "UNITS",
+            "VALIDMIN",
+            "VALIDMAX",
+            "FILLVAL",
+            "LABL_PTRS",
+            "UNIT_PTR",
+            "SCALE_TYP",
+            "SCAL_PTR",
+            "VAR_NOTES",
+            "TIME_BASE",
+            "TIME_SCALE",
+            "LEAP_SECONDS_INCLUDED",
+            "ABSOLUTE_ERROR",
+            "AVG_TYPE",
+            "BIN_LOCATION",
+            "DELTA_PLUS_VAR",
+            "DELTA_MINUS_VAR",
+            "DERIVN",
+            "DICT_KEY",
+            "MONOTON",
+            "SCALEMIN",
+            "SCALEMAX",
+            "REFERENCE_POSITION",
+            "RELATIVE_ERROR",
+            "RESOLUTION",
+            "SI_CONVERSION",
+        ]
 
         row_contents = [
             "stim_tag",
@@ -285,11 +332,11 @@ pitch_angle_label:
             "",
             "",
             "",
-            ""
+            "",
         ]
 
         filePath = "csv_test_file.csv"
-        with open(filePath, "w", newline='') as csvfile:
+        with open(filePath, "w", newline="") as csvfile:
             test_csv_writer = csv.writer(csvfile)
             test_csv_writer.writerow(all_headers)
             test_csv_writer.writerow(row_contents)

@@ -1,6 +1,7 @@
 import numpy as np
 from spacepy import pycdf
 
+
 def fake_uncertainties(cdf_path):
     original_cdf = pycdf.CDF(cdf_path, readonly=False)
 

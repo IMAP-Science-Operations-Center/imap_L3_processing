@@ -13,26 +13,26 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.azimuthal_regions import (
     REGION_SUNGLASSES,
     AzimuthalRegion,
 )
+from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
+    SolarWindFitContext,
+)
 from imap_l3_processing.swapi.l3a.science.solar_wind.integration_limits import (
     AngularQuadrature,
     get_angular_quadrature,
     get_speed_quadrature,
     speed_window_misses_passband,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.utils import (
-    count_rate_conversion_factor,
-)
-from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
-    SolarWindFitContext,
-)
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     LOG_DENSITY_IDX,
     LOG_TEMPERATURE_IDX,
     N_STATE,
-    SolarWindParams,
     VELOCITY_SLICE,
+    SolarWindParams,
     bulk_speed,
     thermal_speed,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.utils import (
+    count_rate_conversion_factor,
 )
 from imap_l3_processing.swapi.response.swapi_response import ResponseGrid
 
@@ -135,10 +135,14 @@ def _integrate_region(
             for i_speed in range(speed_quadrature.points.shape[0]):
                 speed = speed_quadrature.points[i_speed]
                 exponent = (
-                    speed ** 2
-                    + bulk_speed(sw_params) ** 2
-                    - 2 * speed * velocity_along_direction
-                ) * 1.0 / (2 * thermal_speed(sw_params) ** 2)
+                    (
+                        speed**2
+                        + bulk_speed(sw_params) ** 2
+                        - 2 * speed * velocity_along_direction
+                    )
+                    * 1.0
+                    / (2 * thermal_speed(sw_params) ** 2)
+                )
                 weighted_integrand = (
                     speed_quadrature.weights[i_speed]
                     * speed_quadrature.speed_cubed_times_passband[i_speed]
@@ -190,13 +194,13 @@ def _integrate_region(
         elevation_log_temperature_jacobian * count_rate_factor - 1.5 * rate
     )
     jacobian[VELOCITY_SLICE.start] = (
-            elevation_jacobian_r * count_rate_factor / thermal_speed(sw_params) ** 2
+        elevation_jacobian_r * count_rate_factor / thermal_speed(sw_params) ** 2
     )
     jacobian[VELOCITY_SLICE.start + 1] = (
-            elevation_jacobian_t * count_rate_factor / thermal_speed(sw_params) ** 2
+        elevation_jacobian_t * count_rate_factor / thermal_speed(sw_params) ** 2
     )
     jacobian[VELOCITY_SLICE.start + 2] = (
-            elevation_jacobian_n * count_rate_factor / thermal_speed(sw_params) ** 2
+        elevation_jacobian_n * count_rate_factor / thermal_speed(sw_params) ** 2
     )
 
     return rate, jacobian
@@ -222,4 +226,3 @@ def _direction_in_rtn(angular_quadrature, rotation_xyz_to_rtn, i_elevation, i_az
         + rotation_xyz_to_rtn[2, 1] * direction_y
         + rotation_xyz_to_rtn[2, 2] * direction_z,
     )
-

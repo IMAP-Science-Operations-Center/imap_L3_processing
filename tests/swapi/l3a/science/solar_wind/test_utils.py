@@ -31,9 +31,7 @@ class TestAverageSpinAxisRtn(unittest.TestCase):
     def test_constant_axis_across_sweeps_returns_that_axis(self):
         """Five identical identity rotations average to the same +Y_RTN unit vector, confirming the mean is over the sweep axis."""
         rotations = np.stack([np.eye(3)] * 5)
-        np.testing.assert_array_equal(
-            average_spin_axis_rtn(rotations), [0.0, 1.0, 0.0]
-        )
+        np.testing.assert_array_equal(average_spin_axis_rtn(rotations), [0.0, 1.0, 0.0])
 
     def test_averages_two_axes_at_pm_45_deg_to_a_unit_vector(self):
         """Two body-+Y directions tilted ±45° in the RT-plane average to +Y_RTN after renormalization, cancelling the R components."""
@@ -73,9 +71,7 @@ class TestCountRateConversionFactor(unittest.TestCase):
             mass=PROTON_MASS_KG,
         )
 
-    def _response_grid(
-        self, central_effective_area: float = 0.5
-    ) -> ResponseGrid:
+    def _response_grid(self, central_effective_area: float = 0.5) -> ResponseGrid:
         return ResponseGrid(
             sg_passband=None,
             oa_passband=None,

@@ -3,15 +3,15 @@ import unittest
 
 import numpy as np
 
-from imap_l3_processing.swapi.l3a.science.solar_wind.trim_open_aperture import (
-    OA_SCAN_RESOLUTION,
-    OA_SCAN_THRESHOLD,
-    trim_open_aperture,
-)
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     SolarWindParams,
     bulk_speed,
     thermal_speed,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.trim_open_aperture import (
+    OA_SCAN_RESOLUTION,
+    OA_SCAN_THRESHOLD,
+    trim_open_aperture,
 )
 from imap_l3_processing.swapi.response.azimuthal_transmission import (
     AzimuthalTransmissionGrid,
@@ -20,7 +20,6 @@ from imap_l3_processing.swapi.response.passband_grid import build_passband_grid
 from imap_l3_processing.swapi.response.swapi_response import ResponseGrid
 from tests.swapi._helpers import NOMINAL_SWAPI_TO_RTN_ROTATION, proton_params
 from tests.swapi.response.test_passband_grid import _gaussian_values_df
-
 
 # --- fixtures ---------------------------------------------------------------
 
@@ -56,9 +55,7 @@ def _proton_params_at_elevation(
 ) -> SolarWindParams:
     v_x_swapi = -speed * math.cos(math.radians(bulk_el_deg))
     v_z_swapi = -speed * math.sin(math.radians(bulk_el_deg))
-    v_rtn = NOMINAL_SWAPI_TO_RTN_ROTATION @ np.array(
-        [v_x_swapi, 0.0, v_z_swapi]
-    )
+    v_rtn = NOMINAL_SWAPI_TO_RTN_ROTATION @ np.array([v_x_swapi, 0.0, v_z_swapi])
     return proton_params(
         velocity_rtn=tuple(v_rtn), density=density, temperature=temperature
     )
@@ -193,7 +190,9 @@ class TestTrimAt1eMinus6Threshold(unittest.TestCase):
         # interior. The integrand reduces to the Maxwellian centered at the
         # bulk azimuth, which we recompute here.
         rg = _make_response_grid()
-        sw = proton_params(velocity_rtn=(0.0, -450.0, 0.0))  # bulk_az = +90°, bulk_el = 0°
+        sw = proton_params(
+            velocity_rtn=(0.0, -450.0, 0.0)
+        )  # bulk_az = +90°, bulk_el = 0°
 
         lo, hi = _trim(rg, sw, azimuth_lo=20.0, azimuth_hi=150.0, sg_rate=0.0)
 
@@ -202,7 +201,8 @@ class TestTrimAt1eMinus6Threshold(unittest.TestCase):
         speed = bulk_speed(sw)
         central = rg.central_speed
         delta_v_sq = (
-            central**2 + speed**2
+            central**2
+            + speed**2
             - 2.0 * central * speed * np.cos(np.radians(scan - 90.0))
         )
         integrand = np.exp(-delta_v_sq / (2.0 * sigma**2))
@@ -227,9 +227,13 @@ class TestSymmetryBetweenOaPositiveAndNegative(unittest.TestCase):
         sw_pos = proton_params(velocity_rtn=(0.0, -450.0, 0.0))
         sw_neg = proton_params(velocity_rtn=(0.0, +450.0, 0.0))
 
-        lo_pos, hi_pos = _trim(rg, sw_pos, azimuth_lo=20.0, azimuth_hi=150.0, sg_rate=0.0)
+        lo_pos, hi_pos = _trim(
+            rg, sw_pos, azimuth_lo=20.0, azimuth_hi=150.0, sg_rate=0.0
+        )
         # OA-: same magnitudes, mirrored around 0.
-        lo_neg, hi_neg = _trim(rg, sw_neg, azimuth_lo=-150.0, azimuth_hi=-20.0, sg_rate=0.0)
+        lo_neg, hi_neg = _trim(
+            rg, sw_neg, azimuth_lo=-150.0, azimuth_hi=-20.0, sg_rate=0.0
+        )
 
         # The implementation picks scan-grid nodes by index, and
         # `linspace(20, 150, N)` mirrors `linspace(-150, -20, N)` up to a
@@ -246,9 +250,7 @@ class TestSkipPolicyAgainstSgRate(unittest.TestCase):
         rg = _make_response_grid()
         sw = proton_params(velocity_rtn=(0.0, -450.0, 0.0))  # az_inst = +90°
 
-        lo_open, hi_open = _trim(
-            rg, sw, azimuth_lo=20.0, azimuth_hi=150.0, sg_rate=0.0
-        )
+        lo_open, hi_open = _trim(rg, sw, azimuth_lo=20.0, azimuth_hi=150.0, sg_rate=0.0)
         self.assertGreater(hi_open, lo_open)
 
         lo, hi = _trim(rg, sw, azimuth_lo=20.0, azimuth_hi=150.0, sg_rate=1.0e15)

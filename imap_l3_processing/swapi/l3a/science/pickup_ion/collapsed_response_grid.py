@@ -11,22 +11,30 @@ from imap_l3_processing.constants import (
     CENTIMETERS_PER_METER,
     METERS_PER_KILOMETER,
 )
-from imap_l3_processing.swapi.l3a.science.pickup_ion.uniform_speed_grid import UniformSpeedGrid
-from imap_l3_processing.swapi.l3a.utils import velocity_components_to_angles_in_instrument_frame
+from imap_l3_processing.swapi.l3a.science.pickup_ion.uniform_speed_grid import (
+    UniformSpeedGrid,
+)
+from imap_l3_processing.swapi.l3a.utils import (
+    velocity_components_to_angles_in_instrument_frame,
+)
+from imap_l3_processing.swapi.response.azimuthal_transmission import (
+    interpolate_azimuthal_transmission,
+)
 from imap_l3_processing.swapi.response.passband_grid import interpolate_passband
 from imap_l3_processing.swapi.response.swapi_response import ResponseGrid, SwapiResponse
 from imap_l3_processing.swapi.species import Species
-from imap_l3_processing.swapi.response.azimuthal_transmission import interpolate_azimuthal_transmission
 
 
 class ChunkCollapsedResponse(NamedTuple):
-    speed_grid: UniformSpeedGrid       # shared v' grid of N cells
-    bin_weights: NDArray[float]        # (n_sweeps, n_steps, N); count_rate = bin_weights @ f(v')
+    speed_grid: UniformSpeedGrid  # shared v' grid of N cells
+    bin_weights: NDArray[
+        float
+    ]  # (n_sweeps, n_steps, N); count_rate = bin_weights @ f(v')
 
 
 class CollapsedResponseGrid(NamedTuple):
     speed_in_sw_frame: NDArray[float]  # (N,) v' samples
-    values: NDArray[float]             # (N,) H(v', V) [km^3/s] at each v'
+    values: NDArray[float]  # (N,) H(v', V) [km^3/s] at each v'
 
 
 _ELEVATION_RESOLUTION = 32
@@ -65,8 +73,10 @@ def build_chunk_collapsed_response(
             voltage = float(voltages_v[step_index])
             bulk_vec = bulk_sw_per_bin_kms[sweep_index, step_index]
             bulk_speed = float(bulk_speeds[sweep_index, step_index])
-            bulk_azimuth_deg, bulk_elevation_deg = velocity_components_to_angles_in_instrument_frame(
-                bulk_vec[0], bulk_vec[1], bulk_vec[2]
+            bulk_azimuth_deg, bulk_elevation_deg = (
+                velocity_components_to_angles_in_instrument_frame(
+                    bulk_vec[0], bulk_vec[1], bulk_vec[2]
+                )
             )
             response_grid = swapi_response.get_response_grid(
                 time_as_tt2000, voltage, species
@@ -114,9 +124,7 @@ def build_collapsed_response_grid(
             bulk_elevation,
         )
 
-    return CollapsedResponseGrid(
-        speed_in_sw_frame=speed_in_sw_frame, values=values
-    )
+    return CollapsedResponseGrid(speed_in_sw_frame=speed_in_sw_frame, values=values)
 
 
 def solar_wind_frame_speed_range(
@@ -170,20 +178,21 @@ def _collapse_response(
                 continue
 
             cell_coeff = (
-                delta_speed * delta_elevation * speed**2 * central_effective_area_km2
+                delta_speed
+                * delta_elevation
+                * speed**2
+                * central_effective_area_km2
                 / (bulk_speed * cos_bulk_elevation)
             )
 
             for i in range(speed_in_sw_frame.shape[0]):
                 v_prime = speed_in_sw_frame[i]
-                cos_angle = (
-                    (speed**2 + bulk_speed**2 - v_prime**2)
-                    / (2.0 * speed * bulk_speed)
+                cos_angle = (speed**2 + bulk_speed**2 - v_prime**2) / (
+                    2.0 * speed * bulk_speed
                 )
 
-                cos_delta_azimuth = (
-                    (cos_angle - sin_elevation * sin_bulk_elevation)
-                    / (cos_elevation * cos_bulk_elevation)
+                cos_delta_azimuth = (cos_angle - sin_elevation * sin_bulk_elevation) / (
+                    cos_elevation * cos_bulk_elevation
                 )
 
                 if abs(cos_delta_azimuth) >= 1.0 - 1e-5:

@@ -60,5 +60,3 @@ for var in map_vars:
 
     not_included_keys = [key for key in l3_attrs.keys() if key not in l2_attrs.keys()]
     print(var, not_included_keys)
-
-

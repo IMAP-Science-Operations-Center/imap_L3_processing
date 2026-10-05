@@ -3,15 +3,16 @@ from __future__ import annotations
 from collections import namedtuple
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TypeVar
 
 import numpy as np
 from numpy import ndarray
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.cdf.cdf_utils import read_numeric_variable, read_variable_and_mask_fill_values
-from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup
-from imap_l3_processing.models import DataProductVariable, DataProduct
+from imap_l3_processing.cdf.cdf_utils import (
+    read_numeric_variable,
+    read_variable_and_mask_fill_values,
+)
+from imap_l3_processing.models import DataProduct, DataProductVariable
 
 CODICE_LO_L2_NUM_PRIORITIES = 7
 
@@ -89,7 +90,9 @@ class CodiceLoL2SWSpeciesData:
             )
 
 
-EnergyAndSpinAngle = namedtuple(typename="EnergyAndSpinAngle", field_names=["energy", "spin_angle"])
+EnergyAndSpinAngle = namedtuple(
+    typename="EnergyAndSpinAngle", field_names=["energy", "spin_angle"]
+)
 
 
 @dataclass
@@ -119,26 +122,48 @@ class CodiceLoL2DirectEventData:
                 epoch=cdf["epoch"][...],
                 epoch_delta_plus=cdf["epoch_delta_plus"][...],
                 epoch_delta_minus=cdf["epoch_delta_minus"][...],
-                apd_energy=read_variable_and_mask_fill_values(cdf["apd_energy"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
-                gain=read_variable_and_mask_fill_values(cdf["gain"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
-                apd_id=read_variable_and_mask_fill_values(cdf["apd_id"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
-                data_quality=read_variable_and_mask_fill_values(cdf["data_quality"])[:, :CODICE_LO_L2_NUM_PRIORITIES,
-                             ...],
-                energy_step=read_variable_and_mask_fill_values(cdf["energy_step"])[:, :CODICE_LO_L2_NUM_PRIORITIES,
-                            ...],
-                energy_per_charge=read_variable_and_mask_fill_values(cdf["energy_per_charge"])[:,
-                                  :CODICE_LO_L2_NUM_PRIORITIES,
-                                  ...],
-                multi_flag=read_variable_and_mask_fill_values(cdf["multi_flag"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
-                num_events=read_variable_and_mask_fill_values(cdf["num_events"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
-                spin_angle=read_variable_and_mask_fill_values(cdf["spin_angle"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
-                spin_sector=read_variable_and_mask_fill_values(cdf["spin_sector"])[:, :CODICE_LO_L2_NUM_PRIORITIES,
-                            ...].astype(int),
-                elevation_angle=read_variable_and_mask_fill_values(cdf["elevation_angle"])[:,
-                                :CODICE_LO_L2_NUM_PRIORITIES, ...],
-                tof=read_variable_and_mask_fill_values(cdf["tof"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
-                type=read_variable_and_mask_fill_values(cdf["type"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
-                position=read_variable_and_mask_fill_values(cdf["position"])[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
+                apd_energy=read_variable_and_mask_fill_values(cdf["apd_energy"])[
+                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
+                ],
+                gain=read_variable_and_mask_fill_values(cdf["gain"])[
+                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
+                ],
+                apd_id=read_variable_and_mask_fill_values(cdf["apd_id"])[
+                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
+                ],
+                data_quality=read_variable_and_mask_fill_values(cdf["data_quality"])[
+                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
+                ],
+                energy_step=read_variable_and_mask_fill_values(cdf["energy_step"])[
+                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
+                ],
+                energy_per_charge=read_variable_and_mask_fill_values(
+                    cdf["energy_per_charge"]
+                )[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
+                multi_flag=read_variable_and_mask_fill_values(cdf["multi_flag"])[
+                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
+                ],
+                num_events=read_variable_and_mask_fill_values(cdf["num_events"])[
+                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
+                ],
+                spin_angle=read_variable_and_mask_fill_values(cdf["spin_angle"])[
+                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
+                ],
+                spin_sector=read_variable_and_mask_fill_values(cdf["spin_sector"])[
+                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
+                ].astype(int),
+                elevation_angle=read_variable_and_mask_fill_values(
+                    cdf["elevation_angle"]
+                )[:, :CODICE_LO_L2_NUM_PRIORITIES, ...],
+                tof=read_variable_and_mask_fill_values(cdf["tof"])[
+                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
+                ],
+                type=read_variable_and_mask_fill_values(cdf["type"])[
+                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
+                ],
+                position=read_variable_and_mask_fill_values(cdf["position"])[
+                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
+                ],
             )
             result.tof = np.ma.masked_less(result.tof, 0)
             return result
@@ -178,10 +203,16 @@ class CodiceLoL1aSWPriorityRates:
                 epoch_delta_minus=cdf["epoch_delta_minus"][...],
                 acquisition_time_per_esa_step=cdf["acquisition_time_per_esa_step"][...],
                 spin_sector_index=cdf["spin_sector"][...],
-                rgfo_half_spin=read_variable_and_mask_fill_values(cdf["rgfo_half_spin"]),
+                rgfo_half_spin=read_variable_and_mask_fill_values(
+                    cdf["rgfo_half_spin"]
+                ),
                 nso_half_spin=read_variable_and_mask_fill_values(cdf["nso_half_spin"]),
-                sw_bias_gain_mode=read_variable_and_mask_fill_values(cdf["sw_bias_gain_mode"]),
-                st_bias_gain_mode=read_variable_and_mask_fill_values(cdf["st_bias_gain_mode"]),
+                sw_bias_gain_mode=read_variable_and_mask_fill_values(
+                    cdf["sw_bias_gain_mode"]
+                ),
+                st_bias_gain_mode=read_variable_and_mask_fill_values(
+                    cdf["st_bias_gain_mode"]
+                ),
                 data_quality=read_variable_and_mask_fill_values(cdf["data_quality"]),
                 spin_period=read_numeric_variable(cdf["spin_period"]),
                 p0_tcrs=read_variable_and_mask_fill_values(cdf["p0_tcrs"]),
@@ -189,10 +220,16 @@ class CodiceLoL1aSWPriorityRates:
                 p2_heplusplus=read_variable_and_mask_fill_values(cdf["p2_heplusplus"]),
                 p3_heavies=read_variable_and_mask_fill_values(cdf["p3_heavies"]),
                 p4_dcrs=read_variable_and_mask_fill_values(cdf["p4_dcrs"]),
-                half_spin_per_esa_step=read_variable_and_mask_fill_values(cdf["half_spin_per_esa_step"]),
-                rgfo_spin_sector=read_variable_and_mask_fill_values(cdf["rgfo_spin_sector"]),
+                half_spin_per_esa_step=read_variable_and_mask_fill_values(
+                    cdf["half_spin_per_esa_step"]
+                ),
+                rgfo_spin_sector=read_variable_and_mask_fill_values(
+                    cdf["rgfo_spin_sector"]
+                ),
                 rgfo_esa_step=read_variable_and_mask_fill_values(cdf["rgfo_esa_step"]),
-                nso_spin_sector=read_variable_and_mask_fill_values(cdf["nso_spin_sector"]),
+                nso_spin_sector=read_variable_and_mask_fill_values(
+                    cdf["nso_spin_sector"]
+                ),
                 nso_esa_step=read_variable_and_mask_fill_values(cdf["nso_esa_step"]),
                 esa_step=read_variable_and_mask_fill_values(cdf["esa_step"]),
             )
@@ -223,13 +260,21 @@ class CodiceLoL1aNSWPriorityRates:
                 epoch_delta_minus=cdf["epoch_delta_minus"][...],
                 acquisition_time_per_esa_step=cdf["acquisition_time_per_esa_step"][...],
                 spin_sector_index=cdf["spin_sector"][...],
-                rgfo_half_spin=read_variable_and_mask_fill_values(cdf["rgfo_half_spin"]),
+                rgfo_half_spin=read_variable_and_mask_fill_values(
+                    cdf["rgfo_half_spin"]
+                ),
                 data_quality=read_variable_and_mask_fill_values(cdf["data_quality"]),
                 p5_heavies=read_variable_and_mask_fill_values(cdf["p5_heavies"]),
-                p6_hplus_heplusplus=read_variable_and_mask_fill_values(cdf["p6_hplus_heplusplus"]),
+                p6_hplus_heplusplus=read_variable_and_mask_fill_values(
+                    cdf["p6_hplus_heplusplus"]
+                ),
                 nso_half_spin=read_variable_and_mask_fill_values(cdf["nso_half_spin"]),
-                sw_bias_gain_mode=read_variable_and_mask_fill_values(cdf["sw_bias_gain_mode"]),
-                st_bias_gain_mode=read_variable_and_mask_fill_values(cdf["st_bias_gain_mode"]),
+                sw_bias_gain_mode=read_variable_and_mask_fill_values(
+                    cdf["sw_bias_gain_mode"]
+                ),
+                st_bias_gain_mode=read_variable_and_mask_fill_values(
+                    cdf["st_bias_gain_mode"]
+                ),
                 spin_period=read_numeric_variable(cdf["spin_period"]),
             )
 
@@ -259,20 +304,48 @@ class CodiceLoPartialDensityData:
             return cls(
                 epoch=cdf[EPOCH_VAR_NAME][...],
                 epoch_delta=cdf[EPOCH_DELTA_VAR_NAME][...],
-                hplus_partial_density=read_numeric_variable(cdf[H_PARTIAL_DENSITY_VAR_NAME]),
-                heplusplus_partial_density=read_numeric_variable(cdf[HE_PARTIAL_DENSITY_VAR_NAME]),
-                cplus4_partial_density=read_numeric_variable(cdf[C4_PARTIAL_DENSITY_VAR_NAME]),
-                cplus5_partial_density=read_numeric_variable(cdf[C5_PARTIAL_DENSITY_VAR_NAME]),
-                cplus6_partial_density=read_numeric_variable(cdf[C6_PARTIAL_DENSITY_VAR_NAME]),
-                oplus5_partial_density=read_numeric_variable(cdf[O5_PARTIAL_DENSITY_VAR_NAME]),
-                oplus6_partial_density=read_numeric_variable(cdf[O6_PARTIAL_DENSITY_VAR_NAME]),
-                oplus7_partial_density=read_numeric_variable(cdf[O7_PARTIAL_DENSITY_VAR_NAME]),
-                oplus8_partial_density=read_numeric_variable(cdf[O8_PARTIAL_DENSITY_VAR_NAME]),
-                ne_partial_density=read_numeric_variable(cdf[NE_PARTIAL_DENSITY_VAR_NAME]),
-                mg_partial_density=read_numeric_variable(cdf[MG_PARTIAL_DENSITY_VAR_NAME]),
-                si_partial_density=read_numeric_variable(cdf[SI_PARTIAL_DENSITY_VAR_NAME]),
-                fe_loq_partial_density=read_numeric_variable(cdf[FE_LOW_PARTIAL_DENSITY_VAR_NAME]),
-                fe_hiq_partial_density=read_numeric_variable(cdf[FE_HIGH_PARTIAL_DENSITY_VAR_NAME]),
+                hplus_partial_density=read_numeric_variable(
+                    cdf[H_PARTIAL_DENSITY_VAR_NAME]
+                ),
+                heplusplus_partial_density=read_numeric_variable(
+                    cdf[HE_PARTIAL_DENSITY_VAR_NAME]
+                ),
+                cplus4_partial_density=read_numeric_variable(
+                    cdf[C4_PARTIAL_DENSITY_VAR_NAME]
+                ),
+                cplus5_partial_density=read_numeric_variable(
+                    cdf[C5_PARTIAL_DENSITY_VAR_NAME]
+                ),
+                cplus6_partial_density=read_numeric_variable(
+                    cdf[C6_PARTIAL_DENSITY_VAR_NAME]
+                ),
+                oplus5_partial_density=read_numeric_variable(
+                    cdf[O5_PARTIAL_DENSITY_VAR_NAME]
+                ),
+                oplus6_partial_density=read_numeric_variable(
+                    cdf[O6_PARTIAL_DENSITY_VAR_NAME]
+                ),
+                oplus7_partial_density=read_numeric_variable(
+                    cdf[O7_PARTIAL_DENSITY_VAR_NAME]
+                ),
+                oplus8_partial_density=read_numeric_variable(
+                    cdf[O8_PARTIAL_DENSITY_VAR_NAME]
+                ),
+                ne_partial_density=read_numeric_variable(
+                    cdf[NE_PARTIAL_DENSITY_VAR_NAME]
+                ),
+                mg_partial_density=read_numeric_variable(
+                    cdf[MG_PARTIAL_DENSITY_VAR_NAME]
+                ),
+                si_partial_density=read_numeric_variable(
+                    cdf[SI_PARTIAL_DENSITY_VAR_NAME]
+                ),
+                fe_loq_partial_density=read_numeric_variable(
+                    cdf[FE_LOW_PARTIAL_DENSITY_VAR_NAME]
+                ),
+                fe_hiq_partial_density=read_numeric_variable(
+                    cdf[FE_HIGH_PARTIAL_DENSITY_VAR_NAME]
+                ),
             )
 
 
@@ -284,24 +357,52 @@ class CodiceLoL3aPartialDensityDataProduct(DataProduct):
         return [
             DataProductVariable(EPOCH_VAR_NAME, self.data.epoch),
             DataProductVariable(EPOCH_DELTA_VAR_NAME, self.data.epoch_delta),
-            DataProductVariable(H_PARTIAL_DENSITY_VAR_NAME, self.data.hplus_partial_density),
-            DataProductVariable(HE_PARTIAL_DENSITY_VAR_NAME, self.data.heplusplus_partial_density),
-            DataProductVariable(C4_PARTIAL_DENSITY_VAR_NAME, self.data.cplus4_partial_density),
-            DataProductVariable(C5_PARTIAL_DENSITY_VAR_NAME, self.data.cplus5_partial_density),
-            DataProductVariable(C6_PARTIAL_DENSITY_VAR_NAME, self.data.cplus6_partial_density),
-            DataProductVariable(O5_PARTIAL_DENSITY_VAR_NAME, self.data.oplus5_partial_density),
-            DataProductVariable(O6_PARTIAL_DENSITY_VAR_NAME, self.data.oplus6_partial_density),
-            DataProductVariable(O7_PARTIAL_DENSITY_VAR_NAME, self.data.oplus7_partial_density),
-            DataProductVariable(O8_PARTIAL_DENSITY_VAR_NAME, self.data.oplus8_partial_density),
-            DataProductVariable(NE_PARTIAL_DENSITY_VAR_NAME, self.data.ne_partial_density),
-            DataProductVariable(MG_PARTIAL_DENSITY_VAR_NAME, self.data.mg_partial_density),
-            DataProductVariable(SI_PARTIAL_DENSITY_VAR_NAME, self.data.si_partial_density),
-            DataProductVariable(FE_LOW_PARTIAL_DENSITY_VAR_NAME, self.data.fe_loq_partial_density),
-            DataProductVariable(FE_HIGH_PARTIAL_DENSITY_VAR_NAME, self.data.fe_hiq_partial_density)
+            DataProductVariable(
+                H_PARTIAL_DENSITY_VAR_NAME, self.data.hplus_partial_density
+            ),
+            DataProductVariable(
+                HE_PARTIAL_DENSITY_VAR_NAME, self.data.heplusplus_partial_density
+            ),
+            DataProductVariable(
+                C4_PARTIAL_DENSITY_VAR_NAME, self.data.cplus4_partial_density
+            ),
+            DataProductVariable(
+                C5_PARTIAL_DENSITY_VAR_NAME, self.data.cplus5_partial_density
+            ),
+            DataProductVariable(
+                C6_PARTIAL_DENSITY_VAR_NAME, self.data.cplus6_partial_density
+            ),
+            DataProductVariable(
+                O5_PARTIAL_DENSITY_VAR_NAME, self.data.oplus5_partial_density
+            ),
+            DataProductVariable(
+                O6_PARTIAL_DENSITY_VAR_NAME, self.data.oplus6_partial_density
+            ),
+            DataProductVariable(
+                O7_PARTIAL_DENSITY_VAR_NAME, self.data.oplus7_partial_density
+            ),
+            DataProductVariable(
+                O8_PARTIAL_DENSITY_VAR_NAME, self.data.oplus8_partial_density
+            ),
+            DataProductVariable(
+                NE_PARTIAL_DENSITY_VAR_NAME, self.data.ne_partial_density
+            ),
+            DataProductVariable(
+                MG_PARTIAL_DENSITY_VAR_NAME, self.data.mg_partial_density
+            ),
+            DataProductVariable(
+                SI_PARTIAL_DENSITY_VAR_NAME, self.data.si_partial_density
+            ),
+            DataProductVariable(
+                FE_LOW_PARTIAL_DENSITY_VAR_NAME, self.data.fe_loq_partial_density
+            ),
+            DataProductVariable(
+                FE_HIGH_PARTIAL_DENSITY_VAR_NAME, self.data.fe_hiq_partial_density
+            ),
         ]
 
 
-ACQUISITION_TIME_PER_ESA_STEP_VAR_NAME = 'acquisition_time_per_esa_step'
+ACQUISITION_TIME_PER_ESA_STEP_VAR_NAME = "acquisition_time_per_esa_step"
 EVENT_INDEX_VAR_NAME = "event_index"
 SPIN_ANGLE_DELTA_BIN_VAR_NAME = "spin_angle_bin_delta"
 SPIN_ANGLE_BIN_VAR_NAME = "spin_angle_bin"
@@ -333,10 +434,10 @@ HALF_SPIN_PER_ESA_STEP_VAR_NAME = "half_spin_per_esa_step"
 RGFO_SPIN_SECTOR_VAR_NAME = "rgfo_spin_sector"
 RGFO_HALF_SPIN_VAR_NAME = "rgfo_half_spin"
 RGFO_ESA_STEP_VAR_NAME = "rgfo_esa_step"
-NSO_HALF_SPIN_NAME = 'nso_half_spin'
+NSO_HALF_SPIN_NAME = "nso_half_spin"
 NSO_SPIN_SECTOR_VAR_NAME = "nso_spin_sector"
 NSO_ESA_STEP_VAR_NAME = "nso_esa_step"
-RGFO_HALF_SPIN_NAME = 'rgfo_half_spin'
+RGFO_HALF_SPIN_NAME = "rgfo_half_spin"
 ESA_STEP_VAR_NAME = "esa_step"
 ENERGY_PER_CHARGE_VAR_NAME = "energy_per_charge"
 TYPE_VAR_NAME = "type"
@@ -378,29 +479,49 @@ class CodiceLoDirectEventData:
             return cls(
                 epoch=cdf[EPOCH_VAR_NAME][...],
                 epoch_delta=cdf[EPOCH_DELTA_VAR_NAME][...],
-                acquisition_time_per_esa_step=read_numeric_variable(cdf[ACQUISITION_TIME_PER_ESA_STEP_VAR_NAME]),
+                acquisition_time_per_esa_step=read_numeric_variable(
+                    cdf[ACQUISITION_TIME_PER_ESA_STEP_VAR_NAME]
+                ),
                 apd_energy=read_numeric_variable(cdf[APD_ENERGY_VAR_NAME]),
                 apd_id=read_variable_and_mask_fill_values(cdf[APD_ID_VAR_NAME]),
                 data_quality=cdf[DATA_QUALITY_VAR_NAME][...],
                 elevation=read_numeric_variable(cdf[ELEVATION_VAR_NAME]),
-                energy_per_charge=read_numeric_variable(cdf[ENERGY_PER_CHARGE_VAR_NAME]),
-                energy_step=read_variable_and_mask_fill_values(cdf[ENERGY_STEP_VAR_NAME]),
+                energy_per_charge=read_numeric_variable(
+                    cdf[ENERGY_PER_CHARGE_VAR_NAME]
+                ),
+                energy_step=read_variable_and_mask_fill_values(
+                    cdf[ENERGY_STEP_VAR_NAME]
+                ),
                 gain=read_variable_and_mask_fill_values(cdf[GAIN_VAR_NAME]),
                 mass=read_numeric_variable(cdf[MASS_VAR_NAME]),
                 mass_per_charge=read_numeric_variable(cdf[MASS_PER_CHARGE_VAR_NAME]),
                 multi_flag=read_variable_and_mask_fill_values(cdf[MULTI_FLAG_VAR_NAME]),
                 normalization=read_numeric_variable(cdf[NORMALIZATION_VAR_NAME]),
-                normalization_per_event=read_numeric_variable(cdf[NORMALIZATION_PER_EVENT_VAR_NAME]),
+                normalization_per_event=read_numeric_variable(
+                    cdf[NORMALIZATION_PER_EVENT_VAR_NAME]
+                ),
                 num_events=read_variable_and_mask_fill_values(cdf[NUM_EVENTS_VAR_NAME]),
                 position=read_variable_and_mask_fill_values(cdf[POSITION_VAR_NAME]),
                 spin_angle=read_numeric_variable(cdf[SPIN_ANGLE_VAR_NAME]),
                 spin_angle_bin=read_numeric_variable(cdf[SPIN_ANGLE_BIN_VAR_NAME]),
-                spin_angle_bin_delta=read_numeric_variable(cdf[SPIN_ANGLE_DELTA_BIN_VAR_NAME]),
-                spin_sector=read_variable_and_mask_fill_values(cdf[SPIN_SECTOR_VAR_NAME]),
-                half_spin_per_esa_step=read_variable_and_mask_fill_values(cdf[HALF_SPIN_PER_ESA_STEP_VAR_NAME]),
-                rgfo_half_spin=read_variable_and_mask_fill_values(cdf[RGFO_HALF_SPIN_VAR_NAME]),
-                rgfo_spin_sector=read_variable_and_mask_fill_values(cdf[RGFO_SPIN_SECTOR_VAR_NAME]),
-                rgfo_esa_step=read_variable_and_mask_fill_values(cdf[RGFO_ESA_STEP_VAR_NAME]),
+                spin_angle_bin_delta=read_numeric_variable(
+                    cdf[SPIN_ANGLE_DELTA_BIN_VAR_NAME]
+                ),
+                spin_sector=read_variable_and_mask_fill_values(
+                    cdf[SPIN_SECTOR_VAR_NAME]
+                ),
+                half_spin_per_esa_step=read_variable_and_mask_fill_values(
+                    cdf[HALF_SPIN_PER_ESA_STEP_VAR_NAME]
+                ),
+                rgfo_half_spin=read_variable_and_mask_fill_values(
+                    cdf[RGFO_HALF_SPIN_VAR_NAME]
+                ),
+                rgfo_spin_sector=read_variable_and_mask_fill_values(
+                    cdf[RGFO_SPIN_SECTOR_VAR_NAME]
+                ),
+                rgfo_esa_step=read_variable_and_mask_fill_values(
+                    cdf[RGFO_ESA_STEP_VAR_NAME]
+                ),
                 tof=read_variable_and_mask_fill_values(cdf[TOF_VAR_NAME]),
                 type=read_variable_and_mask_fill_values(cdf[TYPE_VAR_NAME]),
             )
@@ -437,14 +558,21 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
         return [
             DataProductVariable(EPOCH_VAR_NAME, self.epoch),
             DataProductVariable(EPOCH_DELTA_VAR_NAME, self.epoch_delta),
-            DataProductVariable(ACQUISITION_TIME_PER_ESA_STEP_VAR_NAME, self.acquisition_time_per_esa_step),
+            DataProductVariable(
+                ACQUISITION_TIME_PER_ESA_STEP_VAR_NAME,
+                self.acquisition_time_per_esa_step,
+            ),
             DataProductVariable(APD_ENERGY_VAR_NAME, self.apd_energy),
             DataProductVariable(APD_ID_VAR_NAME, self.apd_id),
             DataProductVariable(DATA_QUALITY_VAR_NAME, self.data_quality),
             DataProductVariable(ELEVATION_VAR_NAME, self.elevation),
             DataProductVariable(ENERGY_BIN_VAR_NAME, self.energy_bin),
-            DataProductVariable(ENERGY_BIN_DELTA_MINUS_VAR_NAME, self.energy_bin_delta_minus),
-            DataProductVariable(ENERGY_BIN_DELTA_PLUS_VAR_NAME, self.energy_bin_delta_plus),
+            DataProductVariable(
+                ENERGY_BIN_DELTA_MINUS_VAR_NAME, self.energy_bin_delta_minus
+            ),
+            DataProductVariable(
+                ENERGY_BIN_DELTA_PLUS_VAR_NAME, self.energy_bin_delta_plus
+            ),
             DataProductVariable(ENERGY_BIN_LABEL_VAR_NAME, self.energy_bin_label),
             DataProductVariable(ENERGY_PER_CHARGE_VAR_NAME, self.energy_per_charge),
             DataProductVariable(ENERGY_STEP_VAR_NAME, self.energy_step),
@@ -452,26 +580,36 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
             DataProductVariable(EVENT_INDEX_VAR_NAME, self.event_index),
             DataProductVariable(EVENT_INDEX_LABEL_VAR_NAME, self.event_index_label),
             DataProductVariable(GAIN_VAR_NAME, self.gain),
-            DataProductVariable(HALF_SPIN_PER_ESA_STEP_VAR_NAME, self.half_spin_per_esa_step),
+            DataProductVariable(
+                HALF_SPIN_PER_ESA_STEP_VAR_NAME, self.half_spin_per_esa_step
+            ),
             DataProductVariable(MASS_VAR_NAME, self.mass),
             DataProductVariable(MASS_PER_CHARGE_VAR_NAME, self.mass_per_charge),
             DataProductVariable(MULTI_FLAG_VAR_NAME, self.multi_flag),
             DataProductVariable(NORMALIZATION_VAR_NAME, self.normalization),
-            DataProductVariable(NORMALIZATION_PER_EVENT_VAR_NAME, self.normalization_per_event),
+            DataProductVariable(
+                NORMALIZATION_PER_EVENT_VAR_NAME, self.normalization_per_event
+            ),
             DataProductVariable(NSO_ESA_STEP_VAR_NAME, self.nso_esa_step),
             DataProductVariable(NSO_SPIN_SECTOR_VAR_NAME, self.nso_spin_sector),
             DataProductVariable(NSO_HALF_SPIN_NAME, self.nso_half_spin),
             DataProductVariable(NUM_EVENTS_VAR_NAME, self.num_events),
             DataProductVariable(POSITION_VAR_NAME, self.position),
             DataProductVariable(PRIORITY_INDEX_VAR_NAME, self.priority_index),
-            DataProductVariable(PRIORITY_INDEX_LABEL_VAR_NAME, self.priority_index_label),
+            DataProductVariable(
+                PRIORITY_INDEX_LABEL_VAR_NAME, self.priority_index_label
+            ),
             DataProductVariable(RGFO_ESA_STEP_VAR_NAME, self.rgfo_esa_step),
             DataProductVariable(RGFO_SPIN_SECTOR_VAR_NAME, self.rgfo_spin_sector),
             DataProductVariable(RGFO_HALF_SPIN_NAME, self.rgfo_half_spin),
             DataProductVariable(SPIN_ANGLE_VAR_NAME, self.spin_angle),
             DataProductVariable(SPIN_ANGLE_BIN_VAR_NAME, self.spin_angle_bin),
-            DataProductVariable(SPIN_ANGLE_DELTA_BIN_VAR_NAME, self.spin_angle_bin_delta),
-            DataProductVariable(SPIN_ANGLE_BIN_LABEL_VAR_NAME, self.spin_angle_bin_label),
+            DataProductVariable(
+                SPIN_ANGLE_DELTA_BIN_VAR_NAME, self.spin_angle_bin_delta
+            ),
+            DataProductVariable(
+                SPIN_ANGLE_BIN_LABEL_VAR_NAME, self.spin_angle_bin_label
+            ),
             DataProductVariable(SPIN_SECTOR_VAR_NAME, self.spin_sector),
             DataProductVariable(TOF_VAR_NAME, self.tof),
             DataProductVariable(TYPE_VAR_NAME, self.type),
@@ -509,7 +647,7 @@ class CodiceLoL3aRatiosDataProduct(DataProduct):
             DataProductVariable(C6_TO_C5_RATIO_VAR_NAME, self.c6_to_c5_ratio),
             DataProductVariable(C6_TO_C4_RATIO_VAR_NAME, self.c6_to_c4_ratio),
             DataProductVariable(O7_TO_O6_RATIO_VAR_NAME, self.o7_to_o6_ratio),
-            DataProductVariable(FELO_TO_FEHI_RATIO_VAR_NAME, self.felo_to_fehi_ratio)
+            DataProductVariable(FELO_TO_FEHI_RATIO_VAR_NAME, self.felo_to_fehi_ratio),
         ]
 
 
@@ -524,11 +662,18 @@ class CodiceLoL3ChargeStateDistributionsDataProduct(DataProduct):
         return [
             DataProductVariable("epoch", self.epoch),
             DataProductVariable("epoch_delta", self.epoch_delta),
-            DataProductVariable("oxygen_charge_state_distribution", self.oxygen_charge_state_distribution),
-            DataProductVariable("carbon_charge_state_distribution", self.carbon_charge_state_distribution),
+            DataProductVariable(
+                "oxygen_charge_state_distribution",
+                self.oxygen_charge_state_distribution,
+            ),
+            DataProductVariable(
+                "carbon_charge_state_distribution",
+                self.carbon_charge_state_distribution,
+            ),
             DataProductVariable("oxygen_charge_state", np.array([5, 6, 7, 8])),
             DataProductVariable("carbon_charge_state", np.array([4, 5, 6])),
         ]
+
 
 ENERGY_VAR_NAME = "energy"
 ENERGY_DELTA_PLUS_VAR_NAME = "energy_delta_plus"
@@ -574,10 +719,16 @@ class CodiceLoL3b3dDistributionDataProduct(DataProduct):
             DataProductVariable(self.species, self.species_data),
             DataProductVariable(ENERGY_LABEL_VAR_NAME, self.energy.astype(str)),
             DataProductVariable(SPIN_ANGLE_LABEL_VAR_NAME, self.spin_angle.astype(str)),
-            DataProductVariable(ELEVATION_ANGLE_LABEL_VAR_NAME, self.elevation.astype(str)),
-            DataProductVariable(f"{self.species}_stat_uncert", self.species_data_stat_uncert),
+            DataProductVariable(
+                ELEVATION_ANGLE_LABEL_VAR_NAME, self.elevation.astype(str)
+            ),
+            DataProductVariable(
+                f"{self.species}_stat_uncert", self.species_data_stat_uncert
+            ),
             DataProductVariable(RGFO_ESA_STEP_VAR_NAME, self.rgfo_esa_step),
             DataProductVariable(RGFO_SPIN_SECTOR_VAR_NAME, self.rgfo_spin_sector),
             DataProductVariable(RGFO_HALF_SPIN_VAR_NAME, self.rgfo_half_spin),
-            DataProductVariable(HALF_SPIN_PER_ESA_STEP_VAR_NAME, self.half_spin_per_esa_step),
+            DataProductVariable(
+                HALF_SPIN_PER_ESA_STEP_VAR_NAME, self.half_spin_per_esa_step
+            ),
         ]
