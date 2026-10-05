@@ -202,4 +202,4 @@ The `proton-sw` CDF variables are derived from $`\mathbf{x}`$ and $`\Sigma_\math
 
 <a id="fn-vsc"></a>[2]: $`\mathbf{v}_{\text{sc}}^{\text{sun}}`$ is the spacecraft velocity in the Sun's inertial frame.
 
-<a id="fn-gse"></a>[3]: GSE coordinates with the Earth as origin. `proton_sw_velocity_gse_earth` uses the Earth as the standard of rest and `proton_sw_velocity_gse_sun` uses the Sun.
+<a id="fn-gse"></a>[2]: `proton_sw_velocity_gse_earth` contains the proton bulk velocity in GSE coordinates and the Earth frame, while `proton_sw_velocity_gse_sun` is in the Sun frame. The covariance for both is computed using the RTN-to-GSE rotation matrix $`M`$.

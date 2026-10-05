@@ -102,6 +102,6 @@ Finally, the `alpha-sw` CDF variables are derived from the fitted parameter vect
 
 <a id="fn-vp"></a>[1]: $`\mathbf{v}_{b}^{\text{SC}}`$ is the proton bulk velocity in the spacecraft frame.
 
-<a id="fn-gse"></a>[2]: GSE coordinates with the Earth as origin. `alpha_sw_velocity_gse_earth` uses the Earth as the standard of rest and `alpha_sw_velocity_gse_sun` uses the Sun.
+<a id="fn-gse"></a>[2]: `alpha_sw_velocity_gse_earth` contains the alpha bulk velocity in GSE coordinates and the Earth frame, while `alpha_sw_velocity_gse_sun` is in the Sun frame. The covariance for both is computed using the RTN-to-GSE rotation matrix $`M`$.
 
 > **Note**: The proton fit's own uncertainty is not fully propagated into the alpha uncertainty. This is a reasonable approximation because the proton peak has much higher counts, but more sophisticated error analysis may be done in a future update.
