@@ -22,4 +22,5 @@ imap_codice_l3a_hi-direct-events:
   Data_level: "3a"
   Data_type: L3A_hi-direct-events>Level-3A direct events
   Logical_source_description: IMAP Mission CoDICE Hi Instrument Direct Events
-
+  MODS:
+    - "Major version 2: Add incident_ion_energy and use to calculate estimated_mass."
