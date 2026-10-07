@@ -100,7 +100,7 @@ class SwapiL3ProtonSolarWindData(DataProduct):
     proton_sw_velocity_rtn_sun: np.ndarray  # shape (N, 3), km/s, inertial RTN
     proton_sw_velocity_rtn: np.ndarray  # shape (N, 3), km/s, RTN in SC rest frame
     proton_sw_velocity_rtn_covariance: np.ndarray  # shape (N, 3, 3), km²/s²
-    proton_sw_velocity_gse: np.ndarray  # shape (N, 3), km/s, GSE, Earth frame
+    proton_sw_velocity_gse: np.ndarray  # shape (N, 3), km/s, GSE frame
     proton_sw_velocity_gse_covariance: np.ndarray  # shape (N, 3, 3), km²/s²
     quality_flags: np.ndarray[SwapiL3Flags]
 
@@ -191,7 +191,7 @@ class SwapiL3ProtonSolarWindData(DataProduct):
             ),
             DataProductVariable(
                 PROTON_SOLAR_WIND_VELOCITY_GSE_LABEL_CDF_VAR_NAME,
-                value=["Vp Earth GSE X", "Vp Earth GSE Y", "Vp Earth GSE Z"],
+                value=["Vp GSE X", "Vp GSE Y", "Vp GSE Z"],
             ),
         ]
 
@@ -210,7 +210,7 @@ class SwapiL3AlphaSolarWindData(DataProduct):
     alpha_sw_velocity_rtn_sun: np.ndarray  # shape (N, 3), km/s, inertial RTN
     alpha_sw_velocity_rtn: np.ndarray  # shape (N, 3), km/s, RTN in SC rest frame
     alpha_sw_velocity_rtn_covariance: np.ndarray  # shape (N, 3, 3), km²/s²
-    alpha_sw_velocity_gse: np.ndarray  # shape (N, 3), km/s, GSE, Earth frame
+    alpha_sw_velocity_gse: np.ndarray  # shape (N, 3), km/s, GSE frame
     alpha_sw_velocity_gse_covariance: np.ndarray  # shape (N, 3, 3), km²/s²
     quality_flags: np.ndarray
 
@@ -297,7 +297,7 @@ class SwapiL3AlphaSolarWindData(DataProduct):
             ),
             DataProductVariable(
                 ALPHA_VELOCITY_GSE_LABEL_CDF_VAR_NAME,
-                value=["Va Earth GSE X", "Va Earth GSE Y", "Va Earth GSE Z"],
+                value=["Va GSE X", "Va GSE Y", "Va GSE Z"],
             ),
         ]
 

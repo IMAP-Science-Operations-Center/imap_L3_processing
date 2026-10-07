@@ -211,7 +211,7 @@ class TestModels(CdfModelTestCase):
         )
         self.assert_variable_attributes(
             next(var_iter),
-            ["Vp Earth GSE X", "Vp Earth GSE Y", "Vp Earth GSE Z"],
+            ["Vp GSE X", "Vp GSE Y", "Vp GSE Z"],
             PROTON_SOLAR_WIND_VELOCITY_GSE_LABEL_CDF_VAR_NAME,
         )
 
@@ -353,7 +353,7 @@ class TestModels(CdfModelTestCase):
         )
         self.assert_variable_attributes(
             next(var_iter),
-            ["Va Earth GSE X", "Va Earth GSE Y", "Va Earth GSE Z"],
+            ["Va GSE X", "Va GSE Y", "Va GSE Z"],
             ALPHA_VELOCITY_GSE_LABEL_CDF_VAR_NAME,
         )
 

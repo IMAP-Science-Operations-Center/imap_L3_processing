@@ -349,7 +349,7 @@ class TestSwapiSpiceHelpers(SpiceTestCase):
         self.assertLess(speed, 60.0)
 
     def test_convert_sun_velocity_rtn_to_gse_matches_spice_state_of_imap(self):
-        """For IMAP's own Sun-relative velocity, the GSE (Earth frame) velocity equals IMAP's Earth-relative GSE velocity from SPICE (which includes the rotating-frame term). The covariance is only rotated."""
+        """For IMAP's own Sun-relative velocity, the GSE frame velocity equals IMAP's Earth-relative GSE velocity from SPICE (which includes the rotating-frame term). The covariance is only rotated."""
         et = float(ttj2000ns_to_et(self._EPOCH_TT2000_NS))
         covariance_rtn = np.array([[4.0, 1.0, 0.5], [1.0, 9.0, 2.0], [0.5, 2.0, 16.0]])
 
