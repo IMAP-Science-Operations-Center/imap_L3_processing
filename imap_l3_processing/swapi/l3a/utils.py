@@ -121,7 +121,7 @@ def get_spacecraft_velocity_rtn(epoch_tt2000_ns: float) -> ndarray:
 
 def convert_sun_velocity_rtn_to_gse(
     epoch_tt2000_ns: float, velocity_rtn_sun: ndarray, covariance_rtn: ndarray
-) -> tuple[ndarray, ndarray, ndarray]:
+) -> tuple[ndarray, ndarray]:
     """Convert a Sun-frame RTN velocity and its covariance to GSE coordinates.
 
     Parameters
@@ -137,10 +137,8 @@ def convert_sun_velocity_rtn_to_gse(
     -------
     velocity_gse_earth : (3,) ndarray [km/s]
         The bulk velocity in GSE coordinates and the Earth rest frame.
-    velocity_gse_sun : (3,) ndarray [km/s]
-        The bulk velocity in GSE coordinates and the Sun rest frame.
     covariance_gse : (3, 3) ndarray [km^2/s^2]
-        The covariance of both GSE velocities.
+        The covariance of the GSE velocity.
     """
     et = float(ttj2000ns_to_et(epoch_tt2000_ns))
     eclipj2000_from_rtn = get_rotation_matrix(
@@ -159,15 +157,13 @@ def convert_sun_velocity_rtn_to_gse(
     velocity_from_sun = eclipj2000_from_rtn @ velocity_rtn_sun
     velocity_from_earth = velocity_from_sun - earth_velocity_from_sun
     state_earth = np.concatenate([position_from_earth, velocity_from_earth])
-    state_sun = np.concatenate([position_from_earth, velocity_from_sun])
     velocity_gse_earth = (gse_from_eclipj2000 @ state_earth)[3:]
-    velocity_gse_sun = (gse_from_eclipj2000 @ state_sun)[3:]
 
     # The rotating-frame term and the change of rest frame do not depend on the
     # measured velocity, so the covariance only sees the rotation.
     gse_from_rtn = gse_from_eclipj2000[3:, 3:] @ eclipj2000_from_rtn
     covariance_gse = gse_from_rtn @ covariance_rtn @ gse_from_rtn.T
-    return velocity_gse_earth, velocity_gse_sun, covariance_gse
+    return velocity_gse_earth, covariance_gse
 
 
 @numba.njit

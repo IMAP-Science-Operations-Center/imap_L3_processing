@@ -191,7 +191,6 @@ The `proton-sw` CDF variables are derived from $`\mathbf{x}`$ and $`\Sigma_\math
 | `proton_sw_speed_sun`                         | $`v_{\text{sun}}`$          | $`\lvert\mathbf{v}_{b}^{\text{sun}}\rvert`$                                                                 |
 | `proton_sw_speed_sun_uncert`                  | $`\sigma_{v_{\text{sun}}}`$ | propagated through `uncertainties` from $`\mathbf{v}_{b}^{\text{sun}}`$                                       |
 | `proton_sw_velocity_gse_earth`               | $`\mathbf{v}_{b}^{\text{earth,GSE}}`$ | $`\mathbf{v}_{b}^{\text{sun}}`$ in GSE coordinates (Earth frame) <sup>[3](#fn-gse)</sup> |
-| `proton_sw_velocity_gse_sun`                 | $`\mathbf{v}_{b}^{\text{sun,GSE}}`$ | $`\mathbf{v}_{b}^{\text{sun}}`$ in GSE coordinates (Sun frame) <sup>[3](#fn-gse)</sup> |
 | `proton_sw_velocity_gse_covariance`          | $`\Sigma_{\mathbf{v}}^{\text{GSE}}`$ | $`M\thinspace \Sigma_{\mathbf{v}}\thinspace M^{\top}`$ <sup>[3](#fn-gse)</sup> |
 | `proton_sw_velocity_gse_uncert`              | $`\sigma_{\mathbf{v}_{b}}^{\text{GSE}}`$ | $`\sqrt{\operatorname{diag}(\Sigma_{\mathbf{v}}^{\text{GSE}})}`$ |
 | `swp_flags`                                   |                         | quality flag bitmask (see `SwapiL3Flags`)                                                            |
@@ -202,4 +201,4 @@ The `proton-sw` CDF variables are derived from $`\mathbf{x}`$ and $`\Sigma_\math
 
 <a id="fn-vsc"></a>[2]: $`\mathbf{v}_{\text{sc}}^{\text{sun}}`$ is the spacecraft velocity in the Sun's inertial frame.
 
-<a id="fn-gse"></a>[2]: `proton_sw_velocity_gse_earth` contains the proton bulk velocity in GSE coordinates and the Earth frame, while `proton_sw_velocity_gse_sun` is in the Sun frame. The covariance for both is computed using the RTN-to-GSE rotation matrix $`M`$.
+<a id="fn-gse"></a>[2]: `proton_sw_velocity_gse_earth` contains the proton bulk velocity in GSE coordinates and the Earth frame. Its covariance is computed using the RTN-to-GSE rotation matrix $`M`$.

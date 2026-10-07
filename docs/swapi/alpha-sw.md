@@ -93,7 +93,6 @@ Finally, the `alpha-sw` CDF variables are derived from the fitted parameter vect
 | `alpha_sw_speed_sun`                  | $`\lvert\mathbf{v}^{\alpha,\text{sun}}\rvert`$        | $`\lvert\mathbf{v}^{\alpha,\text{sun}}\rvert`$                                                                                |
 | `alpha_sw_speed_sun_uncert`           | $`\sigma_{\lvert\mathbf{v}^{\alpha,\text{sun}}\rvert}`$ | propagated through `uncertainties` from $`\mathbf{v}^{\alpha,\text{sun}}`$                                                    |
 | `alpha_sw_velocity_gse_earth`         | $`\mathbf{v}^{\alpha,\text{earth,GSE}}`$ | $`\mathbf{v}^{\alpha,\text{sun}}`$ in GSE coordinates (Earth frame) <sup>[2](#fn-gse)</sup> |
-| `alpha_sw_velocity_gse_sun`           | $`\mathbf{v}^{\alpha,\text{sun,GSE}}`$ | $`\mathbf{v}^{\alpha,\text{sun}}`$ in GSE coordinates (Sun frame) <sup>[2](#fn-gse)</sup> |
 | `alpha_sw_velocity_gse_covariance`    | $`\Sigma_{\mathbf{v}^{\alpha}}^{\text{GSE}}`$ | $`M\thinspace \Sigma_{\mathbf{v}^{\alpha}}\thinspace M^{\top}`$ <sup>[2](#fn-gse)</sup> |
 | `alpha_sw_velocity_gse_uncert`        | $`\sigma_{\mathbf{v}^{\alpha}}^{\text{GSE}}`$ | $`\sqrt{\operatorname{diag}(\Sigma_{\mathbf{v}^{\alpha}}^{\text{GSE}})}`$ |
 | `swp_flags`                           |                                                   | quality flag bitmask (see `SwapiL3Flags`)                                                                                 |
@@ -102,6 +101,6 @@ Finally, the `alpha-sw` CDF variables are derived from the fitted parameter vect
 
 <a id="fn-vp"></a>[1]: $`\mathbf{v}_{b}^{\text{SC}}`$ is the proton bulk velocity in the spacecraft frame.
 
-<a id="fn-gse"></a>[2]: `alpha_sw_velocity_gse_earth` contains the alpha bulk velocity in GSE coordinates and the Earth frame, while `alpha_sw_velocity_gse_sun` is in the Sun frame. The covariance for both is computed using the RTN-to-GSE rotation matrix $`M`$.
+<a id="fn-gse"></a>[2]: `alpha_sw_velocity_gse_earth` contains the alpha bulk velocity in GSE coordinates and the Earth frame. Its covariance is computed using the RTN-to-GSE rotation matrix $`M`$.
 
 > **Note**: The proton fit's own uncertainty is not fully propagated into the alpha uncertainty. This is a reasonable approximation because the proton peak has much higher counts, but more sophisticated error analysis may be done in a future update.

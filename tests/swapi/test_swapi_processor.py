@@ -1095,14 +1095,12 @@ class TestAddGseVelocities(TestCase):
 
     def _assert_all_fill(self, result):
         self.assertTrue(np.all(np.isnan(result["proton_sw_velocity_gse_earth"])))
-        self.assertTrue(np.all(np.isnan(result["proton_sw_velocity_gse_sun"])))
         self.assertTrue(np.all(np.isnan(result["proton_sw_velocity_gse_covariance"])))
 
-    def test_adds_converted_velocities_and_covariance(self, mock_convert):
+    def test_adds_converted_velocity_and_covariance(self, mock_convert):
         result = self._result([400.0, 1.0, 2.0])
         mock_convert.return_value = (
             np.array([-400.0, 29.0, 2.0]),
-            np.array([-400.0, -1.0, 2.0]),
             2 * np.eye(3),
         )
 
@@ -1114,9 +1112,6 @@ class TestAddGseVelocities(TestCase):
         np.testing.assert_array_equal(np.eye(3), covariance)
         np.testing.assert_array_equal(
             [[-400.0, 29.0, 2.0]], result["proton_sw_velocity_gse_earth"]
-        )
-        np.testing.assert_array_equal(
-            [[-400.0, -1.0, 2.0]], result["proton_sw_velocity_gse_sun"]
         )
         np.testing.assert_array_equal(
             [2 * np.eye(3)], result["proton_sw_velocity_gse_covariance"]
