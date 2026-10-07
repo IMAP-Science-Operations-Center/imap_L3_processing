@@ -54,17 +54,15 @@ def _add_gse_velocities(result: dict[str, np.ndarray], species: str) -> None:
     """
     velocities_rtn_sun = result[f"{species}_sw_velocity_rtn_sun"]
     covariances_rtn = result[f"{species}_sw_velocity_rtn_covariance"]
-    velocities_gse_earth = np.full_like(velocities_rtn_sun, np.nan)
+    velocities_gse = np.full_like(velocities_rtn_sun, np.nan)
     covariances_gse = np.full_like(covariances_rtn, np.nan)
 
     for i, epoch in enumerate(result["epoch"]):
         if np.any(np.isnan(velocities_rtn_sun[i])):
             continue
         try:
-            velocities_gse_earth[i], covariances_gse[i] = (
-                convert_sun_velocity_rtn_to_gse(
-                    epoch, velocities_rtn_sun[i], covariances_rtn[i]
-                )
+            velocities_gse[i], covariances_gse[i] = convert_sun_velocity_rtn_to_gse(
+                epoch, velocities_rtn_sun[i], covariances_rtn[i]
             )
         except Exception:
             logger.warning(
@@ -73,7 +71,7 @@ def _add_gse_velocities(result: dict[str, np.ndarray], species: str) -> None:
             )
             result["quality_flags"][i] |= int(SwapiL3Flags.FIT_ERROR)
 
-    result[f"{species}_sw_velocity_gse_earth"] = velocities_gse_earth
+    result[f"{species}_sw_velocity_gse"] = velocities_gse
     result[f"{species}_sw_velocity_gse_covariance"] = covariances_gse
 
 

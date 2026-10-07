@@ -386,13 +386,13 @@ proton_sw_velocity_rtn_uncert:
   VALIDMAX: 10000
   FILLVAL: -1.000000e+31
   SCALETYP: linear
-proton_sw_velocity_gse_earth:
-  NAME: proton_sw_velocity_gse_earth
+proton_sw_velocity_gse:
+  NAME: proton_sw_velocity_gse
   DATA_TYPE: CDF_REAL4
   FIELDNAM: Proton Solar Wind Velocity (GSE, Earth Frame)
   CATDESC: Solar wind proton bulk velocity vector in GSE coordinates (Earth frame)
   DEPEND_0: epoch
-  LABL_PTR_1: proton_sw_velocity_gse_earth_label
+  LABL_PTR_1: proton_sw_velocity_gse_label
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
@@ -650,13 +650,13 @@ alpha_sw_velocity_rtn_uncert:
   VALIDMAX: 10000
   FILLVAL: -1.000000e+31
   SCALETYP: linear
-alpha_sw_velocity_gse_earth:
-  NAME: alpha_sw_velocity_gse_earth
+alpha_sw_velocity_gse:
+  NAME: alpha_sw_velocity_gse
   DATA_TYPE: CDF_REAL4
   FIELDNAM: Alpha Solar Wind Velocity (GSE, Earth Frame)
   CATDESC: Solar wind alpha-particle bulk velocity vector in GSE coordinates (Earth frame)
   DEPEND_0: epoch
-  LABL_PTR_1: alpha_sw_velocity_gse_earth_label
+  LABL_PTR_1: alpha_sw_velocity_gse_label
   VAR_TYPE: data
   RECORD_VARYING: RV
   DISPLAY_TYPE: time_series
@@ -761,8 +761,8 @@ alpha_sw_velocity_rtn_sun_label:
   RECORD_VARYING: NRV
   FORMAT: a20
   FILLVAL: ' '
-alpha_sw_velocity_gse_earth_label:
-  NAME: alpha_sw_velocity_gse_earth_label
+alpha_sw_velocity_gse_label:
+  NAME: alpha_sw_velocity_gse_label
   DATA_TYPE: CDF_CHAR
   FIELDNAM: Velocity GSE Label
   CATDESC: Label for Geocentric Solar Ecliptic (GSE) velocity components
@@ -789,8 +789,8 @@ proton_sw_velocity_rtn_sun_label:
   FORMAT: a20
   FILLVAL: ' '
 
-proton_sw_velocity_gse_earth_label:
-  NAME: proton_sw_velocity_gse_earth_label
+proton_sw_velocity_gse_label:
+  NAME: proton_sw_velocity_gse_label
   DATA_TYPE: CDF_CHAR
   FIELDNAM: Velocity GSE Label
   CATDESC: Label for Geocentric Solar Ecliptic (GSE) velocity components

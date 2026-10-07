@@ -135,7 +135,7 @@ def convert_sun_velocity_rtn_to_gse(
 
     Returns
     -------
-    velocity_gse_earth : (3,) ndarray [km/s]
+    velocity_gse : (3,) ndarray [km/s]
         The bulk velocity in GSE coordinates and the Earth rest frame.
     covariance_gse : (3, 3) ndarray [km^2/s^2]
         The covariance of the GSE velocity.
@@ -157,13 +157,13 @@ def convert_sun_velocity_rtn_to_gse(
     velocity_from_sun = eclipj2000_from_rtn @ velocity_rtn_sun
     velocity_from_earth = velocity_from_sun - earth_velocity_from_sun
     state_earth = np.concatenate([position_from_earth, velocity_from_earth])
-    velocity_gse_earth = (gse_from_eclipj2000 @ state_earth)[3:]
+    velocity_gse = (gse_from_eclipj2000 @ state_earth)[3:]
 
     # The rotating-frame term and the change of rest frame do not depend on the
     # measured velocity, so the covariance only sees the rotation.
     gse_from_rtn = gse_from_eclipj2000[3:, 3:] @ eclipj2000_from_rtn
     covariance_gse = gse_from_rtn @ covariance_rtn @ gse_from_rtn.T
-    return velocity_gse_earth, covariance_gse
+    return velocity_gse, covariance_gse
 
 
 @numba.njit
