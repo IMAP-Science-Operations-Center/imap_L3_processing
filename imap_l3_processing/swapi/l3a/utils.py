@@ -136,7 +136,7 @@ def convert_sun_velocity_rtn_to_gse(
     Returns
     -------
     velocity_gse : (3,) ndarray [km/s]
-        The bulk velocity in the GSE frame.
+        The bulk velocity in GSE coordinates.
     covariance_gse : (3, 3) ndarray [km^2/s^2]
         The covariance of the GSE velocity.
     """
