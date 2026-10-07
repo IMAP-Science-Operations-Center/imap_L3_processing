@@ -1,0 +1,18 @@
+# BuildKit uses this file instead of the root .dockerignore when building
+# Dockerfile_glows_integration. The integration image needs tests, SPICE
+# kernels, instrument team data and run_local.py in addition to the package.
+*
+
+!pyproject.toml
+!uv.lock
+!imap_l3_data_processor.py
+!imap_l3_processing/
+!scripts/
+!tests/
+!spice_kernels/
+!instrument_team_data/
+!run_local.py
+
+**/__pycache__/
+**/*.pyc
+**/*.pyo
