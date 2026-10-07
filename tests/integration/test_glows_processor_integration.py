@@ -70,23 +70,33 @@ def run_test_in_docker(test_to_run: Callable):
         else:
             l3_processing_dir = Path(tests.__file__).parent.parent
 
-            docker_build = subprocess.run(
-                [
-                    "docker",
-                    "build",
-                    "--platform",
-                    "linux/amd64",
-                    "-q",
-                    "-f",
-                    "Dockerfile_glows_integration",
-                    ".",
-                ],
-                cwd=l3_processing_dir,
-                capture_output=True,
-            )
+            try:
+                docker_build = subprocess.run(
+                    [
+                        "docker",
+                        "build",
+                        "--platform",
+                        "linux/amd64",
+                        "-q",
+                        "-f",
+                        "Dockerfile_glows_integration",
+                        ".",
+                    ],
+                    cwd=l3_processing_dir,
+                    capture_output=True,
+                    check=True,
+                )
+            except subprocess.CalledProcessError as e:
+                raise RuntimeError(
+                    f"Failed to build docker container:\n{e.stderr.decode('utf-8')}"
+                ) from e
             image_hash = docker_build.stdout.strip().decode("utf-8")
 
             print(f"Built docker container: {image_hash}")
+
+            # Bind mounts fail if the source directory does not exist, e.g. in a fresh checkout
+            for mounted_dir in ["temp_cdf_data", "run_local_input_data"]:
+                (l3_processing_dir / mounted_dir).mkdir(exist_ok=True)
 
             args = [
                 "docker",
@@ -734,10 +744,11 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         test_reprocessing_file = get_test_data_path(
             "glows/imap_glows_force-reprocessing-config_20250101_v000.csv"
         )
-        shutil.copy(
-            test_reprocessing_file,
-            AncillaryFilePath(test_reprocessing_file.name).construct_path(),
-        )
+        reprocessing_file_destination = AncillaryFilePath(
+            test_reprocessing_file.name
+        ).construct_path()
+        reprocessing_file_destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(test_reprocessing_file, reprocessing_file_destination)
 
         repoint_file_name = "imap_2026_227_01.repoint"
         processing_input = ProcessingInputCollection(
