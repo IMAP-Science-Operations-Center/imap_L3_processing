@@ -47,11 +47,6 @@ logger = logging.getLogger(__name__)
 
 
 def _add_gse_velocities(result: dict[str, np.ndarray], species: str) -> None:
-    """Add velocity and its covariance in GSE coordinates.
-
-    Epochs without a Sun-frame RTN velocity are left as fill. Epochs where the
-    SPICE transform fails are left as fill and flagged FIT_ERROR.
-    """
     velocities_rtn_sun = result[f"{species}_sw_velocity_rtn_sun"]
     covariances_rtn = result[f"{species}_sw_velocity_rtn_covariance"]
     velocities_gse = np.full_like(velocities_rtn_sun, np.nan)
