@@ -389,8 +389,8 @@ proton_sw_velocity_rtn_uncert:
 proton_sw_velocity_gse:
   NAME: proton_sw_velocity_gse
   DATA_TYPE: CDF_REAL4
-  FIELDNAM: Proton Solar Wind Velocity (GSE, Earth Frame)
-  CATDESC: Solar wind proton bulk velocity vector in GSE coordinates (Earth frame)
+  FIELDNAM: Proton Solar Wind Velocity (GSE Frame)
+  CATDESC: Solar wind proton bulk velocity vector in the GSE frame
   DEPEND_0: epoch
   LABL_PTR_1: proton_sw_velocity_gse_label
   VAR_TYPE: data
@@ -398,7 +398,7 @@ proton_sw_velocity_gse:
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FORMAT: F19.3
-  LABLAXIS: Vp GSE Earth
+  LABLAXIS: Vp GSE
   UNITS: km/s
   VALIDMIN: -10000
   VALIDMAX: 10000
@@ -653,8 +653,8 @@ alpha_sw_velocity_rtn_uncert:
 alpha_sw_velocity_gse:
   NAME: alpha_sw_velocity_gse
   DATA_TYPE: CDF_REAL4
-  FIELDNAM: Alpha Solar Wind Velocity (GSE, Earth Frame)
-  CATDESC: Solar wind alpha-particle bulk velocity vector in GSE coordinates (Earth frame)
+  FIELDNAM: Alpha Solar Wind Velocity (GSE Frame)
+  CATDESC: Solar wind alpha-particle bulk velocity vector in the GSE frame
   DEPEND_0: epoch
   LABL_PTR_1: alpha_sw_velocity_gse_label
   VAR_TYPE: data
@@ -662,7 +662,7 @@ alpha_sw_velocity_gse:
   DISPLAY_TYPE: time_series
   VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
   FORMAT: F19.3
-  LABLAXIS: Va GSE Earth
+  LABLAXIS: Va GSE
   UNITS: km/s
   VALIDMIN: -10000
   VALIDMAX: 10000
