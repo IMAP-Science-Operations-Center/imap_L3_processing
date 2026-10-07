@@ -141,43 +141,39 @@ def convert_sun_velocity_rtn_to_gse(
         The covariance of the GSE velocity.
     """
     et = float(ttj2000ns_to_et(epoch_tt2000_ns))
-    # (3, 3) rotation matrix taking vectors from RTN to ECLIPJ2000 axes.
+
+    # (3, 3) rotation, RTN -> ECLIPJ2000.
     eclipj2000_from_rtn = get_rotation_matrix(
         et, SpiceFrame.IMAP_RTN, SpiceFrame.ECLIPJ2000
     )
-    # (6, 6) state transformation matrix taking 6-vector states
-    # [x, y, z, vx, vy, vz] from ECLIPJ2000 to GSE. Its blocks are
-    #   [[R,     0],
-    #    [dR/dt, R]],
-    # where R is the (3, 3) rotation matrix. Because GSE rotates relative to
-    # ECLIPJ2000, the GSE velocity also picks up the dR/dt @ position term.
+
+    # (6, 6) state transform, ECLIPJ2000 -> GSE, with blocks [[R, 0], [dR/dt, R]].
     gse_from_eclipj2000 = spiceypy.sxform(
         SpiceFrame.ECLIPJ2000.name, SpiceFrame.IMAP_GSE.name, et
     )
-    # (3,) position of IMAP relative to Earth in ECLIPJ2000 axes [km].
-    # imap_state returns the (6,) state; we keep only the position.
+
+    # (3,) IMAP position relative to Earth [km], in ECLIPJ2000.
     position_from_earth = imap_state(
         et, SpiceFrame.ECLIPJ2000, observer=SpiceBody.EARTH
     )[:3]
-    # (3,) velocity of Earth relative to the Sun in ECLIPJ2000 axes [km/s].
-    # spkezr returns ((6,) state, light time); we keep only the velocity.
+
+    # (3,) Earth velocity relative to the Sun [km/s], in ECLIPJ2000.
+    # spiceypy.spkezr returns (state, light time).
     earth_velocity_from_sun = spiceypy.spkezr(
         SpiceBody.EARTH.name, et, SpiceFrame.ECLIPJ2000.name, "NONE", SpiceBody.SUN.name
     )[0][3:]
 
-    # (3,) bulk velocities in ECLIPJ2000 axes [km/s], relative to the Sun and
-    # then relative to Earth.
     velocity_from_sun = eclipj2000_from_rtn @ velocity_rtn_sun
     velocity_from_earth = velocity_from_sun - earth_velocity_from_sun
-    # (6,) Earth-centered state, transformed to GSE; keep the (3,) velocity.
+    # The state transform needs the position for the dR/dt term.
     state_earth = np.concatenate([position_from_earth, velocity_from_earth])
     velocity_gse = (gse_from_eclipj2000 @ state_earth)[3:]
 
-    # The rotating-frame term and the change of rest frame do not depend on the
-    # measured velocity, so the covariance only sees the rotation. The lower-right
-    # (3, 3) block of the state transformation matrix is the rotation matrix R.
+    # The change of rest frame and the dR/dt term are offsets independent of the
+    # measured velocity, so the covariance only sees R.
     gse_from_rtn = gse_from_eclipj2000[3:, 3:] @ eclipj2000_from_rtn
     covariance_gse = gse_from_rtn @ covariance_rtn @ gse_from_rtn.T
+
     return velocity_gse, covariance_gse
 
 
