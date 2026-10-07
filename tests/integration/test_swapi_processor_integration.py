@@ -73,7 +73,7 @@ class SwapiProcessorIntegration(unittest.TestCase):
                 0.9181588158764923,
                 1.1583296142262276,
             ],
-            "proton_sw_velocity_gse_earth": [
+            "proton_sw_velocity_gse": [
                 -474.1849670410156,
                 -0.21491166949272156,
                 18.652050018310547,
@@ -193,7 +193,7 @@ class SwapiProcessorIntegration(unittest.TestCase):
                 3.7314551522295676,
                 2.0892288586865027,
             ],
-            "alpha_sw_velocity_gse_earth": [
+            "alpha_sw_velocity_gse": [
                 -473.031494140625,
                 11.029645919799805,
                 14.796895027160645,
