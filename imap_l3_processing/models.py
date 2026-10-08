@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Union, Optional, TypeVar, Generic
 
 import numpy as np
-from imap_data_access.file_validation import Version
+from imap_data_access.file_validation import Version, ScienceFilePath
 
 from imap_l3_processing.data_utils import rebin
 
@@ -38,6 +38,21 @@ class InputMetadata:
     def logical_source(self):
         return f"imap_{self.instrument}_{self.data_level}_{self.descriptor}"
 
+    def to_science_file_path(self, cr_number: Optional[int] = None) -> ScienceFilePath:
+        assert self.repointing is None or cr_number is None, "You cannot call save_data with both a repointing in the metadata while passing in a CR number"
+        formatted_start_date = self.start_date.strftime("%Y%m%d")
+        version = self.version.lookup(self.descriptor)
+
+        return ScienceFilePath.generate_from_inputs(
+            instrument=self.instrument,
+            data_level=self.data_level,
+            descriptor=self.descriptor,
+            start_time=formatted_start_date,
+            major_version=version.major,
+            minor_version=version.minor,
+            repointing=self.repointing,
+            cr=cr_number,
+        )
 
 @dataclass
 class DataProductVariable:

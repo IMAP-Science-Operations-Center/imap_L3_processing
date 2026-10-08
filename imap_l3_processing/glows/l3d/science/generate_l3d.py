@@ -22,6 +22,7 @@ dependencies = json.loads(sys.argv[2])
 
 ANC_INPUT_FROM_INSTRUMENT_TEAM = dependencies['ancillary_files']
 EXT_DEPENDENCIES = dependencies['external_files']
+L3D_CDF_FILENAME = dependencies['l3d_cdf_filename']
 
 # Create list of L3b/c files and read them
 l3b_fn_list = np.array(sorted(glob.glob('data_l3b/imap_glows_l3b*.json')))
@@ -35,7 +36,8 @@ fn_initial = ANC_INPUT_FROM_INSTRUMENT_TEAM['WawHelioIon']
 
 # Start generating from the initial files (not using the last entry from L3d)
 
-solar_param_hist.header['ancillary_data_files'] = list(fn_initial.values())
+solar_param_hist.header['ancillary_data_files'] = [*fn_initial.values(), ANC_INPUT_FROM_INSTRUMENT_TEAM['pipeline_settings']]
+solar_param_hist.header['l3d_cdf_filename'] = L3D_CDF_FILENAME
 solar_param_hist.generate_initial_history(fn_initial)
 
 solar_param_hist.update_solar_params_hist(EXT_DEPENDENCIES, data_l3b, data_l3c, CR_current)

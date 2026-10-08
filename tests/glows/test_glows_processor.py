@@ -628,6 +628,11 @@ class TestGlowsProcessor(unittest.TestCase):
 
         self.assertEqual(set(expected_parents), set(l3b_data_product.parent_file_names))
 
+    @patch("imap_l3_processing.glows.glows_processor.GlowsL3EInitializer.get_repointings_to_process")
+    def test_process_l3d_uploads_even_if_no_l3e_needs_to_be_produced(self, mock_l3e_initializer_get_repoints):
+        mock_l3e_initializer_get_repoints.return_value = None
+        self.test_process_l3d()
+
     @patch("imap_l3_processing.glows.glows_processor.process_l3e")
     @patch("imap_l3_processing.glows.glows_processor.create_glows_l3b_json_file_from_cdf")
     @patch("imap_l3_processing.glows.glows_processor.create_glows_l3c_json_file_from_cdf")
@@ -639,13 +644,11 @@ class TestGlowsProcessor(unittest.TestCase):
     @patch('imap_l3_processing.glows.glows_processor.shutil')
     @patch("imap_l3_processing.glows.glows_processor.os")
     @patch("imap_l3_processing.glows.glows_processor.GlowsL3DInitializer")
-    @patch("imap_l3_processing.glows.glows_processor.read_pipeline_settings")
-    def test_process_l3d(self, mock_read_pipeline_settings, mock_glows_l3d_initializer, mock_os, mock_shutil, mock_run,
+    def test_process_l3d(self, mock_glows_l3d_initializer, mock_os, mock_shutil, mock_run,
                          mock_convert_json_to_l3d_data_product, mock_get_parent_file_names_from_l3d_json,
                          mock_rename_l3d, mock_save_data, mock_convert_l3c_to_json, mock_convert_l3b_to_json, _):
 
         cr_number = 2092
-        mock_read_pipeline_settings.return_value = {'start_cr': cr_number}
 
         expected_end_cr = cr_number + 1
         glows_l3d_dependencies = GlowsL3DDependencies(
@@ -671,8 +674,11 @@ class TestGlowsProcessor(unittest.TestCase):
         )
 
         old_l3d = Path('imap_glows_l3d_solar-hist_19470303-cr02090_v001.cdf')
-        input_major_version = 12
-        l3d_output_version = Version(input_major_version, 5)
+        major_version = 12
+        l3d_output_version = Version(major_version, 5)
+
+        expected_l3d_cdf_filename = f'imap_glows_l3d_{GLOWS_L3D_DESCRIPTOR}_19470303-cr0{expected_end_cr}_{l3d_output_version}.cdf'
+
         mock_glows_l3d_initializer.should_process_l3d.return_value = (
             l3d_output_version,
             glows_l3d_dependencies,
@@ -701,7 +707,7 @@ class TestGlowsProcessor(unittest.TestCase):
             {
                 GLOWS_L3B_DESCRIPTOR: Version(2, 1),
                 GLOWS_L3C_DESCRIPTOR: Version(2, 1),
-                GLOWS_L3D_DESCRIPTOR: Version(input_major_version, 1),
+                GLOWS_L3D_DESCRIPTOR: Version(major_version, 1),
                 GLOWS_L3E_HI_45_DESCRIPTOR: Version(2, 1),
                 GLOWS_L3E_HI_90_DESCRIPTOR: Version(2, 1),
                 GLOWS_L3E_LO_DESCRIPTOR: Version(2, 1),
@@ -718,7 +724,7 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_convert_l3b_to_json.assert_has_calls([call(sentinel.l3b_file_1), call(sentinel.l3b_file_2)])
         mock_convert_l3c_to_json.assert_has_calls([call(sentinel.l3c_file_1), call(sentinel.l3c_file_2)])
         mock_glows_l3d_initializer.should_process_l3d.assert_called_with(
-            self.mock_external_deps, [], [], self.mock_reprocess_info, input_major_version)
+            self.mock_external_deps, [], [], self.mock_reprocess_info, major_version)
         self.mock_fetch_reprocess_info.assert_called_with(processing_input_collection)
         self.assertEqual([
             Path("imap_glows_e-dens_19470303_20100101_v000.dat"),
@@ -755,8 +761,9 @@ class TestGlowsProcessor(unittest.TestCase):
                     'phion': str(Path('path/to/phion')),
                     'lya': str(Path('path/to/lya')),
                     'e-dens': str(Path('path/to/e-dens'))
-                }
-            }
+                },
+            },
+            "l3d_cdf_filename": expected_l3d_cdf_filename
         })
 
         expected_working_directory = Path(l3d.__file__).parent / 'science'
@@ -892,8 +899,7 @@ class TestGlowsProcessor(unittest.TestCase):
     @patch('imap_l3_processing.glows.glows_processor.os')
     @patch('imap_l3_processing.glows.glows_processor.run')
     @patch('imap_l3_processing.glows.glows_processor.convert_json_to_l3d_data_product')
-    @patch('imap_l3_processing.glows.glows_processor.read_pipeline_settings')
-    def test_process_l3d_handles_unexpected_exception_from_science(self, mock_read_pipeline_settings,
+    def test_process_l3d_handles_unexpected_exception_from_science(self,
                                                                    mock_convert_json_to_l3d,
                                                                    mock_run, mock_os, _, __):
         ancillary_files = {
@@ -911,7 +917,6 @@ class TestGlowsProcessor(unittest.TestCase):
         external_files = {
             'lya_raw_data': Path('path/to/lya'),
         }
-        mock_read_pipeline_settings.return_value = {'start_cr': 2091}
         l3b_file_paths = []
         l3c_file_paths = []
         expected_cr = 2096
@@ -948,7 +953,7 @@ class TestGlowsProcessor(unittest.TestCase):
         mock_run.side_effect = [CalledProcessError(cmd="", returncode=1, stderr=unexpected_exception)]
 
         with self.assertRaises(Exception) as context:
-            process_l3d(l3d_dependencies, 1)
+            process_l3d(l3d_dependencies, Version(1, 1))
         self.assertEqual(unexpected_exception, context.exception.stderr)
 
         mock_convert_json_to_l3d.assert_not_called()
@@ -994,6 +999,26 @@ class TestGlowsProcessor(unittest.TestCase):
         )
 
         glows_l3d_output = process_l3d(l3d_dependencies, Version(1, 4))
+
+        expected_parents = {
+            "imap_glows_l3b_ion-rate-profile_20100422_v013.cdf",
+            "imap_glows_l3b_ion-rate-profile_20100519_v013.cdf",
+            "imap_glows_l3c_sw-profile_20100422_v012.cdf",
+            "imap_glows_l3c_sw-profile_20100519_v012.cdf",
+            "imap_glows_plasma-speed-2010a_20100101_v003.dat",
+            "imap_glows_proton-density-2010a_20100101_v003.dat",
+            "imap_glows_uv-anisotropy-2010a_20100101_v003.dat",
+            "imap_glows_photoion-2010a_20100101_v003.dat",
+            "imap_glows_lya-2010a_20100101_v003.dat",
+            "imap_glows_electron-density-2010a_20100101_v003.dat",
+            "imap_glows_pipeline-settings-l3bcde_20100101_v006.json",
+            "lyman_alpha_composite.nc",
+        }
+
+        self.assertEqual(1, mock_save_data.call_count)
+        [data_product] = mock_save_data.call_args_list[0].args
+
+        self.assertEqual(expected_parents, set(data_product.parent_file_names))
 
         expected_txt_filenames = ["imap_glows_e-dens_19470303_20100629_v004.dat",
                                   "imap_glows_lya_19470303_20100629_v004.dat",
@@ -1068,7 +1093,14 @@ class TestGlowsProcessor(unittest.TestCase):
             with CDF(str(tmp_dir / expected_cdf_filename)) as actual_cdf:
                 for filename, cdf_var_name, length_of_data, first_line, last_line in test_cases:
                     with self.subTest(msg=filename):
-                        actual = np.loadtxt(PATH_TO_L3D_TOOLKIT / "data_l3d_txt" / filename)
+                        l3d_text_path = PATH_TO_L3D_TOOLKIT / "data_l3d_txt" / filename
+                        actual = np.loadtxt(l3d_text_path)
+
+                        actual_input_file_line = next((l for l in l3d_text_path.read_text().split("\n") if l.startswith("# input files:")), None)
+                        self.assertIsNotNone(actual_input_file_line)
+
+                        expected_input_file_line = f"# input files: {expected_cdf_filename}"
+                        self.assertEqual(expected_input_file_line, actual_input_file_line)
 
                         self.assertEqual(length_of_data, len(actual))
                         self.assertEqual(length_of_data, len(actual_cdf[cdf_var_name][...]))
@@ -1114,31 +1146,11 @@ class TestGlowsProcessor(unittest.TestCase):
         repointing_midpoint = datetime(2020, 1, 1, 12)
         mock_get_pointing_date_range.return_value = (start_epoch, end_epoch)
 
-        mock_dependencies = Mock()
-
-        mock_dependencies.get_hi_parents.return_value = ["hi_ancillary.dat"]
-        mock_dependencies.get_lo_parents.return_value = ["lo_ancillary.dat"]
-        mock_dependencies.get_ul_parents.return_value = ["ul_ancillary.dat"]
-
-        l3d_cdf_path = Path("path/to/l3d.cdf")
-        initializer_data = GlowsL3EInitializerOutput(
-            dependencies=mock_dependencies,
-            repointings=GlowsL3eVersionsForRepointings(
-                repointing_numbers=[25],
-                hi_90_repointings={25: Version(None, 1)},
-                hi_45_repointings={25: Version(None, 2)},
-                lo_repointings={25: Version(None, 3)},
-                ultra_sf_repointings={25: Version(None, 4)},
-                ultra_hf_repointings={25: Version(None, 4)},
-            ),
-            l3d_cdf_path=l3d_cdf_path,
-            metakernel_with_predict_ephem=Mock(),
-            metakernel_without_predict_ephem=Mock(),
-        )
+        initializer_data = self._build_l3e_initializer_output()
 
         actual_l3e_products = process_l3e(initializer_data)
         mock_get_pointing_date_range.assert_called_once_with(25)
-        mock_compute_glows_flags_for_repoint.assert_called_once_with(l3d_cdf_path, repointing_midpoint)
+        mock_compute_glows_flags_for_repoint.assert_called_once_with(initializer_data.l3d_cdf_path, repointing_midpoint)
         mock_determine_spacecraft_info.assert_called_once_with(
             datetime(2020, 1, 1, 12),
             initializer_data.metakernel_with_predict_ephem,
@@ -1199,7 +1211,6 @@ class TestGlowsProcessor(unittest.TestCase):
                                          sentinel.last_processed_cr)
         mock_process_l3d.return_value = process_l3d_result
         mock_determine_spacecraft_info.return_value = sentinel.spacecraft_info, GlowsL3Flags.PREDICTIVE_EPHEMERIS, ["spice kernel"]
-
 
         input_major_version = 5
 
@@ -1910,6 +1921,28 @@ class TestGlowsProcessor(unittest.TestCase):
         ])
         mock_zip_file.writestr.assert_called_once_with(expected_json_filename, mock_json.dumps.return_value)
 
+    def _build_l3e_initializer_output(self) -> GlowsL3EInitializerOutput:
+        mock_dependencies = Mock()
+
+        mock_dependencies.get_hi_parents.return_value = ["hi_ancillary.dat"]
+        mock_dependencies.get_lo_parents.return_value = ["lo_ancillary.dat"]
+        mock_dependencies.get_ul_parents.return_value = ["ul_ancillary.dat"]
+
+        l3d_cdf_path = Path("path/to/l3d.cdf")
+        return GlowsL3EInitializerOutput(
+            dependencies=mock_dependencies,
+            repointings=GlowsL3eVersionsForRepointings(
+                repointing_numbers=[25],
+                hi_90_repointings={25: Version(None, 1)},
+                hi_45_repointings={25: Version(None, 2)},
+                lo_repointings={25: Version(None, 3)},
+                ultra_sf_repointings={25: Version(None, 4)},
+                ultra_hf_repointings={25: Version(None, 4)},
+            ),
+            l3d_cdf_path=l3d_cdf_path,
+            metakernel_with_predict_ephem=Mock(),
+            metakernel_without_predict_ephem=Mock(),
+        )
 
 
 if __name__ == '__main__':
