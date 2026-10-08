@@ -23,11 +23,11 @@ imap_glows_l3e_survival-probability-hi-90:
   <<: *MODS
 imap_glows_l3e_survival-probability-ul-sf:
   Data_level: "3e"
-  Data_type: L3E_survival-probability-ul>Level-3E Survival Probability Ul
-  Logical_source_description: IMAP Mission GLOWS L3e Ultra Survival Probability
+  Data_type: L3E_survival-probability-ul-sf>Level-3E Survival Probability Ultra SF
+  Logical_source_description: IMAP Mission GLOWS L3e Ultra Survival Probability Spacecraft Frame
   <<: *MODS
 imap_glows_l3e_survival-probability-ul-hf:
   Data_level: "3e"
-  Data_type: L3E_survival-probability-ul>Level-3E Survival Probability Ul HF
-  Logical_source_description: IMAP Mission GLOWS L3e Ultra Survival Probability HF
+  Data_type: L3E_survival-probability-ul-hf>Level-3E Survival Probability Ultra HF
+  Logical_source_description: IMAP Mission GLOWS L3e Ultra Survival Probability Heliospheric Frame
   <<: *MODS
