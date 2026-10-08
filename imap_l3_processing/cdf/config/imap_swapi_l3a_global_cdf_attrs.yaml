@@ -23,7 +23,7 @@ imap_swapi_l3a_proton-sw:
       the 3D instrument response and spacecraft spin.
   MODS:
     - >-
-      Major version 2: Use corrected SPICE kernels for spin axis and spin phase.
+      Major version 2, Oct. 8, 2026 - Use corrected SPICE kernels for spin axis and spin phase.
 
 imap_swapi_l3a_alpha-sw:
   <<: *instrument_base
@@ -39,7 +39,7 @@ imap_swapi_l3a_alpha-sw:
       is constrained to be aligned with the magnetic field.
   MODS:
     - >-
-      Major version 2: Use corrected SPICE kernels for spin axis and spin phase.
+      Major version 2, Oct. 8, 2026 - Use corrected SPICE kernels for spin axis and spin phase.
 
 imap_swapi_l3a_pui-he:
   <<: *instrument_base

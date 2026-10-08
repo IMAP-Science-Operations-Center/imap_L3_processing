@@ -1,7 +1,7 @@
 shared_mods: &MODS
   MODS:
     - >-
-      Major version 2: Add `epoch_delta`, `energy_delta_plus`, and `energy_delta_minus` to support plotting.
+      Major version 2, Oct. 8, 2026 - Add `epoch_delta`, `energy_delta_plus`, and `energy_delta_minus` to support plotting.
       Add quality flags for L3d data copied from a previous CR and the use of predicted ephemeris.
       Quality flags are propagated from the nearest two L3d data points.
       Use corrected SPICE kernels for spin axis and spin phase.
