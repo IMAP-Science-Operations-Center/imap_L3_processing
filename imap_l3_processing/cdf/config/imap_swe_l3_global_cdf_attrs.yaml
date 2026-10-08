@@ -2,3 +2,6 @@ imap_swe_l3_sci:
   Data_level: "3"
   Data_type: L3_SCI>Level-3 Science data
   Logical_source_description: IMAP Mission SWE Instrument Level-3 Science Data
+  MODS:
+    - >-
+      Major version 2, Oct. 8, 2026 - Use corrected SPICE kernels for spin axis and spin phase.
