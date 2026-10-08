@@ -4,5 +4,5 @@ imap_glows_l3a_hist:
   Logical_source_description: IMAP Mission GLOWS Instrument Light Curve
   MODS:
     - >-
-      Major version 2: Pad `spin_angle` dimension to 90.
+      Major version 2, Oct 8, 2026: Pad `spin_angle` dimension to 90.
       Use corrected SPICE kernels for spin axis and spin phase.
