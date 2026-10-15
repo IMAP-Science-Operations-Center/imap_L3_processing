@@ -13,12 +13,12 @@ class TestMapDescriptors(unittest.TestCase):
         no_sp = SurvivalCorrection.NotSurvivalCorrected
 
         test_cases = [
-            ("h45-ena-h-hf-sp-ram-hae-4deg-3mo",
+            ("h45-ena-h-hf-sp-ram-hae-1deg-3mo",
              MapDescriptorParts(sensor=Sensor.Hi45, quantity=MapQuantity.Intensity, quantity_suffix="",
                                 survival_correction=sp, reference_frame=cg,
                                 spin_phase=SpinPhase.RamOnly, coord="hae",
                                 duration="3mo",
-                                grid=PixelSize.FourDegrees)),
+                                grid=PixelSize.OneDegree)),
             ("h45-ena-h-sf-sp-anti-hae-4deg-3mo",
              MapDescriptorParts(Sensor.Hi45, no_cg, sp, SpinPhase.AntiRamOnly, "hae",
                                 PixelSize.FourDegrees, "3mo",

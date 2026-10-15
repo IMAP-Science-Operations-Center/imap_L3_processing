@@ -50,6 +50,7 @@ class SpinPhase(enum.Enum):
 
 
 class PixelSize(enum.IntEnum):
+    OneDegree = 1
     TwoDegrees = 2
     FourDegrees = 4
     SixDegrees = 6
@@ -116,6 +117,7 @@ spin_phase_mapping = [
 ]
 
 grid_size_mapping = [
+    ("1deg", PixelSize.OneDegree),
     ("2deg", PixelSize.TwoDegrees),
     ("4deg", PixelSize.FourDegrees),
     ("6deg", PixelSize.SixDegrees),
@@ -133,7 +135,7 @@ def parse_map_descriptor(descriptor: str) -> Optional[MapDescriptorParts]:
         (?P<survival_corrected>sp|nsp)-
         (?P<spin_phase>ram|anti|full)-
         (?P<coord>[a-zA-Z0-9]*)-
-        (?P<grid>2deg|4deg|6deg|nside8|nside16)-
+        (?P<grid>1deg|2deg|4deg|6deg|nside8|nside16)-
         (?P<duration>[0-9]+(?:mo|yr))
         """
 
