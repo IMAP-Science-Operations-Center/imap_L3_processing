@@ -58,7 +58,7 @@ class UltraProcessor(MapProcessor):
 
         match parsed_descriptor:
             case MapDescriptorParts(quantity=MapQuantity.SpectralIndex,
-                                    grid=PixelSize.TwoDegrees | PixelSize.FourDegrees | PixelSize.SixDegrees):
+                                    grid=PixelSize.OneDegree | PixelSize.TwoDegrees | PixelSize.FourDegrees | PixelSize.SixDegrees):
                 ultra_l3_spectral_fit_dependencies = UltraL3SpectralIndexDependencies.fetch_dependencies(
                     self.dependencies)
                 spectral_index_map_data = self._process_spectral_index(
@@ -70,7 +70,7 @@ class UltraProcessor(MapProcessor):
                                                                    spice_frame_name=spice_frame_name)
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
                                     sensor=Sensor.Ultra45 | Sensor.Ultra90,
-                                    grid=PixelSize.TwoDegrees | PixelSize.FourDegrees | PixelSize.SixDegrees):
+                                    grid=PixelSize.OneDegree | PixelSize.TwoDegrees | PixelSize.FourDegrees | PixelSize.SixDegrees):
                 deps = UltraL3Dependencies.fetch_dependencies(self.dependencies)
                 healpix_intensity_map_data = (
                     correct_healpix_data_for_survival_probability(
@@ -84,7 +84,7 @@ class UltraProcessor(MapProcessor):
                 data_product.add_paths_to_parents(deps.dependency_file_paths)
             case MapDescriptorParts(survival_correction=SurvivalCorrection.SurvivalCorrected,
                                     sensor=Sensor.UltraCombined,
-                                    grid=PixelSize.TwoDegrees | PixelSize.FourDegrees | PixelSize.SixDegrees):
+                                    grid=PixelSize.OneDegree | PixelSize.TwoDegrees | PixelSize.FourDegrees | PixelSize.SixDegrees):
                 combined_deps = UltraL3CombinedDependencies.fetch_dependencies(
                     self.dependencies
                 )
@@ -108,7 +108,7 @@ class UltraProcessor(MapProcessor):
 
             case MapDescriptorParts(sensor=Sensor.UltraCombined,
                                     survival_correction=SurvivalCorrection.NotSurvivalCorrected,
-                                    grid=PixelSize.TwoDegrees | PixelSize.FourDegrees | PixelSize.SixDegrees):
+                                    grid=PixelSize.OneDegree | PixelSize.TwoDegrees | PixelSize.FourDegrees | PixelSize.SixDegrees):
                 deps = UltraL3CombinedDependencies.fetch_dependencies(self.dependencies)
 
                 combination_strategy = ExposureWeightedCombination()

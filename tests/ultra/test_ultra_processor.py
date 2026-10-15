@@ -43,22 +43,22 @@ class TestUltraProcessor(unittest.TestCase):
         clear_temp_cache()
 
     def test_process_survival_probability_all_spacings(self):
-        for degree_spacing in [2, 4, 6]:
+        for degree_spacing in [1, 2, 4, 6]:
             with self.subTest(spacing=degree_spacing):
                 self._test_process_survival_probability(degree_spacing)
 
     def test_process_spectral_index_all_spacings(self):
-        for degree_spacing in [2, 4, 6]:
+        for degree_spacing in [1, 2, 4, 6]:
             with self.subTest(spacing=degree_spacing):
                 self._test_process_spectral_index(degree_spacing)
 
     def test_process_combined_all_spacings(self):
-        for degree_spacing in [2, 4, 6]:
+        for degree_spacing in [1, 2, 4, 6]:
             with self.subTest(spacing=degree_spacing):
                 self._test_process_combined_sensor(degree_spacing)
 
     def test_process_combined_survival_corrected_all_spacings(self):
-        for degree_spacing in [2, 4, 6]:
+        for degree_spacing in [1, 2, 4, 6]:
             with self.subTest(spacing=degree_spacing):
                 self._test_process_combined_sensor_survival_probability(degree_spacing)
 
