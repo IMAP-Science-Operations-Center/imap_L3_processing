@@ -46,7 +46,7 @@ from imap_l3_processing.utils import save_data
 logger = logging.getLogger(__name__)
 
 
-def _add_gse_velocities(result: dict[str, np.ndarray], species: str) -> None:
+def _calculate_gse_velocities(result: dict[str, np.ndarray], species: str) -> None:
     velocities_rtn_sun = result[f"{species}_sw_velocity_rtn_sun"]
     covariances_rtn = result[f"{species}_sw_velocity_rtn_covariance"]
     velocities_gse = np.full_like(velocities_rtn_sun, np.nan)
@@ -112,7 +112,7 @@ class SwapiProcessor(Processor):
         )
 
         result = runner.run(chunks, ProtonChunkFitter())
-        _add_gse_velocities(result, "proton")
+        _calculate_gse_velocities(result, "proton")
 
         return SwapiL3ProtonSolarWindData(
             replace(self.input_metadata, descriptor="proton-sw"), **result
@@ -132,7 +132,7 @@ class SwapiProcessor(Processor):
 
         fitter = AlphaChunkFitter(dependencies.mag_data)
         result = runner.run(chunks, fitter)
-        _add_gse_velocities(result, "alpha")
+        _calculate_gse_velocities(result, "alpha")
 
         if dependencies.mag_is_preliminary:
             result["quality_flags"] = result["quality_flags"] | int(
