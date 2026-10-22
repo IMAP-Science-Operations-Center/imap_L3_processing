@@ -5,7 +5,6 @@ from typing import Iterable
 import numba
 import numpy as np
 import scipy.optimize
-import spiceypy
 from numpy import ndarray
 from numpy.typing import ArrayLike
 from spacepy import pycdf
@@ -142,36 +141,20 @@ def convert_sun_velocity_rtn_to_gse(
     """
     et = float(ttj2000ns_to_et(epoch_tt2000_ns))
 
-    # (3, 3) rotation, RTN -> ECLIPJ2000.
-    eclipj2000_from_rtn = get_rotation_matrix(
-        et, SpiceFrame.IMAP_RTN, SpiceFrame.ECLIPJ2000
-    )
+    # (3, 3) rotation, RTN -> GSE.
+    gse_from_rtn = get_rotation_matrix(et, SpiceFrame.IMAP_RTN, SpiceFrame.IMAP_GSE)
 
-    # (6, 6) state transform, ECLIPJ2000 -> GSE, with blocks [[R, 0], [dR/dt, R]].
-    gse_from_eclipj2000 = spiceypy.sxform(
-        SpiceFrame.ECLIPJ2000.name, SpiceFrame.IMAP_GSE.name, et
-    )
+    # (3,) IMAP velocity relative to Earth [km/s], in GSE. SPICE includes the
+    # dR/dt term from GSE rotating relative to inertial frames.
+    imap_state_gse = imap_state(et, SpiceFrame.IMAP_GSE, observer=SpiceBody.EARTH)
+    imap_velocity_gse = imap_state_gse[3:]
 
-    # (3,) IMAP position relative to Earth [km], in ECLIPJ2000.
-    position_from_earth = imap_state(
-        et, SpiceFrame.ECLIPJ2000, observer=SpiceBody.EARTH
-    )[:3]
+    # Rotate the velocity relative to IMAP, then add IMAP's velocity relative to Earth.
+    velocity_rtn_imap = velocity_rtn_sun - get_spacecraft_velocity_rtn(epoch_tt2000_ns)
+    velocity_gse = gse_from_rtn @ velocity_rtn_imap + imap_velocity_gse
 
-    # (3,) Earth velocity relative to the Sun [km/s], in ECLIPJ2000.
-    # spiceypy.spkezr returns (state, light time).
-    earth_velocity_from_sun = spiceypy.spkezr(
-        SpiceBody.EARTH.name, et, SpiceFrame.ECLIPJ2000.name, "NONE", SpiceBody.SUN.name
-    )[0][3:]
-
-    velocity_from_sun = eclipj2000_from_rtn @ velocity_rtn_sun
-    velocity_from_earth = velocity_from_sun - earth_velocity_from_sun
-    # The state transform needs the position for the dR/dt term.
-    state_earth = np.concatenate([position_from_earth, velocity_from_earth])
-    velocity_gse = (gse_from_eclipj2000 @ state_earth)[3:]
-
-    # The change of rest frame and the dR/dt term are offsets independent of the
-    # measured velocity, so the covariance only sees R.
-    gse_from_rtn = gse_from_eclipj2000[3:, 3:] @ eclipj2000_from_rtn
+    # The change of rest frame is an offset independent of the measured velocity,
+    # so the covariance only sees the rotation.
     covariance_gse = gse_from_rtn @ covariance_rtn @ gse_from_rtn.T
 
     return velocity_gse, covariance_gse
