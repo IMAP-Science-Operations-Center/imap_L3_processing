@@ -5,6 +5,7 @@ import os
 import shutil
 import subprocess
 import unittest
+from contextlib import contextmanager
 from datetime import timedelta, datetime
 from functools import wraps, partial
 from pathlib import Path
@@ -128,14 +129,19 @@ def run_test_in_docker(test_to_run: Callable):
     return decorated
 
 
+@contextmanager
 def only_process_l3e_for(repointings_to_keep: set[int]):
     # Each repointing runs five survival probability executables and needs SPICE kernels covering it,
-    # so only select the repointings the test checks
+    # so only select the repointings the test checks. Yields the unfiltered results so tests can
+    # still check which repointings would have been processed.
+    unfiltered_results = []
+
     def identify_subset(*args, **kwargs) -> GlowsL3eVersionsForRepointings:
         def keep(versions: dict) -> dict:
             return {n: v for n, v in versions.items() if n in repointings_to_keep}
 
         r = identify_versions_for_l3e_output_files(*args, **kwargs)
+        unfiltered_results.append(r)
         return GlowsL3eVersionsForRepointings(
             [n for n in r.repointing_numbers if n in repointings_to_keep],
             keep(r.hi_90_repointings),
@@ -145,10 +151,11 @@ def only_process_l3e_for(repointings_to_keep: set[int]):
             keep(r.ultra_hf_repointings),
         )
 
-    return patch(
+    with patch(
         "imap_l3_processing.glows.l3e.glows_l3e_initializer.identify_versions_for_l3e_output_files",
         side_effect=identify_subset,
-    )
+    ):
+        yield unfiltered_results
 
 
 class TestGlowsProcessorIntegration(unittest.TestCase):
@@ -427,8 +434,21 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             )
 
             processor = GlowsProcessor(processing_input, input_metadata)
-            with only_process_l3e_for({36, 49}):
+            with only_process_l3e_for({36, 49}) as identified:
                 processor.process()
+
+            [unfiltered] = identified
+            repointings_to_update = set(range(36, 116))
+            # Repoint 20 is not otherwise updated, so it is only there because the force reprocessing config lists it
+            self.assertEqual(repointings_to_update | {20}, set(unfiltered.repointing_numbers))
+            self.assertEqual(repointings_to_update | {20}, set(unfiltered.ultra_sf_repointings))
+            for versions in [
+                unfiltered.hi_90_repointings,
+                unfiltered.hi_45_repointings,
+                unfiltered.lo_repointings,
+                unfiltered.ultra_hf_repointings,
+            ]:
+                self.assertEqual(repointings_to_update, set(versions))
 
             expected_files = [
                 ScienceFilePath(
@@ -601,8 +621,14 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             )
 
             processor = GlowsProcessor(processing_input, input_metadata)
-            with only_process_l3e_for({36}):
+            with only_process_l3e_for({36}) as identified:
                 processor.process()
+
+            [unfiltered] = identified
+            all_repointings = set(range(1, 116))
+            self.assertEqual(all_repointings, set(unfiltered.repointing_numbers))
+            for versions in dataclasses.astuple(unfiltered)[1:]:
+                self.assertEqual(all_repointings, set(versions))
 
             expected_files = [
                 ScienceFilePath(
