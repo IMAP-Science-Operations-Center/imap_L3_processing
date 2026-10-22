@@ -373,6 +373,33 @@ class TestSwapiSpiceHelpers(SpiceTestCase):
             atol=1e-9,
         )
 
+    def test_convert_sun_velocity_rtn_to_gse_matches_full_state_transform(self):
+        """A solar wind velocity that differs from IMAP's matches applying the full 6x6 ECLIPJ2000 -> GSE state transform to the Earth-relative state at IMAP's position."""
+        et = float(ttj2000ns_to_et(self._EPOCH_TT2000_NS))
+        velocity_rtn_sun = np.array([450.0, 10.0, -5.0])
+
+        velocity_gse, _ = convert_sun_velocity_rtn_to_gse(
+            self._EPOCH_TT2000_NS, velocity_rtn_sun, np.eye(3)
+        )
+
+        eclipj2000_from_rtn = spiceypy.pxform("IMAP_RTN", "ECLIPJ2000", et)
+        gse_from_eclipj2000 = spiceypy.sxform("ECLIPJ2000", "IMAP_GSE", et)
+        imap_position_from_earth = spiceypy.spkezr(
+            "IMAP", et, "ECLIPJ2000", "NONE", "EARTH"
+        )[0][:3]
+        earth_velocity_from_sun = spiceypy.spkezr(
+            "EARTH", et, "ECLIPJ2000", "NONE", "SUN"
+        )[0][3:]
+        state_from_earth = np.concatenate(
+            [
+                imap_position_from_earth,
+                eclipj2000_from_rtn @ velocity_rtn_sun - earth_velocity_from_sun,
+            ]
+        )
+        np.testing.assert_allclose(
+            (gse_from_eclipj2000 @ state_from_earth)[3:], velocity_gse, atol=1e-9
+        )
+
 
 class TestVelocityComponentsToAnglesInInstrumentFrame(TestCase):
     """Tests for `velocity_components_to_angles_in_instrument_frame`. The Cartesian input
