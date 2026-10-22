@@ -393,7 +393,9 @@ proton_sw_velocity_gse:
   NAME: proton_sw_velocity_gse
   DATA_TYPE: CDF_REAL4
   FIELDNAM: Proton Solar Wind Velocity (GSE)
-  CATDESC: Solar wind proton bulk velocity vector in GSE coordinates (Earth frame)
+  CATDESC: Solar wind proton bulk velocity vector in GSE coordinates
+  VAR_NOTES: >-
+    Computed using the IMAP_GSE SPICE frame. Velocity is relative to Earth.
   DEPEND_0: epoch
   LABL_PTR_1: proton_sw_velocity_gse_label
   VAR_TYPE: data
@@ -663,7 +665,9 @@ alpha_sw_velocity_gse:
   NAME: alpha_sw_velocity_gse
   DATA_TYPE: CDF_REAL4
   FIELDNAM: Alpha Solar Wind Velocity (GSE)
-  CATDESC: Solar wind alpha-particle bulk velocity vector in GSE coordinates (Earth frame)
+  CATDESC: Solar wind alpha-particle bulk velocity vector in GSE coordinates
+  VAR_NOTES: >-
+    Computed using the IMAP_GSE SPICE frame. Velocity is relative to Earth.
   DEPEND_0: epoch
   LABL_PTR_1: alpha_sw_velocity_gse_label
   VAR_TYPE: data
