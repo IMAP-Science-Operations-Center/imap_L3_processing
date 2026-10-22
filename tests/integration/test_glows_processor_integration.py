@@ -5,8 +5,9 @@ import os
 import shutil
 import subprocess
 import unittest
+from contextlib import contextmanager
 from datetime import timedelta, datetime
-from functools import wraps
+from functools import wraps, partial
 from pathlib import Path
 from typing import Callable
 from unittest import skipIf
@@ -29,6 +30,10 @@ from imap_l3_processing.glows.l3a.utils import (
     create_glows_l3a_from_dictionary,
 )
 from imap_l3_processing.glows.l3d.utils import PATH_TO_L3D_TOOLKIT
+from imap_l3_processing.glows.l3e.glows_l3e_initializer import (
+    identify_versions_for_l3e_output_files,
+)
+from imap_l3_processing.glows.l3e.glows_l3e_utils import GlowsL3eVersionsForRepointings
 from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.utils import save_data
 from tests.integration.integration_test_helpers import (
@@ -110,8 +115,9 @@ def run_test_in_docker(test_to_run: Callable):
                 f"type=bind,src={l3_processing_dir}/run_local_input_data,dst=/run_local_input_data",
             ]
 
-            if imap_api_key := os.getenv("IMAP_API_KEY"):
-                args += ["-e", f"IMAP_API_KEY={imap_api_key}"]
+            # Pass by name so docker reads the value from the environment and the key isn't in error messages
+            if os.getenv("IMAP_API_KEY"):
+                args += ["-e", "IMAP_API_KEY"]
 
             if imap_data_access_url := os.getenv("IMAP_DATA_ACCESS_URL"):
                 args += ["-e", f"IMAP_DATA_ACCESS_URL={imap_data_access_url}"]
@@ -121,6 +127,35 @@ def run_test_in_docker(test_to_run: Callable):
             subprocess.run(args, cwd=l3_processing_dir, check=True)
 
     return decorated
+
+
+@contextmanager
+def only_process_l3e_for(repointings_to_keep: set[int]):
+    # Each repointing runs five survival probability executables and needs SPICE kernels covering it,
+    # so only select the repointings the test checks. Yields the unfiltered results so tests can
+    # still check which repointings would have been processed.
+    unfiltered_results = []
+
+    def identify_subset(*args, **kwargs) -> GlowsL3eVersionsForRepointings:
+        def keep(versions: dict) -> dict:
+            return {n: v for n, v in versions.items() if n in repointings_to_keep}
+
+        r = identify_versions_for_l3e_output_files(*args, **kwargs)
+        unfiltered_results.append(r)
+        return GlowsL3eVersionsForRepointings(
+            [n for n in r.repointing_numbers if n in repointings_to_keep],
+            keep(r.hi_90_repointings),
+            keep(r.hi_45_repointings),
+            keep(r.lo_repointings),
+            keep(r.ultra_sf_repointings),
+            keep(r.ultra_hf_repointings),
+        )
+
+    with patch(
+        "imap_l3_processing.glows.l3e.glows_l3e_initializer.identify_versions_for_l3e_output_files",
+        side_effect=identify_subset,
+    ):
+        yield unfiltered_results
 
 
 class TestGlowsProcessorIntegration(unittest.TestCase):
@@ -399,7 +434,21 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             )
 
             processor = GlowsProcessor(processing_input, input_metadata)
-            processor.process()
+            with only_process_l3e_for({36, 49}) as identified:
+                processor.process()
+
+            [unfiltered] = identified
+            repointings_to_update = set(range(36, 116))
+            # Repoint 20 is not otherwise updated, so it is only there because the force reprocessing config lists it
+            self.assertEqual(repointings_to_update | {20}, set(unfiltered.repointing_numbers))
+            self.assertEqual(repointings_to_update | {20}, set(unfiltered.ultra_sf_repointings))
+            for versions in [
+                unfiltered.hi_90_repointings,
+                unfiltered.hi_45_repointings,
+                unfiltered.lo_repointings,
+                unfiltered.ultra_hf_repointings,
+            ]:
+                self.assertEqual(repointings_to_update, set(versions))
 
             expected_files = [
                 ScienceFilePath(
@@ -572,7 +621,14 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             )
 
             processor = GlowsProcessor(processing_input, input_metadata)
-            processor.process()
+            with only_process_l3e_for({36}) as identified:
+                processor.process()
+
+            [unfiltered] = identified
+            all_repointings = set(range(1, 116))
+            self.assertEqual(all_repointings, set(unfiltered.repointing_numbers))
+            for versions in dataclasses.astuple(unfiltered)[1:]:
+                self.assertEqual(all_repointings, set(versions))
 
             expected_files = [
                 ScienceFilePath(
@@ -770,16 +826,24 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             "dependency": json.loads(processing_input.serialize()),
             "version": {
                 desc: {
-                    "major_version": 1,
+                    "major_version": 2,
                     "minor_version": 1,
                 }
                 for desc in descriptors_to_produce
             },
         }
 
-        with patch(
-            "imap_l3_data_processor._parse_cli_arguments"
-        ) as mock_parse_cli_arguments:
+        # Nothing is uploaded, so reruns compute the same output names as earlier local runs; overwrite them
+        with (
+            patch(
+                "imap_l3_data_processor._parse_cli_arguments"
+            ) as mock_parse_cli_arguments,
+            patch(
+                "imap_l3_processing.glows.glows_processor.save_data",
+                side_effect=partial(save_data, delete_if_present=True),
+            ),
+            only_process_l3e_for({36}),
+        ):
             mock_arguments = Mock()
             mock_arguments.instrument = "glows"
             mock_arguments.data_level = "l3b"
