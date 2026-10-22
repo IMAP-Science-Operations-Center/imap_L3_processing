@@ -686,7 +686,7 @@ alpha_sw_velocity_gse_covariance:
   CATDESC: Covariance matrix in GSE coordinates
   VAR_NOTES: >-
     Independent of observational reference frame.
-    Standard errors given by the Square root of the diagonal.
+    Standard errors given by the square root of the diagonal.
   DEPEND_0: epoch
   VAR_TYPE: support_data
   RECORD_VARYING: RV
