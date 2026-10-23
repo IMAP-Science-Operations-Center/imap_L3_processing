@@ -21,12 +21,18 @@ class HITL3SectoredDependencies:
     mag_is_preliminary: bool = False
 
     @classmethod
-    def fetch_dependencies(cls, dependencies: ProcessingInputCollection) -> HITL3SectoredDependencies:
-        hit_data_dependency = dependencies.get_file_paths(source="hit", descriptor=HIT_L2_DESCRIPTOR)
-        mag_l2_dependencies = dependencies.get_file_paths(source="mag", data_type="l2",
-                                                          descriptor=MAG_L1D_DESCRIPTOR)
-        mag_l1d_dependencies = dependencies.get_file_paths(source="mag", data_type="l1d",
-                                                           descriptor=MAG_L1D_DESCRIPTOR)
+    def fetch_dependencies(
+        cls, dependencies: ProcessingInputCollection
+    ) -> HITL3SectoredDependencies:
+        hit_data_dependency = dependencies.get_file_paths(
+            source="hit", descriptor=HIT_L2_DESCRIPTOR
+        )
+        mag_l2_dependencies = dependencies.get_file_paths(
+            source="mag", data_type="l2", descriptor=MAG_L1D_DESCRIPTOR
+        )
+        mag_l1d_dependencies = dependencies.get_file_paths(
+            source="mag", data_type="l1d", descriptor=MAG_L1D_DESCRIPTOR
+        )
         mag_dependencies = [*mag_l2_dependencies, *mag_l1d_dependencies]
 
         mag_is_preliminary = len(mag_l2_dependencies) == 0
@@ -37,5 +43,6 @@ class HITL3SectoredDependencies:
         mag_data = read_mag_data(mag_data_path)
         hit_data = read_l2_hit_data(hit_data_path)
 
-        return HITL3SectoredDependencies(data=hit_data, mag_data=mag_data,
-                                         mag_is_preliminary=mag_is_preliminary)
+        return HITL3SectoredDependencies(
+            data=hit_data, mag_data=mag_data, mag_is_preliminary=mag_is_preliminary
+        )

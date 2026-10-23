@@ -14,7 +14,9 @@ def truncate_cdf(cdf_path: Path, number_of_epochs: int = 2) -> Path:
             cdf.attrs[attr_name] = list(original_cdf.attrs[attr_name])
 
         for var in original_cdf:
-            depends_on_epoch = var == "epoch" or original_cdf[var].attrs.get("DEPEND_0") == "epoch"
+            depends_on_epoch = (
+                var == "epoch" or original_cdf[var].attrs.get("DEPEND_0") == "epoch"
+            )
             if depends_on_epoch:
                 cdf.clone(original_cdf[var], var, data=False)
                 cdf[var][:] = original_cdf[var][...][:number_of_epochs]
@@ -28,7 +30,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Truncate one or more CDF files to a smaller number of epochs along the epoch axis."
     )
-    parser.add_argument("cdf_paths", nargs="+", type=Path, help="One or more CDF files to truncate.")
+    parser.add_argument(
+        "cdf_paths", nargs="+", type=Path, help="One or more CDF files to truncate."
+    )
     parser.add_argument(
         "-n",
         "--number-of-epochs",

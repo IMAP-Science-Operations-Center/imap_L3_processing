@@ -39,7 +39,9 @@ class InputMetadata:
         return f"imap_{self.instrument}_{self.data_level}_{self.descriptor}"
 
     def to_science_file_path(self, cr_number: Optional[int] = None) -> ScienceFilePath:
-        assert self.repointing is None or cr_number is None, "You cannot call save_data with both a repointing in the metadata while passing in a CR number"
+        assert self.repointing is None or cr_number is None, (
+            "You cannot call save_data with both a repointing in the metadata while passing in a CR number"
+        )
         formatted_start_date = self.start_date.strftime("%Y%m%d")
         version = self.version.lookup(self.descriptor)
 
@@ -54,6 +56,7 @@ class InputMetadata:
             cr=cr_number,
         )
 
+
 @dataclass
 class DataProductVariable:
     name: str
@@ -63,6 +66,7 @@ class DataProductVariable:
 
 
 D = TypeVar("D")
+
 
 @dataclass
 class DataProduct(abc.ABC, Generic[D]):
@@ -78,7 +82,9 @@ class DataProduct(abc.ABC, Generic[D]):
         self.add_filenames_to_parents([path.name for path in paths])
 
     def add_filenames_to_parents(self, filenames):
-        self.parent_file_names.extend(filename for filename in filenames if filename not in self.parent_file_names)
+        self.parent_file_names.extend(
+            filename for filename in filenames if filename not in self.parent_file_names
+        )
 
 
 @dataclass
@@ -86,7 +92,9 @@ class MagData:
     epoch: np.ndarray
     mag_data: np.ndarray
 
-    def rebin_to(self, epoch: np.ndarray[float], epoch_delta: np.ndarray[float]) -> np.ndarray[float]:
+    def rebin_to(
+        self, epoch: np.ndarray[float], epoch_delta: np.ndarray[float]
+    ) -> np.ndarray[float]:
         return rebin(self.epoch, self.mag_data, epoch, epoch_delta)
 
 

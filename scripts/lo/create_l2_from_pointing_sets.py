@@ -28,7 +28,7 @@ def create_input_file() -> str:
         "imap_lo_l1c_pset_20250420-repoint01005_v002.cdf",
         "imap_lo_l1c_pset_20250424-repoint01009_v002.cdf",
         "imap_lo_l1c_pset_20250429-repoint01014_v002.cdf",
-        "imap_lo_l1c_pset_20250504-repoint01019_v002.cdf"
+        "imap_lo_l1c_pset_20250504-repoint01019_v002.cdf",
     ]
 
     inputs = ProcessingInputCollection()
@@ -52,7 +52,7 @@ def generate_map(descriptor: str, start: datetime):
     }
 
     version = "v000"
-    formatted_start_date = start.strftime('%Y%m%d')
+    formatted_start_date = start.strftime("%Y%m%d")
     output_filename = f"imap_lo_l2_{descriptor}_{formatted_start_date}_{version}.cdf"
     command = f"imap_cli --instrument lo --data-level l2 --descriptor {descriptor} --start-date {formatted_start_date} --version {version} --dependency {dependency_file}"
     print(command)

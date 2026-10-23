@@ -190,7 +190,5 @@ class TestOptimizerLeastSquaresKwargs(unittest.TestCase):
             self.assertEqual(kwargs["xtol"], 1e-4)
 
 
-
-
 if __name__ == "__main__":
     unittest.main()

@@ -11,6 +11,7 @@ production's instrument-coordinate response collapse under-counts the
 bulk-aligned geometry near its 1/sin(delta_azimuth) Jacobian singularity, and at
 very low rates (covered by `atol`).
 """
+
 import unittest
 
 import numpy as np
@@ -59,14 +60,14 @@ class CalculateCoincidenceRateAgainstReferenceTest(unittest.TestCase):
         # (−cos θ sin φ, −cos θ cos φ, −sin θ).
         sw_az_rad = np.radians(_SW_AZIMUTH_DEG)
         sw_el_rad = np.radians(_SW_ELEVATION_DEG)
-        bulk_vec = _SW_SPEED_KMS * np.array([
-            -np.cos(sw_el_rad) * np.sin(sw_az_rad),
-            -np.cos(sw_el_rad) * np.cos(sw_az_rad),
-            -np.sin(sw_el_rad),
-        ])
-        bulk_sw_per_bin = np.broadcast_to(
-            bulk_vec, (1, voltage_v.size, 3)
-        ).copy()
+        bulk_vec = _SW_SPEED_KMS * np.array(
+            [
+                -np.cos(sw_el_rad) * np.sin(sw_az_rad),
+                -np.cos(sw_el_rad) * np.cos(sw_az_rad),
+                -np.sin(sw_el_rad),
+            ]
+        )
+        bulk_sw_per_bin = np.broadcast_to(bulk_vec, (1, voltage_v.size, 3)).copy()
 
         swapi_response = load_swapi_response(
             warm_cache_voltages=voltage_v.astype(float)

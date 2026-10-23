@@ -123,8 +123,13 @@ def _plot_scatter(reference: np.ndarray, optimized: np.ndarray) -> None:
         zorder=4,
     )
     ax.plot(
-        line, line, color="black", linestyle="--", linewidth=0.8,
-        label="1:1", zorder=5,
+        line,
+        line,
+        color="black",
+        linestyle="--",
+        linewidth=0.8,
+        label="1:1",
+        zorder=5,
     )
 
     ax.set_xscale("log")

@@ -37,7 +37,8 @@ from imap_l3_processing.models import DataProduct, MagData, InputMetadata
 from imap_l3_processing.version import VERSION
 
 logger = logging.getLogger(__name__)
-_cache_directory: TemporaryDirectory|None = None
+_cache_directory: TemporaryDirectory | None = None
+
 
 def get_temp_cache_dir() -> Path:
     global _cache_directory
@@ -45,11 +46,13 @@ def get_temp_cache_dir() -> Path:
         _cache_directory = TemporaryDirectory(ignore_cleanup_errors=True)
     return Path(_cache_directory.name)
 
+
 def clear_temp_cache():
     global _cache_directory
     if _cache_directory is not None:
         _cache_directory.cleanup()
     _cache_directory = None
+
 
 class SpiceKernelTypes(enum.Enum):
     Leapseconds = "leapseconds"
@@ -64,8 +67,12 @@ class SpiceKernelTypes(enum.Enum):
     PlanetaryConstants = "planetary_constants"
 
 
-def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: Path = None,
-              cr_number=None) -> Path:
+def save_data(
+    data: DataProduct,
+    delete_if_present: bool = False,
+    folder_path: Path = None,
+    cr_number=None,
+) -> Path:
     science_file_path = data.input_metadata.to_science_file_path(cr_number=cr_number)
     file_path = science_file_path.construct_path()
     if folder_path is not None:
@@ -79,11 +86,18 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: P
         file_path.unlink(missing_ok=True)
 
     attribute_manager = ImapAttributeManager()
-    version = str(data.input_metadata.version.lookup(data.input_metadata.descriptor)).replace('v','')
+    version = str(
+        data.input_metadata.version.lookup(data.input_metadata.descriptor)
+    ).replace("v", "")
     attribute_manager.add_global_attribute("Data_version", version)
-    attribute_manager.add_instrument_attrs(data.input_metadata.instrument, data.input_metadata.data_level,
-                                           data.input_metadata.descriptor)
-    attribute_manager.add_global_attribute("Generation_date", date.today().strftime("%Y%m%d"))
+    attribute_manager.add_instrument_attrs(
+        data.input_metadata.instrument,
+        data.input_metadata.data_level,
+        data.input_metadata.descriptor,
+    )
+    attribute_manager.add_global_attribute(
+        "Generation_date", date.today().strftime("%Y%m%d")
+    )
     attribute_manager.add_global_attribute("Logical_source", logical_source)
     attribute_manager.add_global_attribute("Logical_file_id", logical_file_id)
     attribute_manager.add_global_attribute("ground_software_version", VERSION)
@@ -103,12 +117,22 @@ def save_data(data: DataProduct, delete_if_present: bool = False, folder_path: P
                 attribute_manager.add_global_attribute(key, value)
 
             if attribute_manager.try_load_global_metadata(logical_source) is None:
-                logical_source_global_attrs = generate_global_metadata_for_undefined_logical_source(data.input_metadata)
-                attribute_manager.add_global_attribute(logical_source, logical_source_global_attrs)
+                logical_source_global_attrs = (
+                    generate_global_metadata_for_undefined_logical_source(
+                        data.input_metadata
+                    )
+                )
+                attribute_manager.add_global_attribute(
+                    logical_source, logical_source_global_attrs
+                )
 
-            attribute_manager.add_global_attribute("Spice_reference_frame", data.spice_frame_name.name)
+            attribute_manager.add_global_attribute(
+                "Spice_reference_frame", data.spice_frame_name.name
+            )
         else:
-            raise AssertionError(f"Found an unsupported map data product of type: {type(data)}")
+            raise AssertionError(
+                f"Found an unsupported map data product of type: {type(data)}"
+            )
     elif data.parent_file_names:
         attribute_manager.add_global_attribute("Parents", data.parent_file_names)
 
@@ -126,10 +150,10 @@ def generate_map_global_metadata(data_product: MapDataProduct) -> dict:
 
     match data_product.data:
         case (
-        RectangularSpectralIndexMapData(spectral_index_map_data=map_data) |
-        RectangularIntensityMapData(intensity_map_data=map_data) |
-        HealPixIntensityMapData(intensity_map_data=map_data) |
-        ISNBackgroundSubtractedMapData(isn_rate_map_data=map_data)
+            RectangularSpectralIndexMapData(spectral_index_map_data=map_data)
+            | RectangularIntensityMapData(intensity_map_data=map_data)
+            | HealPixIntensityMapData(intensity_map_data=map_data)
+            | ISNBackgroundSubtractedMapData(isn_rate_map_data=map_data)
         ):
             [start_date] = map_data.epoch
             [epoch_delta] = map_data.epoch_delta
@@ -139,7 +163,9 @@ def generate_map_global_metadata(data_product: MapDataProduct) -> dict:
 
             end_date = start_date + timedelta(seconds=epoch_delta / 1e9)
         case _:
-            raise ValueError(f"Found an unsupported map data product of type: {type(data_product.data)}")
+            raise ValueError(
+                f"Found an unsupported map data product of type: {type(data_product.data)}"
+            )
 
     attrs["start_date"] = start_date.isoformat()
     attrs["end_date"] = end_date.isoformat()
@@ -160,8 +186,10 @@ def generate_map_global_metadata(data_product: MapDataProduct) -> dict:
     return attrs
 
 
-def generate_global_metadata_for_undefined_logical_source(input_metadata: InputMetadata) -> dict:
-    level = input_metadata.data_level.replace('l', '')
+def generate_global_metadata_for_undefined_logical_source(
+    input_metadata: InputMetadata,
+) -> dict:
+    level = input_metadata.data_level.replace("l", "")
     data_type_string = f"Level-{level}"
     if "spx" in input_metadata.descriptor:
         data_type_string += " Spectral Fit Index Map"
@@ -184,7 +212,9 @@ def format_time(t: Optional[datetime]) -> Optional[str]:
     return None
 
 
-def download_external_dependency(dependency_url: str, file_path: Path) -> Optional[Path]:
+def download_external_dependency(
+    dependency_url: str, file_path: Path
+) -> Optional[Path]:
     try:
         response = requests.get(dependency_url)
         if response.status_code == 200:
@@ -192,7 +222,9 @@ def download_external_dependency(dependency_url: str, file_path: Path) -> Option
                 file.write(response.content)
             return Path(file_path)
         else:
-            logger.error(f"Failed to download {dependency_url} with status code {response.status_code}")
+            logger.error(
+                f"Failed to download {dependency_url} with status code {response.status_code}"
+            )
     except RequestException:
         logger.exception(f"Failed to download {dependency_url}")
     return None
@@ -201,8 +233,9 @@ def download_external_dependency(dependency_url: str, file_path: Path) -> Option
 def read_mag_data(cdf_path: Union[str, Path]) -> MagData:
     with CDF(str(cdf_path)) as cdf:
         return MagData(
-            epoch=cdf['epoch'][...],
-            mag_data=read_numeric_variable(cdf["b_dsrf"])[:, :3])
+            epoch=cdf["epoch"][...],
+            mag_data=read_numeric_variable(cdf["b_dsrf"])[:, :3],
+        )
 
 
 def select_mag_path(
@@ -212,18 +245,23 @@ def select_mag_path(
     science_files = dependencies.processing_input
     for level in ("l2", "l1d"):
         match = next(
-            (d.imap_file_paths[0] for d in science_files
-             if d.source == "mag"
-             and d.descriptor == descriptor
-             and d.data_type == level),
+            (
+                d.imap_file_paths[0]
+                for d in science_files
+                if d.source == "mag"
+                and d.descriptor == descriptor
+                and d.data_type == level
+            ),
             None,
         )
         if match is not None:
             return download(match.construct_path()), level
     return None, None
 
-def get_dependency_paths_by_descriptor(deps: ProcessingInputCollection, descriptors: list[str]) -> dict[
-    str, list[Path]]:
+
+def get_dependency_paths_by_descriptor(
+    deps: ProcessingInputCollection, descriptors: list[str]
+) -> dict[str, list[Path]]:
     descriptor_to_paths = {key: [] for key in descriptors}
     for input_file in deps.get_science_inputs():
         for descriptor in descriptors:
@@ -237,10 +275,10 @@ def get_dependency_paths_by_descriptor(deps: ProcessingInputCollection, descript
 def furnish_local_spice():
     kernels = Path(imap_l3_processing.__file__).parent.parent.joinpath("spice_kernels")
 
-    total_kernels = spiceypy.ktotal('ALL')
+    total_kernels = spiceypy.ktotal("ALL")
     current_kernels = []
     for i in range(0, total_kernels):
-        current_kernels.append(Path(spiceypy.kdata(i, 'ALL')[0]).name)
+        current_kernels.append(Path(spiceypy.kdata(i, "ALL")[0]).name)
 
     for file in kernels.iterdir():
         if file.name not in current_kernels:
@@ -248,8 +286,8 @@ def furnish_local_spice():
 
 
 def get_spice_parent_file_names() -> list[str]:
-    count = spiceypy.ktotal('ALL')
-    return [Path(spiceypy.kdata(i, 'ALL')[0]).name for i in range(0, count)]
+    count = spiceypy.ktotal("ALL")
+    return [Path(spiceypy.kdata(i, "ALL")[0]).name for i in range(0, count)]
 
 
 @dataclass
@@ -258,36 +296,56 @@ class FurnishMetakernelOutput:
     spice_kernel_paths: list[Path]
 
 
-def get_spice_kernels_file_names(start_date: datetime, end_date: datetime, kernel_types: list[SpiceKernelTypes]) -> \
-        list[str]:
-    metakernel_url = urlparse(imap_data_access.config['DATA_ACCESS_URL'])._replace(path="metakernel").geturl()
+def get_spice_kernels_file_names(
+    start_date: datetime, end_date: datetime, kernel_types: list[SpiceKernelTypes]
+) -> list[str]:
+    metakernel_url = (
+        urlparse(imap_data_access.config["DATA_ACCESS_URL"])
+        ._replace(path="metakernel")
+        .geturl()
+    )
 
     parameters: dict = {
-        'file_types': [kernel_type.value for kernel_type in kernel_types],
-        'start_time': f"{int((start_date - datetime(2000, 1, 1, 12)).total_seconds())}",
-        'end_time': f"{int((end_date - datetime(2000, 1, 1, 12)).total_seconds())}",
+        "file_types": [kernel_type.value for kernel_type in kernel_types],
+        "start_time": f"{int((start_date - datetime(2000, 1, 1, 12)).total_seconds())}",
+        "end_time": f"{int((end_date - datetime(2000, 1, 1, 12)).total_seconds())}",
     }
 
-    kernels_res = requests.get(metakernel_url, params={**parameters, 'list_files': 'true'})
+    kernels_res = requests.get(
+        metakernel_url, params={**parameters, "list_files": "true"}
+    )
     kernels = json.loads(kernels_res.text)
 
     return kernels
 
 
-def furnish_spice_metakernel(start_date: datetime, end_date: datetime, kernel_types: list[SpiceKernelTypes], metakernel_file_name: str="metakernel.txt") -> FurnishMetakernelOutput:
-    metakernel_path = imap_data_access.config.get("DATA_DIR") / "metakernel" / metakernel_file_name
+def furnish_spice_metakernel(
+    start_date: datetime,
+    end_date: datetime,
+    kernel_types: list[SpiceKernelTypes],
+    metakernel_file_name: str = "metakernel.txt",
+) -> FurnishMetakernelOutput:
+    metakernel_path = (
+        imap_data_access.config.get("DATA_DIR") / "metakernel" / metakernel_file_name
+    )
     kernel_path = imap_data_access.config.get("DATA_DIR") / "imap" / "spice"
 
     parameters: dict = {
-        'spice_path': kernel_path,
-        'file_types': [kernel_type.value for kernel_type in kernel_types],
-        'start_time': str(int((start_date - datetime(2000, 1, 1, 12)).total_seconds())),
-        'end_time': str(int((end_date - datetime(2000, 1, 1, 12)).total_seconds())),
+        "spice_path": kernel_path,
+        "file_types": [kernel_type.value for kernel_type in kernel_types],
+        "start_time": str(int((start_date - datetime(2000, 1, 1, 12)).total_seconds())),
+        "end_time": str(int((end_date - datetime(2000, 1, 1, 12)).total_seconds())),
     }
 
-    metakernel_url = urlparse(imap_data_access.config['DATA_ACCESS_URL'])._replace(path="metakernel").geturl()
+    metakernel_url = (
+        urlparse(imap_data_access.config["DATA_ACCESS_URL"])
+        ._replace(path="metakernel")
+        .geturl()
+    )
 
-    logger.info(f"Getting SPICE Metakernel from: {metakernel_url}, with params: {parameters}")
+    logger.info(
+        f"Getting SPICE Metakernel from: {metakernel_url}, with params: {parameters}"
+    )
 
     metakernel_res = requests.get(metakernel_url, params=parameters)
 
@@ -301,7 +359,10 @@ def furnish_spice_metakernel(start_date: datetime, end_date: datetime, kernel_ty
 
     spiceypy.furnsh(str(metakernel_path))
 
-    return FurnishMetakernelOutput(metakernel_path=metakernel_path, spice_kernel_paths=downloaded_paths)
+    return FurnishMetakernelOutput(
+        metakernel_path=metakernel_path, spice_kernel_paths=downloaded_paths
+    )
+
 
 @contextmanager
 def furnished_metakernel(start_date, end_date, kernel_types):
@@ -310,12 +371,14 @@ def furnished_metakernel(start_date, end_date, kernel_types):
     finally:
         spiceypy.kclear()
 
+
 def read_cdf_parents(server_file_name: str) -> set[str]:
     downloaded_path = imap_data_access.download(server_file_name)
 
     with CDF(str(downloaded_path)) as cdf:
         parents = set(cdf.attrs["Parents"])
     return parents
+
 
 def get_version_from_query_result(science_file_query_result):
     if "major_version" in science_file_query_result:
@@ -325,5 +388,3 @@ def get_version_from_query_result(science_file_query_result):
         )
     else:
         return Version.from_version(science_file_query_result["version"])
-
-

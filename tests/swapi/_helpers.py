@@ -108,4 +108,5 @@ def synthesize_count_rates(ctx, sw_params: SolarWindParams) -> np.ndarray:
     ideal, _ = model_solar_wind_ideal_coincidence_rates(sw_params, ctx)
     return ideal * deadtime_factor(ideal)
 
+
 NOMINAL_TEST_EPOCH_TT2000 = pycdf.lib.datetime_to_tt2000(datetime(2026, 1, 1))

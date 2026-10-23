@@ -315,7 +315,7 @@ def _plot_results(data: pd.DataFrame) -> None:
             marker="o",
             zorder=2,
             label="Initial guess",
-            rasterized=True
+            rasterized=True,
         )
         ax.errorbar(
             truth[good],
@@ -344,7 +344,7 @@ def _plot_results(data: pd.DataFrame) -> None:
                 edgecolors="k",
                 linewidths=0.4,
                 zorder=4,
-                rasterized=True
+                rasterized=True,
             )
             ax.scatter(
                 truth[~good],
@@ -356,7 +356,7 @@ def _plot_results(data: pd.DataFrame) -> None:
                 edgecolors="k",
                 linewidths=0.4,
                 zorder=4,
-                rasterized=True
+                rasterized=True,
             )
 
         ax.set_xlabel(f"True {label}", fontsize=9)

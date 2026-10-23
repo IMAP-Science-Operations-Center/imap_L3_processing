@@ -13,9 +13,7 @@ from imap_l3_processing.models import InputMetadata, VersionMap
 from tests.test_helpers import get_run_local_data_path
 
 
-def copy_to_output_directory(
-        release_directory: Path, output_maps: list[Path]
-):
+def copy_to_output_directory(release_directory: Path, output_maps: list[Path]):
     release_directory.mkdir(parents=True, exist_ok=True)
 
     for generated_path in output_maps:
@@ -23,8 +21,11 @@ def copy_to_output_directory(
 
 
 if __name__ == "__main__":
-
-    logging.basicConfig(force=True, level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logging.basicConfig(
+        force=True,
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
 
     output_data_path = get_run_local_data_path("lo_txt_pipeline")
     shutil.rmtree(output_data_path / "imap" / "lo" / "l2", ignore_errors=True)
@@ -92,22 +93,21 @@ if __name__ == "__main__":
             input_files[sfp.descriptor] = file.name
     output_maps = []
     for combined_descriptor, combined_dependencies in maps_needed_for_combination:
-
         [combined_sp_map] = LoProcessor(
-            dependencies=ProcessingInputCollection(*[ScienceInput(input_files[desc]) for desc in combined_dependencies]),
+            dependencies=ProcessingInputCollection(
+                *[ScienceInput(input_files[desc]) for desc in combined_dependencies]
+            ),
             input_metadata=InputMetadata(
                 instrument="lo",
                 data_level="l3",
-                start_date=datetime(2025,11,25),
+                start_date=datetime(2025, 11, 25),
                 end_date=None,
                 version=VersionMap({}, Version(None, 2)),
-                descriptor=combined_descriptor
-            )
+                descriptor=combined_descriptor,
+            ),
         ).process()
 
-        output_maps.extend([
-            combined_sp_map
-        ])
+        output_maps.extend([combined_sp_map])
 
     release_directory = get_run_local_data_path("IMAP-Lo July 31st 2026 Maps")
     copy_to_output_directory(release_directory, output_maps)

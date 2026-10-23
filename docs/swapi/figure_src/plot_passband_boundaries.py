@@ -85,9 +85,7 @@ def plot_region_panel(
         grid, grid.max_boundary, active_elevations, np.maximum
     )
 
-    image = draw_transmission_heatmap(
-        axis, grid.values, elevations, speed_ratios
-    )
+    image = draw_transmission_heatmap(axis, grid.values, elevations, speed_ratios)
     draw_integration_window_outline(
         axis, active_elevations, lower_speed_ratios, upper_speed_ratios
     )

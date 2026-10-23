@@ -15,9 +15,30 @@ _FAKE_SXFORM_ROTATION = np.array(
         [-0.803319036, -0.595067395, -0.023944118, 0.0, 0.0, 0.0],
         [0.594803234, -0.803675802, 0.017728995, 0.0, 0.0, 0.0],
         [-0.029793255, 0.0, 0.999556082, 0.0, 0.0, 0.0],
-        [-1.16314295e-06, 1.56750981e-06, 6.68593934e-08, -0.803319036, -0.595067395, -0.023944118],
-        [-1.56457525e-06, -1.16063465e-06, -1.21809529e-07, 0.594803234, -0.803675802, 0.017728995],
-        [1.26218156e-07, 5.29395592e-23, 3.76211978e-09, -0.029793255, 0.0, 0.999556082],
+        [
+            -1.16314295e-06,
+            1.56750981e-06,
+            6.68593934e-08,
+            -0.803319036,
+            -0.595067395,
+            -0.023944118,
+        ],
+        [
+            -1.56457525e-06,
+            -1.16063465e-06,
+            -1.21809529e-07,
+            0.594803234,
+            -0.803675802,
+            0.017728995,
+        ],
+        [
+            1.26218156e-07,
+            5.29395592e-23,
+            3.76211978e-09,
+            -0.029793255,
+            0.0,
+            0.999556082,
+        ],
     ]
 )
 
@@ -42,7 +63,9 @@ class ConvertVelocityRelativeToImapTest(SpiceTestCase):
             ]
         )
         np.testing.assert_array_almost_equal(output_velocity, expected)
-        mock_spice.sxform.assert_called_with("INPUT_FRAME", "OUTPUT_FRAME", ephemeris_time)
+        mock_spice.sxform.assert_called_with(
+            "INPUT_FRAME", "OUTPUT_FRAME", ephemeris_time
+        )
         mock_spice.spkezr.assert_called_with(
             "IMAP", ephemeris_time, "OUTPUT_FRAME", "NONE", "SUN"
         )

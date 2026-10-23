@@ -22,21 +22,34 @@ class GlowsL3BCDependencies:
 
     @property
     def l3a_file_names(self):
-        return [l3a['filename'] for l3a in self.l3a_data]
+        return [l3a["filename"] for l3a in self.l3a_data]
 
     @classmethod
-    def download_from_cr_to_process(cls, cr_to_process: CRToProcess, version: Version,
-                                    external_dependencies: ExternalDependencies, repointing_file_path: Path):
+    def download_from_cr_to_process(
+        cls,
+        cr_to_process: CRToProcess,
+        version: Version,
+        external_dependencies: ExternalDependencies,
+        repointing_file_path: Path,
+    ):
         external_files = {
-            'f107_raw_data': external_dependencies.f107_index_file_path,
-            'omni_raw_data': external_dependencies.omni2_data_path
+            "f107_raw_data": external_dependencies.f107_index_file_path,
+            "omni_raw_data": external_dependencies.omni2_data_path,
         }
 
         ancillary_files = {
-            'uv_anisotropy': imap_data_access.download(cr_to_process.uv_anisotropy_file_name),
-            'WawHelioIonMP_parameters': imap_data_access.download(cr_to_process.waw_helio_ion_mp_file_name),
-            'bad_days_list': imap_data_access.download(cr_to_process.bad_days_list_file_name),
-            'pipeline_settings': imap_data_access.download(cr_to_process.pipeline_settings_file_name),
+            "uv_anisotropy": imap_data_access.download(
+                cr_to_process.uv_anisotropy_file_name
+            ),
+            "WawHelioIonMP_parameters": imap_data_access.download(
+                cr_to_process.waw_helio_ion_mp_file_name
+            ),
+            "bad_days_list": imap_data_access.download(
+                cr_to_process.bad_days_list_file_name
+            ),
+            "pipeline_settings": imap_data_access.download(
+                cr_to_process.pipeline_settings_file_name
+            ),
         }
 
         l3a_data = []
@@ -52,5 +65,5 @@ class GlowsL3BCDependencies:
             l3a_data=l3a_data,
             external_files=external_files,
             ancillary_files=ancillary_files,
-            repointing_file_path=repointing_file_path
+            repointing_file_path=repointing_file_path,
         )

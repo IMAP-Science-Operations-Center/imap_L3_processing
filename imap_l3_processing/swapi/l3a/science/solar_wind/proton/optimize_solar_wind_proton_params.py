@@ -17,8 +17,8 @@ from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 @dataclass
 class OptimizeSolarWindProtonParamsResult:
     sw_params: SolarWindParams
-    residuals: ndarray      # count-rate residuals at the solution
-    jacobian: ndarray       # ∂residuals/∂param, columns ordered per the params vector
+    residuals: ndarray  # count-rate residuals at the solution
+    jacobian: ndarray  # ∂residuals/∂param, columns ordered per the params vector
     success: bool
 
     @property

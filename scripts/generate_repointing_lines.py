@@ -14,8 +14,12 @@ def add_repointings():
     first_repointing_inclusive = 1000 - 104
 
     for repointing in range(first_repointing_inclusive, last_repointing_exclusive):
-        start_datetime = repoint1000minus104start + (repointing - (first_repointing_inclusive)) * timedelta(days=1)
-        end_datetime = repoint1000minus104end + (repointing - (first_repointing_inclusive)) * timedelta(days=1)
+        start_datetime = repoint1000minus104start + (
+            repointing - (first_repointing_inclusive)
+        ) * timedelta(days=1)
+        end_datetime = repoint1000minus104end + (
+            repointing - (first_repointing_inclusive)
+        ) * timedelta(days=1)
 
         start_sclk = int((start_datetime - spacecraft_clock_start).total_seconds())
         repoint_start_subsec_sclk = 20
@@ -23,8 +27,8 @@ def add_repointings():
         end_sclk = int((end_datetime - spacecraft_clock_start).total_seconds())
         repoint_end_subsec_sclk = 999980
 
-        formatted_start = start_datetime.strftime('%Y-%m-%d %H:%M:%S.%f')
-        formatted_end = end_datetime.strftime('%Y-%m-%d %H:%M:%S.%f')
+        formatted_start = start_datetime.strftime("%Y-%m-%d %H:%M:%S.%f")
+        formatted_end = end_datetime.strftime("%Y-%m-%d %H:%M:%S.%f")
         csv_line = f"{start_sclk},{repoint_start_subsec_sclk},{end_sclk},{repoint_end_subsec_sclk},{formatted_start},{formatted_end},{repointing}"
         print(csv_line)
 

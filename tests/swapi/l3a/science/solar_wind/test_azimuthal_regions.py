@@ -32,7 +32,8 @@ class TestAzimuthalRegionConstants(unittest.TestCase):
     def test_region_namedtuple_field_order_is_stable(self):
         """The AzimuthalRegion NamedTuple field order is locked so positional unpacking in numba forward-model loops keeps working."""
         self.assertEqual(
-            AzimuthalRegion._fields, ("is_sunglasses", "is_open_aperture", "azimuth_sign")
+            AzimuthalRegion._fields,
+            ("is_sunglasses", "is_open_aperture", "azimuth_sign"),
         )
 
 

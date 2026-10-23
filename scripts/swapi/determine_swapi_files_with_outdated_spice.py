@@ -5,7 +5,12 @@ data_level = "l3a"
 descriptors = ["pui-he"]
 
 for descriptor in descriptors:
-    query_results = imap_data_access.query(instrument="swapi", data_level=data_level, descriptor=descriptor, version="latest")
+    query_results = imap_data_access.query(
+        instrument="swapi",
+        data_level=data_level,
+        descriptor=descriptor,
+        version="latest",
+    )
 
     dates_that_used_predict = []
     for result in sorted(query_results, key=lambda r: r["start_date"]):

@@ -29,12 +29,16 @@ def run_spectral_index(input: Path):
     parsed_descriptor = parse_map_descriptor(parsed.descriptor)
 
     output_descriptor = map_descriptor_parts_to_string(
-        dataclasses.replace(parsed_descriptor, quantity=MapQuantity.SpectralIndex, quantity_suffix="")
+        dataclasses.replace(
+            parsed_descriptor, quantity=MapQuantity.SpectralIndex, quantity_suffix=""
+        )
     )
 
     dependencies = ProcessingInputCollection(ScienceInput(input.name))
-    if parsed.instrument == 'ultra':
-        dependencies.add(AncillaryInput("imap_ultra_ulc-spx-energy-ranges_20250407_v000.dat"))
+    if parsed.instrument == "ultra":
+        dependencies.add(
+            AncillaryInput("imap_ultra_ulc-spx-energy-ranges_20250407_v000.dat")
+        )
 
     data_path = parsed.construct_path()
     data_path.parent.mkdir(parents=True, exist_ok=True)
@@ -56,6 +60,7 @@ def run_spectral_index(input: Path):
 if __name__ == "__main__":
     outputs = []
     for file in Path(
-            '/Users/harrison/Development/imap_L3_processing/run_local_input_data/lo/integration_data/imap/lo/l3/2025/04').iterdir():
+        "/Users/harrison/Development/imap_L3_processing/run_local_input_data/lo/integration_data/imap/lo/l3/2025/04"
+    ).iterdir():
         outputs.extend(run_spectral_index(file))
     print(outputs)
