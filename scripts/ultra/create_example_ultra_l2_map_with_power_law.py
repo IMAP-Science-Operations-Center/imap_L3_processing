@@ -56,7 +56,7 @@ def _create_example_ultra_l2_map_with_power_law(
         cdf.new("epoch_delta", np.array([1]))
         cdf.new("energy_delta_plus", np.full_like(energies, 0.1))
         cdf.new("energy_delta_minus", np.full_like(energies, 0.1))
-        (cdf.new("energy_label", [str(val) for val in energies]),)
+        cdf.new("energy_label", [str(val) for val in energies])
         cdf.new(
             "obs_date",
             np.full_like(

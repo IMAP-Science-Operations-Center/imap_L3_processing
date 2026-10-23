@@ -412,187 +412,189 @@ import numpy
 import scipy.linalg.blas
 
 
-# Original FORTRAN documentation
-# **********
+# fmt: off
+#        Original FORTRAN documentation
+#        **********
 #
-# subroutine lmdif
+#        subroutine lmdif
 #
-# the purpose of lmdif is to minimize the sum of the squares of
-# m nonlinear functions in n variables by a modification of
-# the levenberg-marquardt algorithm. the user must provide a
-# subroutine which calculates the functions. the jacobian is
-# then calculated by a forward-difference approximation.
+#        the purpose of lmdif is to minimize the sum of the squares of
+#        m nonlinear functions in n variables by a modification of
+#        the levenberg-marquardt algorithm. the user must provide a
+#        subroutine which calculates the functions. the jacobian is
+#        then calculated by a forward-difference approximation.
 #
-# the subroutine statement is
+#        the subroutine statement is
 #
-# subroutine lmdif(fcn,m,n,x,fvec,ftol,xtol,gtol,maxfev,epsfcn,
-# diag,mode,factor,nprint,info,nfev,fjac,
-# ldfjac,ipvt,qtf,wa1,wa2,wa3,wa4)
+#          subroutine lmdif(fcn,m,n,x,fvec,ftol,xtol,gtol,maxfev,epsfcn,
+#                                               diag,mode,factor,nprint,info,nfev,fjac,
+#                                               ldfjac,ipvt,qtf,wa1,wa2,wa3,wa4)
 #
-# where
+#        where
 #
-# fcn is the name of the user-supplied subroutine which
-# calculates the functions. fcn must be declared
-# in an external statement in the user calling
-# program, and should be written as follows.
+#          fcn is the name of the user-supplied subroutine which
+#                calculates the functions. fcn must be declared
+#                in an external statement in the user calling
+#                program, and should be written as follows.
 #
-# subroutine fcn(m,n,x,fvec,iflag)
-# integer m,n,iflag
-# double precision x(n),fvec(m)
-# ----------
-# calculate the functions at x and
-# return this vector in fvec.
-# ----------
-# return
-# end
+#                subroutine fcn(m,n,x,fvec,iflag)
+#                integer m,n,iflag
+#                double precision x(n),fvec(m)
+#                ----------
+#                calculate the functions at x and
+#                return this vector in fvec.
+#                ----------
+#                return
+#                end
 #
-# the value of iflag should not be changed by fcn unless
-# the user wants to terminate execution of lmdif.
-# in this case set iflag to a negative integer.
+#                the value of iflag should not be changed by fcn unless
+#                the user wants to terminate execution of lmdif.
+#                in this case set iflag to a negative integer.
 #
-# m is a positive integer input variable set to the number
-# of functions.
+#          m is a positive integer input variable set to the number
+#                of functions.
 #
-# n is a positive integer input variable set to the number
-# of variables. n must not exceed m.
+#          n is a positive integer input variable set to the number
+#                of variables. n must not exceed m.
 #
-# x is an array of length n. on input x must contain
-# an initial estimate of the solution vector. on output x
-# contains the final estimate of the solution vector.
+#          x is an array of length n. on input x must contain
+#                an initial estimate of the solution vector. on output x
+#                contains the final estimate of the solution vector.
 #
-# fvec is an output array of length m which contains
-# the functions evaluated at the output x.
+#          fvec is an output array of length m which contains
+#                the functions evaluated at the output x.
 #
-# ftol is a nonnegative input variable. termination
-# occurs when both the actual and predicted relative
-# reductions in the sum of squares are at most ftol.
-# therefore, ftol measures the relative error desired
-# in the sum of squares.
+#          ftol is a nonnegative input variable. termination
+#                occurs when both the actual and predicted relative
+#                reductions in the sum of squares are at most ftol.
+#                therefore, ftol measures the relative error desired
+#                in the sum of squares.
 #
-# xtol is a nonnegative input variable. termination
-# occurs when the relative error between two consecutive
-# iterates is at most xtol. therefore, xtol measures the
-# relative error desired in the approximate solution.
+#          xtol is a nonnegative input variable. termination
+#                occurs when the relative error between two consecutive
+#                iterates is at most xtol. therefore, xtol measures the
+#                relative error desired in the approximate solution.
 #
-# gtol is a nonnegative input variable. termination
-# occurs when the cosine of the angle between fvec and
-# any column of the jacobian is at most gtol in absolute
-# value. therefore, gtol measures the orthogonality
-# desired between the function vector and the columns
-# of the jacobian.
+#          gtol is a nonnegative input variable. termination
+#                occurs when the cosine of the angle between fvec and
+#                any column of the jacobian is at most gtol in absolute
+#                value. therefore, gtol measures the orthogonality
+#                desired between the function vector and the columns
+#                of the jacobian.
 #
-# maxfev is a positive integer input variable. termination
-# occurs when the number of calls to fcn is at least
-# maxfev by the end of an iteration.
+#          maxfev is a positive integer input variable. termination
+#                occurs when the number of calls to fcn is at least
+#                maxfev by the end of an iteration.
 #
-# epsfcn is an input variable used in determining a suitable
-# step length for the forward-difference approximation. this
-# approximation assumes that the relative errors in the
-# functions are of the order of epsfcn. if epsfcn is less
-# than the machine precision, it is assumed that the relative
-# errors in the functions are of the order of the machine
-# precision.
+#          epsfcn is an input variable used in determining a suitable
+#                step length for the forward-difference approximation. this
+#                approximation assumes that the relative errors in the
+#                functions are of the order of epsfcn. if epsfcn is less
+#                than the machine precision, it is assumed that the relative
+#                errors in the functions are of the order of the machine
+#                precision.
 #
-# diag is an array of length n. if mode = 1 (see
-# below), diag is internally set. if mode = 2, diag
-# must contain positive entries that serve as
-# multiplicative scale factors for the variables.
+#          diag is an array of length n. if mode = 1 (see
+#                below), diag is internally set. if mode = 2, diag
+#                must contain positive entries that serve as
+#                multiplicative scale factors for the variables.
 #
-# mode is an integer input variable. if mode = 1, the
-# variables will be scaled internally. if mode = 2,
-# the scaling is specified by the input diag. other
-# values of mode are equivalent to mode = 1.
+#          mode is an integer input variable. if mode = 1, the
+#                variables will be scaled internally. if mode = 2,
+#                the scaling is specified by the input diag. other
+#                values of mode are equivalent to mode = 1.
 #
-# factor is a positive input variable used in determining the
-# initial step bound. this bound is set to the product of
-# factor and the euclidean norm of diag*x if nonzero, or else
-# to factor itself. in most cases factor should lie in the
-# interval (.1,100.). 100. is a generally recommended value.
+#          factor is a positive input variable used in determining the
+#                initial step bound. this bound is set to the product of
+#                factor and the euclidean norm of diag*x if nonzero, or else
+#                to factor itself. in most cases factor should lie in the
+#                interval (.1,100.). 100. is a generally recommended value.
 #
-# nprint is an integer input variable that enables controlled
-# printing of iterates if it is positive. in this case,
-# fcn is called with iflag = 0 at the beginning of the first
-# iteration and every nprint iterations thereafter and
-# immediately prior to return, with x and fvec available
-# for printing. if nprint is not positive, no special calls
-# of fcn with iflag = 0 are made.
+#          nprint is an integer input variable that enables controlled
+#                printing of iterates if it is positive. in this case,
+#                fcn is called with iflag = 0 at the beginning of the first
+#                iteration and every nprint iterations thereafter and
+#                immediately prior to return, with x and fvec available
+#                for printing. if nprint is not positive, no special calls
+#                of fcn with iflag = 0 are made.
 #
-# info is an integer output variable. if the user has
-# terminated execution, info is set to the (negative)
-# value of iflag. see description of fcn. otherwise,
-# info is set as follows.
+#          info is an integer output variable. if the user has
+#                terminated execution, info is set to the (negative)
+#                value of iflag. see description of fcn. otherwise,
+#                info is set as follows.
 #
-# info = 0  improper input parameters.
+#                info = 0  improper input parameters.
 #
-# info = 1  both actual and predicted relative reductions
-# in the sum of squares are at most ftol.
+#                info = 1  both actual and predicted relative reductions
+#                                  in the sum of squares are at most ftol.
 #
-# info = 2  relative error between two consecutive iterates
-# is at most xtol.
+#                info = 2  relative error between two consecutive iterates
+#                                  is at most xtol.
 #
-# info = 3  conditions for info = 1 and info = 2 both hold.
+#                info = 3  conditions for info = 1 and info = 2 both hold.
 #
-# info = 4  the cosine of the angle between fvec and any
-# column of the jacobian is at most gtol in
-# absolute value.
+#                info = 4  the cosine of the angle between fvec and any
+#                                  column of the jacobian is at most gtol in
+#                                  absolute value.
 #
-# info = 5  number of calls to fcn has reached or
-# exceeded maxfev.
+#                info = 5  number of calls to fcn has reached or
+#                                  exceeded maxfev.
 #
-# info = 6  ftol is too small. no further reduction in
-# the sum of squares is possible.
+#                info = 6  ftol is too small. no further reduction in
+#                                  the sum of squares is possible.
 #
-# info = 7  xtol is too small. no further improvement in
-# the approximate solution x is possible.
+#                info = 7  xtol is too small. no further improvement in
+#                                  the approximate solution x is possible.
 #
-# info = 8  gtol is too small. fvec is orthogonal to the
-# columns of the jacobian to machine precision.
+#                info = 8  gtol is too small. fvec is orthogonal to the
+#                                  columns of the jacobian to machine precision.
 #
-# nfev is an integer output variable set to the number of
-# calls to fcn.
+#          nfev is an integer output variable set to the number of
+#                calls to fcn.
 #
-# fjac is an output m by n array. the upper n by n submatrix
-# of fjac contains an upper triangular matrix r with
-# diagonal elements of nonincreasing magnitude such that
+#          fjac is an output m by n array. the upper n by n submatrix
+#                of fjac contains an upper triangular matrix r with
+#                diagonal elements of nonincreasing magnitude such that
 #
-# t	 t		   t
-# p *(jac *jac)*p = r *r,
+#                               t        t                 t
+#                          p *(jac *jac)*p = r *r,
 #
-# where p is a permutation matrix and jac is the final
-# calculated jacobian. column j of p is column ipvt(j)
-# (see below) of the identity matrix. the lower trapezoidal
-# part of fjac contains information generated during
-# the computation of r.
+#                where p is a permutation matrix and jac is the final
+#                calculated jacobian. column j of p is column ipvt(j)
+#                (see below) of the identity matrix. the lower trapezoidal
+#                part of fjac contains information generated during
+#                the computation of r.
 #
-# ldfjac is a positive integer input variable not less than m
-# which specifies the leading dimension of the array fjac.
+#          ldfjac is a positive integer input variable not less than m
+#                which specifies the leading dimension of the array fjac.
 #
-# ipvt is an integer output array of length n. ipvt
-# defines a permutation matrix p such that jac*p = q*r,
-# where jac is the final calculated jacobian, q is
-# orthogonal (not stored), and r is upper triangular
-# with diagonal elements of nonincreasing magnitude.
-# column j of p is column ipvt(j) of the identity matrix.
+#          ipvt is an integer output array of length n. ipvt
+#                defines a permutation matrix p such that jac*p = q*r,
+#                where jac is the final calculated jacobian, q is
+#                orthogonal (not stored), and r is upper triangular
+#                with diagonal elements of nonincreasing magnitude.
+#                column j of p is column ipvt(j) of the identity matrix.
 #
-# qtf is an output array of length n which contains
-# the first n elements of the vector (q transpose)*fvec.
+#          qtf is an output array of length n which contains
+#                the first n elements of the vector (q transpose)*fvec.
 #
-# wa1, wa2, and wa3 are work arrays of length n.
+#          wa1, wa2, and wa3 are work arrays of length n.
 #
-# wa4 is a work array of length m.
+#          wa4 is a work array of length m.
 #
-# subprograms called
+#        subprograms called
 #
-# user-supplied ...... fcn
+#          user-supplied ...... fcn
 #
-# minpack-supplied ... dpmpar,enorm,fdjac2,,qrfac
+#          minpack-supplied ... dpmpar,enorm,fdjac2,,qrfac
 #
-# fortran-supplied ... dabs,dmax1,dmin1,dsqrt,mod
+#          fortran-supplied ... dabs,dmax1,dmin1,dsqrt,mod
 #
-# argonne national laboratory. minpack project. march 1980.
-# burton s. garbow, kenneth e. hillstrom, jorge j. more
+#        argonne national laboratory. minpack project. march 1980.
+#        burton s. garbow, kenneth e. hillstrom, jorge j. more
 #
-# **********
+#        **********
+# fmt: on
 
 
 class mpfit:
@@ -1521,21 +1523,23 @@ class mpfit:
                 print(p + (pformat % x[i]) + "  ")
         return 0
 
+    # fmt: off
     #  DO_ITERSTOP:
     #  if keyword_set(iterstop) then begin
-    # k = get_kbrd(0)
-    # if k EQ string(byte(7)) then begin
-    # message, 'WARNING: minimization not complete', /info
-    # print, 'Do you want to terminate this procedure? (y/n)', $
-    # format='(A,$)'
-    # k = ''
-    # read, k
-    # if strupcase(strmid(k,0,1)) EQ 'Y' then begin
-    # message, 'WARNING: Procedure is terminating.', /info
-    # mperr = -1
-    # endif
-    # endif
+    #     k = get_kbrd(0)
+    #     if k EQ string(byte(7)) then begin
+    #             message, 'WARNING: minimization not complete', /info
+    #             print, 'Do you want to terminate this procedure? (y/n)', $
+    #                   format='(A,$)'
+    #             k = ''
+    #             read, k
+    #             if strupcase(strmid(k,0,1)) EQ 'Y' then begin
+    #                     message, 'WARNING: Procedure is terminating.', /info
+    #                     mperr = -1
+    #             endif
+    #     endif
     #  endif
+    # fmt: on
 
     # Procedure to parse the parameter values in PARINFO, which is a list of dictionaries
     def parinfo(self, parinfo=None, key="a", default=None, n=0):
@@ -1699,82 +1703,83 @@ class mpfit:
                 fjac[0:, j] = (fp - fm) / (2 * h[j])
         return fjac
 
-    # Original FORTRAN documentation
-    # **********
+    # fmt: off
+    #    Original FORTRAN documentation
+    #    **********
     #
-    # subroutine qrfac
+    #    subroutine qrfac
     #
-    # this subroutine uses householder transformations with column
-    # pivoting (optional) to compute a qr factorization of the
-    # m by n matrix a. that is, qrfac determines an orthogonal
-    # matrix q, a permutation matrix p, and an upper trapezoidal
-    # matrix r with diagonal elements of nonincreasing magnitude,
-    # such that a*p = q*r. the householder transformation for
-    # column k, k = 1,2,...,min(m,n), is of the form
+    #    this subroutine uses householder transformations with column
+    #    pivoting (optional) to compute a qr factorization of the
+    #    m by n matrix a. that is, qrfac determines an orthogonal
+    #    matrix q, a permutation matrix p, and an upper trapezoidal
+    #    matrix r with diagonal elements of nonincreasing magnitude,
+    #    such that a*p = q*r. the householder transformation for
+    #    column k, k = 1,2,...,min(m,n), is of the form
     #
-    # t
-    # i - (1/u(k))*u*u
+    #                                           t
+    #           i - (1/u(k))*u*u
     #
-    # where u has zeros in the first k-1 positions. the form of
-    # this transformation and the method of pivoting first
-    # appeared in the corresponding linpack subroutine.
+    #    where u has zeros in the first k-1 positions. the form of
+    #    this transformation and the method of pivoting first
+    #    appeared in the corresponding linpack subroutine.
     #
-    # the subroutine statement is
+    #    the subroutine statement is
     #
-    # subroutine qrfac(m,n,a,lda,pivot,ipvt,lipvt,rdiag,acnorm,wa)
+    #   subroutine qrfac(m,n,a,lda,pivot,ipvt,lipvt,rdiag,acnorm,wa)
     #
-    # where
+    #    where
     #
-    # m is a positive integer input variable set to the number
-    # of rows of a.
+    #   m is a positive integer input variable set to the number
+    #     of rows of a.
     #
-    # n is a positive integer input variable set to the number
-    # of columns of a.
+    #   n is a positive integer input variable set to the number
+    #     of columns of a.
     #
-    # a is an m by n array. on input a contains the matrix for
-    # which the qr factorization is to be computed. on output
-    # the strict upper trapezoidal part of a contains the strict
-    # upper trapezoidal part of r, and the lower trapezoidal
-    # part of a contains a factored form of q (the non-trivial
-    # elements of the u vectors described above).
+    #   a is an m by n array. on input a contains the matrix for
+    #     which the qr factorization is to be computed. on output
+    #     the strict upper trapezoidal part of a contains the strict
+    #     upper trapezoidal part of r, and the lower trapezoidal
+    #     part of a contains a factored form of q (the non-trivial
+    #     elements of the u vectors described above).
     #
-    # lda is a positive integer input variable not less than m
-    # which specifies the leading dimension of the array a.
+    #   lda is a positive integer input variable not less than m
+    #     which specifies the leading dimension of the array a.
     #
-    # pivot is a logical input variable. if pivot is set true,
-    # then column pivoting is enforced. if pivot is set false,
-    # then no column pivoting is done.
+    #   pivot is a logical input variable. if pivot is set true,
+    #     then column pivoting is enforced. if pivot is set false,
+    #     then no column pivoting is done.
     #
-    # ipvt is an integer output array of length lipvt. ipvt
-    # defines the permutation matrix p such that a*p = q*r.
-    # column j of p is column ipvt(j) of the identity matrix.
-    # if pivot is false, ipvt is not referenced.
+    #   ipvt is an integer output array of length lipvt. ipvt
+    #     defines the permutation matrix p such that a*p = q*r.
+    #     column j of p is column ipvt(j) of the identity matrix.
+    #     if pivot is false, ipvt is not referenced.
     #
-    # lipvt is a positive integer input variable. if pivot is false,
-    # then lipvt may be as small as 1. if pivot is true, then
-    # lipvt must be at least n.
+    #   lipvt is a positive integer input variable. if pivot is false,
+    #     then lipvt may be as small as 1. if pivot is true, then
+    #     lipvt must be at least n.
     #
-    # rdiag is an output array of length n which contains the
-    # diagonal elements of r.
+    #   rdiag is an output array of length n which contains the
+    #     diagonal elements of r.
     #
-    # acnorm is an output array of length n which contains the
-    # norms of the corresponding columns of the input matrix a.
-    # if this information is not needed, then acnorm can coincide
-    # with rdiag.
+    #   acnorm is an output array of length n which contains the
+    #     norms of the corresponding columns of the input matrix a.
+    #     if this information is not needed, then acnorm can coincide
+    #     with rdiag.
     #
-    # wa is a work array of length n. if pivot is false, then wa
-    # can coincide with rdiag.
+    #   wa is a work array of length n. if pivot is false, then wa
+    #     can coincide with rdiag.
     #
-    # subprograms called
+    #    subprograms called
     #
-    # minpack-supplied ... dpmpar,enorm
+    #   minpack-supplied ... dpmpar,enorm
     #
-    # fortran-supplied ... dmax1,dsqrt,min0
+    #   fortran-supplied ... dmax1,dsqrt,min0
     #
-    # argonne national laboratory. minpack project. march 1980.
-    # burton s. garbow, kenneth e. hillstrom, jorge j. more
+    #    argonne national laboratory. minpack project. march 1980.
+    #    burton s. garbow, kenneth e. hillstrom, jorge j. more
     #
-    # **********
+    #    **********
     #
     # PIVOTING / PERMUTING:
     #
@@ -1795,40 +1800,41 @@ class mpfit:
     # output.
     #
     #  EXAMPLE:  decompose the matrix [[9.,2.,6.],[4.,8.,7.]]
-    # aa = [[9.,2.,6.],[4.,8.,7.]]
-    # mpfit_qrfac, aa, aapvt, rdiag, aanorm
-    # IDL> print, aa
-    # 1.81818*	 0.181818*	 0.545455*
-    # -8.54545+	  1.90160*	 0.432573*
-    # IDL> print, rdiag
-    # -11.0000+	 -7.48166+
+    #   aa = [[9.,2.,6.],[4.,8.,7.]]
+    #   mpfit_qrfac, aa, aapvt, rdiag, aanorm
+    #    IDL> print, aa
+    #             1.81818*       0.181818*       0.545455*
+    #            -8.54545+        1.90160*       0.432573*
+    #    IDL> print, rdiag
+    #            -11.0000+       -7.48166+
     #
     # The components marked with a * are the components of the
     # reflectors, and those marked with a + are components of R.
     #
     # To reconstruct Q and R we proceed as follows.  First R.
-    # r = fltarr(m, n)
-    # for i = 0, n-1 do r(0:i,i) = aa(0:i,i)  # fill in lower diag
-    # r(lindgen(n)*(m+1)) = rdiag
+    #   r = fltarr(m, n)
+    #   for i = 0, n-1 do r(0:i,i) = aa(0:i,i)  # fill in lower diag
+    #   r(lindgen(n)*(m+1)) = rdiag
     #
     # Next, Q, which are composed from the reflectors.  Each reflector v
     # is taken from the upper trapezoid of aa, and converted to a matrix
     # via (I - 2 vT . v / (v . vT)).
     #
-    #   hh = ident									# identity matrix
+    #   hh = ident                                                                      # identity matrix
     #   for i = 0, n-1 do begin
-    # v = aa(*,i) & if i GT 0 then v(0:i-1) = 0	# extract reflector
-    # hh = hh # (ident - 2*(v # v)/total(v * v))  # generate matrix
+    #   v = aa(*,i) & if i GT 0 then v(0:i-1) = 0       # extract reflector
+    #   hh = hh # (ident - 2*(v # v)/total(v * v))  # generate matrix
     #   endfor
     #
     # Test the result:
-    # IDL> print, hh # transpose(r)
-    # 9.00000	  4.00000
-    # 2.00000	  8.00000
-    # 6.00000	  7.00000
+    #   IDL> print, hh # transpose(r)
+    #             9.00000         4.00000
+    #             2.00000         8.00000
+    #             6.00000         7.00000
     #
     # Note that it is usually never necessary to form the Q matrix
     # explicitly, and MPFIT does not.
+    # fmt: on
 
     def qrfac(self, a, pivot=0):
 
@@ -1911,83 +1917,85 @@ class mpfit:
             rdiag[j] = -ajnorm
         return [a, ipvt, rdiag, acnorm]
 
-    # Original FORTRAN documentation
-    # **********
+    # fmt: off
+    #    Original FORTRAN documentation
+    #    **********
     #
-    # subroutine qrsolv
+    #    subroutine qrsolv
     #
-    # given an m by n matrix a, an n by n diagonal matrix d,
-    # and an m-vector b, the problem is to determine an x which
-    # solves the system
+    #    given an m by n matrix a, an n by n diagonal matrix d,
+    #    and an m-vector b, the problem is to determine an x which
+    #    solves the system
     #
-    # a*x = b ,	 d*x = 0 ,
+    #              a*x = b ,     d*x = 0 ,
     #
-    # in the least squares sense.
+    #    in the least squares sense.
     #
-    # this subroutine completes the solution of the problem
-    # if it is provided with the necessary information from the
-    # factorization, with column pivoting, of a. that is, if
-    # a*p = q*r, where p is a permutation matrix, q has orthogonal
-    # columns, and r is an upper triangular matrix with diagonal
-    # elements of nonincreasing magnitude, then qrsolv expects
-    # the full upper triangle of r, the permutation matrix p,
-    # and the first n components of (q transpose)*b. the system
-    # a*x = b, d*x = 0, is then equivalent to
+    #    this subroutine completes the solution of the problem
+    #    if it is provided with the necessary information from the
+    #    factorization, with column pivoting, of a. that is, if
+    #    a*p = q*r, where p is a permutation matrix, q has orthogonal
+    #    columns, and r is an upper triangular matrix with diagonal
+    #    elements of nonincreasing magnitude, then qrsolv expects
+    #    the full upper triangle of r, the permutation matrix p,
+    #    and the first n components of (q transpose)*b. the system
+    #    a*x = b, d*x = 0, is then equivalent to
     #
-    # t	   t
-    # r*z = q *b ,  p *d*p*z = 0 ,
+    #                             t        t
+    #              r*z = q *b ,  p *d*p*z = 0 ,
     #
-    # where x = p*z. if this system does not have full rank,
-    # then a least squares solution is obtained. on output qrsolv
-    # also provides an upper triangular matrix s such that
+    #    where x = p*z. if this system does not have full rank,
+    #    then a least squares solution is obtained. on output qrsolv
+    #    also provides an upper triangular matrix s such that
     #
-    # t   t			   t
-    # p *(a *a + d*d)*p = s *s .
+    #                   t   t                      t
+    #              p *(a *a + d*d)*p = s *s .
     #
-    # s is computed within qrsolv and may be of separate interest.
+    #    s is computed within qrsolv and may be of separate interest.
     #
-    # the subroutine statement is
+    #    the subroutine statement is
     #
-    # subroutine qrsolv(n,r,ldr,ipvt,diag,qtb,x,sdiag,wa)
+    #      subroutine qrsolv(n,r,ldr,ipvt,diag,qtb,x,sdiag,wa)
     #
-    # where
+    #    where
     #
-    # n is a positive integer input variable set to the order of r.
+    #      n is a positive integer input variable set to the order of r.
     #
-    # r is an n by n array. on input the full upper triangle
-    # must contain the full upper triangle of the matrix r.
-    # on output the full upper triangle is unaltered, and the
-    # strict lower triangle contains the strict upper triangle
-    # (transposed) of the upper triangular matrix s.
+    #      r is an n by n array. on input the full upper triangle
+    #            must contain the full upper triangle of the matrix r.
+    #            on output the full upper triangle is unaltered, and the
+    #            strict lower triangle contains the strict upper triangle
+    #            (transposed) of the upper triangular matrix s.
     #
-    # ldr is a positive integer input variable not less than n
-    # which specifies the leading dimension of the array r.
+    #      ldr is a positive integer input variable not less than n
+    #            which specifies the leading dimension of the array r.
     #
-    # ipvt is an integer input array of length n which defines the
-    # permutation matrix p such that a*p = q*r. column j of p
-    # is column ipvt(j) of the identity matrix.
+    #      ipvt is an integer input array of length n which defines the
+    #            permutation matrix p such that a*p = q*r. column j of p
+    #            is column ipvt(j) of the identity matrix.
     #
-    # diag is an input array of length n which must contain the
-    # diagonal elements of the matrix d.
+    #      diag is an input array of length n which must contain the
+    #            diagonal elements of the matrix d.
     #
-    # qtb is an input array of length n which must contain the first
-    # n elements of the vector (q transpose)*b.
+    #      qtb is an input array of length n which must contain the first
+    #            n elements of the vector (q transpose)*b.
     #
-    # x is an output array of length n which contains the least
-    # squares solution of the system a*x = b, d*x = 0.
+    #      x is an output array of length n which contains the least
+    #            squares solution of the system a*x = b, d*x = 0.
     #
-    # sdiag is an output array of length n which contains the
-    # diagonal elements of the upper triangular matrix s.
+    #      sdiag is an output array of length n which contains the
+    #            diagonal elements of the upper triangular matrix s.
     #
-    # wa is a work array of length n.
+    #      wa is a work array of length n.
     #
-    # subprograms called
+    #    subprograms called
     #
-    # fortran-supplied ... dabs,dsqrt
+    #      fortran-supplied ... dabs,dsqrt
     #
-    # argonne national laboratory. minpack project. march 1980.
-    # burton s. garbow, kenneth e. hillstrom, jorge j. more
+    #    argonne national laboratory. minpack project. march 1980.
+    #    burton s. garbow, kenneth e. hillstrom, jorge j. more
     #
+    # fmt: on
 
     def qrsolv(self, r, ipvt, diag, qtb, sdiag):
         if self.debug:
@@ -2065,99 +2073,101 @@ class mpfit:
         x[ipvt] = wa
         return (r, x, sdiag)
 
-    # Original FORTRAN documentation
+    # fmt: off
+    #    Original FORTRAN documentation
     #
-    # subroutine lmpar
+    #    subroutine lmpar
     #
-    # given an m by n matrix a, an n by n nonsingular diagonal
-    # matrix d, an m-vector b, and a positive number delta,
-    # the problem is to determine a value for the parameter
-    # par such that if x solves the system
+    #    given an m by n matrix a, an n by n nonsingular diagonal
+    #    matrix d, an m-vector b, and a positive number delta,
+    #    the problem is to determine a value for the parameter
+    #    par such that if x solves the system
     #
-    # a*x = b ,	 sqrt(par)*d*x = 0 ,
+    #           a*x = b ,        sqrt(par)*d*x = 0 ,
     #
-    # in the least squares sense, and dxnorm is the euclidean
-    # norm of d*x, then either par is zero and
+    #    in the least squares sense, and dxnorm is the euclidean
+    #    norm of d*x, then either par is zero and
     #
-    # (dxnorm-delta) .le. 0.1*delta ,
+    #           (dxnorm-delta) .le. 0.1*delta ,
     #
-    # or par is positive and
+    #    or par is positive and
     #
-    # abs(dxnorm-delta) .le. 0.1*delta .
+    #           abs(dxnorm-delta) .le. 0.1*delta .
     #
-    # this subroutine completes the solution of the problem
-    # if it is provided with the necessary information from the
-    # qr factorization, with column pivoting, of a. that is, if
-    # a*p = q*r, where p is a permutation matrix, q has orthogonal
-    # columns, and r is an upper triangular matrix with diagonal
-    # elements of nonincreasing magnitude, then lmpar expects
-    # the full upper triangle of r, the permutation matrix p,
-    # and the first n components of (q transpose)*b. on output
-    # lmpar also provides an upper triangular matrix s such that
+    #    this subroutine completes the solution of the problem
+    #    if it is provided with the necessary information from the
+    #    qr factorization, with column pivoting, of a. that is, if
+    #    a*p = q*r, where p is a permutation matrix, q has orthogonal
+    #    columns, and r is an upper triangular matrix with diagonal
+    #    elements of nonincreasing magnitude, then lmpar expects
+    #    the full upper triangle of r, the permutation matrix p,
+    #    and the first n components of (q transpose)*b. on output
+    #    lmpar also provides an upper triangular matrix s such that
     #
-    # t   t				   t
-    # p *(a *a + par*d*d)*p = s *s .
+    #            t   t                             t
+    #           p *(a *a + par*d*d)*p = s *s .
     #
-    # s is employed within lmpar and may be of separate interest.
+    #    s is employed within lmpar and may be of separate interest.
     #
-    # only a few iterations are generally needed for convergence
-    # of the algorithm. if, however, the limit of 10 iterations
-    # is reached, then the output par will contain the best
-    # value obtained so far.
+    #    only a few iterations are generally needed for convergence
+    #    of the algorithm. if, however, the limit of 10 iterations
+    #    is reached, then the output par will contain the best
+    #    value obtained so far.
     #
-    # the subroutine statement is
+    #    the subroutine statement is
     #
-    # subroutine lmpar(n,r,ldr,ipvt,diag,qtb,delta,par,x,sdiag,
-    # wa1,wa2)
+    #   subroutine lmpar(n,r,ldr,ipvt,diag,qtb,delta,par,x,sdiag,
+    #                                    wa1,wa2)
     #
-    # where
+    #    where
     #
-    # n is a positive integer input variable set to the order of r.
+    #   n is a positive integer input variable set to the order of r.
     #
-    # r is an n by n array. on input the full upper triangle
-    # must contain the full upper triangle of the matrix r.
-    # on output the full upper triangle is unaltered, and the
-    # strict lower triangle contains the strict upper triangle
-    # (transposed) of the upper triangular matrix s.
+    #   r is an n by n array. on input the full upper triangle
+    #     must contain the full upper triangle of the matrix r.
+    #     on output the full upper triangle is unaltered, and the
+    #     strict lower triangle contains the strict upper triangle
+    #     (transposed) of the upper triangular matrix s.
     #
-    # ldr is a positive integer input variable not less than n
-    # which specifies the leading dimension of the array r.
+    #   ldr is a positive integer input variable not less than n
+    #     which specifies the leading dimension of the array r.
     #
-    # ipvt is an integer input array of length n which defines the
-    # permutation matrix p such that a*p = q*r. column j of p
-    # is column ipvt(j) of the identity matrix.
+    #   ipvt is an integer input array of length n which defines the
+    #     permutation matrix p such that a*p = q*r. column j of p
+    #     is column ipvt(j) of the identity matrix.
     #
-    # diag is an input array of length n which must contain the
-    # diagonal elements of the matrix d.
+    #   diag is an input array of length n which must contain the
+    #     diagonal elements of the matrix d.
     #
-    # qtb is an input array of length n which must contain the first
-    # n elements of the vector (q transpose)*b.
+    #   qtb is an input array of length n which must contain the first
+    #     n elements of the vector (q transpose)*b.
     #
-    # delta is a positive input variable which specifies an upper
-    # bound on the euclidean norm of d*x.
+    #   delta is a positive input variable which specifies an upper
+    #     bound on the euclidean norm of d*x.
     #
-    # par is a nonnegative variable. on input par contains an
-    # initial estimate of the levenberg-marquardt parameter.
-    # on output par contains the final estimate.
+    #   par is a nonnegative variable. on input par contains an
+    #     initial estimate of the levenberg-marquardt parameter.
+    #     on output par contains the final estimate.
     #
-    # x is an output array of length n which contains the least
-    # squares solution of the system a*x = b, sqrt(par)*d*x = 0,
-    # for the output par.
+    #   x is an output array of length n which contains the least
+    #     squares solution of the system a*x = b, sqrt(par)*d*x = 0,
+    #     for the output par.
     #
-    # sdiag is an output array of length n which contains the
-    # diagonal elements of the upper triangular matrix s.
+    #   sdiag is an output array of length n which contains the
+    #     diagonal elements of the upper triangular matrix s.
     #
-    # wa1 and wa2 are work arrays of length n.
+    #   wa1 and wa2 are work arrays of length n.
     #
-    # subprograms called
+    #    subprograms called
     #
-    # minpack-supplied ... dpmpar,enorm,qrsolv
+    #   minpack-supplied ... dpmpar,enorm,qrsolv
     #
-    # fortran-supplied ... dabs,dmax1,dmin1,dsqrt
+    #   fortran-supplied ... dabs,dmax1,dmin1,dsqrt
     #
-    # argonne national laboratory. minpack project. march 1980.
-    # burton s. garbow, kenneth e. hillstrom, jorge j. more
+    #    argonne national laboratory. minpack project. march 1980.
+    #    burton s. garbow, kenneth e. hillstrom, jorge j. more
     #
+    # fmt: on
 
     def lmpar(self, r, ipvt, diag, qtb, delta, x, sdiag, par=None):
 
@@ -2289,72 +2299,74 @@ class mpfit:
             exec(cmd)
         return p
 
-    # Original FORTRAN documentation
-    # **********
+    # fmt: off
+    #    Original FORTRAN documentation
+    #    **********
     #
-    # subroutine covar
+    #    subroutine covar
     #
-    # given an m by n matrix a, the problem is to determine
-    # the covariance matrix corresponding to a, defined as
+    #    given an m by n matrix a, the problem is to determine
+    #    the covariance matrix corresponding to a, defined as
     #
-    # t
-    # inverse(a *a) .
+    #                                   t
+    #              inverse(a *a) .
     #
-    # this subroutine completes the solution of the problem
-    # if it is provided with the necessary information from the
-    # qr factorization, with column pivoting, of a. that is, if
-    # a*p = q*r, where p is a permutation matrix, q has orthogonal
-    # columns, and r is an upper triangular matrix with diagonal
-    # elements of nonincreasing magnitude, then covar expects
-    # the full upper triangle of r and the permutation matrix p.
-    # the covariance matrix is then computed as
+    #    this subroutine completes the solution of the problem
+    #    if it is provided with the necessary information from the
+    #    qr factorization, with column pivoting, of a. that is, if
+    #    a*p = q*r, where p is a permutation matrix, q has orthogonal
+    #    columns, and r is an upper triangular matrix with diagonal
+    #    elements of nonincreasing magnitude, then covar expects
+    #    the full upper triangle of r and the permutation matrix p.
+    #    the covariance matrix is then computed as
     #
-    # t	 t
-    # p*inverse(r *r)*p  .
+    #                                     t      t
+    #              p*inverse(r *r)*p  .
     #
-    # if a is nearly rank deficient, it may be desirable to compute
-    # the covariance matrix corresponding to the linearly independent
-    # columns of a. to define the numerical rank of a, covar uses
-    # the tolerance tol. if l is the largest integer such that
+    #    if a is nearly rank deficient, it may be desirable to compute
+    #    the covariance matrix corresponding to the linearly independent
+    #    columns of a. to define the numerical rank of a, covar uses
+    #    the tolerance tol. if l is the largest integer such that
     #
-    # abs(r(l,l)) .gt. tol*abs(r(1,1)) ,
+    #              abs(r(l,l)) .gt. tol*abs(r(1,1)) ,
     #
-    # then covar computes the covariance matrix corresponding to
-    # the first l columns of r. for k greater than l, column
-    # and row ipvt(k) of the covariance matrix are set to zero.
+    #    then covar computes the covariance matrix corresponding to
+    #    the first l columns of r. for k greater than l, column
+    #    and row ipvt(k) of the covariance matrix are set to zero.
     #
-    # the subroutine statement is
+    #    the subroutine statement is
     #
-    # subroutine covar(n,r,ldr,ipvt,tol,wa)
+    #      subroutine covar(n,r,ldr,ipvt,tol,wa)
     #
-    # where
+    #    where
     #
-    # n is a positive integer input variable set to the order of r.
+    #      n is a positive integer input variable set to the order of r.
     #
-    # r is an n by n array. on input the full upper triangle must
-    # contain the full upper triangle of the matrix r. on output
-    # r contains the square symmetric covariance matrix.
+    #      r is an n by n array. on input the full upper triangle must
+    #            contain the full upper triangle of the matrix r. on output
+    #            r contains the square symmetric covariance matrix.
     #
-    # ldr is a positive integer input variable not less than n
-    # which specifies the leading dimension of the array r.
+    #      ldr is a positive integer input variable not less than n
+    #            which specifies the leading dimension of the array r.
     #
-    # ipvt is an integer input array of length n which defines the
-    # permutation matrix p such that a*p = q*r. column j of p
-    # is column ipvt(j) of the identity matrix.
+    #      ipvt is an integer input array of length n which defines the
+    #            permutation matrix p such that a*p = q*r. column j of p
+    #            is column ipvt(j) of the identity matrix.
     #
-    # tol is a nonnegative input variable used to define the
-    # numerical rank of a in the manner described above.
+    #      tol is a nonnegative input variable used to define the
+    #            numerical rank of a in the manner described above.
     #
-    # wa is a work array of length n.
+    #      wa is a work array of length n.
     #
-    # subprograms called
+    #    subprograms called
     #
-    # fortran-supplied ... dabs
+    #      fortran-supplied ... dabs
     #
-    # argonne national laboratory. minpack project. august 1980.
-    # burton s. garbow, kenneth e. hillstrom, jorge j. more
+    #    argonne national laboratory. minpack project. august 1980.
+    #    burton s. garbow, kenneth e. hillstrom, jorge j. more
     #
-    # **********
+    #    **********
+    # fmt: on
 
     def calc_covar(self, rr, ipvt=None, tol=1.0e-14):
 
