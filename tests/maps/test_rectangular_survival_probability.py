@@ -541,7 +541,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                     * self.l1c_hi_dataset.exposure_times
                 )
 
-                sensor, expected_skygrid_elevation_index = Sensor.Hi90, 901
+                sensor = Sensor.Hi90
                 pointing_set = RectangularSurvivalProbabilityPointingSet(
                     self.l1c_hi_dataset,
                     sensor,

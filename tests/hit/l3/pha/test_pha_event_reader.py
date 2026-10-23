@@ -269,7 +269,6 @@ class TestPHAEventReader(unittest.TestCase):
         event2 = create_raw_pha_event()
         event3 = create_raw_pha_event()
 
-        number_of_events = 33715
         event_record_buffer = self._create_pha_event_binary(event1)
         event_record_buffer += self._create_pha_event_binary(event2)
         event_record_buffer += self._create_pha_event_binary(event3)

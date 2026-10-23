@@ -475,8 +475,6 @@ class TestMomentsCalculation(unittest.TestCase):
     ):
         density_history = np.array([100, 89, 72])
 
-        high_density_value = 200
-
         calculated_moments = create_dataclass_mock(Moments, density=None)
         mock_calculate_fit_temp_dens_velocity.side_effect = [
             calculated_moments,

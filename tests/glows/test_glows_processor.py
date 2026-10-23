@@ -1654,9 +1654,9 @@ class TestGlowsProcessor(unittest.TestCase):
 
                         actual_input_file_line = next(
                             (
-                                l
-                                for l in l3d_text_path.read_text().split("\n")
-                                if l.startswith("# input files:")
+                                L
+                                for L in l3d_text_path.read_text().split("\n")
+                                if L.startswith("# input files:")
                             ),
                             None,
                         )

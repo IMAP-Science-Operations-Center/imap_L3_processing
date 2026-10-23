@@ -194,8 +194,8 @@ def make_imap_lo_map(
     ny, nx = data.shape
 
     # Original grid centers
-    lats = np.linspace(-87, 87, ny)
-    lons = np.linspace(3, 357, nx)
+    lats = np.linspace(-87, 87, ny)  # noqa: F841
+    lons = np.linspace(3, 357, nx)  # noqa: F841
 
     # Build corner grid for pcolormesh
     lat_edges = np.linspace(-90, 90, ny + 1)

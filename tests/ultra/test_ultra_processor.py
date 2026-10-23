@@ -1198,6 +1198,7 @@ class TestUltraProcessor(unittest.TestCase):
 
         processor = UltraProcessor(input_deps, input_metadata)
         result = processor.process()
+        self.assertEqual(result, [mock_save_data.return_value])
 
         mock_slice_energy_range_by_bin.assert_called_once_with(
             dependencies.map_data.intensity_map_data, 5, 10

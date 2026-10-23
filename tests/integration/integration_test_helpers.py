@@ -192,7 +192,7 @@ class mock_imap_data_access:
                 valid_files.append(input_file)
                 if isinstance(imap_input_file_path, SPICEFilePath):
                     spice_file_paths.append(input_file)
-            except:
+            except Exception:
                 continue
         self.input_files = valid_files
 
@@ -220,7 +220,7 @@ class mock_imap_data_access:
         for file_path in self.input_files:
             try:
                 stage_input_file(file_path)
-            except:
+            except Exception:
                 pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):

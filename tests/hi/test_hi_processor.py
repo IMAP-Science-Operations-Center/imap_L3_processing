@@ -686,7 +686,7 @@ class TestHiProcessor(unittest.TestCase):
 
                 processor = HiProcessor(ProcessingInputCollection(), input_metadata)
                 with self.assertRaises(NotImplementedError):
-                    product = processor.process()
+                    _ = processor.process()
 
     @patch(
         "imap_l3_processing.hi.hi_processor.HiSpectralIndexDependencies.fetch_dependencies"
