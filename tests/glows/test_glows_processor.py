@@ -1164,7 +1164,7 @@ class TestGlowsProcessor(unittest.TestCase):
         get_test_data_path("glows/science"),
     )
     @patch("imap_l3_processing.glows.glows_processor.run")
-    @patch("imap_l3_processing.processor.spiceypy")
+    @patch("imap_l3_processing.utils.spiceypy")
     def test_process_l3d_adds_parent_file_names_to_output(
         self, mock_spicepy, mock_run, mock_rename_l3d_text_output, mock_save_data
     ):

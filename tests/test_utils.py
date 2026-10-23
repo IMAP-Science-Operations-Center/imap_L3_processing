@@ -801,7 +801,7 @@ class TestUtils(TestCase):
                         + f", expected: {sorted(expected_output[output_key])} actual {sorted(actual_output[output_key])}",
                     )
 
-    @patch("imap_l3_processing.glows.l3bc.utils.imap_data_access.download")
+    @patch("imap_l3_processing.utils.imap_data_access.download")
     @with_tempdir
     def test_read_cdf_parents(self, temp_dir, mock_download):
         cdf_downloaded_path = temp_dir / "l3b.cdf"

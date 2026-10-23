@@ -982,7 +982,7 @@ class TestUltraProcessor(unittest.TestCase):
     @patch(
         "imap_l3_processing.ultra.ultra_processor.correct_healpix_data_for_survival_probability"
     )
-    @patch("imap_l3_processing.processor.spiceypy")
+    @patch("imap_l3_processing.utils.spiceypy")
     @patch("imap_l3_processing.ultra.ultra_processor.save_data")
     @patch(
         "imap_l3_processing.ultra.ultra_processor.UltraL3Dependencies.fetch_dependencies"
@@ -1073,7 +1073,7 @@ class TestUltraProcessor(unittest.TestCase):
             mock_fetch_dependencies.return_value, SpiceFrame.ECLIPJ2000
         )
 
-    @patch("imap_l3_processing.processor.spiceypy")
+    @patch("imap_l3_processing.utils.spiceypy")
     @patch("imap_l3_processing.ultra.ultra_processor.save_data")
     @patch(
         "imap_l3_processing.ultra.ultra_processor.calculate_spectral_index_for_multiple_ranges"
@@ -1159,7 +1159,7 @@ class TestUltraProcessor(unittest.TestCase):
         self.assertEqual([mock_save_data.return_value], product)
 
     @patch("imap_l3_processing.ultra.ultra_processor.save_data")
-    @patch("imap_l3_processing.processor.spiceypy")
+    @patch("imap_l3_processing.utils.spiceypy")
     @patch(
         "imap_l3_processing.ultra.ultra_processor.calculate_spectral_index_for_multiple_ranges"
     )

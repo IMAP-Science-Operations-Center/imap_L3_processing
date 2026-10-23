@@ -43,7 +43,7 @@ MODULE = "imap_l3_processing.swe.swe_processor"
 
 
 class TestSweProcessor(unittest.TestCase):
-    @patch("imap_l3_processing.processor.spiceypy")
+    @patch("imap_l3_processing.utils.spiceypy")
     @patch("imap_l3_processing.swe.swe_processor.save_data")
     @patch("imap_l3_processing.swe.swe_processor.SweL3Dependencies.fetch_dependencies")
     @patch("imap_l3_processing.swe.swe_processor.SweProcessor.calculate_products")

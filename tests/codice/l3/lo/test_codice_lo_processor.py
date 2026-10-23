@@ -68,7 +68,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
     @patch(f"{MODULE}.CodiceLoL3aPartialDensitiesDependencies.fetch_dependencies")
     @patch(f"{MODULE}.CodiceLoProcessor.process_l3a_partial_densities")
     @patch(f"{MODULE}.save_data")
-    @patch("imap_l3_processing.processor.spiceypy")
+    @patch("imap_l3_processing.utils.spiceypy")
     def test_process_partial_densities(
         self,
         mock_spiceypy,
@@ -114,7 +114,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
     @patch(f"{MODULE}.CodiceLoL3aRatiosDependencies.fetch_dependencies")
     @patch(f"{MODULE}.CodiceLoProcessor.process_l3a_ratios")
     @patch(f"{MODULE}.save_data")
-    @patch("imap_l3_processing.processor.spiceypy")
+    @patch("imap_l3_processing.utils.spiceypy")
     def test_process_ratios(
         self,
         mock_spiceypy,
@@ -154,7 +154,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
     @patch(f"{MODULE}.CodiceLoL3aRatiosDependencies.fetch_dependencies")
     @patch(f"{MODULE}.CodiceLoProcessor.process_l3a_charge_state_distributions")
     @patch(f"{MODULE}.save_data")
-    @patch("imap_l3_processing.processor.spiceypy")
+    @patch("imap_l3_processing.utils.spiceypy")
     def test_process_abundances(
         self,
         mock_spiceypy,
@@ -489,7 +489,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
     @patch(f"{MODULE}.CodiceLoL3aDirectEventsDependencies.fetch_dependencies")
     @patch(f"{MODULE}.CodiceLoProcessor.process_l3a_direct_event_data_product")
     @patch(f"{MODULE}.save_data")
-    @patch("imap_l3_processing.processor.spiceypy")
+    @patch("imap_l3_processing.utils.spiceypy")
     def test_process_direct_events(
         self,
         mock_spiceypy,
@@ -1891,7 +1891,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
     @patch(f"{MODULE}.CodiceLoL3b3dDistributionsDependencies.fetch_dependencies")
     @patch(f"{MODULE}.CodiceLoProcessor.process_l3b_3d_distribution_product")
     @patch(f"{MODULE}.save_data")
-    @patch("imap_l3_processing.processor.spiceypy")
+    @patch("imap_l3_processing.utils.spiceypy")
     def _test_process_3d_distributions_save(
         self,
         species,

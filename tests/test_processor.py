@@ -35,7 +35,7 @@ class TestProcessor(unittest.TestCase):
 
         self.assertEqual(expected_parent_file_names, actual_parent_file_names)
 
-    @patch("imap_l3_processing.processor.spiceypy")
+    @patch("imap_l3_processing.utils.spiceypy")
     def test_get_parent_files_takes_optional_parameter(self, mock_spiceypy):
         file_paths = [Path("path")]
         mock_spiceypy.ktotal.return_value = 0
