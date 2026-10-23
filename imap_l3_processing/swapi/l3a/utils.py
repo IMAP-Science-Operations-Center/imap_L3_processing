@@ -32,6 +32,7 @@ from imap_l3_processing.swapi.constants import (
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_processing.spice.geometry import (
+    SpiceBody,
     SpiceFrame,
     get_rotation_matrix,
     imap_state,
@@ -117,6 +118,48 @@ def get_spacecraft_velocity_rtn(epoch_tt2000_ns: float) -> ndarray:
     return np.einsum("ij,j->i", rtn_from_eclipj2000, state_eclipj2000[3:])
 
 
+def convert_sun_velocity_rtn_to_gse(
+    epoch_tt2000_ns: float, velocity_rtn_sun: ndarray, covariance_rtn: ndarray
+) -> tuple[ndarray, ndarray]:
+    """Convert a Sun-frame RTN velocity and its covariance to GSE coordinates.
+
+    Parameters
+    ----------
+    epoch_tt2000_ns : float [ns]
+        The TT2000 time of the measurement.
+    velocity_rtn_sun : (3,) ndarray [km/s]
+        The bulk velocity in RTN coordinates and the Sun rest frame.
+    covariance_rtn : (3, 3) ndarray [km^2/s^2]
+        The covariance of the bulk velocity in RTN coordinates.
+
+    Returns
+    -------
+    velocity_gse : (3,) ndarray [km/s]
+        The bulk velocity in GSE coordinates.
+    covariance_gse : (3, 3) ndarray [km^2/s^2]
+        The covariance of the GSE velocity.
+    """
+    et = float(ttj2000ns_to_et(epoch_tt2000_ns))
+
+    # (3, 3) rotation, RTN -> GSE.
+    gse_from_rtn = get_rotation_matrix(et, SpiceFrame.IMAP_RTN, SpiceFrame.IMAP_GSE)
+
+    # (3,) IMAP velocity relative to Earth [km/s], in GSE. SPICE includes the
+    # dR/dt term from GSE rotating relative to inertial frames.
+    imap_state_gse = imap_state(et, SpiceFrame.IMAP_GSE, observer=SpiceBody.EARTH)
+    imap_velocity_gse = imap_state_gse[3:]
+
+    # Rotate the velocity relative to IMAP, then add IMAP's velocity relative to Earth.
+    velocity_rtn_imap = velocity_rtn_sun - get_spacecraft_velocity_rtn(epoch_tt2000_ns)
+    velocity_gse = gse_from_rtn @ velocity_rtn_imap + imap_velocity_gse
+
+    # The change of rest frame is an offset independent of the measured velocity,
+    # so the covariance only sees the rotation.
+    covariance_gse = gse_from_rtn @ covariance_rtn @ gse_from_rtn.T
+
+    return velocity_gse, covariance_gse
+
+
 @numba.njit
 def velocity_components_to_angles_in_instrument_frame(vx: float, vy: float, vz: float):
     """Convert a Cartesian flow-direction velocity to (azimuth_deg, elevation_deg)
@@ -150,7 +193,9 @@ def velocity_to_angles_in_instrument_frame(
     flow-vs-look sign convention.
     """
     v_xyz = rotation_xyz_to_rtn.T @ sw_params.velocity_rtn
-    return velocity_components_to_angles_in_instrument_frame(v_xyz[0], v_xyz[1], v_xyz[2])
+    return velocity_components_to_angles_in_instrument_frame(
+        v_xyz[0], v_xyz[1], v_xyz[2]
+    )
 
 
 def compute_direction_of_mean_magnetic_field_over_chunk(
