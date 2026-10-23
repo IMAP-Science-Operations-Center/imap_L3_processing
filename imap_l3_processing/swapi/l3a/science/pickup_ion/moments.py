@@ -36,6 +36,7 @@ def calculate_helium_pui_density(
 
     Uncertainty on the fit parameters is propagated through the integral.
     """
+
     @uncertainties.wrap
     def calculate(ionization_rate, cutoff_speed):
         f_pui = vasyliunas_siscoe_vdf(

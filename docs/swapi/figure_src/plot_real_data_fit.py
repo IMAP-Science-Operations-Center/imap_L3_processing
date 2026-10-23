@@ -120,22 +120,18 @@ def main():
 
     sc_velocity_rtn = get_spacecraft_velocity_rtn(chunk_center_ns)
     science_result["velocity_rtn_sun"] = (
-        np.array(
-            [c.nominal_value for c in science_result["fit_result"].velocity_rtn]
-        )
+        np.array([c.nominal_value for c in science_result["fit_result"].velocity_rtn])
         + sc_velocity_rtn
     )
     coarse_result["velocity_rtn_sun"] = (
-        np.array(
-            [c.nominal_value for c in coarse_result["fit_result"].velocity_rtn]
-        )
+        np.array([c.nominal_value for c in coarse_result["fit_result"].velocity_rtn])
         + sc_velocity_rtn
     )
 
     print("\n--- Fit results ---")
-    print(f"  Science bins (1..71, includes fine):")
+    print("  Science bins (1..71, includes fine):")
     _print_fit(science_result, sc_velocity_rtn)
-    print(f"  Coarse-only bins (1..62):")
+    print("  Coarse-only bins (1..62):")
     _print_fit(coarse_result, sc_velocity_rtn)
 
     print("\n--- Bootstrap σ on the all-bins fit (B=300, warm-LM, xtol=1e-3) ---")
@@ -283,7 +279,9 @@ def _read_5_sweep_block(
 def _measurement_times_ns(epoch_ns: np.ndarray, bin_slice: slice) -> np.ndarray:
     bins = np.arange(bin_slice.start, bin_slice.stop)
     seconds_into_sweep = bins * SWAPI_BIN_PERIOD_S + SWAPI_LIVETIME_CENTER_OFFSET_S
-    return (epoch_ns[:, None] + seconds_into_sweep * ONE_SECOND_IN_NANOSECONDS).flatten()
+    return (
+        epoch_ns[:, None] + seconds_into_sweep * ONE_SECOND_IN_NANOSECONDS
+    ).flatten()
 
 
 # --------------------------------------------------------------------------- #
@@ -561,9 +559,7 @@ def _model_rates_with_deadtime(
     )
     sw = SolarWindParams(
         density=fit_result.density.nominal_value,
-        velocity_rtn=np.array(
-            [c.nominal_value for c in fit_result.velocity_rtn]
-        ),
+        velocity_rtn=np.array([c.nominal_value for c in fit_result.velocity_rtn]),
         temperature=fit_result.temperature.nominal_value,
         mass=PROTON_MASS_KG,
     )

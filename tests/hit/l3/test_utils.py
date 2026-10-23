@@ -17,14 +17,43 @@ class TestUtils(TestCase):
 
     def test_read_l2_hit_data(self):
         rng = np.random.default_rng()
-        expected_azimuth_data = [12., 36., 60., 84., 108., 132., 156., 180., 204., 228., 252.,
-                                 276., 300., 324., 348.]
-        expected_zenith_data = [11.25, 33.75, 56.25, 78.75, 101.25, 123.75, 146.25, 168.75]
+        expected_azimuth_data = [
+            12.0,
+            36.0,
+            60.0,
+            84.0,
+            108.0,
+            132.0,
+            156.0,
+            180.0,
+            204.0,
+            228.0,
+            252.0,
+            276.0,
+            300.0,
+            324.0,
+            348.0,
+        ]
+        expected_zenith_data = [
+            11.25,
+            33.75,
+            56.25,
+            78.75,
+            101.25,
+            123.75,
+            146.25,
+            168.75,
+        ]
 
         start_time = datetime(2010, 1, 1, 0, 5)
 
         epoch_data = np.array(
-            [start_time, start_time + timedelta(minutes=5), start_time + timedelta(minutes=10, microseconds=999)])
+            [
+                start_time,
+                start_time + timedelta(minutes=5),
+                start_time + timedelta(minutes=10, microseconds=999),
+            ]
+        )
 
         hydrogen_data = rng.random((3, 3, 15, 8))
         helium_data = rng.random((3, 2, 15, 8))
@@ -38,13 +67,19 @@ class TestUtils(TestCase):
         nemgsi_delta = nemgsi_data * 0.1
         iron_delta = iron_data * 0.1
 
-        pathname = self.write_test_data_file(epoch_data, hydrogen_data, helium_data, cno_data, nemgsi_data, iron_data,
-                                             hydrogen_delta,
-                                             helium_delta,
-                                             cno_delta,
-                                             nemgsi_delta,
-                                             iron_delta,
-                                             )
+        pathname = self.write_test_data_file(
+            epoch_data,
+            hydrogen_data,
+            helium_data,
+            cno_data,
+            nemgsi_data,
+            iron_data,
+            hydrogen_delta,
+            helium_delta,
+            cno_delta,
+            nemgsi_delta,
+            iron_delta,
+        )
 
         for path in [pathname, Path(pathname)]:
             with self.subTest(path):
@@ -57,8 +92,10 @@ class TestUtils(TestCase):
                 np.testing.assert_array_equal(iron_data, result.fe)
 
                 np.testing.assert_array_equal(epoch_data, result.epoch)
-                np.testing.assert_array_equal([timedelta(minutes=5), timedelta(minutes=5), timedelta(minutes=5)],
-                                              result.epoch_delta)
+                np.testing.assert_array_equal(
+                    [timedelta(minutes=5), timedelta(minutes=5), timedelta(minutes=5)],
+                    result.epoch_delta,
+                )
 
                 np.testing.assert_array_equal([0, 1, 2], result.h_energy)
                 np.testing.assert_array_equal([0, 1], result.he4_energy)
@@ -104,42 +141,114 @@ class TestUtils(TestCase):
         nemgsi_data = np.full((1, 2, 15, 8), fill_value=fill_val)
         iron_data = np.full((1, 1, 15, 8), fill_value=fill_val)
 
-        pathname = self.write_test_data_file(epoch_data, hydrogen_data, helium_data, cno_data, nemgsi_data, iron_data,
-                                             hydrogen_data, helium_data, cno_data, nemgsi_data, iron_data)
+        pathname = self.write_test_data_file(
+            epoch_data,
+            hydrogen_data,
+            helium_data,
+            cno_data,
+            nemgsi_data,
+            iron_data,
+            hydrogen_data,
+            helium_data,
+            cno_data,
+            nemgsi_data,
+            iron_data,
+        )
 
         for path in [pathname, Path(pathname)]:
             with self.subTest(path):
                 result = read_l2_hit_data(path)
 
-                np.testing.assert_array_equal(result.h, np.full_like(hydrogen_data, np.nan))
-                np.testing.assert_array_equal(result.he4, np.full_like(helium_data, np.nan))
-                np.testing.assert_array_equal(result.cno, np.full_like(cno_data, np.nan))
-                np.testing.assert_array_equal(result.nemgsi, np.full_like(nemgsi_data, np.nan))
-                np.testing.assert_array_equal(result.fe, np.full_like(iron_data, np.nan))
+                np.testing.assert_array_equal(
+                    result.h, np.full_like(hydrogen_data, np.nan)
+                )
+                np.testing.assert_array_equal(
+                    result.he4, np.full_like(helium_data, np.nan)
+                )
+                np.testing.assert_array_equal(
+                    result.cno, np.full_like(cno_data, np.nan)
+                )
+                np.testing.assert_array_equal(
+                    result.nemgsi, np.full_like(nemgsi_data, np.nan)
+                )
+                np.testing.assert_array_equal(
+                    result.fe, np.full_like(iron_data, np.nan)
+                )
 
-                np.testing.assert_array_equal(result.delta_plus_h, np.full_like(hydrogen_data, np.nan))
-                np.testing.assert_array_equal(result.delta_minus_h, np.full_like(hydrogen_data, np.nan))
-                np.testing.assert_array_equal(result.delta_plus_he4, np.full_like(helium_data, np.nan))
-                np.testing.assert_array_equal(result.delta_minus_he4, np.full_like(helium_data, np.nan))
-                np.testing.assert_array_equal(result.delta_plus_cno, np.full_like(cno_data, np.nan))
-                np.testing.assert_array_equal(result.delta_minus_cno, np.full_like(cno_data, np.nan))
-                np.testing.assert_array_equal(result.delta_plus_nemgsi, np.full_like(nemgsi_data, np.nan))
-                np.testing.assert_array_equal(result.delta_minus_nemgsi, np.full_like(nemgsi_data, np.nan))
-                np.testing.assert_array_equal(result.delta_plus_fe, np.full_like(iron_data, np.nan))
-                np.testing.assert_array_equal(result.delta_minus_fe, np.full_like(iron_data, np.nan))
+                np.testing.assert_array_equal(
+                    result.delta_plus_h, np.full_like(hydrogen_data, np.nan)
+                )
+                np.testing.assert_array_equal(
+                    result.delta_minus_h, np.full_like(hydrogen_data, np.nan)
+                )
+                np.testing.assert_array_equal(
+                    result.delta_plus_he4, np.full_like(helium_data, np.nan)
+                )
+                np.testing.assert_array_equal(
+                    result.delta_minus_he4, np.full_like(helium_data, np.nan)
+                )
+                np.testing.assert_array_equal(
+                    result.delta_plus_cno, np.full_like(cno_data, np.nan)
+                )
+                np.testing.assert_array_equal(
+                    result.delta_minus_cno, np.full_like(cno_data, np.nan)
+                )
+                np.testing.assert_array_equal(
+                    result.delta_plus_nemgsi, np.full_like(nemgsi_data, np.nan)
+                )
+                np.testing.assert_array_equal(
+                    result.delta_minus_nemgsi, np.full_like(nemgsi_data, np.nan)
+                )
+                np.testing.assert_array_equal(
+                    result.delta_plus_fe, np.full_like(iron_data, np.nan)
+                )
+                np.testing.assert_array_equal(
+                    result.delta_minus_fe, np.full_like(iron_data, np.nan)
+                )
 
-    def write_test_data_file(self, epoch_data, hydrogen_data, helium_data, cno_data, nemgsi_data, iron_data,
-                             hydrogen_delta,
-                             helium_delta,
-                             cno_delta,
-                             nemgsi_delta,
-                             iron_delta,
-                             ) -> str:
-        pathname = os.path.join(self.temp_dir.name, 'test_cdf.cdf')
-        expected_azimuth_data = [12., 36., 60., 84., 108., 132., 156., 180., 204., 228., 252.,
-                                 276., 300., 324., 348.]
-        expected_zenith_data = [11.25, 33.75, 56.25, 78.75, 101.25, 123.75, 146.25, 168.75]
-        with CDF(pathname, '') as cdf:
+    def write_test_data_file(
+        self,
+        epoch_data,
+        hydrogen_data,
+        helium_data,
+        cno_data,
+        nemgsi_data,
+        iron_data,
+        hydrogen_delta,
+        helium_delta,
+        cno_delta,
+        nemgsi_delta,
+        iron_delta,
+    ) -> str:
+        pathname = os.path.join(self.temp_dir.name, "test_cdf.cdf")
+        expected_azimuth_data = [
+            12.0,
+            36.0,
+            60.0,
+            84.0,
+            108.0,
+            132.0,
+            156.0,
+            180.0,
+            204.0,
+            228.0,
+            252.0,
+            276.0,
+            300.0,
+            324.0,
+            348.0,
+        ]
+        expected_zenith_data = [
+            11.25,
+            33.75,
+            56.25,
+            78.75,
+            101.25,
+            123.75,
+            146.25,
+            168.75,
+        ]
+        with CDF(pathname, "") as cdf:
             cdf.col_major(True)
 
             cdf["h_macropixel_intensity"] = hydrogen_data

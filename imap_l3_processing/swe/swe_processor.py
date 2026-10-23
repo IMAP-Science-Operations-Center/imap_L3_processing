@@ -73,7 +73,9 @@ INTEGRATED_FIELD_SUFFIXES: tuple[str, ...] = (
 
 
 def _detect_negative(density: np.ndarray, tensor: np.ndarray) -> np.ndarray:
-    return (density < 0) | np.any(tensor[:, TEMPERATURE_TENSOR_DIAGONAL_INDICES] < 0, axis=-1)
+    return (density < 0) | np.any(
+        tensor[:, TEMPERATURE_TENSOR_DIAGONAL_INDICES] < 0, axis=-1
+    )
 
 
 def check_and_mask_negative_moments(moment_data: SweL3MomentData) -> np.ndarray:
@@ -96,23 +98,27 @@ def check_and_mask_negative_moments(moment_data: SweL3MomentData) -> np.ndarray:
     for field_suffix in INTEGRATED_FIELD_SUFFIXES:
         getattr(moment_data, "core" + field_suffix)[core_negative] = np.nan
         getattr(moment_data, "halo" + field_suffix)[halo_negative] = np.nan
-        getattr(moment_data, "total" + field_suffix)[core_negative | halo_negative | total_negative] = np.nan
+        getattr(moment_data, "total" + field_suffix)[
+            core_negative | halo_negative | total_negative
+        ] = np.nan
 
-    flags[core_negative | halo_negative | total_negative] |= np.uint16(SweL3Flags.NEGATIVE_MOMENT)
+    flags[core_negative | halo_negative | total_negative] |= np.uint16(
+        SweL3Flags.NEGATIVE_MOMENT
+    )
     return flags
 
 
 # Temperature Outlier Flag Algorithm
 def check_temperature_outlier_flag(data: np.ndarray):
     # Define window duration that is centered, so best to use an odd number
-    window = 61 # 61 is about 1 hour
+    window = 61  # 61 is about 1 hour
     # Initiate Temperature Outliers to be all NONE value
     TEMPERATURE_OUTLIER = np.zeros(len(data), dtype=np.uint16)
     TEMPERATURE_OUTLIER[:] = SweL3Flags.NONE
     for i in np.arange(len(data)):
         # Get left and right index accounting for edges
-        left_idx = 0 if i - window//2 < 0 else i - window//2
-        right_idx = i + window//2 + 1
+        left_idx = 0 if i - window // 2 < 0 else i - window // 2
+        right_idx = i + window // 2 + 1
         # Loop check the current value while removing every point from the window on each iteration
         for k in np.arange(len(data[left_idx:right_idx])):
             temp_data = data[left_idx:right_idx]
@@ -120,7 +126,7 @@ def check_temperature_outlier_flag(data: np.ndarray):
             # Check if current value is beyond 3-sigma of median from data
             median = np.nanmedian(temp_data)
             deviation = np.nanstd(temp_data)
-            if np.abs(median - data[i]) >= deviation*3:
+            if np.abs(median - data[i]) >= deviation * 3:
                 TEMPERATURE_OUTLIER[i] = SweL3Flags.TEMPERATURE_OUTLIER
                 # Break since we already know the current index i is an outlier
                 break
@@ -130,8 +136,8 @@ def check_temperature_outlier_flag(data: np.ndarray):
         # Don't do this is the current value is already an outlier
         if TEMPERATURE_OUTLIER[i] == SweL3Flags.NONE:
             # Get left and right index accounting for edges
-            left_idx = 0 if i - window//2 < 0 else i - window//2
-            right_idx = i + window//2 + 1
+            left_idx = 0 if i - window // 2 < 0 else i - window // 2
+            right_idx = i + window // 2 + 1
             # Loop check the current value while removing every point from the window on each iteration
             # This time around, we conditionally slice to avoid including already known outliers from
             #   median and standard devation calculations
@@ -140,9 +146,17 @@ def check_temperature_outlier_flag(data: np.ndarray):
                     continue
                 temp_data = data[left_idx:right_idx]
                 # Check if current value is beyond 3-sigma of median from data
-                median = np.nanmedian(np.delete(temp_data,k)[np.delete(tof_copy[left_idx:right_idx],k)==0])
-                deviation = np.nanstd(np.delete(temp_data,k)[np.delete(tof_copy[left_idx:right_idx],k)==0])
-                if np.abs(median - data[i]) >= deviation * 3.:
+                median = np.nanmedian(
+                    np.delete(temp_data, k)[
+                        np.delete(tof_copy[left_idx:right_idx], k) == 0
+                    ]
+                )
+                deviation = np.nanstd(
+                    np.delete(temp_data, k)[
+                        np.delete(tof_copy[left_idx:right_idx], k) == 0
+                    ]
+                )
+                if np.abs(median - data[i]) >= deviation * 3.0:
                     TEMPERATURE_OUTLIER[i] = SweL3Flags.TEMPERATURE_OUTLIER
                     # Break since we already know the current index i is an outlier
                     break
@@ -263,13 +277,21 @@ class SweProcessor(Processor):
                 psd_array > UNPHYSICAL_PSD_THRESHOLD,
                 axis=tuple(range(1, psd_array.ndim)),
             )
-            swe_quality_flags[unphysical_psd_per_epoch] |= np.uint16(SweL3Flags.UNPHYSICAL_PSD)
+            swe_quality_flags[unphysical_psd_per_epoch] |= np.uint16(
+                SweL3Flags.UNPHYSICAL_PSD
+            )
 
         if dependencies.mag_is_preliminary:
-            swe_quality_flags = np.bitwise_or(swe_quality_flags, SweL3Flags.PRELIMINARY_MAG)
+            swe_quality_flags = np.bitwise_or(
+                swe_quality_flags, SweL3Flags.PRELIMINARY_MAG
+            )
 
-        last_cal_interval = (swe_l2_data.data_quality & SweL1bFlags.LAST_CAL_INTERVAL) != 0
-        swe_quality_flags[last_cal_interval] |= np.uint16(SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED)
+        last_cal_interval = (
+            swe_l2_data.data_quality & SweL1bFlags.LAST_CAL_INTERVAL
+        ) != 0
+        swe_quality_flags[last_cal_interval] |= np.uint16(
+            SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED
+        )
 
         rebinned_mask = np.ma.masked_invalid(swe_l2_data.phase_space_density_rebinned)
         dist_by_phi_rebinned = np.average(
@@ -432,11 +454,17 @@ class SweProcessor(Processor):
 
                 predicted_tracker = PredictedEphemerisTracker()
                 try:
-                    dps_to_rtn = predicted_tracker.run(get_dps_to_rtn_rotation_matrix, current_epoch)
+                    dps_to_rtn = predicted_tracker.run(
+                        get_dps_to_rtn_rotation_matrix, current_epoch
+                    )
                 except SpiceyError:
-                    logger.info(f"No IMAP_DPS to IMAP_RTN rotation available at epoch index {i}. Using fill values.")
+                    logger.info(
+                        f"No IMAP_DPS to IMAP_RTN rotation available at epoch index {i}. Using fill values."
+                    )
                     dps_to_rtn = np.full((3, 3), np.nan)
-                quality_flags[i] |= np.uint16(SweL3Flags.PREDICTIVE_EPHEMERIS * predicted_tracker.used_predict)
+                quality_flags[i] |= np.uint16(
+                    SweL3Flags.PREDICTIVE_EPHEMERIS * predicted_tracker.used_predict
+                )
 
                 if core_moment_fit_result is not None:
                     core_moment = core_moment_fit_result.moments
@@ -859,9 +887,10 @@ class SweProcessor(Processor):
             halo_temperature_perpendicular_to_mag=halo_temperature_perpendicular_to_mag,
             total_temperature_parallel_to_mag=total_temperature_parallel_to_mag,
             total_temperature_perpendicular_to_mag=total_temperature_perpendicular_to_mag,
-            core_temperature_tensor_integrated = core_temperature_tensor_integrated*1e4,
-            halo_temperature_tensor_integrated = halo_temperature_tensor_integrated*1e4,
-            total_temperature_tensor_integrated = total_temperature_tensor_integrated*1e4,
+            core_temperature_tensor_integrated=core_temperature_tensor_integrated * 1e4,
+            halo_temperature_tensor_integrated=halo_temperature_tensor_integrated * 1e4,
+            total_temperature_tensor_integrated=total_temperature_tensor_integrated
+            * 1e4,
             quality_flags=quality_flags,
         )
 
@@ -885,9 +914,11 @@ class SweProcessor(Processor):
 
         swapi_l3a_proton_data = dependencies.swapi_l3a_proton_data
         swapi_epoch = swapi_l3a_proton_data.epoch
-        solar_wind_vectors, used_predict_to_rotate_solar_wind = rotate_rtn_vectors_to_dps(
-            swapi_epoch,
-            swapi_l3a_proton_data.proton_sw_velocity_rtn,
+        solar_wind_vectors, used_predict_to_rotate_solar_wind = (
+            rotate_rtn_vectors_to_dps(
+                swapi_epoch,
+                swapi_l3a_proton_data.proton_sw_velocity_rtn,
+            )
         )
         proton_sw_speed = swapi_l3a_proton_data.proton_sw_speed
         fallback_to_speed = np.any(np.isnan(solar_wind_vectors), axis=1) & np.isfinite(
@@ -911,15 +942,22 @@ class SweProcessor(Processor):
             maximum_distance=swapi_max_distance,
         )
 
-
         rebinned_solar_wind_vectors = solar_wind_interpolator.interpolate_data()
 
-        rebinned_fallback_to_speed = solar_wind_interpolator.interpolate_flags(fallback_to_speed)
-        rebinned_used_predict_to_rotate_solar_wind = solar_wind_interpolator.interpolate_flags(used_predict_to_rotate_solar_wind)
+        rebinned_fallback_to_speed = solar_wind_interpolator.interpolate_flags(
+            fallback_to_speed
+        )
+        rebinned_used_predict_to_rotate_solar_wind = (
+            solar_wind_interpolator.interpolate_flags(used_predict_to_rotate_solar_wind)
+        )
 
         swe_flags = np.full(len(swe_epoch), SweL3Flags.NONE, dtype=np.uint16)
-        swe_flags[rebinned_fallback_to_speed] |= np.uint16(SweL3Flags.FALLBACK_SWAPI_SPEED)
-        swe_flags[rebinned_used_predict_to_rotate_solar_wind] |= np.uint16(SweL3Flags.PREDICTIVE_EPHEMERIS)
+        swe_flags[rebinned_fallback_to_speed] |= np.uint16(
+            SweL3Flags.FALLBACK_SWAPI_SPEED
+        )
+        swe_flags[rebinned_used_predict_to_rotate_solar_wind] |= np.uint16(
+            SweL3Flags.PREDICTIVE_EPHEMERIS
+        )
 
         counts = dependencies.swe_l1b_data.count_rates * (
             swe_l2_data.acquisition_duration[..., np.newaxis] / 1e6

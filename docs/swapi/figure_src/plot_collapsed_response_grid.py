@@ -32,7 +32,11 @@ from figure_utils import FIGURES_DIR, REPO_ROOT, load_swapi_response
 from imap_l3_processing.constants import HE_PUI_PARTICLE_MASS_PER_CHARGE_M_P_PER_E
 
 _REFERENCE_CSV_PATH = (
-    REPO_ROOT / "tests" / "test_data" / "swapi" / "collapsed_response_grid_reference.csv"
+    REPO_ROOT
+    / "tests"
+    / "test_data"
+    / "swapi"
+    / "collapsed_response_grid_reference.csv"
 )
 
 _ESA_VOLTAGE = 5000.0

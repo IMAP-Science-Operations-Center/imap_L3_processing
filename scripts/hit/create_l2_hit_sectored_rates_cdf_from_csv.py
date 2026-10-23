@@ -9,10 +9,11 @@ from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
 
 
 def create_l2_hit_sectored_rates_cdf_from_csv(csv_file_path: str, output_filename: str):
-    with CDF(output_filename, '') as cdf:
+    with CDF(output_filename, "") as cdf:
         cdf.col_major(True)
-        raw_data = np.loadtxt(csv_file_path, delimiter=",", skiprows=1,
-                              usecols=range(1, 121))
+        raw_data = np.loadtxt(
+            csv_file_path, delimiter=",", skiprows=1, usecols=range(1, 121)
+        )
         flux_data = raw_data.reshape((-1, 8, 15))
         epoch_count = 1
         start_time = datetime(2025, 1, 1, 0, 5)
@@ -78,10 +79,21 @@ def create_l2_hit_sectored_rates_cdf_from_csv(csv_file_path: str, output_filenam
 
 if __name__ == "__main__":
     path = Path(__file__)
-    input_path = path.parent.parent.parent / "instrument_team_data" / "hit" / "hit_l2_sectored_sample1.csv"
-    cdf_file_path = path.parent.parent.parent / "tests" / "test_data" / "hit" / "imap_hit_l2_macropixel-intensity_20250101_v002.cdf"
+    input_path = (
+        path.parent.parent.parent
+        / "instrument_team_data"
+        / "hit"
+        / "hit_l2_sectored_sample1.csv"
+    )
+    cdf_file_path = (
+        path.parent.parent.parent
+        / "tests"
+        / "test_data"
+        / "hit"
+        / "imap_hit_l2_macropixel-intensity_20250101_v002.cdf"
+    )
 
     try:
         create_l2_hit_sectored_rates_cdf_from_csv(str(input_path), str(cdf_file_path))
-    except Exception as e:
+    except Exception:
         traceback.print_exc()

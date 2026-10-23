@@ -51,7 +51,7 @@ class TestSwapiProcessor(TestCase):
     @patch("imap_l3_processing.swapi.swapi_processor.PuiChunkFitter")
     @patch("imap_l3_processing.swapi.swapi_processor.ParallelChunkRunner")
     @patch("imap_l3_processing.swapi.swapi_processor.SwapiL3ADependencies")
-    @patch("imap_l3_processing.processor.spiceypy")
+    @patch("imap_l3_processing.utils.spiceypy")
     def test_process_l3a_pui(
         self,
         mock_spicepy,
@@ -267,7 +267,7 @@ class TestSwapiProcessor(TestCase):
     @patch("imap_l3_processing.swapi.swapi_processor.ParallelChunkRunner")
     @patch("imap_l3_processing.swapi.swapi_processor.chunk_l2_data")
     @patch("imap_l3_processing.swapi.swapi_processor.SwapiL3ADependencies")
-    @patch("imap_l3_processing.processor.spiceypy")
+    @patch("imap_l3_processing.utils.spiceypy")
     def test_process_l3a_proton(
         self,
         mock_spicepy,
@@ -448,7 +448,7 @@ class TestSwapiProcessor(TestCase):
     @patch("imap_l3_processing.swapi.swapi_processor.ParallelChunkRunner")
     @patch("imap_l3_processing.swapi.swapi_processor.chunk_l2_data")
     @patch("imap_l3_processing.swapi.swapi_processor.SwapiL3ADependencies")
-    @patch("imap_l3_processing.processor.spiceypy")
+    @patch("imap_l3_processing.utils.spiceypy")
     def test_process_l3a_alpha(
         self,
         mock_spicepy,
@@ -619,7 +619,7 @@ class TestSwapiProcessor(TestCase):
     @patch(
         "imap_l3_processing.swapi.swapi_processor.calculate_combined_solar_wind_differential_flux"
     )
-    @patch("imap_l3_processing.processor.spiceypy")
+    @patch("imap_l3_processing.utils.spiceypy")
     def test_process_l3b(
         self,
         mock_spiceypy,
@@ -1047,7 +1047,7 @@ class TestSwapiProcessor(TestCase):
         self.assertEqual([mock_save_data.return_value], product)
 
     @patch("imap_l3_processing.swapi.swapi_processor.SwapiL3ADependencies")
-    @patch("imap_l3_processing.processor.spiceypy")
+    @patch("imap_l3_processing.utils.spiceypy")
     def test_process_l3a_raises_for_unknown_descriptor(
         self, mock_spicepy, mock_swapi_l3_dependencies_class
     ):

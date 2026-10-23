@@ -440,8 +440,12 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             [unfiltered] = identified
             repointings_to_update = set(range(36, 116))
             # Repoint 20 is not otherwise updated, so it is only there because the force reprocessing config lists it
-            self.assertEqual(repointings_to_update | {20}, set(unfiltered.repointing_numbers))
-            self.assertEqual(repointings_to_update | {20}, set(unfiltered.ultra_sf_repointings))
+            self.assertEqual(
+                repointings_to_update | {20}, set(unfiltered.repointing_numbers)
+            )
+            self.assertEqual(
+                repointings_to_update | {20}, set(unfiltered.ultra_sf_repointings)
+            )
             for versions in [
                 unfiltered.hi_90_repointings,
                 unfiltered.hi_45_repointings,

@@ -13,5 +13,5 @@ class MassCoefficientLookup:
 
     @classmethod
     def read_from_csv(cls, path: Path):
-        mass_coefficients = np.loadtxt(path, dtype=float, delimiter=',')
+        mass_coefficients = np.loadtxt(path, dtype=float, delimiter=",")
         return cls(mass_coefficients)

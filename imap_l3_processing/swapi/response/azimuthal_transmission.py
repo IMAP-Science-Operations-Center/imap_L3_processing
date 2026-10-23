@@ -44,10 +44,7 @@ def interpolate_azimuthal_transmission(
 
     weight_lower = float(i_upper) - i_float
     weight_upper = i_float - float(i_lower)
-    return (
-        grid.values[i_lower] * weight_lower
-        + grid.values[i_upper] * weight_upper
-    )
+    return grid.values[i_lower] * weight_lower + grid.values[i_upper] * weight_upper
 
 
 def validate_azimuthal_transmission_values(values: ndarray, spacing: float) -> None:
