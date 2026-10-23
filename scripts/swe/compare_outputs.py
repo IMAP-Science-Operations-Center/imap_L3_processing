@@ -174,7 +174,7 @@ for modern_name, heritage_info in variable_mapping.items():
             ratio = heritage_data / modern_data
             smooth_ratio = np.convolve(ratio, np.ones(5) / 5, mode="same")
             plt.plot(smooth_ratio)
-            plt.savefig(OUTPUT_PATH / f"density_ratio.png")
+            plt.savefig(OUTPUT_PATH / "density_ratio.png")
             plt.clf()
     l3_output_cdf.close()
 

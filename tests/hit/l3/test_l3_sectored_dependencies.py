@@ -14,13 +14,13 @@ class TestHITL3SectoredDependencies(TestCase):
     @patch('imap_l3_processing.hit.l3.hit_l3_sectored_dependencies.imap_data_access.download')
     def test_fetch_dependencies(self, mock_download, mock_read_hit_data, mock_read_mag_data):
         hit_l2_data_dependency = ScienceInput(f"imap_hit_l2_{HIT_L2_DESCRIPTOR}_20240908_v001.cdf")
-        mag_data_dependency = ScienceInput(f"imap_mag_l1d_norm-dsrf_20240906_v001.cdf")
+        mag_data_dependency = ScienceInput("imap_mag_l1d_norm-dsrf_20240906_v001.cdf")
 
         hit_data_dir = imap_data_access.config["DATA_DIR"] / 'imap' / 'hit' / 'l2' / '2024' / '09'
         mag_data_dir = imap_data_access.config["DATA_DIR"] / 'imap' / 'mag' / 'l1d' / '2024' / '09'
 
         expected_file_paths = [hit_data_dir / f"imap_hit_l2_{HIT_L2_DESCRIPTOR}_20240908_v001.cdf",
-                               mag_data_dir / f"imap_mag_l1d_norm-dsrf_20240906_v001.cdf"]
+                               mag_data_dir / "imap_mag_l1d_norm-dsrf_20240906_v001.cdf"]
         processing_input_collection = ProcessingInputCollection(hit_l2_data_dependency, mag_data_dependency)
 
         hit_data_path = Path("hit")
@@ -49,14 +49,14 @@ class TestHITL3SectoredDependencies(TestCase):
     @patch('imap_l3_processing.hit.l3.hit_l3_sectored_dependencies.imap_data_access.download')
     def test_fetch_dependencies_uses_mag_l2_if_available(self, mock_download, mock_read_hit_data, mock_read_mag_data):
         hit_l2_data_dependency = ScienceInput(f"imap_hit_l2_{HIT_L2_DESCRIPTOR}_20240908_v001.cdf")
-        mag_data_dependency = ScienceInput(f"imap_mag_l1d_norm-dsrf_20240906_v001.cdf")
-        mag_l2_data_dependency = ScienceInput(f"imap_mag_l2_norm-dsrf_20240906_v001.cdf")
+        mag_data_dependency = ScienceInput("imap_mag_l1d_norm-dsrf_20240906_v001.cdf")
+        mag_l2_data_dependency = ScienceInput("imap_mag_l2_norm-dsrf_20240906_v001.cdf")
 
         hit_data_dir = imap_data_access.config["DATA_DIR"] / 'imap' / 'hit' / 'l2' / '2024' / '09'
         mag_data_dir = imap_data_access.config["DATA_DIR"] / 'imap' / 'mag' / 'l2' / '2024' / '09'
 
         expected_file_paths = [hit_data_dir / f"imap_hit_l2_{HIT_L2_DESCRIPTOR}_20240908_v001.cdf",
-                               mag_data_dir / f"imap_mag_l2_norm-dsrf_20240906_v001.cdf"]
+                               mag_data_dir / "imap_mag_l2_norm-dsrf_20240906_v001.cdf"]
         processing_input_collection = ProcessingInputCollection(hit_l2_data_dependency, mag_data_dependency,
                                                                 mag_l2_data_dependency)
 

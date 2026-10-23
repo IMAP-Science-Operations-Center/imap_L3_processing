@@ -1333,7 +1333,7 @@ class mpfit:
             # if ct GT 0 OR finite(ratio) EQ 0 then begin
 
             if self.status != 0:
-                break;
+                break
         # End of outer loop.
 
         catch_msg = 'in the termination phase'
@@ -1756,8 +1756,8 @@ class mpfit:
                     # exchange occurs later, within the body of MPFIT, after the
                     # extraneous columns of the matrix have been shed.
                     if kmax != j:
-                        temp = ipvt[j];
-                        ipvt[j] = ipvt[kmax];
+                        temp = ipvt[j]
+                        ipvt[j] = ipvt[kmax]
                         ipvt[kmax] = temp
                         rdiag[kmax] = rdiag[j]
                         wa[kmax] = wa[j]
@@ -2135,7 +2135,7 @@ class mpfit:
             if (numpy.abs(fp) <= 0.1 * delta) or \
                     ((parl == 0) and (fp <= temp) and (temp < 0)) or \
                     (iter == 10):
-                break;
+                break
 
             # Compute the newton correction
             wa1 = diag[ipvt] * wa2[ipvt] / dxnorm

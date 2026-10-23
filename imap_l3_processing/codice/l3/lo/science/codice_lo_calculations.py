@@ -12,7 +12,7 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.efficiency_lookup imp
 from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup
-from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, CodiceLoDirectEventData
+from imap_l3_processing.codice.l3.lo.models import CodiceLoDirectEventData
 
 
 def calculate_partial_densities(intensities: np.ndarray, esa_steps: np.ndarray, mass_per_charge: float):

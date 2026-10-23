@@ -30,7 +30,7 @@ class TestHiLoL3SurvivalDependencies(unittest.TestCase):
                 f"imap_glows_l3e_survival-probability-{instrument.value}_20201002_v002.cdf",
                 f"imap_glows_l3e_survival-probability-{instrument.value}_20201003_v003.cdf"]
 
-            l2_map_descriptor = f"ena-h-sf-nsp-ram-hae-6deg-1yr"
+            l2_map_descriptor = "ena-h-sf-nsp-ram-hae-6deg-1yr"
             l2_filename = f"imap_{instrument.value}_l2_{l2_map_descriptor}_20250415_v001.cdf"
 
             dependencies = ProcessingInputCollection(

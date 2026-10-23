@@ -11,10 +11,11 @@ from spacepy.pycdf import CDF
 import numpy as np
 import os
 import sys
-import argparse
 from datetime import datetime
 from pathlib import Path
-import pandas as pd, re, shutil
+import pandas as pd
+import re
+import shutil
 
 def radec2cart(ra,th):
 

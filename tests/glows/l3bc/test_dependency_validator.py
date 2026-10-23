@@ -4,7 +4,6 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch, Mock
 
-from astropy.time import Time, TimeDelta
 
 from imap_l3_processing.glows.l3bc.dependency_validator import validate_omni2_dependency, \
     validate_dependencies, validate_f107_fluxtable_dependency, validate_lyman_alpha_dependency

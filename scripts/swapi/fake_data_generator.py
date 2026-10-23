@@ -1,4 +1,4 @@
-from random import random, randint
+from random import randint
 
 import numpy as np
 

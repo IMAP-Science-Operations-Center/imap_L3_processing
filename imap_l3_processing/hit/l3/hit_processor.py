@@ -52,7 +52,7 @@ class HitProcessor(Processor):
                                        direct_event_dependencies.hit_l1_data.event_binary):
             try:
                 event_raw_pha_events = PHAEventReader.read_all_pha_events(event_binary)
-            except Exception as e:
+            except Exception:
                 logger.warning(f"Could not read all pha events for epoch {epoch}", exc_info=True)
                 continue
 

@@ -28,7 +28,7 @@ class TestCodiceLoL3b3dDistributions(unittest.TestCase):
         efficiency_factors_lut_name = f"imap_codice_{EFFICIENCY_FACTOR_LOOKUP_DESCRIPTOR}_20100105_v010.csv"
         energy_per_charge_lut_name = f"imap_codice_{ESA_TO_ENERGY_PER_CHARGE_LOOKUP_DESCRIPTOR}_20100105_v010.csv"
 
-        unused_science_input = ScienceInput(f"imap_codice_l2_lo-direct-events_20100105_v010.cdf")
+        unused_science_input = ScienceInput("imap_codice_l2_lo-direct-events_20100105_v010.cdf")
 
         processing_input_collection = ProcessingInputCollection(AncillaryInput(mass_species_lut_name),
                                                                 AncillaryInput(geometric_factors_lut_name),

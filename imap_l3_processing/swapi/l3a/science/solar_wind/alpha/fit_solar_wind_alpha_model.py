@@ -6,7 +6,6 @@ import scipy.optimize
 from numpy import ndarray
 from uncertainties import UFloat, covariance_matrix, ufloat
 
-from imap_l3_processing.constants import ALPHA_MASS_PER_CHARGE_M_P_PER_E
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.calculate_initial_guess import (
     calculate_initial_guess,
 )

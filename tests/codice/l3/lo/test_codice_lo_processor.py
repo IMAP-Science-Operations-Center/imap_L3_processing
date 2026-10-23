@@ -7,7 +7,6 @@ from unittest.mock import Mock, patch, call, sentinel, MagicMock
 
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
-from imap_processing.spice.geometry import get_spacecraft_to_instrument_spin_phase_offset
 
 from imap_l3_processing.codice.l3.lo.codice_lo_l3b_3d_distributions_dependencies import \
     CodiceLoL3b3dDistributionsDependencies
@@ -96,7 +95,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
     @patch(f'{MODULE}.CodiceLoL3aRatiosDependencies.fetch_dependencies')
     @patch(f'{MODULE}.CodiceLoProcessor.process_l3a_charge_state_distributions')
     @patch(f'{MODULE}.save_data')
-    @patch(f'imap_l3_processing.processor.spiceypy')
+    @patch('imap_l3_processing.processor.spiceypy')
     def test_process_abundances(self, mock_spiceypy, mock_save_data, mock_process_l3a_abundances,
                                 mock_fetch_dependencies):
         input_collection = MagicMock()
@@ -313,7 +312,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
     @patch(f'{MODULE}.CodiceLoL3aDirectEventsDependencies.fetch_dependencies')
     @patch(f'{MODULE}.CodiceLoProcessor.process_l3a_direct_event_data_product')
     @patch(f'{MODULE}.save_data')
-    @patch(f'imap_l3_processing.processor.spiceypy')
+    @patch('imap_l3_processing.processor.spiceypy')
     def test_process_direct_events(self, mock_spiceypy, mock_save_data, mock_process_direct_event,
                                    mock_fetch_dependencies):
         input_collection = MagicMock()

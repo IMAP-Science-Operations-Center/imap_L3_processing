@@ -1,31 +1,15 @@
-import abc
-import dataclasses
 import logging
-import re
 import shutil
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
-from typing import Self, Optional, override, Literal
 
 import imap_data_access
-import numpy as np
-import pandas
-import xarray as xr
 from imap_data_access import ProcessingInputCollection, ScienceFilePath
 from imap_data_access.file_validation import Version
 from imap_data_access.processing_input import ScienceInput
-from imap_processing.cdf.utils import write_cdf as write_l2_cdf
-from imap_processing.ena_maps.ena_maps import RectangularSkyMap
-from imap_processing.hit.l1b.constants import FILLVAL_INT64
-from imap_processing.spice.geometry import SpiceFrame
-from spacepy.pycdf import CDF
 
-from imap_l3_processing.constants import TT2000_EPOCH
-from imap_l3_processing.lo.l3.lo_sp_initializer import LO_SP_MAP_KERNELS
 from imap_l3_processing.lo.lo_processor import LoProcessor
 from imap_l3_processing.models import InputMetadata, VersionMap
-from imap_l3_processing.utils import furnished_metakernel
 from tests.test_helpers import get_run_local_data_path
 
 

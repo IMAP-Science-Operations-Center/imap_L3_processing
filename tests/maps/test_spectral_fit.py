@@ -6,7 +6,7 @@ from unittest.mock import patch, Mock, sentinel
 import numpy as np
 from scipy.stats import linregress
 
-from imap_l3_processing.maps.map_models import IntensityMapData, RectangularIntensityMapData, QUALITY_FLAGS_VAR_NAME
+from imap_l3_processing.maps.map_models import IntensityMapData, RectangularIntensityMapData
 from imap_l3_processing.maps.mpfit import mpfit
 from imap_l3_processing.maps.quality_flags import MapL3Flags
 from imap_l3_processing.maps.spectral_fit import power_law, fit_arrays_to_power_law, fit_spectral_index_map, \
@@ -132,7 +132,7 @@ class TestSpectralFit(unittest.TestCase):
         expected_energy_midpoint = np.sqrt(0.5 * 10.5)
         expected_energy_minus = expected_energy_midpoint - 0.5
         expected_energy_plus = 10.5 - expected_energy_midpoint
-        expected_energy_label = f"0.5 - 10.5"
+        expected_energy_label = "0.5 - 10.5"
         np.testing.assert_array_equal(spectral_intensity_map.ena_spectral_index,
                                       np.array(true_gamma).reshape(1, 1, 1, 1))
 
@@ -283,7 +283,7 @@ class TestSpectralFit(unittest.TestCase):
         expected_energy_midpoint = np.sqrt(0.5 * 10.5)
         expected_energy_minus = expected_energy_midpoint - 0.5
         expected_energy_plus = 10.5 - expected_energy_midpoint
-        expected_energy_label = f"0.5 - 10.5"
+        expected_energy_label = "0.5 - 10.5"
         np.testing.assert_array_equal(spectral_intensity_map.ena_spectral_index_stat_uncert,
                                       np.full(shape=(1, 1, 1, 1), fill_value=np.nan))
         np.testing.assert_array_equal(spectral_intensity_map.ena_spectral_index_scalar_coefficient,

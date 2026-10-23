@@ -3,10 +3,6 @@
 #!/usr/bin/python
 import numpy as np
 import argparse
-from scipy.optimize import curve_fit
-import random
-import datetime
-from spacepy.pycdf import CDF
 import pandas as pd
 import os
 from pathlib import Path

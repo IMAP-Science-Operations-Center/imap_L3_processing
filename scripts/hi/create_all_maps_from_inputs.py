@@ -42,7 +42,7 @@ if __name__ == "__main__":
     try:
         input_dir = Path(sys.argv[1])
     except:
-        input_dir = Path(f'hi_validation_input')
+        input_dir = Path('hi_validation_input')
         print(f"Could not open input file, using default input path of {input_dir} instead")
 
     run_all_maps(output_dir=output_dir, input_dir=input_dir)

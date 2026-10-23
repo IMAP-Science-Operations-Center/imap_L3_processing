@@ -4,8 +4,6 @@ Author: Marek Strumik, maro at cbk.waw.pl
 import json
 import copy
 import numpy as np
-import time
-import sys
 from .constants import VERSION, L1B_L2_HIST_FLAG_FIELDS, SCAN_CIRCLE_ANGULAR_RADIUS
 from .funcs import time_sec_subsec_to_utc, calibration_factor
 from .geom_fun_libr_box import spin2lb

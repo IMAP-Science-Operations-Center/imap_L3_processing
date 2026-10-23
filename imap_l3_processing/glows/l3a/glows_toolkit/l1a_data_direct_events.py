@@ -2,12 +2,9 @@
 Author: Marek Strumik, maro at cbk.waw.pl
 """
 import json
-import os
-import struct
 import copy
 import numpy as np
 from .constants import VERSION, SUBSECOND_LIMIT
-from .time import Time
 from .funcs import time_sec_subsec_to_utc
 from .direct_event import DirectEvent
 

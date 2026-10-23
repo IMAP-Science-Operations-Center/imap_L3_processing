@@ -1,4 +1,4 @@
-from datetime import timedelta, datetime
+from datetime import datetime
 from pathlib import Path
 
 import imap_data_access
@@ -7,7 +7,7 @@ from imap_data_access import ProcessingInputCollection
 from imap_data_access.file_validation import generate_imap_file_path
 from imap_data_access.processing_input import generate_imap_input
 
-from imap_l3_processing.utils import get_spice_kernels_file_names, SpiceKernelTypes
+from imap_l3_processing.utils import SpiceKernelTypes
 
 REFERENCE_FRAMES = ['sf', 'hf']
 POINTING_SET_DESCRIPTORS_FROM_REF_FRAME = {

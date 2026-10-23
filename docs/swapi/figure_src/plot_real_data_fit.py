@@ -133,9 +133,9 @@ def main():
     )
 
     print("\n--- Fit results ---")
-    print(f"  Science bins (1..71, includes fine):")
+    print("  Science bins (1..71, includes fine):")
     _print_fit(science_result, sc_velocity_rtn)
-    print(f"  Coarse-only bins (1..62):")
+    print("  Coarse-only bins (1..62):")
     _print_fit(coarse_result, sc_velocity_rtn)
 
     print("\n--- Bootstrap σ on the all-bins fit (B=300, warm-LM, xtol=1e-3) ---")

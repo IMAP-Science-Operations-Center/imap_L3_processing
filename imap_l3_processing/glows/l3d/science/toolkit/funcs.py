@@ -11,7 +11,6 @@ import netCDF4
 from astropy.time import Time
 from astropy.coordinates import get_sun
 
-from imap_l3_processing.glows.quality_flags import NOMINAL_ALPHA_PROTON_RATIO_VALUE
 from .constants import PHISICAL_CONSTANTS, CONST_ALPHA_TO_PROTON
 
 import logging
@@ -288,7 +287,7 @@ def get_spher_coord_rad(vec):
     if np.shape(vec)[0]!=3:
       raise "get_spher_coord_rad() error: np.shape(vec)[0]!=3"
     r=np.sqrt(np.dot(vec,vec))
-    if r==0.0: b=0.0;
+    if r==0.0: b=0.0
     else: b=np.arcsin(vec[2]/r) # compute latitude
     # compute longitude
     if vec[0]==0.0 and vec[1]==0.0: l=0.0

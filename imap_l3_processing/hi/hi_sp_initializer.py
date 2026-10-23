@@ -75,7 +75,7 @@ class HiSPInitializer(SPMapInitializer):
         sp_hi45_query_result = imap_data_access.query(
             instrument='glows',
             data_level='l3e',
-            descriptor=f'survival-probability-hi-45',
+            descriptor='survival-probability-hi-45',
             version='latest'
         )
         self.glows_hi45_file_by_repoint = {int(r["repointing"]): Path(r["file_path"]).name for r in
@@ -84,7 +84,7 @@ class HiSPInitializer(SPMapInitializer):
         sp_hi90_query_result = imap_data_access.query(
             instrument='glows',
             data_level='l3e',
-            descriptor=f'survival-probability-hi-90',
+            descriptor='survival-probability-hi-90',
             version='latest'
         )
         self.glows_hi90_file_by_repoint = {int(r["repointing"]): Path(r["file_path"]).name for r in

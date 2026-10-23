@@ -960,8 +960,8 @@ class TestMomentsCalculation(unittest.TestCase):
         for i in np.arange(len(tof_flags)):
             self.assertEqual(expected_values[i], tof_flags[i])
 
-    @patch(f"spiceypy.datetime2et")
-    @patch(f"spiceypy.pxform")
+    @patch("spiceypy.datetime2et")
+    @patch("spiceypy.pxform")
     @patch(f"{MODULE}.PredictedEphemerisTracker")
     def test_rotate_rtn_vectors_to_dps(self, mock_predicted_ephemeris_tracker_class, mock_pxform, mock_datetime2et):
         pred_tracker_1 = create_autospec(PredictedEphemerisTracker, used_predict=False)

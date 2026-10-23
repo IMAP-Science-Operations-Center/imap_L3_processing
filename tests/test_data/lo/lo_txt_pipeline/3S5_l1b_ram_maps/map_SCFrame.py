@@ -7,11 +7,6 @@ Created on Wed Mar 18 2026
 """
 
 import numpy as np
-import argparse
-from scipy.optimize import curve_fit
-import random
-import datetime
-from spacepy.pycdf import CDF
 import pandas as pd
 import os
 from pathlib import Path

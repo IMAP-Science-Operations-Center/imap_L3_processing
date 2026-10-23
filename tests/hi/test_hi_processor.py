@@ -449,7 +449,7 @@ class TestHiProcessor(unittest.TestCase):
                                        start_date=datetime.now(),
                                        end_date=datetime.now() + timedelta(days=1),
                                        version="",
-                                       descriptor=f"hic-ena-h-hf-sp-full-hae-4deg-6mo")
+                                       descriptor="hic-ena-h-hf-sp-full-hae-4deg-6mo")
         dependencies = ProcessingInputCollection(*[ScienceInput(map_name) for map_name in parent_map_names])
         data_product = HiProcessor(dependencies, input_metadata).process()
 

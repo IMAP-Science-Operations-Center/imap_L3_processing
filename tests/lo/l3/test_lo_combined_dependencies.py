@@ -4,7 +4,6 @@ from unittest.mock import sentinel, call, patch
 from imap_data_access import ScienceInput, ProcessingInputCollection
 
 from imap_l3_processing.lo.l3.lo_combined_dependencies import LoCombinedDependencies
-from imap_l3_processing.maps.map_models import RectangularIntensityMapData
 
 
 class TestLoCombinedDependencies(unittest.TestCase):

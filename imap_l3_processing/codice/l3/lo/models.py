@@ -3,14 +3,12 @@ from __future__ import annotations
 from collections import namedtuple
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TypeVar
 
 import numpy as np
 from numpy import ndarray
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.cdf.cdf_utils import read_numeric_variable, read_variable_and_mask_fill_values
-from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup
 from imap_l3_processing.models import DataProductVariable, DataProduct
 
 CODICE_LO_L2_NUM_PRIORITIES = 7

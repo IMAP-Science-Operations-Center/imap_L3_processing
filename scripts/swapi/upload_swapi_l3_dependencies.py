@@ -1,5 +1,4 @@
 import shutil
-from pathlib import Path
 
 import imap_data_access
 from imap_data_access.file_validation import generate_imap_file_path

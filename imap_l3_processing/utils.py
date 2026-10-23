@@ -164,11 +164,11 @@ def generate_global_metadata_for_undefined_logical_source(input_metadata: InputM
     level = input_metadata.data_level.replace('l', '')
     data_type_string = f"Level-{level}"
     if "spx" in input_metadata.descriptor:
-        data_type_string += f" Spectral Fit Index Map"
+        data_type_string += " Spectral Fit Index Map"
     elif "ena" in input_metadata.descriptor and "-sp-" in input_metadata.descriptor:
-        data_type_string += f" Survival Corrected"
+        data_type_string += " Survival Corrected"
     elif "ena" in input_metadata.descriptor:
-        data_type_string += f" ENA Intensity"
+        data_type_string += " ENA Intensity"
 
     logical_source_global_attrs = {
         "Data_level": level,

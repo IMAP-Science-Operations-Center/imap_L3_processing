@@ -51,7 +51,7 @@ print(args)
 imap_dev_url = os.getenv("IMAP_DATA_ACCESS_URL")
 headers = {'x-api-key': os.getenv("IMAP_API_KEY")}
 
-if not "log_id" in vars(args):
+if "log_id" not in vars(args):
     query_params = { key: val for key, val in vars(args).items() if val is not None and key not in ['command']}
     response = requests.get(url=f"{imap_dev_url}/processing-jobs", headers=headers, params=query_params)
     processing_jobs = response.json()

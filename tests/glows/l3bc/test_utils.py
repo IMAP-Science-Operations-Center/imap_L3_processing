@@ -67,7 +67,7 @@ class TestUtils(unittest.TestCase):
         repointing_number = 5998
         with self.assertRaises(ValueError) as err:
             _, _ = get_pointing_date_range(repointing_number)
-        self.assertEqual(str(err.exception), f"No pointing found for pointing: 5998")
+        self.assertEqual(str(err.exception), "No pointing found for pointing: 5998")
 
 
 def create_imap_data_access_json(file_path: str, data_level: str, start_date: str,

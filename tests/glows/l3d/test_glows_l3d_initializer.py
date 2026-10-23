@@ -1,6 +1,4 @@
 import unittest
-from itertools import product
-from math import prod
 from unittest.mock import patch, call, Mock, sentinel
 
 from imap_data_access.file_validation import Version

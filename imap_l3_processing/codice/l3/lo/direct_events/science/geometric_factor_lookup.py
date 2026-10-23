@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import datetime, date
+from datetime import date
 from pathlib import Path
 from typing import TypeVar
 

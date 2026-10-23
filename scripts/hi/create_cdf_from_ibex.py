@@ -1,5 +1,5 @@
 import argparse
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -27,7 +27,7 @@ energies = []
 variances = []
 
 for file in folder.iterdir():
-    if file.parts[-1].endswith("flux.txt") and not "mono" in file.parts[-1]:
+    if file.parts[-1].endswith("flux.txt") and "mono" not in file.parts[-1]:
         group_file_name_prefix = '-'.join(file.parts[-1].split('-')[:-1])
 
         with open(file.parent / (group_file_name_prefix + "-flux.txt"), "r") as flux_file:

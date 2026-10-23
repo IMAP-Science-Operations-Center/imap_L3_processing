@@ -40,7 +40,7 @@ class TestModels(unittest.TestCase):
                     # @formatter:off
                     np.testing.assert_array_equal(l2_direct_event_data.epoch, cdf["epoch"])
                     np.testing.assert_array_equal(l2_direct_event_data.epoch_delta_plus, cdf["epoch_delta_plus"])
-                    np.testing.assert_array_equal(l2_direct_event_data.ssd_energy, cdf[f"ssd_energy"])
+                    np.testing.assert_array_equal(l2_direct_event_data.ssd_energy, cdf["ssd_energy"])
                     expected_ssd_id = cdf["ssd_id"][...]
                     np.testing.assert_array_equal(l2_direct_event_data.ssd_id, expected_ssd_id)
 
@@ -63,7 +63,7 @@ class TestModels(unittest.TestCase):
                     np.testing.assert_array_equal(l2_direct_event_data.data_quality, cdf["data_quality"])
                     np.testing.assert_array_equal(l2_direct_event_data.multi_flag, cdf["multi_flag"])
 
-                    np.testing.assert_array_equal(l2_direct_event_data.type, cdf[f"type"])
+                    np.testing.assert_array_equal(l2_direct_event_data.type, cdf["type"])
 
                     expected_elevation_angle = cdf["elevation_angle"][...]
                     expected_elevation_angle[expected_elevation_angle == -1e31] = np.nan

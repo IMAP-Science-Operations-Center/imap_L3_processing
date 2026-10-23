@@ -35,7 +35,6 @@ from uncertainties import unumpy
 
 from imap_l3_processing.constants import (
     HE_PUI_PARTICLE_MASS_PER_CHARGE_M_P_PER_E,
-    ONE_AU_IN_KM,
     ONE_SECOND_IN_NANOSECONDS,
 )
 from imap_l3_processing.models import InputMetadata

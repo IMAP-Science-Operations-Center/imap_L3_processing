@@ -734,7 +734,7 @@ class TestUltraProcessor(unittest.TestCase):
                                        start_date=datetime.now(),
                                        end_date=datetime.now() + timedelta(days=1),
                                        version="",
-                                       descriptor=f"u90-ena-h-sf-sp-full-hae-2deg-6mo"
+                                       descriptor="u90-ena-h-sf-sp-full-hae-2deg-6mo"
                                        )
 
         mock_healpix_skymap = Mock()
@@ -836,7 +836,7 @@ class TestUltraProcessor(unittest.TestCase):
                                        start_date=datetime.now(),
                                        end_date=datetime.now() + timedelta(days=1),
                                        version="v000",
-                                       descriptor=f"u90-spx0510-h-sf-sp-full-hae-4deg-6mo")
+                                       descriptor="u90-spx0510-h-sf-sp-full-hae-4deg-6mo")
         dependencies = mock_fetch_dependencies.return_value
 
         processor = UltraProcessor(input_deps, input_metadata)
@@ -858,7 +858,7 @@ class TestUltraProcessor(unittest.TestCase):
                                        start_date=datetime.now(),
                                        end_date=datetime.now() + timedelta(days=1),
                                        version="v000",
-                                       descriptor=f"u90-spx-h-sf-sp-full-hae-nside8-6mo")
+                                       descriptor="u90-spx-h-sf-sp-full-hae-nside8-6mo")
 
         processor = UltraProcessor(ProcessingInputCollection(), input_metadata)
 
@@ -873,7 +873,7 @@ class TestUltraProcessor(unittest.TestCase):
                                        start_date=datetime.now(),
                                        end_date=datetime.now() + timedelta(days=1),
                                        version="v000",
-                                       descriptor=f"u90-spx-h-sf-sp-full-hae-6deg-6mo")
+                                       descriptor="u90-spx-h-sf-sp-full-hae-6deg-6mo")
         input_map_path = get_test_data_path('ultra/fake_ultra_map_data_with_breakpoint_at_15keV.cdf')
         fit_energy_ranges_path = get_test_data_path('ultra/imap_ultra_ulc-spx-energy-ranges_20250407_v000.dat')
         dependencies = UltraL3SpectralIndexDependencies.from_file_paths(input_map_path, fit_energy_ranges_path)

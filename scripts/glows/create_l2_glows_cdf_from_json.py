@@ -123,5 +123,5 @@ if __name__ == "__main__":
     for file_path in json_directory.iterdir():
         try:
             fill_official_l2_cdf_with_json_values(output_directory, file_path)
-        except Exception as e:
+        except Exception:
             traceback.print_exc()

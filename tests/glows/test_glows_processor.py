@@ -1273,28 +1273,28 @@ class TestGlowsProcessor(unittest.TestCase):
         )
 
         expected_lo_files = [
-            [f'imap_glows_l3e_survival-probability-lo_20250101-repoint02902_v001.cdf', sentinel.lo_dat_1],
-            [f'imap_glows_l3e_survival-probability-lo_20250101-repoint02905_v003.0013.cdf', sentinel.lo_dat_2],
+            ['imap_glows_l3e_survival-probability-lo_20250101-repoint02902_v001.cdf', sentinel.lo_dat_1],
+            ['imap_glows_l3e_survival-probability-lo_20250101-repoint02905_v003.0013.cdf', sentinel.lo_dat_2],
         ]
         mock_process_lo.side_effect = expected_lo_files
 
         expected_hi90_files = [
             [
-                f"imap_glows_l3e_survival-probability-hi-90_20250101-repoint02902_v001.cdf",
+                "imap_glows_l3e_survival-probability-hi-90_20250101-repoint02902_v001.cdf",
                 sentinel.hi90_dat_1,
             ],
             [
-                f"imap_glows_l3e_survival-probability-hi-90_20250101-repoint02903_v001.0011.cdf",
+                "imap_glows_l3e_survival-probability-hi-90_20250101-repoint02903_v001.0011.cdf",
                 sentinel.hi90_dat_2,
             ],
         ]
         expected_hi45_files = [
             [
-                f"imap_glows_l3e_survival-probability-hi-45_20250101-repoint02902_v001.cdf",
+                "imap_glows_l3e_survival-probability-hi-45_20250101-repoint02902_v001.cdf",
                 sentinel.hi45_dat_1,
             ],
             [
-                f"imap_glows_l3e_survival-probability-hi-45_20250101-repoint02904_v002.0012.cdf",
+                "imap_glows_l3e_survival-probability-hi-45_20250101-repoint02904_v002.0012.cdf",
                 sentinel.hi45_dat_2,
             ],
         ]
@@ -1307,11 +1307,11 @@ class TestGlowsProcessor(unittest.TestCase):
 
         expected_ul_sf_files = [
             [
-                f"imap_glows_l3e_survival-probability-ul-sf_20250101-repoint02902_v001.cdf",
+                "imap_glows_l3e_survival-probability-ul-sf_20250101-repoint02902_v001.cdf",
                 sentinel.ul_sf_dat_1,
             ],
             [
-                f"imap_glows_l3e_survival-probability-ul-sf_20250101-repoint02906_v004.0014.cdf",
+                "imap_glows_l3e_survival-probability-ul-sf_20250101-repoint02906_v004.0014.cdf",
                 sentinel.ul_sf_dat_2,
             ],
         ]
@@ -1319,11 +1319,11 @@ class TestGlowsProcessor(unittest.TestCase):
 
         expected_ul_hf_files = [
             [
-                f"imap_glows_l3e_survival-probability-ul-hf_20250101-repoint02902_v001.cdf",
+                "imap_glows_l3e_survival-probability-ul-hf_20250101-repoint02902_v001.cdf",
                 sentinel.ul_hf_dat_1,
             ],
             [
-                f"imap_glows_l3e_survival-probability-ul-hf_20250101-repoint02907_v005.0015.cdf",
+                "imap_glows_l3e_survival-probability-ul-hf_20250101-repoint02907_v005.0015.cdf",
                 sentinel.ul_hf_dat_2,
             ],
         ]
@@ -1332,25 +1332,25 @@ class TestGlowsProcessor(unittest.TestCase):
         expected_products = [
             sentinel.l3d_text_file_paths,
             sentinel.l3d_cdf_file_path,
-            f"imap_glows_l3e_survival-probability-lo_20250101-repoint02902_v001.cdf",
+            "imap_glows_l3e_survival-probability-lo_20250101-repoint02902_v001.cdf",
             sentinel.lo_dat_1,
-            f"imap_glows_l3e_survival-probability-hi-90_20250101-repoint02902_v001.cdf",
+            "imap_glows_l3e_survival-probability-hi-90_20250101-repoint02902_v001.cdf",
             sentinel.hi90_dat_1,
-            f"imap_glows_l3e_survival-probability-hi-45_20250101-repoint02902_v001.cdf",
+            "imap_glows_l3e_survival-probability-hi-45_20250101-repoint02902_v001.cdf",
             sentinel.hi45_dat_1,
-            f"imap_glows_l3e_survival-probability-ul-sf_20250101-repoint02902_v001.cdf",
+            "imap_glows_l3e_survival-probability-ul-sf_20250101-repoint02902_v001.cdf",
             sentinel.ul_sf_dat_1,
-            f"imap_glows_l3e_survival-probability-ul-hf_20250101-repoint02902_v001.cdf",
+            "imap_glows_l3e_survival-probability-ul-hf_20250101-repoint02902_v001.cdf",
             sentinel.ul_hf_dat_1,
-            f"imap_glows_l3e_survival-probability-hi-90_20250101-repoint02903_v001.0011.cdf",
+            "imap_glows_l3e_survival-probability-hi-90_20250101-repoint02903_v001.0011.cdf",
             sentinel.hi90_dat_2,
-            f"imap_glows_l3e_survival-probability-hi-45_20250101-repoint02904_v002.0012.cdf",
+            "imap_glows_l3e_survival-probability-hi-45_20250101-repoint02904_v002.0012.cdf",
             sentinel.hi45_dat_2,
-            f"imap_glows_l3e_survival-probability-lo_20250101-repoint02905_v003.0013.cdf",
+            "imap_glows_l3e_survival-probability-lo_20250101-repoint02905_v003.0013.cdf",
             sentinel.lo_dat_2,
-            f"imap_glows_l3e_survival-probability-ul-sf_20250101-repoint02906_v004.0014.cdf",
+            "imap_glows_l3e_survival-probability-ul-sf_20250101-repoint02906_v004.0014.cdf",
             sentinel.ul_sf_dat_2,
-            f"imap_glows_l3e_survival-probability-ul-hf_20250101-repoint02907_v005.0015.cdf",
+            "imap_glows_l3e_survival-probability-ul-hf_20250101-repoint02907_v005.0015.cdf",
             sentinel.ul_hf_dat_2,
         ]
 
@@ -1865,7 +1865,7 @@ class TestGlowsProcessor(unittest.TestCase):
     @patch("imap_l3_processing.glows.glows_processor.ZipFile")
     def test_archive_dependencies(self, mock_zip, mock_json):
         version_number = Version(1, 1)
-        expected_filepath = TEMP_CDF_FOLDER_PATH / f"imap_glows_l3b-archive_20250314_v001.zip"
+        expected_filepath = TEMP_CDF_FOLDER_PATH / "imap_glows_l3b-archive_20250314_v001.zip"
         expected_json_filename = "cr_to_process.json"
 
         l3bc_dependencies = GlowsL3BCDependencies(

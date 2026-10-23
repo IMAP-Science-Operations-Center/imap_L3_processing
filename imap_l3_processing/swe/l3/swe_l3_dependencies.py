@@ -35,12 +35,12 @@ class SweL3Dependencies:
             swe_l2_dependency = next(
                 d.imap_file_paths[0] for d in science_files if d.source == "swe" and d.data_type == "l2")
         except StopIteration:
-            raise ValueError(f"Missing SWE l2 dependency.")
+            raise ValueError("Missing SWE l2 dependency.")
         try:
             swe_l1b_dependency = next(
                 d.imap_file_paths[0] for d in science_files if d.source == "swe" and d.data_type == "l1b")
         except StopIteration:
-            raise ValueError(f"Missing SWE l1b dependency.")
+            raise ValueError("Missing SWE l1b dependency.")
         mag_file, mag_level = select_mag_path(dependencies, MAG_DESPUN_L1D_DESCRIPTOR)
         if mag_file is None:
             raise ValueError(f"Missing MAG {MAG_DESPUN_L1D_DESCRIPTOR} dependency.")

@@ -89,8 +89,8 @@ class TestHiCombinedInitializer(unittest.TestCase):
             *l3_sp_input_maps
         }
 
-        existing_file_without_major_number = f'imap_hi_l3_hic-ena-h-hf-sp-full-hae-6deg-1yr_20250101_v001.cdf'
-        existing_file_with_lower_major_number = f'imap_hi_l3_hic-ena-h-hf-sp-full-hae-6deg-1yr_20250101_v001.0001.cdf'
+        existing_file_without_major_number = 'imap_hi_l3_hic-ena-h-hf-sp-full-hae-6deg-1yr_20250101_v001.cdf'
+        existing_file_with_lower_major_number = 'imap_hi_l3_hic-ena-h-hf-sp-full-hae-6deg-1yr_20250101_v001.0001.cdf'
         for existing_file in [existing_file_without_major_number, existing_file_with_lower_major_number]:
             with self.subTest(existing_file=existing_file):
                 mock_read_cdf_parents.reset_mock()
@@ -98,24 +98,24 @@ class TestHiCombinedInitializer(unittest.TestCase):
 
                 self.hi_combined_initializer_mock_query.side_effect = [
                     create_mock_query_results([
-                        f'imap_hi_l3_h45-ena-h-hf-sp-ram-hae-6deg-1yr_20250101_v001.cdf',
-                        f'imap_hi_l3_h45-ena-h-hf-sp-anti-hae-6deg-1yr_20250101_v001.cdf',
-                        f'imap_hi_l3_h90-ena-h-hf-sp-ram-hae-6deg-1yr_20250101_v001.cdf',
-                        f'imap_hi_l3_h90-ena-h-hf-sp-anti-hae-6deg-1yr_20250101_v001.cdf',
+                        'imap_hi_l3_h45-ena-h-hf-sp-ram-hae-6deg-1yr_20250101_v001.cdf',
+                        'imap_hi_l3_h45-ena-h-hf-sp-anti-hae-6deg-1yr_20250101_v001.cdf',
+                        'imap_hi_l3_h90-ena-h-hf-sp-ram-hae-6deg-1yr_20250101_v001.cdf',
+                        'imap_hi_l3_h90-ena-h-hf-sp-anti-hae-6deg-1yr_20250101_v001.cdf',
                         existing_file,
                     ]),
                     create_mock_query_results([])
                 ]
-                descriptor = f'hic-ena-h-hf-sp-full-hae-6deg-1yr'
+                descriptor = 'hic-ena-h-hf-sp-full-hae-6deg-1yr'
 
                 expected_maps_to_produce = [
                     PossibleMapToProduce(
                         input_files={
-                            f'imap_hi_l3_h45-ena-h-hf-sp-ram-hae-6deg-1yr_20250101_v001.cdf',
-                            f'imap_hi_l3_h45-ena-h-hf-sp-anti-hae-6deg-1yr_20250101_v001.cdf',
+                            'imap_hi_l3_h45-ena-h-hf-sp-ram-hae-6deg-1yr_20250101_v001.cdf',
+                            'imap_hi_l3_h45-ena-h-hf-sp-anti-hae-6deg-1yr_20250101_v001.cdf',
 
-                            f'imap_hi_l3_h90-ena-h-hf-sp-ram-hae-6deg-1yr_20250101_v001.cdf',
-                            f'imap_hi_l3_h90-ena-h-hf-sp-anti-hae-6deg-1yr_20250101_v001.cdf',
+                            'imap_hi_l3_h90-ena-h-hf-sp-ram-hae-6deg-1yr_20250101_v001.cdf',
+                            'imap_hi_l3_h90-ena-h-hf-sp-anti-hae-6deg-1yr_20250101_v001.cdf',
                         },
                         input_metadata=InputMetadata(
                             instrument='hi',
@@ -130,7 +130,7 @@ class TestHiCombinedInitializer(unittest.TestCase):
 
                 initializer = HiCombinedInitializer()
                 actual_maps_to_produce = initializer.get_maps_that_should_be_produced(
-                    f'hic-ena-h-hf-sp-full-hae-6deg-1yr', 2)
+                    'hic-ena-h-hf-sp-full-hae-6deg-1yr', 2)
 
                 mock_read_cdf_parents.assert_called_once_with(existing_file)
                 self.hi_combined_initializer_mock_query.assert_has_calls([
@@ -351,7 +351,7 @@ class TestHiCombinedInitializer(unittest.TestCase):
         ]
 
         initializer = HiCombinedInitializer()
-        actual_maps_to_produce = initializer.get_maps_that_should_be_produced(f'hic-ena-h-hf-nsp-full-hae-6deg-1yr',
+        actual_maps_to_produce = initializer.get_maps_that_should_be_produced('hic-ena-h-hf-nsp-full-hae-6deg-1yr',
                                                                               None)
 
         mock_read_cdf_parents.assert_not_called()

@@ -83,5 +83,5 @@ if __name__ == "__main__":
 
     try:
         create_l2_hit_sectored_rates_cdf_from_csv(str(input_path), str(cdf_file_path))
-    except Exception as e:
+    except Exception:
         traceback.print_exc()

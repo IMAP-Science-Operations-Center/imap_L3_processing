@@ -191,7 +191,7 @@ def main():
 
     axis.plot(
         _CUTOFF_SWEEP_KMS, rate_reference, "-", color="0.4", lw=1,
-        label=f"fine-grid reference",
+        label="fine-grid reference",
     )
     axis.scatter(
         _CUTOFF_SWEEP_KMS, rate_without, color="tab:red", s=10,

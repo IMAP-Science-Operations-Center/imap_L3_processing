@@ -8,7 +8,7 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import P
 from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import EnergyLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import MassCoefficientLookup
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup
-from imap_l3_processing.codice.l3.lo.models import EnergyAndSpinAngle, CodiceLoDirectEventData
+from imap_l3_processing.codice.l3.lo.models import CodiceLoDirectEventData
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import calculate_partial_densities, \
     calculate_total_number_of_events, calculate_mass, calculate_mass_per_charge, \
     rebin_to_counts_by_species_elevation_and_spin_sector, rebin_direct_events_by_energy_and_spin_sector, \

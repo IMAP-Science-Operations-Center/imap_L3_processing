@@ -7,12 +7,8 @@ Created on Sun Feb 15 18:14:16 2026
 """
 
 import numpy as np
-import pandas as pd
 import os
-import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
 from scipy.spatial.transform import Rotation as R
-from matplotlib.colors import LogNorm
 import new_patch_arc2 as patch
 import new_patch_arc2_linear as pchlin
 

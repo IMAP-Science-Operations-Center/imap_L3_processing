@@ -1,13 +1,11 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-import numba
 import numpy as np
 from uncertainties import ufloat
 
 from imap_l3_processing.constants import (
     ALPHA_MASS_PER_CHARGE_M_P_PER_E,
-    ALPHA_PARTICLE_CHARGE_COULOMBS,
     ALPHA_PARTICLE_MASS_KG,
     PROTON_CHARGE_COULOMBS,
     PROTON_MASS_KG,

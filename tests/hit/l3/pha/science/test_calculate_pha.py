@@ -1,6 +1,5 @@
 import math
 import unittest
-from collections import defaultdict
 from unittest.mock import patch, Mock, sentinel
 
 import numpy as np

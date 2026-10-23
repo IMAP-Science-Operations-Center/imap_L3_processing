@@ -3,7 +3,6 @@ from pathlib import Path
 
 import netCDF4
 import numpy as np
-from astropy.time import Time, TimeDelta
 from numpy import ndarray
 
 YEAR_COLUMN = 0

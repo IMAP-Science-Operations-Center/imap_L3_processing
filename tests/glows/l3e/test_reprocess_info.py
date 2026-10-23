@@ -10,7 +10,7 @@ from imap_l3_processing.glows.descriptors import GLOWS_L3E_HI_45_DESCRIPTOR, GLO
     GLOWS_L3E_LO_DESCRIPTOR, GLOWS_L3E_ULTRA_SF_DESCRIPTOR, GLOWS_L3E_ULTRA_HF_DESCRIPTOR, GLOWS_L3B_DESCRIPTOR, \
     GLOWS_L3C_DESCRIPTOR, GLOWS_L3D_DESCRIPTOR, GLOWS_REPROCESSING_DESCRIPTOR
 from imap_l3_processing.glows.l3e.reprocess_info import ReprocessInfo, ReprocessTargets, fetch_reprocess_info
-from tests.test_helpers import get_test_data_folder, get_test_data_path, create_mock_query_results
+from tests.test_helpers import get_test_data_folder, get_test_data_path
 
 
 class TestReprocessInfo(unittest.TestCase):

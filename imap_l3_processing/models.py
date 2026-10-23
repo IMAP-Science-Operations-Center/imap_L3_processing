@@ -72,7 +72,7 @@ class DataProduct(abc.ABC, Generic[D]):
 
     @abc.abstractmethod
     def to_data_product_variables(self) -> list[DataProductVariable]:
-        raise NotImplemented
+        raise NotImplementedError
 
     def add_paths_to_parents(self, paths: list[Path]):
         self.add_filenames_to_parents([path.name for path in paths])

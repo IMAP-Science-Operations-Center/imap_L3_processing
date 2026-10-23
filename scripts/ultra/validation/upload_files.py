@@ -30,7 +30,7 @@ def upload_file(f):
             uploaded.append(f.name)
             print("uploaded", f.name)
             return
-        except Exception as e:
+        except Exception:
             failures += 1
 
             print(f"failed to upload file: {f} after {failures} attempts, retrying...")

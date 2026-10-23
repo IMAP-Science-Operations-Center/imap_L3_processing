@@ -339,13 +339,13 @@ class TestHiSPInitializer(unittest.TestCase):
         actual_possible_maps = initializer.get_maps_that_should_be_produced(descriptor, None)
 
         mock_read_cdf_parents.assert_has_calls([
-            call(f'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf'),
-            call(f'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100401_v001.cdf'),
-            call(f'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100701_v001.cdf'),
-            call(f'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20101001_v001.cdf'),
+            call('imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf'),
+            call('imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100401_v001.cdf'),
+            call('imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100701_v001.cdf'),
+            call('imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20101001_v001.cdf'),
 
-            call(f'imap_hi_l3_h90-ena-h-sf-sp-anti-hae-4deg-3mo_20100101_v001.cdf'),
-            call(f'imap_hi_l3_h90-ena-h-sf-sp-anti-hae-4deg-3mo_20100401_v001.cdf'),
+            call('imap_hi_l3_h90-ena-h-sf-sp-anti-hae-4deg-3mo_20100101_v001.cdf'),
+            call('imap_hi_l3_h90-ena-h-sf-sp-anti-hae-4deg-3mo_20100401_v001.cdf'),
         ])
 
         self.assertEqual(expected_possible_maps, actual_possible_maps)
@@ -412,9 +412,9 @@ class TestHiSPInitializer(unittest.TestCase):
                 actual_possible_maps = initializer.get_maps_that_should_be_produced(descriptor, major_version)
 
                 mock_read_cdf_parents.assert_has_calls([
-                    call(f'imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf'),
+                    call('imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf'),
 
-                    call(f'imap_hi_l3_h90-ena-h-sf-sp-anti-hae-4deg-3mo_20100101_v001.cdf'),
+                    call('imap_hi_l3_h90-ena-h-sf-sp-anti-hae-4deg-3mo_20100101_v001.cdf'),
                 ])
 
                 self.assertEqual(expected_possible_maps, actual_possible_maps)
@@ -487,7 +487,7 @@ class TestHiSPInitializer(unittest.TestCase):
                     f'imap_hi_l1c_{sensor}sensor-pset_20100101-repoint00001_v001.cdf',
                     f'imap_hi_l1c_{sensor}sensor-pset_20100102-repoint00002_v001.cdf',
                     f'imap_hi_l1c_{sensor}sensor-pset_20100103-repoint00003_v001.cdf',
-                    f'imap_science_0001.tf',
+                    'imap_science_0001.tf',
                 },
                 f'imap_hi_l2_h{sensor}-ena-h-sf-nsp-anti-hae-4deg-3mo_20100401_v001.cdf': {
                     f'imap_hi_l1c_{sensor}sensor-pset_20100401-repoint00101_v001.cdf',
@@ -512,7 +512,7 @@ class TestHiSPInitializer(unittest.TestCase):
                     f'imap_glows_l3e_survival-probability-hi-{sensor}_20100101-repoint00001_v001.cdf',
                     f'imap_glows_l3e_survival-probability-hi-{sensor}_20100102-repoint00002_v001.cdf',
                     f'imap_glows_l3e_survival-probability-hi-{sensor}_20100103-repoint00003_v001.cdf',
-                    f'imap_science_0001.tf',
+                    'imap_science_0001.tf',
                 },
                 f'imap_hi_l3_h{sensor}-ena-h-sf-sp-anti-hae-4deg-3mo_20100401_v001.cdf': {
                     f'imap_hi_l2_h{sensor}-ena-h-sf-nsp-anti-hae-4deg-3mo_20100401_v001.cdf',
@@ -522,7 +522,7 @@ class TestHiSPInitializer(unittest.TestCase):
                     f'imap_glows_l3e_survival-probability-hi-{sensor}_20100401-repoint00101_v001.cdf',
                     f'imap_glows_l3e_survival-probability-hi-{sensor}_20100402-repoint00102_v001.cdf',
                     f'imap_glows_l3e_survival-probability-hi-{sensor}_20100403-repoint00103_v001.cdf',
-                    f'imap_science_0001.tf',
+                    'imap_science_0001.tf',
                 },
             }
             return mapping[file_name]

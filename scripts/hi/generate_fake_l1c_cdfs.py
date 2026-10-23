@@ -25,4 +25,4 @@ def generate_fake_l1c(start_date: datetime, num_days: int, output_dir: Path) -> 
 
 if __name__ == "__main__":
     generate_fake_l1c(datetime(month=4, year=2025, day=16, hour=12), num_days=90,
-                      output_dir=get_test_data_path(f"hi/fake_l1c/90"))
+                      output_dir=get_test_data_path("hi/fake_l1c/90"))

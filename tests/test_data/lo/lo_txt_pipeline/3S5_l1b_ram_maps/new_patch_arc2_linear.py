@@ -3,7 +3,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 from scipy.spatial.transform import Rotation as R
-from matplotlib.colors import LogNorm
 
 PI = np.pi
 

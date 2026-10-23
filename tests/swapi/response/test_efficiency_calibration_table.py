@@ -1,7 +1,6 @@
 import unittest
 from datetime import datetime
 
-from scipy.constants import milli
 from spacepy import pycdf
 
 from imap_l3_processing.swapi.response.efficiency_calibration_table import EfficiencyCalibrationTable

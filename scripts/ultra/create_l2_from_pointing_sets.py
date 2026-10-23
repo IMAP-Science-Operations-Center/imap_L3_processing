@@ -70,7 +70,7 @@ if __name__ == "__main__":
     end_date = datetime(2025, 10, 15)
 
     duration = '6mo'
-    descriptor = f"u90-ena-h-hf-nsp-full-hae-2deg-6mo"
+    descriptor = "u90-ena-h-hf-nsp-full-hae-2deg-6mo"
     generate_map(descriptor, start_date, end_date)
     # for sensor in [45, 90]:
     #     for side in ['ram', 'anti', 'full']:

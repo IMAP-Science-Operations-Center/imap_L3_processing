@@ -3,7 +3,6 @@ Author: Marek Strumik, maro at cbk.waw.pl
 """
 import json
 import copy
-import sys
 import numpy as np
 import pandas as pd
 from astropy.coordinates import SkyCoord

@@ -267,7 +267,7 @@ def _write_ultra_l1c_cdf_with_parents(
 
 def _add_depends(var: Var, depends: list[str], depend_0: str = None):
     if depend_0 is not None:
-        var.attrs[f"DEPEND_0"] = depend_0
+        var.attrs["DEPEND_0"] = depend_0
     for i, dep in enumerate(depends):
         var.attrs[f"DEPEND_{i + 1}"] = dep
 

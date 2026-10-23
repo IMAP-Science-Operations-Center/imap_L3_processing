@@ -42,7 +42,6 @@ from imap_l3_processing.models import DataProductVariable
 from tests.test_helpers import (
     get_test_data_folder,
     get_integration_test_data_path,
-    NumpyArrayMatcher,
 )
 
 

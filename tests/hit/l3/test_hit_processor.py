@@ -675,6 +675,6 @@ class TestHitProcessor(TestCase):
             processor.process()
 
         self.assertEqual(e.exception.args[0],
-                         f"Don't know how to generate 'spectral-index' /n Known HIT l3 data products: 'macropixel', 'direct-events'.")
+                         "Don't know how to generate 'spectral-index' /n Known HIT l3 data products: 'macropixel', 'direct-events'.")
 
     T = TypeVar("T")

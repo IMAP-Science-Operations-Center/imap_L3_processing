@@ -25,7 +25,7 @@ def create_hi_full_spin_deps(
     if l2_map_dir is None:
         l2_map_dir = get_test_instrument_team_data_path(f"hi/hi{sensor}-6months")
     if glows_dir is None:
-        glows_dir = get_test_data_path(f"hi/fake_l3e_survival_probabilities/90")
+        glows_dir = get_test_data_path("hi/fake_l3e_survival_probabilities/90")
     l1c_folder = output_dir / "l1c"
     l1c_folder.mkdir(parents=True, exist_ok=True)
 
@@ -47,7 +47,7 @@ def create_hi_full_spin_deps(
         f"h{sensor}-ena-h-sf-nsp-anti-hae-4deg-6mo")
 
     input_metadata = InputMetadata("hi", "l3", datetime(year=2025, month=4, day=15), None, "v001",
-                                   f"h90-ena-h-sf-sp-full-hae-4deg-6mo")
+                                   "h90-ena-h-sf-sp-full-hae-4deg-6mo")
 
     ram_data = survival_probability_processing.process_survival_probabilities(ramified_map_deps, SpiceFrame.ECLIPJ2000)
     ram_exposure_is_zero = (np.isnan(ram_data.intensity_map_data.ena_intensity)
