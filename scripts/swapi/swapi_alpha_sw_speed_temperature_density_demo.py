@@ -181,5 +181,5 @@ if __name__ == "__main__":
     try:
         file_path = sys.argv[1]
         main(file_path)
-    except:
+    except Exception:
         main(os.path.abspath("../../instrument_team_data/swapi/swapi_test_data_v5.dat"))

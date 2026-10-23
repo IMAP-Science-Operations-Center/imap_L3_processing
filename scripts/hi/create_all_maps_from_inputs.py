@@ -50,7 +50,7 @@ if __name__ == "__main__":
     output_dir = Path(f"{datetime.now().strftime('%Y%m%d')}_hi_validation_output")
     try:
         input_dir = Path(sys.argv[1])
-    except:
+    except Exception:
         input_dir = Path("hi_validation_input")
         print(
             f"Could not open input file, using default input path of {input_dir} instead"

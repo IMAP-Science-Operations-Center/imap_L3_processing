@@ -14,11 +14,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 from matplotlib.colors import LogNorm
-from pyhdf.HDF import *
+from pyhdf.HDF import HDF
 from pyhdf.SD import SD, SDC
 
 # import pyhdf.SD
-from pyhdf.VS import *
+from pyhdf.VS import VS
 from spacepy.pycdf import CDF
 
 SD

@@ -39,9 +39,9 @@ def extend_priority_counts_to_24_spin_angles(
             rgfo_half_spin = rng.integers(
                 0, 33, size=template_cdf["rgfo_half_spin"].shape
             )
-            randomly_fill_value = rng.choice(
-                [False, True], size=template_cdf["rgfo_half_spin"].shape
-            )
+            # randomly_fill_value = rng.choice(
+            #    [False, True], size=template_cdf["rgfo_half_spin"].shape
+            # )
 
             cdf["rgfo_half_spin"] = rgfo_half_spin
             # cdf["rgfo_half_spin"] = np.where(randomly_fill_value, cdf["rgfo_half_spin"].attrs["FILLVAL"],
