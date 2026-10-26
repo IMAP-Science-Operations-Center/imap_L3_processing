@@ -12,6 +12,7 @@ import numpy as np
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT))
 
+# ruff: disable[E402]
 from imap_l3_processing.constants import (
     METERS_PER_KILOMETER,
     PROTON_CHARGE_COULOMBS,
@@ -19,6 +20,7 @@ from imap_l3_processing.constants import (
 )
 from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
+# ruff: enable[E402]
 
 FIGURES_DIR = REPO_ROOT / "docs" / "swapi" / "figures"
 
