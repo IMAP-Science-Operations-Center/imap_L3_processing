@@ -140,11 +140,6 @@ class L3aData:
             fh.close()
 
             # read L3a lightcurve start dates and array of corrections
-            identifiers = np.loadtxt(
-                anc_input_from_instr_team["time_dependent_bckgrd"],
-                usecols=[0],
-                dtype=str,
-            )
             start_dates = np.loadtxt(
                 anc_input_from_instr_team["time_dependent_bckgrd"],
                 usecols=[1],

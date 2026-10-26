@@ -520,7 +520,7 @@ def read_raw_OMNI_data(ext_dependencies, t_window=None):
         ext_dependencies["omni_raw_data"], usecols=(0, 1, 2, 5, 23, 24, 27, 30, 31, 34)
     )
     omni_raw_date = time_from_yday(omni_raw[:, (0, 1, 2)])
-    if t_window == None:
+    if t_window is None:
         out = omni_raw
     else:
         idx_ini = np.abs(omni_raw_date - t_window[0]).argmin()

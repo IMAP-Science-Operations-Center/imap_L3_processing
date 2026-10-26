@@ -835,6 +835,9 @@ class mpfit:
               If nocovar is set or MPFIT terminated abnormally, then .covar is set to
               a scalar with value None.
 
+           .catch_msg
+              String describing the last operation attempted (which may have failed).
+
            .errmsg
               A string error or warning message is returned.
 
@@ -869,12 +872,13 @@ class mpfit:
         self.perror = None
         self.status = 0  # Invalid input flag set while we check inputs
         self.debug = debug
+        self.catch_msg = ""
         self.errmsg = ""
         self.nfev = 0
         self.damp = damp
         self.dof = 0
 
-        if fcn == None:
+        if fcn is None:
             self.errmsg = "Usage: parms = mpfit('myfunt', ... )"
             return
 
@@ -1070,7 +1074,6 @@ class mpfit:
 
             if (nprint > 0) and (iterfunct is not None):
                 if ((self.niter - 1) % nprint) == 0:
-                    mperr = 0
                     xnew0 = self.params.copy()
 
                     dof = numpy.max([len(fvec) - len(x), 0])
@@ -1103,7 +1106,7 @@ class mpfit:
 
             # Calculate the jacobian matrix
             self.status = 2
-            catch_msg = "calling MPFIT_FDJAC2"
+            self.catch_msg = "calling MPFIT_FDJAC2"
             fjac = self.fdjac2(
                 fcn,
                 x,
@@ -1125,7 +1128,7 @@ class mpfit:
 
             # Determine if any of the parameters are pegged at the limits
             if qanylim:
-                catch_msg = "zeroing derivatives of pegged parameters"
+                self.catch_msg = "zeroing derivatives of pegged parameters"
                 whlpeg = (numpy.nonzero(qllim & (x == llim)))[0]
                 nlpeg = len(whlpeg)
                 whupeg = (numpy.nonzero(qulim & (x == ulim)))[0]
@@ -1149,7 +1152,7 @@ class mpfit:
 
             # On the first iteration if "diag" is unspecified, scale
             # according to the norms of the columns of the initial jacobian
-            catch_msg = "rescaling diagonal elements"
+            self.catch_msg = "rescaling diagonal elements"
             if self.niter == 1:
                 if (rescale == 0) or (len(diag) < n):
                     diag = wa2.copy()
@@ -1164,7 +1167,7 @@ class mpfit:
                     delta = factor
 
             # Form (q transpose)*fvec and store the first n components in qtf
-            catch_msg = "forming (q transpose)*fvec"
+            self.catch_msg = "forming (q transpose)*fvec"
             wa4 = fvec.copy()
             for j in range(n):
                 lj = ipvt[j]
@@ -1192,7 +1195,7 @@ class mpfit:
             # if ct GT 0 then goto, FAIL_OVERFLOW
 
             # Compute the norm of the scaled gradient
-            catch_msg = "computing the scaled gradient"
+            self.catch_msg = "computing the scaled gradient"
             gnorm = 0.0
             if self.fnorm != 0:
                 for j in range(n):
@@ -1216,7 +1219,7 @@ class mpfit:
             # Beginning of the inner loop
             while 1:
                 # Determine the levenberg-marquardt parameter
-                catch_msg = "calculating LM parameter (MPFIT_)"
+                self.catch_msg = "calculating LM parameter (MPFIT_)"
                 [fjac, par, wa1, wa2] = self.lmpar(
                     fjac, ipvt, diag, qtf, delta, wa1, wa2, par=par
                 )
@@ -1236,7 +1239,7 @@ class mpfit:
 
                     if qanylim:
                         # Do not allow any steps out of bounds
-                        catch_msg = "checking for a step out of bounds"
+                        self.catch_msg = "checking for a step out of bounds"
                         if nlpeg > 0:
                             wa1[whlpeg] = numpy.clip(wa1[whlpeg], 0.0, numpy.max(wa1))
                         if nupeg > 0:
@@ -1299,8 +1302,7 @@ class mpfit:
                 self.params[ifree] = wa2
 
                 # Evaluate the function at x+p and calculate its norm
-                mperr = 0
-                catch_msg = "calling " + str(fcn)
+                self.catch_msg = "calling " + str(fcn)
                 [self.status, wa4] = self.call(fcn, self.params, functkw)
                 if self.status < 0:
                     self.errmsg = 'WARNING: premature termination by "' + fcn + '"'
@@ -1308,7 +1310,7 @@ class mpfit:
                 fnorm1 = self.enorm(wa4)
 
                 # Compute the scaled actual reduction
-                catch_msg = "computing convergence criteria"
+                self.catch_msg = "computing convergence criteria"
                 actred = -1.0
                 if (0.1 * fnorm1) < self.fnorm:
                     actred = -((fnorm1 / self.fnorm) ** 2) + 1.0
@@ -1399,7 +1401,7 @@ class mpfit:
                 if ~numpy.all(
                     numpy.isfinite(wa1) & numpy.isfinite(wa2) & numpy.isfinite(x)
                 ) or ~numpy.isfinite(ratio):
-                    errmsg = """ERROR: parameter or function value(s) have become
+                    self.errmsg = """ERROR: parameter or function value(s) have become
 						'infinite; check model function for over- 'and underflow"""
                     self.status = -16
                     break
@@ -1410,7 +1412,7 @@ class mpfit:
                 break
         # End of outer loop.
 
-        catch_msg = "in the termination phase"
+        self.catch_msg = "in the termination phase"
         # Termination, either normal or user imposed.
         if len(self.params) == 0:
             return
@@ -1419,9 +1421,9 @@ class mpfit:
         else:
             self.params[ifree] = x
         if (nprint > 0) and (self.status > 0):
-            catch_msg = "calling " + str(fcn)
+            self.catch_msg = "calling " + str(fcn)
             [status, fvec] = self.call(fcn, self.params, functkw)
-            catch_msg = "in the termination phase"
+            self.catch_msg = "in the termination phase"
             self.fnorm = self.enorm(fvec)
 
         if (self.fnorm is not None) and (fnorm1 is not None):
@@ -1440,7 +1442,7 @@ class mpfit:
         ):
             sz = fjac.shape
             if (n > 0) and (sz[0] >= n) and (sz[1] >= n) and (len(ipvt) >= n):
-                catch_msg = "computing the covariance matrix"
+                self.catch_msg = "computing the covariance matrix"
                 cv = self.calc_covar(fjac[0:n, 0:n], ipvt[0:n])
                 cv.shape = [n, n]
                 nn = len(xall)
@@ -1452,7 +1454,7 @@ class mpfit:
                     self.covar[ifree, ifree[i]] = cv[:, i]
 
                 # Compute errors in parameters
-                catch_msg = "computing parameter errors"
+                self.catch_msg = "computing parameter errors"
                 self.perror = numpy.zeros(nn, dtype=float)
                 d = numpy.diagonal(self.covar)
                 wh = (numpy.nonzero(d >= 0))[0]
@@ -1464,7 +1466,6 @@ class mpfit:
         return {
             "params": self.params,
             "niter": self.niter,
-            "params": self.params,
             "covar": self.covar,
             "perror": self.perror,
             "status": self.status,
@@ -1559,9 +1560,6 @@ class mpfit:
                 values.append(default)
 
         # Convert to numeric arrays if possible
-        test = default
-        if type(default) is list:
-            test = default[0]
         values = numpy.asarray(values)
         return values
 
@@ -1624,7 +1622,6 @@ class mpfit:
 
         # Compute analytical derivative if requested
         if autoderivative == 0:
-            mperr = 0
             fjac = numpy.zeros(nall, dtype=float)
             fjac[ifree] = 1.0  # Specify which parameters need derivatives
             [status, fp] = self.call(fcn, xall, functkw, fjac=fjac)
@@ -1694,7 +1691,6 @@ class mpfit:
                 # COMPUTE THE TWO-SIDED DERIVATIVE
                 xp[ifree[j]] = xall[ifree[j]] - h[j]
 
-                mperr = 0
                 [status, fm] = self.call(fcn, xp, functkw)
                 if status < 0:
                     return None
@@ -2001,7 +1997,6 @@ class mpfit:
         if self.debug:
             print("Entering qrsolv...")
         sz = r.shape
-        m = sz[0]
         n = sz[1]
 
         # copy r and (q transpose)*b to preserve input and initialize s.
@@ -2176,7 +2171,6 @@ class mpfit:
         dwarf = self.machar.minnum
         machep = self.machar.machep
         sz = r.shape
-        m = sz[0]
         n = sz[1]
 
         # Compute and store in x the gauss-newton direction.  If the
