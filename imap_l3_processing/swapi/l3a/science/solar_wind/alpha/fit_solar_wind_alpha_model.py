@@ -6,7 +6,6 @@ import scipy.optimize
 from numpy import ndarray
 from uncertainties import UFloat, covariance_matrix, ufloat
 
-from imap_l3_processing.constants import ALPHA_MASS_PER_CHARGE_M_P_PER_E
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.calculate_initial_guess import (
     calculate_initial_guess,
 )
@@ -161,9 +160,8 @@ def _construct_alpha_fit_result(
     delta_v_fit = float(result.x[2])
     velocity_rtn = proton_bulk + delta_v_fit * magnetic_field_direction
 
-    speed_ratio = (
-        np.linalg.norm(velocity_rtn, axis=-1)
-        / np.linalg.norm(proton_bulk, axis=-1)
+    speed_ratio = np.linalg.norm(velocity_rtn, axis=-1) / np.linalg.norm(
+        proton_bulk, axis=-1
     )
     if speed_ratio < MIN_TOLERABLE_ALPHA_SPEED_RATIO:
         return _nan_alpha_fit_result(bad_fit_flag | SwapiL3Flags.BAD_FIT)
@@ -191,9 +189,7 @@ def _construct_alpha_fit_result(
     return AlphaSolarWindFitResult(
         density=ufloat(alpha_density_fit, density_sigma),
         temperature=ufloat(alpha_temperature_fit, temperature_sigma),
-        velocity_rtn=make_correlated_velocity(
-            velocity_rtn, velocity_covariance_rtn
-        ),
+        velocity_rtn=make_correlated_velocity(velocity_rtn, velocity_covariance_rtn),
         delta_v=ufloat(delta_v_fit, delta_v_sigma),
         quality_flag=int(bad_fit_flag),
     )
@@ -203,9 +199,7 @@ def _alpha_r_squared(
     residuals: ndarray, count_rate: ndarray, n_sweeps: int, n_peak_bins: int
 ) -> float:
     averaged_count_rate = np.nanmean(count_rate, axis=0)
-    averaged_residual = np.nanmean(
-        residuals.reshape(n_sweeps, n_peak_bins), axis=0
-    )
+    averaged_residual = np.nanmean(residuals.reshape(n_sweeps, n_peak_bins), axis=0)
     return r_squared(averaged_residual, averaged_count_rate)
 
 
@@ -232,7 +226,10 @@ class _AlphaEvaluator:
         alpha_velocity_rtn = self.proton_bulk + delta_v * self.magnetic_field_direction
         alpha_true, jacobian_alpha_5d = model_solar_wind_ideal_coincidence_rates(
             SolarWindParams(
-                alpha_density, alpha_velocity_rtn, alpha_temperature, self.alpha_ctx.mass_kg
+                alpha_density,
+                alpha_velocity_rtn,
+                alpha_temperature,
+                self.alpha_ctx.mass_kg,
             ),
             self.alpha_ctx,
         )

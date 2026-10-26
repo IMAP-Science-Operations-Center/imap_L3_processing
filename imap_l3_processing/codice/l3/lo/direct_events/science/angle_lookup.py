@@ -10,6 +10,7 @@ class SpinAngleLookup:
     baseline: np.ndarray
 
     offset = 270
+
     def __init__(self):
         num_bins = 24
         self.baseline = np.linspace(0, 360, num_bins, endpoint=False)
@@ -42,7 +43,33 @@ class PositionToElevationLookup:
         self.lower_bin_edges = self.bin_centers - self.bin_deltas
 
         self.elevation_indices_by_apd = np.array(
-            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1])
+            [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                11,
+                10,
+                9,
+                8,
+                7,
+                6,
+                5,
+                4,
+                3,
+                2,
+                1,
+            ]
+        )
 
     @property
     def num_bins(self):

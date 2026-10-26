@@ -24,6 +24,7 @@ class GlowsL3eSpacecraftInfo:
             f"{self.spin_axis_latitude:.4f}",
         ]
 
+
 @dataclass
 class GlowsL3eCallArguments:
     formatted_date: str
@@ -36,5 +37,5 @@ class GlowsL3eCallArguments:
             self.formatted_date,
             self.decimal_date,
             *self.spacecraft_info.to_argument_list(),
-            f"{self.elongation:.3f}"
+            f"{self.elongation:.3f}",
         ]

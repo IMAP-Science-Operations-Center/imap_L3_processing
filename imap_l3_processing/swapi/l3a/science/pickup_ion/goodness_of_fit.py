@@ -6,7 +6,9 @@ from imap_l3_processing.swapi.constants import SWAPI_BACKGROUND_RATE
 MAX_CUTOFF_SPEED_KMS = 550.0  # v_cutoff <= 550 km/s
 MAX_MEAN_RELATIVE_ERROR = 0.12  # Delta_rel <= 0.12
 MAX_PAST_PEAK_RATIO = 0.4  # R_past_peak <= 0.4
-CUTOFF_DROP_RATIO = 0.25  # extend up to and including the last step with model rate >= 0.25 * peak
+CUTOFF_DROP_RATIO = (
+    0.25  # extend up to and including the last step with model rate >= 0.25 * peak
+)
 MIN_CUTOFF_SPEED_RATIO = 0.5  # v_cutoff >= 0.5 * v_sw
 MAX_CUTOFF_SPEED_RATIO = 1.5  # v_cutoff <= 1.5 * v_sw
 MIN_IONIZATION_RATE = 0.6e-9  # beta >= 0.6 * 10^-9 s^-1
@@ -67,13 +69,14 @@ def is_good_fit(
     in_range = ~past_range
 
     mean_absolute_percent_error = (
-        np.abs(chunk_mean_model_rates + SWAPI_BACKGROUND_RATE - chunk_mean_observed_rates)
+        np.abs(
+            chunk_mean_model_rates + SWAPI_BACKGROUND_RATE - chunk_mean_observed_rates
+        )
         / (chunk_mean_model_rates + SWAPI_BACKGROUND_RATE)
     )[in_range].mean()
 
     past_cutoff_ratio = (
-        chunk_mean_observed_rates[past_range].mean()
-        / chunk_mean_model_rates.max()
+        chunk_mean_observed_rates[past_range].mean() / chunk_mean_model_rates.max()
     )
 
     cutoff_speed_ratio = cutoff_speed_kms / sw_speed_kms

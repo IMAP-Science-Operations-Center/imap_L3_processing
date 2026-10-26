@@ -2,13 +2,17 @@ import unittest
 
 import numpy as np
 
-from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import MassSpeciesBinLookup
+from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_lookup import (
+    MassSpeciesBinLookup,
+)
 from tests.test_helpers import get_test_data_path
 
 
 class TestMassSpeciesBinLookup(unittest.TestCase):
     def test_read_csv(self):
-        csv_path = get_test_data_path("codice/imap_codice_lo-mass-species-bin-lookup_20250309_v003.csv")
+        csv_path = get_test_data_path(
+            "codice/imap_codice_lo-mass-species-bin-lookup_20250309_v003.csv"
+        )
         mass_species_bin_lookup = MassSpeciesBinLookup.read_from_csv(csv_path)
 
         expected_species = ["hplus", "heplusplus", "oplus6", "heplus"]
@@ -16,8 +20,12 @@ class TestMassSpeciesBinLookup(unittest.TestCase):
         expected_mass_range = [(0.5, 1.5), (2.0, 7.5), (14.0, 18.0), (1.0, 7.5)]
 
         np.testing.assert_array_equal(mass_species_bin_lookup.species, expected_species)
-        np.testing.assert_array_equal(mass_species_bin_lookup.mass_per_charge, expected_mass_per_charge)
-        np.testing.assert_array_equal(mass_species_bin_lookup.mass_ranges, expected_mass_range)
+        np.testing.assert_array_equal(
+            mass_species_bin_lookup.mass_per_charge, expected_mass_per_charge
+        )
+        np.testing.assert_array_equal(
+            mass_species_bin_lookup.mass_ranges, expected_mass_range
+        )
 
     def test_get_species(self):
         lookup = MassSpeciesBinLookup(
@@ -36,15 +44,14 @@ class TestMassSpeciesBinLookup(unittest.TestCase):
         self.assertEqual(4, lookup.get_num_species())
 
     def test_get_species_index(self):
-        csv_path = get_test_data_path("codice/imap_codice_lo-mass-species-bin-lookup_20250309_v003.csv")
+        csv_path = get_test_data_path(
+            "codice/imap_codice_lo-mass-species-bin-lookup_20250309_v003.csv"
+        )
         mass_species_bin_lookup = MassSpeciesBinLookup.read_from_csv(csv_path)
 
-        test_cases = [
-            ("hplus", 0),
-            ("heplusplus", 1),
-            ("oplus6", 2),
-            ("heplus", 3)
-        ]
+        test_cases = [("hplus", 0), ("heplusplus", 1), ("oplus6", 2), ("heplus", 3)]
         for species, index in test_cases:
             with self.subTest(species):
-                self.assertEqual(index, mass_species_bin_lookup.get_species_index(species))
+                self.assertEqual(
+                    index, mass_species_bin_lookup.get_species_index(species)
+                )

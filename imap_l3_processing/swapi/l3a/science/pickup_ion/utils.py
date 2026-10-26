@@ -36,8 +36,7 @@ def rotate_rtn_velocity_to_swapi_per_bin(
     chunk: SwapiL2Data,
     sw_velocity_rtn_kms: ndarray,
 ) -> ndarray:
-    """Apply the IMAP_RTN to IMAP_SWAPI rotation at each point in time.
-    """
+    """Apply the IMAP_RTN to IMAP_SWAPI rotation at each point in time."""
     measurement_times_tt2000_ns = measurement_times(chunk.sci_start_time)
     n_sweeps, n_bins = measurement_times_tt2000_ns.shape
     ephemeris_times = ttj2000ns_to_et(measurement_times_tt2000_ns.ravel())

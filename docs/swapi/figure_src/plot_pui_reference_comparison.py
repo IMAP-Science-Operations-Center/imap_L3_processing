@@ -95,14 +95,14 @@ def compute_production_rates(voltages_v: np.ndarray) -> np.ndarray:
 
     sw_az_rad = np.radians(_SW_AZIMUTH_DEG)
     sw_el_rad = np.radians(_SW_ELEVATION_DEG)
-    bulk_vec = _SW_SPEED_KMS * np.array([
-        -np.cos(sw_el_rad) * np.sin(sw_az_rad),
-        -np.cos(sw_el_rad) * np.cos(sw_az_rad),
-        -np.sin(sw_el_rad),
-    ])
-    bulk_sw_per_bin = np.broadcast_to(
-        bulk_vec, (1, voltages_v.size, 3)
-    ).copy()
+    bulk_vec = _SW_SPEED_KMS * np.array(
+        [
+            -np.cos(sw_el_rad) * np.sin(sw_az_rad),
+            -np.cos(sw_el_rad) * np.cos(sw_az_rad),
+            -np.sin(sw_el_rad),
+        ]
+    )
+    bulk_sw_per_bin = np.broadcast_to(bulk_vec, (1, voltages_v.size, 3)).copy()
 
     swapi_response = load_swapi_response()
     swapi_response.warm_cache(voltages_v)
@@ -115,7 +115,9 @@ def compute_production_rates(voltages_v: np.ndarray) -> np.ndarray:
         min_speed_kms=min_speed_kms,
         central_effective_area_scale=_HELIUM_EFFICIENCY_RATIO,
     )
-    return calculate_coincidence_rate(chunk_response, vasyliunas_siscoe_distribution, fitting_params)[0]
+    return calculate_coincidence_rate(
+        chunk_response, vasyliunas_siscoe_distribution, fitting_params
+    )[0]
 
 
 def main():
@@ -133,11 +135,17 @@ def main():
     )
     sw_az_rad = np.radians(_SW_AZIMUTH_DEG)
     sw_el_rad = np.radians(_SW_ELEVATION_DEG)
-    bulk_vec = _SW_SPEED_KMS * np.array([
-        -np.cos(sw_el_rad) * np.sin(sw_az_rad),
-        -np.cos(sw_el_rad) * np.cos(sw_az_rad),
-        -np.sin(sw_el_rad),
-    ]) + 0.0  # normalize -0.0 to +0.0 for display
+    bulk_vec = (
+        _SW_SPEED_KMS
+        * np.array(
+            [
+                -np.cos(sw_el_rad) * np.sin(sw_az_rad),
+                -np.cos(sw_el_rad) * np.cos(sw_az_rad),
+                -np.sin(sw_el_rad),
+            ]
+        )
+        + 0.0
+    )  # normalize -0.0 to +0.0 for display
     axes[0].set_title(
         f"PUI He coincidence rate — m/q={_HELIUM_MASS_PER_CHARGE_M_P_PER_E:.0f}, "
         f"efficiency ratio={_HELIUM_EFFICIENCY_RATIO:.2f}\n"
@@ -165,7 +173,7 @@ def main():
             ".",
             color="red",
             label="Optimized",
-            markersize=4
+            markersize=4,
         )
         rel_err = np.abs(production_rate_hz - count_rate_hz) / count_rate_hz
         axes[1].semilogy(voltage_v, rel_err, ".", color="red")

@@ -9,7 +9,7 @@ coordinate_systems = {
     "hnu": "Heliospheric Nose Upfield (HNU)",
     "gcs": "Galactic (GCS)",
     "rc": "Ribbon-centered (RC)",
-    "ccs": "custom (CCS)"
+    "ccs": "custom (CCS)",
 }
 
 logical_source_description_parts = {
@@ -18,12 +18,12 @@ logical_source_description_parts = {
     "ulc": "Ultra Combined",
     "ena": "ENA Intensity",
     "spx": "Spectral Index",
-    'h': "Hydrogen",
-    'sf': "Spacecraft Frame",
-    'hf': "Heliospheric Frame",
-    'sp': "Survival Probability-Corrected",
-    'nsp': "Non-Survival Probability-Corrected",
-    'full': "Full Spin",
+    "h": "Hydrogen",
+    "sf": "Spacecraft Frame",
+    "hf": "Heliospheric Frame",
+    "sp": "Survival Probability-Corrected",
+    "nsp": "Non-Survival Probability-Corrected",
+    "full": "Full Spin",
     "hae": "HAE",
     "2deg": "Rectangular 2 degree",
     "4deg": "Rectangular 4 degree",
@@ -136,15 +136,28 @@ descriptors = [
 ]
 
 for descriptor in descriptors:
-    descriptor_parts = descriptor.split('-')
+    descriptor_parts = descriptor.split("-")
     sensor = descriptor_parts[0][1:]
-    [quantity, species, frame, sp_corrected, spin_range, coordinate_system, pixelation, time_range] = descriptor_parts[
-                                                                                                      1:]
+    [
+        quantity,
+        species,
+        frame,
+        sp_corrected,
+        spin_range,
+        coordinate_system,
+        pixelation,
+        time_range,
+    ] = descriptor_parts[1:]
 
     products = {
         f"imap_{instrument}_l3_{descriptor}": {
-            "Logical_source_description": "IMAP Ultra Instrument Level 3 " + ', '.join(
-                [logical_source_description_parts[part] for part in descriptor.split("-")]),
+            "Logical_source_description": "IMAP Ultra Instrument Level 3 "
+            + ", ".join(
+                [
+                    logical_source_description_parts[part]
+                    for part in descriptor.split("-")
+                ]
+            ),
             "Data_level": "3",
             "Data_type": f"L3_{time_range}>Level-3 {time_range}",
             "Map_descriptor": descriptor,
@@ -156,7 +169,9 @@ for descriptor in descriptors:
             "Spin_range": "Full Spin",
             "Survival_corrected": "True" if sp_corrected == "sp" else "False",
             "Species": species.capitalize(),
-            "Principal_data_quantity": "ENA Intensity" if quantity == "ena" else "ENA Spectral Index",
+            "Principal_data_quantity": "ENA Intensity"
+            if quantity == "ena"
+            else "ENA Spectral Index",
         }
     }
 

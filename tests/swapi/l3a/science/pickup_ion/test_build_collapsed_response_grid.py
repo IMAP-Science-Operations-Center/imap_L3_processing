@@ -83,7 +83,9 @@ class BuildCollapsedResponseGridTest(unittest.TestCase):
         trusted = h_truth > 0.05 * peak
         self.assertGreater(trusted.sum(), 16, "trusted region too small")
 
-        rel_err = np.abs(collapsed.values[trusted] - h_truth[trusted]) / h_truth[trusted]
+        rel_err = (
+            np.abs(collapsed.values[trusted] - h_truth[trusted]) / h_truth[trusted]
+        )
         worst = int(np.argmax(rel_err))
         worst_index = int(np.flatnonzero(trusted)[worst])
         self.assertLess(
@@ -136,10 +138,11 @@ class BuildCollapsedResponseGridTest(unittest.TestCase):
         cos_elevation = np.cos(np.deg2rad(elevation_deg))
         cos_delta_azimuth_target = 1.0 - 5e-7
         cos_angle_target = cos_delta_azimuth_target * cos_elevation
-        v_singular_kms = float(np.sqrt(
-            speed ** 2 + bulk_speed ** 2
-            - 2 * cos_angle_target * speed * bulk_speed
-        ))
+        v_singular_kms = float(
+            np.sqrt(
+                speed**2 + bulk_speed**2 - 2 * cos_angle_target * speed * bulk_speed
+            )
+        )
 
         collapsed = build_collapsed_response_grid(
             response_grid,

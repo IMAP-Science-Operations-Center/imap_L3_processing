@@ -3,9 +3,7 @@ from numpy import ndarray
 from uncertainties import UFloat, correlated_values, ufloat
 
 
-def compute_hc3_parameter_covariance(
-    jacobian: ndarray, residuals: ndarray
-) -> ndarray:
+def compute_hc3_parameter_covariance(jacobian: ndarray, residuals: ndarray) -> ndarray:
     n_params = jacobian.shape[1]
     try:
         JT_J_pseudoinverse = np.linalg.pinv(jacobian.T @ jacobian)
@@ -17,9 +15,7 @@ def compute_hc3_parameter_covariance(
         )
         h_ii_clipped = np.clip(h_ii, 0.0, 0.9999)
         hc3_weights = (residuals / (1.0 - h_ii_clipped)) ** 2
-        sandwich_middle = np.einsum(
-            "ki,k,kj->ij", jacobian, hc3_weights, jacobian
-        )
+        sandwich_middle = np.einsum("ki,k,kj->ij", jacobian, hc3_weights, jacobian)
         return JT_J_pseudoinverse @ sandwich_middle @ JT_J_pseudoinverse
     except np.linalg.LinAlgError:
         return np.full((n_params, n_params), np.nan)

@@ -1,4 +1,4 @@
-from random import random, randint
+from random import randint
 
 import numpy as np
 
@@ -20,17 +20,19 @@ def generate_sweep_data(center):
 
 def generate_sweeps(n=5):
     time_base = 315576112184000000  # Jan 1, 2010 00:00:46
-    start_times_in_seconds = time_base + np.arange(n)*12
+    start_times_in_seconds = time_base + np.arange(n) * 12
     seed = randint(0, 359)
-    angles = [seed - 72*i for i in range(5)]
-    center_points = 1050 + 20*np.sin(np.deg2rad(angles))
+    angles = [seed - 72 * i for i in range(5)]
+    center_points = 1050 + 20 * np.sin(np.deg2rad(angles))
     sweeps = [generate_sweep_data(c) for c in center_points]
     return list(zip(start_times_in_seconds, sweeps))
 
 
 def generate_sweep_energies():
     coarse_sweep_energies = np.geomspace(100, 19000, 62)
-    return np.concatenate((np.array([np.nan]), coarse_sweep_energies, np.array([np.nan] * 9)))
+    return np.concatenate(
+        (np.array([np.nan]), coarse_sweep_energies, np.array([np.nan] * 9))
+    )
 
 
 # K Factor may come from a lookup table in the future
@@ -42,11 +44,12 @@ def get_k_factor():
 def get_spin_phase_using_spice(time):
     arbitrary_offset = 0.4
     rotation_time = 15
-    rotations = arbitrary_offset + time/rotation_time
+    rotations = arbitrary_offset + time / rotation_time
     fractional, integral = np.modf(rotations)
-    return fractional*360
+    return fractional * 360
 
 
 def generate_peak(energies, height, center, narrowness):
-    return np.exp(np.log(height) - narrowness * np.square(np.log(energies) - np.log(center)))
-
+    return np.exp(
+        np.log(height) - narrowness * np.square(np.log(energies) - np.log(center))
+    )

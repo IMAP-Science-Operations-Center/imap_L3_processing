@@ -62,10 +62,7 @@ def _construct_fit_result(final_result, ctx):
     fit_r_squared = _coarse_peak_averaged_r_squared(
         final_result.residuals, ctx.count_rate
     )
-    flag_bad = (
-        fit_r_squared < 0.9
-        or final_result.sw_params.temperature > 5.0e5
-    )
+    flag_bad = fit_r_squared < 0.9 or final_result.sw_params.temperature > 5.0e5
     if flag_bad:
         return _nan_proton_fit_result(int(SwapiL3Flags.BAD_FIT))
 

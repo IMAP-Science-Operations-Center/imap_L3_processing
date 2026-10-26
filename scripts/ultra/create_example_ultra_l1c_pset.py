@@ -17,6 +17,7 @@ from tests.test_helpers import get_run_local_data_path
 DEFAULT_RECT_SPACING_DEG_L1C = 0.5
 DEFAULT_HEALPIX_NSIDE_L1C = 128
 
+
 # TODO: Add ability to mock with/without energy dim to exposure_factor
 # The Helio frame L1C will have the energy dimension, but the spacecraft frame will not.
 def create_example_ultra_l1c_pset(
@@ -222,9 +223,12 @@ def create_example_ultra_l1c_pset(
 
 
 def _write_ultra_l1c_cdf_with_parents(
-        out_path: Path = get_run_local_data_path("ultra/fake_l1c_psets/test_pset.cdf"),
-        date: str = "2025-09-01T00:00:00"):
-    out_xarray = create_example_ultra_l1c_pset(nside=1, timestr=date, energy_dependent_exposure=True)
+    out_path: Path = get_run_local_data_path("ultra/fake_l1c_psets/test_pset.cdf"),
+    date: str = "2025-09-01T00:00:00",
+):
+    out_xarray = create_example_ultra_l1c_pset(
+        nside=1, timestr=date, energy_dependent_exposure=True
+    )
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.unlink(missing_ok=True)
 
@@ -235,39 +239,88 @@ def _write_ultra_l1c_cdf_with_parents(
         cdf.new("observation_time", np.full_like(out_xarray["counts"], 1))
         cdf.new("quality_flags", out_xarray["quality_flags"].values)
         cdf.new("sensitivity", out_xarray["sensitivity"].values)
-        cdf.new(CoordNames.ELEVATION_L1C.value, out_xarray[CoordNames.ELEVATION_L1C.value].values, recVary=False)
-        cdf.new(CoordNames.AZIMUTH_L1C.value, out_xarray[CoordNames.AZIMUTH_L1C.value].values, recVary=False)
-        cdf.new("epoch", out_xarray[CoordNames.TIME.value].values, type=pycdf.const.CDF_TIME_TT2000.value)
-        cdf.new(CoordNames.ENERGY_ULTRA_L1C.value, out_xarray[CoordNames.ENERGY_ULTRA_L1C.value].values, recVary=False)
-        cdf.new("energy_bin_delta", np.full_like(out_xarray[CoordNames.ENERGY_ULTRA_L1C.value].values, 1),
-                recVary=False)
-        cdf.new(CoordNames.HEALPIX_INDEX.value, out_xarray[CoordNames.HEALPIX_INDEX.value].values, recVary=False)
+        cdf.new(
+            CoordNames.ELEVATION_L1C.value,
+            out_xarray[CoordNames.ELEVATION_L1C.value].values,
+            recVary=False,
+        )
+        cdf.new(
+            CoordNames.AZIMUTH_L1C.value,
+            out_xarray[CoordNames.AZIMUTH_L1C.value].values,
+            recVary=False,
+        )
+        cdf.new(
+            "epoch",
+            out_xarray[CoordNames.TIME.value].values,
+            type=pycdf.const.CDF_TIME_TT2000.value,
+        )
+        cdf.new(
+            CoordNames.ENERGY_ULTRA_L1C.value,
+            out_xarray[CoordNames.ENERGY_ULTRA_L1C.value].values,
+            recVary=False,
+        )
+        cdf.new(
+            "energy_bin_delta",
+            np.full_like(out_xarray[CoordNames.ENERGY_ULTRA_L1C.value].values, 1),
+            recVary=False,
+        )
+        cdf.new(
+            CoordNames.HEALPIX_INDEX.value,
+            out_xarray[CoordNames.HEALPIX_INDEX.value].values,
+            recVary=False,
+        )
 
         cdf[CoordNames.ENERGY_ULTRA_L1C.value].attrs["VAR_TYPE"] = "support_data"
         cdf[CoordNames.HEALPIX_INDEX.value].attrs["VAR_TYPE"] = "support_data"
-        _add_depends(cdf["counts"], [CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value], "epoch")
-        _add_depends(cdf["exposure_factor"], [CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value],
-                     "epoch")
-        _add_depends(cdf["sensitivity"], [CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value], "epoch")
-        _add_depends(cdf["background_rates"], [CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value],
-                     "epoch")
-        _add_depends(cdf["observation_time"], [CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value],
-                     "epoch")
-        _add_depends(cdf["quality_flags"], [CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value], "epoch")
+        _add_depends(
+            cdf["counts"],
+            [CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value],
+            "epoch",
+        )
+        _add_depends(
+            cdf["exposure_factor"],
+            [CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value],
+            "epoch",
+        )
+        _add_depends(
+            cdf["sensitivity"],
+            [CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value],
+            "epoch",
+        )
+        _add_depends(
+            cdf["background_rates"],
+            [CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value],
+            "epoch",
+        )
+        _add_depends(
+            cdf["observation_time"],
+            [CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value],
+            "epoch",
+        )
+        _add_depends(
+            cdf["quality_flags"],
+            [CoordNames.ENERGY_ULTRA_L1C.value, CoordNames.HEALPIX_INDEX.value],
+            "epoch",
+        )
         _add_depends(cdf["energy_bin_delta"], [CoordNames.ENERGY_ULTRA_L1C.value])
 
         for var in cdf:
             if cdf[var].type() == pycdf.const.CDF_TIME_TT2000.value:
-                cdf[var].attrs['FILLVAL'] = datetime.datetime.fromisoformat("9999-12-31T23:59:59.999999999")
+                cdf[var].attrs["FILLVAL"] = datetime.datetime.fromisoformat(
+                    "9999-12-31T23:59:59.999999999"
+                )
             elif cdf[var].type() == pycdf.const.CDF_INT8.value:
-                cdf[var].attrs['FILLVAL'] = -9223372036854775808
-            elif cdf[var].type() == pycdf.const.CDF_FLOAT.value or pycdf.const.CDF_DOUBLE.value:
-                cdf[var].attrs['FILLVAL'] = -1e31
+                cdf[var].attrs["FILLVAL"] = -9223372036854775808
+            elif (
+                cdf[var].type() == pycdf.const.CDF_FLOAT.value
+                or pycdf.const.CDF_DOUBLE.value
+            ):
+                cdf[var].attrs["FILLVAL"] = -1e31
 
 
 def _add_depends(var: Var, depends: list[str], depend_0: str = None):
     if depend_0 is not None:
-        var.attrs[f"DEPEND_0"] = depend_0
+        var.attrs["DEPEND_0"] = depend_0
     for i, dep in enumerate(depends):
         var.attrs[f"DEPEND_{i + 1}"] = dep
 

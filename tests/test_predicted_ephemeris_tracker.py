@@ -89,7 +89,6 @@ class TestPredictedEphemerisTracker(unittest.TestCase):
             self.assertEqual(2, mock_spice_function_1.call_count)
             self.assertEqual(1, mock_spice_function_2.call_count)
 
-
     def test_predicted_ephemeris_tracker_skips_retry_if_no_predict_kernel(self):
         other_kernel = get_integration_test_spice_data_path(
             "imap_2025_105_2026_105_01.ah.bc"
@@ -106,4 +105,11 @@ class TestPredictedEphemerisTracker(unittest.TestCase):
 
         with KernelPool(kernels):
             tracker = PredictedEphemerisTracker()
-            tracker.run(spiceypy.spkezr, "IMAP", spiceypy.datetime2et(datetime(2025,10, 10)), "ECLIPJ2000", "NONE", "SUN")
+            tracker.run(
+                spiceypy.spkezr,
+                "IMAP",
+                spiceypy.datetime2et(datetime(2025, 10, 10)),
+                "ECLIPJ2000",
+                "NONE",
+                "SUN",
+            )

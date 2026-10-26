@@ -14,7 +14,9 @@ from imap_l3_processing.swapi.response.azimuthal_transmission import (
     AzimuthalTransmissionGrid,
     validate_azimuthal_transmission_values,
 )
-from imap_l3_processing.swapi.response.efficiency_calibration_table import EfficiencyCalibrationTable
+from imap_l3_processing.swapi.response.efficiency_calibration_table import (
+    EfficiencyCalibrationTable,
+)
 from imap_l3_processing.swapi.response.passband_grid import (
     PassbandGrid,
     build_passband_grid,
@@ -43,9 +45,9 @@ class SwapiResponse:
         efficiency_table: EfficiencyCalibrationTable,
     ):
         self._azimuthal_transmission_grid = AzimuthalTransmissionGrid(
-                values=np.asarray(azimuthal_transmission, dtype=float),
-                spacing=float(self.AZIMUTHAL_TRANSMISSION_SPACING_DEG),
-            )
+            values=np.asarray(azimuthal_transmission, dtype=float),
+            spacing=float(self.AZIMUTHAL_TRANSMISSION_SPACING_DEG),
+        )
         self._central_effective_area_at_voltage = central_effective_area_at_voltage
         self._passband_fit_coefficients = passband_fit_coefficients
         self._passband_esa_voltage_limits = passband_esa_voltage_limits
@@ -137,7 +139,9 @@ class SwapiResponse:
         esa_voltage: float,
         species: Species,
     ) -> ResponseGrid:
-        relative_efficiency = self._efficiency_table.relative_efficiency(time_as_tt2000, species)
+        relative_efficiency = self._efficiency_table.relative_efficiency(
+            time_as_tt2000, species
+        )
 
         cache_key = (
             self._cache_key(float(esa_voltage)),
@@ -160,8 +164,11 @@ class SwapiResponse:
         response_grid = ResponseGrid(
             sg_passband=passband_pair["SG"],
             oa_passband=passband_pair["OA"],
-            central_speed=self._central_speed(esa_voltage, species.mass_per_charge_m_p_per_e),
-            central_effective_area=self._get_central_effective_area(esa_voltage) * relative_efficiency,
+            central_speed=self._central_speed(
+                esa_voltage, species.mass_per_charge_m_p_per_e
+            ),
+            central_effective_area=self._get_central_effective_area(esa_voltage)
+            * relative_efficiency,
             azimuthal_transmission=self._azimuthal_transmission_grid,
         )
 

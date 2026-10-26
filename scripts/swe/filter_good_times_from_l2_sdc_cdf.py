@@ -8,21 +8,35 @@ bad_time_cdf = CDF(sys.argv[1])
 with CDF("imap_swe_l2_sci-fake_20240510_v002.cdf", masterpath="", readonly=False) as w:
     w["epoch"] = np.array([bad_time_cdf["epoch"][2], bad_time_cdf["epoch"][4]])
     w["epoch"].attrs = bad_time_cdf["epoch"].attrs
-    w["acq_duration"] = np.array([bad_time_cdf["acq_duration"][2], bad_time_cdf["acq_duration"][4]])
+    w["acq_duration"] = np.array(
+        [bad_time_cdf["acq_duration"][2], bad_time_cdf["acq_duration"][4]]
+    )
     w["acq_duration"].attrs = bad_time_cdf["acq_duration"].attrs
-    w["acquisition_time"] = np.array([bad_time_cdf["acquisition_time"][2], bad_time_cdf["acquisition_time"][4]])
+    w["acquisition_time"] = np.array(
+        [bad_time_cdf["acquisition_time"][2], bad_time_cdf["acquisition_time"][4]]
+    )
     w["acquisition_time"].attrs = bad_time_cdf["acquisition_time"].attrs
-    w["flux_spin_sector"] = np.array([bad_time_cdf["flux_spin_sector"][2], bad_time_cdf["flux_spin_sector"][4]])
+    w["flux_spin_sector"] = np.array(
+        [bad_time_cdf["flux_spin_sector"][2], bad_time_cdf["flux_spin_sector"][4]]
+    )
     w["flux_spin_sector"].attrs = bad_time_cdf["flux_spin_sector"].attrs
     w["inst_az_spin_sector"] = np.array(
-        [bad_time_cdf["inst_az_spin_sector"][2], bad_time_cdf["inst_az_spin_sector"][4]])
+        [bad_time_cdf["inst_az_spin_sector"][2], bad_time_cdf["inst_az_spin_sector"][4]]
+    )
     w["inst_az_spin_sector"].attrs = bad_time_cdf["inst_az_spin_sector"].attrs
     w["phase_space_density"] = np.array(
-        [bad_time_cdf["phase_space_density"][2], bad_time_cdf["phase_space_density"][4]])
+        [bad_time_cdf["phase_space_density"][2], bad_time_cdf["phase_space_density"][4]]
+    )
     w["phase_space_density"].attrs = bad_time_cdf["phase_space_density"].attrs
     w["phase_space_density_spin_sector"] = np.array(
-        [bad_time_cdf["phase_space_density_spin_sector"][2], bad_time_cdf["phase_space_density_spin_sector"][4]])
-    w["phase_space_density_spin_sector"].attrs = bad_time_cdf["phase_space_density_spin_sector"].attrs
+        [
+            bad_time_cdf["phase_space_density_spin_sector"][2],
+            bad_time_cdf["phase_space_density_spin_sector"][4],
+        ]
+    )
+    w["phase_space_density_spin_sector"].attrs = bad_time_cdf[
+        "phase_space_density_spin_sector"
+    ].attrs
     w["flux"] = np.array([bad_time_cdf["flux"][2], bad_time_cdf["flux"][4]])
     w["flux"].attrs = bad_time_cdf["flux"].attrs
 

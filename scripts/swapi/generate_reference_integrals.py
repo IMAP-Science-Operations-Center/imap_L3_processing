@@ -49,9 +49,7 @@ _INSTRUMENT_DATA = _REPO_ROOT / "instrument_team_data" / "swapi"
 _WIND_SAMPLES_PATH = (
     _REPO_ROOT / "docs" / "swapi" / "figure_src" / "wind_solar_wind_samples_2025.csv"
 )
-_OUTPUT_PATH = (
-    _REPO_ROOT / "tests" / "test_data" / "swapi" / "reference_integrals.csv"
-)
+_OUTPUT_PATH = _REPO_ROOT / "tests" / "test_data" / "swapi" / "reference_integrals.csv"
 
 
 def _peak_voltage(bulk_speed_km_s: float) -> float:
@@ -90,9 +88,7 @@ def main():
         )
         for i in range(n_samples)
     ]
-    rotation_matrices = np.broadcast_to(
-        ANCHOR_ROTATION_SWAPI_TO_RTN, (n_samples, 3, 3)
-    )
+    rotation_matrices = np.broadcast_to(ANCHOR_ROTATION_SWAPI_TO_RTN, (n_samples, 3, 3))
     voltages = [_peak_voltage(float(v)) for v in bulk_speed]
     swapi_response.warm_cache(voltages)
     response_grids = [

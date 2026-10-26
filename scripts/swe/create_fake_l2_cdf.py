@@ -11,68 +11,76 @@ from spacepy import pycdf
 from spacepy.pycdf import CDF
 
 
-def create_fake_swe_l1b_and_l2_cdf(l1_hdf_path: str, l2_hdf_path: str, output_l1b_swe_cdf_file_path: str,
-                                   output_l2_swe_cdf_file_path: str):
+def create_fake_swe_l1b_and_l2_cdf(
+    l1_hdf_path: str,
+    l2_hdf_path: str,
+    output_l1b_swe_cdf_file_path: str,
+    output_l2_swe_cdf_file_path: str,
+):
     l1_hdf = pyhdf.SD.SD(l1_hdf_path)
     counts = l1_hdf.select("DNSWE_COUNT")[:]
     total_number_of_energies = 20
     spin_spectors = 30
     apertures = 7
-    counts_in_swe_shape = np.moveaxis(counts, 3, 2).reshape((-1, total_number_of_energies, spin_spectors, apertures))
+    counts_in_swe_shape = np.moveaxis(counts, 3, 2).reshape(
+        (-1, total_number_of_energies, spin_spectors, apertures)
+    )
 
     l2_swepam_electron_file = HDF(l2_hdf_path)
     vs_electron = l2_swepam_electron_file.vstart()
     vd_electron = vs_electron.attach("swepam_e")
     epochs = get_epochs_from_output_file(vd_electron)
-    fields = ["chisq_c",
-              "chisq_h",
-              "n_fc",
-              "n_fh",
-              "n_ic",
-              "n_ih",
-              "n_i",
-              "q_flux_ic",
-              "q_flux_ih",
-              "q_flux_i",
-              "q_flux_phi_ic",
-              "q_flux_phi_ih",
-              "q_flux_phi_i",
-              "q_flux_theta_ic",
-              "q_flux_theta_ih",
-              "q_flux_theta_i",
-              "t_para_fc",
-              "t_para_fh",
-              "t_para_ic",
-              "t_para_ih",
-              "t_para_i",
-              "t_perp_fc",
-              "t_perp_fh",
-              "t_perp_ic",
-              "t_perp_ih",
-              "t_perp_i",
-              "t_mat_ic",
-              "t_mat_ih",
-              "t_mat_i",
-              "t_phi_fc",
-              "t_phi_fh",
-              "t_phi_ic",
-              "t_phi_ih",
-              "t_phi_i",
-              "t_theta_fc",
-              "t_theta_fh",
-              "t_theta_ic",
-              "t_theta_ih",
-              "t_theta_i",
-              "v_fc",
-              "v_fh",
-              "v_ic",
-              "v_ih",
-              "v_i",
-              "v_rtn_fc",
-              "v_rtn_fh",
-              "v_rtn_ic",
-              "v_rtn_ih",
-              "v_rtn_i"]
+    fields = [
+        "chisq_c",
+        "chisq_h",
+        "n_fc",
+        "n_fh",
+        "n_ic",
+        "n_ih",
+        "n_i",
+        "q_flux_ic",
+        "q_flux_ih",
+        "q_flux_i",
+        "q_flux_phi_ic",
+        "q_flux_phi_ih",
+        "q_flux_phi_i",
+        "q_flux_theta_ic",
+        "q_flux_theta_ih",
+        "q_flux_theta_i",
+        "t_para_fc",
+        "t_para_fh",
+        "t_para_ic",
+        "t_para_ih",
+        "t_para_i",
+        "t_perp_fc",
+        "t_perp_fh",
+        "t_perp_ic",
+        "t_perp_ih",
+        "t_perp_i",
+        "t_mat_ic",
+        "t_mat_ih",
+        "t_mat_i",
+        "t_phi_fc",
+        "t_phi_fh",
+        "t_phi_ic",
+        "t_phi_ih",
+        "t_phi_i",
+        "t_theta_fc",
+        "t_theta_fh",
+        "t_theta_ic",
+        "t_theta_ih",
+        "t_theta_i",
+        "v_fc",
+        "v_fh",
+        "v_ic",
+        "v_ih",
+        "v_i",
+        "v_rtn_fc",
+        "v_rtn_fh",
+        "v_rtn_ic",
+        "v_rtn_ih",
+        "v_rtn_i",
+    ]
     create_expected_cdf(vd_electron, fields, "swe_moments")
 
     with CDF(output_l2_swe_cdf_file_path, create=True) as cdf:
@@ -92,13 +100,17 @@ def create_fake_swe_l1b_and_l2_cdf(l1_hdf_path: str, l2_hdf_path: str, output_l1
         cdf.new("inst_el", [-63, -42, -21, 0, 21, 42, 63], recVary=False)
 
         shape_without_aperture_axis = psd.shape[:-1]
-        placeholder_insta_az_spin_sector = np.random.random(shape_without_aperture_axis) * 360
+        placeholder_insta_az_spin_sector = (
+            np.random.random(shape_without_aperture_axis) * 360
+        )
         create_variable(cdf, "inst_az_spin_sector", placeholder_insta_az_spin_sector)
 
         minutes = len(counts_in_swe_shape)
         measurement_count = placeholder_insta_az_spin_sector.size
         measurement_times = np.linspace(0, minutes * 60, measurement_count)
-        placeholder_acquisition_time = measurement_times.reshape(shape_without_aperture_axis)
+        placeholder_acquisition_time = measurement_times.reshape(
+            shape_without_aperture_axis
+        )
         create_variable(cdf, "acquisition_time", placeholder_acquisition_time)
 
         acquisition_duration = np.full((minutes, 20, 30), 80000)
@@ -109,14 +121,14 @@ def create_fake_swe_l1b_and_l2_cdf(l1_hdf_path: str, l2_hdf_path: str, output_l1
         cdf["settle_duration"] = np.full((minutes, 4), 133333.3333333334)
 
 
-def create_fake_swapi_l3a_cdf(l2_swepam_ion_file_path: str,
-                              output_swapi_file_path: str):
+def create_fake_swapi_l3a_cdf(
+    l2_swepam_ion_file_path: str, output_swapi_file_path: str
+):
     l2_swepam_ion_file = HDF(l2_swepam_ion_file_path)
     vs_ion = l2_swepam_ion_file.vstart()
     vd_ion = vs_ion.attach("swepam_i")
 
-    sw_velocity_index = vd_ion.field(
-        "vel_p_rtn")._index
+    sw_velocity_index = vd_ion.field("vel_p_rtn")._index
     sw_velocity_data = np.array([x[sw_velocity_index] for x in vd_ion[:]])
     sw_speed = np.linalg.norm(sw_velocity_data, axis=1)
 
@@ -126,10 +138,10 @@ def create_fake_swapi_l3a_cdf(l2_swepam_ion_file_path: str,
 
     with CDF(output_swapi_file_path, readonly=False, create=True) as cdf:
         cdf.compress(pycdf.const.GZIP_COMPRESSION)
-        cdf['epoch'] = epochs
-        cdf['epoch_delta'] = epoch_deltas
-        cdf['proton_sw_speed'] = sw_speed
-        cdf['proton_sw_speed'].attrs["FILLVAL"] = -1e31
+        cdf["epoch"] = epochs
+        cdf["epoch_delta"] = epoch_deltas
+        cdf["proton_sw_speed"] = sw_speed
+        cdf["proton_sw_speed"].attrs["FILLVAL"] = -1e31
 
 
 ATTITUDE_DATA = """Year	DOY	Secofday	Flag	RTN_r		RTN_t		RTN_n		J2GCI_x		J2GCI_y		J2GCI_z		GSE_x		GSE_y		GSE_z
@@ -162,15 +174,18 @@ ATTITUDE_DATA = """Year	DOY	Secofday	Flag	RTN_r		RTN_t		RTN_n		J2GCI_x		J2GCI_y	
 1999	160	    3600	0	-0.98089	-0.17395	-0.08711	 0.02904	 0.94059	 0.33831	 0.98116	 0.18238	-0.06375"""
 
 
-def create_fake_mag_l1d_cdf(l2_swepam_electron_file_path: str,
-                            output_mag_file_path: str):
+def create_fake_mag_l1d_cdf(
+    l2_swepam_electron_file_path: str, output_mag_file_path: str
+):
     buffer = io.StringIO(ATTITUDE_DATA)
     data = np.loadtxt(buffer, skiprows=1)
 
     def time_to_float(ts):
         return [(t - datetime(1999, 1, 1)).total_seconds() for t in ts]
 
-    times = [datetime(1998, 12, 31) + timedelta(days=row[1], seconds=row[2]) for row in data]
+    times = [
+        datetime(1998, 12, 31) + timedelta(days=row[1], seconds=row[2]) for row in data
+    ]
 
     l2_swepam_electron_file_path = HDF(l2_swepam_electron_file_path)
     vs_electron = l2_swepam_electron_file_path.vstart()
@@ -178,11 +193,17 @@ def create_fake_mag_l1d_cdf(l2_swepam_electron_file_path: str,
 
     mag_epochs = get_epochs_from_output_file(vd_electron)
 
-    correction_factor = (datetime(2025, 6, 30) - datetime(1999, 6, 8))
+    correction_factor = datetime(2025, 6, 30) - datetime(1999, 6, 8)
     mag_epochs_uncorrected = mag_epochs - correction_factor
-    r_att = np.interp(time_to_float(mag_epochs_uncorrected), time_to_float(times), data[:, 4])
-    t_att = np.interp(time_to_float(mag_epochs_uncorrected), time_to_float(times), data[:, 5])
-    n_att = np.interp(time_to_float(mag_epochs_uncorrected), time_to_float(times), data[:, 6])
+    r_att = np.interp(
+        time_to_float(mag_epochs_uncorrected), time_to_float(times), data[:, 4]
+    )
+    t_att = np.interp(
+        time_to_float(mag_epochs_uncorrected), time_to_float(times), data[:, 5]
+    )
+    n_att = np.interp(
+        time_to_float(mag_epochs_uncorrected), time_to_float(times), data[:, 6]
+    )
 
     rtn_att = np.stack((r_att, t_att, n_att), axis=-1)
 
@@ -212,7 +233,13 @@ def convert_rtn_to_instrument(input_vector, att_vector):
     c2 = np.sqrt(t2 + n2)
     c1 = np.sqrt((t2 + n2) * (t2 + n2) + r2 * t2 + r2 * n2)
 
-    mat = np.array([[(-n2 - t2) / c1, 0, r / c3], [r * t / c1, -n / c2, t / c3], [r * n / c1, t / c2, n / c3]])
+    mat = np.array(
+        [
+            [(-n2 - t2) / c1, 0, r / c3],
+            [r * t / c1, -n / c2, t / c3],
+            [r * n / c1, t / c2, n / c3],
+        ]
+    )
 
     return np.linalg.inv(mat) @ input_vector
 
@@ -230,14 +257,29 @@ def get_epochs_from_output_file(dataset: VD) -> np.array:
     min_index = dataset.field("min")._index
     sec_index = dataset.field("sec")._index
 
-    correction_factor = (datetime(2025, 6, 30) - datetime(1999, 6, 8))
+    correction_factor = datetime(2025, 6, 30) - datetime(1999, 6, 8)
 
-    return np.array([datetime(year=x[years_index], month=x[month_index], day=x[day_index], hour=x[hour_index],
-                              minute=x[min_index], second=x[sec_index]) + correction_factor for x in dataset[:]])
+    return np.array(
+        [
+            datetime(
+                year=x[years_index],
+                month=x[month_index],
+                day=x[day_index],
+                hour=x[hour_index],
+                minute=x[min_index],
+                second=x[sec_index],
+            )
+            + correction_factor
+            for x in dataset[:]
+        ]
+    )
 
 
 def create_expected_cdf(dataset: VD, fields: list[str], file_name):
-    with pycdf.CDF(str(path.parent.parent.parent / f'temp_cdf_data/expected_{file_name}.cdf'), masterpath="") as file:
+    with pycdf.CDF(
+        str(path.parent.parent.parent / f"temp_cdf_data/expected_{file_name}.cdf"),
+        masterpath="",
+    ) as file:
         for field in fields:
             index = dataset.field(field)._index
             data = np.array([x[index] for x in dataset[:]])
@@ -246,14 +288,47 @@ def create_expected_cdf(dataset: VD, fields: list[str], file_name):
 
 if __name__ == "__main__":
     path = Path(__file__)
-    l1_hdf_path = path.parent.parent.parent / "instrument_team_data/swe/ACE_LV1_1999-159.swepam.hdf"
-    l2_electron_hdf_path = path.parent.parent.parent / "instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf"
-    l2_ion_hdf_path = path.parent.parent.parent / "instrument_team_data/swe/swepam-swi-1999-159.v2-01.hdf"
+    l1_hdf_path = (
+        path.parent.parent.parent
+        / "instrument_team_data/swe/ACE_LV1_1999-159.swepam.hdf"
+    )
+    l2_electron_hdf_path = (
+        path.parent.parent.parent
+        / "instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf"
+    )
+    l2_ion_hdf_path = (
+        path.parent.parent.parent
+        / "instrument_team_data/swe/swepam-swi-1999-159.v2-01.hdf"
+    )
 
-    l2_swe_cdf_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_swe_l2_sci-with-ace-data_20250630_v002.cdf"
-    l1b_swe_cdf_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_swe_l1b_sci-with-ace-data_20250630_v002.cdf"
-    mag_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_mag_l1d_norm-dsrf_20250630_v001.cdf"
-    swapi_file_path = path.parent.parent.parent / "tests" / "test_data" / "swe" / "imap_swapi_l3a_proton-sw_20250630_v001.cdf"
+    l2_swe_cdf_file_path = (
+        path.parent.parent.parent
+        / "tests"
+        / "test_data"
+        / "swe"
+        / "imap_swe_l2_sci-with-ace-data_20250630_v002.cdf"
+    )
+    l1b_swe_cdf_file_path = (
+        path.parent.parent.parent
+        / "tests"
+        / "test_data"
+        / "swe"
+        / "imap_swe_l1b_sci-with-ace-data_20250630_v002.cdf"
+    )
+    mag_file_path = (
+        path.parent.parent.parent
+        / "tests"
+        / "test_data"
+        / "swe"
+        / "imap_mag_l1d_norm-dsrf_20250630_v001.cdf"
+    )
+    swapi_file_path = (
+        path.parent.parent.parent
+        / "tests"
+        / "test_data"
+        / "swe"
+        / "imap_swapi_l3a_proton-sw_20250630_v001.cdf"
+    )
 
     mag_file_path.unlink(missing_ok=True)
     swapi_file_path.unlink(missing_ok=True)

@@ -82,8 +82,6 @@ _JACOBIAN_RTOL = 0.05
 _JACOBIAN_ATOL = 1e-3
 
 
-
-
 def _build_fit_context_for_voltages(
     response: SwapiResponse,
     esa_voltages: np.ndarray,
@@ -142,9 +140,7 @@ class TestModelSolarWindIdealCoincidenceRatesShape(_ForwardModelFixture):
                 ]
             ),
         )
-        rates, jacobian = model_solar_wind_ideal_coincidence_rates(
-            proton_params(), ctx
-        )
+        rates, jacobian = model_solar_wind_ideal_coincidence_rates(proton_params(), ctx)
         self.assertEqual(rates.shape, (3,))
         self.assertEqual(jacobian.shape, (3, N_STATE))
 

@@ -1,12 +1,15 @@
 """@package docstring
 Author: KPLabs with some modifications by Marek Strumik, maro at cbk.waw.pl
 """
+
 from datetime import datetime, timedelta
 
-class SpacecraftTime():
+
+class SpacecraftTime:
     """
     SpacecraftTime() class for epoch-datatime conversions
     """
+
     @staticmethod
     def date_to_spacecraft_epoch(time_tag: datetime) -> int:
         """Get number of seconds after 1 January 2010, midnight

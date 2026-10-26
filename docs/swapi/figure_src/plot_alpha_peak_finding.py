@@ -187,8 +187,12 @@ def _read_5_sweep_block(
 
 def _coarse_measurement_times_ns(epoch_ns: np.ndarray) -> np.ndarray:
     coarse_bins = np.arange(SWAPI_COARSE_SWEEP_BINS.start, SWAPI_COARSE_SWEEP_BINS.stop)
-    seconds_into_sweep = coarse_bins * SWAPI_BIN_PERIOD_S + SWAPI_LIVETIME_CENTER_OFFSET_S
-    return (epoch_ns[:, None] + seconds_into_sweep * ONE_SECOND_IN_NANOSECONDS).flatten()
+    seconds_into_sweep = (
+        coarse_bins * SWAPI_BIN_PERIOD_S + SWAPI_LIVETIME_CENTER_OFFSET_S
+    )
+    return (
+        epoch_ns[:, None] + seconds_into_sweep * ONE_SECOND_IN_NANOSECONDS
+    ).flatten()
 
 
 # --------------------------------------------------------------------------- #
@@ -261,9 +265,7 @@ def _plot_case(ax, swapi_response, cdf_path, mag_data, chunk_index):
         proton_moments=proton_moments,
         magnetic_field_direction=b_hat,
     )
-    alpha_velocity_rtn = np.array(
-        [c.nominal_value for c in alpha_moments.velocity_rtn]
-    )
+    alpha_velocity_rtn = np.array([c.nominal_value for c in alpha_moments.velocity_rtn])
     alpha_sw = SolarWindParams(
         density=alpha_moments.density.nominal_value,
         velocity_rtn=alpha_velocity_rtn,

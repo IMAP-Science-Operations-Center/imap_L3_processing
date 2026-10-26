@@ -17,16 +17,28 @@ from spacepy.pycdf import CDF
 
 from typing import Optional
 
-from imap_l3_processing.constants import ONE_AU_IN_KM, TT2000_EPOCH, ONE_SECOND_IN_NANOSECONDS
+from imap_l3_processing.constants import (
+    ONE_AU_IN_KM,
+    TT2000_EPOCH,
+    ONE_SECOND_IN_NANOSECONDS,
+)
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import jd_fm_Carrington
-from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import GlowsL3eCallArguments, GlowsL3eSpacecraftInfo
+from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import (
+    GlowsL3eCallArguments,
+    GlowsL3eSpacecraftInfo,
+)
 from imap_l3_processing.utils import FurnishMetakernelOutput
 
 if typing.TYPE_CHECKING:
     pass
 
-def determine_call_args_for_l3e_executable(start_date: datetime, repointing_midpoint: datetime, elongation: float,
-                                           spacecraft_info: GlowsL3eSpacecraftInfo) -> GlowsL3eCallArguments:
+
+def determine_call_args_for_l3e_executable(
+    start_date: datetime,
+    repointing_midpoint: datetime,
+    elongation: float,
+    spacecraft_info: GlowsL3eSpacecraftInfo,
+) -> GlowsL3eCallArguments:
     formatted_date = start_date.strftime("%Y%m%d_%H%M%S")
     decimal_date = _decimal_time(repointing_midpoint)
 
@@ -37,10 +49,15 @@ def determine_call_args_for_l3e_executable(start_date: datetime, repointing_midp
         spacecraft_info=spacecraft_info,
     )
 
-def determine_spacecraft_info_for_l3e_executable(repointing_midpoint: datetime) -> GlowsL3eSpacecraftInfo:
+
+def determine_spacecraft_info_for_l3e_executable(
+    repointing_midpoint: datetime,
+) -> GlowsL3eSpacecraftInfo:
     ephemeris_time = spiceypy.datetime2et(repointing_midpoint)
 
-    [x, y, z, vx, vy, vz], _ = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")
+    [x, y, z, vx, vy, vz], _ = spiceypy.spkezr(
+        "IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN"
+    )
 
     radius, longitude, latitude = spiceypy.reclat([x, y, z])
 
@@ -61,18 +78,24 @@ def determine_spacecraft_info_for_l3e_executable(repointing_midpoint: datetime) 
     )
 
 
-def determine_spacecraft_info_using_predict_if_needed(repointing_midpoint: datetime, spice_with_predict: FurnishMetakernelOutput, spice_without_predict: FurnishMetakernelOutput) -> \
-    tuple[GlowsL3eSpacecraftInfo, GlowsL3Flags, list[str]]:
+def determine_spacecraft_info_using_predict_if_needed(
+    repointing_midpoint: datetime,
+    spice_with_predict: FurnishMetakernelOutput,
+    spice_without_predict: FurnishMetakernelOutput,
+) -> tuple[GlowsL3eSpacecraftInfo, GlowsL3Flags, list[str]]:
     try:
         with spiceypy.KernelPool([str(spice_without_predict.metakernel_path)]):
-            spacecraft_info: GlowsL3eSpacecraftInfo = determine_spacecraft_info_for_l3e_executable(repointing_midpoint)
+            spacecraft_info: GlowsL3eSpacecraftInfo = (
+                determine_spacecraft_info_for_l3e_executable(repointing_midpoint)
+            )
 
             glows_l3_flags: GlowsL3Flags = GlowsL3Flags.NONE
             kernel_names = [n.name for n in spice_without_predict.spice_kernel_paths]
     except SpiceyError:
         with spiceypy.KernelPool([str(spice_with_predict.metakernel_path)]):
-            spacecraft_info: GlowsL3eSpacecraftInfo = determine_spacecraft_info_for_l3e_executable(
-                repointing_midpoint)
+            spacecraft_info: GlowsL3eSpacecraftInfo = (
+                determine_spacecraft_info_for_l3e_executable(repointing_midpoint)
+            )
 
             glows_l3_flags: GlowsL3Flags = GlowsL3Flags.PREDICTIVE_EPHEMERIS
             kernel_names = [n.name for n in spice_with_predict.spice_kernel_paths]
@@ -96,10 +119,12 @@ class GlowsL3eVersionsForRepointings:
     ultra_hf_repointings: dict[int, Version]
 
 
-def compute_glows_flags_for_repoint(l3d_cdf_path: Path, repoint_midpoint: datetime) -> int:
+def compute_glows_flags_for_repoint(
+    l3d_cdf_path: Path, repoint_midpoint: datetime
+) -> int:
     with CDF(str(l3d_cdf_path)) as cdf:
-        cr_epochs = cdf['epoch'][...]
-        flags = cdf['glows_flags'][...]
+        cr_epochs = cdf["epoch"][...]
+        flags = cdf["glows_flags"][...]
 
     cr_after_repoint = np.searchsorted(cr_epochs, repoint_midpoint)
     cr_before_repoint = cr_after_repoint - 1
@@ -115,10 +140,11 @@ def compute_glows_flags_for_repoint(l3d_cdf_path: Path, repoint_midpoint: dateti
 
     return int(np.bitwise_or.reduce(selected.astype(np.uint16), initial=0))
 
+
 def get_lo_pivot_angle_from_l1b_file(path: Path) -> float:
     with CDF(str(path)) as cdf:
-        epoch = cdf['epoch'][...]
-        angles = cdf['pcc_coarse_pot_pri'][...]
+        epoch = cdf["epoch"][...]
+        angles = cdf["pcc_coarse_pot_pri"][...]
     if len(epoch) == 0:
         return 90.0
     t0 = epoch[0]
@@ -130,10 +156,12 @@ def get_lo_pivot_angle_from_l1b_file(path: Path) -> float:
         return 90.0
     return np.round(np.median(angles_to_consider))
 
+
 @dataclass
 class LoPivotAngle:
     parent_filename: Optional[str]
     pivot_angle: float
+
 
 def get_lo_pivot_angles(repointings: list[int]) -> dict[int, LoPivotAngle]:
     l1b_results = imap_data_access.query(
@@ -142,37 +170,60 @@ def get_lo_pivot_angles(repointings: list[int]) -> dict[int, LoPivotAngle]:
         descriptor="nhk",
         version="latest",
     )
-    paths_by_repointing = {f["repointing"]:f["file_path"] for f in l1b_results}
+    paths_by_repointing = {f["repointing"]: f["file_path"] for f in l1b_results}
     result = {}
     for repointing in repointings:
         if path := paths_by_repointing.get(repointing):
             downloaded_path = imap_data_access.download(path)
-            result[repointing] = LoPivotAngle(parent_filename=Path(path).name, pivot_angle=get_lo_pivot_angle_from_l1b_file(downloaded_path))
+            result[repointing] = LoPivotAngle(
+                parent_filename=Path(path).name,
+                pivot_angle=get_lo_pivot_angle_from_l1b_file(downloaded_path),
+            )
         else:
             result[repointing] = LoPivotAngle(parent_filename=None, pivot_angle=90.0)
     return result
 
-def get_repoint_numbers_within_cr_window(start_cr_number: int | None, end_cr_number: int, repointing_data) -> set[int]:
+
+def get_repoint_numbers_within_cr_window(
+    start_cr_number: int | None, end_cr_number: int, repointing_data
+) -> set[int]:
     if start_cr_number is None:
         return set()
-    first_carrington_start_date = Time(jd_fm_Carrington(float(start_cr_number)), format='jd')
-    last_cr_end_date = Time(jd_fm_Carrington(float(end_cr_number + 0.5)), format='jd')
+    first_carrington_start_date = Time(
+        jd_fm_Carrington(float(start_cr_number)), format="jd"
+    )
+    last_cr_end_date = Time(jd_fm_Carrington(float(end_cr_number + 0.5)), format="jd")
 
-    start_ns = (first_carrington_start_date.to_datetime() - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS
-    end_ns = (last_cr_end_date.to_datetime() - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS
+    start_ns = (
+        first_carrington_start_date.to_datetime() - TT2000_EPOCH
+    ).total_seconds() * ONE_SECOND_IN_NANOSECONDS
+    end_ns = (
+        last_cr_end_date.to_datetime() - TT2000_EPOCH
+    ).total_seconds() * ONE_SECOND_IN_NANOSECONDS
 
-    vectorized_date_conv = np.vectorize(lambda d: (Time(d, format="iso").to_datetime(
-        leap_second_strict='silent') - TT2000_EPOCH).total_seconds() * ONE_SECOND_IN_NANOSECONDS)
+    vectorized_date_conv = np.vectorize(
+        lambda d: (
+            (
+                Time(d, format="iso").to_datetime(leap_second_strict="silent")
+                - TT2000_EPOCH
+            ).total_seconds()
+            * ONE_SECOND_IN_NANOSECONDS
+        )
+    )
     repoint_starts = vectorized_date_conv(repointing_data["repoint_start_utc"])
     repoint_ends = vectorized_date_conv(repointing_data["repoint_end_utc"])
     repoint_ids = repointing_data["repoint_id"]
 
     repoint_numbers = set()
     for i in range(len(repoint_ids)):
-        if i + 1 < len(repoint_ids) and start_ns < (repoint_starts[i + 1] + repoint_ends[i])/2 < end_ns:
+        if (
+            i + 1 < len(repoint_ids)
+            and start_ns < (repoint_starts[i + 1] + repoint_ends[i]) / 2 < end_ns
+        ):
             repoint_numbers.add(int(repoint_ids[i]))
 
     return repoint_numbers
+
 
 def calculate_energy_deltas(centers: np.ndarray):
     edges = np.empty_like(centers, shape=(len(centers) + 1,))
@@ -184,4 +235,3 @@ def calculate_energy_deltas(centers: np.ndarray):
     delta_minus = centers - edges[:-1]
 
     return delta_plus, delta_minus
-

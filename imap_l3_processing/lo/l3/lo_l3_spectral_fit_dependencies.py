@@ -12,8 +12,12 @@ class LoL3SpectralFitDependencies:
     map_data: RectangularIntensityMapData
 
     @classmethod
-    def fetch_dependencies(cls, dependencies: ProcessingInputCollection) -> LoL3SpectralFitDependencies:
-        file_names = dependencies.get_file_paths(source="lo", data_type="l3") + dependencies.get_file_paths(source="lo", data_type="l2")
+    def fetch_dependencies(
+        cls, dependencies: ProcessingInputCollection
+    ) -> LoL3SpectralFitDependencies:
+        file_names = dependencies.get_file_paths(
+            source="lo", data_type="l3"
+        ) + dependencies.get_file_paths(source="lo", data_type="l2")
 
         if len(file_names) != 1:
             raise ValueError("Incorrect number of dependencies")
