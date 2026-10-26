@@ -3,8 +3,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pyhdf
-from pyhdf.HDF import *
-from pyhdf.VS import *
+from pyhdf.HDF import HDF
+from pyhdf.VS import VS
 from spacepy import pycdf
 from spacepy.pycdf import CDF
 

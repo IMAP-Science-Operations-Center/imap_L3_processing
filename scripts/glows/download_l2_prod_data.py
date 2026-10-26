@@ -9,7 +9,7 @@ from imap_l3_processing.utils import SpiceKernelTypes
 
 dotenv.load_dotenv(".env.prod")
 
-from tests.test_helpers import get_run_local_data_path
+from tests.test_helpers import get_run_local_data_path  # noqa: E402
 
 GLOWS_L3E_REQUIRED_SPICE_KERNELS: list[SpiceKernelTypes] = [
     SpiceKernelTypes.ScienceFrames,

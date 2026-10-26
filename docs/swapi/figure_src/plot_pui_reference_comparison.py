@@ -21,6 +21,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT))
 
+# ruff: disable[E402]
 import matplotlib
 
 matplotlib.use("Agg")
@@ -30,6 +31,7 @@ import pandas as pd
 
 from figure_utils import FIGURES_DIR
 from imap_l3_processing.constants import HE_PUI_PARTICLE_MASS_PER_CHARGE_M_P_PER_E
+# ruff: enable[E402]
 
 _REFERENCE_CSV_PATH = (
     REPO_ROOT / "tests" / "test_data" / "swapi" / "pui_count_rate_reference.csv"

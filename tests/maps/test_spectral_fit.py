@@ -136,9 +136,6 @@ class TestSpectralFit(unittest.TestCase):
                     result_gamma_error,
                     result_chi_square,
                 ) = fit_arrays_to_power_law(flux, uncertainty, energies)
-                fitted_flux = result_a * np.power(
-                    energies.reshape((-1, *spacial_dimension_shape)), -result_gamma
-                )
                 self.assertGreater(result_a, 0)
 
     def test_spectral_fit_map(self):

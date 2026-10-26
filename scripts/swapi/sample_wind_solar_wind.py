@@ -38,7 +38,7 @@ import numpy as np
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_REPO_ROOT))
 
-from imap_l3_processing.constants import (
+from imap_l3_processing.constants import (  # noqa: E402
     BOLTZMANN_CONSTANT_JOULES_PER_KELVIN,
     PROTON_MASS_KG,
 )

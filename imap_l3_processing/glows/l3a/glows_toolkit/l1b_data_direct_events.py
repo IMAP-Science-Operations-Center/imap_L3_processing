@@ -205,8 +205,8 @@ class L1bDataDirectEvents:
         data = copy.deepcopy(self.data)
 
         for key in fmt["arrays"].keys():
-            if (
-                type(data[key]) == np.ndarray
+            if isinstance(
+                data[key], np.ndarray
             ):  # check if we have more than one direct event
                 data[key] = (
                     "["

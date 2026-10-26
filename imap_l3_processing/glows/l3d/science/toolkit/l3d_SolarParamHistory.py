@@ -115,7 +115,6 @@ class SolarParamsHistory:
         self.ini_data = {}
         self.ini_data["CR_last"] = None
         self.ini_data["label"] = list(anc_input_from_instr_team["WawHelioIon"].keys())
-        N = len(self.ini_data["label"])
         self.ini_data["time"] = {}
         for k in anc_input_from_instr_team["WawHelioIon"]:
             self.ini_data["time"][k] = None

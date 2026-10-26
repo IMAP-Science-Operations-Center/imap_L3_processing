@@ -76,7 +76,6 @@ class TestPitchCalculations(unittest.TestCase):
     def test_look_direction(self):
         inst_az = np.array([[0, 90], [180, 270]])
         inst_el = np.array([-90, 0, 90])
-        shape = (2, 2, 3, 3)
         expected_look_direction = np.array(
             [
                 [

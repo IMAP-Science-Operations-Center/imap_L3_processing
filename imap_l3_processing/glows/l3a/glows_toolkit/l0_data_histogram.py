@@ -67,7 +67,7 @@ class L0DataHistogram:
 
         # additional padding when odd number of bins?
         if self.data["number_of_bins_per_histogram"] % 2 == 1:
-            aux = reader.read_uint8()
+            _ = reader.read_uint8()
 
         return self.data
 

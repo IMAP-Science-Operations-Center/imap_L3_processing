@@ -72,7 +72,7 @@ def mec_breakpoint_finder(
         sc_pot = spline_energies[peaks[0]]
         ch_break = spline_energies[peaks[1]]
         BACKUP_SPLINE_UNRESOLVED = SweL3Flags.NONE
-    except:
+    except Exception:
         # Spline peak finder did not work
         BACKUP_SPLINE_UNRESOLVED = SweL3Flags.BACKUP_SPLINE_UNRESOLVED
         sc_pot = np.nan
@@ -160,7 +160,7 @@ def mec_breakpoint_finder(
                 )
                 # spline not used
                 BACKUP_SPLINE_UNRESOLVED = SweL3Flags.NONE
-        except:
+        except Exception:
             # Fall back on Spline method
             # Fit did not converge
             BACKUP_SPLINE_UNRESOLVED = SweL3Flags.BACKUP_SPLINE_UNRESOLVED
@@ -192,7 +192,7 @@ def mec_breakpoint_finder(
             ch_break_output = refine_breakpoint_value(
                 np.exp(log_energy_ch), log_psd_ch, z[2], 3
             )
-    except:
+    except Exception:
         # Fall back on Spline method
         # Fit did not converge
         BREAKPOINT_FIT_UNCONVERGED = SweL3Flags.BREAKPOINT_FIT_UNCONVERGED

@@ -9,7 +9,7 @@ os.environ["IMAP_DATA_DIR"] = str(
     Path(__file__).parent.parent.parent / "glows_l3_validation_data"
 )
 
-import imap_data_access
+import imap_data_access  # noqa: E402
 
 ancillary_descriptors = [
     ("calibration-data", "20100101"),

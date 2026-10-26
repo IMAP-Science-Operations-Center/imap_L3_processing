@@ -1057,7 +1057,7 @@ class TestHitProcessor(TestCase):
             np.all(direct_event_product.pha_value[mask] == UNSIGNED_INT2_FILL_VALUE)
         )
         self.assertTrue(np.all(np.isnan(direct_event_product.energy_at_detector[mask])))
-        self.assertTrue(np.all(direct_event_product.is_low_gain[mask] == False))
+        self.assertFalse(np.any(direct_event_product.is_low_gain[mask]))
 
         np.testing.assert_array_equal(
             direct_event_product.detector_flags,

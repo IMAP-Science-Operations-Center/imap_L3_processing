@@ -171,7 +171,7 @@ class TestUtils(unittest.TestCase):
         )
 
         with self.assertRaises(AssertionError) as cm:
-            glows_l2_data: GlowsL2Data = read_l2_glows_data(cdf)
+            _ = read_l2_glows_data(cdf)
         self.assertEqual(
             ("Level 2 file should have only one histogram",), cm.exception.args
         )

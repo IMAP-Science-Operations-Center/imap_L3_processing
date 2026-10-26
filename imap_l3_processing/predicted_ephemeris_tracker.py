@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, ParamSpec, TypeVar
 
 from imap_data_access import SPICEFilePath
 from spiceypy import spiceypy, KernelPool, SpiceyError
@@ -25,7 +25,10 @@ class PredictedEphemerisTracker:
             except SPICEFilePath.InvalidImapFileError:
                 self.kernels_without_predict.append(kernel)
 
-    def run[T, **P](self, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
+    T = TypeVar("T")
+    P = ParamSpec("P")
+
+    def run(self, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
         if self.used_predict or not self.predict_kernel_available:
             result = func(*args, **kwargs)
         else:

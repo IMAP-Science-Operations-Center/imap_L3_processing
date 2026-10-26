@@ -14,7 +14,6 @@ def _create_example_ultra_l2_map_with_power_law(
 ):
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.unlink(missing_ok=True)
-    nside = 2
     num_lon = 60
     lon = np.linspace(0, 360, 60)
     num_lat = 30

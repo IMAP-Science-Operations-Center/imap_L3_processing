@@ -8,7 +8,6 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Optional, Union
 from urllib.parse import urlparse
-from spiceypy import spiceypy
 
 import imap_data_access
 import requests

@@ -159,7 +159,7 @@ class TestMapCombination(unittest.TestCase):
             else:
                 try:
                     combination._check_maps_match([map_1, map_with_difference])
-                except:
+                except Exception:
                     self.fail(
                         f"Differences in other fields should be alright: {field.name}"
                     )

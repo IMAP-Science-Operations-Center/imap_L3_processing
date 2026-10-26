@@ -26,13 +26,14 @@ Usage:  python scripts/swapi/generate_reference_integrals.py
 import sys
 from pathlib import Path
 
+import numpy as np
+import pandas as pd
+
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_REPO_ROOT))
 sys.path.insert(0, str(_REPO_ROOT / "docs" / "swapi" / "figure_src"))
 
-import numpy as np
-import pandas as pd
-
+# ruff: disable[E402]
 from imap_l3_processing.constants import (
     METERS_PER_KILOMETER,
     PROTON_CHARGE_COULOMBS,
@@ -44,6 +45,7 @@ from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 from scripts.swapi.reference_integral import reference_integrals_batch
 from figure_utils import ANCHOR_ROTATION_SWAPI_TO_RTN
+# ruff: enable[E402]
 
 _INSTRUMENT_DATA = _REPO_ROOT / "instrument_team_data" / "swapi"
 _WIND_SAMPLES_PATH = (

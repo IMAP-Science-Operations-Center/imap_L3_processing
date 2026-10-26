@@ -5,8 +5,8 @@ from pathlib import Path
 import numpy as np
 import pyhdf
 import pyhdf.SD
-from pyhdf.HDF import *
-from pyhdf.VS import *
+from pyhdf.HDF import HDF
+from pyhdf.VS import VD
 from spacepy import pycdf
 from spacepy.pycdf import CDF
 

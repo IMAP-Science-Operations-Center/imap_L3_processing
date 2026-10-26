@@ -172,7 +172,7 @@ class L2DataHistogram:
         ):
             cmp_result = 1
 
-        if l1b_data["flags"]["is_night"] == True:
+        if l1b_data["flags"]["is_night"]:
             print("(night", self.var["is_night_counter"], cmp_result, end=") ")
 
         if cmp_result != 0:
@@ -351,7 +351,7 @@ class L2DataHistogram:
         ):  # we are at the second (or later) l1b file
             if (
                 self.var["is_night_for_previous_l1b"] == 1
-                and l1b_data["flags"]["is_night"] == False
+                and not l1b_data["flags"]["is_night"]
             ):  # new observational day
                 is_new_observ_day = True
 
@@ -465,7 +465,7 @@ class L2DataHistogram:
             # increment good-time counter for L1b files
             self.var["l1b_file_counter_good_time"] += 1
 
-        if l1b_data["flags"]["is_night"] == True:
+        if l1b_data["flags"]["is_night"]:
             # increment is-night-flag-raised counter for L1b files
             self.var["is_night_counter"] += 1
 

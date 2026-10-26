@@ -1478,6 +1478,15 @@ class TestCodiceLoProcessor(unittest.TestCase):
             dependencies=input_collection, input_metadata=input_metadata
         )
         result = processor.process_l3a_direct_event_data_product(dependencies)
+        self.assertIsInstance(result, CodiceLoL3aDirectEventDataProduct)
+        self.assertEqual(
+            result.tof.shape,
+            (
+                num_direct_event_epochs,
+                num_priorities,
+                priority_l1_spin_sectors,
+            ),
+        )
 
         self.assertEqual(1, mock_calculate_normalization_factor.call_count)
         actual_stacked_priorities = mock_calculate_normalization_factor.call_args.args[
@@ -1664,10 +1673,10 @@ class TestCodiceLoProcessor(unittest.TestCase):
                 result_var[3],
             )
 
-            self.assertTrue(np.all(result_var.mask[0] == False))
-            self.assertTrue(np.all(result_var.mask[1] == True))
-            self.assertTrue(np.all(result_var.mask[2] == False))
-            self.assertTrue(np.all(result_var.mask[3] == False))
+            self.assertFalse(np.any(result_var.mask[0]))
+            self.assertTrue(np.all(result_var.mask[1]))
+            self.assertFalse(np.any(result_var.mask[2]))
+            self.assertFalse(np.any(result_var.mask[3]))
 
     @patch(f"{MODULE}.rebin_3d_distribution_azimuth_to_elevation")
     @patch(f"{MODULE}.combine_priorities_for_species_and_calculate_count_uncertainty")
