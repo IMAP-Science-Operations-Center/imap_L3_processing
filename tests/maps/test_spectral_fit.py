@@ -1,7 +1,7 @@
 import dataclasses
 import unittest
 from datetime import datetime
-from unittest.mock import patch, Mock, sentinel
+from unittest.mock import Mock, patch, sentinel
 
 import numpy as np
 from scipy.stats import linregress
@@ -13,10 +13,10 @@ from imap_l3_processing.maps.map_models import (
 from imap_l3_processing.maps.mpfit import mpfit
 from imap_l3_processing.maps.quality_flags import MapL3Flags
 from imap_l3_processing.maps.spectral_fit import (
-    power_law,
+    calculate_spectral_index_for_multiple_ranges,
     fit_arrays_to_power_law,
     fit_spectral_index_map,
-    calculate_spectral_index_for_multiple_ranges,
+    power_law,
     slice_energy_range_by_bin,
 )
 from tests.test_helpers import get_test_data_path

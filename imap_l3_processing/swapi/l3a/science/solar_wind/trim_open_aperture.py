@@ -22,7 +22,6 @@ from imap_l3_processing.swapi.response.passband_grid import (
 )
 from imap_l3_processing.swapi.response.swapi_response import ResponseGrid
 
-
 OA_SCAN_THRESHOLD = 1e-6
 OA_SCAN_RESOLUTION = 64
 OA_SKIP_FRACTION = 1e-3

@@ -1,19 +1,19 @@
 import unittest
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch, call, sentinel
+from unittest.mock import call, patch, sentinel
 
 import imap_data_access
 from imap_data_access.processing_input import (
-    ScienceInput,
-    ProcessingInputCollection,
     AncillaryInput,
+    ProcessingInputCollection,
+    ScienceInput,
 )
 
 from imap_l3_processing.swapi.descriptors import (
-    SWAPI_L2_DESCRIPTOR,
-    GEOMETRIC_FACTOR_SW_LOOKUP_TABLE_DESCRIPTOR,
     EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR,
+    GEOMETRIC_FACTOR_SW_LOOKUP_TABLE_DESCRIPTOR,
+    SWAPI_L2_DESCRIPTOR,
 )
 from imap_l3_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
 

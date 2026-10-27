@@ -1,15 +1,15 @@
 import unittest
-from unittest.mock import patch, call, Mock, sentinel
+from unittest.mock import Mock, call, patch, sentinel
 
 from imap_data_access.file_validation import Version
 
 from imap_l3_processing.glows.descriptors import (
-    GLOWS_L3E_ULTRA_HF_DESCRIPTOR,
+    GLOWS_L3B_DESCRIPTOR,
     GLOWS_L3E_HI_45_DESCRIPTOR,
     GLOWS_L3E_HI_90_DESCRIPTOR,
     GLOWS_L3E_LO_DESCRIPTOR,
+    GLOWS_L3E_ULTRA_HF_DESCRIPTOR,
     GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
-    GLOWS_L3B_DESCRIPTOR,
 )
 from imap_l3_processing.glows.l3d.glows_l3d_initializer import GlowsL3DInitializer
 from imap_l3_processing.glows.l3e.reprocess_info import ReprocessInfo, ReprocessTargets

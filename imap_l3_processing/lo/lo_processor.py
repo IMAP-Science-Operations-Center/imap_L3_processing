@@ -16,25 +16,23 @@ from imap_l3_processing.maps.hilo_l3_survival_dependencies import (
 )
 from imap_l3_processing.maps.map_combination import ExposureWeightedCombination
 from imap_l3_processing.maps.map_descriptors import (
-    parse_map_descriptor,
     MapDescriptorParts,
     MapQuantity,
-    SurvivalCorrection,
     ReferenceFrame,
     Sensor,
+    SurvivalCorrection,
+    parse_map_descriptor,
 )
 from imap_l3_processing.maps.map_models import (
-    ISNRateData,
+    InputRectangularPointingSet,
     ISNBackgroundSubtractedData,
+    ISNBackgroundSubtractedDataProduct,
     ISNBackgroundSubtractedMapData,
-)
-from imap_l3_processing.maps.map_models import (
+    ISNRateData,
+    RectangularIntensityDataProduct,
     RectangularIntensityMapData,
     RectangularSpectralIndexDataProduct,
     RectangularSpectralIndexMapData,
-    RectangularIntensityDataProduct,
-    InputRectangularPointingSet,
-    ISNBackgroundSubtractedDataProduct,
 )
 from imap_l3_processing.maps.map_processor import MapProcessor
 from imap_l3_processing.maps.spectral_fit import (

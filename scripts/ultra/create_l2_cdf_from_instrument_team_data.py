@@ -22,7 +22,7 @@ args = parser.parse_args()
 
 parent = Path(args.map_folder)
 
-data = defaultdict(lambda: {})
+data = defaultdict(dict)
 for folder in parent.iterdir():
     for sub_folder in folder.iterdir():
         for file in sub_folder.iterdir():

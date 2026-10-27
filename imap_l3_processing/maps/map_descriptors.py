@@ -2,7 +2,6 @@ import enum
 import re
 from dataclasses import dataclass
 from datetime import timedelta
-from typing import Optional
 
 
 class Sensor(enum.Enum):
@@ -80,7 +79,7 @@ class MapDescriptorParts:
     duration: str
     quantity: MapQuantity
     quantity_suffix: str
-    spectral_index_energy_range: Optional[tuple[int, int]] = None
+    spectral_index_energy_range: tuple[int, int] | None = None
 
 
 sensor_mapping = [
@@ -130,7 +129,7 @@ grid_size_mapping = [
 ]
 
 
-def parse_map_descriptor(descriptor: str) -> Optional[MapDescriptorParts]:
+def parse_map_descriptor(descriptor: str) -> MapDescriptorParts | None:
     descriptor_regex = """
         (?P<sensor>hic|h45|h90|l090|l105|l075|ulc|u45|u90|ilo)-
         (?P<quantity>ena|spxnbs|spx|isn)(?P<spectral_index_range>[0-9]{4})?(?P<quantity_suffix>[a-zA-Z]*)-

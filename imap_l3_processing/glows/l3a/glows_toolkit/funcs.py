@@ -4,9 +4,11 @@ Various functions that are not methods to classes
 """
 
 import datetime
+
 import numpy as np
-from .imap_time import SpacecraftTime
+
 from .constants import SUBSECOND_LIMIT
+from .imap_time import SpacecraftTime
 
 
 def calibration_factor(calibration_file_name, date_string):

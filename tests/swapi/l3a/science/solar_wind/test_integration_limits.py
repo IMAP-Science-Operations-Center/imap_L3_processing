@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 
 from imap_l3_processing.constants import PROTON_MASS_KG
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.l3a.science.solar_wind.azimuthal_regions import (
     REGION_OPEN_APERTURE_NEG,
     REGION_OPEN_APERTURE_POS,
@@ -23,7 +24,6 @@ from imap_l3_processing.swapi.response.passband_grid import (
     interpolate_passband,
     speed_ratio_range_at_elevation,
 )
-from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.species import Species
 from tests.swapi._helpers import (
     NOMINAL_SWAPI_TO_RTN_ROTATION,

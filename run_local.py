@@ -8,8 +8,8 @@ import sys
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Optional, TypeVar
-from unittest.mock import patch, Mock
+from typing import TypeVar
+from unittest.mock import Mock, patch
 
 import imap_data_access
 import numpy as np
@@ -18,8 +18,8 @@ import xarray as xr
 from imap_data_access.processing_input import (
     AncillaryInput,
     ProcessingInputCollection,
-    ScienceInput,
     RepointInput,
+    ScienceInput,
 )
 from imap_processing.spice.geometry import SpiceFrame
 from spacepy.pycdf import CDF
@@ -31,9 +31,6 @@ from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3a_direct_events_de
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import (
     CodicePitchAngleDependencies,
 )
-from imap_l3_processing.codice.l3.lo.codice_lo_l3b_3d_distributions_dependencies import (
-    CodiceLoL3b3dDistributionsDependencies,
-)
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies import (
     CodiceLoL3aDirectEventsDependencies,
 )
@@ -42,6 +39,9 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencie
 )
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import (
     CodiceLoL3aRatiosDependencies,
+)
+from imap_l3_processing.codice.l3.lo.codice_lo_l3b_3d_distributions_dependencies import (
+    CodiceLoL3b3dDistributionsDependencies,
 )
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
 from imap_l3_processing.codice.l3.lo.models import CodiceLoL2SWSpeciesData
@@ -52,8 +52,8 @@ from imap_l3_processing.constants import ONE_AU_IN_KM, TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.utils import (
-    read_l2_glows_data,
     create_glows_l3a_dictionary_from_cdf,
+    read_l2_glows_data,
 )
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
@@ -80,15 +80,15 @@ from imap_l3_processing.hit.l3.utils import read_l2_hit_data
 from imap_l3_processing.lo.l3.lo_l3_spectral_fit_dependencies import (
     LoL3SpectralFitDependencies,
 )
-from imap_l3_processing.lo.lo_processor import perform_spectral_fit, LoProcessor
+from imap_l3_processing.lo.lo_processor import LoProcessor, perform_spectral_fit
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import (
-    HiLoL3SurvivalDependencies,
     HiL3SingleSensorFullSpinDependencies,
+    HiLoL3SurvivalDependencies,
 )
 from imap_l3_processing.maps.map_models import (
-    RectangularSpectralIndexDataProduct,
     RectangularIntensityDataProduct,
     RectangularIntensityMapData,
+    RectangularSpectralIndexDataProduct,
 )
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.swapi.l3a.science.pickup_ion.density_of_neutral_helium_lookup_table import (
@@ -96,17 +96,17 @@ from imap_l3_processing.swapi.l3a.science.pickup_ion.density_of_neutral_helium_l
 )
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
 from imap_l3_processing.swapi.l3a.utils import read_l2_swapi_data
-from imap_l3_processing.swapi.response.efficiency_calibration_table import (
-    EfficiencyCalibrationTable,
-)
 from imap_l3_processing.swapi.l3b.science.geometric_factor_calibration_table import (
     GeometricFactorCalibrationTable,
 )
 from imap_l3_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
+from imap_l3_processing.swapi.response.efficiency_calibration_table import (
+    EfficiencyCalibrationTable,
+)
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
-from imap_l3_processing.ultra.models import UltraL1CPSet, UltraGlowsL3eData
+from imap_l3_processing.ultra.models import UltraGlowsL3eData, UltraL1CPSet
 from imap_l3_processing.ultra.ultra_l3_dependencies import (
     UltraL3Dependencies,
     UltraL3SpectralIndexDependencies,
@@ -115,7 +115,7 @@ from imap_l3_processing.ultra.ultra_processor import (
     UltraProcessor,
     correct_healpix_data_for_survival_probability,
 )
-from imap_l3_processing.utils import save_data, read_mag_data, furnish_local_spice
+from imap_l3_processing.utils import furnish_local_spice, read_mag_data, save_data
 from scripts.codice.create_fake_efficiency_ancillary import create_efficiency_lookup
 from scripts.codice.create_more_accurate_l3a_direct_event import (
     create_more_accurate_l3a_direct_events_cdf,
@@ -129,10 +129,10 @@ from scripts.ultra.create_l1c_l2_and_glows_with_matching_date_range import (
     create_l1c_and_glows_with_matching_date_range,
 )
 from tests.test_helpers import (
+    get_imap_data_dir_path,
     get_test_data_path,
     get_test_instrument_team_data_path,
     try_get_many_run_local_paths,
-    get_imap_data_dir_path,
 )
 
 
@@ -165,7 +165,7 @@ def create_codice_lo_l3a_partial_densities_cdf():
 
 
 def create_codice_lo_l3a_direct_events_cdf(
-    l1a_paths: Optional[tuple[Path, Path]] = None,
+    l1a_paths: tuple[Path, Path] | None = None,
 ) -> Path:
     codice_lo_l2_direct_event_cdf_path = modify_l2_direct_events(
         get_test_instrument_team_data_path(
@@ -1202,9 +1202,9 @@ def run_glows_l3d(mock_shutil):
 
 def create_empty_hi_l1c_dataset(
     epoch: datetime,
-    exposures: Optional[np.ndarray] = None,
-    spin_angles: Optional[np.ndarray] = None,
-    energies: Optional[np.ndarray] = None,
+    exposures: np.ndarray | None = None,
+    spin_angles: np.ndarray | None = None,
+    energies: np.ndarray | None = None,
 ):
     energies = energies if energies is not None else np.geomspace(1, 10000, 9)
     spin_angles = (
@@ -1234,8 +1234,8 @@ def create_empty_hi_l1c_dataset(
 def create_empty_glows_l3e_dataset(
     epoch: datetime,
     survival_probabilities: np.ndarray,
-    spin_angles: Optional[np.ndarray] = None,
-    energies: Optional[np.ndarray] = None,
+    spin_angles: np.ndarray | None = None,
+    energies: np.ndarray | None = None,
 ):
     energies = energies or np.geomspace(1, 10000, 16)
     spin_angles = spin_angles or np.arange(0, 360, 1) + 0.5

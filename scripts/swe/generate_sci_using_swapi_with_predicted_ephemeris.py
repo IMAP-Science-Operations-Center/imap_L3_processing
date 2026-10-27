@@ -6,7 +6,7 @@ import imap_data_access
 from imap_data_access import DependencyFilePath, ProcessingInputCollection
 from imap_data_access.processing_input import generate_imap_input
 
-from imap_l3_processing.utils import get_spice_kernels_file_names, SpiceKernelTypes
+from imap_l3_processing.utils import SpiceKernelTypes, get_spice_kernels_file_names
 
 SPICE_KERNELS = [
     SpiceKernelTypes.Leapseconds,

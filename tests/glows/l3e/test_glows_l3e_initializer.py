@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch, call, sentinel, Mock, create_autospec
+from unittest.mock import Mock, call, create_autospec, patch, sentinel
 
 import numpy as np
 from imap_data_access import RepointInput
@@ -9,12 +9,12 @@ from imap_data_access.file_validation import Version
 
 from imap_l3_processing.glows.descriptors import (
     GLOWS_L3BCDE_DESCRIPTORS,
+    GLOWS_L3E_DESCRIPTORS,
     GLOWS_L3E_HI_45_DESCRIPTOR,
     GLOWS_L3E_HI_90_DESCRIPTOR,
     GLOWS_L3E_LO_DESCRIPTOR,
-    GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
     GLOWS_L3E_ULTRA_HF_DESCRIPTOR,
-    GLOWS_L3E_DESCRIPTORS,
+    GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
 )
 from imap_l3_processing.glows.l3d.models import GlowsL3DProcessorOutput
 from imap_l3_processing.glows.l3e.glows_l3e_initializer import (

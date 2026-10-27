@@ -1,17 +1,17 @@
 import math
 import unittest
-from unittest.mock import patch, Mock, sentinel
+from unittest.mock import Mock, patch, sentinel
 
 import numpy as np
 
-from imap_l3_processing.hit.l3.pha.pha_event_reader import PHAWord, Detector
+from imap_l3_processing.hit.l3.pha.pha_event_reader import Detector, PHAWord
 from imap_l3_processing.hit.l3.pha.science.calculate_pha import (
     EventAnalysis,
+    EventOutput,
     analyze_event,
     calculate_mev,
-    process_pha_event,
-    EventOutput,
     compute_charge,
+    process_pha_event,
 )
 from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import (
     DetectedRange,

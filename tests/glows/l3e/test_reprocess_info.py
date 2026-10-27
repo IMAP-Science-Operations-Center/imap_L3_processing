@@ -3,21 +3,21 @@ from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
 
-from imap_data_access import ProcessingInputCollection, AncillaryInput, RepointInput
+from imap_data_access import AncillaryInput, ProcessingInputCollection, RepointInput
 from imap_processing.spice.repoint import (
-    set_global_repoint_table_paths,
     get_repoint_data,
+    set_global_repoint_table_paths,
 )
 
 from imap_l3_processing.glows.descriptors import (
-    GLOWS_L3E_HI_45_DESCRIPTOR,
-    GLOWS_L3E_HI_90_DESCRIPTOR,
-    GLOWS_L3E_LO_DESCRIPTOR,
-    GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
-    GLOWS_L3E_ULTRA_HF_DESCRIPTOR,
     GLOWS_L3B_DESCRIPTOR,
     GLOWS_L3C_DESCRIPTOR,
     GLOWS_L3D_DESCRIPTOR,
+    GLOWS_L3E_HI_45_DESCRIPTOR,
+    GLOWS_L3E_HI_90_DESCRIPTOR,
+    GLOWS_L3E_LO_DESCRIPTOR,
+    GLOWS_L3E_ULTRA_HF_DESCRIPTOR,
+    GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
     GLOWS_REPROCESSING_DESCRIPTOR,
 )
 from imap_l3_processing.glows.l3e.reprocess_info import (

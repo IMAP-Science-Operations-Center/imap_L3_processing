@@ -1,16 +1,16 @@
 import logging
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 from imap_data_access.processing_input import (
     ProcessingInputCollection,
-    generate_imap_input,
     ScienceFilePath,
+    generate_imap_input,
 )
 
 import imap_l3_data_processor
 from tests.integration.integration_test_helpers import mock_imap_data_access
-from tests.test_helpers import get_test_data_path, get_run_local_data_path
+from tests.test_helpers import get_run_local_data_path, get_test_data_path
 
 
 class HitProcessorIntegration(unittest.TestCase):

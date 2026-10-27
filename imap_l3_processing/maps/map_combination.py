@@ -5,8 +5,8 @@ import numpy as np
 
 from imap_l3_processing.data_utils import safe_divide
 from imap_l3_processing.maps.map_models import (
-    IntensityMapData,
     HealPixIntensityMapData,
+    IntensityMapData,
     RectangularIntensityMapData,
     calculate_datetime_weighted_average,
 )

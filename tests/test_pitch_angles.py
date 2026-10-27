@@ -3,12 +3,12 @@ import unittest
 import numpy as np
 
 from imap_l3_processing.pitch_angles import (
+    calculate_gyrophase,
     calculate_pitch_angle,
     calculate_unit_vector,
-    calculate_gyrophase,
+    rebin_by_pitch_angle_and_gyrophase,
     rotate_from_imap_despun_to_hit_despun,
     rotate_particle_vectors_from_hit_despun_to_imap_despun,
-    rebin_by_pitch_angle_and_gyrophase,
 )
 
 

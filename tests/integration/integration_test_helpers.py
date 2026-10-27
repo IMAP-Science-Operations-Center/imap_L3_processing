@@ -2,18 +2,18 @@ import json
 import os
 import shutil
 from collections import defaultdict
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 from urllib.parse import urlparse
 
 import imap_data_access
 import requests
 from imap_data_access import AncillaryFilePath
 from imap_data_access.file_validation import (
-    generate_imap_file_path,
     ScienceFilePath,
     SPICEFilePath,
+    generate_imap_file_path,
 )
 from requests import Response
 
@@ -35,8 +35,7 @@ class ImapQueryPatcher:
 
     def __call__(self, **kwargs):
         table = kwargs.get("table") or "science"
-        if "table" in kwargs:
-            del kwargs["table"]
+        kwargs.pop("table", None)
 
         use_latest = kwargs.get("version") == "latest"
         if kwargs.get("version") == "latest":

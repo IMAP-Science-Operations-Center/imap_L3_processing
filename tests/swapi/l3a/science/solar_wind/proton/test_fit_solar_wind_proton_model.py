@@ -9,15 +9,15 @@ from imap_l3_processing.constants import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
 )
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
+    N_STATE,
+    SolarWindParams,
+)
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
     fit_solar_wind_proton_model,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.optimize_solar_wind_proton_params import (
     OptimizeSolarWindProtonParamsResult,
-)
-from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
-    N_STATE,
-    SolarWindParams,
 )
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.species import Species

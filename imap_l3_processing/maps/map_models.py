@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import abc
 from dataclasses import dataclass
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Generic, Optional
+from typing import Generic
 
 import numpy as np
 import xarray
@@ -14,12 +14,12 @@ from imap_processing.spice.geometry import SpiceFrame
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.cdf.cdf_utils import (
-    read_variable_and_mask_fill_values,
     read_numeric_variable,
+    read_variable_and_mask_fill_values,
 )
 from imap_l3_processing.constants import TT2000_EPOCH
 from imap_l3_processing.maps.quality_flags import MapL3Flags
-from imap_l3_processing.models import DataProduct, DataProductVariable, D
+from imap_l3_processing.models import D, DataProduct, DataProductVariable
 
 EPOCH_VAR_NAME = "epoch"
 EPOCH_DELTA_VAR_NAME = "epoch_delta"
@@ -115,12 +115,12 @@ class IntensityMapData(MapData):
     ena_intensity_stat_uncert: np.ndarray
     ena_intensity_sys_err: np.ndarray
     quality_flags: np.ndarray
-    ena_intensity_sys_err_minus: Optional[np.ndarray] = None
-    ena_intensity_sys_err_plus: Optional[np.ndarray] = None
-    bg_intensity: Optional[np.ndarray] = None
-    bg_intensity_stat_uncert: Optional[np.ndarray] = None
-    bg_intensity_sys_err: Optional[np.ndarray] = None
-    survival_probability: Optional[np.ndarray] = None
+    ena_intensity_sys_err_minus: np.ndarray | None = None
+    ena_intensity_sys_err_plus: np.ndarray | None = None
+    bg_intensity: np.ndarray | None = None
+    bg_intensity_stat_uncert: np.ndarray | None = None
+    bg_intensity_sys_err: np.ndarray | None = None
+    survival_probability: np.ndarray | None = None
 
 
 @dataclass
@@ -735,12 +735,12 @@ class GlowsL3eRectangularMapInputData:
 @dataclass
 class InputRectangularPointingSet:
     epoch: datetime
-    epoch_delta: Optional[np.ndarray]
+    epoch_delta: np.ndarray | None
     epoch_j2000: np.ndarray
     repointing: int
     exposure_times: np.ndarray
     esa_energy_step: np.ndarray
-    pointing_start_met: Optional[float]
-    pointing_end_met: Optional[float]
+    pointing_start_met: float | None
+    pointing_end_met: float | None
     hae_longitude: np.ndarray
     hae_latitude: np.ndarray

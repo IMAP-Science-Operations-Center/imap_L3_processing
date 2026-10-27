@@ -3,13 +3,10 @@ from collections import namedtuple
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 from imap_processing.spice.geometry import (
-    get_spacecraft_to_instrument_spin_phase_offset,
     SpiceFrame,
+    get_spacecraft_to_instrument_spin_phase_offset,
 )
 
-from imap_l3_processing.codice.l3.lo.codice_lo_l3b_3d_distributions_dependencies import (
-    CodiceLoL3b3dDistributionsDependencies,
-)
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies import (
     CodiceLoL3aDirectEventsDependencies,
 )
@@ -19,28 +16,31 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencie
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import (
     CodiceLoL3aRatiosDependencies,
 )
+from imap_l3_processing.codice.l3.lo.codice_lo_l3b_3d_distributions_dependencies import (
+    CodiceLoL3b3dDistributionsDependencies,
+)
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import (
-    SpinAngleLookup,
     PositionToElevationLookup,
+    SpinAngleLookup,
 )
 from imap_l3_processing.codice.l3.lo.models import (
-    CodiceLoL3aPartialDensityDataProduct,
     CodiceLoL3aDirectEventDataProduct,
-    CodiceLoPartialDensityData,
+    CodiceLoL3aPartialDensityDataProduct,
     CodiceLoL3aRatiosDataProduct,
-    CodiceLoL3ChargeStateDistributionsDataProduct,
     CodiceLoL3b3dDistributionDataProduct,
+    CodiceLoL3ChargeStateDistributionsDataProduct,
+    CodiceLoPartialDensityData,
 )
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import (
-    calculate_partial_densities,
     calculate_mass,
     calculate_mass_per_charge,
-    convert_counts_to_intensity,
-    rebin_to_counts_by_species_elevation_and_spin_sector,
-    combine_priorities_for_species_and_calculate_count_uncertainty,
     calculate_normalization_factor,
+    calculate_partial_densities,
+    combine_priorities_for_species_and_calculate_count_uncertainty,
+    convert_counts_to_intensity,
     lookup_normalization_per_event,
     rebin_3d_distribution_azimuth_to_elevation,
+    rebin_to_counts_by_species_elevation_and_spin_sector,
 )
 from imap_l3_processing.data_utils import safe_divide
 from imap_l3_processing.models import InputMetadata

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Sat Feb  7 11:53:09 2026
 
@@ -8,15 +7,16 @@ Created on Sat Feb  7 11:53:09 2026
 This code produce spin angle distribution from the l1b histograms.
 """
 
-from spacepy.pycdf import CDF
-import numpy as np
 import os
+import re
+import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
+
+import numpy as np
 import pandas as pd
-import re
-import shutil
+from spacepy.pycdf import CDF
 
 
 def radec2cart(ra, th):
@@ -226,8 +226,8 @@ for file in data_dir.glob("*.cdf"):
         cdf = CDF(file_path)
 
         for ESA in range(1, 8):
-            nep_cnts = np.zeros((60))
-            nep_expo = np.zeros((60))
+            nep_cnts = np.zeros(60)
+            nep_expo = np.zeros(60)
 
             ## Filter through Goodtime, create masking
             start_arr, end_arr, expo = estimate_exposure_time(

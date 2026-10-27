@@ -8,16 +8,16 @@ from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.models import MagData
 from imap_l3_processing.swe.l3.models import (
-    SweL2Data,
-    SweConfiguration,
     SwapiL3aProtonData,
+    SweConfiguration,
     SweL1bData,
+    SweL2Data,
 )
 from imap_l3_processing.swe.l3.utils import (
+    read_l1b_swe_data,
     read_l2_swe_data,
     read_l3a_swapi_proton_data,
     read_swe_config,
-    read_l1b_swe_data,
 )
 from imap_l3_processing.utils import read_mag_data, select_mag_path
 

@@ -1,10 +1,17 @@
 import math
+from collections.abc import Iterable
 from datetime import datetime
-from typing import Iterable
 
 import numba
 import numpy as np
 import scipy.optimize
+from imap_processing.spice.geometry import (
+    SpiceBody,
+    SpiceFrame,
+    get_rotation_matrix,
+    imap_state,
+)
+from imap_processing.spice.time import ttj2000ns_to_et
 from numpy import ndarray
 from numpy.typing import ArrayLike
 from spacepy import pycdf
@@ -31,14 +38,6 @@ from imap_l3_processing.swapi.constants import (
 )
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
-from imap_processing.spice.geometry import (
-    SpiceBody,
-    SpiceFrame,
-    get_rotation_matrix,
-    imap_state,
-)
-from imap_processing.spice.time import ttj2000ns_to_et
-
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 
 

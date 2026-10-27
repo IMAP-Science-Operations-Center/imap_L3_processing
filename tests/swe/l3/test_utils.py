@@ -9,13 +9,13 @@ import spiceypy
 from imap_processing.quality_flags import SweL1bFlags
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData, SweL1bData
+from imap_l3_processing.swe.l3.models import SwapiL3aProtonData, SweL1bData, SweL2Data
 from imap_l3_processing.swe.l3.utils import (
-    read_swe_config,
+    compute_epoch_delta_in_ns,
+    read_l1b_swe_data,
     read_l2_swe_data,
     read_l3a_swapi_proton_data,
-    read_l1b_swe_data,
-    compute_epoch_delta_in_ns,
+    read_swe_config,
 )
 from tests.spice_test_case import SpiceTestCase
 from tests.test_helpers import get_test_data_path

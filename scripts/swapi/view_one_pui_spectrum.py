@@ -28,12 +28,11 @@ import imap_data_access
 import matplotlib.pyplot as plt
 import numpy as np
 import spiceypy
-from matplotlib.colors import LogNorm
 from imap_data_access import ProcessingInputCollection
 from imap_data_access.processing_input import generate_imap_input
-from spacepy.pycdf import lib as cdf_library
-
 from imap_processing.swapi.l2 import swapi_l2
+from matplotlib.colors import LogNorm
+from spacepy.pycdf import lib as cdf_library
 
 from imap_l3_processing.constants import ONE_AU_IN_KM, ONE_SECOND_IN_NANOSECONDS
 from imap_l3_processing.swapi.constants import (
@@ -59,7 +58,6 @@ from scripts.swapi.pui_xarray_reference_50sweep import (
     build_pui_xarray_context,
     evaluate_pui_sweep_xarray,
 )
-
 
 argument_parser = argparse.ArgumentParser(
     description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter

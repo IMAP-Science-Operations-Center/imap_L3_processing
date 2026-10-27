@@ -1,18 +1,18 @@
 import unittest
 from pathlib import Path
-from unittest.mock import patch, call, sentinel
+from unittest.mock import call, patch, sentinel
 
 import imap_data_access
 from imap_data_access.processing_input import (
+    AncillaryInput,
     ProcessingInputCollection,
     ScienceInput,
-    AncillaryInput,
 )
 
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencies import (
-    CodiceLoL3aPartialDensitiesDependencies,
-    SW_SPECIES_DESCRIPTOR,
     MASS_PER_CHARGE_DESCRIPTOR,
+    SW_SPECIES_DESCRIPTOR,
+    CodiceLoL3aPartialDensitiesDependencies,
 )
 
 

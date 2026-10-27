@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 import numpy as np
 
-from imap_l3_processing.data_utils import rebin, NearestInterpolator
+from imap_l3_processing.data_utils import NearestInterpolator, rebin
 
 
 class TestDataUtils(unittest.TestCase):

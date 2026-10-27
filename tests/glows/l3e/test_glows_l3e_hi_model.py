@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime, timedelta
-from unittest.mock import sentinel, Mock, MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch, sentinel
 
 import numpy as np
 

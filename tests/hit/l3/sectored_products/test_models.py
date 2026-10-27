@@ -1,6 +1,6 @@
 from datetime import timedelta
 from unittest import TestCase
-from unittest.mock import sentinel, Mock
+from unittest.mock import Mock, sentinel
 
 import numpy as np
 

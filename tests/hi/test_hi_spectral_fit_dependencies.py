@@ -1,20 +1,20 @@
 import unittest
 from pathlib import Path
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 import numpy as np
 from imap_data_access.processing_input import (
-    ScienceInput,
-    ProcessingInputCollection,
     AncillaryInput,
+    ProcessingInputCollection,
+    ScienceInput,
 )
 
 from imap_l3_processing.hi.hi_spectral_fit_dependencies import (
     HiSpectralIndexDependencies,
 )
 from imap_l3_processing.maps.map_models import (
-    RectangularIntensityMapData,
     IntensityMapData,
+    RectangularIntensityMapData,
 )
 from imap_l3_processing.maps.quality_flags import MapL3Flags
 

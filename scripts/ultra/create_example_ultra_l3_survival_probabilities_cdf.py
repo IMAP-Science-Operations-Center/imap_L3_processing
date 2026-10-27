@@ -19,7 +19,7 @@ def create_survival_probabilities_file(
 ):
     with open(glows_file_path) as input_data:
         energy_line = [
-            line for line in input_data.readlines() if line.startswith("#energy_grid")
+            line for line in input_data if line.startswith("#energy_grid")
         ]
         assert len(energy_line) == 1
         match = [float(x) for x in re.findall(r"\s+([0-9.]+)", energy_line[0])]
@@ -37,7 +37,7 @@ def create_survival_probabilities_file(
     latitude = lats.value
     longitude = lons.value
     skips = 0
-    for i in range(0, 3072):
+    for i in range(3072):
         if i in healpix_index:
             output_survival_probabilities[:, i] = spin_angle_and_survival_probabilities[
                 i - skips, 3:-1

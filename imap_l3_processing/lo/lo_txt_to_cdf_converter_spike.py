@@ -6,7 +6,7 @@ import shutil
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
-from typing import Self, Optional, override, Literal
+from typing import Literal, Self, override
 
 import imap_data_access
 import numpy as np
@@ -39,15 +39,15 @@ LO_ENERGY_BIN_UPPERS = (
 
 class CsvNameToProduct:
     @abc.abstractmethod
-    def get_energy_and_quantity(self, filename) -> Optional[tuple[int, str]]:
+    def get_energy_and_quantity(self, filename) -> tuple[int, str] | None:
         raise NotImplementedError
 
 
 @dataclasses.dataclass
 class NBSNameMapping(CsvNameToProduct):
     @override
-    def get_energy_and_quantity(self, filename: str) -> Optional[tuple[int, str]]:
-        if fn_match := re.match("map_([a-zA-Z]+)_esa(\d{1}).csv", filename):
+    def get_energy_and_quantity(self, filename: str) -> tuple[int, str] | None:
+        if fn_match := re.match(r"map_([a-zA-Z]+)_esa(\d{1}).csv", filename):
             [quantity, energy] = fn_match.groups()
 
             csv_to_l2_cdf_mapping = {
@@ -68,8 +68,8 @@ class NBSNameMapping(CsvNameToProduct):
 
 class CGNameMapping(CsvNameToProduct):
     @override
-    def get_energy_and_quantity(self, filename: str) -> Optional[tuple[int, str]]:
-        if fn_match := re.match("([a-zA-Z]+_[a-zA-Z]+)_esa(\d{1}).csv", filename):
+    def get_energy_and_quantity(self, filename: str) -> tuple[int, str] | None:
+        if fn_match := re.match(r"([a-zA-Z]+_[a-zA-Z]+)_esa(\d{1}).csv", filename):
             [quantity, energy] = fn_match.groups()
 
             csv_to_l2_cdf_mapping = {
@@ -92,9 +92,9 @@ class SputterOrBootStrapNameMapping(CsvNameToProduct):
         self.correction = correction
 
     @override
-    def get_energy_and_quantity(self, filename: str) -> Optional[tuple[int, str]]:
+    def get_energy_and_quantity(self, filename: str) -> tuple[int, str] | None:
         if fn_match := re.match(
-            "map_flux_(\d{1})_Hy_([a-zA-Z]+)_([a-zA-Z]+).csv", filename
+            r"map_flux_(\d{1})_Hy_([a-zA-Z]+)_([a-zA-Z]+).csv", filename
         ):
             [energy, correction, quantity] = fn_match.groups()
 

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import imap_data_access
-from imap_data_access import ScienceFilePath, ImapFilePath, ProcessingInputCollection
+from imap_data_access import ImapFilePath, ProcessingInputCollection, ScienceFilePath
 from imap_data_access.file_validation import Version
 from imap_data_access.processing_input import generate_imap_input
 

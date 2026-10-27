@@ -9,15 +9,15 @@ import numpy as np
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.codice.l3.hi.models import (
-    CodiceL2HiDirectEventData,
-    CodiceL3HiDirectEvents,
     CodiceHiL2SectoredIntensitiesData,
     CodiceHiL3PitchAngleDataProduct,
     CodiceL1aHiDirectEvents,
+    CodiceL2HiDirectEventData,
+    CodiceL3HiDirectEvents,
 )
 from tests.test_helpers import (
-    get_test_instrument_team_data_path,
     get_test_data_path,
+    get_test_instrument_team_data_path,
     with_tempdir,
 )
 

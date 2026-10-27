@@ -11,15 +11,15 @@ from numpy import ndarray
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
-from imap_l3_processing.constants import TT2000_EPOCH, ONE_SECOND_IN_NANOSECONDS
+from imap_l3_processing.constants import ONE_SECOND_IN_NANOSECONDS, TT2000_EPOCH
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import (
     PROBABILITY_OF_SURVIVAL_VAR_NAME,
 )
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import (
-    HEALPIX_INDEX_VAR_NAME,
     ENERGY_VAR_NAME,
     EPOCH_CDF_VAR_NAME,
     GLOWS_FLAGS_VAR_NAME,
+    HEALPIX_INDEX_VAR_NAME,
 )
 
 

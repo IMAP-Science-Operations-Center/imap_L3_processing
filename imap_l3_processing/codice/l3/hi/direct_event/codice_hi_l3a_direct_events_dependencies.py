@@ -8,8 +8,8 @@ from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_mass_correction_look
     CodiceHiMassCorrectionLookupTable,
 )
 from imap_l3_processing.codice.l3.hi.models import (
-    CodiceL2HiDirectEventData,
     CodiceL1aHiDirectEvents,
+    CodiceL2HiDirectEventData,
 )
 
 

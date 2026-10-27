@@ -2,11 +2,13 @@
 Author: Marek Strumik, maro at cbk.waw.pl
 """
 
-import json
 import copy
+import json
+
 import numpy as np
-from .constants import VERSION, L1B_L2_HIST_FLAG_FIELDS, SCAN_CIRCLE_ANGULAR_RADIUS
-from .funcs import time_sec_subsec_to_utc, calibration_factor
+
+from .constants import L1B_L2_HIST_FLAG_FIELDS, SCAN_CIRCLE_ANGULAR_RADIUS, VERSION
+from .funcs import calibration_factor, time_sec_subsec_to_utc
 from .geom_fun_libr_box import spin2lb
 
 
@@ -50,9 +52,9 @@ class L2DataHistogram:
             + "and in L1B_L2_HIST_FLAG_FIELDS"
         )
         for i, __ in enumerate(list_1):
-            assert list_1[i] == list_2[i], (
+            assert __ == list_2[i], (
                 'Different keys "'
-                + list_1[i]
+                + __
                 + '" and "'
                 + list_2[i]
                 + "\" in self.var['settings']['active_bad_angle_flags'] and L1B_L2_HIST_FLAG_FIELDS"
@@ -146,9 +148,9 @@ class L2DataHistogram:
             + "and in l1b_data['flags']"
         )
         for i, __ in enumerate(list_1):
-            assert list_1[i] == list_2[i], (
+            assert __ == list_2[i], (
                 'Different keys "'
-                + list_1[i]
+                + __
                 + '" and "'
                 + list_2[i]
                 + "\" in self.var['settings']['active_bad_time_flags'] and l1b_data['flags']"

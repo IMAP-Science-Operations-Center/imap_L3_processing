@@ -12,7 +12,6 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -49,10 +48,10 @@ class PuiXArrayContext:
 
 def build_pui_xarray_context(
     *,
-    azimuthal_transmission_path: Union[str, Path],
-    central_effective_area_path: Union[str, Path],
-    passband_fit_coefficients_path: Union[str, Path],
-    density_of_neutral_helium_lut_path: Union[str, Path],
+    azimuthal_transmission_path: str | Path,
+    central_effective_area_path: str | Path,
+    passband_fit_coefficients_path: str | Path,
+    density_of_neutral_helium_lut_path: str | Path,
     helium_efficiency_ratio: float = HELIUM_EFFICIENCY_RATIO,
 ) -> PuiXArrayContext:
     """Load SWAPI calibration CSVs/DAT and assemble the xarray integration

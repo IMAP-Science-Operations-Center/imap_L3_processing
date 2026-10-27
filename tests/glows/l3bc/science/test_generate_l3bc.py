@@ -13,9 +13,9 @@ from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDepen
 from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
 from imap_l3_processing.glows.quality_flags import GlowsL3Flags
 from tests.test_helpers import (
+    assert_dict_close,
     get_test_data_path,
     get_test_instrument_team_data_path,
-    assert_dict_close,
 )
 
 

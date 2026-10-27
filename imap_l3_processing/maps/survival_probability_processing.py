@@ -1,4 +1,4 @@
-from typing import Union, TypeVar
+from typing import TypeVar
 
 import numpy as np
 from imap_processing.spice.geometry import SpiceFrame
@@ -8,10 +8,10 @@ from imap_l3_processing.maps.hilo_l3_survival_dependencies import (
 )
 from imap_l3_processing.maps.map_descriptors import ReferenceFrame
 from imap_l3_processing.maps.map_models import (
-    RectangularIntensityMapData,
-    IntensityMapData,
-    InputRectangularPointingSet,
     GlowsL3eRectangularMapInputData,
+    InputRectangularPointingSet,
+    IntensityMapData,
+    RectangularIntensityMapData,
 )
 from imap_l3_processing.maps.rectangular_survival_probability import (
     RectangularSurvivalProbabilityPointingSet,
@@ -20,10 +20,10 @@ from imap_l3_processing.maps.rectangular_survival_probability import (
 from imap_l3_processing.ultra.models import UltraGlowsL3eData, UltraL1CPSet
 
 L1CPointingSet = TypeVar(
-    "L1CPointingSet", bound=Union[InputRectangularPointingSet, UltraL1CPSet]
+    "L1CPointingSet", bound=InputRectangularPointingSet | UltraL1CPSet
 )
 GlowsL3eData = TypeVar(
-    "GlowsL3eData", bound=Union[GlowsL3eRectangularMapInputData, UltraGlowsL3eData]
+    "GlowsL3eData", bound=GlowsL3eRectangularMapInputData | UltraGlowsL3eData
 )
 
 
@@ -35,7 +35,7 @@ def combine_glows_l3e_with_l1c_pointing(
 
     return [
         (l1c_by_repoint[repoint], glows_by_repoint[repoint])
-        for repoint in l1c_by_repoint.keys()
+        for repoint in l1c_by_repoint
         if repoint in glows_by_repoint
     ]
 

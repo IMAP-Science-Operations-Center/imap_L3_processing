@@ -7,8 +7,8 @@ from imap_data_access import SPICEFilePath
 
 from imap_l3_processing.swe.l3.science.pitch_calculations import (
     calculate_velocity_in_dsp_frame_km_s,
-    swe_rebin_intensity_by_pitch_angle_and_gyrophase,
     correct_and_rebin,
+    swe_rebin_intensity_by_pitch_angle_and_gyrophase,
 )
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor

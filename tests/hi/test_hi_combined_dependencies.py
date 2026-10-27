@@ -1,6 +1,6 @@
 import unittest
 from pathlib import Path
-from unittest.mock import patch, call, sentinel
+from unittest.mock import call, patch, sentinel
 
 from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput
 

@@ -6,17 +6,17 @@ import numpy as np
 import pandas as pd
 
 from imap_l3_processing.swapi.response.azimuthal_transmission import (
-    AzimuthalTransmissionGrid,
     OA_PLATEAU_AZIMUTH_MAX_DEG,
     OA_PLATEAU_AZIMUTH_MIN_DEG,
     OA_PLATEAU_TRANSMISSION,
     SG_PLATEAU_AZIMUTH_MAX_DEG,
     SG_PLATEAU_TRANSMISSION,
+    AzimuthalTransmissionGrid,
     interpolate_azimuthal_transmission,
     validate_azimuthal_transmission_values,
 )
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
-from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path
+from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path
 
 _TRANSMISSION_CSV = get_test_instrument_team_data_path(
     "swapi/imap_swapi_azimuthal-transmission_20260425_v001.csv"

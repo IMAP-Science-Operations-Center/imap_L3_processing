@@ -5,17 +5,17 @@ from datetime import datetime
 import numpy as np
 
 from imap_l3_processing.maps.map_combination import (
-    UnweightedCombination,
     CombinationStrategy,
     ExposureWeightedCombination,
     UncertaintyWeightedCombination,
+    UnweightedCombination,
 )
 from imap_l3_processing.maps.map_models import (
-    IntensityMapData,
-    RectangularIntensityMapData,
-    RectangularCoords,
-    HealPixIntensityMapData,
     HealPixCoords,
+    HealPixIntensityMapData,
+    IntensityMapData,
+    RectangularCoords,
+    RectangularIntensityMapData,
 )
 from imap_l3_processing.maps.quality_flags import MapL3Flags
 from tests.maps.test_builders import (
@@ -599,12 +599,11 @@ class TestMapCombination(unittest.TestCase):
             ("lon_label", make_data(lon_label=np.array(["two"]))),
         ]
         for name, not_matching_map in cases:
-            with self.subTest(name):
-                with self.assertRaises(AssertionError):
-                    strategy = UnweightedCombination()
-                    strategy.combine_rectangular_intensity_map_data(
-                        [base_map, not_matching_map]
-                    )
+            with self.subTest(name), self.assertRaises(AssertionError):
+                strategy = UnweightedCombination()
+                strategy.combine_rectangular_intensity_map_data(
+                    [base_map, not_matching_map]
+                )
 
     def test_combine_healpix_intensity_map_data_errors_if_coords_not_matching(self):
         index_array = np.array([1])
@@ -633,12 +632,11 @@ class TestMapCombination(unittest.TestCase):
             ),
         ]
         for name, not_matching_map in cases:
-            with self.subTest(name):
-                with self.assertRaises(AssertionError):
-                    strategy = UnweightedCombination()
-                    strategy.combine_healpix_intensity_map_data(
-                        [base_map, not_matching_map]
-                    )
+            with self.subTest(name), self.assertRaises(AssertionError):
+                strategy = UnweightedCombination()
+                strategy.combine_healpix_intensity_map_data(
+                    [base_map, not_matching_map]
+                )
 
     def test_calculate_weighted_sys_err(self):
         uncertainties_1 = np.array([10, 20, 30, 40])

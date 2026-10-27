@@ -2,14 +2,16 @@
 Author: Marek Strumik, maro at cbk.waw.pl
 """
 
-import json
 import copy
+import json
+
 import numpy as np
-from .constants import VERSION, SUBSECOND_LIMIT
+
+from .constants import SUBSECOND_LIMIT, VERSION
 from .funcs import (
     decode_ancillary_parameter,
-    time_sec_subsec_to_utc,
     time_sec_subsec_to_float64,
+    time_sec_subsec_to_utc,
 )
 
 

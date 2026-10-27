@@ -3,17 +3,17 @@ Author: Izabela Kowalska-Leszczynska (ikowalska@cbk.waw.pl)
 Functions used in L3a->L3b processing that are not class methods
 """
 
-import numpy as np
-import astropy.units as u
-import astropy.constants as const
 import json
-import netCDF4
-from astropy.time import Time
-from astropy.coordinates import get_sun
-
-from .constants import PHISICAL_CONSTANTS, CONST_ALPHA_TO_PROTON
-
 import logging
+
+import astropy.constants as const
+import astropy.units as u
+import netCDF4
+import numpy as np
+from astropy.coordinates import get_sun
+from astropy.time import Time
+
+from .constants import CONST_ALPHA_TO_PROTON, PHISICAL_CONSTANTS
 
 logging.basicConfig(level=logging.ERROR)
 
@@ -132,7 +132,7 @@ def check_nan(data):
     data - dictionary with the data product
     """
     for key in data:
-        if np.any((np.isnan(np.array(data[key])))):
+        if np.any(np.isnan(np.array(data[key]))):
             raise Exception("There are NaN in the output data")
 
 

@@ -2,15 +2,15 @@ import pickle
 import unittest
 from hashlib import sha256
 from pathlib import Path
-from unittest.mock import patch, sentinel, call, Mock
+from unittest.mock import Mock, call, patch, sentinel
 
 import numpy as np
-from imap_data_access import ScienceInput, AncillaryInput, ProcessingInputCollection
+from imap_data_access import AncillaryInput, ProcessingInputCollection, ScienceInput
 
 from imap_l3_processing.ultra.ultra_l3_dependencies import (
+    UltraL3CombinedDependencies,
     UltraL3Dependencies,
     UltraL3SpectralIndexDependencies,
-    UltraL3CombinedDependencies,
     load_or_create_healpix_l2,
 )
 from imap_l3_processing.utils import clear_temp_cache, get_temp_cache_dir

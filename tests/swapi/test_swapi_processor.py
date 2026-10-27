@@ -1,31 +1,31 @@
 from dataclasses import replace
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
 from unittest import TestCase
-from unittest.mock import patch, sentinel, call, Mock
+from unittest.mock import Mock, call, patch, sentinel
 
 import numpy as np
 from imap_data_access import config
 from imap_data_access.file_validation import Version
 from imap_data_access.processing_input import (
+    AncillaryInput,
     ProcessingInputCollection,
     ScienceInput,
-    AncillaryInput,
 )
-from uncertainties.unumpy import uarray, nominal_values, std_devs
+from uncertainties.unumpy import nominal_values, std_devs, uarray
 
 from imap_l3_processing.constants import (
-    THIRTY_SECONDS_IN_NANOSECONDS,
     FIVE_MINUTES_IN_NANOSECONDS,
+    THIRTY_SECONDS_IN_NANOSECONDS,
 )
 from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.swapi.descriptors import (
+    AZIMUTHAL_TRANSMISSION_DESCRIPTOR,
+    CENTRAL_EFFECTIVE_AREA_DESCRIPTOR,
     DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR,
     EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR,
     GEOMETRIC_FACTOR_SW_LOOKUP_TABLE_DESCRIPTOR,
-    HYDROGEN_INFLOW_VECTOR_DESCRIPTOR,
     HELIUM_INFLOW_VECTOR_DESCRIPTOR,
-    AZIMUTHAL_TRANSMISSION_DESCRIPTOR,
-    CENTRAL_EFFECTIVE_AREA_DESCRIPTOR,
+    HYDROGEN_INFLOW_VECTOR_DESCRIPTOR,
     PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR,
 )
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data

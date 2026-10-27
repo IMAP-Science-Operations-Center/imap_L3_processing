@@ -1,24 +1,23 @@
 import unittest
-from unittest.mock import Mock, patch, call, sentinel
+from unittest.mock import Mock, call, patch, sentinel
 
 import numpy as np
 
 from imap_l3_processing.swe.l3.science.pitch_calculations import (
-    mec_breakpoint_finder,
     average_over_look_directions,
-    calculate_velocity_in_dsp_frame_km_s,
-    calculate_look_directions,
-    rebin_by_pitch_angle,
-    correct_and_rebin,
     calculate_energy_in_ev_from_velocity_in_km_per_second,
+    calculate_look_directions,
+    calculate_velocity_in_dsp_frame_km_s,
+    correct_and_rebin,
     integrate_distribution_to_get_1d_spectrum,
     integrate_distribution_to_get_inbound_and_outbound_1d_spectrum,
+    mec_breakpoint_finder,
+    rebin_by_pitch_angle,
     rebin_by_pitch_angle_and_gyrophase,
     swe_rebin_intensity_by_pitch_angle_and_gyrophase,
 )
-from tests.test_helpers import build_swe_configuration, NumpyArrayMatcher
-
 from imap_l3_processing.swe.quality_flags import SweL3Flags
+from tests.test_helpers import NumpyArrayMatcher, build_swe_configuration
 
 
 class TestPitchCalculations(unittest.TestCase):

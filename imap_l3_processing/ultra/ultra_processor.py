@@ -3,9 +3,8 @@ import pickle
 import re
 from dataclasses import dataclass
 from hashlib import sha256
-from typing import Optional
 
-from imap_data_access import ScienceFilePath, ImapFilePath
+from imap_data_access import ImapFilePath, ScienceFilePath
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.map_combination import (
@@ -15,18 +14,18 @@ from imap_l3_processing.maps.map_combination import (
 from imap_l3_processing.maps.map_descriptors import (
     MapDescriptorParts,
     MapQuantity,
-    SurvivalCorrection,
-    parse_map_descriptor,
     PixelSize,
     Sensor,
+    SurvivalCorrection,
+    parse_map_descriptor,
 )
 from imap_l3_processing.maps.map_models import (
+    HealPixCoords,
     HealPixIntensityMapData,
     IntensityMapData,
-    HealPixCoords,
+    RectangularCoords,
     RectangularIntensityDataProduct,
     RectangularIntensityMapData,
-    RectangularCoords,
     RectangularSpectralIndexDataProduct,
     RectangularSpectralIndexMapData,
 )
@@ -34,24 +33,24 @@ from imap_l3_processing.maps.map_processor import MapProcessor
 from imap_l3_processing.maps.quality_flags import MapL3Flags
 from imap_l3_processing.maps.spectral_fit import (
     calculate_spectral_index_for_multiple_ranges,
-    slice_energy_range_by_bin,
     fit_spectral_index_map,
+    slice_energy_range_by_bin,
 )
 from imap_l3_processing.maps.survival_probability_processing import (
     combine_glows_l3e_with_l1c_pointing,
 )
 from imap_l3_processing.ultra.science.ultra_survival_probability import (
-    UltraSurvivalProbabilitySkyMap,
     UltraSurvivalProbability,
+    UltraSurvivalProbabilitySkyMap,
 )
 from imap_l3_processing.ultra.ultra_l3_dependencies import (
+    UltraL3CombinedDependencies,
     UltraL3Dependencies,
     UltraL3SpectralIndexDependencies,
-    UltraL3CombinedDependencies,
 )
 from imap_l3_processing.utils import (
-    save_data,
     get_temp_cache_dir,
+    save_data,
 )
 
 logger = logging.getLogger(__name__)
@@ -209,7 +208,7 @@ class UltraProcessor(MapProcessor):
     def _process_spectral_index(
         self,
         dependencies: UltraL3SpectralIndexDependencies,
-        spectral_index_range: Optional[tuple[int, int]],
+        spectral_index_range: tuple[int, int] | None,
     ) -> RectangularSpectralIndexMapData:
         if spectral_index_range is not None:
             start, end = spectral_index_range

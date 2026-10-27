@@ -9,7 +9,7 @@ import numpy as np
 from astropy import units as u
 from astropy_healpix import HEALPix
 
-from .constants import VERSION, SCAN_CIRCLE_ANGULAR_RADIUS
+from .constants import SCAN_CIRCLE_ANGULAR_RADIUS, VERSION
 from .funcs import calibration_factor, check_if_contains_actual_data
 from .geom_fun_libr_box import spin2lb
 

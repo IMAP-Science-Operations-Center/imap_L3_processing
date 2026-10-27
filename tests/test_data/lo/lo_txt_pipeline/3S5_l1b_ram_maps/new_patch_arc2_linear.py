@@ -1,7 +1,7 @@
+import cartopy.crs as ccrs
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
 from scipy.spatial.transform import Rotation as R
 
 PI = np.pi
@@ -153,7 +153,7 @@ def make_imap_lo_reference_points(rot, option=1):
         # --- Reference point in ORIGINAL coordinates ---
     lat_points = np.linspace(0.0, 0.0, npoints)
     lon_points = np.linspace(0.0, 0.0, npoints)
-    for i in range(0, npoints):
+    for i in range(npoints):
         ref_lat = lats[i]  # degrees
         ref_lon = lons[i]  # degrees
 
@@ -435,7 +435,7 @@ def make_imap_lo_map(
     if opt_points > 0:
         labels, lon_points, lat_points = make_imap_lo_reference_points(rot, opt_points)
         npoints = len(labels)
-        for i in range(0, npoints):
+        for i in range(npoints):
             lon_ref_rot = lon_points[i]
             lat_ref_rot = lat_points[i]
             ref_label = labels[i]

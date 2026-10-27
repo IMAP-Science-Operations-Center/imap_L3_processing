@@ -34,6 +34,8 @@ import matplotlib.pyplot as plt
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
+from figure_utils import FIGURES_DIR, load_swapi_response
+
 from imap_l3_processing.constants import (
     ALPHA_MASS_PER_CHARGE_M_P_PER_E,
     ALPHA_PARTICLE_MASS_KG,
@@ -70,7 +72,6 @@ from imap_l3_processing.swapi.l3a.utils import (
 )
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 from imap_l3_processing.utils import SpiceKernelTypes
-from figure_utils import FIGURES_DIR, load_swapi_response
 
 DATE_YYYYMMDD = "20260101"
 N_SWEEPS = 5

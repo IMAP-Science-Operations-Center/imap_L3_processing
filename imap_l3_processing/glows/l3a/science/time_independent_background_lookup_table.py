@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Union, TypeVar
+from typing import TypeVar
 
 import numpy as np
 import scipy.interpolate
+from typing_extensions import Self
 
 T = TypeVar("T", bound="TimeIndependentBackgroundLookupTable")
 
@@ -15,8 +16,8 @@ class TimeIndependentBackgroundLookupTable:
     background_values: np.ndarray[float]
 
     def lookup(
-        self, lat: Union[np.ndarray[float], float], lon: Union[np.ndarray[float], float]
-    ) -> Union[np.ndarray[float], float]:
+        self, lat: np.ndarray[float] | float, lon: np.ndarray[float] | float
+    ) -> np.ndarray[float] | float:
         wrapped_lon = np.mod(lon, 360)
         background_extended = np.append(
             self.background_values, self.background_values[:, :1], axis=1
@@ -29,7 +30,7 @@ class TimeIndependentBackgroundLookupTable:
         )
 
     @classmethod
-    def from_file(cls: type[T], path: Path) -> T:
+    def from_file(cls, path: Path) -> Self:
         values = np.loadtxt(path)
         numlat, numlon = values.shape
         longitudes = np.linspace(0, 360, numlon, endpoint=False)

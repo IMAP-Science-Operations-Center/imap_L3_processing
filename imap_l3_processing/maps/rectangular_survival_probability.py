@@ -1,10 +1,10 @@
 import numpy as np
 import xarray as xr
-from imap_processing.ena_maps.ena_maps import RectangularSkyMap, PointingSet
+from imap_processing.ena_maps.ena_maps import PointingSet, RectangularSkyMap
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.ena_maps.utils.corrections import (
-    apply_compton_getting_correction,
     add_spacecraft_position_and_velocity_to_pset,
+    apply_compton_getting_correction,
     calculate_ram_mask,
 )
 from imap_processing.spice.geometry import SpiceFrame

@@ -7,12 +7,12 @@ from imap_data_access import AncillaryFilePath
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3a.models import (
-    GlowsL2Data,
-    GlowsL2LightCurve,
-    GlowsLatLon,
-    GlowsL3LightCurve,
     XYZ,
+    GlowsL2Data,
     GlowsL2Header,
+    GlowsL2LightCurve,
+    GlowsL3LightCurve,
+    GlowsLatLon,
 )
 from imap_l3_processing.models import InputMetadata, Instrument
 

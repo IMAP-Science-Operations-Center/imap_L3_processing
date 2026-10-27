@@ -1,19 +1,19 @@
 import unittest
 from datetime import datetime
-from unittest.mock import patch, call
+from unittest.mock import call, patch
 
 from imap_data_access.file_validation import Version
 
 from imap_l3_processing.glows.descriptors import (
-    GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
     GLOWS_L3E_ULTRA_HF_DESCRIPTOR,
+    GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
 )
 from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
 from imap_l3_processing.maps.sp_map_initializer import SPMapInitializer
 from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.ultra.ultra_sp_initializer import (
-    UltraSPInitializer,
     ULTRA_SP_SPICE_KERNELS,
+    UltraSPInitializer,
 )
 from tests.integration.integration_test_helpers import ImapQueryPatcher
 

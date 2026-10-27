@@ -1,16 +1,13 @@
 import unittest
 import warnings
 from dataclasses import fields
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
 from pathlib import Path
-from unittest.mock import Mock, patch, call, sentinel, MagicMock
+from unittest.mock import MagicMock, Mock, call, patch, sentinel
 
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 
-from imap_l3_processing.codice.l3.lo.codice_lo_l3b_3d_distributions_dependencies import (
-    CodiceLoL3b3dDistributionsDependencies,
-)
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies import (
     CodiceLoL3aDirectEventsDependencies,
 )
@@ -19,6 +16,9 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencie
 )
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import (
     CodiceLoL3aRatiosDependencies,
+)
+from imap_l3_processing.codice.l3.lo.codice_lo_l3b_3d_distributions_dependencies import (
+    CodiceLoL3b3dDistributionsDependencies,
 )
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import (
@@ -34,17 +34,17 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_look
     GeometricFactorLookup,
 )
 from imap_l3_processing.codice.l3.lo.models import (
-    CodiceLoL3aPartialDensityDataProduct,
-    CodiceLoL2DirectEventData,
-    CodiceLoL3aDirectEventDataProduct,
-    CodiceLoL2SWSpeciesData,
-    CodiceLoL1aSWPriorityRates,
-    CodiceLoL1aNSWPriorityRates,
-    CodiceLoPartialDensityData,
-    CodiceLoL3aRatiosDataProduct,
     CODICE_LO_L2_NUM_PRIORITIES,
-    CodiceLoL3ChargeStateDistributionsDataProduct,
+    CodiceLoL1aNSWPriorityRates,
+    CodiceLoL1aSWPriorityRates,
+    CodiceLoL2DirectEventData,
+    CodiceLoL2SWSpeciesData,
+    CodiceLoL3aDirectEventDataProduct,
+    CodiceLoL3aPartialDensityDataProduct,
+    CodiceLoL3aRatiosDataProduct,
     CodiceLoL3b3dDistributionDataProduct,
+    CodiceLoL3ChargeStateDistributionsDataProduct,
+    CodiceLoPartialDensityData,
 )
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import (
     MassPerChargeLookup,
@@ -52,9 +52,9 @@ from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charg
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from tests.test_helpers import (
+    NumpyArrayMatcher,
     create_dataclass_mock,
     get_test_data_path,
-    NumpyArrayMatcher,
 )
 
 MODULE = "imap_l3_processing.codice.l3.lo.codice_lo_processor"
@@ -790,8 +790,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         codice_l2_variables["epoch"] = epochs
         codice_l2_variables["spin_angle"] *= 360
-        codice_l2_variables["data_quality"] = rng.random((num_epochs))
-        codice_l2_variables["num_events"] = rng.random((num_epochs))
+        codice_l2_variables["data_quality"] = rng.random(num_epochs)
+        codice_l2_variables["num_events"] = rng.random(num_epochs)
 
         expected_energy_per_charge = codice_l2_variables["energy_per_charge"]
         expected_apd_energy = codice_l2_variables["apd_energy"]

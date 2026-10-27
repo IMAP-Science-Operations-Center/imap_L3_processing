@@ -9,7 +9,7 @@ from imap_l3_processing import constants
 from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 from imap_l3_processing.swapi.species import Species
-from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path
+from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path
 
 
 def _load_response() -> SwapiResponse:

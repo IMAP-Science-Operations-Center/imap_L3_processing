@@ -2,28 +2,27 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 import imap_data_access
-from imap_data_access import ScienceFilePath, ProcessingInputCollection, RepointInput
+from imap_data_access import ProcessingInputCollection, RepointInput, ScienceFilePath
 from imap_data_access.file_validation import Version
 from imap_processing.spice.repoint import set_global_repoint_table_paths
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.descriptors import (
     BAD_DAYS_LIST_DESCRIPTOR,
-    WAW_HELIOION_DESCRIPTOR,
-    UV_ANISOTROPY_1CR_DESCRIPTOR,
-    PIPELINE_SETTINGS_L3BCDE_DESCRIPTOR,
     GLOWS_L3B_DESCRIPTOR,
     GLOWS_L3C_DESCRIPTOR,
+    PIPELINE_SETTINGS_L3BCDE_DESCRIPTOR,
+    UV_ANISOTROPY_1CR_DESCRIPTOR,
+    WAW_HELIOION_DESCRIPTOR,
 )
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.models import CRToProcess, ExternalDependencies
 from imap_l3_processing.glows.l3bc.utils import (
-    get_date_range_of_cr,
     get_best_ancillary,
     get_cr_for_date_time,
+    get_date_range_of_cr,
 )
 from imap_l3_processing.utils import read_cdf_parents
 
@@ -193,7 +192,7 @@ class GlowsL3BCInitializer:
         l3bs_by_cr: dict[int, str],
         external_dependencies: ExternalDependencies,
         major_version: int | None,
-    ) -> Optional[Version]:
+    ) -> Version | None:
         if not cr_candidate.buffer_time_has_elapsed_since_cr():
             logger.warning(
                 f"Not enough time has elapsed for cr {cr_candidate.cr_rotation_number}"

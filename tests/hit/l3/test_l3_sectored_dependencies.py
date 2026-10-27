@@ -1,13 +1,13 @@
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import patch, call
+from unittest.mock import call, patch
 
 import imap_data_access
-from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection
+from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput
 
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import (
-    HITL3SectoredDependencies,
     HIT_L2_DESCRIPTOR,
+    HITL3SectoredDependencies,
 )
 
 

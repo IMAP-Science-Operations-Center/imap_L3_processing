@@ -16,7 +16,6 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.utils import average_spin_a
 from imap_l3_processing.swapi.l3a.utils import optimal_density_scale
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 
-
 _MAX_BASIN_REFINE_ITERS = 6
 _ROTATED_RMSE_RATIO_THRESHOLD = 10
 

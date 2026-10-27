@@ -4,6 +4,7 @@ Author: Marek Strumik, maro at cbk.waw.pl
 
 import struct
 from dataclasses import dataclass
+
 from .constants import SUBSECOND_LIMIT
 
 

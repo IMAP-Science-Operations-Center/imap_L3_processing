@@ -3,41 +3,41 @@ import unittest
 from datetime import datetime, timedelta
 from hashlib import sha256
 from pathlib import Path
-from unittest.mock import patch, sentinel, call, Mock
+from unittest.mock import Mock, call, patch, sentinel
 
 import numpy as np
 import xarray as xr
 from imap_data_access.processing_input import (
     AncillaryInput,
-    ScienceInput,
     ProcessingInputCollection,
+    ScienceInput,
 )
 from imap_processing.ena_maps.ena_maps import RectangularSkyMap
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice.geometry import SpiceFrame
 
 from imap_l3_processing.maps.map_models import (
+    HealPixCoords,
     HealPixIntensityMapData,
     IntensityMapData,
-    HealPixCoords,
-    SpectralIndexMapData,
     RectangularIntensityDataProduct,
+    RectangularIntensityMapData,
     RectangularSpectralIndexDataProduct,
     RectangularSpectralIndexMapData,
-    RectangularIntensityMapData,
+    SpectralIndexMapData,
 )
 from imap_l3_processing.maps.quality_flags import MapL3Flags
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.ultra.ultra_l3_dependencies import (
+    UltraL3CombinedDependencies,
     UltraL3Dependencies,
     UltraL3SpectralIndexDependencies,
-    UltraL3CombinedDependencies,
 )
 from imap_l3_processing.ultra.ultra_processor import (
     UltraProcessor,
     correct_healpix_data_for_survival_probability,
 )
-from imap_l3_processing.utils import get_temp_cache_dir, clear_temp_cache
+from imap_l3_processing.utils import clear_temp_cache, get_temp_cache_dir
 from tests.maps.test_builders import create_rectangular_intensity_map_data
 from tests.test_helpers import get_test_data_path
 

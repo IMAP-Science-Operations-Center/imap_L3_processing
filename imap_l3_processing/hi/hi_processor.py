@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 
 from imap_processing.spice.geometry import SpiceFrame
 
@@ -10,29 +9,29 @@ from imap_l3_processing.hi.hi_spectral_fit_dependencies import (
     HiSpectralIndexDependencies,
 )
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import (
-    HiLoL3SurvivalDependencies,
     HiL3SingleSensorFullSpinDependencies,
+    HiLoL3SurvivalDependencies,
 )
 from imap_l3_processing.maps.map_combination import (
-    UncertaintyWeightedCombination,
-    UnweightedCombination,
     CombinationStrategy,
     ExposureWeightedCombination,
+    UncertaintyWeightedCombination,
+    UnweightedCombination,
 )
 from imap_l3_processing.maps.map_descriptors import (
-    parse_map_descriptor,
-    MapQuantity,
     MapDescriptorParts,
-    SurvivalCorrection,
-    SpinPhase,
-    Sensor,
+    MapQuantity,
     ReferenceFrame,
+    Sensor,
+    SpinPhase,
+    SurvivalCorrection,
+    parse_map_descriptor,
 )
 from imap_l3_processing.maps.map_models import (
+    RectangularIntensityDataProduct,
+    RectangularIntensityMapData,
     RectangularSpectralIndexDataProduct,
     RectangularSpectralIndexMapData,
-    RectangularIntensityMapData,
-    RectangularIntensityDataProduct,
 )
 from imap_l3_processing.maps.map_processor import MapProcessor
 from imap_l3_processing.maps.spectral_fit import (
@@ -185,7 +184,7 @@ class HiProcessor(MapProcessor):
     def process_spectral_fit_index(
         self,
         hi_l3_spectral_fit_dependencies: HiSpectralIndexDependencies,
-        spectral_index_energy_range: Optional[tuple[int, int]] = None,
+        spectral_index_energy_range: tuple[int, int] | None = None,
     ) -> RectangularSpectralIndexMapData:
         intensity_map_data = hi_l3_spectral_fit_dependencies.map_data.intensity_map_data
         if spectral_index_energy_range is not None:

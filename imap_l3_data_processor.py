@@ -19,13 +19,13 @@ from imap_l3_processing.hi.hi_combined_initializer import (
 )
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.hi_sp_initializer import (
-    HiSPInitializer,
     HI_SP_MAP_DESCRIPTORS,
+    HiSPInitializer,
 )
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.lo.l3.lo_sp_initializer import (
-    LoSPInitializer,
     LO_SP_MAP_DESCRIPTORS,
+    LoSPInitializer,
 )
 from imap_l3_processing.lo.lo_processor import LoProcessor
 from imap_l3_processing.maps.map_descriptors import parse_map_descriptor
@@ -33,15 +33,15 @@ from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.ultra.ultra_combined_nsp_initializer import (
-    UltraCombinedNSPInitializer,
     ULTRA_COMBINED_NSP_DESCRIPTORS,
+    UltraCombinedNSPInitializer,
 )
 from imap_l3_processing.ultra.ultra_processor import UltraProcessor
 from imap_l3_processing.ultra.ultra_sp_initializer import (
-    UltraSPInitializer,
     ULTRA_45_DESCRIPTORS,
     ULTRA_90_DESCRIPTORS,
     ULTRA_COMBINED_SP_DESCRIPTORS,
+    UltraSPInitializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -237,7 +237,7 @@ def imap_l3_processor():
             except Exception as e:
                 exceptions.append(e)
         if exceptions:
-            raise IOError(f"Failed to upload some files: {exceptions}")
+            raise OSError(f"Failed to upload some files: {exceptions}")
 
 
 def _furnish_spice_kernels(processing_input_collection):

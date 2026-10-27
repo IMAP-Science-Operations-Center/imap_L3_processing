@@ -17,7 +17,7 @@ def fix_fieldnam():
             for key, item in yaml_data.items():
                 if "NAME" not in item.keys():
                     continue
-                if "_" in yaml_data[key]["FIELDNAM"]:
+                if "_" in item["FIELDNAM"]:
                     yaml_data[key]["FIELDNAM"] = key.replace("_", " ").title()
                 if len(key) > 30:
                     print("key over 30", variable_yaml, key)

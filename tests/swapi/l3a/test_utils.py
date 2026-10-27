@@ -27,18 +27,18 @@ from imap_l3_processing.swapi.constants import (
 )
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.utils import (
-    velocity_components_to_angles_in_instrument_frame,
     calculate_sw_speed,
     chunk_l2_data,
+    convert_sun_velocity_rtn_to_gse,
     esa_voltage_to_alpha_speed,
     esa_voltage_to_proton_speed,
     get_spacecraft_velocity_rtn,
-    convert_sun_velocity_rtn_to_gse,
     get_swapi_geometry,
     measurement_times,
     pickup_ion_chunk_epoch,
     read_l2_swapi_data,
     read_mag_rtn_data,
+    velocity_components_to_angles_in_instrument_frame,
     velocity_to_angles_in_instrument_frame,
 )
 from tests.spice_test_case import SpiceTestCase

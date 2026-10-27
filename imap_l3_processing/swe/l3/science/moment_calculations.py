@@ -2,18 +2,17 @@ import logging
 import math
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional, Union, Tuple
 
 import numpy as np
 import spiceypy
 
 from imap_l3_processing.constants import (
-    ELECTRON_MASS_KG,
     BOLTZMANN_CONSTANT_JOULES_PER_KELVIN,
-    METERS_PER_KILOMETER,
     CENTIMETERS_PER_METER,
-    PROTON_CHARGE_COULOMBS,
+    ELECTRON_MASS_KG,
     GRAMS_PER_KILOGRAM,
+    METERS_PER_KILOMETER,
+    PROTON_CHARGE_COULOMBS,
 )
 from imap_l3_processing.pitch_angles import calculate_unit_vector
 from imap_l3_processing.predicted_ephemeris_tracker import PredictedEphemerisTracker
@@ -100,8 +99,8 @@ def core_fit_moments_retrying_on_failure(
     weights: np.ndarray,
     energy_start: int,
     energy_end: int,
-    density_history: Union[np.ndarray, list[float]],
-) -> Optional[MomentFitResults]:
+    density_history: np.ndarray | list[float],
+) -> MomentFitResults | None:
     return _fit_moments_retrying_on_failure(
         corrected_energy_bins,
         velocity_vectors,
@@ -121,10 +120,10 @@ def halo_fit_moments_retrying_on_failure(
     weights: np.ndarray,
     energy_start: int,
     energy_end: int,
-    density_history: Union[np.ndarray, list[float]],
-    spacecraft_potential: Union[np.float64, float],
-    core_halo_breakpoint: Union[np.float64, float],
-) -> Optional[MomentFitResults]:
+    density_history: np.ndarray | list[float],
+    spacecraft_potential: np.float64 | float,
+    core_halo_breakpoint: np.float64 | float,
+) -> MomentFitResults | None:
     return _fit_moments_retrying_on_failure(
         corrected_energy_bins,
         velocity_vectors,
@@ -147,10 +146,10 @@ def _fit_moments_retrying_on_failure(
     weights: np.ndarray,
     energy_start: int,
     energy_end: int,
-    density_history: Union[np.ndarray, list[float]],
+    density_history: np.ndarray | list[float],
     history_scalar: float,
-    halo_correction_parameters: Optional[HaloCorrectionParameters] = None,
-) -> Optional[MomentFitResults]:
+    halo_correction_parameters: HaloCorrectionParameters | None = None,
+) -> MomentFitResults | None:
     filtered_velocity_vectors, filtered_weights, filtered_yreg = (
         filter_and_flatten_regress_parameters(
             corrected_energy_bins,
@@ -445,7 +444,7 @@ def apply_rotation_matrix(
 
 def rotate_rtn_vectors_to_dps(
     epochs: np.ndarray, vectors_rtn: np.ndarray
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     result = np.full_like(vectors_rtn, np.nan, dtype=float)
     predicted_ephemeris_flags = np.zeros_like(epochs, dtype=bool)
     for i, epoch in enumerate(epochs):
@@ -527,7 +526,7 @@ def compute_density_scale(
 
 def halotrunc(
     moments: Moments, core_halo_breakpoint: float, spacecraft_potential: float
-) -> Optional[np.float64]:
+) -> np.float64 | None:
     htmax = moments.t_parallel
     htmin = moments.t_perpendicular
 
@@ -568,14 +567,14 @@ def integrate(
     spacecraft_potential: float,
     cdelnv: np.ndarray,
     cdelt: np.ndarray,
-) -> Optional[IntegrateOutputs]:
+) -> IntegrateOutputs | None:
     sumn = 0
     sumvx = 0
     sumvy = 0
     sumvz = 0
     base = 1000
     delphi = np.full(7, 2 * np.pi / 30)
-    delv = np.empty((len(energy)))
+    delv = np.empty(len(energy))
     fv_with_axis_order_energy_cem_spin = np.moveaxis(fv, 1, 2)
     for i in range(istart, iend + 1):
         if energy[i] > 0:
@@ -597,8 +596,7 @@ def integrate(
         delv[i] = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * (
             np.sqrt(ehigh) - np.sqrt(elow)
         )
-        if elow < base:
-            base = elow
+        base = min(base, elow)
         for j in range(7):
             for k in range(28):  # why 28 and not 30?
                 if energy[i] > 0:

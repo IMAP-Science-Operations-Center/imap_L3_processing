@@ -8,6 +8,10 @@ from uncertainties.unumpy import uarray
 from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
+from imap_l3_processing.swapi.constants import (
+    SWAPI_COARSE_SWEEP_BINS,
+    SWAPI_L2_K_FACTOR,
+)
 from imap_l3_processing.swapi.l3a.chunk_fits import (
     AlphaChunkFitter,
     ParallelChunkRunner,
@@ -15,13 +19,9 @@ from imap_l3_processing.swapi.l3a.chunk_fits import (
     PuiChunkFitter,
 )
 from imap_l3_processing.swapi.l3a.models import (
-    SwapiL3ProtonSolarWindData,
     SwapiL3AlphaSolarWindData,
     SwapiL3PickupIonData,
-)
-from imap_l3_processing.swapi.constants import (
-    SWAPI_COARSE_SWEEP_BINS,
-    SWAPI_L2_K_FACTOR,
+    SwapiL3ProtonSolarWindData,
 )
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
 from imap_l3_processing.swapi.l3a.utils import (
@@ -33,10 +33,10 @@ from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_differential_flux
     calculate_combined_solar_wind_differential_flux,
 )
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_vdf import (
-    calculate_proton_solar_wind_vdf,
     calculate_alpha_solar_wind_vdf,
-    calculate_pui_solar_wind_vdf,
     calculate_delta_minus_plus,
+    calculate_proton_solar_wind_vdf,
+    calculate_pui_solar_wind_vdf,
 )
 from imap_l3_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags

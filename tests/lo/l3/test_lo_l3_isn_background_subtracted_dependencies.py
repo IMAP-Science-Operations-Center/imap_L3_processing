@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection
+from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput
 
 from imap_l3_processing.lo.l3.lo_l3_isn_background_subtracted_dependencies import (
     LoL3ISNBackgroundSubtractedDependencies,

@@ -2,14 +2,13 @@ import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import patch, Mock
-
+from unittest.mock import Mock, patch
 
 from imap_l3_processing.glows.l3bc.dependency_validator import (
-    validate_omni2_dependency,
     validate_dependencies,
     validate_f107_fluxtable_dependency,
     validate_lyman_alpha_dependency,
+    validate_omni2_dependency,
 )
 from tests.test_helpers import get_test_data_path
 

@@ -2,7 +2,7 @@ import dataclasses
 import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import patch, sentinel, Mock, call, MagicMock
+from unittest.mock import MagicMock, Mock, call, patch, sentinel
 
 import numpy as np
 
@@ -11,9 +11,9 @@ from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3a_direct_events_de
     CodiceHiL3aDirectEventsDependencies,
 )
 from imap_l3_processing.codice.l3.hi.models import (
+    CodiceHiL2SectoredIntensitiesData,
     CodiceL1aHiDirectEvents,
     CodiceL2HiDirectEventData,
-    CodiceHiL2SectoredIntensitiesData,
     CodiceL3HiDirectEvents,
 )
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import (

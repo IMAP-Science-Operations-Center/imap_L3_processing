@@ -2,14 +2,14 @@ import unittest
 from unittest.mock import Mock
 
 import numpy as np
-from uncertainties.unumpy import uarray, nominal_values, std_devs
+from uncertainties.unumpy import nominal_values, std_devs, uarray
 
 from imap_l3_processing.glows.l3a.science.bad_angle_flag_configuration import (
     BadAngleFlagConfiguration,
 )
 from imap_l3_processing.glows.l3a.science.calculate_daily_lightcurve import (
-    rebin_lightcurve,
     calculate_spin_angles,
+    rebin_lightcurve,
 )
 from imap_l3_processing.glows.l3a.science.time_independent_background_lookup_table import (
     TimeIndependentBackgroundLookupTable,

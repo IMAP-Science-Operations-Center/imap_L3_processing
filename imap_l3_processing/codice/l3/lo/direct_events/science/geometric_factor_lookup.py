@@ -7,9 +7,9 @@ import numpy as np
 import pandas as pd
 
 from imap_l3_processing.codice.l3.lo.constants import (
-    CODICE_LO_NUM_SPIN_SECTORS,
-    CODICE_LO_NUM_ESA_STEPS,
     CODICE_LO_NUM_AZIMUTH_BINS,
+    CODICE_LO_NUM_ESA_STEPS,
+    CODICE_LO_NUM_SPIN_SECTORS,
     CODICE_SECOND_ERA,
     CODICE_THIRD_ERA,
 )

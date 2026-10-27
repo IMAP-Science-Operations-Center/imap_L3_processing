@@ -4,8 +4,8 @@ import numpy as np
 import scipy
 
 from imap_l3_processing.maps.map_models import (
-    SpectralIndexMapData,
     IntensityMapData,
+    SpectralIndexMapData,
     calculate_datetime_weighted_average,
 )
 from imap_l3_processing.maps.mpfit import mpfit

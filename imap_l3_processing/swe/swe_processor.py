@@ -12,36 +12,36 @@ from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.predicted_ephemeris_tracker import PredictedEphemerisTracker
 from imap_l3_processing.processor import Processor
 from imap_l3_processing.swe.l3.models import (
-    SweL3Data,
+    SweConfiguration,
     SweL1bData,
     SweL2Data,
+    SweL3Data,
     SweL3MomentData,
-    SweConfiguration,
 )
 from imap_l3_processing.swe.l3.science.moment_calculations import (
-    compute_maxwellian_weight_factors,
-    rotate_temperature,
-    apply_rotation_matrix,
-    rotate_rtn_vectors_to_dps,
-    core_fit_moments_retrying_on_failure,
-    halo_fit_moments_retrying_on_failure,
     Moments,
+    ScaleDensityOutput,
+    apply_rotation_matrix,
+    calculate_primary_eigenvector,
+    compute_maxwellian_weight_factors,
+    core_fit_moments_retrying_on_failure,
+    get_dps_to_rtn_rotation_matrix,
+    halo_fit_moments_retrying_on_failure,
     integrate,
+    rotate_rtn_vectors_to_dps,
+    rotate_temperature,
+    rotate_temperature_tensor_to_mag,
+    rotate_vector_to_rtn_spherical_coordinates,
     scale_core_density,
     scale_halo_density,
-    rotate_vector_to_rtn_spherical_coordinates,
-    calculate_primary_eigenvector,
-    ScaleDensityOutput,
-    rotate_temperature_tensor_to_mag,
-    get_dps_to_rtn_rotation_matrix,
 )
 from imap_l3_processing.swe.l3.science.pitch_calculations import (
     average_over_look_directions,
-    mec_breakpoint_finder,
+    calculate_velocity_in_dsp_frame_km_s,
     correct_and_rebin,
     integrate_distribution_to_get_1d_spectrum,
     integrate_distribution_to_get_inbound_and_outbound_1d_spectrum,
-    calculate_velocity_in_dsp_frame_km_s,
+    mec_breakpoint_finder,
     swe_rebin_intensity_by_pitch_angle_and_gyrophase,
 )
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
@@ -117,7 +117,7 @@ def check_temperature_outlier_flag(data: np.ndarray):
     TEMPERATURE_OUTLIER[:] = SweL3Flags.NONE
     for i in np.arange(len(data)):
         # Get left and right index accounting for edges
-        left_idx = 0 if i - window // 2 < 0 else i - window // 2
+        left_idx = max(i - window // 2, 0)
         right_idx = i + window // 2 + 1
         # Loop check the current value while removing every point from the window on each iteration
         for k in np.arange(len(data[left_idx:right_idx])):
@@ -136,7 +136,7 @@ def check_temperature_outlier_flag(data: np.ndarray):
         # Don't do this is the current value is already an outlier
         if TEMPERATURE_OUTLIER[i] == SweL3Flags.NONE:
             # Get left and right index accounting for edges
-            left_idx = 0 if i - window // 2 < 0 else i - window // 2
+            left_idx = max(i - window // 2, 0)
             right_idx = i + window // 2 + 1
             # Loop check the current value while removing every point from the window on each iteration
             # This time around, we conditionally slice to avoid including already known outliers from
@@ -199,7 +199,7 @@ class SweProcessor(Processor):
         geometric_fractions = np.array(config["geometric_fractions"])
         for i in range(len(swe_epoch)):
             npts = 7 // 2
-            left_idx = 0 if i - npts < 0 else i - npts
+            left_idx = max(i - npts, 0)
             right_idx = i + (i - left_idx + 1)
             time_avg_psd = np.nanmean(
                 swe_l2_data.phase_space_density[left_idx:right_idx], axis=0
@@ -435,9 +435,7 @@ class SweProcessor(Processor):
                     continue
 
                 halo_nfit = (
-                    5
-                    if len(swe_l2_data.energy) - jbreak > 5
-                    else len(swe_l2_data.energy) - jbreak
+                    min(len(swe_l2_data.energy) - jbreak, 5)
                 )
 
                 core_moment_fit_result = core_fit_moments_retrying_on_failure(

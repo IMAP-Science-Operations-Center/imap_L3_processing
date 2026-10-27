@@ -36,7 +36,7 @@ class TestConvertProductDefinitionToYamlTest(unittest.TestCase):
         }
 
         rows = [
-            [k for k in row_columns.keys()],
+            [k for k in row_columns],
             [v[0] for v in row_columns.values()],
             [v[1] for v in row_columns.values()],
             [v[2] for v in row_columns.values()],

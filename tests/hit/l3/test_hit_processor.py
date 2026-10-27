@@ -3,36 +3,36 @@ from datetime import datetime
 from pathlib import Path
 from typing import TypeVar
 from unittest import TestCase
-from unittest.mock import sentinel, patch, call, Mock
+from unittest.mock import Mock, call, patch, sentinel
 
 import numpy as np
 
 from imap_l3_processing.constants import (
-    UNSIGNED_INT2_FILL_VALUE,
     UNSIGNED_INT1_FILL_VALUE,
+    UNSIGNED_INT2_FILL_VALUE,
 )
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import (
     HITL3SectoredDependencies,
 )
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
-from imap_l3_processing.hit.l3.models import HitL2Data, HitL1Data
+from imap_l3_processing.hit.l3.models import HitL1Data, HitL2Data
 from imap_l3_processing.hit.l3.pha.pha_event_reader import (
-    PHAWord,
     Detector,
-    RawPHAEvent,
-    PHAExtendedHeader,
-    StimBlock,
     ExtendedStimHeader,
+    PHAExtendedHeader,
+    PHAWord,
+    RawPHAEvent,
+    StimBlock,
 )
 from imap_l3_processing.hit.l3.pha.science.calculate_pha import EventOutput
 from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import (
     DetectedRange,
-    DetectorSide,
     DetectorRange,
+    DetectorSide,
 )
 from imap_l3_processing.hit.l3.sectored_products.models import HitPitchAngleDataProduct
 from imap_l3_processing.hit.quality_flags import HitL3Flags
-from imap_l3_processing.models import MagData, InputMetadata
+from imap_l3_processing.models import InputMetadata, MagData
 from imap_l3_processing.processor import Processor
 from tests.test_helpers import NumpyArrayMatcher, create_dataclass_mock
 

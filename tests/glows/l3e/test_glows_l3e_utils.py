@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import patch, Mock, call
+from unittest.mock import Mock, call, patch
 
 import imap_data_access
 import numpy as np
@@ -18,23 +18,23 @@ from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import (
     GlowsL3eSpacecraftInfo,
 )
 from imap_l3_processing.glows.l3e.glows_l3e_utils import (
-    determine_call_args_for_l3e_executable,
-    get_lo_pivot_angles,
-    get_lo_pivot_angle_from_l1b_file,
     LoPivotAngle,
+    calculate_energy_deltas,
     compute_glows_flags_for_repoint,
-    get_repoint_numbers_within_cr_window,
+    determine_call_args_for_l3e_executable,
     determine_spacecraft_info_for_l3e_executable,
     determine_spacecraft_info_using_predict_if_needed,
-    calculate_energy_deltas,
+    get_lo_pivot_angle_from_l1b_file,
+    get_lo_pivot_angles,
+    get_repoint_numbers_within_cr_window,
 )
 from imap_l3_processing.glows.quality_flags import GlowsL3Flags
 from imap_l3_processing.utils import FurnishMetakernelOutput
 from tests.integration.integration_test_helpers import (
-    mock_imap_data_access,
     create_metakernel,
+    mock_imap_data_access,
 )
-from tests.test_helpers import get_test_data_path, get_integration_test_data_path
+from tests.test_helpers import get_integration_test_data_path, get_test_data_path
 
 
 class TestGlowsL3EUtils(unittest.TestCase):

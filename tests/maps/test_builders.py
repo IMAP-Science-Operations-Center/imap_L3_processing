@@ -1,15 +1,14 @@
 from datetime import datetime
-from typing import Optional
 
 import numpy as np
 import spiceypy
 
 from imap_l3_processing.maps.map_models import (
-    RectangularIntensityMapData,
+    GlowsL3eRectangularMapInputData,
+    InputRectangularPointingSet,
     IntensityMapData,
     RectangularCoords,
-    InputRectangularPointingSet,
-    GlowsL3eRectangularMapInputData,
+    RectangularIntensityMapData,
     RectangularSpectralIndexMapData,
     SpectralIndexMapData,
 )
@@ -279,7 +278,7 @@ def create_l1c_pset(
     epoch_delta: np.ndarray = np.array([43200_000_000_000]),
     repointing: int = 1,
     energy_steps: np.ndarray = np.array([1]),
-    exposures: Optional[np.ndarray] = None,
+    exposures: np.ndarray | None = None,
     pointing_start_met=None,
     pointing_end_met=None,
     hae_longitude=None,
@@ -317,8 +316,8 @@ def create_l3e_pset(
     repointing: int = 1,
     energy_steps=np.array([0.5, 5.0, 12.0]),
     spin_angle=np.arange(0, 360),
-    sp: Optional[np.array] = None,
-    flags: Optional[np.array] = None,
+    sp: np.array | None = None,
+    flags: np.array | None = None,
 ) -> GlowsL3eRectangularMapInputData:
     epoch_j2000 = np.array([spiceypy.datetime2et(epoch)]) * 1e9
     sp = sp or np.full(shape=(1, len(energy_steps), len(spin_angle)), fill_value=0.5)

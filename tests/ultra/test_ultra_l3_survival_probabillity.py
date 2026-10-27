@@ -4,17 +4,17 @@ from unittest.mock import patch
 
 import numpy as np
 from astropy_healpix import HEALPix
-from imap_processing.ena_maps.ena_maps import UltraPointingSet, HealpixSkyMap
+from imap_processing.ena_maps.ena_maps import HealpixSkyMap, UltraPointingSet
 from imap_processing.spice import geometry
 from imap_processing.ultra.constants import UltraConstants
 
 from imap_l3_processing.constants import (
-    TT2000_EPOCH,
     ONE_SECOND_IN_NANOSECONDS,
     SECONDS_PER_DAY,
+    TT2000_EPOCH,
 )
 from imap_l3_processing.glows.quality_flags import GlowsL3Flags
-from imap_l3_processing.ultra.models import UltraL1CPSet, UltraGlowsL3eData
+from imap_l3_processing.ultra.models import UltraGlowsL3eData, UltraL1CPSet
 from imap_l3_processing.ultra.science.ultra_survival_probability import (
     UltraSurvivalProbability,
     UltraSurvivalProbabilitySkyMap,

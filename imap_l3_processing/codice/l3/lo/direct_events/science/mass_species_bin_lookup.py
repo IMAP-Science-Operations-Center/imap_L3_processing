@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 
@@ -25,7 +24,7 @@ class MassSpeciesBinLookup:
             mass_ranges=list(zip(mass_min, mass_max)),
         )
 
-    def get_species(self, mass: float, mass_per_charge: float) -> Optional[str]:
+    def get_species(self, mass: float, mass_per_charge: float) -> str | None:
         for i in range(len(self.species)):
             lower_mass, upper_mass = self.mass_ranges[i]
             lower_mass_per_charge, upper_mass_per_charge = self.mass_per_charge[i]

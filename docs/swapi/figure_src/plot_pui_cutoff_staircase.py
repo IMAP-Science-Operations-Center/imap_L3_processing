@@ -28,14 +28,12 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT))
 
-# ruff: disable[E402]
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
 from figure_utils import FIGURES_DIR, load_swapi_response
 
 from imap_l3_processing.constants import (
@@ -60,7 +58,6 @@ from imap_l3_processing.swapi.l3a.science.pickup_ion.vasyliunas_siscoe_distribut
 from imap_l3_processing.swapi.l3a.utils import (
     velocity_components_to_angles_in_instrument_frame,
 )
-# ruff: enable[E402]
 
 _SW_SPEED_KMS = 450.0
 _SW_AZIMUTH_DEG = 0.0

@@ -68,8 +68,8 @@ def speed_ratio_range_at_elevation(grid, elevation: float):
         return upper_min, upper_max
     if upper_is_nan:
         return lower_min, lower_max
-    lo = lower_min if lower_min < upper_min else upper_min
-    hi = lower_max if lower_max > upper_max else upper_max
+    lo = min(upper_min, lower_min)
+    hi = max(upper_max, lower_max)
     return lo, hi
 
 

@@ -1,11 +1,11 @@
 import unittest
 from pathlib import Path
-from unittest.mock import patch, Mock, call
+from unittest.mock import Mock, call, patch
 
 from imap_data_access.processing_input import (
-    ScienceInput,
     AncillaryInput,
     ProcessingInputCollection,
+    ScienceInput,
 )
 
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies

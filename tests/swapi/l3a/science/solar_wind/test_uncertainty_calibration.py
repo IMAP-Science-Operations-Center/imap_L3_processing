@@ -47,12 +47,11 @@ from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 from imap_l3_processing.swapi.species import Species
 from tests.swapi._helpers import (
-    NOMINAL_TEST_EPOCH_TT2000,
     NOMINAL_SWAPI_TO_RTN_ROTATION,
+    NOMINAL_TEST_EPOCH_TT2000,
     load_swapi_response,
 )
 from tests.test_helpers import run_periodically
-
 
 _N_BINS_PER_SWEEP = 62
 _N_SWEEPS = 5

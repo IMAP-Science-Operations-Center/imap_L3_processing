@@ -1,28 +1,32 @@
 import unittest
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
-from unittest.mock import patch, call, Mock, sentinel, create_autospec
+from unittest.mock import Mock, call, create_autospec, patch, sentinel
 
 import numpy as np
 from imap_data_access.processing_input import (
-    ScienceInput,
-    ProcessingInputCollection,
     AncillaryInput,
+    ProcessingInputCollection,
+    ScienceInput,
 )
 from imap_processing.quality_flags import SweL1bFlags
 from spiceypy import SpiceyError
 
 from imap_l3_processing.data_utils import NearestInterpolator
-from imap_l3_processing.models import MagData, InputMetadata
+from imap_l3_processing.models import InputMetadata, MagData
 from imap_l3_processing.predicted_ephemeris_tracker import PredictedEphemerisTracker
-from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData, SweL1bData
-from imap_l3_processing.swe.l3.models import SweL3MomentData
+from imap_l3_processing.swe.l3.models import (
+    SwapiL3aProtonData,
+    SweL1bData,
+    SweL2Data,
+    SweL3MomentData,
+)
 from imap_l3_processing.swe.l3.science.moment_calculations import (
     IntegrateOutputs,
     MomentFitResults,
+    Moments,
     ScaleDensityOutput,
 )
-from imap_l3_processing.swe.l3.science.moment_calculations import Moments
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.quality_flags import SweL3Flags
 from imap_l3_processing.swe.swe_processor import (
@@ -32,11 +36,11 @@ from imap_l3_processing.swe.swe_processor import (
 )
 from tests.test_helpers import (
     NumpyArrayMatcher,
-    build_swe_configuration,
-    create_dataclass_mock,
-    build_moments,
     build_moment_fit_results,
+    build_moments,
+    build_swe_configuration,
     build_swe_moment_data,
+    create_dataclass_mock,
 )
 
 MODULE = "imap_l3_processing.swe.swe_processor"

@@ -1,7 +1,7 @@
 import csv
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Literal
+from typing import Literal
 
 from bitstring import BitStream
 
@@ -96,9 +96,9 @@ class RawPHAEvent:
     culling_flag: bool
     spare: bool
     pha_words: list[PHAWord]
-    extended_header: Optional[PHAExtendedHeader] = None
-    stim_block: Optional[StimBlock] = None
-    extended_stim_header: Optional[ExtendedStimHeader] = None
+    extended_header: PHAExtendedHeader | None = None
+    stim_block: StimBlock | None = None
+    extended_stim_header: ExtendedStimHeader | None = None
 
 
 class PHAEventReader:

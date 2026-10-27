@@ -1,10 +1,9 @@
-from typing import Optional
 
 import numpy as np
 import spiceypy
 from astropy.units import Quantity
 from astropy_healpix import HEALPix, npix_to_nside
-from imap_processing.ena_maps.ena_maps import UltraPointingSet, HealpixSkyMap
+from imap_processing.ena_maps.ena_maps import HealpixSkyMap, UltraPointingSet
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
 from imap_processing.ultra.l2.ultra_l2 import bin_pset_energy_bins
@@ -13,7 +12,7 @@ from xarray import Dataset
 from imap_l3_processing.constants import ONE_SECOND_IN_NANOSECONDS
 from imap_l3_processing.glows.quality_flags import GlowsL3Flags
 from imap_l3_processing.maps.quality_flags import MapL3Flags
-from imap_l3_processing.ultra.models import UltraL1CPSet, UltraGlowsL3eData
+from imap_l3_processing.ultra.models import UltraGlowsL3eData, UltraL1CPSet
 
 
 class UltraSurvivalProbability(UltraPointingSet):
@@ -21,7 +20,7 @@ class UltraSurvivalProbability(UltraPointingSet):
         self,
         l1c_pset: UltraL1CPSet,
         l3e_glows: UltraGlowsL3eData,
-        bin_groups: Optional[np.ndarray] = None,
+        bin_groups: np.ndarray | None = None,
     ):
         coarse_bins = bin_pset_energy_bins(l1c_pset.to_xarray(), bin_groups)
         super().__init__(coarse_bins, geometry.SpiceFrame.IMAP_DPS)

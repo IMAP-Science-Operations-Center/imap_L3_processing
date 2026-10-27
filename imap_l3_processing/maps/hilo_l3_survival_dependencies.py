@@ -8,18 +8,18 @@ from imap_data_access import ScienceFilePath
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.hi.utils import (
-    read_l1c_rectangular_pointing_set_data,
     read_glows_l3e_data,
+    read_l1c_rectangular_pointing_set_data,
 )
 from imap_l3_processing.maps.map_descriptors import (
     MapDescriptorParts,
-    parse_map_descriptor,
     SpinPhase,
+    parse_map_descriptor,
 )
 from imap_l3_processing.maps.map_models import (
-    RectangularIntensityMapData,
     GlowsL3eRectangularMapInputData,
     InputRectangularPointingSet,
+    RectangularIntensityMapData,
 )
 from imap_l3_processing.models import Instrument
 

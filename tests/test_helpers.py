@@ -1,26 +1,27 @@
 import json
 import os
 import tempfile
-from dataclasses import fields, dataclass
-from datetime import timedelta, datetime
+from collections.abc import Callable
+from dataclasses import dataclass, fields
+from datetime import datetime, timedelta
 from functools import wraps
 from pathlib import Path
-from typing import Type, Optional, Callable, TypeVar
+from typing import TypeVar
 from unittest import SkipTest
 from unittest.mock import Mock
 
 import imap_data_access
 import numpy as np
-from imap_data_access import ScienceFilePath, AncillaryFilePath, SPICEFilePath
-from imap_data_access.file_validation import generate_imap_file_path, Version
+from imap_data_access import AncillaryFilePath, ScienceFilePath, SPICEFilePath
+from imap_data_access.file_validation import Version, generate_imap_file_path
 
 import imap_l3_processing
 import tests
 from imap_l3_processing.models import VersionMap
 from imap_l3_processing.swe.l3.models import SweConfiguration, SweL3MomentData
 from imap_l3_processing.swe.l3.science.moment_calculations import (
-    Moments,
     MomentFitResults,
+    Moments,
 )
 
 run_local_data_path = Path(tests.__file__).parent.parent / "run_local_input_data"
@@ -181,7 +182,7 @@ def build_swe_moment_data(epoch_len):
 T = TypeVar("T")
 
 
-def create_dataclass_mock(obj: Type[T], **kwargs) -> T:
+def create_dataclass_mock(obj: type[T], **kwargs) -> T:
     return Mock(spec=[field.name for field in fields(obj)], **kwargs)
 
 
@@ -249,7 +250,7 @@ def environment_variables(env_vars: dict):
 
             func_result = func(*args, **kwargs)
 
-            for k in env_vars.keys():
+            for k in env_vars:
                 del os.environ[k]
 
             for k, v in old_vars.items():
@@ -263,7 +264,7 @@ def environment_variables(env_vars: dict):
 
 
 def create_mock_query_results(
-    file_names: list[Path | str], ingestion_dates: Optional[list[datetime]] = None
+    file_names: list[Path | str], ingestion_dates: list[datetime] | None = None
 ) -> list[dict]:
     file_paths = []
 
@@ -317,9 +318,9 @@ def create_mock_query_results(
 
 
 def create_mock_version_map(
-    descriptor: Optional[str] = "descriptor",
-    major_version: Optional[int] = None,
-    minor_version: Optional[int] = 1,
+    descriptor: str | None = "descriptor",
+    major_version: int | None = None,
+    minor_version: int | None = 1,
 ):
     return VersionMap({descriptor: Version(major_version, minor_version)})
 
@@ -328,7 +329,7 @@ def create_mock_version_map(
 class PeriodicallyRunTest:
     test_name: str
     frequency: str
-    last_run: Optional[str]
+    last_run: str | None
 
 
 def run_periodically(frequency: timedelta):

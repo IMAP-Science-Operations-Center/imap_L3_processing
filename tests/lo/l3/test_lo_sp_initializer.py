@@ -1,14 +1,14 @@
 import unittest
 from datetime import datetime
-from unittest.mock import patch, call
+from unittest.mock import call, patch
 
 from imap_data_access.file_validation import Version
 
 from imap_l3_processing.lo.l3.lo_sp_initializer import (
-    LoSPInitializer,
     LO_SP_MAP_KERNELS,
+    LoSPInitializer,
 )
-from imap_l3_processing.maps.map_initializer import PossibleMapToProduce, MapInitializer
+from imap_l3_processing.maps.map_initializer import MapInitializer, PossibleMapToProduce
 from imap_l3_processing.models import InputMetadata, VersionMap
 from tests.integration.integration_test_helpers import ImapQueryPatcher
 

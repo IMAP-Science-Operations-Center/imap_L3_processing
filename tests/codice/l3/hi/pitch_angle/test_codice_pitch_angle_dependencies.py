@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, call, sentinel
+from unittest.mock import call, patch, sentinel
 
 import imap_data_access
 from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput

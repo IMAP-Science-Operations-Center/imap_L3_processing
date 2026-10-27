@@ -11,8 +11,8 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.efficiency_lookup imp
     EfficiencyLookup,
 )
 from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import (
-    EnergyLookup,
     ESA_TO_ENERGY_PER_CHARGE_LOOKUP_DESCRIPTOR,
+    EnergyLookup,
 )
 from imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_lookup import (
     GeometricFactorLookup,

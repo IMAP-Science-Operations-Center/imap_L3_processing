@@ -8,7 +8,7 @@ from pathlib import Path
 import imap_data_access
 from imap_data_access.processing_input import ProcessingInputCollection, RepointInput
 
-from imap_l3_processing.utils import furnish_spice_metakernel, SpiceKernelTypes
+from imap_l3_processing.utils import SpiceKernelTypes, furnish_spice_metakernel
 
 logger = logging.getLogger(__name__)
 

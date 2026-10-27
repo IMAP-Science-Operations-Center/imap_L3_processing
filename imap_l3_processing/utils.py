@@ -3,10 +3,9 @@ import json
 import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Optional, Union
 from urllib.parse import urlparse
 
 import imap_data_access
@@ -19,20 +18,20 @@ from requests import RequestException
 from spacepy.pycdf import CDF
 
 import imap_l3_processing
-from imap_l3_processing.cdf.cdf_utils import write_cdf, read_numeric_variable
+from imap_l3_processing.cdf.cdf_utils import read_numeric_variable, write_cdf
 from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_l3_processing.constants import TT2000_EPOCH
 from imap_l3_processing.maps.map_models import (
-    RectangularSpectralIndexMapData,
-    RectangularIntensityMapData,
     HealPixIntensityMapData,
-    RectangularSpectralIndexDataProduct,
-    RectangularIntensityDataProduct,
-    MapDataProduct,
     ISNBackgroundSubtractedDataProduct,
     ISNBackgroundSubtractedMapData,
+    MapDataProduct,
+    RectangularIntensityDataProduct,
+    RectangularIntensityMapData,
+    RectangularSpectralIndexDataProduct,
+    RectangularSpectralIndexMapData,
 )
-from imap_l3_processing.models import DataProduct, MagData, InputMetadata
+from imap_l3_processing.models import DataProduct, InputMetadata, MagData
 from imap_l3_processing.version import VERSION
 
 logger = logging.getLogger(__name__)
@@ -205,7 +204,7 @@ def generate_global_metadata_for_undefined_logical_source(
     return logical_source_global_attrs
 
 
-def format_time(t: Optional[datetime]) -> Optional[str]:
+def format_time(t: datetime | None) -> str | None:
     if t is not None:
         return t.strftime("%Y%m%d")
     return None
@@ -213,7 +212,7 @@ def format_time(t: Optional[datetime]) -> Optional[str]:
 
 def download_external_dependency(
     dependency_url: str, file_path: Path
-) -> Optional[Path]:
+) -> Path | None:
     try:
         response = requests.get(dependency_url)
         if response.status_code == 200:
@@ -229,7 +228,7 @@ def download_external_dependency(
     return None
 
 
-def read_mag_data(cdf_path: Union[str, Path]) -> MagData:
+def read_mag_data(cdf_path: str | Path) -> MagData:
     with CDF(str(cdf_path)) as cdf:
         return MagData(
             epoch=cdf["epoch"][...],
@@ -240,7 +239,7 @@ def read_mag_data(cdf_path: Union[str, Path]) -> MagData:
 def select_mag_path(
     dependencies: ProcessingInputCollection,
     descriptor: str,
-) -> tuple[Optional[Path], Optional[str]]:
+) -> tuple[Path | None, str | None]:
     science_files = dependencies.processing_input
     for level in ("l2", "l1d"):
         match = next(
@@ -276,7 +275,7 @@ def furnish_local_spice():
 
     total_kernels = spiceypy.ktotal("ALL")
     current_kernels = []
-    for i in range(0, total_kernels):
+    for i in range(total_kernels):
         current_kernels.append(Path(spiceypy.kdata(i, "ALL")[0]).name)
 
     for file in kernels.iterdir():
@@ -286,7 +285,7 @@ def furnish_local_spice():
 
 def get_spice_parent_file_names() -> list[str]:
     count = spiceypy.ktotal("ALL")
-    return [Path(spiceypy.kdata(i, "ALL")[0]).name for i in range(0, count)]
+    return [Path(spiceypy.kdata(i, "ALL")[0]).name for i in range(count)]
 
 
 @dataclass

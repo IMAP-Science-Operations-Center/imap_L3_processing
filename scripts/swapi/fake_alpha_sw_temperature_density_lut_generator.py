@@ -19,7 +19,4 @@ with open(
     f.write("#\n")
     f.write("#   u_sw     n     density (cm^-3)     T     temperature (K)\n")
 
-    for u_sw, density, temp in itertools.product(u_sw_values, densities, temps):
-        f.write(
-            f"{u_sw}  {density}  {density * 1.021:.4f}  {temp:.4e}  {temp / 1.025:0.4e}\n"
-        )
+    f.writelines(f"{u_sw}  {density}  {density * 1.021:.4f}  {temp:.4e}  {temp / 1.025:0.4e}\n" for u_sw, density, temp in itertools.product(u_sw_values, densities, temps))

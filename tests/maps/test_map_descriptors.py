@@ -1,15 +1,15 @@
 import unittest
 
 from imap_l3_processing.maps.map_descriptors import (
-    ReferenceFrame,
-    SurvivalCorrection,
     MapDescriptorParts,
-    Sensor,
     MapQuantity,
-    SpinPhase,
     PixelSize,
-    parse_map_descriptor,
+    ReferenceFrame,
+    Sensor,
+    SpinPhase,
+    SurvivalCorrection,
     map_descriptor_parts_to_string,
+    parse_map_descriptor,
 )
 
 

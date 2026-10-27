@@ -1,12 +1,12 @@
 import unittest
 from pathlib import Path
-from unittest.mock import patch, Mock, sentinel, call
+from unittest.mock import Mock, call, patch, sentinel
 
 from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput
 
 from imap_l3_processing.maps.hilo_l3_survival_dependencies import (
-    HiLoL3SurvivalDependencies,
     HiL3SingleSensorFullSpinDependencies,
+    HiLoL3SurvivalDependencies,
 )
 from imap_l3_processing.models import Instrument
 

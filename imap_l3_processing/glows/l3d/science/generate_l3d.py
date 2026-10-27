@@ -9,7 +9,6 @@ import sys
 import warnings
 
 import numpy as np
-
 import toolkit.funcs as fun
 import toolkit.l3d_SolarParamHistory as sph
 

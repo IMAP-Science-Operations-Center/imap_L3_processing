@@ -21,17 +21,15 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT))
 
-# ruff: disable[E402]
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
 from figure_utils import FIGURES_DIR
+
 from imap_l3_processing.constants import HE_PUI_PARTICLE_MASS_PER_CHARGE_M_P_PER_E
-# ruff: enable[E402]
 
 _REFERENCE_CSV_PATH = (
     REPO_ROOT / "tests" / "test_data" / "swapi" / "pui_count_rate_reference.csv"
@@ -61,6 +59,8 @@ def compute_production_rates(voltages_v: np.ndarray) -> np.ndarray:
     """Build the chunk-level collapsed response and call the in-development
     production kernel. Imports live inside the function so a broken module
     doesn't break the figure script at import time."""
+    from figure_utils import load_swapi_response
+
     from imap_l3_processing.constants import ONE_AU_IN_KM
     from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_coincidence_rate import (
         calculate_coincidence_rate,
@@ -75,7 +75,6 @@ def compute_production_rates(voltages_v: np.ndarray) -> np.ndarray:
         FittingParameters,
         VasyliunasSiscoeDistribution,
     )
-    from figure_utils import load_swapi_response
 
     fitting_params = FittingParameters(
         cooling_index=_COOLING_INDEX,

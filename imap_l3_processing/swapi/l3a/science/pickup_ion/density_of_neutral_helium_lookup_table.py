@@ -1,4 +1,3 @@
-from typing import Union
 
 import numpy as np
 from numpy import ndarray
@@ -25,7 +24,7 @@ class DensityOfNeutralHeliumLookupTable:
             self.grid, self.densities, bounds_error=False, fill_value=0, method="linear"
         )
 
-    def density(self, angle: Union[ndarray, float], distance: Union[ndarray, float]):
+    def density(self, angle: ndarray | float, distance: ndarray | float):
         if isinstance(distance, float):
             coords = np.array((angle % 360, distance))
             result = self._interp(coords)[0]

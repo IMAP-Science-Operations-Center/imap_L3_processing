@@ -2,7 +2,6 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import imap_data_access
 import numpy as np
@@ -10,10 +9,10 @@ from imap_data_access.file_validation import Version
 from spacepy.pycdf import CDF
 
 import imap_l3_processing
+from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
 from imap_l3_processing.glows.l3bc.utils import get_midpoint_of_cr
 from imap_l3_processing.glows.l3d.models import GlowsL3DSolarParamsHistory
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
 
 PATH_TO_L3D_TOOLKIT = (
     Path(imap_l3_processing.__file__).parent / "glows" / "l3d" / "science"
@@ -165,7 +164,7 @@ def rename_l3d_text_outputs(paths: list[Path], version: str) -> list[Path]:
     return out_paths
 
 
-def query_for_most_recent_l3d(descriptor: str) -> Optional[dict]:
+def query_for_most_recent_l3d(descriptor: str) -> dict | None:
     query_result = imap_data_access.query(
         instrument="glows", data_level="l3d", descriptor=descriptor
     )

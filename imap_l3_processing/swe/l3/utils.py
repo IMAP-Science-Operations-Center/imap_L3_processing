@@ -8,10 +8,10 @@ from spacepy.pycdf import CDF
 
 from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
 from imap_l3_processing.swe.l3.models import (
-    SweConfiguration,
-    SweL2Data,
     SwapiL3aProtonData,
+    SweConfiguration,
     SweL1bData,
+    SweL2Data,
 )
 
 

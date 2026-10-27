@@ -1,11 +1,11 @@
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import patch, Mock, call, sentinel, mock_open
+from unittest.mock import Mock, call, mock_open, patch, sentinel
 
 from imap_data_access import RepointInput
 
 from imap_l3_processing.glows.l3e.glows_l3e_dependencies import GlowsL3EDependencies
-from imap_l3_processing.utils import SpiceKernelTypes, FurnishMetakernelOutput
+from imap_l3_processing.utils import FurnishMetakernelOutput, SpiceKernelTypes
 from tests.test_helpers import get_test_data_path
 
 
@@ -361,14 +361,14 @@ class TestGlowsL3EDependencies(TestCase):
 
         mock_file.assert_called_once_with("ionization.files.dat", "w")
         mock_file.return_value.write.assert_called_once_with(
-            (
+            
                 f"{glows_l3e_dependencies.lya_series.name}\n"
                 f"{glows_l3e_dependencies.solar_uv_anisotropy.name}\n"
                 f"{glows_l3e_dependencies.speed_3d_sw.name}\n"
                 f"{glows_l3e_dependencies.density_3d_sw.name}\n"
                 f"{glows_l3e_dependencies.phion_hydrogen.name}\n"
                 f"{glows_l3e_dependencies.sw_eqtr_electrons.name}\n"
-            )
+            
         )
 
     def _create_l3e_dependencies(self) -> GlowsL3EDependencies:

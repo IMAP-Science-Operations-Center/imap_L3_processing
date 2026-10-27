@@ -1,19 +1,18 @@
 from dataclasses import dataclass
-from typing import Optional
 
 import numpy as np
 from numpy import clip
 
 from imap_l3_processing.hit.l3.pha.pha_event_reader import PHAWord, RawPHAEvent
 from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import (
+    CosineCorrectionLookupTable,
     DetectedRange,
     Detector,
-    CosineCorrectionLookupTable,
     DetectorRange,
 )
 from imap_l3_processing.hit.l3.pha.science.gain_lookup_table import (
-    GainLookupTable,
     DetectorGain,
+    GainLookupTable,
 )
 from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import (
     HitEventTypeLookup,
@@ -34,12 +33,12 @@ class EventAnalysis:
 @dataclass
 class EventOutput:
     original_event: RawPHAEvent
-    total_energy: Optional[float]
-    charge: Optional[float]
+    total_energy: float | None
+    charge: float | None
     energies: list[float]
-    detected_range: Optional[DetectedRange]
-    e_delta: Optional[float]
-    e_prime: Optional[float]
+    detected_range: DetectedRange | None
+    e_delta: float | None
+    e_prime: float | None
 
 
 def calculate_mev(word: PHAWord, gain_lookup_table: GainLookupTable) -> float:
@@ -50,7 +49,7 @@ def calculate_mev(word: PHAWord, gain_lookup_table: GainLookupTable) -> float:
 
 def analyze_event(
     event: RawPHAEvent, rule_lookup: HitEventTypeLookup
-) -> Optional[EventAnalysis]:
+) -> EventAnalysis | None:
 
     def get_adc_value(pha_word: PHAWord):
         return 20 * pha_word.adc_value if pha_word.is_low_gain else pha_word.adc_value
@@ -58,7 +57,7 @@ def analyze_event(
     words = [word for word in event.pha_words]
     groups_to_words = {}
     for word in words:
-        if word.detector.group in groups_to_words.keys():
+        if word.detector.group in groups_to_words:
             groups_to_words[word.detector.group].append(word)
         else:
             groups_to_words[word.detector.group] = [word]

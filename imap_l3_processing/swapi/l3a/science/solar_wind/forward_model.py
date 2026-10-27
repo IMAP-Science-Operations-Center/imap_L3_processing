@@ -13,26 +13,26 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.azimuthal_regions import (
     REGION_SUNGLASSES,
     AzimuthalRegion,
 )
+from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
+    SolarWindFitContext,
+)
 from imap_l3_processing.swapi.l3a.science.solar_wind.integration_limits import (
     AngularQuadrature,
     get_angular_quadrature,
     get_speed_quadrature,
     speed_window_misses_passband,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.utils import (
-    count_rate_conversion_factor,
-)
-from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
-    SolarWindFitContext,
-)
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     LOG_DENSITY_IDX,
     LOG_TEMPERATURE_IDX,
     N_STATE,
-    SolarWindParams,
     VELOCITY_SLICE,
+    SolarWindParams,
     bulk_speed,
     thermal_speed,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.utils import (
+    count_rate_conversion_factor,
 )
 from imap_l3_processing.swapi.response.swapi_response import ResponseGrid
 

@@ -2,22 +2,22 @@ import tempfile
 import unittest
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch, mock_open, MagicMock, sentinel, Mock, call
+from unittest.mock import MagicMock, Mock, call, mock_open, patch, sentinel
 
 import numpy as np
 
 import imap_l3_processing
 from imap_l3_processing.glows.l3d.models import GlowsL3DSolarParamsHistory
 from imap_l3_processing.glows.l3d.utils import (
-    create_glows_l3b_json_file_from_cdf,
     convert_json_to_l3d_data_product,
+    create_glows_l3b_json_file_from_cdf,
     create_glows_l3c_json_file_from_cdf,
+    get_most_recently_uploaded_ancillary,
     get_parent_file_names_from_l3d_json,
     rename_l3d_text_outputs,
-    get_most_recently_uploaded_ancillary,
 )
 from imap_l3_processing.models import InputMetadata
-from tests.test_helpers import get_test_data_path, create_mock_query_results
+from tests.test_helpers import create_mock_query_results, get_test_data_path
 
 
 class TestL3dUtils(unittest.TestCase):

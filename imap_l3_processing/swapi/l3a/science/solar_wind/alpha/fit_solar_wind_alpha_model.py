@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 import numpy as np
 import scipy.optimize
@@ -18,8 +17,8 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     LOG_DENSITY_IDX,
     LOG_TEMPERATURE_IDX,
-    SolarWindParams,
     VELOCITY_SLICE,
+    SolarWindParams,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
     ProtonSolarWindFitResult,
@@ -215,9 +214,9 @@ class _AlphaEvaluator:
         self.magnetic_field_direction = magnetic_field_direction
         self.proton_true_rate = proton_true_rate
         self.alpha_ctx = alpha_ctx
-        self._last_state: Optional[ndarray] = None
-        self._last_residuals: Optional[ndarray] = None
-        self._last_jacobian: Optional[ndarray] = None
+        self._last_state: ndarray | None = None
+        self._last_residuals: ndarray | None = None
+        self._last_jacobian: ndarray | None = None
 
     def _eval(self, x: ndarray) -> None:
         alpha_density = float(np.exp(x[0]))

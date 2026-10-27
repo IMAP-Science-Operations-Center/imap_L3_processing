@@ -7,6 +7,7 @@ from imap_l3_processing.constants import PROTON_MASS_KG
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     SolarWindFitContext,
 )
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton import (
     escape_local_minimum as escape_local_minimum_module,
 )
@@ -18,7 +19,6 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.proton.escape_local_minimum
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.optimize_solar_wind_proton_params import (
     OptimizeSolarWindProtonParamsResult,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from tests.swapi._helpers import proton_params as _shared_proton_params
 
 

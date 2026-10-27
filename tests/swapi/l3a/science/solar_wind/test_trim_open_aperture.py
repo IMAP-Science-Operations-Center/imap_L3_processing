@@ -3,15 +3,15 @@ import unittest
 
 import numpy as np
 
-from imap_l3_processing.swapi.l3a.science.solar_wind.trim_open_aperture import (
-    OA_SCAN_RESOLUTION,
-    OA_SCAN_THRESHOLD,
-    trim_open_aperture,
-)
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     SolarWindParams,
     bulk_speed,
     thermal_speed,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.trim_open_aperture import (
+    OA_SCAN_RESOLUTION,
+    OA_SCAN_THRESHOLD,
+    trim_open_aperture,
 )
 from imap_l3_processing.swapi.response.azimuthal_transmission import (
     AzimuthalTransmissionGrid,
@@ -20,7 +20,6 @@ from imap_l3_processing.swapi.response.passband_grid import build_passband_grid
 from imap_l3_processing.swapi.response.swapi_response import ResponseGrid
 from tests.swapi._helpers import NOMINAL_SWAPI_TO_RTN_ROTATION, proton_params
 from tests.swapi.response.test_passband_grid import _gaussian_values_df
-
 
 # --- fixtures ---------------------------------------------------------------
 

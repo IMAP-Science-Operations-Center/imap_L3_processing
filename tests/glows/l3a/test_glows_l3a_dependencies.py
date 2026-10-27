@@ -1,19 +1,19 @@
 import unittest
 from pathlib import Path
-from unittest.mock import patch, call
+from unittest.mock import call, patch
 
 import imap_data_access
 from imap_data_access.processing_input import (
-    ScienceInput,
     AncillaryInput,
     ProcessingInputCollection,
+    ScienceInput,
 )
 
 from imap_l3_processing.glows.descriptors import (
-    GLOWS_L2_DESCRIPTOR,
     GLOWS_CALIBRATION_DATA_DESCRIPTOR,
-    GLOWS_PIPELINE_SETTINGS_DESCRIPTOR,
     GLOWS_EXTRA_HELIOSPHERIC_BACKGROUND_DESCRIPTOR,
+    GLOWS_L2_DESCRIPTOR,
+    GLOWS_PIPELINE_SETTINGS_DESCRIPTOR,
     GLOWS_TIME_DEPENDENT_BACKGROUND_DESCRIPTOR,
 )
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies

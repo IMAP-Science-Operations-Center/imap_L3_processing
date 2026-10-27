@@ -17,12 +17,12 @@ from imap_l3_processing.swapi.l3a.science.pickup_ion.uniform_speed_grid import (
 from imap_l3_processing.swapi.l3a.utils import (
     velocity_components_to_angles_in_instrument_frame,
 )
-from imap_l3_processing.swapi.response.passband_grid import interpolate_passband
-from imap_l3_processing.swapi.response.swapi_response import ResponseGrid, SwapiResponse
-from imap_l3_processing.swapi.species import Species
 from imap_l3_processing.swapi.response.azimuthal_transmission import (
     interpolate_azimuthal_transmission,
 )
+from imap_l3_processing.swapi.response.passband_grid import interpolate_passband
+from imap_l3_processing.swapi.response.swapi_response import ResponseGrid, SwapiResponse
+from imap_l3_processing.swapi.species import Species
 
 
 class ChunkCollapsedResponse(NamedTuple):

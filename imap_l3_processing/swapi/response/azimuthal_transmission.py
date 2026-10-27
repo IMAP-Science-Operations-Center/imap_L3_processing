@@ -5,7 +5,6 @@ import numba
 import numpy as np
 from numpy import ndarray
 
-
 SG_PLATEAU_AZIMUTH_MAX_DEG = 9.0
 SG_PLATEAU_TRANSMISSION = 1 / 1000
 

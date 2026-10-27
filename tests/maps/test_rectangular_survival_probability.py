@@ -1,12 +1,12 @@
-import dataclasses
 import copy
+import dataclasses
 from datetime import datetime
-from unittest.mock import patch, sentinel, call, MagicMock
+from unittest.mock import MagicMock, call, patch, sentinel
 
 import numpy as np
 import spiceypy
 import xarray as xr
-from imap_processing.ena_maps.ena_maps import RectangularSkyMap, PointingSet
+from imap_processing.ena_maps.ena_maps import PointingSet, RectangularSkyMap
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.spice import geometry
 from imap_processing.spice.geometry import SpiceFrame
@@ -19,9 +19,9 @@ from imap_l3_processing.maps.map_models import (
 )
 from imap_l3_processing.maps.quality_flags import MapL3Flags
 from imap_l3_processing.maps.rectangular_survival_probability import (
-    Sensor,
-    RectangularSurvivalProbabilitySkyMap,
     RectangularSurvivalProbabilityPointingSet,
+    RectangularSurvivalProbabilitySkyMap,
+    Sensor,
     interpolate_angular_data_to_nearest_neighbor,
 )
 from tests.maps import test_builders

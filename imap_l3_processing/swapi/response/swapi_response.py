@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, NamedTuple
+from typing import NamedTuple
 
 import numpy as np
 import pandas as pd
@@ -10,6 +11,7 @@ from imap_l3_processing.constants import (
     METERS_PER_KILOMETER,
     PROTON_CHARGE_OVER_MASS_C_PER_KG,
 )
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.response.azimuthal_transmission import (
     AzimuthalTransmissionGrid,
     validate_azimuthal_transmission_values,
@@ -21,7 +23,6 @@ from imap_l3_processing.swapi.response.passband_grid import (
     PassbandGrid,
     build_passband_grid,
 )
-from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.species import Species
 
 

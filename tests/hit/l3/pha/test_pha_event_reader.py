@@ -5,10 +5,10 @@ from bitstring import BitArray, BitStream
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.hit.l3.pha.pha_event_reader import (
-    PHAEventReader,
-    RawPHAEvent,
-    PHAWord,
     Detector,
+    PHAEventReader,
+    PHAWord,
+    RawPHAEvent,
 )
 from tests.hit.l3.hit_test_builders import create_raw_pha_event
 from tests.test_helpers import get_test_data_path
@@ -339,10 +339,10 @@ class TestPHAEventReader(unittest.TestCase):
                         continue
                     if not pha_word.is_low_gain:
                         index = pha_word.detector.address
-                        row[index] = "{: 6}".format(pha_word.adc_value)
+                        row[index] = f"{pha_word.adc_value: 6}"
                     else:
                         index = pha_word.detector.address + 64
-                        row[index] = "{: 6}".format(pha_word.adc_value)
+                        row[index] = f"{pha_word.adc_value: 6}"
                 self.assertEqual(expected_row[2:], row)
 
     def _create_pha_event_binary(self, pha_event: RawPHAEvent) -> str:

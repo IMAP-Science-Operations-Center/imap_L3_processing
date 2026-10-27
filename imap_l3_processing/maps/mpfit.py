@@ -411,7 +411,6 @@ Perform Levenberg-Marquardt least-squares minimization, based on MINPACK-1.
 import numpy
 import scipy.linalg.blas
 
-
 # fmt: off
 #        Original FORTRAN documentation
 #        **********
@@ -2250,7 +2249,7 @@ class mpfit:
 
             if (
                 (numpy.abs(fp) <= 0.1 * delta)
-                or ((parl == 0) and (fp <= temp) and (temp < 0))
+                or ((parl == 0) and (fp <= temp < 0))
                 or (iter == 10)
             ):
                 break

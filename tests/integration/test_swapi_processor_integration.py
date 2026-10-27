@@ -13,6 +13,7 @@ spectrum into the SPICE coverage window — keeping a date-shifted copy on disk
 would just be duplicate data.
 """
 
+import datetime
 import os
 import subprocess
 import sys
@@ -25,7 +26,6 @@ import numpy as np
 import numpy.testing
 from imap_data_access import ScienceFilePath
 from spacepy.pycdf import CDF
-import datetime
 
 import imap_l3_processing
 from imap_l3_processing.swapi.constants import SWAPI_COARSE_SWEEP_BINS
@@ -131,7 +131,7 @@ class SwapiProcessorIntegration(unittest.TestCase):
         bulk_speed_atol = 1e-3 * float(expected_values["proton_sw_speed"])
 
         with CDF(str(expected_file_path)) as cdf:
-            for key in expected_values.keys():
+            for key in expected_values:
                 actual_value = cdf[key][0]
                 if key.endswith("_uncert"):
                     rtol, atol = 1e-2, 0.0
@@ -251,7 +251,7 @@ class SwapiProcessorIntegration(unittest.TestCase):
         bulk_speed_atol = 1e-3 * float(expected_values["alpha_sw_speed"])
 
         with CDF(str(expected_file_path)) as cdf:
-            for key in expected_values.keys():
+            for key in expected_values:
                 actual_value = cdf[key][sample_index]
                 if key.endswith("_uncert"):
                     rtol, atol = 3e-2, 0.0
@@ -331,7 +331,7 @@ class SwapiProcessorIntegration(unittest.TestCase):
         self.assertTrue(expected_file_path.exists())
 
         with CDF(str(expected_file_path)) as cdf:
-            for key in expected_values.keys():
+            for key in expected_values:
                 actual_value = cdf[key][sample_index]
                 if key.endswith("_uncert"):
                     rtol, atol = 1e-2, 0.0

@@ -1,7 +1,7 @@
 from datetime import date
 
-from spacepy.pycdf import CDF
 import numpy as np
+from spacepy.pycdf import CDF
 
 filename = f"imap_hi_l3_spectral-fit-index_{date.today().strftime('%Y%m%d')}_"
 temp_cdf = CDF(

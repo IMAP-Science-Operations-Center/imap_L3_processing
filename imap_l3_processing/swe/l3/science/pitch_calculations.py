@@ -7,13 +7,13 @@ import scipy
 
 from imap_l3_processing.constants import (
     ELECTRON_MASS_KG,
-    PROTON_CHARGE_COULOMBS,
     METERS_PER_KILOMETER,
+    PROTON_CHARGE_COULOMBS,
 )
 from imap_l3_processing.pitch_angles import (
+    calculate_gyrophase,
     calculate_pitch_angle,
     calculate_unit_vector,
-    calculate_gyrophase,
 )
 from imap_l3_processing.swe.l3.models import SweConfiguration
 from imap_l3_processing.swe.quality_flags import SweL3Flags

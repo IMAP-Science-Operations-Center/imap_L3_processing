@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime, timedelta
-from unittest.mock import sentinel, Mock, MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch, sentinel
 
 import numpy as np
 
@@ -9,30 +9,30 @@ from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import (
     GlowsL3eSpacecraftInfo,
 )
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import (
-    GlowsL3ELoData,
-    SPIN_AXIS_LONGITUDE_VAR_NAME,
-    SPIN_AXIS_LATITUDE_VAR_NAME,
-    EPOCH_CDF_VAR_NAME,
-    ENERGY_VAR_NAME,
-    SPIN_ANGLE_VAR_NAME,
-    PROBABILITY_OF_SURVIVAL_VAR_NAME,
-    ENERGY_LABEL_VAR_NAME,
-    SPIN_ANGLE_LABEL_VAR_NAME,
     ELONGATION_VAR_NAME,
+    ENERGY_DELTA_MINUS_VAR_NAME,
+    ENERGY_DELTA_PLUS_VAR_NAME,
+    ENERGY_LABEL_VAR_NAME,
+    ENERGY_VAR_NAME,
+    EPOCH_CDF_VAR_NAME,
+    EPOCH_DELTA_CDF_VAR_NAME,
+    GLOWS_FLAGS_VAR_NAME,
+    PROBABILITY_OF_SURVIVAL_VAR_NAME,
     PROGRAM_VERSION_VAR_NAME,
-    SPACECRAFT_RADIUS_VAR_NAME,
-    SPACECRAFT_LONGITUDE_VAR_NAME,
     SPACECRAFT_LATITUDE_VAR_NAME,
+    SPACECRAFT_LONGITUDE_VAR_NAME,
+    SPACECRAFT_RADIUS_VAR_NAME,
     SPACECRAFT_VELOCITY_X_VAR_NAME,
     SPACECRAFT_VELOCITY_Y_VAR_NAME,
     SPACECRAFT_VELOCITY_Z_VAR_NAME,
-    GLOWS_FLAGS_VAR_NAME,
-    ENERGY_DELTA_PLUS_VAR_NAME,
-    ENERGY_DELTA_MINUS_VAR_NAME,
-    EPOCH_DELTA_CDF_VAR_NAME,
+    SPIN_ANGLE_LABEL_VAR_NAME,
+    SPIN_ANGLE_VAR_NAME,
+    SPIN_AXIS_LATITUDE_VAR_NAME,
+    SPIN_AXIS_LONGITUDE_VAR_NAME,
+    GlowsL3ELoData,
 )
 from imap_l3_processing.models import DataProductVariable
-from tests.test_helpers import get_test_instrument_team_data_path, NumpyArrayMatcher
+from tests.test_helpers import NumpyArrayMatcher, get_test_instrument_team_data_path
 
 
 class TestL3eLoModel(unittest.TestCase):

@@ -1,7 +1,7 @@
 import unittest
-from unittest.mock import sentinel, call, patch
+from unittest.mock import call, patch, sentinel
 
-from imap_data_access import ScienceInput, ProcessingInputCollection
+from imap_data_access import ProcessingInputCollection, ScienceInput
 
 from imap_l3_processing.lo.l3.lo_combined_dependencies import LoCombinedDependencies
 

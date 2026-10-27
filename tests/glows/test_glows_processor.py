@@ -10,7 +10,7 @@ from dataclasses import replace
 from datetime import datetime, timedelta
 from pathlib import Path
 from subprocess import CalledProcessError, CompletedProcess
-from unittest.mock import patch, Mock, sentinel, call, MagicMock
+from unittest.mock import MagicMock, Mock, call, patch, sentinel
 from zipfile import ZIP_DEFLATED
 
 import imap_data_access
@@ -23,24 +23,24 @@ from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows import l3d
 from imap_l3_processing.glows.descriptors import (
     GLOWS_L3A_DESCRIPTOR,
-    GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
-    GLOWS_L3E_ULTRA_HF_DESCRIPTOR,
     GLOWS_L3B_DESCRIPTOR,
     GLOWS_L3C_DESCRIPTOR,
     GLOWS_L3D_DESCRIPTOR,
     GLOWS_L3E_HI_45_DESCRIPTOR,
     GLOWS_L3E_HI_90_DESCRIPTOR,
     GLOWS_L3E_LO_DESCRIPTOR,
+    GLOWS_L3E_ULTRA_HF_DESCRIPTOR,
+    GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
 )
 from imap_l3_processing.glows.glows_processor import (
     GlowsProcessor,
+    process_l3bc,
     process_l3d,
     process_l3e,
-    process_l3bc,
-    process_l3e_ul_sf,
     process_l3e_hi,
     process_l3e_lo,
     process_l3e_ul_hf,
+    process_l3e_ul_sf,
 )
 from imap_l3_processing.glows.l3a.utils import (
     create_glows_l3a_dictionary_from_cdf,
@@ -74,10 +74,10 @@ from imap_l3_processing.glows.quality_flags import GlowsL3Flags
 from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.utils import save_data
 from tests.test_helpers import (
-    get_test_instrument_team_data_path,
-    get_test_data_path,
-    get_test_data_folder,
     assert_dataclass_fields,
+    get_test_data_folder,
+    get_test_data_path,
+    get_test_instrument_team_data_path,
 )
 
 MODULE = "imap_l3_processing.glows.glows_processor"

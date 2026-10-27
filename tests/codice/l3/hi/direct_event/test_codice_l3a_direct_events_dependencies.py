@@ -4,9 +4,9 @@ from unittest.mock import call, patch
 
 import imap_data_access
 from imap_data_access.processing_input import (
+    AncillaryInput,
     ProcessingInputCollection,
     ScienceInput,
-    AncillaryInput,
 )
 
 from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3a_direct_events_dependencies import (

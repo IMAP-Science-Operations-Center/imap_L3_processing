@@ -5,19 +5,23 @@ import os
 import shutil
 import subprocess
 import unittest
+from collections.abc import Callable
 from contextlib import contextmanager
-from datetime import timedelta, datetime
-from functools import wraps, partial
+from datetime import datetime, timedelta
+from functools import partial, wraps
 from pathlib import Path
-from typing import Callable
 from unittest import skipIf
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 import imap_data_access
 import numpy as np
-from imap_data_access import ProcessingInputCollection, RepointInput
-from imap_data_access import ScienceInput, AncillaryInput
-from imap_data_access.file_validation import ScienceFilePath, AncillaryFilePath, Version
+from imap_data_access import (
+    AncillaryInput,
+    ProcessingInputCollection,
+    RepointInput,
+    ScienceInput,
+)
+from imap_data_access.file_validation import AncillaryFilePath, ScienceFilePath, Version
 from spacepy.pycdf import CDF
 
 import imap_l3_data_processor
@@ -26,8 +30,8 @@ from imap_l3_processing.glows.descriptors import GLOWS_L3BCDE_DESCRIPTORS
 from imap_l3_processing.glows.glows_processor import GlowsProcessor
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.utils import (
-    read_l2_glows_data,
     create_glows_l3a_from_dictionary,
+    read_l2_glows_data,
 )
 from imap_l3_processing.glows.l3d.utils import PATH_TO_L3D_TOOLKIT
 from imap_l3_processing.glows.l3e.glows_l3e_initializer import (
@@ -41,12 +45,12 @@ from tests.integration.integration_test_helpers import (
     run_istp_compliance_check,
 )
 from tests.test_helpers import (
+    create_mock_version_map,
+    get_run_local_data_path,
     get_test_data_path,
     get_test_instrument_team_data_path,
-    with_tempdir,
-    get_run_local_data_path,
     run_periodically,
-    create_mock_version_map,
+    with_tempdir,
 )
 
 GLOWS_INTEGRATION_DATA_DIR = get_run_local_data_path(

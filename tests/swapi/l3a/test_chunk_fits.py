@@ -1,7 +1,7 @@
+import platform
 import unittest
 from datetime import datetime
-from unittest.mock import Mock, patch, create_autospec
-import platform
+from unittest.mock import Mock, create_autospec, patch
 
 import numpy as np
 from imap_processing.spice.time import str_yyyymmdd_to_ttj2000ns
@@ -16,7 +16,15 @@ from imap_l3_processing.constants import (
     THIRTY_SECONDS_IN_NANOSECONDS,
 )
 from imap_l3_processing.models import InputMetadata, MagData
-from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
+from imap_l3_processing.predicted_ephemeris_tracker import PredictedEphemerisTracker
+from imap_l3_processing.swapi.constants import (
+    SWAPI_BIN_PERIOD_S,
+    SWAPI_COARSE_SWEEP_BINS,
+    SWAPI_FINE_SWEEP_BINS,
+    SWAPI_L2_K_FACTOR,
+    SWAPI_LIVETIME_CENTER_OFFSET_S,
+    SWAPI_SCIENCE_BINS,
+)
 from imap_l3_processing.swapi.l3a import chunk_fits
 from imap_l3_processing.swapi.l3a.chunk_fits import (
     AlphaChunkFitter,
@@ -25,15 +33,11 @@ from imap_l3_processing.swapi.l3a.chunk_fits import (
     ProtonChunkFitter,
     PuiChunkFitter,
 )
-from imap_l3_processing.swapi.l3a.utils import pickup_ion_chunk_epoch
+from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_pickup_ion_values import (
     PickupIonFitInputData,
     PickupIonFitResult,
 )
-from imap_l3_processing.swapi.response.efficiency_calibration_table import (
-    EfficiencyCalibrationTable,
-)
-from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
 )
@@ -45,21 +49,17 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proto
     ProtonSolarWindFitResult,
 )
 from imap_l3_processing.swapi.l3a.utils import (
-    get_swapi_geometry,
     get_spacecraft_velocity_rtn,
+    get_swapi_geometry,
+    pickup_ion_chunk_epoch,
 )
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
-from imap_l3_processing.swapi.constants import (
-    SWAPI_BIN_PERIOD_S,
-    SWAPI_COARSE_SWEEP_BINS,
-    SWAPI_FINE_SWEEP_BINS,
-    SWAPI_L2_K_FACTOR,
-    SWAPI_LIVETIME_CENTER_OFFSET_S,
-    SWAPI_SCIENCE_BINS,
+from imap_l3_processing.swapi.response.efficiency_calibration_table import (
+    EfficiencyCalibrationTable,
 )
-from imap_l3_processing.predicted_ephemeris_tracker import PredictedEphemerisTracker
 from imap_l3_processing.swapi.species import Species
+from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from tests.spice_test_case import SpiceTestCase
 from tests.swapi._helpers import (
     REALISTIC_ESA_VOLTAGES,

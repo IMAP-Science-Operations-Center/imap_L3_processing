@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.response.passband_grid import (
     _PASSBAND_BOUNDARY_THRESHOLD,
     _TARGET_ELEVATIONS,
@@ -11,7 +12,6 @@ from imap_l3_processing.swapi.response.passband_grid import (
     interpolate_passband,
     speed_ratio_range_at_elevation,
 )
-from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 
 
 def _gaussian_values_df(

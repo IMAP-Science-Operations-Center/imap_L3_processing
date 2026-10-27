@@ -12,15 +12,15 @@ from imap_l3_processing.maps.hilo_l3_survival_dependencies import (
 )
 from imap_l3_processing.maps.map_models import RectangularIntensityDataProduct
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.utils import save_data, furnish_local_spice
+from imap_l3_processing.utils import furnish_local_spice, save_data
 from scripts.hi.create_cdf_from_instrument_team_data import (
     create_l2_map_from_instrument_team,
 )
 from scripts.hi.generate_fake_l1c_cdfs import generate_fake_l1c
 from tests.test_helpers import (
-    get_test_instrument_team_data_path,
-    get_test_data_path,
     get_run_local_data_path,
+    get_test_data_path,
+    get_test_instrument_team_data_path,
 )
 
 

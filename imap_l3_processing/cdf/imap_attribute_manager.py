@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 
 from sammi.cdf_attribute_manager import CdfAttributeManager
 
@@ -26,7 +25,7 @@ class ImapAttributeManager(CdfAttributeManager):
             self.config_folder_path / "imap_default_global_cdf_attrs.yaml"
         )
 
-    def try_load_global_metadata(self, logical_source: str) -> Optional[dict]:
+    def try_load_global_metadata(self, logical_source: str) -> dict | None:
         try:
             return self.get_global_attributes(logical_source)
         except KeyError:

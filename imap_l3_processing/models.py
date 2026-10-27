@@ -4,10 +4,10 @@ import enum
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Union, Optional, TypeVar, Generic
+from typing import Generic, TypeVar
 
 import numpy as np
-from imap_data_access.file_validation import Version, ScienceFilePath
+from imap_data_access.file_validation import ScienceFilePath, Version
 
 from imap_l3_processing.data_utils import rebin
 
@@ -29,16 +29,16 @@ class InputMetadata:
     instrument: str
     data_level: str
     start_date: datetime
-    end_date: Optional[datetime]
+    end_date: datetime | None
     version: VersionMap
     descriptor: str = ""
-    repointing: Optional[int] = None
+    repointing: int | None = None
 
     @property
     def logical_source(self):
         return f"imap_{self.instrument}_{self.data_level}_{self.descriptor}"
 
-    def to_science_file_path(self, cr_number: Optional[int] = None) -> ScienceFilePath:
+    def to_science_file_path(self, cr_number: int | None = None) -> ScienceFilePath:
         assert self.repointing is None or cr_number is None, (
             "You cannot call save_data with both a repointing in the metadata while passing in a CR number"
         )
@@ -60,7 +60,7 @@ class InputMetadata:
 @dataclass
 class DataProductVariable:
     name: str
-    value: Union[np.ndarray, int, float, list[str], list[int]]
+    value: np.ndarray | int | float | list[str] | list[int]
     cdf_data_type: ctypes.c_long = None
     record_varying: bool = None
 

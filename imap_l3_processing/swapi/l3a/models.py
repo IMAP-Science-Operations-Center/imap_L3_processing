@@ -9,8 +9,8 @@ from uncertainties.unumpy import nominal_values, std_devs
 
 from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
 from imap_l3_processing.constants import (
-    THIRTY_SECONDS_IN_NANOSECONDS,
     FIVE_MINUTES_IN_NANOSECONDS,
+    THIRTY_SECONDS_IN_NANOSECONDS,
 )
 from imap_l3_processing.models import DataProduct, DataProductVariable
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags

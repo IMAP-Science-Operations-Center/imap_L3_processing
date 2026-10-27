@@ -42,6 +42,12 @@ from imap_l3_processing.swapi.constants import (
     SWAPI_COARSE_SWEEP_BINS,
     SWAPI_L2_K_FACTOR,
 )
+from imap_l3_processing.swapi.l3a.chunk_fits import (
+    ParallelChunkRunner,
+    ProtonChunkFitter,
+    PuiChunkFitter,
+)
+from imap_l3_processing.swapi.l3a.models import SwapiL3PickupIonData
 from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_coincidence_rate import (
     calculate_coincidence_rate,
 )
@@ -51,23 +57,16 @@ from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_pickup_ion_values
 from imap_l3_processing.swapi.l3a.science.pickup_ion.collapsed_response_grid import (
     build_chunk_collapsed_response,
 )
+from imap_l3_processing.swapi.l3a.science.pickup_ion.utils import (
+    rotate_rtn_velocity_to_swapi_per_bin,
+)
 from imap_l3_processing.swapi.l3a.science.pickup_ion.vasyliunas_siscoe_distribution import (
     FittingParameters,
     build_vasyliunas_siscoe_distribution,
 )
-from imap_l3_processing.swapi.l3a.chunk_fits import (
-    ParallelChunkRunner,
-    ProtonChunkFitter,
-    PuiChunkFitter,
-)
-from imap_l3_processing.swapi.l3a.models import SwapiL3PickupIonData
-from imap_l3_processing.swapi.l3a.science.pickup_ion.utils import (
-    rotate_rtn_velocity_to_swapi_per_bin,
-)
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
 from imap_l3_processing.swapi.l3a.utils import chunk_l2_data
 from imap_l3_processing.utils import SpiceKernelTypes, get_spice_kernels_file_names
-
 
 _HELIUM_MASS_PER_CHARGE_M_P_PER_E = HE_PUI_PARTICLE_MASS_PER_CHARGE_M_P_PER_E
 _COARSE_SWEEP_LEN = 62

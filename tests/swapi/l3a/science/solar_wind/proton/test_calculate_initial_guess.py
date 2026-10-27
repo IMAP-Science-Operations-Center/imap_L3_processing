@@ -8,24 +8,23 @@ from imap_l3_processing.constants import (
     PROTON_CHARGE_COULOMBS,
     PROTON_MASS_KG,
 )
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
 )
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
+    SolarWindParams,
+)
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.calculate_initial_guess import (
     INITIAL_TEMPERATURE_FLOOR_K,
     calculate_initial_guess,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
-    SolarWindParams,
-)
 from imap_l3_processing.swapi.l3a.utils import optimal_density_scale
-from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.species import Species
 from tests.swapi._helpers import NOMINAL_TEST_EPOCH_TT2000, load_swapi_response
-
 
 # RTN → SWAPI rotation. Body +Y (the SWAPI boresight / spin axis) in RTN is
 # column 1 of the transpose, i.e. -R̂_RTN. The solar wind direction (anti-

@@ -7,12 +7,12 @@ from imap_data_access.file_validation import Version
 
 from imap_l3_processing.maps.map_descriptors import (
     MapDescriptorParts,
-    parse_map_descriptor,
     Sensor,
-    map_descriptor_parts_to_string,
     SpinPhase,
+    map_descriptor_parts_to_string,
+    parse_map_descriptor,
 )
-from imap_l3_processing.maps.map_initializer import PossibleMapToProduce, MapInitializer
+from imap_l3_processing.maps.map_initializer import MapInitializer, PossibleMapToProduce
 from imap_l3_processing.models import InputMetadata, VersionMap
 
 HI_COMBINED_DESCRIPTORS = [

@@ -1,6 +1,5 @@
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -9,7 +8,7 @@ from imap_processing.spice.repoint import get_repoint_data
 
 def get_best_ancillary(
     start_date: datetime, end_date: datetime, ancillary_query_results: list[dict]
-) -> Optional[str]:
+) -> str | None:
     valid_ancillaries = []
     for ancillary_file in ancillary_query_results:
         ancillary_start_date = datetime.strptime(ancillary_file["start_date"], "%Y%m%d")

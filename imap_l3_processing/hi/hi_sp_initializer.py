@@ -7,8 +7,8 @@ import imap_data_access
 from imap_l3_processing.maps.map_descriptors import (
     MapDescriptorParts,
     Sensor,
-    SurvivalCorrection,
     SpinPhase,
+    SurvivalCorrection,
 )
 from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
 from imap_l3_processing.maps.sp_map_initializer import SPMapInitializer

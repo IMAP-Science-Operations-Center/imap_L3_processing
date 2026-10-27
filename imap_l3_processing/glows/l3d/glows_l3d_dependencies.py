@@ -6,15 +6,15 @@ from imap_data_access import ScienceFilePath
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.glows.descriptors import (
-    PROTON_DENSITY_DESCRIPTOR,
-    PLASMA_SPEED_DESCRIPTOR,
-    UV_ANISOTROPY_DESCRIPTOR,
-    PHOTOION_DESCRIPTOR,
-    LYA_DESCRIPTOR,
     ELECTRON_DENSITY_DESCRIPTOR,
-    PIPELINE_SETTINGS_L3BCDE_DESCRIPTOR,
     GLOWS_L3B_DESCRIPTOR,
     GLOWS_L3C_DESCRIPTOR,
+    LYA_DESCRIPTOR,
+    PHOTOION_DESCRIPTOR,
+    PIPELINE_SETTINGS_L3BCDE_DESCRIPTOR,
+    PLASMA_SPEED_DESCRIPTOR,
+    PROTON_DENSITY_DESCRIPTOR,
+    UV_ANISOTROPY_DESCRIPTOR,
 )
 from imap_l3_processing.glows.l3bc.models import ExternalDependencies
 

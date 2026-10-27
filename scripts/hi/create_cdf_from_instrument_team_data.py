@@ -26,7 +26,7 @@ def create_l2_map_from_instrument_team(
     epoch = np.array([datetime(2025, 5, 1)])
     epoch_delta = np.array([FIVE_MINUTES_IN_NANOSECONDS])
 
-    data = defaultdict(lambda: {})
+    data = defaultdict(dict)
     for sub_folder in folder.iterdir():
         for file in sub_folder.iterdir():
             energy_string = re.search(r"_(\d*p\d*)keV", file.name).group(1)

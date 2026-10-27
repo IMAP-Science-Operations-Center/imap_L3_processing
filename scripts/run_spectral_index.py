@@ -4,19 +4,19 @@ from datetime import datetime
 from pathlib import Path
 
 from imap_data_access import (
-    ScienceFilePath,
-    ProcessingInputCollection,
-    ScienceInput,
     AncillaryInput,
+    ProcessingInputCollection,
+    ScienceFilePath,
+    ScienceInput,
 )
 from imap_data_access.file_validation import Version
 
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.lo.lo_processor import LoProcessor
 from imap_l3_processing.maps.map_descriptors import (
-    parse_map_descriptor,
     MapQuantity,
     map_descriptor_parts_to_string,
+    parse_map_descriptor,
 )
 from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.ultra.ultra_processor import UltraProcessor

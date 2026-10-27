@@ -1,14 +1,14 @@
 import unittest
+from collections.abc import Callable
 from datetime import datetime
-from typing import Callable
-from unittest.mock import patch, call, Mock, sentinel
+from unittest.mock import Mock, call, patch, sentinel
 
 from imap_data_access.file_validation import Version
 
-from imap_l3_processing.hi.hi_sp_initializer import HiSPInitializer, HI_SP_SPICE_KERNELS
+from imap_l3_processing.hi.hi_sp_initializer import HI_SP_SPICE_KERNELS, HiSPInitializer
 from imap_l3_processing.maps.map_descriptors import (
-    parse_map_descriptor,
     map_descriptor_parts_to_string,
+    parse_map_descriptor,
 )
 from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
 from imap_l3_processing.maps.sp_map_initializer import logger

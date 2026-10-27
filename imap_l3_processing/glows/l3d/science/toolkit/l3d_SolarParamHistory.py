@@ -1,12 +1,14 @@
-import numpy as np
-from astropy.time import Time
-import json
 import glob
+import json
+from dataclasses import dataclass
+
+import numpy as np
 import toolkit.funcs as fun
+from astropy.time import Time
 
 from imap_l3_processing.glows.quality_flags import GlowsL3Flags
+
 from .constants import VERSION
-from dataclasses import dataclass
 
 
 @dataclass

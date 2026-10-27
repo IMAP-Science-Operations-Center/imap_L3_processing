@@ -1,9 +1,9 @@
 import dataclasses
+import math
 import unittest
 from datetime import datetime
-from unittest.mock import patch, call, sentinel, create_autospec
+from unittest.mock import call, create_autospec, patch, sentinel
 
-import math
 import numpy as np
 import spiceypy
 from spiceypy import SpiceyError
@@ -11,29 +11,28 @@ from spiceypy import SpiceyError
 from imap_l3_processing.predicted_ephemeris_tracker import PredictedEphemerisTracker
 from imap_l3_processing.swe.l3.science import moment_calculations
 from imap_l3_processing.swe.l3.science.moment_calculations import (
-    compute_maxwellian_weight_factors,
-    filter_and_flatten_regress_parameters,
-    regress,
-    calculate_fit_temperature_density_velocity,
-    rotate_temperature,
-    apply_rotation_matrix,
-    Moments,
-    halotrunc,
-    compute_density_scale,
-    core_fit_moments_retrying_on_failure,
-    halo_fit_moments_retrying_on_failure,
-    scale_halo_density,
-    rotate_vector_to_rtn_spherical_coordinates,
-    calculate_primary_eigenvector,
-    rotation_matrix_builder,
-    rotate_temperature_tensor_to_mag,
     MomentFitResults,
+    Moments,
+    apply_rotation_matrix,
+    calculate_fit_temperature_density_velocity,
+    calculate_primary_eigenvector,
+    compute_density_scale,
+    compute_maxwellian_weight_factors,
+    core_fit_moments_retrying_on_failure,
+    filter_and_flatten_regress_parameters,
+    halo_fit_moments_retrying_on_failure,
+    halotrunc,
+    regress,
     rotate_rtn_vectors_to_dps,
+    rotate_temperature,
+    rotate_temperature_tensor_to_mag,
+    rotate_vector_to_rtn_spherical_coordinates,
+    rotation_matrix_builder,
+    scale_halo_density,
 )
-from tests.test_helpers import create_dataclass_mock
-from tests.test_helpers import get_test_data_path
-from imap_l3_processing.swe.swe_processor import check_temperature_outlier_flag
 from imap_l3_processing.swe.quality_flags import SweL3Flags
+from imap_l3_processing.swe.swe_processor import check_temperature_outlier_flag
+from tests.test_helpers import create_dataclass_mock, get_test_data_path
 
 MODULE = "imap_l3_processing.swe.l3.science.moment_calculations"
 

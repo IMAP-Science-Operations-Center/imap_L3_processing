@@ -2,10 +2,10 @@ import unittest
 
 from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import (
     CosineCorrectionLookupTable,
-    Detector,
     DetectedRange,
-    DetectorSide,
+    Detector,
     DetectorRange,
+    DetectorSide,
 )
 from tests.test_helpers import get_test_data_path
 

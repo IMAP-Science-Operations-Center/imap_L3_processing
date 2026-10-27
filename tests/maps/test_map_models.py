@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import sentinel, Mock
+from unittest.mock import Mock, sentinel
 
 import numpy as np
 from imap_processing.ena_maps.ena_maps import HealpixSkyMap
@@ -15,40 +15,40 @@ from spacepy.pycdf import CDF
 from xarray import Dataset
 
 from imap_l3_processing.cdf.cdf_utils import (
-    read_variable_and_mask_fill_values,
     read_numeric_variable,
+    read_variable_and_mask_fill_values,
 )
 from imap_l3_processing.constants import (
+    FIVE_MINUTES_IN_NANOSECONDS,
     ONE_SECOND_IN_NANOSECONDS,
     SECONDS_PER_DAY,
-    FIVE_MINUTES_IN_NANOSECONDS,
     TT2000_EPOCH,
 )
 from imap_l3_processing.maps import map_models
 from imap_l3_processing.maps.map_models import (
-    RectangularCoords,
-    SpectralIndexMapData,
-    RectangularSpectralIndexMapData,
-    RectangularSpectralIndexDataProduct,
-    RectangularIntensityMapData,
-    IntensityMapData,
-    RectangularIntensityDataProduct,
-    HealPixIntensityMapData,
+    QUALITY_FLAGS_VAR_NAME,
     HealPixCoords,
-    convert_tt2000_time_to_datetime,
-    _read_intensity_map_data_from_open_cdf,
-    calculate_datetime_weighted_average,
-    ISNRateData,
+    HealPixIntensityMapData,
+    IntensityMapData,
     ISNBackgroundSubtractedData,
     ISNBackgroundSubtractedDataProduct,
     ISNBackgroundSubtractedMapData,
-    QUALITY_FLAGS_VAR_NAME,
+    ISNRateData,
+    RectangularCoords,
+    RectangularIntensityDataProduct,
+    RectangularIntensityMapData,
+    RectangularSpectralIndexDataProduct,
+    RectangularSpectralIndexMapData,
+    SpectralIndexMapData,
+    _read_intensity_map_data_from_open_cdf,
+    calculate_datetime_weighted_average,
+    convert_tt2000_time_to_datetime,
 )
 from imap_l3_processing.maps.quality_flags import MapL3Flags
 from imap_l3_processing.models import DataProductVariable
 from tests.test_helpers import (
-    get_test_data_folder,
     get_integration_test_data_path,
+    get_test_data_folder,
 )
 
 

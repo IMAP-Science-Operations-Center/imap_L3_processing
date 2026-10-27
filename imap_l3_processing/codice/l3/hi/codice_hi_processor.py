@@ -7,8 +7,10 @@ from imap_data_access.processing_input import ProcessingInputCollection
 from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3a_direct_events_dependencies import (
     CodiceHiL3aDirectEventsDependencies,
 )
-from imap_l3_processing.codice.l3.hi.models import CodiceHiL3PitchAngleDataProduct
-from imap_l3_processing.codice.l3.hi.models import CodiceL3HiDirectEvents
+from imap_l3_processing.codice.l3.hi.models import (
+    CodiceHiL3PitchAngleDataProduct,
+    CodiceL3HiDirectEvents,
+)
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import (
     CodicePitchAngleDependencies,
 )
@@ -21,9 +23,9 @@ from imap_l3_processing.hit.l3.sectored_products.science.sectored_products_algor
 )
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.pitch_angles import (
-    calculate_unit_vector,
-    calculate_pitch_angle,
     calculate_gyrophase,
+    calculate_pitch_angle,
+    calculate_unit_vector,
     rebin_by_pitch_angle_and_gyrophase,
 )
 from imap_l3_processing.processor import Processor

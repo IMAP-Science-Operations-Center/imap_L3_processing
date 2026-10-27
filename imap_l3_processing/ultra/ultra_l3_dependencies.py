@@ -6,7 +6,6 @@ import re
 from dataclasses import dataclass, field
 from hashlib import sha256
 from pathlib import Path
-from typing import Optional
 
 import imap_data_access
 import numpy as np
@@ -19,7 +18,7 @@ from imap_l3_processing.maps.map_models import (
     RectangularIntensityMapData,
     SpectralIndexDependencies,
 )
-from imap_l3_processing.ultra.models import UltraL1CPSet, UltraGlowsL3eData
+from imap_l3_processing.ultra.models import UltraGlowsL3eData, UltraL1CPSet
 from imap_l3_processing.utils import (
     get_dependency_paths_by_descriptor,
     get_temp_cache_dir,
@@ -34,7 +33,7 @@ class UltraL3Dependencies:
     ultra_l2_rectangular_map: RectangularIntensityMapData
     ultra_l1c_pset: list[UltraL1CPSet]
     glows_l3e_sp: list[UltraGlowsL3eData]
-    energy_bin_group_sizes: Optional[np.ndarray]
+    energy_bin_group_sizes: np.ndarray | None
     dependency_file_paths: list[Path] = field(default_factory=list)
 
     @classmethod
@@ -79,7 +78,7 @@ class UltraL3Dependencies:
         l2_map_path: Path,
         l1c_file_paths: list[Path],
         glows_file_paths: list[Path],
-        energy_bin_path: Optional[Path],
+        energy_bin_path: Path | None,
     ) -> UltraL3Dependencies:
         ultra_l1c_data = []
         glows_l3e_data = []
@@ -208,7 +207,7 @@ class UltraL3CombinedDependencies:
         glows_l3e_pset_paths: list[Path],
         u45_map_path: Path,
         u90_map_path: Path,
-        energy_bin_group_sizes_path: Optional[Path],
+        energy_bin_group_sizes_path: Path | None,
     ) -> UltraL3CombinedDependencies:
 
         return cls(

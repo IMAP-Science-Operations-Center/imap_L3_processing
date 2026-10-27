@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime
-from unittest.mock import patch, Mock, call
+from unittest.mock import Mock, call, patch
 
 from imap_data_access.file_validation import Version
 

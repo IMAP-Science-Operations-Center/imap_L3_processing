@@ -3,11 +3,10 @@ import logging
 import unittest
 from datetime import timedelta
 from pathlib import Path
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 import numpy as np
-from imap_data_access import ProcessingInputCollection, ScienceInput
-from imap_data_access import ScienceFilePath
+from imap_data_access import ProcessingInputCollection, ScienceFilePath, ScienceInput
 from spacepy.pycdf import CDF
 from spiceypy import spiceypy
 
@@ -16,8 +15,8 @@ from imap_l3_processing.hi.hi_combined_initializer import HI_COMBINED_DESCRIPTOR
 from tests.integration.integration_test_helpers import mock_imap_data_access
 from tests.test_helpers import (
     get_run_local_data_path,
-    run_periodically,
     get_test_data_path,
+    run_periodically,
 )
 
 INTEGRATION_TEST_DATA_PATH = Path(__file__).parent / "test_data"

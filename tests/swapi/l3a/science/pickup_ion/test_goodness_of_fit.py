@@ -4,12 +4,12 @@ import numpy as np
 
 from imap_l3_processing.swapi.constants import SWAPI_BACKGROUND_RATE
 from imap_l3_processing.swapi.l3a.science.pickup_ion.goodness_of_fit import (
+    CUTOFF_DROP_RATIO,
     MAX_CUTOFF_SPEED_KMS,
     MAX_CUTOFF_SPEED_RATIO,
     MAX_IONIZATION_RATE,
     MIN_CUTOFF_SPEED_RATIO,
     MIN_IONIZATION_RATE,
-    CUTOFF_DROP_RATIO,
     is_good_fit,
 )
 

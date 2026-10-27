@@ -1,5 +1,5 @@
 from datetime import datetime
-from unittest.mock import sentinel, patch, call, Mock
+from unittest.mock import Mock, call, patch, sentinel
 
 import numpy as np
 import xarray as xr
@@ -11,8 +11,8 @@ from imap_l3_processing.maps.hilo_l3_survival_dependencies import (
 )
 from imap_l3_processing.maps.map_descriptors import (
     PixelSize,
-    parse_map_descriptor,
     ReferenceFrame,
+    parse_map_descriptor,
 )
 from imap_l3_processing.maps.map_models import (
     GlowsL3eRectangularMapInputData,
@@ -20,14 +20,14 @@ from imap_l3_processing.maps.map_models import (
 )
 from imap_l3_processing.maps.quality_flags import MapL3Flags
 from imap_l3_processing.maps.survival_probability_processing import (
-    process_survival_probabilities,
     combine_glows_l3e_with_l1c_pointing,
     filter_bad_days,
+    process_survival_probabilities,
 )
 from tests.maps.test_builders import (
-    create_rectangular_intensity_map_data,
     create_l1c_pset,
     create_l3e_pset,
+    create_rectangular_intensity_map_data,
 )
 from tests.spice_test_case import SpiceTestCase
 from tests.test_helpers import create_dataclass_mock

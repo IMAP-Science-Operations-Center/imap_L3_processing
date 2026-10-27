@@ -6,13 +6,13 @@ import numpy as np
 from imap_l3_processing.swapi.l3a.science.solar_wind.azimuthal_regions import (
     AzimuthalRegion,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.trim_open_aperture import (
-    trim_open_aperture,
-)
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     SolarWindParams,
     bulk_speed,
     thermal_speed,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.trim_open_aperture import (
+    trim_open_aperture,
 )
 from imap_l3_processing.swapi.l3a.utils import (
     velocity_to_angles_in_instrument_frame,

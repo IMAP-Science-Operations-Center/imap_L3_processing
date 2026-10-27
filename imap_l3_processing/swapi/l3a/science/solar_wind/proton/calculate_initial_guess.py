@@ -6,23 +6,22 @@ from imap_l3_processing.constants import (
     BOLTZMANN_CONSTANT_JOULES_PER_KELVIN,
     PROTON_CHARGE_COULOMBS,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
-    model_solar_wind_ideal_coincidence_rates,
-)
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     SolarWindFitContext,
 )
-from imap_l3_processing.swapi.l3a.utils import (
-    esa_voltage_to_proton_speed,
-    optimal_density_scale,
+from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
+    model_solar_wind_ideal_coincidence_rates,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.utils import average_spin_axis_rtn
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     SolarWindParams,
     temperature_to_thermal_speed,
     thermal_speed_to_temperature,
 )
-
+from imap_l3_processing.swapi.l3a.science.solar_wind.utils import average_spin_axis_rtn
+from imap_l3_processing.swapi.l3a.utils import (
+    esa_voltage_to_proton_speed,
+    optimal_density_scale,
+)
 
 # 1 eV
 INITIAL_TEMPERATURE_FLOOR_K = (

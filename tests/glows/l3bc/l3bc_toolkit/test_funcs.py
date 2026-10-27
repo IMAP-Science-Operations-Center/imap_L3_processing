@@ -5,7 +5,6 @@ import numpy as np
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import process_omni_param
 from imap_l3_processing.glows.quality_flags import NOMINAL_ALPHA_PROTON_RATIO_VALUE
 
-
 ALPHA_PARAM_SETTINGS = {
     "column_numbers": (0, 1, 2, 6, 9),
     "gap_marker": 9.999,

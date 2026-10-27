@@ -10,12 +10,12 @@ from imap_processing.spice.geometry import SpiceFrame
 from imap_l3_processing.lo.l3.lo_combined_dependencies import LoCombinedDependencies
 from imap_l3_processing.lo.lo_processor import LoProcessor, isn_background_subtraction
 from imap_l3_processing.maps.map_models import (
-    RectangularSpectralIndexDataProduct,
-    RectangularIntensityDataProduct,
     InputRectangularPointingSet,
-    ISNRateData,
     ISNBackgroundSubtractedData,
     ISNBackgroundSubtractedMapData,
+    ISNRateData,
+    RectangularIntensityDataProduct,
+    RectangularSpectralIndexDataProduct,
 )
 from imap_l3_processing.models import InputMetadata, Instrument
 from tests.maps import test_builders

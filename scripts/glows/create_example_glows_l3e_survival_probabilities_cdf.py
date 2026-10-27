@@ -25,7 +25,7 @@ def create_survival_probabilities_file(
     cdf_file_path.unlink(missing_ok=True)
     with open(glows_file_path) as input_data:
         energy_line = [
-            line for line in input_data.readlines() if line.startswith("#energy_grid")
+            line for line in input_data if line.startswith("#energy_grid")
         ]
         assert len(energy_line) == 1
         energies = np.array(

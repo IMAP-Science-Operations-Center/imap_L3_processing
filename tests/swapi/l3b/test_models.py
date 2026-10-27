@@ -11,13 +11,13 @@ from imap_l3_processing.swapi.l3a.models import (
     EPOCH_DELTA_CDF_VAR_NAME,
 )
 from imap_l3_processing.swapi.l3b.models import (
-    SwapiL3BCombinedVDF,
     COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_CDF_VAR_NAME,
     COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_DELTA_CDF_VAR_NAME,
-    SOLAR_WIND_ENERGY_CDF_VAR_NAME,
     SOLAR_WIND_COMBINED_ENERGY_DELTA_MINUS_CDF_VAR_NAME,
     SOLAR_WIND_COMBINED_ENERGY_DELTA_PLUS_CDF_VAR_NAME,
+    SOLAR_WIND_ENERGY_CDF_VAR_NAME,
     SOLAR_WIND_ENERGY_LABEL_CDF_VAR_NAME,
+    SwapiL3BCombinedVDF,
 )
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 

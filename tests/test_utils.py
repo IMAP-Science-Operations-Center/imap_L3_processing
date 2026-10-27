@@ -1,52 +1,52 @@
 import os
 import tempfile
-from datetime import datetime, date
+from datetime import date, datetime
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import patch, call, Mock, sentinel
+from unittest.mock import Mock, call, patch, sentinel
 
 import imap_data_access
 import numpy as np
 from imap_data_access import config
 from imap_data_access.file_validation import Version
-from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection
+from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput
 from imap_processing.spice.geometry import SpiceFrame
 from requests import RequestException
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH, TT2000_EPOCH
 from imap_l3_processing.maps.map_models import (
-    RectangularSpectralIndexDataProduct,
     RectangularIntensityDataProduct,
+    RectangularSpectralIndexDataProduct,
 )
 from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.swapi.l3a.models import SwapiL3AlphaSolarWindData
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.utils import (
+    FurnishMetakernelOutput,
+    SpiceKernelTypes,
+    download_external_dependency,
     format_time,
+    furnish_local_spice,
+    furnish_spice_metakernel,
+    get_dependency_paths_by_descriptor,
+    get_spice_parent_file_names,
+    get_temp_cache_dir,
+    get_version_from_query_result,
+    read_cdf_parents,
     read_mag_data,
     save_data,
-    download_external_dependency,
-    furnish_local_spice,
-    get_spice_parent_file_names,
-    furnish_spice_metakernel,
-    SpiceKernelTypes,
-    FurnishMetakernelOutput,
-    read_cdf_parents,
-    get_dependency_paths_by_descriptor,
-    get_version_from_query_result,
-    get_temp_cache_dir,
 )
 from imap_l3_processing.version import VERSION
 from tests.cdf.test_cdf_utils import TestDataProduct
 from tests.maps.test_builders import (
-    create_rectangular_spectral_index_map_data,
     create_rectangular_intensity_map_data,
+    create_rectangular_spectral_index_map_data,
 )
 from tests.test_helpers import (
+    create_mock_version_map,
     get_spice_data_path,
     with_tempdir,
-    create_mock_version_map,
 )
 
 

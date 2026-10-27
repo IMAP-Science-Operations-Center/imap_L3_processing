@@ -1,24 +1,24 @@
 import unittest
 from pathlib import Path
-from unittest.mock import patch, call, sentinel
+from unittest.mock import call, patch, sentinel
 
 import imap_data_access
 from imap_data_access.processing_input import (
-    ScienceInput,
-    ProcessingInputCollection,
     AncillaryInput,
+    ProcessingInputCollection,
+    ScienceInput,
 )
 
 from imap_l3_processing.swapi.descriptors import (
-    SWAPI_L2_DESCRIPTOR,
-    DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR,
-    EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR,
-    HYDROGEN_INFLOW_VECTOR_DESCRIPTOR,
-    HELIUM_INFLOW_VECTOR_DESCRIPTOR,
     AZIMUTHAL_TRANSMISSION_DESCRIPTOR,
     CENTRAL_EFFECTIVE_AREA_DESCRIPTOR,
-    PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR,
+    DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR,
+    EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR,
+    HELIUM_INFLOW_VECTOR_DESCRIPTOR,
+    HYDROGEN_INFLOW_VECTOR_DESCRIPTOR,
     MAG_RTN_DESCRIPTOR,
+    PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR,
+    SWAPI_L2_DESCRIPTOR,
 )
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
 

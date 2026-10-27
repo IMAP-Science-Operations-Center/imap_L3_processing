@@ -18,19 +18,19 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.mass_species_bin_look
 )
 from imap_l3_processing.codice.l3.lo.models import CodiceLoDirectEventData
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import (
-    calculate_partial_densities,
-    calculate_total_number_of_events,
+    CODICE_LO_NUM_AZIMUTH_BINS,
     calculate_mass,
     calculate_mass_per_charge,
-    rebin_to_counts_by_species_elevation_and_spin_sector,
-    rebin_direct_events_by_energy_and_spin_sector,
-    CODICE_LO_NUM_AZIMUTH_BINS,
-    combine_priorities_for_species_and_calculate_count_uncertainty,
-    rebin_3d_distribution_azimuth_to_elevation,
-    convert_counts_to_intensity,
-    rebin_direct_events_for_normalization,
     calculate_normalization_factor,
+    calculate_partial_densities,
+    calculate_total_number_of_events,
+    combine_priorities_for_species_and_calculate_count_uncertainty,
+    convert_counts_to_intensity,
     lookup_normalization_per_event,
+    rebin_3d_distribution_azimuth_to_elevation,
+    rebin_direct_events_by_energy_and_spin_sector,
+    rebin_direct_events_for_normalization,
+    rebin_to_counts_by_species_elevation_and_spin_sector,
 )
 
 

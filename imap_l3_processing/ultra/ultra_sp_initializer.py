@@ -9,13 +9,13 @@ from imap_l3_processing.glows.descriptors import (
 )
 from imap_l3_processing.maps.map_descriptors import (
     MapDescriptorParts,
-    SurvivalCorrection,
-    Sensor,
     ReferenceFrame,
+    Sensor,
+    SurvivalCorrection,
 )
 from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
 from imap_l3_processing.maps.sp_map_initializer import SPMapInitializer
-from imap_l3_processing.utils import furnish_spice_metakernel, SpiceKernelTypes
+from imap_l3_processing.utils import SpiceKernelTypes, furnish_spice_metakernel
 
 ULTRA_SP_SPICE_KERNELS = [
     SpiceKernelTypes.Leapseconds,

@@ -2,22 +2,22 @@ import os
 import unittest
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch, call
+from unittest.mock import call, patch
 
 import numpy as np
 from spacepy import pycdf
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import (
-    PROBABILITY_OF_SURVIVAL_VAR_NAME,
-    SPIN_ANGLE_VAR_NAME,
     ENERGY_VAR_NAME,
     EPOCH_CDF_VAR_NAME,
     GLOWS_FLAGS_VAR_NAME,
+    PROBABILITY_OF_SURVIVAL_VAR_NAME,
+    SPIN_ANGLE_VAR_NAME,
 )
 from imap_l3_processing.hi.utils import (
-    read_l1c_rectangular_pointing_set_data,
     read_glows_l3e_data,
+    read_l1c_rectangular_pointing_set_data,
 )
 from tests.test_helpers import get_test_data_folder, with_tempdir
 
@@ -43,7 +43,7 @@ class TestUtils(unittest.TestCase):
                 epoch_delta = np.array([1_000_000_000])
                 repointing = 1111
                 exposure_times = rng.random((1, 9, 3600))
-                energy_step = rng.random((9))
+                energy_step = rng.random(9)
                 hae_longitude = np.ones(3600).reshape((1, 3600))
                 hae_latitude = np.ones(3600).reshape((1, 3600)) * 2
 

@@ -10,9 +10,12 @@ from imap_l3_processing.constants import (
     PROTON_CHARGE_COULOMBS,
     PROTON_MASS_KG,
 )
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
+from imap_l3_processing.swapi.l3a.science.solar_wind.alpha import (
+    calculate_initial_guess as alpha_initial_guess_module,
+)
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha import (
     fit_solar_wind_alpha_model as alpha_module,
-    calculate_initial_guess as alpha_initial_guess_module,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_solar_wind_alpha_model import (
     MIN_TOLERABLE_ALPHA_SPEED_RATIO,
@@ -27,17 +30,15 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
 )
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
     ProtonSolarWindFitResult,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
-from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 from imap_l3_processing.swapi.species import Species
 from tests.swapi._helpers import NOMINAL_TEST_EPOCH_TT2000, load_swapi_response
-
 
 # ----- module-level fixture constants --------------------------------------
 

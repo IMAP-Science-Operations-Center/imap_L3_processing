@@ -4,15 +4,16 @@ Carrington solar wind class
 """
 
 import json
+import logging
 from dataclasses import dataclass
+
+import astropy.constants as const
+import astropy.units as u
 import numpy as np
 from astropy.time import Time
-import astropy.units as u
-import astropy.constants as const
-from . import funcs as fun
-from .constants import VERSION, PHISICAL_CONSTANTS
 
-import logging
+from . import funcs as fun
+from .constants import PHISICAL_CONSTANTS, VERSION
 
 logging.basicConfig(level=logging.ERROR)
 

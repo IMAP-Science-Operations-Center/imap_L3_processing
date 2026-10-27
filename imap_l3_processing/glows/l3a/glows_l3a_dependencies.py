@@ -6,11 +6,11 @@ from imap_data_access.processing_input import ProcessingInputCollection, Science
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.descriptors import (
-    GLOWS_L2_DESCRIPTOR,
-    GLOWS_TIME_DEPENDENT_BACKGROUND_DESCRIPTOR,
     GLOWS_CALIBRATION_DATA_DESCRIPTOR,
     GLOWS_EXTRA_HELIOSPHERIC_BACKGROUND_DESCRIPTOR,
+    GLOWS_L2_DESCRIPTOR,
     GLOWS_PIPELINE_SETTINGS_DESCRIPTOR,
+    GLOWS_TIME_DEPENDENT_BACKGROUND_DESCRIPTOR,
 )
 from imap_l3_processing.glows.l3a.models import GlowsL2Data
 from imap_l3_processing.glows.l3a.utils import read_l2_glows_data

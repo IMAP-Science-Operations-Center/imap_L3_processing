@@ -7,6 +7,7 @@ from imap_l3_processing.constants import (
     PROTON_CHARGE_COULOMBS,
     PROTON_MASS_KG,
 )
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
 )
@@ -18,15 +19,13 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     LOG_DENSITY_IDX,
     LOG_TEMPERATURE_IDX,
     N_STATE,
-    SolarWindParams,
     VELOCITY_SLICE,
+    SolarWindParams,
 )
-from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 from imap_l3_processing.swapi.species import Species
 from tests.swapi._helpers import NOMINAL_TEST_EPOCH_TT2000, proton_params
 from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path
-
 
 # Reference bulk speed for the slow-wind fixture state shared by every test
 # in this module (5 cm⁻³, 100 kK protons under the default `proton_params`).

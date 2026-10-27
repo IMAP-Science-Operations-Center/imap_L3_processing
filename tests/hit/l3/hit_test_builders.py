@@ -1,7 +1,7 @@
 from imap_l3_processing.hit.l3.pha.pha_event_reader import (
-    RawPHAEvent,
-    PHAWord,
     Detector,
+    PHAWord,
+    RawPHAEvent,
 )
 
 

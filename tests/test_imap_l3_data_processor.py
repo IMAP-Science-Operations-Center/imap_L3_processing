@@ -2,13 +2,13 @@ import json
 from datetime import datetime
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import patch, call, Mock, sentinel
+from unittest.mock import Mock, call, patch, sentinel
 
 from imap_data_access.file_validation import Version
 from imap_data_access.processing_input import (
-    ScienceInput,
-    ProcessingInputCollection,
     AncillaryInput,
+    ProcessingInputCollection,
+    ScienceInput,
     SPICEInput,
 )
 

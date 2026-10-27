@@ -11,7 +11,7 @@ import numpy as np
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.time import Time
-from sklearn.linear_model import LinearRegression, Lasso, Ridge
+from sklearn.linear_model import Lasso, LinearRegression, Ridge
 
 from . import funcs as fun
 from .constants import VERSION

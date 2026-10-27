@@ -8,10 +8,10 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+from figure_utils import FIGURES_DIR, load_swapi_response
 
 from imap_l3_processing.swapi.response.passband_grid import PassbandGrid
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
-from figure_utils import FIGURES_DIR, load_swapi_response
 
 _ELEVATION_DISPLAY_LIMIT_DEG = 15.0
 _ACTIVE_ELEVATION_SAMPLE_COUNT = 300

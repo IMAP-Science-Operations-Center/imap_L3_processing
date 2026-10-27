@@ -267,7 +267,7 @@ class TestCdfUtils(TestCase):
         epoch_delta_types = ["epoch_delta", "epoch_delta_plus", "epoch_delta_minus"]
         if any(
             [
-                epoch_delta_type in yaml_data.keys()
+                epoch_delta_type in yaml_data
                 for epoch_delta_type in epoch_delta_types
             ]
         ):

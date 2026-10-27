@@ -1,19 +1,19 @@
 import unittest
 from pathlib import Path
-from unittest.mock import patch, call, sentinel
+from unittest.mock import call, patch, sentinel
 
 from imap_data_access.processing_input import (
+    AncillaryInput,
     ProcessingInputCollection,
     ScienceInput,
-    AncillaryInput,
 )
 
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies import (
-    CodiceLoL3aDirectEventsDependencies,
     DIRECT_EVENTS_DESCRIPTOR,
-    SW_PRIORITY_DESCRIPTOR,
-    NSW_PRIORITY_DESCRIPTOR,
     MASS_COEFFICIENT_DESCRIPTOR,
+    NSW_PRIORITY_DESCRIPTOR,
+    SW_PRIORITY_DESCRIPTOR,
+    CodiceLoL3aDirectEventsDependencies,
 )
 from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import (
     ESA_TO_ENERGY_PER_CHARGE_LOOKUP_DESCRIPTOR,

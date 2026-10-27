@@ -4,9 +4,9 @@ import numpy as np
 from numpy.typing import NDArray
 
 from imap_l3_processing.constants import (
-    ONE_AU_IN_KM,
     CENTIMETERS_PER_METER,
     METERS_PER_KILOMETER,
+    ONE_AU_IN_KM,
 )
 from imap_l3_processing.swapi.constants import SWAPI_PUI_COOLING_INDEX
 from imap_l3_processing.swapi.l3a.science.pickup_ion.density_of_neutral_helium_lookup_table import (

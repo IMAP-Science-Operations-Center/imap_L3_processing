@@ -4,23 +4,23 @@ import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import sentinel, patch, call
+from unittest.mock import call, patch, sentinel
 
 import numpy as np
 from spacepy import pycdf
 
 from imap_l3_processing.constants import (
-    TEMP_CDF_FOLDER_PATH,
     CARRINGTON_ROTATION_IN_NANOSECONDS,
+    TEMP_CDF_FOLDER_PATH,
 )
 from imap_l3_processing.glows.l3bc.models import (
-    GlowsL3BIonizationRate,
-    GlowsL3CSolarWind,
-    CRToProcess,
-    ExternalDependencies,
     F107_FLUX_TABLE_URL,
     LYMAN_ALPHA_COMPOSITE_INDEX_URL,
     OMNI2_URL,
+    CRToProcess,
+    ExternalDependencies,
+    GlowsL3BIonizationRate,
+    GlowsL3CSolarWind,
 )
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 from tests.test_helpers import get_test_instrument_team_data_path

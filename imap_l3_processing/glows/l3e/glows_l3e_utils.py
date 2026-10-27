@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import typing
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -9,28 +8,22 @@ import imap_data_access
 import numpy as np
 import spiceypy
 from astropy.time import Time
-from spiceypy import SpiceyError
-
-from imap_l3_processing.glows.quality_flags import GlowsL3Flags
 from imap_data_access.file_validation import Version
 from spacepy.pycdf import CDF
-
-from typing import Optional
+from spiceypy import SpiceyError
 
 from imap_l3_processing.constants import (
     ONE_AU_IN_KM,
-    TT2000_EPOCH,
     ONE_SECOND_IN_NANOSECONDS,
+    TT2000_EPOCH,
 )
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import jd_fm_Carrington
 from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import (
     GlowsL3eCallArguments,
     GlowsL3eSpacecraftInfo,
 )
+from imap_l3_processing.glows.quality_flags import GlowsL3Flags
 from imap_l3_processing.utils import FurnishMetakernelOutput
-
-if typing.TYPE_CHECKING:
-    pass
 
 
 def determine_call_args_for_l3e_executable(
@@ -106,7 +99,7 @@ def determine_spacecraft_info_using_predict_if_needed(
 def _decimal_time(t: datetime) -> str:
     year_start = datetime(t.year, 1, 1)
     year_end = datetime(t.year + 1, 1, 1)
-    return "{:10.5f}".format(t.year + (t - year_start) / (year_end - year_start))
+    return f"{t.year + (t - year_start) / (year_end - year_start):10.5f}"
 
 
 @dataclass
@@ -159,7 +152,7 @@ def get_lo_pivot_angle_from_l1b_file(path: Path) -> float:
 
 @dataclass
 class LoPivotAngle:
-    parent_filename: Optional[str]
+    parent_filename: str | None
     pivot_angle: float
 
 

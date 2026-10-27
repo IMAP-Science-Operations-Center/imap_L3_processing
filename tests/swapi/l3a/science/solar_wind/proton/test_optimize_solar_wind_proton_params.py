@@ -7,18 +7,18 @@ import scipy.optimize
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.optimize_solar_wind_proton_params import (
-    OptimizeSolarWindProtonParamsResult,
-    optimize_solar_wind_proton_params,
-)
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     N_STATE,
     SolarWindParams,
 )
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.optimize_solar_wind_proton_params import (
+    OptimizeSolarWindProtonParamsResult,
+    optimize_solar_wind_proton_params,
+)
 from imap_l3_processing.swapi.species import Species
 from tests.swapi._helpers import (
-    NOMINAL_TEST_EPOCH_TT2000,
     NOMINAL_SWAPI_TO_RTN_ROTATION,
+    NOMINAL_TEST_EPOCH_TT2000,
     REALISTIC_ESA_VOLTAGES,
     load_swapi_response,
     proton_params,

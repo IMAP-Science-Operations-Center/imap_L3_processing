@@ -6,15 +6,15 @@ import numpy as np
 
 from imap_l3_processing.codice.l3.lo.constants import (
     AZIMUTH_STEP_SIZE,
-    ELEVATION_STEP_SIZE,
-    ENERGY_STEP_SIZE,
-    ENERGY_LOST_IN_CARBON_FOIL,
-    POST_ACCELERATION_VOLTAGE_IN_KV,
-    CONVERSION_CONSTANT_K,
     CODICE_LO_NUM_AZIMUTH_BINS,
-    CONSTANT_C_FROM_INSTRUMENT_TEAM,
     CODICE_LO_NUM_ESA_STEPS,
     CODICE_LO_NUM_SPIN_SECTORS,
+    CONSTANT_C_FROM_INSTRUMENT_TEAM,
+    CONVERSION_CONSTANT_K,
+    ELEVATION_STEP_SIZE,
+    ENERGY_LOST_IN_CARBON_FOIL,
+    ENERGY_STEP_SIZE,
+    POST_ACCELERATION_VOLTAGE_IN_KV,
 )
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import (
     PositionToElevationLookup,

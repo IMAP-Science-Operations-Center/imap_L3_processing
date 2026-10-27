@@ -16,7 +16,7 @@ DEFAULT_RECT_SPACING_DEG_L1C = 0.5
 DEFAULT_HEALPIX_NSIDE_L1C = 16
 
 
-def create_example_ultra_l2_map(  # noqa: PLR0913
+def create_example_ultra_l2_map(
     nside: int = DEFAULT_HEALPIX_NSIDE_L1C,
     stripe_center_lat: int = 0,
     width_scale: float = 180.0,

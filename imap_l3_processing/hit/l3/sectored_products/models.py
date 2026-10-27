@@ -307,43 +307,43 @@ class HitPitchAngleDataProduct(DataProduct):
             DataProductVariable(
                 PITCH_ANGLE_LABEL_VAR_NAME,
                 [
-                    f"Pitch Angle Label {str(i + 1)}"
+                    f"Pitch Angle Label {i + 1!s}"
                     for i in range(len(self.pitch_angles))
                 ],
             ),
             DataProductVariable(
                 GYROPHASE_LABEL_VAR_NAME,
-                [f"Gyrophase Label {str(i + 1)}" for i in range(len(self.gyrophases))],
+                [f"Gyrophase Label {i + 1!s}" for i in range(len(self.gyrophases))],
             ),
             DataProductVariable(
                 H_ENERGY_LABEL_VAR_NAME,
-                [f"H Energy Label {str(i + 1)}" for i in range(len(self.h_energies))],
+                [f"H Energy Label {i + 1!s}" for i in range(len(self.h_energies))],
             ),
             DataProductVariable(
                 HE4_ENERGY_LABEL_VAR_NAME,
                 [
-                    f"He4 Energy Label {str(i + 1)}"
+                    f"He4 Energy Label {i + 1!s}"
                     for i in range(len(self.he4_energies))
                 ],
             ),
             DataProductVariable(
                 CNO_ENERGY_LABEL_VAR_NAME,
                 [
-                    f"CNO Energy Label {str(i + 1)}"
+                    f"CNO Energy Label {i + 1!s}"
                     for i in range(len(self.cno_energies))
                 ],
             ),
             DataProductVariable(
                 NE_MG_SI_ENERGY_LABEL_VAR_NAME,
                 [
-                    f"NeMgSi Energy Label {str(i + 1)}"
+                    f"NeMgSi Energy Label {i + 1!s}"
                     for i in range(len(self.ne_mg_si_energies))
                 ],
             ),
             DataProductVariable(
                 IRON_ENERGY_LABEL_VAR_NAME,
                 [
-                    f"Fe Energy Label {str(i + 1)}"
+                    f"Fe Energy Label {i + 1!s}"
                     for i in range(len(self.iron_energies))
                 ],
             ),

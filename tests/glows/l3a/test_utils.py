@@ -8,9 +8,9 @@ from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3a.models import GlowsL2Data, GlowsL2Header
 from imap_l3_processing.glows.l3a.utils import (
-    read_l2_glows_data,
-    create_glows_l3a_from_dictionary,
     create_glows_l3a_dictionary_from_cdf,
+    create_glows_l3a_from_dictionary,
+    read_l2_glows_data,
 )
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_test_data_path

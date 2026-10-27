@@ -72,7 +72,7 @@ import pint_xarray  # noqa: F401
 import xarray as xr
 
 from imap_l3_processing.constants import HE_PUI_PARTICLE_MASS_PER_CHARGE_M_P_PER_E
-from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path
+from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path
 
 OUTPUT_PATH = get_test_data_path("swapi/pui_count_rate_reference.csv")
 

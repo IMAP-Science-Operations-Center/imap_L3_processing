@@ -12,7 +12,7 @@ from imap_l3_processing.cdf.cdf_utils import (
     read_numeric_variable,
     read_variable_and_mask_fill_values,
 )
-from imap_l3_processing.models import DataProductVariable, DataProduct
+from imap_l3_processing.models import DataProduct, DataProductVariable
 
 CODICE_LO_L2_NUM_PRIORITIES = 7
 

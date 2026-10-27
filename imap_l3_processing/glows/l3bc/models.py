@@ -7,13 +7,12 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from itertools import chain
 from pathlib import Path
-from typing import Optional
 
 import imap_data_access
 import numpy as np
 from spacepy import pycdf
 
-from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH, ONE_SECOND_IN_NANOSECONDS
+from imap_l3_processing.constants import ONE_SECOND_IN_NANOSECONDS, TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.l3bc.dependency_validator import validate_dependencies
 from imap_l3_processing.glows.l3bc.utils import get_date_range_of_cr
 from imap_l3_processing.models import DataProduct, DataProductVariable, InputMetadata
@@ -108,7 +107,7 @@ class CRToProcess:
     cr_end_date: datetime
     cr_rotation_number: int
 
-    _buffer_time: Optional[timedelta] = None
+    _buffer_time: timedelta | None = None
 
     def pipeline_dependency_file_names(self) -> set[str]:
         ancillary_files = {

@@ -9,27 +9,26 @@ from dataclasses import replace
 from datetime import datetime, timedelta
 from pathlib import Path
 from subprocess import run
-from typing import Optional
-from zipfile import ZipFile, ZIP_DEFLATED
+from zipfile import ZIP_DEFLATED, ZipFile
 
 import numpy as np
 from imap_data_access.file_validation import (
-    generate_imap_file_path,
-    ScienceFilePath,
     AncillaryFilePath,
+    ScienceFilePath,
     Version,
+    generate_imap_file_path,
 )
 from imap_data_access.processing_input import ProcessingInputCollection
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.descriptors import (
     GLOWS_L3A_DESCRIPTOR,
-    GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
-    GLOWS_L3E_ULTRA_HF_DESCRIPTOR,
-    GLOWS_L3D_DESCRIPTOR,
     GLOWS_L3B_DESCRIPTOR,
     GLOWS_L3C_DESCRIPTOR,
+    GLOWS_L3D_DESCRIPTOR,
     GLOWS_L3E_LO_DESCRIPTOR,
+    GLOWS_L3E_ULTRA_HF_DESCRIPTOR,
+    GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
 )
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
 from imap_l3_processing.glows.l3a.glows_toolkit.l3a_data import L3aData
@@ -41,10 +40,10 @@ from imap_l3_processing.glows.l3bc.glows_l3bc_initializer import (
     GlowsL3BCInitializerData,
 )
 from imap_l3_processing.glows.l3bc.models import (
+    ExternalDependencies,
+    GlowsL3BCProcessorOutput,
     GlowsL3BIonizationRate,
     GlowsL3CSolarWind,
-    GlowsL3BCProcessorOutput,
-    ExternalDependencies,
 )
 from imap_l3_processing.glows.l3bc.science.filter_out_bad_days import filter_l3a_files
 from imap_l3_processing.glows.l3bc.science.generate_l3bc import generate_l3bc
@@ -53,10 +52,10 @@ from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependen
 from imap_l3_processing.glows.l3d.glows_l3d_initializer import GlowsL3DInitializer
 from imap_l3_processing.glows.l3d.models import GlowsL3DProcessorOutput
 from imap_l3_processing.glows.l3d.utils import (
-    create_glows_l3b_json_file_from_cdf,
-    create_glows_l3c_json_file_from_cdf,
     PATH_TO_L3D_TOOLKIT,
     convert_json_to_l3d_data_product,
+    create_glows_l3b_json_file_from_cdf,
+    create_glows_l3c_json_file_from_cdf,
     get_parent_file_names_from_l3d_json,
     rename_l3d_text_outputs,
 )
@@ -69,10 +68,10 @@ from imap_l3_processing.glows.l3e.glows_l3e_initializer import (
 from imap_l3_processing.glows.l3e.glows_l3e_lo_model import GlowsL3ELoData
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import GlowsL3EUltraData
 from imap_l3_processing.glows.l3e.glows_l3e_utils import (
-    determine_call_args_for_l3e_executable,
-    get_lo_pivot_angles,
     compute_glows_flags_for_repoint,
+    determine_call_args_for_l3e_executable,
     determine_spacecraft_info_using_predict_if_needed,
+    get_lo_pivot_angles,
 )
 from imap_l3_processing.glows.l3e.reprocess_info import fetch_reprocess_info
 from imap_l3_processing.models import InputMetadata, VersionMap
@@ -201,7 +200,7 @@ class GlowsProcessor(Processor):
 
     def process_l3a(
         self, dependencies: GlowsL3ADependencies
-    ) -> Optional[GlowsL3LightCurve]:
+    ) -> GlowsL3LightCurve | None:
         data = dependencies.data
         l3_data = L3aData(dependencies.ancillary_files)
         l3_data.process_l2_data_file(data)
@@ -346,7 +345,7 @@ def process_l3bc(processor, initializer_data: GlowsL3BCInitializerData):
 
 def process_l3d(
     dependencies: GlowsL3DDependencies, version: Version
-) -> Optional[GlowsL3DProcessorOutput]:
+) -> GlowsL3DProcessorOutput | None:
 
     collections.deque(
         (

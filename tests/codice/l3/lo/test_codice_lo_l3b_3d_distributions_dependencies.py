@@ -1,17 +1,17 @@
 import unittest
-from unittest.mock import patch, sentinel, call
+from unittest.mock import call, patch, sentinel
 
 from imap_data_access.processing_input import (
+    AncillaryInput,
     ProcessingInputCollection,
     ScienceInput,
-    AncillaryInput,
 )
 
 from imap_l3_processing.codice.l3.lo.codice_lo_l3b_3d_distributions_dependencies import (
-    CodiceLoL3b3dDistributionsDependencies,
-    MASS_SPECIES_BIN_LOOKUP_DESCRIPTOR,
-    GEOMETRIC_FACTOR_LOOKUP_DESCRIPTOR,
     EFFICIENCY_FACTOR_LOOKUP_DESCRIPTOR,
+    GEOMETRIC_FACTOR_LOOKUP_DESCRIPTOR,
+    MASS_SPECIES_BIN_LOOKUP_DESCRIPTOR,
+    CodiceLoL3b3dDistributionsDependencies,
 )
 from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import (
     ESA_TO_ENERGY_PER_CHARGE_LOOKUP_DESCRIPTOR,

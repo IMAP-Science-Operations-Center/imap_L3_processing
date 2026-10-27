@@ -7,9 +7,9 @@ from imap_data_access.file_validation import Version
 from spacepy import pycdf
 
 from imap_l3_processing.cdf.cdf_utils import (
-    write_cdf,
-    read_variable_and_mask_fill_values,
     read_numeric_variable,
+    read_variable_and_mask_fill_values,
+    write_cdf,
 )
 from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_l3_processing.models import (

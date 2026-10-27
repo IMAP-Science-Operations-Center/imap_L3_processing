@@ -1,6 +1,5 @@
 import unittest
 
-
 from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_mass_correction_lookup_table import (
     CodiceHiMassCorrectionLookupTable,
 )

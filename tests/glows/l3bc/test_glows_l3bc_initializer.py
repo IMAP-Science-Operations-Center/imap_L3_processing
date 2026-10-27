@@ -2,7 +2,7 @@ import dataclasses
 import unittest
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import Mock, patch, call, sentinel
+from unittest.mock import Mock, call, patch, sentinel
 
 from imap_data_access import ProcessingInputCollection, RepointInput
 from imap_data_access.file_validation import Version

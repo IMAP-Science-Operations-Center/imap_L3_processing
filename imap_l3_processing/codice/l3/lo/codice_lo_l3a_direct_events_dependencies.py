@@ -5,16 +5,16 @@ from imap_data_access import download
 from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput
 
 from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import (
-    EnergyLookup,
     ESA_TO_ENERGY_PER_CHARGE_LOOKUP_DESCRIPTOR,
+    EnergyLookup,
 )
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import (
     MassCoefficientLookup,
 )
 from imap_l3_processing.codice.l3.lo.models import (
-    CodiceLoL2DirectEventData,
-    CodiceLoL1aSWPriorityRates,
     CodiceLoL1aNSWPriorityRates,
+    CodiceLoL1aSWPriorityRates,
+    CodiceLoL2DirectEventData,
 )
 
 SW_PRIORITY_DESCRIPTOR = "lo-sw-priority"

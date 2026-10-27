@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Union
 
 import numpy as np
 from spacepy.pycdf import CDF
@@ -149,6 +148,6 @@ class HitL1Data:
     event_binary: np.ndarray[str]
 
     @classmethod
-    def read_from_cdf(cls, cdf_file_path: Union[Path, str]):
+    def read_from_cdf(cls, cdf_file_path: Path | str):
         with CDF(str(cdf_file_path)) as cdf:
             return cls(cdf["epoch"][...], cdf["pha_raw"][...])

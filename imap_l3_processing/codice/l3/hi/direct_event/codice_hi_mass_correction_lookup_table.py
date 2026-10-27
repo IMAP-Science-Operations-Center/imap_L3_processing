@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-SSD_SHEET_NAME_FORMAT = "ssd(\d+)"
+SSD_SHEET_NAME_FORMAT = r"ssd(\d+)"
 
 
 @dataclass

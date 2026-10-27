@@ -1,11 +1,12 @@
 # May 18, 2023 - NAS
 # in Version 2 we are adding the TOF3 < 20 ns criterion
 #!/usr/bin/python
-import numpy as np
 import argparse
-import pandas as pd
 import os
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
 
 PI = np.pi
 
@@ -142,7 +143,7 @@ for pp in [75, 90, 105]:
             counts = df["counts"].values
             expo = df["expo"].values
 
-            for ia in range(0, 60):
+            for ia in range(60):
                 ra = ps_ra[ia]
                 dec = ps_dec[ia]
 
@@ -159,8 +160,8 @@ for pp in [75, 90, 105]:
                 h_cnts_map[jmap, imap] += counts[ia]
                 exposure[jmap, imap] += expo[ia]
 
-        for imap in range(0, nra):
-            for jmap in range(0, ncolat):
+        for imap in range(nra):
+            for jmap in range(ncolat):
                 expo = exposure[jmap, imap]
                 energy = esa_energy[esa]
                 # if el == 'Hy':

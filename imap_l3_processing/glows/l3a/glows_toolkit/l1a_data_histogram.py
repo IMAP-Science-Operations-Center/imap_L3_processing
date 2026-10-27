@@ -3,10 +3,12 @@ Author: Marek Strumik, maro at cbk.waw.pl
 """
 
 import json
+
 import numpy as np
-from .constants import VERSION, MAIN_TIME_FIELD
-from .time import Time
+
+from .constants import MAIN_TIME_FIELD, VERSION
 from .funcs import time_sec_subsec_to_utc
+from .time import Time
 
 
 class L1aDataHistogram:

@@ -2,24 +2,26 @@
 Author: Marek Strumik, maro at cbk.waw.pl
 """
 
-import json
 import copy
+import json
+
 import numpy as np
 import pandas as pd
-from astropy.coordinates import SkyCoord
 from astropy import units as u
+from astropy.coordinates import SkyCoord
+
 from .constants import (
-    VERSION,
-    SCAN_CIRCLE_ANGULAR_RADIUS,
     L1B_L2_HIST_FLAG_FIELDS,
     MAIN_TIME_FIELD,
+    SCAN_CIRCLE_ANGULAR_RADIUS,
+    VERSION,
 )
 from .funcs import (
-    time_sec_subsec_to_utc,
-    time_sec_subsec_to_float64,
-    flags_deserialize,
-    decode_ancillary_parameters_avg_stddev,
     check_if_contains_actual_data,
+    decode_ancillary_parameters_avg_stddev,
+    flags_deserialize,
+    time_sec_subsec_to_float64,
+    time_sec_subsec_to_utc,
 )
 from .geom_fun_libr_box import spin2lb
 

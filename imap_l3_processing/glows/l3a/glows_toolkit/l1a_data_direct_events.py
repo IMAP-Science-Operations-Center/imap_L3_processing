@@ -2,12 +2,14 @@
 Author: Marek Strumik, maro at cbk.waw.pl
 """
 
-import json
 import copy
+import json
+
 import numpy as np
-from .constants import VERSION, SUBSECOND_LIMIT
-from .funcs import time_sec_subsec_to_utc
+
+from .constants import SUBSECOND_LIMIT, VERSION
 from .direct_event import DirectEvent
+from .funcs import time_sec_subsec_to_utc
 
 
 class L1aDataDirectEvents:
@@ -342,8 +344,5 @@ class L1aDataDirectEvents:
 
         file_name = self.generate_file_name("dat")
         file_handler = open(file_name, "w")
-        for i, x in enumerate(self.direct_events):
-            file_handler.write(
-                "%d %7d %3d\n" % (x.seconds, x.subseconds, x.impulse_length)
-            )
+        file_handler.writelines("%d %7d %3d\n" % (x.seconds, x.subseconds, x.impulse_length) for i, x in enumerate(self.direct_events))
         file_handler.close()

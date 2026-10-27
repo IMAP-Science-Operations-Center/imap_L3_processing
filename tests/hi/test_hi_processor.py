@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import patch, call, sentinel, Mock
+from unittest.mock import Mock, call, patch, sentinel
 
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput
@@ -16,8 +16,8 @@ from imap_l3_processing.maps.hilo_l3_survival_dependencies import (
     HiLoL3SurvivalDependencies,
 )
 from imap_l3_processing.maps.map_models import (
-    RectangularSpectralIndexDataProduct,
     RectangularIntensityDataProduct,
+    RectangularSpectralIndexDataProduct,
 )
 from imap_l3_processing.models import InputMetadata, Instrument
 from tests.maps.test_builders import create_rectangular_intensity_map_data
