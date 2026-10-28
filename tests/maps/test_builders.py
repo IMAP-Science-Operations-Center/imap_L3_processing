@@ -275,15 +275,19 @@ def create_rectangular_spectral_index_map_data(
 
 def create_l1c_pset(
     epoch: datetime = datetime(2025, 4, 15, 12),
-    epoch_delta: np.ndarray = np.array([43200_000_000_000]),
+    epoch_delta: np.ndarray | None | tuple = (),
     repointing: int = 1,
-    energy_steps: np.ndarray = np.array([1]),
+    energy_steps: np.ndarray | None = None,
     exposures: np.ndarray | None = None,
     pointing_start_met=None,
     pointing_end_met=None,
     hae_longitude=None,
     hae_latitude=None,
 ) -> InputRectangularPointingSet:
+    if epoch_delta == ():
+        epoch_delta = np.array([43200_000_000_000])
+    if energy_steps is None:
+        energy_steps = np.array([1])
     epoch_j2000 = np.array([spiceypy.datetime2et(epoch)]) * 1e9
     exposures = (
         exposures
@@ -314,11 +318,15 @@ def create_l1c_pset(
 def create_l3e_pset(
     epoch: datetime = datetime(2025, 4, 15, 12),
     repointing: int = 1,
-    energy_steps=np.array([0.5, 5.0, 12.0]),
-    spin_angle=np.arange(0, 360),
+    energy_steps: np.ndarray | None = None,
+    spin_angle: np.ndarray | None = None,
     sp: np.ndarray | None = None,
     flags: np.ndarray | None = None,
 ) -> GlowsL3eRectangularMapInputData:
+    if energy_steps is None:
+        energy_steps = np.array([0.5, 5.0, 12.0])
+    if spin_angle is None:
+        spin_angle = np.arange(0, 360)
     epoch_j2000 = np.array([spiceypy.datetime2et(epoch)]) * 1e9
     sp = sp or np.full(shape=(1, len(energy_steps), len(spin_angle)), fill_value=0.5)
     flags = flags or np.full(1, 0, dtype=np.uint16)

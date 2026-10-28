@@ -521,7 +521,7 @@ def _build_glows_l3e_ultra(
     healpix_pixels = np.arange(num_pixels)
 
     healpix_grid = HEALPix(nside)
-    lon, lat = healpix_grid.healpix_to_lonlat(healpix_pixels)
+    _lon, _lat = healpix_grid.healpix_to_lonlat(healpix_pixels)
 
     return UltraGlowsL3eData(
         epoch=datetime.now(),
@@ -540,7 +540,7 @@ def _create_ultra_l1c_pset(
     counts: np.ndarray = None,
     latitude: np.ndarray = None,
     longitude: np.ndarray = None,
-    epoch: datetime = None,
+    epoch: datetime | None = None,
     epoch_delta: int = ONE_SECOND_IN_NANOSECONDS * SECONDS_PER_DAY,
 ):
     epoch = datetime(2025, 10, 1, 0) if epoch is None else epoch

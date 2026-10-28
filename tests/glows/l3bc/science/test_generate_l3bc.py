@@ -213,7 +213,7 @@ class TestGenerateL3BC(TestCase):
             version=Version(1, 1),
             repointing_file_path=sentinel.repointing_file_path,
         )
-        l3b, l3c = generate_l3bc(dependencies)
+        l3b, _l3c = generate_l3bc(dependencies)
 
         expected_l3a_parent_files = [
             "imap_glows_l3a_hist_20100511-repoint00131_v012.cdf",
@@ -229,3 +229,4 @@ class TestGenerateL3BC(TestCase):
         self.assertEqual(
             expected_l3a_parent_files, l3b["header"]["l3a_input_files_name"]
         )
+

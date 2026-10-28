@@ -47,14 +47,14 @@ class TestGoodnessOfFit(TestCase):
         observed_rates = model_rates + SWAPI_BACKGROUND_RATE
 
         max_cutoff = MAX_CUTOFF_SPEED_KMS
-        defaults = dict(
-            esa_energies=esa_energies,
-            model_rates=model_rates,
-            observed_rates=observed_rates,
-            cutoff_speed_kms=max_cutoff - 50.0,
-            sw_speed_kms=400.0,
-            ionization_rate=1e-7,
-        )
+        defaults = {
+            "esa_energies": esa_energies,
+            "model_rates": model_rates,
+            "observed_rates": observed_rates,
+            "cutoff_speed_kms": max_cutoff - 50.0,
+            "sw_speed_kms": 400.0,
+            "ionization_rate": 1e-7,
+        }
 
         chunk_mean_model_rates = model_rates.mean(axis=0)
         peak_model_rate = chunk_mean_model_rates.max()
@@ -67,27 +67,27 @@ class TestGoodnessOfFit(TestCase):
         )  # 4 points by construction: three zero, one nonzero
 
         def extra_counts_past_cutoff(fraction: float) -> dict:
-            return dict(
-                observed_rates=model_rates
+            return {
+                "observed_rates": model_rates
                 + past_cutoff_mask * peak_model_rate * fraction
-            )
+            }
 
         def poisson_sampled_observed_rates() -> dict:
             livetime = 0.145
             expected_counts = observed_rates * livetime
             sampled_counts = np.random.default_rng(0).poisson(expected_counts)
-            return dict(observed_rates=sampled_counts / livetime)
+            return {"observed_rates": sampled_counts / livetime}
 
         cases = {
             "all good": (True, {}),
             "cutoff just below maximum": (
                 True,
-                dict(cutoff_speed_kms=max_cutoff - 1.0),
+                {"cutoff_speed_kms": max_cutoff - 1.0},
             ),
-            "cutoff at maximum": (True, dict(cutoff_speed_kms=max_cutoff)),
-            "cutoff above maximum": (False, dict(cutoff_speed_kms=max_cutoff + 1.0)),
-            "model underpredicts a little": (True, dict(model_rates=model_rates * 0.9)),
-            "model underpredicts a lot": (False, dict(model_rates=model_rates * 0.8)),
+            "cutoff at maximum": (True, {"cutoff_speed_kms": max_cutoff}),
+            "cutoff above maximum": (False, {"cutoff_speed_kms": max_cutoff + 1.0}),
+            "model underpredicts a little": (True, {"model_rates": model_rates * 0.9}),
+            "model underpredicts a lot": (False, {"model_rates": model_rates * 0.8}),
             "small extra counts bit past cutoff": (True, extra_counts_past_cutoff(0.3)),
             "too much past cutoff": (False, extra_counts_past_cutoff(0.5)),
             "counting noise only": (True, poisson_sampled_observed_rates()),
@@ -106,14 +106,14 @@ class TestGoodnessOfFit(TestCase):
 
         # 300 km/s keeps 1.5 * v_sw under MAX_CUTOFF_SPEED_KMS
         sw_speed = 300.0
-        defaults = dict(
-            esa_energies=esa_energies,
-            model_rates=model_rates,
-            observed_rates=model_rates + SWAPI_BACKGROUND_RATE,
-            cutoff_speed_kms=sw_speed,
-            sw_speed_kms=sw_speed,
-            ionization_rate=1e-7,
-        )
+        defaults = {
+            "esa_energies": esa_energies,
+            "model_rates": model_rates,
+            "observed_rates": model_rates + SWAPI_BACKGROUND_RATE,
+            "cutoff_speed_kms": sw_speed,
+            "sw_speed_kms": sw_speed,
+            "ionization_rate": 1e-7,
+        }
 
         min_cutoff_speed = sw_speed * MIN_CUTOFF_SPEED_RATIO
         max_cutoff_speed = sw_speed * MAX_CUTOFF_SPEED_RATIO
@@ -121,51 +121,51 @@ class TestGoodnessOfFit(TestCase):
             "all good": (True, {}),
             "cutoff speed below the lowest allowed multiple": (
                 False,
-                dict(cutoff_speed_kms=min_cutoff_speed - 1.0),
+                {"cutoff_speed_kms": min_cutoff_speed - 1.0},
             ),
             "cutoff speed at the lowest allowed multiple of the bulk speed": (
                 True,
-                dict(cutoff_speed_kms=min_cutoff_speed),
+                {"cutoff_speed_kms": min_cutoff_speed},
             ),
             "cutoff speed above the lowest allowed multiple": (
                 True,
-                dict(cutoff_speed_kms=min_cutoff_speed + 1.0),
+                {"cutoff_speed_kms": min_cutoff_speed + 1.0},
             ),
             "cutoff speed below the highest allowed multiple": (
                 True,
-                dict(cutoff_speed_kms=max_cutoff_speed - 1.0),
+                {"cutoff_speed_kms": max_cutoff_speed - 1.0},
             ),
             "cutoff speed at the highest allowed multiple of the bulk speed": (
                 True,
-                dict(cutoff_speed_kms=max_cutoff_speed),
+                {"cutoff_speed_kms": max_cutoff_speed},
             ),
             "cutoff speed above the highest allowed multiple": (
                 False,
-                dict(cutoff_speed_kms=max_cutoff_speed + 1.0),
+                {"cutoff_speed_kms": max_cutoff_speed + 1.0},
             ),
             "ionization rate below the lower limit": (
                 False,
-                dict(ionization_rate=MIN_IONIZATION_RATE * 0.99),
+                {"ionization_rate": MIN_IONIZATION_RATE * 0.99},
             ),
             "ionization rate at the lower limit": (
                 True,
-                dict(ionization_rate=MIN_IONIZATION_RATE),
+                {"ionization_rate": MIN_IONIZATION_RATE},
             ),
             "ionization rate above the lower limit": (
                 True,
-                dict(ionization_rate=MIN_IONIZATION_RATE * 1.01),
+                {"ionization_rate": MIN_IONIZATION_RATE * 1.01},
             ),
             "ionization rate below the upper limit": (
                 True,
-                dict(ionization_rate=MAX_IONIZATION_RATE * 0.99),
+                {"ionization_rate": MAX_IONIZATION_RATE * 0.99},
             ),
             "ionization rate at the upper limit": (
                 True,
-                dict(ionization_rate=MAX_IONIZATION_RATE),
+                {"ionization_rate": MAX_IONIZATION_RATE},
             ),
             "ionization rate above the upper limit": (
                 False,
-                dict(ionization_rate=MAX_IONIZATION_RATE * 1.01),
+                {"ionization_rate": MAX_IONIZATION_RATE * 1.01},
             ),
         }
         for case_name, (expected, overrides) in cases.items():

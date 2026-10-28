@@ -55,8 +55,10 @@ def build_header(file_type, hmin, hmax):
         " skyframe=ECLIPJ2000 posframe=J2000",
         "",
         " chat=0 smearspread='0/0/0' calc='0/0/0'",
-        " frame_epoch=914561779.587 resp_class=lo_triple "
-        "zaxis_ra_deg=+274.476346 zaxis_dec_deg=-22.782473",
+        (
+            " frame_epoch=914561779.587 resp_class=lo_triple "
+            "zaxis_ra_deg=+274.476346 zaxis_dec_deg=-22.782473"
+        ),
         " ram_ra_deg=+186.7725 ram_dec_deg=-3.2847 mtype_list='40' energy_list='21,41'",
         " check_mt_list='40' check_species='20' rate_factor='1000' e_nominal='0.015'",
         "",

@@ -61,7 +61,7 @@ class TestGlowsL3DInitializer(unittest.TestCase):
             "imap_glows_lya-2026d_19470301_v000.dat",
             "imap_glows_uv-anisotropy-2026d_19470301_v000.dat",
             "imap_glows_photoion-2026d_19470301_v000.dat",
-            "imap_glows_electron-density-2026d_19470301_v000.dat"
+            "imap_glows_electron-density-2026d_19470301_v000.dat",
             "lyman-alpha-composite.nc",
         }
 

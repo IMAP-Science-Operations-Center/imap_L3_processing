@@ -118,7 +118,7 @@ class TestBuildSolarWindFitContext(unittest.TestCase):
         """When every voltage is finite and positive, the context preserves count_rate and esa_voltage verbatim and builds one ResponseGrid per bin."""
         count_rate = np.array([10.0, 20.0, 30.0])
         esa_voltage = np.array([100.0, 200.0, 300.0])
-        ctx, response = self._call_factory(
+        ctx, _response = self._call_factory(
             count_rate=count_rate, esa_voltage=esa_voltage
         )
         np.testing.assert_array_equal(ctx.count_rate, count_rate)

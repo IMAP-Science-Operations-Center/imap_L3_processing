@@ -720,7 +720,7 @@ class TestCalculatePHA(unittest.TestCase):
                 self.assertEqual(expected_nan, np.isnan(result))
 
     def _create_detector_from_string(
-        self, detector_string: str, detector_group: str = None
+        self, detector_string: str, detector_group: str | None = None
     ):
         layer = int(detector_string[1])
         group = detector_group if detector_group is not None else "L1A4c"
@@ -734,7 +734,7 @@ class TestCalculatePHA(unittest.TestCase):
         )
 
     def _create_event_from_detectors_and_groups(
-        self, detectors: list[str], groups: list[str] = None
+        self, detectors: list[str], groups: list[str] | None = None
     ):
         if groups and len(detectors) != len(groups):
             self.assertTrue(

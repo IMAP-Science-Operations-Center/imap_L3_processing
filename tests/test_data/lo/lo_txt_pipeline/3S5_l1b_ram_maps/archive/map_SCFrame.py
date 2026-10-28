@@ -1,6 +1,8 @@
+#!/usr/bin/python
+
 # May 18, 2023 - NAS
 # in Version 2 we are adding the TOF3 < 20 ns criterion
-#!/usr/bin/python
+
 import argparse
 import os
 from pathlib import Path

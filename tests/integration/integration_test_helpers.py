@@ -185,13 +185,13 @@ class mock_imap_data_access:
         spice_file_paths = []
         for input_file in input_files:
             if not input_file.exists():
-                raise Exception(f"Could not find file {input_file}")
+                raise FileNotFoundError(f"Could not find file {input_file}")
             try:
                 imap_input_file_path = generate_imap_file_path(input_file.name)
                 valid_files.append(input_file)
                 if isinstance(imap_input_file_path, SPICEFilePath):
                     spice_file_paths.append(input_file)
-            except Exception:
+            except Exception:  # noqa: BLE001, S112
                 continue
         self.input_files = valid_files
 
@@ -219,7 +219,7 @@ class mock_imap_data_access:
         for file_path in self.input_files:
             try:
                 stage_input_file(file_path)
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -240,11 +240,12 @@ class mock_imap_data_access:
 
 
 def run_istp_compliance_check(cdf_path: Path):
-    cdf_as_json = requests.post(
-        "https://skteditor.heliophysics.net/cgi-bin/cdf2json.cgi",
-        files={"file": open(cdf_path, "rb")},
-    ).json()
-    cdf_json = list(cdf_as_json.values())[0]
+    with open(cdf_path, "rb") as cdffile:
+        cdf_as_json = requests.post(
+            "https://skteditor.heliophysics.net/cgi-bin/cdf2json.cgi",
+            files={"file": cdffile},
+        ).json()
+    cdf_json = next(iter(cdf_as_json.values()))
     return requests.post(
         "https://skteditor.heliophysics.net/cgi-bin/validate.cgi",
         json={cdf_path.name: cdf_json},

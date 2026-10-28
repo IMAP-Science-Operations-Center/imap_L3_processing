@@ -98,9 +98,9 @@ class TestSpectralFit(unittest.TestCase):
 
                 (
                     result_A,
-                    result_A_error,
+                    _result_A_error,
                     result_gamma,
-                    result_gamma_error,
+                    _result_gamma_error,
                     result_chi_square,
                 ) = fit_arrays_to_power_law(flux, uncertainty, energies)
                 fitted_flux = result_A * np.power(
@@ -131,10 +131,10 @@ class TestSpectralFit(unittest.TestCase):
 
                 (
                     result_a,
-                    result_a_error,
-                    result_gamma,
-                    result_gamma_error,
-                    result_chi_square,
+                    _result_a_error,
+                    _result_gamma,
+                    _result_gamma_error,
+                    _result_chi_square,
                 ) = fit_arrays_to_power_law(flux, uncertainty, energies)
                 self.assertGreater(result_a, 0)
 
@@ -312,9 +312,9 @@ class TestSpectralFit(unittest.TestCase):
 
                 (
                     scalar_coefficients,
-                    scalar_coefficient_error,
+                    _scalar_coefficient_error,
                     result,
-                    result_error,
+                    _result_error,
                     chisq,
                 ) = fit_arrays_to_power_law(flux, uncertainty, energies)
                 np.testing.assert_array_equal(
@@ -429,9 +429,9 @@ class TestSpectralFit(unittest.TestCase):
 
                 (
                     scalar_coefficients,
-                    scalar_coefficient_error,
+                    _scalar_coefficient_error,
                     result,
-                    result_error,
+                    _result_error,
                     chisq,
                 ) = fit_arrays_to_power_law(flux, uncertainty, energies)
                 np.testing.assert_array_equal(
@@ -468,9 +468,9 @@ class TestSpectralFit(unittest.TestCase):
 
                 (
                     scalar_coefficients,
-                    scalar_coefficient_error,
+                    _scalar_coefficient_error,
                     result,
-                    result_error,
+                    _result_error,
                     chisq,
                 ) = fit_arrays_to_power_law(flux, uncertainty, energies)
                 np.testing.assert_array_equal(
@@ -556,9 +556,9 @@ class TestSpectralFit(unittest.TestCase):
 
                 (
                     scalar_coefficients,
-                    scalar_coefficient_error,
+                    _scalar_coefficient_error,
                     result,
-                    result_error,
+                    _result_error,
                     chisq,
                 ) = fit_arrays_to_power_law(flux, uncertainty, energies)
                 np.testing.assert_array_almost_equal(

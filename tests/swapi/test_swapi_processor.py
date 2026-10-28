@@ -80,11 +80,11 @@ class TestSwapiProcessor(TestCase):
         returned_chunk_epoch = 10 + THIRTY_SECONDS_IN_NANOSECONDS
         returned_velocity_rtn_sc = np.array([370.0, 10.0, 5.0])
 
-        proton_runner_result = dict(
-            epoch=np.array([returned_chunk_epoch]),
-            proton_sw_velocity_rtn=np.array([returned_velocity_rtn_sc]),
-            quality_flags=np.array([SwapiL3Flags.NONE]),
-        )
+        proton_runner_result = {
+            "epoch": np.array([returned_chunk_epoch]),
+            "proton_sw_velocity_rtn": np.array([returned_velocity_rtn_sc]),
+            "quality_flags": np.array([SwapiL3Flags.NONE]),
+        }
 
         initial_epoch = 10
 
@@ -122,14 +122,14 @@ class TestSwapiProcessor(TestCase):
             coincidence_count_rate_uncertainty_fifty,
         )
 
-        pui_runner_result = dict(
-            epoch=np.array([initial_epoch + FIVE_MINUTES_IN_NANOSECONDS]),
-            ionization_rate=np.array([2]),
-            cutoff_speed=np.array([3]),
-            density=np.array([5]),
-            temperature=np.array([6]),
-            quality_flags=np.array([SwapiL3Flags.NONE]),
-        )
+        pui_runner_result = {
+            "epoch": np.array([initial_epoch + FIVE_MINUTES_IN_NANOSECONDS]),
+            "ionization_rate": np.array([2]),
+            "cutoff_speed": np.array([3]),
+            "density": np.array([5]),
+            "temperature": np.array([6]),
+            "quality_flags": np.array([SwapiL3Flags.NONE]),
+        }
         mock_runner = mock_parallel_chunk_runner_class.return_value
         mock_runner.run.side_effect = [proton_runner_result, pui_runner_result]
 
@@ -322,25 +322,25 @@ class TestSwapiProcessor(TestCase):
             f"imap_{instrument}_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{dependency_start_date}_{version}.cdf"
         )
 
-        runner_result = dict(
-            epoch=np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]),
-            proton_sw_speed=np.array([400000.0]),
-            proton_sw_speed_uncert=np.array([2.0]),
-            proton_sw_speed_sun=np.array([401000.0]),
-            proton_sw_speed_sun_uncert=np.array([2.5]),
-            proton_sw_temperature=np.array([99000.0]),
-            proton_sw_temperature_uncert=np.array([1000.0]),
-            proton_sw_density=np.array([4.97]),
-            proton_sw_density_uncert=np.array([0.25]),
-            proton_sw_clock_angle=np.array([200.0]),
-            proton_sw_clock_angle_uncert=np.array([0.25]),
-            proton_sw_deflection_angle=np.array([5.0]),
-            proton_sw_deflection_angle_uncert=np.array([0.001]),
-            proton_sw_velocity_rtn_sun=np.array([[400.0, 10.0, 5.0]]),
-            proton_sw_velocity_rtn=np.array([[370.0, 10.0, 5.0]]),
-            proton_sw_velocity_rtn_covariance=np.array([np.eye(3)]),
-            quality_flags=np.array([SwapiL3Flags.NONE]),
-        )
+        runner_result = {
+            "epoch": np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]),
+            "proton_sw_speed": np.array([400000.0]),
+            "proton_sw_speed_uncert": np.array([2.0]),
+            "proton_sw_speed_sun": np.array([401000.0]),
+            "proton_sw_speed_sun_uncert": np.array([2.5]),
+            "proton_sw_temperature": np.array([99000.0]),
+            "proton_sw_temperature_uncert": np.array([1000.0]),
+            "proton_sw_density": np.array([4.97]),
+            "proton_sw_density_uncert": np.array([0.25]),
+            "proton_sw_clock_angle": np.array([200.0]),
+            "proton_sw_clock_angle_uncert": np.array([0.25]),
+            "proton_sw_deflection_angle": np.array([5.0]),
+            "proton_sw_deflection_angle_uncert": np.array([0.001]),
+            "proton_sw_velocity_rtn_sun": np.array([[400.0, 10.0, 5.0]]),
+            "proton_sw_velocity_rtn": np.array([[370.0, 10.0, 5.0]]),
+            "proton_sw_velocity_rtn_covariance": np.array([np.eye(3)]),
+            "quality_flags": np.array([SwapiL3Flags.NONE]),
+        }
         mock_runner = mock_parallel_chunk_runner_class.return_value
         mock_runner.run.return_value = runner_result
 
@@ -493,21 +493,21 @@ class TestSwapiProcessor(TestCase):
             epoch, energy, coincidence_count_rate, coincidence_count_rate_uncertainty
         )
 
-        runner_result = dict(
-            epoch=np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]),
-            alpha_sw_speed=np.array([450.0]),
-            alpha_sw_speed_uncert=np.array([1.0]),
-            alpha_sw_speed_sun=np.array([480.0]),
-            alpha_sw_speed_sun_uncert=np.array([1.4]),
-            alpha_sw_density=np.array([0.15]),
-            alpha_sw_density_uncert=np.array([0.01]),
-            alpha_sw_temperature=np.array([400000.0]),
-            alpha_sw_temperature_uncert=np.array([2000.0]),
-            alpha_sw_velocity_rtn_sun=np.array([[480.0, 5.0, 1.0]]),
-            alpha_sw_velocity_rtn=np.array([[450.0, 5.0, 1.0]]),
-            alpha_sw_velocity_rtn_covariance=np.array([np.eye(3)]),
-            quality_flags=np.array([int(SwapiL3Flags.NONE)]),
-        )
+        runner_result = {
+            "epoch": np.array([initial_epoch + THIRTY_SECONDS_IN_NANOSECONDS]),
+            "alpha_sw_speed": np.array([450.0]),
+            "alpha_sw_speed_uncert": np.array([1.0]),
+            "alpha_sw_speed_sun": np.array([480.0]),
+            "alpha_sw_speed_sun_uncert": np.array([1.4]),
+            "alpha_sw_density": np.array([0.15]),
+            "alpha_sw_density_uncert": np.array([0.01]),
+            "alpha_sw_temperature": np.array([400000.0]),
+            "alpha_sw_temperature_uncert": np.array([2000.0]),
+            "alpha_sw_velocity_rtn_sun": np.array([[480.0, 5.0, 1.0]]),
+            "alpha_sw_velocity_rtn": np.array([[450.0, 5.0, 1.0]]),
+            "alpha_sw_velocity_rtn_covariance": np.array([np.eye(3)]),
+            "quality_flags": np.array([int(SwapiL3Flags.NONE)]),
+        }
         mock_runner = mock_parallel_chunk_runner_class.return_value
         mock_runner.run.return_value = runner_result
 

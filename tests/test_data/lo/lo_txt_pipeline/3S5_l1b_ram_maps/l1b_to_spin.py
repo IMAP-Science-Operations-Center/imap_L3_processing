@@ -304,7 +304,7 @@ for file in data_dir.glob("*.cdf"):
                 f"./outdir/{pivot_str}/daily/data_YD_{YD}_esa{ESA}.csv", index=False
             )
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"Skipping {file.name}: {e}")
 
 ## Move files into specific directory

@@ -58,4 +58,4 @@ addopts = "-ra"
 
 [tool.ruff]
 target-version = "py310"
-lint.ignore = ["DTZ001", "DTZ005", "E741"]
+lint.ignore = ["DTZ", "E741"]

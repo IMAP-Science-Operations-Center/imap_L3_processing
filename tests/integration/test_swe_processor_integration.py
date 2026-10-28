@@ -64,6 +64,7 @@ class SweProcessorIntegration(unittest.TestCase):
                     "--dependency",
                     "imap_swe_l3_sci-9ad0ccff_20260120_v009.json",
                 ],
+                check=False,
             )
 
             expected_file_path = ScienceFilePath(

@@ -79,18 +79,18 @@ def build_swe_configuration(**args) -> SweConfiguration:
 
 
 def build_moments(**args) -> Moments:
-    default_moments = dict(
-        alpha=1,
-        beta=2,
-        t_parallel=3e5,
-        t_perpendicular=4e5,
-        velocity_x=500,
-        velocity_y=600,
-        velocity_z=700,
-        density=80,
-        aoo=9,
-        ao=10,
-    )
+    default_moments = {
+        "alpha": 1,
+        "beta": 2,
+        "t_parallel": 3e5,
+        "t_perpendicular": 4e5,
+        "velocity_x": 500,
+        "velocity_y": 600,
+        "velocity_z": 700,
+        "density": 80,
+        "aoo": 9,
+        "ao": 10,
+    }
     default_moments.update(**args)
 
     return Moments(**default_moments)
@@ -356,12 +356,12 @@ def run_periodically(frequency: timedelta):
                 periodically_run_tests_path.write_text(
                     json.dumps(periodically_run_tests, indent=4)
                 )
-            except Exception as e:
+            except Exception:
                 periodically_run_tests[test_item.__name__] = None
                 periodically_run_tests_path.write_text(
                     json.dumps(periodically_run_tests, indent=4)
                 )
-                raise e
+                raise
 
         return test_thing
 

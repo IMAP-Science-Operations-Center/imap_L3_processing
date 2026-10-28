@@ -317,14 +317,14 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
                 def query_that_returns_empty_list_for_missing_ancillary(**kwargs):
                     if (
                         kwargs.get("table") == "ancillary"
-                        and kwargs["descriptor"] != missing_ancillary
+                        and kwargs["descriptor"] != missing_ancillary  # noqa: B023
                     ):
                         return [
                             {
                                 "start_date": "20100101",
                                 "end_date": None,
                                 "ingestion_date": "20100101 00:00:00",
-                                "file_path": f"some/ancillary/{missing_ancillary}",
+                                "file_path": f"some/ancillary/{missing_ancillary}",  # noqa: B023
                             }
                         ]
                     else:
@@ -593,7 +593,7 @@ class TestGlowsL3BCInitializer(unittest.TestCase):
         new_l3a_file = {
             "l3a_file_names": {
                 "imap_glows_l3a_hist_20100101-repoint000001_v001.cdf",
-                "imap_glows_l3a_hist_20100102-repoint000002_v001.cdf"
+                "imap_glows_l3a_hist_20100102-repoint000002_v001.cdf",
                 "imap_glows_l3a_hist_20100103-repoint000002_v001.cdf",
             }
         }

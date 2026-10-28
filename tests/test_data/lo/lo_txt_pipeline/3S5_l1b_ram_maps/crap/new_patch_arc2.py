@@ -231,11 +231,9 @@ def make_imap_lo_map(
     # lat_edges = compute_edges(lat_rot)
 
     # --- Plot using pcolormesh ---
-    fig, ax = plt.subplots(figsize=(10, 5), subplot_kw={"projection": ccrs.Mollweide()})
+    _fig, ax = plt.subplots(figsize=(10, 5), subplot_kw={"projection": ccrs.Mollweide()})
     ax.set_facecolor("darkblue")
 
-    vmin = vmin
-    vmax = vmax
     data_clipped = np.clip(data, vmin, vmax)
     data_filled = np.copy(data_clipped)
     data_filled[np.isnan(data_clipped)] = vmin
@@ -312,7 +310,7 @@ def make_imap_lo_map(
                     ax.text(
                         lon_here,
                         seg_lat[0],
-                        f"{int(round(lat_orig))}°",
+                        f"{round(lat_orig)}°",
                         transform=ccrs.PlateCarree(),
                         color="orange",
                         fontsize=6,

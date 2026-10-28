@@ -180,7 +180,6 @@ class TestSwapiL3ADependencies(unittest.TestCase):
 
         SwapiL3ADependencies.fetch_dependencies(input_collection)
 
-        _, kwargs = mock_from_file_paths.call_args
         args = mock_from_file_paths.call_args.args
         self.assertEqual(sentinel.mag_path, args[8])
         self.assertEqual(True, args[9])

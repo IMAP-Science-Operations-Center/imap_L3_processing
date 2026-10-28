@@ -392,8 +392,8 @@ class TestProtonChunkFitterPrecomputeGeometry(SpiceTestCase):
 
         with KernelPool(spice_test_paths):
             [geom1, geom2] = ProtonChunkFitter().precompute_geometry(chunks)
-            epoch1, rotation_matrices1, spacecraft_velocity1, flags1 = geom1
-            epoch2, rotation_matrices2, spacecraft_velocity2, flags2 = geom2
+            _epoch1, _rotation_matrices1, _spacecraft_velocity1, flags1 = geom1
+            _epoch2, _rotation_matrices2, _spacecraft_velocity2, flags2 = geom2
 
             self.assertEqual(SwapiL3Flags.PREDICTIVE_EPHEMERIS, flags1)
             self.assertEqual(SwapiL3Flags.NONE, flags2)
@@ -649,8 +649,8 @@ class TestAlphaChunkFitterPrecomputeGeometry(SpiceTestCase):
 
         with KernelPool(spice_test_paths):
             [geom1, geom2] = AlphaChunkFitter(None).precompute_geometry(chunks)
-            epoch1, rotation_matrices1, spacecraft_velocity1, bhat1, flags1 = geom1
-            epoch2, rotation_matrices2, spacecraft_velocity2, bhat2, flags2 = geom2
+            _epoch1, _rotation_matrices1, _spacecraft_velocity1, _bhat1, flags1 = geom1
+            _epoch2, _rotation_matrices2, _spacecraft_velocity2, _bhat2, flags2 = geom2
 
             self.assertEqual(SwapiL3Flags.PREDICTIVE_EPHEMERIS, flags1)
             self.assertEqual(SwapiL3Flags.NONE, flags2)
@@ -1393,6 +1393,7 @@ class TestPuiChunkFitterPrecomputeGeometry(SpiceTestCase):
                     [_pui_chunk(_EPOCH_TT2000)]
                 )
 
+                self.assertEqual(0, quality_flag)
                 if len(failed_minutes) > 2:
                     self.assertIsNone(fit_input)
                 else:

@@ -37,10 +37,12 @@ def _proton_params(
 
 
 def _single_sweep_ctx(
-    spin_axis_column=np.array([0.0, 1.0, 0.0]),
+    spin_axis_column: np.ndarray | None = None,
 ) -> SolarWindFitContext:
     """Single-sweep context whose +Y_inst column equals `spin_axis_column`,
     so `average_spin_axis_rtn(ctx.rotation_matrices)` returns that axis."""
+    if spin_axis_column is None:
+        spin_axis_column = np.array([0.0, 1.0, 0.0])
     rotation = np.eye(3)
     rotation[:, 1] = spin_axis_column
     return SolarWindFitContext(

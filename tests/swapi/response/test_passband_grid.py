@@ -55,7 +55,7 @@ def _gaussian_values_df(
 
 def _row_index_for_elevation(grid, elevation: float) -> int:
     """Index into `grid.values` for the row at the given target elevation."""
-    return int(round((elevation - grid.min_elevation) / grid.elevation_spacing))
+    return round((elevation - grid.min_elevation) / grid.elevation_spacing)
 
 
 class TestBuildPassbandGrid(unittest.TestCase):
@@ -309,13 +309,11 @@ class TestSpeedRatioRangeAtElevation(unittest.TestCase):
         past_upper_edge = min_el + spacing * n_rows + 100.0
         past_lower_edge = min_el - 100.0
 
-        with self.subTest(case="both NaN past upper edge"):
-            with self.assertRaises(ValueError):
-                speed_ratio_range_at_elevation(grid, float(past_upper_edge))
+        with self.subTest(case="both NaN past upper edge"), self.assertRaises(ValueError):
+            speed_ratio_range_at_elevation(grid, float(past_upper_edge))
 
-        with self.subTest(case="both NaN past lower edge"):
-            with self.assertRaises(ValueError):
-                speed_ratio_range_at_elevation(grid, float(past_lower_edge))
+        with self.subTest(case="both NaN past lower edge"), self.assertRaises(ValueError):
+            speed_ratio_range_at_elevation(grid, float(past_lower_edge))
 
         with self.subTest(case="only upper row NaN at top of active range"):
             lo, hi = speed_ratio_range_at_elevation(grid, float(upper_edge_one_nan))

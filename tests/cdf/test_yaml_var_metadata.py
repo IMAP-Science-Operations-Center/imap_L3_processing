@@ -51,7 +51,7 @@ class TestCdfUtils(TestCase):
                 )
 
                 self._epoch_meets_schema(yaml_data)
-                if "epoch_delta" in yaml_data.keys():
+                if "epoch_delta" in yaml_data:
                     self._epoch_delta_meets_schema(yaml_data)
 
     def test_type_of_min_max_attributes(self):
@@ -83,8 +83,8 @@ class TestCdfUtils(TestCase):
             with self.subTest(f"{filename}:{variable_key}"):
                 if (
                     "NAME" in variable
-                    and not variable["VAR_TYPE"] == "metadata"
-                    and not variable.get("DISPLAY_TYPE") == "no_plot"
+                    and variable["VAR_TYPE"] != "metadata"
+                    and variable.get("DISPLAY_TYPE") != "no_plot"
                 ):
                     self.assertIn(
                         "LABLAXIS",
@@ -197,8 +197,7 @@ class TestCdfUtils(TestCase):
     def test_attrs_that_point_to_another_var_actually_point_to_something(self):
         def _is_pointer_attr(attr: str) -> bool:
             return (
-                attr.startswith("DEPEND_")
-                or attr.startswith("LABL_PTR_")
+                attr.startswith(("DEPEND_", "LABL_PTR_"))
                 or attr in ["DELTA_PLUS_VAR", "DELTA_MINUS_VAR"]
             )
 
@@ -266,10 +265,8 @@ class TestCdfUtils(TestCase):
     def _epoch_meets_schema(self, yaml_data: dict):
         epoch_delta_types = ["epoch_delta", "epoch_delta_plus", "epoch_delta_minus"]
         if any(
-            [
                 epoch_delta_type in yaml_data
                 for epoch_delta_type in epoch_delta_types
-            ]
         ):
             self.assertEqual(20, len(yaml_data["epoch"].keys()))
         else:

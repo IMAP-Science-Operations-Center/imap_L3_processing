@@ -289,14 +289,13 @@ class TestGlowsL3EUtils(unittest.TestCase):
             ("fallback to 90 if no points at all", [], [], 90),
         ]
         for name, epochs, pivot_angles, expected in cases:
-            with self.subTest(name):
-                with tempfile.TemporaryDirectory() as tmp_dir:
-                    cdf_path = Path(tmp_dir, "l1b.cdf")
-                    with CDF(str(cdf_path), create=True) as cdf:
-                        cdf["epoch"] = epochs
-                        cdf["pcc_coarse_pot_pri"] = pivot_angles
-                    actual = get_lo_pivot_angle_from_l1b_file(cdf_path)
-                    self.assertEqual(expected, actual)
+            with self.subTest(name), tempfile.TemporaryDirectory() as tmp_dir:
+                cdf_path = Path(tmp_dir, "l1b.cdf")
+                with CDF(str(cdf_path), create=True) as cdf:
+                    cdf["epoch"] = epochs
+                    cdf["pcc_coarse_pot_pri"] = pivot_angles
+                actual = get_lo_pivot_angle_from_l1b_file(cdf_path)
+                self.assertEqual(expected, actual)
 
     def test_compute_glows_flags_for_repoint(self):
         epochs = [
@@ -346,22 +345,21 @@ class TestGlowsL3EUtils(unittest.TestCase):
         ]
 
         for name, repoint_midpoint, expected in cases:
-            with self.subTest(name):
-                with tempfile.TemporaryDirectory() as tmp_dir:
-                    cdf_path = Path(tmp_dir, "l3d.cdf")
-                    with CDF(str(cdf_path), create=True) as cdf:
-                        cdf["epoch"] = epochs
-                        cdf.new(
-                            "glows_flags",
-                            data=flags,
-                            type=const.CDF_UINT2,
-                            recVary=True,
-                        )
+            with self.subTest(name), tempfile.TemporaryDirectory() as tmp_dir:
+                cdf_path = Path(tmp_dir, "l3d.cdf")
+                with CDF(str(cdf_path), create=True) as cdf:
+                    cdf["epoch"] = epochs
+                    cdf.new(
+                        "glows_flags",
+                        data=flags,
+                        type=const.CDF_UINT2,
+                        recVary=True,
+                    )
 
-                    actual = compute_glows_flags_for_repoint(cdf_path, repoint_midpoint)
+                actual = compute_glows_flags_for_repoint(cdf_path, repoint_midpoint)
 
-                    self.assertIsInstance(actual, int)
-                    self.assertEqual(expected, actual)
+                self.assertIsInstance(actual, int)
+                self.assertEqual(expected, actual)
 
     @patch(
         "imap_l3_processing.glows.l3e.glows_l3e_utils.get_lo_pivot_angle_from_l1b_file"

@@ -1981,10 +1981,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             dependencies=input_collection, input_metadata=input_metadata
         )
 
-        try:
-            processor.process_l3a_direct_event_data_product(dependencies)
-        except Exception as e:
-            self.fail(e)
+        processor.process_l3a_direct_event_data_product(dependencies)
 
 
 if __name__ == "__main__":

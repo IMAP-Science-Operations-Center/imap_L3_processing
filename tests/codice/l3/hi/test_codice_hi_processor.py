@@ -745,7 +745,4 @@ class TestCodiceHiProcessor(unittest.TestCase):
             dependencies=Mock(), input_metadata=input_metadata
         )
 
-        try:
-            processor.process_l3a_direct_event(codice_hi_dependencies)
-        except Exception as e:
-            self.fail(e)
+        processor.process_l3a_direct_event(codice_hi_dependencies)

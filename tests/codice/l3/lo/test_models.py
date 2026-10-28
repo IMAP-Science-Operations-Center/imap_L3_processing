@@ -261,6 +261,7 @@ class TestModels(CdfModelTestCase):
                 actual_data_product_variable.value,
                 getattr(data_product.data, input_name),
             )
+            self.assertIs(expected_value, getattr(data_product.data, input_name))
             self.assertEqual(input_name, actual_data_product_variable.name)
 
     def test_codice_lo_l3a_ratios_to_data_product(self):
@@ -291,6 +292,7 @@ class TestModels(CdfModelTestCase):
             np.testing.assert_array_equal(
                 actual_data_product_variable.value, getattr(data_product, input_name)
             )
+            self.assertIs(expected_value, getattr(data_product, input_name))
             self.assertEqual(input_name, actual_data_product_variable.name)
 
     def test_codice_lo_l3a_partial_density_read_from_cdf(self):
@@ -365,6 +367,7 @@ class TestModels(CdfModelTestCase):
             np.testing.assert_array_equal(
                 actual_data_product_variable.value, getattr(data_product, input_name)
             )
+            self.assertIs(expected_value, getattr(data_product, input_name))
             self.assertEqual(input_name, actual_data_product_variable.name)
 
         (

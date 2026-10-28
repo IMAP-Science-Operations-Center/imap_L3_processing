@@ -721,7 +721,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
 
                 try:
                     _ = processor.process()
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     print(f"Processing L3a day {start_date} failed! Reason: {e}")
 
         l3bcde_ancillary_inputs = [
@@ -877,86 +877,85 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         new_file_path = output_folder / official_l2_path.name
         new_file_path.unlink(missing_ok=True)
 
+        with open(json_file_path) as f:
+            instrument_data = json.load(f)
         with CDF(str(new_file_path), masterpath=str(official_l2_path)) as cdf:
-            with open(json_file_path) as f:
-                instrument_data = json.load(f)
+            start_of_epoch_window = datetime.fromisoformat(
+                instrument_data["start_time"]
+            )
+            end_of_epoch_window = datetime.fromisoformat(
+                instrument_data["end_time"]
+            )
+            epoch_window = end_of_epoch_window - start_of_epoch_window
+            epoch = start_of_epoch_window + epoch_window / 2
 
-                start_of_epoch_window = datetime.fromisoformat(
-                    instrument_data["start_time"]
-                )
-                end_of_epoch_window = datetime.fromisoformat(
-                    instrument_data["end_time"]
-                )
-                epoch_window = end_of_epoch_window - start_of_epoch_window
-                epoch = start_of_epoch_window + epoch_window / 2
+            cdf["epoch"][0] = epoch
+            cdf["start_time"][0] = instrument_data["start_time"]
+            cdf["end_time"][0] = instrument_data["end_time"]
 
-                cdf["epoch"][0] = epoch
-                cdf["start_time"][0] = instrument_data["start_time"]
-                cdf["end_time"][0] = instrument_data["end_time"]
-
-                lightcurve_vars = [
-                    "spin_angle",
-                    "photon_flux",
-                    "exposure_times",
-                    "flux_uncertainties",
-                    "ecliptic_lon",
-                    "ecliptic_lat",
+            lightcurve_vars = [
+                "spin_angle",
+                "photon_flux",
+                "exposure_times",
+                "flux_uncertainties",
+                "ecliptic_lon",
+                "ecliptic_lat",
+            ]
+            for var in lightcurve_vars:
+                cdf[var] = np.array(instrument_data["daily_lightcurve"][var])[
+                    np.newaxis, :
                 ]
-                for var in lightcurve_vars:
-                    cdf[var] = np.array(instrument_data["daily_lightcurve"][var])[
-                        np.newaxis, :
+
+            cdf["raw_histograms"] = np.array(
+                instrument_data["daily_lightcurve"]["raw_histogram"]
+            )[np.newaxis, :]
+            cdf["histogram_flag_array"] = np.array(
+                [
+                    int(f, 16)
+                    for f in instrument_data["daily_lightcurve"][
+                        "histogram_flag_array"
                     ]
-
-                cdf["raw_histograms"] = np.array(
-                    instrument_data["daily_lightcurve"]["raw_histogram"]
-                )[np.newaxis, :]
-                cdf["histogram_flag_array"] = np.array(
-                    [
-                        int(f, 16)
-                        for f in instrument_data["daily_lightcurve"][
-                            "histogram_flag_array"
-                        ]
-                    ]
-                )[np.newaxis, :]
-
-                single_value_vars = [
-                    "filter_temperature_average",
-                    "filter_temperature_std_dev",
-                    "hv_voltage_average",
-                    "hv_voltage_std_dev",
-                    "spin_period_average",
-                    "spin_period_std_dev",
-                    "pulse_length_average",
-                    "pulse_length_std_dev",
-                    "spin_period_ground_average",
-                    "spin_period_ground_std_dev",
-                    "position_angle_offset_average",
-                    "position_angle_offset_std_dev",
-                    "identifier",
                 ]
-                for var in single_value_vars:
-                    cdf[var][0] = instrument_data[var]
+            )[np.newaxis, :]
 
-                vector_vars = [
-                    "spacecraft_location_average",
-                    "spacecraft_location_std_dev",
-                    "spacecraft_velocity_average",
-                    "spacecraft_velocity_std_dev",
-                    "spin_axis_orientation_average",
-                    "spin_axis_orientation_std_dev",
-                ]
-                for var in vector_vars:
-                    cdf[var][0] = np.array(list(instrument_data[var].values()))
+            single_value_vars = [
+                "filter_temperature_average",
+                "filter_temperature_std_dev",
+                "hv_voltage_average",
+                "hv_voltage_std_dev",
+                "spin_period_average",
+                "spin_period_std_dev",
+                "pulse_length_average",
+                "pulse_length_std_dev",
+                "spin_period_ground_average",
+                "spin_period_ground_std_dev",
+                "position_angle_offset_average",
+                "position_angle_offset_std_dev",
+                "identifier",
+            ]
+            for var in single_value_vars:
+                cdf[var][0] = instrument_data[var]
 
-                cdf["bad_time_flag_occurrences"][0] = list(
-                    instrument_data["bad_time_flag_occurences"].values()
-                )
-                cdf["number_of_good_l1b_inputs"][0] = instrument_data["header"][
-                    "number_of_l1b_files_used"
-                ]
-                cdf["total_l1b_inputs"][0] = instrument_data["header"][
-                    "number_of_all_l1b_files"
-                ]
+            vector_vars = [
+                "spacecraft_location_average",
+                "spacecraft_location_std_dev",
+                "spacecraft_velocity_average",
+                "spacecraft_velocity_std_dev",
+                "spin_axis_orientation_average",
+                "spin_axis_orientation_std_dev",
+            ]
+            for var in vector_vars:
+                cdf[var][0] = np.array(list(instrument_data[var].values()))
+
+            cdf["bad_time_flag_occurrences"][0] = list(
+                instrument_data["bad_time_flag_occurences"].values()
+            )
+            cdf["number_of_good_l1b_inputs"][0] = instrument_data["header"][
+                "number_of_l1b_files_used"
+            ]
+            cdf["total_l1b_inputs"][0] = instrument_data["header"][
+                "number_of_all_l1b_files"
+            ]
 
         return new_file_path
 

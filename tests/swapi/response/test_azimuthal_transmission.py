@@ -120,10 +120,10 @@ class TestInterpolateAzimuthalTransmission(unittest.TestCase):
           - multi-period inputs (±541°) wrap into the canonical interval
             (541 mod 360 = 181 → wraps to -179° → |az| = 179°)
         """
-        idx_at_1deg = int(round(1.0 / _SPACING_DEG))
+        idx_at_1deg = round(1.0 / _SPACING_DEG)
         expected_at_1deg = float(self.values[idx_at_1deg])
         last_value = float(self.values[-1])
-        idx_at_179deg = int(round(179.0 / _SPACING_DEG))
+        idx_at_179deg = round(179.0 / _SPACING_DEG)
         expected_at_179deg = float(self.values[idx_at_179deg])
 
         for label, az, expected in [
@@ -225,7 +225,7 @@ class TestValidateAzimuthalTransmissionValues(unittest.TestCase):
     def test_raises_when_sg_plateau_endpoint_is_wrong(self):
         # |az| = 9.0° (= SG_PLATEAU_AZIMUTH_MAX_DEG) is inclusive.
         values = _build_grid_satisfying_invariants()
-        endpoint_index = int(round(SG_PLATEAU_AZIMUTH_MAX_DEG / 0.1))
+        endpoint_index = round(SG_PLATEAU_AZIMUTH_MAX_DEG / 0.1)
         values[endpoint_index] = 0.5
         with self.assertRaises(ValueError):
             validate_azimuthal_transmission_values(values, 0.1)
@@ -233,7 +233,7 @@ class TestValidateAzimuthalTransmissionValues(unittest.TestCase):
     def test_raises_when_oa_plateau_endpoint_is_wrong(self):
         # The 115° endpoint is inclusive — corrupt it and validation must trip.
         values = _build_grid_satisfying_invariants()
-        endpoint_index = int(round(OA_PLATEAU_AZIMUTH_MAX_DEG / 0.1))
+        endpoint_index = round(OA_PLATEAU_AZIMUTH_MAX_DEG / 0.1)
         values[endpoint_index] = 0.5
         with self.assertRaises(ValueError):
             validate_azimuthal_transmission_values(values, 0.1)

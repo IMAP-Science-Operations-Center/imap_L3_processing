@@ -13,6 +13,8 @@ from imap_l3_processing.hit.l3.pha.pha_event_reader import (
 from tests.hit.l3.hit_test_builders import create_raw_pha_event
 from tests.test_helpers import get_test_data_path
 
+# ruff: noqa: FLY002
+
 
 class TestPHAEventReader(unittest.TestCase):
     def test_can_create_detector_from_address(self):
@@ -346,9 +348,7 @@ class TestPHAEventReader(unittest.TestCase):
                 self.assertEqual(expected_row[2:], row)
 
     def _create_pha_event_binary(self, pha_event: RawPHAEvent) -> str:
-        binary_string = ""
-
-        binary_string += self._create_pha_header(
+        binary_string = self._create_pha_header(
             particle_id=pha_event.particle_id,
             buf_priority_num=pha_event.priority_buffer_num,
             stim_tag=pha_event.stim_tag,

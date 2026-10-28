@@ -23,7 +23,7 @@ class TestHitEventTypeLookup(unittest.TestCase):
     def test_hit_event_type_lookup_from_csv(self):
         with open(self.fake_lookup_path, "w") as csvfile:
             csvfile.write(
-                "\n".join(
+                "\n".join(  # noqa: FLY002
                     [
                         "L1A4,L1B14,L2A,L3A,L2B,L40B,L4B14,Range",
                         "1,0,1,0,0,0,0,2A",
