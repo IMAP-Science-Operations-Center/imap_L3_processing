@@ -316,8 +316,8 @@ def create_l3e_pset(
     repointing: int = 1,
     energy_steps=np.array([0.5, 5.0, 12.0]),
     spin_angle=np.arange(0, 360),
-    sp: np.array | None = None,
-    flags: np.array | None = None,
+    sp: np.ndarray | None = None,
+    flags: np.ndarray | None = None,
 ) -> GlowsL3eRectangularMapInputData:
     epoch_j2000 = np.array([spiceypy.datetime2et(epoch)]) * 1e9
     sp = sp or np.full(shape=(1, len(energy_steps), len(spin_angle)), fill_value=0.5)
