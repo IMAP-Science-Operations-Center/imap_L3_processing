@@ -33,7 +33,7 @@ def upload_file(f):
             uploaded.append(f.name)
             print("uploaded", f.name)
             return
-        except Exception:
+        except Exception:  # noqa: BLE001
             failures += 1
 
             print(f"failed to upload file: {f} after {failures} attempts, retrying...")

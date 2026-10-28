@@ -296,6 +296,7 @@ if not arguments.use_cache or not output_cdf_path.exists():
             "--dependency",
             dependency_filename,
         ],
+        check=False,
         cwd=L3_PROCESSING_ROOT,
     )
     if result.returncode != 0:

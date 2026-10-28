@@ -43,9 +43,11 @@ parser.add_argument("--instrument")
 parser.add_argument("--data-level")
 parser.add_argument("--descriptor")
 args = parser.parse_args()
-query_args = dict(
-    instrument=args.instrument, descriptor=args.descriptor, data_level=args.data_level
-)
+query_args = {
+    "instrument": args.instrument,
+    "descriptor": args.descriptor,
+    "data_level": args.data_level,
+}
 if args.reprocessing_time is not None:
     analyze(args.reprocessing_time, **query_args)
 else:

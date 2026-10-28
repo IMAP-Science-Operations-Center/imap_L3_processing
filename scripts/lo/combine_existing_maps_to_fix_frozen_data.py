@@ -35,7 +35,7 @@ if __name__ == "__main__":
     lo_input_data_dir = get_run_local_data_path("input_lo_txt_pipeline")
     maps_to_combine = lo_input_data_dir / "maps_to_combine"
     if not maps_to_combine.exists():
-        raise Exception(f"Place maps to combine in {maps_to_combine}")
+        raise FileNotFoundError(f"Place maps to combine in {maps_to_combine}")
 
     maps_needed_for_combination = [
         (

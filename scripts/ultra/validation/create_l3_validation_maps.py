@@ -51,7 +51,7 @@ if __name__ == "__main__":
     output_dir = Path(f"{datetime.now().strftime('%Y%m%d')}_ultra_validation_output")
     try:
         input_dir = Path(sys.argv[1])
-    except Exception:
+    except Exception:  # noqa: BLE001
         input_dir = Path(r"C:\Users\Harrison\AppData\Local\cava\cava\data")
         print(
             f"Could not open input file, using default input path of {input_dir} instead"

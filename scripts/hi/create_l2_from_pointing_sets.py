@@ -60,7 +60,7 @@ def generate_map(descriptor: str, start: datetime, end: datetime):
     output_filename = f"imap_hi_l2_{descriptor}_{formatted_start_date}_{version}.cdf"
     if not generate_imap_file_path(output_filename).construct_path().exists():
         command = f"imap_cli --instrument hi --data-level l2 --descriptor {descriptor} --start-date {formatted_start_date} --version {version} --dependency {dependency_file}"
-        subprocess.run(command.split(" "), env=env)
+        subprocess.run(command.split(" "), env=env, check=True)
     else:
         print(f"Skipping generation of {output_filename}, it already exists")
 

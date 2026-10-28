@@ -15,13 +15,11 @@ if __name__ == "__main__":
         key: ""
         for key in set(
             chain.from_iterable(
-                [yaml_data[variable].keys() for variable in yaml_data.keys()]
+                [data.keys() for data in yaml_data.values()]
             )
         )
     }
-    valid_variables = [
-        yaml_data[var] for var in yaml_data.keys() if "NAME" in yaml_data[var]
-    ]
+    valid_variables = [data for data in yaml_data.values() if "NAME" in data]
     with open(outpath, "w") as out_file:
         writer = csv.DictWriter(out_file, fieldnames=all_headers.keys())
         writer.writeheader()

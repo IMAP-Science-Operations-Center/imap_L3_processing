@@ -45,7 +45,7 @@ def get_spin_phase_using_spice(time):
     arbitrary_offset = 0.4
     rotation_time = 15
     rotations = arbitrary_offset + time / rotation_time
-    fractional, integral = np.modf(rotations)
+    fractional, _integral = np.modf(rotations)
     return fractional * 360
 
 

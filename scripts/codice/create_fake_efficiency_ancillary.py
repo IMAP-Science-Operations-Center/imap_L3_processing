@@ -15,8 +15,10 @@ HEADER_TEXT = """# Efficiency Factors for the CoDICE-Lo Instrument for each ener
 
 
 def create_efficiency_lookup(
-    species: str, output_dir: Path = get_run_local_data_path("codice")
+    species: str, output_dir: Path | None = None,
 ) -> Path:
+    if output_dir is None:
+        output_dir = get_run_local_data_path("codice")
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / f"imap_codice_lo-{species}-efficiency_20241110_v001.csv"
     open(output_path, "a").close()

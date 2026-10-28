@@ -436,7 +436,7 @@ for axis_for_spectrogram, spectrogram_values, label in (
         ha="left",
         va="top",
         fontsize=10,
-        bbox=dict(boxstyle="round,pad=0.3", fc="white", alpha=0.85, ec="none"),
+        bbox={"boxstyle": "round,pad=0.3", "fc": "white", "alpha": 0.85, "ec": "none"},
     )
 plt.setp(observed_spectrogram_axis.get_xticklabels(), visible=False)
 model_spectrogram_axis.set_xlabel("Sweep index within chunk")

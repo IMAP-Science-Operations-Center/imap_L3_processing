@@ -1,4 +1,3 @@
-import traceback
 from datetime import datetime
 from pathlib import Path
 
@@ -93,7 +92,4 @@ if __name__ == "__main__":
         / "imap_hit_l2_macropixel-intensity_20250101_v002.cdf"
     )
 
-    try:
-        create_l2_hit_sectored_rates_cdf_from_csv(str(input_path), str(cdf_file_path))
-    except Exception:
-        traceback.print_exc()
+    create_l2_hit_sectored_rates_cdf_from_csv(str(input_path), str(cdf_file_path))

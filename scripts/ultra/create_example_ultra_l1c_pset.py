@@ -223,9 +223,11 @@ def create_example_ultra_l1c_pset(
 
 
 def _write_ultra_l1c_cdf_with_parents(
-    out_path: Path = get_run_local_data_path("ultra/fake_l1c_psets/test_pset.cdf"),
+    out_path: Path | None = None,
     date: str = "2025-09-01T00:00:00",
 ):
+    if out_path is None:
+        get_run_local_data_path("ultra/fake_l1c_psets/test_pset.cdf")
     out_xarray = create_example_ultra_l1c_pset(
         nside=1, timestr=date, energy_dependent_exposure=True
     )
@@ -318,7 +320,7 @@ def _write_ultra_l1c_cdf_with_parents(
                 cdf[var].attrs["FILLVAL"] = -1e31
 
 
-def _add_depends(var: Var, depends: list[str], depend_0: str = None):
+def _add_depends(var: Var, depends: list[str], depend_0: str | None = None):
     if depend_0 is not None:
         var.attrs["DEPEND_0"] = depend_0
     for i, dep in enumerate(depends):

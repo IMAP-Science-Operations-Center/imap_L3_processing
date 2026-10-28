@@ -117,7 +117,7 @@ def convert_csv_to_yaml(file_path):
                         continue
 
                     yaml_text += f"   {row_headers[index]}: {display_rowitem}\n"
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(e)
 
     yaml_text = yaml_text.strip()
@@ -156,20 +156,20 @@ def process_csv():
     filename_without_extension = Path(file_path).name.split(".")[0]
     print(filename_without_extension)
     yaml_file_name = f"imap_l3_processing/cdf/config/{filename_without_extension}.yaml"
-    if os.path.isfile(yaml_file_name):
-        if (
-            input(
-                "The Yaml already exists in the config folder! Are you sure you want to overwrite the other pairs work? [Y/n]"
-            )
-            != "n"
-        ):
-            os.remove(yaml_file_name)
+    if (
+        os.path.isfile(yaml_file_name)
+        and input(
+            "The Yaml already exists in the config folder! Are you sure you want to overwrite the other pairs work? [Y/n]"
+        )
+        != "n"
+    ):
+        os.remove(yaml_file_name)
 
     with open(yaml_file_name, "w") as yaml_file:
         yaml_file.write(yaml_text)
 
     if args.generate_cdf_for_instrument is not None:
-        subprocess.run(["python", "run_local.py", args.generate_cdf_for_instrument])
+        subprocess.run(["python", "run_local.py", args.generate_cdf_for_instrument], check=True)
 
 
 if __name__ == "__main__":

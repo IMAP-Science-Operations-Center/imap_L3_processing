@@ -26,11 +26,13 @@ from tests.test_helpers import (
 
 def create_hi_full_spin_deps(
     sensor="90",
-    output_dir: Path = get_run_local_data_path("hi/full_spin_deps"),
+    output_dir: Path | None = None,
     start_date: datetime = datetime(year=2025, month=4, day=16, hour=12),
-    l2_map_dir: Path = None,
-    glows_dir: Path = None,
+    l2_map_dir: Path | None = None,
+    glows_dir: Path | None = None,
 ):
+    if output_dir is None:
+        output_dir = get_run_local_data_path("hi/full_spin_deps")
     if l2_map_dir is None:
         l2_map_dir = get_test_instrument_team_data_path(f"hi/hi{sensor}-6months")
     if glows_dir is None:

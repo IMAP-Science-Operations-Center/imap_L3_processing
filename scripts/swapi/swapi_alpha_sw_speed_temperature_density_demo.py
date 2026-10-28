@@ -82,7 +82,7 @@ def run_example_dat_files():
     temperature_density_lut = AlphaTemperatureDensityCalibrationTable.from_file(
         r"swapi/test_data/imap_swapi_alpha-density-temperature-lut_20240920_v000.dat"
     )
-    alpha_temperature, alpha_density = (
+    _alpha_temperature, _alpha_density = (
         calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
             temperature_density_lut, alpha_speed, coincident_count_rate, energy
         )
@@ -143,7 +143,7 @@ def main(file_path):
     elif file_path[-4:] == ".cdf":
         data = read_l2_data(os.path.abspath(file_path))
     else:
-        raise Exception("The demo can only load data from .dat or .cdf files!")
+        raise ValueError("The demo can only load data from .dat or .cdf files!")
 
     coincident_count_rate = uarray(
         data.coincidence_count_rate, data.coincidence_count_rate_uncertainty
@@ -181,5 +181,5 @@ if __name__ == "__main__":
     try:
         file_path = sys.argv[1]
         main(file_path)
-    except Exception:
+    except (IndexError, ValueError):
         main(os.path.abspath("../../instrument_team_data/swapi/swapi_test_data_v5.dat"))

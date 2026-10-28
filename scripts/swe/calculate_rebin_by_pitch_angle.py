@@ -99,7 +99,7 @@ def calculate(i):
         swe_l2_data.inst_az_spin_sector[i],
     )
 
-    rebinned_psd, rebinned_psd_by_pa_and_gyro = correct_and_rebin(
+    _rebinned_psd, _rebinned_psd_by_pa_and_gyro = correct_and_rebin(
         swe_l2_data.phase_space_density[i],
         np.array([0, 0, -400]),
         dsp_velocities,

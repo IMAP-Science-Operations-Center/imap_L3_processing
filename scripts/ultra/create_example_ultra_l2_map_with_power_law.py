@@ -10,7 +10,7 @@ from tests.test_helpers import get_test_data_path
 
 
 def _create_example_ultra_l2_map_with_power_law(
-    out_path: Path, parents: list[str] = None
+    out_path: Path, parents: list[str] | None = None
 ):
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.unlink(missing_ok=True)

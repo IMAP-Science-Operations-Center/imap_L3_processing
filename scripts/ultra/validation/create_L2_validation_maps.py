@@ -26,7 +26,7 @@ def generate_l2_files():
     for descriptor in L2_DESCRIPTORS:
         groups[descriptor[:15]].append(descriptor)
     with ProcessPoolExecutor() as pool:
-        for group, descriptors in groups.items():
+        for descriptors in groups.values():
             pool.submit(make_maps, descriptors)
 
 

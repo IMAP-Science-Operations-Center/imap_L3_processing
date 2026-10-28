@@ -1,4 +1,5 @@
 import datetime
+from pathlib import Path
 
 import astropy_healpix.healpy as hp
 import numpy as np
@@ -187,9 +188,9 @@ def create_example_ultra_l2_map(
     return pset_product
 
 
-def _write_ultra_l2_cdf_with_parents(
-    out_path=get_run_local_data_path("ultra/fake_l2_maps/test_l2_map.cdf"),
-):
+def _write_ultra_l2_cdf_with_parents(out_path: Path | None = None):
+    if out_path is None:
+        out_path = get_run_local_data_path("ultra/fake_l2_maps/test_l2_map.cdf")
     out_xarray = create_example_ultra_l2_map(nside=2)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.unlink(missing_ok=True)

@@ -17,11 +17,7 @@ from pyhdf.HDF import HDF
 from pyhdf.SD import SD, SDC
 
 # import pyhdf.SD
-from pyhdf.VS import VS
 from spacepy.pycdf import CDF
-
-SD
-VS
 
 
 def decompressed_counts(cem_count: int) -> int:
@@ -97,7 +93,7 @@ def hdf4_to_xarray(hdf_file_path):
         dataset = hdf_file.select(dataset_name)
         try:
             data = dataset.get()  # Explicit read using the get method
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"Error reading dataset {dataset_name}: {e}")
             continue
 

@@ -344,7 +344,7 @@ if __name__ == "__main__":
                             pickup_ion_data.background_rate[chunk_index],
                         ),
                     )
-                except Exception as replay_error:
+                except Exception as replay_error:  # noqa: BLE001
                     print(f"chunk {chunk_index} replay failed: {replay_error}")
                 else:
                     model_rates_for_chunk[:, replay["bin_mask"]] = replay[
