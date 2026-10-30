@@ -274,7 +274,7 @@ def create_l1c_pset(
     hae_longitude=None,
     hae_latitude=None,
 ) -> InputRectangularPointingSet:
-    if epoch_delta == ():
+    if isinstance(epoch_delta, tuple) and epoch_delta == ():
         epoch_delta = np.array([43200_000_000_000])
     if energy_steps is None:
         energy_steps = np.array([1])
