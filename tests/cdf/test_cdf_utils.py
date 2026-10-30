@@ -389,8 +389,8 @@ class TestCdfUtils(TempFileTestCase):
                         return [
                             DataProductVariable(
                                 "var",
-                                input_data,
-                                pycdf.const.CDF_REAL8,  # noqa: B023
+                                input_data,  # noqa: B023
+                                pycdf.const.CDF_REAL8,
                             ),
                         ]
 
