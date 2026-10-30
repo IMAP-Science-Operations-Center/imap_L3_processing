@@ -63,12 +63,8 @@ class ConvertVelocityRelativeToImapTest(SpiceTestCase):
             ]
         )
         np.testing.assert_array_almost_equal(output_velocity, expected)
-        mock_spice.sxform.assert_called_with(
-            "INPUT_FRAME", "OUTPUT_FRAME", ephemeris_time
-        )
-        mock_spice.spkezr.assert_called_with(
-            "IMAP", ephemeris_time, "OUTPUT_FRAME", "NONE", "SUN"
-        )
+        mock_spice.sxform.assert_called_with("INPUT_FRAME", "OUTPUT_FRAME", ephemeris_time)
+        mock_spice.spkezr.assert_called_with("IMAP", ephemeris_time, "OUTPUT_FRAME", "NONE", "SUN")
 
 
 class ConvertVelocityToReferenceFrameTest(SpiceTestCase):
@@ -78,9 +74,7 @@ class ConvertVelocityToReferenceFrameTest(SpiceTestCase):
         ephemeris_time = 10_000_000
 
         input_2d = np.array([[1, 2, 3], [1, 2, 3]])
-        result_2d = convert_velocity_to_reference_frame(
-            input_2d, ephemeris_time, "FROM", "TO"
-        )
+        result_2d = convert_velocity_to_reference_frame(input_2d, ephemeris_time, "FROM", "TO")
         expected_row = (
             1 * _FAKE_SXFORM_ROTATION[3:6, 3]
             + 2 * _FAKE_SXFORM_ROTATION[3:6, 4]
@@ -89,7 +83,5 @@ class ConvertVelocityToReferenceFrameTest(SpiceTestCase):
         np.testing.assert_array_almost_equal([expected_row, expected_row], result_2d)
         mock_spice.sxform.assert_called_with("FROM", "TO", ephemeris_time)
 
-        result_1d = convert_velocity_to_reference_frame(
-            input_2d[0], ephemeris_time, "FROM", "TO"
-        )
+        result_1d = convert_velocity_to_reference_frame(input_2d[0], ephemeris_time, "FROM", "TO")
         np.testing.assert_array_almost_equal(expected_row, result_1d)

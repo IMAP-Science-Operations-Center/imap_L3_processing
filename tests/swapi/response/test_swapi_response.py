@@ -9,7 +9,7 @@ from imap_l3_processing import constants
 from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 from imap_l3_processing.swapi.species import Species
-from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path
+from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path
 
 
 def _load_response() -> SwapiResponse:
@@ -49,9 +49,7 @@ class TestWarmCacheApi(unittest.TestCase):
         """Duplicates collapse, NaN/inf are skipped."""
         voltages = np.array([100.0, 100.0, 200.0, 300.0, np.nan, np.inf])
         self.response.warm_cache(voltages)
-        self.assertEqual(
-            set(self.response._passband_grid_cache.keys()), {100.0, 200.0, 300.0}
-        )
+        self.assertEqual(set(self.response._passband_grid_cache.keys()), {100.0, 200.0, 300.0})
         self.assertEqual(len(self.response._passband_grid_cache), 3)
 
     def test_warming_twice_at_same_voltage_is_a_noop(self):
@@ -59,8 +57,7 @@ class TestWarmCacheApi(unittest.TestCase):
         PassbandGrid objects — it does not rebuild them."""
         self.response.warm_cache([750.0])
         first_grids = {
-            region: self.response._passband_grid_cache[750.0][region]
-            for region in ("SG", "OA")
+            region: self.response._passband_grid_cache[750.0][region] for region in ("SG", "OA")
         }
         self.response.warm_cache([750.0])
 
@@ -75,9 +72,7 @@ class TestWarmCacheApi(unittest.TestCase):
         """Multidimensional voltage inputs are flattened."""
         voltages = np.array([[100.0, 200.0], [200.0, 300.0]])
         self.response.warm_cache(voltages)
-        self.assertEqual(
-            set(self.response._passband_grid_cache.keys()), {100.0, 200.0, 300.0}
-        )
+        self.assertEqual(set(self.response._passband_grid_cache.keys()), {100.0, 200.0, 300.0})
 
 
 class TestPassbandInterpolation(_RealResponseFixture):
@@ -101,24 +96,18 @@ class TestPassbandInterpolation(_RealResponseFixture):
 
                 returned = self.response._get_passband_values(voltage, region)
 
-                coeffs = self.response._passband_fit_coefficients.xs(
-                    region, level="region"
-                )
+                coeffs = self.response._passband_fit_coefficients.xs(region, level="region")
                 log_beam_energy = np.log(SWAPI_K_FACTOR * voltage)
                 n_degrees = coeffs.shape[1]
                 degrees = np.arange(n_degrees - 1, -1, -1)
-                expected_exponent = (coeffs.values * log_beam_energy**degrees).sum(
-                    axis=1
-                )
+                expected_exponent = (coeffs.values * log_beam_energy**degrees).sum(axis=1)
                 expected = np.exp(expected_exponent)
 
                 npt.assert_allclose(returned["value"].to_numpy(), expected, rtol=1e-12)
 
     def _assert_grid_value_bounds(self, esa_voltage):
         self.response.warm_cache([esa_voltage])
-        cached = self.response._passband_grid_cache[
-            self.response._cache_key(esa_voltage)
-        ]
+        cached = self.response._passband_grid_cache[self.response._cache_key(esa_voltage)]
         for region in ("SG", "OA"):
             grid = cached[region]
             self.assertGreaterEqual(
@@ -149,15 +138,9 @@ class TestGetResponseGrid(unittest.TestCase):
         response = _load_response()
         response.warm_cache(esa_voltage)
 
-        response_grid = response.get_response_grid(
-            time_as_tt2000, esa_voltage, Species.PROTON
-        )
-        self.assertAlmostEqual(
-            response_grid.central_effective_area, 0.37553722631276887
-        )
-        self.assertIs(
-            response_grid.azimuthal_transmission, response._azimuthal_transmission_grid
-        )
+        response_grid = response.get_response_grid(time_as_tt2000, esa_voltage, Species.PROTON)
+        self.assertAlmostEqual(response_grid.central_effective_area, 0.37553722631276887)
+        self.assertIs(response_grid.azimuthal_transmission, response._azimuthal_transmission_grid)
         self.assertIs(
             response_grid.oa_passband,
             response._passband_grid_cache[round(esa_voltage, 3)]["OA"],
@@ -176,13 +159,9 @@ class TestGetResponseGrid(unittest.TestCase):
             )
             / constants.METERS_PER_KILOMETER
         )
-        self.assertAlmostEqual(
-            response_grid.central_speed, expected_central_speed_km_per_s
-        )
+        self.assertAlmostEqual(response_grid.central_speed, expected_central_speed_km_per_s)
 
-        response_grid2 = response.get_response_grid(
-            time_as_tt2000, esa_voltage, Species.PROTON
-        )
+        response_grid2 = response.get_response_grid(time_as_tt2000, esa_voltage, Species.PROTON)
         self.assertIs(response_grid, response_grid2, "cache miss")
 
         for species, mass_per_charge in [

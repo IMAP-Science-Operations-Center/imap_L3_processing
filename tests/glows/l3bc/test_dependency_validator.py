@@ -2,14 +2,13 @@ import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import patch, Mock
-
+from unittest.mock import Mock, patch
 
 from imap_l3_processing.glows.l3bc.dependency_validator import (
-    validate_omni2_dependency,
     validate_dependencies,
     validate_f107_fluxtable_dependency,
     validate_lyman_alpha_dependency,
+    validate_omni2_dependency,
 )
 from tests.test_helpers import get_test_data_path
 
@@ -64,15 +63,9 @@ class TestDependencyValidator(unittest.TestCase):
                 )
                 self.assertEqual(expected, actual)
 
-    @patch(
-        "imap_l3_processing.glows.l3bc.dependency_validator.validate_lyman_alpha_dependency"
-    )
-    @patch(
-        "imap_l3_processing.glows.l3bc.dependency_validator.validate_f107_fluxtable_dependency"
-    )
-    @patch(
-        "imap_l3_processing.glows.l3bc.dependency_validator.validate_omni2_dependency"
-    )
+    @patch("imap_l3_processing.glows.l3bc.dependency_validator.validate_lyman_alpha_dependency")
+    @patch("imap_l3_processing.glows.l3bc.dependency_validator.validate_f107_fluxtable_dependency")
+    @patch("imap_l3_processing.glows.l3bc.dependency_validator.validate_omni2_dependency")
     def test_validate_dependencies(
         self,
         mock_validate_omni2_dependency: Mock,
@@ -102,9 +95,7 @@ class TestDependencyValidator(unittest.TestCase):
             with self.subTest(case_name):
                 mock_validate_omni2_dependency.return_value = omni2_validation
                 mock_validate_f107_fluxtable_dependency.return_value = flux_validation
-                mock_validate_lyman_alpha_dependency.return_value = (
-                    lyman_alpha_validation
-                )
+                mock_validate_lyman_alpha_dependency.return_value = lyman_alpha_validation
 
                 actual = validate_dependencies(
                     cr_start_date,

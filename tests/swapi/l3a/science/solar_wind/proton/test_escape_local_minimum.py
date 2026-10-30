@@ -7,6 +7,7 @@ from imap_l3_processing.constants import PROTON_MASS_KG
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     SolarWindFitContext,
 )
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton import (
     escape_local_minimum as escape_local_minimum_module,
 )
@@ -18,7 +19,6 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.proton.escape_local_minimum
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.optimize_solar_wind_proton_params import (
     OptimizeSolarWindProtonParamsResult,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from tests.swapi._helpers import proton_params as _shared_proton_params
 
 
@@ -37,10 +37,12 @@ def _proton_params(
 
 
 def _single_sweep_ctx(
-    spin_axis_column=np.array([0.0, 1.0, 0.0]),
+    spin_axis_column: np.ndarray | None = None,
 ) -> SolarWindFitContext:
     """Single-sweep context whose +Y_inst column equals `spin_axis_column`,
     so `average_spin_axis_rtn(ctx.rotation_matrices)` returns that axis."""
+    if spin_axis_column is None:
+        spin_axis_column = np.array([0.0, 1.0, 0.0])
     rotation = np.eye(3)
     rotation[:, 1] = spin_axis_column
     return SolarWindFitContext(
@@ -109,9 +111,7 @@ class TestEscapeLocalMinimum(unittest.TestCase):
                 "flipped_seed",
                 return_value=(flipped_mse_at_gate, _proton_params()),
             ),
-            patch.object(
-                escape_local_minimum_module, "_restart_from_flipped_params"
-            ) as mock_opt,
+            patch.object(escape_local_minimum_module, "_restart_from_flipped_params") as mock_opt,
         ):
             out = escape_local_minimum(lm1, ctx)
 

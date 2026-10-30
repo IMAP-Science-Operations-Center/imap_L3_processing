@@ -20,18 +20,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
 import types
 
+import matplotlib
 import numpy as np
 import pandas as pd
-import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-
-from imap_l3_processing.constants import (
-    PROTON_MASS_KG,
-    PROTON_MASS_PER_CHARGE_M_P_PER_E,
-)
-from imap_l3_processing.swapi.constants import SWAPI_LIVETIME_S
 from figure_utils import (
     COARSE_BIN_INDICES_IN_SWEEP,
     COARSE_SWEEP_VOLTAGES_MEAN_V,
@@ -39,6 +33,24 @@ from figure_utils import (
     compute_per_bin_rotation_matrices,
     load_swapi_response,
     run_parallel_map,
+)
+
+from imap_l3_processing.constants import (
+    PROTON_MASS_KG,
+    PROTON_MASS_PER_CHARGE_M_P_PER_E,
+)
+from imap_l3_processing.swapi.constants import SWAPI_LIVETIME_S
+from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
+    build_solar_wind_fit_context,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
+    model_solar_wind_ideal_coincidence_rates,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
+    LOG_DENSITY_IDX,
+    LOG_TEMPERATURE_IDX,
+    VELOCITY_SLICE,
+    SolarWindParams,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.calculate_initial_guess import (
     calculate_initial_guess,
@@ -48,19 +60,7 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proto
     escape_local_minimum,
     optimize_solar_wind_proton_params,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
-    LOG_DENSITY_IDX,
-    LOG_TEMPERATURE_IDX,
-    VELOCITY_SLICE,
-    SolarWindParams,
-)
-from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
-    model_solar_wind_ideal_coincidence_rates,
-)
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
-from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
-    build_solar_wind_fit_context,
-)
 
 _N_SWEEPS = 5
 _N_BINS = len(COARSE_SWEEP_VOLTAGES_MEAN_V)
@@ -88,7 +88,7 @@ def main():
         [
             (
                 f"Poisson + {_LOGNORMAL_REL_SIGMA:.0%} log-normal "
-                f"+ {_NOISE_FLOOR_HZ:g} Hz floor",
+                + f"+ {_NOISE_FLOOR_HZ:g} Hz floor",
                 poisson_lognormal_floor_data,
             ),
         ]
@@ -153,9 +153,7 @@ def _process_one(i):
     # counts added — a stand-in for unmodelled detector dark/leakage rate.
     # The mean adds 10 Hz to obs at every bin; the variance is √(floor·τ)/τ
     # ≈ 8 Hz per bin. The fit's model does not account for this.
-    floor_counts = rng.poisson(
-        _NOISE_FLOOR_HZ * SWAPI_LIVETIME_S, size=count_rates.shape
-    )
+    floor_counts = rng.poisson(_NOISE_FLOOR_HZ * SWAPI_LIVETIME_S, size=count_rates.shape)
     count_rates = count_rates + floor_counts.astype(float) / SWAPI_LIVETIME_S
 
     fit_ctx = build_solar_wind_fit_context(
@@ -190,7 +188,7 @@ def _process_one(i):
         initial_guess = calculate_initial_guess(fit_ctx)
         first_result = optimize_solar_wind_proton_params(initial_guess, fit_ctx)
         final_result = escape_local_minimum(first_result, fit_ctx)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"  case {i}: fit failed ({type(e).__name__}: {e})")
         return nan_row
 
@@ -228,9 +226,7 @@ def _uncorrected_sigmas(opt_result) -> tuple[float, float, np.ndarray]:
     J = opt_result.jacobian
     n_params = J.shape[1]
     n_obs = len(opt_result.residuals)
-    residual_variance = float(np.sum(opt_result.residuals**2)) / max(
-        n_obs - n_params, 1
-    )
+    residual_variance = float(np.sum(opt_result.residuals**2)) / max(n_obs - n_params, 1)
     try:
         cov = residual_variance * np.linalg.pinv(J.T @ J)
     except np.linalg.LinAlgError:
@@ -356,7 +352,7 @@ def _plot_results(experiments: list[tuple[str, pd.DataFrame]]) -> None:
                 va="top",
                 ha="left",
                 fontsize=7.5,
-                bbox=dict(boxstyle="round,pad=0.3", fc="white", alpha=0.8),
+                bbox={"boxstyle": "round,pad=0.3", "fc": "white", "alpha": 0.8},
             )
             if col_idx == 0:
                 ax_top.legend(fontsize=7, loc="upper right", framealpha=0.8)
@@ -368,9 +364,7 @@ def _plot_results(experiments: list[tuple[str, pd.DataFrame]]) -> None:
             ax_bot = axes[row_bot, col_idx]
             normalized_resid_sandwich = (fits - truth) / sigmas
             normalized_resid_ols = (fits - truth) / ols_sigmas
-            finite_sw = normalized_resid_sandwich[
-                np.isfinite(normalized_resid_sandwich)
-            ]
+            finite_sw = normalized_resid_sandwich[np.isfinite(normalized_resid_sandwich)]
             finite_ols_n = normalized_resid_ols[np.isfinite(normalized_resid_ols)]
             x_max = float(np.nanmax(np.abs(np.concatenate([finite_sw, finite_ols_n]))))
             x_max = max(x_max, 4.0)  # always show at least ±4σ
@@ -398,9 +392,7 @@ def _plot_results(experiments: list[tuple[str, pd.DataFrame]]) -> None:
             bin_width = bins_norm[1] - bins_norm[0]
             x_ref = np.linspace(-x_max, x_max, 200)
             unit_gaussian_pdf = (
-                (np.exp(-0.5 * x_ref**2) / np.sqrt(2 * np.pi))
-                * n_good_finite
-                * bin_width
+                (np.exp(-0.5 * x_ref**2) / np.sqrt(2 * np.pi)) * n_good_finite * bin_width
             )
             ax_bot.plot(
                 x_ref,
@@ -425,7 +417,7 @@ def _plot_results(experiments: list[tuple[str, pd.DataFrame]]) -> None:
                 va="top",
                 ha="left",
                 fontsize=7.5,
-                bbox=dict(boxstyle="round,pad=0.3", fc="white", alpha=0.8),
+                bbox={"boxstyle": "round,pad=0.3", "fc": "white", "alpha": 0.8},
             )
             if col_idx == 0:
                 ax_bot.legend(fontsize=7, loc="upper right", framealpha=0.8)

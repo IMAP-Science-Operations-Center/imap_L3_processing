@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch, sentinel, call
+from unittest.mock import call, patch, sentinel
 
 from imap_l3_processing.constants import TEMP_CDF_FOLDER_PATH
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
@@ -12,12 +12,8 @@ class TestGlowsL3BCDependencies(unittest.TestCase):
     @patch(
         "imap_l3_processing.glows.l3bc.glows_l3bc_dependencies.create_glows_l3a_dictionary_from_cdf"
     )
-    @patch(
-        "imap_l3_processing.glows.l3bc.glows_l3bc_dependencies.imap_data_access.download"
-    )
-    def test_download_from_cr_to_process(
-        self, mock_download, mock_create_dictionary_from_cdf
-    ):
+    @patch("imap_l3_processing.glows.l3bc.glows_l3bc_dependencies.imap_data_access.download")
+    def test_download_from_cr_to_process(self, mock_download, mock_create_dictionary_from_cdf):
         mock_download.side_effect = [
             sentinel.uv_anisotropy_downloaded_path,
             sentinel.waw_downloaded_path,
@@ -50,13 +46,11 @@ class TestGlowsL3BCDependencies(unittest.TestCase):
             lyman_alpha_path=Path("not used"),
         )
 
-        dependency: GlowsL3BCDependencies = (
-            GlowsL3BCDependencies.download_from_cr_to_process(
-                cr_to_process,
-                sentinel.version,
-                external_dependencies,
-                repointing_file_path,
-            )
+        dependency: GlowsL3BCDependencies = GlowsL3BCDependencies.download_from_cr_to_process(
+            cr_to_process,
+            sentinel.version,
+            external_dependencies,
+            repointing_file_path,
         )
 
         self.assertEqual(

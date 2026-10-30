@@ -26,7 +26,7 @@ def generate_l2_files():
     for descriptor in L2_DESCRIPTORS:
         groups[descriptor[:15]].append(descriptor)
     with ProcessPoolExecutor() as pool:
-        for group, descriptors in groups.items():
+        for descriptors in groups.values():
             pool.submit(make_maps, descriptors)
 
 
@@ -43,9 +43,7 @@ def make_maps(descriptors):
         start_date = "20251018"
         output_filename = f"imap_ultra_l2_{descriptor}_{start_date}_{version}.cdf"
         if not generate_imap_file_path(output_filename).construct_path().exists():
-            Ultra(
-                "l2", descriptor, dependency, start_date, None, "v000", False
-            ).process()
+            Ultra("l2", descriptor, dependency, start_date, None, "v000", False).process()
         else:
             print(f"Skipping generation of {output_filename}, it already exists")
 

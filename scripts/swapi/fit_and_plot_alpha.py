@@ -45,8 +45,7 @@ WIND_ALPHA_TEMPERATURE_FACTOR_K_PER_KM2_PER_S2 = 4.0 * 60.5685
 # well below 9000 in every numeric column.
 WIND_FILL_THRESHOLD = 9000.0
 WIND_FTP_URL_TEMPLATE = (
-    "ftp://nssdcftp.gsfc.nasa.gov/pub/data/wind/swe/ascii/2-min/"
-    "wind_swe_2m_sw{yyyymm}.asc"
+    "ftp://nssdcftp.gsfc.nasa.gov/pub/data/wind/swe/ascii/2-min/wind_swe_2m_sw{yyyymm}.asc"
 )
 
 L3_PROCESSING_ROOT = Path(imap_l3_processing.__file__).parent.parent
@@ -136,9 +135,7 @@ def fetch_wind_swe_2min_alphas(compact_date_string, cache_directory):
     alpha_density_sigma = row[:, 38]
 
     # T = c * W^2 -> sigma_T = 2 * c * W * sigma_W (linear propagation, W >= 0).
-    alpha_temperature = (
-        WIND_ALPHA_TEMPERATURE_FACTOR_K_PER_KM2_PER_S2 * alpha_thermal_speed**2
-    )
+    alpha_temperature = WIND_ALPHA_TEMPERATURE_FACTOR_K_PER_KM2_PER_S2 * alpha_thermal_speed**2
     alpha_temperature_sigma = (
         2.0
         * WIND_ALPHA_TEMPERATURE_FACTOR_K_PER_KM2_PER_S2
@@ -204,9 +201,7 @@ def build_dependency_collection(target_date, compact_date):
         SpiceKernelTypes.EphemerisReconstructed,
         SpiceKernelTypes.EphemerisPredicted,
     ]
-    non_ephemeris_kernel_types = [
-        t for t in SpiceKernelTypes if t not in ephemeris_kernel_types
-    ]
+    non_ephemeris_kernel_types = [t for t in SpiceKernelTypes if t not in ephemeris_kernel_types]
     spice_kernel_filenames = list(
         dict.fromkeys(
             os.path.basename(path)
@@ -271,9 +266,7 @@ if not arguments.use_cache or not output_cdf_path.exists():
     processing_input_collection = build_dependency_collection(target_date, compact_date)
     processing_input_collection.download_all_files()
 
-    dependency_filename = (
-        f"imap_swapi_l3a_alpha-sw_{compact_date}_{PROCESSOR_OUTPUT_VERSION}.json"
-    )
+    dependency_filename = f"imap_swapi_l3a_alpha-sw_{compact_date}_{PROCESSOR_OUTPUT_VERSION}.json"
     dependency_path = DependencyFilePath(dependency_filename).construct_path()
     dependency_path.parent.mkdir(parents=True, exist_ok=True)
     dependency_path.write_text(processing_input_collection.serialize())
@@ -296,6 +289,7 @@ if not arguments.use_cache or not output_cdf_path.exists():
             "--dependency",
             dependency_filename,
         ],
+        check=False,
         cwd=L3_PROCESSING_ROOT,
     )
     if result.returncode != 0:
@@ -307,13 +301,9 @@ with CDF(str(output_cdf_path)) as alpha_cdf:
     timestamps = alpha_cdf["epoch"][...]
     quality_flags = alpha_cdf["swp_flags"][...]
     swapi_density = read_numeric_variable(alpha_cdf["alpha_sw_density"])
-    swapi_density_uncertainty = read_numeric_variable(
-        alpha_cdf["alpha_sw_density_uncert"]
-    )
+    swapi_density_uncertainty = read_numeric_variable(alpha_cdf["alpha_sw_density_uncert"])
     swapi_temperature = read_numeric_variable(alpha_cdf["alpha_sw_temperature"])
-    swapi_temperature_uncertainty = read_numeric_variable(
-        alpha_cdf["alpha_sw_temperature_uncert"]
-    )
+    swapi_temperature_uncertainty = read_numeric_variable(alpha_cdf["alpha_sw_temperature_uncert"])
     swapi_speed = read_numeric_variable(alpha_cdf["alpha_sw_speed"])
     swapi_speed_uncertainty = read_numeric_variable(alpha_cdf["alpha_sw_speed_uncert"])
     swapi_velocity_rtn = read_numeric_variable(alpha_cdf["alpha_sw_velocity_rtn_sun"])
@@ -334,9 +324,7 @@ swapi_velocity_rtn = swapi_velocity_rtn[good_record_mask]
 swapi_velocity_rtn_covariance = swapi_velocity_rtn_covariance[good_record_mask]
 
 # Diagonal of the RTN velocity covariance gives variances on (vR, vT, vN).
-swapi_velocity_rtn_sigma = np.sqrt(
-    np.diagonal(swapi_velocity_rtn_covariance, axis1=1, axis2=2)
-)
+swapi_velocity_rtn_sigma = np.sqrt(np.diagonal(swapi_velocity_rtn_covariance, axis1=1, axis2=2))
 
 wind_alphas = fetch_wind_swe_2min_alphas(compact_date, DATA_DIR / "wind") or {}
 

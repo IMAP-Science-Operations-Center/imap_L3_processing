@@ -29,19 +29,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
 import types
 
+import matplotlib
 import numpy as np
 import pandas as pd
 from uncertainties import UFloat
-import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-
-from imap_l3_processing.constants import (
-    PROTON_MASS_KG,
-    PROTON_MASS_PER_CHARGE_M_P_PER_E,
-)
-from imap_l3_processing.swapi.constants import SWAPI_LIVETIME_S
 from figure_utils import (
     COARSE_BIN_INDICES_IN_SWEEP,
     COARSE_SWEEP_VOLTAGES_MEAN_V,
@@ -50,20 +44,26 @@ from figure_utils import (
     load_swapi_response,
     run_parallel_map,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
-    fit_solar_wind_proton_model,
+
+from imap_l3_processing.constants import (
+    PROTON_MASS_KG,
+    PROTON_MASS_PER_CHARGE_M_P_PER_E,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.calculate_initial_guess import (
-    calculate_initial_guess,
+from imap_l3_processing.swapi.constants import SWAPI_LIVETIME_S
+from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
+    build_solar_wind_fit_context,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
 )
-from imap_l3_processing.swapi.response.deadtime import deadtime_factor
-from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
-    build_solar_wind_fit_context,
-)
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.calculate_initial_guess import (
+    calculate_initial_guess,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
+    fit_solar_wind_proton_model,
+)
+from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 
 _N_SWEEPS = 5
 _N_BINS = len(COARSE_SWEEP_VOLTAGES_MEAN_V)
@@ -86,9 +86,7 @@ def _load_wind_samples(csv_path: Path) -> tuple[np.ndarray, ...]:
             f"Missing WIND samples CSV: {csv_path}. "
             f"Run scripts/swapi/sample_wind_solar_wind.py first."
         )
-    cols = np.genfromtxt(
-        csv_path, delimiter=",", names=True, dtype=None, encoding="utf-8"
-    )
+    cols = np.genfromtxt(csv_path, delimiter=",", names=True, dtype=None, encoding="utf-8")
     return (
         cols["v_R_km_s"].astype(float),
         cols["proton_temperature_K"].astype(float),
@@ -177,7 +175,7 @@ def _process_one(i):
     )
     try:
         initial_guess = calculate_initial_guess(fit_ctx)
-    except Exception:
+    except Exception:  # noqa: BLE001
         initial_guess = SolarWindParams(
             density=float("nan"),
             velocity_rtn=np.array([float("nan")] * 3),
@@ -186,12 +184,13 @@ def _process_one(i):
         )
     try:
         result = fit_solar_wind_proton_model(fit_ctx)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"  case {i}: fit failed ({type(e).__name__}: {e}); flagging bad")
+        from uncertainties import ufloat
+
         from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
             ProtonSolarWindFitResult,
         )
-        from uncertainties import ufloat
 
         nan_uf = ufloat(float("nan"), float("nan"))
         result = ProtonSolarWindFitResult(
@@ -293,9 +292,7 @@ def _plot_results(data: pd.DataFrame) -> None:
     color_initial_guess = "tab:orange"
     color_final_fit = "tab:blue"
 
-    for ax, (label, true_key, init_key, fit_key, fit_sigma_key, scale) in zip(
-        axes, plot_columns
-    ):
+    for ax, (label, true_key, init_key, fit_key, fit_sigma_key, scale) in zip(axes, plot_columns):
         truth = data[true_key]
         init = data[init_key]
         fit = data[fit_key]
@@ -377,7 +374,7 @@ def _plot_results(data: pd.DataFrame) -> None:
             va="top",
             ha="left",
             fontsize=6.5,
-            bbox=dict(boxstyle="round,pad=0.3", fc="white", alpha=0.75),
+            bbox={"boxstyle": "round,pad=0.3", "fc": "white", "alpha": 0.75},
         )
 
     axes[0].legend(fontsize=8, loc="lower right", framealpha=0.8)
@@ -393,9 +390,7 @@ def _plot_results(data: pd.DataFrame) -> None:
 def _rmse_label(truth, estimated, scale):
     mask = np.isfinite(estimated)
     if scale == "log":
-        rmse = np.sqrt(
-            np.mean((np.log10(estimated[mask]) - np.log10(truth[mask])) ** 2)
-        )
+        rmse = np.sqrt(np.mean((np.log10(estimated[mask]) - np.log10(truth[mask])) ** 2))
         return f"RMSE log₁₀ = {rmse:.3f}"
     else:
         rmse = np.sqrt(np.mean((estimated[mask] - truth[mask]) ** 2))

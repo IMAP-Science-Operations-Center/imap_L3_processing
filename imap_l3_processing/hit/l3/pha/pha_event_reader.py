@@ -1,7 +1,7 @@
 import csv
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Literal
+from typing import ClassVar, Literal
 
 from bitstring import BitStream
 
@@ -17,14 +17,12 @@ class Detector:
     def __str__(self):
         return "L" + str(self.layer) + self.side + self.segment
 
-    detector_mapping = {}
+    detector_mapping: ClassVar[dict[int, tuple[str, str]]] = {}
 
     @classmethod
     def from_address(cls, address: int):
         if cls.detector_mapping == {}:
-            with open(
-                Path(__file__).parent / "address_to_detector.csv"
-            ) as detector_mapping_file:
+            with open(Path(__file__).parent / "address_to_detector.csv") as detector_mapping_file:
                 reader = csv.reader(detector_mapping_file)
                 next(reader)
                 for name, address_str, group in reader:
@@ -96,9 +94,9 @@ class RawPHAEvent:
     culling_flag: bool
     spare: bool
     pha_words: list[PHAWord]
-    extended_header: Optional[PHAExtendedHeader] = None
-    stim_block: Optional[StimBlock] = None
-    extended_stim_header: Optional[ExtendedStimHeader] = None
+    extended_header: PHAExtendedHeader | None = None
+    stim_block: StimBlock | None = None
+    extended_stim_header: ExtendedStimHeader | None = None
 
 
 class PHAEventReader:
@@ -126,9 +124,7 @@ class PHAEventReader:
             delta_e_index = event_bitstream.read("uint:9")
             e_prime_index = event_bitstream.read("uint:7")
             detector_flags = event_bitstream.read("uint:8")
-            extended_header = PHAExtendedHeader(
-                detector_flags, delta_e_index, e_prime_index
-            )
+            extended_header = PHAExtendedHeader(detector_flags, delta_e_index, e_prime_index)
 
         elif stim_tag:
             if long_event_flag:

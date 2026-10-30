@@ -7,9 +7,9 @@ from imap_data_access.file_validation import Version
 from spacepy import pycdf
 
 from imap_l3_processing.cdf.cdf_utils import (
-    write_cdf,
-    read_variable_and_mask_fill_values,
     read_numeric_variable,
+    read_variable_and_mask_fill_values,
+    write_cdf,
 )
 from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
 from imap_l3_processing.models import (
@@ -94,46 +94,28 @@ class TestCdfUtils(TempFileTestCase):
             )
             self.assertTrue(actual_cdf[var_without_explicit_type.name].rv())
 
-            np.testing.assert_array_equal(
-                int_var.value, actual_cdf.raw_var(int_var.name)
-            )
-            self.assertEqual(
-                "var_val1", actual_cdf[int_var.name].attrs["variable_attr1"]
-            )
-            self.assertEqual(
-                -9223372036854775808, actual_cdf[int_var.name].attrs["FILLVAL"]
-            )
+            np.testing.assert_array_equal(int_var.value, actual_cdf.raw_var(int_var.name))
+            self.assertEqual("var_val1", actual_cdf[int_var.name].attrs["variable_attr1"])
+            self.assertEqual(-9223372036854775808, actual_cdf[int_var.name].attrs["FILLVAL"])
             self.assertEqual(
                 pycdf.const.CDF_INT8.value,
                 actual_cdf[int_var.name].attrs.type("FILLVAL"),
             )
-            self.assertEqual(
-                pycdf.const.CDF_INT8.value, actual_cdf[int_var.name].type()
-            )
+            self.assertEqual(pycdf.const.CDF_INT8.value, actual_cdf[int_var.name].type())
             self.assertTrue(actual_cdf[int_var.name].rv())
 
-            np.testing.assert_array_equal(
-                float_var.value, actual_cdf.raw_var(float_var.name)
-            )
-            self.assertEqual(
-                "var_val1", actual_cdf[float_var.name].attrs["variable_attr1"]
-            )
+            np.testing.assert_array_equal(float_var.value, actual_cdf.raw_var(float_var.name))
+            self.assertEqual("var_val1", actual_cdf[float_var.name].attrs["variable_attr1"])
             self.assertEqual(-1e31, actual_cdf[float_var.name].attrs["FILLVAL"])
             self.assertEqual(
                 pycdf.const.CDF_REAL4.value,
                 actual_cdf[float_var.name].attrs.type("FILLVAL"),
             )
-            self.assertEqual(
-                pycdf.const.CDF_REAL4.value, actual_cdf[float_var.name].type()
-            )
+            self.assertEqual(pycdf.const.CDF_REAL4.value, actual_cdf[float_var.name].type())
             self.assertTrue(actual_cdf[float_var.name].rv())
 
-            np.testing.assert_array_equal(
-                time_var.value, actual_cdf.raw_var(time_var.name)
-            )
-            self.assertEqual(
-                "var_val3", actual_cdf[time_var.name].attrs["variable_attr3"]
-            )
+            np.testing.assert_array_equal(time_var.value, actual_cdf.raw_var(time_var.name))
+            self.assertEqual("var_val3", actual_cdf[time_var.name].attrs["variable_attr3"])
             self.assertEqual(
                 datetime(9999, 12, 31, 23, 59, 59, 999999),
                 actual_cdf[time_var.name].attrs["FILLVAL"],
@@ -142,9 +124,7 @@ class TestCdfUtils(TempFileTestCase):
                 pycdf.const.CDF_TIME_TT2000.value,
                 actual_cdf[time_var.name].attrs.type("FILLVAL"),
             )
-            self.assertEqual(
-                pycdf.const.CDF_TIME_TT2000.value, actual_cdf[time_var.name].type()
-            )
+            self.assertEqual(pycdf.const.CDF_TIME_TT2000.value, actual_cdf[time_var.name].type())
             self.assertFalse(actual_cdf[time_var.name].rv())
 
             self.assertEqual(
@@ -153,9 +133,7 @@ class TestCdfUtils(TempFileTestCase):
             self.assertEqual(
                 "var_val6", actual_cdf[non_rec_varying_var.name].attrs["variable_attr6"]
             )
-            self.assertEqual(
-                non_rec_varying_var.value, actual_cdf[non_rec_varying_var.name][...]
-            )
+            self.assertEqual(non_rec_varying_var.value, actual_cdf[non_rec_varying_var.name][...])
             self.assertEqual(
                 pycdf.const.CDF_INT4.value, actual_cdf[non_rec_varying_var.name].type()
             )
@@ -294,9 +272,7 @@ class TestCdfUtils(TempFileTestCase):
     def test_write_cdf_replaces_nan_inf_and_overflowing_floats_with_fill_value(self):
         epoch_fillval = datetime.fromisoformat("9999-12-31T23:59:59.999999")
 
-        epoch_data = np.ma.masked_array(
-            [datetime(2025, 3, 7, 17, 0), None], mask=[False, True]
-        )
+        epoch_data = np.ma.masked_array([datetime(2025, 3, 7, 17, 0), None], mask=[False, True])
         expected_cdf_epoch_data = np.array([datetime(2025, 3, 7, 17, 0), epoch_fillval])
 
         float_var_input = np.array(
@@ -314,12 +290,8 @@ class TestCdfUtils(TempFileTestCase):
 
             def to_data_product_variables(self) -> list[DataProductVariable]:
                 return [
-                    DataProductVariable(
-                        "epoch", epoch_data, pycdf.const.CDF_TIME_TT2000
-                    ),
-                    DataProductVariable(
-                        "float_var", float_var_input, pycdf.const.CDF_REAL4
-                    ),
+                    DataProductVariable("epoch", epoch_data, pycdf.const.CDF_TIME_TT2000),
+                    DataProductVariable("float_var", float_var_input, pycdf.const.CDF_REAL4),
                 ]
 
         path = str(self.temp_directory / "write_cdf.cdf")
@@ -346,9 +318,7 @@ class TestCdfUtils(TempFileTestCase):
             actual_float_var = actual_cdf["float_var"][...]
             self.assertFalse(np.any(np.isnan(actual_float_var)))
             self.assertFalse(np.any(np.isinf(actual_float_var)))
-            np.testing.assert_array_equal(
-                expected_float_var, actual_float_var, strict=True
-            )
+            np.testing.assert_array_equal(expected_float_var, actual_float_var, strict=True)
             np.testing.assert_array_equal(
                 actual_cdf["epoch"][...], expected_cdf_epoch_data, strict=True
             )
@@ -363,9 +333,7 @@ class TestCdfUtils(TempFileTestCase):
 
             def to_data_product_variables(self) -> list[DataProductVariable]:
                 return [
-                    DataProductVariable(
-                        "epoch", epoch_data, pycdf.const.CDF_TIME_TT2000
-                    ),
+                    DataProductVariable("epoch", epoch_data, pycdf.const.CDF_TIME_TT2000),
                 ]
 
         path = str(self.temp_directory / "write_cdf.cdf")
@@ -411,9 +379,7 @@ class TestCdfUtils(TempFileTestCase):
             (np.zeros((0), dtype=float), "CDF_REAL8", "RV", -1e31),
         ]
         for input_data, data_type, record_varying, fill_val in cases:
-            with self.subTest(
-                input_data=input_data, data_type=data_type, rv=record_varying
-            ):
+            with self.subTest(input_data=input_data, data_type=data_type, rv=record_varying):
 
                 class DataProductWithEmptyEpoch(DataProduct):
                     def __init__(self):
@@ -422,7 +388,9 @@ class TestCdfUtils(TempFileTestCase):
                     def to_data_product_variables(self) -> list[DataProductVariable]:
                         return [
                             DataProductVariable(
-                                "var", input_data, pycdf.const.CDF_REAL8
+                                "var",
+                                input_data,  # noqa: B023
+                                pycdf.const.CDF_REAL8,
                             ),
                         ]
 
@@ -441,18 +409,14 @@ class TestCdfUtils(TempFileTestCase):
 
                 write_cdf(str(path), data, attribute_manager)
                 with pycdf.CDF(str(path)) as actual_cdf:
-                    np.testing.assert_array_equal(
-                        actual_cdf["var"][...], input_data, strict=True
-                    )
+                    np.testing.assert_array_equal(actual_cdf["var"][...], input_data, strict=True)
 
                 path.unlink()
 
     def test_does_not_write_variable_attribute_if_value_is_empty_string(self):
         path = str(self.temp_directory / "write_cdf.cdf")
         data = TestDataProduct()
-        _, _, regular_var, time_var, non_rec_varying_var = (
-            data.to_data_product_variables()
-        )
+        _, _, regular_var, time_var, non_rec_varying_var = data.to_data_product_variables()
         attribute_manager = Mock(spec=ImapAttributeManager)
         attribute_manager.get_global_attributes.return_value = {
             "global1": "global_val1",
@@ -469,9 +433,7 @@ class TestCdfUtils(TempFileTestCase):
         write_cdf(path, data, attribute_manager)
 
         with pycdf.CDF(path) as actual_cdf:
-            np.testing.assert_array_equal(
-                regular_var.value, actual_cdf[regular_var.name][...]
-            )
+            np.testing.assert_array_equal(regular_var.value, actual_cdf[regular_var.name][...])
             self.assertEqual("epoch", actual_cdf[regular_var.name].attrs["DEPEND_0"])
             self.assertFalse("CATDESC" in actual_cdf[time_var.name].attrs)
             self.assertFalse("DEPEND_0" in actual_cdf[non_rec_varying_var.name].attrs)
@@ -484,13 +446,11 @@ class TestCdfUtils(TempFileTestCase):
             actual_cdf["date_var"].attrs["FILLVAL"] = datetime_fill
 
             int_fillval = -9223372036854775808
-            actual_cdf["int_var"] = np.array(
-                [-1, 2, int_fillval, int_fillval + 1], dtype=np.int64
-            )
+            actual_cdf["int_var"] = np.array([-1, 2, int_fillval, int_fillval + 1], dtype=np.int64)
             actual_cdf["int_var"].attrs["FILLVAL"] = int_fillval
 
-            masked_datetime_data: np.ma.masked_array = (
-                read_variable_and_mask_fill_values(actual_cdf["date_var"])
+            masked_datetime_data: np.ma.masked_array = read_variable_and_mask_fill_values(
+                actual_cdf["date_var"]
             )
             masked_int_data: np.ma.masked_array = read_variable_and_mask_fill_values(
                 actual_cdf["int_var"]
@@ -504,9 +464,7 @@ class TestCdfUtils(TempFileTestCase):
             masked_int_data.data,
             np.array([-1, 2, int_fillval, int_fillval + 1], dtype=np.int64),
         )
-        np.testing.assert_equal(
-            masked_int_data.mask, np.array([False, False, True, False])
-        )
+        np.testing.assert_equal(masked_int_data.mask, np.array([False, False, True, False]))
 
     def test_read_variable_replaces_fill_values_with_nan(self):
         path = str(self.temp_directory / "cdf.cdf")
@@ -555,15 +513,11 @@ class TestCdfUtils(TempFileTestCase):
             "FILLVAL": -1e31,
             "RECORD_VARYING": "rV",
         }
-        attribute_manager.get_variable_attributes.side_effect = lambda _: (
-            variable_metadata.copy()
-        )
+        attribute_manager.get_variable_attributes.side_effect = lambda _: variable_metadata.copy()
 
         write_cdf(path, data, attribute_manager)
 
-        expected_data_product_logical_source = (
-            "imap_hi_l3_h45-ena-h-sf-sp-ram-hae-6deg-6mo"
-        )
+        expected_data_product_logical_source = "imap_hi_l3_h45-ena-h-sf-sp-ram-hae-6deg-6mo"
         attribute_manager.get_global_attributes.assert_called_once_with(
             expected_data_product_logical_source
         )

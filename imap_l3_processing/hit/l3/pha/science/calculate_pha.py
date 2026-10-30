@@ -1,19 +1,18 @@
 from dataclasses import dataclass
-from typing import Optional
 
 import numpy as np
 from numpy import clip
 
 from imap_l3_processing.hit.l3.pha.pha_event_reader import PHAWord, RawPHAEvent
 from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import (
+    CosineCorrectionLookupTable,
     DetectedRange,
     Detector,
-    CosineCorrectionLookupTable,
     DetectorRange,
 )
 from imap_l3_processing.hit.l3.pha.science.gain_lookup_table import (
-    GainLookupTable,
     DetectorGain,
+    GainLookupTable,
 )
 from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import (
     HitEventTypeLookup,
@@ -34,12 +33,12 @@ class EventAnalysis:
 @dataclass
 class EventOutput:
     original_event: RawPHAEvent
-    total_energy: Optional[float]
-    charge: Optional[float]
+    total_energy: float | None
+    charge: float | None
     energies: list[float]
-    detected_range: Optional[DetectedRange]
-    e_delta: Optional[float]
-    e_prime: Optional[float]
+    detected_range: DetectedRange | None
+    e_delta: float | None
+    e_prime: float | None
 
 
 def calculate_mev(word: PHAWord, gain_lookup_table: GainLookupTable) -> float:
@@ -48,9 +47,7 @@ def calculate_mev(word: PHAWord, gain_lookup_table: GainLookupTable) -> float:
     return word.adc_value * gain_coeffs.a + gain_coeffs.b
 
 
-def analyze_event(
-    event: RawPHAEvent, rule_lookup: HitEventTypeLookup
-) -> Optional[EventAnalysis]:
+def analyze_event(event: RawPHAEvent, rule_lookup: HitEventTypeLookup) -> EventAnalysis | None:
 
     def get_adc_value(pha_word: PHAWord):
         return 20 * pha_word.adc_value if pha_word.is_low_gain else pha_word.adc_value
@@ -58,7 +55,7 @@ def analyze_event(
     words = [word for word in event.pha_words]
     groups_to_words = {}
     for word in words:
-        if word.detector.group in groups_to_words.keys():
+        if word.detector.group in groups_to_words:
             groups_to_words[word.detector.group].append(word)
         else:
             groups_to_words[word.detector.group] = [word]
@@ -76,39 +73,39 @@ def analyze_event(
                 unsaturated_words, key=get_adc_value
             )
 
-        l1_detector = [
+        l1_detector = next(
             group
             for group in rule.included_detector_groups
             if group[0:3] == f"L1{rule.range.side.name}"
-        ][0]
-        l2_detector = [
+        )
+        l2_detector = next(
             group
             for group in rule.included_detector_groups
             if group[0:3] == f"L2{rule.range.side.name}"
-        ][0]
+        )
 
         if rule.range.range == DetectorRange.R2:
             e_prime_group = l2_detector
             e_delta_group = l1_detector
         elif rule.range.range == DetectorRange.R3:
-            e_prime_group = [
+            e_prime_group = next(
                 group
                 for group in rule.included_detector_groups
                 if group[0:3] == f"L3{rule.range.side.name}"
-            ][0]
+            )
             e_delta_group = l2_detector
         elif rule.range.range == DetectorRange.R4:
             opposite_side = "A" if rule.range.side.name == "B" else "B"
-            e_prime_group = [
+            e_prime_group = next(
                 group
                 for group in rule.included_detector_groups
                 if group[0:3] == f"L3{opposite_side}"
-            ][0]
-            e_delta_group = [
+            )
+            e_delta_group = next(
                 group
                 for group in rule.included_detector_groups
                 if group[0:3] == f"L3{rule.range.side.name}"
-            ][0]
+            )
 
         return EventAnalysis(
             range=rule.range,
@@ -154,16 +151,12 @@ def compute_charge(
     double_power_law_lookup: RangeFitLookup,
 ) -> float:
     if valid_ranges[detected_range.range].is_in_range(e_prime, delta_e):
-        charges, deltas = double_power_law_lookup.evaluate_e_prime(
-            detected_range, e_prime
-        )
+        charges, deltas = double_power_law_lookup.evaluate_e_prime(detected_range, e_prime)
         assert np.array_equal(deltas, np.sort(deltas)), "values are not increasing"
         index_2 = clip(np.searchsorted(deltas, delta_e), 1, len(charges) - 1)
         index_1 = index_2 - 1
 
-        B = np.log(charges[index_2] / charges[index_1]) / np.log(
-            deltas[index_2] / deltas[index_1]
-        )
+        B = np.log(charges[index_2] / charges[index_1]) / np.log(deltas[index_2] / deltas[index_1])
         A = charges[index_1] / (deltas[index_1] ** B)
 
         return A * delta_e**B
@@ -188,14 +181,11 @@ def process_pha_event(
 
         energies = [calculate_corrected_energy(word) for word in event.pha_words]
         total_energy = sum(
-            calculate_corrected_energy(word)
-            for word in event_analysis.words_with_highest_energy
+            calculate_corrected_energy(word) for word in event_analysis.words_with_highest_energy
         )
         e_delta = calculate_corrected_energy(event_analysis.e_delta_word)
         e_prime = calculate_corrected_energy(event_analysis.e_prime_word)
-        charge = compute_charge(
-            event_analysis.range, e_delta, e_prime, range_fit_lookup
-        )
+        charge = compute_charge(event_analysis.range, e_delta, e_prime, range_fit_lookup)
 
         return EventOutput(
             original_event=event,

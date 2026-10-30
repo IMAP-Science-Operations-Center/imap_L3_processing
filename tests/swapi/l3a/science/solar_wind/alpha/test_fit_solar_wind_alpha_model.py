@@ -10,9 +10,12 @@ from imap_l3_processing.constants import (
     PROTON_CHARGE_COULOMBS,
     PROTON_MASS_KG,
 )
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
+from imap_l3_processing.swapi.l3a.science.solar_wind.alpha import (
+    calculate_initial_guess as alpha_initial_guess_module,
+)
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha import (
     fit_solar_wind_alpha_model as alpha_module,
-    calculate_initial_guess as alpha_initial_guess_module,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_solar_wind_alpha_model import (
     MIN_TOLERABLE_ALPHA_SPEED_RATIO,
@@ -27,17 +30,15 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
 )
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
     ProtonSolarWindFitResult,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
-from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 from imap_l3_processing.swapi.species import Species
 from tests.swapi._helpers import NOMINAL_TEST_EPOCH_TT2000, load_swapi_response
-
 
 # ----- module-level fixture constants --------------------------------------
 
@@ -50,9 +51,7 @@ from tests.swapi._helpers import NOMINAL_TEST_EPOCH_TT2000, load_swapi_response
 _N_BINS_PER_SWEEP = 62
 _N_SWEEPS = 5
 _ONE_SWEEP_VOLTAGE = np.logspace(np.log10(3500.0), np.log10(140.0), _N_BINS_PER_SWEEP)
-_FIVE_SWEEP_VOLTAGE = np.broadcast_to(
-    _ONE_SWEEP_VOLTAGE, (_N_SWEEPS, _N_BINS_PER_SWEEP)
-).copy()
+_FIVE_SWEEP_VOLTAGE = np.broadcast_to(_ONE_SWEEP_VOLTAGE, (_N_SWEEPS, _N_BINS_PER_SWEEP)).copy()
 _N_MEAS = _FIVE_SWEEP_VOLTAGE.size
 
 # Slow-wind ground-truth moments. RTN +R points sunward, so a sunward solar
@@ -230,9 +229,7 @@ def _synthesize_proton_plus_alpha_count_rate(
             species=Species.ALPHA,
             rotation_matrices=rotation_matrices,
         )
-        alpha_true, _ = model_solar_wind_ideal_coincidence_rates(
-            alpha_params, alpha_ctx
-        )
+        alpha_true, _ = model_solar_wind_ideal_coincidence_rates(alpha_params, alpha_ctx)
         total_true = proton_true + alpha_true
     else:
         total_true = proton_true
@@ -334,9 +331,7 @@ class TestFitAlphaMomentsGuardBranches(unittest.TestCase):
 # ----- fit_solar_wind_alpha_model — end-to-end recovery -----------------
 
 
-class TestFitAlphaMomentsRecoversTruth(
-    _SyntheticAlphaSpectrumFixture, unittest.TestCase
-):
+class TestFitAlphaMomentsRecoversTruth(_SyntheticAlphaSpectrumFixture, unittest.TestCase):
     """Tests for `fit_solar_wind_alpha_model` — end-to-end Stage-2 recovery: synthesize a proton+alpha spectrum from known truth, hand the fitter the exact proton moments, and verify it recovers (n_α, T_α, Δv) and the field-aligned alpha velocity."""
 
     @classmethod
@@ -378,16 +373,12 @@ class TestFitAlphaMomentsRecoversTruth(
 
     def test_recovers_signed_delta_v(self):
         """The fitted Δv matches the truth in magnitude and sign — LM recovers the correct basin from the Δv=0 seed."""
-        np.testing.assert_allclose(
-            self.result.delta_v.nominal_value, _TRUE_DELTA_V_KM_S, atol=0.5
-        )
+        np.testing.assert_allclose(self.result.delta_v.nominal_value, _TRUE_DELTA_V_KM_S, atol=0.5)
 
     def test_alpha_velocity_equals_proton_velocity_plus_delta_v_along_bhat(self):
         """The post-fit `velocity_rtn` satisfies the algebraic identity v_α = v_p* + Δv·B̂ exactly (not approximately) — the dataclass stores the constraint, not a free vector."""
         v_alpha = self.result.velocity_rtn_nominal()
-        expected = (
-            _TRUE_PROTON_VELOCITY_RTN + self.result.delta_v.nominal_value * _B_HAT_RTN
-        )
+        expected = _TRUE_PROTON_VELOCITY_RTN + self.result.delta_v.nominal_value * _B_HAT_RTN
         np.testing.assert_allclose(v_alpha, expected, atol=1e-9)
 
     def test_alpha_velocity_recovers_truth(self):
@@ -452,9 +443,7 @@ class TestFitAlphaMomentsAlphaVelocityFollowsBHat(unittest.TestCase):
             b_hat=cls.b_hat,
         )
         cls.alpha_velocity_truth = alpha_v
-        cls.proton_moments = _build_proton_fit_result(
-            velocity_rtn=cls.proton_velocity_rtn
-        )
+        cls.proton_moments = _build_proton_fit_result(velocity_rtn=cls.proton_velocity_rtn)
         proton_ctx, alpha_ctx = _build_proton_and_alpha_contexts(
             response=cls.response,
             count_rate=observed,
@@ -480,9 +469,7 @@ class TestFitAlphaMomentsAlphaVelocityFollowsBHat(unittest.TestCase):
                 self.b_hat,
             )
         )
-        np.testing.assert_allclose(
-            self.result.delta_v.nominal_value, delta_along, atol=1e-9
-        )
+        np.testing.assert_allclose(self.result.delta_v.nominal_value, delta_along, atol=1e-9)
 
     def test_alpha_velocity_recovers_truth_under_tilted_bhat(self):
         """With a 10° tilted B̂, the recovered alpha velocity matches the synthesis truth vector to ~1 km/s."""
@@ -518,9 +505,7 @@ class TestAlphaSolarWindFitResultAccessors(unittest.TestCase):
                 [0.5, 0.25, 16.0],
             ]
         )
-        velocity_triple = make_correlated_velocity(
-            self.expected_nominal, self.expected_covariance
-        )
+        velocity_triple = make_correlated_velocity(self.expected_nominal, self.expected_covariance)
         self.moments = AlphaSolarWindFitResult(
             density=ufloat(0.2, 0.01),
             temperature=ufloat(4.0e5, 1.0e3),
@@ -531,9 +516,7 @@ class TestAlphaSolarWindFitResultAccessors(unittest.TestCase):
 
     def test_velocity_rtn_nominal_returns_per_component_nominals(self):
         """The nominal-vector accessor returns the per-component nominal_values as a length-3 ndarray."""
-        np.testing.assert_array_equal(
-            self.moments.velocity_rtn_nominal(), self.expected_nominal
-        )
+        np.testing.assert_array_equal(self.moments.velocity_rtn_nominal(), self.expected_nominal)
 
     def test_velocity_rtn_covariance_is_three_by_three(self):
         """The covariance accessor returns a 3×3 matrix matching the RTN velocity dimensionality."""
@@ -756,9 +739,7 @@ class TestAlphaEvaluatorAnalyticJacobianMatchesFiniteDifference(
 
     def test_jacobian_shape_is_n_residuals_by_three(self):
         """The analytic Jacobian has shape (N_residuals, 3) — one row per measurement bin, one column per fit parameter (log n_α, log T_α, Δv)."""
-        self.assertEqual(
-            self.analytic_jacobian.shape, (self.alpha_ctx.count_rate.size, 3)
-        )
+        self.assertEqual(self.analytic_jacobian.shape, (self.alpha_ctx.count_rate.size, 3))
 
     def test_log_density_column_equals_alpha_only_rate_times_deadtime_squared(self):
         """Because the rate is linear in n_α, the analytic ∂(observable)/∂(log n_α) column equals 𝒟²(R_total) · R_α exactly with no quadrature slack — an identity check independent of finite-difference noise."""
@@ -772,9 +753,7 @@ class TestAlphaEvaluatorAnalyticJacobianMatchesFiniteDifference(
             temperature=_TRUE_ALPHA_TEMPERATURE_K,
             mass=ALPHA_PARTICLE_MASS_KG,
         )
-        alpha_rate, _ = model_solar_wind_ideal_coincidence_rates(
-            alpha_only_params, self.alpha_ctx
-        )
+        alpha_rate, _ = model_solar_wind_ideal_coincidence_rates(alpha_only_params, self.alpha_ctx)
         total_rate = self.proton_true_rate + alpha_rate
         deadtime_squared = deadtime_factor(total_rate) ** 2
         np.testing.assert_allclose(
@@ -803,9 +782,7 @@ class TestAlphaEvaluatorAnalyticJacobianMatchesFiniteDifference(
         )
 
 
-class TestAlphaEvaluatorCachesEvaluation(
-    _SyntheticAlphaSpectrumFixture, unittest.TestCase
-):
+class TestAlphaEvaluatorCachesEvaluation(_SyntheticAlphaSpectrumFixture, unittest.TestCase):
     """Tests for `_AlphaEvaluator._refresh` — caches the last (residuals, jacobian) so scipy.least_squares' separate `fun` and `jac` callbacks share one forward-model evaluation per state."""
 
     @classmethod

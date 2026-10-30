@@ -13,9 +13,7 @@ imap_data_access.config["API_KEY"] = (
 l1_45_folder = Path(
     r"C:\Users\Harrison\Downloads\ULTRA_45sensor_spacecraft-psets_20251113-20251125T164844Z-1-001\ULTRA_45sensor_spacecraft-psets_20251113"
 )
-l1_90_folder = Path(
-    r"C:\Users\Harrison\Downloads\ULTRA_90sensor_spacecraft-psets_20251113"
-)
+l1_90_folder = Path(r"C:\Users\Harrison\Downloads\ULTRA_90sensor_spacecraft-psets_20251113")
 glows_folder = Path(r"C:\Users\Harrison\Downloads\ultra_combined_hf_validation\glows")
 l2_45_folder = Path(r"C:\Users\Harrison\Downloads\u45_l2")
 l2_90_folder = Path(r"C:\Users\Harrison\Downloads\u90_l2")
@@ -33,7 +31,7 @@ def upload_file(f):
             uploaded.append(f.name)
             print("uploaded", f.name)
             return
-        except Exception:
+        except Exception:  # noqa: BLE001
             failures += 1
 
             print(f"failed to upload file: {f} after {failures} attempts, retrying...")

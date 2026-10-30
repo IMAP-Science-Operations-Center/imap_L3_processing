@@ -13,6 +13,7 @@ spectrum into the SPICE coverage window — keeping a date-shifted copy on disk
 would just be duplicate data.
 """
 
+import datetime
 import os
 import subprocess
 import sys
@@ -25,7 +26,6 @@ import numpy as np
 import numpy.testing
 from imap_data_access import ScienceFilePath
 from spacepy.pycdf import CDF
-import datetime
 
 import imap_l3_processing
 from imap_l3_processing.swapi.constants import SWAPI_COARSE_SWEEP_BINS
@@ -122,6 +122,7 @@ class SwapiProcessorIntegration(unittest.TestCase):
                 "--dependency",
                 dependency_filename,
             ],
+            check=False,
             env={**os.environ, "IMAP_DATA_DIR": str(data_dir)},
         )
 
@@ -131,7 +132,7 @@ class SwapiProcessorIntegration(unittest.TestCase):
         bulk_speed_atol = 1e-3 * float(expected_values["proton_sw_speed"])
 
         with CDF(str(expected_file_path)) as cdf:
-            for key in expected_values.keys():
+            for key, expected_value in expected_values.items():
                 actual_value = cdf[key][0]
                 if key.endswith("_uncert"):
                     rtol, atol = 1e-2, 0.0
@@ -142,13 +143,13 @@ class SwapiProcessorIntegration(unittest.TestCase):
                 try:
                     numpy.testing.assert_allclose(
                         actual_value,
-                        expected_values[key],
+                        expected_value,
                         rtol=rtol,
                         atol=atol,
                         err_msg=key,
                     )
                 except TypeError:
-                    self.assertEqual(expected_values[key], actual_value, msg=key)
+                    self.assertEqual(expected_value, actual_value, msg=key)
 
     @skipUnless(os.environ.get("IMAP_API_KEY"), "requires production API key")
     def test_alpha_sw_with_production_data(self):
@@ -242,6 +243,7 @@ class SwapiProcessorIntegration(unittest.TestCase):
                 "--dependency",
                 dependency_filename,
             ],
+            check=False,
             env={**os.environ, "IMAP_DATA_DIR": str(data_dir)},
         )
 
@@ -251,7 +253,7 @@ class SwapiProcessorIntegration(unittest.TestCase):
         bulk_speed_atol = 1e-3 * float(expected_values["alpha_sw_speed"])
 
         with CDF(str(expected_file_path)) as cdf:
-            for key in expected_values.keys():
+            for key, expected_value in expected_values.items():
                 actual_value = cdf[key][sample_index]
                 if key.endswith("_uncert"):
                     rtol, atol = 3e-2, 0.0
@@ -262,13 +264,13 @@ class SwapiProcessorIntegration(unittest.TestCase):
                 try:
                     numpy.testing.assert_allclose(
                         actual_value,
-                        expected_values[key],
+                        expected_value,
                         rtol=rtol,
                         atol=atol,
                         err_msg=key,
                     )
                 except TypeError:
-                    self.assertEqual(expected_values[key], actual_value, msg=key)
+                    self.assertEqual(expected_value, actual_value, msg=key)
 
     @skipUnless(os.environ.get("IMAP_API_KEY"), "requires production API key")
     def test_pui_he_with_production_data(self):
@@ -324,6 +326,7 @@ class SwapiProcessorIntegration(unittest.TestCase):
                 "--dependency",
                 dependency_filename,
             ],
+            check=False,
             env={**os.environ, "IMAP_DATA_DIR": str(data_dir)},
         )
 
@@ -331,7 +334,7 @@ class SwapiProcessorIntegration(unittest.TestCase):
         self.assertTrue(expected_file_path.exists())
 
         with CDF(str(expected_file_path)) as cdf:
-            for key in expected_values.keys():
+            for key, expected_value in expected_values.items():
                 actual_value = cdf[key][sample_index]
                 if key.endswith("_uncert"):
                     rtol, atol = 1e-2, 0.0
@@ -340,13 +343,13 @@ class SwapiProcessorIntegration(unittest.TestCase):
                 try:
                     numpy.testing.assert_allclose(
                         actual_value,
-                        expected_values[key],
+                        expected_value,
                         rtol=rtol,
                         atol=atol,
                         err_msg=key,
                     )
                 except TypeError:
-                    self.assertEqual(expected_values[key], actual_value, msg=key)
+                    self.assertEqual(expected_value, actual_value, msg=key)
 
     @skipUnless(os.environ.get("IMAP_API_KEY"), "requires production API key")
     def test_l3b_with_production_data(self):
@@ -385,22 +388,21 @@ class SwapiProcessorIntegration(unittest.TestCase):
                 "--dependency",
                 dependency_filename,
             ],
+            check=False,
             env={**os.environ, "IMAP_DATA_DIR": str(data_dir)},
         )
 
         self.assertEqual(0, result.returncode)
         self.assertTrue(expected_file_path.exists())
 
-        l2_file_path = ScienceFilePath(
-            "imap_swapi_l2_sci_20260101_v001.0001.cdf"
-        ).construct_path()
+        l2_file_path = ScienceFilePath("imap_swapi_l2_sci_20260101_v001.0001.cdf").construct_path()
         self.assertTrue(l2_file_path.exists())
 
         with CDF(str(l2_file_path)) as l2_cdf, CDF(str(expected_file_path)) as l3b_cdf:
             print(l3b_cdf.keys())
-            l2_coincidence_rate = l2_cdf["swp_coin_rate"][
-                :50, SWAPI_COARSE_SWEEP_BINS
-            ].mean(axis=0)
+            l2_coincidence_rate = l2_cdf["swp_coin_rate"][:50, SWAPI_COARSE_SWEEP_BINS].mean(
+                axis=0
+            )
             combined_differential_flux = l3b_cdf["combined_differential_flux"][0]
 
             geometric_factor = l2_coincidence_rate / combined_differential_flux

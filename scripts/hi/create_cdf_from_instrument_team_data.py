@@ -26,7 +26,7 @@ def create_l2_map_from_instrument_team(
     epoch = np.array([datetime(2025, 5, 1)])
     epoch_delta = np.array([FIVE_MINUTES_IN_NANOSECONDS])
 
-    data = defaultdict(lambda: {})
+    data = defaultdict(dict)
     for sub_folder in folder.iterdir():
         for file in sub_folder.iterdir():
             energy_string = re.search(r"_(\d*p\d*)keV", file.name).group(1)
@@ -58,9 +58,7 @@ def create_l2_map_from_instrument_team(
     if not np.isclose(pixel_size, 4):
         coords = np.stack(np.meshgrid(lon, lat), axis=-1)
 
-        new_ena_intensity = np.full(
-            (1, ena_intensity.shape[1], len(lon), len(lat)), -1e31
-        )
+        new_ena_intensity = np.full((1, ena_intensity.shape[1], len(lon), len(lat)), -1e31)
         new_ena_intensity_stat_unc = np.full(
             (1, ena_intensity.shape[1], len(lon), len(lat)), -1e31
         )
@@ -90,9 +88,7 @@ def create_l2_map_from_instrument_team(
     pathname = output_dir / f"{folder.name}.cdf"
 
     obs_date = np.full(ena_intensity.shape, datetime.now())
-    obs_date_range = np.full(
-        ena_intensity.shape, ONE_SECOND_IN_NANOSECONDS * SECONDS_PER_DAY * 2
-    )
+    obs_date_range = np.full(ena_intensity.shape, ONE_SECOND_IN_NANOSECONDS * SECONDS_PER_DAY * 2)
 
     exposure_mask = ena_intensity == 0
     exposure_factor = np.full(ena_intensity.shape, 1.0)
@@ -110,9 +106,7 @@ def create_l2_map_from_instrument_team(
         cdf.new("longitude", lon, recVary=False, type=pycdf.const.CDF_FLOAT)
         cdf.new("longitude_delta", lon_delta, recVary=False, type=pycdf.const.CDF_FLOAT)
         cdf.new("longitude_label", lon_label, recVary=False, type=pycdf.const.CDF_CHAR)
-        cdf.new(
-            "ena_intensity", ena_intensity, recVary=True, type=pycdf.const.CDF_FLOAT
-        )
+        cdf.new("ena_intensity", ena_intensity, recVary=True, type=pycdf.const.CDF_FLOAT)
         cdf.new(
             "ena_intensity_stat_uncert",
             ena_intensity_stat_uncert,
@@ -125,13 +119,9 @@ def create_l2_map_from_instrument_team(
             recVary=True,
             type=pycdf.const.CDF_FLOAT,
         )
-        cdf.new(
-            "exposure_factor", exposure_factor, recVary=True, type=pycdf.const.CDF_FLOAT
-        )
+        cdf.new("exposure_factor", exposure_factor, recVary=True, type=pycdf.const.CDF_FLOAT)
         cdf.new("obs_date", obs_date, recVary=True, type=pycdf.const.CDF_TIME_TT2000)
-        cdf.new(
-            "obs_date_range", obs_date_range, recVary=True, type=pycdf.const.CDF_INT8
-        )
+        cdf.new("obs_date_range", obs_date_range, recVary=True, type=pycdf.const.CDF_INT8)
         cdf.new("solid_angle", solid_angle, recVary=True, type=pycdf.const.CDF_FLOAT)
         cdf.new("epoch_delta", epoch_delta, recVary=True, type=pycdf.const.CDF_INT8)
         cdf.new(
@@ -153,9 +143,7 @@ def create_l2_map_from_instrument_team(
 
         for var in cdf:
             if cdf[var].type() == pycdf.const.CDF_TIME_TT2000.value:
-                cdf[var].attrs["FILLVAL"] = datetime.fromisoformat(
-                    "9999-12-31T23:59:59.999999999"
-                )
+                cdf[var].attrs["FILLVAL"] = datetime.fromisoformat("9999-12-31T23:59:59.999999999")
             elif cdf[var].type() == pycdf.const.CDF_INT8.value:
                 cdf[var].attrs["FILLVAL"] = -9223372036854775808
             elif cdf[var].type() == pycdf.const.CDF_FLOAT.value:

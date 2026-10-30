@@ -4,9 +4,11 @@ Various functions that are not methods to classes
 """
 
 import datetime
+
 import numpy as np
-from .imap_time import SpacecraftTime
+
 from .constants import SUBSECOND_LIMIT
+from .imap_time import SpacecraftTime
 
 
 def calibration_factor(calibration_file_name, date_string):
@@ -32,15 +34,12 @@ def check_if_contains_actual_data(file_name):
     Args:
         file_name: name of file to be checked
     """
-    f = open(file_name, "r")
-    line = f.readline()
     is_data_in_file = False
-    while line:
-        if line.lstrip()[0] != "#" and len(line.lstrip()) > 0:
-            is_data_in_file = True
-            break
-        line = f.readline()
-    f.close()
+    with open(file_name, "r") as f:
+        for line in f:
+            if line.lstrip()[0] != "#" and len(line.lstrip()) > 0:
+                is_data_in_file = True
+                break
     return is_data_in_file
 
 
@@ -121,10 +120,9 @@ def read_l0_data(pkts_file_name):
         pkts_file_name: name of of the file with CCSDS packets
     """
     # open binary pkts file containing CCSDS packets with histograms
-    file_handler = open("%s" % pkts_file_name, mode="rb")
-    # read binary file with histograms (CCSDS headers are assumed to be included)
-    histogram_telemetry_packets = file_handler.read()
-    file_handler.close()
+    with open(str(pkts_file_name), mode="rb") as file_handler:
+        # read binary file with histograms (CCSDS headers are assumed to be included)
+        histogram_telemetry_packets = file_handler.read()
     return histogram_telemetry_packets  # byte array
 
 

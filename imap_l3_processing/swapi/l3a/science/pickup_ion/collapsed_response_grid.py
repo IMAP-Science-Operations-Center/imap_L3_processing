@@ -17,19 +17,17 @@ from imap_l3_processing.swapi.l3a.science.pickup_ion.uniform_speed_grid import (
 from imap_l3_processing.swapi.l3a.utils import (
     velocity_components_to_angles_in_instrument_frame,
 )
-from imap_l3_processing.swapi.response.passband_grid import interpolate_passband
-from imap_l3_processing.swapi.response.swapi_response import ResponseGrid, SwapiResponse
-from imap_l3_processing.swapi.species import Species
 from imap_l3_processing.swapi.response.azimuthal_transmission import (
     interpolate_azimuthal_transmission,
 )
+from imap_l3_processing.swapi.response.passband_grid import interpolate_passband
+from imap_l3_processing.swapi.response.swapi_response import ResponseGrid, SwapiResponse
+from imap_l3_processing.swapi.species import Species
 
 
 class ChunkCollapsedResponse(NamedTuple):
     speed_grid: UniformSpeedGrid  # shared v' grid of N cells
-    bin_weights: NDArray[
-        float
-    ]  # (n_sweeps, n_steps, N); count_rate = bin_weights @ f(v')
+    bin_weights: NDArray[float]  # (n_sweeps, n_steps, N); count_rate = bin_weights @ f(v')
 
 
 class CollapsedResponseGrid(NamedTuple):
@@ -59,9 +57,7 @@ def build_chunk_collapsed_response(
     bulk_sw_per_bin_kms = np.asarray(bulk_sw_per_bin_kms, dtype=float)
     n_sweeps, n_steps, _ = bulk_sw_per_bin_kms.shape
     if voltages_v.shape != (n_steps,):
-        raise ValueError(
-            f"voltages_v shape {voltages_v.shape} must match n_steps={n_steps}"
-        )
+        raise ValueError(f"voltages_v shape {voltages_v.shape} must match n_steps={n_steps}")
     bulk_speeds = np.linalg.norm(bulk_sw_per_bin_kms, axis=-1)  # (n_sweeps, n_steps)
 
     speed_grid = UniformSpeedGrid(cutoff_speed_max_kms)
@@ -78,9 +74,7 @@ def build_chunk_collapsed_response(
                     bulk_vec[0], bulk_vec[1], bulk_vec[2]
                 )
             )
-            response_grid = swapi_response.get_response_grid(
-                time_as_tt2000, voltage, species
-            )
+            response_grid = swapi_response.get_response_grid(time_as_tt2000, voltage, species)
             collapsed = build_collapsed_response_grid(
                 response_grid,
                 bulk_speed,
@@ -88,9 +82,7 @@ def build_chunk_collapsed_response(
                 bulk_elevation_deg,
                 speed_in_sw_frame=speed_grid.centers,
             )
-            bin_weights[sweep_index, step_index, :] = (
-                collapsed.values * integration_weights
-            )
+            bin_weights[sweep_index, step_index, :] = collapsed.values * integration_weights
 
     return ChunkCollapsedResponse(speed_grid=speed_grid, bin_weights=bin_weights)
 
@@ -104,9 +96,7 @@ def build_collapsed_response_grid(
 ) -> CollapsedResponseGrid:
     speed_in_sw_frame = np.asarray(speed_in_sw_frame, dtype=float)
     if speed_in_sw_frame.ndim != 1:
-        raise ValueError(
-            f"speed_in_sw_frame shape {speed_in_sw_frame.shape} must be 1D"
-        )
+        raise ValueError(f"speed_in_sw_frame shape {speed_in_sw_frame.shape} must be 1D")
 
     v_prime_min, v_prime_max = solar_wind_frame_speed_range(
         response_grid.central_speed, float(bulk_speed)
@@ -148,8 +138,7 @@ def _collapse_response(
     bulk_elevation: float,
 ):
     central_effective_area_km2 = (
-        response_grid.central_effective_area
-        / (CENTIMETERS_PER_METER * METERS_PER_KILOMETER) ** 2
+        response_grid.central_effective_area / (CENTIMETERS_PER_METER * METERS_PER_KILOMETER) ** 2
     )
     central_speed = float(response_grid.central_speed)
     cos_bulk_elevation = math.cos(math.radians(bulk_elevation))
@@ -187,9 +176,7 @@ def _collapse_response(
 
             for i in range(speed_in_sw_frame.shape[0]):
                 v_prime = speed_in_sw_frame[i]
-                cos_angle = (speed**2 + bulk_speed**2 - v_prime**2) / (
-                    2.0 * speed * bulk_speed
-                )
+                cos_angle = (speed**2 + bulk_speed**2 - v_prime**2) / (2.0 * speed * bulk_speed)
 
                 cos_delta_azimuth = (cos_angle - sin_elevation * sin_bulk_elevation) / (
                     cos_elevation * cos_bulk_elevation

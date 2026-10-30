@@ -1,25 +1,23 @@
 import logging
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 from imap_data_access.processing_input import (
     ProcessingInputCollection,
-    generate_imap_input,
     ScienceFilePath,
+    generate_imap_input,
 )
 
 import imap_l3_data_processor
 from tests.integration.integration_test_helpers import mock_imap_data_access
-from tests.test_helpers import get_test_data_path, get_run_local_data_path
+from tests.test_helpers import get_run_local_data_path, get_test_data_path
 
 
 class HitProcessorIntegration(unittest.TestCase):
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_hit_macropixel_product(self, mock_parse_cli_arguments):
         input_files = [
-            get_test_data_path(
-                "hit/imap_hit_l2_macropixel-intensity_20260228_v001.0002.cdf"
-            ),
+            get_test_data_path("hit/imap_hit_l2_macropixel-intensity_20260228_v001.0002.cdf"),
             get_test_data_path("hit/imap_mag_l1d_norm-dsrf_20260228_v005.cdf"),
             get_test_data_path("hit/imap_mag_l2_norm-dsrf_20260228_v002.cdf"),
         ]

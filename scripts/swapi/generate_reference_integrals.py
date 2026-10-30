@@ -33,19 +33,18 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_REPO_ROOT))
 sys.path.insert(0, str(_REPO_ROOT / "docs" / "swapi" / "figure_src"))
 
-# ruff: disable[E402]
+from figure_utils import ANCHOR_ROTATION_SWAPI_TO_RTN
+
 from imap_l3_processing.constants import (
     METERS_PER_KILOMETER,
     PROTON_CHARGE_COULOMBS,
     PROTON_MASS_KG,
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
 from scripts.swapi.reference_integral import reference_integrals_batch
-from figure_utils import ANCHOR_ROTATION_SWAPI_TO_RTN
-# ruff: enable[E402]
 
 _INSTRUMENT_DATA = _REPO_ROOT / "instrument_team_data" / "swapi"
 _WIND_SAMPLES_PATH = (
@@ -94,8 +93,7 @@ def main():
     voltages = [_peak_voltage(float(v)) for v in bulk_speed]
     swapi_response.warm_cache(voltages)
     response_grids = [
-        swapi_response.get_response_grid(v, PROTON_MASS_PER_CHARGE_M_P_PER_E)
-        for v in voltages
+        swapi_response.get_response_grid(v, PROTON_MASS_PER_CHARGE_M_P_PER_E) for v in voltages
     ]
 
     print(f"Computing {n_samples} reference integrals (JIT-parallel, fixed limits)...")

@@ -9,15 +9,15 @@ from imap_l3_processing.constants import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
 )
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
+    N_STATE,
+    SolarWindParams,
+)
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
     fit_solar_wind_proton_model,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.optimize_solar_wind_proton_params import (
     OptimizeSolarWindProtonParamsResult,
-)
-from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
-    N_STATE,
-    SolarWindParams,
 )
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.species import Species
@@ -149,13 +149,9 @@ def _per_bin_rotation_matrices() -> np.ndarray:
     details don't affect what's being tested."""
     sweep_index = np.repeat(np.arange(_N_SWEEPS), _N_BINS_PER_SWEEP)
     bin_index_in_sweep = np.tile(np.arange(1, _N_BINS_PER_SWEEP + 1), _N_SWEEPS)
-    sample_times_s = (
-        sweep_index * _SWEEP_DURATION_S + bin_index_in_sweep * _SAMPLE_TIME_PER_BIN_S
-    )
+    sample_times_s = sweep_index * _SWEEP_DURATION_S + bin_index_in_sweep * _SAMPLE_TIME_PER_BIN_S
 
-    spin_axis = _ANCHOR_ROTATION_MATRIX[:, 1] / np.linalg.norm(
-        _ANCHOR_ROTATION_MATRIX[:, 1]
-    )
+    spin_axis = _ANCHOR_ROTATION_MATRIX[:, 1] / np.linalg.norm(_ANCHOR_ROTATION_MATRIX[:, 1])
     delta_phi = _SPIN_OMEGA_RAD_S * (sample_times_s - _ANCHOR_TIME_S)
 
     ax, ay, az = spin_axis

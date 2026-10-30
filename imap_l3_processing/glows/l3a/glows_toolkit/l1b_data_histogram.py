@@ -2,24 +2,26 @@
 Author: Marek Strumik, maro at cbk.waw.pl
 """
 
-import json
 import copy
+import json
+
 import numpy as np
 import pandas as pd
-from astropy.coordinates import SkyCoord
 from astropy import units as u
+from astropy.coordinates import SkyCoord
+
 from .constants import (
-    VERSION,
-    SCAN_CIRCLE_ANGULAR_RADIUS,
     L1B_L2_HIST_FLAG_FIELDS,
     MAIN_TIME_FIELD,
+    SCAN_CIRCLE_ANGULAR_RADIUS,
+    VERSION,
 )
 from .funcs import (
-    time_sec_subsec_to_utc,
-    time_sec_subsec_to_float64,
-    flags_deserialize,
-    decode_ancillary_parameters_avg_stddev,
     check_if_contains_actual_data,
+    decode_ancillary_parameters_avg_stddev,
+    flags_deserialize,
+    time_sec_subsec_to_float64,
+    time_sec_subsec_to_utc,
 )
 from .geom_fun_libr_box import spin2lb
 
@@ -39,9 +41,7 @@ class L1bDataHistogram:
         self.block_start_time = None
         self.block_end_time = None
 
-    def _block_header_add_list_of_anc_files(
-        self, anc_input_from_sdc, anc_input_from_instr_team
-    ):
+    def _block_header_add_list_of_anc_files(self, anc_input_from_sdc, anc_input_from_instr_team):
         """
         Add list of used ancillary files to block header
         Args:
@@ -54,9 +54,7 @@ class L1bDataHistogram:
                 anc_input_from_instr_team[key]
             )
         for key in anc_input_from_sdc:
-            self.data["block_header"]["ancillary_data_files"].append(
-                anc_input_from_sdc[key]
-            )
+            self.data["block_header"]["ancillary_data_files"].append(anc_input_from_sdc[key])
 
     def _compute_spin_period_ground_estimate(self, anc_data):
         """
@@ -161,15 +159,9 @@ class L1bDataHistogram:
 
         # generate synthetic series with spacecraft location data (assumed to arrive every 0.1 s)
         time = np.arange(self.block_start_time, self.block_end_time, 0.1)
-        data_x = np.interp(
-            time, [df_1["imap_time"], df_2["imap_time"]], [df_1["x"], df_2["x"]]
-        )
-        data_y = np.interp(
-            time, [df_1["imap_time"], df_2["imap_time"]], [df_1["y"], df_2["y"]]
-        )
-        data_z = np.interp(
-            time, [df_1["imap_time"], df_2["imap_time"]], [df_1["z"], df_2["z"]]
-        )
+        data_x = np.interp(time, [df_1["imap_time"], df_2["imap_time"]], [df_1["x"], df_2["x"]])
+        data_y = np.interp(time, [df_1["imap_time"], df_2["imap_time"]], [df_1["y"], df_2["y"]])
+        data_z = np.interp(time, [df_1["imap_time"], df_2["imap_time"]], [df_1["z"], df_2["z"]])
 
         # compute spacecraft-location average and standard deviation over block
         average = [np.mean(data_x), np.mean(data_y), np.mean(data_z)]
@@ -195,15 +187,9 @@ class L1bDataHistogram:
 
         # generate synthetic series with spacecraft velocity data (assumed to arrive every 0.1 s)
         time = np.arange(self.block_start_time, self.block_end_time, 0.1)
-        data_vx = np.interp(
-            time, [df_1["imap_time"], df_2["imap_time"]], [df_1["vx"], df_2["vx"]]
-        )
-        data_vy = np.interp(
-            time, [df_1["imap_time"], df_2["imap_time"]], [df_1["vy"], df_2["vy"]]
-        )
-        data_vz = np.interp(
-            time, [df_1["imap_time"], df_2["imap_time"]], [df_1["vz"], df_2["vz"]]
-        )
+        data_vx = np.interp(time, [df_1["imap_time"], df_2["imap_time"]], [df_1["vx"], df_2["vx"]])
+        data_vy = np.interp(time, [df_1["imap_time"], df_2["imap_time"]], [df_1["vy"], df_2["vy"]])
+        data_vz = np.interp(time, [df_1["imap_time"], df_2["imap_time"]], [df_1["vz"], df_2["vz"]])
 
         # compute spacecraft-velocity average and standard deviation over block
         average = [np.mean(data_vx), np.mean(data_vy), np.mean(data_vz)]
@@ -230,10 +216,8 @@ class L1bDataHistogram:
 
         # compute ecliptic longitude and latitude of histogram bin centers
         histogram_bins_ecl_coords = spin2lb(
-            np.radians(self.data["spin_axis_orientation_average"]["lon"])
-            * np.ones(n_bins, float),
-            np.radians(self.data["spin_axis_orientation_average"]["lat"])
-            * np.ones(n_bins, float),
+            np.radians(self.data["spin_axis_orientation_average"]["lon"]) * np.ones(n_bins, float),
+            np.radians(self.data["spin_axis_orientation_average"]["lat"]) * np.ones(n_bins, float),
             np.radians(spin_angle_from_north),
             0.0,
             np.radians(SCAN_CIRCLE_ANGULAR_RADIUS) * np.ones(n_bins, float),
@@ -251,11 +235,8 @@ class L1bDataHistogram:
         """
 
         # load conversion/decoding table for ancillary parameters collected onboard
-        file_handler = open(
-            anc_input_from_instr_team["conversion_table_for_anc_data"], "r"
-        )
-        conversion_table = json.load(file_handler)
-        file_handler.close()
+        with open(anc_input_from_instr_team["conversion_table_for_anc_data"], "r") as file_handler:
+            conversion_table = json.load(file_handler)
 
         # ancillary parameters collected onboard that need to be decoded
         (
@@ -265,24 +246,16 @@ class L1bDataHistogram:
             "filter_temperature", conversion_table, l1a_data
         )
         self.data["hv_voltage_average"], self.data["hv_voltage_std_dev"] = (
-            decode_ancillary_parameters_avg_stddev(
-                "hv_voltage", conversion_table, l1a_data
-            )
+            decode_ancillary_parameters_avg_stddev("hv_voltage", conversion_table, l1a_data)
         )
         self.data["spin_period_average"], self.data["spin_period_std_dev"] = (
-            decode_ancillary_parameters_avg_stddev(
-                "spin_period", conversion_table, l1a_data
-            )
+            decode_ancillary_parameters_avg_stddev("spin_period", conversion_table, l1a_data)
         )
         self.data["pulse_length_average"], self.data["pulse_length_std_dev"] = (
-            decode_ancillary_parameters_avg_stddev(
-                "pulse_length", conversion_table, l1a_data
-            )
+            decode_ancillary_parameters_avg_stddev("pulse_length", conversion_table, l1a_data)
         )
 
-    def create_l1b_from_l1a_data(
-        self, l1a_data, anc_input_from_sdc, anc_input_from_instr_team
-    ):
+    def create_l1b_from_l1a_data(self, l1a_data, anc_input_from_sdc, anc_input_from_instr_team):
         """
         Sets values of L1b fields using L1a data read from a file
         Args:
@@ -291,21 +264,15 @@ class L1bDataHistogram:
             anc_input_from_instr_team: ancillary input provided by IMAP/GLOWS Instrument Team
         """
         self.data["block_header"] = {
-            "flight_software_version": l1a_data["block_header"][
-                "flight_software_version"
-            ],
+            "flight_software_version": l1a_data["block_header"]["flight_software_version"],
             "ground_software_version": VERSION,
             "pkts_file_name": l1a_data["block_header"]["pkts_file_name"],
-            "seq_count_in_pkts_file": l1a_data["block_header"][
-                "seq_count_in_pkts_file"
-            ],
+            "seq_count_in_pkts_file": l1a_data["block_header"]["seq_count_in_pkts_file"],
             "l1a_file_name": l1a_data["l1a_file_name"],
         }
 
         # add list of used ancillary files to block_header
-        self._block_header_add_list_of_anc_files(
-            anc_input_from_sdc, anc_input_from_instr_team
-        )
+        self._block_header_add_list_of_anc_files(anc_input_from_sdc, anc_input_from_instr_team)
 
         self.data["unique_block_identifier"] = time_sec_subsec_to_utc(
             l1a_data[MAIN_TIME_FIELD]["seconds"],
@@ -317,9 +284,7 @@ class L1bDataHistogram:
 
         # set histogram-related quantities
         self.data["number_of_spins_per_block"] = l1a_data["number_of_spins_per_block"]
-        self.data["number_of_bins_per_histogram"] = l1a_data[
-            "number_of_bins_per_histogram"
-        ]
+        self.data["number_of_bins_per_histogram"] = l1a_data["number_of_bins_per_histogram"]
 
         # set histogram
         self.data["histogram"] = l1a_data["histogram"]
@@ -343,13 +308,9 @@ class L1bDataHistogram:
         # set block_start_time and block_end_time for funcs invoked in process_anc_input_from_sdc()
         self.block_start_time = self.data[MAIN_TIME_FIELD]
         if MAIN_TIME_FIELD == "imap_start_time":
-            self.block_end_time = (
-                self.block_start_time + self.data["imap_end_time_offset"]
-            )
+            self.block_end_time = self.block_start_time + self.data["imap_end_time_offset"]
         if MAIN_TIME_FIELD == "glows_start_time":
-            self.block_end_time = (
-                self.block_start_time + self.data["glows_end_time_offset"]
-            )
+            self.block_end_time = self.block_start_time + self.data["glows_end_time_offset"]
 
         # convert ancillary parameters collected onboard to physical units
         self._convert_ancillary_parameters(l1a_data, anc_input_from_instr_team)
@@ -366,9 +327,7 @@ class L1bDataHistogram:
                 self.data["flags"][key] = l1a_data["flags"][key]
 
         # initialize histogram bin flags
-        self.data["histogram_flag_array"] = np.zeros_like(
-            self.data["histogram"], np.int16
-        )
+        self.data["histogram_flag_array"] = np.zeros_like(self.data["histogram"], np.int16)
 
         # apply filters defined by the IMAP/GLOWS Instrument Team
         self._filters(anc_input_from_instr_team)
@@ -388,9 +347,8 @@ class L1bDataHistogram:
             anc_input_from_instr_team: ancillary input provided by IMAP/GLOWS Instrument Team
         """
         # read filter settings
-        file_handler = open(anc_input_from_instr_team["settings"], "r")
-        settings = json.load(file_handler)
-        file_handler.close()
+        with open(anc_input_from_instr_team["settings"], "r") as file_handler:
+            settings = json.load(file_handler)
 
         # set uv-source-related part of histogram flag array
         self._set_histogram_flag_array_uv_sources(anc_input_from_instr_team, settings)
@@ -414,9 +372,7 @@ class L1bDataHistogram:
         # apply filter based on filter-temperature spread and set related flag
         self._flag_compare_with_threshold(
             "filter_temperature_std_dev",
-            settings["filter_based_on_temperature_std_dev"][
-                "std_dev_threshold__celsius_deg"
-            ],
+            settings["filter_based_on_temperature_std_dev"]["std_dev_threshold__celsius_deg"],
             "is_temperature_std_dev_beyond_threshold",
         )
 
@@ -462,12 +418,8 @@ class L1bDataHistogram:
         Args:
             settings: filter settings from a file provided by IMAP/GLOWS Instrument Team
         """
-        n_lo = settings["filter_based_on_daily_statistical_error"][
-            "n_sigma_threshold_lower"
-        ]
-        n_up = settings["filter_based_on_daily_statistical_error"][
-            "n_sigma_threshold_upper"
-        ]
+        n_lo = settings["filter_based_on_daily_statistical_error"]["n_sigma_threshold_lower"]
+        n_up = settings["filter_based_on_daily_statistical_error"]["n_sigma_threshold_upper"]
         if n_lo < 0 or n_up < 0:
             # negative value means that filter is turned off, so we can immediately set the flag
             self.data["flags"]["is_beyond_daily_statistical_error"] = False
@@ -479,12 +431,8 @@ class L1bDataHistogram:
             total_counts_daily_average, total_counts_daily_std_dev = (
                 self.total_counts_daily_statistics()
             )
-            self.data["debugging_data"]["total_counts_daily_average"] = (
-                total_counts_daily_average
-            )
-            self.data["debugging_data"]["total_counts_daily_std_dev"] = (
-                total_counts_daily_std_dev
-            )
+            self.data["debugging_data"]["total_counts_daily_average"] = total_counts_daily_average
+            self.data["debugging_data"]["total_counts_daily_std_dev"] = total_counts_daily_std_dev
             if (
                 total_counts_daily_average - n_lo * total_counts_daily_std_dev
                 <= total_counts
@@ -534,9 +482,7 @@ class L1bDataHistogram:
             relative_difference = np.fabs(
                 self.data[parameter_1_name] - self.data[parameter_2_name]
             ) / (self.data[parameter_1_name] + self.data[parameter_2_name])
-            self.data["debugging_data"]["spin_period_relative_difference"] = (
-                relative_difference
-            )
+            self.data["debugging_data"]["spin_period_relative_difference"] = relative_difference
             if relative_difference < threshold:
                 self.data["flags"][flag_name] = False
             else:
@@ -551,9 +497,7 @@ class L1bDataHistogram:
 
         # read ancillary variables provided by SDC (IMAP general telemetry)
         # note that finally different CSV files can be used for different quantities
-        anc_data = pd.read_csv(
-            anc_input_from_sdc["anc_data_file_name"], sep=" ", comment="#"
-        )
+        anc_data = pd.read_csv(anc_input_from_sdc["anc_data_file_name"], sep=" ", comment="#")
         # TMP_SOLUTION: we use here a csv file with mock ancillary data generated by
         # GLOWS Team using generate_anc_file.py script
         # the following procedures invoked below:
@@ -601,9 +545,8 @@ class L1bDataHistogram:
         Args:
             file_name: name of of file with L1b data
         """
-        file_handler = open(file_name, "r")
-        self.data = json.load(file_handler)
-        file_handler.close()
+        with open(file_name, "r") as file_handler:
+            self.data = json.load(file_handler)
 
         # hexadecimal values saved as strings require special treatment to make them integers
         self.data["histogram_flag_array"] = [
@@ -669,35 +612,20 @@ class L1bDataHistogram:
         # them to be saved as one-liners (i.e., without \n after each element) or we want them to
         # be printed with a specific format by json.dumps()
         # so we convert variables to strings as defined in fmt
-        for key in fmt["arrays"].keys():
-            data[key] = (
-                "["
-                + ", ".join(map(lambda x: fmt["arrays"][key] % x, list(data[key])))
-                + "]"
-            )
-        for key in fmt["scalar variables"].keys():
-            data[key] = "|" + fmt["scalar variables"][key] % data[key] + "|"
-        for key in fmt["lon lat variables"].keys():
+        for key in fmt["arrays"]:
+            data[key] = "[" + ", ".join(fmt["arrays"][key] % x for x in list(data[key])) + "]"
+        for key, value in fmt["scalar variables"].items():
+            data[key] = "|" + value % data[key] + "|"
+        for key, value in fmt["lon lat variables"].items():
             for sec_key in ["lon", "lat"]:
-                data[key][sec_key] = (
-                    "|" + fmt["lon lat variables"][key] % data[key][sec_key] + "|"
-                )
-        for key in fmt["vector variables"].keys():
+                data[key][sec_key] = "|" + value % data[key][sec_key] + "|"
+        for key, value in fmt["vector variables"].items():
             for sec_key in ["x", "y", "z"]:
-                data[key][sec_key] = (
-                    "|" + fmt["vector variables"][key] % data[key][sec_key] + "|"
-                )
+                data[key][sec_key] = "|" + value % data[key][sec_key] + "|"
 
         # histogram_flag_array requires special hexadecimal treatment
         data["histogram_flag_array"] = (
-            "["
-            + ", ".join(
-                map(
-                    lambda x: '"0x' + format(x, "x").zfill(4) + '"',
-                    list(data["histogram_flag_array"]),
-                )
-            )
-            + "]"
+            "[" + ", ".join(f'0x{x:04x}"' for x in list(data["histogram_flag_array"])) + "]"
         )
 
         # generate JSON content to be saved in output file
@@ -708,59 +636,43 @@ class L1bDataHistogram:
         json_content = json_content.replace('|"', "").replace('"|', "")
         json_content = json_content.replace('\\"', '"')
 
-        if 1 == 2:
-            # some fields need to be temporarily converted to string arrays, because we want to force
-            # them to be saved as one-liners (i.e., without \n after each element) by json.dumps()
-            spin_angle_tmp = self.data["imap_spin_angle_bin_cntr"]
-            histogram_tmp = self.data["histogram"]
-            flags_tmp = self.data["histogram_flag_array"]
-            self.data["histogram"] = (
-                "[" + ", ".join(map(str, list(histogram_tmp))) + "]"
-            )
-            self.data["imap_spin_angle_bin_cntr"] = (
-                "[" + ", ".join(map(lambda x: "%.2f" % x, list(spin_angle_tmp))) + "]"
-            )
-            self.data["histogram_flag_array"] = (
-                "["
-                + ", ".join(
-                    map(
-                        lambda x: '"0x' + format(x, "x").zfill(4) + '"', list(flags_tmp)
-                    )
-                )
-                + "]"
-            )
-            json_content = json.dumps(self.data, indent=4, default=vars)
-            self.data["imap_spin_angle_bin_cntr"] = spin_angle_tmp
-            self.data["histogram"] = histogram_tmp
-            self.data["histogram_flag_array"] = flags_tmp
-            # modify json_content to make string arrays be seen finally as number arrays
-            json_content = json_content.replace('"[', "[").replace(']"', "]")
-            json_content = json_content.replace('\\"', '"')
+        # some fields need to be temporarily converted to string arrays, because we want to force
+        # them to be saved as one-liners (i.e., without \n after each element) by json.dumps()
+        spin_angle_tmp = self.data["imap_spin_angle_bin_cntr"]
+        histogram_tmp = self.data["histogram"]
+        flags_tmp = self.data["histogram_flag_array"]
+        self.data["histogram"] = "[" + ", ".join(map(str, list(histogram_tmp))) + "]"
+        self.data["imap_spin_angle_bin_cntr"] = (
+            "[" + ", ".join(f"{x:.2f}" for x in list(spin_angle_tmp)) + "]"
+        )
+        self.data["histogram_flag_array"] = (
+            "[" + ", ".join(f'0x{x:04x}"' for x in list(flags_tmp)) + "]"
+        )
+        json_content = json.dumps(self.data, indent=4, default=vars)
+        self.data["imap_spin_angle_bin_cntr"] = spin_angle_tmp
+        self.data["histogram"] = histogram_tmp
+        self.data["histogram_flag_array"] = flags_tmp
+        # modify json_content to make string arrays be seen finally as number arrays
+        json_content = json_content.replace('"[', "[").replace(']"', "]")
+        json_content = json_content.replace('\\"', '"')
 
         # start_time_utc string for output file name, based on unique_block_identifier
-        start_time_utc = "".join(
-            filter(str.isdigit, self.data["unique_block_identifier"])
-        )
+        start_time_utc = "".join(filter(str.isdigit, self.data["unique_block_identifier"]))
 
         # the output file name is constructed using a convention defined in Sec. 1.4.2 of
         # "IMAP SDC to Instrument Team ICD"
-        file_name = "data_l1b_histograms/imap_glows_l1b_%s_orbX_modX_p_v00.json" % (
-            start_time_utc
-        )
+        file_name = f"data_l1b_histograms/imap_glows_l1b_{start_time_utc}_orbX_modX_p_v00.json"
 
         # save data
-        file_handler = open(file_name, "w")
-        print(json_content, file=file_handler)
-        file_handler.close()
+        with open(file_name, "w") as file_handler:
+            print(json_content, file=file_handler)
 
         # TO_BE_REMOVED append file name to l1b list needed for the l1b-to-l2 processing
         # file_handler = open('l1b_list.dat', 'a')
         # print(file_name, file=file_handler)
         # file_handler.close()
 
-    def _set_histogram_flag_array_by_instr_team(
-        self, anc_input_from_instr_team, type_of_list
-    ):
+    def _set_histogram_flag_array_by_instr_team(self, anc_input_from_instr_team, type_of_list):
         """
         Set histogram flag array using lists defined by IMAP/GLOWS Instrument Team
             bin indexes in the list are marked by True
@@ -768,42 +680,39 @@ class L1bDataHistogram:
             anc_input_from_instr_team: ancillary input provided by IMAP/GLOWS Instrument Team
             type_of_list: 'exclusions_by_instr_team' or 'suspected_transients'
         """
-        file_handler = open(anc_input_from_instr_team[type_of_list], "r")
-        line = file_handler.readline()
-        while line:
-            if line[0] != "#":
-                # sanity check
-                assert line[:2] == "20" and line[10] == "T", (
-                    "Bad identifier "
-                    + line[:20]
-                    + " in "
-                    + anc_input_from_instr_team[type_of_list]
-                )
-                identifier = line.rstrip().split(" ")[0]
-                flags = line.rstrip().split(" ")[1]
-
-                # sanity check
-                # this check turned out to be inappropriate because number of bins is not always the same
-                # assert len(flags) == self.data['number_of_bins_per_histogram'], \
-                #    'Bad length of mask_array for identifier ' + identifier + ' in ' + \
-                #    anc_input_from_instr_team[type_of_list]
-
-                if identifier == self.data["unique_block_identifier"]:
-                    flags = np.array(list(flags)).astype(bool)
-                    #                    print(np.shape(flags))
-                    if type_of_list == "exclusions_by_instr_team":
-                        flags = np.left_shift(
-                            flags, L1B_L2_HIST_FLAG_FIELDS["is_excluded_by_instr_team"]
-                        )
-                    if type_of_list == "suspected_transients":
-                        flags = np.left_shift(
-                            flags, L1B_L2_HIST_FLAG_FIELDS["is_suspected_transient"]
-                        )
-                    self.data["histogram_flag_array"] = (
-                        self.data["histogram_flag_array"] | flags
+        with open(anc_input_from_instr_team[type_of_list], "r") as file_handler:
+            for line in file_handler:
+                if line[0] != "#":
+                    # sanity check
+                    assert line[:2] == "20" and line[10] == "T", (
+                        "Bad identifier "
+                        + line[:20]
+                        + " in "
+                        + anc_input_from_instr_team[type_of_list]
                     )
-            line = file_handler.readline()
-        file_handler.close()
+                    identifier = line.rstrip().split(" ")[0]
+                    flags = line.rstrip().split(" ")[1]
+
+                    # sanity check
+                    # this check turned out to be inappropriate because number of bins is not always the same
+                    # assert len(flags) == self.data['number_of_bins_per_histogram'], \
+                    #    'Bad length of mask_array for identifier ' + identifier + ' in ' + \
+                    #    anc_input_from_instr_team[type_of_list]
+
+                    if identifier == self.data["unique_block_identifier"]:
+                        flags = np.array(list(flags)).astype(bool)
+                        #                    print(np.shape(flags))
+                        if type_of_list == "exclusions_by_instr_team":
+                            flags = np.left_shift(
+                                flags, L1B_L2_HIST_FLAG_FIELDS["is_excluded_by_instr_team"]
+                            )
+                        if type_of_list == "suspected_transients":
+                            flags = np.left_shift(
+                                flags, L1B_L2_HIST_FLAG_FIELDS["is_suspected_transient"]
+                            )
+                        self.data["histogram_flag_array"] = (
+                            self.data["histogram_flag_array"] | flags
+                        )
 
     def _set_histogram_flag_array_excl_by_instr_team(self, anc_input_from_instr_team):
         """
@@ -812,38 +721,35 @@ class L1bDataHistogram:
         Args:
             anc_input_from_instr_team: ancillary input provided by IMAP/GLOWS Instrument Team
         """
-        file_handler = open(anc_input_from_instr_team["exclusions_by_instr_team"], "r")
-        line = file_handler.readline()
-        while line:
-            if line[0] != "#":
-                # sanity check
-                assert line[:2] == "20" and line[10] == "_", (
-                    "Bad identifier "
-                    + line[:20]
-                    + " in "
-                    + anc_input_from_instr_team["exclusions_by_instr_team"]
-                )
-                identifier = line.rstrip().split(" ")[0]
-                flags = line.rstrip().split(" ")[1]
-
-                # sanity check
-                assert len(flags) == self.data["number_of_bins_per_histogram"], (
-                    "Bad length of mask_array for identifier "
-                    + identifier
-                    + " in "
-                    + anc_input_from_instr_team["exclusions_by_instr_team"]
-                )
-
-                if identifier == self.data["unique_block_identifier"]:
-                    flags = np.array(list(flags)).astype(bool)
-                    flags = np.left_shift(
-                        flags, L1B_L2_HIST_FLAG_FIELDS["is_excluded_by_instr_team"]
+        with open(anc_input_from_instr_team["exclusions_by_instr_team"], "r") as file_handler:
+            for line in file_handler:
+                if line[0] != "#":
+                    # sanity check
+                    assert line[:2] == "20" and line[10] == "_", (
+                        "Bad identifier "
+                        + line[:20]
+                        + " in "
+                        + anc_input_from_instr_team["exclusions_by_instr_team"]
                     )
-                    self.data["histogram_flag_array"] = (
-                        self.data["histogram_flag_array"] | flags
+                    identifier = line.rstrip().split(" ")[0]
+                    flags = line.rstrip().split(" ")[1]
+
+                    # sanity check
+                    assert len(flags) == self.data["number_of_bins_per_histogram"], (
+                        "Bad length of mask_array for identifier "
+                        + identifier
+                        + " in "
+                        + anc_input_from_instr_team["exclusions_by_instr_team"]
                     )
-            line = file_handler.readline()
-        file_handler.close()
+
+                    if identifier == self.data["unique_block_identifier"]:
+                        flags = np.array(list(flags)).astype(bool)
+                        flags = np.left_shift(
+                            flags, L1B_L2_HIST_FLAG_FIELDS["is_excluded_by_instr_team"]
+                        )
+                        self.data["histogram_flag_array"] = (
+                            self.data["histogram_flag_array"] | flags
+                        )
 
     def _set_histogram_flag_array_uv_sources(self, anc_input_from_instr_team, settings):
         """
@@ -854,9 +760,7 @@ class L1bDataHistogram:
             settings: filter settings
         """
 
-        if check_if_contains_actual_data(
-            anc_input_from_instr_team["map_of_uv_sources"]
-        ):
+        if check_if_contains_actual_data(anc_input_from_instr_team["map_of_uv_sources"]):
             # read ecliptic coords and angular radiuses for the masking of bright uv point sources
             uv_sources_coords_and_radiuses = np.loadtxt(
                 anc_input_from_instr_team["map_of_uv_sources"], usecols=[1, 2, 3]
@@ -869,25 +773,19 @@ class L1bDataHistogram:
 
             # a radius_bins grouping is used below for code speed up, because otherwise we would need to use
             # coord1.separation(coord2) from astropy, which turned out to be slow in tests
-            n_radius_bins = (
-                10  # actually used bins, see +2 in np.linspace() argument below
-            )
+            n_radius_bins = 10  # actually used bins, see +2 in np.linspace() argument below
             radius_bins = np.linspace(
                 uv_sources_coords_and_radiuses[:, 2].min() - 1.0e-6,
                 uv_sources_coords_and_radiuses[:, 2].max() + 1.0e-6,
                 n_radius_bins + 2,
             )
             # digitizing/binning into radius_bins
-            radius_idxs = np.digitize(
-                uv_sources_coords_and_radiuses[:, 2], bins=radius_bins
-            )
+            radius_idxs = np.digitize(uv_sources_coords_and_radiuses[:, 2], bins=radius_bins)
 
             for i in range(1, n_radius_bins + 2):  # looping over all radius_bins groups
                 rejection_radius = radius_bins[i]
                 idxs = np.nonzero(radius_idxs == i)[0]
-                if (
-                    len(idxs) > 0
-                ):  # check if we have any uv sources to check in the current group
+                if len(idxs) > 0:  # check if we have any uv sources to check in the current group
                     match_catalog = SkyCoord(
                         uv_sources_coords_and_radiuses[idxs, 0],
                         uv_sources_coords_and_radiuses[idxs, 1],
@@ -913,9 +811,7 @@ class L1bDataHistogram:
             flag = np.left_shift(flag, L1B_L2_HIST_FLAG_FIELDS["is_close_to_uv_source"])
             self.data["histogram_flag_array"] = self.data["histogram_flag_array"] | flag
 
-    def _set_histogram_flag_array_excl_regions(
-        self, anc_input_from_instr_team, settings
-    ):
+    def _set_histogram_flag_array_excl_regions(self, anc_input_from_instr_team, settings):
         """
         Set histogram flag array using a map of excluded regions, close-to-map-points bins are
             denoted by True
@@ -924,13 +820,9 @@ class L1bDataHistogram:
             settings: filter settings
         """
 
-        if check_if_contains_actual_data(
-            anc_input_from_instr_team["map_of_excluded_regions"]
-        ):
+        if check_if_contains_actual_data(anc_input_from_instr_team["map_of_excluded_regions"]):
             # read ecliptic coords of points defining excluded regions
-            excluded_pts_coords = np.loadtxt(
-                anc_input_from_instr_team["map_of_excluded_regions"]
-            )
+            excluded_pts_coords = np.loadtxt(anc_input_from_instr_team["map_of_excluded_regions"])
 
             # set angular radius below which bins are too close to map points
             rejection_radius = settings["filter_based_on_maps"][
@@ -972,9 +864,7 @@ class L1bDataHistogram:
                 flag = np.zeros_like(self.data["histogram"], bool)
                 flag[idxs_to_reject] = True
 
-            flag = np.left_shift(
-                flag, L1B_L2_HIST_FLAG_FIELDS["is_inside_excluded_region"]
-            )
+            flag = np.left_shift(flag, L1B_L2_HIST_FLAG_FIELDS["is_inside_excluded_region"])
             self.data["histogram_flag_array"] = self.data["histogram_flag_array"] | flag
 
     def _set_histogram_flag_array_test_pattern(self):
@@ -1017,25 +907,22 @@ class L1bDataHistogram:
         Compute daily average for the total number of counts in L1a histograms
         """
         file_name = "data_l1a_histograms/total_counts_file.dat"
-        file_handler = open(file_name, "r")
-        line = file_handler.readline()
+        with open(file_name, "r") as file_handler:
+            line = file_handler.readline()
 
-        # sanity check
-        assert (
-            line.rstrip().split(" ")[1] == self.data["block_header"]["pkts_file_name"]
-        ), (
-            "Packets file name "
-            + line.rstrip().split(" ")[1]
-            + " in "
-            + file_name
-            + " is different from currently processed packets file "
-            + self.data["block_header"]["pkts_file_name"]
-        )
+            # sanity check
+            assert line.rstrip().split(" ")[1] == self.data["block_header"]["pkts_file_name"], (
+                "Packets file name "
+                + line.rstrip().split(" ")[1]
+                + " in "
+                + file_name
+                + " is different from currently processed packets file "
+                + self.data["block_header"]["pkts_file_name"]
+            )
 
-        # the first column of data array below: 'seq_count_in_pkts_file'
-        # the second column: total counts in a L1a histogram
-        data = np.loadtxt(file_handler)
-        file_handler.close()
+            # the first column of data array below: 'seq_count_in_pkts_file'
+            # the second column: total counts in a L1a histogram
+            data = np.loadtxt(file_handler)
         total_counts_average = np.mean(data[:, 1])
         total_counts_std_dev = np.std(data[:, 1])
         return total_counts_average, total_counts_std_dev

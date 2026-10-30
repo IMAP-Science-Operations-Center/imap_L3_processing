@@ -70,13 +70,9 @@ class GlowsL3EUltraData(DataProduct):
             lines = input_data.readlines()
 
             energy_line = [line for line in lines if line.startswith("#energy_grid")]
-            energies = np.array(
-                [float(i) for i in re.findall(r"\d+.\d+", energy_line[0])]
-            )
+            energies = np.array([float(i) for i in re.findall(r"\d+.\d+", energy_line[0])])
 
-            code_version_line = [
-                line for line in lines if line.startswith("# code version")
-            ]
+            code_version_line = [line for line in lines if line.startswith("# code version")]
             code_version = code_version_line[0].split(",")[0][14:].strip()
 
         data_table = np.loadtxt(file_path, skiprows=200, dtype=np.float64)
@@ -108,9 +104,7 @@ class GlowsL3EUltraData(DataProduct):
         return cls(
             input_metadata,
             epoch=np.array([epoch]),
-            epoch_delta=np.array(
-                [epoch_delta.total_seconds() * ONE_SECOND_IN_NANOSECONDS]
-            ),
+            epoch_delta=np.array([epoch_delta.total_seconds() * ONE_SECOND_IN_NANOSECONDS]),
             energy=energies,
             energy_delta_plus=energy_delta_plus,
             energy_delta_minus=energy_delta_minus,
@@ -122,15 +116,9 @@ class GlowsL3EUltraData(DataProduct):
             spacecraft_radius=np.array([args.spacecraft_info.spacecraft_radius]),
             spacecraft_longitude=np.array([args.spacecraft_info.spacecraft_longitude]),
             spacecraft_latitude=np.array([args.spacecraft_info.spacecraft_latitude]),
-            spacecraft_velocity_x=np.array(
-                [args.spacecraft_info.spacecraft_velocity_x]
-            ),
-            spacecraft_velocity_y=np.array(
-                [args.spacecraft_info.spacecraft_velocity_y]
-            ),
-            spacecraft_velocity_z=np.array(
-                [args.spacecraft_info.spacecraft_velocity_z]
-            ),
+            spacecraft_velocity_x=np.array([args.spacecraft_info.spacecraft_velocity_x]),
+            spacecraft_velocity_y=np.array([args.spacecraft_info.spacecraft_velocity_y]),
+            spacecraft_velocity_z=np.array([args.spacecraft_info.spacecraft_velocity_z]),
             elongation_excluded=np.array([args.elongation]),
             pixel_latitude=np.array([pixel_latitude_to_return]),
             pixel_longitude=np.array([pixel_longitude_to_return]),
@@ -147,9 +135,7 @@ class GlowsL3EUltraData(DataProduct):
             DataProductVariable(ENERGY_DELTA_PLUS_VAR_NAME, self.energy_delta_plus),
             DataProductVariable(ENERGY_DELTA_MINUS_VAR_NAME, self.energy_delta_minus),
             DataProductVariable(HEALPIX_INDEX_VAR_NAME, self.healpix_index),
-            DataProductVariable(
-                PROBABILITY_OF_SURVIVAL_VAR_NAME, self.probability_of_survival
-            ),
+            DataProductVariable(PROBABILITY_OF_SURVIVAL_VAR_NAME, self.probability_of_survival),
             DataProductVariable(ENERGY_LABEL_VAR_NAME, energy_labels),
             DataProductVariable(PIXEL_INDEX_LABEL_VAR_NAME, pixel_labels),
             DataProductVariable(SPIN_AXIS_LATITUDE_VAR_NAME, self.spin_axis_lat),
@@ -157,18 +143,10 @@ class GlowsL3EUltraData(DataProduct):
             DataProductVariable(PROGRAM_VERSION_VAR_NAME, self.program_version),
             DataProductVariable(SPACECRAFT_RADIUS_VAR_NAME, self.spacecraft_radius),
             DataProductVariable(SPACECRAFT_LATITUDE_VAR_NAME, self.spacecraft_latitude),
-            DataProductVariable(
-                SPACECRAFT_LONGITUDE_VAR_NAME, self.spacecraft_longitude
-            ),
-            DataProductVariable(
-                SPACECRAFT_VELOCITY_X_VAR_NAME, self.spacecraft_velocity_x
-            ),
-            DataProductVariable(
-                SPACECRAFT_VELOCITY_Y_VAR_NAME, self.spacecraft_velocity_y
-            ),
-            DataProductVariable(
-                SPACECRAFT_VELOCITY_Z_VAR_NAME, self.spacecraft_velocity_z
-            ),
+            DataProductVariable(SPACECRAFT_LONGITUDE_VAR_NAME, self.spacecraft_longitude),
+            DataProductVariable(SPACECRAFT_VELOCITY_X_VAR_NAME, self.spacecraft_velocity_x),
+            DataProductVariable(SPACECRAFT_VELOCITY_Y_VAR_NAME, self.spacecraft_velocity_y),
+            DataProductVariable(SPACECRAFT_VELOCITY_Z_VAR_NAME, self.spacecraft_velocity_z),
             DataProductVariable(ELONGATION_EXCLUDED_VAR_NAME, self.elongation_excluded),
             DataProductVariable(PIXEL_LATITUDE_VAR_NAME, self.pixel_latitude),
             DataProductVariable(PIXEL_LONGITUDE_VAR_NAME, self.pixel_longitude),

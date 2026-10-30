@@ -3,17 +3,17 @@ Author: Izabela Kowalska-Leszczynska (ikowalska@cbk.waw.pl)
 Functions used in L3a->L3b processing that are not class methods
 """
 
-import numpy as np
-import astropy.units as u
-import astropy.constants as const
 import json
-import netCDF4
-from astropy.time import Time
-from astropy.coordinates import get_sun
-
-from .constants import PHISICAL_CONSTANTS, CONST_ALPHA_TO_PROTON
-
 import logging
+
+import astropy.constants as const
+import astropy.units as u
+import netCDF4
+import numpy as np
+from astropy.coordinates import get_sun
+from astropy.time import Time
+
+from .constants import CONST_ALPHA_TO_PROTON, PHISICAL_CONSTANTS
 
 logging.basicConfig(level=logging.ERROR)
 
@@ -70,9 +70,7 @@ def calculate_lya_monthly(t, flux):
     Calculates data that are averaged over each Carrington rotation period. Time is mean value of decimal year in each period.
     """
     t_carr, flux_carr = resize_by_carr(t, flux)
-    t_mean = Time(
-        np.array([np.mean(t.decimalyear) for t in t_carr]), format="decimalyear"
-    )
+    t_mean = Time(np.array([np.mean(t.decimalyear) for t in t_carr]), format="decimalyear")
     flux_mean = np.array([f.mean() for f in flux_carr])
 
     return t_mean, flux_mean
@@ -132,8 +130,8 @@ def check_nan(data):
     data - dictionary with the data product
     """
     for key in data:
-        if np.any((np.isnan(np.array(data[key])))):
-            raise Exception("There are NaN in the output data")
+        if np.any(np.isnan(np.array(data[key]))):
+            raise ValueError("There are NaN in the output data")
 
 
 def cr_from_l3b_fn(fn):
@@ -192,11 +190,7 @@ def cross_section_cx(E):
     A8 = 6.1091
 
     EkeV = E.to("keV").value
-    out = (
-        (1e-16)
-        * (A1 * np.log(A2 / EkeV + A3))
-        / (1 + A4 * EkeV + A5 * EkeV**A6 + A7 * EkeV**A8)
-    )
+    out = (1e-16) * (A1 * np.log(A2 / EkeV + A3)) / (1 + A4 * EkeV + A5 * EkeV**A6 + A7 * EkeV**A8)
     sigma = out * u.cm * u.cm
 
     return sigma
@@ -239,7 +233,7 @@ def f107_daily_data(t, flux):
     t_out: daily time array (astropy.time)
     flux_out: daily F10.7 flux adjusted to 1au (10^(-22) W/m^2/Hz)
     """
-    idx_noon, idx_dup = select_noon(t)  # select one measurment per day
+    idx_noon, _idx_dup = select_noon(t)  # select one measurment per day
     idx_no0 = np.where(flux[idx_noon] > 0)[0]
     t_out = t[idx_noon[idx_no0]]
     flux_out = flux[idx_noon[idx_no0]]
@@ -319,7 +313,7 @@ def get_spher_coord_rad(vec):
     """
     if vec.ndim == 1:
         if np.shape(vec)[0] != 3:
-            raise "get_spher_coord_rad() error: np.shape(vec)[0]!=3"
+            raise ValueError("get_spher_coord_rad() error: np.shape(vec)[0]!=3")
         r = np.sqrt(np.dot(vec, vec))
         if r == 0.0:
             b = 0.0
@@ -333,7 +327,7 @@ def get_spher_coord_rad(vec):
         return np.array([r, l, b])  # return one array similarly as in Mathematica
     else:
         if np.shape(vec)[1] != 3:
-            raise "get_spher_coord_rad() error: np.shape(vec)[1]!=3"
+            raise ValueError("get_spher_coord_rad() error: np.shape(vec)[1]!=3")
         r = np.sqrt((vec * vec).sum(axis=1))
         idxs = np.nonzero(r != 0.0)
         b = np.zeros((len(r)), np.float64)
@@ -341,9 +335,7 @@ def get_spher_coord_rad(vec):
         l = np.arctan2(vec[:, 1], vec[:, 0]) % (2 * np.pi)  # compute longitude
         idxs = np.nonzero(np.logical_and(vec[:, 0] == 0.0, vec[:, 1] == 0.0))
         l[idxs[0]] = 0.0  # set l=0 if vec[:,0]==0.0 and vec[:,1]==0.0
-        return np.column_stack(
-            [r, l, b]
-        )  # return one array similarly as in Mathematica
+        return np.column_stack([r, l, b])  # return one array similarly as in Mathematica
 
 
 def jd_fm_Carrington(carr):
@@ -415,10 +407,8 @@ def process_omni_param(omni_raw, cr_grid, param_settings):
     if np.logical_and(param_cr[0] <= cr_grid[0], param_cr[-1] >= cr_grid[-1]):
         param_value_interp = np.interp(cr_grid, param_cr, param_value)
     else:
-        logging.info(
-            "There are gaps in the OMNI2 data that cannot be filled by the interpolation"
-        )
-        raise Exception("OMNI Error: not enough data for interpolation")
+        logging.info("There are gaps in the OMNI2 data that cannot be filled by the interpolation")
+        raise RuntimeError("OMNI Error: not enough data for interpolation")
 
     return param_value_interp, used_nominal_per_cr
 
@@ -534,9 +524,8 @@ def read_json(fn):
     """
     Opens, reads and returns the content of the json file
     """
-    fp = open(fn, "r")
-    data = json.load(fp)
-    fp.close()
+    with open(fn, "r") as fp:
+        data = json.load(fp)
     return data
 
 
@@ -655,9 +644,7 @@ def select_noon(t_pen):
                     i = i + 3
             else:
                 h = np.array([int(t_pen[i].yday[9:11]), int(t_pen[i + 1].yday[9:11])])
-                k = (
-                    i + np.abs(h - 20).argmin()
-                )  # index of the hour that is near 20UT (local noon)
+                k = i + np.abs(h - 20).argmin()  # index of the hour that is near 20UT (local noon)
                 d = [i, i + 1]
             i = i + 2
         else:
@@ -718,24 +705,14 @@ def test_WawHelioInMP_file(model):
         lcrv_filtration = model["vg_points"][k]["parameters"]["lcrv_filtration"]
         lcrv_order = model["vg_points"][k]["parameters"]["lcrv_order"]
 
-        model_const_0 = np.array(
-            model["vg_points"][k]["parameters"]["model_const"]
-        ).shape[0]
+        model_const_0 = np.array(model["vg_points"][k]["parameters"]["model_const"]).shape[0]
         model_matrix = np.array(model["vg_points"][k]["parameters"]["model_matrix"])
-        model_matrix_0 = np.array(
-            model["vg_points"][k]["parameters"]["model_matrix"]
-        ).shape[0]
-        model_matrix_1 = np.array(
-            model["vg_points"][k]["parameters"]["model_matrix"]
-        ).shape[1]
+        model_matrix_0 = np.array(model["vg_points"][k]["parameters"]["model_matrix"]).shape[0]
+        model_matrix_1 = np.array(model["vg_points"][k]["parameters"]["model_matrix"]).shape[1]
 
         lcrv_Trmatrix = np.array(model["vg_points"][k]["parameters"]["lcrv_Trmatrix"])
-        lcrv_Trmatrix_0 = np.array(
-            model["vg_points"][k]["parameters"]["lcrv_Trmatrix"]
-        ).shape[0]
-        lcrv_Trmatrix_1 = np.array(
-            model["vg_points"][k]["parameters"]["lcrv_Trmatrix"]
-        ).shape[1]
+        lcrv_Trmatrix_0 = np.array(model["vg_points"][k]["parameters"]["lcrv_Trmatrix"]).shape[0]
+        lcrv_Trmatrix_1 = np.array(model["vg_points"][k]["parameters"]["lcrv_Trmatrix"]).shape[1]
 
         if model_const_0 != hion_filtration:
             logging.error(
@@ -746,9 +723,7 @@ def test_WawHelioInMP_file(model):
             )
             raise ArrayShapeError("Array shape error: Array shape is incorrect")
 
-        elif np.logical_or(
-            model_matrix_0 != hion_filtration, model_matrix_1 != lcrv_filtration
-        ):
+        elif np.logical_or(model_matrix_0 != hion_filtration, model_matrix_1 != lcrv_filtration):
             logging.error(
                 "model_matrix shape is incorrect.\nIt is "
                 + str(model_matrix.shape)

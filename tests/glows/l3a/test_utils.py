@@ -8,9 +8,9 @@ from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3a.models import GlowsL2Data, GlowsL2Header
 from imap_l3_processing.glows.l3a.utils import (
-    read_l2_glows_data,
-    create_glows_l3a_from_dictionary,
     create_glows_l3a_dictionary_from_cdf,
+    create_glows_l3a_from_dictionary,
+    read_l2_glows_data,
 )
 from imap_l3_processing.models import InputMetadata
 from tests.test_helpers import get_test_data_path
@@ -19,11 +19,7 @@ from tests.test_helpers import get_test_data_path
 class TestUtils(unittest.TestCase):
     def test_reading_l2_glows_data_into_models(self):
         cdf = CDF(
-            str(
-                get_test_data_path(
-                    "glows/imap_glows_l2_hist_20251224-repoint00088_v001.cdf"
-                )
-            )
+            str(get_test_data_path("glows/imap_glows_l2_hist_20251224-repoint00088_v001.cdf"))
         )
 
         glows_l2_data: GlowsL2Data = read_l2_glows_data(cdf)
@@ -31,62 +27,36 @@ class TestUtils(unittest.TestCase):
         self.assertEqual("2025-12-24T11:36:21.588935256", glows_l2_data["start_time"])
         self.assertEqual("2025-12-25T09:39:47.969074488", glows_l2_data["end_time"])
 
-        self.assertEqual(
-            (3600,), glows_l2_data["daily_lightcurve"]["photon_flux"].shape
-        )
-        self.assertEqual(
-            887.6062785692615, glows_l2_data["daily_lightcurve"]["photon_flux"][0]
-        )
-        self.assertEqual(
-            872.260576384695, glows_l2_data["daily_lightcurve"]["photon_flux"][-1]
-        )
+        self.assertEqual((3600,), glows_l2_data["daily_lightcurve"]["photon_flux"].shape)
+        self.assertEqual(887.6062785692615, glows_l2_data["daily_lightcurve"]["photon_flux"][0])
+        self.assertEqual(872.260576384695, glows_l2_data["daily_lightcurve"]["photon_flux"][-1])
 
-        self.assertEqual(
-            (3600,), glows_l2_data["daily_lightcurve"]["flux_uncertainties"].shape
-        )
+        self.assertEqual((3600,), glows_l2_data["daily_lightcurve"]["flux_uncertainties"].shape)
         self.assertEqual(
             6.338751356172933,
             glows_l2_data["daily_lightcurve"]["flux_uncertainties"][0],
         )
 
-        self.assertEqual(
-            (3600,), glows_l2_data["daily_lightcurve"]["exposure_times"].shape
-        )
+        self.assertEqual((3600,), glows_l2_data["daily_lightcurve"]["exposure_times"].shape)
         self.assertEqual(
             22.090875733333327, glows_l2_data["daily_lightcurve"]["exposure_times"][0]
         )
 
         self.assertEqual((3600,), glows_l2_data["daily_lightcurve"]["spin_angle"].shape)
-        self.assertEqual(
-            0.08840215463658296, glows_l2_data["daily_lightcurve"]["spin_angle"][0]
-        )
+        self.assertEqual(0.08840215463658296, glows_l2_data["daily_lightcurve"]["spin_angle"][0])
 
-        self.assertEqual(
-            (3600,), glows_l2_data["daily_lightcurve"]["histogram_flag_array"].shape
-        )
-        self.assertEqual(
-            np.int64, glows_l2_data["daily_lightcurve"]["histogram_flag_array"].dtype
-        )
+        self.assertEqual((3600,), glows_l2_data["daily_lightcurve"]["histogram_flag_array"].shape)
+        self.assertEqual(np.int64, glows_l2_data["daily_lightcurve"]["histogram_flag_array"].dtype)
         self.assertEqual(
             np.uint8(0), glows_l2_data["daily_lightcurve"]["histogram_flag_array"][84]
         )
 
-        self.assertEqual(
-            (3600,), glows_l2_data["daily_lightcurve"]["ecliptic_lat"].shape
-        )
-        self.assertEqual(
-            (3600,), glows_l2_data["daily_lightcurve"]["ecliptic_lon"].shape
-        )
-        self.assertEqual(
-            75.04420784333895, glows_l2_data["daily_lightcurve"]["ecliptic_lat"][0]
-        )
-        self.assertEqual(
-            268.7416390634532, glows_l2_data["daily_lightcurve"]["ecliptic_lon"][0]
-        )
+        self.assertEqual((3600,), glows_l2_data["daily_lightcurve"]["ecliptic_lat"].shape)
+        self.assertEqual((3600,), glows_l2_data["daily_lightcurve"]["ecliptic_lon"].shape)
+        self.assertEqual(75.04420784333895, glows_l2_data["daily_lightcurve"]["ecliptic_lat"][0])
+        self.assertEqual(268.7416390634532, glows_l2_data["daily_lightcurve"]["ecliptic_lon"][0])
 
-        self.assertEqual(
-            (3600,), glows_l2_data["daily_lightcurve"]["raw_histogram"].shape
-        )
+        self.assertEqual((3600,), glows_l2_data["daily_lightcurve"]["raw_histogram"].shape)
         self.assertEqual(19608, glows_l2_data["daily_lightcurve"]["raw_histogram"][0])
 
         self.assertEqual(
@@ -103,18 +73,10 @@ class TestUtils(unittest.TestCase):
             cdf["filter_temperature_std_dev"][0],
             glows_l2_data["filter_temperature_std_dev"],
         )
-        self.assertEqual(
-            cdf["hv_voltage_average"][0], glows_l2_data["hv_voltage_average"]
-        )
-        self.assertEqual(
-            cdf["hv_voltage_std_dev"][0], glows_l2_data["hv_voltage_std_dev"]
-        )
-        self.assertEqual(
-            cdf["spin_period_average"][0], glows_l2_data["spin_period_average"]
-        )
-        self.assertEqual(
-            cdf["spin_period_std_dev"][0], glows_l2_data["spin_period_std_dev"]
-        )
+        self.assertEqual(cdf["hv_voltage_average"][0], glows_l2_data["hv_voltage_average"])
+        self.assertEqual(cdf["hv_voltage_std_dev"][0], glows_l2_data["hv_voltage_std_dev"])
+        self.assertEqual(cdf["spin_period_average"][0], glows_l2_data["spin_period_average"])
+        self.assertEqual(cdf["spin_period_std_dev"][0], glows_l2_data["spin_period_std_dev"])
         self.assertEqual(
             cdf["spin_period_ground_average"][0],
             glows_l2_data["spin_period_ground_average"],
@@ -123,12 +85,8 @@ class TestUtils(unittest.TestCase):
             cdf["spin_period_ground_std_dev"][0],
             glows_l2_data["spin_period_ground_std_dev"],
         )
-        self.assertEqual(
-            cdf["pulse_length_average"][0], glows_l2_data["pulse_length_average"]
-        )
-        self.assertEqual(
-            cdf["pulse_length_std_dev"][0], glows_l2_data["pulse_length_std_dev"]
-        )
+        self.assertEqual(cdf["pulse_length_average"][0], glows_l2_data["pulse_length_average"])
+        self.assertEqual(cdf["pulse_length_std_dev"][0], glows_l2_data["pulse_length_std_dev"])
         self.assertEqual(
             cdf["position_angle_offset_average"][0],
             glows_l2_data["position_angle_offset_average"],
@@ -166,21 +124,15 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(expected_spacecraft_location_average, actual[variable_name])
 
     def test_fails_if_cdf_has_more_than_one_histogram(self):
-        cdf = CDF(
-            str(get_test_data_path("glows/glows_l2_with_too_many_histograms.cdf"))
-        )
+        cdf = CDF(str(get_test_data_path("glows/glows_l2_with_too_many_histograms.cdf")))
 
         with self.assertRaises(AssertionError) as cm:
             _ = read_l2_glows_data(cdf)
-        self.assertEqual(
-            ("Level 2 file should have only one histogram",), cm.exception.args
-        )
+        self.assertEqual(("Level 2 file should have only one histogram",), cm.exception.args)
 
     def test_create_glows_l3a_from_dictionary(self):
         with open(
-            get_test_data_path(
-                "glows/imap_glows_l3a_20130908085214_orbX_modX_p_v00.json"
-            )
+            get_test_data_path("glows/imap_glows_l3a_20130908085214_orbX_modX_p_v00.json")
         ) as f:
             data = json.load(f)
             expected_spin_delta = 3
@@ -315,9 +267,7 @@ class TestUtils(unittest.TestCase):
         cdf_path = get_test_data_path("glows") / "imap_glows_l3a_hist_20100101_v001.cdf"
         actual_dictionary = create_glows_l3a_dictionary_from_cdf(cdf_path)
 
-        self.assertEqual(
-            "imap_glows_l3a_hist_20100101_v001.cdf", actual_dictionary["filename"]
-        )
+        self.assertEqual("imap_glows_l3a_hist_20100101_v001.cdf", actual_dictionary["filename"])
         self.assertEqual(
             datetime(2013, 9, 8, 8, 52, 14).strftime("%Y-%m-%d %H:%M:%S"),
             actual_dictionary["start_time"],
@@ -340,12 +290,8 @@ class TestUtils(unittest.TestCase):
             169.51280659858702,
             actual_dictionary["daily_lightcurve"]["ecliptic_lon"][-1],
         )
-        self.assertEqual(
-            802.8, actual_dictionary["daily_lightcurve"]["exposure_times"][0]
-        )
-        self.assertEqual(
-            80.28, actual_dictionary["daily_lightcurve"]["exposure_times"][2]
-        )
+        self.assertEqual(802.8, actual_dictionary["daily_lightcurve"]["exposure_times"][0])
+        self.assertEqual(80.28, actual_dictionary["daily_lightcurve"]["exposure_times"][2])
         self.assertAlmostEqual(
             620.93173891, actual_dictionary["daily_lightcurve"]["photon_flux"][0]
         )
@@ -366,61 +312,39 @@ class TestUtils(unittest.TestCase):
             3.66514655e-04,
             actual_dictionary["daily_lightcurve"]["extra_heliospheric_bckgrd"][-1],
         )
-        self.assertEqual(
-            0, actual_dictionary["daily_lightcurve"]["time_dependent_bckgrd"][0]
-        )
+        self.assertEqual(0, actual_dictionary["daily_lightcurve"]["time_dependent_bckgrd"][0])
         self.assertEqual(
             1.0000e-02,
             actual_dictionary["daily_lightcurve"]["time_dependent_bckgrd"][10],
         )
         self.assertEqual(2, actual_dictionary["daily_lightcurve"]["spin_angle"][0])
         self.assertEqual(358, actual_dictionary["daily_lightcurve"]["spin_angle"][-1])
-        self.assertEqual(
-            498484, actual_dictionary["daily_lightcurve"]["raw_histogram"][0]
-        )
-        self.assertEqual(
-            510152, actual_dictionary["daily_lightcurve"]["raw_histogram"][-1]
-        )
+        self.assertEqual(498484, actual_dictionary["daily_lightcurve"]["raw_histogram"][0])
+        self.assertEqual(510152, actual_dictionary["daily_lightcurve"]["raw_histogram"][-1])
         self.assertEqual(65, actual_dictionary["daily_lightcurve"]["number_of_bins"])
 
-        self.assertEqual(
-            -27.84000015258789, actual_dictionary["filter_temperature_average"]
-        )
+        self.assertEqual(-27.84000015258789, actual_dictionary["filter_temperature_average"])
         self.assertEqual(0.0, actual_dictionary["filter_temperature_std_dev"])
         self.assertEqual(1527.0999755859375, actual_dictionary["hv_voltage_average"])
         self.assertEqual(87.94999694824219, actual_dictionary["hv_voltage_std_dev"])
         self.assertEqual(15.0, actual_dictionary["spin_period_average"])
         self.assertEqual(0.0, actual_dictionary["spin_period_std_dev"])
-        self.assertEqual(
-            15.236681938171387, actual_dictionary["spin_period_ground_average"]
-        )
-        self.assertEqual(
-            0.0014979999978095293, actual_dictionary["spin_period_ground_std_dev"]
-        )
+        self.assertEqual(15.236681938171387, actual_dictionary["spin_period_ground_average"])
+        self.assertEqual(0.0014979999978095293, actual_dictionary["spin_period_ground_std_dev"])
         self.assertEqual(0.29899999499320984, actual_dictionary["pulse_length_average"])
-        self.assertEqual(
-            0.017260000109672546, actual_dictionary["pulse_length_std_dev"]
-        )
+        self.assertEqual(0.017260000109672546, actual_dictionary["pulse_length_std_dev"])
 
-        self.assertEqual(
-            91.5780029296875, actual_dictionary["position_angle_offset_average"]
-        )
-        self.assertEqual(
-            0.009991000406444073, actual_dictionary["position_angle_offset_std_dev"]
-        )
+        self.assertEqual(91.5780029296875, actual_dictionary["position_angle_offset_average"])
+        self.assertEqual(0.009991000406444073, actual_dictionary["position_angle_offset_std_dev"])
 
         self.assertAlmostEqual(
             162.09199524, actual_dictionary["spin_axis_orientation_average"]["lon"]
         )
-        self.assertAlmostEqual(
-            0.0, actual_dictionary["spin_axis_orientation_average"]["lat"]
-        )
+        self.assertAlmostEqual(0.0, actual_dictionary["spin_axis_orientation_average"]["lat"])
         self.assertAlmostEqual(
             0.23450001, actual_dictionary["spin_axis_orientation_std_dev"]["lon"]
         )
-        self.assertAlmostEqual(
-            0.0, actual_dictionary["spin_axis_orientation_std_dev"]["lat"]
-        )
+        self.assertAlmostEqual(0.0, actual_dictionary["spin_axis_orientation_std_dev"]["lat"])
 
         self.assertAlmostEqual(
             1.46231104e08, actual_dictionary["spacecraft_location_average"]["x"]

@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime, timedelta
-from unittest.mock import sentinel, Mock, MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch, sentinel
 
 import numpy as np
 
@@ -66,41 +66,21 @@ class TestL3eHiModel(unittest.TestCase):
                     DataProductVariable("epoch", sentinel.epoch),
                     DataProductVariable("epoch_delta", sentinel.epoch_delta),
                     DataProductVariable("energy_grid", energy_array),
-                    DataProductVariable(
-                        "energy_delta_plus", sentinel.energy_delta_plus
-                    ),
-                    DataProductVariable(
-                        "energy_delta_minus", sentinel.energy_delta_minus
-                    ),
+                    DataProductVariable("energy_delta_plus", sentinel.energy_delta_plus),
+                    DataProductVariable("energy_delta_minus", sentinel.energy_delta_minus),
                     DataProductVariable("spin_angle", spin_angle_array),
                     DataProductVariable("surv_prob", sentinel.probability_of_survival),
                     DataProductVariable("energy_label", expected_energy_labels),
                     DataProductVariable("spin_angle_label", expected_spin_angle_labels),
-                    DataProductVariable(
-                        "spin_axis_latitude", sentinel.spin_axis_latitude
-                    ),
-                    DataProductVariable(
-                        "spin_axis_longitude", sentinel.spin_axis_longitude
-                    ),
+                    DataProductVariable("spin_axis_latitude", sentinel.spin_axis_latitude),
+                    DataProductVariable("spin_axis_longitude", sentinel.spin_axis_longitude),
                     DataProductVariable("program_version", sentinel.program_version),
-                    DataProductVariable(
-                        "spacecraft_radius", sentinel.spacecraft_radius
-                    ),
-                    DataProductVariable(
-                        "spacecraft_latitude", sentinel.spacecraft_latitude
-                    ),
-                    DataProductVariable(
-                        "spacecraft_longitude", sentinel.spacecraft_longitude
-                    ),
-                    DataProductVariable(
-                        "spacecraft_velocity_x", sentinel.spacecraft_velocity_x
-                    ),
-                    DataProductVariable(
-                        "spacecraft_velocity_y", sentinel.spacecraft_velocity_y
-                    ),
-                    DataProductVariable(
-                        "spacecraft_velocity_z", sentinel.spacecraft_velocity_z
-                    ),
+                    DataProductVariable("spacecraft_radius", sentinel.spacecraft_radius),
+                    DataProductVariable("spacecraft_latitude", sentinel.spacecraft_latitude),
+                    DataProductVariable("spacecraft_longitude", sentinel.spacecraft_longitude),
+                    DataProductVariable("spacecraft_velocity_x", sentinel.spacecraft_velocity_x),
+                    DataProductVariable("spacecraft_velocity_y", sentinel.spacecraft_velocity_y),
+                    DataProductVariable("spacecraft_velocity_z", sentinel.spacecraft_velocity_z),
                     DataProductVariable("elongation", sentinel.elongation),
                     DataProductVariable("glows_flags", sentinel.glows_flags),
                 ]
@@ -893,24 +873,18 @@ class TestL3eHiModel(unittest.TestCase):
 
         expected_program_version = "Hi.v00.01"
 
-        l3e_hi_product: GlowsL3EHiData = (
-            GlowsL3EHiData.convert_dat_to_glows_l3e_hi_product(
-                mock_metadata, hi_file_path, expected_epoch, epoch_delta, args
-            )
+        l3e_hi_product: GlowsL3EHiData = GlowsL3EHiData.convert_dat_to_glows_l3e_hi_product(
+            mock_metadata, hi_file_path, expected_epoch, epoch_delta, args
         )
 
-        np.testing.assert_equal(
-            np.array([expected_epoch]), l3e_hi_product.epoch, strict=True
-        )
+        np.testing.assert_equal(np.array([expected_epoch]), l3e_hi_product.epoch, strict=True)
         np.testing.assert_equal(
             np.array([expected_epoch_delta_in_nanoseconds]),
             l3e_hi_product.epoch_delta,
             strict=True,
         )
         np.testing.assert_equal(l3e_hi_product.energy, expected_energy, strict=True)
-        np.testing.assert_equal(
-            l3e_hi_product.spin_angle, expected_spin_angle, strict=True
-        )
+        np.testing.assert_equal(l3e_hi_product.spin_angle, expected_spin_angle, strict=True)
         np.testing.assert_equal(
             l3e_hi_product.probability_of_survival.shape,
             expected_survival_probability_shape,
@@ -934,25 +908,13 @@ class TestL3eHiModel(unittest.TestCase):
             strict=True,
         )
 
-        np.testing.assert_equal(
-            np.array([0.5]), l3e_hi_product.spacecraft_radius, strict=True
-        )
-        np.testing.assert_equal(
-            np.array([85.4]), l3e_hi_product.spacecraft_longitude, strict=True
-        )
-        np.testing.assert_equal(
-            np.array([45.1]), l3e_hi_product.spacecraft_latitude, strict=True
-        )
+        np.testing.assert_equal(np.array([0.5]), l3e_hi_product.spacecraft_radius, strict=True)
+        np.testing.assert_equal(np.array([85.4]), l3e_hi_product.spacecraft_longitude, strict=True)
+        np.testing.assert_equal(np.array([45.1]), l3e_hi_product.spacecraft_latitude, strict=True)
 
-        np.testing.assert_equal(
-            np.array([2.1]), l3e_hi_product.spacecraft_velocity_x, strict=True
-        )
-        np.testing.assert_equal(
-            np.array([2.2]), l3e_hi_product.spacecraft_velocity_y, strict=True
-        )
-        np.testing.assert_equal(
-            np.array([2.3]), l3e_hi_product.spacecraft_velocity_z, strict=True
-        )
+        np.testing.assert_equal(np.array([2.1]), l3e_hi_product.spacecraft_velocity_x, strict=True)
+        np.testing.assert_equal(np.array([2.2]), l3e_hi_product.spacecraft_velocity_y, strict=True)
+        np.testing.assert_equal(np.array([2.3]), l3e_hi_product.spacecraft_velocity_z, strict=True)
 
         np.testing.assert_equal([135.0], l3e_hi_product.elongation)
         np.testing.assert_equal(

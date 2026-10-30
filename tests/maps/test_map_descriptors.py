@@ -1,15 +1,15 @@
 import unittest
 
 from imap_l3_processing.maps.map_descriptors import (
-    ReferenceFrame,
-    SurvivalCorrection,
     MapDescriptorParts,
-    Sensor,
     MapQuantity,
-    SpinPhase,
     PixelSize,
-    parse_map_descriptor,
+    ReferenceFrame,
+    Sensor,
+    SpinPhase,
+    SurvivalCorrection,
     map_descriptor_parts_to_string,
+    parse_map_descriptor,
 )
 
 
@@ -432,9 +432,7 @@ class TestMapDescriptors(unittest.TestCase):
                 self.assertEqual(expected, descriptor_parts)
 
                 if descriptor_parts is not None:
-                    self.assertEqual(
-                        descriptor, map_descriptor_parts_to_string(descriptor_parts)
-                    )
+                    self.assertEqual(descriptor, map_descriptor_parts_to_string(descriptor_parts))
 
 
 if __name__ == "__main__":

@@ -5,11 +5,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
-os.environ["IMAP_DATA_DIR"] = str(
-    Path(__file__).parent.parent.parent / "glows_l3_validation_data"
-)
+os.environ["IMAP_DATA_DIR"] = str(Path(__file__).parent.parent.parent / "glows_l3_validation_data")
 
-import imap_data_access  # noqa: E402
+import imap_data_access
 
 ancillary_descriptors = [
     ("calibration-data", "20100101"),
@@ -40,9 +38,7 @@ for descriptor, start_date in ancillary_descriptors:
         instrument="glows",
         descriptor=descriptor,
         start_date=start_date,
-        end_date=(datetime.strptime(start_date, "%Y%m%d") + timedelta(days=1)).strftime(
-            "%Y%m%d"
-        ),
+        end_date=(datetime.strptime(start_date, "%Y%m%d") + timedelta(days=1)).strftime("%Y%m%d"),
         version="latest",
     )
 

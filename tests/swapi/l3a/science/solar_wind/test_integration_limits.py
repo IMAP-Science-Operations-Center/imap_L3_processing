@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 
 from imap_l3_processing.constants import PROTON_MASS_KG
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.l3a.science.solar_wind.azimuthal_regions import (
     REGION_OPEN_APERTURE_NEG,
     REGION_OPEN_APERTURE_POS,
@@ -23,7 +24,6 @@ from imap_l3_processing.swapi.response.passband_grid import (
     interpolate_passband,
     speed_ratio_range_at_elevation,
 )
-from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.species import Species
 from tests.swapi._helpers import (
     NOMINAL_SWAPI_TO_RTN_ROTATION,
@@ -78,9 +78,7 @@ class TestSpeedWindowMissesPassband(unittest.TestCase):
         bulk = v_passband_hi + 30.0
         sigma_overlap = 50.0 / SPEED_HALF_WIDTH_VTH
         T_overlap = thermal_speed_to_temperature(sigma_overlap, PROTON_MASS_KG)
-        sw_overlap = proton_params(
-            velocity_rtn=(0.0, -bulk, 0.0), temperature=T_overlap
-        )
+        sw_overlap = proton_params(velocity_rtn=(0.0, -bulk, 0.0), temperature=T_overlap)
         self.assertFalse(speed_window_misses_passband(sw_overlap, self.response_grid))
 
     def test_window_detaches_from_passband_when_k_sigma_falls_below_offset(self):
@@ -89,9 +87,7 @@ class TestSpeedWindowMissesPassband(unittest.TestCase):
         bulk = v_passband_hi + 30.0
         sigma_detached = 5.0 / SPEED_HALF_WIDTH_VTH
         T_detached = thermal_speed_to_temperature(sigma_detached, PROTON_MASS_KG)
-        sw_detached = proton_params(
-            velocity_rtn=(0.0, -bulk, 0.0), temperature=T_detached
-        )
+        sw_detached = proton_params(velocity_rtn=(0.0, -bulk, 0.0), temperature=T_detached)
         self.assertTrue(speed_window_misses_passband(sw_detached, self.response_grid))
 
 
@@ -131,12 +127,8 @@ class TestGetAngularQuadratureSunglassesRegion(unittest.TestCase):
             sw, self.response_grid, REGION_SUNGLASSES, self.identity, 0.0
         )
         # GL nodes lie strictly inside the band.
-        np.testing.assert_array_less(
-            quadrature.azimuth_points, _SG_AZIMUTH_HI_DEG + 1e-9
-        )
-        np.testing.assert_array_less(
-            _SG_AZIMUTH_LO_DEG - 1e-9, quadrature.azimuth_points
-        )
+        np.testing.assert_array_less(quadrature.azimuth_points, _SG_AZIMUTH_HI_DEG + 1e-9)
+        np.testing.assert_array_less(_SG_AZIMUTH_LO_DEG - 1e-9, quadrature.azimuth_points)
         # The outermost 21-node GL node sits ≈0.125° inside the edge of a 40°
         # window (analytically `20°·(1 - x_GL[-1])` ≈ 0.125°). 1.5° is a loose
         # cushion above that — only meant to catch the case where the window
@@ -254,9 +246,7 @@ class TestGetAngularQuadratureOpenApertureNegative(unittest.TestCase):
         )
         cls.identity = np.eye(3)
         # Bulk at az=-90°: v_inst = (+v, 0, 0) ⇒ az = atan2(-v, 0) = -90°.
-        cls.sw_bulk_at_minus_90 = proton_params(
-            velocity_rtn=(+_BULK_SPEED_KM_S, 0.0, 0.0)
-        )
+        cls.sw_bulk_at_minus_90 = proton_params(velocity_rtn=(+_BULK_SPEED_KM_S, 0.0, 0.0))
 
     def test_oa_negative_region_is_active_for_bulk_at_minus_90_deg_azimuth(self):
         """A bulk at az ≈ -90° lies inside the OA- band, so the region is active and a quadrature is returned."""
@@ -308,12 +298,8 @@ class TestGetSpeedQuadrature(unittest.TestCase):
     def test_speed_window_lies_inside_per_elevation_passband(self):
         """For warm plasma the passband binds the window, so every GL node lies inside `[r_min(θ)·v0, r_max(θ)·v0]` at the given elevation."""
         sw = proton_params()
-        _, speed_quadrature = get_speed_quadrature(
-            sw, self.response_grid, REGION_SUNGLASSES, 0.0
-        )
-        ratio_lo, ratio_hi = speed_ratio_range_at_elevation(
-            self.response_grid.sg_passband, 0.0
-        )
+        _, speed_quadrature = get_speed_quadrature(sw, self.response_grid, REGION_SUNGLASSES, 0.0)
+        ratio_lo, ratio_hi = speed_ratio_range_at_elevation(self.response_grid.sg_passband, 0.0)
         passband_lo = self.response_grid.central_speed * ratio_lo
         passband_hi = self.response_grid.central_speed * ratio_hi
         self.assertGreaterEqual(speed_quadrature.points.min(), passband_lo)
@@ -327,9 +313,7 @@ class TestGetSpeedQuadrature(unittest.TestCase):
         )
         sigma = thermal_speed(sw)
         speed = bulk_speed(sw)
-        _, speed_quadrature = get_speed_quadrature(
-            sw, self.response_grid, REGION_SUNGLASSES, 0.0
-        )
+        _, speed_quadrature = get_speed_quadrature(sw, self.response_grid, REGION_SUNGLASSES, 0.0)
         window_lo = speed - SPEED_HALF_WIDTH_VTH * sigma
         window_hi = speed + SPEED_HALF_WIDTH_VTH * sigma
         self.assertGreaterEqual(speed_quadrature.points.min(), window_lo)
@@ -343,9 +327,7 @@ class TestGetSpeedQuadrature(unittest.TestCase):
         )
         sigma = thermal_speed(sw)
         speed = bulk_speed(sw)
-        _, speed_quadrature = get_speed_quadrature(
-            sw, self.response_grid, REGION_SUNGLASSES, 0.0
-        )
+        _, speed_quadrature = get_speed_quadrature(sw, self.response_grid, REGION_SUNGLASSES, 0.0)
         window_lo = speed - SPEED_HALF_WIDTH_VTH * sigma
         window_hi = speed + SPEED_HALF_WIDTH_VTH * sigma
         self.assertLess(window_hi - speed_quadrature.points.max(), 2.0)
@@ -354,9 +336,7 @@ class TestGetSpeedQuadrature(unittest.TestCase):
     def test_speed_quadrature_arrays_are_all_15_long(self):
         """Each array on the returned `SpeedQuadrature` (points, weights, `speed_cubed_times_passband`) has the doc-prescribed Nv = 15 nodes."""
         sw = proton_params()
-        _, speed_quadrature = get_speed_quadrature(
-            sw, self.response_grid, REGION_SUNGLASSES, 0.0
-        )
+        _, speed_quadrature = get_speed_quadrature(sw, self.response_grid, REGION_SUNGLASSES, 0.0)
         self.assertEqual(speed_quadrature.points.shape, (15,))
         self.assertEqual(speed_quadrature.weights.shape, (15,))
         self.assertEqual(speed_quadrature.speed_cubed_times_passband.shape, (15,))
@@ -373,18 +353,10 @@ class TestGetSpeedQuadrature(unittest.TestCase):
     def test_uses_region_specific_passband(self):
         """With a hot plasma so the passband binds the window in both regions, the SG and OA quadratures land on their own region's passband edge and the two windows are distinct."""
         sw = proton_params(temperature=1_000_000.0)
-        _, sg_quad = get_speed_quadrature(
-            sw, self.response_grid, REGION_SUNGLASSES, 0.0
-        )
-        _, oa_quad = get_speed_quadrature(
-            sw, self.response_grid, REGION_OPEN_APERTURE_POS, 0.0
-        )
-        sg_ratio_lo, _ = speed_ratio_range_at_elevation(
-            self.response_grid.sg_passband, 0.0
-        )
-        oa_ratio_lo, _ = speed_ratio_range_at_elevation(
-            self.response_grid.oa_passband, 0.0
-        )
+        _, sg_quad = get_speed_quadrature(sw, self.response_grid, REGION_SUNGLASSES, 0.0)
+        _, oa_quad = get_speed_quadrature(sw, self.response_grid, REGION_OPEN_APERTURE_POS, 0.0)
+        sg_ratio_lo, _ = speed_ratio_range_at_elevation(self.response_grid.sg_passband, 0.0)
+        oa_ratio_lo, _ = speed_ratio_range_at_elevation(self.response_grid.oa_passband, 0.0)
         sg_lo = self.response_grid.central_speed * sg_ratio_lo
         oa_lo = self.response_grid.central_speed * oa_ratio_lo
         # Each quadrature's lower edge sits at its own region's passband edge.
@@ -400,9 +372,7 @@ class TestGetSpeedQuadrature(unittest.TestCase):
     ):
         """The `speed_cubed_times_passband` array equals `v³ · P(θ, v/v0) / P(0, 1)` reconstructed from `interpolate_passband` at every GL node."""
         sw = proton_params()
-        _, speed_quadrature = get_speed_quadrature(
-            sw, self.response_grid, REGION_SUNGLASSES, 0.0
-        )
+        _, speed_quadrature = get_speed_quadrature(sw, self.response_grid, REGION_SUNGLASSES, 0.0)
         on_axis_peak = interpolate_passband(self.response_grid.sg_passband, 0.0, 1.0)
         expected = np.array(
             [
@@ -416,9 +386,7 @@ class TestGetSpeedQuadrature(unittest.TestCase):
                 for v in speed_quadrature.points
             ]
         )
-        np.testing.assert_allclose(
-            speed_quadrature.speed_cubed_times_passband, expected
-        )
+        np.testing.assert_allclose(speed_quadrature.speed_cubed_times_passband, expected)
 
 
 if __name__ == "__main__":

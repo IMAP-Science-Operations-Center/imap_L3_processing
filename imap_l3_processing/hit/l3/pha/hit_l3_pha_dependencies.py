@@ -86,14 +86,14 @@ class HitL3PhaDependencies:
         )
 
         lo_gain_lookup_path = download(
-            dependencies.get_file_paths(
-                source="hit", descriptor=HIT_L3_LO_GAIN_LOOKUP_DESCRIPTOR
-            )[0]
+            dependencies.get_file_paths(source="hit", descriptor=HIT_L3_LO_GAIN_LOOKUP_DESCRIPTOR)[
+                0
+            ]
         )
         hi_gain_lookup_path = download(
-            dependencies.get_file_paths(
-                source="hit", descriptor=HIT_L3_HI_GAIN_LOOKUP_DESCRIPTOR
-            )[0]
+            dependencies.get_file_paths(source="hit", descriptor=HIT_L3_HI_GAIN_LOOKUP_DESCRIPTOR)[
+                0
+            ]
         )
         range_2A_charge_fit_lookup_path = download(
             dependencies.get_file_paths(
@@ -139,9 +139,7 @@ class HitL3PhaDependencies:
             range_3B_cosine_lookup_path,
             range_4B_cosine_lookup_path,
         )
-        gain_lookup_table = GainLookupTable.from_file(
-            hi_gain_lookup_path, lo_gain_lookup_path
-        )
+        gain_lookup_table = GainLookupTable.from_file(hi_gain_lookup_path, lo_gain_lookup_path)
         range_fit_lookup_table = RangeFitLookup.from_files(
             range_2A_charge_fit_lookup_path,
             range_3A_charge_fit_lookup_path,

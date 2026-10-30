@@ -36,9 +36,7 @@ def create_more_accurate_l3a_direct_events_cdf(template_cdf: Path):
         position = rng.integers(1, 25, size=event_buffer_shape)
         cdf["position"] = position
 
-        cdf["spin_angle"] = rng.choice(
-            spin_angle_lut.bin_centers, size=event_buffer_shape
-        )
+        cdf["spin_angle"] = rng.choice(spin_angle_lut.bin_centers, size=event_buffer_shape)
 
         species = rng.integers(
             0, mass_species_bin_lookup.get_num_species(), size=event_buffer_shape
@@ -47,10 +45,7 @@ def create_more_accurate_l3a_direct_events_cdf(template_cdf: Path):
         mass_ranges = np.array(mass_species_bin_lookup.mass_ranges)
         lower_masses = mass_ranges[species, 0]
         upper_masses = mass_ranges[species, -1]
-        masses = (
-            rng.random(event_buffer_shape) * (upper_masses - lower_masses)
-            + lower_masses
-        )
+        masses = rng.random(event_buffer_shape) * (upper_masses - lower_masses) + lower_masses
 
         mass_per_charge_ranges = np.array(mass_species_bin_lookup.mass_per_charge)
         lower_mpc = mass_per_charge_ranges[species, 0]

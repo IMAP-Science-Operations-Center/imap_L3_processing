@@ -22,13 +22,11 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT))
 
-# ruff: disable[E402]
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
-
 from figure_utils import FIGURES_DIR
 
 from imap_l3_processing.constants import ONE_AU_IN_KM
@@ -39,7 +37,6 @@ from imap_l3_processing.swapi.l3a.science.pickup_ion.vasyliunas_siscoe_distribut
     FittingParameters,
     VasyliunasSiscoeDistribution,
 )
-# ruff: enable[E402]
 
 _CUTOFF_SPEED_KMS = 450.0
 _SW_SPEED_INERTIAL_KMS = 450.0
@@ -94,9 +91,7 @@ def main():
         label=r"cutoff speed $v_b$",
     )
     axis.set_yscale("log")
-    axis.set_xlabel(
-        r"Comoving speed $v' = \|\mathbf{v} - \mathbf{v}_\text{sw}\|$ [km/s]"
-    )
+    axis.set_xlabel(r"Comoving speed $v' = \|\mathbf{v} - \mathbf{v}_\text{sw}\|$ [km/s]")
     axis.set_ylabel(r"$f_\text{PUI}(v')$ [s$^3$ km$^{-6}$]")
     axis.set_xlim(speed_in_sw_frame[0], speed_in_sw_frame[-1])
     axis.set_ylim(1e0, 1e4)

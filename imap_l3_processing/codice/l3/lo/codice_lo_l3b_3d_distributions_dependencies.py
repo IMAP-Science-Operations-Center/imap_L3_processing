@@ -11,8 +11,8 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.efficiency_lookup imp
     EfficiencyLookup,
 )
 from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import (
-    EnergyLookup,
     ESA_TO_ENERGY_PER_CHARGE_LOOKUP_DESCRIPTOR,
+    EnergyLookup,
 )
 from imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_lookup import (
     GeometricFactorLookup,
@@ -43,9 +43,9 @@ class CodiceLoL3b3dDistributionsDependencies:
         l3a_direct_event_paths = []
         for input in processing_input_collection.get_science_inputs():
             match input:
-                case ScienceInput(
-                    data_type="l3a", source="codice", descriptor=descriptor
-                ) if descriptor == DIRECT_EVENTS_DESCRIPTOR:
+                case ScienceInput(data_type="l3a", source="codice", descriptor=descriptor) if (
+                    descriptor == DIRECT_EVENTS_DESCRIPTOR
+                ):
                     l3a_direct_event_paths.extend(input.filename_list)
 
         [direct_events_path] = l3a_direct_event_paths
@@ -67,15 +67,9 @@ class CodiceLoL3b3dDistributionsDependencies:
         )
 
         direct_events_downloaded_path = imap_data_access.download(direct_events_path)
-        mass_species_bin_downloaded_path = imap_data_access.download(
-            mass_species_bin_path.name
-        )
-        geometric_factor_downloaded_path = imap_data_access.download(
-            geometric_factor_path.name
-        )
-        efficiency_factor_downloaded_path = imap_data_access.download(
-            efficiency_factor_path.name
-        )
+        mass_species_bin_downloaded_path = imap_data_access.download(mass_species_bin_path.name)
+        geometric_factor_downloaded_path = imap_data_access.download(geometric_factor_path.name)
+        efficiency_factor_downloaded_path = imap_data_access.download(efficiency_factor_path.name)
         esa_to_energy_per_charge_downloaded_path = imap_data_access.download(
             esa_to_energy_per_charge_path.name
         )
@@ -99,18 +93,12 @@ class CodiceLoL3b3dDistributionsDependencies:
         energy_per_charge_lut: Path,
         species: str,
     ):
-        mass_species_bin_lookup = MassSpeciesBinLookup.read_from_csv(
-            mass_species_bin_lut
-        )
+        mass_species_bin_lookup = MassSpeciesBinLookup.read_from_csv(mass_species_bin_lut)
         return cls(
             l3a_direct_event_data=CodiceLoDirectEventData.read_from_cdf(l3a_file_path),
             mass_species_bin_lookup=mass_species_bin_lookup,
-            geometric_factors_lookup=GeometricFactorLookup.read_from_csv(
-                geometric_factors_lut
-            ),
-            efficiency_factors_lut=EfficiencyLookup.read_from_csv(
-                efficiency_factors_lut, species
-            ),
+            geometric_factors_lookup=GeometricFactorLookup.read_from_csv(geometric_factors_lut),
+            efficiency_factors_lut=EfficiencyLookup.read_from_csv(efficiency_factors_lut, species),
             energy_per_charge_lut=EnergyLookup.read_from_csv(energy_per_charge_lut),
             species=species,
         )

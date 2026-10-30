@@ -6,13 +6,13 @@ import numpy as np
 from imap_l3_processing.swapi.l3a.science.solar_wind.azimuthal_regions import (
     AzimuthalRegion,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.trim_open_aperture import (
-    trim_open_aperture,
-)
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     SolarWindParams,
     bulk_speed,
     thermal_speed,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.trim_open_aperture import (
+    trim_open_aperture,
 )
 from imap_l3_processing.swapi.l3a.utils import (
     velocity_to_angles_in_instrument_frame,
@@ -56,9 +56,7 @@ SPEED_HALF_WIDTH_VTH = 6.0
 
 
 @numba.njit
-def speed_window_misses_passband(
-    sw_params: SolarWindParams, response_grid: ResponseGrid
-) -> bool:
+def speed_window_misses_passband(sw_params: SolarWindParams, response_grid: ResponseGrid) -> bool:
     sigma = thermal_speed(sw_params)
     speed = bulk_speed(sw_params)
 
@@ -137,9 +135,7 @@ def get_speed_quadrature(
     region: AzimuthalRegion,
     elevation: float,
 ):
-    passband = (
-        response_grid.sg_passband if region.is_sunglasses else response_grid.oa_passband
-    )
+    passband = response_grid.sg_passband if region.is_sunglasses else response_grid.oa_passband
     central_speed = response_grid.central_speed
     sigma = thermal_speed(sw_params)
     bulk_v = bulk_speed(sw_params)
@@ -174,12 +170,8 @@ def _angular_limits(
     region: AzimuthalRegion,
     response_grid: ResponseGrid,
 ):
-    half_width = _maxwellian_angular_extent(
-        sw_params, response_grid.central_speed, EPSILON
-    )
-    bulk_az, bulk_el = velocity_to_angles_in_instrument_frame(
-        sw_params, rotation_matrix
-    )
+    half_width = _maxwellian_angular_extent(sw_params, response_grid.central_speed, EPSILON)
+    bulk_az, bulk_el = velocity_to_angles_in_instrument_frame(sw_params, rotation_matrix)
 
     if region.is_sunglasses:
         el_lo, el_hi = response_grid.sg_passband.elevation_range
@@ -209,9 +201,7 @@ def _clamp(x: float, lower: float, upper: float) -> float:
 
 
 @numba.njit
-def _clamp_window(
-    center: float, half_width: float, lower_bound: float, upper_bound: float
-):
+def _clamp_window(center: float, half_width: float, lower_bound: float, upper_bound: float):
     return (
         _clamp(center - half_width, lower_bound, upper_bound),
         _clamp(center + half_width, lower_bound, upper_bound),

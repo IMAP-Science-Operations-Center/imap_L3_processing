@@ -8,8 +8,8 @@ from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_mass_correction_look
     CodiceHiMassCorrectionLookupTable,
 )
 from imap_l3_processing.codice.l3.hi.models import (
-    CodiceL2HiDirectEventData,
     CodiceL1aHiDirectEvents,
+    CodiceL2HiDirectEventData,
 )
 
 
@@ -27,9 +27,7 @@ class CodiceHiL3aDirectEventsDependencies:
         l1a_hi_direct_events_file_paths = dependencies.get_file_paths(
             "codice", "hi-direct-events", data_type="l1a"
         )
-        ancillary_file_paths = dependencies.get_file_paths(
-            "codice", "l3-hi-mass-correction-lut"
-        )
+        ancillary_file_paths = dependencies.get_file_paths("codice", "l3-hi-mass-correction-lut")
 
         for download_location_file_path in [
             *l2_hi_direct_events_file_paths,
@@ -53,10 +51,8 @@ class CodiceHiL3aDirectEventsDependencies:
     ):
         codice_l2_hi_data = CodiceL2HiDirectEventData.read_from_cdf(codice_l2_hi_cdf)
         codice_l1a_hi_data = CodiceL1aHiDirectEvents.read_from_cdf(codice_l1a_hi_cdf)
-        codice_hi_mass_correction_lut_ancillary = (
-            CodiceHiMassCorrectionLookupTable.from_file(
-                codice_hi_mass_correction_lut_ancillary
-            )
+        codice_hi_mass_correction_lut_ancillary = CodiceHiMassCorrectionLookupTable.from_file(
+            codice_hi_mass_correction_lut_ancillary
         )
 
         return cls(

@@ -21,21 +21,17 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT))
 
-# ruff: disable[E402]
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
 from figure_utils import FIGURES_DIR
-from imap_l3_processing.constants import HE_PUI_PARTICLE_MASS_PER_CHARGE_M_P_PER_E
-# ruff: enable[E402]
 
-_REFERENCE_CSV_PATH = (
-    REPO_ROOT / "tests" / "test_data" / "swapi" / "pui_count_rate_reference.csv"
-)
+from imap_l3_processing.constants import HE_PUI_PARTICLE_MASS_PER_CHARGE_M_P_PER_E
+
+_REFERENCE_CSV_PATH = REPO_ROOT / "tests" / "test_data" / "swapi" / "pui_count_rate_reference.csv"
 
 # Must match scripts/swapi/pui_xarray_reference.py so the production kernel is
 # evaluated at the same point as the precomputed reference CSV.
@@ -61,6 +57,8 @@ def compute_production_rates(voltages_v: np.ndarray) -> np.ndarray:
     """Build the chunk-level collapsed response and call the in-development
     production kernel. Imports live inside the function so a broken module
     doesn't break the figure script at import time."""
+    from figure_utils import load_swapi_response
+
     from imap_l3_processing.constants import ONE_AU_IN_KM
     from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_coincidence_rate import (
         calculate_coincidence_rate,
@@ -75,7 +73,6 @@ def compute_production_rates(voltages_v: np.ndarray) -> np.ndarray:
         FittingParameters,
         VasyliunasSiscoeDistribution,
     )
-    from figure_utils import load_swapi_response
 
     fitting_params = FittingParameters(
         cooling_index=_COOLING_INDEX,
@@ -84,9 +81,7 @@ def compute_production_rates(voltages_v: np.ndarray) -> np.ndarray:
         background_count_rate=_BACKGROUND_RATE_HZ,
     )
     lut = DensityOfNeutralHeliumLookupTable.from_file(_DENSITY_LUT_PATH)
-    min_speed_kms = max(
-        1.0, _CUTOFF_SPEED_KMS * lut.get_minimum_distance() / _HELIO_DIST_AU
-    )
+    min_speed_kms = max(1.0, _CUTOFF_SPEED_KMS * lut.get_minimum_distance() / _HELIO_DIST_AU)
     vasyliunas_siscoe_distribution = VasyliunasSiscoeDistribution(
         ephemeris_time=0.0,
         solar_wind_speed_inertial_frame=_SW_SPEED_INERTIAL_KMS,
@@ -165,7 +160,7 @@ def main():
 
     try:
         production_rate_hz = compute_production_rates(voltage_v)
-    except Exception:
+    except Exception:  # noqa: BLE001
         traceback.print_exc()
         print("calculate_coincidence_rate failed — skipping production overlay.")
     else:

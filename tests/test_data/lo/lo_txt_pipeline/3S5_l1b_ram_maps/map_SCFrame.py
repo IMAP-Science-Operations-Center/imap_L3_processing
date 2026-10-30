@@ -5,10 +5,11 @@ Created on Wed Mar 18 2026
 
 """
 
-import numpy as np
-import pandas as pd
 import os
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
 
 PI = np.pi
 
@@ -193,7 +194,7 @@ for pp in [75, 90, 105]:
             counts = df["counts"].values
             expo = df["expo"].values
 
-            for ia in range(0, 60):
+            for ia in range(60):
                 ra = ps_ra[ia]
                 dec = ps_dec[ia]
 
@@ -220,8 +221,8 @@ for pp in [75, 90, 105]:
                 h_cnts_map[jmap, imap] += counts[ia]
                 exposure[jmap, imap] += expo[ia]
 
-        for imap in range(0, nra):
-            for jmap in range(0, ncolat):
+        for imap in range(nra):
+            for jmap in range(ncolat):
                 expo = exposure[jmap, imap]
                 energy = esa_energy[esa]
 
@@ -236,25 +237,18 @@ for pp in [75, 90, 105]:
                     back_rate_var[jmap, imap] = brate / expo
                     h_rate_map[jmap, imap] = h_cnts_map[jmap, imap] / expo
                     h_flux_map[jmap, imap] = h_rate_map[jmap, imap] / (geo * energy)
-                    h_fser_map[jmap, imap] = (
-                        h_rate_map[jmap, imap] * dge / (geo * geo * energy)
-                    )
+                    h_fser_map[jmap, imap] = h_rate_map[jmap, imap] * dge / (geo * geo * energy)
                     back_flux_map[jmap, imap] = brate / (geo * energy)
-                    back_flux_var[jmap, imap] = (
-                        back_rate_var[jmap, imap] / (geo * energy) ** 2
-                    )
+                    back_flux_var[jmap, imap] = back_rate_var[jmap, imap] / (geo * energy) ** 2
                     # represent uncertainty in terms of variance (Poisson counts)
                     h_rate_var[jmap, imap] = h_rate_map[jmap, imap] / expo
                     if brate > 0.0:
                         stonoise_map[jmap, imap] = h_rate_map[jmap, imap] / (brate)
                         # Guard against division by zero in stonoise_var components
-                        if (back_rate_map[jmap, imap] > 0.0) and (
-                            h_rate_map[jmap, imap] > 0.0
-                        ):
+                        if (back_rate_map[jmap, imap] > 0.0) and (h_rate_map[jmap, imap] > 0.0):
                             stonoise_var_map[jmap, imap] = (
                                 h_rate_var[jmap, imap] / back_rate_map[jmap, imap] ** 2
-                                + back_rate_var[jmap, imap]
-                                / h_rate_map[jmap, imap] ** 2
+                                + back_rate_var[jmap, imap] / h_rate_map[jmap, imap] ** 2
                             )
                         else:
                             stonoise_var_map[jmap, imap] = 0.0

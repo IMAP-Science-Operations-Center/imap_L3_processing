@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.response.passband_grid import (
     _PASSBAND_BOUNDARY_THRESHOLD,
     _TARGET_ELEVATIONS,
@@ -11,7 +12,6 @@ from imap_l3_processing.swapi.response.passband_grid import (
     interpolate_passband,
     speed_ratio_range_at_elevation,
 )
-from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 
 
 def _gaussian_values_df(
@@ -55,7 +55,7 @@ def _gaussian_values_df(
 
 def _row_index_for_elevation(grid, elevation: float) -> int:
     """Index into `grid.values` for the row at the given target elevation."""
-    return int(round((elevation - grid.min_elevation) / grid.elevation_spacing))
+    return round((elevation - grid.min_elevation) / grid.elevation_spacing)
 
 
 class TestBuildPassbandGrid(unittest.TestCase):
@@ -95,15 +95,11 @@ class TestBuildPassbandGrid(unittest.TestCase):
                 continue
             with self.subTest(row=i):
                 np.testing.assert_allclose(
-                    np.interp(
-                        grid.min_boundary[i], _TARGET_SPEED_RATIOS, grid.values[i]
-                    ),
+                    np.interp(grid.min_boundary[i], _TARGET_SPEED_RATIOS, grid.values[i]),
                     cutoff,
                 )
                 np.testing.assert_allclose(
-                    np.interp(
-                        grid.max_boundary[i], _TARGET_SPEED_RATIOS, grid.values[i]
-                    ),
+                    np.interp(grid.max_boundary[i], _TARGET_SPEED_RATIOS, grid.values[i]),
                     cutoff,
                 )
 
@@ -186,12 +182,8 @@ class TestInterpolatePassband(unittest.TestCase):
         ]
         for elevation, speed_ratio, label in cases:
             with self.subTest(label=label):
-                i_float = (
-                    elevation - self.grid.min_elevation
-                ) / self.grid.elevation_spacing
-                j_float = (
-                    speed_ratio - self.grid.min_speed_ratio
-                ) / self.grid.speed_ratio_spacing
+                i_float = (elevation - self.grid.min_elevation) / self.grid.elevation_spacing
+                j_float = (speed_ratio - self.grid.min_speed_ratio) / self.grid.speed_ratio_spacing
                 i_lo, j_lo = int(i_float), int(j_float)
                 i_weight, j_weight = i_float - i_lo, j_float - j_lo
 
@@ -241,12 +233,8 @@ class TestSpeedRatioRangeAtElevation(unittest.TestCase):
             with self.subTest(elevation=elevation):
                 lo, hi = speed_ratio_range_at_elevation(grid, float(elevation))
                 row = grid.values[_row_index_for_elevation(grid, float(elevation))]
-                self.assertAlmostEqual(
-                    np.interp(lo, _TARGET_SPEED_RATIOS, row), cutoff, places=2
-                )
-                self.assertAlmostEqual(
-                    np.interp(hi, _TARGET_SPEED_RATIOS, row), cutoff, places=2
-                )
+                self.assertAlmostEqual(np.interp(lo, _TARGET_SPEED_RATIOS, row), cutoff, places=2)
+                self.assertAlmostEqual(np.interp(hi, _TARGET_SPEED_RATIOS, row), cutoff, places=2)
 
     def test_returns_union_of_bracketing_rows_for_off_grid_elevation(self):
         """For an elevation between two grid rows, the returned (lo, hi)
@@ -256,12 +244,8 @@ class TestSpeedRatioRangeAtElevation(unittest.TestCase):
         between_elevation = 0.25
         lower_row = _row_index_for_elevation(self.grid, lower_elevation)
         upper_row = _row_index_for_elevation(self.grid, upper_elevation)
-        expected_lo = min(
-            self.grid.min_boundary[lower_row], self.grid.min_boundary[upper_row]
-        )
-        expected_hi = max(
-            self.grid.max_boundary[lower_row], self.grid.max_boundary[upper_row]
-        )
+        expected_lo = min(self.grid.min_boundary[lower_row], self.grid.min_boundary[upper_row])
+        expected_hi = max(self.grid.max_boundary[lower_row], self.grid.max_boundary[upper_row])
         lo, hi = speed_ratio_range_at_elevation(self.grid, between_elevation)
         self.assertAlmostEqual(lo, expected_lo)
         self.assertAlmostEqual(hi, expected_hi)
@@ -271,9 +255,7 @@ class TestSpeedRatioRangeAtElevation(unittest.TestCase):
         active_lo, active_hi = self.grid.elevation_range
         for elevation in np.linspace(active_lo, active_hi, 7):
             with self.subTest(elevation=elevation):
-                lower, upper = speed_ratio_range_at_elevation(
-                    self.grid, float(elevation)
-                )
+                lower, upper = speed_ratio_range_at_elevation(self.grid, float(elevation))
                 self.assertLessEqual(lower, upper)
 
     def test_nan_row_handling_at_active_range_edges(self):
@@ -309,13 +291,11 @@ class TestSpeedRatioRangeAtElevation(unittest.TestCase):
         past_upper_edge = min_el + spacing * n_rows + 100.0
         past_lower_edge = min_el - 100.0
 
-        with self.subTest(case="both NaN past upper edge"):
-            with self.assertRaises(ValueError):
-                speed_ratio_range_at_elevation(grid, float(past_upper_edge))
+        with self.subTest(case="both NaN past upper edge"), self.assertRaises(ValueError):
+            speed_ratio_range_at_elevation(grid, float(past_upper_edge))
 
-        with self.subTest(case="both NaN past lower edge"):
-            with self.assertRaises(ValueError):
-                speed_ratio_range_at_elevation(grid, float(past_lower_edge))
+        with self.subTest(case="both NaN past lower edge"), self.assertRaises(ValueError):
+            speed_ratio_range_at_elevation(grid, float(past_lower_edge))
 
         with self.subTest(case="only upper row NaN at top of active range"):
             lo, hi = speed_ratio_range_at_elevation(grid, float(upper_edge_one_nan))

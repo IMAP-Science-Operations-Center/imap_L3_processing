@@ -3,13 +3,10 @@ from collections import namedtuple
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 from imap_processing.spice.geometry import (
-    get_spacecraft_to_instrument_spin_phase_offset,
     SpiceFrame,
+    get_spacecraft_to_instrument_spin_phase_offset,
 )
 
-from imap_l3_processing.codice.l3.lo.codice_lo_l3b_3d_distributions_dependencies import (
-    CodiceLoL3b3dDistributionsDependencies,
-)
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies import (
     CodiceLoL3aDirectEventsDependencies,
 )
@@ -19,28 +16,31 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencie
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import (
     CodiceLoL3aRatiosDependencies,
 )
+from imap_l3_processing.codice.l3.lo.codice_lo_l3b_3d_distributions_dependencies import (
+    CodiceLoL3b3dDistributionsDependencies,
+)
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import (
-    SpinAngleLookup,
     PositionToElevationLookup,
+    SpinAngleLookup,
 )
 from imap_l3_processing.codice.l3.lo.models import (
-    CodiceLoL3aPartialDensityDataProduct,
     CodiceLoL3aDirectEventDataProduct,
-    CodiceLoPartialDensityData,
+    CodiceLoL3aPartialDensityDataProduct,
     CodiceLoL3aRatiosDataProduct,
-    CodiceLoL3ChargeStateDistributionsDataProduct,
     CodiceLoL3b3dDistributionDataProduct,
+    CodiceLoL3ChargeStateDistributionsDataProduct,
+    CodiceLoPartialDensityData,
 )
 from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import (
-    calculate_partial_densities,
     calculate_mass,
     calculate_mass_per_charge,
-    convert_counts_to_intensity,
-    rebin_to_counts_by_species_elevation_and_spin_sector,
-    combine_priorities_for_species_and_calculate_count_uncertainty,
     calculate_normalization_factor,
+    calculate_partial_densities,
+    combine_priorities_for_species_and_calculate_count_uncertainty,
+    convert_counts_to_intensity,
     lookup_normalization_per_event,
     rebin_3d_distribution_azimuth_to_elevation,
+    rebin_to_counts_by_species_elevation_and_spin_sector,
 )
 from imap_l3_processing.data_utils import safe_divide
 from imap_l3_processing.models import InputMetadata
@@ -51,9 +51,7 @@ PriorityRate = namedtuple("PriorityRate", ("epoch", "energy_table", "priority_co
 
 
 class CodiceLoProcessor(Processor):
-    def __init__(
-        self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata
-    ):
+    def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
         super().__init__(dependencies, input_metadata)
 
     def process(self):
@@ -68,14 +66,10 @@ class CodiceLoProcessor(Processor):
             )
             data_product = self.process_l3a_direct_event_data_product(dependencies)
         elif self.input_metadata.descriptor == "lo-sw-ratios":
-            dependencies = CodiceLoL3aRatiosDependencies.fetch_dependencies(
-                self.dependencies
-            )
+            dependencies = CodiceLoL3aRatiosDependencies.fetch_dependencies(self.dependencies)
             data_product = self.process_l3a_ratios(dependencies)
         elif self.input_metadata.descriptor == "lo-sw-charge-state-distributions":
-            dependencies = CodiceLoL3aRatiosDependencies.fetch_dependencies(
-                self.dependencies
-            )
+            dependencies = CodiceLoL3aRatiosDependencies.fetch_dependencies(self.dependencies)
             data_product = self.process_l3a_charge_state_distributions(dependencies)
         elif "3d-distribution" in self.input_metadata.descriptor:
             species = self.input_metadata.descriptor.split("-")[1]
@@ -131,31 +125,21 @@ class CodiceLoProcessor(Processor):
         c5 = dependencies.partial_density_data.cplus5_partial_density
         c6 = dependencies.partial_density_data.cplus6_partial_density
 
-        o_densities = _average_over_block(
-            np.column_stack((o5, o6, o7, o8)), block_size=3
-        )
-        o_distribution = safe_divide(
-            o_densities, np.sum(o_densities, axis=1, keepdims=True)
-        )
+        o_densities = _average_over_block(np.column_stack((o5, o6, o7, o8)), block_size=3)
+        o_distribution = safe_divide(o_densities, np.sum(o_densities, axis=1, keepdims=True))
 
         c_densities = _average_over_block(np.column_stack((c4, c5, c6)), block_size=3)
-        c_distribution = safe_divide(
-            c_densities, np.sum(c_densities, axis=1, keepdims=True)
-        )
+        c_distribution = safe_divide(c_densities, np.sum(c_densities, axis=1, keepdims=True))
 
         return CodiceLoL3ChargeStateDistributionsDataProduct(
             self.input_metadata,
             epoch=_average_dates_over_block(dependencies.partial_density_data.epoch, 3),
-            epoch_delta=_sum_over_block(
-                dependencies.partial_density_data.epoch_delta, 3
-            ),
+            epoch_delta=_sum_over_block(dependencies.partial_density_data.epoch_delta, 3),
             oxygen_charge_state_distribution=o_distribution,
             carbon_charge_state_distribution=c_distribution,
         )
 
-    def process_l3a_partial_densities(
-        self, dependencies: CodiceLoL3aPartialDensitiesDependencies
-    ):
+    def process_l3a_partial_densities(self, dependencies: CodiceLoL3aPartialDensitiesDependencies):
         codice_lo_l2_data = dependencies.codice_l2_lo_data
         mass_per_charge_lookup = dependencies.mass_per_charge_lookup
         h_plus_partial_density = calculate_partial_densities(
@@ -254,12 +238,8 @@ class CodiceLoProcessor(Processor):
     def process_l3a_direct_event_data_product(
         self, dependencies: CodiceLoL3aDirectEventsDependencies
     ) -> CodiceLoL3aDirectEventDataProduct:
-        codice_sw_priority_counts_l1a_data = (
-            dependencies.codice_lo_l1a_sw_priority_rates
-        )
-        codice_nsw_priority_counts_l1a_data = (
-            dependencies.codice_lo_l1a_nsw_priority_rates
-        )
+        codice_sw_priority_counts_l1a_data = dependencies.codice_lo_l1a_sw_priority_rates
+        codice_nsw_priority_counts_l1a_data = dependencies.codice_lo_l1a_nsw_priority_rates
         codice_direct_events = dependencies.codice_l2_direct_events
         esa_energy_per_charge_lookup = dependencies.energy_lookup
 
@@ -300,12 +280,10 @@ class CodiceLoProcessor(Processor):
             codice_sw_priority_counts_l1a_data.epoch,
             direct_event_epochs,
         )
-        nsw_aligned, nsw_missing = (
-            _align_priority_counts_variable_to_direct_event_epochs(
-                nsw_priority_counts,
-                codice_nsw_priority_counts_l1a_data.epoch,
-                direct_event_epochs,
-            )
+        nsw_aligned, nsw_missing = _align_priority_counts_variable_to_direct_event_epochs(
+            nsw_priority_counts,
+            codice_nsw_priority_counts_l1a_data.epoch,
+            direct_event_epochs,
         )
         acquisition_time_per_esa_aligned, _ = (
             _align_priority_counts_variable_to_direct_event_epochs(
@@ -314,54 +292,40 @@ class CodiceLoProcessor(Processor):
                 direct_event_epochs,
             )
         )
-        rgfo_half_spin_aligned, _ = (
-            _align_priority_counts_variable_to_direct_event_epochs(
-                codice_sw_priority_counts_l1a_data.rgfo_half_spin,
-                codice_sw_priority_counts_l1a_data.epoch,
-                direct_event_epochs,
-            )
+        rgfo_half_spin_aligned, _ = _align_priority_counts_variable_to_direct_event_epochs(
+            codice_sw_priority_counts_l1a_data.rgfo_half_spin,
+            codice_sw_priority_counts_l1a_data.epoch,
+            direct_event_epochs,
         )
-        rgfo_spin_sector_aligned, _ = (
-            _align_priority_counts_variable_to_direct_event_epochs(
-                codice_sw_priority_counts_l1a_data.rgfo_spin_sector,
-                codice_sw_priority_counts_l1a_data.epoch,
-                direct_event_epochs,
-            )
+        rgfo_spin_sector_aligned, _ = _align_priority_counts_variable_to_direct_event_epochs(
+            codice_sw_priority_counts_l1a_data.rgfo_spin_sector,
+            codice_sw_priority_counts_l1a_data.epoch,
+            direct_event_epochs,
         )
-        rgfo_esa_step_aligned, _ = (
-            _align_priority_counts_variable_to_direct_event_epochs(
-                codice_sw_priority_counts_l1a_data.rgfo_esa_step,
-                codice_sw_priority_counts_l1a_data.epoch,
-                direct_event_epochs,
-            )
+        rgfo_esa_step_aligned, _ = _align_priority_counts_variable_to_direct_event_epochs(
+            codice_sw_priority_counts_l1a_data.rgfo_esa_step,
+            codice_sw_priority_counts_l1a_data.epoch,
+            direct_event_epochs,
         )
-        half_spin_per_esa_step_aligned, _ = (
-            _align_priority_counts_variable_to_direct_event_epochs(
-                codice_sw_priority_counts_l1a_data.half_spin_per_esa_step,
-                codice_sw_priority_counts_l1a_data.epoch,
-                direct_event_epochs,
-            )
+        half_spin_per_esa_step_aligned, _ = _align_priority_counts_variable_to_direct_event_epochs(
+            codice_sw_priority_counts_l1a_data.half_spin_per_esa_step,
+            codice_sw_priority_counts_l1a_data.epoch,
+            direct_event_epochs,
         )
-        nso_spin_sector_aligned, _ = (
-            _align_priority_counts_variable_to_direct_event_epochs(
-                codice_sw_priority_counts_l1a_data.nso_spin_sector,
-                codice_sw_priority_counts_l1a_data.epoch,
-                direct_event_epochs,
-            )
+        nso_spin_sector_aligned, _ = _align_priority_counts_variable_to_direct_event_epochs(
+            codice_sw_priority_counts_l1a_data.nso_spin_sector,
+            codice_sw_priority_counts_l1a_data.epoch,
+            direct_event_epochs,
         )
-        nso_esa_step_aligned, _ = (
-            _align_priority_counts_variable_to_direct_event_epochs(
-                codice_sw_priority_counts_l1a_data.nso_esa_step,
-                codice_sw_priority_counts_l1a_data.epoch,
-                direct_event_epochs,
-            )
+        nso_esa_step_aligned, _ = _align_priority_counts_variable_to_direct_event_epochs(
+            codice_sw_priority_counts_l1a_data.nso_esa_step,
+            codice_sw_priority_counts_l1a_data.epoch,
+            direct_event_epochs,
         )
-        nso_half_spin_aligned, _ = (
-            _align_priority_counts_variable_to_direct_event_epochs(
-                codice_sw_priority_counts_l1a_data.nso_half_spin,
-                codice_sw_priority_counts_l1a_data.epoch,
-                direct_event_epochs,
-            )
+        nso_half_spin_aligned, _ = _align_priority_counts_variable_to_direct_event_epochs(
+            codice_sw_priority_counts_l1a_data.nso_half_spin,
+            codice_sw_priority_counts_l1a_data.epoch,
+            direct_event_epochs,
         )
         stacked_priorities = np.concatenate(
             [np.ma.filled(sw_aligned, np.nan), np.ma.filled(nsw_aligned, np.nan)],
@@ -445,9 +409,7 @@ class CodiceLoProcessor(Processor):
         species_index = mass_species_bin_lookup.get_species_index(dependencies.species)
         counts_for_species = counts_3d_data[species_index]
         normalized_counts, counts_uncertainty = (
-            combine_priorities_for_species_and_calculate_count_uncertainty(
-                counts_for_species
-            )
+            combine_priorities_for_species_and_calculate_count_uncertainty(counts_for_species)
         )
         geometric_factors = geometric_factor_lut.get_geometric_factors(
             dependencies.l3a_direct_event_data.rgfo_half_spin,
@@ -485,8 +447,7 @@ class CodiceLoProcessor(Processor):
             dependencies.l3a_direct_event_data.half_spin_per_esa_step,
         )
         offset_degrees = (
-            get_spacecraft_to_instrument_spin_phase_offset(SpiceFrame.IMAP_CODICE) * 360
-            - 180
+            get_spacecraft_to_instrument_spin_phase_offset(SpiceFrame.IMAP_CODICE) * 360 - 180
         )
         spin_angle_bins_in_dps = (
             dependencies.l3a_direct_event_data.spin_angle_bin + offset_degrees
@@ -542,10 +503,7 @@ def _average_over_block(data_array: np.ndarray, block_size: int):
 
 def _sum_over_block(data_array: np.ndarray, block_size: int):
     return np.array(
-        [
-            data_array[i : i + block_size].sum()
-            for i in range(0, len(data_array), block_size)
-        ]
+        [data_array[i : i + block_size].sum() for i in range(0, len(data_array), block_size)]
     )
 
 

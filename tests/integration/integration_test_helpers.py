@@ -2,18 +2,18 @@ import json
 import os
 import shutil
 from collections import defaultdict
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 from urllib.parse import urlparse
 
 import imap_data_access
 import requests
 from imap_data_access import AncillaryFilePath
 from imap_data_access.file_validation import (
-    generate_imap_file_path,
     ScienceFilePath,
     SPICEFilePath,
+    generate_imap_file_path,
 )
 from requests import Response
 
@@ -35,8 +35,7 @@ class ImapQueryPatcher:
 
     def __call__(self, **kwargs):
         table = kwargs.get("table") or "science"
-        if "table" in kwargs:
-            del kwargs["table"]
+        kwargs.pop("table", None)
 
         use_latest = kwargs.get("version") == "latest"
         if kwargs.get("version") == "latest":
@@ -61,9 +60,7 @@ class ImapQueryPatcher:
             qr for qr in query_results if desired_attributes.issubset(set(qr.items()))
         ]
         if use_latest:
-            filtered_query_results = self.filter_results_for_latest(
-                filtered_query_results
-            )
+            filtered_query_results = self.filter_results_for_latest(filtered_query_results)
         return filtered_query_results
 
     @staticmethod
@@ -72,8 +69,7 @@ class ImapQueryPatcher:
         for qr in query_results:
             query_results_by_date[qr["start_date"]].append(qr)
         return [
-            max(qrs, key=get_version_from_query_result)
-            for qrs in query_results_by_date.values()
+            max(qrs, key=get_version_from_query_result) for qrs in query_results_by_date.values()
         ]
 
 
@@ -109,18 +105,14 @@ METAKERNEL_TEMPLATE = """
 """
 
 
-def create_metakernel(
-    path_to_spice_dir: str, requested_spice_paths: list[SPICEFilePath]
-) -> str:
+def create_metakernel(path_to_spice_dir: str, requested_spice_paths: list[SPICEFilePath]) -> str:
     all_spice_paths = []
     for spice_file in requested_spice_paths:
         spice_subdir_name = spice_file.construct_path().parent.name
         spice_file_name = spice_file.construct_path().name
         spice_path = str(Path(path_to_spice_dir) / spice_subdir_name / spice_file_name)
 
-        chunked_spice_path = [
-            spice_path[i : i + 79] for i in range(0, len(spice_path), 79)
-        ]
+        chunked_spice_path = [spice_path[i : i + 79] for i in range(0, len(spice_path), 79)]
         for i, chunk in enumerate(chunked_spice_path[:-1]):
             chunked_spice_path[i] = f"{chunk}+"
 
@@ -154,9 +146,7 @@ class RequestsGetPatcher:
                 elif "params" in kwargs:
                     prefix = kwargs["params"].get("spice_path") or ""
 
-                    spice_file_paths = [
-                        SPICEFilePath(fn) for fn in self.spice_file_names
-                    ]
+                    spice_file_paths = [SPICEFilePath(fn) for fn in self.spice_file_names]
                     requested_spice_paths = [
                         p
                         for p in spice_file_paths
@@ -177,32 +167,26 @@ class RequestsGetPatcher:
 
 
 class mock_imap_data_access:
-    def __init__(
-        self, data_dir: Path, input_files: list[Path], omni_file: Path | None = None
-    ):
+    def __init__(self, data_dir: Path, input_files: list[Path], omni_file: Path | None = None):
         self.data_dir = data_dir
 
         valid_files = []
         spice_file_paths = []
         for input_file in input_files:
             if not input_file.exists():
-                raise Exception(f"Could not find file {input_file}")
+                raise FileNotFoundError(f"Could not find file {input_file}")
             try:
                 imap_input_file_path = generate_imap_file_path(input_file.name)
                 valid_files.append(input_file)
                 if isinstance(imap_input_file_path, SPICEFilePath):
                     spice_file_paths.append(input_file)
-            except Exception:
+            except Exception:  # noqa: BLE001, S112
                 continue
         self.input_files = valid_files
 
         self.env_patcher = patch.dict(os.environ, {"IMAP_DATA_DIR": str(self.data_dir)})
-        self.data_dir_patcher = patch.dict(
-            imap_data_access.config, {"DATA_DIR": self.data_dir}
-        )
-        self.download_patcher = patch.object(
-            imap_data_access, "download", new=fake_download
-        )
+        self.data_dir_patcher = patch.dict(imap_data_access.config, {"DATA_DIR": self.data_dir})
+        self.download_patcher = patch.object(imap_data_access, "download", new=fake_download)
         self.query_patcher = ImapQueryPatcher(self.input_files)
         self.requests_get_patcher = RequestsGetPatcher(spice_file_paths, omni_file)
 
@@ -220,7 +204,7 @@ class mock_imap_data_access:
         for file_path in self.input_files:
             try:
                 stage_input_file(file_path)
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -241,11 +225,12 @@ class mock_imap_data_access:
 
 
 def run_istp_compliance_check(cdf_path: Path):
-    cdf_as_json = requests.post(
-        "https://skteditor.heliophysics.net/cgi-bin/cdf2json.cgi",
-        files={"file": open(cdf_path, "rb")},
-    ).json()
-    cdf_json = list(cdf_as_json.values())[0]
+    with open(cdf_path, "rb") as cdffile:
+        cdf_as_json = requests.post(
+            "https://skteditor.heliophysics.net/cgi-bin/cdf2json.cgi",
+            files={"file": cdffile},
+        ).json()
+    cdf_json = next(iter(cdf_as_json.values()))
     return requests.post(
         "https://skteditor.heliophysics.net/cgi-bin/validate.cgi",
         json={cdf_path.name: cdf_json},

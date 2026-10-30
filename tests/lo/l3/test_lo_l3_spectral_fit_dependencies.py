@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from imap_data_access.processing_input import ScienceInput, ProcessingInputCollection
+from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput
 
 from imap_l3_processing.lo.l3.lo_l3_spectral_fit_dependencies import (
     LoL3SpectralFitDependencies,
@@ -25,14 +25,10 @@ class TestLoL3SpectralFitDependencies(unittest.TestCase):
 
                 input_deps = ProcessingInputCollection(ena_input, *extra_inputs)
 
-                dependencies = LoL3SpectralFitDependencies.fetch_dependencies(
-                    input_deps
-                )
+                dependencies = LoL3SpectralFitDependencies.fetch_dependencies(input_deps)
 
                 mock_download.assert_called_once_with(file_name)
-                self.assertEqual(
-                    dependencies.map_data, mock_read_from_path.return_value
-                )
+                self.assertEqual(dependencies.map_data, mock_read_from_path.return_value)
 
                 mock_read_from_path.assert_called_with(mock_download.return_value)
 
@@ -50,15 +46,11 @@ class TestLoL3SpectralFitDependencies(unittest.TestCase):
             ),
             (
                 "1 L2 and 1 L3 file",
-                ProcessingInputCollection(
-                    ScienceInput(l2_file_name), ScienceInput(l3_file_name)
-                ),
+                ProcessingInputCollection(ScienceInput(l2_file_name), ScienceInput(l3_file_name)),
             ),
             (
                 "2 L2 files",
-                ProcessingInputCollection(
-                    ScienceInput(l2_file_name), ScienceInput(l2_file_name)
-                ),
+                ProcessingInputCollection(ScienceInput(l2_file_name), ScienceInput(l2_file_name)),
             ),
         ]
 

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import typing
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -9,28 +8,22 @@ import imap_data_access
 import numpy as np
 import spiceypy
 from astropy.time import Time
-from spiceypy import SpiceyError
-
-from imap_l3_processing.glows.quality_flags import GlowsL3Flags
 from imap_data_access.file_validation import Version
 from spacepy.pycdf import CDF
-
-from typing import Optional
+from spiceypy import SpiceyError
 
 from imap_l3_processing.constants import (
     ONE_AU_IN_KM,
-    TT2000_EPOCH,
     ONE_SECOND_IN_NANOSECONDS,
+    TT2000_EPOCH,
 )
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import jd_fm_Carrington
 from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import (
     GlowsL3eCallArguments,
     GlowsL3eSpacecraftInfo,
 )
+from imap_l3_processing.glows.quality_flags import GlowsL3Flags
 from imap_l3_processing.utils import FurnishMetakernelOutput
-
-if typing.TYPE_CHECKING:
-    pass
 
 
 def determine_call_args_for_l3e_executable(
@@ -55,9 +48,7 @@ def determine_spacecraft_info_for_l3e_executable(
 ) -> GlowsL3eSpacecraftInfo:
     ephemeris_time = spiceypy.datetime2et(repointing_midpoint)
 
-    [x, y, z, vx, vy, vz], _ = spiceypy.spkezr(
-        "IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN"
-    )
+    [x, y, z, vx, vy, vz], _ = spiceypy.spkezr("IMAP", ephemeris_time, "ECLIPJ2000", "NONE", "SUN")
 
     radius, longitude, latitude = spiceypy.reclat([x, y, z])
 
@@ -85,16 +76,16 @@ def determine_spacecraft_info_using_predict_if_needed(
 ) -> tuple[GlowsL3eSpacecraftInfo, GlowsL3Flags, list[str]]:
     try:
         with spiceypy.KernelPool([str(spice_without_predict.metakernel_path)]):
-            spacecraft_info: GlowsL3eSpacecraftInfo = (
-                determine_spacecraft_info_for_l3e_executable(repointing_midpoint)
+            spacecraft_info: GlowsL3eSpacecraftInfo = determine_spacecraft_info_for_l3e_executable(
+                repointing_midpoint
             )
 
             glows_l3_flags: GlowsL3Flags = GlowsL3Flags.NONE
             kernel_names = [n.name for n in spice_without_predict.spice_kernel_paths]
     except SpiceyError:
         with spiceypy.KernelPool([str(spice_with_predict.metakernel_path)]):
-            spacecraft_info: GlowsL3eSpacecraftInfo = (
-                determine_spacecraft_info_for_l3e_executable(repointing_midpoint)
+            spacecraft_info: GlowsL3eSpacecraftInfo = determine_spacecraft_info_for_l3e_executable(
+                repointing_midpoint
             )
 
             glows_l3_flags: GlowsL3Flags = GlowsL3Flags.PREDICTIVE_EPHEMERIS
@@ -106,7 +97,7 @@ def determine_spacecraft_info_using_predict_if_needed(
 def _decimal_time(t: datetime) -> str:
     year_start = datetime(t.year, 1, 1)
     year_end = datetime(t.year + 1, 1, 1)
-    return "{:10.5f}".format(t.year + (t - year_start) / (year_end - year_start))
+    return f"{t.year + (t - year_start) / (year_end - year_start):10.5f}"
 
 
 @dataclass
@@ -119,9 +110,7 @@ class GlowsL3eVersionsForRepointings:
     ultra_hf_repointings: dict[int, Version]
 
 
-def compute_glows_flags_for_repoint(
-    l3d_cdf_path: Path, repoint_midpoint: datetime
-) -> int:
+def compute_glows_flags_for_repoint(l3d_cdf_path: Path, repoint_midpoint: datetime) -> int:
     with CDF(str(l3d_cdf_path)) as cdf:
         cr_epochs = cdf["epoch"][...]
         flags = cdf["glows_flags"][...]
@@ -159,7 +148,7 @@ def get_lo_pivot_angle_from_l1b_file(path: Path) -> float:
 
 @dataclass
 class LoPivotAngle:
-    parent_filename: Optional[str]
+    parent_filename: str | None
     pivot_angle: float
 
 
@@ -189,9 +178,7 @@ def get_repoint_numbers_within_cr_window(
 ) -> set[int]:
     if start_cr_number is None:
         return set()
-    first_carrington_start_date = Time(
-        jd_fm_Carrington(float(start_cr_number)), format="jd"
-    )
+    first_carrington_start_date = Time(jd_fm_Carrington(float(start_cr_number)), format="jd")
     last_cr_end_date = Time(jd_fm_Carrington(float(end_cr_number + 0.5)), format="jd")
 
     start_ns = (
@@ -204,8 +191,7 @@ def get_repoint_numbers_within_cr_window(
     vectorized_date_conv = np.vectorize(
         lambda d: (
             (
-                Time(d, format="iso").to_datetime(leap_second_strict="silent")
-                - TT2000_EPOCH
+                Time(d, format="iso").to_datetime(leap_second_strict="silent") - TT2000_EPOCH
             ).total_seconds()
             * ONE_SECOND_IN_NANOSECONDS
         )

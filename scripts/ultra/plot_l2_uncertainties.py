@@ -51,17 +51,15 @@ ultra_nsp_combined_dep = UltraL3CombinedDependencies.from_file_paths(
         "ultra/imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv"
     ),
 )
-print(
-    ultra_nsp_combined_dep.u45_l2_map.intensity_map_data.ena_intensity_stat_uncert.shape
-)
+print(ultra_nsp_combined_dep.u45_l2_map.intensity_map_data.ena_intensity_stat_uncert.shape)
 
 hp32 = HEALPix(32)
 lon, lat = hp32.healpix_to_lonlat(np.arange(hp32.npix))
 plt.scatter(
     lon,
     lat,
-    c=ultra_nsp_combined_dep.u45_l2_map.intensity_map_data.ena_intensity_stat_uncert[
-        0
-    ].reshape(12, -1)[0],
+    c=ultra_nsp_combined_dep.u45_l2_map.intensity_map_data.ena_intensity_stat_uncert[0].reshape(
+        12, -1
+    )[0],
 )
 plt.show()

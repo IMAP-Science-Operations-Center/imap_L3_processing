@@ -2,18 +2,17 @@ import logging
 import math
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional, Union, Tuple
 
 import numpy as np
 import spiceypy
 
 from imap_l3_processing.constants import (
-    ELECTRON_MASS_KG,
     BOLTZMANN_CONSTANT_JOULES_PER_KELVIN,
-    METERS_PER_KILOMETER,
     CENTIMETERS_PER_METER,
-    PROTON_CHARGE_COULOMBS,
+    ELECTRON_MASS_KG,
     GRAMS_PER_KILOGRAM,
+    METERS_PER_KILOMETER,
+    PROTON_CHARGE_COULOMBS,
 )
 from imap_l3_processing.pitch_angles import calculate_unit_vector
 from imap_l3_processing.predicted_ephemeris_tracker import PredictedEphemerisTracker
@@ -100,8 +99,8 @@ def core_fit_moments_retrying_on_failure(
     weights: np.ndarray,
     energy_start: int,
     energy_end: int,
-    density_history: Union[np.ndarray, list[float]],
-) -> Optional[MomentFitResults]:
+    density_history: np.ndarray | list[float],
+) -> MomentFitResults | None:
     return _fit_moments_retrying_on_failure(
         corrected_energy_bins,
         velocity_vectors,
@@ -121,10 +120,10 @@ def halo_fit_moments_retrying_on_failure(
     weights: np.ndarray,
     energy_start: int,
     energy_end: int,
-    density_history: Union[np.ndarray, list[float]],
-    spacecraft_potential: Union[np.float64, float],
-    core_halo_breakpoint: Union[np.float64, float],
-) -> Optional[MomentFitResults]:
+    density_history: np.ndarray | list[float],
+    spacecraft_potential: np.float64 | float,
+    core_halo_breakpoint: np.float64 | float,
+) -> MomentFitResults | None:
     return _fit_moments_retrying_on_failure(
         corrected_energy_bins,
         velocity_vectors,
@@ -147,10 +146,10 @@ def _fit_moments_retrying_on_failure(
     weights: np.ndarray,
     energy_start: int,
     energy_end: int,
-    density_history: Union[np.ndarray, list[float]],
+    density_history: np.ndarray | list[float],
     history_scalar: float,
-    halo_correction_parameters: Optional[HaloCorrectionParameters] = None,
-) -> Optional[MomentFitResults]:
+    halo_correction_parameters: HaloCorrectionParameters | None = None,
+) -> MomentFitResults | None:
     filtered_velocity_vectors, filtered_weights, filtered_yreg = (
         filter_and_flatten_regress_parameters(
             corrected_energy_bins,
@@ -162,9 +161,7 @@ def _fit_moments_retrying_on_failure(
         )
     )
 
-    fit_function, chi_squared = regress(
-        filtered_velocity_vectors, filtered_weights, filtered_yreg
-    )
+    fit_function, chi_squared = regress(filtered_velocity_vectors, filtered_weights, filtered_yreg)
     moment = calculate_fit_temperature_density_velocity(fit_function)
     average_density = np.average(density_history) * history_scalar
 
@@ -202,9 +199,7 @@ def _fit_moments_retrying_on_failure(
         )
 
 
-def regress(
-    velocity_vectors: np.ndarray, weight: np.ndarray, yreg: np.ndarray
-) -> np.ndarray:
+def regress(velocity_vectors: np.ndarray, weight: np.ndarray, yreg: np.ndarray) -> np.ndarray:
     fit_function = np.zeros((len(velocity_vectors), 9))
 
     velocity_xs = velocity_vectors[:, 0]
@@ -317,10 +312,7 @@ def calculate_fit_temperature_density_velocity(parameters: np.ndarray[float]):
             parameters[0] - parameters[3] * parameters[4] / parameters[5]
         )
         moments.t_parallel = 1.0 / (
-            parameters[0]
-            + parameters[1]
-            + parameters[2]
-            - 2.0 / moments.t_perpendicular
+            parameters[0] + parameters[1] + parameters[2] - 2.0 / moments.t_perpendicular
         )
 
     c11 = parameters[1] * parameters[2] - parameters[5] * parameters[5]
@@ -437,24 +429,20 @@ def get_dps_to_rtn_rotation_matrix(epoch: datetime) -> np.ndarray:
     return spiceypy.pxform("IMAP_DPS", "IMAP_RTN", spiceypy.datetime2et(epoch))
 
 
-def apply_rotation_matrix(
-    rotation_matrix: np.ndarray, vector: np.ndarray
-) -> np.ndarray:
+def apply_rotation_matrix(rotation_matrix: np.ndarray, vector: np.ndarray) -> np.ndarray:
     return rotation_matrix @ vector
 
 
 def rotate_rtn_vectors_to_dps(
     epochs: np.ndarray, vectors_rtn: np.ndarray
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     result = np.full_like(vectors_rtn, np.nan, dtype=float)
     predicted_ephemeris_flags = np.zeros_like(epochs, dtype=bool)
     for i, epoch in enumerate(epochs):
         tracker = PredictedEphemerisTracker()
         try:
             et_time = spiceypy.datetime2et(epoch)
-            rotation_matrix = tracker.run(
-                spiceypy.pxform, "IMAP_RTN", "IMAP_DPS", et_time
-            )
+            rotation_matrix = tracker.run(spiceypy.pxform, "IMAP_RTN", "IMAP_DPS", et_time)
         except spiceypy.SpiceyError as e:
             logger.info(f"Failed to rotate RTN→DPS at epoch {epoch}: {e}")
             continue
@@ -515,25 +503,19 @@ def compute_density_scale(
     escalep = math.erfc(scalep) if scalep < 9 else 0
     escalem = math.erfc(scalem) if scalem < 9 else 0
 
-    dscalep = density_multiplier / (
-        scalep * np.exp(-scalep2) + density_multiplier * escalep
-    )
-    dscalem = density_multiplier / (
-        scalem * np.exp(-scalem2) + density_multiplier * escalem
-    )
+    dscalep = density_multiplier / (scalep * np.exp(-scalep2) + density_multiplier * escalep)
+    dscalem = density_multiplier / (scalem * np.exp(-scalem2) + density_multiplier * escalem)
 
     return 0.5 * (dscalep + dscalem)
 
 
 def halotrunc(
     moments: Moments, core_halo_breakpoint: float, spacecraft_potential: float
-) -> Optional[np.float64]:
+) -> np.float64 | None:
     htmax = moments.t_parallel
     htmin = moments.t_perpendicular
 
-    speed = math.sqrt(
-        moments.velocity_x**2 + moments.velocity_y**2 + moments.velocity_z**2
-    )
+    speed = math.sqrt(moments.velocity_x**2 + moments.velocity_y**2 + moments.velocity_z**2)
 
     halod = moments.density
 
@@ -545,9 +527,7 @@ def halotrunc(
     if htmax <= 1e4 or htmin <= 1e4:
         dscale = 1
     elif core_halo_breakpoint - spacecraft_potential > 5 and temp < 1.0e7:
-        dscale = compute_density_scale(
-            core_halo_breakpoint - spacecraft_potential, speed, temp
-        )
+        dscale = compute_density_scale(core_halo_breakpoint - spacecraft_potential, speed, temp)
     else:
         dscale = 1
 
@@ -568,14 +548,14 @@ def integrate(
     spacecraft_potential: float,
     cdelnv: np.ndarray,
     cdelt: np.ndarray,
-) -> Optional[IntegrateOutputs]:
+) -> IntegrateOutputs | None:
     sumn = 0
     sumvx = 0
     sumvy = 0
     sumvz = 0
     base = 1000
     delphi = np.full(7, 2 * np.pi / 30)
-    delv = np.empty((len(energy)))
+    delv = np.empty(len(energy))
     fv_with_axis_order_energy_cem_spin = np.moveaxis(fv, 1, 2)
     for i in range(istart, iend + 1):
         if energy[i] > 0:
@@ -587,38 +567,20 @@ def integrate(
         ehigh = 1.175 * energy[i]
         if i < len(energy) - 1:
             ehigh = np.sqrt(
-                (energy[i + 1] + spacecraft_potential)
-                * (energy[i] + spacecraft_potential)
+                (energy[i + 1] + spacecraft_potential) * (energy[i] + spacecraft_potential)
             )
-        elow = np.sqrt(
-            (energy[i] + spacecraft_potential) * (energy[i - 1] + spacecraft_potential)
-        )
+        elow = np.sqrt((energy[i] + spacecraft_potential) * (energy[i - 1] + spacecraft_potential))
 
-        delv[i] = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * (
-            np.sqrt(ehigh) - np.sqrt(elow)
-        )
-        if elow < base:
-            base = elow
+        delv[i] = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * (np.sqrt(ehigh) - np.sqrt(elow))
+        base = min(base, elow)
         for j in range(7):
             for k in range(28):  # why 28 and not 30?
                 if energy[i] > 0:
                     delta = delv[i] * deltheta[j] * delphi[j]
                     fact = sintheta[j] * fv_with_axis_order_energy_cem_spin[i, j, k]
                     sumn += delta * v2mid * fact
-                    sumvx += (
-                        delta
-                        * v3mid
-                        * fact
-                        * sintheta[j]
-                        * np.cos(np.deg2rad(phi[i, k]))
-                    )
-                    sumvy += (
-                        delta
-                        * v3mid
-                        * fact
-                        * sintheta[j]
-                        * np.sin(np.deg2rad(phi[i, k]))
-                    )
+                    sumvx += delta * v3mid * fact * sintheta[j] * np.cos(np.deg2rad(phi[i, k]))
+                    sumvy += delta * v3mid * fact * sintheta[j] * np.sin(np.deg2rad(phi[i, k]))
                     sumvz += delta * v3mid * fact * costheta[j]
 
     totden = sumn + cdelnv[0]
@@ -652,36 +614,26 @@ def integrate(
                 if energy[i] > 0:
                     angx = sintheta[j] * np.cos(np.deg2rad(phi[i, k]))
                     vx = (
-                        -ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR
-                        * np.sqrt(energy[i])
-                        * angx
+                        -ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(energy[i]) * angx
                         - CM_PER_KM * output_velocities[0]
                     )
 
                     angy = sintheta[j] * np.sin(np.deg2rad(phi[i, k]))
                     vy = (
-                        -ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR
-                        * np.sqrt(energy[i])
-                        * angy
+                        -ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(energy[i]) * angy
                         - CM_PER_KM * output_velocities[1]
                     )
 
                     angz = costheta[j]
                     vz = (
-                        -ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR
-                        * np.sqrt(energy[i])
-                        * angz
+                        -ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(energy[i]) * angz
                         - CM_PER_KM * output_velocities[2]
                     )
 
                     vmag2 = vx * vx + vy * vy + vz * vz
 
                     delta = delv[i] * deltheta[j] * delphi[j]
-                    fact = (
-                        v2mid
-                        * sintheta[j]
-                        * fv_with_axis_order_energy_cem_spin[i, j, k]
-                    )
+                    fact = v2mid * sintheta[j] * fv_with_axis_order_energy_cem_spin[i, j, k]
                     sumtxx += delta * fact * vx * vx
                     sumtxy += delta * fact * vx * vy
                     sumtxz += delta * fact * vx * vz
@@ -700,9 +652,7 @@ def integrate(
         + cdelt
     ) / totden
 
-    heat_flux = (
-        np.array([sumqx, sumqy, sumqz]) * 500 * ELECTRON_MASS_KG * GRAMS_PER_KILOGRAM
-    )
+    heat_flux = np.array([sumqx, sumqy, sumqz]) * 500 * ELECTRON_MASS_KG * GRAMS_PER_KILOGRAM
 
     return IntegrateOutputs(totden, output_velocities, temperature, heat_flux, base)
 
@@ -730,29 +680,25 @@ def scale_core_density(
     velocity_in_sc_frame = np.zeros((2, NUMBER_OF_DETECTORS))
     for j in range(NUMBER_OF_DETECTORS):
         ehigh = np.sqrt(
-            (energy[ifit + 1] + spacecraft_potential)
-            * (energy[ifit] + spacecraft_potential)
+            (energy[ifit + 1] + spacecraft_potential) * (energy[ifit] + spacecraft_potential)
         )
         elow = np.sqrt(
-            (energy[ifit] + spacecraft_potential)
-            * (energy[ifit - 1] + spacecraft_potential)
+            (energy[ifit] + spacecraft_potential) * (energy[ifit - 1] + spacecraft_potential)
         )
         delv[0, j] = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * (
             np.sqrt(ehigh) - np.sqrt(elow)
         )
-        velocity_in_sc_frame[0, j] = (
-            ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(energy[ifit])
+        velocity_in_sc_frame[0, j] = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(
+            energy[ifit]
         )
         base_energy = min(base_energy, elow)
     base_energy -= spacecraft_potential
     if base_energy > 0:
         number_of_energies = 2
-        velocity_in_sc_frame[1, :] = (
-            ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(0.5 * base_energy)
+        velocity_in_sc_frame[1, :] = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(
+            0.5 * base_energy
         )
-        delv[1, :] = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(
-            base_energy
-        )
+        delv[1, :] = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(base_energy)
 
     factor = (
         core_moment_fit.density
@@ -774,21 +720,15 @@ def scale_core_density(
     vz = -velocity_3_dim * cos_theta
 
     fun = -zmk * np.stack(
-        np.broadcast_arrays(
-            vx * vx, vy * vy, vz * vz, vx * vy, vx * vz, vy * vz, vx, vy, vz
-        ),
+        np.broadcast_arrays(vx * vx, vy * vy, vz * vz, vx * vy, vx * vz, vy * vz, vx, vy, vz),
         axis=-1,
     )
     exponent = -zmk * core_moment_fit.aoo + np.dot(fun, regress_outputs[:9])
     delt = delv[:, :, np.newaxis] * delta_theta * delta_phi
-    common_factor = (
-        np.square(velocity_3_dim) * delt * sin_theta * factor * np.exp(exponent)
-    )
+    common_factor = np.square(velocity_3_dim) * delt * sin_theta * factor * np.exp(exponent)
 
     def integrate(array):
-        return np.sum(
-            array[:number_of_energies, :NUMBER_OF_DETECTORS, :MAX_SPIN_SECTOR_INDEX]
-        )
+        return np.sum(array[:number_of_energies, :NUMBER_OF_DETECTORS, :MAX_SPIN_SECTOR_INDEX])
 
     sumint = integrate(common_factor)
     sumvx = integrate(vx * common_factor)
@@ -849,9 +789,7 @@ def scale_halo_density(
     hchbreak = core_halo_break - spacecraft_potential
     scval = abs(hchbreak - base_energy)
     min_energy = min(base_energy, hchbreak)
-    vsch = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(
-        min_energy + 0.5 * scval
-    )
+    vsch = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(min_energy + 0.5 * scval)
     deltav = ENERGY_EV_TO_SPEED_CM_PER_S_CONVERSION_FACTOR * np.sqrt(scval)
     factor = (
         halo_moment_fit.density
@@ -872,9 +810,7 @@ def scale_halo_density(
     vz = -vsch * cos_theta
 
     fun = -zmk * np.stack(
-        np.broadcast_arrays(
-            vx * vx, vy * vy, vz * vz, vx * vy, vx * vz, vy * vz, vx, vy, vz
-        ),
+        np.broadcast_arrays(vx * vx, vy * vy, vz * vz, vx * vy, vx * vz, vy * vz, vx, vy, vz),
         axis=-1,
     )
     exponent = np.dot(fun, regress_outputs[:9])
@@ -917,10 +853,7 @@ def scale_halo_density(
     corrected_halo_temp = halo_temp.copy()
     corrected_halo_temp *= halo_density / corrected_density
     corrected_halo_temp += (
-        delta_temperature
-        * 1e-4
-        * ELECTRON_MASS_OVER_BOLTZMANN_IN_CGS_UNITS
-        / corrected_density
+        delta_temperature * 1e-4 * ELECTRON_MASS_OVER_BOLTZMANN_IN_CGS_UNITS / corrected_density
     )
 
     return ScaleDensityOutput(
@@ -938,16 +871,10 @@ def calculate_primary_eigenvector(
     symmetric_temperature_tensor = np.zeros(shape=(3, 3))
 
     symmetric_temperature_tensor[0][0] = temperature_tensor[0]
-    symmetric_temperature_tensor[0][1] = symmetric_temperature_tensor[1][0] = (
-        temperature_tensor[1]
-    )
+    symmetric_temperature_tensor[0][1] = symmetric_temperature_tensor[1][0] = temperature_tensor[1]
     symmetric_temperature_tensor[1][1] = temperature_tensor[2]
-    symmetric_temperature_tensor[0][2] = symmetric_temperature_tensor[2][0] = (
-        temperature_tensor[3]
-    )
-    symmetric_temperature_tensor[1][2] = symmetric_temperature_tensor[2][1] = (
-        temperature_tensor[4]
-    )
+    symmetric_temperature_tensor[0][2] = symmetric_temperature_tensor[2][0] = temperature_tensor[3]
+    symmetric_temperature_tensor[1][2] = symmetric_temperature_tensor[2][1] = temperature_tensor[4]
     symmetric_temperature_tensor[2][2] = temperature_tensor[5]
 
     nan_array = np.full(3, np.nan)
@@ -956,11 +883,7 @@ def calculate_primary_eigenvector(
     except np.linalg.LinAlgError:
         return nan_array, nan_array
 
-    if (
-        np.any(eigen_values < 0)
-        or np.all(eigen_values == 0)
-        or np.any(np.isnan(eigen_values))
-    ):
+    if np.any(eigen_values < 0) or np.all(eigen_values == 0) or np.any(np.isnan(eigen_values)):
         return nan_array, nan_array
 
     eigen_values_mean = np.mean(eigen_values)
@@ -978,16 +901,12 @@ def calculate_primary_eigenvector(
     other_evals = [v for i, v in enumerate(eigen_values) if i != ipar]
     max_eval = max(other_evals)
     min_eval = min(other_evals)
-    perpendicular_temperature = TEMPERATURE_SCALING_FACTOR * np.sqrt(
-        min_eval * max_eval
-    )
+    perpendicular_temperature = TEMPERATURE_SCALING_FACTOR * np.sqrt(min_eval * max_eval)
     if min_eval == 0:
         gyro = 1
     else:
         gyro = max(other_evals) / min_eval
-    return primary_evec, np.array(
-        [parallel_temperature, perpendicular_temperature, gyro]
-    )
+    return primary_evec, np.array([parallel_temperature, perpendicular_temperature, gyro])
 
 
 def rotation_matrix_builder(mag_vector: np.ndarray) -> np.ndarray(shape=(3, 3)):
@@ -1006,16 +925,10 @@ def rotate_temperature_tensor_to_mag(
     symmetric_temperature_tensor = np.zeros(shape=(3, 3))
 
     symmetric_temperature_tensor[0][0] = temperature_tensor[0]
-    symmetric_temperature_tensor[0][1] = symmetric_temperature_tensor[1][0] = (
-        temperature_tensor[1]
-    )
+    symmetric_temperature_tensor[0][1] = symmetric_temperature_tensor[1][0] = temperature_tensor[1]
     symmetric_temperature_tensor[1][1] = temperature_tensor[2]
-    symmetric_temperature_tensor[0][2] = symmetric_temperature_tensor[2][0] = (
-        temperature_tensor[3]
-    )
-    symmetric_temperature_tensor[1][2] = symmetric_temperature_tensor[2][1] = (
-        temperature_tensor[4]
-    )
+    symmetric_temperature_tensor[0][2] = symmetric_temperature_tensor[2][0] = temperature_tensor[3]
+    symmetric_temperature_tensor[1][2] = symmetric_temperature_tensor[2][1] = temperature_tensor[4]
     symmetric_temperature_tensor[2][2] = temperature_tensor[5]
 
     rotation_matrix = rotation_matrix_builder(mag_vector)

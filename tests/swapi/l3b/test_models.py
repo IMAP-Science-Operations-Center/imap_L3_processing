@@ -11,13 +11,13 @@ from imap_l3_processing.swapi.l3a.models import (
     EPOCH_DELTA_CDF_VAR_NAME,
 )
 from imap_l3_processing.swapi.l3b.models import (
-    SwapiL3BCombinedVDF,
     COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_CDF_VAR_NAME,
     COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_DELTA_CDF_VAR_NAME,
-    SOLAR_WIND_ENERGY_CDF_VAR_NAME,
     SOLAR_WIND_COMBINED_ENERGY_DELTA_MINUS_CDF_VAR_NAME,
     SOLAR_WIND_COMBINED_ENERGY_DELTA_PLUS_CDF_VAR_NAME,
+    SOLAR_WIND_ENERGY_CDF_VAR_NAME,
     SOLAR_WIND_ENERGY_LABEL_CDF_VAR_NAME,
+    SwapiL3BCombinedVDF,
 )
 from tests.swapi.cdf_model_test_case import CdfModelTestCase
 
@@ -70,9 +70,7 @@ class TestModels(CdfModelTestCase):
             ]
         )
 
-        expected_combined_energy_labels = np.array(
-            ["ESA 01", "ESA 02", "ESA 03", "ESA 04"]
-        )
+        expected_combined_energy_labels = np.array(["ESA 01", "ESA 02", "ESA 03", "ESA 04"])
 
         vdf = SwapiL3BCombinedVDF(
             input_metadata=input_metadata,
@@ -103,9 +101,7 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(
             variables[0], epoch, EPOCH_CDF_VAR_NAME, pycdf.const.CDF_TIME_TT2000
         )
-        self.assert_variable_attributes(
-            variables[1], epoch_delta, EPOCH_DELTA_CDF_VAR_NAME
-        )
+        self.assert_variable_attributes(variables[1], epoch_delta, EPOCH_DELTA_CDF_VAR_NAME)
 
         self.assert_variable_attributes(
             variables[2], combined_energies, SOLAR_WIND_ENERGY_CDF_VAR_NAME

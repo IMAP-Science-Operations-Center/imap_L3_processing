@@ -3,7 +3,7 @@ Author: KPLabs with some modifications by Marek Strumik, maro at cbk.waw.pl
 """
 
 import struct
-from typing import Any, cast, Tuple, Union
+from typing import Any, cast
 
 
 class Reader:
@@ -11,7 +11,7 @@ class Reader:
     Reader() class for reading binary stream with GLOWS data
     """
 
-    def __init__(self, buffer: Union[memoryview, bytes]):
+    def __init__(self, buffer: memoryview | bytes):
         """
         Constructor for this class, sets init values of its fields
         """
@@ -44,7 +44,7 @@ class Reader:
         self._offset += length
         return part
 
-    def read(self, pack_format: str) -> Tuple[Any, ...]:
+    def read(self, pack_format: str) -> tuple[Any, ...]:
         """read bytes according to pack_format"""
         length = struct.calcsize(pack_format)
         part = self._read_part(length)
@@ -60,7 +60,7 @@ class Reader:
 
     def read_uint24_be(self) -> int:
         """read 3 bytes as big-endian uint"""
-        high, low = cast(Tuple[int, int], self.read(">BH"))
+        high, low = cast(tuple[int, int], self.read(">BH"))
         return high << 16 | low
 
     def read_uint32_be(self) -> int:

@@ -5,8 +5,8 @@ import numpy as np
 
 from imap_l3_processing.data_utils import safe_divide
 from imap_l3_processing.maps.map_models import (
-    IntensityMapData,
     HealPixIntensityMapData,
+    IntensityMapData,
     RectangularIntensityMapData,
     calculate_datetime_weighted_average,
 )
@@ -17,18 +17,10 @@ class CombinationStrategy(ABC):
         self, maps: list[RectangularIntensityMapData]
     ) -> RectangularIntensityMapData:
         for m in maps[1:]:
-            assert np.array_equal(
-                maps[0].coords.latitude_delta, m.coords.latitude_delta
-            )
-            assert np.array_equal(
-                maps[0].coords.longitude_delta, m.coords.longitude_delta
-            )
-            assert np.array_equal(
-                maps[0].coords.latitude_label, m.coords.latitude_label
-            )
-            assert np.array_equal(
-                maps[0].coords.longitude_label, m.coords.longitude_label
-            )
+            assert np.array_equal(maps[0].coords.latitude_delta, m.coords.latitude_delta)
+            assert np.array_equal(maps[0].coords.longitude_delta, m.coords.longitude_delta)
+            assert np.array_equal(maps[0].coords.latitude_label, m.coords.latitude_label)
+            assert np.array_equal(maps[0].coords.longitude_label, m.coords.longitude_label)
 
         self._check_maps_match([m.intensity_map_data for m in maps])
         intensity_map_data = self._combine([m.intensity_map_data for m in maps])
@@ -41,9 +33,7 @@ class CombinationStrategy(ABC):
     ) -> HealPixIntensityMapData:
         for m in maps[1:]:
             assert np.array_equal(maps[0].coords.pixel_index, m.coords.pixel_index)
-            assert np.array_equal(
-                maps[0].coords.pixel_index_label, m.coords.pixel_index_label
-            )
+            assert np.array_equal(maps[0].coords.pixel_index_label, m.coords.pixel_index_label)
 
         self._check_maps_match([m.intensity_map_data for m in maps])
         intensity_map_data = self._combine([m.intensity_map_data for m in maps])
@@ -83,9 +73,7 @@ class CombinationStrategy(ABC):
         for field in dataclasses.fields(first_map):
             if field.name not in fields_which_may_differ:
                 differing_fields.append(field.name)
-                supports_nan = np.issubdtype(
-                    first_map_dict[field.name].dtype, np.floating
-                )
+                supports_nan = np.issubdtype(first_map_dict[field.name].dtype, np.floating)
                 assert np.all(
                     [
                         np.array_equal(
@@ -98,17 +86,13 @@ class CombinationStrategy(ABC):
                 ), f"{field.name}"
 
     @staticmethod
-    def calculated_weighted_uncertainty(
-        values: np.ndarray, weights: np.ndarray
-    ) -> np.ndarray:
+    def calculated_weighted_uncertainty(values: np.ndarray, weights: np.ndarray) -> np.ndarray:
         masked_values = np.where(weights == 0, 0, values)
         numerator = np.sum(np.square(masked_values * weights), axis=0)
         return np.sqrt(safe_divide(numerator, np.square(np.sum(weights, axis=0))))
 
     @staticmethod
-    def calculate_weighted_sys_err(
-        values: np.ndarray, weights: np.ndarray
-    ) -> np.ndarray:
+    def calculate_weighted_sys_err(values: np.ndarray, weights: np.ndarray) -> np.ndarray:
         numerator = np.sum(values * weights, axis=0)
         denominator = np.sum(weights, axis=0)
 
@@ -155,11 +139,7 @@ class UnweightedCombination(CombinationStrategy):
 
         survival_probabilities = np.array([m.survival_probability for m in maps])
         if all(m.survival_probability is not None for m in maps):
-            sp_mask = (
-                np.isnan(survival_probabilities)
-                | (exposures == 0)
-                | np.isnan(exposures)
-            )
+            sp_mask = np.isnan(survival_probabilities) | (exposures == 0) | np.isnan(exposures)
             masked_survival_probabilities = np.where(sp_mask, 0, survival_probabilities)
             sp_masked_weights = np.where(sp_mask, 0, 1)
             summed_survival_probability = np.sum(
@@ -215,11 +195,7 @@ class ExposureWeightedCombination(CombinationStrategy):
 
         survival_probabilities = np.array([m.survival_probability for m in maps])
         if all(m.survival_probability is not None for m in maps):
-            sp_mask = (
-                np.isnan(survival_probabilities)
-                | (exposures == 0)
-                | np.isnan(exposures)
-            )
+            sp_mask = np.isnan(survival_probabilities) | (exposures == 0) | np.isnan(exposures)
             masked_survival_probabilities = np.where(sp_mask, 0, survival_probabilities)
             sp_masked_exposures = np.where(sp_mask, 0, exposures)
             summed_survival_probability = np.sum(
@@ -239,12 +215,8 @@ class ExposureWeightedCombination(CombinationStrategy):
         bg_intensity_sys_err = np.array([m.bg_intensity_sys_err for m in maps])
         bg_intensity_stat_uncert = np.array([m.bg_intensity_stat_uncert for m in maps])
 
-        ena_intensity_sys_err_plus = np.array(
-            [m.ena_intensity_sys_err_plus for m in maps]
-        )
-        ena_intensity_sys_err_minus = np.array(
-            [m.ena_intensity_sys_err_minus for m in maps]
-        )
+        ena_intensity_sys_err_plus = np.array([m.ena_intensity_sys_err_plus for m in maps])
+        ena_intensity_sys_err_minus = np.array([m.ena_intensity_sys_err_minus for m in maps])
 
         def all_elem_defined(array):
             return all(v is not None for v in array)
@@ -342,9 +314,7 @@ class UncertaintyWeightedCombination(CombinationStrategy):
         summed_exposures = np.sum(masked_exposures, axis=0)
 
         squared_stat_unc = np.square(intensity_stat_unc)
-        inverse_squared_stat_unc = safe_divide(
-            np.ones_like(squared_stat_unc), squared_stat_unc
-        )
+        inverse_squared_stat_unc = safe_divide(np.ones_like(squared_stat_unc), squared_stat_unc)
         uncertainty_weighted_combined_intensity = safe_divide(
             np.nansum(safe_divide(intensities, squared_stat_unc), axis=0),
             np.nansum(inverse_squared_stat_unc, axis=0),

@@ -4,9 +4,9 @@ import numpy as np
 from numpy.typing import NDArray
 
 from imap_l3_processing.constants import (
-    ONE_AU_IN_KM,
     CENTIMETERS_PER_METER,
     METERS_PER_KILOMETER,
+    ONE_AU_IN_KM,
 )
 from imap_l3_processing.swapi.constants import SWAPI_PUI_COOLING_INDEX
 from imap_l3_processing.swapi.l3a.science.pickup_ion.density_of_neutral_helium_lookup_table import (
@@ -81,8 +81,7 @@ def _filled_shell_vdf_without_cutoff(
         inflow_angle, radius_in_au * w**SWAPI_PUI_COOLING_INDEX
     )
     neutral_helium_density_per_km3 = (
-        neutral_helium_density_per_cm3
-        * (CENTIMETERS_PER_METER * METERS_PER_KILOMETER) ** 3
+        neutral_helium_density_per_cm3 * (CENTIMETERS_PER_METER * METERS_PER_KILOMETER) ** 3
     )
     term1 = SWAPI_PUI_COOLING_INDEX / (4 * np.pi)
     term2 = (ionization_rate * ONE_AU_IN_KM**2) / (

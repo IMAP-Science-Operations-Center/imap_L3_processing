@@ -1,25 +1,24 @@
 import logging
 from pathlib import Path
-from typing import Optional
 
 import imap_data_access
 from imap_data_access import (
-    ProcessingInputCollection,
-    ScienceInput,
     AncillaryInput,
+    ProcessingInputCollection,
     ScienceFilePath,
+    ScienceInput,
 )
 from imap_data_access.file_validation import Version
 
 from imap_l3_processing.glows.descriptors import (
+    ELECTRON_DENSITY_DESCRIPTOR,
+    GLOWS_L3D_DESCRIPTOR,
+    LYA_DESCRIPTOR,
+    PHOTOION_DESCRIPTOR,
+    PIPELINE_SETTINGS_L3BCDE_DESCRIPTOR,
     PLASMA_SPEED_DESCRIPTOR,
     PROTON_DENSITY_DESCRIPTOR,
     UV_ANISOTROPY_DESCRIPTOR,
-    PHOTOION_DESCRIPTOR,
-    LYA_DESCRIPTOR,
-    ELECTRON_DENSITY_DESCRIPTOR,
-    PIPELINE_SETTINGS_L3BCDE_DESCRIPTOR,
-    GLOWS_L3D_DESCRIPTOR,
 )
 from imap_l3_processing.glows.l3bc.models import (
     ExternalDependencies,
@@ -28,7 +27,7 @@ from imap_l3_processing.glows.l3bc.models import (
 from imap_l3_processing.glows.l3d.glows_l3d_dependencies import GlowsL3DDependencies
 from imap_l3_processing.glows.l3d.utils import query_for_most_recent_l3d
 from imap_l3_processing.glows.l3e.reprocess_info import ReprocessInfo
-from imap_l3_processing.utils import read_cdf_parents, get_version_from_query_result
+from imap_l3_processing.utils import get_version_from_query_result, read_cdf_parents
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +40,7 @@ class GlowsL3DInitializer:
         l3cs: list[str],
         reprocess_info: ReprocessInfo,
         major_version: int | None,
-    ) -> Optional[tuple[Version, GlowsL3DDependencies, Optional[str]]]:
+    ) -> tuple[Version, GlowsL3DDependencies, str | None] | None:
         if len(l3bs) == 0 and len(l3cs) == 0:
             logger.info("Found no L3b and L3c files!")
             return None
@@ -96,16 +95,8 @@ class GlowsL3DInitializer:
             imap_data_access.download(pipeline_settings_filename)
         )
 
-        l3bs = [
-            l3b
-            for l3b in l3bs
-            if ScienceFilePath(l3b).cr >= pipeline_settings["start_cr"]
-        ]
-        l3cs = [
-            l3c
-            for l3c in l3cs
-            if ScienceFilePath(l3c).cr >= pipeline_settings["start_cr"]
-        ]
+        l3bs = [l3b for l3b in l3bs if ScienceFilePath(l3b).cr >= pipeline_settings["start_cr"]]
+        l3cs = [l3c for l3c in l3cs if ScienceFilePath(l3c).cr >= pipeline_settings["start_cr"]]
 
         if len(l3bs) == 0 and len(l3cs) == 0:
             logger.info("Found no L3b and L3c files after start CR!")
@@ -140,17 +131,13 @@ class GlowsL3DInitializer:
             l3d_parents = read_cdf_parents(Path(most_recent_l3d["file_path"]).name)
             old_l3d = Path(most_recent_l3d["file_path"]).name
 
-            logger.info(
-                f"Old L3d parents: {l3d_parents}, new L3d deps: {updated_input_files}"
-            )
+            logger.info(f"Old L3d parents: {l3d_parents}, new L3d deps: {updated_input_files}")
 
             most_recent_l3d_version = get_version_from_query_result(most_recent_l3d)
             minor_version_to_generate = most_recent_l3d_version.minor + 1
 
             same_major_version = most_recent_l3d_version.major == major_version
-            inputs_unchanged = same_major_version and updated_input_files.issubset(
-                l3d_parents
-            )
+            inputs_unchanged = same_major_version and updated_input_files.issubset(l3d_parents)
 
             if inputs_unchanged and not reprocess_info.should_reprocess_l3d():
                 return None
@@ -169,8 +156,6 @@ class GlowsL3DInitializer:
     ) -> tuple[Version, GlowsL3DDependencies, str | None]:
         return (
             version_to_generate,
-            GlowsL3DDependencies.fetch_dependencies(
-                processing_input_collection, external_deps
-            ),
+            GlowsL3DDependencies.fetch_dependencies(processing_input_collection, external_deps),
             old_l3d,
         )

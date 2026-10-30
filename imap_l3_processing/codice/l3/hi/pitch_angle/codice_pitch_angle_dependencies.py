@@ -45,6 +45,4 @@ class CodicePitchAngleDependencies:
             codice_l2_sectored_intensities_path
         )
 
-        return cls(
-            mag_data, sectored_intensities, mag_is_preliminary=mag_is_preliminary
-        )
+        return cls(mag_data, sectored_intensities, mag_is_preliminary=mag_is_preliminary)

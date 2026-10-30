@@ -1,18 +1,18 @@
 import unittest
 from pathlib import Path
-from unittest.mock import patch, call, sentinel
+from unittest.mock import call, patch, sentinel
 
 import imap_data_access
 from imap_data_access.processing_input import (
+    AncillaryInput,
     ProcessingInputCollection,
     ScienceInput,
-    AncillaryInput,
 )
 
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencies import (
-    CodiceLoL3aPartialDensitiesDependencies,
-    SW_SPECIES_DESCRIPTOR,
     MASS_PER_CHARGE_DESCRIPTOR,
+    SW_SPECIES_DESCRIPTOR,
+    CodiceLoL3aPartialDensitiesDependencies,
 )
 
 
@@ -23,11 +23,13 @@ class TestCodiceLoL3aPartialDensitiesDependencies(unittest.TestCase):
     @patch(
         "imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencies.CodiceLoL3aPartialDensitiesDependencies.from_file_paths"
     )
-    def test_fetch_dependencies(
-        self, mock_from_file_paths, mock_imap_data_access_download
-    ):
-        expected_codice_science_file_download_path = f"imap/codice/l2/2010/01/imap_codice_l2_{SW_SPECIES_DESCRIPTOR}_20100105_v010.cdf"
-        expected_mass_per_charge_file_download_path = f"imap/ancillary/codice/imap_codice_{MASS_PER_CHARGE_DESCRIPTOR}_20100105_v001.csv"
+    def test_fetch_dependencies(self, mock_from_file_paths, mock_imap_data_access_download):
+        expected_codice_science_file_download_path = (
+            f"imap/codice/l2/2010/01/imap_codice_l2_{SW_SPECIES_DESCRIPTOR}_20100105_v010.cdf"
+        )
+        expected_mass_per_charge_file_download_path = (
+            f"imap/ancillary/codice/imap_codice_{MASS_PER_CHARGE_DESCRIPTOR}_20100105_v001.csv"
+        )
 
         sectored_science_input = ScienceInput(
             f"imap_codice_l2_{SW_SPECIES_DESCRIPTOR}_20100105_v010.cdf"
@@ -66,19 +68,15 @@ class TestCodiceLoL3aPartialDensitiesDependencies(unittest.TestCase):
             expected_local_mass_per_charge_file_download_path,
         ]
 
-        codice_l3_dependencies = (
-            CodiceLoL3aPartialDensitiesDependencies.fetch_dependencies(
-                processing_input_collection
-            )
+        codice_l3_dependencies = CodiceLoL3aPartialDensitiesDependencies.fetch_dependencies(
+            processing_input_collection
         )
 
         data_dir = imap_data_access.config["DATA_DIR"]
         expected_download_sectored_science_path = (
             data_dir / expected_codice_science_file_download_path
         )
-        expected_download_ancillary_path = (
-            data_dir / expected_mass_per_charge_file_download_path
-        )
+        expected_download_ancillary_path = data_dir / expected_mass_per_charge_file_download_path
 
         mock_imap_data_access_download.assert_has_calls(
             [
@@ -108,9 +106,7 @@ class TestCodiceLoL3aPartialDensitiesDependencies(unittest.TestCase):
         mock_mpc_read_from_file.assert_called_once_with(sentinel.mpc_lookup_path)
         mock_read_from_cdf.assert_called_once_with(sentinel.cdf_path)
 
-        self.assertEqual(
-            mock_read_from_cdf.return_value, actual_dependencies.codice_l2_lo_data
-        )
+        self.assertEqual(mock_read_from_cdf.return_value, actual_dependencies.codice_l2_lo_data)
         self.assertEqual(
             mock_mpc_read_from_file.return_value,
             actual_dependencies.mass_per_charge_lookup,

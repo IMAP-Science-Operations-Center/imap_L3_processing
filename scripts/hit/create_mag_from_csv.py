@@ -13,9 +13,7 @@ def create_mag(csv_path, l2_path, output_path, offset):
 
     mag_data = csv_data[offset : offset + epoch_len, -3:]
     mag_sclk = csv_data[offset : offset + epoch_len, 6]
-    mag_epochs = [
-        spiceypy.et2datetime(spiceypy.scs2e(-43, str(sclk))) for sclk in mag_sclk
-    ]
+    mag_epochs = [spiceypy.et2datetime(spiceypy.scs2e(-43, str(sclk))) for sclk in mag_sclk]
     print(mag_sclk[0])
     print(mag_epochs[:5])
     print(epoch[:5])

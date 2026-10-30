@@ -17,9 +17,9 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from figure_utils import FIGURES_DIR, load_swapi_response
 
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
-from figure_utils import FIGURES_DIR, load_swapi_response
 
 _AREA_CSV = (
     Path(__file__).resolve().parents[3]
@@ -37,9 +37,7 @@ def main():
     eff_area = area_df["effective_area"].to_numpy()
 
     transmission = swapi_response._azimuthal_transmission
-    azimuths = (
-        np.arange(len(transmission)) * SwapiResponse.AZIMUTHAL_TRANSMISSION_SPACING_DEG
-    )
+    azimuths = np.arange(len(transmission)) * SwapiResponse.AZIMUTHAL_TRANSMISSION_SPACING_DEG
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
 

@@ -24,9 +24,9 @@ class CodiceLoL3aPartialDensitiesDependencies:
 
         for science_input in dependencies.get_science_inputs():
             match science_input:
-                case ScienceInput(
-                    data_type="l2", source="codice", descriptor=descriptor
-                ) if descriptor == SW_SPECIES_DESCRIPTOR:
+                case ScienceInput(data_type="l2", source="codice", descriptor=descriptor) if (
+                    descriptor == SW_SPECIES_DESCRIPTOR
+                ):
                     sectored_intensities_file_paths.extend(science_input.filename_list)
 
         assert len(sectored_intensities_file_paths) == 1
@@ -36,9 +36,7 @@ class CodiceLoL3aPartialDensitiesDependencies:
             source="codice", descriptor=MASS_PER_CHARGE_DESCRIPTOR
         )
         assert len(mass_per_charge_ancillary_file_paths) == 1
-        mass_per_charge_ancillary_file_path = mass_per_charge_ancillary_file_paths[
-            0
-        ].name
+        mass_per_charge_ancillary_file_path = mass_per_charge_ancillary_file_paths[0].name
 
         sectored_intensities_downloaded_path = imap_data_access.download(
             sectored_intensities_file_path
@@ -54,9 +52,7 @@ class CodiceLoL3aPartialDensitiesDependencies:
 
     @classmethod
     def from_file_paths(cls, codice_l2_lo_cdf: Path, mass_per_charge_lookup_path: Path):
-        mass_per_charge_lookup = MassPerChargeLookup.read_from_file(
-            mass_per_charge_lookup_path
-        )
+        mass_per_charge_lookup = MassPerChargeLookup.read_from_file(mass_per_charge_lookup_path)
         codice_l2_lo_data = CodiceLoL2SWSpeciesData.read_from_cdf(codice_l2_lo_cdf)
 
         return cls(codice_l2_lo_data, mass_per_charge_lookup)

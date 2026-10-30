@@ -8,6 +8,10 @@ from uncertainties.unumpy import uarray
 from imap_l3_processing.constants import FIVE_MINUTES_IN_NANOSECONDS
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
+from imap_l3_processing.swapi.constants import (
+    SWAPI_COARSE_SWEEP_BINS,
+    SWAPI_L2_K_FACTOR,
+)
 from imap_l3_processing.swapi.l3a.chunk_fits import (
     AlphaChunkFitter,
     ParallelChunkRunner,
@@ -15,13 +19,9 @@ from imap_l3_processing.swapi.l3a.chunk_fits import (
     PuiChunkFitter,
 )
 from imap_l3_processing.swapi.l3a.models import (
-    SwapiL3ProtonSolarWindData,
     SwapiL3AlphaSolarWindData,
     SwapiL3PickupIonData,
-)
-from imap_l3_processing.swapi.constants import (
-    SWAPI_COARSE_SWEEP_BINS,
-    SWAPI_L2_K_FACTOR,
+    SwapiL3ProtonSolarWindData,
 )
 from imap_l3_processing.swapi.l3a.swapi_l3a_dependencies import SwapiL3ADependencies
 from imap_l3_processing.swapi.l3a.utils import (
@@ -33,10 +33,10 @@ from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_differential_flux
     calculate_combined_solar_wind_differential_flux,
 )
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_vdf import (
-    calculate_proton_solar_wind_vdf,
     calculate_alpha_solar_wind_vdf,
-    calculate_pui_solar_wind_vdf,
     calculate_delta_minus_plus,
+    calculate_proton_solar_wind_vdf,
+    calculate_pui_solar_wind_vdf,
 )
 from imap_l3_processing.swapi.l3b.swapi_l3b_dependencies import SwapiL3BDependencies
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
@@ -71,16 +71,12 @@ def _calculate_gse_velocities(result: dict[str, np.ndarray], species: str) -> No
 
 
 class SwapiProcessor(Processor):
-    def __init__(
-        self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata
-    ):
+    def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
         super().__init__(dependencies, input_metadata)
 
     def process(self):
         if self.input_metadata.data_level == "l3a":
-            l3a_dependencies = SwapiL3ADependencies.fetch_dependencies(
-                self.dependencies
-            )
+            l3a_dependencies = SwapiL3ADependencies.fetch_dependencies(self.dependencies)
 
             if self.input_metadata.descriptor == "proton-sw":
                 data = self.process_l3a_proton(l3a_dependencies.data, l3a_dependencies)
@@ -89,16 +85,12 @@ class SwapiProcessor(Processor):
             elif self.input_metadata.descriptor == "pui-he":
                 data = self.process_l3a_pui(l3a_dependencies.data, l3a_dependencies)
             else:
-                raise NotImplementedError(
-                    "unknown descriptor", self.input_metadata.descriptor
-                )
+                raise NotImplementedError("unknown descriptor", self.input_metadata.descriptor)
             data.parent_file_names = self.get_parent_file_names()
             cdf_path = save_data(data)
             return [cdf_path]
         elif self.input_metadata.data_level == "l3b":
-            l3b_dependencies = SwapiL3BDependencies.fetch_dependencies(
-                self.dependencies
-            )
+            l3b_dependencies = SwapiL3BDependencies.fetch_dependencies(self.dependencies)
             l3b_combined_vdf = self.process_l3b(l3b_dependencies.data, l3b_dependencies)
             l3b_combined_vdf.parent_file_names = self.get_parent_file_names()
             cdf_path = save_data(l3b_combined_vdf)
@@ -135,16 +127,12 @@ class SwapiProcessor(Processor):
         _calculate_gse_velocities(result, "alpha")
 
         if dependencies.mag_is_preliminary:
-            result["quality_flags"] = result["quality_flags"] | int(
-                SwapiL3Flags.PRELIMINARY_MAG
-            )
+            result["quality_flags"] = result["quality_flags"] | int(SwapiL3Flags.PRELIMINARY_MAG)
 
         metadata = replace(self.input_metadata, descriptor="alpha-sw")
         return SwapiL3AlphaSolarWindData(metadata, **result)
 
-    def process_l3a_pui(
-        self, data, dependencies: SwapiL3ADependencies
-    ) -> SwapiL3PickupIonData:
+    def process_l3a_pui(self, data, dependencies: SwapiL3ADependencies) -> SwapiL3PickupIonData:
         dependencies.swapi_response.warm_cache(data.energy / SWAPI_L2_K_FACTOR)
         runner = ParallelChunkRunner(
             dependencies.swapi_response, dependencies.efficiency_calibration_table
@@ -182,21 +170,15 @@ class SwapiProcessor(Processor):
 
         for data_chunk in chunk_l2_data(data, 50):
             center_of_epoch = data_chunk.sci_start_time[0] + FIVE_MINUTES_IN_NANOSECONDS
-            instrument_efficiency = (
-                dependencies.efficiency_calibration_table.relative_efficiency(
-                    center_of_epoch, Species.PROTON
-                )
+            instrument_efficiency = dependencies.efficiency_calibration_table.relative_efficiency(
+                center_of_epoch, Species.PROTON
             )
             coincidence_count_rates_with_uncertainty = uarray(
                 data_chunk.coincidence_count_rate,
                 data_chunk.coincidence_count_rate_uncertainty,
             )
-            coarse_rates = coincidence_count_rates_with_uncertainty[
-                :, SWAPI_COARSE_SWEEP_BINS
-            ]
-            average_coincident_count_rates = np.sum(coarse_rates, axis=0) / len(
-                coarse_rates
-            )
+            coarse_rates = coincidence_count_rates_with_uncertainty[:, SWAPI_COARSE_SWEEP_BINS]
+            average_coincident_count_rates = np.sum(coarse_rates, axis=0) / len(coarse_rates)
             energies = np.mean(data_chunk.energy[:, SWAPI_COARSE_SWEEP_BINS], axis=0)
             proton_velocities, proton_probabilities = calculate_proton_solar_wind_vdf(
                 energies,
@@ -216,13 +198,11 @@ class SwapiProcessor(Processor):
                 instrument_efficiency,
                 dependencies.geometric_factor_calibration_table,
             )
-            combined_differential_flux = (
-                calculate_combined_solar_wind_differential_flux(
-                    energies,
-                    average_coincident_count_rates,
-                    instrument_efficiency,
-                    dependencies.geometric_factor_calibration_table,
-                )
+            combined_differential_flux = calculate_combined_solar_wind_differential_flux(
+                energies,
+                average_coincident_count_rates,
+                instrument_efficiency,
+                dependencies.geometric_factor_calibration_table,
             )
             epochs.append(center_of_epoch)
             cdf_proton_velocities.append(proton_velocities)
@@ -266,9 +246,7 @@ class SwapiProcessor(Processor):
             pui_sw_velocities_delta_minus=np.array(
                 [delta.delta_minus for delta in cdf_pui_deltas]
             ),
-            pui_sw_velocities_delta_plus=np.array(
-                [delta.delta_plus for delta in cdf_pui_deltas]
-            ),
+            pui_sw_velocities_delta_plus=np.array([delta.delta_plus for delta in cdf_pui_deltas]),
             pui_sw_combined_vdf=np.array(cdf_pui_probabilities),
             combined_energy=np.array(combined_energies),
             combined_energy_delta_minus=np.array(

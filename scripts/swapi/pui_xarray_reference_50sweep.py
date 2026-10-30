@@ -12,7 +12,6 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -49,10 +48,10 @@ class PuiXArrayContext:
 
 def build_pui_xarray_context(
     *,
-    azimuthal_transmission_path: Union[str, Path],
-    central_effective_area_path: Union[str, Path],
-    passband_fit_coefficients_path: Union[str, Path],
-    density_of_neutral_helium_lut_path: Union[str, Path],
+    azimuthal_transmission_path: str | Path,
+    central_effective_area_path: str | Path,
+    passband_fit_coefficients_path: str | Path,
+    density_of_neutral_helium_lut_path: str | Path,
     helium_efficiency_ratio: float = HELIUM_EFFICIENCY_RATIO,
 ) -> PuiXArrayContext:
     """Load SWAPI calibration CSVs/DAT and assemble the xarray integration
@@ -84,9 +83,7 @@ def build_pui_xarray_context(
         passband_coefficients["energy_ratio"].values / K_FACTOR.to("eV/V/e").magnitude
     )
     passband_coefficients = (
-        passband_coefficients.assign_coords(
-            speed_ratio=("energy_ratio", source_speed_ratio)
-        )
+        passband_coefficients.assign_coords(speed_ratio=("energy_ratio", source_speed_ratio))
         .swap_dims({"energy_ratio": "speed_ratio"})
         .drop_vars("energy_ratio")
     )
@@ -143,13 +140,11 @@ def build_pui_xarray_context(
         dim="cartesian",
     ).assign_coords(cartesian=["x", "y", "z"])
 
-    central_instrument_speed = np.sqrt(
-        2 * K_FACTOR * voltages / HE_PLUS_MASS_PER_CHARGE
-    ).pint.to("km/s")
-
-    log_beam_energy = np.log(
-        np.abs(K_FACTOR * voltages).pint.to("eV/e").pint.dequantify()
+    central_instrument_speed = np.sqrt(2 * K_FACTOR * voltages / HE_PLUS_MASS_PER_CHARGE).pint.to(
+        "km/s"
     )
+
+    log_beam_energy = np.log(np.abs(K_FACTOR * voltages).pint.to("eV/e").pint.dequantify())
     passband_per_region = np.exp(
         xr.polyval(log_beam_energy, passband_coefficients, degree_dim="degree")
     ).fillna(0)
@@ -164,13 +159,11 @@ def build_pui_xarray_context(
         passband_per_region.sel(region="OA"),
     )
 
-    effective_area = (
-        central_effective_area * passband_full * azimuthal_transmission
-    ).clip(min=Q(0, "cm**2"))
-
-    speed_grid = (speed_ratio_axis * central_instrument_speed).transpose(
-        "V", "speed_ratio"
+    effective_area = (central_effective_area * passband_full * azimuthal_transmission).clip(
+        min=Q(0, "cm**2")
     )
+
+    speed_grid = (speed_ratio_axis * central_instrument_speed).transpose("V", "speed_ratio")
     cos_elevation = np.cos(np.deg2rad(elevation_deg_axis))
 
     return PuiXArrayContext(
@@ -232,9 +225,7 @@ def evaluate_pui_sweep_xarray(
     term4 = (
         context.density_table.pint.interp(
             psi=(psi % Q(360, "deg")).magnitude,
-            r=(heliocentric_distance * w**cooling_index)
-            .pint.to("au")
-            .pint.dequantify(),
+            r=(heliocentric_distance * w**cooling_index).pint.to("au").pint.dequantify(),
         )
         .drop_vars(["psi", "r"])
         .fillna(0)
@@ -247,9 +238,7 @@ def evaluate_pui_sweep_xarray(
     d3v = context.speed_grid**2 * deg2_to_sr * context.cos_elevation
     integrand = context.effective_area * flux * d3v
     integral = (
-        integrand.integrate("azimuth_deg")
-        .integrate("elevation_deg")
-        .integrate("speed_ratio")
+        integrand.integrate("azimuth_deg").integrate("elevation_deg").integrate("speed_ratio")
     )
     count_rate = (integral * context.central_instrument_speed).pint.to("counts/s")
     return count_rate.pint.dequantify().values
@@ -344,9 +333,7 @@ if __name__ == "__main__":
     start_et = spiceypy.str2et(START_TIME_UTC.isoformat())
     sweep_starts_et = start_et + np.arange(N_SWEEPS) * SWEEP_DURATION_S
     step_offsets_s = np.arange(N_ESA_STEPS_PER_SWEEP) * STEP_DURATION_S
-    ephemeris_time_grid = (
-        sweep_starts_et[:, None] + step_offsets_s[None, :]
-    )  # (sweep, step)
+    ephemeris_time_grid = sweep_starts_et[:, None] + step_offsets_s[None, :]  # (sweep, step)
 
     print("Computing per-bin IMAP_RTN↔IMAP_SWAPI rotations...")
     bulk_sw_per_bin_swapi_kms = np.empty((N_SWEEPS, N_ESA_STEPS_PER_SWEEP, 3))
@@ -401,9 +388,7 @@ if __name__ == "__main__":
             solar_wind_speed_inertial_kms=SW_SPEED_INERTIAL_KMS,
         )
 
-    print(
-        "Computing proton + alpha Maxwellian shoulder via production forward model..."
-    )
+    print("Computing proton + alpha Maxwellian shoulder via production forward model...")
     voltage_repeated = np.broadcast_to(
         pui_context.voltages_v, (N_SWEEPS, N_ESA_STEPS_PER_SWEEP)
     ).ravel()
@@ -447,9 +432,7 @@ if __name__ == "__main__":
     )
 
     ideal_total_rate = (
-        pui_count_rate_per_sweep
-        + proton_alpha_count_rate_per_sweep
-        + BACKGROUND_RATE_HZ
+        pui_count_rate_per_sweep + proton_alpha_count_rate_per_sweep + BACKGROUND_RATE_HZ
     )
     expected_count_rate_per_sweep = ideal_total_rate * deadtime_factor(ideal_total_rate)
 

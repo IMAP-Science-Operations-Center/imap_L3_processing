@@ -16,25 +16,23 @@ from imap_l3_processing.maps.hilo_l3_survival_dependencies import (
 )
 from imap_l3_processing.maps.map_combination import ExposureWeightedCombination
 from imap_l3_processing.maps.map_descriptors import (
-    parse_map_descriptor,
     MapDescriptorParts,
     MapQuantity,
-    SurvivalCorrection,
     ReferenceFrame,
     Sensor,
+    SurvivalCorrection,
+    parse_map_descriptor,
 )
 from imap_l3_processing.maps.map_models import (
-    ISNRateData,
+    InputRectangularPointingSet,
     ISNBackgroundSubtractedData,
+    ISNBackgroundSubtractedDataProduct,
     ISNBackgroundSubtractedMapData,
-)
-from imap_l3_processing.maps.map_models import (
+    ISNRateData,
+    RectangularIntensityDataProduct,
     RectangularIntensityMapData,
     RectangularSpectralIndexDataProduct,
     RectangularSpectralIndexMapData,
-    RectangularIntensityDataProduct,
-    InputRectangularPointingSet,
-    ISNBackgroundSubtractedDataProduct,
 )
 from imap_l3_processing.maps.map_processor import MapProcessor
 from imap_l3_processing.maps.spectral_fit import (
@@ -49,9 +47,7 @@ from imap_l3_processing.utils import save_data
 
 
 class LoProcessor(MapProcessor):
-    def process(
-        self, spice_frame_name: SpiceFrame = SpiceFrame.ECLIPJ2000
-    ) -> list[Path]:
+    def process(self, spice_frame_name: SpiceFrame = SpiceFrame.ECLIPJ2000) -> list[Path]:
         set_of_parent_file_names = set(self.get_parent_file_names())
         descriptor = parse_map_descriptor(self.input_metadata.descriptor)
         match descriptor:
@@ -89,9 +85,7 @@ class LoProcessor(MapProcessor):
                 deps = LoCombinedDependencies.fetch_dependencies(self.dependencies)
                 combination = ExposureWeightedCombination()
 
-                combined_map = combination.combine_rectangular_intensity_map_data(
-                    deps.map_data
-                )
+                combined_map = combination.combine_rectangular_intensity_map_data(deps.map_data)
                 data_product = RectangularIntensityDataProduct(
                     self.input_metadata, combined_map, spice_frame_name=spice_frame_name
                 )
@@ -104,20 +98,14 @@ class LoProcessor(MapProcessor):
                     self.dependencies, Instrument.IMAP_LO
                 )
                 deps.l1c_data = list(map(self._collapse_pset_dimension, deps.l1c_data))
-                data = process_survival_probabilities(
-                    deps, spice_frame_name, cg_corrected=False
-                )
+                data = process_survival_probabilities(deps, spice_frame_name, cg_corrected=False)
 
                 data_product = RectangularIntensityDataProduct(
                     self.input_metadata, data, spice_frame_name=spice_frame_name
                 )
-                set_of_parent_file_names.update(
-                    path.name for path in deps.dependency_file_paths
-                )
+                set_of_parent_file_names.update(path.name for path in deps.dependency_file_paths)
             case None:
-                raise ValueError(
-                    f"Could not parse descriptor {self.input_metadata.descriptor}"
-                )
+                raise ValueError(f"Could not parse descriptor {self.input_metadata.descriptor}")
             case _:
                 raise NotImplementedError(self.input_metadata.descriptor)
 
@@ -151,9 +139,7 @@ def perform_spectral_fit(
 def isn_background_subtraction(
     isn_rate_data: ISNRateData,
 ) -> ISNBackgroundSubtractedMapData:
-    isn_rate_background_subtracted = (
-        isn_rate_data.ena_count_rate - isn_rate_data.bg_rate
-    )
+    isn_rate_background_subtracted = isn_rate_data.ena_count_rate - isn_rate_data.bg_rate
     isn_bg_subtracted_stat_err = np.sqrt(
         np.square(isn_rate_data.ena_count_rate_stat_uncert)
         + np.square(isn_rate_data.bg_rate_stat_uncert)

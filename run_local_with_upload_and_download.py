@@ -30,7 +30,8 @@ if __name__ == "__main__":
             {{"type": "science", "files": ["imap_hi_l2_h45-ena-h-hf-nsp-ram-hae-4deg-1yr_20250415_{version}.cdf"]}},
             {{"type": "science", "files": ["imap_hi_l2_h90-ena-h-hf-nsp-anti-hae-4deg-1yr_20250415_{version}.cdf"]}},
             {{"type": "science", "files": ["imap_hi_l2_h90-ena-h-hf-nsp-ram-hae-4deg-1yr_20250415_{version}.cdf"]}}]""",
-                ]
+                ],
+                check=True,
             )
         case "lo", "spx":
             version = "v902"
@@ -50,7 +51,8 @@ if __name__ == "__main__":
                     "l090-spx-h-sf-sp-ram-hae-6deg-1yr",
                     "--dependency",
                     '[{"type": "science", "files": ["imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-1yr_20260101_v001.cdf"]}]',
-                ]
+                ],
+                check=True,
             )
             subprocess.run(
                 [
@@ -68,7 +70,8 @@ if __name__ == "__main__":
                     "l090-spx-h-sf-nsp-ram-hae-6deg-1yr",
                     "--dependency",
                     '[{"type": "science", "files": ["imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-1yr_20260101_v902.cdf"]}]',
-                ]
+                ],
+                check=True,
             )
             subprocess.run(
                 [
@@ -86,7 +89,8 @@ if __name__ == "__main__":
                     "l090-spxnbs-h-sf-nsp-ram-hae-6deg-1yr",
                     "--dependency",
                     '[{"type": "science", "files": ["imap_lo_l2_l090-enanbs-h-sf-nsp-ram-hae-6deg-1yr_20260101_v900.cdf"]}]',
-                ]
+                ],
+                check=True,
             )
         case "hi", "spx":
             subprocess.run(
@@ -105,7 +109,8 @@ if __name__ == "__main__":
                     "h90-spx-h-hf-sp-full-hae-4deg-6mo",
                     "--dependency",
                     '[{"type": "science", "files": ["imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-6mo_20250415_v002.cdf"]}]',
-                ]
+                ],
+                check=True,
             )
         case "hi", "survival":
             subprocess.run(
@@ -124,7 +129,8 @@ if __name__ == "__main__":
                     "h90-ena-h-sf-sp-full-hae-4deg-6mo",
                     "--dependency",
                     '[{"type": "science", "files": ["imap_hi_l2_h90-ena-h-sf-nsp-ram-hae-4deg-6mo_20250415_v001.cdf"]},\n{"type": "science", "files": ["imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-6mo_20250415_v001.cdf"]}]',
-                ]
+                ],
+                check=True,
             )
         case "hit", "direct":
             subprocess.run(
@@ -142,23 +148,26 @@ if __name__ == "__main__":
                     "--descriptor",
                     "direct-events",
                     "--dependency",
-                    '[{"type": "science", "files": ["imap_hit_l1a_direct-events_20100106_v001.cdf"]},'
-                    + '{"type": "ancillary", "files": ["imap_hit_range-2A-cosine-lookup_20250203_v000.csv"]},'
-                    + '{"type": "ancillary", "files": ["imap_hit_range-2B-cosine-lookup_20250203_v000.csv"]},'
-                    + '{"type": "ancillary", "files": ["imap_hit_range-3A-cosine-lookup_20250203_v000.csv"]},'
-                    + '{"type": "ancillary", "files": ["imap_hit_range-3B-cosine-lookup_20250203_v000.csv"]},'
-                    + '{"type": "ancillary", "files": ["imap_hit_range-4A-cosine-lookup_20250203_v000.csv"]},'
-                    + '{"type": "ancillary", "files": ["imap_hit_range-4B-cosine-lookup_20250203_v000.csv"]},'
-                    + '{"type": "ancillary", "files": ["imap_hit_hi-gain-lookup_20250203_v000.csv"]},'
-                    + '{"type": "ancillary", "files": ["imap_hit_lo-gain-lookup_20250203_v000.csv"]},'
-                    + '{"type": "ancillary", "files": ["imap_hit_hit-event-type-lookup_20250228_v000.csv"]},'
-                    + '{"type": "ancillary", "files": ["imap_hit_range-2A-charge-fit-lookup_20250319_v000.csv"]},'
-                    + '{"type": "ancillary", "files": ["imap_hit_range-3A-charge-fit-lookup_20250319_v000.csv"]},'
-                    + '{"type": "ancillary", "files": ["imap_hit_range-4A-charge-fit-lookup_20250319_v000.csv"]},'
-                    + '{"type": "ancillary", "files": ["imap_hit_range-2B-charge-fit-lookup_20250319_v000.csv"]},'
-                    + '{"type": "ancillary", "files": ["imap_hit_range-3B-charge-fit-lookup_20250319_v000.csv"]},'
-                    + '{"type": "ancillary", "files": ["imap_hit_range-4B-charge-fit-lookup_20250319_v000.csv"]}]',
-                ]
+                    (
+                        '[{"type": "science", "files": ["imap_hit_l1a_direct-events_20100106_v001.cdf"]},'
+                        '{"type": "ancillary", "files": ["imap_hit_range-2A-cosine-lookup_20250203_v000.csv"]},'
+                        '{"type": "ancillary", "files": ["imap_hit_range-2B-cosine-lookup_20250203_v000.csv"]},'
+                        '{"type": "ancillary", "files": ["imap_hit_range-3A-cosine-lookup_20250203_v000.csv"]},'
+                        '{"type": "ancillary", "files": ["imap_hit_range-3B-cosine-lookup_20250203_v000.csv"]},'
+                        '{"type": "ancillary", "files": ["imap_hit_range-4A-cosine-lookup_20250203_v000.csv"]},'
+                        '{"type": "ancillary", "files": ["imap_hit_range-4B-cosine-lookup_20250203_v000.csv"]},'
+                        '{"type": "ancillary", "files": ["imap_hit_hi-gain-lookup_20250203_v000.csv"]},'
+                        '{"type": "ancillary", "files": ["imap_hit_lo-gain-lookup_20250203_v000.csv"]},'
+                        '{"type": "ancillary", "files": ["imap_hit_hit-event-type-lookup_20250228_v000.csv"]},'
+                        '{"type": "ancillary", "files": ["imap_hit_range-2A-charge-fit-lookup_20250319_v000.csv"]},'
+                        '{"type": "ancillary", "files": ["imap_hit_range-3A-charge-fit-lookup_20250319_v000.csv"]},'
+                        '{"type": "ancillary", "files": ["imap_hit_range-4A-charge-fit-lookup_20250319_v000.csv"]},'
+                        '{"type": "ancillary", "files": ["imap_hit_range-2B-charge-fit-lookup_20250319_v000.csv"]},'
+                        '{"type": "ancillary", "files": ["imap_hit_range-3B-charge-fit-lookup_20250319_v000.csv"]},'
+                        '{"type": "ancillary", "files": ["imap_hit_range-4B-charge-fit-lookup_20250319_v000.csv"]}]'
+                    ),
+                ],
+                check=True,
             )
         case "hit", "macropixel":
             subprocess.run(
@@ -176,9 +185,12 @@ if __name__ == "__main__":
                     "--descriptor",
                     "macropixel",
                     "--dependency",
-                    '[{"type": "science", "files": ["imap_hit_l2_macropixel-intensity_20100106_v001.cdf"]},'
-                    + '{"type": "science", "files": ["imap_mag_l1d_norm-dsrf_20100106_v001.cdf"]}]',
-                ]
+                    (
+                        '[{"type": "science", "files": ["imap_hit_l2_macropixel-intensity_20100106_v001.cdf"]},'
+                        '{"type": "science", "files": ["imap_mag_l1d_norm-dsrf_20100106_v001.cdf"]}]'
+                    ),
+                ],
+                check=True,
             )
         case "ultra", "survival":
             subprocess.run(
@@ -196,12 +208,15 @@ if __name__ == "__main__":
                     "--descriptor",
                     "u90-ena-h-sf-sp-full-hae-4deg-3mo",
                     "--dependency",
-                    '[{"type": "science", "files": ["imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-3mo_20250415_v010.cdf"]},'
-                    + '{"type": "spice", "files": ["imap_sclk_0000.tsc"]},'
-                    + '{"type": "spice", "files": ["naif0012.tls"]},'
-                    + '{"type": "spice", "files": ["imap_science_0001.tf"]},'
-                    + '{"type": "spice", "files": ["imap_dps_2025_105_2026_105_01.ah.bc"]}]',
-                ]
+                    (
+                        '[{"type": "science", "files": ["imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-3mo_20250415_v010.cdf"]},'
+                        '{"type": "spice", "files": ["imap_sclk_0000.tsc"]},'
+                        '{"type": "spice", "files": ["naif0012.tls"]},'
+                        '{"type": "spice", "files": ["imap_science_0001.tf"]},'
+                        '{"type": "spice", "files": ["imap_dps_2025_105_2026_105_01.ah.bc"]}]'
+                    ),
+                ],
+                check=True,
             )
         case "ultra", "spx":
             subprocess.run(
@@ -219,11 +234,14 @@ if __name__ == "__main__":
                     "--descriptor",
                     "u90-spx-h-sf-sp-full-hae-4deg-3mo",
                     "--dependency",
-                    "["
-                    '{"type": "science", "files": ["imap_ultra_l3_u90-ena-h-sf-sp-full-hae-4deg-3mo_20250415_v010.cdf"]},'
-                    '{"type": "ancillary", "files": ["imap_ultra_ulc-spx-energy-ranges_20250407_v000.dat"]}'
-                    "]",
-                ]
+                    (
+                        "["
+                        '{"type": "science", "files": ["imap_ultra_l3_u90-ena-h-sf-sp-full-hae-4deg-3mo_20250415_v010.cdf"]},'
+                        '{"type": "ancillary", "files": ["imap_ultra_ulc-spx-energy-ranges_20250407_v000.dat"]}'
+                        "]"
+                    ),
+                ],
+                check=True,
             )
         case "glows", "l3b":
             subprocess.run(
@@ -239,13 +257,16 @@ if __name__ == "__main__":
                     "--version",
                     "v025",
                     "--dependency",
-                    '[{"type": "science", "files": ["imap_glows_l3a_hist_20250415-repoint01000_v026.cdf"]},'
-                    '{"type": "ancillary", "files":["imap_glows_bad-days-list_20100101_v001.dat"]},'
-                    '{"type": "ancillary", "files":["imap_glows_WawHelioIonMP_20100101_v002.json"]},'
-                    '{"type": "ancillary", "files":["imap_glows_uv-anisotropy-1CR_20100101_v001.json"]},'
-                    '{"type": "ancillary", "files":["imap_glows_pipeline-settings-l3bcde_19470303_v008.json"]},'
-                    '{"type": "repoint", "files":["imap_2026_105_01.repoint.csv"]}]',
-                ]
+                    (
+                        '[{"type": "science", "files": ["imap_glows_l3a_hist_20250415-repoint01000_v026.cdf"]},'
+                        '{"type": "ancillary", "files":["imap_glows_bad-days-list_20100101_v001.dat"]},'
+                        '{"type": "ancillary", "files":["imap_glows_WawHelioIonMP_20100101_v002.json"]},'
+                        '{"type": "ancillary", "files":["imap_glows_uv-anisotropy-1CR_20100101_v001.json"]},'
+                        '{"type": "ancillary", "files":["imap_glows_pipeline-settings-l3bcde_19470303_v008.json"]},'
+                        '{"type": "repoint", "files":["imap_2026_105_01.repoint.csv"]}]'
+                    ),
+                ],
+                check=True,
             )
         case "glows", "l3d":
             if os.path.exists(PATH_TO_L3D_TOOLKIT / "data_l3b"):
@@ -272,17 +293,20 @@ if __name__ == "__main__":
                     "--descriptor",
                     "solar-hist",
                     "--dependency",
-                    '[{"type": "science", "files": ["imap_glows_l3b_ion-rate-profile_20100422_v013.cdf"]},'
-                    '{"type": "science", "files": ["imap_glows_l3c_sw-profile_20100422_v012.cdf"]},'
-                    '{"type": "ancillary", "files": ["imap_glows_plasma-speed-2010a_20100101_v003.dat"]},'
-                    '{"type": "ancillary", "files": ["imap_glows_proton-density-2010a_20100101_v003.dat"]},'
-                    '{"type": "ancillary", "files": ["imap_glows_uv-anisotropy-2010a_20100101_v003.dat"]},'
-                    '{"type": "ancillary", "files": ["imap_glows_photoion-2010a_20100101_v003.dat"]},'
-                    '{"type": "ancillary", "files": ["imap_glows_electron-density-2010a_20100101_v003.dat"]},'
-                    '{"type": "ancillary", "files": ["imap_glows_lya-2010a_20100101_v003.dat"]},'
-                    '{"type": "ancillary", "files": ["imap_glows_l3b-archive_20100422_v011.zip"]},'
-                    '{"type": "ancillary", "files": ["imap_glows_pipeline-settings-l3bcde_20100101_v006.json"]}]',
-                ]
+                    (
+                        '[{"type": "science", "files": ["imap_glows_l3b_ion-rate-profile_20100422_v013.cdf"]},'
+                        '{"type": "science", "files": ["imap_glows_l3c_sw-profile_20100422_v012.cdf"]},'
+                        '{"type": "ancillary", "files": ["imap_glows_plasma-speed-2010a_20100101_v003.dat"]},'
+                        '{"type": "ancillary", "files": ["imap_glows_proton-density-2010a_20100101_v003.dat"]},'
+                        '{"type": "ancillary", "files": ["imap_glows_uv-anisotropy-2010a_20100101_v003.dat"]},'
+                        '{"type": "ancillary", "files": ["imap_glows_photoion-2010a_20100101_v003.dat"]},'
+                        '{"type": "ancillary", "files": ["imap_glows_electron-density-2010a_20100101_v003.dat"]},'
+                        '{"type": "ancillary", "files": ["imap_glows_lya-2010a_20100101_v003.dat"]},'
+                        '{"type": "ancillary", "files": ["imap_glows_l3b-archive_20100422_v011.zip"]},'
+                        '{"type": "ancillary", "files": ["imap_glows_pipeline-settings-l3bcde_20100101_v006.json"]}]'
+                    ),
+                ],
+                check=True,
             )
         case "swapi", "proton":
             subprocess.run(
@@ -300,21 +324,24 @@ if __name__ == "__main__":
                     "--version",
                     "v000",
                     "--dependency",
-                    '[{"type":"science","files":["imap_swapi_l2_sci_20251208_v006.cdf"]},'
-                    '{"type":"ancillary","files":["imap_swapi_efficiency-lut_20241020_v002.dat"]},'
-                    '{"type":"ancillary","files":["imap_swapi_energy-gf-pui-lut_20100101_v001.csv"]},'
-                    '{"type":"ancillary","files":["imap_swapi_density-of-neutral-helium-lut_20241023_v000.dat"]},'
-                    '{"type":"ancillary","files":["imap_swapi_azimuthal-transmission_20260425_v001.csv"]},'
-                    '{"type":"ancillary","files":["imap_swapi_central-effective-area_20260425_v001.csv"]},'
-                    '{"type":"ancillary","files":["imap_swapi_passband-fit-coefficients_20260425_v001.csv"]},'
-                    '{"type": "spice", "files": ["imap_sclk_0000.tsc"]},'
-                    + '{"type": "spice", "files": ["naif0012.tls"]},'
-                    + '{"type": "spice", "files": ["imap_science_108.tf"]},'
-                    + '{"type": "spice", "files": ["imap_001.tf"]},'
-                    + '{"type": "spice", "files": ["imap_2025_105_2026_105_01.ah.bc"]},'
-                    + '{"type": "spice", "files": ["imap_dps_2025_105_2026_105_01.ah.bc"]}'
-                    "]",
-                ]
+                    (
+                        '[{"type":"science","files":["imap_swapi_l2_sci_20251208_v006.cdf"]},'
+                        '{"type":"ancillary","files":["imap_swapi_efficiency-lut_20241020_v002.dat"]},'
+                        '{"type":"ancillary","files":["imap_swapi_energy-gf-pui-lut_20100101_v001.csv"]},'
+                        '{"type":"ancillary","files":["imap_swapi_density-of-neutral-helium-lut_20241023_v000.dat"]},'
+                        '{"type":"ancillary","files":["imap_swapi_azimuthal-transmission_20260425_v001.csv"]},'
+                        '{"type":"ancillary","files":["imap_swapi_central-effective-area_20260425_v001.csv"]},'
+                        '{"type":"ancillary","files":["imap_swapi_passband-fit-coefficients_20260425_v001.csv"]},'
+                        '{"type": "spice", "files": ["imap_sclk_0000.tsc"]},'
+                        '{"type": "spice", "files": ["naif0012.tls"]},'
+                        '{"type": "spice", "files": ["imap_science_108.tf"]},'
+                        '{"type": "spice", "files": ["imap_001.tf"]},'
+                        '{"type": "spice", "files": ["imap_2025_105_2026_105_01.ah.bc"]},'
+                        '{"type": "spice", "files": ["imap_dps_2025_105_2026_105_01.ah.bc"]}'
+                        "]"
+                    ),
+                ],
+                check=True,
             )
         case "swapi", "alpha":
             subprocess.run(
@@ -332,12 +359,15 @@ if __name__ == "__main__":
                     "--version",
                     "v000",
                     "--dependency",
-                    '[{"type":"science","files":["imap_swapi_l2_sci_20250606_v001.cdf"]},'
-                    '{"type":"ancillary","files":["imap_swapi_efficiency-lut_20241020_v002.dat"]},'
-                    '{"type":"ancillary","files":["imap_swapi_energy-gf-pui-lut_20100101_v001.csv"]},'
-                    '{"type":"ancillary","files":["imap_swapi_density-of-neutral-helium-lut_20241023_v000.dat"]}'
-                    "]",
-                ]
+                    (
+                        '[{"type":"science","files":["imap_swapi_l2_sci_20250606_v001.cdf"]},'
+                        '{"type":"ancillary","files":["imap_swapi_efficiency-lut_20241020_v002.dat"]},'
+                        '{"type":"ancillary","files":["imap_swapi_energy-gf-pui-lut_20100101_v001.csv"]},'
+                        '{"type":"ancillary","files":["imap_swapi_density-of-neutral-helium-lut_20241023_v000.dat"]}'
+                        "]"
+                    ),
+                ],
+                check=True,
             )
         case "swapi", "pui":
             subprocess.run(
@@ -355,20 +385,23 @@ if __name__ == "__main__":
                     "--version",
                     "v000",
                     "--dependency",
-                    '[{"type":"science","files":["imap_swapi_l2_sci_20250606_v001.cdf"]},'
-                    '{"type":"ancillary","files":["imap_swapi_efficiency-lut_20241020_v002.dat"]},'
-                    '{"type":"ancillary","files":["imap_swapi_energy-gf-pui-lut_20100101_v001.csv"]},'
-                    '{"type":"ancillary","files":["imap_swapi_density-of-neutral-helium-lut_20241023_v000.dat"]},'
-                    '{"type": "spice", "files": ["imap_sclk_0000.tsc"]},'
-                    + '{"type": "spice", "files": ["naif0012.tls"]},'
-                    + '{"type": "spice", "files": ["imap_science_0001.tf"]},'
-                    + '{"type": "spice", "files": ["imap_001.tf"]},'
-                    + '{"type": "spice", "files": ["imap_2025_105_2026_105_01.ah.bc"]},'
-                    + '{"type": "spice", "files": ["de440.bsp"]},'
-                    + '{"type": "spice", "files": ["imap_recon_20250415_20260415_v01.bsp"]},'
-                    + '{"type": "spice", "files": ["imap_dps_2025_105_2026_105_01.ah.bc"]}'
-                    "]",
-                ]
+                    (
+                        '[{"type":"science","files":["imap_swapi_l2_sci_20250606_v001.cdf"]},'
+                        '{"type":"ancillary","files":["imap_swapi_efficiency-lut_20241020_v002.dat"]},'
+                        '{"type":"ancillary","files":["imap_swapi_energy-gf-pui-lut_20100101_v001.csv"]},'
+                        '{"type":"ancillary","files":["imap_swapi_density-of-neutral-helium-lut_20241023_v000.dat"]},'
+                        '{"type": "spice", "files": ["imap_sclk_0000.tsc"]},'
+                        '{"type": "spice", "files": ["naif0012.tls"]},'
+                        '{"type": "spice", "files": ["imap_science_0001.tf"]},'
+                        '{"type": "spice", "files": ["imap_001.tf"]},'
+                        '{"type": "spice", "files": ["imap_2025_105_2026_105_01.ah.bc"]},'
+                        '{"type": "spice", "files": ["de440.bsp"]},'
+                        '{"type": "spice", "files": ["imap_recon_20250415_20260415_v01.bsp"]},'
+                        '{"type": "spice", "files": ["imap_dps_2025_105_2026_105_01.ah.bc"]}'
+                        "]"
+                    ),
+                ],
+                check=True,
             )
         case "swapi", "l3b":
             subprocess.run(
@@ -384,10 +417,13 @@ if __name__ == "__main__":
                     "--version",
                     "v003",
                     "--dependency",
-                    '[{"type": "science", "files": ["imap_swapi_l2_sci_20250606_v001.cdf"]},'
-                    '{"type":"ancillary","files":["imap_swapi_energy-gf-sw-lut_20100101_v001.csv"]},'
-                    '{"type":"ancillary","files":["imap_swapi_efficiency-lut_20241020_v002.dat"]}]',
-                ]
+                    (
+                        '[{"type": "science", "files": ["imap_swapi_l2_sci_20250606_v001.cdf"]},'
+                        '{"type":"ancillary","files":["imap_swapi_energy-gf-sw-lut_20100101_v001.csv"]},'
+                        '{"type":"ancillary","files":["imap_swapi_efficiency-lut_20241020_v002.dat"]}]'
+                    ),
+                ],
+                check=True,
             )
         case "codice", "lo-direct-events":
             subprocess.run(
@@ -405,13 +441,16 @@ if __name__ == "__main__":
                     "--version",
                     "v000",
                     "--dependency",
-                    "["
-                    '{"type": "science", "files": ["imap_codice_l1a_lo-sw-priority_20241110_v002.cdf"]},'
-                    '{"type": "science", "files": ["imap_codice_l1a_lo-nsw-priority_20241110_v003.cdf"]},'
-                    '{"type": "science", "files": ["imap_codice_l2_lo-direct-events_20241110_v006.cdf"]},'
-                    '{"type": "ancillary", "files": ["imap_codice_mass-coefficient-lookup_20241110_v002.csv"]},'
-                    '{"type": "ancillary", "files": ["imap_codice_lo-energy-per-charge_20241110_v002.csv"]}]',
-                ]
+                    (
+                        "["
+                        '{"type": "science", "files": ["imap_codice_l1a_lo-sw-priority_20241110_v002.cdf"]},'
+                        '{"type": "science", "files": ["imap_codice_l1a_lo-nsw-priority_20241110_v003.cdf"]},'
+                        '{"type": "science", "files": ["imap_codice_l2_lo-direct-events_20241110_v006.cdf"]},'
+                        '{"type": "ancillary", "files": ["imap_codice_mass-coefficient-lookup_20241110_v002.csv"]},'
+                        '{"type": "ancillary", "files": ["imap_codice_lo-energy-per-charge_20241110_v002.csv"]}]'
+                    ),
+                ],
+                check=True,
             )
         case "codice", ("lo-partial-densities" | "partial-densities"):
             subprocess.run(
@@ -429,10 +468,13 @@ if __name__ == "__main__":
                     "--version",
                     "v000",
                     "--dependency",
-                    "["
-                    '{"type": "science", "files": ["imap_codice_l2_lo-sw-species_20241110_v002.cdf"]},'
-                    '{"type": "ancillary", "files": ["imap_codice_mass-per-charge_20241110_v002.csv"]}]',
-                ]
+                    (
+                        "["
+                        '{"type": "science", "files": ["imap_codice_l2_lo-sw-species_20241110_v002.cdf"]},'
+                        '{"type": "ancillary", "files": ["imap_codice_mass-per-charge_20241110_v002.csv"]}]'
+                    ),
+                ],
+                check=True,
             )
         case "codice", ("lo-sw-ratios" | "ratios"):
             subprocess.run(
@@ -450,10 +492,13 @@ if __name__ == "__main__":
                     "--version",
                     "v000",
                     "--dependency",
-                    "["
-                    '{"type": "science", "files": ["imap_codice_l3a_lo-partial-densities_20241110_v000.cdf"]}'
-                    "]",
-                ]
+                    (
+                        "["
+                        '{"type": "science", "files": ["imap_codice_l3a_lo-partial-densities_20241110_v000.cdf"]}'
+                        "]"
+                    ),
+                ],
+                check=True,
             )
         case "codice", ("lo-sw-charge-state-distributions"):
             subprocess.run(
@@ -471,10 +516,13 @@ if __name__ == "__main__":
                     "--version",
                     "v000",
                     "--dependency",
-                    "["
-                    '{"type": "science", "files": ["imap_codice_l3a_lo-partial-densities_20241110_v000.cdf"]}'
-                    "]",
-                ]
+                    (
+                        "["
+                        '{"type": "science", "files": ["imap_codice_l3a_lo-partial-densities_20241110_v000.cdf"]}'
+                        "]"
+                    ),
+                ],
+                check=True,
             )
         case "codice", "hi-direct-events":
             subprocess.run(
@@ -492,10 +540,13 @@ if __name__ == "__main__":
                     "--version",
                     "v000",
                     "--dependency",
-                    "["
-                    '{"type": "science", "files": ["imap_codice_l2_hi-direct-events_20241110_v002.cdf"]},'
-                    '{"type": "ancillary", "files": ["imap_codice_tof-lookup_20241110_v002.csv"]}]',
-                ]
+                    (
+                        "["
+                        '{"type": "science", "files": ["imap_codice_l2_hi-direct-events_20241110_v002.cdf"]},'
+                        '{"type": "ancillary", "files": ["imap_codice_tof-lookup_20241110_v002.csv"]}]'
+                    ),
+                ],
+                check=True,
             )
         case "codice", "hi-pitch-angle":
             subprocess.run(
@@ -513,16 +564,19 @@ if __name__ == "__main__":
                     "--version",
                     "v000",
                     "--dependency",
-                    "["
-                    '{"type": "science", "files": ["imap_codice_l2_hi-sectored_20241110_v002.cdf"]},'
-                    '{"type": "science", "files": ["imap_mag_l1d_norm-dsrf_20250630_v001.cdf"]}'
-                    "]",
-                ]
+                    (
+                        "["
+                        '{"type": "science", "files": ["imap_codice_l2_hi-sectored_20241110_v002.cdf"]},'
+                        '{"type": "science", "files": ["imap_mag_l1d_norm-dsrf_20250630_v001.cdf"]}'
+                        "]"
+                    ),
+                ],
+                check=True,
             )
         case "codice", descriptor if "3d-distribution" in descriptor:
             species = descriptor.split("-")[1]
-            assert species in ["hplus", "heplus", "heplus2", "oplus6"], (
-                NotImplementedError("Target instrument or product not implemented")
+            assert species in ["hplus", "heplus", "heplus2", "oplus6"], NotImplementedError(
+                "Target instrument or product not implemented"
             )
 
             subprocess.run(
@@ -540,16 +594,19 @@ if __name__ == "__main__":
                     "--version",
                     "v000",
                     "--dependency",
-                    "["
-                    '{"type": "science", "files": ["imap_codice_l1a_lo-sw-priority_20241110_v002.cdf"]},'
-                    '{"type": "science", "files": ["imap_codice_l1a_lo-nsw-priority_20241110_v003.cdf"]},'
-                    '{"type": "science", "files": ["imap_codice_l3a_lo-direct-events_20241110_v005.cdf"]},'
-                    '{"type": "ancillary", "files": ["imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv"]},'
-                    '{"type": "ancillary", "files": ["imap_codice_lo-geometric-factors_20241110_v001.csv"]},'
-                    '{"type": "ancillary", "files": ["imap_codice_lo-energy-per-charge_20241110_v002.csv"]},'
-                    f'{{"type": "ancillary", "files": ["imap_codice_lo-{species}-efficiency_20241110_v001.csv"]}}'
-                    "]",
-                ]
+                    (
+                        "["
+                        '{"type": "science", "files": ["imap_codice_l1a_lo-sw-priority_20241110_v002.cdf"]},'
+                        '{"type": "science", "files": ["imap_codice_l1a_lo-nsw-priority_20241110_v003.cdf"]},'
+                        '{"type": "science", "files": ["imap_codice_l3a_lo-direct-events_20241110_v005.cdf"]},'
+                        '{"type": "ancillary", "files": ["imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv"]},'
+                        '{"type": "ancillary", "files": ["imap_codice_lo-geometric-factors_20241110_v001.csv"]},'
+                        '{"type": "ancillary", "files": ["imap_codice_lo-energy-per-charge_20241110_v002.csv"]},'
+                        f'{{"type": "ancillary", "files": ["imap_codice_lo-{species}-efficiency_20241110_v001.csv"]}}'
+                        "]"
+                    ),
+                ],
+                check=True,
             )
         case _:
             raise NotImplementedError("Target instrument or product not implemented")

@@ -6,15 +6,15 @@ import numpy as np
 
 from imap_l3_processing.codice.l3.lo.constants import (
     AZIMUTH_STEP_SIZE,
-    ELEVATION_STEP_SIZE,
-    ENERGY_STEP_SIZE,
-    ENERGY_LOST_IN_CARBON_FOIL,
-    POST_ACCELERATION_VOLTAGE_IN_KV,
-    CONVERSION_CONSTANT_K,
     CODICE_LO_NUM_AZIMUTH_BINS,
-    CONSTANT_C_FROM_INSTRUMENT_TEAM,
     CODICE_LO_NUM_ESA_STEPS,
     CODICE_LO_NUM_SPIN_SECTORS,
+    CONSTANT_C_FROM_INSTRUMENT_TEAM,
+    CONVERSION_CONSTANT_K,
+    ELEVATION_STEP_SIZE,
+    ENERGY_LOST_IN_CARBON_FOIL,
+    ENERGY_STEP_SIZE,
+    POST_ACCELERATION_VOLTAGE_IN_KV,
 )
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import (
     PositionToElevationLookup,
@@ -76,15 +76,9 @@ def calculate_mass(
     return np.e**mass_calculation
 
 
-def calculate_mass_per_charge(
-    energy_per_charge: np.ndarray, tof: np.ndarray
-) -> np.ndarray:
+def calculate_mass_per_charge(energy_per_charge: np.ndarray, tof: np.ndarray) -> np.ndarray:
     return (
-        (
-            energy_per_charge
-            + POST_ACCELERATION_VOLTAGE_IN_KV
-            - ENERGY_LOST_IN_CARBON_FOIL
-        )
+        (energy_per_charge + POST_ACCELERATION_VOLTAGE_IN_KV - ENERGY_LOST_IN_CARBON_FOIL)
         * (tof**2)
         * CONVERSION_CONSTANT_K
     )
@@ -103,8 +97,7 @@ def rebin_direct_events_for_normalization(
     half_spin = num_spin_sectors // 2
     result = np.zeros_like(base_counts)
     result[:, :, :, 0:half_spin] = (
-        base_counts[:, :, :, 0:half_spin]
-        + base_counts[:, :, :, half_spin:num_spin_sectors]
+        base_counts[:, :, :, 0:half_spin] + base_counts[:, :, :, half_spin:num_spin_sectors]
     )
     result[:, :, :, half_spin:num_spin_sectors] = result[:, :, :, 0:half_spin]
     return result
@@ -120,9 +113,7 @@ def rebin_direct_events_by_energy_and_spin_sector(
     num_epochs = num_events.shape[0]
     num_priorities = num_events.shape[1]
 
-    rebinned_output = np.zeros(
-        (num_epochs, num_priorities, num_energies, num_spin_sectors)
-    )
+    rebinned_output = np.zeros((num_epochs, num_priorities, num_energies, num_spin_sectors))
 
     for time_index in range(num_epochs):
         for priority_index in range(num_priorities):
@@ -312,9 +303,7 @@ def convert_counts_to_intensity(
     geometric_factor: np.ndarray[(EPOCH, ENERGY, SPIN_ANGLE, POSITION)],
 ) -> np.ndarray:
     count_rates = counts / acquisition_times[:, :, np.newaxis, np.newaxis]
-    reshaped_efficiency_data = efficiency_lookup.efficiency_data[
-        np.newaxis, :, np.newaxis, :
-    ]
+    reshaped_efficiency_data = efficiency_lookup.efficiency_data[np.newaxis, :, np.newaxis, :]
     denominator = (
         geometric_factor
         * energy_per_charge.bin_centers[np.newaxis, :, np.newaxis, np.newaxis]

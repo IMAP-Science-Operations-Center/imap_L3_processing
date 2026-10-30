@@ -7,25 +7,17 @@ from imap_data_access import SPICEFilePath
 
 from imap_l3_processing.swe.l3.science.pitch_calculations import (
     calculate_velocity_in_dsp_frame_km_s,
-    swe_rebin_intensity_by_pitch_angle_and_gyrophase,
     correct_and_rebin,
+    swe_rebin_intensity_by_pitch_angle_and_gyrophase,
 )
 from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
 
 swe_l2_file_path = Path(r"data/imap/swe/l2/2025/12/imap_swe_l2_sci_20251217_v002.cdf")
-swe_l1b_file_path = Path(
-    r"data/imap/swe/l1b/2025/12/imap_swe_l1b_sci_20251217_v004.cdf"
-)
-mag_file_path = Path(
-    r"data/imap/mag/l1d/2025/12/imap_mag_l1d_norm-dsrf_20251217_v001.cdf"
-)
-swapi_file_path = Path(
-    r"data/imap/swapi/l3a/2025/12/imap_swapi_l3a_proton-sw_20251217_v002.cdf"
-)
-configuration_file_path = Path(
-    r"data/imap/ancillary/swe/imap_swe_config_20251119_v002.json"
-)
+swe_l1b_file_path = Path(r"data/imap/swe/l1b/2025/12/imap_swe_l1b_sci_20251217_v004.cdf")
+mag_file_path = Path(r"data/imap/mag/l1d/2025/12/imap_mag_l1d_norm-dsrf_20251217_v001.cdf")
+swapi_file_path = Path(r"data/imap/swapi/l3a/2025/12/imap_swapi_l3a_proton-sw_20251217_v002.cdf")
+configuration_file_path = Path(r"data/imap/ancillary/swe/imap_swe_config_20251119_v002.json")
 
 spice_files = [
     "naif0012.tls",
@@ -99,7 +91,7 @@ def calculate(i):
         swe_l2_data.inst_az_spin_sector[i],
     )
 
-    rebinned_psd, rebinned_psd_by_pa_and_gyro = correct_and_rebin(
+    _rebinned_psd, _rebinned_psd_by_pa_and_gyro = correct_and_rebin(
         swe_l2_data.phase_space_density[i],
         np.array([0, 0, -400]),
         dsp_velocities,

@@ -100,17 +100,13 @@ def create_fake_swe_l1b_and_l2_cdf(
         cdf.new("inst_el", [-63, -42, -21, 0, 21, 42, 63], recVary=False)
 
         shape_without_aperture_axis = psd.shape[:-1]
-        placeholder_insta_az_spin_sector = (
-            np.random.random(shape_without_aperture_axis) * 360
-        )
+        placeholder_insta_az_spin_sector = np.random.random(shape_without_aperture_axis) * 360
         create_variable(cdf, "inst_az_spin_sector", placeholder_insta_az_spin_sector)
 
         minutes = len(counts_in_swe_shape)
         measurement_count = placeholder_insta_az_spin_sector.size
         measurement_times = np.linspace(0, minutes * 60, measurement_count)
-        placeholder_acquisition_time = measurement_times.reshape(
-            shape_without_aperture_axis
-        )
+        placeholder_acquisition_time = measurement_times.reshape(shape_without_aperture_axis)
         create_variable(cdf, "acquisition_time", placeholder_acquisition_time)
 
         acquisition_duration = np.full((minutes, 20, 30), 80000)
@@ -121,9 +117,7 @@ def create_fake_swe_l1b_and_l2_cdf(
         cdf["settle_duration"] = np.full((minutes, 4), 133333.3333333334)
 
 
-def create_fake_swapi_l3a_cdf(
-    l2_swepam_ion_file_path: str, output_swapi_file_path: str
-):
+def create_fake_swapi_l3a_cdf(l2_swepam_ion_file_path: str, output_swapi_file_path: str):
     l2_swepam_ion_file = HDF(l2_swepam_ion_file_path)
     vs_ion = l2_swepam_ion_file.vstart()
     vd_ion = vs_ion.attach("swepam_i")
@@ -174,18 +168,14 @@ ATTITUDE_DATA = """Year	DOY	Secofday	Flag	RTN_r		RTN_t		RTN_n		J2GCI_x		J2GCI_y	
 1999	160	    3600	0	-0.98089	-0.17395	-0.08711	 0.02904	 0.94059	 0.33831	 0.98116	 0.18238	-0.06375"""
 
 
-def create_fake_mag_l1d_cdf(
-    l2_swepam_electron_file_path: str, output_mag_file_path: str
-):
+def create_fake_mag_l1d_cdf(l2_swepam_electron_file_path: str, output_mag_file_path: str):
     buffer = io.StringIO(ATTITUDE_DATA)
     data = np.loadtxt(buffer, skiprows=1)
 
     def time_to_float(ts):
         return [(t - datetime(1999, 1, 1)).total_seconds() for t in ts]
 
-    times = [
-        datetime(1998, 12, 31) + timedelta(days=row[1], seconds=row[2]) for row in data
-    ]
+    times = [datetime(1998, 12, 31) + timedelta(days=row[1], seconds=row[2]) for row in data]
 
     l2_swepam_electron_file_path = HDF(l2_swepam_electron_file_path)
     vs_electron = l2_swepam_electron_file_path.vstart()
@@ -195,15 +185,9 @@ def create_fake_mag_l1d_cdf(
 
     correction_factor = datetime(2025, 6, 30) - datetime(1999, 6, 8)
     mag_epochs_uncorrected = mag_epochs - correction_factor
-    r_att = np.interp(
-        time_to_float(mag_epochs_uncorrected), time_to_float(times), data[:, 4]
-    )
-    t_att = np.interp(
-        time_to_float(mag_epochs_uncorrected), time_to_float(times), data[:, 5]
-    )
-    n_att = np.interp(
-        time_to_float(mag_epochs_uncorrected), time_to_float(times), data[:, 6]
-    )
+    r_att = np.interp(time_to_float(mag_epochs_uncorrected), time_to_float(times), data[:, 4])
+    t_att = np.interp(time_to_float(mag_epochs_uncorrected), time_to_float(times), data[:, 5])
+    n_att = np.interp(time_to_float(mag_epochs_uncorrected), time_to_float(times), data[:, 6])
 
     rtn_att = np.stack((r_att, t_att, n_att), axis=-1)
 
@@ -289,16 +273,13 @@ def create_expected_cdf(dataset: VD, fields: list[str], file_name):
 if __name__ == "__main__":
     path = Path(__file__)
     l1_hdf_path = (
-        path.parent.parent.parent
-        / "instrument_team_data/swe/ACE_LV1_1999-159.swepam.hdf"
+        path.parent.parent.parent / "instrument_team_data/swe/ACE_LV1_1999-159.swepam.hdf"
     )
     l2_electron_hdf_path = (
-        path.parent.parent.parent
-        / "instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf"
+        path.parent.parent.parent / "instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf"
     )
     l2_ion_hdf_path = (
-        path.parent.parent.parent
-        / "instrument_team_data/swe/swepam-swi-1999-159.v2-01.hdf"
+        path.parent.parent.parent / "instrument_team_data/swe/swepam-swi-1999-159.v2-01.hdf"
     )
 
     l2_swe_cdf_file_path = (

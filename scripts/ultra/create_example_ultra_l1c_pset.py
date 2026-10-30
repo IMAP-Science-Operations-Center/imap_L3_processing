@@ -103,9 +103,7 @@ def create_example_ultra_l1c_pset(
 
     # Calculate probability based on distance from target latitude
     lat_diff = np.abs(lat_pix - stripe_center_lat)
-    prob_scaling_factor = counts_scaling_params[1] * np.exp(
-        -(lat_diff**2) / (2 * width_scale**2)
-    )
+    prob_scaling_factor = counts_scaling_params[1] * np.exp(-(lat_diff**2) / (2 * width_scale**2))
     # Generate counts using binomial distribution
     rng = np.random.default_rng(seed=42)
     counts = np.array(
@@ -120,16 +118,13 @@ def create_example_ultra_l1c_pset(
         -(lat_diff**2) / (2 * (3 * width_scale) ** 2)
     )
     exposure_time = (
-        peak_exposure
-        * (prob_scaling_factor_exptime / prob_scaling_factor_exptime.max())
+        peak_exposure * (prob_scaling_factor_exptime / prob_scaling_factor_exptime.max())
     )[np.newaxis, :]
 
     # Exposure time/factor can optionally be energy dependent
     if energy_dependent_exposure:
         # Add energy dimension to exposure time as axis 1
-        exposure_time = np.repeat(
-            exposure_time[:, np.newaxis, :], num_energy_bins, axis=1
-        )
+        exposure_time = np.repeat(exposure_time[:, np.newaxis, :], num_energy_bins, axis=1)
         exposure_dims = [
             CoordNames.TIME.value,
             CoordNames.ENERGY_ULTRA_L1C.value,
@@ -223,9 +218,11 @@ def create_example_ultra_l1c_pset(
 
 
 def _write_ultra_l1c_cdf_with_parents(
-    out_path: Path = get_run_local_data_path("ultra/fake_l1c_psets/test_pset.cdf"),
+    out_path: Path | None = None,
     date: str = "2025-09-01T00:00:00",
 ):
+    if out_path is None:
+        get_run_local_data_path("ultra/fake_l1c_psets/test_pset.cdf")
     out_xarray = create_example_ultra_l1c_pset(
         nside=1, timestr=date, energy_dependent_exposure=True
     )
@@ -311,14 +308,11 @@ def _write_ultra_l1c_cdf_with_parents(
                 )
             elif cdf[var].type() == pycdf.const.CDF_INT8.value:
                 cdf[var].attrs["FILLVAL"] = -9223372036854775808
-            elif (
-                cdf[var].type() == pycdf.const.CDF_FLOAT.value
-                or pycdf.const.CDF_DOUBLE.value
-            ):
+            elif cdf[var].type() == pycdf.const.CDF_FLOAT.value or pycdf.const.CDF_DOUBLE.value:
                 cdf[var].attrs["FILLVAL"] = -1e31
 
 
-def _add_depends(var: Var, depends: list[str], depend_0: str = None):
+def _add_depends(var: Var, depends: list[str], depend_0: str | None = None):
     if depend_0 is not None:
         var.attrs["DEPEND_0"] = depend_0
     for i, dep in enumerate(depends):

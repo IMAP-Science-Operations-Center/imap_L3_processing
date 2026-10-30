@@ -2,22 +2,22 @@ import os
 import unittest
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch, call
+from unittest.mock import call, patch
 
 import numpy as np
 from spacepy import pycdf
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import (
-    PROBABILITY_OF_SURVIVAL_VAR_NAME,
-    SPIN_ANGLE_VAR_NAME,
     ENERGY_VAR_NAME,
     EPOCH_CDF_VAR_NAME,
     GLOWS_FLAGS_VAR_NAME,
+    PROBABILITY_OF_SURVIVAL_VAR_NAME,
+    SPIN_ANGLE_VAR_NAME,
 )
 from imap_l3_processing.hi.utils import (
-    read_l1c_rectangular_pointing_set_data,
     read_glows_l3e_data,
+    read_l1c_rectangular_pointing_set_data,
 )
 from tests.test_helpers import get_test_data_folder, with_tempdir
 
@@ -43,7 +43,7 @@ class TestUtils(unittest.TestCase):
                 epoch_delta = np.array([1_000_000_000])
                 repointing = 1111
                 exposure_times = rng.random((1, 9, 3600))
-                energy_step = rng.random((9))
+                energy_step = rng.random(9)
                 hae_longitude = np.ones(3600).reshape((1, 3600))
                 hae_latitude = np.ones(3600).reshape((1, 3600)) * 2
 
@@ -58,14 +58,10 @@ class TestUtils(unittest.TestCase):
                     cdf[var].attrs["FILLVAL"] = 1000000
 
             for path in [pathname, Path(pathname)]:
-                with self.subTest(
-                    path=path, exposure_time_var_name=exposure_time_var_name
-                ):
+                with self.subTest(path=path, exposure_time_var_name=exposure_time_var_name):
                     result = read_l1c_rectangular_pointing_set_data(path)
                     self.assertEqual(epoch[0], result.epoch)
-                    np.testing.assert_array_equal(
-                        result.epoch_delta, epoch_delta, strict=True
-                    )
+                    np.testing.assert_array_equal(result.epoch_delta, epoch_delta, strict=True)
                     self.assertEqual(repointing, result.repointing)
                     self.assertEqual([43264184000000], result.epoch_j2000)
                     np.testing.assert_array_equal(exposure_times, result.exposure_times)
@@ -85,24 +81,16 @@ class TestUtils(unittest.TestCase):
 
         with CDF(str(path)) as cdf:
             self.assertEqual(cdf["epoch"][0], result.epoch)
-            np.testing.assert_array_equal(
-                result.epoch_delta, cdf["epoch_delta"], strict=True
-            )
+            np.testing.assert_array_equal(result.epoch_delta, cdf["epoch_delta"], strict=True)
             self.assertEqual(1, result.repointing)
-            np.testing.assert_array_equal(
-                result.esa_energy_step, cdf["esa_energy_step"]
-            )
+            np.testing.assert_array_equal(result.esa_energy_step, cdf["esa_energy_step"])
             np.testing.assert_array_equal(
                 result.exposure_times, np.full_like(cdf["exposure_times"], 0)
             )
 
     @patch("imap_l3_processing.hi.utils.met_to_ttj2000ns")
     def test_read_lo_l1c(self, mock_met_to_ttj2000ns):
-        path = (
-            get_test_data_folder()
-            / "lo"
-            / "imap_lo_l1c_pset_20260101-repoint01261_v001.cdf"
-        )
+        path = get_test_data_folder() / "lo" / "imap_lo_l1c_pset_20260101-repoint01261_v001.cdf"
 
         mock_met_to_ttj2000ns.side_effect = [np.array([3]), np.array([2])]
 
@@ -117,12 +105,8 @@ class TestUtils(unittest.TestCase):
             self.assertEqual((1,), result.epoch_delta.shape)
             np.testing.assert_array_almost_equal(result.epoch_delta, [1])
             self.assertEqual(1261, result.repointing)
-            np.testing.assert_array_equal(
-                result.esa_energy_step, cdf["esa_energy_step"]
-            )
-            np.testing.assert_array_equal(
-                result.exposure_times, cdf["exposure_time"][...]
-            )
+            np.testing.assert_array_equal(result.esa_energy_step, cdf["esa_energy_step"])
+            np.testing.assert_array_equal(result.exposure_times, cdf["exposure_time"][...])
             self.assertEqual(cdf["pointing_start_met"][0], result.pointing_start_met)
             self.assertEqual(cdf["pointing_end_met"][0], result.pointing_end_met)
 
@@ -131,8 +115,7 @@ class TestUtils(unittest.TestCase):
         rng = np.random.default_rng()
 
         pathname = str(
-            temp_dir
-            / "imap_glows_l3e_survival-probability-hi_20250415-repoint01000_v001.cdf"
+            temp_dir / "imap_glows_l3e_survival-probability-hi_20250415-repoint01000_v001.cdf"
         )
 
         with CDF(pathname, "") as cdf:

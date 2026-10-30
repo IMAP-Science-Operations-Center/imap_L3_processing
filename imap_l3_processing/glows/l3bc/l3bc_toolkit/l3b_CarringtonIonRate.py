@@ -2,6 +2,7 @@
 Author: Izabela Kowalska-Leszczynska (ikowalska@cbk.waw.pl)
 Carrington averaged ionization rate class
 """
+# ruff: noqa: N999
 
 import json
 import logging
@@ -189,8 +190,7 @@ class CarringtonIonizationRate:
         # statistical uncertainty
         if len(self.carr_ion_rate["cx_rate"]) > 1:
             self.carr_ion_rate["cx_rate_uncert"] = (
-                self.carr_ion_rate["ion_rate_uncert"]
-                + self.carr_ion_rate["ph_rate_uncert"]
+                self.carr_ion_rate["ion_rate_uncert"] + self.carr_ion_rate["ph_rate_uncert"]
             )
         else:
             self.carr_ion_rate["cx_rate_uncert"] = -1.0e31 * np.ones_like(
@@ -231,23 +231,13 @@ class CarringtonIonizationRate:
         else:
             # if there are less than 2 data points in the time window, we want to interpolate
             # between mean values of the previous and next CR
-            t_ini_next = Time(
-                fun.jd_fm_Carrington(self.carr_ion_rate["CR"] + 1), format="jd"
-            )
-            t_end_next = Time(
-                fun.jd_fm_Carrington(self.carr_ion_rate["CR"] + 2), format="jd"
-            )
-            data_window_next = fun.select_data_window(
-                [t_raw, flux_raw], [t_ini_next, t_end_next]
-            )
+            t_ini_next = Time(fun.jd_fm_Carrington(self.carr_ion_rate["CR"] + 1), format="jd")
+            t_end_next = Time(fun.jd_fm_Carrington(self.carr_ion_rate["CR"] + 2), format="jd")
+            data_window_next = fun.select_data_window([t_raw, flux_raw], [t_ini_next, t_end_next])
             if len(data_window_next[0]) > 2:
                 # if there are at least data points in the next CR, then we can interpolate
-                t_ini_prev = Time(
-                    fun.jd_fm_Carrington(self.carr_ion_rate["CR"] - 1), format="jd"
-                )
-                t_end_prev = Time(
-                    fun.jd_fm_Carrington(self.carr_ion_rate["CR"]), format="jd"
-                )
+                t_ini_prev = Time(fun.jd_fm_Carrington(self.carr_ion_rate["CR"] - 1), format="jd")
+                t_end_prev = Time(fun.jd_fm_Carrington(self.carr_ion_rate["CR"]), format="jd")
                 data_window_prev = fun.select_data_window(
                     [t_raw, flux_raw], [t_ini_prev, t_end_prev]
                 )
@@ -273,7 +263,7 @@ class CarringtonIonizationRate:
                 photoion_mean = self._calculate_photoion_from_f107(data_mean[1])
             else:
                 # if there are no data in the next CR, then we need to wait for another CR
-                raise Exception(
+                raise RuntimeError(
                     "There are no data to interpolate F10.7 for CR=%d",
                     self.carr_ion_rate["CR"],
                 )
@@ -336,15 +326,9 @@ class CarringtonIonizationRate:
         output["ion_rate_profile"]["sum_rate"] = self.carr_ion_rate["ion_rate"].tolist()
         output["ion_rate_profile"]["ph_rate"] = self.carr_ion_rate["ph_rate"].tolist()
         output["ion_rate_profile"]["cx_rate"] = self.carr_ion_rate["cx_rate"].tolist()
-        output["ion_rate_profile"]["sum_uncert"] = self.carr_ion_rate[
-            "ion_rate_uncert"
-        ].tolist()
-        output["ion_rate_profile"]["ph_uncert"] = self.carr_ion_rate[
-            "ph_rate_uncert"
-        ].tolist()
-        output["ion_rate_profile"]["cx_uncert"] = self.carr_ion_rate[
-            "cx_rate_uncert"
-        ].tolist()
+        output["ion_rate_profile"]["sum_uncert"] = self.carr_ion_rate["ion_rate_uncert"].tolist()
+        output["ion_rate_profile"]["ph_uncert"] = self.carr_ion_rate["ph_rate_uncert"].tolist()
+        output["ion_rate_profile"]["cx_uncert"] = self.carr_ion_rate["cx_rate_uncert"].tolist()
 
         output["uv_anisotropy_factor"] = self.uv_anisotropy.tolist()
         output["uv_anisotropy_flag"] = self.uv_anisotropy_flag
@@ -375,15 +359,9 @@ class CarringtonIonizationRate:
         output["ion_rate_profile"]["sum_rate"] = self.carr_ion_rate["ion_rate"].tolist()
         output["ion_rate_profile"]["ph_rate"] = self.carr_ion_rate["ph_rate"].tolist()
         output["ion_rate_profile"]["cx_rate"] = self.carr_ion_rate["cx_rate"].tolist()
-        output["ion_rate_profile"]["sum_uncert"] = self.carr_ion_rate[
-            "ion_rate_uncert"
-        ].tolist()
-        output["ion_rate_profile"]["ph_uncert"] = self.carr_ion_rate[
-            "ph_rate_uncert"
-        ].tolist()
-        output["ion_rate_profile"]["cx_uncert"] = self.carr_ion_rate[
-            "cx_rate_uncert"
-        ].tolist()
+        output["ion_rate_profile"]["sum_uncert"] = self.carr_ion_rate["ion_rate_uncert"].tolist()
+        output["ion_rate_profile"]["ph_uncert"] = self.carr_ion_rate["ph_rate_uncert"].tolist()
+        output["ion_rate_profile"]["cx_uncert"] = self.carr_ion_rate["cx_rate_uncert"].tolist()
 
         output["uv_anisotropy_factor"] = self.uv_anisotropy.tolist()
         output["uv_anisotropy_flag"] = self.uv_anisotropy_flag
@@ -393,6 +371,5 @@ class CarringtonIonizationRate:
 
         json_content = json.dumps(output, indent=3)
 
-        output_fp = open(fn, "w")
-        print(json_content, file=output_fp)
-        output_fp.close()
+        with open(fn, "w") as output_fp:
+            print(json_content, file=output_fp)

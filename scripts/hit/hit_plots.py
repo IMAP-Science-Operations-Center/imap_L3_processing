@@ -8,7 +8,7 @@ print(de)
 xs = []
 ys = []
 
-for i in range(0, len(de["energy"][...])):
+for i in range(len(de["energy"][...])):
     if de["range"][i] == 3 and de["side"][i] == 1 and de["stim_tag"][i] != 1:
         ys.append(de["delta_e"][i])
         xs.append(de["e_prime"][i])

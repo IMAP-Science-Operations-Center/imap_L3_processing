@@ -28,12 +28,11 @@ import imap_data_access
 import matplotlib.pyplot as plt
 import numpy as np
 import spiceypy
-from matplotlib.colors import LogNorm
 from imap_data_access import ProcessingInputCollection
 from imap_data_access.processing_input import generate_imap_input
-from spacepy.pycdf import lib as cdf_library
-
 from imap_processing.swapi.l2 import swapi_l2
+from matplotlib.colors import LogNorm
+from spacepy.pycdf import lib as cdf_library
 
 from imap_l3_processing.constants import ONE_AU_IN_KM, ONE_SECOND_IN_NANOSECONDS
 from imap_l3_processing.swapi.constants import (
@@ -60,15 +59,13 @@ from scripts.swapi.pui_xarray_reference_50sweep import (
     evaluate_pui_sweep_xarray,
 )
 
-
 argument_parser = argparse.ArgumentParser(
     description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
 )
 argument_parser.add_argument("date", help="UTC date in YYYY-MM-DD format")
 argument_parser.add_argument(
     "time",
-    help="UTC time in HH:MM[:SS] format; picks the 50-sweep "
-    "chunk whose central epoch is nearest.",
+    help="UTC time in HH:MM[:SS] format; picks the 50-sweep chunk whose central epoch is nearest.",
 )
 argument_parser.add_argument(
     "--output-path",
@@ -99,14 +96,10 @@ if not arguments.offline and "IMAP_API_KEY" not in os.environ:
     sys.exit("IMAP_API_KEY environment variable is required.")
 
 target_date = datetime.strptime(arguments.date, "%Y-%m-%d")
-target_datetime_utc = datetime.combine(
-    target_date.date(), _parse_hh_mm_ss(arguments.time)
-)
+target_datetime_utc = datetime.combine(target_date.date(), _parse_hh_mm_ss(arguments.time))
 compact_date = target_date.strftime("%Y%m%d")
 fit_cache_path = Path(f"/tmp/swapi_pui_fit_{compact_date}.pkl")
-spectrogram_cache_path = Path(
-    f"/tmp/swapi_pui_spectrograms_per_sweep_{compact_date}.pkl"
-)
+spectrogram_cache_path = Path(f"/tmp/swapi_pui_spectrograms_per_sweep_{compact_date}.pkl")
 if not fit_cache_path.exists() or not spectrogram_cache_path.exists():
     sys.exit(
         f"Missing pickle caches for {arguments.date}. "
@@ -134,9 +127,7 @@ data_dir = imap_data_access.config["DATA_DIR"]
 
 def resolve_l2_filename_from_cache() -> str:
     matches = sorted(
-        (data_dir / "imap" / "swapi" / "l2").rglob(
-            f"imap_swapi_l2_sci_{compact_date}_v*.cdf"
-        )
+        (data_dir / "imap" / "swapi" / "l2").rglob(f"imap_swapi_l2_sci_{compact_date}_v*.cdf")
     )
     if not matches:
         sys.exit(
@@ -147,9 +138,7 @@ def resolve_l2_filename_from_cache() -> str:
 
 
 def resolve_spice_filenames_from_cache() -> list[str]:
-    names = sorted(
-        p.name for p in (data_dir / "imap" / "spice").rglob("*") if p.is_file()
-    )
+    names = sorted(p.name for p in (data_dir / "imap" / "spice").rglob("*") if p.is_file())
     if not names:
         sys.exit(
             f"No cached SPICE kernels under {data_dir}. "
@@ -178,9 +167,7 @@ else:
         SpiceKernelTypes.EphemerisReconstructed,
         SpiceKernelTypes.EphemerisPredicted,
     ]
-    non_ephemeris_kernel_types = [
-        t for t in SpiceKernelTypes if t not in ephemeris_kernel_types
-    ]
+    non_ephemeris_kernel_types = [t for t in SpiceKernelTypes if t not in ephemeris_kernel_types]
     spice_kernel_filenames = list(
         dict.fromkeys(
             os.path.basename(path)
@@ -213,25 +200,15 @@ dependencies = SwapiL3ADependencies.fetch_dependencies(processing_input_collecti
 
 
 def _swapi_ancillary_path(descriptor: str) -> Path:
-    paths = processing_input_collection.get_file_paths(
-        source="swapi", descriptor=descriptor
-    )
+    paths = processing_input_collection.get_file_paths(source="swapi", descriptor=descriptor)
     return imap_data_access.download(paths[0])
 
 
 pui_xarray_context = build_pui_xarray_context(
-    azimuthal_transmission_path=_swapi_ancillary_path(
-        AZIMUTHAL_TRANSMISSION_DESCRIPTOR
-    ),
-    central_effective_area_path=_swapi_ancillary_path(
-        CENTRAL_EFFECTIVE_AREA_DESCRIPTOR
-    ),
-    passband_fit_coefficients_path=_swapi_ancillary_path(
-        PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR
-    ),
-    density_of_neutral_helium_lut_path=_swapi_ancillary_path(
-        DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR
-    ),
+    azimuthal_transmission_path=_swapi_ancillary_path(AZIMUTHAL_TRANSMISSION_DESCRIPTOR),
+    central_effective_area_path=_swapi_ancillary_path(CENTRAL_EFFECTIVE_AREA_DESCRIPTOR),
+    passband_fit_coefficients_path=_swapi_ancillary_path(PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR),
+    density_of_neutral_helium_lut_path=_swapi_ancillary_path(DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR),
 )
 
 chunks = list(chunk_l2_data(dependencies.data, 50))
@@ -239,10 +216,7 @@ chunk_central_datetimes = np.array(
     [cdf_library.tt2000_to_datetime(int(t)) for t in pickup_ion_data.epoch]
 )
 seconds_from_target = np.array(
-    [
-        abs((central - target_datetime_utc).total_seconds())
-        for central in chunk_central_datetimes
-    ]
+    [abs((central - target_datetime_utc).total_seconds()) for central in chunk_central_datetimes]
 )
 chunk_index = int(np.argmin(seconds_from_target))
 data_chunk = chunks[chunk_index]
@@ -260,18 +234,14 @@ if sw_velocity_rtn_kms is None or np.any(np.isnan(sw_velocity_rtn_kms)):
 if not np.isfinite(pickup_ion_data.cooling_index[chunk_index].n):
     sys.exit(f"Chunk {chunk_index} has no successful PUI fit.")
 
-chunk_ephemeris_time = spiceypy.unitim(
-    chunk_epoch_tt2000 / ONE_SECOND_IN_NANOSECONDS, "TT", "ET"
-)
+chunk_ephemeris_time = spiceypy.unitim(chunk_epoch_tt2000 / ONE_SECOND_IN_NANOSECONDS, "TT", "ET")
 vasyliunas_siscoe = build_vasyliunas_siscoe_distribution(
     chunk_ephemeris_time,
     sw_velocity_rtn_kms,
     dependencies.density_of_neutral_helium_calibration_table,
     dependencies.helium_inflow_vector,
 )
-bulk_sw_per_bin_swapi_kms = rotate_rtn_velocity_to_swapi_per_bin(
-    data_chunk, sw_velocity_rtn_kms
-)
+bulk_sw_per_bin_swapi_kms = rotate_rtn_velocity_to_swapi_per_bin(data_chunk, sw_velocity_rtn_kms)
 
 # Production averages per-sweep rates computed with the per-bin bulk SW
 # vector. At high E the f_PUI azimuthal window is narrow (~tens of degrees),
@@ -289,9 +259,7 @@ fit_ionization_rate_hz = float(pickup_ion_data.ionization_rate[chunk_index].n)
 fit_background_rate_hz = float(pickup_ion_data.background_rate[chunk_index].n)
 # A rejected background is stored as NaN (see _set_background_to_fill_if_too_high);
 # adding it would wipe out the model lines, so fall back to no offset.
-background_offset_hz = (
-    fit_background_rate_hz if np.isfinite(fit_background_rate_hz) else 0.0
-)
+background_offset_hz = fit_background_rate_hz if np.isfinite(fit_background_rate_hz) else 0.0
 
 xarray_rate_per_sweep = np.empty(bulk_sw_per_bin_swapi_kms.shape[:2])
 n_sweeps_in_chunk = bulk_sw_per_bin_swapi_kms.shape[0]
@@ -319,9 +287,7 @@ chunk_voltages_per_sweep = energies_per_sweep_ev[chunk_sweep_slice] / SWAPI_L2_K
 
 chunk_observed_mean = np.nanmean(chunk_observed_per_sweep, axis=0)
 chunk_model_mean = np.nanmean(chunk_model_per_sweep, axis=0)
-chunk_energies_mean_ev = (
-    np.nanmean(chunk_voltages_per_sweep, axis=0) * SWAPI_L2_K_FACTOR
-)
+chunk_energies_mean_ev = np.nanmean(chunk_voltages_per_sweep, axis=0) * SWAPI_L2_K_FACTOR
 
 # Poisson uncertainty on the chunk-mean rate at each bin: the mean of N
 # independent counting measurements over a livetime each, so total counts
@@ -335,9 +301,7 @@ pickup_ion_window_bin_mask = ~np.all(np.isnan(chunk_model_per_sweep), axis=0)
 
 xarray_energies_ev = pui_xarray_context.voltages_v * SWAPI_L2_K_FACTOR
 
-mean_energies_ev_per_step = np.nanmean(
-    chunk_voltages_per_sweep * SWAPI_L2_K_FACTOR, axis=0
-)
+mean_energies_ev_per_step = np.nanmean(chunk_voltages_per_sweep * SWAPI_L2_K_FACTOR, axis=0)
 pickup_ion_bin_indices = np.where(pickup_ion_window_bin_mask)[0]
 fit_window_energies_ev = mean_energies_ev_per_step[pickup_ion_bin_indices]
 energy_sort_order_within_window = np.argsort(fit_window_energies_ev)
@@ -438,7 +402,7 @@ for axis_for_spectrogram, spectrogram_values, label in (
         ha="left",
         va="top",
         fontsize=10,
-        bbox=dict(boxstyle="round,pad=0.3", fc="white", alpha=0.85, ec="none"),
+        bbox={"boxstyle": "round,pad=0.3", "fc": "white", "alpha": 0.85, "ec": "none"},
     )
 plt.setp(observed_spectrogram_axis.get_xticklabels(), visible=False)
 model_spectrogram_axis.set_xlabel("Sweep index within chunk")

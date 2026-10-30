@@ -1,26 +1,27 @@
 import json
 import os
 import tempfile
-from dataclasses import fields, dataclass
-from datetime import timedelta, datetime
+from collections.abc import Callable
+from dataclasses import dataclass, fields
+from datetime import datetime, timedelta
 from functools import wraps
 from pathlib import Path
-from typing import Type, Optional, Callable, TypeVar
+from typing import TypeVar
 from unittest import SkipTest
 from unittest.mock import Mock
 
 import imap_data_access
 import numpy as np
-from imap_data_access import ScienceFilePath, AncillaryFilePath, SPICEFilePath
-from imap_data_access.file_validation import generate_imap_file_path, Version
+from imap_data_access import AncillaryFilePath, ScienceFilePath, SPICEFilePath
+from imap_data_access.file_validation import Version, generate_imap_file_path
 
 import imap_l3_processing
 import tests
 from imap_l3_processing.models import VersionMap
 from imap_l3_processing.swe.l3.models import SweConfiguration, SweL3MomentData
 from imap_l3_processing.swe.l3.science.moment_calculations import (
-    Moments,
     MomentFitResults,
+    Moments,
 )
 
 run_local_data_path = Path(tests.__file__).parent.parent / "run_local_input_data"
@@ -57,9 +58,7 @@ def get_spice_data_path(filename: str) -> Path:
 
 
 def get_integration_test_spice_data_path(filename: str) -> Path:
-    return (
-        Path(tests.__file__).parent / "integration" / "test_data" / "spice" / filename
-    )
+    return Path(tests.__file__).parent / "integration" / "test_data" / "spice" / filename
 
 
 def get_test_data_folder() -> Path:
@@ -78,18 +77,18 @@ def build_swe_configuration(**args) -> SweConfiguration:
 
 
 def build_moments(**args) -> Moments:
-    default_moments = dict(
-        alpha=1,
-        beta=2,
-        t_parallel=3e5,
-        t_perpendicular=4e5,
-        velocity_x=500,
-        velocity_y=600,
-        velocity_z=700,
-        density=80,
-        aoo=9,
-        ao=10,
-    )
+    default_moments = {
+        "alpha": 1,
+        "beta": 2,
+        "t_parallel": 3e5,
+        "t_perpendicular": 4e5,
+        "velocity_x": 500,
+        "velocity_y": 600,
+        "velocity_z": 700,
+        "density": 80,
+        "aoo": 9,
+        "ao": 10,
+    }
     default_moments.update(**args)
 
     return Moments(**default_moments)
@@ -181,7 +180,7 @@ def build_swe_moment_data(epoch_len):
 T = TypeVar("T")
 
 
-def create_dataclass_mock(obj: Type[T], **kwargs) -> T:
+def create_dataclass_mock(obj: type[T], **kwargs) -> T:
     return Mock(spec=[field.name for field in fields(obj)], **kwargs)
 
 
@@ -215,9 +214,7 @@ def assert_dict_close(x, y, rtol=1e-7, path=None):
         for k in x:
             assert_dict_close(x[k], y[k], rtol, path.copy() + [k])
     elif isinstance(x, (list, np.ndarray, float)):
-        np.testing.assert_allclose(
-            x, y, rtol=rtol, err_msg=f"path to failure: {path_str}"
-        )
+        np.testing.assert_allclose(x, y, rtol=rtol, err_msg=f"path to failure: {path_str}")
     else:
         assert x == y, f"{x} != {y} at path {path_str}"
 
@@ -249,7 +246,7 @@ def environment_variables(env_vars: dict):
 
             func_result = func(*args, **kwargs)
 
-            for k in env_vars.keys():
+            for k in env_vars:
                 del os.environ[k]
 
             for k, v in old_vars.items():
@@ -263,7 +260,7 @@ def environment_variables(env_vars: dict):
 
 
 def create_mock_query_results(
-    file_names: list[Path | str], ingestion_dates: Optional[list[datetime]] = None
+    file_names: list[Path | str], ingestion_dates: list[datetime] | None = None
 ) -> list[dict]:
     file_paths = []
 
@@ -273,9 +270,7 @@ def create_mock_query_results(
     for fn, ingestion_date in zip(file_names, ingestion_dates):
         imap_file_path = generate_imap_file_path(Path(fn).name)
         file_path = str(
-            imap_file_path.construct_path().relative_to(
-                imap_data_access.config["DATA_DIR"]
-            )
+            imap_file_path.construct_path().relative_to(imap_data_access.config["DATA_DIR"])
         ).replace("\\", "/")
 
         match imap_file_path:
@@ -317,9 +312,9 @@ def create_mock_query_results(
 
 
 def create_mock_version_map(
-    descriptor: Optional[str] = "descriptor",
-    major_version: Optional[int] = None,
-    minor_version: Optional[int] = 1,
+    descriptor: str | None = "descriptor",
+    major_version: int | None = None,
+    minor_version: int | None = 1,
 ):
     return VersionMap({descriptor: Version(major_version, minor_version)})
 
@@ -328,16 +323,14 @@ def create_mock_version_map(
 class PeriodicallyRunTest:
     test_name: str
     frequency: str
-    last_run: Optional[str]
+    last_run: str | None
 
 
 def run_periodically(frequency: timedelta):
     def run_periodically_decorator(test_item):
         @wraps(test_item)
         def test_thing(*args):
-            periodically_run_tests_path = (
-                Path(__file__).parent / "periodically_run_tests.json"
-            )
+            periodically_run_tests_path = Path(__file__).parent / "periodically_run_tests.json"
             periodically_run_tests = json.loads(periodically_run_tests_path.read_text())
 
             last_run = periodically_run_tests.get(test_item.__name__)
@@ -355,12 +348,12 @@ def run_periodically(frequency: timedelta):
                 periodically_run_tests_path.write_text(
                     json.dumps(periodically_run_tests, indent=4)
                 )
-            except Exception as e:
+            except Exception:
                 periodically_run_tests[test_item.__name__] = None
                 periodically_run_tests_path.write_text(
                     json.dumps(periodically_run_tests, indent=4)
                 )
-                raise e
+                raise
 
         return test_thing
 

@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime, timedelta
-from unittest.mock import sentinel, Mock, MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch, sentinel
 
 import numpy as np
 
@@ -9,32 +9,32 @@ from imap_l3_processing.glows.l3e.glows_l3e_call_arguments import (
     GlowsL3eSpacecraftInfo,
 )
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import (
-    GlowsL3EUltraData,
+    ELONGATION_EXCLUDED_VAR_NAME,
+    ENERGY_DELTA_MINUS_VAR_NAME,
+    ENERGY_DELTA_PLUS_VAR_NAME,
+    ENERGY_LABEL_VAR_NAME,
+    ENERGY_VAR_NAME,
     EPOCH_CDF_VAR_NAME,
     EPOCH_DELTA_CDF_VAR_NAME,
-    ENERGY_VAR_NAME,
-    PROBABILITY_OF_SURVIVAL_VAR_NAME,
+    GLOWS_FLAGS_VAR_NAME,
     HEALPIX_INDEX_VAR_NAME,
-    ENERGY_LABEL_VAR_NAME,
     PIXEL_INDEX_LABEL_VAR_NAME,
-    SPIN_AXIS_LATITUDE_VAR_NAME,
-    SPIN_AXIS_LONGITUDE_VAR_NAME,
+    PIXEL_LATITUDE_VAR_NAME,
+    PIXEL_LONGITUDE_VAR_NAME,
+    PROBABILITY_OF_SURVIVAL_VAR_NAME,
     PROGRAM_VERSION_VAR_NAME,
-    SPACECRAFT_RADIUS_VAR_NAME,
-    SPACECRAFT_LONGITUDE_VAR_NAME,
     SPACECRAFT_LATITUDE_VAR_NAME,
+    SPACECRAFT_LONGITUDE_VAR_NAME,
+    SPACECRAFT_RADIUS_VAR_NAME,
     SPACECRAFT_VELOCITY_X_VAR_NAME,
     SPACECRAFT_VELOCITY_Y_VAR_NAME,
     SPACECRAFT_VELOCITY_Z_VAR_NAME,
-    ELONGATION_EXCLUDED_VAR_NAME,
-    PIXEL_LATITUDE_VAR_NAME,
-    PIXEL_LONGITUDE_VAR_NAME,
-    GLOWS_FLAGS_VAR_NAME,
-    ENERGY_DELTA_PLUS_VAR_NAME,
-    ENERGY_DELTA_MINUS_VAR_NAME,
+    SPIN_AXIS_LATITUDE_VAR_NAME,
+    SPIN_AXIS_LONGITUDE_VAR_NAME,
+    GlowsL3EUltraData,
 )
 from imap_l3_processing.models import DataProductVariable
-from tests.test_helpers import get_test_instrument_team_data_path, NumpyArrayMatcher
+from tests.test_helpers import NumpyArrayMatcher, get_test_instrument_team_data_path
 
 
 class TestL3eUltraModel(unittest.TestCase):
@@ -90,33 +90,21 @@ class TestL3eUltraModel(unittest.TestCase):
                     DataProductVariable(EPOCH_CDF_VAR_NAME, sentinel.epoch),
                     DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, sentinel.epoch_delta),
                     DataProductVariable(ENERGY_VAR_NAME, energy_array),
-                    DataProductVariable(
-                        ENERGY_DELTA_PLUS_VAR_NAME, sentinel.energy_delta_plus
-                    ),
-                    DataProductVariable(
-                        ENERGY_DELTA_MINUS_VAR_NAME, sentinel.energy_delta_minus
-                    ),
+                    DataProductVariable(ENERGY_DELTA_PLUS_VAR_NAME, sentinel.energy_delta_plus),
+                    DataProductVariable(ENERGY_DELTA_MINUS_VAR_NAME, sentinel.energy_delta_minus),
                     DataProductVariable(HEALPIX_INDEX_VAR_NAME, healpix_index_array),
                     DataProductVariable(
                         PROBABILITY_OF_SURVIVAL_VAR_NAME,
                         sentinel.probability_of_survival,
                     ),
                     DataProductVariable(ENERGY_LABEL_VAR_NAME, expected_energy_labels),
-                    DataProductVariable(
-                        PIXEL_INDEX_LABEL_VAR_NAME, expected_healpix_labels
-                    ),
-                    DataProductVariable(
-                        SPIN_AXIS_LATITUDE_VAR_NAME, sentinel.spin_axis_latitude
-                    ),
+                    DataProductVariable(PIXEL_INDEX_LABEL_VAR_NAME, expected_healpix_labels),
+                    DataProductVariable(SPIN_AXIS_LATITUDE_VAR_NAME, sentinel.spin_axis_latitude),
                     DataProductVariable(
                         SPIN_AXIS_LONGITUDE_VAR_NAME, sentinel.spin_axis_longitude
                     ),
-                    DataProductVariable(
-                        PROGRAM_VERSION_VAR_NAME, sentinel.program_version
-                    ),
-                    DataProductVariable(
-                        SPACECRAFT_RADIUS_VAR_NAME, sentinel.spacecraft_radius
-                    ),
+                    DataProductVariable(PROGRAM_VERSION_VAR_NAME, sentinel.program_version),
+                    DataProductVariable(SPACECRAFT_RADIUS_VAR_NAME, sentinel.spacecraft_radius),
                     DataProductVariable(
                         SPACECRAFT_LATITUDE_VAR_NAME, sentinel.spacecraft_latitude
                     ),
@@ -135,12 +123,8 @@ class TestL3eUltraModel(unittest.TestCase):
                     DataProductVariable(
                         ELONGATION_EXCLUDED_VAR_NAME, sentinel.elongation_excluded
                     ),
-                    DataProductVariable(
-                        PIXEL_LATITUDE_VAR_NAME, sentinel.pixel_latitude
-                    ),
-                    DataProductVariable(
-                        PIXEL_LONGITUDE_VAR_NAME, sentinel.pixel_longitude
-                    ),
+                    DataProductVariable(PIXEL_LATITUDE_VAR_NAME, sentinel.pixel_latitude),
+                    DataProductVariable(PIXEL_LONGITUDE_VAR_NAME, sentinel.pixel_longitude),
                     DataProductVariable(GLOWS_FLAGS_VAR_NAME, sentinel.glows_flags),
                 ]
 
@@ -285,10 +269,8 @@ class TestL3eUltraModel(unittest.TestCase):
 
         args.elongation = 30.0
 
-        l3e_ul_product: GlowsL3EUltraData = (
-            GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product(
-                mock_metadata, ul_file_path, expected_epoch, epoch_delta, args
-            )
+        l3e_ul_product: GlowsL3EUltraData = GlowsL3EUltraData.convert_dat_to_glows_l3e_ul_product(
+            mock_metadata, ul_file_path, expected_epoch, epoch_delta, args
         )
 
         mock_calculate_energy_deltas.assert_called_once_with(
@@ -310,9 +292,7 @@ class TestL3eUltraModel(unittest.TestCase):
             l3e_ul_product.energy_delta_minus, sentinel.energy_delta_minus, strict=True
         )
 
-        np.testing.assert_equal(
-            expected_heal_pix, l3e_ul_product.healpix_index, strict=True
-        )
+        np.testing.assert_equal(expected_heal_pix, l3e_ul_product.healpix_index, strict=True)
         np.testing.assert_equal(
             expected_survival_probability_shape,
             l3e_ul_product.probability_of_survival.shape,
@@ -347,36 +327,18 @@ class TestL3eUltraModel(unittest.TestCase):
             strict=True,
         )
 
-        np.testing.assert_equal(
-            np.array([0.5]), l3e_ul_product.spacecraft_radius, strict=True
-        )
-        np.testing.assert_equal(
-            np.array([85.4]), l3e_ul_product.spacecraft_longitude, strict=True
-        )
-        np.testing.assert_equal(
-            np.array([45.1]), l3e_ul_product.spacecraft_latitude, strict=True
-        )
+        np.testing.assert_equal(np.array([0.5]), l3e_ul_product.spacecraft_radius, strict=True)
+        np.testing.assert_equal(np.array([85.4]), l3e_ul_product.spacecraft_longitude, strict=True)
+        np.testing.assert_equal(np.array([45.1]), l3e_ul_product.spacecraft_latitude, strict=True)
 
-        np.testing.assert_equal(
-            np.array([2.1]), l3e_ul_product.spacecraft_velocity_x, strict=True
-        )
-        np.testing.assert_equal(
-            np.array([2.2]), l3e_ul_product.spacecraft_velocity_y, strict=True
-        )
-        np.testing.assert_equal(
-            np.array([2.3]), l3e_ul_product.spacecraft_velocity_z, strict=True
-        )
+        np.testing.assert_equal(np.array([2.1]), l3e_ul_product.spacecraft_velocity_x, strict=True)
+        np.testing.assert_equal(np.array([2.2]), l3e_ul_product.spacecraft_velocity_y, strict=True)
+        np.testing.assert_equal(np.array([2.3]), l3e_ul_product.spacecraft_velocity_z, strict=True)
 
-        np.testing.assert_equal(
-            np.array([30.0]), l3e_ul_product.elongation_excluded, strict=True
-        )
+        np.testing.assert_equal(np.array([30.0]), l3e_ul_product.elongation_excluded, strict=True)
 
-        np.testing.assert_equal(
-            (1, 3072), l3e_ul_product.pixel_latitude.shape, strict=True
-        )
-        np.testing.assert_equal(
-            (1, 3072), l3e_ul_product.pixel_longitude.shape, strict=True
-        )
+        np.testing.assert_equal((1, 3072), l3e_ul_product.pixel_latitude.shape, strict=True)
+        np.testing.assert_equal((1, 3072), l3e_ul_product.pixel_longitude.shape, strict=True)
         np.testing.assert_equal(87.07582, l3e_ul_product.pixel_latitude[0, 0])
         np.testing.assert_equal(45.00000, l3e_ul_product.pixel_longitude[0, 0])
 

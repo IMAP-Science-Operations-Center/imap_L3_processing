@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 import numpy as np
 import scipy.optimize
@@ -18,8 +17,8 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     LOG_DENSITY_IDX,
     LOG_TEMPERATURE_IDX,
-    SolarWindParams,
     VELOCITY_SLICE,
+    SolarWindParams,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
     ProtonSolarWindFitResult,
@@ -160,9 +159,7 @@ def _construct_alpha_fit_result(
     delta_v_fit = float(result.x[2])
     velocity_rtn = proton_bulk + delta_v_fit * magnetic_field_direction
 
-    speed_ratio = np.linalg.norm(velocity_rtn, axis=-1) / np.linalg.norm(
-        proton_bulk, axis=-1
-    )
+    speed_ratio = np.linalg.norm(velocity_rtn, axis=-1) / np.linalg.norm(proton_bulk, axis=-1)
     if speed_ratio < MIN_TOLERABLE_ALPHA_SPEED_RATIO:
         return _nan_alpha_fit_result(bad_fit_flag | SwapiL3Flags.BAD_FIT)
 
@@ -181,9 +178,8 @@ def _construct_alpha_fit_result(
     delta_v_sigma = float(np.sqrt(max(cov_x[2, 2], 0.0)))
 
     sigma_dv2 = max(cov_x[2, 2], 0.0)
-    velocity_covariance_rtn = (
-        proton_moments.velocity_rtn_covariance()
-        + sigma_dv2 * np.outer(magnetic_field_direction, magnetic_field_direction)
+    velocity_covariance_rtn = proton_moments.velocity_rtn_covariance() + sigma_dv2 * np.outer(
+        magnetic_field_direction, magnetic_field_direction
     )
 
     return AlphaSolarWindFitResult(
@@ -215,9 +211,9 @@ class _AlphaEvaluator:
         self.magnetic_field_direction = magnetic_field_direction
         self.proton_true_rate = proton_true_rate
         self.alpha_ctx = alpha_ctx
-        self._last_state: Optional[ndarray] = None
-        self._last_residuals: Optional[ndarray] = None
-        self._last_jacobian: Optional[ndarray] = None
+        self._last_state: ndarray | None = None
+        self._last_residuals: ndarray | None = None
+        self._last_jacobian: ndarray | None = None
 
     def _eval(self, x: ndarray) -> None:
         alpha_density = float(np.exp(x[0]))

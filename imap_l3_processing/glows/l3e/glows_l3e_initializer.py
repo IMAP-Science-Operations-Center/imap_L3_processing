@@ -3,30 +3,29 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 import imap_data_access
 import numpy as np
 from imap_data_access import (
-    ProcessingInputCollection,
     AncillaryInput,
-    ScienceInput,
+    ProcessingInputCollection,
     RepointInput,
+    ScienceInput,
 )
 from imap_data_access.file_validation import Version
 from imap_processing.spice.repoint import (
-    set_global_repoint_table_paths,
     get_repoint_data,
+    set_global_repoint_table_paths,
 )
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.descriptors import (
     GLOWS_L3E_DESCRIPTORS,
-    GLOWS_L3E_HI_90_DESCRIPTOR,
     GLOWS_L3E_HI_45_DESCRIPTOR,
+    GLOWS_L3E_HI_90_DESCRIPTOR,
     GLOWS_L3E_LO_DESCRIPTOR,
-    GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
     GLOWS_L3E_ULTRA_HF_DESCRIPTOR,
+    GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
 )
 from imap_l3_processing.glows.l3bc.utils import get_pointing_date_range
 from imap_l3_processing.glows.l3d.models import GlowsL3DProcessorOutput
@@ -56,11 +55,11 @@ class GlowsL3EInitializer:
     @staticmethod
     def get_repointings_to_process(
         l3d_output: GlowsL3DProcessorOutput,
-        previous_l3d: Optional[str],
+        previous_l3d: str | None,
         repointing_file_path: Path,
         version_map: VersionMap,
         reprocess_info: ReprocessInfo,
-    ) -> Optional[GlowsL3EInitializerOutput]:
+    ) -> GlowsL3EInitializerOutput | None:
         pipeline_settings_l3bcde = get_most_recently_uploaded_ancillary(
             imap_data_access.query(
                 table="ancillary",
@@ -74,9 +73,7 @@ class GlowsL3EInitializer:
             )
         )
         tess_xyz_8 = get_most_recently_uploaded_ancillary(
-            imap_data_access.query(
-                table="ancillary", instrument="glows", descriptor="tess-xyz-8"
-            )
+            imap_data_access.query(table="ancillary", instrument="glows", descriptor="tess-xyz-8")
         )
         energy_grid_hi = get_most_recently_uploaded_ancillary(
             imap_data_access.query(
@@ -89,9 +86,7 @@ class GlowsL3EInitializer:
             )
         )
         tess_ang_16 = get_most_recently_uploaded_ancillary(
-            imap_data_access.query(
-                table="ancillary", instrument="glows", descriptor="tess-ang-16"
-            )
+            imap_data_access.query(table="ancillary", instrument="glows", descriptor="tess-ang-16")
         )
 
         processing_input_collection = ProcessingInputCollection(
@@ -113,9 +108,7 @@ class GlowsL3EInitializer:
 
         first_updated_cr = first_cr
         if previous_l3d is not None:
-            first_updated_cr = find_first_updated_cr(
-                l3d_output.l3d_cdf_file_path, previous_l3d
-            )
+            first_updated_cr = find_first_updated_cr(l3d_output.l3d_cdf_file_path, previous_l3d)
             if first_updated_cr is not None:
                 first_updated_cr -= 1
 
@@ -158,11 +151,11 @@ def query_existing_l3es_versions(descriptor: str) -> dict[int, Version]:
         instrument="glows", data_level="l3e", version="latest", descriptor=descriptor
     )
     for l3e in l3e_files:
-        if "major_version" in l3e.keys() and "minor_version" in l3e.keys():
+        if "major_version" in l3e and "minor_version" in l3e:
             existing_l3es_for_descriptor[int(l3e["repointing"])] = Version(
                 l3e["major_version"], l3e["minor_version"]
             )
-        elif "version" in l3e.keys():
+        elif "version" in l3e:
             existing_l3es_for_descriptor[int(l3e["repointing"])] = Version.from_version(
                 l3e["version"]
             )
@@ -174,7 +167,7 @@ def query_existing_l3es_versions(descriptor: str) -> dict[int, Version]:
 def identify_versions_for_l3e_output_files(
     start_cr_of_mission: int,
     end_cr_of_mission: int,
-    first_updated_cr_from_l3d: Optional[int],
+    first_updated_cr_from_l3d: int | None,
     repointing_path: Path,
     version_map: VersionMap,
     reprocess_info: ReprocessInfo,
@@ -247,16 +240,14 @@ def find_out_of_date_l3es(
     return out_of_date_l3es
 
 
-def find_first_updated_cr(new_l3d: Path, old_l3d: str) -> Optional[int]:
+def find_first_updated_cr(new_l3d: Path, old_l3d: str) -> int | None:
     downloaded_old_l3d = imap_data_access.download(old_l3d)
 
     old_l3d_cdf = CDF(str(downloaded_old_l3d))
     new_l3d_cdf = CDF(str(new_l3d))
 
     for i, cr in enumerate(old_l3d_cdf["cr_grid"][...]):
-        lya_matches = np.isclose(
-            old_l3d_cdf["lyman_alpha"][i], new_l3d_cdf["lyman_alpha"][i]
-        )
+        lya_matches = np.isclose(old_l3d_cdf["lyman_alpha"][i], new_l3d_cdf["lyman_alpha"][i])
         phion_matches = np.isclose(old_l3d_cdf["phion"][i], new_l3d_cdf["phion"][i])
         plasma_speed_flag_matches = np.isclose(
             old_l3d_cdf["plasma_speed_flag"][i], new_l3d_cdf["plasma_speed_flag"][i]
@@ -275,9 +266,7 @@ def find_first_updated_cr(new_l3d: Path, old_l3d: str) -> Optional[int]:
             np.isclose(old_l3d_cdf["plasma_speed"][i], new_l3d_cdf["plasma_speed"][i])
         )
         proton_density_matches = np.all(
-            np.isclose(
-                old_l3d_cdf["proton_density"][i], new_l3d_cdf["proton_density"][i]
-            )
+            np.isclose(old_l3d_cdf["proton_density"][i], new_l3d_cdf["proton_density"][i])
         )
         uv_anisotropy_matches = np.all(
             np.isclose(old_l3d_cdf["uv_anisotropy"][i], new_l3d_cdf["uv_anisotropy"][i])

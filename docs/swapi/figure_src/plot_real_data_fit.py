@@ -37,29 +37,15 @@ import matplotlib.pyplot as plt
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
+import scipy.optimize
+from figure_utils import FIGURES_DIR, REPO_ROOT, load_swapi_response
+
 from imap_l3_processing.constants import (
     BOLTZMANN_CONSTANT_JOULES_PER_KELVIN,
     ONE_SECOND_IN_NANOSECONDS,
     PROTON_MASS_KG,
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
 )
-import scipy.optimize
-
-from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
-    build_solar_wind_fit_context,
-)
-from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
-    model_solar_wind_ideal_coincidence_rates,
-)
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
-    fit_solar_wind_proton_model,
-)
-from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
-from imap_l3_processing.swapi.l3a.utils import (
-    get_spacecraft_velocity_rtn,
-    get_swapi_geometry,
-)
-from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 from imap_l3_processing.swapi.constants import (
     SWAPI_BIN_PERIOD_S,
     SWAPI_COARSE_SWEEP_BINS,
@@ -69,8 +55,22 @@ from imap_l3_processing.swapi.constants import (
     SWAPI_LIVETIME_CENTER_OFFSET_S,
     SWAPI_SCIENCE_BINS,
 )
+from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
+    build_solar_wind_fit_context,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
+    model_solar_wind_ideal_coincidence_rates,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
+    fit_solar_wind_proton_model,
+)
+from imap_l3_processing.swapi.l3a.utils import (
+    get_spacecraft_velocity_rtn,
+    get_swapi_geometry,
+)
+from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 from imap_l3_processing.utils import SpiceKernelTypes
-from figure_utils import FIGURES_DIR, REPO_ROOT, load_swapi_response
 
 _DOC_PATH = REPO_ROOT / "docs" / "swapi" / "proton-sw.md"
 _TABLE_BEGIN = "<!-- BEGIN: real_data_table"
@@ -91,16 +91,13 @@ WIND_BASE_URL = "https://spdf.gsfc.nasa.gov/pub/data/wind/swe/ascii/2-min"
 def main():
     if not os.environ.get("IMAP_API_KEY"):
         raise SystemExit(
-            "IMAP_API_KEY environment variable is not set. "
-            "Export it before running this script."
+            "IMAP_API_KEY environment variable is not set. Export it before running this script."
         )
     cdf_path = _download_l2(DATE_YYYYMMDD)
     _furnish_spice_around(DATE_YYYYMMDD)
 
     sweep_start = SWEEP_START
-    epoch_ns, count_rate, esa_voltage = _read_5_sweep_block(
-        cdf_path, sweep_start, N_SWEEPS
-    )
+    epoch_ns, count_rate, esa_voltage = _read_5_sweep_block(cdf_path, sweep_start, N_SWEEPS)
     chunk_center_ns = int(epoch_ns[0]) + 30 * ONE_SECOND_IN_NANOSECONDS
     chunk_center_dt = _tt2000ns_to_datetime(chunk_center_ns)
     print(
@@ -216,9 +213,7 @@ def _furnish_spice_around(date_yyyymmdd: str) -> None:
     spk_start = target - timedelta(days=90)
 
     metakernel_url = (
-        urlparse(imap_data_access.config["DATA_ACCESS_URL"])
-        ._replace(path="metakernel")
-        .geturl()
+        urlparse(imap_data_access.config["DATA_ACCESS_URL"])._replace(path="metakernel").geturl()
     )
     j2000 = datetime(2000, 1, 1, 12)
 
@@ -267,21 +262,15 @@ def _read_5_sweep_block(
         epoch_ns = np.asarray(
             cdf.raw_var("epoch")[sweep_start : sweep_start + n_sweeps], dtype=np.int64
         )
-        cr = np.asarray(
-            cdf["swp_coin_rate"][sweep_start : sweep_start + n_sweeps, :], dtype=float
-        )
-        esa = np.asarray(
-            cdf["esa_energy"][sweep_start : sweep_start + n_sweeps, :], dtype=float
-        )
+        cr = np.asarray(cdf["swp_coin_rate"][sweep_start : sweep_start + n_sweeps, :], dtype=float)
+        esa = np.asarray(cdf["esa_energy"][sweep_start : sweep_start + n_sweeps, :], dtype=float)
     return epoch_ns, cr, esa
 
 
 def _measurement_times_ns(epoch_ns: np.ndarray, bin_slice: slice) -> np.ndarray:
     bins = np.arange(bin_slice.start, bin_slice.stop)
     seconds_into_sweep = bins * SWAPI_BIN_PERIOD_S + SWAPI_LIVETIME_CENTER_OFFSET_S
-    return (
-        epoch_ns[:, None] + seconds_into_sweep * ONE_SECOND_IN_NANOSECONDS
-    ).flatten()
+    return (epoch_ns[:, None] + seconds_into_sweep * ONE_SECOND_IN_NANOSECONDS).flatten()
 
 
 # --------------------------------------------------------------------------- #
@@ -352,7 +341,7 @@ def _bootstrap_sigmas(
             mass_kg=PROTON_MASS_KG,
             mass_per_charge_m_p_per_e=PROTON_MASS_PER_CHARGE_M_P_PER_E,
         )
-
+        # ruff: disable[B023]
         cache = {}
 
         def _eval(state):
@@ -373,6 +362,8 @@ def _bootstrap_sigmas(
                 _eval(state)
             return cache["j"]
 
+        # ruff: enable[B023]
+
         try:
             raw = scipy.optimize.least_squares(
                 _residues,
@@ -381,7 +372,7 @@ def _bootstrap_sigmas(
                 method="lm",
                 xtol=xtol,
             )
-        except Exception:
+        except (TypeError, ValueError):
             continue
         if not raw.success:
             continue
@@ -458,10 +449,10 @@ def _build_intro_table(science_result, coarse_result, boot, wind):
         (
             "Temperature $`T`$ (K)",
             f"$`({sci_fit.temperature.nominal_value / 1e4:.3f} \\pm "
-            f"{sci_fit.temperature.std_dev / 1e4:.3f})\\times10^{{4}}`$",
+            + f"{sci_fit.temperature.std_dev / 1e4:.3f})\\times10^{{4}}`$",
             f"$`\\pm {boot['T_sigma'] / 1e4:.3f}\\times10^{{4}}`$",
             f"$`({coa_fit.temperature.nominal_value / 1e4:.3f} \\pm "
-            f"{coa_fit.temperature.std_dev / 1e4:.3f})\\times10^{{4}}`$",
+            + f"{coa_fit.temperature.std_dev / 1e4:.3f})\\times10^{{4}}`$",
             wind_T,
         ),
         (
@@ -586,9 +577,7 @@ def _wind_value_at(target_dt: datetime) -> dict | None:
 
     data = np.loadtxt(asc, comments=";")
 
-    fdoy_target = (
-        target_dt - datetime(target_dt.year, 1, 1)
-    ).total_seconds() / 86400.0 + 1.0
+    fdoy_target = (target_dt - datetime(target_dt.year, 1, 1)).total_seconds() / 86400.0 + 1.0
     year = data[:, 0].astype(int)
     fdoy = data[:, 1]
     in_year = year == target_dt.year
@@ -610,11 +599,7 @@ def _wind_value_at(target_dt: datetime) -> dict | None:
     # 10 σVz, 11 Wscalar, 12 σWscalar, 21 Np, 22 σNp.
     w_th = row[11]
     sigma_w = row[12]
-    T_K = (
-        PROTON_MASS_KG
-        * (w_th * 1e3) ** 2
-        / (2.0 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN)
-    )
+    T_K = PROTON_MASS_KG * (w_th * 1e3) ** 2 / (2.0 * BOLTZMANN_CONSTANT_JOULES_PER_KELVIN)
     # Linear-error propagation: T = m·w²/(2k)  ⇒  σT = (2T/w)·σw.
     sigma_T = T_K * 2.0 * sigma_w / w_th if w_th > 0 else float("nan")
     return {
@@ -700,9 +685,9 @@ def _make_plot(
         keep = (v_per_bin > 100.0) & np.isfinite(values_per_bin)
         if keep.sum() < 2:
             return fine_dense_step, np.full_like(fine_dense_step, np.nan)
-        bins_keep = bin_indices[
-            SWAPI_FINE_SWEEP_BINS.start : SWAPI_FINE_SWEEP_BINS.stop
-        ][keep[SWAPI_FINE_SWEEP_BINS]]
+        bins_keep = bin_indices[SWAPI_FINE_SWEEP_BINS.start : SWAPI_FINE_SWEEP_BINS.stop][
+            keep[SWAPI_FINE_SWEEP_BINS]
+        ]
         order = np.argsort(bins_keep)
         return (
             fine_dense_step,
@@ -719,9 +704,7 @@ def _make_plot(
         ax_c, ax_f = panel
         ok = (v > 0) & np.isfinite(v)
         coarse_mask = ok & (bin_indices < SWAPI_FINE_SWEEP_BINS.start)
-        fine_mask_useful = (
-            ok & (bin_indices >= SWAPI_FINE_SWEEP_BINS.start) & (v > 100.0)
-        )
+        fine_mask_useful = ok & (bin_indices >= SWAPI_FINE_SWEEP_BINS.start) & (v > 100.0)
 
         ax_c.semilogy(
             bin_indices[coarse_mask],
@@ -803,9 +786,7 @@ def _make_plot(
             v_region = v[peak_slice]
             bins_region = bin_grid[peak_slice]
             ok_region = (v_region > 0) & np.isfinite(v_region)
-            v_at_peak = float(
-                np.interp(peak_bin, bins_region[ok_region], v_region[ok_region])
-            )
+            v_at_peak = float(np.interp(peak_bin, bins_region[ok_region], v_region[ok_region]))
             e_over_q_eV = SWAPI_K_FACTOR * v_at_peak
             log10_rate = float(np.log10(max(peak_rate, 1.0)))
             x_marker = peak_bin
@@ -819,9 +800,7 @@ def _make_plot(
                 zorder=5,
                 label=marker_label if draw_legend else None,
             )
-            text_transform = blended_transform_factory(
-                sub_ax.transData, sub_ax.transAxes
-            )
+            text_transform = blended_transform_factory(sub_ax.transData, sub_ax.transAxes)
             sub_ax.text(
                 x_marker,
                 0.98,

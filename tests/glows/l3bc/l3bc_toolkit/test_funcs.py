@@ -5,7 +5,6 @@ import numpy as np
 from imap_l3_processing.glows.l3bc.l3bc_toolkit.funcs import process_omni_param
 from imap_l3_processing.glows.quality_flags import NOMINAL_ALPHA_PROTON_RATIO_VALUE
 
-
 ALPHA_PARAM_SETTINGS = {
     "column_numbers": (0, 1, 2, 6, 9),
     "gap_marker": 9.999,
@@ -31,9 +30,7 @@ class TestProcessOmniAlphaParam(unittest.TestCase):
 
         cr_grid = np.array([1957, 1958])
 
-        averaged, used_nominal_per_cr = process_omni_param(
-            omni_raw, cr_grid, ALPHA_PARAM_SETTINGS
-        )
+        averaged, used_nominal_per_cr = process_omni_param(omni_raw, cr_grid, ALPHA_PARAM_SETTINGS)
 
         np.testing.assert_array_equal(used_nominal_per_cr, np.array([False, False]))
         np.testing.assert_array_almost_equal(averaged, np.array([0.05, 0.06]))
@@ -52,9 +49,7 @@ class TestProcessOmniAlphaParam(unittest.TestCase):
 
         cr_grid = np.array([1957, 1958])
 
-        averaged, used_nominal_per_cr = process_omni_param(
-            omni_raw, cr_grid, ALPHA_PARAM_SETTINGS
-        )
+        averaged, used_nominal_per_cr = process_omni_param(omni_raw, cr_grid, ALPHA_PARAM_SETTINGS)
 
         np.testing.assert_array_equal(used_nominal_per_cr, np.array([False, False]))
         np.testing.assert_array_almost_equal(averaged, np.array([0.04, 0.06]))
@@ -71,13 +66,9 @@ class TestProcessOmniAlphaParam(unittest.TestCase):
 
         cr_grid = np.array([1957, 1958, 1959, 1960])
 
-        averaged, used_nominal_per_cr = process_omni_param(
-            omni_raw, cr_grid, ALPHA_PARAM_SETTINGS
-        )
+        averaged, used_nominal_per_cr = process_omni_param(omni_raw, cr_grid, ALPHA_PARAM_SETTINGS)
 
-        np.testing.assert_array_equal(
-            used_nominal_per_cr, np.array([False, False, True, True])
-        )
+        np.testing.assert_array_equal(used_nominal_per_cr, np.array([False, False, True, True]))
         np.testing.assert_array_almost_equal(
             averaged,
             np.array(
@@ -105,9 +96,7 @@ class TestProcessOmniAlphaParam(unittest.TestCase):
         with self.assertRaises(Exception) as ctx:
             process_omni_param(omni_raw, cr_grid, ALPHA_PARAM_SETTINGS)
 
-        self.assertEqual(
-            str(ctx.exception), "OMNI Error: not enough data for interpolation"
-        )
+        self.assertEqual(str(ctx.exception), "OMNI Error: not enough data for interpolation")
 
     def test_smooths_interior_cr_gap_via_interpolation_and_does_not_flag(self):
         omni_raw = np.array(
@@ -121,13 +110,9 @@ class TestProcessOmniAlphaParam(unittest.TestCase):
 
         cr_grid = np.array([1957, 1958, 1959])
 
-        averaged, used_nominal_per_cr = process_omni_param(
-            omni_raw, cr_grid, ALPHA_PARAM_SETTINGS
-        )
+        averaged, used_nominal_per_cr = process_omni_param(omni_raw, cr_grid, ALPHA_PARAM_SETTINGS)
 
-        np.testing.assert_array_equal(
-            used_nominal_per_cr, np.array([False, False, False])
-        )
+        np.testing.assert_array_equal(used_nominal_per_cr, np.array([False, False, False]))
         np.testing.assert_array_almost_equal(averaged, np.array([0.05, 0.06, 0.07]))
 
 

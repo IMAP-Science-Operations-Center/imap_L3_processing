@@ -58,18 +58,12 @@ class GlowsL3DSolarParamsHistory(DataProduct):
             DataProductVariable(CR_CDF_VAR_NAME, self.cr),
             DataProductVariable(SPEED_CDF_VAR_NAME, self.plasma_speed),
             DataProductVariable(PROTON_DENSITY_CDF_VAR_NAME, self.proton_density),
-            DataProductVariable(
-                UV_ANISOTROPY_CDF_VAR_NAME, self.ultraviolet_anisotropy
-            ),
+            DataProductVariable(UV_ANISOTROPY_CDF_VAR_NAME, self.ultraviolet_anisotropy),
             DataProductVariable(PHION_CDF_VAR_NAME, self.phion),
             DataProductVariable(LYMAN_ALPHA_CDF_VAR_NAME, self.lyman_alpha),
             DataProductVariable(ELECTRON_DENSITY_CDF_VAR_NAME, self.electron_density),
             DataProductVariable(PLASMA_SPEED_FLAG_CDF_VAR_NAME, self.plasma_speed_flag),
-            DataProductVariable(
-                UV_ANISOTROPY_FLAG_CDF_VAR_NAME, self.uv_anisotropy_flag
-            ),
-            DataProductVariable(
-                PROTON_DENSITY_FLAG_CDF_VAR_NAME, self.proton_density_flag
-            ),
+            DataProductVariable(UV_ANISOTROPY_FLAG_CDF_VAR_NAME, self.uv_anisotropy_flag),
+            DataProductVariable(PROTON_DENSITY_FLAG_CDF_VAR_NAME, self.proton_density_flag),
             DataProductVariable(GLOWS_FLAGS_CDF_VAR_NAME, self.glows_flags),
         ]

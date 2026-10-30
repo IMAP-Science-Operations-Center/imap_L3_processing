@@ -47,12 +47,11 @@ from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 from imap_l3_processing.swapi.species import Species
 from tests.swapi._helpers import (
-    NOMINAL_TEST_EPOCH_TT2000,
     NOMINAL_SWAPI_TO_RTN_ROTATION,
+    NOMINAL_TEST_EPOCH_TT2000,
     load_swapi_response,
 )
 from tests.test_helpers import run_periodically
-
 
 _N_BINS_PER_SWEEP = 62
 _N_SWEEPS = 5
@@ -75,14 +74,10 @@ def _per_bin_rotation_matrices() -> np.ndarray:
     bins and breaks that degeneracy."""
     sweep_index = np.repeat(np.arange(_N_SWEEPS), _N_BINS_PER_SWEEP)
     bin_index_in_sweep = np.tile(np.arange(1, _N_BINS_PER_SWEEP + 1), _N_SWEEPS)
-    sample_times_s = (
-        sweep_index * _SWEEP_DURATION_S + bin_index_in_sweep * _SAMPLE_TIME_PER_BIN_S
-    )
+    sample_times_s = sweep_index * _SWEEP_DURATION_S + bin_index_in_sweep * _SAMPLE_TIME_PER_BIN_S
     spin_axis = NOMINAL_SWAPI_TO_RTN_ROTATION[:, 1]
     spin_axis = spin_axis / np.linalg.norm(spin_axis)
-    delta_phi = (-2.0 * np.pi / _SPIN_PERIOD_S) * (
-        sample_times_s - 0.5 * _SWEEP_DURATION_S
-    )
+    delta_phi = (-2.0 * np.pi / _SPIN_PERIOD_S) * (sample_times_s - 0.5 * _SWEEP_DURATION_S)
     ax, ay, az = spin_axis
     K = np.array([[0.0, -az, ay], [az, 0.0, -ax], [-ay, ax, 0.0]])
     sin_dp = np.sin(delta_phi)[:, None, None]
@@ -141,9 +136,7 @@ def _build_truth_count_rates(response, *, with_alpha: bool) -> np.ndarray:
         species=Species.PROTON,
         rotation_matrices=_ROTATION_MATRICES,
     )
-    proton_rates, _ = model_solar_wind_ideal_coincidence_rates(
-        proton_params, proton_ctx
-    )
+    proton_rates, _ = model_solar_wind_ideal_coincidence_rates(proton_params, proton_ctx)
     total_rates = proton_rates
     if with_alpha:
         alpha_velocity = _TRUE_PROTON_VELOCITY_RTN + _TRUE_DELTA_V_KM_S * _B_HAT_RTN
@@ -161,9 +154,7 @@ def _build_truth_count_rates(response, *, with_alpha: bool) -> np.ndarray:
             species=Species.ALPHA,
             rotation_matrices=_ROTATION_MATRICES,
         )
-        alpha_rates, _ = model_solar_wind_ideal_coincidence_rates(
-            alpha_params, alpha_ctx
-        )
+        alpha_rates, _ = model_solar_wind_ideal_coincidence_rates(alpha_params, alpha_ctx)
         total_rates = proton_rates + alpha_rates
     deadtime_applied = total_rates * deadtime_factor(total_rates)
     return deadtime_applied.reshape(_VOLTAGE_AXIS.shape)
@@ -180,9 +171,7 @@ def _inject_noise(truth_rates: np.ndarray, rng: np.random.Generator) -> np.ndarr
 
 
 def _velocity_component_truth(base: str, velocity_rtn: np.ndarray) -> dict:
-    return {
-        f"{base}_{axis}": float(velocity_rtn[i]) for i, axis in enumerate(_RTN_AXES)
-    }
+    return {f"{base}_{axis}": float(velocity_rtn[i]) for i, axis in enumerate(_RTN_AXES)}
 
 
 def _proton_truth_values() -> dict:
@@ -193,9 +182,7 @@ def _proton_truth_values() -> dict:
         "proton_sw_temperature": _TRUE_PROTON_TEMPERATURE_K,
         "proton_sw_speed": float(np.linalg.norm(_TRUE_PROTON_VELOCITY_RTN)),
         "proton_sw_speed_sun": float(np.linalg.norm(velocity_sun)),
-        **_velocity_component_truth(
-            "proton_sw_velocity_rtn", _TRUE_PROTON_VELOCITY_RTN
-        ),
+        **_velocity_component_truth("proton_sw_velocity_rtn", _TRUE_PROTON_VELOCITY_RTN),
     }
 
 
@@ -249,15 +236,11 @@ def _assert_calibration(
 ) -> None:
     label = species.name.lower()
     if n_good < _N_TRIALS * 0.9:
-        raise AssertionError(
-            f"{label}: only {n_good}/{_N_TRIALS} trials produced a good fit"
-        )
+        raise AssertionError(f"{label}: only {n_good}/{_N_TRIALS} trials produced a good fit")
     failures = []
     for name, samples in sorted(accumulator.items()):
         assert name in truth_values, f"no truth value declared for {name!r}"
-        values, reported_sigmas = (
-            np.asarray(column, dtype=float) for column in zip(*samples)
-        )
+        values, reported_sigmas = (np.asarray(column, dtype=float) for column in zip(*samples))
         if not np.all(np.isfinite(reported_sigmas) & (reported_sigmas > 0)):
             failures.append(f"  {name}: non-positive or non-finite reported σ")
             continue
@@ -350,9 +333,7 @@ def _run_trial(trial_seed: int) -> dict | None:
         b_hat_rtn=_B_HAT_RTN.copy(),
         quality_flag=int(alpha_moments.quality_flag),
     )
-    return _alpha_moments_from_fit(
-        chunk_result, epoch=0, sc_velocity_rtn=_SC_VELOCITY_RTN
-    )
+    return _alpha_moments_from_fit(chunk_result, epoch=0, sc_velocity_rtn=_SC_VELOCITY_RTN)
 
 
 def _run_mc_in_parallel(n_trials: int) -> tuple[dict, int]:

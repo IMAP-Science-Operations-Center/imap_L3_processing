@@ -11,15 +11,15 @@ from numpy import ndarray
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
-from imap_l3_processing.constants import TT2000_EPOCH, ONE_SECOND_IN_NANOSECONDS
+from imap_l3_processing.constants import ONE_SECOND_IN_NANOSECONDS, TT2000_EPOCH
 from imap_l3_processing.glows.l3e.glows_l3e_hi_model import (
     PROBABILITY_OF_SURVIVAL_VAR_NAME,
 )
 from imap_l3_processing.glows.l3e.glows_l3e_ultra_model import (
-    HEALPIX_INDEX_VAR_NAME,
     ENERGY_VAR_NAME,
     EPOCH_CDF_VAR_NAME,
     GLOWS_FLAGS_VAR_NAME,
+    HEALPIX_INDEX_VAR_NAME,
 )
 
 
@@ -42,9 +42,7 @@ class UltraGlowsL3eData:
                 repointing=repointing,
                 energy=read_numeric_variable(cdf[ENERGY_VAR_NAME]),
                 healpix_index=cdf[HEALPIX_INDEX_VAR_NAME][...],
-                survival_probability=read_numeric_variable(
-                    cdf[PROBABILITY_OF_SURVIVAL_VAR_NAME]
-                ),
+                survival_probability=read_numeric_variable(cdf[PROBABILITY_OF_SURVIVAL_VAR_NAME]),
                 flags=cdf[GLOWS_FLAGS_VAR_NAME][...],
             )
 
@@ -71,12 +69,8 @@ class UltraL1CPSet:
                 epoch_delta=cdf["epoch_delta"][0],
                 energy=read_numeric_variable(cdf[CoordNames.ENERGY_ULTRA_L1C.value]),
                 exposure=read_numeric_variable(cdf["exposure_factor"]),
-                latitude=read_numeric_variable(
-                    cdf[CoordNames.ELEVATION_L1C.value]
-                ).ravel(),
-                longitude=read_numeric_variable(
-                    cdf[CoordNames.AZIMUTH_L1C.value]
-                ).ravel(),
+                latitude=read_numeric_variable(cdf[CoordNames.ELEVATION_L1C.value]).ravel(),
+                longitude=read_numeric_variable(cdf[CoordNames.AZIMUTH_L1C.value]).ravel(),
                 healpix_index=cdf[CoordNames.HEALPIX_INDEX.value][...],
                 sensitivity=read_numeric_variable(cdf["sensitivity"]),
             )
@@ -110,8 +104,7 @@ class UltraL1CPSet:
             },
             coords={
                 CoordNames.TIME.value: [
-                    ((self.epoch - TT2000_EPOCH).total_seconds())
-                    * ONE_SECOND_IN_NANOSECONDS
+                    ((self.epoch - TT2000_EPOCH).total_seconds()) * ONE_SECOND_IN_NANOSECONDS
                     + self.epoch_delta / 2,
                 ],
                 CoordNames.ENERGY_ULTRA_L1C.value: self.energy,

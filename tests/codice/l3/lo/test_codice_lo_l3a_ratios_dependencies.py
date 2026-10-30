@@ -13,15 +13,11 @@ class TestCodiceLoL3aRatiosDependencies(unittest.TestCase):
         "imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies.CodiceLoPartialDensityData.read_from_cdf"
     )
     def test_from_file_paths(self, mock_read_from_cdf):
-        actual_dependencies = CodiceLoL3aRatiosDependencies.from_file_paths(
-            sentinel.cdf_path
-        )
+        actual_dependencies = CodiceLoL3aRatiosDependencies.from_file_paths(sentinel.cdf_path)
 
         mock_read_from_cdf.assert_called_once_with(sentinel.cdf_path)
 
-        self.assertEqual(
-            mock_read_from_cdf.return_value, actual_dependencies.partial_density_data
-        )
+        self.assertEqual(mock_read_from_cdf.return_value, actual_dependencies.partial_density_data)
 
     @patch(
         "imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies.CodiceLoPartialDensityData.read_from_cdf"
@@ -34,11 +30,7 @@ class TestCodiceLoL3aRatiosDependencies(unittest.TestCase):
         science_input = ScienceInput(expected_file_name)
         processing_inputs = ProcessingInputCollection(science_input)
 
-        dependencies = CodiceLoL3aRatiosDependencies.fetch_dependencies(
-            processing_inputs
-        )
+        dependencies = CodiceLoL3aRatiosDependencies.fetch_dependencies(processing_inputs)
 
         mock_download.assert_called_once_with(expected_file_name)
-        self.assertEqual(
-            mock_read_from_cdf.return_value, dependencies.partial_density_data
-        )
+        self.assertEqual(mock_read_from_cdf.return_value, dependencies.partial_density_data)

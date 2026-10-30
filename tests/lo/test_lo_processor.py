@@ -10,12 +10,12 @@ from imap_processing.spice.geometry import SpiceFrame
 from imap_l3_processing.lo.l3.lo_combined_dependencies import LoCombinedDependencies
 from imap_l3_processing.lo.lo_processor import LoProcessor, isn_background_subtraction
 from imap_l3_processing.maps.map_models import (
-    RectangularSpectralIndexDataProduct,
-    RectangularIntensityDataProduct,
     InputRectangularPointingSet,
-    ISNRateData,
     ISNBackgroundSubtractedData,
     ISNBackgroundSubtractedMapData,
+    ISNRateData,
+    RectangularIntensityDataProduct,
+    RectangularSpectralIndexDataProduct,
 )
 from imap_l3_processing.models import InputMetadata, Instrument
 from tests.maps import test_builders
@@ -24,9 +24,7 @@ from tests.maps import test_builders
 class TestLoProcessor(unittest.TestCase):
     @patch("imap_l3_processing.hi.hi_processor.MapProcessor.get_parent_file_names")
     @patch("imap_l3_processing.lo.lo_processor.slice_energy_range_by_bin")
-    @patch(
-        "imap_l3_processing.lo.lo_processor.LoL3SpectralFitDependencies.fetch_dependencies"
-    )
+    @patch("imap_l3_processing.lo.lo_processor.LoL3SpectralFitDependencies.fetch_dependencies")
     @patch("imap_l3_processing.lo.lo_processor.fit_spectral_index_map")
     @patch("imap_l3_processing.lo.lo_processor.save_data")
     def test_process_spectral_index(
@@ -76,18 +74,14 @@ class TestLoProcessor(unittest.TestCase):
             data_product.data.spectral_index_map_data,
             mock_fit_spectral_index_map.return_value,
         )
-        self.assertEqual(
-            data_product.data.coords, lo_l3_spectral_fit_dependency.map_data.coords
-        )
+        self.assertEqual(data_product.data.coords, lo_l3_spectral_fit_dependency.map_data.coords)
         self.assertEqual(data_product.input_metadata, processor.input_metadata)
         self.assertEqual(data_product.parent_file_names, ["some_input_file_name"])
         self.assertEqual(data_product.spice_frame_name, SpiceFrame.ECLIPJ2000)
         self.assertEqual([mock_save_data.return_value], product)
 
     @patch("imap_l3_processing.hi.hi_processor.MapProcessor.get_parent_file_names")
-    @patch(
-        "imap_l3_processing.lo.lo_processor.LoL3SpectralFitDependencies.fetch_dependencies"
-    )
+    @patch("imap_l3_processing.lo.lo_processor.LoL3SpectralFitDependencies.fetch_dependencies")
     @patch("imap_l3_processing.lo.lo_processor.fit_spectral_index_map")
     @patch("imap_l3_processing.lo.lo_processor.save_data")
     @patch("imap_l3_processing.lo.lo_processor.slice_energy_range_by_bin")
@@ -117,8 +111,8 @@ class TestLoProcessor(unittest.TestCase):
 
                 input_collection = Mock()
                 lo_l3_spectral_fit_dependency = mock_fetch_dependencies.return_value
-                lo_l3_spectral_fit_dependency.map_data.intensity_map_data.energy = (
-                    np.array([1, 10, 1000, 10000, 100000, 1000000, 10000000])
+                lo_l3_spectral_fit_dependency.map_data.intensity_map_data.energy = np.array(
+                    [1, 10, 1000, 10000, 100000, 1000000, 10000000]
                 )
 
                 metadata = InputMetadata(
@@ -157,15 +151,11 @@ class TestLoProcessor(unittest.TestCase):
                 )
                 self.assertEqual(data_product.input_metadata, processor.input_metadata)
                 self.assertEqual(data_product.spice_frame_name, SpiceFrame.ECLIPJ2000)
-                self.assertEqual(
-                    data_product.parent_file_names, ["some_input_file_name"]
-                )
+                self.assertEqual(data_product.parent_file_names, ["some_input_file_name"])
                 self.assertEqual([mock_save_data.return_value], product)
 
     @patch("imap_l3_processing.lo.lo_processor.MapProcessor.get_parent_file_names")
-    @patch(
-        "imap_l3_processing.lo.lo_processor.HiLoL3SurvivalDependencies.fetch_dependencies"
-    )
+    @patch("imap_l3_processing.lo.lo_processor.HiLoL3SurvivalDependencies.fetch_dependencies")
     @patch("imap_l3_processing.lo.lo_processor.process_survival_probabilities")
     @patch("imap_l3_processing.lo.lo_processor.save_data")
     def test_process_survival_probabilities(
@@ -208,9 +198,7 @@ class TestLoProcessor(unittest.TestCase):
                 )
                 mock_fetch_survival_dependencies.return_value = dependencies
 
-                mock_process_survival_prob.return_value = (
-                    sentinel.survival_probabilities
-                )
+                mock_process_survival_prob.return_value = sentinel.survival_probabilities
 
                 processor = LoProcessor(sentinel.input_dependencies, input_metadata)
                 product = processor.process(spice_frame_name=SpiceFrame.IMAP_DPS)
@@ -241,9 +229,7 @@ class TestLoProcessor(unittest.TestCase):
                 mock_process_survival_prob.reset_mock()
                 mock_save_data.reset_mock()
 
-    @patch(
-        "imap_l3_processing.lo.lo_processor.LoCombinedDependencies.fetch_dependencies"
-    )
+    @patch("imap_l3_processing.lo.lo_processor.LoCombinedDependencies.fetch_dependencies")
     @patch("imap_l3_processing.lo.lo_processor.ExposureWeightedCombination")
     @patch("imap_l3_processing.lo.lo_processor.save_data")
     def test_process_lo_combined(
@@ -253,9 +239,7 @@ class TestLoProcessor(unittest.TestCase):
         mock_fetch_combined_dependencies,
     ):
 
-        mock_exposure_weighted_combination = (
-            mock_exposure_weighted_combination_class.return_value
-        )
+        mock_exposure_weighted_combination = mock_exposure_weighted_combination_class.return_value
 
         input_metadata = InputMetadata(
             instrument="lo",
@@ -271,32 +255,20 @@ class TestLoProcessor(unittest.TestCase):
         )
 
         processing_input = ProcessingInputCollection(
-            ScienceInput(
-                "imap_lo_l3_l075-ena-h-hf-sp-ram-hae-6deg-6mo_20250422_v001.cdf"
-            ),
-            ScienceInput(
-                "imap_lo_l3_l090-ena-h-hf-sp-ram-hae-6deg-6mo_20250422_v001.cdf"
-            ),
-            ScienceInput(
-                "imap_lo_l3_l105-ena-h-hf-sp-ram-hae-6deg-6mo_20250422_v001.cdf"
-            ),
+            ScienceInput("imap_lo_l3_l075-ena-h-hf-sp-ram-hae-6deg-6mo_20250422_v001.cdf"),
+            ScienceInput("imap_lo_l3_l090-ena-h-hf-sp-ram-hae-6deg-6mo_20250422_v001.cdf"),
+            ScienceInput("imap_lo_l3_l105-ena-h-hf-sp-ram-hae-6deg-6mo_20250422_v001.cdf"),
         )
 
         lo_processor = LoProcessor(processing_input, input_metadata)
 
-        [combined_product] = lo_processor.process(
-            spice_frame_name=SpiceFrame.ECLIPJ2000
-        )
+        [combined_product] = lo_processor.process(spice_frame_name=SpiceFrame.ECLIPJ2000)
 
         mock_fetch_combined_dependencies.assert_called_once_with(processing_input)
 
-        mock_combine = (
-            mock_exposure_weighted_combination.combine_rectangular_intensity_map_data
-        )
+        mock_combine = mock_exposure_weighted_combination.combine_rectangular_intensity_map_data
 
-        mock_combine.assert_called_once_with(
-            [sentinel.l075, sentinel.l090, sentinel.l105]
-        )
+        mock_combine.assert_called_once_with([sentinel.l075, sentinel.l090, sentinel.l105])
 
         expected_parents = [
             "imap_lo_l3_l075-ena-h-hf-sp-ram-hae-6deg-6mo_20250422_v001.cdf",
@@ -361,27 +333,19 @@ class TestLoProcessor(unittest.TestCase):
             obs_date=np.arange(1 * 7 * 60 * 30).reshape((1, 7, 60, 30)) * 5,
             obs_date_range=np.arange(1 * 7 * 60 * 30).reshape((1, 7, 60, 30)) * 6,
             ena_intensity=np.arange(1 * 7 * 60 * 30).reshape((1, 7, 60, 30)) * 7,
-            ena_intensity_sys_err=np.arange(1 * 7 * 60 * 30).reshape((1, 7, 60, 30))
-            * 8,
-            ena_intensity_stat_uncert=np.arange(1 * 7 * 60 * 30).reshape((1, 7, 60, 30))
-            * 9,
+            ena_intensity_sys_err=np.arange(1 * 7 * 60 * 30).reshape((1, 7, 60, 30)) * 8,
+            ena_intensity_stat_uncert=np.arange(1 * 7 * 60 * 30).reshape((1, 7, 60, 30)) * 9,
             bg_rate_sys_err=np.arange(1 * 7 * 60 * 30).reshape((1, 7, 60, 30)) * 11,
             ena_count_rate=np.ones((1, 7, 60, 30)) * 3,
             bg_rate=np.ones((1, 7, 60, 30)) * 2,
             bg_rate_stat_uncert=np.ones((1, 7, 60, 30)) * 3,
             ena_count_rate_stat_uncert=np.ones((1, 7, 60, 30)) * 2,
         )
-        actual_map_data: ISNBackgroundSubtractedMapData = isn_background_subtraction(
-            input_data
-        )
-        actual_isn_rate_map_data: ISNBackgroundSubtractedData = (
-            actual_map_data.isn_rate_map_data
-        )
+        actual_map_data: ISNBackgroundSubtractedMapData = isn_background_subtraction(input_data)
+        actual_isn_rate_map_data: ISNBackgroundSubtractedData = actual_map_data.isn_rate_map_data
 
         expected_isn_bg_rate_subtracted = np.ones((1, 7, 60, 30))
-        expected_isn_bg_rate_subtracted_stat_uncert = np.ones((1, 7, 60, 30)) * np.sqrt(
-            13
-        )
+        expected_isn_bg_rate_subtracted_stat_uncert = np.ones((1, 7, 60, 30)) * np.sqrt(13)
 
         np.testing.assert_array_equal(
             actual_isn_rate_map_data.isn_bg_rate_subtracted,
@@ -392,9 +356,7 @@ class TestLoProcessor(unittest.TestCase):
             expected_isn_bg_rate_subtracted_stat_uncert,
         )
 
-        np.testing.assert_array_equal(
-            actual_isn_rate_map_data.energy, input_data.energy
-        )
+        np.testing.assert_array_equal(actual_isn_rate_map_data.energy, input_data.energy)
         np.testing.assert_array_equal(
             actual_isn_rate_map_data.energy_delta_plus, input_data.energy_delta_plus
         )
@@ -407,15 +369,11 @@ class TestLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(
             actual_isn_rate_map_data.exposure_factor, input_data.exposure_factor
         )
-        np.testing.assert_array_equal(
-            actual_isn_rate_map_data.obs_date, input_data.obs_date
-        )
+        np.testing.assert_array_equal(actual_isn_rate_map_data.obs_date, input_data.obs_date)
         np.testing.assert_array_equal(
             actual_isn_rate_map_data.obs_date_range, input_data.obs_date_range
         )
-        np.testing.assert_array_equal(
-            actual_isn_rate_map_data.bg_rate, input_data.bg_rate
-        )
+        np.testing.assert_array_equal(actual_isn_rate_map_data.bg_rate, input_data.bg_rate)
         np.testing.assert_array_equal(
             actual_isn_rate_map_data.bg_rate_stat_uncert, input_data.bg_rate_stat_uncert
         )
@@ -430,17 +388,9 @@ class TestLoProcessor(unittest.TestCase):
         self.assertEqual(actual_isn_rate_map_data.epoch, sentinel.epoch)
         self.assertEqual(actual_isn_rate_map_data.solid_angle, sentinel.solid_angle)
         self.assertEqual(actual_isn_rate_map_data.latitude, sentinel.latitude)
-        self.assertEqual(
-            actual_isn_rate_map_data.latitude_delta, sentinel.latitude_delta
-        )
-        self.assertEqual(
-            actual_isn_rate_map_data.latitude_label, sentinel.latitude_label
-        )
+        self.assertEqual(actual_isn_rate_map_data.latitude_delta, sentinel.latitude_delta)
+        self.assertEqual(actual_isn_rate_map_data.latitude_label, sentinel.latitude_label)
         self.assertEqual(actual_isn_rate_map_data.longitude, sentinel.longitude)
-        self.assertEqual(
-            actual_isn_rate_map_data.longitude_delta, sentinel.longitude_delta
-        )
-        self.assertEqual(
-            actual_isn_rate_map_data.longitude_label, sentinel.longitude_label
-        )
+        self.assertEqual(actual_isn_rate_map_data.longitude_delta, sentinel.longitude_delta)
+        self.assertEqual(actual_isn_rate_map_data.longitude_label, sentinel.longitude_label)
         self.assertEqual(actual_isn_rate_map_data.epoch_delta, sentinel.epoch_delta)

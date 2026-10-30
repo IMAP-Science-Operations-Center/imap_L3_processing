@@ -6,17 +6,17 @@ import numpy as np
 import pandas as pd
 
 from imap_l3_processing.swapi.response.azimuthal_transmission import (
-    AzimuthalTransmissionGrid,
     OA_PLATEAU_AZIMUTH_MAX_DEG,
     OA_PLATEAU_AZIMUTH_MIN_DEG,
     OA_PLATEAU_TRANSMISSION,
     SG_PLATEAU_AZIMUTH_MAX_DEG,
     SG_PLATEAU_TRANSMISSION,
+    AzimuthalTransmissionGrid,
     interpolate_azimuthal_transmission,
     validate_azimuthal_transmission_values,
 )
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
-from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path
+from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path
 
 _TRANSMISSION_CSV = get_test_instrument_team_data_path(
     "swapi/imap_swapi_azimuthal-transmission_20260425_v001.csv"
@@ -79,9 +79,7 @@ class TestInterpolateAzimuthalTransmission(unittest.TestCase):
         for fraction in [0.25, 0.7, 0.9]:
             with self.subTest(fraction=fraction):
                 az = az_lower + fraction * _SPACING_DEG
-                expected = (1 - fraction) * self.values[idx] + fraction * self.values[
-                    idx + 1
-                ]
+                expected = (1 - fraction) * self.values[idx] + fraction * self.values[idx + 1]
                 got = interpolate_azimuthal_transmission(self.grid, az)
                 self.assertAlmostEqual(got, float(expected))
 
@@ -120,10 +118,10 @@ class TestInterpolateAzimuthalTransmission(unittest.TestCase):
           - multi-period inputs (±541°) wrap into the canonical interval
             (541 mod 360 = 181 → wraps to -179° → |az| = 179°)
         """
-        idx_at_1deg = int(round(1.0 / _SPACING_DEG))
+        idx_at_1deg = round(1.0 / _SPACING_DEG)
         expected_at_1deg = float(self.values[idx_at_1deg])
         last_value = float(self.values[-1])
-        idx_at_179deg = int(round(179.0 / _SPACING_DEG))
+        idx_at_179deg = round(179.0 / _SPACING_DEG)
         expected_at_179deg = float(self.values[idx_at_179deg])
 
         for label, az, expected in [
@@ -172,9 +170,7 @@ class TestRealGridShape(unittest.TestCase):
         self.assertAlmostEqual(float(grid.values[0]), 1e-3)
 
 
-def _build_grid_satisfying_invariants(
-    spacing: float = 0.1, n: int = 1801
-) -> np.ndarray:
+def _build_grid_satisfying_invariants(spacing: float = 0.1, n: int = 1801) -> np.ndarray:
     """Build a synthetic values array that respects the SG-floor and OA-plateau
     invariants the interpolator's short-circuit branches assume. Cells outside
     those two ranges are set to a neutral 0.5 so a test can corrupt a single
@@ -225,7 +221,7 @@ class TestValidateAzimuthalTransmissionValues(unittest.TestCase):
     def test_raises_when_sg_plateau_endpoint_is_wrong(self):
         # |az| = 9.0° (= SG_PLATEAU_AZIMUTH_MAX_DEG) is inclusive.
         values = _build_grid_satisfying_invariants()
-        endpoint_index = int(round(SG_PLATEAU_AZIMUTH_MAX_DEG / 0.1))
+        endpoint_index = round(SG_PLATEAU_AZIMUTH_MAX_DEG / 0.1)
         values[endpoint_index] = 0.5
         with self.assertRaises(ValueError):
             validate_azimuthal_transmission_values(values, 0.1)
@@ -233,7 +229,7 @@ class TestValidateAzimuthalTransmissionValues(unittest.TestCase):
     def test_raises_when_oa_plateau_endpoint_is_wrong(self):
         # The 115° endpoint is inclusive — corrupt it and validation must trip.
         values = _build_grid_satisfying_invariants()
-        endpoint_index = int(round(OA_PLATEAU_AZIMUTH_MAX_DEG / 0.1))
+        endpoint_index = round(OA_PLATEAU_AZIMUTH_MAX_DEG / 0.1)
         values[endpoint_index] = 0.5
         with self.assertRaises(ValueError):
             validate_azimuthal_transmission_values(values, 0.1)

@@ -15,6 +15,12 @@ from imap_l3_processing.constants import (
     ONE_SECOND_IN_NANOSECONDS,
     THIRTY_SECONDS_IN_NANOSECONDS,
 )
+from imap_l3_processing.predicted_ephemeris_tracker import PredictedEphemerisTracker
+from imap_l3_processing.swapi.constants import (
+    SWAPI_COARSE_SWEEP_BINS,
+    SWAPI_L2_K_FACTOR,
+    SWAPI_SCIENCE_BINS,
+)
 from imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_pickup_ion_values import (
     PickupIonFitInputData,
     calculate_pickup_ion_values,
@@ -26,18 +32,12 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.alpha.fit_solar_wind_alpha_
     AlphaSolarWindFitResult,
     fit_solar_wind_alpha_model,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
-    ProtonSolarWindFitResult,
-    fit_solar_wind_proton_model,
-)
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
 )
-from imap_l3_processing.swapi.species import Species
-from imap_l3_processing.swapi.constants import (
-    SWAPI_COARSE_SWEEP_BINS,
-    SWAPI_L2_K_FACTOR,
-    SWAPI_SCIENCE_BINS,
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.fit_solar_wind_proton_model import (
+    ProtonSolarWindFitResult,
+    fit_solar_wind_proton_model,
 )
 from imap_l3_processing.swapi.l3a.utils import (
     compute_direction_of_mean_magnetic_field_over_chunk,
@@ -49,7 +49,7 @@ from imap_l3_processing.swapi.l3a.utils import (
     solar_wind_chunk_epoch,
 )
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
-from imap_l3_processing.predicted_ephemeris_tracker import PredictedEphemerisTracker
+from imap_l3_processing.swapi.species import Species
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ class ParallelChunkRunner:
                 _run_one, [(chunk, geom) for chunk, geom in zip(chunks, geometries)]
             )
 
-        return {k: np.array([r[k] for r in results]) for k in results[0].keys()}
+        return {k: np.array([r[k] for r in results]) for k in results[0]}
 
 
 def _init_worker(swapi_response, efficiency_table, fitter):
@@ -103,9 +103,7 @@ class ProtonChunkFitter(ChunkFitter):
             sc_vel = None
             tracker = PredictedEphemerisTracker()
             try:
-                science_bin_times = measurement_times(chunk.sci_start_time)[
-                    :, SWAPI_SCIENCE_BINS
-                ]
+                science_bin_times = measurement_times(chunk.sci_start_time)[:, SWAPI_SCIENCE_BINS]
                 rm = tracker.run(get_swapi_geometry, science_bin_times.ravel())
             except Exception:
                 logger.warning(
@@ -122,9 +120,7 @@ class ProtonChunkFitter(ChunkFitter):
                         exc_info=True,
                     )
             flags = (
-                SwapiL3Flags.PREDICTIVE_EPHEMERIS
-                if tracker.used_predict
-                else SwapiL3Flags.NONE
+                SwapiL3Flags.PREDICTIVE_EPHEMERIS if tracker.used_predict else SwapiL3Flags.NONE
             )
             geometries.append((epoch, rm, sc_vel, flags))
 
@@ -156,11 +152,9 @@ class AlphaChunkFitter(ChunkFitter):
             sc_vel = None
             tracker = PredictedEphemerisTracker()
             try:
-                science_bin_times = measurement_times(chunk.sci_start_time)[
-                    :, SWAPI_SCIENCE_BINS
-                ]
+                science_bin_times = measurement_times(chunk.sci_start_time)[:, SWAPI_SCIENCE_BINS]
                 rm = tracker.run(get_swapi_geometry, science_bin_times.ravel())
-            except Exception:
+            except SpiceyError:
                 logger.info(
                     f"Missing SPICE information at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}, continuing with fill value"
                 )
@@ -168,7 +162,7 @@ class AlphaChunkFitter(ChunkFitter):
             if rm is not None:
                 try:
                     sc_vel = tracker.run(get_spacecraft_velocity_rtn, epoch)
-                except Exception:
+                except SpiceyError:
                     logger.warning(
                         "SPICE gap in spacecraft velocity.",
                         exc_info=True,
@@ -178,9 +172,7 @@ class AlphaChunkFitter(ChunkFitter):
                 self.mag_data, int(epoch), int(THIRTY_SECONDS_IN_NANOSECONDS)
             )
             flags = (
-                SwapiL3Flags.PREDICTIVE_EPHEMERIS
-                if tracker.used_predict
-                else SwapiL3Flags.NONE
+                SwapiL3Flags.PREDICTIVE_EPHEMERIS if tracker.used_predict else SwapiL3Flags.NONE
             )
             geometries.append((epoch, rm, sc_vel, b_hat, flags))
         return geometries
@@ -194,9 +186,7 @@ class AlphaChunkFitter(ChunkFitter):
         magnetic_field_direction,
         geometry_quality_flags: SwapiL3Flags,
     ):
-        result = _fit_alpha(
-            data_chunk, epoch, rotation_matrices, magnetic_field_direction
-        )
+        result = _fit_alpha(data_chunk, epoch, rotation_matrices, magnetic_field_direction)
         moments = _alpha_moments_from_fit(result, epoch, sc_velocity_rtn)
         moments["quality_flags"] |= geometry_quality_flags
         return moments
@@ -210,9 +200,7 @@ class PuiChunkFitter(ChunkFitter):
         helium_inflow_vector,
         proton_sw_results: dict,
     ):
-        self.density_of_neutral_helium_lookup_table = (
-            density_of_neutral_helium_lookup_table
-        )
+        self.density_of_neutral_helium_lookup_table = density_of_neutral_helium_lookup_table
         self.hydrogen_inflow_vector = hydrogen_inflow_vector
         self.helium_inflow_vector = helium_inflow_vector
         self.proton_sw_results = proton_sw_results
@@ -226,9 +214,7 @@ class PuiChunkFitter(ChunkFitter):
         10-minute chunks and compute the bitwise-OR of the per-minute flags.
 
         Skip fill-value solar wind fits when there aren't too many."""
-        velocities_rtn = np.asarray(
-            self.proton_sw_results["proton_sw_velocity_rtn"], dtype=float
-        )
+        velocities_rtn = np.asarray(self.proton_sw_results["proton_sw_velocity_rtn"], dtype=float)
         velocities_rtn_sun = np.asarray(
             self.proton_sw_results["proton_sw_velocity_rtn_sun"], dtype=float
         )
@@ -248,9 +234,7 @@ class PuiChunkFitter(ChunkFitter):
             )
 
             if np.count_nonzero(is_usable) >= self.MIN_SOLAR_WIND_FITS_PER_CHUNK:
-                ten_minute_velocities_rtn.append(
-                    np.mean(chunk_velocities_rtn[is_usable], axis=0)
-                )
+                ten_minute_velocities_rtn.append(np.mean(chunk_velocities_rtn[is_usable], axis=0))
                 ten_minute_velocities_rtn_sun.append(
                     np.mean(chunk_velocities_rtn_sun[is_usable], axis=0)
                 )
@@ -258,9 +242,7 @@ class PuiChunkFitter(ChunkFitter):
                     np.bitwise_or.reduce(chunk_quality_flags[is_usable])
                 )
             else:
-                ten_minute_velocities_rtn.append(
-                    np.full(chunk_velocities_rtn.shape[1], np.nan)
-                )
+                ten_minute_velocities_rtn.append(np.full(chunk_velocities_rtn.shape[1], np.nan))
                 ten_minute_velocities_rtn_sun.append(
                     np.full(chunk_velocities_rtn_sun.shape[1], np.nan)
                 )
@@ -288,9 +270,7 @@ class PuiChunkFitter(ChunkFitter):
             epoch = pickup_ion_chunk_epoch(chunk)
             proton_sw_quality_flag = int(sw_flags)
 
-            if np.any(np.isnan(sw_velocity_rtn_sc)) or np.any(
-                np.isnan(sw_velocity_rtn_sun)
-            ):
+            if np.any(np.isnan(sw_velocity_rtn_sc)) or np.any(np.isnan(sw_velocity_rtn_sun)):
                 logger.info(f"solar wind velocity gap at {epoch}")
                 input_data_list.append((None, proton_sw_quality_flag))
                 continue
@@ -316,14 +296,11 @@ class PuiChunkFitter(ChunkFitter):
                         imap_position_eclipj2000_frame
                     )
                     inflow_angle = (
-                        np.rad2deg(longitude)
-                        - self.helium_inflow_vector.longitude_deg_eclipj2000
+                        np.rad2deg(longitude) - self.helium_inflow_vector.longitude_deg_eclipj2000
                     )
                     return distance_km, inflow_angle
 
-                distance, inflow_angle = tracker.run(
-                    compute_chunk_position, chunk_ephemeris_time
-                )
+                distance, inflow_angle = tracker.run(compute_chunk_position, chunk_ephemeris_time)
             except SpiceyError:
                 logger.info(f"SPICE gap at {epoch}")
                 input_data_list.append((None, proton_sw_quality_flag))
@@ -336,9 +313,7 @@ class PuiChunkFitter(ChunkFitter):
                 (
                     PickupIonFitInputData(
                         time_as_tt2000=epoch,
-                        esa_energies=chunk.energy[:, SWAPI_COARSE_SWEEP_BINS].mean(
-                            axis=0
-                        ),
+                        esa_energies=chunk.energy[:, SWAPI_COARSE_SWEEP_BINS].mean(axis=0),
                         coincidence_count_rates=chunk.coincidence_count_rate[
                             :, SWAPI_COARSE_SWEEP_BINS
                         ],
@@ -363,13 +338,9 @@ class PuiChunkFitter(ChunkFitter):
     ):
         epoch = pickup_ion_chunk_epoch(data_chunk)
 
-        count_rates_window = data_chunk.coincidence_count_rate[
-            :, SWAPI_COARSE_SWEEP_BINS
-        ]
+        count_rates_window = data_chunk.coincidence_count_rate[:, SWAPI_COARSE_SWEEP_BINS]
         if np.any(np.isnan(count_rates_window)):
-            return _pui_fill_result(
-                epoch, quality_flag, "gap in L2 coincidence count rate"
-            )
+            return _pui_fill_result(epoch, quality_flag, "gap in L2 coincidence count rate")
         if fit_input is None:
             return _pui_fill_result(
                 epoch,
@@ -392,14 +363,14 @@ class PuiChunkFitter(ChunkFitter):
             )
             return _pui_fill_result(epoch, quality_flag)
 
-        return dict(
-            epoch=epoch,
-            ionization_rate=fit_result.ionization_rate,
-            cutoff_speed=fit_result.cutoff_speed,
-            density=fit_result.density,
-            temperature=fit_result.temperature,
-            quality_flags=int(quality_flag) | int(fit_result.flags),
-        )
+        return {
+            "epoch": epoch,
+            "ionization_rate": fit_result.ionization_rate,
+            "cutoff_speed": fit_result.cutoff_speed,
+            "density": fit_result.density,
+            "temperature": fit_result.temperature,
+            "quality_flags": int(quality_flag) | int(fit_result.flags),
+        }
 
 
 def _proton_moments_from_fit(result, epoch, data_chunk, sc_velocity_rtn):
@@ -428,21 +399,21 @@ def _proton_moments_from_fit(result, epoch, data_chunk, sc_velocity_rtn):
     if not np.isfinite(speed_nom):
         speed_nom = _peak_proton_speed_kms(data_chunk)
 
-    return dict(
-        epoch=epoch,
-        proton_sw_speed=speed_nom,
-        proton_sw_speed_uncert=speed_unc,
-        proton_sw_speed_sun=sun_speed_nom,
-        proton_sw_speed_sun_uncert=sun_speed_unc,
-        proton_sw_temperature=temp_nom,
-        proton_sw_temperature_uncert=temp_unc,
-        proton_sw_density=density_nom,
-        proton_sw_density_uncert=density_unc,
-        proton_sw_velocity_rtn_sun=velocity_rtn_sun,
-        proton_sw_velocity_rtn=velocity_rtn_sc,
-        proton_sw_velocity_rtn_covariance=velocity_rtn_covariance,
-        quality_flags=result.quality_flag,
-    )
+    return {
+        "epoch": epoch,
+        "proton_sw_speed": speed_nom,
+        "proton_sw_speed_uncert": speed_unc,
+        "proton_sw_speed_sun": sun_speed_nom,
+        "proton_sw_speed_sun_uncert": sun_speed_unc,
+        "proton_sw_temperature": temp_nom,
+        "proton_sw_temperature_uncert": temp_unc,
+        "proton_sw_density": density_nom,
+        "proton_sw_density_uncert": density_unc,
+        "proton_sw_velocity_rtn_sun": velocity_rtn_sun,
+        "proton_sw_velocity_rtn": velocity_rtn_sc,
+        "proton_sw_velocity_rtn_covariance": velocity_rtn_covariance,
+        "quality_flags": result.quality_flag,
+    }
 
 
 def _alpha_moments_from_fit(result, epoch, sc_velocity_rtn):
@@ -466,21 +437,21 @@ def _alpha_moments_from_fit(result, epoch, sc_velocity_rtn):
         velocity_rtn_sun = np.full(3, np.nan)
         sun_speed_nom = sun_speed_unc = np.nan
 
-    return dict(
-        epoch=epoch,
-        alpha_sw_speed=speed.nominal_value,
-        alpha_sw_speed_uncert=speed.std_dev,
-        alpha_sw_speed_sun=sun_speed_nom,
-        alpha_sw_speed_sun_uncert=sun_speed_unc,
-        alpha_sw_density=alpha.density.nominal_value,
-        alpha_sw_density_uncert=alpha.density.std_dev,
-        alpha_sw_temperature=alpha.temperature.nominal_value,
-        alpha_sw_temperature_uncert=alpha.temperature.std_dev,
-        alpha_sw_velocity_rtn_sun=velocity_rtn_sun,
-        alpha_sw_velocity_rtn=velocity_rtn_sc,
-        alpha_sw_velocity_rtn_covariance=velocity_rtn_covariance,
-        quality_flags=result.quality_flag,
-    )
+    return {
+        "epoch": epoch,
+        "alpha_sw_speed": speed.nominal_value,
+        "alpha_sw_speed_uncert": speed.std_dev,
+        "alpha_sw_speed_sun": sun_speed_nom,
+        "alpha_sw_speed_sun_uncert": sun_speed_unc,
+        "alpha_sw_density": alpha.density.nominal_value,
+        "alpha_sw_density_uncert": alpha.density.std_dev,
+        "alpha_sw_temperature": alpha.temperature.nominal_value,
+        "alpha_sw_temperature_uncert": alpha.temperature.std_dev,
+        "alpha_sw_velocity_rtn_sun": velocity_rtn_sun,
+        "alpha_sw_velocity_rtn": velocity_rtn_sc,
+        "alpha_sw_velocity_rtn_covariance": velocity_rtn_covariance,
+        "quality_flags": result.quality_flag,
+    }
 
 
 _PEAK_SPEED_HALF_WIDTH = 4
@@ -562,9 +533,9 @@ def _fit_proton(data_chunk, epoch, rotation_matrices) -> ProtonSolarWindFitResul
         n_sweeps_local, n_bins_local = voltages.shape
         voltages = voltages[:, keep_bins]
         count_rates = count_rates[:, keep_bins]
-        rotation_matrices = rotation_matrices.reshape(
-            n_sweeps_local, n_bins_local, 3, 3
-        )[:, keep_bins].reshape(-1, 3, 3)
+        rotation_matrices = rotation_matrices.reshape(n_sweeps_local, n_bins_local, 3, 3)[
+            :, keep_bins
+        ].reshape(-1, 3, 3)
 
     ctx = build_solar_wind_fit_context(
         count_rate=count_rates,
@@ -593,14 +564,14 @@ def _pui_fill_result(epoch, proton_sw_quality_flag, reason=None) -> dict:
             f"{reason}; using fill values"
         )
     nan = ufloat(np.nan, np.nan)
-    return dict(
-        epoch=epoch,
-        ionization_rate=nan,
-        cutoff_speed=nan,
-        density=nan,
-        temperature=nan,
-        quality_flags=int(proton_sw_quality_flag),
-    )
+    return {
+        "epoch": epoch,
+        "ionization_rate": nan,
+        "cutoff_speed": nan,
+        "density": nan,
+        "temperature": nan,
+        "quality_flags": int(proton_sw_quality_flag),
+    }
 
 
 def _nan_proton_result(flag) -> ProtonSolarWindFitResult:
@@ -644,9 +615,7 @@ def _fit_alpha(
     magnetic_field_direction,
 ) -> AlphaChunkFitResult:
     nan_b_hat = np.full(3, np.nan)
-    if magnetic_field_direction is None or not np.all(
-        np.isfinite(magnetic_field_direction)
-    ):
+    if magnetic_field_direction is None or not np.all(np.isfinite(magnetic_field_direction)):
         logger.warning(
             f"Alpha fit at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}: missing or non-finite magnetic field direction; using fill values"
         )
@@ -659,9 +628,7 @@ def _fit_alpha(
 
     proton_moments = _fit_proton(data_chunk, epoch, rotation_matrices)
     if not np.all(
-        np.isfinite(
-            [component.nominal_value for component in proton_moments.velocity_rtn]
-        )
+        np.isfinite([component.nominal_value for component in proton_moments.velocity_rtn])
     ):
         return AlphaChunkFitResult(
             alpha_moments=_nan_alpha_fit_result(proton_moments.quality_flag),

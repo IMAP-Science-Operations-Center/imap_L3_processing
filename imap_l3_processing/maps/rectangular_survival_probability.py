@@ -1,10 +1,10 @@
 import numpy as np
 import xarray as xr
-from imap_processing.ena_maps.ena_maps import RectangularSkyMap, PointingSet
+from imap_processing.ena_maps.ena_maps import PointingSet, RectangularSkyMap
 from imap_processing.ena_maps.utils.coordinates import CoordNames
 from imap_processing.ena_maps.utils.corrections import (
-    apply_compton_getting_correction,
     add_spacecraft_position_and_velocity_to_pset,
+    apply_compton_getting_correction,
     calculate_ram_mask,
 )
 from imap_processing.spice.geometry import SpiceFrame
@@ -21,9 +21,7 @@ from imap_l3_processing.maps.quality_flags import MapL3Flags
 def interpolate_angular_data_to_nearest_neighbor(
     input_azimuths: np.array, glows_azimuths: np.array, glows_data: np.array
 ) -> np.array:
-    expanded_az = np.concatenate(
-        [glows_azimuths - 360, glows_azimuths, glows_azimuths + 360]
-    )
+    expanded_az = np.concatenate([glows_azimuths - 360, glows_azimuths, glows_azimuths + 360])
     expanded_glows_data = np.concatenate([glows_data, glows_data, glows_data], axis=1)
     sort = np.argsort(expanded_az)
     sorted_az = expanded_az[sort]
@@ -47,17 +45,13 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
         deg_spacing = 360 / num_spin_angle_bins
         half_bin_width = deg_spacing / 2
 
-        self.azimuths = (
-            np.linspace(0, 360, num_spin_angle_bins, endpoint=False) + half_bin_width
-        )
+        self.azimuths = np.linspace(0, 360, num_spin_angle_bins, endpoint=False) + half_bin_width
 
         sensor_angle = Sensor.get_sensor_angle(sensor)
         self.elevations = np.repeat(sensor_angle, num_spin_angle_bins)
 
         hae_az_el_points = xr.DataArray(
-            np.column_stack(
-                [l1c_dataset.hae_longitude[0], l1c_dataset.hae_latitude[0]]
-            ),
+            np.column_stack([l1c_dataset.hae_longitude[0], l1c_dataset.hae_latitude[0]]),
             dims=[CoordNames.GENERIC_PIXEL.value, CoordNames.AZ_EL_VECTOR.value],
         )
 
@@ -66,15 +60,10 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
         if l1c_dataset.epoch_delta is not None:
             repointing_midpoint = l1c_dataset.epoch_j2000 + l1c_dataset.epoch_delta / 2
         elif (
-            l1c_dataset.pointing_start_met is not None
-            and l1c_dataset.pointing_end_met is not None
+            l1c_dataset.pointing_start_met is not None and l1c_dataset.pointing_end_met is not None
         ):
-            pointing_duration = (
-                l1c_dataset.pointing_end_met - l1c_dataset.pointing_start_met
-            )
-            repointing_midpoint = l1c_dataset.epoch_j2000 + (
-                1e9 * pointing_duration / 2
-            )
+            pointing_duration = l1c_dataset.pointing_end_met - l1c_dataset.pointing_start_met
+            repointing_midpoint = l1c_dataset.epoch_j2000 + (1e9 * pointing_duration / 2)
 
         initial_dataset = xr.Dataset(
             {},
@@ -155,12 +144,10 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
             dataset["directional_mask"] = ~dataset["ram_mask"]
 
         if cg_corrected:
-            sp_interpolated_to_pset_angles = (
-                interpolate_angular_data_to_nearest_neighbor(
-                    self.azimuths,
-                    glows_dataset.spin_angle,
-                    glows_dataset.probability_of_survival[0],
-                )
+            sp_interpolated_to_pset_angles = interpolate_angular_data_to_nearest_neighbor(
+                self.azimuths,
+                glows_dataset.spin_angle,
+                glows_dataset.probability_of_survival[0],
             )
             log_sc_frame_energies = np.log10(spacecraft_frame_energies_in_kev[0])
 
@@ -173,9 +160,7 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                 )
         else:
             glows_spin_bin_count = len(glows_dataset.spin_angle)
-            sp_interpolated_to_hi_energies = np.empty(
-                shape=(len(energies), glows_spin_bin_count)
-            )
+            sp_interpolated_to_hi_energies = np.empty(shape=(len(energies), glows_spin_bin_count))
             for spin_angle_index in range(glows_spin_bin_count):
                 sp_interpolated_to_hi_energies[:, spin_angle_index] = np.interp(
                     np.log10(energies),
@@ -183,15 +168,11 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                     glows_dataset.probability_of_survival[0, :, spin_angle_index],
                 )
 
-            sp_interpolated_to_pset_angles = np.zeros(
-                (1, len(energies), num_spin_angle_bins)
-            )
-            sp_interpolated_to_pset_angles[0] = (
-                interpolate_angular_data_to_nearest_neighbor(
-                    self.azimuths,
-                    glows_dataset.spin_angle,
-                    sp_interpolated_to_hi_energies,
-                )
+            sp_interpolated_to_pset_angles = np.zeros((1, len(energies), num_spin_angle_bins))
+            sp_interpolated_to_pset_angles[0] = interpolate_angular_data_to_nearest_neighbor(
+                self.azimuths,
+                glows_dataset.spin_angle,
+                sp_interpolated_to_hi_energies,
             )
             sp_final = sp_interpolated_to_pset_angles
         flag_value = glows_dataset.flags[0]
@@ -222,9 +203,7 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
                 CoordNames.AZIMUTH_L1C.value,
             ],
         )
-        nominal_alpha_proton_flag_set = (
-            flag_value & GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO != 0
-        )
+        nominal_alpha_proton_flag_set = flag_value & GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO != 0
         dataset["nominal_alpha_proton_ratio_flag"] = xr.DataArray(
             exposure * nominal_alpha_proton_flag_set,
             dims=[
@@ -234,9 +213,7 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
             ],
         )
 
-        persisted_last_point_flag_set = (
-            flag_value & GlowsL3Flags.PERSISTED_LAST_POINT != 0
-        )
+        persisted_last_point_flag_set = flag_value & GlowsL3Flags.PERSISTED_LAST_POINT != 0
         dataset["persisted_last_point_flag"] = xr.DataArray(
             exposure * persisted_last_point_flag_set,
             dims=[
@@ -253,9 +230,7 @@ class RectangularSurvivalProbabilityPointingSet(PointingSet):
 class RectangularSurvivalProbabilitySkyMap(RectangularSkyMap):
     def __init__(
         self,
-        survival_probability_pointing_sets: list[
-            RectangularSurvivalProbabilityPointingSet
-        ],
+        survival_probability_pointing_sets: list[RectangularSurvivalProbabilityPointingSet],
         spacing_degree: float,
         spice_frame: SpiceFrame,
     ):
@@ -273,9 +248,7 @@ class RectangularSurvivalProbabilitySkyMap(RectangularSkyMap):
             )
 
         predicted_ephemeris_set = self.data_1d["predicted_ephemeris_flag"] != 0
-        nominal_alpha_proton_ratio_set = (
-            self.data_1d["nominal_alpha_proton_ratio_flag"] != 0
-        )
+        nominal_alpha_proton_ratio_set = self.data_1d["nominal_alpha_proton_ratio_flag"] != 0
         persisted_last_point_set = self.data_1d["persisted_last_point_flag"] != 0
         quality_flags_1d = (
             (predicted_ephemeris_set * MapL3Flags.PREDICTIVE_EPHEMERIS)

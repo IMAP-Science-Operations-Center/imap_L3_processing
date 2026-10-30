@@ -16,7 +16,6 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.utils import average_spin_a
 from imap_l3_processing.swapi.l3a.utils import optimal_density_scale
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 
-
 _MAX_BASIN_REFINE_ITERS = 6
 _ROTATED_RMSE_RATIO_THRESHOLD = 10
 
@@ -29,9 +28,7 @@ def escape_local_minimum(
 
     current_result = first_result
     for _ in range(_MAX_BASIN_REFINE_ITERS):
-        flipped_mse, flipped_seed_params = flipped_seed(
-            current_result, ctx, spin_axis_rtn
-        )
+        flipped_mse, flipped_seed_params = flipped_seed(current_result, ctx, spin_axis_rtn)
 
         flipped_seed_is_substantially_worse_than_current = (
             flipped_mse >= current_result.mse * _ROTATED_RMSE_RATIO_THRESHOLD**2

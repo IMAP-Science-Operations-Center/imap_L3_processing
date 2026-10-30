@@ -38,22 +38,18 @@ class GlowsL3BCDependencies:
         }
 
         ancillary_files = {
-            "uv_anisotropy": imap_data_access.download(
-                cr_to_process.uv_anisotropy_file_name
-            ),
+            "uv_anisotropy": imap_data_access.download(cr_to_process.uv_anisotropy_file_name),
             "WawHelioIonMP_parameters": imap_data_access.download(
                 cr_to_process.waw_helio_ion_mp_file_name
             ),
-            "bad_days_list": imap_data_access.download(
-                cr_to_process.bad_days_list_file_name
-            ),
+            "bad_days_list": imap_data_access.download(cr_to_process.bad_days_list_file_name),
             "pipeline_settings": imap_data_access.download(
                 cr_to_process.pipeline_settings_file_name
             ),
         }
 
         l3a_data = []
-        for l3a_file in sorted(list(cr_to_process.l3a_file_names)):
+        for l3a_file in sorted(cr_to_process.l3a_file_names):
             downloaded_file_path = imap_data_access.download(l3a_file)
             l3a_data.append(create_glows_l3a_dictionary_from_cdf(downloaded_file_path))
 

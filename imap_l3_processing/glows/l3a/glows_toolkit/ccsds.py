@@ -30,8 +30,7 @@ class CCSDSHeader:
         # print('first', bit_seq_as_string)
         self.data["ccsds_ver"] = int(bit_seq_as_string[:3], 2)
         assert self.data["ccsds_ver"] == 0, (
-            "Field ccsds_ver in CCSDS header has incorrect value"
-            + " %d" % self.data["ccsds_ver"]
+            f"Field ccsds_ver in CCSDS header has incorrect value {self.data['ccsds_ver']}"
         )
         self.data["pkt_type"] = bool(int(bit_seq_as_string[3]))
         self.data["sec_header_flag"] = bool(int(bit_seq_as_string[4]))
@@ -49,16 +48,15 @@ class CCSDSHeader:
             0x5B1,
             0x5C8,
             0x5C9,
-        ], "error deserialize(): wrong apid %d 0x%x" % (
-            self.data["apid"],
-            self.data["apid"],
+        ], "error deserialize(): wrong apid {apid:d} 0x{apid:x}".format(
+            apid=self.data["apid"],
         )
 
         aux = reader.read_uint16_be()
         bit_seq_as_string = format(aux, "b").zfill(16)
         # print('second', bit_seq_as_string)
         self.data["grouping_flag"] = int(bit_seq_as_string[:2], 2)
-        self.data["seq_count"] = int(bit_seq_as_string[2:], 2)
+        self.data["seq_count"] = int(bit_seq_as_string[2:], 2)  # noqa: FURB166
 
         # print(bit_seq_as_string, end=' ')
 
@@ -77,11 +75,8 @@ class CCSDSHeader:
         #          exit()
 
         if not reader.overrun:
-            assert (
-                self.data["packet_length"] >= 3 and self.data["packet_length"] <= 4089
-            ), (
-                "Field packet_length in CCSDS header has incorrect value"
-                + " %d" % self.data["packet_length"]
+            assert self.data["packet_length"] >= 3 and self.data["packet_length"] <= 4089, (
+                f"Field packet_length in CCSDS header has incorrect value {self.data['packet_length']}"
             )
 
         # SCLK/MET field is expected to be included in every CCSDS packet for GLOWS so it is

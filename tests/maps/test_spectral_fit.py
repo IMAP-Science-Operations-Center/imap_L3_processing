@@ -1,7 +1,7 @@
 import dataclasses
 import unittest
 from datetime import datetime
-from unittest.mock import patch, Mock, sentinel
+from unittest.mock import Mock, patch, sentinel
 
 import numpy as np
 from scipy.stats import linregress
@@ -13,10 +13,10 @@ from imap_l3_processing.maps.map_models import (
 from imap_l3_processing.maps.mpfit import mpfit
 from imap_l3_processing.maps.quality_flags import MapL3Flags
 from imap_l3_processing.maps.spectral_fit import (
-    power_law,
+    calculate_spectral_index_for_multiple_ranges,
     fit_arrays_to_power_law,
     fit_spectral_index_map,
-    calculate_spectral_index_for_multiple_ranges,
+    power_law,
     slice_energy_range_by_bin,
 )
 from tests.test_helpers import get_test_data_path
@@ -47,12 +47,8 @@ class TestSpectralFit(unittest.TestCase):
 
         for name, spacial_dimension_shape in cases:
             with self.subTest(name):
-                flux = np.array(flux_data).reshape(
-                    1, len(energies), *spacial_dimension_shape
-                )
-                uncertainty = np.array(errors).reshape(
-                    1, len(energies), *spacial_dimension_shape
-                )
+                flux = np.array(flux_data).reshape(1, len(energies), *spacial_dimension_shape)
+                uncertainty = np.array(errors).reshape(1, len(energies), *spacial_dimension_shape)
 
                 (
                     result_A,
@@ -89,18 +85,14 @@ class TestSpectralFit(unittest.TestCase):
 
         for name, spacial_dimension_shape in cases:
             with self.subTest(name):
-                flux = np.array(flux_data).reshape(
-                    1, len(energies), *spacial_dimension_shape
-                )
-                uncertainty = np.array(errors).reshape(
-                    1, len(energies), *spacial_dimension_shape
-                )
+                flux = np.array(flux_data).reshape(1, len(energies), *spacial_dimension_shape)
+                uncertainty = np.array(errors).reshape(1, len(energies), *spacial_dimension_shape)
 
                 (
                     result_A,
-                    result_A_error,
+                    _result_A_error,
                     result_gamma,
-                    result_gamma_error,
+                    _result_gamma_error,
                     result_chi_square,
                 ) = fit_arrays_to_power_law(flux, uncertainty, energies)
                 fitted_flux = result_A * np.power(
@@ -109,9 +101,7 @@ class TestSpectralFit(unittest.TestCase):
                 residual = fitted_flux - flux
                 chisquared = np.sum(np.square(residual / uncertainty))
                 reduced_chisquared = chisquared / (len(energies) - 2)
-                np.testing.assert_array_almost_equal(
-                    result_chi_square, reduced_chisquared
-                )
+                np.testing.assert_array_almost_equal(result_chi_square, reduced_chisquared)
 
     def test_handles_small_fluxes(self):
         energies = np.array([5.65826829, 8.45453724, 12.70203527])
@@ -122,19 +112,15 @@ class TestSpectralFit(unittest.TestCase):
 
         for name, spacial_dimension_shape in cases:
             with self.subTest(name):
-                flux = np.array(flux_data).reshape(
-                    1, len(energies), *spacial_dimension_shape
-                )
-                uncertainty = np.array(errors).reshape(
-                    1, len(energies), *spacial_dimension_shape
-                )
+                flux = np.array(flux_data).reshape(1, len(energies), *spacial_dimension_shape)
+                uncertainty = np.array(errors).reshape(1, len(energies), *spacial_dimension_shape)
 
                 (
                     result_a,
-                    result_a_error,
-                    result_gamma,
-                    result_gamma_error,
-                    result_chi_square,
+                    _result_a_error,
+                    _result_gamma,
+                    _result_gamma_error,
+                    _result_chi_square,
                 ) = fit_arrays_to_power_law(flux, uncertainty, energies)
                 self.assertGreater(result_a, 0)
 
@@ -158,9 +144,7 @@ class TestSpectralFit(unittest.TestCase):
             latitude=latitude,
             longitude=longitude,
             exposure_factor=np.full(full_shape, 1.0),
-            obs_date=np.ma.array(
-                np.full(full_shape, datetime(year=2010, month=1, day=1))
-            ),
+            obs_date=np.ma.array(np.full(full_shape, datetime(year=2010, month=1, day=1))),
             obs_date_range=np.full(full_shape, 100000),
             solid_angle=np.full(full_shape, 1.23),
             ena_intensity=np.array(flux_data).reshape(full_shape),
@@ -199,19 +183,11 @@ class TestSpectralFit(unittest.TestCase):
         np.testing.assert_array_almost_equal(
             spectral_intensity_map.energy_delta_plus, [expected_energy_plus]
         )
-        np.testing.assert_equal(
-            spectral_intensity_map.energy_label, [expected_energy_label]
-        )
+        np.testing.assert_equal(spectral_intensity_map.energy_label, [expected_energy_label])
 
-        np.testing.assert_array_almost_equal(
-            spectral_intensity_map.longitude, data.longitude
-        )
-        np.testing.assert_array_almost_equal(
-            spectral_intensity_map.latitude, data.latitude
-        )
-        np.testing.assert_array_almost_equal(
-            spectral_intensity_map.solid_angle, data.solid_angle
-        )
+        np.testing.assert_array_almost_equal(spectral_intensity_map.longitude, data.longitude)
+        np.testing.assert_array_almost_equal(spectral_intensity_map.latitude, data.latitude)
+        np.testing.assert_array_almost_equal(spectral_intensity_map.solid_angle, data.solid_angle)
 
     def test_spectral_fit_fields_other_than_fit_fields(self):
         input_energies = np.array([1, 10, 99]) + 0.5
@@ -272,12 +248,8 @@ class TestSpectralFit(unittest.TestCase):
         np.testing.assert_array_equal(
             output.obs_date, np.full(expected_ena_shape, datetime(2026, 1, 1))
         )
-        np.testing.assert_array_equal(
-            output.obs_date_range, np.full(expected_ena_shape, 2)
-        )
-        np.testing.assert_array_equal(
-            output.exposure_factor, np.full(expected_ena_shape, 6)
-        )
+        np.testing.assert_array_equal(output.obs_date_range, np.full(expected_ena_shape, 2))
+        np.testing.assert_array_equal(output.exposure_factor, np.full(expected_ena_shape, 6))
 
         expected_quality_flags = np.full(expected_ena_shape, MapL3Flags.NONE)
         expected_quality_flags[0, 0, 0] = MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO
@@ -303,18 +275,14 @@ class TestSpectralFit(unittest.TestCase):
 
         for name, spacial_dimension_shape in cases:
             with self.subTest(name):
-                flux = np.array(flux_data).reshape(
-                    1, len(energies), *spacial_dimension_shape
-                )
-                uncertainty = np.array(errors).reshape(
-                    1, len(energies), *spacial_dimension_shape
-                )
+                flux = np.array(flux_data).reshape(1, len(energies), *spacial_dimension_shape)
+                uncertainty = np.array(errors).reshape(1, len(energies), *spacial_dimension_shape)
 
                 (
                     scalar_coefficients,
-                    scalar_coefficient_error,
+                    _scalar_coefficient_error,
                     result,
-                    result_error,
+                    _result_error,
                     chisq,
                 ) = fit_arrays_to_power_law(flux, uncertainty, energies)
                 np.testing.assert_array_equal(
@@ -324,9 +292,7 @@ class TestSpectralFit(unittest.TestCase):
                     scalar_coefficients,
                     np.array(true_A).reshape(1, 1, *spacial_dimension_shape),
                 )
-                np.testing.assert_array_equal(
-                    chisq, np.zeros((1, 1, *spacial_dimension_shape))
-                )
+                np.testing.assert_array_equal(chisq, np.zeros((1, 1, *spacial_dimension_shape)))
 
     def test_spectral_fit_map_negative_gammas(self):
         epoch = np.array([datetime.now()])
@@ -348,9 +314,7 @@ class TestSpectralFit(unittest.TestCase):
             latitude=latitude,
             longitude=longitude,
             exposure_factor=np.full(full_shape, 1.0),
-            obs_date=np.ma.array(
-                np.full(full_shape, datetime(year=2010, month=1, day=1))
-            ),
+            obs_date=np.ma.array(np.full(full_shape, datetime(year=2010, month=1, day=1))),
             obs_date_range=np.full(full_shape, 100000),
             solid_angle=np.full(full_shape, 1.23),
             ena_intensity=np.array(flux_data).reshape(full_shape),
@@ -391,19 +355,11 @@ class TestSpectralFit(unittest.TestCase):
         np.testing.assert_array_almost_equal(
             spectral_intensity_map.energy_delta_plus, [expected_energy_plus]
         )
-        np.testing.assert_equal(
-            spectral_intensity_map.energy_label, [expected_energy_label]
-        )
+        np.testing.assert_equal(spectral_intensity_map.energy_label, [expected_energy_label])
 
-        np.testing.assert_array_almost_equal(
-            spectral_intensity_map.longitude, data.longitude
-        )
-        np.testing.assert_array_almost_equal(
-            spectral_intensity_map.latitude, data.latitude
-        )
-        np.testing.assert_array_almost_equal(
-            spectral_intensity_map.solid_angle, data.solid_angle
-        )
+        np.testing.assert_array_almost_equal(spectral_intensity_map.longitude, data.longitude)
+        np.testing.assert_array_almost_equal(spectral_intensity_map.latitude, data.latitude)
+        np.testing.assert_array_almost_equal(spectral_intensity_map.solid_angle, data.solid_angle)
 
     def test_finds_best_fit_with_nan_in_uncertainty(self):
         energies = np.geomspace(1, 10, 23)
@@ -420,18 +376,14 @@ class TestSpectralFit(unittest.TestCase):
             ("healpix", (1,)),
         ]:
             with self.subTest(name):
-                flux = np.array(flux_data).reshape(
-                    1, len(energies), *spacial_dimension_shape
-                )
-                uncertainty = np.array(errors).reshape(
-                    1, len(energies), *spacial_dimension_shape
-                )
+                flux = np.array(flux_data).reshape(1, len(energies), *spacial_dimension_shape)
+                uncertainty = np.array(errors).reshape(1, len(energies), *spacial_dimension_shape)
 
                 (
                     scalar_coefficients,
-                    scalar_coefficient_error,
+                    _scalar_coefficient_error,
                     result,
-                    result_error,
+                    _result_error,
                     chisq,
                 ) = fit_arrays_to_power_law(flux, uncertainty, energies)
                 np.testing.assert_array_equal(
@@ -441,9 +393,7 @@ class TestSpectralFit(unittest.TestCase):
                     scalar_coefficients,
                     np.array(true_A).reshape(1, 1, *spacial_dimension_shape),
                 )
-                np.testing.assert_array_equal(
-                    chisq, np.zeros((1, 1, *spacial_dimension_shape))
-                )
+                np.testing.assert_array_equal(chisq, np.zeros((1, 1, *spacial_dimension_shape)))
 
     def test_finds_best_fit_with_zero_in_flux_and_uncertainty(self):
         energies = np.geomspace(1, 10, 23)
@@ -459,18 +409,14 @@ class TestSpectralFit(unittest.TestCase):
             ("healpix", (1,)),
         ]:
             with self.subTest(name):
-                flux = np.array(flux_data).reshape(
-                    1, len(energies), *spacial_dimension_shape
-                )
-                uncertainty = np.array(errors).reshape(
-                    1, len(energies), *spacial_dimension_shape
-                )
+                flux = np.array(flux_data).reshape(1, len(energies), *spacial_dimension_shape)
+                uncertainty = np.array(errors).reshape(1, len(energies), *spacial_dimension_shape)
 
                 (
                     scalar_coefficients,
-                    scalar_coefficient_error,
+                    _scalar_coefficient_error,
                     result,
-                    result_error,
+                    _result_error,
                     chisq,
                 ) = fit_arrays_to_power_law(flux, uncertainty, energies)
                 np.testing.assert_array_equal(
@@ -480,9 +426,7 @@ class TestSpectralFit(unittest.TestCase):
                     scalar_coefficients,
                     np.array(true_A).reshape(1, 1, *spacial_dimension_shape),
                 )
-                np.testing.assert_array_equal(
-                    chisq, np.zeros((1, 1, *spacial_dimension_shape))
-                )
+                np.testing.assert_array_equal(chisq, np.zeros((1, 1, *spacial_dimension_shape)))
 
     def test_finds_best_fit_with_ibex_data(self):
         energies = np.array([0.71, 1.11, 1.74, 2.73, 4.29])
@@ -547,18 +491,14 @@ class TestSpectralFit(unittest.TestCase):
             ("healpix", (1,)),
         ]:
             with self.subTest(name):
-                flux = np.array(flux_data).reshape(
-                    1, len(energies), *spacial_dimension_shape
-                )
-                uncertainty = np.array(errors).reshape(
-                    1, len(energies), *spacial_dimension_shape
-                )
+                flux = np.array(flux_data).reshape(1, len(energies), *spacial_dimension_shape)
+                uncertainty = np.array(errors).reshape(1, len(energies), *spacial_dimension_shape)
 
                 (
                     scalar_coefficients,
-                    scalar_coefficient_error,
+                    _scalar_coefficient_error,
                     result,
-                    result_error,
+                    _result_error,
                     chisq,
                 ) = fit_arrays_to_power_law(flux, uncertainty, energies)
                 np.testing.assert_array_almost_equal(
@@ -587,12 +527,8 @@ class TestSpectralFit(unittest.TestCase):
             ("healpix", (1,)),
         ]:
             with self.subTest(name):
-                flux = np.array(flux_data).reshape(
-                    1, len(energies), *spacial_dimension_shape
-                )
-                uncertainty = np.array(errors).reshape(
-                    1, len(energies), *spacial_dimension_shape
-                )
+                flux = np.array(flux_data).reshape(1, len(energies), *spacial_dimension_shape)
+                uncertainty = np.array(errors).reshape(1, len(energies), *spacial_dimension_shape)
                 (
                     scalar_coefficients,
                     scalar_coefficient_error,
@@ -631,12 +567,8 @@ class TestSpectralFit(unittest.TestCase):
             ("healpix", (1,)),
         ]:
             with self.subTest(name):
-                flux = np.array(flux_data).reshape(
-                    1, len(energies), *spacial_dimension_shape
-                )
-                uncertainty = np.array(errors).reshape(
-                    1, len(energies), *spacial_dimension_shape
-                )
+                flux = np.array(flux_data).reshape(1, len(energies), *spacial_dimension_shape)
+                uncertainty = np.array(errors).reshape(1, len(energies), *spacial_dimension_shape)
 
                 (
                     scalar_coefficients,
@@ -670,12 +602,8 @@ class TestSpectralFit(unittest.TestCase):
         input_energy_range_2 = np.geomspace(101, 10000, 12)
         true_A_range_1, true_gamma_range_1 = 2.0, 1.5
         true_A_range_2, true_gamma_range_2 = 0.1, 3.5
-        flux_data_range_1 = true_A_range_1 * np.power(
-            input_energy_range_1, -true_gamma_range_1
-        )
-        flux_data_range_2 = true_A_range_2 * np.power(
-            input_energy_range_2, -true_gamma_range_2
-        )
+        flux_data_range_1 = true_A_range_1 * np.power(input_energy_range_1, -true_gamma_range_1)
+        flux_data_range_2 = true_A_range_2 * np.power(input_energy_range_2, -true_gamma_range_2)
         longitude = np.array([45])
         latitude = np.array([90])
         errors_range_1 = 0.1 * np.abs(flux_data_range_1)
@@ -691,9 +619,9 @@ class TestSpectralFit(unittest.TestCase):
         quality_flags_range_2 = np.full((12,), MapL3Flags.NONE)
         quality_flags_range_2[1] = MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO
         quality_flags_range_2[2] = MapL3Flags.PREDICTIVE_EPHEMERIS
-        quality_flags = np.concat(
-            (quality_flags_range_1, quality_flags_range_2)
-        ).reshape(full_shape)
+        quality_flags = np.concat((quality_flags_range_1, quality_flags_range_2)).reshape(
+            full_shape
+        )
 
         expected_quality_flags = np.array(
             [
@@ -712,9 +640,7 @@ class TestSpectralFit(unittest.TestCase):
             latitude=latitude,
             longitude=longitude,
             exposure_factor=np.full(full_shape, 1.0),
-            obs_date=np.ma.array(
-                np.full(full_shape, datetime(year=2010, month=1, day=1))
-            ),
+            obs_date=np.ma.array(np.full(full_shape, datetime(year=2010, month=1, day=1))),
             obs_date_range=np.full(full_shape, 100000),
             solid_angle=np.full(full_shape, 1.23),
             ena_intensity=flux,
@@ -762,14 +688,10 @@ class TestSpectralFit(unittest.TestCase):
             np.array([6.5887234, 902.0219449]),
         )
         np.testing.assert_array_equal(spectral_index_map_data.epoch, epoch)
-        np.testing.assert_array_equal(
-            spectral_index_map_data.epoch_delta, data.epoch_delta
-        )
+        np.testing.assert_array_equal(spectral_index_map_data.epoch_delta, data.epoch_delta)
         np.testing.assert_array_equal(spectral_index_map_data.latitude, latitude)
         np.testing.assert_array_equal(spectral_index_map_data.longitude, longitude)
-        np.testing.assert_array_equal(
-            spectral_index_map_data.solid_angle, data.solid_angle
-        )
+        np.testing.assert_array_equal(spectral_index_map_data.solid_angle, data.solid_angle)
 
         np.testing.assert_array_equal(
             spectral_index_map_data.energy_label, ["0.5 - 100.5", "100.5 - 10000.5"]
@@ -809,19 +731,15 @@ class TestSpectralFit(unittest.TestCase):
             for status_code in invalid_status_cases:
                 with self.subTest(f"Pixelization: {name}, status_code: {status_code}"):
                     mock_mpfit.return_value = Mock(status=status_code, params=(0, 0))
-                    flux = np.array(flux_data).reshape(
-                        1, len(energies), *spacial_dimension_shape
-                    )
+                    flux = np.array(flux_data).reshape(1, len(energies), *spacial_dimension_shape)
                     uncertainty = np.array(errors).reshape(
                         1, len(energies), *spacial_dimension_shape
                     )
 
-                    scalar, scalar_error, result, result_error, chisq = (
-                        fit_arrays_to_power_law(flux, uncertainty, energies)
+                    scalar, scalar_error, result, result_error, chisq = fit_arrays_to_power_law(
+                        flux, uncertainty, energies
                     )
-                    expected_nan_result = np.full(
-                        (1, 1, *spacial_dimension_shape), np.nan
-                    )
+                    expected_nan_result = np.full((1, 1, *spacial_dimension_shape), np.nan)
                     np.testing.assert_array_equal(result, expected_nan_result)
                     np.testing.assert_array_equal(result_error, expected_nan_result)
                     np.testing.assert_array_equal(scalar, expected_nan_result)
@@ -829,9 +747,7 @@ class TestSpectralFit(unittest.TestCase):
                     np.testing.assert_array_equal(chisq, expected_nan_result)
 
     @patch("imap_l3_processing.maps.spectral_fit.mpfit", wraps=mpfit)
-    @patch(
-        "imap_l3_processing.maps.spectral_fit.scipy.stats.linregress", wraps=linregress
-    )
+    @patch("imap_l3_processing.maps.spectral_fit.scipy.stats.linregress", wraps=linregress)
     def test_passes_initial_guess_to_mpfit_based_on_linear_fit_in_log_space(
         self, mock_linregress, mock_mpfit
     ):

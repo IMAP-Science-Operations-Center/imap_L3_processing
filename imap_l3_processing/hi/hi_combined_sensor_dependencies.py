@@ -21,15 +21,12 @@ class HiL3CombinedMapDependencies:
         input_map_filenames = dependencies.get_file_paths(source="hi")
 
         map_files = [
-            imap_data_access.download(input_map.name)
-            for input_map in input_map_filenames
+            imap_data_access.download(input_map.name) for input_map in input_map_filenames
         ]
         return cls.from_file_paths(map_files)
 
     @classmethod
-    def from_file_paths(
-        cls, hi_l3_map_paths: list[Path]
-    ) -> HiL3CombinedMapDependencies:
+    def from_file_paths(cls, hi_l3_map_paths: list[Path]) -> HiL3CombinedMapDependencies:
         return cls(
             [
                 RectangularIntensityMapData.read_from_path(path)
