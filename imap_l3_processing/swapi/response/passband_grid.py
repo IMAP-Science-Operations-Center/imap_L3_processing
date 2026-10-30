@@ -24,9 +24,7 @@ class PassbandGrid(NamedTuple):
 
 
 def build_passband_grid(values_df: pd.DataFrame) -> PassbandGrid:
-    grid_values = _build_passband_array(
-        values_df, _TARGET_ELEVATIONS, _TARGET_SPEED_RATIOS
-    )
+    grid_values = _build_passband_array(values_df, _TARGET_ELEVATIONS, _TARGET_SPEED_RATIOS)
     min_boundary, max_boundary = _passband_boundaries(grid_values, _TARGET_SPEED_RATIOS)
     elevation_range = _elevation_range(grid_values, _TARGET_ELEVATIONS)
 
@@ -180,12 +178,8 @@ def _elevation_range(grid_values: NDArray, target_elevations: NDArray) -> tuple:
     row_max = grid_values.max(axis=1)
     above = np.flatnonzero(row_max >= cutoff)
 
-    lo = _interp_cutoff_crossing(
-        target_elevations, row_max, cutoff, above[0], above[0] - 1
-    )
-    hi = _interp_cutoff_crossing(
-        target_elevations, row_max, cutoff, above[-1], above[-1] + 1
-    )
+    lo = _interp_cutoff_crossing(target_elevations, row_max, cutoff, above[0], above[0] - 1)
+    hi = _interp_cutoff_crossing(target_elevations, row_max, cutoff, above[-1], above[-1] + 1)
     return (float(lo), float(hi))
 
 

@@ -35,9 +35,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
         "imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiProcessor.process_l3a_direct_event"
     )
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.save_data")
-    def test_process_l3a(
-        self, mock_save_data, mock_process_l3a, mock_fetch_dependencies
-    ):
+    def test_process_l3a(self, mock_save_data, mock_process_l3a, mock_fetch_dependencies):
         start_date = datetime(2024, 10, 7, 10, 00, 00)
         end_date = datetime(2024, 10, 8, 10, 00, 00)
         input_metadata = InputMetadata("codice", "l3a", start_date, end_date, "v02")
@@ -54,9 +52,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
         mock_process_l3a.assert_called_with(mock_fetch_dependencies.return_value)
         mock_save_data.assert_called_with(mock_processed_direct_events)
         self.assertEqual([mock_save_data.return_value], product)
-        self.assertEqual(
-            ["parent_file_1"], mock_processed_direct_events.parent_file_names
-        )
+        self.assertEqual(["parent_file_1"], mock_processed_direct_events.parent_file_names)
 
     def test_process_l3a_with_small_dataset(self):
         high_gain_events = {
@@ -94,7 +90,9 @@ class TestCodiceHiProcessor(unittest.TestCase):
             return expected_factors.pop(key)
 
         mock_codice_hi_mass_correction_lut_ancillary = Mock()
-        mock_codice_hi_mass_correction_lut_ancillary.lookup_correction_factor.side_effect = lookup_factor
+        mock_codice_hi_mass_correction_lut_ancillary.lookup_correction_factor.side_effect = (
+            lookup_factor
+        )
 
         codice_hi_processor = CodiceHiProcessor(
             sentinel.processing_input_collection, input_metadata=sentinel.input_metadata
@@ -186,9 +184,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
             spin_sector=sentinel.l2_spin_sector,
         )
 
-        actual_output = codice_hi_processor.process_l3a_direct_event(
-            dependencies=dependencies
-        )
+        actual_output = codice_hi_processor.process_l3a_direct_event(dependencies=dependencies)
         for field in dataclasses.fields(CodiceL3HiDirectEvents):
             np.testing.assert_equal(
                 getattr(actual_output, field.name), getattr(expected_output, field.name)
@@ -284,9 +280,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
             spin_sector=sentinel.l2_spin_sector,
         )
 
-        actual_output = codice_hi_processor.process_l3a_direct_event(
-            dependencies=dependencies
-        )
+        actual_output = codice_hi_processor.process_l3a_direct_event(dependencies=dependencies)
         mock_lut.lookup_correction_factor.assert_not_called()
         for field in dataclasses.fields(CodiceL3HiDirectEvents):
             np.testing.assert_equal(
@@ -296,13 +290,9 @@ class TestCodiceHiProcessor(unittest.TestCase):
     @patch(
         "imap_l3_processing.codice.l3.hi.codice_hi_processor.CodicePitchAngleDependencies.fetch_dependencies"
     )
-    @patch(
-        "imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiProcessor.process_l3b"
-    )
+    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.CodiceHiProcessor.process_l3b")
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.save_data")
-    def test_process_l3b_saves(
-        self, mock_save_data, mock_process_l3b, mock_fetch_dependencies
-    ):
+    def test_process_l3b_saves(self, mock_save_data, mock_process_l3b, mock_fetch_dependencies):
         start_date = datetime(2024, 10, 7, 10, 00, 00)
         end_date = datetime(2024, 10, 8, 10, 00, 00)
         input_metadata = InputMetadata("codice", "l3b", start_date, end_date, "v02")
@@ -320,9 +310,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
         mock_process_l3b.assert_called_with(mock_fetch_dependencies.return_value)
         mock_save_data.assert_called_with(mock_processed_pitch_angles)
         self.assertEqual([mock_save_data.return_value], product)
-        self.assertEqual(
-            ["parent_file_2"], mock_processed_pitch_angles.parent_file_names
-        )
+        self.assertEqual(["parent_file_2"], mock_processed_pitch_angles.parent_file_names)
 
     def test_raises_exception_on_non_l3_input_metadata(self):
         input_metadata = InputMetadata("codice", "L2a", Mock(), Mock(), "v02")
@@ -333,9 +321,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
         self.assertEqual("Unknown data level for CoDICE: L2a", str(context.exception))
 
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.calculate_unit_vector")
-    @patch(
-        "imap_l3_processing.codice.l3.hi.codice_hi_processor.get_sector_unit_vectors"
-    )
+    @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.get_sector_unit_vectors")
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.calculate_pitch_angle")
     @patch("imap_l3_processing.codice.l3.hi.codice_hi_processor.calculate_gyrophase")
     @patch(
@@ -530,10 +516,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
         mock_get_sector_unit_vectors.assert_called_once_with(
             codice_l2_data.elevation_angle,
             NumpyArrayMatcher(
-                (
-                    codice_l2_data.spin_angles.T
-                    + CODICE_INSTRUMENT_TO_SC_FRAME_SPIN_ANGLE_OFFSET
-                )
+                (codice_l2_data.spin_angles.T + CODICE_INSTRUMENT_TO_SC_FRAME_SPIN_ANGLE_OFFSET)
                 % 360
             ),
         )
@@ -621,27 +604,21 @@ class TestCodiceHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(epoch, codice_hi_data_product.epoch)
         np.testing.assert_array_equal(epoch_delta, codice_hi_data_product.epoch_delta)
 
-        np.testing.assert_array_equal(
-            codice_hi_data_product.energy_h, codice_l2_data.energy_h
-        )
+        np.testing.assert_array_equal(codice_hi_data_product.energy_h, codice_l2_data.energy_h)
         np.testing.assert_array_equal(
             codice_hi_data_product.energy_h_plus, codice_l2_data.energy_h_plus
         )
         np.testing.assert_array_equal(
             codice_hi_data_product.energy_h_minus, codice_l2_data.energy_h_minus
         )
-        np.testing.assert_array_equal(
-            codice_hi_data_product.energy_cno, codice_l2_data.energy_cno
-        )
+        np.testing.assert_array_equal(codice_hi_data_product.energy_cno, codice_l2_data.energy_cno)
         np.testing.assert_array_equal(
             codice_hi_data_product.energy_cno_plus, codice_l2_data.energy_cno_plus
         )
         np.testing.assert_array_equal(
             codice_hi_data_product.energy_cno_minus, codice_l2_data.energy_cno_minus
         )
-        np.testing.assert_array_equal(
-            codice_hi_data_product.energy_fe, codice_l2_data.energy_fe
-        )
+        np.testing.assert_array_equal(codice_hi_data_product.energy_fe, codice_l2_data.energy_fe)
         np.testing.assert_array_equal(
             codice_hi_data_product.energy_fe_plus, codice_l2_data.energy_fe_plus
         )
@@ -665,9 +642,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(
             expected_pitch_angle_delta, codice_hi_data_product.pitch_angle_delta
         )
-        np.testing.assert_array_almost_equal(
-            expected_gyrophase, codice_hi_data_product.gyrophase
-        )
+        np.testing.assert_array_almost_equal(expected_gyrophase, codice_hi_data_product.gyrophase)
         np.testing.assert_array_equal(
             expected_gyrophase_delta, codice_hi_data_product.gyrophase_delta
         )
@@ -712,9 +687,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
             np.array([CodiceL3Flags.PRELIMINARY_MAG, CodiceL3Flags.PRELIMINARY_MAG]),
         )
 
-        np.testing.assert_array_equal(
-            codice_hi_data_product.parent_file_names, expected_parents
-        )
+        np.testing.assert_array_equal(codice_hi_data_product.parent_file_names, expected_parents)
 
     def test_integration_test(self):
         l2_direct_event_sci_path = get_test_data_path(
@@ -741,8 +714,6 @@ class TestCodiceHiProcessor(unittest.TestCase):
             version="v02",
             descriptor="hi-direct-events",
         )
-        processor = CodiceHiProcessor(
-            dependencies=Mock(), input_metadata=input_metadata
-        )
+        processor = CodiceHiProcessor(dependencies=Mock(), input_metadata=input_metadata)
 
         processor.process_l3a_direct_event(codice_hi_dependencies)

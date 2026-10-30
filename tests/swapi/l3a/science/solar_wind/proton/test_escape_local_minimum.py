@@ -111,9 +111,7 @@ class TestEscapeLocalMinimum(unittest.TestCase):
                 "flipped_seed",
                 return_value=(flipped_mse_at_gate, _proton_params()),
             ),
-            patch.object(
-                escape_local_minimum_module, "_restart_from_flipped_params"
-            ) as mock_opt,
+            patch.object(escape_local_minimum_module, "_restart_from_flipped_params") as mock_opt,
         ):
             out = escape_local_minimum(lm1, ctx)
 

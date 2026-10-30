@@ -37,9 +37,7 @@ def equatorial_to_ecliptic(alpha, delta):
     delta_rad = np.radians(delta)
     epsilon_rad = np.radians(epsilon_0)
 
-    numerator = np.sin(alpha_rad) * np.cos(epsilon_rad) + np.tan(delta_rad) * np.sin(
-        epsilon_rad
-    )
+    numerator = np.sin(alpha_rad) * np.cos(epsilon_rad) + np.tan(delta_rad) * np.sin(epsilon_rad)
     denominator = np.cos(alpha_rad)
 
     # Calculate ecliptic longitude
@@ -230,9 +228,7 @@ for file in data_dir.glob("*.cdf"):
             nep_expo = np.zeros(60)
 
             ## Filter through Goodtime, create masking
-            start_arr, end_arr, expo = estimate_exposure_time(
-                goodtime_file, int_YD, ESA
-            )
+            start_arr, end_arr, expo = estimate_exposure_time(goodtime_file, int_YD, ESA)
 
             met_epoch = datetime(2010, 1, 1, 0, 0, 0)
             epoch_sec = cdf["epoch"][:]
@@ -291,18 +287,14 @@ for file in data_dir.glob("*.cdf"):
             df_new["date_yyyymmdd"] = yymmdd
             df_new["yd"] = YD
             df_new["repoint"] = (
-                basename.split("-repoint")[1].split("_")[0]
-                if "-repoint" in basename
-                else ""
+                basename.split("-repoint")[1].split("_")[0] if "-repoint" in basename else ""
             )
             df_new["pivot"] = int(pivot)
             df_new["l1b_product"] = "histrates"
             df_new["l1b_filename"] = basename
             df_new["l1b_path"] = str(Path(file_path).resolve())
 
-            df_new.to_csv(
-                f"./outdir/{pivot_str}/daily/data_YD_{YD}_esa{ESA}.csv", index=False
-            )
+            df_new.to_csv(f"./outdir/{pivot_str}/daily/data_YD_{YD}_esa{ESA}.csv", index=False)
 
     except Exception as e:  # noqa: BLE001
         print(f"Skipping {file.name}: {e}")

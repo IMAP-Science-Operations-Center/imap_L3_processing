@@ -48,9 +48,7 @@ class L3aData:
                 see ANC_INPUT_FROM_INSTRUMENT_TEAM in constants.py
         """
 
-        if check_if_contains_actual_data(
-            anc_input_from_instr_team["extra_heliospheric_bckgrd"]
-        ):
+        if check_if_contains_actual_data(anc_input_from_instr_team["extra_heliospheric_bckgrd"]):
             with open(anc_input_from_instr_team["extra_heliospheric_bckgrd"], "r") as fh:
                 for i in range(3):
                     line = fh.readline()
@@ -99,9 +97,7 @@ class L3aData:
                 see ANC_INPUT_FROM_INSTRUMENT_TEAM in constants.py
         """
 
-        if check_if_contains_actual_data(
-            anc_input_from_instr_team["time_dependent_bckgrd"]
-        ):
+        if check_if_contains_actual_data(anc_input_from_instr_team["time_dependent_bckgrd"]):
             # read the size of the background-estimate array
             with open(anc_input_from_instr_team["time_dependent_bckgrd"], "r") as fh:
                 for i in range(2):
@@ -148,9 +144,7 @@ class L3aData:
                 usecols=range(2, bckgrd_array_size + 2),
                 ndmin=2,
             )
-            idx = np.nonzero(self.data["start_time"].replace(" ", "T") == start_dates)[
-                0
-            ]
+            idx = np.nonzero(self.data["start_time"].replace(" ", "T") == start_dates)[0]
             print(" tdbckgrd idx:", idx, "  ", end="")
             if idx.size == 0:
                 # corrections has not been found for the current date, so we set zeros
@@ -162,8 +156,7 @@ class L3aData:
                 if idx.size != 1:
                     raise ValueError(
                         "error _compute_time_dependent_bckgrd(): not-found or multiple-definition error for "
-                        "the start date {}".format(self.data["start_time"].replace(" ", "T")
-                        )
+                        "the start date {}".format(self.data["start_time"].replace(" ", "T"))
                     )
 
                 # interpolate the background estimate from the bckgrd_array into the centers of the scanning circle bins
@@ -201,14 +194,10 @@ class L3aData:
         print(" cps/R:", cps_per_R, "  ", end="")
 
         # convert count rate to photon flux
-        self.data["daily_lightcurve"]["photon_flux"] = (
-            self.var["count_rate"] / cps_per_R
-        )
+        self.data["daily_lightcurve"]["photon_flux"] = self.var["count_rate"] / cps_per_R
 
         # compute uncertainties
-        self.var["raw_uncertainties"] = np.sqrt(
-            self.data["daily_lightcurve"]["raw_histogram"]
-        )
+        self.var["raw_uncertainties"] = np.sqrt(self.data["daily_lightcurve"]["raw_histogram"])
         self.data["daily_lightcurve"]["flux_uncertainties"] = np.zeros_like(
             self.data["daily_lightcurve"]["raw_histogram"], float
         )
@@ -446,24 +435,16 @@ class L3aData:
         # so we convert variables to strings as defined in fmt
         for key, value in fmt["daily_lightcurve"].items:
             data["daily_lightcurve"][key] = (
-                "["
-                + ", ".join(
-                    value % x for x in list(data["daily_lightcurve"][key])
-                )
-                + "]"
+                "[" + ", ".join(value % x for x in list(data["daily_lightcurve"][key])) + "]"
             )
         for key, value in fmt["scalar variables"].items():
             data[key] = "|" + value % data[key] + "|"
         for key, value in fmt["lon lat variables"].items():
             for sec_key in ["lon", "lat"]:
-                data[key][sec_key] = (
-                    "|" + value % data[key][sec_key] + "|"
-                )
+                data[key][sec_key] = "|" + value % data[key][sec_key] + "|"
         for key, value in fmt["vector variables"].items():
             for sec_key in ["x", "y", "z"]:
-                data[key][sec_key] = (
-                    "|" + value % data[key][sec_key] + "|"
-                )
+                data[key][sec_key] = "|" + value % data[key][sec_key] + "|"
 
         # generate JSON content to be saved in output file
         json_content = json.dumps(data, indent=4, default=vars)

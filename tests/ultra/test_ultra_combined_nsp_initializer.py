@@ -173,24 +173,12 @@ class TestUltraCombinedNSPInitializer(unittest.TestCase):
 
                 mock_read_cdf_parents.assert_has_calls(
                     [
-                        call(
-                            "imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-4deg-3mo_20100101_v001.cdf"
-                        ),
-                        call(
-                            "imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-3mo_20100101_v001.cdf"
-                        ),
-                        call(
-                            "imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-4deg-3mo_20100401_v001.cdf"
-                        ),
-                        call(
-                            "imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-3mo_20100401_v002.cdf"
-                        ),
-                        call(
-                            "imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-4deg-3mo_20100701_v001.cdf"
-                        ),
-                        call(
-                            "imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-3mo_20100701_v001.cdf"
-                        ),
+                        call("imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-4deg-3mo_20100101_v001.cdf"),
+                        call("imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-3mo_20100101_v001.cdf"),
+                        call("imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-4deg-3mo_20100401_v001.cdf"),
+                        call("imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-3mo_20100401_v002.cdf"),
+                        call("imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-4deg-3mo_20100701_v001.cdf"),
+                        call("imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-3mo_20100701_v001.cdf"),
                         call(
                             f"imap_ultra_l3_ulc-ena-h-sf-nsp-full-hae-4deg-3mo_20100101_{Version(major_version, 1)}.cdf"
                         ),

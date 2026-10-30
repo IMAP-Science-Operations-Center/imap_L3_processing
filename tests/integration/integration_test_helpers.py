@@ -60,9 +60,7 @@ class ImapQueryPatcher:
             qr for qr in query_results if desired_attributes.issubset(set(qr.items()))
         ]
         if use_latest:
-            filtered_query_results = self.filter_results_for_latest(
-                filtered_query_results
-            )
+            filtered_query_results = self.filter_results_for_latest(filtered_query_results)
         return filtered_query_results
 
     @staticmethod
@@ -71,8 +69,7 @@ class ImapQueryPatcher:
         for qr in query_results:
             query_results_by_date[qr["start_date"]].append(qr)
         return [
-            max(qrs, key=get_version_from_query_result)
-            for qrs in query_results_by_date.values()
+            max(qrs, key=get_version_from_query_result) for qrs in query_results_by_date.values()
         ]
 
 
@@ -108,18 +105,14 @@ METAKERNEL_TEMPLATE = """
 """
 
 
-def create_metakernel(
-    path_to_spice_dir: str, requested_spice_paths: list[SPICEFilePath]
-) -> str:
+def create_metakernel(path_to_spice_dir: str, requested_spice_paths: list[SPICEFilePath]) -> str:
     all_spice_paths = []
     for spice_file in requested_spice_paths:
         spice_subdir_name = spice_file.construct_path().parent.name
         spice_file_name = spice_file.construct_path().name
         spice_path = str(Path(path_to_spice_dir) / spice_subdir_name / spice_file_name)
 
-        chunked_spice_path = [
-            spice_path[i : i + 79] for i in range(0, len(spice_path), 79)
-        ]
+        chunked_spice_path = [spice_path[i : i + 79] for i in range(0, len(spice_path), 79)]
         for i, chunk in enumerate(chunked_spice_path[:-1]):
             chunked_spice_path[i] = f"{chunk}+"
 
@@ -153,9 +146,7 @@ class RequestsGetPatcher:
                 elif "params" in kwargs:
                     prefix = kwargs["params"].get("spice_path") or ""
 
-                    spice_file_paths = [
-                        SPICEFilePath(fn) for fn in self.spice_file_names
-                    ]
+                    spice_file_paths = [SPICEFilePath(fn) for fn in self.spice_file_names]
                     requested_spice_paths = [
                         p
                         for p in spice_file_paths
@@ -176,9 +167,7 @@ class RequestsGetPatcher:
 
 
 class mock_imap_data_access:
-    def __init__(
-        self, data_dir: Path, input_files: list[Path], omni_file: Path | None = None
-    ):
+    def __init__(self, data_dir: Path, input_files: list[Path], omni_file: Path | None = None):
         self.data_dir = data_dir
 
         valid_files = []
@@ -196,12 +185,8 @@ class mock_imap_data_access:
         self.input_files = valid_files
 
         self.env_patcher = patch.dict(os.environ, {"IMAP_DATA_DIR": str(self.data_dir)})
-        self.data_dir_patcher = patch.dict(
-            imap_data_access.config, {"DATA_DIR": self.data_dir}
-        )
-        self.download_patcher = patch.object(
-            imap_data_access, "download", new=fake_download
-        )
+        self.data_dir_patcher = patch.dict(imap_data_access.config, {"DATA_DIR": self.data_dir})
+        self.download_patcher = patch.object(imap_data_access, "download", new=fake_download)
         self.query_patcher = ImapQueryPatcher(self.input_files)
         self.requests_get_patcher = RequestsGetPatcher(spice_file_paths, omni_file)
 

@@ -135,11 +135,7 @@ def _integrate_region(
             for i_speed in range(speed_quadrature.points.shape[0]):
                 speed = speed_quadrature.points[i_speed]
                 exponent = (
-                    (
-                        speed**2
-                        + bulk_speed(sw_params) ** 2
-                        - 2 * speed * velocity_along_direction
-                    )
+                    (speed**2 + bulk_speed(sw_params) ** 2 - 2 * speed * velocity_along_direction)
                     * 1.0
                     / (2 * thermal_speed(sw_params) ** 2)
                 )
@@ -160,9 +156,7 @@ def _integrate_region(
 
             azimuth_rate += azimuth_weight * rate_integral
 
-            azimuth_log_temperature_jacobian += (
-                azimuth_weight * log_temperature_jacobian_integral
-            )
+            azimuth_log_temperature_jacobian += azimuth_weight * log_temperature_jacobian_integral
             azimuth_jacobian_r += azimuth_weight * (
                 direction_r * velocity_along_direction_integral - bulk_r * rate_integral
             )
@@ -178,9 +172,7 @@ def _integrate_region(
             * angular_quadrature.cos_elevation[i_elevation]
         )
         elevation_rate += azimuth_rate * elevation_weight
-        elevation_log_temperature_jacobian += (
-            azimuth_log_temperature_jacobian * elevation_weight
-        )
+        elevation_log_temperature_jacobian += azimuth_log_temperature_jacobian * elevation_weight
         elevation_jacobian_r += azimuth_jacobian_r * elevation_weight
         elevation_jacobian_t += azimuth_jacobian_t * elevation_weight
         elevation_jacobian_n += azimuth_jacobian_n * elevation_weight

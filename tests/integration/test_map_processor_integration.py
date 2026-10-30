@@ -38,13 +38,9 @@ class TestMapIntegration(unittest.TestCase):
             INTEGRATION_TEST_DATA_PATH / "spice" / "naif020.tls",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_science_108.tf",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_sclk_008.tsc",
-            INTEGRATION_TEST_DATA_PATH
-            / "spice"
-            / "imap_dps_2025_105_2026_105_009.ah.bc",
+            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
             INTEGRATION_TEST_DATA_PATH / "spice" / "de440.bsp",
-            INTEGRATION_TEST_DATA_PATH
-            / "spice"
-            / "imap_recon_20250415_20260415_v01.bsp",
+            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_recon_20250415_20260415_v01.bsp",
         ]
 
         with mock_imap_data_access(lo_imap_data_dir, input_files):
@@ -153,13 +149,9 @@ class TestMapIntegration(unittest.TestCase):
             INTEGRATION_TEST_DATA_PATH / "spice" / "naif020.tls",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_science_108.tf",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_sclk_008.tsc",
-            INTEGRATION_TEST_DATA_PATH
-            / "spice"
-            / "imap_dps_2025_105_2026_105_009.ah.bc",
+            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
             INTEGRATION_TEST_DATA_PATH / "spice" / "de440.bsp",
-            INTEGRATION_TEST_DATA_PATH
-            / "spice"
-            / "imap_recon_20250415_20260415_v01.bsp",
+            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_recon_20250415_20260415_v01.bsp",
         ]
 
         with mock_imap_data_access(hi_imap_data_dir, input_files):
@@ -302,9 +294,7 @@ class TestMapIntegration(unittest.TestCase):
             "imap_hi_l2_h90-ena-h-hf-nsp-ram-hae-6deg-1yr_20250415_v000.cdf",
         ]
 
-        input_files = [
-            hi_test_data_dir / "combined" / f for f in [*sp_files, *nsp_files]
-        ]
+        input_files = [hi_test_data_dir / "combined" / f for f in [*sp_files, *nsp_files]]
 
         with mock_imap_data_access(hi_imap_data_dir, input_files):
             logging.basicConfig(
@@ -365,10 +355,8 @@ class TestMapIntegration(unittest.TestCase):
         lo_imap_data_dir = get_run_local_data_path("lo/integration_data")
 
         input_files = [
-            lo_test_data_dir
-            / "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-1yr_20260101_v900.cdf",
-            lo_test_data_dir
-            / "imap_lo_l2_l090-ena-h-hf-nsp-ram-hae-6deg-1yr_20260101_v900.cdf",
+            lo_test_data_dir / "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-1yr_20260101_v900.cdf",
+            lo_test_data_dir / "imap_lo_l2_l090-ena-h-hf-nsp-ram-hae-6deg-1yr_20260101_v900.cdf",
             get_test_data_path("lo/imap_lo_l1c_pset_20260101-repoint01261_v001.cdf"),
             lo_test_data_dir
             / "imap_glows_l3e_survival-probability-lo_20260101-repoint01261_v001.cdf",
@@ -377,13 +365,9 @@ class TestMapIntegration(unittest.TestCase):
             INTEGRATION_TEST_DATA_PATH / "spice" / "naif020.tls",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_science_108.tf",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_sclk_008.tsc",
-            INTEGRATION_TEST_DATA_PATH
-            / "spice"
-            / "imap_dps_2025_105_2026_105_009.ah.bc",
+            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
             INTEGRATION_TEST_DATA_PATH / "spice" / "de440.bsp",
-            INTEGRATION_TEST_DATA_PATH
-            / "spice"
-            / "imap_recon_20250415_20260415_v01.bsp",
+            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_recon_20250415_20260415_v01.bsp",
         ]
 
         with mock_imap_data_access(lo_imap_data_dir, input_files):
@@ -446,17 +430,11 @@ class TestMapIntegration(unittest.TestCase):
         lo_test_data_dir = INTEGRATION_TEST_DATA_PATH / "lo"
         lo_imap_data_dir = get_run_local_data_path("lo/integration_data")
 
-        input_file = (
-            "imap_lo_l2_l090-enanbs-h-sf-nsp-ram-hae-6deg-1yr_20250415_v000.cdf"
-        )
+        input_file = "imap_lo_l2_l090-enanbs-h-sf-nsp-ram-hae-6deg-1yr_20250415_v000.cdf"
         descriptor = "l090-isn-h-sf-nsp-ram-hae-6deg-1yr"
-        expected_output_file = (
-            "imap_lo_l3_l090-isn-h-sf-nsp-ram-hae-6deg-1yr_20250415_v001.cdf"
-        )
+        expected_output_file = "imap_lo_l3_l090-isn-h-sf-nsp-ram-hae-6deg-1yr_20250415_v001.cdf"
 
-        processing_input_collection = ProcessingInputCollection(
-            ScienceInput(input_file)
-        )
+        processing_input_collection = ProcessingInputCollection(ScienceInput(input_file))
 
         with mock_imap_data_access(lo_imap_data_dir, [lo_test_data_dir / input_file]):
             logging.basicConfig(
@@ -513,12 +491,8 @@ class TestMapIntegration(unittest.TestCase):
             INTEGRATION_TEST_DATA_PATH / "spice" / "naif020.tls",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_science_108.tf",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_sclk_008.tsc",
-            INTEGRATION_TEST_DATA_PATH
-            / "spice"
-            / "imap_dps_2025_105_2026_105_009.ah.bc",
-            get_test_data_path(
-                "ultra/imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv"
-            ),
+            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
+            get_test_data_path("ultra/imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv"),
         ]
 
         with mock_imap_data_access(ultra_imap_data_dir, input_files):
@@ -570,26 +544,16 @@ class TestMapIntegration(unittest.TestCase):
             INTEGRATION_TEST_DATA_PATH / "spice" / "naif020.tls",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_science_108.tf",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_sclk_008.tsc",
-            INTEGRATION_TEST_DATA_PATH
-            / "spice"
-            / "imap_dps_2025_105_2026_105_009.ah.bc",
-            get_test_data_path(
-                "ultra/imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv"
-            ),
+            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
+            get_test_data_path("ultra/imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv"),
         ]
         input_files = [
-            ultra_path
-            / "imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-6deg-3mo_20250416_v001.cdf",
-            ultra_path
-            / "imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-6deg-3mo_20250416_v001.cdf",
-            ultra_path
-            / "imap_ultra_l1c_45sensor-heliopset_20250416-repoint00000_v000.cdf",
-            ultra_path
-            / "imap_ultra_l1c_45sensor-heliopset_20251017-repoint00184_v000.cdf",
-            ultra_path
-            / "imap_ultra_l1c_90sensor-heliopset_20250416-repoint00000_v000.cdf",
-            ultra_path
-            / "imap_ultra_l1c_90sensor-heliopset_20251017-repoint00184_v000.cdf",
+            ultra_path / "imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-6deg-3mo_20250416_v001.cdf",
+            ultra_path / "imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-6deg-3mo_20250416_v001.cdf",
+            ultra_path / "imap_ultra_l1c_45sensor-heliopset_20250416-repoint00000_v000.cdf",
+            ultra_path / "imap_ultra_l1c_45sensor-heliopset_20251017-repoint00184_v000.cdf",
+            ultra_path / "imap_ultra_l1c_90sensor-heliopset_20250416-repoint00000_v000.cdf",
+            ultra_path / "imap_ultra_l1c_90sensor-heliopset_20251017-repoint00184_v000.cdf",
             ultra_path
             / "imap_glows_l3e_survival-probability-ul-hf_20250415-repoint00000_v001.cdf",
             ultra_path
@@ -646,26 +610,16 @@ class TestMapIntegration(unittest.TestCase):
             INTEGRATION_TEST_DATA_PATH / "spice" / "naif020.tls",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_science_108.tf",
             INTEGRATION_TEST_DATA_PATH / "spice" / "imap_sclk_008.tsc",
-            INTEGRATION_TEST_DATA_PATH
-            / "spice"
-            / "imap_dps_2025_105_2026_105_009.ah.bc",
-            get_test_data_path(
-                "ultra/imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv"
-            ),
+            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
+            get_test_data_path("ultra/imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv"),
         ]
         input_files = [
-            ultra_path
-            / "imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-6deg-3mo_20250416_v001.cdf",
-            ultra_path
-            / "imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-6deg-3mo_20250416_v001.cdf",
-            ultra_path
-            / "imap_ultra_l1c_45sensor-heliopset_20250416-repoint00000_v000.cdf",
-            ultra_path
-            / "imap_ultra_l1c_45sensor-heliopset_20251017-repoint00184_v000.cdf",
-            ultra_path
-            / "imap_ultra_l1c_90sensor-heliopset_20250416-repoint00000_v000.cdf",
-            ultra_path
-            / "imap_ultra_l1c_90sensor-heliopset_20251017-repoint00184_v000.cdf",
+            ultra_path / "imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-6deg-3mo_20250416_v001.cdf",
+            ultra_path / "imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-6deg-3mo_20250416_v001.cdf",
+            ultra_path / "imap_ultra_l1c_45sensor-heliopset_20250416-repoint00000_v000.cdf",
+            ultra_path / "imap_ultra_l1c_45sensor-heliopset_20251017-repoint00184_v000.cdf",
+            ultra_path / "imap_ultra_l1c_90sensor-heliopset_20250416-repoint00000_v000.cdf",
+            ultra_path / "imap_ultra_l1c_90sensor-heliopset_20251017-repoint00184_v000.cdf",
         ]
 
         with mock_imap_data_access(ultra_imap_data_dir, input_files + ancil_files):

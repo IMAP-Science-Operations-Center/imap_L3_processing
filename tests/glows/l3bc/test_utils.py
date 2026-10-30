@@ -90,9 +90,7 @@ class TestUtils(unittest.TestCase):
                     start_date, end_date, available_ancillaries
                 )
 
-                self.assertEqual(
-                    expected_best_ancillary_file_name, actual_ancillary_name
-                )
+                self.assertEqual(expected_best_ancillary_file_name, actual_ancillary_name)
 
     def test_get_pointing_date_range(self):
         repointing_number = 13

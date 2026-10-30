@@ -53,8 +53,6 @@ if __name__ == "__main__":
         input_dir = Path(sys.argv[1])
     except Exception:  # noqa: BLE001
         input_dir = Path(r"C:\Users\Harrison\AppData\Local\cava\cava\data")
-        print(
-            f"Could not open input file, using default input path of {input_dir} instead"
-        )
+        print(f"Could not open input file, using default input path of {input_dir} instead")
 
     run_all_maps(output_dir=output_dir, input_dir=input_dir)

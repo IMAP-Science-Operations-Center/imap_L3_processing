@@ -56,9 +56,7 @@ def _proton_params_at_elevation(
     v_x_swapi = -speed * math.cos(math.radians(bulk_el_deg))
     v_z_swapi = -speed * math.sin(math.radians(bulk_el_deg))
     v_rtn = NOMINAL_SWAPI_TO_RTN_ROTATION @ np.array([v_x_swapi, 0.0, v_z_swapi])
-    return proton_params(
-        velocity_rtn=tuple(v_rtn), density=density, temperature=temperature
-    )
+    return proton_params(velocity_rtn=tuple(v_rtn), density=density, temperature=temperature)
 
 
 def _trim(
@@ -190,9 +188,7 @@ class TestTrimAt1eMinus6Threshold(unittest.TestCase):
         # interior. The integrand reduces to the Maxwellian centered at the
         # bulk azimuth, which we recompute here.
         rg = _make_response_grid()
-        sw = proton_params(
-            velocity_rtn=(0.0, -450.0, 0.0)
-        )  # bulk_az = +90°, bulk_el = 0°
+        sw = proton_params(velocity_rtn=(0.0, -450.0, 0.0))  # bulk_az = +90°, bulk_el = 0°
 
         lo, hi = _trim(rg, sw, azimuth_lo=20.0, azimuth_hi=150.0, sg_rate=0.0)
 
@@ -201,9 +197,7 @@ class TestTrimAt1eMinus6Threshold(unittest.TestCase):
         speed = bulk_speed(sw)
         central = rg.central_speed
         delta_v_sq = (
-            central**2
-            + speed**2
-            - 2.0 * central * speed * np.cos(np.radians(scan - 90.0))
+            central**2 + speed**2 - 2.0 * central * speed * np.cos(np.radians(scan - 90.0))
         )
         integrand = np.exp(-delta_v_sq / (2.0 * sigma**2))
         above_idx = np.where(integrand > OA_SCAN_THRESHOLD * integrand.max())[0]
@@ -227,13 +221,9 @@ class TestSymmetryBetweenOaPositiveAndNegative(unittest.TestCase):
         sw_pos = proton_params(velocity_rtn=(0.0, -450.0, 0.0))
         sw_neg = proton_params(velocity_rtn=(0.0, +450.0, 0.0))
 
-        lo_pos, hi_pos = _trim(
-            rg, sw_pos, azimuth_lo=20.0, azimuth_hi=150.0, sg_rate=0.0
-        )
+        lo_pos, hi_pos = _trim(rg, sw_pos, azimuth_lo=20.0, azimuth_hi=150.0, sg_rate=0.0)
         # OA-: same magnitudes, mirrored around 0.
-        lo_neg, hi_neg = _trim(
-            rg, sw_neg, azimuth_lo=-150.0, azimuth_hi=-20.0, sg_rate=0.0
-        )
+        lo_neg, hi_neg = _trim(rg, sw_neg, azimuth_lo=-150.0, azimuth_hi=-20.0, sg_rate=0.0)
 
         # The implementation picks scan-grid nodes by index, and
         # `linspace(20, 150, N)` mirrors `linspace(-150, -20, N)` up to a

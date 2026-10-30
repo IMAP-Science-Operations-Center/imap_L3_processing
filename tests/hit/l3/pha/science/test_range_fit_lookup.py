@@ -87,9 +87,7 @@ class TestRangeFitLookup(unittest.TestCase):
 
                 e_prime = 11.2
 
-                charges, delta_e_loss = lookup_table.evaluate_e_prime(
-                    range, e_prime
-                )
+                charges, delta_e_loss = lookup_table.evaluate_e_prime(range, e_prime)
 
                 np.testing.assert_equal(charges, expected_charges)
                 np.testing.assert_allclose(

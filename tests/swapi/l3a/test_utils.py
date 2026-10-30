@@ -47,8 +47,7 @@ from tests.swapi._helpers import proton_params
 
 def _analytic_speed_km_per_s(voltage: float, mass_kg: float, charge_c: float) -> float:
     return float(
-        np.sqrt(2 * SWAPI_K_FACTOR * charge_c * abs(voltage) / mass_kg)
-        / METERS_PER_KILOMETER
+        np.sqrt(2 * SWAPI_K_FACTOR * charge_c * abs(voltage) / mass_kg) / METERS_PER_KILOMETER
     )
 
 
@@ -111,9 +110,7 @@ class TestChunkL2Data(TestCase):
             first_chunk.coincidence_count_rate_uncertainty,
         )
 
-        expected_count_rate_chunk_2 = np.array(
-            [[14, 15, 16, 17, 18], [19, 20, 21, 22, 23]]
-        )
+        expected_count_rate_chunk_2 = np.array([[14, 15, 16, 17, 18], [19, 20, 21, 22, 23]])
         expected_count_rate_uncertainty_chunk_2 = np.array(
             [[0.1, 0.2, 0.3, 0.4, 0.5], [0.1, 0.2, 0.3, 0.4, 0.5]]
         )
@@ -153,9 +150,7 @@ class TestMeasurementTimes(TestCase):
         times = measurement_times(sci_start_time)
 
         def expected(sweep_start, bin_index):
-            seconds_into_sweep = (
-                bin_index * SWAPI_BIN_PERIOD_S + SWAPI_LIVETIME_CENTER_OFFSET_S
-            )
+            seconds_into_sweep = bin_index * SWAPI_BIN_PERIOD_S + SWAPI_LIVETIME_CENTER_OFFSET_S
             return sweep_start + seconds_into_sweep * ONE_SECOND_IN_NANOSECONDS
 
         self.assertEqual(times.shape, (2, SWAPI_SWEEP_BIN_COUNT))
@@ -166,9 +161,7 @@ class TestMeasurementTimes(TestCase):
     def test_offset_is_the_livetime_center_not_its_start(self):
         """The per-bin offset lands half a livetime past the end of the ramp-up, i.e. at the center of the livetime window rather than its start."""
         ramp_up_s = SWAPI_BIN_PERIOD_S - SWAPI_LIVETIME_S
-        self.assertAlmostEqual(
-            SWAPI_LIVETIME_CENTER_OFFSET_S, ramp_up_s + SWAPI_LIVETIME_S / 2
-        )
+        self.assertAlmostEqual(SWAPI_LIVETIME_CENTER_OFFSET_S, ramp_up_s + SWAPI_LIVETIME_S / 2)
         self.assertAlmostEqual(
             SWAPI_LIVETIME_CENTER_OFFSET_S, SWAPI_BIN_PERIOD_S - SWAPI_LIVETIME_S / 2
         )
@@ -208,9 +201,7 @@ class TestReadL2SwapiData(TestCase):
         np.testing.assert_array_equal(
             np.array(epoch_as_tt2000), actual_swapi_l2_data.sci_start_time
         )
-        np.testing.assert_array_equal(
-            np.array([1, np.nan, 3, 4]), actual_swapi_l2_data.energy
-        )
+        np.testing.assert_array_equal(np.array([1, np.nan, 3, 4]), actual_swapi_l2_data.energy)
         np.testing.assert_array_equal(
             np.array([5, 6, 7, np.nan]), actual_swapi_l2_data.coincidence_count_rate
         )
@@ -226,10 +217,7 @@ class TestCalculateSwSpeed(TestCase):
     def test_2d_array_matches_analytic_formula_per_element(self):
         """calculate_sw_speed on a 2D energy array matches the analytic v = sqrt(2qE/m) (in km/s) element-by-element."""
         E = np.array([[1.0e-16, 2.0e-16], [4.0e-16, 8.0e-16]])
-        expected = (
-            np.sqrt(2 * E * PROTON_CHARGE_COULOMBS / PROTON_MASS_KG)
-            / METERS_PER_KILOMETER
-        )
+        expected = np.sqrt(2 * E * PROTON_CHARGE_COULOMBS / PROTON_MASS_KG) / METERS_PER_KILOMETER
         result = calculate_sw_speed(PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, E)
         np.testing.assert_allclose(result, expected)
 
@@ -241,9 +229,7 @@ class TestCalculateSwSpeed(TestCase):
 
     def test_empty_array_input_returns_empty_array(self):
         """calculate_sw_speed returns an empty array when given one, without errors."""
-        result = calculate_sw_speed(
-            PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, np.array([])
-        )
+        result = calculate_sw_speed(PROTON_MASS_KG, PROTON_CHARGE_COULOMBS, np.array([]))
         self.assertEqual(result.size, 0)
 
     def test_ufloat_scalar_propagates_uncertainty(self):
@@ -272,9 +258,7 @@ class TestCalculateSwSpeed(TestCase):
                 / METERS_PER_KILOMETER
             )
             self.assertAlmostEqual(r.nominal_value, expected_nom)
-            self.assertAlmostEqual(
-                r.std_dev, expected_nom * E.std_dev / (2 * E.nominal_value)
-            )
+            self.assertAlmostEqual(r.std_dev, expected_nom * E.std_dev / (2 * E.nominal_value))
 
 
 class TestReadMagRtnData(TestCase):
@@ -291,9 +275,7 @@ class TestReadMagRtnData(TestCase):
 
     def test_reads_b_rtn_and_epoch_into_mag_data(self):
         """read_mag_rtn_data converts CDF epochs to TT2000 and keeps only the leading three vector components of b_rtn (dropping the magnitude column)."""
-        epochs = np.array(
-            [datetime(2026, 1, 1, 0, 0, 0), datetime(2026, 1, 1, 0, 0, 1)]
-        )
+        epochs = np.array([datetime(2026, 1, 1, 0, 0, 0), datetime(2026, 1, 1, 0, 0, 1)])
         b_rtn = np.array(
             [[1.0, 2.0, 3.0, 0.0], [4.0, 5.0, 6.0, 0.0]],
         )
@@ -317,9 +299,7 @@ class TestSwapiSpiceHelpers(SpiceTestCase):
 
     # 2025-06-06 12:00 UTC — inside the IMAP SPK and attitude coverage windows
     # used by the shipped `spice_kernels/` set.
-    _EPOCH_TT2000_NS = spacepy.pycdf.lib.datetime_to_tt2000(
-        datetime(2025, 6, 6, 12, 0, 0)
-    )
+    _EPOCH_TT2000_NS = spacepy.pycdf.lib.datetime_to_tt2000(datetime(2025, 6, 6, 12, 0, 0))
 
     def test_get_swapi_geometry_returns_orthonormal_rotation_per_time(self):
         """get_swapi_geometry returns one proper-orthogonal (right-handed) rotation matrix per input time across a 30 s window."""
@@ -359,12 +339,10 @@ class TestSwapiSpiceHelpers(SpiceTestCase):
             covariance_rtn,
         )
 
-        imap_velocity_from_earth_gse = spiceypy.spkezr(
-            "IMAP", et, "IMAP_GSE", "NONE", "EARTH"
-        )[0][3:]
-        np.testing.assert_allclose(
-            imap_velocity_from_earth_gse, velocity_gse, atol=1e-9
-        )
+        imap_velocity_from_earth_gse = spiceypy.spkezr("IMAP", et, "IMAP_GSE", "NONE", "EARTH")[0][
+            3:
+        ]
+        np.testing.assert_allclose(imap_velocity_from_earth_gse, velocity_gse, atol=1e-9)
 
         gse_from_rtn = spiceypy.pxform("IMAP_RTN", "IMAP_GSE", et)
         np.testing.assert_allclose(
@@ -384,12 +362,10 @@ class TestSwapiSpiceHelpers(SpiceTestCase):
 
         eclipj2000_from_rtn = spiceypy.pxform("IMAP_RTN", "ECLIPJ2000", et)
         gse_from_eclipj2000 = spiceypy.sxform("ECLIPJ2000", "IMAP_GSE", et)
-        imap_position_from_earth = spiceypy.spkezr(
-            "IMAP", et, "ECLIPJ2000", "NONE", "EARTH"
-        )[0][:3]
-        earth_velocity_from_sun = spiceypy.spkezr(
-            "EARTH", et, "ECLIPJ2000", "NONE", "SUN"
-        )[0][3:]
+        imap_position_from_earth = spiceypy.spkezr("IMAP", et, "ECLIPJ2000", "NONE", "EARTH")[0][
+            :3
+        ]
+        earth_velocity_from_sun = spiceypy.spkezr("EARTH", et, "ECLIPJ2000", "NONE", "SUN")[0][3:]
         state_from_earth = np.concatenate(
             [
                 imap_position_from_earth,
@@ -408,54 +384,40 @@ class TestVelocityComponentsToAnglesInInstrumentFrame(TestCase):
 
     def test_flow_along_minus_y_returns_zero_angles(self):
         """A flow along -Y means SWAPI looks toward +Y, which is the (azimuth=0, elevation=0) bore-sight in the instrument frame."""
-        azimuth, elevation = velocity_components_to_angles_in_instrument_frame(
-            0.0, -450.0, 0.0
-        )
+        azimuth, elevation = velocity_components_to_angles_in_instrument_frame(0.0, -450.0, 0.0)
         self.assertAlmostEqual(azimuth, 0.0)
         self.assertAlmostEqual(elevation, 0.0)
 
     def test_positive_x_flow_yields_negative_azimuth(self):
         """A flow with a positive X component (look direction in -X) gives a negative azimuth, since azimuth = atan2(-vx, -vy) < 0 when vx > 0 and vy < 0."""
-        azimuth, _ = velocity_components_to_angles_in_instrument_frame(
-            50.0, -450.0, 0.0
-        )
+        azimuth, _ = velocity_components_to_angles_in_instrument_frame(50.0, -450.0, 0.0)
         self.assertLess(azimuth, 0.0)
 
     def test_positive_z_flow_yields_negative_elevation(self):
         """A flow with a positive Z component (look direction in -Z) gives a negative elevation, since elevation = asin(-vz/|v|) < 0 when vz > 0."""
-        _, elevation = velocity_components_to_angles_in_instrument_frame(
-            0.0, -450.0, 50.0
-        )
+        _, elevation = velocity_components_to_angles_in_instrument_frame(0.0, -450.0, 50.0)
         self.assertLess(elevation, 0.0)
 
     def test_negative_z_flow_yields_positive_elevation(self):
         """A flow with a negative Z component (look direction in +Z) gives a positive elevation."""
-        _, elevation = velocity_components_to_angles_in_instrument_frame(
-            0.0, -450.0, -50.0
-        )
+        _, elevation = velocity_components_to_angles_in_instrument_frame(0.0, -450.0, -50.0)
         self.assertGreater(elevation, 0.0)
 
     def test_pure_plus_x_flow_yields_azimuth_minus_90_elevation_zero(self):
         """A pure +X flow has look direction along -X; azimuth = atan2(-450, 0) = -90 deg, elevation = 0."""
-        azimuth, elevation = velocity_components_to_angles_in_instrument_frame(
-            450.0, 0.0, 0.0
-        )
+        azimuth, elevation = velocity_components_to_angles_in_instrument_frame(450.0, 0.0, 0.0)
         self.assertAlmostEqual(azimuth, -90.0)
         self.assertAlmostEqual(elevation, 0.0)
 
     def test_pure_plus_y_flow_yields_azimuth_180(self):
         """A pure +Y flow (away from SWAPI) has look direction along -Y; azimuth = atan2(0, -450) = +/-180 deg, elevation = 0."""
-        azimuth, elevation = velocity_components_to_angles_in_instrument_frame(
-            0.0, 450.0, 0.0
-        )
+        azimuth, elevation = velocity_components_to_angles_in_instrument_frame(0.0, 450.0, 0.0)
         self.assertAlmostEqual(abs(azimuth), 180.0)
         self.assertAlmostEqual(elevation, 0.0)
 
     def test_pure_plus_z_flow_yields_elevation_minus_90(self):
         """A pure +Z flow has look direction along -Z; elevation = asin(-1) = -90 deg."""
-        _, elevation = velocity_components_to_angles_in_instrument_frame(
-            0.0, 0.0, 450.0
-        )
+        _, elevation = velocity_components_to_angles_in_instrument_frame(0.0, 0.0, 450.0)
         self.assertAlmostEqual(elevation, -90.0)
 
 
@@ -486,9 +448,7 @@ class TestBulkVelocityToAnglesInInstrumentFrame(TestCase):
 
     def test_uses_rotation_argument_to_transform_into_instrument_frame(self):
         """When the rotation maps +Y_inst to -X_RTN, an RTN flow along -X_RTN lands along +Y_inst and produces azimuth = atan2(0, -1) = +/-180 deg, catching regressions that drop the rotation."""
-        rotation_xyz_to_rtn = np.array(
-            [[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]]
-        )
+        rotation_xyz_to_rtn = np.array([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
         sw = proton_params(velocity_rtn=(-450.0, 0.0, 0.0))
         azimuth, _ = velocity_to_angles_in_instrument_frame(sw, rotation_xyz_to_rtn)
         self.assertAlmostEqual(abs(azimuth), 180.0, places=10)
@@ -509,9 +469,7 @@ class TestEsaVoltageToProtonSpeed(TestCase):
 
     def test_matches_hardcoded_reference_value_at_1000_volts(self):
         """At V = 1000 V the function returns ~601.730748 km/s, the value pre-computed offline from `sqrt(2 · 1.89 · q_p · 1000 / m_p) / 1000`. This pins the absolute magnitude against a manually verifiable number, not just the live formula."""
-        np.testing.assert_allclose(
-            esa_voltage_to_proton_speed(1000.0), 601.7307477647, rtol=1e-9
-        )
+        np.testing.assert_allclose(esa_voltage_to_proton_speed(1000.0), 601.7307477647, rtol=1e-9)
 
     def test_handles_negative_voltage(self):
         """A negative ESA voltage yields the same proton speed as its positive counterpart, since the conversion depends on magnitude."""
@@ -537,9 +495,7 @@ class TestEsaVoltageToAlphaSpeed(TestCase):
 
     def test_matches_hardcoded_reference_value_at_1000_volts(self):
         """At V = 1000 V the function returns ~426.952735 km/s, the value pre-computed offline from `sqrt(2 · 1.89 · 2·q_p · 1000 / m_alpha) / 1000`. This pins the absolute magnitude against a manually verifiable number, not just the live formula."""
-        np.testing.assert_allclose(
-            esa_voltage_to_alpha_speed(1000.0), 426.9527347202, rtol=1e-9
-        )
+        np.testing.assert_allclose(esa_voltage_to_alpha_speed(1000.0), 426.9527347202, rtol=1e-9)
 
     def test_handles_negative_voltage(self):
         """A negative ESA voltage yields the same alpha speed as its positive counterpart, since the conversion depends on magnitude."""

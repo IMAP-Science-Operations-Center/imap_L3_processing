@@ -30,17 +30,15 @@ for file in folder.iterdir():
     if file.parts[-1].endswith("flux.txt") and "mono" not in file.parts[-1]:
         group_file_name_prefix = "-".join(file.parts[-1].split("-")[:-1])
 
-        with open(
-            file.parent / (group_file_name_prefix + "-flux.txt"), "r"
-        ) as flux_file:
+        with open(file.parent / (group_file_name_prefix + "-flux.txt"), "r") as flux_file:
             fluxes.append(extract_data(flux_file.readlines()))
-        with open(
-            file.parent / (group_file_name_prefix + "-fvar.txt"), "r"
-        ) as variance_file:
+        with open(file.parent / (group_file_name_prefix + "-fvar.txt"), "r") as variance_file:
             variances.append(extract_data(variance_file.readlines()))
 
 rng = np.random.default_rng()
-pathname = f"C://Users//Harrison//Development//imap_L3_processing//tests//test_data//{folder.name}.cdf"
+pathname = (
+    f"C://Users//Harrison//Development//imap_L3_processing//tests//test_data//{folder.name}.cdf"
+)
 
 with CDF(pathname, "") as cdf:
     cdf.col_major(True)

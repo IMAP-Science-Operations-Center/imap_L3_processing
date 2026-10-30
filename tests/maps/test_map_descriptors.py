@@ -432,9 +432,7 @@ class TestMapDescriptors(unittest.TestCase):
                 self.assertEqual(expected, descriptor_parts)
 
                 if descriptor_parts is not None:
-                    self.assertEqual(
-                        descriptor, map_descriptor_parts_to_string(descriptor_parts)
-                    )
+                    self.assertEqual(descriptor, map_descriptor_parts_to_string(descriptor_parts))
 
 
 if __name__ == "__main__":

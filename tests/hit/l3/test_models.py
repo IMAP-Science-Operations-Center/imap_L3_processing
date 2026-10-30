@@ -96,9 +96,7 @@ class TestModels(CdfModelTestCase):
             DataProductVariable(models.E_PRIME_VAR_NAME, e_prime),
             DataProductVariable(models.DETECTED_RANGE_VAR_NAME, detected_range),
             DataProductVariable(models.PARTICLE_ID_VAR_NAME, particle),
-            DataProductVariable(
-                models.PRIORITY_BUFFER_NUMBER_VAR_NAME, priority_buffer_number
-            ),
+            DataProductVariable(models.PRIORITY_BUFFER_NUMBER_VAR_NAME, priority_buffer_number),
             DataProductVariable(models.LATENCY_VAR_NAME, latency),
             DataProductVariable(models.STIM_TAG_VAR_NAME, stim_tag),
             DataProductVariable(models.LONG_EVENT_FLAG_VAR_NAME, long_event_flag),
@@ -191,9 +189,7 @@ class TestModels(CdfModelTestCase):
         actual_variables = direct_event.to_data_product_variables()
 
         self.assertEqual(28, len(actual_variables))
-        for expected_variable, actual_variable in zip(
-            expected_variables, actual_variables
-        ):
+        for expected_variable, actual_variable in zip(expected_variables, actual_variables):
             self.assert_variable_attributes(
                 actual_variable,
                 expected_variable.value,
@@ -221,6 +217,4 @@ class TestModels(CdfModelTestCase):
                 hit_l1_data = HitL1Data.read_from_cdf(file_path)
 
                 np.testing.assert_array_equal(hit_l1_data.epoch, expected_epochs)
-                np.testing.assert_array_equal(
-                    expected_raw_binaries, hit_l1_data.event_binary
-                )
+                np.testing.assert_array_equal(expected_raw_binaries, hit_l1_data.event_binary)

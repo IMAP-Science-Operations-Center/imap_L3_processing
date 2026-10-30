@@ -27,8 +27,7 @@ class GlowsL3ADependencies:
         desired_input = next(
             science_input
             for science_input in science_inputs
-            if science_input.descriptor == GLOWS_L2_DESCRIPTOR
-            and science_input.source == "glows"
+            if science_input.descriptor == GLOWS_L2_DESCRIPTOR and science_input.source == "glows"
         )
 
         l2_cdf_file_path: Path = desired_input.imap_file_paths[0].construct_path()
@@ -51,12 +50,8 @@ class GlowsL3ADependencies:
         )
 
         calibration_path = download(calibration_dependency[0])
-        extra_heliospheric_background = download(
-            extra_heliospheric_background_dependency[0]
-        )
-        time_dependent_background_path = download(
-            time_dependent_background_dependency[0]
-        )
+        extra_heliospheric_background = download(extra_heliospheric_background_dependency[0])
+        time_dependent_background_path = download(time_dependent_background_dependency[0])
         settings_path = download(settings_dependency[0])
 
         ancillary_files = {

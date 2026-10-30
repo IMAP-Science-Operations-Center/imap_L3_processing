@@ -69,9 +69,7 @@ def convert_csv_to_yaml(file_path):
         with open(file_path, "r") as f:
             csvreader = csv.reader(f)
             row_headers = next(csvreader)
-            header_to_index = {
-                header: index for index, header in enumerate(row_headers)
-            }
+            header_to_index = {header: index for index, header in enumerate(row_headers)}
             for row in csvreader:
                 yaml_text += f"{row[0]}:\n"
 
@@ -89,13 +87,10 @@ def convert_csv_to_yaml(file_path):
                     required_variables = required_for_data
 
                 if (
-                    "RECORD_VARYING" in required_variables
-                    or "RECORD_VARYING" in header_to_index
+                    "RECORD_VARYING" in required_variables or "RECORD_VARYING" in header_to_index
                 ) and row[header_to_index["RECORD_VARYING"]].lower() == "nrv":
                     required_variables = [
-                        variable
-                        for variable in required_variables
-                        if variable != "DEPEND_0"
+                        variable for variable in required_variables if variable != "DEPEND_0"
                     ]
 
                 for index, rowitem in enumerate(row):
@@ -110,10 +105,7 @@ def convert_csv_to_yaml(file_path):
                     column_not_listed_in_specified_list = row_headers[index] not in (
                         required_variables + non_required_columns
                     )
-                    if (
-                        column_is_empty_and_not_required
-                        or column_not_listed_in_specified_list
-                    ):
+                    if column_is_empty_and_not_required or column_not_listed_in_specified_list:
                         continue
 
                     yaml_text += f"   {row_headers[index]}: {display_rowitem}\n"

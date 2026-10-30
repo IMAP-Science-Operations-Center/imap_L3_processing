@@ -10,9 +10,7 @@ from tests.test_helpers import get_test_data_path
 
 
 class TestGlowsL3EDependencies(TestCase):
-    @patch(
-        "imap_l3_processing.glows.l3e.glows_l3e_dependencies.imap_data_access.download"
-    )
+    @patch("imap_l3_processing.glows.l3e.glows_l3e_dependencies.imap_data_access.download")
     def test_fetch_dependencies(self, mock_download):
         mock_processing_input_collection = Mock()
 
@@ -133,37 +131,25 @@ class TestGlowsL3EDependencies(TestCase):
         }
 
         self.assertEqual(mock_lya_series_path, actual_dependencies.lya_series)
-        self.assertEqual(
-            mock_solar_uv_anisotropy_path, actual_dependencies.solar_uv_anisotropy
-        )
+        self.assertEqual(mock_solar_uv_anisotropy_path, actual_dependencies.solar_uv_anisotropy)
         self.assertEqual(mock_speed_3d_sw_path, actual_dependencies.speed_3d_sw)
         self.assertEqual(mock_density_3d_sw_path, actual_dependencies.density_3d_sw)
         self.assertEqual(mock_phion_hydrogen_path, actual_dependencies.phion_hydrogen)
-        self.assertEqual(
-            mock_sw_eqtr_electrons_path, actual_dependencies.sw_eqtr_electrons
-        )
+        self.assertEqual(mock_sw_eqtr_electrons_path, actual_dependencies.sw_eqtr_electrons)
         self.assertEqual(
             expected_pipeline_settings["executable_dependency_paths"],
             actual_dependencies.pipeline_settings["executable_dependency_paths"],
         )
         self.assertEqual(mock_energy_grid_lo_path, actual_dependencies.energy_grid_lo)
         self.assertEqual(mock_energy_grid_hi_path, actual_dependencies.energy_grid_hi)
-        self.assertEqual(
-            mock_energy_grid_ultra_path, actual_dependencies.energy_grid_ultra
-        )
+        self.assertEqual(mock_energy_grid_ultra_path, actual_dependencies.energy_grid_ultra)
         self.assertEqual(mock_tess_xyz_8_path, actual_dependencies.tess_xyz_8)
         self.assertEqual(mock_tess_ang_16_path, actual_dependencies.tess_ang16)
-        self.assertEqual(
-            pipeline_settings_path, actual_dependencies.pipeline_settings_file
-        )
+        self.assertEqual(pipeline_settings_path, actual_dependencies.pipeline_settings_file)
 
-        self.assertEqual(
-            mock_downloaded_repoint_file, actual_dependencies.repointing_file
-        )
+        self.assertEqual(mock_downloaded_repoint_file, actual_dependencies.repointing_file)
 
-    @patch(
-        "imap_l3_processing.glows.l3e.glows_l3e_dependencies.furnish_spice_metakernel"
-    )
+    @patch("imap_l3_processing.glows.l3e.glows_l3e_dependencies.furnish_spice_metakernel")
     def test_collect_spice_dependencies(self, mock_furnish_spice_metakernel):
         expected_kernel_types_with_predicted = [
             SpiceKernelTypes.ScienceFrames,
@@ -206,9 +192,7 @@ class TestGlowsL3EDependencies(TestCase):
         ]
 
         actual_metakernel_with_predict, actual_metakernel_without_predict = (
-            GlowsL3EDependencies.collect_spice_dependencies(
-                sentinel.start_date, sentinel.end_date
-            )
+            GlowsL3EDependencies.collect_spice_dependencies(sentinel.start_date, sentinel.end_date)
         )
 
         mock_furnish_spice_metakernel.assert_has_calls(
@@ -229,9 +213,7 @@ class TestGlowsL3EDependencies(TestCase):
         )
 
         self.assertEqual(metakernel_output_with_predict, actual_metakernel_with_predict)
-        self.assertEqual(
-            metakernel_output_without_predict, actual_metakernel_without_predict
-        )
+        self.assertEqual(metakernel_output_without_predict, actual_metakernel_without_predict)
 
     def test_get_hi_parents(self):
         dependencies = self._create_l3e_dependencies()
@@ -327,9 +309,7 @@ class TestGlowsL3EDependencies(TestCase):
             [
                 call(glows_l3e_dependencies.energy_grid_lo, expected_energy_grid_lo),
                 call(glows_l3e_dependencies.energy_grid_hi, expected_energy_grid_hi),
-                call(
-                    glows_l3e_dependencies.energy_grid_ultra, expected_energy_grid_ultra
-                ),
+                call(glows_l3e_dependencies.energy_grid_ultra, expected_energy_grid_ultra),
                 call(glows_l3e_dependencies.tess_xyz_8, expected_tess_xyz_8),
                 call(glows_l3e_dependencies.tess_ang16, expected_tess_ang16),
                 call(
@@ -361,14 +341,12 @@ class TestGlowsL3EDependencies(TestCase):
 
         mock_file.assert_called_once_with("ionization.files.dat", "w")
         mock_file.return_value.write.assert_called_once_with(
-            
-                f"{glows_l3e_dependencies.lya_series.name}\n"
-                f"{glows_l3e_dependencies.solar_uv_anisotropy.name}\n"
-                f"{glows_l3e_dependencies.speed_3d_sw.name}\n"
-                f"{glows_l3e_dependencies.density_3d_sw.name}\n"
-                f"{glows_l3e_dependencies.phion_hydrogen.name}\n"
-                f"{glows_l3e_dependencies.sw_eqtr_electrons.name}\n"
-            
+            f"{glows_l3e_dependencies.lya_series.name}\n"
+            f"{glows_l3e_dependencies.solar_uv_anisotropy.name}\n"
+            f"{glows_l3e_dependencies.speed_3d_sw.name}\n"
+            f"{glows_l3e_dependencies.density_3d_sw.name}\n"
+            f"{glows_l3e_dependencies.phion_hydrogen.name}\n"
+            f"{glows_l3e_dependencies.sw_eqtr_electrons.name}\n"
         )
 
     def _create_l3e_dependencies(self) -> GlowsL3EDependencies:

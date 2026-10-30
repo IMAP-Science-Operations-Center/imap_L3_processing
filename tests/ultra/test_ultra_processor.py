@@ -68,9 +68,7 @@ class TestUltraProcessor(unittest.TestCase):
 
     @patch("imap_l3_processing.ultra.ultra_processor.UltraSurvivalProbabilitySkyMap")
     @patch("imap_l3_processing.ultra.ultra_processor.UltraSurvivalProbability")
-    @patch(
-        "imap_l3_processing.ultra.ultra_processor.combine_glows_l3e_with_l1c_pointing"
-    )
+    @patch("imap_l3_processing.ultra.ultra_processor.combine_glows_l3e_with_l1c_pointing")
     def test_correct_healpix_data_for_survival_probability(
         self,
         mock_combine_glows_l3e_with_l1c_pointing,
@@ -116,9 +114,7 @@ class TestUltraProcessor(unittest.TestCase):
             sentinel.pset_3,
         ]
         computed_survival_probabilities = rng.random((1, 9, healpix_indices.shape[0]))
-        expected_quality_flags = np.full(
-            (1, 9, healpix_indices.shape[0]), MapL3Flags.NONE
-        )
+        expected_quality_flags = np.full((1, 9, healpix_indices.shape[0]), MapL3Flags.NONE)
         expected_quality_flags[rng.random((1, 9, healpix_indices.shape[0])) > 0.8] = (
             MapL3Flags.PREDICTIVE_EPHEMERIS
         )
@@ -209,15 +205,11 @@ class TestUltraProcessor(unittest.TestCase):
             computed_survival_probabilities,
         )
 
-        np.testing.assert_array_equal(
-            actual_intensity_map_data.epoch, intensity_data.epoch
-        )
+        np.testing.assert_array_equal(actual_intensity_map_data.epoch, intensity_data.epoch)
         np.testing.assert_array_equal(
             actual_intensity_map_data.epoch_delta, intensity_data.epoch_delta
         )
-        np.testing.assert_array_equal(
-            actual_intensity_map_data.energy, intensity_data.energy
-        )
+        np.testing.assert_array_equal(actual_intensity_map_data.energy, intensity_data.energy)
         np.testing.assert_array_equal(
             actual_intensity_map_data.energy_delta_plus,
             intensity_data.energy_delta_plus,
@@ -229,18 +221,14 @@ class TestUltraProcessor(unittest.TestCase):
         np.testing.assert_array_equal(
             actual_intensity_map_data.energy_label, intensity_data.energy_label
         )
-        np.testing.assert_array_equal(
-            actual_intensity_map_data.latitude, intensity_data.latitude
-        )
+        np.testing.assert_array_equal(actual_intensity_map_data.latitude, intensity_data.latitude)
         np.testing.assert_array_equal(
             actual_intensity_map_data.longitude, intensity_data.longitude
         )
         np.testing.assert_array_equal(
             actual_intensity_map_data.exposure_factor, intensity_data.exposure_factor
         )
-        np.testing.assert_array_equal(
-            actual_intensity_map_data.obs_date, intensity_data.obs_date
-        )
+        np.testing.assert_array_equal(actual_intensity_map_data.obs_date, intensity_data.obs_date)
         np.testing.assert_array_equal(
             actual_intensity_map_data.obs_date_range, intensity_data.obs_date_range
         )
@@ -251,9 +239,7 @@ class TestUltraProcessor(unittest.TestCase):
             actual_intensity_map_data.quality_flags, expected_quality_flags
         )
         coords = healpix_intensity_map_data.coords
-        np.testing.assert_array_equal(
-            coords.pixel_index, input_l2_healpix_map.coords.pixel_index
-        )
+        np.testing.assert_array_equal(coords.pixel_index, input_l2_healpix_map.coords.pixel_index)
         np.testing.assert_array_equal(
             coords.pixel_index_label, input_l2_healpix_map.coords.pixel_index_label
         )
@@ -261,9 +247,7 @@ class TestUltraProcessor(unittest.TestCase):
     @patch("imap_l3_processing.ultra.ultra_processor.HealPixIntensityMapData")
     @patch("imap_l3_processing.ultra.ultra_processor.UltraSurvivalProbabilitySkyMap")
     @patch("imap_l3_processing.ultra.ultra_processor.UltraSurvivalProbability")
-    @patch(
-        "imap_l3_processing.ultra.ultra_processor.combine_glows_l3e_with_l1c_pointing"
-    )
+    @patch("imap_l3_processing.ultra.ultra_processor.combine_glows_l3e_with_l1c_pointing")
     def test_correct_healpix_data_for_survival_probability_caches_results(
         self,
         mock_combine_glows_l3e_with_l1c_pointing,
@@ -271,9 +255,7 @@ class TestUltraProcessor(unittest.TestCase):
         mock_survival_skymap,
         mock_healpix_intensity_map_data,
     ):
-        mock_healpix_intensity_map_data.return_value = (
-            sentinel.healpix_intensity_map_data
-        )
+        mock_healpix_intensity_map_data.return_value = sentinel.healpix_intensity_map_data
         rng = np.random.default_rng()
         healpix_indices = np.arange(12)
 
@@ -345,9 +327,7 @@ class TestUltraProcessor(unittest.TestCase):
             f"['{input_glows_l3e_name_1}', '{input_glows_l3e_name_2}']"
             "a-map-descriptor-nside32"
         )
-        expected_cache_path = (
-            cache_dir / sha256(expected_cache_key.encode("utf-8")).hexdigest()
-        )
+        expected_cache_path = cache_dir / sha256(expected_cache_key.encode("utf-8")).hexdigest()
 
         with open(expected_cache_path, "rb") as f:
             cached_data = pickle.load(f)
@@ -357,9 +337,7 @@ class TestUltraProcessor(unittest.TestCase):
     @patch("imap_l3_processing.ultra.ultra_processor.HealPixIntensityMapData")
     @patch("imap_l3_processing.ultra.ultra_processor.UltraSurvivalProbabilitySkyMap")
     @patch("imap_l3_processing.ultra.ultra_processor.UltraSurvivalProbability")
-    @patch(
-        "imap_l3_processing.ultra.ultra_processor.combine_glows_l3e_with_l1c_pointing"
-    )
+    @patch("imap_l3_processing.ultra.ultra_processor.combine_glows_l3e_with_l1c_pointing")
     def test_correct_healpix_data_for_survival_probability_uses_cached_result(
         self,
         mock_combine_glows_l3e_with_l1c_pointing,
@@ -379,9 +357,7 @@ class TestUltraProcessor(unittest.TestCase):
             f"['{input_glows_l3e_name_1}', '{input_glows_l3e_name_2}']"
             "a-map-descriptor-nside32"
         )
-        expected_cache_path = (
-            cache_dir / sha256(expected_cache_key.encode("utf-8")).hexdigest()
-        )
+        expected_cache_path = cache_dir / sha256(expected_cache_key.encode("utf-8")).hexdigest()
         cached_result = sentinel.healpix_intensity_map_data
 
         with open(expected_cache_path, "wb") as f:
@@ -429,9 +405,7 @@ class TestUltraProcessor(unittest.TestCase):
     )
     @patch("imap_l3_processing.utils.spiceypy")
     @patch("imap_l3_processing.ultra.ultra_processor.save_data")
-    @patch(
-        "imap_l3_processing.ultra.ultra_processor.UltraL3Dependencies.fetch_dependencies"
-    )
+    @patch("imap_l3_processing.ultra.ultra_processor.UltraL3Dependencies.fetch_dependencies")
     def _test_process_survival_probability(
         self,
         degree_spacing,
@@ -481,12 +455,8 @@ class TestUltraProcessor(unittest.TestCase):
         )
 
         rectangular_predicted_ephemeris_data = np.array([0.73, 0.24, 0, 0.99, 1, 0])
-        nominal_alpha_proton_ratio_data = np.full_like(
-            rectangular_predicted_ephemeris_data, 0.0
-        )
-        persisted_last_point_data = np.full_like(
-            rectangular_predicted_ephemeris_data, 0.0
-        )
+        nominal_alpha_proton_ratio_data = np.full_like(rectangular_predicted_ephemeris_data, 0.0)
+        persisted_last_point_data = np.full_like(rectangular_predicted_ephemeris_data, 0.0)
 
         expected_quality_flags = np.array(
             [
@@ -499,9 +469,7 @@ class TestUltraProcessor(unittest.TestCase):
             ]
         )
 
-        mock_healpix_map_data = (
-            mock_correct_healpix_data_for_survival_probability.return_value
-        )
+        mock_healpix_map_data = mock_correct_healpix_data_for_survival_probability.return_value
         mock_healpix_skymap = Mock()
         mock_healpix_map_data.to_healpix_skymap = Mock(return_value=mock_healpix_skymap)
 
@@ -510,18 +478,10 @@ class TestUltraProcessor(unittest.TestCase):
             "ena_intensity_stat_uncert": Mock(
                 values=sentinel.rectangular_ena_intensity_stat_uncert
             ),
-            "ena_intensity_sys_err": Mock(
-                values=sentinel.rectangular_ena_intensity_sys_err
-            ),
-            "survival_probability": Mock(
-                values=sentinel.rectangular_survival_probability
-            ),
-            "predicted_ephemeris_flag": Mock(
-                values=rectangular_predicted_ephemeris_data
-            ),
-            "nominal_alpha_proton_ratio_flag": Mock(
-                values=nominal_alpha_proton_ratio_data
-            ),
+            "ena_intensity_sys_err": Mock(values=sentinel.rectangular_ena_intensity_sys_err),
+            "survival_probability": Mock(values=sentinel.rectangular_survival_probability),
+            "predicted_ephemeris_flag": Mock(values=rectangular_predicted_ephemeris_data),
+            "nominal_alpha_proton_ratio_flag": Mock(values=nominal_alpha_proton_ratio_data),
             "persisted_last_point_flag": Mock(values=persisted_last_point_data),
         }
 
@@ -555,9 +515,7 @@ class TestUltraProcessor(unittest.TestCase):
 
         mock_save_data.assert_called_once()
         actual_rectangular_data_product = mock_save_data.call_args_list[0].args[0]
-        self.assertIsInstance(
-            actual_rectangular_data_product, RectangularIntensityDataProduct
-        )
+        self.assertIsInstance(actual_rectangular_data_product, RectangularIntensityDataProduct)
         self.assertEqual(4, len(actual_rectangular_data_product.parent_file_names))
         self.assertEqual(
             {
@@ -568,13 +526,9 @@ class TestUltraProcessor(unittest.TestCase):
             },
             set(actual_rectangular_data_product.parent_file_names),
         )
-        self.assertEqual(
-            SpiceFrame.IMAP_GCS, actual_rectangular_data_product.spice_frame_name
-        )
+        self.assertEqual(SpiceFrame.IMAP_GCS, actual_rectangular_data_product.spice_frame_name)
         actual_rectangular_data = actual_rectangular_data_product.data
-        self.assertIsInstance(
-            actual_rectangular_data.intensity_map_data, IntensityMapData
-        )
+        self.assertIsInstance(actual_rectangular_data.intensity_map_data, IntensityMapData)
 
         # @formatter:off
         self.assertEqual(
@@ -600,9 +554,7 @@ class TestUltraProcessor(unittest.TestCase):
         )
 
         expected_passthrough = input_l2_rectangular_map.intensity_map_data
-        self.assertIs(
-            expected_passthrough.epoch, actual_rectangular_data.intensity_map_data.epoch
-        )
+        self.assertIs(expected_passthrough.epoch, actual_rectangular_data.intensity_map_data.epoch)
         self.assertIs(
             expected_passthrough.epoch_delta,
             actual_rectangular_data.intensity_map_data.epoch_delta,
@@ -669,9 +621,7 @@ class TestUltraProcessor(unittest.TestCase):
 
         self.assertEqual([mock_save_data.return_value], product)
 
-    @patch(
-        "imap_l3_processing.ultra.ultra_processor.MapProcessor.get_parent_file_names"
-    )
+    @patch("imap_l3_processing.ultra.ultra_processor.MapProcessor.get_parent_file_names")
     @patch("imap_l3_processing.ultra.ultra_processor.ExposureWeightedCombination")
     @patch("imap_l3_processing.ultra.ultra_processor.save_data")
     @patch(
@@ -731,9 +681,7 @@ class TestUltraProcessor(unittest.TestCase):
         )
 
         predicted_ephemeris_rectangular_values = np.array([0.243, 0, 1, 0, 0.993, 0])
-        nominal_alpha_proton_ratio_rectangular_values = np.array(
-            [0, 0.34, 0.8, 0, 0, 0]
-        )
+        nominal_alpha_proton_ratio_rectangular_values = np.array([0, 0.34, 0.8, 0, 0, 0])
         persisted_last_point_rectangular_values = np.array([0, 0, 0.4, 0, 0, 1])
 
         expected_quality_flags = np.array(
@@ -753,18 +701,12 @@ class TestUltraProcessor(unittest.TestCase):
             "ena_intensity_stat_uncert": Mock(
                 values=sentinel.rectangular_ena_intensity_stat_uncert
             ),
-            "ena_intensity_sys_err": Mock(
-                values=sentinel.rectangular_ena_intensity_sys_err
-            ),
-            "predicted_ephemeris_flag": Mock(
-                values=predicted_ephemeris_rectangular_values
-            ),
+            "ena_intensity_sys_err": Mock(values=sentinel.rectangular_ena_intensity_sys_err),
+            "predicted_ephemeris_flag": Mock(values=predicted_ephemeris_rectangular_values),
             "nominal_alpha_proton_ratio_flag": Mock(
                 values=nominal_alpha_proton_ratio_rectangular_values
             ),
-            "persisted_last_point_flag": Mock(
-                values=persisted_last_point_rectangular_values
-            ),
+            "persisted_last_point_flag": Mock(values=persisted_last_point_rectangular_values),
         }
 
         processor = UltraProcessor(sentinel.dependencies, input_metadata)
@@ -849,9 +791,7 @@ class TestUltraProcessor(unittest.TestCase):
     @patch(
         "imap_l3_processing.ultra.ultra_processor.UltraProcessor._process_healpix_intensity_to_rectangular"
     )
-    @patch(
-        "imap_l3_processing.ultra.ultra_processor.MapProcessor.get_parent_file_names"
-    )
+    @patch("imap_l3_processing.ultra.ultra_processor.MapProcessor.get_parent_file_names")
     @patch("imap_l3_processing.ultra.ultra_processor.UncertaintyWeightedCombination")
     @patch("imap_l3_processing.ultra.ultra_processor.save_data")
     @patch(
@@ -984,9 +924,7 @@ class TestUltraProcessor(unittest.TestCase):
     )
     @patch("imap_l3_processing.utils.spiceypy")
     @patch("imap_l3_processing.ultra.ultra_processor.save_data")
-    @patch(
-        "imap_l3_processing.ultra.ultra_processor.UltraL3Dependencies.fetch_dependencies"
-    )
+    @patch("imap_l3_processing.ultra.ultra_processor.UltraL3Dependencies.fetch_dependencies")
     def test_defaults_to_ECLIPJ2000_spice_frame(
         self,
         mock_fetch_dependencies,
@@ -1045,15 +983,9 @@ class TestUltraProcessor(unittest.TestCase):
 
         mock_rectangular_map_dataset = {
             "ena_intensity": Mock(values=sentinel.rectangular_ena_intensity),
-            "ena_intensity_stat_uncert": Mock(
-                values=sentinel.rectangular_ena_intensity_stat_unc
-            ),
-            "ena_intensity_sys_err": Mock(
-                values=sentinel.rectangular_ena_intensity_sys_err
-            ),
-            "survival_probability": Mock(
-                values=sentinel.rectangular_survival_probability
-            ),
+            "ena_intensity_stat_uncert": Mock(values=sentinel.rectangular_ena_intensity_stat_unc),
+            "ena_intensity_sys_err": Mock(values=sentinel.rectangular_ena_intensity_sys_err),
+            "survival_probability": Mock(values=sentinel.rectangular_survival_probability),
             "predicted_ephemeris_flag": Mock(values=np.array([])),
             "nominal_alpha_proton_ratio_flag": Mock(values=np.array([])),
             "persisted_last_point_flag": Mock(values=np.array([])),
@@ -1075,9 +1007,7 @@ class TestUltraProcessor(unittest.TestCase):
 
     @patch("imap_l3_processing.utils.spiceypy")
     @patch("imap_l3_processing.ultra.ultra_processor.save_data")
-    @patch(
-        "imap_l3_processing.ultra.ultra_processor.calculate_spectral_index_for_multiple_ranges"
-    )
+    @patch("imap_l3_processing.ultra.ultra_processor.calculate_spectral_index_for_multiple_ranges")
     @patch(
         "imap_l3_processing.ultra.ultra_processor.UltraL3SpectralIndexDependencies.fetch_dependencies"
     )
@@ -1107,9 +1037,7 @@ class TestUltraProcessor(unittest.TestCase):
             descriptor=f"u90-spx-h-sf-sp-full-hae-{degree_spacing}deg-6mo",
         )
         input_map_data = RectangularIntensityMapData(Mock(), Mock())
-        dependencies = UltraL3SpectralIndexDependencies(
-            input_map_data, sentinel.energy_ranges
-        )
+        dependencies = UltraL3SpectralIndexDependencies(input_map_data, sentinel.energy_ranges)
         mock_fetch_dependencies.return_value = dependencies
 
         mock_spectral_index_map_data = Mock(spec=SpectralIndexMapData)
@@ -1122,23 +1050,15 @@ class TestUltraProcessor(unittest.TestCase):
 
         mock_save_data.assert_called_once()
         actual_rectangular_data_product = mock_save_data.call_args_list[0].args[0]
-        self.assertIsInstance(
-            actual_rectangular_data_product, RectangularSpectralIndexDataProduct
-        )
+        self.assertIsInstance(actual_rectangular_data_product, RectangularSpectralIndexDataProduct)
         self.assertEqual(
             expected_parent_file_names,
             actual_rectangular_data_product.parent_file_names,
         )
-        self.assertEqual(
-            processor.input_metadata, actual_rectangular_data_product.input_metadata
-        )
-        self.assertEqual(
-            SpiceFrame.ECLIPJ2000, actual_rectangular_data_product.spice_frame_name
-        )
+        self.assertEqual(processor.input_metadata, actual_rectangular_data_product.input_metadata)
+        self.assertEqual(SpiceFrame.ECLIPJ2000, actual_rectangular_data_product.spice_frame_name)
 
-        self.assertIsInstance(
-            actual_rectangular_data_product, RectangularSpectralIndexDataProduct
-        )
+        self.assertIsInstance(actual_rectangular_data_product, RectangularSpectralIndexDataProduct)
 
         actual_rectangular_data: RectangularSpectralIndexMapData = (
             actual_rectangular_data_product.data
@@ -1160,9 +1080,7 @@ class TestUltraProcessor(unittest.TestCase):
 
     @patch("imap_l3_processing.ultra.ultra_processor.save_data")
     @patch("imap_l3_processing.utils.spiceypy")
-    @patch(
-        "imap_l3_processing.ultra.ultra_processor.calculate_spectral_index_for_multiple_ranges"
-    )
+    @patch("imap_l3_processing.ultra.ultra_processor.calculate_spectral_index_for_multiple_ranges")
     @patch("imap_l3_processing.ultra.ultra_processor.fit_spectral_index_map")
     @patch("imap_l3_processing.ultra.ultra_processor.slice_energy_range_by_bin")
     @patch(
@@ -1258,17 +1176,15 @@ class TestUltraProcessor(unittest.TestCase):
         )
         mock_fetch_dependencies.return_value = dependencies
 
-        expected_ena_spectral_index = np.array(
-            [2] * (60 * 30) + [3.5] * (60 * 30)
-        ).reshape(1, 2, 60, 30)
+        expected_ena_spectral_index = np.array([2] * (60 * 30) + [3.5] * (60 * 30)).reshape(
+            1, 2, 60, 30
+        )
 
         processing_input_collection = ProcessingInputCollection()
         processor = UltraProcessor(processing_input_collection, input_metadata)
         product = processor.process()
 
-        actual_data_product: RectangularSpectralIndexDataProduct = (
-            mock_save_data.call_args[0][0]
-        )
+        actual_data_product: RectangularSpectralIndexDataProduct = mock_save_data.call_args[0][0]
 
         np.testing.assert_array_almost_equal(
             actual_data_product.data.spectral_index_map_data.ena_spectral_index,
@@ -1292,18 +1208,14 @@ def _create_ultra_l2_healpix_data(
     lat = lat if lat is not None else np.array([1.0])
     healpix_indices = healpix_indices if healpix_indices is not None else np.arange(12)
     energy = energy if energy is not None else np.array([1.0])
-    energy_delta = (
-        energy_delta if energy_delta is not None else np.full((len(energy), 2), 1)
-    )
+    energy_delta = energy_delta if energy_delta is not None else np.full((len(energy), 2), 1)
     flux = (
         flux
         if flux is not None
         else np.full((len(epoch), len(energy), len(healpix_indices)), fill_value=1)
     )
     intensity_stat_uncert = (
-        intensity_stat_unc
-        if intensity_stat_unc is not None
-        else np.full(flux.shape, fill_value=1)
+        intensity_stat_unc if intensity_stat_unc is not None else np.full(flux.shape, fill_value=1)
     )
 
     if isinstance(flux, np.ndarray):

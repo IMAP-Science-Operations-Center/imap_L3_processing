@@ -9,9 +9,7 @@ from imap_l3_processing.data_utils import NearestInterpolator, rebin
 
 class TestDataUtils(unittest.TestCase):
     def test_1d_rebin(self):
-        hit_data_epoch = np.array(
-            [datetime(2020, 4, 4, 0, 5), datetime(2020, 4, 4, 0, 15)]
-        )
+        hit_data_epoch = np.array([datetime(2020, 4, 4, 0, 5), datetime(2020, 4, 4, 0, 15)])
         hit_data_delta = np.array([timedelta(seconds=300), timedelta(seconds=300)])
         extra_data_at_beginning = [0, 0.5]
         extra_dates_at_beginning = [
@@ -51,9 +49,7 @@ class TestDataUtils(unittest.TestCase):
         np.testing.assert_array_equal(actual_average, expected_average)
 
     def test_rebin_with_extra_data_at_beginning_and_end(self):
-        hit_data_epoch = np.array(
-            [datetime(2020, 4, 4, 0, 5), datetime(2020, 4, 4, 0, 15)]
-        )
+        hit_data_epoch = np.array([datetime(2020, 4, 4, 0, 5), datetime(2020, 4, 4, 0, 15)])
         hit_data_delta = np.array([timedelta(seconds=300), timedelta(seconds=300)])
         extra_data_at_beginning = [[0.5, 0, 1], [0, 0.5, 1]]
         extra_dates_at_beginning = [
@@ -282,9 +278,7 @@ class TestDataUtils(unittest.TestCase):
                     from_date_epoch, from_data, to_data_epoch, timedelta(days=1)
                 )
 
-                np.testing.assert_array_equal(
-                    interpolator.interpolate_data(), expected_values
-                )
+                np.testing.assert_array_equal(interpolator.interpolate_data(), expected_values)
                 np.testing.assert_array_equal(
                     interpolator.interpolate_flags(quality_flags),
                     expected_quality_flags,
@@ -309,10 +303,7 @@ class TestDataUtils(unittest.TestCase):
 
         from_data = np.repeat([[1, 0, 0]], 86400 * 2, axis=0)
         from_epoch = np.array(
-            [
-                datetime(2020, 4, 4) + timedelta(seconds=0.5) * i
-                for i in range(86400 * 2)
-            ]
+            [datetime(2020, 4, 4) + timedelta(seconds=0.5) * i for i in range(86400 * 2)]
         )
 
         t0 = time.perf_counter()
@@ -325,13 +316,9 @@ class TestDataUtils(unittest.TestCase):
 
     def test_nearest_interpolator_handles_nan(self):
         to_epoch = np.array([datetime(2020, 4, 4, minute=1)])
-        from_epoch = np.array(
-            [datetime(2020, 4, 4, minute=1), datetime(2020, 4, 4, minute=2)]
-        )
+        from_epoch = np.array([datetime(2020, 4, 4, minute=1), datetime(2020, 4, 4, minute=2)])
 
         from_data = np.array([np.nan, 2])
 
-        interpolator = NearestInterpolator(
-            from_epoch, from_data, to_epoch, timedelta(minutes=1)
-        )
+        interpolator = NearestInterpolator(from_epoch, from_data, to_epoch, timedelta(minutes=1))
         self.assertEqual(interpolator.interpolate_data(), [2])

@@ -93,8 +93,7 @@ def main():
     voltages = [_peak_voltage(float(v)) for v in bulk_speed]
     swapi_response.warm_cache(voltages)
     response_grids = [
-        swapi_response.get_response_grid(v, PROTON_MASS_PER_CHARGE_M_P_PER_E)
-        for v in voltages
+        swapi_response.get_response_grid(v, PROTON_MASS_PER_CHARGE_M_P_PER_E) for v in voltages
     ]
 
     print(f"Computing {n_samples} reference integrals (JIT-parallel, fixed limits)...")

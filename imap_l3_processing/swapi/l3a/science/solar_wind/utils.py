@@ -19,9 +19,7 @@ def average_spin_axis_rtn(rotation_matrices: ndarray) -> ndarray:
 
 
 @numba.njit
-def count_rate_conversion_factor(
-    sw_params: SolarWindParams, response_grid: ResponseGrid
-) -> float:
+def count_rate_conversion_factor(sw_params: SolarWindParams, response_grid: ResponseGrid) -> float:
     sigma = thermal_speed(sw_params)
     return (
         response_grid.central_effective_area

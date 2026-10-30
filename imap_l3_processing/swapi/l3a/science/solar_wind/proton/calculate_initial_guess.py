@@ -24,9 +24,7 @@ from imap_l3_processing.swapi.l3a.utils import (
 )
 
 # 1 eV
-INITIAL_TEMPERATURE_FLOOR_K = (
-    PROTON_CHARGE_COULOMBS / BOLTZMANN_CONSTANT_JOULES_PER_KELVIN
-)
+INITIAL_TEMPERATURE_FLOOR_K = PROTON_CHARGE_COULOMBS / BOLTZMANN_CONSTANT_JOULES_PER_KELVIN
 
 
 def calculate_initial_guess(ctx: SolarWindFitContext) -> SolarWindParams:

@@ -115,9 +115,7 @@ class TestUtils(SpiceTestCase):
         self.assertTrue(np.all(np.isnan(result.inst_az_spin_sector[1])))
         spiceypy.sct2e(-43, 0.1)
         self.assertEqual(result.phase_space_density.shape, (6, 24, 30, 7))
-        self.assertEqual(
-            result.phase_space_density[3][11][8][4], 3.1664245168848865e-28
-        )
+        self.assertEqual(result.phase_space_density[3][11][8][4], 3.1664245168848865e-28)
         self.assertTrue(np.all(np.isnan(result.phase_space_density[1])))
 
         self.assertEqual(result.acquisition_time.shape, (6, 24, 30))
@@ -132,9 +130,7 @@ class TestUtils(SpiceTestCase):
         self.assertTrue(np.all(result.acquisition_duration[1] == 0))
 
         self.assertEqual(result.phase_space_density_rebinned.shape, (6, 24, 30, 7))
-        self.assertEqual(
-            result.phase_space_density_rebinned[3][11][8][4], 1.2744421815220178e-27
-        )
+        self.assertEqual(result.phase_space_density_rebinned[3][11][8][4], 1.2744421815220178e-27)
         self.assertTrue(np.isnan(result.phase_space_density_rebinned[0][0][0][0]))
         self.assertTrue(np.all(np.isnan(result.phase_space_density_rebinned[1])))
 
@@ -177,9 +173,7 @@ class TestUtils(SpiceTestCase):
     def test_compute_epoch_delta_in_ns(self):
         acq_duration_microseconds = np.full((4, 24, 30), 80_000)
         settle_duration_microseconds = np.full((4, 4), 10000 / 3)
-        result = compute_epoch_delta_in_ns(
-            acq_duration_microseconds, settle_duration_microseconds
-        )
+        result = compute_epoch_delta_in_ns(acq_duration_microseconds, settle_duration_microseconds)
         expected = np.full(4, 30 * 1e9)
         np.testing.assert_array_equal(expected, result)
 

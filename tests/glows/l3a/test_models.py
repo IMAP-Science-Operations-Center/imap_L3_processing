@@ -128,48 +128,28 @@ class TestModels(CdfModelTestCase):
 
         variables = iter(variables)
         # @formatter:off
-        self.assert_variable_attributes(
-            next(variables), [repointing], REPOINTING_CDF_VAR_NAME
-        )
-        self.assert_variable_attributes(
-            next(variables), photon_flux, PHOTON_FLUX_CDF_VAR_NAME
-        )
+        self.assert_variable_attributes(next(variables), [repointing], REPOINTING_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(variables), photon_flux, PHOTON_FLUX_CDF_VAR_NAME)
         self.assert_variable_attributes(
             next(variables),
             photon_flux_uncertainty,
             PHOTON_FLUX_UNCERTAINTY_CDF_VAR_NAME,
         )
-        self.assert_variable_attributes(
-            next(variables), raw_histogram, RAW_HISTOGRAM_CDF_VAR_NAME
-        )
+        self.assert_variable_attributes(next(variables), raw_histogram, RAW_HISTOGRAM_CDF_VAR_NAME)
         self.assert_variable_attributes(
             next(variables), exposure_times, EXPOSURE_TIMES_CDF_VAR_NAME
         )
-        self.assert_variable_attributes(
-            next(variables), number_of_bins, NUM_OF_BINS_CDF_VAR_NAME
-        )
+        self.assert_variable_attributes(next(variables), number_of_bins, NUM_OF_BINS_CDF_VAR_NAME)
         self.assert_variable_attributes(next(variables), epoch, EPOCH_CDF_VAR_NAME)
-        self.assert_variable_attributes(
-            next(variables), epoch_delta, EPOCH_DELTA_CDF_VAR_NAME
-        )
-        self.assert_variable_attributes(
-            next(variables), [start_time], START_TIME_CDF_VAR_NAME
-        )
-        self.assert_variable_attributes(
-            next(variables), [end_time], END_TIME_CDF_VAR_NAME
-        )
-        self.assert_variable_attributes(
-            next(variables), spin_angle, SPIN_ANGLE_CDF_VAR_NAME
-        )
+        self.assert_variable_attributes(next(variables), epoch_delta, EPOCH_DELTA_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(variables), [start_time], START_TIME_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(variables), [end_time], END_TIME_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(variables), spin_angle, SPIN_ANGLE_CDF_VAR_NAME)
         self.assert_variable_attributes(
             next(variables), spin_angle_delta, SPIN_ANGLE_DELTA_CDF_VAR_NAME
         )
-        self.assert_variable_attributes(
-            next(variables), latitudes, LATITUDE_CDF_VAR_NAME
-        )
-        self.assert_variable_attributes(
-            next(variables), longitudes, LONGITUDE_CDF_VAR_NAME
-        )
+        self.assert_variable_attributes(next(variables), latitudes, LATITUDE_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(variables), longitudes, LONGITUDE_CDF_VAR_NAME)
         self.assert_variable_attributes(
             next(variables),
             extra_heliospheric_background,
@@ -260,13 +240,9 @@ class TestModels(CdfModelTestCase):
         )
 
         self.assert_variable_attributes(next(variables), [0, 1], "lon_lat")
-        self.assert_variable_attributes(
-            next(variables), ["lon", "lat"], "lon_lat_labels"
-        )
+        self.assert_variable_attributes(next(variables), ["lon", "lat"], "lon_lat_labels")
         self.assert_variable_attributes(next(variables), [0, 1, 2], "x_y_z")
-        self.assert_variable_attributes(
-            next(variables), ["X", "Y", "Z"], "x_y_z_labels"
-        )
+        self.assert_variable_attributes(next(variables), ["X", "Y", "Z"], "x_y_z_labels")
 
 
 if __name__ == "__main__":

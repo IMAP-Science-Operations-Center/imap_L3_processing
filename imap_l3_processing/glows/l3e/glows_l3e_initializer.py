@@ -73,9 +73,7 @@ class GlowsL3EInitializer:
             )
         )
         tess_xyz_8 = get_most_recently_uploaded_ancillary(
-            imap_data_access.query(
-                table="ancillary", instrument="glows", descriptor="tess-xyz-8"
-            )
+            imap_data_access.query(table="ancillary", instrument="glows", descriptor="tess-xyz-8")
         )
         energy_grid_hi = get_most_recently_uploaded_ancillary(
             imap_data_access.query(
@@ -88,9 +86,7 @@ class GlowsL3EInitializer:
             )
         )
         tess_ang_16 = get_most_recently_uploaded_ancillary(
-            imap_data_access.query(
-                table="ancillary", instrument="glows", descriptor="tess-ang-16"
-            )
+            imap_data_access.query(table="ancillary", instrument="glows", descriptor="tess-ang-16")
         )
 
         processing_input_collection = ProcessingInputCollection(
@@ -112,9 +108,7 @@ class GlowsL3EInitializer:
 
         first_updated_cr = first_cr
         if previous_l3d is not None:
-            first_updated_cr = find_first_updated_cr(
-                l3d_output.l3d_cdf_file_path, previous_l3d
-            )
+            first_updated_cr = find_first_updated_cr(l3d_output.l3d_cdf_file_path, previous_l3d)
             if first_updated_cr is not None:
                 first_updated_cr -= 1
 
@@ -253,9 +247,7 @@ def find_first_updated_cr(new_l3d: Path, old_l3d: str) -> int | None:
     new_l3d_cdf = CDF(str(new_l3d))
 
     for i, cr in enumerate(old_l3d_cdf["cr_grid"][...]):
-        lya_matches = np.isclose(
-            old_l3d_cdf["lyman_alpha"][i], new_l3d_cdf["lyman_alpha"][i]
-        )
+        lya_matches = np.isclose(old_l3d_cdf["lyman_alpha"][i], new_l3d_cdf["lyman_alpha"][i])
         phion_matches = np.isclose(old_l3d_cdf["phion"][i], new_l3d_cdf["phion"][i])
         plasma_speed_flag_matches = np.isclose(
             old_l3d_cdf["plasma_speed_flag"][i], new_l3d_cdf["plasma_speed_flag"][i]
@@ -274,9 +266,7 @@ def find_first_updated_cr(new_l3d: Path, old_l3d: str) -> int | None:
             np.isclose(old_l3d_cdf["plasma_speed"][i], new_l3d_cdf["plasma_speed"][i])
         )
         proton_density_matches = np.all(
-            np.isclose(
-                old_l3d_cdf["proton_density"][i], new_l3d_cdf["proton_density"][i]
-            )
+            np.isclose(old_l3d_cdf["proton_density"][i], new_l3d_cdf["proton_density"][i])
         )
         uv_anisotropy_matches = np.all(
             np.isclose(old_l3d_cdf["uv_anisotropy"][i], new_l3d_cdf["uv_anisotropy"][i])

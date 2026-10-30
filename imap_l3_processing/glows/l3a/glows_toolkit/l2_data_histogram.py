@@ -34,9 +34,7 @@ class L2DataHistogram:
 
         # initialize counters
         self.var["l1b_file_counter_all"] = 0  # all l1b files processed for a given day
-        self.var["l1b_file_counter_good_time"] = (
-            0  # only good-time files for a given day
-        )
+        self.var["l1b_file_counter_good_time"] = 0  # only good-time files for a given day
 
         # read pipeline settings to be used for L2
         with open(anc_input_from_instr_team["settings"], "r") as file_handler:
@@ -103,9 +101,7 @@ class L2DataHistogram:
                 continue
             if isinstance(self.var["l1b_averages"][key], dict):
                 for second_key in self.var["l1b_averages"][key]:
-                    self.var["l1b_averages"][key][second_key].append(
-                        l1b_data[key][second_key]
-                    )
+                    self.var["l1b_averages"][key][second_key].append(l1b_data[key][second_key])
             else:
                 self.var["l1b_averages"][key].append(l1b_data[key])
         self.var["l1b_averages"]["counter"] += 1
@@ -156,9 +152,7 @@ class L2DataHistogram:
             )
 
         # set bad-time-flag bits to compare it with self.var['bad_time_mask']
-        l1b_bad_time_flags = "".join(
-            [str(l1b_data["flags"][key]) for key in l1b_data["flags"]]
-        )
+        l1b_bad_time_flags = "".join([str(l1b_data["flags"][key]) for key in l1b_data["flags"]])
         l1b_bad_time_flags = "0b" + l1b_bad_time_flags[::-1]
 
         # compare bad_time_flags for L1b with mask
@@ -199,9 +193,7 @@ class L2DataHistogram:
                 self.data[key] = {}
                 self.data[spread_key] = {}
                 for second_key in self.var["l1b_averages"][key]:
-                    self.data[key][second_key] = np.mean(
-                        self.var["l1b_averages"][key][second_key]
-                    )
+                    self.data[key][second_key] = np.mean(self.var["l1b_averages"][key][second_key])
                     self.data[spread_key][second_key] = np.std(
                         self.var["l1b_averages"][key][second_key]
                     )
@@ -217,12 +209,8 @@ class L2DataHistogram:
                 and MOC see ANC_INPUT_FROM_INSTRUMENT_TEAM in constants.py
         """
 
-        self.data["header"]["number_of_l1b_files_used"] = self.var[
-            "l1b_file_counter_good_time"
-        ]
-        self.data["header"]["number_of_all_l1b_files"] = self.var[
-            "l1b_file_counter_all"
-        ]
+        self.data["header"]["number_of_l1b_files_used"] = self.var["l1b_file_counter_good_time"]
+        self.data["header"]["number_of_all_l1b_files"] = self.var["l1b_file_counter_all"]
 
         if self.data["header"]["number_of_l1b_files_used"] > 0:
             self.data["start_time"] = time_sec_subsec_to_utc(
@@ -242,9 +230,7 @@ class L2DataHistogram:
             self.data["daily_lightcurve"]["exposure_times"] = np.zeros(
                 self.var["number_of_bins_per_histogram"], float
             )
-            self.var["raw_histogram"] = np.zeros(
-                self.var["number_of_bins_per_histogram"], int
-            )
+            self.var["raw_histogram"] = np.zeros(self.var["number_of_bins_per_histogram"], int)
             self.data["daily_lightcurve"]["photon_flux"] = np.zeros(
                 self.var["number_of_bins_per_histogram"], float
             )
@@ -255,8 +241,7 @@ class L2DataHistogram:
         # compute cps from raw histogram and exposure times
         idxs = np.nonzero(self.data["daily_lightcurve"]["exposure_times"] > 0.0)[0]
         self.data["daily_lightcurve"]["photon_flux"][idxs] = (
-            self.var["raw_histogram"][idxs]
-            / self.data["daily_lightcurve"]["exposure_times"][idxs]
+            self.var["raw_histogram"][idxs] / self.data["daily_lightcurve"]["exposure_times"][idxs]
         )
 
         # add raw histogram counts
@@ -299,21 +284,15 @@ class L2DataHistogram:
             ones = np.ones(len(self.data["daily_lightcurve"]["spin_angle"]), float)
             histogram_bins_ecl_coords = np.degrees(
                 spin2lb(
-                    np.radians(self.data["spin_axis_orientation_average"]["lon"])
-                    * ones,
-                    np.radians(self.data["spin_axis_orientation_average"]["lat"])
-                    * ones,
+                    np.radians(self.data["spin_axis_orientation_average"]["lon"]) * ones,
+                    np.radians(self.data["spin_axis_orientation_average"]["lat"]) * ones,
                     np.radians(self.data["daily_lightcurve"]["spin_angle"]),
                     0.0,
                     np.radians(SCAN_CIRCLE_ANGULAR_RADIUS) * ones,
                 )
             )
-            self.data["daily_lightcurve"]["ecliptic_lon"] = histogram_bins_ecl_coords[
-                :, 0
-            ]
-            self.data["daily_lightcurve"]["ecliptic_lat"] = histogram_bins_ecl_coords[
-                :, 1
-            ]
+            self.data["daily_lightcurve"]["ecliptic_lon"] = histogram_bins_ecl_coords[:, 0]
+            self.data["daily_lightcurve"]["ecliptic_lat"] = histogram_bins_ecl_coords[:, 1]
 
         # apply calibration to get helioglow intensity in physical units of Rayleigh
         cps_per_R = calibration_factor(
@@ -346,9 +325,9 @@ class L2DataHistogram:
 
         # check if is_night flag at L1b goes from True to False, if so then we have a new observational day
         is_new_observ_day = (
-            self.var["is_night_for_previous_l1b"] >= 0 # we are at the second (or later) l1b file
+            self.var["is_night_for_previous_l1b"] >= 0  # we are at the second (or later) l1b file
             and self.var["is_night_for_previous_l1b"] == 1
-            and not l1b_data["flags"]["is_night"] # new observational day
+            and not l1b_data["flags"]["is_night"]  # new observational day
         )
 
         self.var["is_night_for_previous_l1b"] = l1b_data["flags"]["is_night"]
@@ -368,15 +347,11 @@ class L2DataHistogram:
             # generate spin-angle values for L2 for which spin=0 is measured from the
             # northernmost point of lightcurve, however it must have the same resolution as
             # l1b histograms so we can use L1b imap_spin_angle values for angular-grid generation
-            self.data["daily_lightcurve"]["spin_angle"] = l1b_data[
-                "imap_spin_angle_bin_cntr"
-            ]
+            self.data["daily_lightcurve"]["spin_angle"] = l1b_data["imap_spin_angle_bin_cntr"]
         self.var["l1b_end_time_all"] = (
             l1b_data["imap_start_time"] + l1b_data["imap_end_time_offset"]
         )
-        self.var["number_of_bins_per_histogram"] = l1b_data[
-            "number_of_bins_per_histogram"
-        ]
+        self.var["number_of_bins_per_histogram"] = l1b_data["number_of_bins_per_histogram"]
 
         # increment all-l1b-files counter
         self.var["l1b_file_counter_all"] += 1
@@ -389,14 +364,10 @@ class L2DataHistogram:
             if self.var["l1b_file_counter_good_time"] <= 0:
                 # things to do when we have the first good-time L1b data file
                 self.data["header"] = {
-                    "flight_software_version": l1b_data["block_header"][
-                        "flight_software_version"
-                    ],
+                    "flight_software_version": l1b_data["block_header"]["flight_software_version"],
                     "ground_software_version": VERSION,
                     "pkts_file_name": l1b_data["block_header"]["pkts_file_name"],
-                    "ancillary_data_files": l1b_data["block_header"][
-                        "ancillary_data_files"
-                    ],
+                    "ancillary_data_files": l1b_data["block_header"]["ancillary_data_files"],
                 }
 
                 # we are here at the first good-time L1b file, so we set the current state of
@@ -486,8 +457,7 @@ class L2DataHistogram:
 
         # hexadecimal values saved as strings require special treatment to make them integers
         self.data["daily_lightcurve"]["histogram_flag_array"] = [
-            int(x, base=16)
-            for x in self.data["daily_lightcurve"]["histogram_flag_array"]
+            int(x, base=16) for x in self.data["daily_lightcurve"]["histogram_flag_array"]
         ]
 
         # additional field to keep track where data come from
@@ -556,22 +526,19 @@ class L2DataHistogram:
         for key in fmt["daily_lightcurve"]:
             data["daily_lightcurve"][key] = (
                 "["
-                + ", ".join(fmt["daily_lightcurve"][key] % x
-                            for x in list(data["daily_lightcurve"][key])),
-                + "]"
+                + ", ".join(
+                    fmt["daily_lightcurve"][key] % x for x in list(data["daily_lightcurve"][key])
+                ),
+                +"]",
             )
         for key, value in fmt["scalar variables"].items():
             data[key] = "|" + value % data[key] + "|"
         for key, value in fmt["lon lat variables"].items():
             for sec_key in ["lon", "lat"]:
-                data[key][sec_key] = (
-                    "|" + value % data[key][sec_key] + "|"
-                )
+                data[key][sec_key] = "|" + value % data[key][sec_key] + "|"
         for key in fmt["vector variables"].items():
             for sec_key in ["x", "y", "z"]:
-                data[key][sec_key] = (
-                    "|" + value % data[key][sec_key] + "|"
-                )
+                data[key][sec_key] = "|" + value % data[key][sec_key] + "|"
 
         # histogram_flag_array requires special hexadecimal treatment
         data["daily_lightcurve"]["histogram_flag_array"] = (

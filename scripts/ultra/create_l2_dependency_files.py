@@ -73,7 +73,9 @@ def create_l2_dependency_files(sensor, reference_frame):
 
     inputs.add([generate_imap_input(f) for f in spice_files + pset_files])
 
-    dependency_file = f"imap_ultra_l2_{dependency_file_descriptor}_{START_DATE.strftime('%Y%m%d')}_v001.json"
+    dependency_file = (
+        f"imap_ultra_l2_{dependency_file_descriptor}_{START_DATE.strftime('%Y%m%d')}_v001.json"
+    )
     dependency_path = generate_imap_file_path(dependency_file).construct_path()
     dependency_path.parent.mkdir(parents=True, exist_ok=True)
     dependency_path.write_text(inputs.serialize())

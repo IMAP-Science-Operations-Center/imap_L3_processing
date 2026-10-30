@@ -94,9 +94,7 @@ def create_example_ultra_l2_map(
 
     # Calculate probability based on distance from target latitude
     lat_diff = np.abs(lat_pix - stripe_center_lat)
-    prob_scaling_factor = counts_scaling_params[1] * np.exp(
-        -(lat_diff**2) / (2 * width_scale**2)
-    )
+    prob_scaling_factor = counts_scaling_params[1] * np.exp(-(lat_diff**2) / (2 * width_scale**2))
     # Generate counts using binomial distribution
     rng = np.random.default_rng(seed=42)
     counts = np.array(
@@ -178,12 +176,8 @@ def create_example_ultra_l2_map(
     pset_product[CoordNames.ELEVATION_L1C.value].attrs["VAR_TYPE"] = "data"
 
     pset_product.coords[CoordNames.TIME.value].attrs["VAR_TYPE"] = "support_data"
-    pset_product.coords[CoordNames.ENERGY_ULTRA_L1C.value].attrs["VAR_TYPE"] = (
-        "support_data"
-    )
-    pset_product.coords[CoordNames.HEALPIX_INDEX.value].attrs["VAR_TYPE"] = (
-        "support_data"
-    )
+    pset_product.coords[CoordNames.ENERGY_ULTRA_L1C.value].attrs["VAR_TYPE"] = "support_data"
+    pset_product.coords[CoordNames.HEALPIX_INDEX.value].attrs["VAR_TYPE"] = "support_data"
 
     return pset_product
 
@@ -199,12 +193,8 @@ def _write_ultra_l2_cdf_with_parents(out_path: Path | None = None):
         cdf.new("ena_intensity", out_xarray["counts"].values)
         cdf.new("exposure_factor", out_xarray["exposure_time"].values)
         cdf.new("sensitivity", out_xarray["sensitivity"].values)
-        cdf.new(
-            "latitude", out_xarray[CoordNames.ELEVATION_L1C.value].values, recVary=False
-        )
-        cdf.new(
-            "longitude", out_xarray[CoordNames.AZIMUTH_L1C.value].values, recVary=False
-        )
+        cdf.new("latitude", out_xarray[CoordNames.ELEVATION_L1C.value].values, recVary=False)
+        cdf.new("longitude", out_xarray[CoordNames.AZIMUTH_L1C.value].values, recVary=False)
         cdf.new(
             "epoch",
             out_xarray[CoordNames.TIME.value].values,
@@ -247,9 +237,7 @@ def _write_ultra_l2_cdf_with_parents(out_path: Path | None = None):
             "solid_angle",
             np.full_like(out_xarray[CoordNames.HEALPIX_INDEX.value].values, 1),
         )
-        cdf.new(
-            "ena_intensity_stat_uncert", np.full_like(out_xarray["counts"].values, 1)
-        )
+        cdf.new("ena_intensity_stat_uncert", np.full_like(out_xarray["counts"].values, 1))
         cdf.new("ena_intensity_sys_err", np.full_like(out_xarray["counts"].values, 1))
         cdf.new(
             "pixel_index_label",
@@ -263,10 +251,7 @@ def _write_ultra_l2_cdf_with_parents(out_path: Path | None = None):
                 )
             elif cdf[var].type() == pycdf.const.CDF_INT8.value:
                 cdf[var].attrs["FILLVAL"] = -9223372036854775808
-            elif (
-                cdf[var].type() == pycdf.const.CDF_FLOAT.value
-                or pycdf.const.CDF_DOUBLE.value
-            ):
+            elif cdf[var].type() == pycdf.const.CDF_FLOAT.value or pycdf.const.CDF_DOUBLE.value:
                 cdf[var].attrs["FILLVAL"] = -1e31
 
 

@@ -51,16 +51,9 @@ class TestGlowsL3aDependencies(unittest.TestCase):
             AncillaryInput(time_dependent_background_dependency_filename),
         )
         science_data_dir = (
-            imap_data_access.config["DATA_DIR"]
-            / "imap"
-            / "glows"
-            / "l2a"
-            / "2023"
-            / "01"
+            imap_data_access.config["DATA_DIR"] / "imap" / "glows" / "l2a" / "2023" / "01"
         )
-        ancillary_data_dir = (
-            imap_data_access.config["DATA_DIR"] / "imap" / "ancillary" / "glows"
-        )
+        ancillary_data_dir = imap_data_access.config["DATA_DIR"] / "imap" / "ancillary" / "glows"
 
         cdf_path_str = "some_cdf.cdf"
         cdf_path_name = Path(cdf_path_str)
@@ -99,13 +92,8 @@ class TestGlowsL3aDependencies(unittest.TestCase):
             [
                 call(science_data_dir / cdf_dependency_filename),
                 call(ancillary_data_dir / calibration_data_dependency_filename),
-                call(
-                    ancillary_data_dir
-                    / extra_heliospheric_background_dependency_filename
-                ),
-                call(
-                    ancillary_data_dir / time_dependent_background_dependency_filename
-                ),
+                call(ancillary_data_dir / extra_heliospheric_background_dependency_filename),
+                call(ancillary_data_dir / time_dependent_background_dependency_filename),
                 call(ancillary_data_dir / settings_dependency_filename),
             ],
             mock_download.call_args_list,

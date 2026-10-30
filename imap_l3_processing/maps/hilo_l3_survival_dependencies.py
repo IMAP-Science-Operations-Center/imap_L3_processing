@@ -37,21 +37,13 @@ class HiLoL3SurvivalDependencies:
     def fetch_dependencies(
         cls, dependencies: ProcessingInputCollection, instrument: Instrument
     ) -> HiLoL3SurvivalDependencies:
-        [l2_map_path] = dependencies.get_file_paths(
-            source=instrument.value, data_type="l2"
-        )
-        l1c_paths = dependencies.get_file_paths(
-            source=instrument.value, data_type="l1c"
-        )
+        [l2_map_path] = dependencies.get_file_paths(source=instrument.value, data_type="l2")
+        l1c_paths = dependencies.get_file_paths(source=instrument.value, data_type="l1c")
         glows_paths = dependencies.get_file_paths(source="glows")
 
         map_file_path = imap_data_access.download(l2_map_path.name)
-        l1c_downloaded_paths = [
-            imap_data_access.download(l1c.name) for l1c in l1c_paths
-        ]
-        glows_downloaded_paths = [
-            imap_data_access.download(path.name) for path in glows_paths
-        ]
+        l1c_downloaded_paths = [imap_data_access.download(l1c.name) for l1c in l1c_paths]
+        glows_downloaded_paths = [imap_data_access.download(path.name) for path in glows_paths]
 
         l2_descriptor = ScienceFilePath(l2_map_path).descriptor
 

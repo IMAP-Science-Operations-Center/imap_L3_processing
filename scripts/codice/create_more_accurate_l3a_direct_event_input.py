@@ -27,7 +27,7 @@ def extend_priority_counts_to_24_spin_angles(
     with (
         CDF(str(template_cdf_path)) as template_cdf,
         CDF(str(output_path), masterpath="") as cdf,
-    ):    
+    ):
         cdf["spin_sector_index"] = np.arange(24)
         for var in template_cdf:
             if var in priority_count_variables:
@@ -38,9 +38,7 @@ def extend_priority_counts_to_24_spin_angles(
                 cdf[var] = template_cdf[var]
             cdf[var].attrs = template_cdf[var].attrs
 
-        rgfo_half_spin = rng.integers(
-            0, 33, size=template_cdf["rgfo_half_spin"].shape
-        )
+        rgfo_half_spin = rng.integers(0, 33, size=template_cdf["rgfo_half_spin"].shape)
         # randomly_fill_value = rng.choice(
         #    [False, True], size=template_cdf["rgfo_half_spin"].shape
         # )
@@ -97,9 +95,7 @@ def modify_l2_direct_events(instrument_team_l2_path: Path) -> Path:
         CDF(str(instrument_team_l2_path)) as template_cdf,
         CDF(str(output_path), masterpath="") as cdf,
     ):
-        epoch_delta = (
-            timedelta(minutes=2).total_seconds() * ONE_SECOND_IN_NANOSECONDS
-        )
+        epoch_delta = timedelta(minutes=2).total_seconds() * ONE_SECOND_IN_NANOSECONDS
         cdf["epoch_delta_plus"] = np.full(template_cdf["epoch"].shape, epoch_delta)
         cdf["epoch_delta_minus"] = np.full(template_cdf["epoch"].shape, epoch_delta)
 
@@ -107,9 +103,7 @@ def modify_l2_direct_events(instrument_team_l2_path: Path) -> Path:
             elevation_var = f"p{priority_i}_elevation"
             position_var = f"p{priority_i}_position"
 
-            cdf[position_var] = rng.integers(
-                1, 25, size=template_cdf[position_var].shape
-            )
+            cdf[position_var] = rng.integers(1, 25, size=template_cdf[position_var].shape)
             cdf[position_var].attrs["FILLVAL"] = int_fillval
 
             cdf[elevation_var] = rng.choice(
@@ -118,9 +112,7 @@ def modify_l2_direct_events(instrument_team_l2_path: Path) -> Path:
             cdf[elevation_var].attrs["FILLVAL"] = float_fillval
 
             for epoch_i in range(cdf[elevation_var].shape[0]):
-                number_of_events = template_cdf[f"p{priority_i}_num_events"][
-                    epoch_i
-                ]
+                number_of_events = template_cdf[f"p{priority_i}_num_events"][epoch_i]
 
                 filled_position = cdf[position_var][...]
                 filled_position[epoch_i, number_of_events:] = int_fillval
@@ -162,11 +154,7 @@ if __name__ == "__main__":
     )
 
     convert_epoch_time(l1a_nsw_path, target_datetime)
-    l1a_nsw_path.rename(
-        l1a_nsw_path.parent / "imap_codice_l1a_lo-nsw-priority_20241111_v000.cdf"
-    )
+    l1a_nsw_path.rename(l1a_nsw_path.parent / "imap_codice_l1a_lo-nsw-priority_20241111_v000.cdf")
 
     convert_epoch_time(l1a_sw_path, target_datetime)
-    l1a_sw_path.rename(
-        l1a_sw_path.parent / "imap_codice_l1a_lo-sw-priority_20241111_v000.cdf"
-    )
+    l1a_sw_path.rename(l1a_sw_path.parent / "imap_codice_l1a_lo-sw-priority_20241111_v000.cdf")

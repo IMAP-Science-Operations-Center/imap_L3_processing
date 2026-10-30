@@ -188,9 +188,7 @@ class TestUltraSPInitializer(unittest.TestCase):
                 self.assertEqual(2, len(actual_maps_to_produce))
 
     @patch("imap_l3_processing.maps.map_initializer.read_cdf_parents")
-    def test_get_maps_that_should_be_produced_lists_combined_maps(
-        self, mock_read_cdf_parents
-    ):
+    def test_get_maps_that_should_be_produced_lists_combined_maps(self, mock_read_cdf_parents):
         self.mock_query.side_effect = ImapQueryPatcher(
             [
                 "imap_glows_l3e_survival-probability-ul-sf_20100101-repoint00001_v001.cdf",
@@ -320,36 +318,16 @@ class TestUltraSPInitializer(unittest.TestCase):
 
         mock_read_cdf_parents.assert_has_calls(
             [
-                call(
-                    "imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-4deg-3mo_20100101_v001.cdf"
-                ),
-                call(
-                    "imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-3mo_20100101_v001.cdf"
-                ),
-                call(
-                    "imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-4deg-3mo_20100401_v001.cdf"
-                ),
-                call(
-                    "imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-3mo_20100401_v001.cdf"
-                ),
-                call(
-                    "imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-4deg-3mo_20100701_v001.cdf"
-                ),
-                call(
-                    "imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-3mo_20100701_v001.cdf"
-                ),
-                call(
-                    "imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-4deg-3mo_20101001_v001.cdf"
-                ),
-                call(
-                    "imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-3mo_20101001_v001.cdf"
-                ),
-                call(
-                    "imap_ultra_l3_ulc-ena-h-sf-sp-full-hae-4deg-3mo_20100101_v001.cdf"
-                ),
-                call(
-                    "imap_ultra_l3_ulc-ena-h-sf-sp-full-hae-4deg-3mo_20100401_v001.cdf"
-                ),
+                call("imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-4deg-3mo_20100101_v001.cdf"),
+                call("imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-3mo_20100101_v001.cdf"),
+                call("imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-4deg-3mo_20100401_v001.cdf"),
+                call("imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-3mo_20100401_v001.cdf"),
+                call("imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-4deg-3mo_20100701_v001.cdf"),
+                call("imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-3mo_20100701_v001.cdf"),
+                call("imap_ultra_l2_u45-ena-h-sf-nsp-full-hae-4deg-3mo_20101001_v001.cdf"),
+                call("imap_ultra_l2_u90-ena-h-sf-nsp-full-hae-4deg-3mo_20101001_v001.cdf"),
+                call("imap_ultra_l3_ulc-ena-h-sf-sp-full-hae-4deg-3mo_20100101_v001.cdf"),
+                call("imap_ultra_l3_ulc-ena-h-sf-sp-full-hae-4deg-3mo_20100401_v001.cdf"),
             ]
         )
         descriptor = "ulc-ena-h-sf-sp-full-hae-4deg-3mo"
@@ -382,9 +360,7 @@ class TestUltraSPInitializer(unittest.TestCase):
         self.assertEqual(2, len(actual_maps_to_produce))
 
     @patch("imap_l3_processing.maps.map_initializer.read_cdf_parents")
-    def test_get_maps_that_should_be_produced_lists_cg_corrected_maps(
-        self, mock_read_cdf_parents
-    ):
+    def test_get_maps_that_should_be_produced_lists_cg_corrected_maps(self, mock_read_cdf_parents):
         self.mock_query.side_effect = ImapQueryPatcher(
             [
                 "imap_glows_l3e_survival-probability-ul-hf_20100101-repoint00001_v001.cdf",
@@ -514,36 +490,16 @@ class TestUltraSPInitializer(unittest.TestCase):
 
         mock_read_cdf_parents.assert_has_calls(
             [
-                call(
-                    "imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-4deg-3mo_20100101_v001.cdf"
-                ),
-                call(
-                    "imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-4deg-3mo_20100101_v001.cdf"
-                ),
-                call(
-                    "imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-4deg-3mo_20100401_v001.cdf"
-                ),
-                call(
-                    "imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-4deg-3mo_20100401_v001.cdf"
-                ),
-                call(
-                    "imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-4deg-3mo_20100701_v001.cdf"
-                ),
-                call(
-                    "imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-4deg-3mo_20100701_v001.cdf"
-                ),
-                call(
-                    "imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-4deg-3mo_20101001_v001.cdf"
-                ),
-                call(
-                    "imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-4deg-3mo_20101001_v001.cdf"
-                ),
-                call(
-                    "imap_ultra_l3_ulc-ena-h-hf-sp-full-hae-4deg-3mo_20100101_v001.cdf"
-                ),
-                call(
-                    "imap_ultra_l3_ulc-ena-h-hf-sp-full-hae-4deg-3mo_20100401_v001.cdf"
-                ),
+                call("imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-4deg-3mo_20100101_v001.cdf"),
+                call("imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-4deg-3mo_20100101_v001.cdf"),
+                call("imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-4deg-3mo_20100401_v001.cdf"),
+                call("imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-4deg-3mo_20100401_v001.cdf"),
+                call("imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-4deg-3mo_20100701_v001.cdf"),
+                call("imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-4deg-3mo_20100701_v001.cdf"),
+                call("imap_ultra_l2_u45-ena-h-hf-nsp-full-hae-4deg-3mo_20101001_v001.cdf"),
+                call("imap_ultra_l2_u90-ena-h-hf-nsp-full-hae-4deg-3mo_20101001_v001.cdf"),
+                call("imap_ultra_l3_ulc-ena-h-hf-sp-full-hae-4deg-3mo_20100101_v001.cdf"),
+                call("imap_ultra_l3_ulc-ena-h-hf-sp-full-hae-4deg-3mo_20100401_v001.cdf"),
             ]
         )
 

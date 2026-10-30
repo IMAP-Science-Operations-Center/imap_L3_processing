@@ -61,9 +61,7 @@ class TestHiSPInitializer(unittest.TestCase):
                     create_mock_query_results([]),
                 ]
 
-                mock_read_cdf_parents.side_effect = self.create_fake_read_cdf_parents(
-                    "45"
-                )
+                mock_read_cdf_parents.side_effect = self.create_fake_read_cdf_parents("45")
 
                 expected_possible_maps = [
                     PossibleMapToProduce(
@@ -150,18 +148,10 @@ class TestHiSPInitializer(unittest.TestCase):
 
                 mock_read_cdf_parents.assert_has_calls(
                     [
-                        call(
-                            "imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf"
-                        ),
-                        call(
-                            "imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100401_v001.cdf"
-                        ),
-                        call(
-                            "imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100701_v001.cdf"
-                        ),
-                        call(
-                            "imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20101001_v001.cdf"
-                        ),
+                        call("imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf"),
+                        call("imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100401_v001.cdf"),
+                        call("imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20100701_v001.cdf"),
+                        call("imap_hi_l2_h45-ena-h-sf-nsp-anti-hae-4deg-3mo_20101001_v001.cdf"),
                     ],
                     any_order=True,
                 )
@@ -169,9 +159,7 @@ class TestHiSPInitializer(unittest.TestCase):
                 self.assertEqual(expected_possible_maps, actual_possible_maps)
 
     @patch("imap_l3_processing.maps.map_initializer.read_cdf_parents")
-    def test_get_maps_that_can_be_produced_full_spin_descriptor(
-        self, mock_read_cdf_parents
-    ):
+    def test_get_maps_that_can_be_produced_full_spin_descriptor(self, mock_read_cdf_parents):
         self.mock_query.side_effect = [
             create_mock_query_results([]),
             create_mock_query_results(
@@ -427,9 +415,7 @@ class TestHiSPInitializer(unittest.TestCase):
             ]
         )
 
-        actual_possible_maps = initializer.get_maps_that_should_be_produced(
-            descriptor, None
-        )
+        actual_possible_maps = initializer.get_maps_that_should_be_produced(descriptor, None)
 
         mock_read_cdf_parents.assert_has_calls(
             [
@@ -475,9 +461,7 @@ class TestHiSPInitializer(unittest.TestCase):
                     ),
                 ]
 
-                mock_read_cdf_parents.side_effect = self.create_fake_read_cdf_parents(
-                    "90"
-                )
+                mock_read_cdf_parents.side_effect = self.create_fake_read_cdf_parents("90")
 
                 descriptor = "h90-ena-h-sf-sp-anti-hae-4deg-3mo"
                 expected_possible_maps = [
@@ -529,12 +513,8 @@ class TestHiSPInitializer(unittest.TestCase):
 
                 mock_read_cdf_parents.assert_has_calls(
                     [
-                        call(
-                            "imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf"
-                        ),
-                        call(
-                            "imap_hi_l3_h90-ena-h-sf-sp-anti-hae-4deg-3mo_20100101_v001.cdf"
-                        ),
+                        call("imap_hi_l2_h90-ena-h-sf-nsp-anti-hae-4deg-3mo_20100101_v001.cdf"),
+                        call("imap_hi_l3_h90-ena-h-sf-sp-anti-hae-4deg-3mo_20100101_v001.cdf"),
                     ]
                 )
 
@@ -623,9 +603,7 @@ class TestHiSPInitializer(unittest.TestCase):
             input_files=files, input_metadata=Mock()
         ).processing_input_collection
 
-        mock_collection.assert_called_once_with(
-            sentinel.file1, sentinel.file2, sentinel.file3
-        )
+        mock_collection.assert_called_once_with(sentinel.file1, sentinel.file2, sentinel.file3)
 
         self.assertEqual(mock_collection.return_value, processing_input)
 

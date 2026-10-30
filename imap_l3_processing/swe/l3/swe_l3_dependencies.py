@@ -36,9 +36,7 @@ class SweL3Dependencies:
     mag_is_preliminary: bool = False
 
     @classmethod
-    def fetch_dependencies(
-        cls, dependencies: ProcessingInputCollection
-    ) -> SweL3Dependencies:
+    def fetch_dependencies(cls, dependencies: ProcessingInputCollection) -> SweL3Dependencies:
         science_files = dependencies.processing_input
         swe_config_dependency = dependencies.get_file_paths(
             source="swe", descriptor=SWE_CONFIG_DESCRIPTOR

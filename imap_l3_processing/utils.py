@@ -84,18 +84,16 @@ def save_data(
         file_path.unlink(missing_ok=True)
 
     attribute_manager = ImapAttributeManager()
-    version = str(
-        data.input_metadata.version.lookup(data.input_metadata.descriptor)
-    ).replace("v", "")
+    version = str(data.input_metadata.version.lookup(data.input_metadata.descriptor)).replace(
+        "v", ""
+    )
     attribute_manager.add_global_attribute("Data_version", version)
     attribute_manager.add_instrument_attrs(
         data.input_metadata.instrument,
         data.input_metadata.data_level,
         data.input_metadata.descriptor,
     )
-    attribute_manager.add_global_attribute(
-        "Generation_date", date.today().strftime("%Y%m%d")
-    )
+    attribute_manager.add_global_attribute("Generation_date", date.today().strftime("%Y%m%d"))
     attribute_manager.add_global_attribute("Logical_source", logical_source)
     attribute_manager.add_global_attribute("Logical_file_id", logical_file_id)
     attribute_manager.add_global_attribute("ground_software_version", VERSION)
@@ -116,21 +114,15 @@ def save_data(
 
             if attribute_manager.try_load_global_metadata(logical_source) is None:
                 logical_source_global_attrs = (
-                    generate_global_metadata_for_undefined_logical_source(
-                        data.input_metadata
-                    )
+                    generate_global_metadata_for_undefined_logical_source(data.input_metadata)
                 )
-                attribute_manager.add_global_attribute(
-                    logical_source, logical_source_global_attrs
-                )
+                attribute_manager.add_global_attribute(logical_source, logical_source_global_attrs)
 
             attribute_manager.add_global_attribute(
                 "Spice_reference_frame", data.spice_frame_name.name
             )
         else:
-            raise AssertionError(
-                f"Found an unsupported map data product of type: {type(data)}"
-            )
+            raise AssertionError(f"Found an unsupported map data product of type: {type(data)}")
     elif data.parent_file_names:
         attribute_manager.add_global_attribute("Parents", data.parent_file_names)
 
@@ -210,9 +202,7 @@ def format_time(t: datetime | None) -> str | None:
     return None
 
 
-def download_external_dependency(
-    dependency_url: str, file_path: Path
-) -> Path | None:
+def download_external_dependency(dependency_url: str, file_path: Path) -> Path | None:
     try:
         response = requests.get(dependency_url)
         if response.status_code == 200:
@@ -246,9 +236,7 @@ def select_mag_path(
             (
                 d.imap_file_paths[0]
                 for d in science_files
-                if d.source == "mag"
-                and d.descriptor == descriptor
-                and d.data_type == level
+                if d.source == "mag" and d.descriptor == descriptor and d.data_type == level
             ),
             None,
         )
@@ -298,9 +286,7 @@ def get_spice_kernels_file_names(
     start_date: datetime, end_date: datetime, kernel_types: list[SpiceKernelTypes]
 ) -> list[str]:
     metakernel_url = (
-        urlparse(imap_data_access.config["DATA_ACCESS_URL"])
-        ._replace(path="metakernel")
-        .geturl()
+        urlparse(imap_data_access.config["DATA_ACCESS_URL"])._replace(path="metakernel").geturl()
     )
 
     parameters: dict = {
@@ -309,9 +295,7 @@ def get_spice_kernels_file_names(
         "end_time": f"{int((end_date - datetime(2000, 1, 1, 12)).total_seconds())}",
     }
 
-    kernels_res = requests.get(
-        metakernel_url, params={**parameters, "list_files": "true"}
-    )
+    kernels_res = requests.get(metakernel_url, params={**parameters, "list_files": "true"})
     kernels = json.loads(kernels_res.text)
 
     return kernels
@@ -323,9 +307,7 @@ def furnish_spice_metakernel(
     kernel_types: list[SpiceKernelTypes],
     metakernel_file_name: str = "metakernel.txt",
 ) -> FurnishMetakernelOutput:
-    metakernel_path = (
-        imap_data_access.config.get("DATA_DIR") / "metakernel" / metakernel_file_name
-    )
+    metakernel_path = imap_data_access.config.get("DATA_DIR") / "metakernel" / metakernel_file_name
     kernel_path = imap_data_access.config.get("DATA_DIR") / "imap" / "spice"
 
     parameters: dict = {
@@ -336,14 +318,10 @@ def furnish_spice_metakernel(
     }
 
     metakernel_url = (
-        urlparse(imap_data_access.config["DATA_ACCESS_URL"])
-        ._replace(path="metakernel")
-        .geturl()
+        urlparse(imap_data_access.config["DATA_ACCESS_URL"])._replace(path="metakernel").geturl()
     )
 
-    logger.info(
-        f"Getting SPICE Metakernel from: {metakernel_url}, with params: {parameters}"
-    )
+    logger.info(f"Getting SPICE Metakernel from: {metakernel_url}, with params: {parameters}")
 
     metakernel_res = requests.get(metakernel_url, params=parameters)
 

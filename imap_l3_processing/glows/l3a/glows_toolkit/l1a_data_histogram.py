@@ -69,9 +69,7 @@ class L1aDataHistogram:
         )
 
         self.data["number_of_spins_per_block"] = l0_data["number_of_spins_per_block"]
-        self.data["number_of_bins_per_histogram"] = l0_data[
-            "number_of_bins_per_histogram"
-        ]
+        self.data["number_of_bins_per_histogram"] = l0_data["number_of_bins_per_histogram"]
         self.data["histogram"] = l0_data["histogram"]
         # TMP_SOLUTION
         self.data["number_of_events"] = l0_data["number_of_events"]
@@ -86,9 +84,7 @@ class L1aDataHistogram:
             )
 
         self.data["filter_temperature_average"] = l0_data["filter_temperature_average"]
-        self.data["filter_temperature_variance"] = l0_data[
-            "filter_temperature_variance"
-        ]
+        self.data["filter_temperature_variance"] = l0_data["filter_temperature_variance"]
         self.data["hv_voltage_average"] = l0_data["hv_voltage_average"]
         self.data["hv_voltage_variance"] = l0_data["hv_voltage_variance"]
         self.data["spin_period_average"] = l0_data["spin_period_average"]

@@ -50,9 +50,7 @@ for folder in parent.iterdir():
     pixel_index_label = [f"Pixel index {x}" for x in pixel_index]
 
     obs_date = np.full(ena_intensity.shape, datetime.now())
-    obs_date_range = np.full(
-        ena_intensity.shape, ONE_SECOND_IN_NANOSECONDS * SECONDS_PER_DAY * 2
-    )
+    obs_date_range = np.full(ena_intensity.shape, ONE_SECOND_IN_NANOSECONDS * SECONDS_PER_DAY * 2)
 
     solid_angle = build_solid_angle_map(4)
 
@@ -65,9 +63,7 @@ for folder in parent.iterdir():
         cdf.new("energy", energy, recVary=False, type=pycdf.const.CDF_FLOAT)
         cdf.new("latitude", lat, recVary=False, type=pycdf.const.CDF_FLOAT)
         cdf.new("longitude", lon, recVary=False, type=pycdf.const.CDF_FLOAT)
-        cdf.new(
-            "ena_intensity", ena_intensity, recVary=True, type=pycdf.const.CDF_FLOAT
-        )
+        cdf.new("ena_intensity", ena_intensity, recVary=True, type=pycdf.const.CDF_FLOAT)
         cdf.new(
             "ena_intensity_stat_uncert",
             ena_intensity_stat_uncert,
@@ -80,13 +76,9 @@ for folder in parent.iterdir():
             recVary=True,
             type=pycdf.const.CDF_FLOAT,
         )
-        cdf.new(
-            "exposure_factor", exposure_factor, recVary=True, type=pycdf.const.CDF_FLOAT
-        )
+        cdf.new("exposure_factor", exposure_factor, recVary=True, type=pycdf.const.CDF_FLOAT)
         cdf.new("obs_date", obs_date, recVary=True, type=pycdf.const.CDF_TIME_TT2000)
-        cdf.new(
-            "obs_date_range", obs_date_range, recVary=True, type=pycdf.const.CDF_INT8
-        )
+        cdf.new("obs_date_range", obs_date_range, recVary=True, type=pycdf.const.CDF_INT8)
         cdf.new("solid_angle", solid_angle, recVary=True, type=pycdf.const.CDF_FLOAT)
         cdf.new("epoch_delta", epoch_delta, recVary=True, type=pycdf.const.CDF_INT8)
         cdf.new(
@@ -115,9 +107,7 @@ for folder in parent.iterdir():
 
         for var in cdf:
             if cdf[var].type() == pycdf.const.CDF_TIME_TT2000.value:
-                cdf[var].attrs["FILLVAL"] = datetime.fromisoformat(
-                    "9999-12-31T23:59:59.999999999"
-                )
+                cdf[var].attrs["FILLVAL"] = datetime.fromisoformat("9999-12-31T23:59:59.999999999")
             elif cdf[var].type() == pycdf.const.CDF_INT8.value:
                 cdf[var].attrs["FILLVAL"] = -9223372036854775808
             elif cdf[var].type() == pycdf.const.CDF_FLOAT.value:

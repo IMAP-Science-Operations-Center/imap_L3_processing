@@ -18,21 +18,14 @@ def create_survival_probabilities_file(
     glows_file_path: Path, date_for_file: datetime, sensor: str
 ):
     filename = f"imap_glows_l3e_survival-probabilities-hi-{sensor}_{date_for_file.strftime('%Y%m%d')}_v001.cdf"
-    cdf_file_path = get_test_data_path(
-        f"hi/fake_l3e_survival_probabilities/{sensor}/{filename}"
-    )
+    cdf_file_path = get_test_data_path(f"hi/fake_l3e_survival_probabilities/{sensor}/{filename}")
 
     cdf_file_path.unlink(missing_ok=True)
     with open(glows_file_path) as input_data:
-        energy_line = [
-            line for line in input_data if line.startswith("#energy_grid")
-        ]
+        energy_line = [line for line in input_data if line.startswith("#energy_grid")]
         assert len(energy_line) == 1
         energies = np.array(
-            [
-                float("".join(list(t)))
-                for t in itertools.batched(energy_line[0][19:-1], 10)
-            ]
+            [float("".join(list(t))) for t in itertools.batched(energy_line[0][19:-1], 10)]
         )
         energy_units = re.search(r"\[(.+)]", energy_line[0]).group(1)
 

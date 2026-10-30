@@ -42,9 +42,7 @@ class TestReprocessInfo(unittest.TestCase):
         test_file: Path = (
             get_test_data_folder() / "glows" / "glows_reprocessing_ancillary_file.dat"
         )
-        mock_datetime.now.return_value = datetime(
-            2026, 8, 11, 11, 40, tzinfo=timezone.utc
-        )
+        mock_datetime.now.return_value = datetime(2026, 8, 11, 11, 40, tzinfo=timezone.utc)
         cases = [
             (datetime(2026, 8, 11, 11, 41, tzinfo=timezone.utc), products),
             (datetime(2026, 8, 11, 11, 41), products),
@@ -57,9 +55,7 @@ class TestReprocessInfo(unittest.TestCase):
 
                 reprocess_info = ReprocessInfo.parse_from_ancillary(test_file)
 
-                self.assertEqual(
-                    expected_products, reprocess_info.products_to_reprocess
-                )
+                self.assertEqual(expected_products, reprocess_info.products_to_reprocess)
                 mock_datetime.fromisoformat.assert_called_with("2226-08-11 11:40")
                 mock_datetime.now.assert_called_with(timezone.utc)
 
@@ -131,9 +127,7 @@ class TestReprocessInfo(unittest.TestCase):
     def test_get_repoints(self):
         reprocess_info = ReprocessInfo(
             {
-                GLOWS_L3E_LO_DESCRIPTOR: ReprocessTargets(
-                    [2045, 2046, 3700], [2093, 2094]
-                ),
+                GLOWS_L3E_LO_DESCRIPTOR: ReprocessTargets([2045, 2046, 3700], [2093, 2094]),
                 GLOWS_L3E_HI_45_DESCRIPTOR: ReprocessTargets([2050], []),
             }
         )
@@ -165,13 +159,9 @@ class TestReprocessInfo(unittest.TestCase):
         self.assertEqual(expected_repoints_ultra, repoints_for_ultra)
 
     @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access.download")
-    def test_fetch_reprocess_info_downloads_and_parses_reprocess_info(
-        self, mock_download
-    ):
+    def test_fetch_reprocess_info_downloads_and_parses_reprocess_info(self, mock_download):
         processing_input = ProcessingInputCollection(
-            AncillaryInput(
-                f"imap_glows_{GLOWS_REPROCESSING_DESCRIPTOR}_20250101_v000.dat"
-            ),
+            AncillaryInput(f"imap_glows_{GLOWS_REPROCESSING_DESCRIPTOR}_20250101_v000.dat"),
             RepointInput("imap_2026_269_12.repoint.csv"),
         )
         path_to_downloaded_ancillary = (
@@ -193,6 +183,4 @@ class TestReprocessInfo(unittest.TestCase):
             GLOWS_L3E_ULTRA_HF_DESCRIPTOR: ReprocessTargets([243], []),
             GLOWS_L3D_DESCRIPTOR: ReprocessTargets([], []),
         }
-        self.assertEqual(
-            expected_products_to_reprocess, reprocess_info.products_to_reprocess
-        )
+        self.assertEqual(expected_products_to_reprocess, reprocess_info.products_to_reprocess)

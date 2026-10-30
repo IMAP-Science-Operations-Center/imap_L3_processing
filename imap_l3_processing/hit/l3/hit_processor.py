@@ -35,24 +35,18 @@ logger = logging.getLogger(__name__)
 
 
 class HitProcessor(Processor):
-    def __init__(
-        self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata
-    ):
+    def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
         super().__init__(dependencies, input_metadata)
 
     def process(self):
         if self.input_metadata.descriptor == "macropixel":
-            dependencies = HITL3SectoredDependencies.fetch_dependencies(
-                self.dependencies
-            )
+            dependencies = HITL3SectoredDependencies.fetch_dependencies(self.dependencies)
             pitch_angle_data_product = self.process_pitch_angle_product(dependencies)
             pitch_angle_data_product.parent_file_names = self.get_parent_file_names()
             cdf_file_path = save_data(pitch_angle_data_product)
             return [cdf_file_path]
         elif self.input_metadata.descriptor == "direct-events":
-            direct_event_dependencies = HitL3PhaDependencies.fetch_dependencies(
-                self.dependencies
-            )
+            direct_event_dependencies = HitL3PhaDependencies.fetch_dependencies(self.dependencies)
             direct_event_data_product = self.process_direct_event_product(
                 direct_event_dependencies
             )
@@ -77,9 +71,7 @@ class HitProcessor(Processor):
             try:
                 event_raw_pha_events = PHAEventReader.read_all_pha_events(event_binary)
             except Exception:
-                logger.warning(
-                    f"Could not read all pha events for epoch {epoch}", exc_info=True
-                )
+                logger.warning(f"Could not read all pha events for epoch {epoch}", exc_info=True)
                 continue
 
             epochs += [epoch] * len(event_raw_pha_events)
@@ -90,15 +82,11 @@ class HitProcessor(Processor):
         e_delta = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
         e_prime = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
         detected_range = np.full(shape=(len(raw_pha_events)), fill_value=np.nan)
-        particle_id = np.full(
-            shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT2_FILL_VALUE
-        )
+        particle_id = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT2_FILL_VALUE)
         priority_buffer_number = np.full(
             shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT1_FILL_VALUE
         )
-        latency = np.full(
-            shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT1_FILL_VALUE
-        )
+        latency = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT1_FILL_VALUE)
         stim_tag = np.full(shape=(len(raw_pha_events)), fill_value=False)
         long_event_flag = np.full(shape=(len(raw_pha_events)), fill_value=False)
         haz_tag = np.full(shape=(len(raw_pha_events)), fill_value=False)
@@ -106,29 +94,17 @@ class HitProcessor(Processor):
         has_unread_adcs = np.full(shape=(len(raw_pha_events)), fill_value=False)
         culling_flag = np.full(shape=(len(raw_pha_events)), fill_value=False)
 
-        pha_value = np.full(
-            shape=(len(raw_pha_events), 64), fill_value=UNSIGNED_INT2_FILL_VALUE
-        )
+        pha_value = np.full(shape=(len(raw_pha_events), 64), fill_value=UNSIGNED_INT2_FILL_VALUE)
         energy_at_detector = np.full(shape=(len(raw_pha_events), 64), fill_value=np.nan)
         is_low_gain = np.full(shape=(len(raw_pha_events), 64), fill_value=False)
 
-        detector_flags = np.full(
-            shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT2_FILL_VALUE
-        )
-        deindex = np.full(
-            shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT2_FILL_VALUE
-        )
-        epindex = np.full(
-            shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT2_FILL_VALUE
-        )
+        detector_flags = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT2_FILL_VALUE)
+        deindex = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT2_FILL_VALUE)
+        epindex = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT2_FILL_VALUE)
         stim_gain = np.full(shape=(len(raw_pha_events)), fill_value=False)
         a_l_stim = np.full(shape=(len(raw_pha_events)), fill_value=False)
-        stim_step = np.full(
-            shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT1_FILL_VALUE
-        )
-        dac_value = np.full(
-            shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT2_FILL_VALUE
-        )
+        stim_step = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT1_FILL_VALUE)
+        dac_value = np.full(shape=(len(raw_pha_events)), fill_value=UNSIGNED_INT2_FILL_VALUE)
 
         for i, raw_event in enumerate(raw_pha_events):
             event_output = process_pha_event(
@@ -159,9 +135,7 @@ class HitProcessor(Processor):
             has_unread_adcs[i] = raw_event.has_unread_adcs
             culling_flag[i] = raw_event.culling_flag
 
-            for event_energy_at_detector, word in zip(
-                event_output.energies, raw_event.pha_words
-            ):
+            for event_energy_at_detector, word in zip(event_output.energies, raw_event.pha_words):
                 pha_value[i, word.detector.address] = word.adc_value
                 energy_at_detector[i, word.detector.address] = event_energy_at_detector
                 is_low_gain[i, word.detector.address] = word.is_low_gain
@@ -303,16 +277,12 @@ class HitProcessor(Processor):
         )
 
         particle_unit_vectors = -sector_unit_vectors
-        rotated_particle_unit_vectors = (
-            rotate_particle_vectors_from_hit_despun_to_imap_despun(
-                particle_unit_vectors
-            )
+        rotated_particle_unit_vectors = rotate_particle_vectors_from_hit_despun_to_imap_despun(
+            particle_unit_vectors
         )
 
         pitch_angles, gyrophases, pitch_angle_deltas, gyrophase_deltas = (
-            get_hit_bin_polar_coordinates(
-                number_of_pitch_angle_bins, number_of_gyrophase_bins
-            )
+            get_hit_bin_polar_coordinates(number_of_pitch_angle_bins, number_of_gyrophase_bins)
         )
 
         averaged_mag_data = mag_data.rebin_to(hit_data.epoch, hit_data.epoch_delta)

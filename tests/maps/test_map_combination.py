@@ -91,9 +91,7 @@ class TestMapCombination(unittest.TestCase):
         map_1.ena_intensity_stat_uncert = np.array([1])
 
         combine_one = combination._combine([map_1])
-        np.testing.assert_equal(
-            dataclasses.asdict(combine_one), dataclasses.asdict(map_1)
-        )
+        np.testing.assert_equal(dataclasses.asdict(combine_one), dataclasses.asdict(map_1))
 
     def _combine_maps_with_no_background_data(self, combination: CombinationStrategy):
         map_1 = construct_intensity_data_with_all_zero_fields()
@@ -103,22 +101,16 @@ class TestMapCombination(unittest.TestCase):
         map_1.bg_intensity_stat_uncert = None
 
         combine_one = combination._combine([map_1])
-        np.testing.assert_equal(
-            dataclasses.asdict(combine_one), dataclasses.asdict(map_1)
-        )
+        np.testing.assert_equal(dataclasses.asdict(combine_one), dataclasses.asdict(map_1))
 
-    def _combine_maps_with_no_intensity_sys_errors(
-        self, combination: CombinationStrategy
-    ):
+    def _combine_maps_with_no_intensity_sys_errors(self, combination: CombinationStrategy):
         map_1 = construct_intensity_data_with_all_zero_fields()
         map_1.ena_intensity_stat_uncert = np.array([1])
         map_1.ena_intensity_sys_err_plus = None
         map_1.ena_intensity_sys_err_minus = None
 
         combine_one = combination._combine([map_1])
-        np.testing.assert_equal(
-            dataclasses.asdict(combine_one), dataclasses.asdict(map_1)
-        )
+        np.testing.assert_equal(dataclasses.asdict(combine_one), dataclasses.asdict(map_1))
 
     def _check_maps_match(self, combination: CombinationStrategy):
         map_1 = construct_intensity_data_with_all_zero_fields()
@@ -160,9 +152,7 @@ class TestMapCombination(unittest.TestCase):
                 try:
                     combination._check_maps_match([map_1, map_with_difference])
                 except AssertionError:
-                    self.fail(
-                        f"Differences in other fields should be alright: {field.name}"
-                    )
+                    self.fail(f"Differences in other fields should be alright: {field.name}")
 
     def test_combine_maps_does_a_time_weighted_average_of_intensity(self):
         map_1 = construct_intensity_data_with_all_zero_fields()
@@ -282,12 +272,8 @@ class TestMapCombination(unittest.TestCase):
 
         exposure_weighted_strategy = ExposureWeightedCombination()
 
-        rectangular_map_1: RectangularIntensityMapData = (
-            create_rectangular_intensity_map(map_1)
-        )
-        rectangular_map_2: RectangularIntensityMapData = (
-            create_rectangular_intensity_map(map_2)
-        )
+        rectangular_map_1: RectangularIntensityMapData = create_rectangular_intensity_map(map_1)
+        rectangular_map_2: RectangularIntensityMapData = create_rectangular_intensity_map(map_2)
         combine_two = exposure_weighted_strategy.combine_rectangular_intensity_map_data(
             [rectangular_map_1, rectangular_map_2]
         )
@@ -307,9 +293,7 @@ class TestMapCombination(unittest.TestCase):
         np.testing.assert_equal(
             combine_two.intensity_map_data.obs_date.mask, expected_obs_date.mask
         )
-        np.testing.assert_equal(
-            combine_two.intensity_map_data.obs_date, expected_obs_date
-        )
+        np.testing.assert_equal(combine_two.intensity_map_data.obs_date, expected_obs_date)
         np.testing.assert_equal(
             combine_two.intensity_map_data.bg_intensity, expected_combined_bg_intensity
         )
@@ -381,13 +365,11 @@ class TestMapCombination(unittest.TestCase):
             np.nan,
         ]
 
-        combined_map = (
-            ExposureWeightedCombination().combine_rectangular_intensity_map_data(
-                [
-                    create_rectangular_intensity_map(map_1),
-                    create_rectangular_intensity_map(map_2),
-                ]
-            )
+        combined_map = ExposureWeightedCombination().combine_rectangular_intensity_map_data(
+            [
+                create_rectangular_intensity_map(map_1),
+                create_rectangular_intensity_map(map_2),
+            ]
         )
 
         np.testing.assert_array_equal(
@@ -410,25 +392,17 @@ class TestMapCombination(unittest.TestCase):
         map_1 = construct_intensity_data_with_all_zero_fields()
         map_1.exposure_factor = np.array([1, 0, 5, 6, 0])
         DATETIME_FILL = -9223372036854775808
-        map_1.obs_date = np.ma.masked_equal(
-            [5, DATETIME_FILL, 7, 8, DATETIME_FILL], DATETIME_FILL
-        )
+        map_1.obs_date = np.ma.masked_equal([5, DATETIME_FILL, 7, 8, DATETIME_FILL], DATETIME_FILL)
 
         map_2 = construct_intensity_data_with_all_zero_fields()
         map_2.exposure_factor = np.array([3, 1, 5, 2, 0])
-        map_2.obs_date = np.ma.masked_equal(
-            [9, 10, 11, 12, DATETIME_FILL], DATETIME_FILL
-        )
+        map_2.obs_date = np.ma.masked_equal([9, 10, 11, 12, DATETIME_FILL], DATETIME_FILL)
         expected_obs_date = np.ma.array([8, 10, 9, 9, np.ma.masked])
 
         exposure_weighted_strategy = ExposureWeightedCombination()
 
-        rectangular_map_1: RectangularIntensityMapData = (
-            create_rectangular_intensity_map(map_1)
-        )
-        rectangular_map_2: RectangularIntensityMapData = (
-            create_rectangular_intensity_map(map_2)
-        )
+        rectangular_map_1: RectangularIntensityMapData = create_rectangular_intensity_map(map_1)
+        rectangular_map_2: RectangularIntensityMapData = create_rectangular_intensity_map(map_2)
 
         combine_two = exposure_weighted_strategy.combine_rectangular_intensity_map_data(
             [rectangular_map_1, rectangular_map_2]
@@ -437,9 +411,7 @@ class TestMapCombination(unittest.TestCase):
         np.testing.assert_equal(
             combine_two.intensity_map_data.obs_date.mask, expected_obs_date.mask
         )
-        np.testing.assert_equal(
-            combine_two.intensity_map_data.obs_date, expected_obs_date
-        )
+        np.testing.assert_equal(combine_two.intensity_map_data.obs_date, expected_obs_date)
 
     def test_combine_unweighted_combination_strategy(self):
         map_1 = construct_intensity_data_with_all_zero_fields()
@@ -484,9 +456,7 @@ class TestMapCombination(unittest.TestCase):
         map_2 = construct_intensity_data_with_all_zero_fields()
         map_2.ena_intensity = np.array([5, 6, 7, 8, np.nan, 100, 9, 10, 11])
         map_2.exposure_factor = np.array([10, 0, 10, 10, 10, 100, 100, np.nan, 30])
-        map_2.ena_intensity_sys_err = np.array(
-            [4, 1, 4, 5, np.nan, 1, np.nan, np.nan, np.nan]
-        )
+        map_2.ena_intensity_sys_err = np.array([4, 1, 4, 5, np.nan, 1, np.nan, np.nan, np.nan])
         map_2.ena_intensity_stat_uncert = np.array(
             [8, 1, 8, 10, np.nan, 1, np.nan, np.nan, np.nan]
         )
@@ -538,17 +508,11 @@ class TestMapCombination(unittest.TestCase):
 
         exposure_unweighted_strategy = UnweightedCombination()
 
-        rectangular_map_1: RectangularIntensityMapData = (
-            create_rectangular_intensity_map(map_1)
-        )
-        rectangular_map_2: RectangularIntensityMapData = (
-            create_rectangular_intensity_map(map_2)
-        )
+        rectangular_map_1: RectangularIntensityMapData = create_rectangular_intensity_map(map_1)
+        rectangular_map_2: RectangularIntensityMapData = create_rectangular_intensity_map(map_2)
 
-        combine_two = (
-            exposure_unweighted_strategy.combine_rectangular_intensity_map_data(
-                [rectangular_map_1, rectangular_map_2]
-            )
+        combine_two = exposure_unweighted_strategy.combine_rectangular_intensity_map_data(
+            [rectangular_map_1, rectangular_map_2]
         )
 
         np.testing.assert_equal(
@@ -560,9 +524,7 @@ class TestMapCombination(unittest.TestCase):
         np.testing.assert_equal(
             combine_two.intensity_map_data.ena_intensity_stat_uncert, expected_stat_unc
         )
-        np.testing.assert_equal(
-            combine_two.intensity_map_data.obs_date[-1], expected_obs_date
-        )
+        np.testing.assert_equal(combine_two.intensity_map_data.obs_date[-1], expected_obs_date)
         np.testing.assert_equal(
             combine_two.intensity_map_data.survival_probability,
             expected_survival_probability,
@@ -601,9 +563,7 @@ class TestMapCombination(unittest.TestCase):
         for name, not_matching_map in cases:
             with self.subTest(name), self.assertRaises(AssertionError):
                 strategy = UnweightedCombination()
-                strategy.combine_rectangular_intensity_map_data(
-                    [base_map, not_matching_map]
-                )
+                strategy.combine_rectangular_intensity_map_data([base_map, not_matching_map])
 
     def test_combine_healpix_intensity_map_data_errors_if_coords_not_matching(self):
         index_array = np.array([1])
@@ -626,17 +586,13 @@ class TestMapCombination(unittest.TestCase):
             ),
             (
                 "pixel_index_label",
-                make_data(
-                    pixel_index=index_array, pixel_index_label=np.array(["diff label"])
-                ),
+                make_data(pixel_index=index_array, pixel_index_label=np.array(["diff label"])),
             ),
         ]
         for name, not_matching_map in cases:
             with self.subTest(name), self.assertRaises(AssertionError):
                 strategy = UnweightedCombination()
-                strategy.combine_healpix_intensity_map_data(
-                    [base_map, not_matching_map]
-                )
+                strategy.combine_healpix_intensity_map_data([base_map, not_matching_map])
 
     def test_calculate_weighted_sys_err(self):
         uncertainties_1 = np.array([10, 20, 30, 40])
@@ -746,9 +702,7 @@ class TestMapCombination(unittest.TestCase):
         np.testing.assert_equal(
             combine_two.intensity_map_data.obs_date.mask, expected_obs_date.mask
         )
-        np.testing.assert_equal(
-            combine_two.intensity_map_data.obs_date, expected_obs_date
-        )
+        np.testing.assert_equal(combine_two.intensity_map_data.obs_date, expected_obs_date)
         np.testing.assert_equal(
             combine_two.intensity_map_data.survival_probability,
             expected_survival_probability,
@@ -769,13 +723,11 @@ class TestMapCombination(unittest.TestCase):
                 map_2 = construct_intensity_data_with_all_zero_fields()
                 map_2.survival_probability = None
 
-                combined_map = (
-                    combination_strategy().combine_rectangular_intensity_map_data(
-                        [
-                            create_rectangular_intensity_map(map_1),
-                            create_rectangular_intensity_map(map_2),
-                        ]
-                    )
+                combined_map = combination_strategy().combine_rectangular_intensity_map_data(
+                    [
+                        create_rectangular_intensity_map(map_1),
+                        create_rectangular_intensity_map(map_2),
+                    ]
                 )
 
                 self.assertIsNone(combined_map.intensity_map_data.survival_probability)
@@ -813,13 +765,11 @@ class TestMapCombination(unittest.TestCase):
                     ]
                 )
 
-                combined_map = (
-                    combination_strategy().combine_rectangular_intensity_map_data(
-                        [
-                            create_rectangular_intensity_map(map_1),
-                            create_rectangular_intensity_map(map_2),
-                        ]
-                    )
+                combined_map = combination_strategy().combine_rectangular_intensity_map_data(
+                    [
+                        create_rectangular_intensity_map(map_1),
+                        create_rectangular_intensity_map(map_2),
+                    ]
                 )
 
                 np.testing.assert_equal(
@@ -830,7 +780,6 @@ class TestMapCombination(unittest.TestCase):
                         MapL3Flags.PREDICTIVE_EPHEMERIS,
                         MapL3Flags.PREDICTIVE_EPHEMERIS,
                         MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
-                        MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO
-                        | MapL3Flags.PREDICTIVE_EPHEMERIS,
+                        MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO | MapL3Flags.PREDICTIVE_EPHEMERIS,
                     ],
                 )

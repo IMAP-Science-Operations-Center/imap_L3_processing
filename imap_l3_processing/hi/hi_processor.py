@@ -46,16 +46,14 @@ from imap_l3_processing.utils import save_data
 
 
 class HiProcessor(MapProcessor):
-    def process(
-        self, spice_frame_name: SpiceFrame = SpiceFrame.ECLIPJ2000
-    ) -> list[Path]:
+    def process(self, spice_frame_name: SpiceFrame = SpiceFrame.ECLIPJ2000) -> list[Path]:
         set_of_parent_file_names = set(self.get_parent_file_names())
 
         parsed_descriptor = parse_map_descriptor(self.input_metadata.descriptor)
         match parsed_descriptor:
             case MapDescriptorParts(quantity=MapQuantity.SpectralIndex):
-                hi_l3_spectral_fit_dependencies = (
-                    HiSpectralIndexDependencies.fetch_dependencies(self.dependencies)
+                hi_l3_spectral_fit_dependencies = HiSpectralIndexDependencies.fetch_dependencies(
+                    self.dependencies
                 )
                 map_data = self.process_spectral_fit_index(
                     hi_l3_spectral_fit_dependencies,
@@ -84,8 +82,7 @@ class HiProcessor(MapProcessor):
                     spice_frame_name=spice_frame_name,
                 )
                 set_of_parent_file_names.update(
-                    p.name
-                    for p in hi_l3_survival_probabilities_dependencies.dependency_file_paths
+                    p.name for p in hi_l3_survival_probabilities_dependencies.dependency_file_paths
                 )
             case MapDescriptorParts(
                 survival_correction=SurvivalCorrection.SurvivalCorrected,
@@ -94,9 +91,7 @@ class HiProcessor(MapProcessor):
                 reference_frame=ReferenceFrame.Spacecraft,
             ):
                 hi_l3_full_spin_dependencies = (
-                    HiL3SingleSensorFullSpinDependencies.fetch_dependencies(
-                        self.dependencies
-                    )
+                    HiL3SingleSensorFullSpinDependencies.fetch_dependencies(self.dependencies)
                 )
                 combination_strategy = UnweightedCombination()
                 combined_map = self.process_full_spin_single_sensor(
@@ -117,9 +112,7 @@ class HiProcessor(MapProcessor):
                 reference_frame=ReferenceFrame.Heliospheric,
             ):
                 hi_l3_full_spin_cg_corrected_dependencies = (
-                    HiL3SingleSensorFullSpinDependencies.fetch_dependencies(
-                        self.dependencies
-                    )
+                    HiL3SingleSensorFullSpinDependencies.fetch_dependencies(self.dependencies)
                 )
 
                 combination_strategy = UncertaintyWeightedCombination()
@@ -134,18 +127,22 @@ class HiProcessor(MapProcessor):
                     spice_frame_name=spice_frame_name,
                 )
             case MapDescriptorParts(sensor=Sensor.HiCombined):
-                dependencies = HiL3CombinedMapDependencies.fetch_dependencies(
-                    self.dependencies
+                dependencies = HiL3CombinedMapDependencies.fetch_dependencies(self.dependencies)
+                h45_full_spin_12mo = (
+                    UncertaintyWeightedCombination().combine_rectangular_intensity_map_data(
+                        dependencies.h45_maps
+                    )
                 )
-                h45_full_spin_12mo = UncertaintyWeightedCombination().combine_rectangular_intensity_map_data(
-                    dependencies.h45_maps
-                )
-                h90_full_spin_12mo = UncertaintyWeightedCombination().combine_rectangular_intensity_map_data(
-                    dependencies.h90_maps
+                h90_full_spin_12mo = (
+                    UncertaintyWeightedCombination().combine_rectangular_intensity_map_data(
+                        dependencies.h90_maps
+                    )
                 )
 
-                combined_map_data = ExposureWeightedCombination().combine_rectangular_intensity_map_data(
-                    [h45_full_spin_12mo, h90_full_spin_12mo]
+                combined_map_data = (
+                    ExposureWeightedCombination().combine_rectangular_intensity_map_data(
+                        [h45_full_spin_12mo, h90_full_spin_12mo]
+                    )
                 )
 
                 data_product = RectangularIntensityDataProduct(
@@ -154,9 +151,7 @@ class HiProcessor(MapProcessor):
                     spice_frame_name=spice_frame_name,
                 )
             case None:
-                raise ValueError(
-                    f"Could not parse descriptor {self.input_metadata.descriptor}"
-                )
+                raise ValueError(f"Could not parse descriptor {self.input_metadata.descriptor}")
             case _:
                 raise NotImplementedError(self.input_metadata.descriptor)
 
@@ -189,9 +184,7 @@ class HiProcessor(MapProcessor):
         intensity_map_data = hi_l3_spectral_fit_dependencies.map_data.intensity_map_data
         if spectral_index_energy_range is not None:
             start_bin, end_bin = spectral_index_energy_range
-            intensity_map_data = slice_energy_range_by_bin(
-                intensity_map_data, start_bin, end_bin
-            )
+            intensity_map_data = slice_energy_range_by_bin(intensity_map_data, start_bin, end_bin)
         return RectangularSpectralIndexMapData(
             spectral_index_map_data=fit_spectral_index_map(intensity_map_data),
             coords=hi_l3_spectral_fit_dependencies.map_data.coords,

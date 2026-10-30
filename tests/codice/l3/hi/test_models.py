@@ -33,12 +33,8 @@ class TestModels(unittest.TestCase):
 
     @with_tempdir
     def test_codice_hi_l2_data_read_from_instrument_team_cdf(self, tempdir):
-        l2_path = get_test_data_path(
-            "codice/imap_codice_l2_hi-direct-events_20250814_v001.cdf"
-        )
-        expanded_l2_path = TestModels._create_expanded_l2_hi_de_dataset(
-            l2_path, tempdir
-        )
+        l2_path = get_test_data_path("codice/imap_codice_l2_hi-direct-events_20250814_v001.cdf")
+        expanded_l2_path = TestModels._create_expanded_l2_hi_de_dataset(l2_path, tempdir)
 
         test_cases = [
             ("6 priorities", l2_path),
@@ -47,15 +43,11 @@ class TestModels(unittest.TestCase):
 
         for name, input_path in test_cases:
             with self.subTest(name):
-                l2_direct_event_data = CodiceL2HiDirectEventData.read_from_cdf(
-                    input_path
-                )
+                l2_direct_event_data = CodiceL2HiDirectEventData.read_from_cdf(input_path)
 
                 with CDF(str(l2_path)) as cdf:
                     # @formatter:off
-                    np.testing.assert_array_equal(
-                        l2_direct_event_data.epoch, cdf["epoch"]
-                    )
+                    np.testing.assert_array_equal(l2_direct_event_data.epoch, cdf["epoch"])
                     np.testing.assert_array_equal(
                         l2_direct_event_data.epoch_delta_plus, cdf["epoch_delta_plus"]
                     )
@@ -63,9 +55,7 @@ class TestModels(unittest.TestCase):
                         l2_direct_event_data.ssd_energy, cdf["ssd_energy"]
                     )
                     expected_ssd_id = cdf["ssd_id"][...]
-                    np.testing.assert_array_equal(
-                        l2_direct_event_data.ssd_id, expected_ssd_id
-                    )
+                    np.testing.assert_array_equal(l2_direct_event_data.ssd_id, expected_ssd_id)
 
                     expected_energy_per_nuc = cdf["energy_per_nuc"][...]
                     expected_energy_per_nuc[expected_energy_per_nuc == -1e31] = np.nan
@@ -100,9 +90,7 @@ class TestModels(unittest.TestCase):
                         l2_direct_event_data.multi_flag, cdf["multi_flag"]
                     )
 
-                    np.testing.assert_array_equal(
-                        l2_direct_event_data.type, cdf["type"]
-                    )
+                    np.testing.assert_array_equal(l2_direct_event_data.type, cdf["type"])
 
                     expected_elevation_angle = cdf["elevation_angle"][...]
                     expected_elevation_angle[expected_elevation_angle == -1e31] = np.nan
@@ -111,13 +99,9 @@ class TestModels(unittest.TestCase):
                     )
 
                     self.assertIsInstance(l2_direct_event_data.gain, np.ma.masked_array)
-                    np.testing.assert_array_equal(
-                        l2_direct_event_data.gain.data, cdf["gain"]
-                    )
+                    np.testing.assert_array_equal(l2_direct_event_data.gain.data, cdf["gain"])
 
-                    self.assertIsInstance(
-                        l2_direct_event_data.spin_sector, np.ma.masked_array
-                    )
+                    self.assertIsInstance(l2_direct_event_data.spin_sector, np.ma.masked_array)
                     np.testing.assert_array_equal(
                         l2_direct_event_data.spin_sector.data, cdf["spin_sector"]
                     )
@@ -142,9 +126,7 @@ class TestModels(unittest.TestCase):
         expected_priority_index_label = np.array(
             [str(i) for i in range(number_of_priority_events)]
         )
-        expected_event_index_label = np.array(
-            [str(i) for i in range(event_buffer_size)]
-        )
+        expected_event_index_label = np.array([str(i) for i in range(event_buffer_size)])
 
         l3_data_product = CodiceL3HiDirectEvents(
             Mock(),
@@ -176,9 +158,7 @@ class TestModels(unittest.TestCase):
 
         self.assertEqual(len(data_product_variables), len(non_parent_fields))
 
-        np.testing.assert_array_equal(
-            l3_data_product.priority_index, expected_priority_index
-        )
+        np.testing.assert_array_equal(l3_data_product.priority_index, expected_priority_index)
         np.testing.assert_array_equal(l3_data_product.event_index, expected_event_index)
         np.testing.assert_array_equal(
             l3_data_product.priority_index_label, expected_priority_index_label
@@ -232,18 +212,14 @@ class TestModels(unittest.TestCase):
             + 1,
             "h_intensity_by_pitch_angle_and_gyrophase": np.arange(
                 pitch_angle_and_gyrophase_size
-            ).reshape(
-                len(epoch_data), len(energy_data), len(pitch_angle), len(gyrophase)
-            )
+            ).reshape(len(epoch_data), len(energy_data), len(pitch_angle), len(gyrophase))
             + 2,
             "he3he4_intensity_by_pitch_angle": np.arange(pitch_angle_size).reshape(
                 len(epoch_data), len(energy_data), len(pitch_angle)
             ),
             "he3he4_intensity_by_pitch_angle_and_gyrophase": np.arange(
                 pitch_angle_and_gyrophase_size
-            ).reshape(
-                len(epoch_data), len(energy_data), len(pitch_angle), len(gyrophase)
-            )
+            ).reshape(len(epoch_data), len(energy_data), len(pitch_angle), len(gyrophase))
             + 3,
             "cno_intensity_by_pitch_angle": np.arange(pitch_angle_size).reshape(
                 len(epoch_data), len(energy_data), len(pitch_angle)
@@ -251,9 +227,7 @@ class TestModels(unittest.TestCase):
             + 4,
             "cno_intensity_by_pitch_angle_and_gyrophase": np.arange(
                 pitch_angle_and_gyrophase_size
-            ).reshape(
-                len(epoch_data), len(energy_data), len(pitch_angle), len(gyrophase)
-            )
+            ).reshape(len(epoch_data), len(energy_data), len(pitch_angle), len(gyrophase))
             + 5,
             "fe_intensity_by_pitch_angle": np.arange(pitch_angle_size).reshape(
                 len(epoch_data), len(energy_data), len(pitch_angle)
@@ -261,9 +235,7 @@ class TestModels(unittest.TestCase):
             + 6,
             "fe_intensity_by_pitch_angle_and_gyrophase": np.arange(
                 pitch_angle_and_gyrophase_size
-            ).reshape(
-                len(epoch_data), len(energy_data), len(pitch_angle), len(gyrophase)
-            )
+            ).reshape(len(epoch_data), len(energy_data), len(pitch_angle), len(gyrophase))
             + 7,
             "codice_flags": np.zeros(len(epoch_data), dtype=np.uint16),
         }
@@ -309,9 +281,7 @@ class TestModels(unittest.TestCase):
                     data_product_var.value, getattr(data_product, data_product_var.name)
                 )
             else:
-                np.testing.assert_array_equal(
-                    data_product_var.value, np.array([10 * 1e9])
-                )
+                np.testing.assert_array_equal(data_product_var.value, np.array([10 * 1e9]))
 
     def test_codice_hi_l1a_direct_event_read_from_sdc_cdf(self):
         l1a_path = get_test_data_path(
@@ -321,9 +291,7 @@ class TestModels(unittest.TestCase):
 
         with CDF(str(l1a_path)) as cdf:
             np.testing.assert_array_equal(l1a_hi_direct_events.epoch, cdf["epoch"][...])
-            np.testing.assert_array_equal(
-                l1a_hi_direct_events.ssd_energy, cdf["ssd_energy"][...]
-            )
+            np.testing.assert_array_equal(l1a_hi_direct_events.ssd_energy, cdf["ssd_energy"][...])
             np.testing.assert_array_equal(l1a_hi_direct_events.tof, cdf["tof"][...])
 
     def test_l2_sectored_intensities_read_from_sdc_cdf(self):
@@ -337,55 +305,31 @@ class TestModels(unittest.TestCase):
             expected_epoch_delta = np.array(
                 [timedelta(seconds=ns / 1e9) for ns in cdf["epoch_delta_plus"][...]]
             )
-            np.testing.assert_array_equal(
-                l2_sectored_data.epoch_delta_plus, expected_epoch_delta
-            )
-            np.testing.assert_array_equal(
-                l2_sectored_data.spin_angles, cdf["spin_angle"][...]
-            )
-            np.testing.assert_array_equal(
-                l2_sectored_data.elevation_angle, cdf["elevation_angle"]
-            )
+            np.testing.assert_array_equal(l2_sectored_data.epoch_delta_plus, expected_epoch_delta)
+            np.testing.assert_array_equal(l2_sectored_data.spin_angles, cdf["spin_angle"][...])
+            np.testing.assert_array_equal(l2_sectored_data.elevation_angle, cdf["elevation_angle"])
 
-            np.testing.assert_array_equal(
-                l2_sectored_data.data_quality, cdf["data_quality"]
-            )
+            np.testing.assert_array_equal(l2_sectored_data.data_quality, cdf["data_quality"])
 
             np.testing.assert_array_equal(l2_sectored_data.h_intensities, cdf["h"])
             np.testing.assert_array_equal(l2_sectored_data.energy_h, cdf["energy_h"])
-            np.testing.assert_array_equal(
-                l2_sectored_data.energy_h_plus, cdf["energy_h_plus"]
-            )
-            np.testing.assert_array_equal(
-                l2_sectored_data.energy_h_minus, cdf["energy_h_minus"]
-            )
+            np.testing.assert_array_equal(l2_sectored_data.energy_h_plus, cdf["energy_h_plus"])
+            np.testing.assert_array_equal(l2_sectored_data.energy_h_minus, cdf["energy_h_minus"])
 
             np.testing.assert_array_equal(l2_sectored_data.cno_intensities, cdf["cno"])
-            np.testing.assert_array_equal(
-                l2_sectored_data.energy_cno, cdf["energy_cno"]
-            )
-            np.testing.assert_array_equal(
-                l2_sectored_data.energy_cno_plus, cdf["energy_cno_plus"]
-            )
+            np.testing.assert_array_equal(l2_sectored_data.energy_cno, cdf["energy_cno"])
+            np.testing.assert_array_equal(l2_sectored_data.energy_cno_plus, cdf["energy_cno_plus"])
             np.testing.assert_array_equal(
                 l2_sectored_data.energy_cno_minus, cdf["energy_cno_minus"]
             )
 
             np.testing.assert_array_equal(l2_sectored_data.fe_intensities, cdf["fe"])
             np.testing.assert_array_equal(l2_sectored_data.energy_fe, cdf["energy_fe"])
-            np.testing.assert_array_equal(
-                l2_sectored_data.energy_fe_plus, cdf["energy_fe_plus"]
-            )
-            np.testing.assert_array_equal(
-                l2_sectored_data.energy_fe_minus, cdf["energy_fe_minus"]
-            )
+            np.testing.assert_array_equal(l2_sectored_data.energy_fe_plus, cdf["energy_fe_plus"])
+            np.testing.assert_array_equal(l2_sectored_data.energy_fe_minus, cdf["energy_fe_minus"])
 
-            np.testing.assert_array_equal(
-                l2_sectored_data.he3he4_intensities, cdf["he3he4"]
-            )
-            np.testing.assert_array_equal(
-                l2_sectored_data.energy_he3he4, cdf["energy_he3he4"]
-            )
+            np.testing.assert_array_equal(l2_sectored_data.he3he4_intensities, cdf["he3he4"])
+            np.testing.assert_array_equal(l2_sectored_data.energy_he3he4, cdf["energy_he3he4"])
             np.testing.assert_array_equal(
                 l2_sectored_data.energy_he3he4_plus, cdf["energy_he3he4_plus"]
             )

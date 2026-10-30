@@ -93,12 +93,8 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
 
         computed_survival_probabilities = rng.random((1, 9, 90, 45))
         quality_flags = np.full((1, 9, 90, 45), MapL3Flags.NONE)
-        quality_flags[rng.random((1, 9, 90, 45)) > 0.8] = (
-            MapL3Flags.PREDICTIVE_EPHEMERIS
-        )
-        quality_flags[rng.random((1, 9, 90, 45)) > 0.7] = (
-            MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO
-        )
+        quality_flags[rng.random((1, 9, 90, 45)) > 0.8] = MapL3Flags.PREDICTIVE_EPHEMERIS
+        quality_flags[rng.random((1, 9, 90, 45)) > 0.7] = MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO
 
         mock_survival_skymap.return_value.to_dataset.return_value = xr.Dataset(
             data_vars={
@@ -129,9 +125,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
             },
         )
 
-        survival_data = process_survival_probabilities(
-            dependencies, SpiceFrame.IMAP_DPS
-        )
+        survival_data = process_survival_probabilities(dependencies, SpiceFrame.IMAP_DPS)
 
         mock_filter_bad_days.assert_called_once_with(sentinel.l1c_data)
 
@@ -182,8 +176,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
         )
         np.testing.assert_array_equal(
             survival_data.intensity_map_data.ena_intensity_stat_uncert,
-            intensity_map_data.ena_intensity_stat_uncert
-            / computed_survival_probabilities,
+            intensity_map_data.ena_intensity_stat_uncert / computed_survival_probabilities,
         )
         np.testing.assert_array_equal(
             survival_data.intensity_map_data.ena_intensity_sys_err,
@@ -200,8 +193,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
         )
         np.testing.assert_array_equal(
             survival_data.intensity_map_data.bg_intensity_stat_uncert,
-            intensity_map_data.bg_intensity_stat_uncert
-            / computed_survival_probabilities,
+            intensity_map_data.bg_intensity_stat_uncert / computed_survival_probabilities,
         )
 
         np.testing.assert_array_equal(
@@ -211,14 +203,12 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
 
         np.testing.assert_array_equal(
             survival_data.intensity_map_data.ena_intensity_sys_err_minus,
-            intensity_map_data.ena_intensity_sys_err_minus
-            / computed_survival_probabilities,
+            intensity_map_data.ena_intensity_sys_err_minus / computed_survival_probabilities,
         )
 
         np.testing.assert_array_equal(
             survival_data.intensity_map_data.ena_intensity_sys_err_plus,
-            intensity_map_data.ena_intensity_sys_err_plus
-            / computed_survival_probabilities,
+            intensity_map_data.ena_intensity_sys_err_plus / computed_survival_probabilities,
         )
 
         np.testing.assert_array_equal(
@@ -301,9 +291,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
             input_map_flux = rng.random((1, 9, 90, 45))
             epoch = datetime.now()
 
-            input_map = create_rectangular_intensity_map_data(
-                epoch=[epoch], flux=input_map_flux
-            )
+            input_map = create_rectangular_intensity_map_data(epoch=[epoch], flux=input_map_flux)
 
             input_map.intensity_map_data.energy = sentinel.hi_l2_energies
 
@@ -335,9 +323,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
             ]
 
             computed_survival_probabilities = rng.random((1, 9, 90, 45))
-            quality_flags = np.full_like(
-                computed_survival_probabilities, MapL3Flags.NONE
-            )
+            quality_flags = np.full_like(computed_survival_probabilities, MapL3Flags.NONE)
 
             mock_survival_skymap.return_value.to_dataset.return_value = xr.Dataset(
                 {
@@ -411,30 +397,30 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
             create_l1c_pset(
                 epoch=t1,
                 repointing=1,
-                hae_longitude=np.concat(
-                    [np.full((1800), 304 + 2), np.full((1800), 124 + 2)]
-                )[np.newaxis, :],
+                hae_longitude=np.concat([np.full((1800), 304 + 2), np.full((1800), 124 + 2)])[
+                    np.newaxis, :
+                ],
             ),
             create_l1c_pset(
                 epoch=t2,
                 repointing=2,
-                hae_longitude=np.concat(
-                    [np.full((1800), 312 + 2), np.full((1800), 132 + 2)]
-                )[np.newaxis, :],
+                hae_longitude=np.concat([np.full((1800), 312 + 2), np.full((1800), 132 + 2)])[
+                    np.newaxis, :
+                ],
             ),
             create_l1c_pset(
                 epoch=t3,
                 repointing=3,
-                hae_longitude=np.concat(
-                    [np.full((1800), 316 + 2), np.full((1800), 136 + 2)]
-                )[np.newaxis, :],
+                hae_longitude=np.concat([np.full((1800), 316 + 2), np.full((1800), 136 + 2)])[
+                    np.newaxis, :
+                ],
             ),
             create_l1c_pset(
                 epoch=t4,
                 repointing=4,
-                hae_longitude=np.concat(
-                    [np.full((1800), 320 + 2), np.full((1800), 140 + 2)]
-                )[np.newaxis, :],
+                hae_longitude=np.concat([np.full((1800), 320 + 2), np.full((1800), 140 + 2)])[
+                    np.newaxis, :
+                ],
             ),
         ]
         l3e_psets = [
@@ -452,9 +438,7 @@ class TestSurvivalProbabilityProcessing(SpiceTestCase):
         expected_sky_strip = np.full(45, 2.0)
         default_sp_sky_strip = np.full(45, np.nan)
 
-        output_map = process_survival_probabilities(
-            survival_dependencies, SpiceFrame.IMAP_HAE
-        )
+        output_map = process_survival_probabilities(survival_dependencies, SpiceFrame.IMAP_HAE)
         np.testing.assert_equal(
             output_map.intensity_map_data.ena_intensity[0, 0, 76, :], expected_sky_strip
         )

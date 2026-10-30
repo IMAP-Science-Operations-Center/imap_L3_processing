@@ -30,8 +30,7 @@ class TestFilterL3aFiles(unittest.TestCase):
 
         filtered_list = filter_l3a_files(
             l3a_data=l3a_data,
-            bad_day_list_path=get_test_data_path("glows")
-            / "imap_glows_bad-days-list_v001.dat",
+            bad_day_list_path=get_test_data_path("glows") / "imap_glows_bad-days-list_v001.dat",
             cr=2092,
         )
         self.assertEqual(expected_filtered_list, filtered_list)

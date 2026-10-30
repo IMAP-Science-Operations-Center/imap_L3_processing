@@ -26,8 +26,7 @@ class TestModels(SpiceTestCase):
     @with_tempdir
     def test_glows_l3e_read_from_file(self, temp_dir):
         path_to_cdf = (
-            temp_dir
-            / "imap_glows_l3e_survival-probability-ul_20250415-repoint01000_v001.cdf"
+            temp_dir / "imap_glows_l3e_survival-probability-ul_20250415-repoint01000_v001.cdf"
         )
 
         rng = np.random.RandomState(42)
@@ -80,12 +79,8 @@ class TestModels(SpiceTestCase):
             np.testing.assert_array_equal(
                 expected[CoordNames.ENERGY_ULTRA_L1C.value][...], actual.energy
             )
-            np.testing.assert_array_equal(
-                expected["exposure_factor"][...], actual.exposure
-            )
-            np.testing.assert_array_equal(
-                expected["epoch_delta"][...], actual.epoch_delta
-            )
+            np.testing.assert_array_equal(expected["exposure_factor"][...], actual.exposure)
+            np.testing.assert_array_equal(expected["epoch_delta"][...], actual.epoch_delta)
             np.testing.assert_array_equal(
                 expected[CoordNames.HEALPIX_INDEX.value][...], actual.healpix_index
             )
@@ -95,9 +90,7 @@ class TestModels(SpiceTestCase):
             np.testing.assert_array_equal(
                 expected[CoordNames.AZIMUTH_L1C.value][0], actual.longitude
             )
-            np.testing.assert_array_equal(
-                expected["sensitivity"][...], actual.sensitivity
-            )
+            np.testing.assert_array_equal(expected["sensitivity"][...], actual.sensitivity)
 
     def test_ultra_l1c_convert_to_xarray(self):
         l1c_path = get_test_data_path(

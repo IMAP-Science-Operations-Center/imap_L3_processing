@@ -70,9 +70,7 @@ class TestModels(CdfModelTestCase):
             ]
         )
 
-        expected_combined_energy_labels = np.array(
-            ["ESA 01", "ESA 02", "ESA 03", "ESA 04"]
-        )
+        expected_combined_energy_labels = np.array(["ESA 01", "ESA 02", "ESA 03", "ESA 04"])
 
         vdf = SwapiL3BCombinedVDF(
             input_metadata=input_metadata,
@@ -103,9 +101,7 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(
             variables[0], epoch, EPOCH_CDF_VAR_NAME, pycdf.const.CDF_TIME_TT2000
         )
-        self.assert_variable_attributes(
-            variables[1], epoch_delta, EPOCH_DELTA_CDF_VAR_NAME
-        )
+        self.assert_variable_attributes(variables[1], epoch_delta, EPOCH_DELTA_CDF_VAR_NAME)
 
         self.assert_variable_attributes(
             variables[2], combined_energies, SOLAR_WIND_ENERGY_CDF_VAR_NAME

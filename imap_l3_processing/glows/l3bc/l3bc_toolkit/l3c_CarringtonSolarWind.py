@@ -185,20 +185,12 @@ class CarringtonSolarWind:
         output["CR"] = self.sw_profile["CR"]
         output["solar_wind_ecliptic"] = {}
         output["solar_wind_ecliptic"]["plasma_speed"] = self.sw_ecliptic["mean_speed"]
-        output["solar_wind_ecliptic"]["proton_density"] = self.sw_ecliptic[
-            "mean_proton_density"
-        ]
-        output["solar_wind_ecliptic"]["alpha_abundance"] = self.sw_ecliptic[
-            "mean_alpha_abundance"
-        ]
+        output["solar_wind_ecliptic"]["proton_density"] = self.sw_ecliptic["mean_proton_density"]
+        output["solar_wind_ecliptic"]["alpha_abundance"] = self.sw_ecliptic["mean_alpha_abundance"]
         output["solar_wind_profile"] = {}
         output["solar_wind_profile"]["lat_grid"] = self.sw_profile["grid"]
-        output["solar_wind_profile"]["plasma_speed"] = self.sw_profile[
-            "plasma_speed"
-        ].tolist()
-        output["solar_wind_profile"]["proton_density"] = self.sw_profile[
-            "proton_density"
-        ].tolist()
+        output["solar_wind_profile"]["plasma_speed"] = self.sw_profile["plasma_speed"].tolist()
+        output["solar_wind_profile"]["proton_density"] = self.sw_profile["proton_density"].tolist()
 
         return output
 
@@ -220,20 +212,12 @@ class CarringtonSolarWind:
         output["CR"] = self.sw_profile["CR"]
         output["solar_wind_ecliptic"] = {}
         output["solar_wind_ecliptic"]["plasma_speed"] = self.sw_ecliptic["mean_speed"]
-        output["solar_wind_ecliptic"]["proton_density"] = self.sw_ecliptic[
-            "mean_proton_density"
-        ]
-        output["solar_wind_ecliptic"]["alpha_abundance"] = self.sw_ecliptic[
-            "mean_alpha_abundance"
-        ]
+        output["solar_wind_ecliptic"]["proton_density"] = self.sw_ecliptic["mean_proton_density"]
+        output["solar_wind_ecliptic"]["alpha_abundance"] = self.sw_ecliptic["mean_alpha_abundance"]
         output["solar_wind_profile"] = {}
         output["solar_wind_profile"]["lat_grid"] = self.sw_profile["grid"]
-        output["solar_wind_profile"]["plasma_speed"] = self.sw_profile[
-            "plasma_speed"
-        ].tolist()
-        output["solar_wind_profile"]["proton_density"] = self.sw_profile[
-            "proton_density"
-        ].tolist()
+        output["solar_wind_profile"]["plasma_speed"] = self.sw_profile["plasma_speed"].tolist()
+        output["solar_wind_profile"]["proton_density"] = self.sw_profile["proton_density"].tolist()
 
         # Check validity of the data
         fun.check_nan(output["solar_wind_ecliptic"])

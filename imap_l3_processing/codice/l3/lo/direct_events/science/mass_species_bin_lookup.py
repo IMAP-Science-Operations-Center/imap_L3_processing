@@ -14,9 +14,7 @@ class MassSpeciesBinLookup:
     def read_from_csv(cls, path: Path | str):
         loaded_csv = np.genfromtxt(path, delimiter=",", dtype=None, skip_header=1)
         range_data = list(zip(*loaded_csv))
-        [species, mpq_min, mpq_max, mass_min, mass_max] = [
-            list(column) for column in range_data
-        ]
+        [species, mpq_min, mpq_max, mass_min, mass_max] = [list(column) for column in range_data]
 
         return cls(
             species=species,

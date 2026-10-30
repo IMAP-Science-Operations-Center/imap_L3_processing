@@ -88,9 +88,7 @@ class EclipticSolarWind:
         # TODO: SWAPI if we have full 13 Carrington rotation periods of data
 
         # Read solar wind parameters (Carrington averaged parameters on common carrington number grid)
-        _grid_cr, plasma_speed, proton_dens, p_alpha = self.read_sw_ecliptic(
-            ext_dependencies
-        )
+        _grid_cr, plasma_speed, proton_dens, p_alpha = self.read_sw_ecliptic(ext_dependencies)
 
         # Calculate solar wind energy flux for each CR
         sw_energy_flux = fun.calculate_sw_energy_flux(
@@ -140,12 +138,8 @@ class EclipticSolarWind:
             },
         }
 
-        proton_dens_carr, _ = fun.process_omni_param(
-            omni_raw, cr_grid, param_settings["density"]
-        )
-        plasma_speed_carr, _ = fun.process_omni_param(
-            omni_raw, cr_grid, param_settings["speed"]
-        )
+        proton_dens_carr, _ = fun.process_omni_param(omni_raw, cr_grid, param_settings["density"])
+        plasma_speed_carr, _ = fun.process_omni_param(omni_raw, cr_grid, param_settings["speed"])
         p_alpha_carr, used_nominal_alpha_per_cr = fun.process_omni_param(
             omni_raw, cr_grid, param_settings["alpha"]
         )
@@ -207,13 +201,9 @@ class EclipticSolarWind:
         sw_ecliptic_source = self.settings["sw_ecliptic_source"]
 
         if sw_ecliptic_source == "OMNI":
-            grid_cr, plasma_speed, proton_dens, p_alpha = self._read_OMNI_data(
-                ext_dependencies
-            )
+            grid_cr, plasma_speed, proton_dens, p_alpha = self._read_OMNI_data(ext_dependencies)
         elif sw_ecliptic_source == "SWAPI":
-            grid_cr, plasma_speed, proton_dens, p_alpha = self._read_SWAPI_data(
-                ext_dependencies
-            )
+            grid_cr, plasma_speed, proton_dens, p_alpha = self._read_SWAPI_data(ext_dependencies)
         else:
             raise ValueError("Unknown solar wind source. Select OMNI or SWAPI")
 

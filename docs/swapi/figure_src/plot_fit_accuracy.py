@@ -86,9 +86,7 @@ def _load_wind_samples(csv_path: Path) -> tuple[np.ndarray, ...]:
             f"Missing WIND samples CSV: {csv_path}. "
             f"Run scripts/swapi/sample_wind_solar_wind.py first."
         )
-    cols = np.genfromtxt(
-        csv_path, delimiter=",", names=True, dtype=None, encoding="utf-8"
-    )
+    cols = np.genfromtxt(csv_path, delimiter=",", names=True, dtype=None, encoding="utf-8")
     return (
         cols["v_R_km_s"].astype(float),
         cols["proton_temperature_K"].astype(float),
@@ -294,9 +292,7 @@ def _plot_results(data: pd.DataFrame) -> None:
     color_initial_guess = "tab:orange"
     color_final_fit = "tab:blue"
 
-    for ax, (label, true_key, init_key, fit_key, fit_sigma_key, scale) in zip(
-        axes, plot_columns
-    ):
+    for ax, (label, true_key, init_key, fit_key, fit_sigma_key, scale) in zip(axes, plot_columns):
         truth = data[true_key]
         init = data[init_key]
         fit = data[fit_key]
@@ -394,9 +390,7 @@ def _plot_results(data: pd.DataFrame) -> None:
 def _rmse_label(truth, estimated, scale):
     mask = np.isfinite(estimated)
     if scale == "log":
-        rmse = np.sqrt(
-            np.mean((np.log10(estimated[mask]) - np.log10(truth[mask])) ** 2)
-        )
+        rmse = np.sqrt(np.mean((np.log10(estimated[mask]) - np.log10(truth[mask])) ** 2))
         return f"RMSE log₁₀ = {rmse:.3f}"
     else:
         rmse = np.sqrt(np.mean((estimated[mask] - truth[mask]) ** 2))

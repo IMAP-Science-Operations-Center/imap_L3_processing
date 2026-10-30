@@ -90,9 +90,7 @@ def imap_l3_processor():
         processing_input_collection.deserialize(args.dependency)
         version_map = VersionMap({}, Version(None, args.version))
     else:
-        processing_input_collection.deserialize(
-            json.dumps(parsed_dependency["dependency"])
-        )
+        processing_input_collection.deserialize(json.dumps(parsed_dependency["dependency"]))
         version_map = VersionMap(
             {
                 k: Version(v["major_version"], v["minor_version"])
@@ -102,9 +100,7 @@ def imap_l3_processor():
 
     repointing_number = None
     if args.repointing is not None:
-        repointing_number_match = re.match(
-            r"repoint(?P<repoint>\d{5})", args.repointing
-        )
+        repointing_number_match = re.match(r"repoint(?P<repoint>\d{5})", args.repointing)
         if repointing_number_match is None:
             raise ValueError("Unexpected repointing number command line format!")
         repointing_number = int(repointing_number_match["repoint"])
@@ -165,13 +161,9 @@ def imap_l3_processor():
                 )
             )
 
-        logger.info(
-            f"maps to produce {[m.input_metadata.descriptor for m in maps_to_produce]}"
-        )
+        logger.info(f"maps to produce {[m.input_metadata.descriptor for m in maps_to_produce]}")
         if len(maps_to_produce) == 0:
-            logger.info(
-                f"Did not find any maps to produce for instrument {args.instrument}"
-            )
+            logger.info(f"Did not find any maps to produce for instrument {args.instrument}")
 
         for map_to_produce in maps_to_produce:
             logger.info(
@@ -190,9 +182,7 @@ def imap_l3_processor():
                     f"Failed to produce map {map_to_produce.input_metadata.descriptor}, {map_to_produce.input_metadata.start_date}!",
                     exc_info=e,
                 )
-    elif args.instrument == "swapi" and (
-        args.data_level == "l3a" or args.data_level == "l3b"
-    ):
+    elif args.instrument == "swapi" and (args.data_level == "l3a" or args.data_level == "l3b"):
         processor = SwapiProcessor(processing_input_collection, input_dependency)
         paths = processor.process()
     elif args.instrument == "glows" and args.data_level in ["l3a", "l3b"]:

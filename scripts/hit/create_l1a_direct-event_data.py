@@ -8,12 +8,7 @@ from spacepy.pycdf import CDF
 
 path = Path(__file__)
 binary_data_path = (
-    path.parent.parent.parent
-    / "tests"
-    / "test_data"
-    / "hit"
-    / "pha_events"
-    / "pha_binary"
+    path.parent.parent.parent / "tests" / "test_data" / "hit" / "pha_events" / "pha_binary"
 )
 
 start_time = datetime(year=2010, month=1, day=6)

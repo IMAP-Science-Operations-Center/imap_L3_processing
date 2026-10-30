@@ -31,9 +31,7 @@ from figure_utils import FIGURES_DIR
 
 from imap_l3_processing.constants import HE_PUI_PARTICLE_MASS_PER_CHARGE_M_P_PER_E
 
-_REFERENCE_CSV_PATH = (
-    REPO_ROOT / "tests" / "test_data" / "swapi" / "pui_count_rate_reference.csv"
-)
+_REFERENCE_CSV_PATH = REPO_ROOT / "tests" / "test_data" / "swapi" / "pui_count_rate_reference.csv"
 
 # Must match scripts/swapi/pui_xarray_reference.py so the production kernel is
 # evaluated at the same point as the precomputed reference CSV.
@@ -83,9 +81,7 @@ def compute_production_rates(voltages_v: np.ndarray) -> np.ndarray:
         background_count_rate=_BACKGROUND_RATE_HZ,
     )
     lut = DensityOfNeutralHeliumLookupTable.from_file(_DENSITY_LUT_PATH)
-    min_speed_kms = max(
-        1.0, _CUTOFF_SPEED_KMS * lut.get_minimum_distance() / _HELIO_DIST_AU
-    )
+    min_speed_kms = max(1.0, _CUTOFF_SPEED_KMS * lut.get_minimum_distance() / _HELIO_DIST_AU)
     vasyliunas_siscoe_distribution = VasyliunasSiscoeDistribution(
         ephemeris_time=0.0,
         solar_wind_speed_inertial_frame=_SW_SPEED_INERTIAL_KMS,

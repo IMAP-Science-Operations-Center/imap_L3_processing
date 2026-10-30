@@ -138,9 +138,7 @@ def calculate_pickup_ion_values(
     density_of_neutral_helium_lookup_table : DensityOfNeutralHeliumLookupTable
         The neutral helium density table for the model.
     """
-    solar_wind_speed_inertial_frame = float(
-        np.linalg.norm(fit_input.solar_wind_velocity_rtn_sun)
-    )
+    solar_wind_speed_inertial_frame = float(np.linalg.norm(fit_input.solar_wind_velocity_rtn_sun))
     distance = fit_input.distance
     inflow_angle = fit_input.inflow_angle
 
@@ -164,14 +162,10 @@ def calculate_pickup_ion_values(
     shared_response = build_chunk_collapsed_response(
         swapi_response=swapi_response,
         voltages_v=shared_energies / SWAPI_L2_K_FACTOR,
-        bulk_sw_per_bin_kms=fit_input.bulk_sw_per_bin_swapi_kms[
-            :, shared_esa_step_mask, :
-        ],
+        bulk_sw_per_bin_kms=fit_input.bulk_sw_per_bin_swapi_kms[:, shared_esa_step_mask, :],
         time_as_tt2000=fit_input.time_as_tt2000,
         species=_PICKUP_ION_SPECIES,
-        cutoff_speed_max_kms=solar_wind_speed_inertial_frame
-        * MAX_CUTOFF_SPEED_RATIO
-        * 1.1,
+        cutoff_speed_max_kms=solar_wind_speed_inertial_frame * MAX_CUTOFF_SPEED_RATIO * 1.1,
     )
     fitting_response = ChunkCollapsedResponse(
         speed_grid=shared_response.speed_grid,
@@ -204,9 +198,7 @@ def calculate_pickup_ion_values(
     def residuals(log_parameters: np.ndarray) -> np.ndarray:
         modeled_rates = (
             fitting_window_model(
-                ionization_rate=float(
-                    np.exp(log_parameters[_LOG_IONIZATION_RATE_INDEX])
-                ),
+                ionization_rate=float(np.exp(log_parameters[_LOG_IONIZATION_RATE_INDEX])),
                 cutoff_speed=float(np.exp(log_parameters[_LOG_CUTOFF_SPEED_INDEX])),
             )
             + SWAPI_BACKGROUND_RATE
@@ -263,9 +255,7 @@ def calculate_pickup_ion_values(
         cutoff_speed=ufloat(fitted_cutoff_speed, fitted_cutoff_speed_error),
         density=calculate_helium_pui_density(
             shared_response.speed_grid,
-            ionization_rate=ufloat(
-                fitted_ionization_rate, fitted_ionization_rate_error
-            ),
+            ionization_rate=ufloat(fitted_ionization_rate, fitted_ionization_rate_error),
             cutoff_speed=ufloat(fitted_cutoff_speed, fitted_cutoff_speed_error),
             distance=distance,
             inflow_angle=inflow_angle,
@@ -274,9 +264,7 @@ def calculate_pickup_ion_values(
         ),
         temperature=calculate_helium_pui_temperature(
             shared_response.speed_grid,
-            ionization_rate=ufloat(
-                fitted_ionization_rate, fitted_ionization_rate_error
-            ),
+            ionization_rate=ufloat(fitted_ionization_rate, fitted_ionization_rate_error),
             cutoff_speed=ufloat(fitted_cutoff_speed, fitted_cutoff_speed_error),
             distance=distance,
             inflow_angle=inflow_angle,

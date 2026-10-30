@@ -24,12 +24,8 @@ class TestL3dUtils(unittest.TestCase):
     @patch("imap_l3_processing.glows.l3d.utils.os")
     @patch("imap_l3_processing.glows.l3d.utils.json")
     @patch("builtins.open", new_callable=mock_open, create=False)
-    def test_create_glows_l3c_json_file_from_cdf(
-        self, mock_open_file, mock_json, mock_os
-    ):
-        l3c_path = get_test_data_path(
-            "glows/imap_glows_l3c_sw-profile_20101030_v008.cdf"
-        )
+    def test_create_glows_l3c_json_file_from_cdf(self, mock_open_file, mock_json, mock_os):
+        l3c_path = get_test_data_path("glows/imap_glows_l3c_sw-profile_20101030_v008.cdf")
 
         expected: dict = {
             "solar_wind_profile": {
@@ -89,18 +85,12 @@ class TestL3dUtils(unittest.TestCase):
         create_glows_l3c_json_file_from_cdf(l3c_path)
 
         data_path = (
-            Path(imap_l3_processing.__file__).parent
-            / "glows"
-            / "l3d"
-            / "science"
-            / "data_l3c"
+            Path(imap_l3_processing.__file__).parent / "glows" / "l3d" / "science" / "data_l3c"
         )
 
         mock_os.makedirs.assert_called_once_with(data_path, exist_ok=True)
 
-        mock_open_file.assert_called_once_with(
-            data_path / "imap_glows_l3c_cr_2103_v008.json", "w"
-        )
+        mock_open_file.assert_called_once_with(data_path / "imap_glows_l3c_cr_2103_v008.json", "w")
 
         mock_json.dump.assert_called_once()
         actual = mock_json.dump.call_args.args[0]
@@ -139,12 +129,8 @@ class TestL3dUtils(unittest.TestCase):
     @patch("imap_l3_processing.glows.l3d.utils.os")
     @patch("imap_l3_processing.glows.l3d.utils.json")
     @patch("builtins.open", new_callable=mock_open, create=False)
-    def test_create_glows_l3b_json_file_from_cdf(
-        self, mock_open_file, mock_json, mock_os
-    ):
-        l3b_path = get_test_data_path(
-            "glows/imap_glows_l3b_ion-rate-profile_20100422_v011.cdf"
-        )
+    def test_create_glows_l3b_json_file_from_cdf(self, mock_open_file, mock_json, mock_os):
+        l3b_path = get_test_data_path("glows/imap_glows_l3b_ion-rate-profile_20100422_v011.cdf")
 
         expected: dict = {
             "header": {
@@ -227,11 +213,7 @@ class TestL3dUtils(unittest.TestCase):
         create_glows_l3b_json_file_from_cdf(l3b_path)
 
         data_path = (
-            Path(imap_l3_processing.__file__).parent
-            / "glows"
-            / "l3d"
-            / "science"
-            / "data_l3b"
+            Path(imap_l3_processing.__file__).parent / "glows" / "l3d" / "science" / "data_l3b"
         )
 
         mock_os.makedirs.assert_called_once_with(data_path, exist_ok=True)
@@ -240,9 +222,7 @@ class TestL3dUtils(unittest.TestCase):
         actual = mock_json.dump.call_args.args[0]
         self.assertEqual(json_file, mock_json.dump.call_args.args[1])
 
-        mock_open_file.assert_called_once_with(
-            data_path / "imap_glows_l3b_cr_2096_v011.json", "w"
-        )
+        mock_open_file.assert_called_once_with(data_path / "imap_glows_l3b_cr_2096_v011.json", "w")
 
         self.assertIsInstance(actual["CR"], int)
         self.assertEqual(expected["CR"], actual["CR"])
@@ -250,9 +230,7 @@ class TestL3dUtils(unittest.TestCase):
         self.assertIsInstance(actual["date"], str)
         self.assertEqual(actual["date"], expected["date"])
 
-        np.testing.assert_array_equal(
-            expected["header"]["filename"], actual["header"]["filename"]
-        )
+        np.testing.assert_array_equal(expected["header"]["filename"], actual["header"]["filename"])
 
         self.assertIsInstance(actual["uv_anisotropy_factor"], list)
         np.testing.assert_array_equal(
@@ -289,9 +267,7 @@ class TestL3dUtils(unittest.TestCase):
         )
 
         self.assertEqual(input_metadata, l3d_data_product.input_metadata)
-        self.assertEqual(
-            input_metadata.start_date, datetime.fromisoformat("1947-03-03").date()
-        )
+        self.assertEqual(input_metadata.start_date, datetime.fromisoformat("1947-03-03").date())
 
         self.assertEqual(sentinel.parent_file_names, l3d_data_product.parent_file_names)
 
@@ -333,9 +309,7 @@ class TestL3dUtils(unittest.TestCase):
             l3d_data_product.epoch[-1],
         )
 
-        np.testing.assert_array_equal(
-            np.arange(-90, 100, step=10), l3d_data_product.latitude
-        )
+        np.testing.assert_array_equal(np.arange(-90, 100, step=10), l3d_data_product.latitude)
 
         self.assertEqual(846, len(l3d_data_product.plasma_speed))
         np.testing.assert_allclose(
@@ -494,20 +468,12 @@ class TestL3dUtils(unittest.TestCase):
         )
 
         self.assertEqual(846, len(l3d_data_product.phion))
-        np.testing.assert_allclose(
-            1.830438692701064e-07, l3d_data_product.phion[0], rtol=1e-6
-        )
-        np.testing.assert_allclose(
-            1.0538921234648196e-07, l3d_data_product.phion[-1], rtol=1e-6
-        )
+        np.testing.assert_allclose(1.830438692701064e-07, l3d_data_product.phion[0], rtol=1e-6)
+        np.testing.assert_allclose(1.0538921234648196e-07, l3d_data_product.phion[-1], rtol=1e-6)
 
         self.assertEqual(846, len(l3d_data_product.lyman_alpha))
-        np.testing.assert_allclose(
-            619975763789.9209, l3d_data_product.lyman_alpha[0], rtol=1e-6
-        )
-        np.testing.assert_allclose(
-            396312787467.8571, l3d_data_product.lyman_alpha[-1], rtol=1e-6
-        )
+        np.testing.assert_allclose(619975763789.9209, l3d_data_product.lyman_alpha[0], rtol=1e-6)
+        np.testing.assert_allclose(396312787467.8571, l3d_data_product.lyman_alpha[-1], rtol=1e-6)
 
         self.assertEqual(846, len(l3d_data_product.electron_density))
         self.assertEqual(-1.0, l3d_data_product.electron_density[0])
@@ -517,21 +483,15 @@ class TestL3dUtils(unittest.TestCase):
 
         self.assertEqual(846, len(l3d_data_product.plasma_speed_flag))
         self.assertEqual(-1.0, l3d_data_product.plasma_speed_flag[0])
-        np.testing.assert_allclose(
-            20001.0, l3d_data_product.plasma_speed_flag[-1], rtol=1e-6
-        )
+        np.testing.assert_allclose(20001.0, l3d_data_product.plasma_speed_flag[-1], rtol=1e-6)
 
         self.assertEqual(846, len(l3d_data_product.uv_anisotropy_flag))
         self.assertEqual(-1.0, l3d_data_product.uv_anisotropy_flag[0])
-        np.testing.assert_allclose(
-            30001.0, l3d_data_product.uv_anisotropy_flag[-1], rtol=1e-6
-        )
+        np.testing.assert_allclose(30001.0, l3d_data_product.uv_anisotropy_flag[-1], rtol=1e-6)
 
         self.assertEqual(846, len(l3d_data_product.proton_density_flag))
         self.assertEqual(-1.0, l3d_data_product.proton_density_flag[0])
-        np.testing.assert_allclose(
-            10001.0, l3d_data_product.proton_density_flag[-1], rtol=1e-6
-        )
+        np.testing.assert_allclose(10001.0, l3d_data_product.proton_density_flag[-1], rtol=1e-6)
 
         self.assertEqual(846, len(l3d_data_product.glows_flags))
         self.assertEqual(0, int(l3d_data_product.glows_flags[0]))
@@ -563,9 +523,7 @@ class TestL3dUtils(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir = Path(tmpdir)
             original_lya_path = tmpdir / "imap_glows_l3d_lya_19470303-cr02092_v00.dat"
-            original_p_dens_path = (
-                tmpdir / "imap_glows_l3d_p-dens_19470303-cr02092_v00.dat"
-            )
+            original_p_dens_path = tmpdir / "imap_glows_l3d_p-dens_19470303-cr02092_v00.dat"
 
             original_lya_path.write_text("lya")
             original_p_dens_path.write_text("p_dens")
@@ -580,13 +538,9 @@ class TestL3dUtils(unittest.TestCase):
             mock_get_midpoint_of_cr.assert_has_calls([call(2092), call(2092)])
 
             expected_lya_output = tmpdir / "imap_glows_lya_19470303_20100201_v012.dat"
-            expected_p_dens_output = (
-                tmpdir / "imap_glows_p-dens_19470303_20100201_v012.dat"
-            )
+            expected_p_dens_output = tmpdir / "imap_glows_p-dens_19470303_20100201_v012.dat"
 
-            self.assertEqual(
-                [expected_lya_output, expected_p_dens_output], actual_new_paths
-            )
+            self.assertEqual([expected_lya_output, expected_p_dens_output], actual_new_paths)
 
             self.assertEqual("lya", expected_lya_output.read_text())
             self.assertEqual("p_dens", expected_p_dens_output.read_text())

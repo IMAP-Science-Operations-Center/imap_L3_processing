@@ -31,9 +31,7 @@ def somewhat_great_circle_centered(rot, lat0, lon0, angle, npts=400):
     t = np.linspace(0, 2 * np.pi, npts)
 
     angle_r = np.radians(angle)
-    pts = np.cos(angle_r) * p + np.sin(angle_r) * (
-        np.outer(np.cos(t), u) + np.outer(np.sin(t), v)
-    )
+    pts = np.cos(angle_r) * p + np.sin(angle_r) * (np.outer(np.cos(t), u) + np.outer(np.sin(t), v))
     # rotate into map frame
     pts_rot = rot.apply(pts)
 
@@ -102,9 +100,7 @@ def make_imap_lo_reference_points(rot, option=1):
         labels = ["Nose", "V1", "V2", "Tail"]
     if option == 2:
         npoints = 7
-        lons = np.array(
-            [259.200622, 255.499300, 289.800000, 79.200622, 221, 150.0, 0.0]
-        )
+        lons = np.array([259.200622, 255.499300, 289.800000, 79.200622, 221, 150.0, 0.0])
         lats = np.array([5.116296, 34.999941, -35.600000, -5.116296, 39, 0.0, 0.0])
         labels = ["Nose", "V1", "V2", "Tail", "Rcen", "Stbd", "Port"]
     if option == 3:
@@ -227,9 +223,7 @@ def make_imap_lo_map(
     xyz_rot = rot.apply(xyz)
 
     lat_rot = np.degrees(np.arcsin(xyz_rot[:, 2])).reshape(ny + 1, nx + 1)
-    lon_rot = np.degrees(np.arctan2(xyz_rot[:, 1], xyz_rot[:, 0])).reshape(
-        ny + 1, nx + 1
-    )
+    lon_rot = np.degrees(np.arctan2(xyz_rot[:, 1], xyz_rot[:, 0])).reshape(ny + 1, nx + 1)
     lon_rot = (lon_rot + 180) % 360 - 180
 
     # For the data

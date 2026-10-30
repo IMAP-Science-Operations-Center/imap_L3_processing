@@ -26,6 +26,4 @@ class LoCombinedDependencies:
 
     @classmethod
     def from_file_paths(cls, file_paths: list[Path]) -> Self:
-        return cls(
-            map_data=[RectangularIntensityMapData.read_from_path(p) for p in file_paths]
-        )
+        return cls(map_data=[RectangularIntensityMapData.read_from_path(p) for p in file_paths])

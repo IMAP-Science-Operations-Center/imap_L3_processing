@@ -44,9 +44,7 @@ class TestHitEventTypeLookup(unittest.TestCase):
 
         test_cases = [
             (
-                Rule(
-                    Range2A, ["L1A4", "L2A"], ["L1B14", "L3A", "L2B", "L40B", "L4B14"]
-                ),
+                Rule(Range2A, ["L1A4", "L2A"], ["L1B14", "L3A", "L2B", "L40B", "L4B14"]),
                 {"L1A4", "L2A"},
             ),
             (

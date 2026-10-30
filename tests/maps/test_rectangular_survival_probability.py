@@ -34,12 +34,10 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
         self.num_energies = 2
         self.l1c_epoch = datetime(2025, 1, 1, 0, 30)
         self.l1c_epoch_delta = np.array([86400_000_000_000])
-        self.l1c_hae_longitude = (
-            0.05 + np.linspace(0, 360, 3600, endpoint=False) + 90
-        ).reshape((1, -1)) % 360
-        self.l1c_hae_latitude = np.linspace(-90, 90, 3600, endpoint=False).reshape(
+        self.l1c_hae_longitude = (0.05 + np.linspace(0, 360, 3600, endpoint=False) + 90).reshape(
             (1, -1)
-        )
+        ) % 360
+        self.l1c_hae_latitude = np.linspace(-90, 90, 3600, endpoint=False).reshape((1, -1))
 
         self.hi_energies = np.geomspace(1, 10000, self.num_energies)
 
@@ -47,9 +45,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
             epoch=self.l1c_epoch,
             epoch_delta=self.l1c_epoch_delta,
             repointing=1,
-            epoch_j2000=np.array(
-                np.array([spiceypy.datetime2et(self.l1c_epoch)]) * 1e9
-            ),
+            epoch_j2000=np.array(np.array([spiceypy.datetime2et(self.l1c_epoch)]) * 1e9),
             exposure_times=np.arange(self.num_energies * 3600).reshape(
                 (1, self.num_energies, 3600)
             )
@@ -104,15 +100,11 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
         self.mock_add_spacecraft_position_and_velocity_to_pset_patcher.stop()
         self.mock_calculate_ram_mask_patcher.stop()
 
-    @patch(
-        "imap_l3_processing.maps.rectangular_survival_probability.PointingSet.__init__"
-    )
+    @patch("imap_l3_processing.maps.rectangular_survival_probability.PointingSet.__init__")
     @patch(
         "imap_l3_processing.maps.rectangular_survival_probability.add_spacecraft_position_and_velocity_to_pset"
     )
-    @patch(
-        "imap_l3_processing.maps.rectangular_survival_probability.calculate_ram_mask"
-    )
+    @patch("imap_l3_processing.maps.rectangular_survival_probability.calculate_ram_mask")
     def test_survival_probability_pointing_set_calls_parent_constructor(
         self, _, __, mock_rectangular_pointing_set_constructor
     ):
@@ -130,9 +122,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
     @patch(
         "imap_l3_processing.maps.rectangular_survival_probability.add_spacecraft_position_and_velocity_to_pset"
     )
-    @patch(
-        "imap_l3_processing.maps.rectangular_survival_probability.calculate_ram_mask"
-    )
+    @patch("imap_l3_processing.maps.rectangular_survival_probability.calculate_ram_mask")
     def test_survival_probability_pointing_set_no_cg(
         self, mock_calculate_ram_mask, mock_add_sc_velocity_to_pset
     ):
@@ -147,9 +137,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
             False,
         )
 
-        mock_calculate_ram_mask.assert_called_once_with(
-            mock_add_sc_velocity_to_pset.return_value
-        )
+        mock_calculate_ram_mask.assert_called_once_with(mock_add_sc_velocity_to_pset.return_value)
 
         self.assertEqual(pointing_set.data["directional_mask"], [True])
 
@@ -162,9 +150,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
             (Sensor.Lo90, 0, SpinPhase.AntiRamOnly, ~self.ram_mask),
         ]
 
-        expected_repointing_midpoint = (
-            self.l1c_hi_dataset.epoch_j2000 + self.l1c_epoch_delta / 2
-        )
+        expected_repointing_midpoint = self.l1c_hi_dataset.epoch_j2000 + self.l1c_epoch_delta / 2
 
         for sensor, expected_sensor_angle, spin_phase, expected_mask in test_cases:
             with self.subTest(f"{sensor.value}"):
@@ -176,9 +162,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                     self.hi_energies,
                 )
                 self.assertIsInstance(pointing_set, PointingSet)
-                self.assertEqual(
-                    pointing_set.spice_reference_frame, geometry.SpiceFrame.IMAP_HAE
-                )
+                self.assertEqual(pointing_set.spice_reference_frame, geometry.SpiceFrame.IMAP_HAE)
 
                 self.assertIn("exposure", pointing_set.data.data_vars)
                 np.testing.assert_array_equal(
@@ -196,9 +180,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                     pointing_set.data[CoordNames.AZIMUTH_L1C.value].values,
                 )
 
-                self.assertIn(
-                    CoordNames.ENERGY_ULTRA_L1C.value, pointing_set.data.coords
-                )
+                self.assertIn(CoordNames.ENERGY_ULTRA_L1C.value, pointing_set.data.coords)
                 np.testing.assert_array_equal(
                     self.l1c_hi_dataset.esa_energy_step,
                     pointing_set.data[CoordNames.ENERGY_ULTRA_L1C.value].values,
@@ -221,9 +203,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
     @patch(
         "imap_l3_processing.maps.rectangular_survival_probability.apply_compton_getting_correction"
     )
-    def test_hi_cg_corrected_survival_probability_pointing_set(
-        self, mock_cg_correction
-    ):
+    def test_hi_cg_corrected_survival_probability_pointing_set(self, mock_cg_correction):
         self.mock_add_sc_velocity_to_pset.side_effect = None
         corrected_hae_longitude = np.full((1, 3, 3600), 2)
         corrected_hae_latitude = np.full((1, 3, 3600), 1)
@@ -231,9 +211,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
         l1c_dataset = test_builders.create_l1c_pset(
             epoch=self.l1c_hi_dataset.epoch,
             epoch_delta=self.l1c_hi_dataset.epoch_delta,
-            exposures=np.array(
-                [[np.full((3600,), 1), np.full((3600,), 2), np.full((3600,), 3)]]
-            ),
+            exposures=np.array([[np.full((3600,), 1), np.full((3600,), 2), np.full((3600,), 3)]]),
         )
 
         corrected_az_el_pairs = np.stack(
@@ -336,12 +314,8 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
         )
 
         pset_with_sc_velocity, actual_hf_energies = mock_cg_correction.call_args[0]
-        self.assertEqual(
-            pset_with_sc_velocity, self.mock_add_sc_velocity_to_pset.return_value
-        )
-        self.mock_calculate_ram_mask.assert_called_once_with(
-            mock_cg_correction.return_value
-        )
+        self.assertEqual(pset_with_sc_velocity, self.mock_add_sc_velocity_to_pset.return_value)
+        self.mock_calculate_ram_mask.assert_called_once_with(mock_cg_correction.return_value)
 
         expected_energies_in_eV = hi_hf_energies * 1000
         np.testing.assert_array_equal(actual_hf_energies, expected_energies_in_eV)
@@ -351,13 +325,9 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
             cg_pointing_set.data["epoch"],
             self.l1c_hi_dataset.epoch_j2000 + (self.l1c_hi_dataset.epoch_delta / 2),
         )
-        np.testing.assert_array_equal(
-            cg_pointing_set.az_el_points, corrected_az_el_pairs
-        )
+        np.testing.assert_array_equal(cg_pointing_set.az_el_points, corrected_az_el_pairs)
 
-        np.testing.assert_array_equal(
-            cg_pointing_set.data["exposure"], expected_exposures
-        )
+        np.testing.assert_array_equal(cg_pointing_set.data["exposure"], expected_exposures)
 
     @patch(
         "imap_l3_processing.maps.rectangular_survival_probability.add_spacecraft_position_and_velocity_to_pset"
@@ -380,9 +350,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
         l1c_dataset = test_builders.create_l1c_pset(
             epoch=self.l1c_hi_dataset.epoch,
             epoch_delta=None,
-            exposures=np.array(
-                [[np.full((3600,), 1), np.full((3600,), 2), np.full((3600,), 3)]]
-            ),
+            exposures=np.array([[np.full((3600,), 1), np.full((3600,), 2), np.full((3600,), 3)]]),
             pointing_start_met=np.array([800_000_000]),
             pointing_end_met=np.array([800_100_000]),
         )
@@ -486,41 +454,27 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                     actual_uncorrected_pset["epoch"].values,
                     self.l1c_hi_dataset.epoch_j2000,
                 )
-                np.testing.assert_array_equal(
-                    actual_uncorrected_pset["epoch_delta"].values, None
-                )
+                np.testing.assert_array_equal(actual_uncorrected_pset["epoch_delta"].values, None)
                 np.testing.assert_array_equal(
                     actual_uncorrected_pset["pointing_start_met"].values, [800_000_000]
                 )
                 np.testing.assert_array_equal(
                     actual_uncorrected_pset["pointing_end_met"].values, [800_100_000]
                 )
-                self.assertEqual(
-                    actual_uncorrected_pset.attrs["Logical_source"], "imap_lo"
-                )
+                self.assertEqual(actual_uncorrected_pset.attrs["Logical_source"], "imap_lo")
 
-                pset_with_sc_velocity, actual_hf_energies = (
-                    mock_cg_correction.call_args[0]
-                )
-                self.assertEqual(
-                    pset_with_sc_velocity, mock_add_sc_velocity_to_pset.return_value
-                )
+                pset_with_sc_velocity, actual_hf_energies = mock_cg_correction.call_args[0]
+                self.assertEqual(pset_with_sc_velocity, mock_add_sc_velocity_to_pset.return_value)
 
                 expected_energies_in_eV = lo_hf_energies * 1000
-                np.testing.assert_array_equal(
-                    actual_hf_energies, expected_energies_in_eV
-                )
+                np.testing.assert_array_equal(actual_hf_energies, expected_energies_in_eV)
 
                 np.testing.assert_array_equal(
                     cg_pointing_set.data["epoch"], expected_pointing_epoch_midpoint
                 )
-                np.testing.assert_array_equal(
-                    cg_pointing_set.az_el_points, corrected_az_el_pairs
-                )
+                np.testing.assert_array_equal(cg_pointing_set.az_el_points, corrected_az_el_pairs)
 
-                np.testing.assert_array_equal(
-                    cg_pointing_set.data["exposure"], expected_exposures
-                )
+                np.testing.assert_array_equal(cg_pointing_set.data["exposure"], expected_exposures)
 
     def test_exposure_weighting_with_interpolated_survival_probabilities(self):
         test_cases = [
@@ -532,9 +486,9 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
             with self.subTest(spin_phase):
                 self.hi_energies = np.array([10, 10_000])
                 self.glows_data.energy = np.array([1, 100, 100_000])
-                self.glows_data.probability_of_survival = np.repeat(
-                    [2, 4, 7], 360
-                ).reshape(1, 3, 360)
+                self.glows_data.probability_of_survival = np.repeat([2, 4, 7], 360).reshape(
+                    1, 3, 360
+                )
 
                 expected_interpolated_survival_probabilities = (
                     np.repeat([3, 6], 3600).reshape(1, 2, 3600)
@@ -550,14 +504,10 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                     self.hi_energies,
                 )
 
-                self.assertIn(
-                    "survival_probability_times_exposure", pointing_set.data.data_vars
-                )
+                self.assertIn("survival_probability_times_exposure", pointing_set.data.data_vars)
                 self.assertEqual(
                     (1, self.num_energies, 3600),
-                    pointing_set.data[
-                        "survival_probability_times_exposure"
-                    ].values.shape,
+                    pointing_set.data["survival_probability_times_exposure"].values.shape,
                 )
 
                 np.testing.assert_array_equal(
@@ -565,9 +515,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                     pointing_set.data["survival_probability_times_exposure"].values,
                 )
 
-                np.testing.assert_array_equal(
-                    pointing_set.data["directional_mask"], expected_mask
-                )
+                np.testing.assert_array_equal(pointing_set.data["directional_mask"], expected_mask)
 
     def test_exposure_weighted_survivals_are_repeated_to_match_l1c_shape(self):
         pointing_set = RectangularSurvivalProbabilityPointingSet(
@@ -617,9 +565,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
         mock_interpolate.assert_called_once()
         get_interpolated_glows_data_args = mock_interpolate.call_args_list[0].args
 
-        np.testing.assert_array_equal(
-            pset_azimuths, get_interpolated_glows_data_args[0]
-        )
+        np.testing.assert_array_equal(pset_azimuths, get_interpolated_glows_data_args[0])
         np.testing.assert_array_equal(
             self.glows_data.spin_angle, get_interpolated_glows_data_args[1]
         )
@@ -665,9 +611,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                 self.glows_data.energy = np.array([1.25, 1.85, 3])
 
                 energy_sc = np.array([[np.full((3600,), 1250), np.full((3600,), 1850)]])
-                exposure_times = np.array(
-                    [[np.full((3600,), 10), np.full((3600,), 100)]]
-                )
+                exposure_times = np.array([[np.full((3600,), 10), np.full((3600,), 100)]])
                 l1c_dataset = create_l1c_pset(exposures=exposure_times)
 
                 corrected_hae_lon = np.ones((1, 2, 3600))
@@ -733,9 +677,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
 
                 self.assertEqual(1, mock_interpolate.call_count)
                 mock_interpolate_call_args = mock_interpolate.call_args_list[0].args
-                np.testing.assert_array_equal(
-                    pset_azimuths, mock_interpolate_call_args[0]
-                )
+                np.testing.assert_array_equal(pset_azimuths, mock_interpolate_call_args[0])
                 np.testing.assert_array_equal(
                     self.glows_data.spin_angle, mock_interpolate_call_args[1]
                 )
@@ -765,8 +707,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
             (GlowsL3Flags.PREDICTIVE_EPHEMERIS, 1.0, 0.0, 0.0),
             (GlowsL3Flags.PERSISTED_LAST_POINT, 0.0, 0.0, 1.0),
             (
-                GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO
-                | GlowsL3Flags.PREDICTIVE_EPHEMERIS,
+                GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO | GlowsL3Flags.PREDICTIVE_EPHEMERIS,
                 1.0,
                 1.0,
                 0.0,
@@ -778,8 +719,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                 1.0,
             ),
             (
-                GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO
-                | GlowsL3Flags.PERSISTED_LAST_POINT,
+                GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO | GlowsL3Flags.PERSISTED_LAST_POINT,
                 0.0,
                 1.0,
                 1.0,
@@ -817,9 +757,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                     (1, self.num_energies, 3600), expected_pred_ephem_value
                 )
                 expected_pred_ephem[:, :, 1000] = 0
-                np.testing.assert_array_equal(
-                    actual_pred_ephem, expected_pred_ephem, strict=True
-                )
+                np.testing.assert_array_equal(actual_pred_ephem, expected_pred_ephem, strict=True)
                 self.assertEqual(
                     pointing_set.data["predicted_ephemeris_flag"].dims,
                     pointing_set.data["survival_probability_times_exposure"].dims,
@@ -842,9 +780,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                     pointing_set.data["survival_probability_times_exposure"].dims,
                 )
 
-                actual_persisted_last_point = pointing_set.data[
-                    "persisted_last_point_flag"
-                ].values
+                actual_persisted_last_point = pointing_set.data["persisted_last_point_flag"].values
                 expected_persisted_last_point = np.full(
                     (1, self.num_energies, 3600), expected_persisted_last_point_value
                 )
@@ -902,15 +838,11 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
     @patch(
         "imap_l3_processing.maps.rectangular_survival_probability.RectangularSkyMap.project_pset_values_to_map"
     )
-    @patch(
-        "imap_l3_processing.maps.rectangular_survival_probability.RectangularSkyMap.__init__"
-    )
+    @patch("imap_l3_processing.maps.rectangular_survival_probability.RectangularSkyMap.__init__")
     def test_survival_probability_map_construction(
         self, mock_skymap_constructor, mock_project_pset
     ):
-        class TestableRectangularSurvivalProbabilitySkyMap(
-            RectangularSurvivalProbabilitySkyMap
-        ):
+        class TestableRectangularSurvivalProbabilitySkyMap(RectangularSurvivalProbabilitySkyMap):
             def __init__(self, *args):
                 self.data_1d = MagicMock()
                 super().__init__(*args)
@@ -925,9 +857,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
         )
         self.assertIsInstance(actual_sky_map, RectangularSkyMap)
 
-        mock_skymap_constructor.assert_called_with(
-            sentinel.spacing_deg, sentinel.spice_frame
-        )
+        mock_skymap_constructor.assert_called_with(sentinel.spacing_deg, sentinel.spice_frame)
 
         expected_values_to_project = [
             "survival_probability_times_exposure",
@@ -986,9 +916,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
         )
 
         spice_frame = SpiceFrame.IMAP_HAE
-        actual_skymap = RectangularSurvivalProbabilitySkyMap(
-            [pset1, pset2], 0.1, spice_frame
-        )
+        actual_skymap = RectangularSurvivalProbabilitySkyMap([pset1, pset2], 0.1, spice_frame)
         survival_probability_dataset = actual_skymap.to_dataset()
         expected = 3 * np.repeat(
             self.glows_data.probability_of_survival[:, [0, -1], 0:180], 10, axis=2
@@ -998,14 +926,10 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
         survival_prob_in_skygrid_shape = np.full((1, 2, 3600, 1800), np.nan)
         survival_prob_in_skygrid_shape[:, :, 300, :] = expected
 
-        self.assertIn(
-            "exposure_weighted_survival_probabilities", survival_probability_dataset
-        )
+        self.assertIn("exposure_weighted_survival_probabilities", survival_probability_dataset)
         self.assertEqual(
             (1, 2, 3600, 1800),
-            survival_probability_dataset[
-                "exposure_weighted_survival_probabilities"
-            ].values.shape,
+            survival_probability_dataset["exposure_weighted_survival_probabilities"].values.shape,
         )
 
         actual_sp_at_relevant_long = survival_probability_dataset[
@@ -1016,9 +940,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
 
         np.testing.assert_array_almost_equal(
             survival_prob_in_skygrid_shape,
-            survival_probability_dataset[
-                "exposure_weighted_survival_probabilities"
-            ].values,
+            survival_probability_dataset["exposure_weighted_survival_probabilities"].values,
         )
 
     def test_survival_probability_sky_map_returns_flags(self):
@@ -1052,8 +974,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                 GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
             ),
             (
-                GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO
-                | GlowsL3Flags.PREDICTIVE_EPHEMERIS,
+                GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO | GlowsL3Flags.PREDICTIVE_EPHEMERIS,
                 GlowsL3Flags.NONE,
                 MapL3Flags.NOMINAL_ALPHA_PROTON_RATIO | MapL3Flags.PREDICTIVE_EPHEMERIS,
             ),
@@ -1104,9 +1025,7 @@ class TestRectangularSurvivalProbability(SpiceTestCase):
                 )
                 survival_probability_dataset = actual_skymap.to_dataset()
 
-                expected_flags_in_full_shape = np.full(
-                    (1, 2, 3600, 1800), MapL3Flags.NONE
-                )
+                expected_flags_in_full_shape = np.full((1, 2, 3600, 1800), MapL3Flags.NONE)
                 expected_flags_in_full_shape[:, :, 300, :] = expected_quality_flags
 
                 self.assertIn("quality_flags", survival_probability_dataset)

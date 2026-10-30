@@ -15,7 +15,8 @@ HEADER_TEXT = """# Efficiency Factors for the CoDICE-Lo Instrument for each ener
 
 
 def create_efficiency_lookup(
-    species: str, output_dir: Path | None = None,
+    species: str,
+    output_dir: Path | None = None,
 ) -> Path:
     if output_dir is None:
         output_dir = get_run_local_data_path("codice")

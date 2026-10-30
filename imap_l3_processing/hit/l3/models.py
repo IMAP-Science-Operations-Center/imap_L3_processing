@@ -117,9 +117,7 @@ class HitDirectEventDataProduct(DataProduct):
             DataProductVariable(E_PRIME_VAR_NAME, self.e_prime),
             DataProductVariable(DETECTED_RANGE_VAR_NAME, self.detected_range),
             DataProductVariable(PARTICLE_ID_VAR_NAME, self.particle_id),
-            DataProductVariable(
-                PRIORITY_BUFFER_NUMBER_VAR_NAME, self.priority_buffer_number
-            ),
+            DataProductVariable(PRIORITY_BUFFER_NUMBER_VAR_NAME, self.priority_buffer_number),
             DataProductVariable(LATENCY_VAR_NAME, self.latency),
             DataProductVariable(STIM_TAG_VAR_NAME, self.stim_tag),
             DataProductVariable(LONG_EVENT_FLAG_VAR_NAME, self.long_event_flag),

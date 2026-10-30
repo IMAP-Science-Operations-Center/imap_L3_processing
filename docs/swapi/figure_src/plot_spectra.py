@@ -102,9 +102,7 @@ def main():
     handles_for_legend = None
     for ax, (label, v_b, T_k, az, el, density) in zip(axes.flat, CASES):
         v_peak = peak_esa_voltage_for_proton_bulk_speed(v_b)
-        esa_voltages = np.logspace(
-            np.log10(0.4 * v_peak), np.log10(2.5 * v_peak), n_voltages
-        )
+        esa_voltages = np.logspace(np.log10(0.4 * v_peak), np.log10(2.5 * v_peak), n_voltages)
         sw = SolarWindParams(
             density=density,
             velocity_rtn=velocity_rtn_from_swapi_angles(v_b, az, el),
@@ -121,9 +119,7 @@ def main():
             )
             rate, _ = calculate_integral(sw, response_grid, rotation_matrix)
             optimized[i] = rate
-            reference[i] = reference_integral_fixed_limits(
-                response_grid, sw, rotation_matrix
-            )
+            reference[i] = reference_integral_fixed_limits(response_grid, sw, rotation_matrix)
 
         (h_ref,) = ax.plot(
             esa_voltages,

@@ -28,9 +28,7 @@ def create_intensity_map_data(
     lon = lon if lon is not None else np.array([1.0])
     lat = lat if lat is not None else np.array([1.0])
     energy = energy if energy is not None else np.array([1.0])
-    energy_delta = (
-        energy_delta if energy_delta is not None else np.full((len(energy), 2), 1)
-    )
+    energy_delta = energy_delta if energy_delta is not None else np.full((len(energy), 2), 1)
     epoch = epoch if epoch is not None else np.ma.array([datetime.now()])
     epoch_delta = epoch_delta if epoch_delta is not None else np.ma.array([86400 * 1e9])
     flux = (
@@ -60,9 +58,7 @@ def create_intensity_map_data(
         latitude=lat,
         longitude=lon,
         exposure_factor=np.full_like(flux, 0),
-        obs_date=np.ma.array(
-            np.full(more_real_flux.shape, datetime(year=2010, month=1, day=1))
-        ),
+        obs_date=np.ma.array(np.full(more_real_flux.shape, datetime(year=2010, month=1, day=1))),
         obs_date_range=np.ma.array(np.full_like(more_real_flux, 0)),
         solid_angle=np.full_like(more_real_flux, 0),
         ena_intensity=flux,
@@ -89,9 +85,7 @@ def create_rectangular_intensity_map_data(
     lon = lon if lon is not None else np.array([1.0])
     lat = lat if lat is not None else np.array([1.0])
     energy = energy if energy is not None else np.array([1.0])
-    energy_delta = (
-        energy_delta if energy_delta is not None else np.full((len(energy), 2), 1)
-    )
+    energy_delta = energy_delta if energy_delta is not None else np.full((len(energy), 2), 1)
     epoch = epoch if epoch is not None else np.ma.array([datetime.now()])
     epoch_delta = epoch_delta if epoch_delta is not None else np.ma.array([86400 * 1e9])
     flux = (
@@ -159,9 +153,7 @@ def create_rectangular_intensity_map(
     intensity_map_data: IntensityMapData = None, coords: RectangularCoords = None
 ) -> RectangularIntensityMapData:
     intensity_map = (
-        intensity_map_data
-        if intensity_map_data is not None
-        else create_intensity_map_data()
+        intensity_map_data if intensity_map_data is not None else create_intensity_map_data()
     )
 
     if coords is None:
@@ -217,9 +209,7 @@ def create_rectangular_spectral_index_map_data(
     lon = lon if lon is not None else np.array([1.0])
     lat = lat if lat is not None else np.array([1.0])
     energy = energy if energy is not None else np.array([1.0])
-    energy_delta = (
-        energy_delta if energy_delta is not None else np.full((len(energy), 2), 1)
-    )
+    energy_delta = energy_delta if energy_delta is not None else np.full((len(energy), 2), 1)
     epoch = epoch if epoch is not None else np.ma.array([datetime.now()])
     epoch_delta = epoch_delta if epoch_delta is not None else np.ma.array([86400 * 1e9])
     spectral_index = (

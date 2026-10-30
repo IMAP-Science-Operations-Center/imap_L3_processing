@@ -45,9 +45,7 @@ from imap_l3_processing.constants import (
 
 _BASE_URL = "https://spdf.gsfc.nasa.gov/pub/data/wind/swe/ascii/2-min"
 _DEFAULT_CACHE_DIR = Path.home() / ".cache" / "imap_l3" / "wind_swe_2m"
-_DEFAULT_OUTPUT = (
-    _REPO_ROOT / "docs" / "swapi" / "figure_src" / "wind_solar_wind_samples_2025.csv"
-)
+_DEFAULT_OUTPUT = _REPO_ROOT / "docs" / "swapi" / "figure_src" / "wind_solar_wind_samples_2025.csv"
 
 # Column indices (0-based) into the WIND ASCII record. See documentation_jck.txt
 # at the source URL for the full layout.
@@ -166,9 +164,7 @@ def main():
     print(f"  After fill-value filter: {keep.sum()} rows")
 
     if keep.sum() < args.n:
-        sys.exit(
-            f"Only {keep.sum()} rows survive filters but {args.n} samples requested."
-        )
+        sys.exit(f"Only {keep.sum()} rows survive filters but {args.n} samples requested.")
 
     rng = np.random.default_rng(args.seed)
     candidates = np.flatnonzero(keep)
@@ -233,9 +229,7 @@ def main():
         ("v_N", v_N, "km/s"),
     ]:
         q = np.percentile(arr, [1, 50, 99])
-        print(
-            f"  {label:>13s} [{unit}]  p1={q[0]:9.3g}  median={q[1]:9.3g}  p99={q[2]:9.3g}"
-        )
+        print(f"  {label:>13s} [{unit}]  p1={q[0]:9.3g}  median={q[1]:9.3g}  p99={q[2]:9.3g}")
 
 
 if __name__ == "__main__":

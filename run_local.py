@@ -265,11 +265,9 @@ def create_codice_lo_l3b_3d_distributions_cdf(species: str):
         ),
     )
 
-    codice_lo_l3a_direct_event_path = Path(
-        create_codice_lo_l3a_direct_events_cdf(l1a_paths)
-    )
-    accurate_codice_lo_l3a_direct_event_path = (
-        create_more_accurate_l3a_direct_events_cdf(codice_lo_l3a_direct_event_path)
+    codice_lo_l3a_direct_event_path = Path(create_codice_lo_l3a_direct_events_cdf(l1a_paths))
+    accurate_codice_lo_l3a_direct_event_path = create_more_accurate_l3a_direct_events_cdf(
+        codice_lo_l3a_direct_event_path
     )
 
     codice_lo_l1a_nsw_priority_path, codice_lo_l1a_sw_priority_path = l1a_paths
@@ -279,14 +277,10 @@ def create_codice_lo_l3b_3d_distributions_cdf(species: str):
         l1a_sw_file_path=codice_lo_l1a_sw_priority_path,
         l1a_nsw_file_path=codice_lo_l1a_nsw_priority_path,
         mass_species_bin_lut=(
-            get_test_data_path(
-                "codice/imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv"
-            )
+            get_test_data_path("codice/imap_codice_lo-mass-species-bin-lookup_20241110_v001.csv")
         ),
         geometric_factors_lut=(
-            get_test_data_path(
-                "codice/imap_codice_lo-geometric-factors_20241110_v001.csv"
-            )
+            get_test_data_path("codice/imap_codice_lo-geometric-factors_20241110_v001.csv")
         ),
         efficiency_factors_lut=(create_efficiency_lookup(species)),
         energy_per_charge_lut=get_test_data_path(
@@ -309,12 +303,8 @@ def create_codice_lo_l3b_3d_distributions_cdf(species: str):
     return save_data(l3b_3d_distributions, delete_if_present=True)
 
 
-def create_swapi_l3b_cdf(
-    geometric_calibration_file, efficiency_calibration_file, cdf_file
-):
-    geometric_calibration = GeometricFactorCalibrationTable.from_file(
-        geometric_calibration_file
-    )
+def create_swapi_l3b_cdf(geometric_calibration_file, efficiency_calibration_file, cdf_file):
+    geometric_calibration = GeometricFactorCalibrationTable.from_file(geometric_calibration_file)
     efficiency_calibration = EfficiencyCalibrationTable(efficiency_calibration_file)
     swapi_cdf_data = CDF(cdf_file)
     swapi_data = read_l2_swapi_data(swapi_cdf_data)
@@ -350,9 +340,7 @@ def create_swapi_l3a_cdf(
     mock_light_time = 122.0
     mock_spice.spkezr.return_value = (np.array([0, 0, 0, 0, 0, 0]), mock_light_time)
     mock_spice.latrec.return_value = np.array([0, 2, 0])
-    mock_spice.reclat.return_value = np.array(
-        [0.99 * ONE_AU_IN_KM, np.deg2rad(255.7), 0.6]
-    )
+    mock_spice.reclat.return_value = np.array([0.99 * ONE_AU_IN_KM, np.deg2rad(255.7), 0.6])
 
     def mock_sxform(from_frame, to_frame, et):
         if from_frame == "IMAP_SWAPI":
@@ -370,13 +358,9 @@ def create_swapi_l3a_cdf(
 
     mock_spice.sxform.side_effect = mock_sxform
 
-    efficiency_calibration_table = EfficiencyCalibrationTable(
-        imap_swapi_efficiency_lut_file
-    )
-    density_of_neutral_helium_calibration_table = (
-        DensityOfNeutralHeliumLookupTable.from_file(
-            density_of_neutral_helium_calibration_file
-        )
+    efficiency_calibration_table = EfficiencyCalibrationTable(imap_swapi_efficiency_lut_file)
+    density_of_neutral_helium_calibration_table = DensityOfNeutralHeliumLookupTable.from_file(
+        density_of_neutral_helium_calibration_file
     )
     swapi_cdf_data = CDF(cdf_file)
     swapi_data = read_l2_swapi_data(swapi_cdf_data)
@@ -422,17 +406,14 @@ def create_swe_product(dependencies: SweL3Dependencies) -> Path:
 
 
 @patch("imap_l3_processing.swe.l3.science.moment_calculations.spiceypy.pxform")
-def create_swe_product_with_fake_spice(
-    dependencies: SweL3Dependencies, mock_spice_pxform
-) -> Path:
+def create_swe_product_with_fake_spice(dependencies: SweL3Dependencies, mock_spice_pxform) -> Path:
     data = np.loadtxt(get_test_data_path("swe/ace_attitude.dat"), skiprows=1)
 
     def time_to_float(t):
         return (t - datetime(1999, 1, 1, tzinfo=timezone.utc)).total_seconds()
 
     times = [
-        datetime(1998, 12, 31, tzinfo=timezone.utc)
-        + timedelta(days=row[1], seconds=row[2])
+        datetime(1998, 12, 31, tzinfo=timezone.utc) + timedelta(days=row[1], seconds=row[2])
         for row in data
     ]
     times_as_floats = [time_to_float(t) for t in times]
@@ -491,13 +472,9 @@ def create_survival_corrected_full_spin_cdf(
         descriptor="h90-ena-h-sf-sp-full-hae-4deg-1yr",
     )
     processor = HiProcessor(Mock(), input_metadata)
-    output_data = processor.process_full_spin_single_sensor(
-        dependencies, SpiceFrame.ECLIPJ2000
-    )
+    output_data = processor.process_full_spin_single_sensor(dependencies, SpiceFrame.ECLIPJ2000)
 
-    data_product = RectangularIntensityDataProduct(
-        data=output_data, input_metadata=input_metadata
-    )
+    data_product = RectangularIntensityDataProduct(data=output_data, input_metadata=input_metadata)
     cdf_path = save_data(data_product, delete_if_present=True)
     return cdf_path
 
@@ -555,24 +532,12 @@ def create_hit_sectored_cdf(dependencies: HITL3SectoredDependencies) -> Path:
 
 def create_hit_direct_event_cdf():
     cosine_table = CosineCorrectionLookupTable(
-        get_test_data_path(
-            "hit/pha_events/imap_hit_range-2A-cosine-lookup_20250203_v000.csv"
-        ),
-        get_test_data_path(
-            "hit/pha_events/imap_hit_range-2B-cosine-lookup_20250203_v000.csv"
-        ),
-        get_test_data_path(
-            "hit/pha_events/imap_hit_range-3A-cosine-lookup_20250203_v000.csv"
-        ),
-        get_test_data_path(
-            "hit/pha_events/imap_hit_range-3B-cosine-lookup_20250203_v000.csv"
-        ),
-        get_test_data_path(
-            "hit/pha_events/imap_hit_range-4A-cosine-lookup_20250203_v000.csv"
-        ),
-        get_test_data_path(
-            "hit/pha_events/imap_hit_range-4B-cosine-lookup_20250203_v000.csv"
-        ),
+        get_test_data_path("hit/pha_events/imap_hit_range-2A-cosine-lookup_20250203_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-2B-cosine-lookup_20250203_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-3A-cosine-lookup_20250203_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-3B-cosine-lookup_20250203_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-4A-cosine-lookup_20250203_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-4B-cosine-lookup_20250203_v000.csv"),
     )
     gain_table = GainLookupTable.from_file(
         get_test_data_path("hit/pha_events/imap_hit_hi-gain-lookup_20250203_v000.csv"),
@@ -580,30 +545,16 @@ def create_hit_direct_event_cdf():
     )
 
     range_fit_lookup = RangeFitLookup.from_files(
-        get_test_data_path(
-            "hit/pha_events/imap_hit_range-2A-charge-fit-lookup_20250319_v000.csv"
-        ),
-        get_test_data_path(
-            "hit/pha_events/imap_hit_range-3A-charge-fit-lookup_20250319_v000.csv"
-        ),
-        get_test_data_path(
-            "hit/pha_events/imap_hit_range-4A-charge-fit-lookup_20250319_v000.csv"
-        ),
-        get_test_data_path(
-            "hit/pha_events/imap_hit_range-2B-charge-fit-lookup_20250319_v000.csv"
-        ),
-        get_test_data_path(
-            "hit/pha_events/imap_hit_range-3B-charge-fit-lookup_20250319_v000.csv"
-        ),
-        get_test_data_path(
-            "hit/pha_events/imap_hit_range-4B-charge-fit-lookup_20250319_v000.csv"
-        ),
+        get_test_data_path("hit/pha_events/imap_hit_range-2A-charge-fit-lookup_20250319_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-3A-charge-fit-lookup_20250319_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-4A-charge-fit-lookup_20250319_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-2B-charge-fit-lookup_20250319_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-3B-charge-fit-lookup_20250319_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-4B-charge-fit-lookup_20250319_v000.csv"),
     )
 
     event_type_look = HitEventTypeLookup.from_csv(
-        get_test_data_path(
-            "hit/pha_events/imap_hit_hit-event-type-lookup_20250228_v000.csv"
-        )
+        get_test_data_path("hit/pha_events/imap_hit_hit-event-type-lookup_20250228_v000.csv")
     )
 
     hit_l1_data = HitL1Data.read_from_cdf(
@@ -633,13 +584,9 @@ def create_hit_direct_event_cdf():
 
 
 @patch("imap_l3_processing.glows.glows_initializer.query")
-@patch(
-    "imap_l3_processing.glows.l3bc.glows_l3bc_dependencies.download_dependency_from_path"
-)
+@patch("imap_l3_processing.glows.l3bc.glows_l3bc_dependencies.download_dependency_from_path")
 @patch("imap_l3_processing.glows.glows_processor.imap_data_access")
-@patch(
-    "imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies.download"
-)
+@patch("imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies.download")
 @patch(
     "imap_l3_processing.glows.l3bc.glows_initializer_ancillary_dependencies.download_external_dependency"
 )
@@ -664,9 +611,7 @@ def run_l3b_initializer(
     mock_query.side_effect = [l3a_dicts, []]
 
     mock_download.side_effect = [
-        get_test_data_path(
-            "glows/imap_glows_pipeline-settings-l3bcde_20250423_v001.json"
-        ),
+        get_test_data_path("glows/imap_glows_pipeline-settings-l3bcde_20250423_v001.json"),
         get_test_data_path("glows/imap_2026_105_01.repoint.csv"),
     ]
 
@@ -682,9 +627,7 @@ def run_l3b_initializer(
         get_test_data_path("glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json"),
         get_test_data_path("glows/imap_glows_WawHelioIonMP_20100101_v002.json"),
         get_test_data_path("glows/imap_glows_bad-days-list_20100101_v004.dat"),
-        get_test_data_path(
-            "glows/imap_glows_pipeline-settings-l3bcde_20250423_v001.json"
-        ),
+        get_test_data_path("glows/imap_glows_pipeline-settings-l3bcde_20250423_v001.json"),
         get_test_data_path(
             "glows/pipeline/l3a/imap_glows_l3a_hist_20250625-repoint01071_v001.cdf"
         ),
@@ -694,9 +637,7 @@ def run_l3b_initializer(
         get_test_data_path("glows/imap_glows_uv-anisotropy-1CR_20100101_v001.json"),
         get_test_data_path("glows/imap_glows_WawHelioIonMP_20100101_v002.json"),
         get_test_data_path("glows/imap_glows_bad-days-list_20100101_v004.dat"),
-        get_test_data_path(
-            "glows/imap_glows_pipeline-settings-l3bcde_20250423_v001.json"
-        ),
+        get_test_data_path("glows/imap_glows_pipeline-settings-l3bcde_20250423_v001.json"),
         get_test_data_path(
             "glows/pipeline/l3a/imap_glows_l3a_hist_20100521-repoint00289_v001.cdf"
         ),
@@ -708,9 +649,7 @@ def run_l3b_initializer(
     bad_days_list = AncillaryInput("imap_glows_bad-days-list_20100101_v004.dat")
     waw_helio_ion = AncillaryInput("imap_glows_WawHelioIonMP_20100101_v002.json")
     uv_anisotropy = AncillaryInput("imap_glows_uv-anisotropy-1CR_20100101_v001.json")
-    pipeline_settings = AncillaryInput(
-        "imap_glows_pipeline-settings-l3bcde_20250423_v001.json"
-    )
+    pipeline_settings = AncillaryInput("imap_glows_pipeline-settings-l3bcde_20250423_v001.json")
 
     repointings = RepointInput("imap_2026_105_01.repoint.csv")
 
@@ -760,16 +699,12 @@ def run_glows_l3bc_processor_and_initializer(mock_query):
     bad_days_list = AncillaryInput("imap_glows_bad-days-list_20100101_v001.dat")
     waw_helio_ion = AncillaryInput("imap_glows_WawHelioIonMP_20100101_v002.json")
     uv_anisotropy = AncillaryInput("imap_glows_uv-anisotropy-1CR_20300101_v003.json")
-    pipeline_settings = AncillaryInput(
-        "imap_glows_pipeline-settings-l3bcde_20100101_v006.json"
-    )
+    pipeline_settings = AncillaryInput("imap_glows_pipeline-settings-l3bcde_20100101_v006.json")
     input_collection = ProcessingInputCollection(
         bad_days_list, waw_helio_ion, uv_anisotropy, pipeline_settings
     )
 
-    processor = GlowsProcessor(
-        dependencies=input_collection, input_metadata=input_metadata
-    )
+    processor = GlowsProcessor(dependencies=input_collection, input_metadata=input_metadata)
     print(processor.process())
 
 
@@ -789,9 +724,7 @@ def run_glows_l3e_lo_with_mocks(
         Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/EnGridUltra.dat"),
         Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/tessXYZ8.dat"),
         Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/tessAng16.dat"),
-        Path(
-            "instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/lyaSeriesV4_2021b.dat"
-        ),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/lyaSeriesV4_2021b.dat"),
         Path(
             "instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/solar_uv_anisotropy_NP.1.0_SP.1.0.dat"
         ),
@@ -804,12 +737,8 @@ def run_glows_l3e_lo_with_mocks(
         Path(
             "instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/phion_Hydrogen_T12F107_2021b.dat"
         ),
-        Path(
-            "instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/swEqtrElectrons5_2021b.dat"
-        ),
-        Path(
-            "instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/ionization.files.dat"
-        ),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/swEqtrElectrons5_2021b.dat"),
+        Path("instrument_team_data/glows/GLOWS_L3d_to_L3e_processing/ionization.files.dat"),
         pipeline_settings={
             "executable_dependency_paths": {
                 "energy-grid-lo": "EnGridLo.dat",
@@ -839,16 +768,8 @@ def run_glows_l3e_lo_with_mocks(
 
     mock_path.side_effect = [
         # Path(get_test_instrument_team_data_path("glows/probSur.Imap.Lo_20090101_010101_2009.000_60.00.txt")),
-        Path(
-            get_test_instrument_team_data_path(
-                "glows/probSur.Imap.Hi_2009.000_135.0.txt"
-            )
-        ),
-        Path(
-            get_test_instrument_team_data_path(
-                "glows/probSur.Imap.Hi_2009.000_90.00.txt"
-            )
-        ),
+        Path(get_test_instrument_team_data_path("glows/probSur.Imap.Hi_2009.000_135.0.txt")),
+        Path(get_test_instrument_team_data_path("glows/probSur.Imap.Hi_2009.000_90.00.txt")),
         Path(
             get_test_instrument_team_data_path(
                 "glows/probSur.Imap.Ul_20090101_010101_2009.000.txt"
@@ -1012,9 +933,7 @@ def make_glows_l3a_files():
 
 
 def run_glows_l3a(file_path):
-    date_in_path = re.search(r"imap_glows_l2_hist_(\d{8}).*.cdf", file_path.name).group(
-        1
-    )
+    date_in_path = re.search(r"imap_glows_l2_hist_(\d{8}).*.cdf", file_path.name).group(1)
     start_date = datetime.strptime(date_in_path, "%Y%m%d")
     end_date = start_date + timedelta(days=1)
     input_metadata = InputMetadata(
@@ -1054,9 +973,7 @@ def run_glows_l3a(file_path):
         l3a_data = processor.process_l3a(dependencies)
 
         glows_l3a_temp_path = TEMP_CDF_FOLDER_PATH / "glows" / "l3a"
-        print(
-            save_data(l3a_data, folder_path=glows_l3a_temp_path, delete_if_present=True)
-        )
+        print(save_data(l3a_data, folder_path=glows_l3a_temp_path, delete_if_present=True))
 
 
 def run_glows_l3bc():
@@ -1071,9 +988,7 @@ def run_glows_l3bc():
     cr = 2091
     external_files = {
         "f107_raw_data": get_test_instrument_team_data_path("glows/f107_fluxtable.txt"),
-        "omni_raw_data": get_test_instrument_team_data_path(
-            "glows/omni2_all_years.dat"
-        ),
+        "omni_raw_data": get_test_instrument_team_data_path("glows/omni2_all_years.dat"),
     }
     ancillary_files = {
         "uv_anisotropy": get_test_data_path(
@@ -1090,18 +1005,14 @@ def run_glows_l3bc():
     l3a_data_folder_path = get_test_data_path("glows/l3a_products")
     l3a_data = []
     l3a_file_names = [
-        f"imap_glows_l3a_hist_201004{x}-repoint{x + 90:05d}_v012.cdf"
-        for x in range(22, 31)
+        f"imap_glows_l3a_hist_201004{x}-repoint{x + 90:05d}_v012.cdf" for x in range(22, 31)
     ]
     l3a_file_names += [
-        f"imap_glows_l3a_hist_201005{x:02d}-repoint{x + 120:05d}_v012.cdf"
-        for x in range(1, 19)
+        f"imap_glows_l3a_hist_201005{x:02d}-repoint{x + 120:05d}_v012.cdf" for x in range(1, 19)
     ]
 
     for name in l3a_file_names:
-        l3a_data.append(
-            create_glows_l3a_dictionary_from_cdf(l3a_data_folder_path / name)
-        )
+        l3a_data.append(create_glows_l3a_dictionary_from_cdf(l3a_data_folder_path / name))
 
     dependencies = GlowsL3BCDependencies(
         l3a_data=l3a_data,
@@ -1155,9 +1066,7 @@ def run_glows_l3d(mock_shutil):
             "phion": get_test_instrument_team_data_path(
                 "glows/imap_glows_photoion-2010a_v003.dat"
             ),
-            "lya": get_test_instrument_team_data_path(
-                "glows/imap_glows_lya-2010a_v003.dat"
-            ),
+            "lya": get_test_instrument_team_data_path("glows/imap_glows_lya-2010a_v003.dat"),
             "e-dens": get_test_instrument_team_data_path(
                 "glows/imap_glows_electron-density-2010a_v003.dat"
             ),
@@ -1168,21 +1077,13 @@ def run_glows_l3d(mock_shutil):
     }
 
     l3b_file_paths = [
-        get_test_data_path(
-            "glows/pipeline/l3b/imap_glows_l3b_ion-rate-profile_20100103_v001.cdf"
-        ),
-        get_test_data_path(
-            "glows/pipeline/l3b/imap_glows_l3b_ion-rate-profile_20100519_v001.cdf"
-        ),
+        get_test_data_path("glows/pipeline/l3b/imap_glows_l3b_ion-rate-profile_20100103_v001.cdf"),
+        get_test_data_path("glows/pipeline/l3b/imap_glows_l3b_ion-rate-profile_20100519_v001.cdf"),
     ]
 
     l3c_file_paths = [
-        get_test_data_path(
-            "glows/pipeline/l3c/imap_glows_l3c_sw-profile_20100103_v001.cdf"
-        ),
-        get_test_data_path(
-            "glows/pipeline/l3c/imap_glows_l3c_sw-profile_20100519_v001.cdf"
-        ),
+        get_test_data_path("glows/pipeline/l3c/imap_glows_l3c_sw-profile_20100103_v001.cdf"),
+        get_test_data_path("glows/pipeline/l3c/imap_glows_l3c_sw-profile_20100519_v001.cdf"),
     ]
 
     l3d_dependencies: GlowsL3DDependencies = GlowsL3DDependencies(
@@ -1193,9 +1094,7 @@ def run_glows_l3d(mock_shutil):
     )
 
     processor = GlowsProcessor(ProcessingInputCollection(), input_metadata)
-    data_product, l3d_txt_paths, last_processed_cr = processor.process_l3d(
-        l3d_dependencies
-    )
+    data_product, l3d_txt_paths, last_processed_cr = processor.process_l3d(l3d_dependencies)
     print("l3d_txts:")
     [print(txt_path) for txt_path in l3d_txt_paths]
     print(save_data(data_product, cr_number=last_processed_cr))
@@ -1208,13 +1107,9 @@ def create_empty_hi_l1c_dataset(
     energies: np.ndarray | None = None,
 ):
     energies = energies if energies is not None else np.geomspace(1, 10000, 9)
-    spin_angles = (
-        spin_angles if spin_angles is not None else np.arange(0, 360, 0.1) + 0.05
-    )
+    spin_angles = spin_angles if spin_angles is not None else np.arange(0, 360, 0.1) + 0.05
     exposures = (
-        exposures
-        if exposures is not None
-        else np.ones(shape=(1, len(energies), len(spin_angles)))
+        exposures if exposures is not None else np.ones(shape=(1, len(energies), len(spin_angles)))
     )
 
     return xr.Dataset(
@@ -1264,20 +1159,12 @@ LATITUDE = TypeVar("LATITUDE")
 
 def read_glows_survival_probability_data_from_cdf() -> tuple[np.ndarray, np.ndarray]:
     l3e = CDF(
-        str(
-            get_test_data_path(
-                "glows/imap_glows_l3e_survival-probabilities-hi_20250324_v001.cdf"
-            )
-        )
+        str(get_test_data_path("glows/imap_glows_l3e_survival-probabilities-hi_20250324_v001.cdf"))
     )
-    return l3e["probability_of_survival"][...][:, 0], l3e["probability_of_survival"][
-        ...
-    ][:, 1]
+    return l3e["probability_of_survival"][...][:, 0], l3e["probability_of_survival"][...][:, 1]
 
 
-@patch(
-    "imap_l3_processing.hi.hi_processor.HiLoL3SurvivalDependencies.fetch_dependencies"
-)
+@patch("imap_l3_processing.hi.hi_processor.HiLoL3SurvivalDependencies.fetch_dependencies")
 def create_hi_l3_survival_corrected_cdf(
     survival_dependencies: HiLoL3SurvivalDependencies,
     spacing_degree: int,
@@ -1300,9 +1187,7 @@ def create_hi_l3_survival_corrected_cdf(
     print(processor.process())
 
 
-@patch(
-    "imap_l3_processing.lo.lo_processor.HiLoL3SurvivalDependencies.fetch_dependencies"
-)
+@patch("imap_l3_processing.lo.lo_processor.HiLoL3SurvivalDependencies.fetch_dependencies")
 def create_lo_l3_survival_corrected_cdf(
     survival_dependencies: HiLoL3SurvivalDependencies,
     spacing_degree: int,
@@ -1345,18 +1230,14 @@ def create_codice_hi_l3a_direct_events_cdf():
     )
 
     codice_lo_processor = CodiceHiProcessor(ProcessingInputCollection(), input_metadata)
-    direct_event_data = codice_lo_processor.process_l3a_direct_event(
-        codice_hi_de_dependencies
-    )
+    direct_event_data = codice_lo_processor.process_l3a_direct_event(codice_hi_de_dependencies)
     cdf_path = save_data(direct_event_data, delete_if_present=True)
     return cdf_path
 
 
 def create_codice_hi_l3b_pitch_angles_cdf():
     codice_hi_pitch_angle_dependencies = CodicePitchAngleDependencies.from_file_paths(
-        mag_file_path=get_test_data_path(
-            "mag/imap_mag_l1d_norm-mago_20250814_v003.cdf"
-        ),
+        mag_file_path=get_test_data_path("mag/imap_mag_l1d_norm-mago_20250814_v003.cdf"),
         codice_l2_sectored_intensities_path=get_test_instrument_team_data_path(
             "codice/hi/imap_codice_l2_hi-sectored_20250814_v002.cdf"
         ),
@@ -1372,9 +1253,7 @@ def create_codice_hi_l3b_pitch_angles_cdf():
     )
 
     codice_hi_processor = CodiceHiProcessor(ProcessingInputCollection(), input_metadata)
-    pitch_angle_data = codice_hi_processor.process_l3b(
-        codice_hi_pitch_angle_dependencies
-    )
+    pitch_angle_data = codice_hi_processor.process_l3b(codice_hi_pitch_angle_dependencies)
     cdf_path = save_data(pitch_angle_data, delete_if_present=True)
     return cdf_path
 
@@ -1403,37 +1282,21 @@ if __name__ == "__main__":
     if "swapi" in sys.argv:
         if "l3a" in sys.argv:
             paths = create_swapi_l3a_cdf(
-                str(
-                    get_test_data_path(
-                        "swapi/imap_swapi_energy-gf-pui-lut_20100101_v001.csv"
-                    )
-                ),
+                str(get_test_data_path("swapi/imap_swapi_energy-gf-pui-lut_20100101_v001.csv")),
                 str(
                     get_test_data_path(
                         "swapi/imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf"
                     )
                 ),
-                str(
-                    get_test_data_path(
-                        "swapi/imap_swapi_efficiency-lut_20241020_v002.dat"
-                    )
-                ),
-                str(
-                    get_test_data_path(
-                        "swapi/imap_swapi_l2_50-sweeps_20250606_v003.cdf"
-                    )
-                ),
+                str(get_test_data_path("swapi/imap_swapi_efficiency-lut_20241020_v002.dat")),
+                str(get_test_data_path("swapi/imap_swapi_l2_50-sweeps_20250606_v003.cdf")),
             )
             print(paths)
         if "l3b" in sys.argv:
             path = create_swapi_l3b_cdf(
                 "tests/test_data/swapi/imap_swapi_energy-gf-sw-lut_20100101_v001.csv",
                 "tests/test_data/swapi/imap_swapi_efficiency-lut_20241020_v002.dat",
-                str(
-                    get_test_data_path(
-                        "swapi/imap_swapi_l2_50-sweeps_20250606_v003.cdf"
-                    )
-                ),
+                str(get_test_data_path("swapi/imap_swapi_l2_50-sweeps_20250606_v003.cdf")),
             )
             print(path)
     if "glows" in sys.argv:
@@ -1467,9 +1330,7 @@ if __name__ == "__main__":
                 r"C:\Users\Petty\Downloads\HIT Validation-20250922T131655Z-1-001\HIT Validation\imap_hit_l2_macropixel-intensity_20100106_v001.cdf"
             )
             dependencies = HITL3SectoredDependencies(mag_data=mag_data, data=hit_data)
-            print(
-                f"hit macropixel data product: {create_hit_sectored_cdf(dependencies)}"
-            )
+            print(f"hit macropixel data product: {create_hit_sectored_cdf(dependencies)}")
 
     if "swe" in sys.argv:
         dependencies = SweL3Dependencies.from_file_paths(
@@ -1572,9 +1433,7 @@ if __name__ == "__main__":
             print(create_lo_spectral_index_cdf(dependencies))
 
         if do_all or "survival_probabilities" in sys.argv:
-            glows_l3e_folder = get_test_data_path(
-                "hi/fake_l3e_survival_probabilities/90"
-            )
+            glows_l3e_folder = get_test_data_path("hi/fake_l3e_survival_probabilities/90")
             glows_l3_paths = list(glows_l3e_folder.iterdir())
 
             missing_paths, run_local_paths = try_get_many_run_local_paths(
@@ -1645,9 +1504,7 @@ if __name__ == "__main__":
                 UltraL1CPSet.read_from_path(l1c_dependency_path)
                 for l1c_dependency_path in l1c_dependency_paths
             ]
-            l3e_dependencies = [
-                UltraGlowsL3eData.read_from_path(path) for path in l3e_glows_paths
-            ]
+            l3e_dependencies = [UltraGlowsL3eData.read_from_path(path) for path in l3e_glows_paths]
 
             dependencies = UltraL3Dependencies.from_file_paths(
                 l2_map_path, l1c_dependency_paths, l3e_glows_paths
@@ -1656,12 +1513,10 @@ if __name__ == "__main__":
             healpix_sp_corrected_data = correct_healpix_data_for_survival_probability(
                 deps=dependencies, spice_frame_name=SpiceFrame.IMAP_HAE
             )
-            rectangular_sp_data_product = (
-                processor._process_healpix_intensity_to_rectangular(
-                    healpix_sp_corrected_data,
-                    spacing_degree,
-                    spice_frame_name=SpiceFrame.IMAP_HAE,
-                )
+            rectangular_sp_data_product = processor._process_healpix_intensity_to_rectangular(
+                healpix_sp_corrected_data,
+                spacing_degree,
+                spice_frame_name=SpiceFrame.IMAP_HAE,
             )
 
             rectangular_sp_corrected_path = save_data(
@@ -1689,9 +1544,7 @@ if __name__ == "__main__":
                 descriptor=f"u90-spx-h-sf-sp-full-hae-{spacing_degree}deg-6mo",
             )
 
-            processor = UltraProcessor(
-                input_metadata=processor_input_metadata, dependencies=None
-            )
+            processor = UltraProcessor(input_metadata=processor_input_metadata, dependencies=None)
 
             spectral_index_map_data = processor._process_spectral_index(dependencies)
             output = processor._process_healpix_spectral_index_to_rectangular(

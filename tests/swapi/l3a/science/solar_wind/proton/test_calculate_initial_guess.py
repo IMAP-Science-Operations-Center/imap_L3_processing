@@ -129,9 +129,7 @@ class TestCalculateInitialGuessSeeds(unittest.TestCase):
 
         temperature_seed_arg = patched_refine.call_args.args[3]
         expected_temperature = 60_000.0 * (peak_speed / 400.0) ** 2
-        np.testing.assert_allclose(
-            temperature_seed_arg, expected_temperature, rtol=1e-12
-        )
+        np.testing.assert_allclose(temperature_seed_arg, expected_temperature, rtol=1e-12)
 
     def test_temperature_seed_floors_at_one_ev(self):
         """At a low peak speed where 60_000·(v/400)² is below 1 eV, the temperature seed handed to the refiner is clamped to `INITIAL_TEMPERATURE_FLOOR_K`."""
@@ -212,9 +210,7 @@ class TestCalculateInitialGuessDensity(unittest.TestCase):
             temperature=guess.temperature,
             mass=ctx.mass_kg,
         )
-        unit_rates, _ = model_solar_wind_ideal_coincidence_rates(
-            unit_density_params, ctx
-        )
+        unit_rates, _ = model_solar_wind_ideal_coincidence_rates(unit_density_params, ctx)
         expected_density = optimal_density_scale(unit_rates, ctx.count_rate)
         np.testing.assert_allclose(guess.density, expected_density, rtol=1e-10)
 

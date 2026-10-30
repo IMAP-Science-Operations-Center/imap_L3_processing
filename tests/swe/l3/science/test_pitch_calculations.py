@@ -89,18 +89,14 @@ class TestPitchCalculations(unittest.TestCase):
         )
 
         actual_look_direction = calculate_look_directions(inst_el, inst_az)
-        np.testing.assert_array_almost_equal(
-            actual_look_direction, expected_look_direction
-        )
+        np.testing.assert_array_almost_equal(actual_look_direction, expected_look_direction)
 
     def test_compute_velocity(self):
         energy = np.array([1, 2])  # 2 -- energy
         inst_el = np.array([0, 90])
         inst_az = np.array([[0], [90]])  # 2, 1  --  energy, spin sector
 
-        scalar_speeds = (
-            np.sqrt(energy * 1.602176634e-19 * 2 / 9.109_383_7139e-31) / 1000
-        )
+        scalar_speeds = np.sqrt(energy * 1.602176634e-19 * 2 / 9.109_383_7139e-31) / 1000
         expected_velocity = np.array(
             [
                 [  # energy 1
@@ -129,10 +125,7 @@ class TestPitchCalculations(unittest.TestCase):
         velocity = calculate_velocity_in_dsp_frame_km_s(energy, inst_el, inst_az)
         scalar_velocity = np.linalg.norm(velocity, axis=-1)
         calculated_energy = (
-            0.5
-            * 9.109_383_7139e-31
-            * np.square(scalar_velocity * 1000)
-            / 1.602176634e-19
+            0.5 * 9.109_383_7139e-31 * np.square(scalar_velocity * 1000) / 1.602176634e-19
         )
 
         np.testing.assert_almost_equal(calculated_energy[0], energy[0])
@@ -405,9 +398,7 @@ class TestPitchCalculations(unittest.TestCase):
     )
     @patch("imap_l3_processing.swe.l3.science.pitch_calculations.rebin_by_pitch_angle")
     @patch("imap_l3_processing.swe.l3.science.pitch_calculations.calculate_pitch_angle")
-    @patch(
-        "imap_l3_processing.swe.l3.science.pitch_calculations.calculate_velocity_in_sw_frame"
-    )
+    @patch("imap_l3_processing.swe.l3.science.pitch_calculations.calculate_velocity_in_sw_frame")
     def test_correct_and_rebin(
         self,
         mock_calculate_velocity_in_sw_frame,
@@ -468,9 +459,7 @@ class TestPitchCalculations(unittest.TestCase):
             NumpyArrayMatcher(expected_mag_vectors_with_cem_axis),
         )
 
-        mock_calculate_energy.assert_called_with(
-            mock_calculate_velocity_in_sw_frame.return_value
-        )
+        mock_calculate_energy.assert_called_with(mock_calculate_velocity_in_sw_frame.return_value)
         mock_rebin_by_pitch_angle.assert_called_with(
             flux_data,
             mock_calculate_pitch_angle.return_value,
@@ -520,9 +509,7 @@ class TestPitchCalculations(unittest.TestCase):
             5 * bin1_factor + 10 * bin2_factor,
             7 * bin1_factor + 15 * bin2_factor,
         ]
-        np.testing.assert_allclose(
-            actual_integrated_spectrum, expected_integrated_spectrum
-        )
+        np.testing.assert_allclose(actual_integrated_spectrum, expected_integrated_spectrum)
 
     def test_integrate_distribution_to_get_1d_spectrum_ignores_nan_values(self):
         pitch_angle_bins = [30, 90]
@@ -552,9 +539,7 @@ class TestPitchCalculations(unittest.TestCase):
             5 * bin1_factor + 10 * bin2_factor,
             15 * bin2_factor,
         ]
-        np.testing.assert_allclose(
-            actual_integrated_spectrum, expected_integrated_spectrum
-        )
+        np.testing.assert_allclose(actual_integrated_spectrum, expected_integrated_spectrum)
 
     def test_integrate_distribution_decides_inbound_and_outbound_based_on_config_energy_index(
         self,
@@ -641,10 +626,8 @@ class TestPitchCalculations(unittest.TestCase):
             in_vs_out_energy_index=0,
         )
 
-        in_spectrum, out_spectrum = (
-            integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(
-                psd_by_pitch_angles, configuration
-            )
+        in_spectrum, out_spectrum = integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(
+            psd_by_pitch_angles, configuration
         )
 
         np.testing.assert_allclose(in_spectrum, expected_A_spectrum)
@@ -762,9 +745,7 @@ class TestPitchCalculations(unittest.TestCase):
             actual_intensity_uncertainty_by_pa_and_gyro,
             actual_intensity_uncertainty_by_pa,
         ) = rebinned_data
-        np.testing.assert_equal(
-            actual_rebinned_by_pa_and_gyro, expected_intensity_by_pa_and_gyro
-        )
+        np.testing.assert_equal(actual_rebinned_by_pa_and_gyro, expected_intensity_by_pa_and_gyro)
         np.testing.assert_equal(actual_rebinned_by_pa, expected_intensity_by_pa)
         np.testing.assert_array_almost_equal(
             actual_intensity_uncertainty_by_pa_and_gyro, expected_uncertainty_by_pa_gyro

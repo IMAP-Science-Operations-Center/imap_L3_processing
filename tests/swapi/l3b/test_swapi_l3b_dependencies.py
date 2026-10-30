@@ -35,9 +35,15 @@ class TestSwapiL3BDependencies(unittest.TestCase):
         version = "v002"
         start_date = datetime(2025, 1, 1).strftime("%Y%m%d")
 
-        science_file_path = f"imap_swapi_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{start_date}_{version}.cdf"
-        geometric_calibration_path = f"imap_swapi_{GEOMETRIC_FACTOR_SW_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf"
-        efficiency_table_path = f"imap_swapi_{EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf"
+        science_file_path = (
+            f"imap_swapi_{incoming_data_level}_{SWAPI_L2_DESCRIPTOR}_{start_date}_{version}.cdf"
+        )
+        geometric_calibration_path = (
+            f"imap_swapi_{GEOMETRIC_FACTOR_SW_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf"
+        )
+        efficiency_table_path = (
+            f"imap_swapi_{EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf"
+        )
 
         science_input = ScienceInput(science_file_path)
         geometric_calibration_input = AncillaryInput(geometric_calibration_path)
@@ -46,26 +52,15 @@ class TestSwapiL3BDependencies(unittest.TestCase):
             science_input, geometric_calibration_input, efficiency_table_input
         )
 
-        actual_swapi_l3b_dependencies = SwapiL3BDependencies.fetch_dependencies(
-            dependencies
-        )
+        actual_swapi_l3b_dependencies = SwapiL3BDependencies.fetch_dependencies(dependencies)
 
         sci_data_dir = (
-            imap_data_access.config["DATA_DIR"]
-            / "imap"
-            / "swapi"
-            / "l2"
-            / "2025"
-            / "01"
+            imap_data_access.config["DATA_DIR"] / "imap" / "swapi" / "l2" / "2025" / "01"
         )
-        ancillary_data_dir = (
-            imap_data_access.config["DATA_DIR"] / "imap" / "ancillary" / "swapi"
-        )
+        ancillary_data_dir = imap_data_access.config["DATA_DIR"] / "imap" / "ancillary" / "swapi"
 
         expected_download_science_path = sci_data_dir / science_file_path
-        expected_geometric_calibration_path = (
-            ancillary_data_dir / geometric_calibration_path
-        )
+        expected_geometric_calibration_path = ancillary_data_dir / geometric_calibration_path
         expected_efficiency_table_path = ancillary_data_dir / efficiency_table_path
 
         mock_download.assert_has_calls(
@@ -82,14 +77,10 @@ class TestSwapiL3BDependencies(unittest.TestCase):
             expected_efficiency_table_path,
         )
 
-        self.assertEqual(
-            mock_from_file_paths.return_value, actual_swapi_l3b_dependencies
-        )
+        self.assertEqual(mock_from_file_paths.return_value, actual_swapi_l3b_dependencies)
 
     @patch("imap_l3_processing.swapi.l3b.swapi_l3b_dependencies.CDF")
-    @patch(
-        "imap_l3_processing.swapi.l3b.swapi_l3b_dependencies.EfficiencyCalibrationTable"
-    )
+    @patch("imap_l3_processing.swapi.l3b.swapi_l3b_dependencies.EfficiencyCalibrationTable")
     @patch(
         "imap_l3_processing.swapi.l3b.swapi_l3b_dependencies.GeometricFactorCalibrationTable.from_file"
     )
@@ -137,9 +128,7 @@ class TestSwapiL3BDependencies(unittest.TestCase):
         mock_read_geometric_factor.assert_called_once_with(
             swapi_geometric_factor_calibration_file_path
         )
-        mock_efficiency_calibration.assert_called_once_with(
-            swapi_efficiency_calibration_file_path
-        )
+        mock_efficiency_calibration.assert_called_once_with(swapi_efficiency_calibration_file_path)
 
         mock_cdf.assert_called_once_with(str(swapi_science_file_download_path))
 

@@ -42,12 +42,8 @@ class GlowsL3DDependencies:
         uv_anisotropy_path = dependencies.get_file_paths(
             source="glows", descriptor=UV_ANISOTROPY_DESCRIPTOR
         )
-        photoion_path = dependencies.get_file_paths(
-            source="glows", descriptor=PHOTOION_DESCRIPTOR
-        )
-        lya_path = dependencies.get_file_paths(
-            source="glows", descriptor=LYA_DESCRIPTOR
-        )
+        photoion_path = dependencies.get_file_paths(source="glows", descriptor=PHOTOION_DESCRIPTOR)
+        lya_path = dependencies.get_file_paths(source="glows", descriptor=LYA_DESCRIPTOR)
         electron_density_path = dependencies.get_file_paths(
             source="glows", descriptor=ELECTRON_DENSITY_DESCRIPTOR
         )
@@ -55,19 +51,13 @@ class GlowsL3DDependencies:
             source="glows", descriptor=PIPELINE_SETTINGS_L3BCDE_DESCRIPTOR
         )
 
-        plasma_speed_legendre = imap_data_access.download(
-            str(plasma_speed_legendre_path[0])
-        )
-        proton_density_legendre = imap_data_access.download(
-            str(proton_density_legendre_path[0])
-        )
+        plasma_speed_legendre = imap_data_access.download(str(plasma_speed_legendre_path[0]))
+        proton_density_legendre = imap_data_access.download(str(proton_density_legendre_path[0]))
         uv_anisotropy = imap_data_access.download(str(uv_anisotropy_path[0]))
         photoion = imap_data_access.download(str(photoion_path[0]))
         lya_2010a = imap_data_access.download(str(lya_path[0]))
         electron_density = imap_data_access.download(str(electron_density_path[0]))
-        pipeline_settings_l3bc = imap_data_access.download(
-            str(pipeline_settings_l3bc_path[0])
-        )
+        pipeline_settings_l3bc = imap_data_access.download(str(pipeline_settings_l3bc_path[0]))
 
         l3b_file_names = dependencies.get_file_paths(
             source="glows", descriptor=GLOWS_L3B_DESCRIPTOR
@@ -97,6 +87,4 @@ class GlowsL3DDependencies:
         last_l3c_cr = max([ScienceFilePath(file).cr for file in l3c_file_paths])
         end_cr = min(last_l3b_cr, last_l3c_cr) + 1
 
-        return cls(
-            external_dict, ancillary_dict, l3b_file_paths, l3c_file_paths, end_cr
-        )
+        return cls(external_dict, ancillary_dict, l3b_file_paths, l3c_file_paths, end_cr)

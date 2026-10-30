@@ -21,9 +21,7 @@ class TestUltraL3Dependencies(unittest.TestCase):
     def setUp(self):
         clear_temp_cache()
 
-    @patch(
-        "imap_l3_processing.ultra.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path"
-    )
+    @patch("imap_l3_processing.ultra.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path")
     @patch("imap_l3_processing.ultra.ultra_l3_dependencies.UltraL1CPSet.read_from_path")
     @patch(
         "imap_l3_processing.ultra.ultra_l3_dependencies.RectangularIntensityMapData.read_from_path"
@@ -56,9 +54,7 @@ class TestUltraL3Dependencies(unittest.TestCase):
             "imap_glows_l3e_survival-probability-ul-sf_20201003_v003.cdf",
         ]
 
-        l2_energy_bin_group_sizes = (
-            "imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv"
-        )
+        l2_energy_bin_group_sizes = "imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv"
         l2_energy_bin_group_sizes_path = get_test_data_path(
             "ultra/imap_ultra_l2-energy-bin-group-sizes_20250101_v000.csv"
         )
@@ -83,9 +79,7 @@ class TestUltraL3Dependencies(unittest.TestCase):
         ]
 
         mock_download.side_effect = returned_download_paths
-        mock_science_input_constructor.return_value = Mock(
-            descriptor="ultra-nsp-descriptor-6deg"
-        )
+        mock_science_input_constructor.return_value = Mock(descriptor="ultra-nsp-descriptor-6deg")
 
         l1c_data = [
             sentinel.ultra_l1c_data_1,
@@ -103,9 +97,7 @@ class TestUltraL3Dependencies(unittest.TestCase):
 
         mock_ultra_l2.return_value = [sentinel.ultra_l2_healpix_map_dataset]
         mock_read_xarray_healpix.return_value = sentinel.ultra_l2_healpix_data
-        mock_read_from_path_rectangular.return_value = (
-            sentinel.ultra_l2_rectangular_data
-        )
+        mock_read_from_path_rectangular.return_value = sentinel.ultra_l2_rectangular_data
 
         dependencies = UltraL3Dependencies.fetch_dependencies(input_collection)
 
@@ -138,19 +130,13 @@ class TestUltraL3Dependencies(unittest.TestCase):
             [call(file_path) for file_path in expected_parent_file_paths]
         )
 
-        mock_read_xarray_healpix.assert_called_once_with(
-            sentinel.ultra_l2_healpix_map_dataset
-        )
+        mock_read_xarray_healpix.assert_called_once_with(sentinel.ultra_l2_healpix_map_dataset)
         mock_read_from_path_rectangular.assert_called_once_with(sentinel.l2_map_path)
 
         self.assertEqual(l1c_data, dependencies.ultra_l1c_pset)
         self.assertEqual(glows_l3e_data, dependencies.glows_l3e_sp)
-        self.assertEqual(
-            sentinel.ultra_l2_healpix_data, dependencies.ultra_l2_healpix_map
-        )
-        self.assertEqual(
-            sentinel.ultra_l2_rectangular_data, dependencies.ultra_l2_rectangular_map
-        )
+        self.assertEqual(sentinel.ultra_l2_healpix_data, dependencies.ultra_l2_healpix_map)
+        self.assertEqual(sentinel.ultra_l2_rectangular_data, dependencies.ultra_l2_rectangular_map)
         self.assertEqual(returned_download_paths, dependencies.dependency_file_paths)
         np.testing.assert_array_equal(
             np.array([0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 46], dtype=np.uint8),
@@ -159,9 +145,7 @@ class TestUltraL3Dependencies(unittest.TestCase):
         )
 
     @patch("imap_l3_processing.ultra.ultra_l3_dependencies.load_or_create_healpix_l2")
-    @patch(
-        "imap_l3_processing.ultra.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path"
-    )
+    @patch("imap_l3_processing.ultra.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path")
     @patch("imap_l3_processing.ultra.ultra_l3_dependencies.UltraL1CPSet.read_from_path")
     @patch(
         "imap_l3_processing.ultra.ultra_l3_dependencies.RectangularIntensityMapData.read_from_path"
@@ -215,9 +199,7 @@ class TestUltraL3Dependencies(unittest.TestCase):
     @patch(
         "imap_l3_processing.ultra.ultra_l3_dependencies.RectangularIntensityMapData.read_from_path"
     )
-    @patch(
-        "imap_l3_processing.ultra.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path"
-    )
+    @patch("imap_l3_processing.ultra.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path")
     @patch("imap_l3_processing.ultra.ultra_l3_dependencies.UltraL1CPSet.read_from_path")
     def test_from_file_paths(
         self,
@@ -247,12 +229,8 @@ class TestUltraL3Dependencies(unittest.TestCase):
         )
 
         mock_read_l2_from_path.assert_called_with(ultra_l2_input_path)
-        mock_read_l1c.assert_has_calls(
-            [call(file_path) for file_path in ultra_l1c_input_paths]
-        )
-        mock_read_glows.assert_has_calls(
-            [call(file_path) for file_path in glows_input_paths]
-        )
+        mock_read_l1c.assert_has_calls([call(file_path) for file_path in ultra_l1c_input_paths])
+        mock_read_glows.assert_has_calls([call(file_path) for file_path in glows_input_paths])
         mock_load_or_create_healpix_l2.assert_called_with(
             ultra_l2_input_path, ultra_l1c_input_paths
         )
@@ -261,13 +239,9 @@ class TestUltraL3Dependencies(unittest.TestCase):
             result.ultra_l1c_pset,
             [sentinel.ultra_data3, sentinel.ultra_data1, sentinel.ultra_data2],
         )
-        self.assertEqual(
-            result.glows_l3e_sp, [sentinel.glows_data1, sentinel.glows_data2]
-        )
+        self.assertEqual(result.glows_l3e_sp, [sentinel.glows_data1, sentinel.glows_data2])
         self.assertEqual(result.ultra_l2_healpix_map, sentinel.ultra_l2_healpix_data)
-        self.assertEqual(
-            result.ultra_l2_rectangular_map, sentinel.ultra_l2_rectangular_data
-        )
+        self.assertEqual(result.ultra_l2_rectangular_map, sentinel.ultra_l2_rectangular_data)
 
     @patch(
         "imap_l3_processing.ultra.ultra_l3_dependencies.HealPixIntensityMapData.read_from_xarray"
@@ -288,9 +262,7 @@ class TestUltraL3Dependencies(unittest.TestCase):
         ]
         mock_read_l2_xarray.return_value = sentinel.ultra_l2_healpix_data
         l2_ultra_descriptor = "u45-ena-h-hf-nsp-full-hae-6deg"
-        mock_science_input_constructor.return_value = Mock(
-            descriptor=l2_ultra_descriptor
-        )
+        mock_science_input_constructor.return_value = Mock(descriptor=l2_ultra_descriptor)
         mock_ultra_l2.return_value = [sentinel.ultra_l2_healpix_map]
 
         result = load_or_create_healpix_l2(ultra_l2_input_path, ultra_l1c_input_paths)
@@ -312,9 +284,7 @@ class TestUltraL3Dependencies(unittest.TestCase):
         self.assertEqual(result, sentinel.ultra_l2_healpix_data)
 
         temp_cache_dir = get_temp_cache_dir()
-        raw_cache_key = (
-            "['u_path_1', 'u_path_2', 'u_path_3']u45-ena-h-hf-nsp-full-hae-nside32"
-        )
+        raw_cache_key = "['u_path_1', 'u_path_2', 'u_path_3']u45-ena-h-hf-nsp-full-hae-nside32"
         cached_healpix_filename = sha256(raw_cache_key.encode("utf-8")).hexdigest()
         with open(temp_cache_dir / cached_healpix_filename, "rb") as f:
             cached_healpix = pickle.load(f)
@@ -332,9 +302,7 @@ class TestUltraL3Dependencies(unittest.TestCase):
         mock_read_l2_xarray: Mock,
     ):
         temp_cache_dir = get_temp_cache_dir()
-        raw_cache_key = (
-            "['l1c_path_1.cdf', 'l1c_path_2.cdf']u45-ena-h-hf-nsp-full-hae-nside32"
-        )
+        raw_cache_key = "['l1c_path_1.cdf', 'l1c_path_2.cdf']u45-ena-h-hf-nsp-full-hae-nside32"
         cached_healpix_filename = sha256(raw_cache_key.encode("utf-8")).hexdigest()
         with open(temp_cache_dir / cached_healpix_filename, "wb") as f:
             pickle.dump(sentinel.ultra_l2_healpix_data, f)
@@ -344,9 +312,7 @@ class TestUltraL3Dependencies(unittest.TestCase):
             Path("imap/l1c_path_2.cdf"),
         ]
         l2_ultra_descriptor = "u45-ena-h-hf-nsp-full-hae-6deg"
-        mock_science_input_constructor.return_value = Mock(
-            descriptor=l2_ultra_descriptor
-        )
+        mock_science_input_constructor.return_value = Mock(descriptor=l2_ultra_descriptor)
 
         result = load_or_create_healpix_l2(ultra_l2_input_path, ultra_l1c_input_paths)
 
@@ -366,12 +332,16 @@ class TestUltraL3Dependencies(unittest.TestCase):
         for input_data_type in ["l2", "l3"]:
             mock_rectangular_read_from_path.reset_mock()
             with self.subTest(input_data_type):
-                map_file_name = f"imap_ultra_{input_data_type}_ultra-cool-descriptor_20250601_v000.cdf"
+                map_file_name = (
+                    f"imap_ultra_{input_data_type}_ultra-cool-descriptor_20250601_v000.cdf"
+                )
                 ancillary_file_name = "imap_ultra_spx-energy-ranges_20250601_v000.cdf"
                 pointing_set_file_name = (
                     "imap_ultra_l1c_u90spacecraftpset_20250601-repoint00001_v000.cdf"
                 )
-                glows_file_name = "imap_glows_l3e_survival-probability-ul-hf_20250601-repoint00001_v000.cdf"
+                glows_file_name = (
+                    "imap_glows_l3e_survival-probability-ul-hf_20250601-repoint00001_v000.cdf"
+                )
                 expected_energy_ranges = [[5, 15], [15, 50]]
                 map_input = ScienceInput(map_file_name)
                 ancillary_input = AncillaryInput(ancillary_file_name)
@@ -385,20 +355,14 @@ class TestUltraL3Dependencies(unittest.TestCase):
 
                 mock_download.side_effect = [
                     "map_file",
-                    get_test_data_path(
-                        "ultra/imap_ultra_ulc-spx-energy-ranges_20250407_v000.dat"
-                    ),
+                    get_test_data_path("ultra/imap_ultra_ulc-spx-energy-ranges_20250407_v000.dat"),
                 ]
 
-                ultra_l3_dependencies = (
-                    UltraL3SpectralIndexDependencies.fetch_dependencies(
-                        processing_input_collection
-                    )
+                ultra_l3_dependencies = UltraL3SpectralIndexDependencies.fetch_dependencies(
+                    processing_input_collection
                 )
 
-                mock_download.assert_has_calls(
-                    [call(map_file_name), call(ancillary_file_name)]
-                )
+                mock_download.assert_has_calls([call(map_file_name), call(ancillary_file_name)])
                 mock_rectangular_read_from_path.assert_called_once_with("map_file")
                 self.assertEqual(
                     ultra_l3_dependencies.map_data,
@@ -409,9 +373,7 @@ class TestUltraL3Dependencies(unittest.TestCase):
                 )
 
     def test_spectral_index_fetch_dependencies_raises_exception_on_missing_map(self):
-        ancillary_input = AncillaryInput(
-            "imap_ultra_spx-energy-ranges_20250601_v000.dat"
-        )
+        ancillary_input = AncillaryInput("imap_ultra_spx-energy-ranges_20250601_v000.dat")
         with self.assertRaises(ValueError) as context:
             UltraL3SpectralIndexDependencies.fetch_dependencies(
                 ProcessingInputCollection(ancillary_input)
@@ -419,9 +381,7 @@ class TestUltraL3Dependencies(unittest.TestCase):
         self.assertEqual("Expected 1 input map, got 0: []", str(context.exception))
 
     def test_spectral_index_fetch_dependencies_raises_exception_on_multiple_maps(self):
-        ancillary_input = AncillaryInput(
-            "imap_ultra_spx-energy-ranges_20250601_v000.dat"
-        )
+        ancillary_input = AncillaryInput("imap_ultra_spx-energy-ranges_20250601_v000.dat")
         science_input = ScienceInput("imap_ultra_l3_map_20250601_v000.cdf")
 
         with self.assertRaises(ValueError) as context:
@@ -434,17 +394,13 @@ class TestUltraL3Dependencies(unittest.TestCase):
     def test_spectral_index_fetch_dependencies_raises_exception_on_missing_ancillary_file(
         self,
     ):
-        science_input = ScienceInput(
-            "imap_ultra_l3_ultra-cool-descriptor_20250601_v000.cdf"
-        )
+        science_input = ScienceInput("imap_ultra_l3_ultra-cool-descriptor_20250601_v000.cdf")
 
         with self.assertRaises(ValueError) as context:
             UltraL3SpectralIndexDependencies.fetch_dependencies(
                 ProcessingInputCollection(science_input)
             )
-        self.assertEqual(
-            "Missing fit energy ranges ancillary file", str(context.exception)
-        )
+        self.assertEqual("Missing fit energy ranges ancillary file", str(context.exception))
 
     @patch(
         "imap_l3_processing.ultra.ultra_l3_dependencies.RectangularIntensityMapData.read_from_path"
@@ -452,8 +408,7 @@ class TestUltraL3Dependencies(unittest.TestCase):
     def test_spectral_index_from_file_paths(self, mock_read_from_path):
         map_file_path = Mock()
         ancillary_file_path = (
-            get_test_data_path("ultra")
-            / "imap_ultra_ulc-spx-energy-ranges_20250407_v000.dat"
+            get_test_data_path("ultra") / "imap_ultra_ulc-spx-energy-ranges_20250407_v000.dat"
         )
         expected_energy_range_values = np.loadtxt(ancillary_file_path)
 
@@ -473,9 +428,7 @@ class TestUltraL3Dependencies(unittest.TestCase):
         )
         actual_fit_energy_ranges = dependencies.get_fit_energy_ranges()
 
-        np.testing.assert_array_equal(
-            actual_fit_energy_ranges, expected_energy_range_values
-        )
+        np.testing.assert_array_equal(actual_fit_energy_ranges, expected_energy_range_values)
 
 
 class TestUltraL3CombinedDependencies(unittest.TestCase):
@@ -702,9 +655,7 @@ class TestUltraL3CombinedDependencies(unittest.TestCase):
         self.assertIsNone(combined_dependencies.u90_dependencies.energy_bin_group_sizes)
 
     @patch("imap_l3_processing.ultra.ultra_l3_dependencies.load_or_create_healpix_l2")
-    @patch(
-        "imap_l3_processing.ultra.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path"
-    )
+    @patch("imap_l3_processing.ultra.ultra_l3_dependencies.UltraGlowsL3eData.read_from_path")
     @patch("imap_l3_processing.ultra.ultra_l3_dependencies.UltraL1CPSet.read_from_path")
     @patch("imap_l3_processing.ultra.ultra_l3_dependencies.imap_data_access.download")
     @patch(
@@ -721,12 +672,8 @@ class TestUltraL3CombinedDependencies(unittest.TestCase):
         cases = [["sf", "spacecraftpset"], ["hf", "heliopset"]]
         for frame, pset in cases:
             with self.subTest(frame):
-                u45_map_file_name = (
-                    "imap_ultra_l2_u45-cool-descriptor_20250601_v000.cdf"
-                )
-                u90_map_file_name = (
-                    "imap_ultra_l2_u90-cool-descriptor_20250601_v000.cdf"
-                )
+                u45_map_file_name = "imap_ultra_l2_u45-cool-descriptor_20250601_v000.cdf"
+                u90_map_file_name = "imap_ultra_l2_u90-cool-descriptor_20250601_v000.cdf"
                 u45_pset_file_names = [
                     f"imap_ultra_l1c_45sensor-{pset}_20251010_v001.cdf",
                     f"imap_ultra_l1c_45sensor-{pset}_20251011_v001.cdf",
@@ -766,24 +713,14 @@ class TestUltraL3CombinedDependencies(unittest.TestCase):
                     Path("imap_ultra_l1c_u90-pset_20251011_v001.cdf"),
                     Path("imap_ultra_l1c_u90-pset_20251012_v001.cdf"),
                 ]
-                u45_l2_path = Path(
-                    "imap_ultra_l2_u45-cool-descriptor_20250601_v000.cdf"
-                )
-                u90_l2_path = Path(
-                    "imap_ultra_l2_u90-cool-descriptor_20250601_v000.cdf"
-                )
+                u45_l2_path = Path("imap_ultra_l2_u45-cool-descriptor_20250601_v000.cdf")
+                u90_l2_path = Path("imap_ultra_l2_u90-cool-descriptor_20250601_v000.cdf")
                 expected_file_paths = [
                     *u45_l1c_paths,
                     *u90_l1c_paths,
-                    Path(
-                        f"imap_glows_l3e_survival-probability-ul-{frame}_20251010_v001.cdf"
-                    ),
-                    Path(
-                        f"imap_glows_l3e_survival-probability-ul-{frame}_20251011_v001.cdf"
-                    ),
-                    Path(
-                        f"imap_glows_l3e_survival-probability-ul-{frame}_20251012_v001.cdf"
-                    ),
+                    Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251010_v001.cdf"),
+                    Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251011_v001.cdf"),
+                    Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251012_v001.cdf"),
                     u45_l2_path,
                     u90_l2_path,
                 ]
@@ -892,18 +829,10 @@ class TestUltraL3CombinedDependencies(unittest.TestCase):
                 )
                 u45_deps = combined_dependencies.u45_dependencies
                 u90_deps = combined_dependencies.u90_dependencies
-                self.assertEqual(
-                    u45_deps.ultra_l2_healpix_map, sentinel.u45_healpix_dataset
-                )
-                self.assertEqual(
-                    u90_deps.ultra_l2_healpix_map, sentinel.u90_healpix_dataset
-                )
-                self.assertEqual(
-                    u45_deps.ultra_l2_rectangular_map, sentinel.u45_rectangular_l2
-                )
-                self.assertEqual(
-                    u90_deps.ultra_l2_rectangular_map, sentinel.u90_rectangular_l2
-                )
+                self.assertEqual(u45_deps.ultra_l2_healpix_map, sentinel.u45_healpix_dataset)
+                self.assertEqual(u90_deps.ultra_l2_healpix_map, sentinel.u90_healpix_dataset)
+                self.assertEqual(u45_deps.ultra_l2_rectangular_map, sentinel.u45_rectangular_l2)
+                self.assertEqual(u90_deps.ultra_l2_rectangular_map, sentinel.u90_rectangular_l2)
                 self.assertEqual(
                     u45_deps.ultra_l1c_pset,
                     [sentinel.u45_l1c_1, sentinel.u45_l1c_2, sentinel.u45_l1c_3],
@@ -923,32 +852,16 @@ class TestUltraL3CombinedDependencies(unittest.TestCase):
                 expected_u45_file_paths = [
                     u45_l2_path,
                     *u45_l1c_paths,
-                    Path(
-                        f"imap_glows_l3e_survival-probability-ul-{frame}_20251010_v001.cdf"
-                    ),
-                    Path(
-                        f"imap_glows_l3e_survival-probability-ul-{frame}_20251011_v001.cdf"
-                    ),
-                    Path(
-                        f"imap_glows_l3e_survival-probability-ul-{frame}_20251012_v001.cdf"
-                    ),
+                    Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251010_v001.cdf"),
+                    Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251011_v001.cdf"),
+                    Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251012_v001.cdf"),
                 ]
                 expected_u90_file_paths = [
                     u90_l2_path,
                     *u90_l1c_paths,
-                    Path(
-                        f"imap_glows_l3e_survival-probability-ul-{frame}_20251010_v001.cdf"
-                    ),
-                    Path(
-                        f"imap_glows_l3e_survival-probability-ul-{frame}_20251011_v001.cdf"
-                    ),
-                    Path(
-                        f"imap_glows_l3e_survival-probability-ul-{frame}_20251012_v001.cdf"
-                    ),
+                    Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251010_v001.cdf"),
+                    Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251011_v001.cdf"),
+                    Path(f"imap_glows_l3e_survival-probability-ul-{frame}_20251012_v001.cdf"),
                 ]
-                self.assertEqual(
-                    u45_deps.dependency_file_paths, expected_u45_file_paths
-                )
-                self.assertEqual(
-                    u90_deps.dependency_file_paths, expected_u90_file_paths
-                )
+                self.assertEqual(u45_deps.dependency_file_paths, expected_u45_file_paths)
+                self.assertEqual(u90_deps.dependency_file_paths, expected_u90_file_paths)

@@ -26,9 +26,7 @@ class L1bDataDirectEvents:
         """
         self.data = {}
 
-    def _block_header_add_list_of_anc_files(
-        self, anc_input_from_sdc, anc_input_from_instr_team
-    ):
+    def _block_header_add_list_of_anc_files(self, anc_input_from_sdc, anc_input_from_instr_team):
         """
         Add list of used ancillary files to block header
         Args:
@@ -37,9 +35,7 @@ class L1bDataDirectEvents:
         """
         self.data["header"]["ancillary_data_files"] = []
         for key in ["conversion_table_for_anc_data"]:
-            self.data["header"]["ancillary_data_files"].append(
-                anc_input_from_instr_team[key]
-            )
+            self.data["header"]["ancillary_data_files"].append(anc_input_from_instr_team[key])
         # for key in anc_input_from_sdc:
         #    self.data['block_header']['ancillary_data_files'].append(anc_input_from_sdc[key])
 
@@ -53,9 +49,7 @@ class L1bDataDirectEvents:
         """
 
         # load conversion/decoding table for ancillary parameters collected onboard
-        with open(
-            anc_input_from_instr_team["conversion_table_for_anc_data"], "r"
-        ) as file_handler:
+        with open(anc_input_from_instr_team["conversion_table_for_anc_data"], "r") as file_handler:
             conversion_table = json.load(file_handler)
 
         # ancillary parameters collected onboard that need to be decoded
@@ -72,9 +66,7 @@ class L1bDataDirectEvents:
             "spin_phase", conversion_table, l1a_data["spin_phase_at_next_pps"]
         )
 
-    def create_l1b_from_l1a_data(
-        self, l1a, anc_input_from_sdc, anc_input_from_instr_team
-    ):
+    def create_l1b_from_l1a_data(self, l1a, anc_input_from_sdc, anc_input_from_instr_team):
         """
         Sets values of L1b fields using L1a data read from a file
         Args:
@@ -90,9 +82,7 @@ class L1bDataDirectEvents:
         }
 
         # add list of used ancillary files to block_header
-        self._block_header_add_list_of_anc_files(
-            anc_input_from_sdc, anc_input_from_instr_team
-        )
+        self._block_header_add_list_of_anc_files(anc_input_from_sdc, anc_input_from_instr_team)
 
         # self.data['unique_identifier'] = \
         #    time_sec_subsec_to_utc(l1a.data['data_every_second']['imap_sclk_last_pps'],
@@ -139,9 +129,7 @@ class L1bDataDirectEvents:
                 self.data["flags"][key] = l1a.data["data_every_second"][key]
 
         if np.shape(l1a.direct_events)[0] > 0:
-            if (
-                l1a.direct_events.ndim > 1
-            ):  # this is supposed to check if we have more than one DE
+            if l1a.direct_events.ndim > 1:  # this is supposed to check if we have more than one DE
                 self.data["direct_event_glows_times"] = (
                     l1a.direct_events[:, 0] + l1a.direct_events[:, 1] / SUBSECOND_LIMIT
                 ).astype(float)
@@ -157,9 +145,7 @@ class L1bDataDirectEvents:
                 conversion_table = json.load(file_handler)
 
             # convert pulse lengths into physical units
-            if (
-                l1a.direct_events.ndim > 1
-            ):  # this is supposed to check if we have more than one DE
+            if l1a.direct_events.ndim > 1:  # this is supposed to check if we have more than one DE
                 self.data["direct_event_pulse_lengths"] = decode_ancillary_parameter(
                     "pulse_length", conversion_table, l1a.direct_events[:, 2]
                 )
@@ -205,14 +191,8 @@ class L1bDataDirectEvents:
         data = copy.deepcopy(self.data)
 
         for key in fmt["arrays"]:
-            if isinstance(
-                data[key], np.ndarray
-            ):  # check if we have more than one direct event
-                data[key] = (
-                    "["
-                    + ", ".join(fmt["arrays"][key] % x for x in list(data[key]))
-                    + "]"
-                )
+            if isinstance(data[key], np.ndarray):  # check if we have more than one direct event
+                data[key] = "[" + ", ".join(fmt["arrays"][key] % x for x in list(data[key])) + "]"
             else:
                 data[key] = "[" + fmt["arrays"][key] % data[key] + "]"
         for key, value in fmt["scalar variables"].items():

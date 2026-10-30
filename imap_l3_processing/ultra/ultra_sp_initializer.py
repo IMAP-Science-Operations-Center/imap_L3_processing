@@ -117,9 +117,7 @@ class UltraSPInitializer(SPMapInitializer):
             kernel_types=ULTRA_SP_SPICE_KERNELS,
         )
 
-    def _collect_glows_psets_by_repoint(
-        self, descriptor: MapDescriptorParts
-    ) -> dict[int, str]:
+    def _collect_glows_psets_by_repoint(self, descriptor: MapDescriptorParts) -> dict[int, str]:
         if descriptor.reference_frame == ReferenceFrame.Heliospheric:
             return self.hf_glows_psets_by_repointing
         elif descriptor.reference_frame == ReferenceFrame.Spacecraft:
@@ -129,9 +127,7 @@ class UltraSPInitializer(SPMapInitializer):
                 "Reference frame should be either Spacecraft or Heliospheric"
             )
 
-    def _get_l2_dependencies(
-        self, descriptor: MapDescriptorParts
-    ) -> list[MapDescriptorParts]:
+    def _get_l2_dependencies(self, descriptor: MapDescriptorParts) -> list[MapDescriptorParts]:
         if descriptor.sensor == Sensor.UltraCombined:
             return [
                 dataclasses.replace(

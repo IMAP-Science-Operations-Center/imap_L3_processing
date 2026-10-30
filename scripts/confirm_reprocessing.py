@@ -8,9 +8,7 @@ import imap_data_access
 def report_oldest_file(**query_args):
     records = imap_data_access.query(**query_args, version="latest")
     oldest = min(records, key=lambda x: x["ingestion_date"])
-    print(
-        f"Oldest file:\n{oldest['ingestion_date']}     {Path(oldest['file_path']).name}"
-    )
+    print(f"Oldest file:\n{oldest['ingestion_date']}     {Path(oldest['file_path']).name}")
 
 
 def get_unprocessed_files(reference_time_str, **query_args):

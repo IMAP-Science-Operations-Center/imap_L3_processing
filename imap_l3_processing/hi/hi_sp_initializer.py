@@ -83,8 +83,7 @@ class HiSPInitializer(SPMapInitializer):
             version="latest",
         )
         self.glows_hi45_file_by_repoint = {
-            int(r["repointing"]): Path(r["file_path"]).name
-            for r in sp_hi45_query_result
+            int(r["repointing"]): Path(r["file_path"]).name for r in sp_hi45_query_result
         }
 
         sp_hi90_query_result = imap_data_access.query(
@@ -94,8 +93,7 @@ class HiSPInitializer(SPMapInitializer):
             version="latest",
         )
         self.glows_hi90_file_by_repoint = {
-            int(r["repointing"]): Path(r["file_path"]).name
-            for r in sp_hi90_query_result
+            int(r["repointing"]): Path(r["file_path"]).name for r in sp_hi90_query_result
         }
 
         hi_l2_query_result = imap_data_access.query(instrument="hi", data_level="l2")
@@ -108,9 +106,7 @@ class HiSPInitializer(SPMapInitializer):
             kernel_types=HI_SP_SPICE_KERNELS,
         )
 
-    def _get_l2_dependencies(
-        self, descriptor: MapDescriptorParts
-    ) -> list[MapDescriptorParts]:
+    def _get_l2_dependencies(self, descriptor: MapDescriptorParts) -> list[MapDescriptorParts]:
         match descriptor:
             case MapDescriptorParts(
                 survival_correction=SurvivalCorrection.SurvivalCorrected,
@@ -141,9 +137,7 @@ class HiSPInitializer(SPMapInitializer):
             case _:
                 raise ValueError("Expected map to be produced to use a single sensor!")
 
-    def _collect_glows_psets_by_repoint(
-        self, descriptor: MapDescriptorParts
-    ) -> dict[int, str]:
+    def _collect_glows_psets_by_repoint(self, descriptor: MapDescriptorParts) -> dict[int, str]:
         match descriptor:
             case MapDescriptorParts(sensor=Sensor.Hi45):
                 return self.glows_hi45_file_by_repoint

@@ -21,9 +21,7 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import 
 
 
 class TestCodiceLoL3aDirectEventsDependencies(unittest.TestCase):
-    @patch(
-        "imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies.download"
-    )
+    @patch("imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies.download")
     @patch(
         "imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies.CodiceLoL3aDirectEventsDependencies.from_file_paths"
     )
@@ -37,10 +35,10 @@ class TestCodiceLoL3aDirectEventsDependencies(unittest.TestCase):
         lo_nsw_priority_science_file_name = (
             f"imap_codice_l1a_{NSW_PRIORITY_DESCRIPTOR}_20100105_v010.cdf"
         )
-        mass_coefficient_file_name = (
-            f"imap_codice_{MASS_COEFFICIENT_DESCRIPTOR}_20100105_v001.csv"
+        mass_coefficient_file_name = f"imap_codice_{MASS_COEFFICIENT_DESCRIPTOR}_20100105_v001.csv"
+        energy_lookup_file_name = (
+            f"imap_codice_{ESA_TO_ENERGY_PER_CHARGE_LOOKUP_DESCRIPTOR}_20100105_v001.csv"
         )
-        energy_lookup_file_name = f"imap_codice_{ESA_TO_ENERGY_PER_CHARGE_LOOKUP_DESCRIPTOR}_20100105_v001.csv"
 
         mock_download.side_effect = [
             Path("some_local_folder") / lo_sw_priority_science_file_name,
@@ -59,9 +57,7 @@ class TestCodiceLoL3aDirectEventsDependencies(unittest.TestCase):
             AncillaryInput(
                 "imap/ancillary/hit/imap_codice_range-2A-cosine-lookup_20250203_v001.csv"
             ),
-            ScienceInput(
-                "imap/hit/l3/2010/01/imap_hit_l3_direct-events_20100105_v010.cdf"
-            ),
+            ScienceInput("imap/hit/l3/2010/01/imap_hit_l3_direct-events_20100105_v010.cdf"),
             ScienceInput("imap_codice_l1_direct-events_20100105_v010.cdf"),
         )
 
@@ -120,21 +116,11 @@ class TestCodiceLoL3aDirectEventsDependencies(unittest.TestCase):
             sentinel.energy_lookup_path,
         )
 
-        mock_direct_event_read_from_cdf.assert_called_once_with(
-            sentinel.direct_events_cdf_path
-        )
-        mock_mass_coefficient_lookup.assert_called_once_with(
-            sentinel.mass_coefficient_lookup_path
-        )
-        mock_codice_lo_l1a_sw_priority_rates.assert_called_once_with(
-            sentinel.sw_priority
-        )
-        mock_codice_lo_l1a_nsw_priority_rates.assert_called_once_with(
-            sentinel.nsw_priority
-        )
-        mock_energy_lookup_read_from_csv.assert_called_once_with(
-            sentinel.energy_lookup_path
-        )
+        mock_direct_event_read_from_cdf.assert_called_once_with(sentinel.direct_events_cdf_path)
+        mock_mass_coefficient_lookup.assert_called_once_with(sentinel.mass_coefficient_lookup_path)
+        mock_codice_lo_l1a_sw_priority_rates.assert_called_once_with(sentinel.sw_priority)
+        mock_codice_lo_l1a_nsw_priority_rates.assert_called_once_with(sentinel.nsw_priority)
+        mock_energy_lookup_read_from_csv.assert_called_once_with(sentinel.energy_lookup_path)
 
         self.assertEqual(
             mock_direct_event_read_from_cdf.return_value,

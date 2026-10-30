@@ -70,9 +70,7 @@ class UltraProcessor(MapProcessor):
                 | PixelSize.SixDegrees,
             ):
                 ultra_l3_spectral_fit_dependencies = (
-                    UltraL3SpectralIndexDependencies.fetch_dependencies(
-                        self.dependencies
-                    )
+                    UltraL3SpectralIndexDependencies.fetch_dependencies(self.dependencies)
                 )
                 spectral_index_map_data = self._process_spectral_index(
                     ultra_l3_spectral_fit_dependencies,
@@ -92,10 +90,8 @@ class UltraProcessor(MapProcessor):
                 | PixelSize.SixDegrees,
             ):
                 deps = UltraL3Dependencies.fetch_dependencies(self.dependencies)
-                healpix_intensity_map_data = (
-                    correct_healpix_data_for_survival_probability(
-                        deps, spice_frame_name
-                    )
+                healpix_intensity_map_data = correct_healpix_data_for_survival_probability(
+                    deps, spice_frame_name
                 )
                 data_product = self._process_healpix_intensity_to_rectangular(
                     healpix_intensity_map_data,
@@ -112,13 +108,9 @@ class UltraProcessor(MapProcessor):
                 | PixelSize.FourDegrees
                 | PixelSize.SixDegrees,
             ):
-                combined_deps = UltraL3CombinedDependencies.fetch_dependencies(
-                    self.dependencies
-                )
+                combined_deps = UltraL3CombinedDependencies.fetch_dependencies(self.dependencies)
                 combined_healpix, combined_rectangular = (
-                    self._process_combined_survival_probability(
-                        combined_deps, spice_frame_name
-                    )
+                    self._process_combined_survival_probability(combined_deps, spice_frame_name)
                 )
                 data_product = self._process_healpix_intensity_to_rectangular(
                     combined_healpix,
@@ -144,21 +136,17 @@ class UltraProcessor(MapProcessor):
                 deps = UltraL3CombinedDependencies.fetch_dependencies(self.dependencies)
 
                 combination_strategy = ExposureWeightedCombination()
-                combined_healpix = (
-                    combination_strategy.combine_healpix_intensity_map_data(
-                        [
-                            deps.u45_dependencies.ultra_l2_healpix_map,
-                            deps.u90_dependencies.ultra_l2_healpix_map,
-                        ]
-                    )
+                combined_healpix = combination_strategy.combine_healpix_intensity_map_data(
+                    [
+                        deps.u45_dependencies.ultra_l2_healpix_map,
+                        deps.u90_dependencies.ultra_l2_healpix_map,
+                    ]
                 )
-                combined_rectangular = (
-                    combination_strategy.combine_rectangular_intensity_map_data(
-                        [
-                            deps.u45_dependencies.ultra_l2_rectangular_map,
-                            deps.u90_dependencies.ultra_l2_rectangular_map,
-                        ]
-                    )
+                combined_rectangular = combination_strategy.combine_rectangular_intensity_map_data(
+                    [
+                        deps.u45_dependencies.ultra_l2_rectangular_map,
+                        deps.u90_dependencies.ultra_l2_rectangular_map,
+                    ]
                 )
 
                 data_product = self._process_healpix_intensity_to_rectangular(
@@ -167,12 +155,8 @@ class UltraProcessor(MapProcessor):
                     parsed_descriptor.grid,
                     spice_frame_name=spice_frame_name,
                 )
-                data_product.add_paths_to_parents(
-                    deps.u45_dependencies.dependency_file_paths
-                )
-                data_product.add_paths_to_parents(
-                    deps.u90_dependencies.dependency_file_paths
-                )
+                data_product.add_paths_to_parents(deps.u45_dependencies.dependency_file_paths)
+                data_product.add_paths_to_parents(deps.u90_dependencies.dependency_file_paths)
             case _:
                 raise NotImplementedError
 
@@ -195,13 +179,11 @@ class UltraProcessor(MapProcessor):
         combined_healpix = combination_strategy.combine_healpix_intensity_map_data(
             [u45_survival_corrected, u90_survival_corrected]
         )
-        combined_rectangular = (
-            combination_strategy.combine_rectangular_intensity_map_data(
-                [
-                    deps.u45_dependencies.ultra_l2_rectangular_map,
-                    deps.u90_dependencies.ultra_l2_rectangular_map,
-                ]
-            )
+        combined_rectangular = combination_strategy.combine_rectangular_intensity_map_data(
+            [
+                deps.u45_dependencies.ultra_l2_rectangular_map,
+                deps.u90_dependencies.ultra_l2_rectangular_map,
+            ]
         )
         return combined_healpix, combined_rectangular
 
@@ -232,9 +214,7 @@ class UltraProcessor(MapProcessor):
         spacing_deg: int,
         spice_frame_name: SpiceFrame,
     ) -> RectangularIntensityDataProduct:
-        has_survival_data = (
-            healpix_map_data.intensity_map_data.survival_probability is not None
-        )
+        has_survival_data = healpix_map_data.intensity_map_data.survival_probability is not None
 
         variables_to_convert_to_rectangular = [
             "ena_intensity",
@@ -289,9 +269,7 @@ class UltraProcessor(MapProcessor):
             ena_intensity_stat_uncert=rectangular_map_xarray_dataset[
                 "ena_intensity_stat_uncert"
             ].values,
-            ena_intensity_sys_err=rectangular_map_xarray_dataset[
-                "ena_intensity_sys_err"
-            ].values,
+            ena_intensity_sys_err=rectangular_map_xarray_dataset["ena_intensity_sys_err"].values,
             quality_flags=quality_flags,
         )
 
@@ -353,9 +331,7 @@ def correct_healpix_data_for_survival_probability(
 
     logger.info("Cached HEALPix SP-corrected data not found; building from inputs")
 
-    combined_psets = combine_glows_l3e_with_l1c_pointing(
-        deps.glows_l3e_sp, deps.ultra_l1c_pset
-    )
+    combined_psets = combine_glows_l3e_with_l1c_pointing(deps.glows_l3e_sp, deps.ultra_l1c_pset)
     survival_probability_psets = [
         UltraSurvivalProbability(_l1c, _l3e, bin_groups=deps.energy_bin_group_sizes)
         for _l1c, _l3e in combined_psets
@@ -367,17 +343,14 @@ def correct_healpix_data_for_survival_probability(
         survival_probability_psets, spice_frame_name, coords.nside
     )
     skymap_dataset = corrected_skymap.to_dataset()
-    survival_probability_map = skymap_dataset[
-        "exposure_weighted_survival_probabilities"
-    ].values
+    survival_probability_map = skymap_dataset["exposure_weighted_survival_probabilities"].values
 
     healpix_intensity_data = HealPixIntensityMapData(
         intensity_map_data=IntensityMapData(
             ena_intensity=intensity_data.ena_intensity / survival_probability_map,
             ena_intensity_stat_uncert=intensity_data.ena_intensity_stat_uncert
             / survival_probability_map,
-            ena_intensity_sys_err=intensity_data.ena_intensity_sys_err
-            / survival_probability_map,
+            ena_intensity_sys_err=intensity_data.ena_intensity_sys_err / survival_probability_map,
             epoch=intensity_data.epoch,
             epoch_delta=intensity_data.epoch_delta,
             energy=intensity_data.energy,

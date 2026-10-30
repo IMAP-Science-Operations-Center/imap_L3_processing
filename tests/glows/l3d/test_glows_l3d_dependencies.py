@@ -11,9 +11,7 @@ from tests.test_helpers import get_test_data_path
 
 class TestGlowsL3DDependencies(unittest.TestCase):
     @patch("imap_l3_processing.glows.l3d.glows_l3d_dependencies.ScienceFilePath")
-    @patch(
-        "imap_l3_processing.glows.l3d.glows_l3d_dependencies.imap_data_access.download"
-    )
+    @patch("imap_l3_processing.glows.l3d.glows_l3d_dependencies.imap_data_access.download")
     def test_fetch_dependencies(self, mock_download, mock_science_file_path):
         waw_helio_ion_mp_speed = get_test_data_path(
             "glows/imap_glows_plasma-speed-2026d_20251113_v003.dat"
@@ -27,9 +25,7 @@ class TestGlowsL3DDependencies(unittest.TestCase):
         waw_helio_ion_mp_phion = get_test_data_path(
             "glows/imap_glows_photoion-2026d_20251113_v003.dat"
         )
-        waw_helio_ion_mp_lya = get_test_data_path(
-            "glows/imap_glows_lya-2026d_20251113_v003.dat"
-        )
+        waw_helio_ion_mp_lya = get_test_data_path("glows/imap_glows_lya-2026d_20251113_v003.dat")
         waw_helio_ion_mp_e_dens = get_test_data_path(
             "glows/imap_glows_electron-density-2026d_20251113_v003.dat"
         )
@@ -83,10 +79,8 @@ class TestGlowsL3DDependencies(unittest.TestCase):
             omni2_data_path=None,
         )
 
-        actual_dependencies: GlowsL3DDependencies = (
-            GlowsL3DDependencies.fetch_dependencies(
-                mock_processing_input_collection, external_dependencies
-            )
+        actual_dependencies: GlowsL3DDependencies = GlowsL3DDependencies.fetch_dependencies(
+            mock_processing_input_collection, external_dependencies
         )
 
         mock_processing_input_collection.get_file_paths.assert_has_calls(

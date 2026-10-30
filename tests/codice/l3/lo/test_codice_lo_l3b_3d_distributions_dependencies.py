@@ -46,11 +46,11 @@ class TestCodiceLoL3b3dDistributions(unittest.TestCase):
         efficiency_factors_lut_name = (
             f"imap_codice_{EFFICIENCY_FACTOR_LOOKUP_DESCRIPTOR}_20100105_v010.csv"
         )
-        energy_per_charge_lut_name = f"imap_codice_{ESA_TO_ENERGY_PER_CHARGE_LOOKUP_DESCRIPTOR}_20100105_v010.csv"
-
-        unused_science_input = ScienceInput(
-            "imap_codice_l2_lo-direct-events_20100105_v010.cdf"
+        energy_per_charge_lut_name = (
+            f"imap_codice_{ESA_TO_ENERGY_PER_CHARGE_LOOKUP_DESCRIPTOR}_20100105_v010.csv"
         )
+
+        unused_science_input = ScienceInput("imap_codice_l2_lo-direct-events_20100105_v010.cdf")
 
         processing_input_collection = ProcessingInputCollection(
             AncillaryInput(mass_species_lut_name),
@@ -125,15 +125,11 @@ class TestCodiceLoL3b3dDistributions(unittest.TestCase):
         )
         mock_l3a_direct_event_read_from_cdf.assert_called_once_with(sentinel.l3a_path)
         mock_mass_species_from_csv.assert_called_once_with(sentinel.mass_species_path)
-        mock_geometric_factor_from_csv.assert_called_once_with(
-            sentinel.geometric_factor_path
-        )
+        mock_geometric_factor_from_csv.assert_called_once_with(sentinel.geometric_factor_path)
         mock_efficiency_lut_read_from_csv.assert_called_once_with(
             sentinel.efficiency_factor_path, "some-species"
         )
-        mock_energy_lookup_from_csv.assert_called_once_with(
-            sentinel.energy_per_charge_path
-        )
+        mock_energy_lookup_from_csv.assert_called_once_with(sentinel.energy_per_charge_path)
 
         expected_dependencies = CodiceLoL3b3dDistributionsDependencies(
             l3a_direct_event_data=mock_l3a_direct_event_read_from_cdf.return_value,

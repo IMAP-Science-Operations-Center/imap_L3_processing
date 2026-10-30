@@ -575,8 +575,8 @@ if __name__ == "__main__":
             )
         case "codice", descriptor if "3d-distribution" in descriptor:
             species = descriptor.split("-")[1]
-            assert species in ["hplus", "heplus", "heplus2", "oplus6"], (
-                NotImplementedError("Target instrument or product not implemented")
+            assert species in ["hplus", "heplus", "heplus2", "oplus6"], NotImplementedError(
+                "Target instrument or product not implemented"
             )
 
             subprocess.run(

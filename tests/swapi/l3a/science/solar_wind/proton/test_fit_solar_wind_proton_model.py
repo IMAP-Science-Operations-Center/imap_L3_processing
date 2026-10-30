@@ -149,13 +149,9 @@ def _per_bin_rotation_matrices() -> np.ndarray:
     details don't affect what's being tested."""
     sweep_index = np.repeat(np.arange(_N_SWEEPS), _N_BINS_PER_SWEEP)
     bin_index_in_sweep = np.tile(np.arange(1, _N_BINS_PER_SWEEP + 1), _N_SWEEPS)
-    sample_times_s = (
-        sweep_index * _SWEEP_DURATION_S + bin_index_in_sweep * _SAMPLE_TIME_PER_BIN_S
-    )
+    sample_times_s = sweep_index * _SWEEP_DURATION_S + bin_index_in_sweep * _SAMPLE_TIME_PER_BIN_S
 
-    spin_axis = _ANCHOR_ROTATION_MATRIX[:, 1] / np.linalg.norm(
-        _ANCHOR_ROTATION_MATRIX[:, 1]
-    )
+    spin_axis = _ANCHOR_ROTATION_MATRIX[:, 1] / np.linalg.norm(_ANCHOR_ROTATION_MATRIX[:, 1])
     delta_phi = _SPIN_OMEGA_RAD_S * (sample_times_s - _ANCHOR_TIME_S)
 
     ax, ay, az = spin_axis

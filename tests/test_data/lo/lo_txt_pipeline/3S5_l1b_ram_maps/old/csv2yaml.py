@@ -56,9 +56,7 @@ def csv_to_map_yaml(
         reader = csv.reader(f)
         header = next(reader)  # 10–59, not used  # noqa: F841
         for row in reader:
-            formatted_row = [
-                f"{float(x):.3E}" if float(x) != 0 else "0.000E+00" for x in row
-            ]
+            formatted_row = [f"{float(x):.3E}" if float(x) != 0 else "0.000E+00" for x in row]
             data_rows.append(formatted_row)
 
     tag = latest_monday_tag()

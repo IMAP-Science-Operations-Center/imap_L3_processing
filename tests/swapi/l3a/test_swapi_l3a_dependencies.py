@@ -29,9 +29,7 @@ class TestSwapiL3ADependencies(unittest.TestCase):
         "imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.SwapiL3ADependencies.from_file_paths"
     )
     @patch("imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.download")
-    def test_fetch_dependencies(
-        self, mock_download, mock_from_file_paths, mock_select_mag_path
-    ):
+    def test_fetch_dependencies(self, mock_download, mock_from_file_paths, mock_select_mag_path):
         input_collection = ProcessingInputCollection()
 
         start_date = "20100105"
@@ -52,11 +50,15 @@ class TestSwapiL3ADependencies(unittest.TestCase):
         ]
         mock_select_mag_path.return_value = (sentinel.mag_path, "l2")
 
-        swapi_science_file_download_path = f"{mission}_{instrument}_{data_level}_{SWAPI_L2_DESCRIPTOR}_{start_date}_{version}.cdf"
+        swapi_science_file_download_path = (
+            f"{mission}_{instrument}_{data_level}_{SWAPI_L2_DESCRIPTOR}_{start_date}_{version}.cdf"
+        )
         swapi_efficiency_file_name = f"{mission}_{instrument}_{EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR}_{start_date}_{version}.cdf"
         swapi_density_of_neutral_helium_lookup = f"{mission}_{instrument}_{DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR}_{start_date}_{version}.cdf"
         swapi_hydrogen_inflow_filename = f"{mission}_{instrument}_{HYDROGEN_INFLOW_VECTOR_DESCRIPTOR}_{start_date}_{version}.cdf"
-        swapi_helium_inflow_filename = f"{mission}_{instrument}_{HELIUM_INFLOW_VECTOR_DESCRIPTOR}_{start_date}_{version}.cdf"
+        swapi_helium_inflow_filename = (
+            f"{mission}_{instrument}_{HELIUM_INFLOW_VECTOR_DESCRIPTOR}_{start_date}_{version}.cdf"
+        )
         swapi_azimuthal_transmission_filename = f"{mission}_{instrument}_{AZIMUTHAL_TRANSMISSION_DESCRIPTOR}_{start_date}_{version}.cdf"
         swapi_central_effective_area_filename = f"{mission}_{instrument}_{CENTRAL_EFFECTIVE_AREA_DESCRIPTOR}_{start_date}_{version}.cdf"
         swapi_passband_fit_coefficients_filename = f"{mission}_{instrument}_{PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR}_{start_date}_{version}.cdf"
@@ -68,12 +70,8 @@ class TestSwapiL3ADependencies(unittest.TestCase):
         )
         hydrogen_inflow_ancillary = AncillaryInput(swapi_hydrogen_inflow_filename)
         helium_inflow_ancillary = AncillaryInput(swapi_helium_inflow_filename)
-        azimuthal_transmission_ancillary = AncillaryInput(
-            swapi_azimuthal_transmission_filename
-        )
-        central_effective_area_ancillary = AncillaryInput(
-            swapi_central_effective_area_filename
-        )
+        azimuthal_transmission_ancillary = AncillaryInput(swapi_azimuthal_transmission_filename)
+        central_effective_area_ancillary = AncillaryInput(swapi_central_effective_area_filename)
         passband_fit_coefficients_ancillary = AncillaryInput(
             swapi_passband_fit_coefficients_filename
         )
@@ -91,21 +89,12 @@ class TestSwapiL3ADependencies(unittest.TestCase):
             ]
         )
 
-        actual_swapi_l3_dependencies = SwapiL3ADependencies.fetch_dependencies(
-            input_collection
-        )
+        actual_swapi_l3_dependencies = SwapiL3ADependencies.fetch_dependencies(input_collection)
 
         science_data_dir = (
-            imap_data_access.config["DATA_DIR"]
-            / "imap"
-            / "swapi"
-            / "l2"
-            / "2010"
-            / "01"
+            imap_data_access.config["DATA_DIR"] / "imap" / "swapi" / "l2" / "2010" / "01"
         )
-        ancillary_data_dir = (
-            imap_data_access.config["DATA_DIR"] / "imap" / "ancillary" / "swapi"
-        )
+        ancillary_data_dir = imap_data_access.config["DATA_DIR"] / "imap" / "ancillary" / "swapi"
 
         mock_download.assert_has_calls(
             [
@@ -120,9 +109,7 @@ class TestSwapiL3ADependencies(unittest.TestCase):
             ]
         )
 
-        mock_select_mag_path.assert_called_once_with(
-            input_collection, MAG_RTN_DESCRIPTOR
-        )
+        mock_select_mag_path.assert_called_once_with(input_collection, MAG_RTN_DESCRIPTOR)
 
         mock_from_file_paths.assert_called_with(
             sentinel.swapi_l2_data,
@@ -137,9 +124,7 @@ class TestSwapiL3ADependencies(unittest.TestCase):
             False,
         )
 
-        self.assertEqual(
-            mock_from_file_paths.return_value, actual_swapi_l3_dependencies
-        )
+        self.assertEqual(mock_from_file_paths.return_value, actual_swapi_l3_dependencies)
 
     @patch("imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.select_mag_path")
     @patch(
@@ -185,14 +170,10 @@ class TestSwapiL3ADependencies(unittest.TestCase):
         self.assertEqual(True, args[9])
 
     @patch("imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.read_mag_rtn_data")
-    @patch(
-        "imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.SwapiResponse.from_files"
-    )
+    @patch("imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.SwapiResponse.from_files")
     @patch("imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.CDF")
     @patch("imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.InflowVector.from_file")
-    @patch(
-        "imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.EfficiencyCalibrationTable"
-    )
+    @patch("imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.EfficiencyCalibrationTable")
     @patch(
         "imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.DensityOfNeutralHeliumLookupTable.from_file"
     )
@@ -212,12 +193,8 @@ class TestSwapiL3ADependencies(unittest.TestCase):
         neutral_helium_path = Path("imap_swapi_neutral_he_20100105_v010.cdf")
         hydrogen_vector_path = Path("imap_swapi_h_inflow_20100105_v010.dat")
         helium_vector_path = Path("imap_swapi_he_inflow_20100105_v010.dat")
-        azimuthal_transmission_path = Path(
-            "imap_swapi_azimuthal_transmission_20100105_v010.cdf"
-        )
-        central_effective_area_path = Path(
-            "imap_swapi_central_effective_area_20100105_v010.cdf"
-        )
+        azimuthal_transmission_path = Path("imap_swapi_azimuthal_transmission_20100105_v010.cdf")
+        central_effective_area_path = Path("imap_swapi_central_effective_area_20100105_v010.cdf")
         passband_fit_coefficients_path = Path(
             "imap_swapi_passband_fit_coefficients_20100105_v010.cdf"
         )
@@ -275,14 +252,10 @@ class TestSwapiL3ADependencies(unittest.TestCase):
         self.assertEqual(expected_dependencies, actual_dependencies)
 
     @patch("imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.read_mag_rtn_data")
-    @patch(
-        "imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.SwapiResponse.from_files"
-    )
+    @patch("imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.SwapiResponse.from_files")
     @patch("imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.CDF")
     @patch("imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.InflowVector.from_file")
-    @patch(
-        "imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.EfficiencyCalibrationTable"
-    )
+    @patch("imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.EfficiencyCalibrationTable")
     @patch(
         "imap_l3_processing.swapi.l3a.swapi_l3a_dependencies.DensityOfNeutralHeliumLookupTable.from_file"
     )

@@ -23,9 +23,7 @@ SPICE_KERNELS = [
 
 
 def generate_swapi_for_given_day(descriptor: str, day: datetime):
-    spice_kernel_files = get_spice_kernels_file_names(
-        day, day + timedelta(days=1), SPICE_KERNELS
-    )
+    spice_kernel_files = get_spice_kernels_file_names(day, day + timedelta(days=1), SPICE_KERNELS)
     day_as_string = day.strftime("%Y%m%d")
     l2_file_path = imap_data_access.query(
         instrument="swapi",
@@ -35,15 +33,11 @@ def generate_swapi_for_given_day(descriptor: str, day: datetime):
         version="latest",
     )[0]["file_path"]
 
-    template_json = Path(
-        "scripts/swapi/imap_swapi_l3a_proton-sw_dependency_template.json"
-    )
+    template_json = Path("scripts/swapi/imap_swapi_l3a_proton-sw_dependency_template.json")
 
     input_files = [*spice_kernel_files, Path(l2_file_path).name]
 
-    input_collection = ProcessingInputCollection(
-        *[generate_imap_input(i) for i in input_files]
-    )
+    input_collection = ProcessingInputCollection(*[generate_imap_input(i) for i in input_files])
     input_collection.deserialize(template_json.read_text())
 
     input_collection.download_all_files()

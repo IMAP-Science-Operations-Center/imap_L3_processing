@@ -40,9 +40,7 @@ def create_hi_full_spin_deps(
     l1c_folder = output_dir / "l1c"
     l1c_folder.mkdir(parents=True, exist_ok=True)
 
-    l1c_files = [
-        Path(s) for s in generate_fake_l1c(start_date, 2, output_dir=l1c_folder)
-    ]
+    l1c_files = [Path(s) for s in generate_fake_l1c(start_date, 2, output_dir=l1c_folder)]
     original_full_spin_map_path = create_l2_map_from_instrument_team(
         l2_map_dir, output_dir=output_dir
     )
@@ -87,9 +85,7 @@ def create_hi_full_spin_deps(
         delete_if_present=True,
         folder_path=output_dir,
     )
-    ram_logical_source = (
-        f"imap_hi_l2_h{sensor}-ena-h-sf-nsp-ram-hae-4deg-6mo_20250415_v001"
-    )
+    ram_logical_source = f"imap_hi_l2_h{sensor}-ena-h-sf-nsp-ram-hae-4deg-6mo_20250415_v001"
     with CDF(str(ram_cdf_path), readonly=False) as ram:
         ram["exposure_factor"] = np.where(
             ram_exposure_is_zero, 0, ram_data.intensity_map_data.exposure_factor
@@ -108,18 +104,16 @@ def create_hi_full_spin_deps(
     antiram_data = survival_probability_processing.process_survival_probabilities(
         antiramified_map_deps, SpiceFrame.ECLIPJ2000
     )
-    antiram_exposure_is_zero = np.isnan(
-        antiram_data.intensity_map_data.ena_intensity
-    ) | (antiram_data.intensity_map_data.ena_intensity == 0)
+    antiram_exposure_is_zero = np.isnan(antiram_data.intensity_map_data.ena_intensity) | (
+        antiram_data.intensity_map_data.ena_intensity == 0
+    )
 
     antiram_cdf_path = save_data(
         RectangularIntensityDataProduct(input_metadata, antiram_data),
         delete_if_present=True,
         folder_path=output_dir,
     )
-    antiram_logical_source = (
-        f"imap_hi_l2_h{sensor}-ena-h-sf-nsp-anti-hae-4deg-6mo_20250415_v001"
-    )
+    antiram_logical_source = f"imap_hi_l2_h{sensor}-ena-h-sf-nsp-anti-hae-4deg-6mo_20250415_v001"
 
     with CDF(str(antiram_cdf_path), readonly=False) as antiram:
         antiram["exposure_factor"] = np.where(

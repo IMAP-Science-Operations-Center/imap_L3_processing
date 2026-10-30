@@ -28,15 +28,11 @@ class CodiceHiMassCorrectionLookupTable:
                     f"Not using sheet {sheet_name} from {file_path.name} ancillary! Expected sheet names in the format: {SSD_SHEET_NAME_FORMAT}"
                 )
 
-        assert len(data) > 0, (
-            f"Failed to read any correction factors from: {file_path.name}"
-        )
+        assert len(data) > 0, f"Failed to read any correction factors from: {file_path.name}"
 
         return cls(correction_factors=data)
 
-    def lookup_correction_factor(
-        self, ssd_id: int, energy_channel: int, tof: int
-    ) -> float:
+    def lookup_correction_factor(self, ssd_id: int, energy_channel: int, tof: int) -> float:
         data_for_ssd = self.correction_factors.get(ssd_id)
         if data_for_ssd is not None:
             return data_for_ssd[energy_channel, tof]

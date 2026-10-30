@@ -41,9 +41,7 @@ class L1bDataHistogram:
         self.block_start_time = None
         self.block_end_time = None
 
-    def _block_header_add_list_of_anc_files(
-        self, anc_input_from_sdc, anc_input_from_instr_team
-    ):
+    def _block_header_add_list_of_anc_files(self, anc_input_from_sdc, anc_input_from_instr_team):
         """
         Add list of used ancillary files to block header
         Args:
@@ -56,9 +54,7 @@ class L1bDataHistogram:
                 anc_input_from_instr_team[key]
             )
         for key in anc_input_from_sdc:
-            self.data["block_header"]["ancillary_data_files"].append(
-                anc_input_from_sdc[key]
-            )
+            self.data["block_header"]["ancillary_data_files"].append(anc_input_from_sdc[key])
 
     def _compute_spin_period_ground_estimate(self, anc_data):
         """
@@ -163,15 +159,9 @@ class L1bDataHistogram:
 
         # generate synthetic series with spacecraft location data (assumed to arrive every 0.1 s)
         time = np.arange(self.block_start_time, self.block_end_time, 0.1)
-        data_x = np.interp(
-            time, [df_1["imap_time"], df_2["imap_time"]], [df_1["x"], df_2["x"]]
-        )
-        data_y = np.interp(
-            time, [df_1["imap_time"], df_2["imap_time"]], [df_1["y"], df_2["y"]]
-        )
-        data_z = np.interp(
-            time, [df_1["imap_time"], df_2["imap_time"]], [df_1["z"], df_2["z"]]
-        )
+        data_x = np.interp(time, [df_1["imap_time"], df_2["imap_time"]], [df_1["x"], df_2["x"]])
+        data_y = np.interp(time, [df_1["imap_time"], df_2["imap_time"]], [df_1["y"], df_2["y"]])
+        data_z = np.interp(time, [df_1["imap_time"], df_2["imap_time"]], [df_1["z"], df_2["z"]])
 
         # compute spacecraft-location average and standard deviation over block
         average = [np.mean(data_x), np.mean(data_y), np.mean(data_z)]
@@ -197,15 +187,9 @@ class L1bDataHistogram:
 
         # generate synthetic series with spacecraft velocity data (assumed to arrive every 0.1 s)
         time = np.arange(self.block_start_time, self.block_end_time, 0.1)
-        data_vx = np.interp(
-            time, [df_1["imap_time"], df_2["imap_time"]], [df_1["vx"], df_2["vx"]]
-        )
-        data_vy = np.interp(
-            time, [df_1["imap_time"], df_2["imap_time"]], [df_1["vy"], df_2["vy"]]
-        )
-        data_vz = np.interp(
-            time, [df_1["imap_time"], df_2["imap_time"]], [df_1["vz"], df_2["vz"]]
-        )
+        data_vx = np.interp(time, [df_1["imap_time"], df_2["imap_time"]], [df_1["vx"], df_2["vx"]])
+        data_vy = np.interp(time, [df_1["imap_time"], df_2["imap_time"]], [df_1["vy"], df_2["vy"]])
+        data_vz = np.interp(time, [df_1["imap_time"], df_2["imap_time"]], [df_1["vz"], df_2["vz"]])
 
         # compute spacecraft-velocity average and standard deviation over block
         average = [np.mean(data_vx), np.mean(data_vy), np.mean(data_vz)]
@@ -232,10 +216,8 @@ class L1bDataHistogram:
 
         # compute ecliptic longitude and latitude of histogram bin centers
         histogram_bins_ecl_coords = spin2lb(
-            np.radians(self.data["spin_axis_orientation_average"]["lon"])
-            * np.ones(n_bins, float),
-            np.radians(self.data["spin_axis_orientation_average"]["lat"])
-            * np.ones(n_bins, float),
+            np.radians(self.data["spin_axis_orientation_average"]["lon"]) * np.ones(n_bins, float),
+            np.radians(self.data["spin_axis_orientation_average"]["lat"]) * np.ones(n_bins, float),
             np.radians(spin_angle_from_north),
             0.0,
             np.radians(SCAN_CIRCLE_ANGULAR_RADIUS) * np.ones(n_bins, float),
@@ -253,9 +235,7 @@ class L1bDataHistogram:
         """
 
         # load conversion/decoding table for ancillary parameters collected onboard
-        with open(
-                anc_input_from_instr_team["conversion_table_for_anc_data"], "r"
-        ) as file_handler:
+        with open(anc_input_from_instr_team["conversion_table_for_anc_data"], "r") as file_handler:
             conversion_table = json.load(file_handler)
 
         # ancillary parameters collected onboard that need to be decoded
@@ -266,24 +246,16 @@ class L1bDataHistogram:
             "filter_temperature", conversion_table, l1a_data
         )
         self.data["hv_voltage_average"], self.data["hv_voltage_std_dev"] = (
-            decode_ancillary_parameters_avg_stddev(
-                "hv_voltage", conversion_table, l1a_data
-            )
+            decode_ancillary_parameters_avg_stddev("hv_voltage", conversion_table, l1a_data)
         )
         self.data["spin_period_average"], self.data["spin_period_std_dev"] = (
-            decode_ancillary_parameters_avg_stddev(
-                "spin_period", conversion_table, l1a_data
-            )
+            decode_ancillary_parameters_avg_stddev("spin_period", conversion_table, l1a_data)
         )
         self.data["pulse_length_average"], self.data["pulse_length_std_dev"] = (
-            decode_ancillary_parameters_avg_stddev(
-                "pulse_length", conversion_table, l1a_data
-            )
+            decode_ancillary_parameters_avg_stddev("pulse_length", conversion_table, l1a_data)
         )
 
-    def create_l1b_from_l1a_data(
-        self, l1a_data, anc_input_from_sdc, anc_input_from_instr_team
-    ):
+    def create_l1b_from_l1a_data(self, l1a_data, anc_input_from_sdc, anc_input_from_instr_team):
         """
         Sets values of L1b fields using L1a data read from a file
         Args:
@@ -292,21 +264,15 @@ class L1bDataHistogram:
             anc_input_from_instr_team: ancillary input provided by IMAP/GLOWS Instrument Team
         """
         self.data["block_header"] = {
-            "flight_software_version": l1a_data["block_header"][
-                "flight_software_version"
-            ],
+            "flight_software_version": l1a_data["block_header"]["flight_software_version"],
             "ground_software_version": VERSION,
             "pkts_file_name": l1a_data["block_header"]["pkts_file_name"],
-            "seq_count_in_pkts_file": l1a_data["block_header"][
-                "seq_count_in_pkts_file"
-            ],
+            "seq_count_in_pkts_file": l1a_data["block_header"]["seq_count_in_pkts_file"],
             "l1a_file_name": l1a_data["l1a_file_name"],
         }
 
         # add list of used ancillary files to block_header
-        self._block_header_add_list_of_anc_files(
-            anc_input_from_sdc, anc_input_from_instr_team
-        )
+        self._block_header_add_list_of_anc_files(anc_input_from_sdc, anc_input_from_instr_team)
 
         self.data["unique_block_identifier"] = time_sec_subsec_to_utc(
             l1a_data[MAIN_TIME_FIELD]["seconds"],
@@ -318,9 +284,7 @@ class L1bDataHistogram:
 
         # set histogram-related quantities
         self.data["number_of_spins_per_block"] = l1a_data["number_of_spins_per_block"]
-        self.data["number_of_bins_per_histogram"] = l1a_data[
-            "number_of_bins_per_histogram"
-        ]
+        self.data["number_of_bins_per_histogram"] = l1a_data["number_of_bins_per_histogram"]
 
         # set histogram
         self.data["histogram"] = l1a_data["histogram"]
@@ -344,13 +308,9 @@ class L1bDataHistogram:
         # set block_start_time and block_end_time for funcs invoked in process_anc_input_from_sdc()
         self.block_start_time = self.data[MAIN_TIME_FIELD]
         if MAIN_TIME_FIELD == "imap_start_time":
-            self.block_end_time = (
-                self.block_start_time + self.data["imap_end_time_offset"]
-            )
+            self.block_end_time = self.block_start_time + self.data["imap_end_time_offset"]
         if MAIN_TIME_FIELD == "glows_start_time":
-            self.block_end_time = (
-                self.block_start_time + self.data["glows_end_time_offset"]
-            )
+            self.block_end_time = self.block_start_time + self.data["glows_end_time_offset"]
 
         # convert ancillary parameters collected onboard to physical units
         self._convert_ancillary_parameters(l1a_data, anc_input_from_instr_team)
@@ -367,9 +327,7 @@ class L1bDataHistogram:
                 self.data["flags"][key] = l1a_data["flags"][key]
 
         # initialize histogram bin flags
-        self.data["histogram_flag_array"] = np.zeros_like(
-            self.data["histogram"], np.int16
-        )
+        self.data["histogram_flag_array"] = np.zeros_like(self.data["histogram"], np.int16)
 
         # apply filters defined by the IMAP/GLOWS Instrument Team
         self._filters(anc_input_from_instr_team)
@@ -414,9 +372,7 @@ class L1bDataHistogram:
         # apply filter based on filter-temperature spread and set related flag
         self._flag_compare_with_threshold(
             "filter_temperature_std_dev",
-            settings["filter_based_on_temperature_std_dev"][
-                "std_dev_threshold__celsius_deg"
-            ],
+            settings["filter_based_on_temperature_std_dev"]["std_dev_threshold__celsius_deg"],
             "is_temperature_std_dev_beyond_threshold",
         )
 
@@ -462,12 +418,8 @@ class L1bDataHistogram:
         Args:
             settings: filter settings from a file provided by IMAP/GLOWS Instrument Team
         """
-        n_lo = settings["filter_based_on_daily_statistical_error"][
-            "n_sigma_threshold_lower"
-        ]
-        n_up = settings["filter_based_on_daily_statistical_error"][
-            "n_sigma_threshold_upper"
-        ]
+        n_lo = settings["filter_based_on_daily_statistical_error"]["n_sigma_threshold_lower"]
+        n_up = settings["filter_based_on_daily_statistical_error"]["n_sigma_threshold_upper"]
         if n_lo < 0 or n_up < 0:
             # negative value means that filter is turned off, so we can immediately set the flag
             self.data["flags"]["is_beyond_daily_statistical_error"] = False
@@ -479,12 +431,8 @@ class L1bDataHistogram:
             total_counts_daily_average, total_counts_daily_std_dev = (
                 self.total_counts_daily_statistics()
             )
-            self.data["debugging_data"]["total_counts_daily_average"] = (
-                total_counts_daily_average
-            )
-            self.data["debugging_data"]["total_counts_daily_std_dev"] = (
-                total_counts_daily_std_dev
-            )
+            self.data["debugging_data"]["total_counts_daily_average"] = total_counts_daily_average
+            self.data["debugging_data"]["total_counts_daily_std_dev"] = total_counts_daily_std_dev
             if (
                 total_counts_daily_average - n_lo * total_counts_daily_std_dev
                 <= total_counts
@@ -534,9 +482,7 @@ class L1bDataHistogram:
             relative_difference = np.fabs(
                 self.data[parameter_1_name] - self.data[parameter_2_name]
             ) / (self.data[parameter_1_name] + self.data[parameter_2_name])
-            self.data["debugging_data"]["spin_period_relative_difference"] = (
-                relative_difference
-            )
+            self.data["debugging_data"]["spin_period_relative_difference"] = relative_difference
             if relative_difference < threshold:
                 self.data["flags"][flag_name] = False
             else:
@@ -551,9 +497,7 @@ class L1bDataHistogram:
 
         # read ancillary variables provided by SDC (IMAP general telemetry)
         # note that finally different CSV files can be used for different quantities
-        anc_data = pd.read_csv(
-            anc_input_from_sdc["anc_data_file_name"], sep=" ", comment="#"
-        )
+        anc_data = pd.read_csv(anc_input_from_sdc["anc_data_file_name"], sep=" ", comment="#")
         # TMP_SOLUTION: we use here a csv file with mock ancillary data generated by
         # GLOWS Team using generate_anc_file.py script
         # the following procedures invoked below:
@@ -669,29 +613,19 @@ class L1bDataHistogram:
         # be printed with a specific format by json.dumps()
         # so we convert variables to strings as defined in fmt
         for key in fmt["arrays"]:
-            data[key] = (
-                "["
-                + ", ".join(fmt["arrays"][key] % x for x in list(data[key]))
-                + "]"
-            )
+            data[key] = "[" + ", ".join(fmt["arrays"][key] % x for x in list(data[key])) + "]"
         for key, value in fmt["scalar variables"].items():
             data[key] = "|" + value % data[key] + "|"
         for key, value in fmt["lon lat variables"].items():
             for sec_key in ["lon", "lat"]:
-                data[key][sec_key] = (
-                    "|" + value % data[key][sec_key] + "|"
-                )
+                data[key][sec_key] = "|" + value % data[key][sec_key] + "|"
         for key, value in fmt["vector variables"].items():
             for sec_key in ["x", "y", "z"]:
-                data[key][sec_key] = (
-                    "|" + value % data[key][sec_key] + "|"
-                )
+                data[key][sec_key] = "|" + value % data[key][sec_key] + "|"
 
         # histogram_flag_array requires special hexadecimal treatment
         data["histogram_flag_array"] = (
-            "["
-            + ", ".join(f'0x{x:04x}"' for x in list(data["histogram_flag_array"]))
-            + "]"
+            "[" + ", ".join(f'0x{x:04x}"' for x in list(data["histogram_flag_array"])) + "]"
         )
 
         # generate JSON content to be saved in output file
@@ -707,16 +641,12 @@ class L1bDataHistogram:
         spin_angle_tmp = self.data["imap_spin_angle_bin_cntr"]
         histogram_tmp = self.data["histogram"]
         flags_tmp = self.data["histogram_flag_array"]
-        self.data["histogram"] = (
-            "[" + ", ".join(map(str, list(histogram_tmp))) + "]"
-        )
+        self.data["histogram"] = "[" + ", ".join(map(str, list(histogram_tmp))) + "]"
         self.data["imap_spin_angle_bin_cntr"] = (
             "[" + ", ".join(f"{x:.2f}" for x in list(spin_angle_tmp)) + "]"
         )
         self.data["histogram_flag_array"] = (
-            "["
-            + ", ".join(f'0x{x:04x}"' for x in list(flags_tmp))
-            + "]"
+            "[" + ", ".join(f'0x{x:04x}"' for x in list(flags_tmp)) + "]"
         )
         json_content = json.dumps(self.data, indent=4, default=vars)
         self.data["imap_spin_angle_bin_cntr"] = spin_angle_tmp
@@ -727,14 +657,11 @@ class L1bDataHistogram:
         json_content = json_content.replace('\\"', '"')
 
         # start_time_utc string for output file name, based on unique_block_identifier
-        start_time_utc = "".join(
-            filter(str.isdigit, self.data["unique_block_identifier"])
-        )
+        start_time_utc = "".join(filter(str.isdigit, self.data["unique_block_identifier"]))
 
         # the output file name is constructed using a convention defined in Sec. 1.4.2 of
         # "IMAP SDC to Instrument Team ICD"
         file_name = f"data_l1b_histograms/imap_glows_l1b_{start_time_utc}_orbX_modX_p_v00.json"
-
 
         # save data
         with open(file_name, "w") as file_handler:
@@ -745,9 +672,7 @@ class L1bDataHistogram:
         # print(file_name, file=file_handler)
         # file_handler.close()
 
-    def _set_histogram_flag_array_by_instr_team(
-        self, anc_input_from_instr_team, type_of_list
-    ):
+    def _set_histogram_flag_array_by_instr_team(self, anc_input_from_instr_team, type_of_list):
         """
         Set histogram flag array using lists defined by IMAP/GLOWS Instrument Team
             bin indexes in the list are marked by True
@@ -835,9 +760,7 @@ class L1bDataHistogram:
             settings: filter settings
         """
 
-        if check_if_contains_actual_data(
-            anc_input_from_instr_team["map_of_uv_sources"]
-        ):
+        if check_if_contains_actual_data(anc_input_from_instr_team["map_of_uv_sources"]):
             # read ecliptic coords and angular radiuses for the masking of bright uv point sources
             uv_sources_coords_and_radiuses = np.loadtxt(
                 anc_input_from_instr_team["map_of_uv_sources"], usecols=[1, 2, 3]
@@ -850,25 +773,19 @@ class L1bDataHistogram:
 
             # a radius_bins grouping is used below for code speed up, because otherwise we would need to use
             # coord1.separation(coord2) from astropy, which turned out to be slow in tests
-            n_radius_bins = (
-                10  # actually used bins, see +2 in np.linspace() argument below
-            )
+            n_radius_bins = 10  # actually used bins, see +2 in np.linspace() argument below
             radius_bins = np.linspace(
                 uv_sources_coords_and_radiuses[:, 2].min() - 1.0e-6,
                 uv_sources_coords_and_radiuses[:, 2].max() + 1.0e-6,
                 n_radius_bins + 2,
             )
             # digitizing/binning into radius_bins
-            radius_idxs = np.digitize(
-                uv_sources_coords_and_radiuses[:, 2], bins=radius_bins
-            )
+            radius_idxs = np.digitize(uv_sources_coords_and_radiuses[:, 2], bins=radius_bins)
 
             for i in range(1, n_radius_bins + 2):  # looping over all radius_bins groups
                 rejection_radius = radius_bins[i]
                 idxs = np.nonzero(radius_idxs == i)[0]
-                if (
-                    len(idxs) > 0
-                ):  # check if we have any uv sources to check in the current group
+                if len(idxs) > 0:  # check if we have any uv sources to check in the current group
                     match_catalog = SkyCoord(
                         uv_sources_coords_and_radiuses[idxs, 0],
                         uv_sources_coords_and_radiuses[idxs, 1],
@@ -894,9 +811,7 @@ class L1bDataHistogram:
             flag = np.left_shift(flag, L1B_L2_HIST_FLAG_FIELDS["is_close_to_uv_source"])
             self.data["histogram_flag_array"] = self.data["histogram_flag_array"] | flag
 
-    def _set_histogram_flag_array_excl_regions(
-        self, anc_input_from_instr_team, settings
-    ):
+    def _set_histogram_flag_array_excl_regions(self, anc_input_from_instr_team, settings):
         """
         Set histogram flag array using a map of excluded regions, close-to-map-points bins are
             denoted by True
@@ -905,13 +820,9 @@ class L1bDataHistogram:
             settings: filter settings
         """
 
-        if check_if_contains_actual_data(
-            anc_input_from_instr_team["map_of_excluded_regions"]
-        ):
+        if check_if_contains_actual_data(anc_input_from_instr_team["map_of_excluded_regions"]):
             # read ecliptic coords of points defining excluded regions
-            excluded_pts_coords = np.loadtxt(
-                anc_input_from_instr_team["map_of_excluded_regions"]
-            )
+            excluded_pts_coords = np.loadtxt(anc_input_from_instr_team["map_of_excluded_regions"])
 
             # set angular radius below which bins are too close to map points
             rejection_radius = settings["filter_based_on_maps"][
@@ -953,9 +864,7 @@ class L1bDataHistogram:
                 flag = np.zeros_like(self.data["histogram"], bool)
                 flag[idxs_to_reject] = True
 
-            flag = np.left_shift(
-                flag, L1B_L2_HIST_FLAG_FIELDS["is_inside_excluded_region"]
-            )
+            flag = np.left_shift(flag, L1B_L2_HIST_FLAG_FIELDS["is_inside_excluded_region"])
             self.data["histogram_flag_array"] = self.data["histogram_flag_array"] | flag
 
     def _set_histogram_flag_array_test_pattern(self):
@@ -1002,9 +911,7 @@ class L1bDataHistogram:
             line = file_handler.readline()
 
             # sanity check
-            assert (
-                line.rstrip().split(" ")[1] == self.data["block_header"]["pkts_file_name"]
-            ), (
+            assert line.rstrip().split(" ")[1] == self.data["block_header"]["pkts_file_name"], (
                 "Packets file name "
                 + line.rstrip().split(" ")[1]
                 + " in "

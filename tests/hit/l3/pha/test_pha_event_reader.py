@@ -37,9 +37,7 @@ class TestPHAEventReader(unittest.TestCase):
             (
                 10,
                 "L4AUnknown_10",
-                Detector(
-                    layer=4, side="A", segment="UNKNOWN_10", address=10, group="Unknown"
-                ),
+                Detector(layer=4, side="A", segment="UNKNOWN_10", address=10, group="Unknown"),
             ),
         ]
 
@@ -147,17 +145,13 @@ class TestPHAEventReader(unittest.TestCase):
         self.assertEqual(2, len(event_data.pha_words))
         self.assertEqual(pha1_adc_value, event_data.pha_words[0].adc_value)
         self.assertEqual(pha1_adc_overflow, event_data.pha_words[0].adc_overflow)
-        self.assertEqual(
-            pha1_adc_detector_address, event_data.pha_words[0].detector.address
-        )
+        self.assertEqual(pha1_adc_detector_address, event_data.pha_words[0].detector.address)
         self.assertEqual(pha1_is_low_gain, event_data.pha_words[0].is_low_gain)
         self.assertEqual(pha1_is_last_event, event_data.pha_words[0].is_last_pha)
 
         self.assertEqual(pha2_adc_value, event_data.pha_words[1].adc_value)
         self.assertEqual(pha2_adc_overflow, event_data.pha_words[1].adc_overflow)
-        self.assertEqual(
-            pha2_adc_detector_address, event_data.pha_words[1].detector.address
-        )
+        self.assertEqual(pha2_adc_detector_address, event_data.pha_words[1].detector.address)
         self.assertEqual(pha2_is_low_gain, event_data.pha_words[1].is_low_gain)
         self.assertEqual(pha2_is_last_event, event_data.pha_words[1].is_last_pha)
 
@@ -183,15 +177,9 @@ class TestPHAEventReader(unittest.TestCase):
         event_data = PHAEventReader.read_pha_event(bitstream)
 
         self.assertIsNone(event_data.extended_stim_header)
-        self.assertEqual(
-            expected_detector_flags, event_data.extended_header.detector_flags
-        )
-        self.assertEqual(
-            expected_delta_e_index, event_data.extended_header.delta_e_index
-        )
-        self.assertEqual(
-            expected_e_prime_index, event_data.extended_header.e_prime_index
-        )
+        self.assertEqual(expected_detector_flags, event_data.extended_header.detector_flags)
+        self.assertEqual(expected_delta_e_index, event_data.extended_header.delta_e_index)
+        self.assertEqual(expected_e_prime_index, event_data.extended_header.e_prime_index)
 
     def test_reads_extended_stim_header_section_when_long_event_and_stim_flag_set(self):
         header_binary = self._create_pha_header(stim_tag=True, long_event_flag=True)
@@ -254,9 +242,7 @@ class TestPHAEventReader(unittest.TestCase):
 
         pha_word1 = self._create_pha_data(is_last_event=False)
         pha_word2 = self._create_pha_data(is_last_event=True)
-        bitstream = BitStream(
-            "0b" + header_binary + stim_block_binary + pha_word1 + pha_word2
-        )
+        bitstream = BitStream("0b" + header_binary + stim_block_binary + pha_word1 + pha_word2)
         event_data = PHAEventReader.read_pha_event(bitstream)
 
         self.assertIsNone(event_data.extended_header)
@@ -309,11 +295,7 @@ class TestPHAEventReader(unittest.TestCase):
 
     def test_reads_pha_events_from_cdf(self):
         cdf = CDF(
-            str(
-                get_test_data_path(
-                    "hit/pha_events/imap_hit_l1a_direct-events_20100105_v009.cdf"
-                )
-            )
+            str(get_test_data_path("hit/pha_events/imap_hit_l1a_direct-events_20100105_v009.cdf"))
         )
 
         event_total = 0
@@ -364,15 +346,9 @@ class TestPHAEventReader(unittest.TestCase):
         if pha_event.extended_header is not None:
             binary_string += "".join(
                 [
-                    BitArray(
-                        uint=pha_event.extended_header.e_prime_index, length=8
-                    ).bin,
-                    BitArray(
-                        uint=pha_event.extended_header.delta_e_index, length=8
-                    ).bin,
-                    BitArray(
-                        uint=pha_event.extended_header.detector_flags, length=8
-                    ).bin,
+                    BitArray(uint=pha_event.extended_header.e_prime_index, length=8).bin,
+                    BitArray(uint=pha_event.extended_header.delta_e_index, length=8).bin,
+                    BitArray(uint=pha_event.extended_header.detector_flags, length=8).bin,
                 ]
             )
 
@@ -390,9 +366,7 @@ class TestPHAEventReader(unittest.TestCase):
             binary_string += "".join(
                 [
                     BitArray(uint=pha_event.extended_stim_header.tbd, length=12).bin,
-                    BitArray(
-                        uint=pha_event.extended_stim_header.dac_value, length=12
-                    ).bin,
+                    BitArray(uint=pha_event.extended_stim_header.dac_value, length=12).bin,
                 ]
             )
 

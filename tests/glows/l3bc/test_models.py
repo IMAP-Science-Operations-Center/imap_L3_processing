@@ -61,9 +61,7 @@ class TestModels(CdfModelTestCase):
         self.assertEqual(expected_external_deps, external_dependencies)
 
     @patch("imap_l3_processing.glows.l3bc.models.download_external_dependency")
-    def test_external_dependencies_files_not_found(
-        self, mock_download_external_dependencies
-    ):
+    def test_external_dependencies_files_not_found(self, mock_download_external_dependencies):
         mock_download_external_dependencies.return_value = None
 
         external_dependencies = ExternalDependencies.fetch_dependencies()
@@ -71,9 +69,7 @@ class TestModels(CdfModelTestCase):
         self.assertEqual(ExternalDependencies(None, None, None), external_dependencies)
 
     @patch("imap_l3_processing.glows.l3bc.models.download_external_dependency")
-    def test_external_dependencies_comment_headers(
-        self, mock_download_external_dependencies
-    ):
+    def test_external_dependencies_comment_headers(self, mock_download_external_dependencies):
         with tempfile.TemporaryDirectory() as tmpdir:
             file_name = Path(tmpdir) / "flux_table.txt"
             with open(file_name, "w") as fp:
@@ -97,9 +93,7 @@ class TestModels(CdfModelTestCase):
 
     @patch("imap_l3_processing.glows.l3bc.models.datetime")
     @patch("imap_l3_processing.glows.l3bc.models.imap_data_access.download")
-    def test_cr_to_process_buffer_time_has_elapsed_since_cr(
-        self, mock_download, mock_datetime
-    ):
+    def test_cr_to_process_buffer_time_has_elapsed_since_cr(self, mock_download, mock_datetime):
         with TemporaryDirectory() as temp_dir:
             temp_dir = Path(temp_dir)
             fake_pipeline_settings = temp_dir / "fake_pipeline_settings.json"
@@ -177,9 +171,7 @@ class TestModels(CdfModelTestCase):
                 Path("f107_index_file_path"),
                 Path("lyman_alpha_path"),
             )
-            self.assertEqual(
-                mock_validate_dependencies.return_value, actual_has_valid_ext_deps
-            )
+            self.assertEqual(mock_validate_dependencies.return_value, actual_has_valid_ext_deps)
 
     def test_l3b_to_data_product_variables(self):
         data = GlowsL3BIonizationRate(
@@ -206,12 +198,8 @@ class TestModels(CdfModelTestCase):
 
         variables = iter(variables)
         self.assert_variable_attributes(next(variables), sentinel.epoch, "epoch")
-        self.assert_variable_attributes(
-            next(variables), sentinel.epoch_delta, "epoch_delta"
-        )
-        self.assert_variable_attributes(
-            next(variables), sentinel.mean_time, "mean_time"
-        )
+        self.assert_variable_attributes(next(variables), sentinel.epoch_delta, "epoch_delta")
+        self.assert_variable_attributes(next(variables), sentinel.mean_time, "mean_time")
         self.assert_variable_attributes(next(variables), sentinel.cr, "cr")
         self.assert_variable_attributes(
             next(variables), sentinel.uv_anisotropy_factor, "uv_anisotropy_factor"
@@ -220,38 +208,24 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(next(variables), sentinel.sum_rate, "sum_rate")
         self.assert_variable_attributes(next(variables), sentinel.ph_rate, "ph_rate")
         self.assert_variable_attributes(next(variables), sentinel.cx_rate, "cx_rate")
-        self.assert_variable_attributes(
-            next(variables), sentinel.sum_uncert, "sum_uncert"
-        )
-        self.assert_variable_attributes(
-            next(variables), sentinel.ph_uncert, "ph_uncert"
-        )
-        self.assert_variable_attributes(
-            next(variables), sentinel.cx_uncert, "cx_uncert"
-        )
-        self.assert_variable_attributes(
-            next(variables), sentinel.lat_grid_label, "lat_grid_label"
-        )
+        self.assert_variable_attributes(next(variables), sentinel.sum_uncert, "sum_uncert")
+        self.assert_variable_attributes(next(variables), sentinel.ph_uncert, "ph_uncert")
+        self.assert_variable_attributes(next(variables), sentinel.cx_uncert, "cx_uncert")
+        self.assert_variable_attributes(next(variables), sentinel.lat_grid_label, "lat_grid_label")
         self.assert_variable_attributes(
             next(variables), sentinel.uv_anisotropy_flag, "uv_anisotropy_flag"
         )
         self.assert_variable_attributes(next(variables), sentinel.used_l3a, "used_l3a")
-        self.assert_variable_attributes(
-            next(variables), sentinel.glows_flags, "glows_flags"
-        )
+        self.assert_variable_attributes(next(variables), sentinel.glows_flags, "glows_flags")
 
         self.assertIsNone(next(variables, None))
 
     def test_l3b_from_instrument_team_dictionary(self):
         glows_instrument_team_data_path = get_test_instrument_team_data_path("glows")
-        with open(
-            glows_instrument_team_data_path / "imap_glows_l3b_cr_2091_v00.json"
-        ) as f:
+        with open(glows_instrument_team_data_path / "imap_glows_l3b_cr_2091_v00.json") as f:
             instrument_team_l3b_dict = json.load(f)
 
-        instrument_team_l3b_dict["header"]["ancillary_data_files"][
-            "pipeline_settings"
-        ] = (
+        instrument_team_l3b_dict["header"]["ancillary_data_files"]["pipeline_settings"] = (
             glows_instrument_team_data_path
             / "imap_glows_pipeline-settings-l3bcde_20250514_v004.json"
         )
@@ -260,9 +234,7 @@ class TestModels(CdfModelTestCase):
             instrument_team_l3b_dict, sentinel.input_metadata
         )
 
-        latitude_grid = np.array(
-            instrument_team_l3b_dict["ion_rate_profile"]["lat_grid"]
-        )
+        latitude_grid = np.array(instrument_team_l3b_dict["ion_rate_profile"]["lat_grid"])
         self.assertIsInstance(result, GlowsL3BIonizationRate)
 
         self.assertEqual(sentinel.input_metadata, result.input_metadata)
@@ -270,9 +242,7 @@ class TestModels(CdfModelTestCase):
         np.testing.assert_array_equal(
             [datetime.fromisoformat("2009-12-20 20:14:51.360")], result.epoch
         )
-        np.testing.assert_equal(
-            [CARRINGTON_ROTATION_IN_NANOSECONDS / 2], result.epoch_delta
-        )
+        np.testing.assert_equal([CARRINGTON_ROTATION_IN_NANOSECONDS / 2], result.epoch_delta)
         np.testing.assert_equal(
             [datetime.fromisoformat("2010-01-02 03:43:28.667")], result.mean_time
         )
@@ -356,9 +326,7 @@ class TestModels(CdfModelTestCase):
         )
         self.assertEqual((1, 50), result.used_l3a.shape)
         np.testing.assert_array_equal(result.used_l3a[0, 3:], "")
-        np.testing.assert_equal(
-            [instrument_team_l3b_dict["glows_flags"]], result.glows_flags
-        )
+        np.testing.assert_equal([instrument_team_l3b_dict["glows_flags"]], result.glows_flags)
 
     def test_l3c_to_data_product_variables(self):
         data = GlowsL3CSolarWind(
@@ -445,26 +413,20 @@ class TestModels(CdfModelTestCase):
             "proton_density_profile",
             expected_data_type=pycdf.const.CDF_FLOAT,
         )
-        self.assert_variable_attributes(
-            next(variables), sentinel.glows_flags, "glows_flags"
-        )
+        self.assert_variable_attributes(next(variables), sentinel.glows_flags, "glows_flags")
 
         self.assertIsNone(next(variables, None))
 
     def test_l3c_from_instrument_team_dictionary(self):
         glows_instrument_team_data_path = get_test_instrument_team_data_path("glows")
-        with open(
-            glows_instrument_team_data_path / "imap_glows_l3c_cr_2091_v00.json"
-        ) as f:
+        with open(glows_instrument_team_data_path / "imap_glows_l3c_cr_2091_v00.json") as f:
             model = json.load(f)
         model["header"]["ancillary_data_files"]["pipeline_settings"] = (
             glows_instrument_team_data_path
             / "imap_glows_pipeline-settings-L3bc_20250707_v002.json"
         )
         latitude_grid = model["solar_wind_profile"]["lat_grid"]
-        result = GlowsL3CSolarWind.from_instrument_team_dictionary(
-            model, sentinel.input_metadata
-        )
+        result = GlowsL3CSolarWind.from_instrument_team_dictionary(model, sentinel.input_metadata)
 
         self.assertIsInstance(result, GlowsL3CSolarWind)
 
@@ -472,9 +434,7 @@ class TestModels(CdfModelTestCase):
         np.testing.assert_array_equal(
             [datetime.fromisoformat("2009-12-20 20:14:51.360")], result.epoch
         )
-        np.testing.assert_equal(
-            [CARRINGTON_ROTATION_IN_NANOSECONDS / 2], result.epoch_delta
-        )
+        np.testing.assert_equal([CARRINGTON_ROTATION_IN_NANOSECONDS / 2], result.epoch_delta)
         np.testing.assert_array_equal(
             [datetime.fromisoformat("2010-01-02 03:43:28.667")], result.mean_time
         )

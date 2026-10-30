@@ -74,46 +74,22 @@ class TestModels(CdfModelTestCase):
                 epoch_delta_plus = rng.random(len(epoch))
                 energy_per_charge = np.geomspace(2, 1000)
                 spin_sector = np.linspace(0, 360, 24)
-                hplus = rng.random(
-                    (len(epoch), len(energy_per_charge), len(spin_sector))
-                )
-                heplus = rng.random(
-                    (len(epoch), len(energy_per_charge), len(spin_sector))
-                )
-                heplusplus = rng.random(
-                    (len(epoch), len(energy_per_charge), len(spin_sector))
-                )
+                hplus = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                heplus = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                heplusplus = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
                 ne = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
-                cplus4 = rng.random(
-                    (len(epoch), len(energy_per_charge), len(spin_sector))
-                )
-                cplus5 = rng.random(
-                    (len(epoch), len(energy_per_charge), len(spin_sector))
-                )
-                cplus6 = rng.random(
-                    (len(epoch), len(energy_per_charge), len(spin_sector))
-                )
-                oplus5 = rng.random(
-                    (len(epoch), len(energy_per_charge), len(spin_sector))
-                )
-                oplus6 = rng.random(
-                    (len(epoch), len(energy_per_charge), len(spin_sector))
-                )
-                oplus7 = rng.random(
-                    (len(epoch), len(energy_per_charge), len(spin_sector))
-                )
-                oplus8 = rng.random(
-                    (len(epoch), len(energy_per_charge), len(spin_sector))
-                )
+                cplus4 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                cplus5 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                cplus6 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                oplus5 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                oplus6 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                oplus7 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                oplus8 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
                 mg = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
                 si = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
                 cnoplus = rng.random((len(epoch), len(energy_per_charge)))
-                fe_loq = rng.random(
-                    (len(epoch), len(energy_per_charge), len(spin_sector))
-                )
-                fe_hiq = rng.random(
-                    (len(epoch), len(energy_per_charge), len(spin_sector))
-                )
+                fe_loq = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
+                fe_hiq = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
                 data_quality = rng.random(len(epoch))
 
                 cdf_file["epoch"] = epoch
@@ -142,9 +118,7 @@ class TestModels(CdfModelTestCase):
                 for var in LO_L2_SW_SPECIES_DATA_VARS:
                     cdf_file[var].attrs["FILLVAL"] = -1e31
 
-            result: CodiceLoL2SWSpeciesData = CodiceLoL2SWSpeciesData.read_from_cdf(
-                cdf_file_path
-            )
+            result: CodiceLoL2SWSpeciesData = CodiceLoL2SWSpeciesData.read_from_cdf(cdf_file_path)
             np.testing.assert_array_equal(result.epoch, epoch)
             np.testing.assert_array_equal(result.epoch_delta_minus, epoch_delta_minus)
             np.testing.assert_array_equal(result.epoch_delta_plus, epoch_delta_plus)
@@ -177,9 +151,7 @@ class TestModels(CdfModelTestCase):
                 epoch_delta_plus = rng.random(len(epoch))
                 energy_per_charge = np.geomspace(2, 1000)
                 spin_sector = np.linspace(0, 360, 24)
-                fills = np.full(
-                    (len(epoch), len(energy_per_charge), len(spin_sector)), -1e31
-                )
+                fills = np.full((len(epoch), len(energy_per_charge), len(spin_sector)), -1e31)
 
                 data_quality = rng.random(len(epoch))
 
@@ -194,13 +166,9 @@ class TestModels(CdfModelTestCase):
                     cdf_file[var] = fills
                     cdf_file[var].attrs["FILLVAL"] = -1e31
 
-            nans = np.full(
-                (len(epoch), len(energy_per_charge), len(spin_sector)), np.nan
-            )
+            nans = np.full((len(epoch), len(energy_per_charge), len(spin_sector)), np.nan)
 
-            result: CodiceLoL2SWSpeciesData = CodiceLoL2SWSpeciesData.read_from_cdf(
-                cdf_file_path
-            )
+            result: CodiceLoL2SWSpeciesData = CodiceLoL2SWSpeciesData.read_from_cdf(cdf_file_path)
             np.testing.assert_array_equal(result.epoch, epoch)
             np.testing.assert_array_equal(result.epoch_delta_minus, epoch_delta_minus)
             np.testing.assert_array_equal(result.epoch_delta_plus, epoch_delta_plus)
@@ -331,9 +299,7 @@ class TestModels(CdfModelTestCase):
         )
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            cdf_path = save_data(
-                codice_lo_l3a_partial_densities, folder_path=Path(tmpdir)
-            )
+            cdf_path = save_data(codice_lo_l3a_partial_densities, folder_path=Path(tmpdir))
 
             read_in_density_data = CodiceLoPartialDensityData.read_from_cdf(cdf_path)
 
@@ -392,9 +358,7 @@ class TestModels(CdfModelTestCase):
             tmpdir = Path(tmpdir)
 
             test_l3a_direct_event = tmpdir / "test_l3a_cdf.cdf"
-            with CDF(
-                str(test_l3a_direct_event), masterpath=str(no_fill_l3a_cdf_path)
-            ) as cdf:
+            with CDF(str(test_l3a_direct_event), masterpath=str(no_fill_l3a_cdf_path)) as cdf:
                 cdf["apd_energy"] = rng.random(cdf["apd_energy"].shape)
                 cdf["elevation"] = rng.random(cdf["elevation"].shape)
                 cdf["energy_per_charge"] = rng.random(cdf["energy_per_charge"].shape)
@@ -404,62 +368,42 @@ class TestModels(CdfModelTestCase):
                 cdf["normalization"] = rng.random(cdf["normalization"].shape)
                 cdf["spin_angle"] = rng.random(cdf["spin_angle"].shape)
                 cdf["spin_angle_bin"] = rng.random(cdf["spin_angle_bin"].shape)
-                cdf["spin_angle_bin_delta"] = rng.random(
-                    cdf["spin_angle_bin_delta"].shape
-                )
+                cdf["spin_angle_bin_delta"] = rng.random(cdf["spin_angle_bin_delta"].shape)
                 cdf["type"] = rng.integers(0, 5, cdf["type"].shape)
-                cdf["normalization_per_event"] = rng.random(
-                    cdf["normalization_per_event"].shape
-                )
+                cdf["normalization_per_event"] = rng.random(cdf["normalization_per_event"].shape)
                 cdf["position"] = rng.random(cdf["position"].shape)
                 cdf["spin_sector"] = rng.random(cdf["spin_sector"].shape)
                 cdf["acquisition_time_per_esa_step"] = rng.random(
                     cdf["acquisition_time_per_esa_step"].shape
                 )
 
-                cdf["rgfo_spin_sector"] = rng.integers(
-                    0, 24, cdf["rgfo_spin_sector"].shape
-                )
+                cdf["rgfo_spin_sector"] = rng.integers(0, 24, cdf["rgfo_spin_sector"].shape)
                 cdf["rgfo_half_spin"] = rng.integers(0, 32, cdf["rgfo_half_spin"].shape)
                 cdf["rgfo_esa_step"] = rng.integers(0, 128, cdf["rgfo_esa_step"].shape)
                 cdf["half_spin_per_esa_step"] = rng.integers(
                     0, 32, cdf["half_spin_per_esa_step"].shape
                 )
 
-            actual_event_data = CodiceLoDirectEventData.read_from_cdf(
-                test_l3a_direct_event
-            )
+            actual_event_data = CodiceLoDirectEventData.read_from_cdf(test_l3a_direct_event)
 
             with CDF(str(test_l3a_direct_event)) as cdf:
                 np.testing.assert_array_equal(
                     actual_event_data.normalization_per_event,
                     cdf["normalization_per_event"],
                 )
-                np.testing.assert_array_equal(
-                    actual_event_data.position, cdf["position"]
-                )
-                np.testing.assert_array_equal(
-                    actual_event_data.energy_step, cdf["energy_step"]
-                )
-                np.testing.assert_array_equal(
-                    actual_event_data.spin_sector, cdf["spin_sector"]
-                )
+                np.testing.assert_array_equal(actual_event_data.position, cdf["position"])
+                np.testing.assert_array_equal(actual_event_data.energy_step, cdf["energy_step"])
+                np.testing.assert_array_equal(actual_event_data.spin_sector, cdf["spin_sector"])
                 np.testing.assert_array_equal(
                     actual_event_data.acquisition_time_per_esa_step,
                     cdf["acquisition_time_per_esa_step"],
                 )
-                np.testing.assert_array_equal(
-                    actual_event_data.apd_energy, cdf["apd_energy"]
-                )
-                np.testing.assert_array_equal(
-                    actual_event_data.elevation, cdf["elevation"]
-                )
+                np.testing.assert_array_equal(actual_event_data.apd_energy, cdf["apd_energy"])
+                np.testing.assert_array_equal(actual_event_data.elevation, cdf["elevation"])
                 np.testing.assert_array_equal(
                     actual_event_data.energy_per_charge, cdf["energy_per_charge"]
                 )
-                np.testing.assert_array_equal(
-                    actual_event_data.energy_step, cdf["energy_step"]
-                )
+                np.testing.assert_array_equal(actual_event_data.energy_step, cdf["energy_step"])
                 np.testing.assert_array_equal(actual_event_data.mass, cdf["mass"])
                 np.testing.assert_array_equal(
                     actual_event_data.mass_per_charge, cdf["mass_per_charge"]
@@ -467,9 +411,7 @@ class TestModels(CdfModelTestCase):
                 np.testing.assert_array_equal(
                     actual_event_data.normalization, cdf["normalization"]
                 )
-                np.testing.assert_array_equal(
-                    actual_event_data.spin_angle, cdf["spin_angle"]
-                )
+                np.testing.assert_array_equal(actual_event_data.spin_angle, cdf["spin_angle"])
                 np.testing.assert_array_equal(
                     actual_event_data.spin_angle_bin, cdf["spin_angle_bin"]
                 )
@@ -503,9 +445,7 @@ class TestModels(CdfModelTestCase):
                 actual_event_data.apd_energy,
                 np.full_like(cdf["apd_energy"][...], np.nan),
             )
-            np.testing.assert_array_equal(
-                actual_event_data.data_quality, cdf["data_quality"]
-            )
+            np.testing.assert_array_equal(actual_event_data.data_quality, cdf["data_quality"])
             np.testing.assert_array_equal(
                 actual_event_data.elevation, np.full_like(cdf["elevation"][...], np.nan)
             )
@@ -622,9 +562,7 @@ class TestModels(CdfModelTestCase):
             type=rng.integers(0, 5, (len(epoch), len(priority), len(event_num))),
         )
 
-        np.testing.assert_array_equal(
-            direct_event.event_index, np.arange(len(event_num))
-        )
+        np.testing.assert_array_equal(direct_event.event_index, np.arange(len(event_num)))
         np.testing.assert_array_equal(
             direct_event.priority_index_label,
             np.array(["0", "1", "2", "3", "4", "5", "6"]),
@@ -658,17 +596,11 @@ class TestModels(CdfModelTestCase):
             )
 
     def test_codice_lo_l1a_sw_priority_read_from_cdf(self):
-        cdf_path = get_test_data_path(
-            "codice/imap_codice_l1a_lo-sw-priority_20260307_v004.cdf"
-        )
-        actual_l1a_sw_priority_rates = CodiceLoL1aSWPriorityRates.read_from_cdf(
-            cdf_path
-        )
+        cdf_path = get_test_data_path("codice/imap_codice_l1a_lo-sw-priority_20260307_v004.cdf")
+        actual_l1a_sw_priority_rates = CodiceLoL1aSWPriorityRates.read_from_cdf(cdf_path)
 
         with CDF(str(cdf_path)) as cdf:
-            np.testing.assert_array_equal(
-                actual_l1a_sw_priority_rates.epoch, cdf["epoch"][...]
-            )
+            np.testing.assert_array_equal(actual_l1a_sw_priority_rates.epoch, cdf["epoch"][...])
             np.testing.assert_array_equal(
                 actual_l1a_sw_priority_rates.epoch_delta_plus,
                 cdf["epoch_delta_plus"][...],
@@ -742,17 +674,11 @@ class TestModels(CdfModelTestCase):
             )
 
     def test_codice_lo_l1a_nsw_priority_read_from_cdf(self):
-        cdf_path = get_test_data_path(
-            "codice/imap_codice_l1a_lo-nsw-priority_20260307_v004.cdf"
-        )
-        actual_l1a_nsw_priority_rates = CodiceLoL1aNSWPriorityRates.read_from_cdf(
-            cdf_path
-        )
+        cdf_path = get_test_data_path("codice/imap_codice_l1a_lo-nsw-priority_20260307_v004.cdf")
+        actual_l1a_nsw_priority_rates = CodiceLoL1aNSWPriorityRates.read_from_cdf(cdf_path)
 
         with CDF(str(cdf_path)) as cdf:
-            np.testing.assert_array_equal(
-                actual_l1a_nsw_priority_rates.epoch, cdf["epoch"][...]
-            )
+            np.testing.assert_array_equal(actual_l1a_nsw_priority_rates.epoch, cdf["epoch"][...])
             np.testing.assert_array_equal(
                 actual_l1a_nsw_priority_rates.epoch_delta_plus,
                 cdf["epoch_delta_plus"][...],
@@ -828,21 +754,15 @@ class TestModels(CdfModelTestCase):
         self.assertEqual(18, len(actual_data_product_variables))
         actual_variables = iter(actual_data_product_variables)
 
-        self.assert_variable_attributes(
-            next(actual_variables), sentinel.epoch, EPOCH_VAR_NAME
-        )
+        self.assert_variable_attributes(next(actual_variables), sentinel.epoch, EPOCH_VAR_NAME)
         self.assert_variable_attributes(
             next(actual_variables), sentinel.epoch_delta, EPOCH_DELTA_VAR_NAME
         )
-        self.assert_variable_attributes(
-            next(actual_variables), elevation, ELEVATION_VAR_NAME
-        )
+        self.assert_variable_attributes(next(actual_variables), elevation, ELEVATION_VAR_NAME)
         self.assert_variable_attributes(
             next(actual_variables), sentinel.elevation_delta, ELEVATION_DELTA_VAR_NAME
         )
-        self.assert_variable_attributes(
-            next(actual_variables), spin_angle, SPIN_ANGLE_VAR_NAME
-        )
+        self.assert_variable_attributes(next(actual_variables), spin_angle, SPIN_ANGLE_VAR_NAME)
         self.assert_variable_attributes(
             next(actual_variables), sentinel.spin_angle_delta, SPIN_ANGLE_DELTA_VAR_NAME
         )
@@ -857,9 +777,7 @@ class TestModels(CdfModelTestCase):
             sentinel.energy_delta_minus,
             ENERGY_DELTA_MINUS_VAR_NAME,
         )
-        self.assert_variable_attributes(
-            next(actual_variables), sentinel.species_data, species
-        )
+        self.assert_variable_attributes(next(actual_variables), sentinel.species_data, species)
         self.assert_variable_attributes(
             next(actual_variables), energy.astype(str), ENERGY_LABEL_VAR_NAME
         )
@@ -931,9 +849,7 @@ class TestModels(CdfModelTestCase):
                 np.testing.assert_array_equal(
                     l2_direct_event.spin_angle, cdf["spin_angle"][:, :7, ...]
                 )
-                np.testing.assert_array_equal(
-                    l2_direct_event.type, cdf["type"][:, :7, ...]
-                )
+                np.testing.assert_array_equal(l2_direct_event.type, cdf["type"][:, :7, ...])
 
     def test_workaround_to_convert_float_spin_sector_to_int(self):
         all_fill_l2_cdf_path = get_test_data_path(
@@ -946,9 +862,7 @@ class TestModels(CdfModelTestCase):
 
             test_cdf_path = tmpdir / "test_cdf.cdf"
             with CDF(str(test_cdf_path), masterpath=str(all_fill_l2_cdf_path)) as cdf:
-                expected_spin_sector = rng.integers(
-                    0, 24, cdf["spin_sector"].shape, dtype=int
-                )
+                expected_spin_sector = rng.integers(0, 24, cdf["spin_sector"].shape, dtype=int)
                 cdf["spin_sector"] = expected_spin_sector.astype(float)
 
             l2_direct_event = CodiceLoL2DirectEventData.read_from_cdf(test_cdf_path)
@@ -1000,15 +914,11 @@ class TestModels(CdfModelTestCase):
             self.assertTrue(np.all(l2_direct_event.position.mask))
 
             self.assertIsInstance(l2_direct_event.gain, np.ma.masked_array)
-            np.testing.assert_array_equal(
-                l2_direct_event.gain.data, cdf["gain"][:, :7, ...]
-            )
+            np.testing.assert_array_equal(l2_direct_event.gain.data, cdf["gain"][:, :7, ...])
             self.assertTrue(np.all(l2_direct_event.gain.mask))
 
             self.assertIsInstance(l2_direct_event.apd_id, np.ma.masked_array)
-            np.testing.assert_array_equal(
-                l2_direct_event.apd_id.data, cdf["apd_id"][:, :7, ...]
-            )
+            np.testing.assert_array_equal(l2_direct_event.apd_id.data, cdf["apd_id"][:, :7, ...])
             self.assertTrue(np.all(l2_direct_event.apd_id.mask))
 
             self.assertIsInstance(l2_direct_event.data_quality, np.ma.masked_array)
@@ -1030,9 +940,7 @@ class TestModels(CdfModelTestCase):
             self.assertTrue(np.all(l2_direct_event.num_events.mask))
 
             self.assertIsInstance(l2_direct_event.tof, np.ma.masked_array)
-            np.testing.assert_array_equal(
-                l2_direct_event.tof.data, cdf["tof"][:, :7, ...]
-            )
+            np.testing.assert_array_equal(l2_direct_event.tof.data, cdf["tof"][:, :7, ...])
             self.assertTrue(np.all(l2_direct_event.tof.mask))
 
     def test_codice_lo_l2_direct_events_read_from_cdf_masks_negative_tof_values(self):
@@ -1055,9 +963,7 @@ class TestModels(CdfModelTestCase):
             expected_truncated_tof = tof[:, :CODICE_LO_L2_NUM_PRIORITIES, ...]
             expected_mask = expected_truncated_tof < 0
 
-            np.testing.assert_array_equal(
-                l2_direct_event.tof.data, expected_truncated_tof
-            )
+            np.testing.assert_array_equal(l2_direct_event.tof.data, expected_truncated_tof)
             np.testing.assert_array_equal(l2_direct_event.tof.mask, expected_mask)
 
     def test_codice_lo_l1a_sw_priority_read_from_cdf_handles_fill_value(self):
@@ -1107,21 +1013,15 @@ class TestModels(CdfModelTestCase):
             )
 
             self.assertIsInstance(l1a_nsw_model.rgfo_half_spin, np.ma.masked_array)
-            np.testing.assert_array_equal(
-                l1a_nsw_model.rgfo_half_spin.data, cdf["rgfo_half_spin"]
-            )
+            np.testing.assert_array_equal(l1a_nsw_model.rgfo_half_spin.data, cdf["rgfo_half_spin"])
             self.assertTrue(np.all(l1a_nsw_model.rgfo_half_spin.mask))
 
             self.assertIsInstance(l1a_nsw_model.data_quality, np.ma.masked_array)
-            np.testing.assert_array_equal(
-                l1a_nsw_model.data_quality.data, cdf["data_quality"]
-            )
+            np.testing.assert_array_equal(l1a_nsw_model.data_quality.data, cdf["data_quality"])
             self.assertTrue(np.all(l1a_nsw_model.data_quality.mask))
 
             self.assertIsInstance(l1a_nsw_model.p5_heavies, np.ma.masked_array)
-            np.testing.assert_array_equal(
-                l1a_nsw_model.p5_heavies.data, cdf["p5_heavies"]
-            )
+            np.testing.assert_array_equal(l1a_nsw_model.p5_heavies.data, cdf["p5_heavies"])
             self.assertTrue(np.all(l1a_nsw_model.p5_heavies.mask))
 
             self.assertIsInstance(l1a_nsw_model.p6_hplus_heplusplus, np.ma.masked_array)
@@ -1131,9 +1031,7 @@ class TestModels(CdfModelTestCase):
             self.assertTrue(np.all(l1a_nsw_model.p6_hplus_heplusplus.mask))
 
             self.assertIsInstance(l1a_nsw_model.nso_half_spin, np.ma.masked_array)
-            np.testing.assert_array_equal(
-                l1a_nsw_model.nso_half_spin.data, cdf["nso_half_spin"]
-            )
+            np.testing.assert_array_equal(l1a_nsw_model.nso_half_spin.data, cdf["nso_half_spin"])
             self.assertTrue(np.all(l1a_nsw_model.nso_half_spin.mask))
 
             self.assertIsInstance(l1a_nsw_model.sw_bias_gain_mode, np.ma.masked_array)

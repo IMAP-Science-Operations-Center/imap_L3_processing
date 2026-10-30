@@ -104,9 +104,7 @@ class TestUtils(TestCase):
         )
 
         mock_science_file_path = Mock()
-        mock_science_file_path_class.generate_from_inputs.return_value = (
-            mock_science_file_path
-        )
+        mock_science_file_path_class.generate_from_inputs.return_value = mock_science_file_path
 
         expected_file_path = mock_science_file_path.construct_path.return_value
 
@@ -149,9 +147,7 @@ class TestUtils(TestCase):
     @patch("imap_l3_processing.utils.ImapAttributeManager")
     @patch("imap_l3_processing.utils.date")
     @patch("imap_l3_processing.utils.write_cdf")
-    def test_save_data_adds_global_attrs_if_present(
-        self, _, mock_today, mock_attribute_manager
-    ):
+    def test_save_data_adds_global_attrs_if_present(self, _, mock_today, mock_attribute_manager):
         mock_today.today.return_value = date(2024, 9, 16)
         data_product = TestDataProduct()
         data_product.global_metadata_attrs = {
@@ -268,9 +264,7 @@ class TestUtils(TestCase):
     @patch("imap_l3_processing.utils.ImapAttributeManager")
     @patch("imap_l3_processing.utils.date")
     @patch("imap_l3_processing.utils.write_cdf")
-    def test_save_data_does_not_add_parent_attribute_if_empty(
-        self, mock_write_cdf, mock_today, _
-    ):
+    def test_save_data_does_not_add_parent_attribute_if_empty(self, mock_write_cdf, mock_today, _):
         mock_today.today.return_value = date(2024, 9, 16)
 
         descriptor = "descriptor"
@@ -369,9 +363,7 @@ class TestUtils(TestCase):
 
     @patch("imap_l3_processing.utils.write_cdf")
     @patch("imap_l3_processing.utils.ImapAttributeManager.add_global_attribute")
-    def test_save_data_procedurally_generates_map_global_metadata(
-        self, mock_add_global_attr, _
-    ):
+    def test_save_data_procedurally_generates_map_global_metadata(self, mock_add_global_attr, _):
         descriptor = "descriptor"
         input_metadata = InputMetadata(
             "ultra",
@@ -383,9 +375,7 @@ class TestUtils(TestCase):
         )
 
         epoch_as_datetime = np.array([datetime(2025, 1, 1)])
-        epoch_as_int = np.array(
-            [(datetime(2025, 1, 1) - TT2000_EPOCH).total_seconds() * 1e9]
-        )
+        epoch_as_int = np.array([(datetime(2025, 1, 1) - TT2000_EPOCH).total_seconds() * 1e9])
         epoch_delta = np.array([86400 * 1e9])
 
         cases = [
@@ -396,10 +386,8 @@ class TestUtils(TestCase):
         for case, epoch in cases:
             mock_add_global_attr.reset_mock()
             with self.subTest(case=case):
-                rectangular_spectral_index_map_data = (
-                    create_rectangular_spectral_index_map_data(
-                        epoch=epoch, epoch_delta=epoch_delta
-                    )
+                rectangular_spectral_index_map_data = create_rectangular_spectral_index_map_data(
+                    epoch=epoch, epoch_delta=epoch_delta
                 )
                 data_product = RectangularSpectralIndexDataProduct(
                     input_metadata=input_metadata,
@@ -523,9 +511,7 @@ class TestUtils(TestCase):
 
                 mock_write_cdf.assert_called_once()
 
-                [_file_path, _data, attribute_manager] = mock_write_cdf.call_args_list[
-                    0
-                ].args
+                [_file_path, _data, attribute_manager] = mock_write_cdf.call_args_list[0].args
 
                 global_metadata = attribute_manager.try_load_global_metadata(
                     input_metadata.logical_source
@@ -546,7 +532,9 @@ class TestUtils(TestCase):
     @patch("imap_l3_processing.utils.requests")
     @patch("builtins.open")
     def test_download_external_dependency(self, mock_open_file, mock_requests):
-        expected_url = "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/fluxtable.txt"
+        expected_url = (
+            "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/fluxtable.txt"
+        )
         expected_filename = "f107_fluxtable.txt"
 
         mock_response = Mock(status_code=200)
@@ -565,7 +553,9 @@ class TestUtils(TestCase):
 
     @patch("imap_l3_processing.utils.requests")
     def test_download_external_dependency_error_case(self, mock_requests):
-        expected_url = "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/no_such_file.txt"
+        expected_url = (
+            "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/no_such_file.txt"
+        )
 
         expected_filename = "f107_fluxtable.txt"
         mock_requests.get.side_effect = RequestException
@@ -622,13 +612,7 @@ class TestUtils(TestCase):
                 call(str(get_spice_data_path("imap_science_0001.tf"))),
                 call(str(get_spice_data_path("imap_science_draft.tf"))),
                 call(str(get_spice_data_path("imap_sclk_0000.tsc"))),
-                call(
-                    str(
-                        get_spice_data_path(
-                            "imap_sim_ck_2hr_2secsampling_with_nutation.bc"
-                        )
-                    )
-                ),
+                call(str(get_spice_data_path("imap_sim_ck_2hr_2secsampling_with_nutation.bc"))),
                 call(str(get_spice_data_path("imap_spk_demo.bsp"))),
                 call(str(get_spice_data_path("imap_wkcp.tf"))),
                 call(str(get_spice_data_path("pck00011.tpc"))),
@@ -656,13 +640,9 @@ class TestUtils(TestCase):
     @patch("imap_l3_processing.utils.imap_data_access.download")
     @patch("imap_l3_processing.utils.spiceypy")
     @patch("imap_l3_processing.utils.requests")
-    def test_furnish_spice_metakernel(
-        self, mock_requests, mock_spiceypy, mock_download
-    ):
+    def test_furnish_spice_metakernel(self, mock_requests, mock_spiceypy, mock_download):
 
-        metakernel_bytes = (
-            b"\n\\begintext\n\nThis is the most up to date Metakernel as of ..."
-        )
+        metakernel_bytes = b"\n\\begintext\n\nThis is the most up to date Metakernel as of ..."
 
         mock_requests.get.side_effect = [
             Mock(content=metakernel_bytes),
@@ -692,9 +672,7 @@ class TestUtils(TestCase):
                 "DATA_DIR": mock_data_dir,
                 "DATA_ACCESS_URL": mock_data_access_url,
             }
-            with patch.object(
-                imap_data_access, "config", new=fake_imap_data_access_config
-            ):
+            with patch.object(imap_data_access, "config", new=fake_imap_data_access_config):
                 actual_output = furnish_spice_metakernel(
                     start_date,
                     end_date,
@@ -724,20 +702,12 @@ class TestUtils(TestCase):
                     ]
                 )
 
-                mock_download.assert_has_calls(
-                    [call("naif0012.tls"), call("imap_001.tf")]
-                )
+                mock_download.assert_has_calls([call("naif0012.tls"), call("imap_001.tf")])
 
-                expected_metakernel_path = (
-                    mock_data_dir / "metakernel" / "metakernel_file.txt"
-                )
-                self.assertEqual(
-                    metakernel_bytes, expected_metakernel_path.read_bytes()
-                )
+                expected_metakernel_path = mock_data_dir / "metakernel" / "metakernel_file.txt"
+                self.assertEqual(metakernel_bytes, expected_metakernel_path.read_bytes())
 
-                mock_spiceypy.furnsh.assert_called_once_with(
-                    str(expected_metakernel_path)
-                )
+                mock_spiceypy.furnsh.assert_called_once_with(str(expected_metakernel_path))
 
                 expected_output = FurnishMetakernelOutput(
                     metakernel_path=expected_metakernel_path,
@@ -768,30 +738,22 @@ class TestUtils(TestCase):
             ),
             (
                 "no matching filenames for a descriptor",
-                ProcessingInputCollection(
-                    ScienceInput(filename1), ScienceInput(filename3)
-                ),
+                ProcessingInputCollection(ScienceInput(filename1), ScienceInput(filename3)),
                 ["u90", "u45"],
                 {"u45": [], "u90": [filename1, filename3]},
             ),
             (
                 "extra science file",
-                ProcessingInputCollection(
-                    ScienceInput(filename1), ScienceInput(filename4)
-                ),
+                ProcessingInputCollection(ScienceInput(filename1), ScienceInput(filename4)),
                 ["u90", "u45"],
                 {"u45": [], "u90": [filename1]},
             ),
         ]
         for case_name, input_collection, descriptors, expected_output in cases:
             with self.subTest(case_name):
-                actual_output = get_dependency_paths_by_descriptor(
-                    input_collection, descriptors
-                )
+                actual_output = get_dependency_paths_by_descriptor(input_collection, descriptors)
 
-                self.assertEqual(
-                    sorted(expected_output.keys()), sorted(actual_output.keys())
-                )
+                self.assertEqual(sorted(expected_output.keys()), sorted(actual_output.keys()))
 
                 for i, output_key in enumerate(expected_output.keys()):
                     self.assertEqual(
@@ -842,9 +804,7 @@ class TestUtils(TestCase):
         }
 
         science_file_version = get_version_from_query_result(science_file_query_result)
-        ancillary_file_version = get_version_from_query_result(
-            ancillary_file_query_result
-        )
+        ancillary_file_version = get_version_from_query_result(ancillary_file_query_result)
 
         self.assertIsInstance(science_file_version, Version)
         self.assertIsInstance(ancillary_file_version, Version)

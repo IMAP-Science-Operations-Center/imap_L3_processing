@@ -46,9 +46,7 @@ class TestSweL3Dependencies(unittest.TestCase):
         self.assertEqual(mock_read_l1b_swe_data.return_value, result.swe_l1b_data)
         self.assertEqual(mock_read_swe_data.return_value, result.swe_l2_data)
         self.assertEqual(mock_read_mag_data.return_value, result.mag_data)
-        self.assertEqual(
-            mock_read_swapi_data.return_value, result.swapi_l3a_proton_data
-        )
+        self.assertEqual(mock_read_swapi_data.return_value, result.swapi_l3a_proton_data)
         self.assertEqual(mock_read_swe_config.return_value, result.configuration)
         self.assertFalse(result.mag_is_preliminary)
 

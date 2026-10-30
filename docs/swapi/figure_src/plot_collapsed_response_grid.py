@@ -32,11 +32,7 @@ from imap_l3_processing.swapi.l3a.science.pickup_ion.collapsed_response_grid imp
 )
 
 _REFERENCE_CSV_PATH = (
-    REPO_ROOT
-    / "tests"
-    / "test_data"
-    / "swapi"
-    / "collapsed_response_grid_reference.csv"
+    REPO_ROOT / "tests" / "test_data" / "swapi" / "collapsed_response_grid_reference.csv"
 )
 
 _ESA_VOLTAGE = 5000.0

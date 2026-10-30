@@ -38,9 +38,7 @@ def run_all_maps(
 
         imap_l3_data_processor.imap_l3_processor()
     spiceypy.kclear()
-    with mock_imap_data_access(
-        output_dir, list(Path(intermediate_output).rglob("*.*"))
-    ):
+    with mock_imap_data_access(output_dir, list(Path(intermediate_output).rglob("*.*"))):
         mock_arguments.descriptor = "hic-maps"
         imap_l3_data_processor.imap_l3_processor()
     spiceypy.kclear()
@@ -52,8 +50,6 @@ if __name__ == "__main__":
         input_dir = Path(sys.argv[1])
     except (IndexError, ValueError):
         input_dir = Path("hi_validation_input")
-        print(
-            f"Could not open input file, using default input path of {input_dir} instead"
-        )
+        print(f"Could not open input file, using default input path of {input_dir} instead")
 
     run_all_maps(output_dir=output_dir, input_dir=input_dir)

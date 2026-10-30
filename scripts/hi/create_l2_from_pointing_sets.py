@@ -74,9 +74,7 @@ if __name__ == "__main__":
     for sensor in [45, 90]:
         for side in ["ram", "anti", "full"]:
             for pixelation in [4, 6]:
-                descriptor = (
-                    f"h{sensor}-ena-h-hf-nsp-{side}-hae-{pixelation}deg-{duration}"
-                )
+                descriptor = f"h{sensor}-ena-h-hf-nsp-{side}-hae-{pixelation}deg-{duration}"
                 generate_map(descriptor, start_date, end_date)
 
     duration = "6mo"
@@ -87,7 +85,5 @@ if __name__ == "__main__":
                     (datetime(2025, 4, 15), datetime(2025, 10, 15)),
                     (datetime(2025, 10, 15), datetime(2026, 4, 15)),
                 ]:
-                    descriptor = (
-                        f"h{sensor}-ena-h-hf-nsp-{side}-hae-{pixelation}deg-{duration}"
-                    )
+                    descriptor = f"h{sensor}-ena-h-hf-nsp-{side}-hae-{pixelation}deg-{duration}"
                     generate_map(descriptor, start_date, end_date)

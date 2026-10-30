@@ -18,9 +18,7 @@ from tests.test_helpers import (
 )
 
 
-def create_l1c_and_glows_with_matching_date_range(
-    start_date: datetime, end_date: datetime
-):
+def create_l1c_and_glows_with_matching_date_range(start_date: datetime, end_date: datetime):
     process_date = start_date
     repoint_counter = 0
     l1c_filepaths = []
@@ -38,9 +36,7 @@ def create_l1c_and_glows_with_matching_date_range(
             f"{base_path}/ultra_l1c/imap_ultra_l1c_45sensor-spacecraftpset_{process_date:%Y%m%d}-repoint{repoint_counter:05}_v{version_number:03}.cdf"
         )
         l1c_file_path.parent.mkdir(parents=True, exist_ok=True)
-        _write_ultra_l1c_cdf_with_parents(
-            date=process_date.isoformat(), out_path=l1c_file_path
-        )
+        _write_ultra_l1c_cdf_with_parents(date=process_date.isoformat(), out_path=l1c_file_path)
         l1c_filepaths.append(str(l1c_file_path))
         all_paths.append(str(l1c_file_path))
 

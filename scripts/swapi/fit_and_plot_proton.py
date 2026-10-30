@@ -45,8 +45,7 @@ WIND_PROTON_TEMPERATURE_FACTOR_K_PER_KM2_PER_S2 = 60.5685
 # well below 9000 in every numeric column.
 WIND_FILL_THRESHOLD = 9000.0
 WIND_FTP_URL_TEMPLATE = (
-    "ftp://nssdcftp.gsfc.nasa.gov/pub/data/wind/swe/ascii/2-min/"
-    "wind_swe_2m_sw{yyyymm}.asc"
+    "ftp://nssdcftp.gsfc.nasa.gov/pub/data/wind/swe/ascii/2-min/wind_swe_2m_sw{yyyymm}.asc"
 )
 
 L3_PROCESSING_ROOT = Path(imap_l3_processing.__file__).parent.parent
@@ -135,9 +134,7 @@ def fetch_wind_swe_2min_protons(compact_date_string, cache_directory):
     proton_thermal_speed, proton_thermal_speed_sigma = row[:, 11], row[:, 12]
     proton_density, proton_density_sigma = row[:, 21], row[:, 22]
 
-    proton_temperature = (
-        WIND_PROTON_TEMPERATURE_FACTOR_K_PER_KM2_PER_S2 * proton_thermal_speed**2
-    )
+    proton_temperature = WIND_PROTON_TEMPERATURE_FACTOR_K_PER_KM2_PER_S2 * proton_thermal_speed**2
     proton_temperature_sigma = (
         2.0
         * WIND_PROTON_TEMPERATURE_FACTOR_K_PER_KM2_PER_S2
@@ -196,9 +193,7 @@ def build_dependency_collection(target_date, compact_date):
         SpiceKernelTypes.EphemerisReconstructed,
         SpiceKernelTypes.EphemerisPredicted,
     ]
-    non_ephemeris_kernel_types = [
-        t for t in SpiceKernelTypes if t not in ephemeris_kernel_types
-    ]
+    non_ephemeris_kernel_types = [t for t in SpiceKernelTypes if t not in ephemeris_kernel_types]
     spice_kernel_filenames = list(
         dict.fromkeys(
             os.path.basename(path)
@@ -298,17 +293,13 @@ with CDF(str(output_cdf_path)) as proton_cdf:
     timestamps = proton_cdf["epoch"][...]
     quality_flags = proton_cdf["swp_flags"][...]
     swapi_density = read_numeric_variable(proton_cdf["proton_sw_density"])
-    swapi_density_uncertainty = read_numeric_variable(
-        proton_cdf["proton_sw_density_uncert"]
-    )
+    swapi_density_uncertainty = read_numeric_variable(proton_cdf["proton_sw_density_uncert"])
     swapi_temperature = read_numeric_variable(proton_cdf["proton_sw_temperature"])
     swapi_temperature_uncertainty = read_numeric_variable(
         proton_cdf["proton_sw_temperature_uncert"]
     )
     swapi_speed = read_numeric_variable(proton_cdf["proton_sw_speed"])
-    swapi_speed_uncertainty = read_numeric_variable(
-        proton_cdf["proton_sw_speed_uncert"]
-    )
+    swapi_speed_uncertainty = read_numeric_variable(proton_cdf["proton_sw_speed_uncert"])
     swapi_velocity_rtn = read_numeric_variable(proton_cdf["proton_sw_velocity_rtn_sun"])
     swapi_velocity_rtn_covariance = read_numeric_variable(
         proton_cdf["proton_sw_velocity_rtn_covariance"]
@@ -325,9 +316,7 @@ swapi_speed_uncertainty = swapi_speed_uncertainty[good_record_mask]
 swapi_velocity_rtn = swapi_velocity_rtn[good_record_mask]
 swapi_velocity_rtn_covariance = swapi_velocity_rtn_covariance[good_record_mask]
 
-swapi_velocity_rtn_sigma = np.sqrt(
-    np.diagonal(swapi_velocity_rtn_covariance, axis1=1, axis2=2)
-)
+swapi_velocity_rtn_sigma = np.sqrt(np.diagonal(swapi_velocity_rtn_covariance, axis1=1, axis2=2))
 
 wind_protons = fetch_wind_swe_2min_protons(compact_date, DATA_DIR / "wind") or {}
 

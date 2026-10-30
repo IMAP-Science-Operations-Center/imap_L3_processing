@@ -22,9 +22,7 @@ SPICE_KERNELS = [
 
 
 def generate_swe_for_given_day(day: datetime):
-    spice_kernel_files = get_spice_kernels_file_names(
-        day, day + timedelta(days=1), SPICE_KERNELS
-    )
+    spice_kernel_files = get_spice_kernels_file_names(day, day + timedelta(days=1), SPICE_KERNELS)
     day_as_string = day.strftime("%Y%m%d")
     l2_file_name = imap_data_access.query(
         instrument="swe",
@@ -65,9 +63,7 @@ def generate_swe_for_given_day(day: datetime):
         swe_ancillary_file_name,
     ]
 
-    input_collection = ProcessingInputCollection(
-        *[generate_imap_input(i) for i in input_files]
-    )
+    input_collection = ProcessingInputCollection(*[generate_imap_input(i) for i in input_files])
     input_collection.download_all_files()
 
     dependency_file_name = f"imap_swe_l3_sci_{day_as_string}_v002.json"

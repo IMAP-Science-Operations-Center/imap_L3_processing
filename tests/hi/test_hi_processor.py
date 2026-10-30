@@ -26,9 +26,7 @@ from tests.test_helpers import get_test_data_path, run_periodically
 
 class TestHiProcessor(unittest.TestCase):
     @patch("imap_l3_processing.hi.hi_processor.MapProcessor.get_parent_file_names")
-    @patch(
-        "imap_l3_processing.hi.hi_processor.HiSpectralIndexDependencies.fetch_dependencies"
-    )
+    @patch("imap_l3_processing.hi.hi_processor.HiSpectralIndexDependencies.fetch_dependencies")
     @patch("imap_l3_processing.maps.spectral_fit.fit_arrays_to_power_law")
     @patch("imap_l3_processing.hi.hi_processor.save_data")
     def test_process_spectral_fit(
@@ -97,9 +95,7 @@ class TestHiProcessor(unittest.TestCase):
 
         mock_save_data.assert_called_once()
         actual_hi_data_product = mock_save_data.call_args_list[0].args[0]
-        self.assertIsInstance(
-            actual_hi_data_product, RectangularSpectralIndexDataProduct
-        )
+        self.assertIsInstance(actual_hi_data_product, RectangularSpectralIndexDataProduct)
         self.assertEqual(input_metadata, actual_hi_data_product.input_metadata)
         actual_data = actual_hi_data_product.data
         spectral_index_data = actual_data.spectral_index_map_data
@@ -114,9 +110,7 @@ class TestHiProcessor(unittest.TestCase):
         np.testing.assert_array_equal(
             spectral_index_data.energy_delta_plus, expected_energy_delta_plus
         )
-        np.testing.assert_array_equal(
-            spectral_index_data.ena_spectral_index, expected_index
-        )
+        np.testing.assert_array_equal(spectral_index_data.ena_spectral_index, expected_index)
         np.testing.assert_array_equal(
             spectral_index_data.ena_spectral_index_stat_uncert, expected_index_unc
         )
@@ -127,20 +121,12 @@ class TestHiProcessor(unittest.TestCase):
             spectral_index_data.ena_spectral_index_scalar_coefficient_stat_uncert,
             expected_scalar_unc,
         )
-        np.testing.assert_array_equal(
-            spectral_index_data.ena_spectral_index_chisq, expected_chisq
-        )
+        np.testing.assert_array_equal(spectral_index_data.ena_spectral_index_chisq, expected_chisq)
         np.testing.assert_array_equal(spectral_index_data.energy, expected_energy)
-        np.testing.assert_array_equal(
-            spectral_index_data.latitude, intensity_data.latitude
-        )
-        np.testing.assert_array_equal(
-            spectral_index_data.longitude, intensity_data.longitude
-        )
+        np.testing.assert_array_equal(spectral_index_data.latitude, intensity_data.latitude)
+        np.testing.assert_array_equal(spectral_index_data.longitude, intensity_data.longitude)
         np.testing.assert_array_equal(spectral_index_data.epoch, intensity_data.epoch)
-        np.testing.assert_array_equal(
-            spectral_index_data.exposure_factor, expected_exposure
-        )
+        np.testing.assert_array_equal(spectral_index_data.exposure_factor, expected_exposure)
         self.assertEqual(["l2_or_l3_map"], actual_hi_data_product.parent_file_names)
         self.assertEqual(hi_l3_data.coords, spectral_index_coords)
         self.assertEqual(SpiceFrame.ECLIPJ2000, actual_hi_data_product.spice_frame_name)
@@ -218,9 +204,7 @@ class TestHiProcessor(unittest.TestCase):
                     atol=1e-3,
                 )
                 np.testing.assert_allclose(
-                    output_data.spectral_index_map_data.ena_spectral_index_stat_uncert[
-                        0, 0
-                    ],
+                    output_data.spectral_index_map_data.ena_spectral_index_stat_uncert[0, 0],
                     expected_gamma_sigma,
                     atol=1e-3,
                 )
@@ -301,9 +285,7 @@ class TestHiProcessor(unittest.TestCase):
         intensity_data.obs_date_range[0, 0] = 1
         intensity_data.obs_date_range[0, 1] = 1
         intensity_data.obs_date_range[0, 2] = 3
-        intensity_data.obs_date_range.mask = np.ma.getmaskarray(
-            intensity_data.obs_date_range
-        )
+        intensity_data.obs_date_range.mask = np.ma.getmaskarray(intensity_data.obs_date_range)
         intensity_data.obs_date_range.mask[0, 1] = True
 
         processor = HiProcessor(sentinel.input_metadata, sentinel.dependencies)
@@ -339,9 +321,7 @@ class TestHiProcessor(unittest.TestCase):
 
         intensity_data.exposure_factor[:] = 0.0
 
-        intensity_data.obs_date_range.mask = np.ma.getmaskarray(
-            intensity_data.obs_date_range
-        )
+        intensity_data.obs_date_range.mask = np.ma.getmaskarray(intensity_data.obs_date_range)
         intensity_data.obs_date_range.mask[:] = True
 
         processor = HiProcessor(sentinel.input_metadata, sentinel.dependencies)
@@ -364,9 +344,7 @@ class TestHiProcessor(unittest.TestCase):
         )
 
     @patch("imap_l3_processing.hi.hi_processor.MapProcessor.get_parent_file_names")
-    @patch(
-        "imap_l3_processing.hi.hi_processor.HiLoL3SurvivalDependencies.fetch_dependencies"
-    )
+    @patch("imap_l3_processing.hi.hi_processor.HiLoL3SurvivalDependencies.fetch_dependencies")
     @patch("imap_l3_processing.hi.hi_processor.process_survival_probabilities")
     @patch("imap_l3_processing.hi.hi_processor.save_data")
     def test_process_ram_or_antiram_spin(
@@ -408,9 +386,7 @@ class TestHiProcessor(unittest.TestCase):
                     Path("folder/l1c"),
                 ]
 
-                mock_process_survival_prob.return_value = (
-                    sentinel.survival_probabilities
-                )
+                mock_process_survival_prob.return_value = sentinel.survival_probabilities
 
                 processor = HiProcessor(sentinel.input_dependencies, input_metadata)
                 product = processor.process(spice_frame_name=spice_frame_name)
@@ -419,9 +395,7 @@ class TestHiProcessor(unittest.TestCase):
                     sentinel.input_dependencies, Instrument.IMAP_HI
                 )
 
-                mock_process_survival_prob.assert_called_once_with(
-                    dependencies, spice_frame_name
-                )
+                mock_process_survival_prob.assert_called_once_with(dependencies, spice_frame_name)
 
                 mock_save_data.assert_called_once_with(
                     RectangularIntensityDataProduct(
@@ -537,9 +511,7 @@ class TestHiProcessor(unittest.TestCase):
 
                 full_spin_dependencies: HiL3SingleSensorFullSpinDependencies = Mock()
                 full_spin_dependencies.dependency_file_paths = [
-                    Path(
-                        "folder/ram_map", Path("folder/antiram_map"), Path("folder/l1c")
-                    )
+                    Path("folder/ram_map", Path("folder/antiram_map"), Path("folder/l1c"))
                 ]
                 mock_fetch_dependencies.return_value = full_spin_dependencies
 
@@ -594,9 +566,7 @@ class TestHiProcessor(unittest.TestCase):
 
     @patch("imap_l3_processing.hi.hi_processor.MapProcessor.get_parent_file_names")
     @patch("imap_l3_processing.hi.hi_processor.save_data")
-    @patch(
-        "imap_l3_processing.hi.hi_processor.HiL3CombinedMapDependencies.fetch_dependencies"
-    )
+    @patch("imap_l3_processing.hi.hi_processor.HiL3CombinedMapDependencies.fetch_dependencies")
     @patch("imap_l3_processing.hi.hi_processor.ExposureWeightedCombination")
     @patch("imap_l3_processing.hi.hi_processor.UncertaintyWeightedCombination")
     def test_process_combined_sensor_map(
@@ -608,9 +578,7 @@ class TestHiProcessor(unittest.TestCase):
         mock_get_parent_file_names,
     ):
         mock_exposure_combination = Mock()
-        mock_exposure_weighted_combination_class.return_value = (
-            mock_exposure_combination
-        )
+        mock_exposure_weighted_combination_class.return_value = mock_exposure_combination
 
         mock_uncertainty_weighted_combination = Mock()
 
@@ -688,9 +656,7 @@ class TestHiProcessor(unittest.TestCase):
                 with self.assertRaises(NotImplementedError):
                     _ = processor.process()
 
-    @patch(
-        "imap_l3_processing.hi.hi_processor.HiSpectralIndexDependencies.fetch_dependencies"
-    )
+    @patch("imap_l3_processing.hi.hi_processor.HiSpectralIndexDependencies.fetch_dependencies")
     @patch("imap_l3_processing.hi.hi_processor.fit_spectral_index_map")
     @patch("imap_l3_processing.hi.hi_processor.slice_energy_range_by_bin")
     @patch("imap_l3_processing.hi.hi_processor.save_data")
@@ -719,6 +685,4 @@ class TestHiProcessor(unittest.TestCase):
         mock_slice_energy_range_by_bin.assert_called_with(
             dependencies.map_data.intensity_map_data, 10, 20
         )
-        mock_fit_spectral_index_map.assert_called_with(
-            mock_slice_energy_range_by_bin.return_value
-        )
+        mock_fit_spectral_index_map.assert_called_with(mock_slice_energy_range_by_bin.return_value)

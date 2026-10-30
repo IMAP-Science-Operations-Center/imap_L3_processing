@@ -62,9 +62,7 @@ ESA_STEP = TypeVar("ESA_STEP")
 class GeometricFactorLookup:
     _full_factor: np.ndarray[(ESA_STEP, POSITION)]
     _reduced_factor: np.ndarray[(ESA_STEP, POSITION)]
-    _esa_step_end_index: np.ndarray = field(
-        default_factory=_half_spin_to_esa_step_lookup
-    )
+    _esa_step_end_index: np.ndarray = field(default_factory=_half_spin_to_esa_step_lookup)
 
     @classmethod
     def read_from_csv(cls, filepath: Path):
@@ -93,9 +91,7 @@ class GeometricFactorLookup:
         reduced_factor_full_shape = np.broadcast_to(
             self._reduced_factor[None, :, None, :], full_shape
         )
-        full_factor_full_shape = np.broadcast_to(
-            self._full_factor[None, :, None, :], full_shape
-        )
+        full_factor_full_shape = np.broadcast_to(self._full_factor[None, :, None, :], full_shape)
 
         if epoch < CODICE_SECOND_ERA:
             use_reduced = self._rgfo_half_spin_compare_only(rgfo_half_spin, half_spin)
@@ -132,9 +128,7 @@ class GeometricFactorLookup:
 
         half_spin_e = half_spin[:, :, None, None]
         esa_step_axis = np.arange(CODICE_LO_NUM_ESA_STEPS)[None, :, None, None]
-        spin_sector_axis_mod = (
-            np.arange(CODICE_LO_NUM_SPIN_SECTORS)[None, None, :, None] % 12
-        )
+        spin_sector_axis_mod = np.arange(CODICE_LO_NUM_SPIN_SECTORS)[None, None, :, None] % 12
 
         half_spin_past = half_spin_e > rgfo_half_spin_e
         half_spin_match = half_spin_e == rgfo_half_spin_e

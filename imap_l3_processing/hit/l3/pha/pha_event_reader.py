@@ -22,9 +22,7 @@ class Detector:
     @classmethod
     def from_address(cls, address: int):
         if cls.detector_mapping == {}:
-            with open(
-                Path(__file__).parent / "address_to_detector.csv"
-            ) as detector_mapping_file:
+            with open(Path(__file__).parent / "address_to_detector.csv") as detector_mapping_file:
                 reader = csv.reader(detector_mapping_file)
                 next(reader)
                 for name, address_str, group in reader:
@@ -126,9 +124,7 @@ class PHAEventReader:
             delta_e_index = event_bitstream.read("uint:9")
             e_prime_index = event_bitstream.read("uint:7")
             detector_flags = event_bitstream.read("uint:8")
-            extended_header = PHAExtendedHeader(
-                detector_flags, delta_e_index, e_prime_index
-            )
+            extended_header = PHAExtendedHeader(detector_flags, delta_e_index, e_prime_index)
 
         elif stim_tag:
             if long_event_flag:

@@ -80,17 +80,11 @@ def replay_chunk_spectrum(
     Mirrors the geometry path in calculate_pickup_ion_values so the energies
     and modeled rate match production exactly.
     """
-    chunk_ephemeris_time = spiceypy.unitim(
-        center_of_epoch / ONE_SECOND_IN_NANOSECONDS, "TT", "ET"
-    )
+    chunk_ephemeris_time = spiceypy.unitim(center_of_epoch / ONE_SECOND_IN_NANOSECONDS, "TT", "ET")
     sw_velocity_kms = float(np.linalg.norm(sw_velocity_rtn_kms))
 
-    voltages_flat = (
-        data_chunk.energy[:, SWAPI_COARSE_SWEEP_BINS] / SWAPI_L2_K_FACTOR
-    ).flatten()
-    count_rates_flat = data_chunk.coincidence_count_rate[
-        :, SWAPI_COARSE_SWEEP_BINS
-    ].flatten()
+    voltages_flat = (data_chunk.energy[:, SWAPI_COARSE_SWEEP_BINS] / SWAPI_L2_K_FACTOR).flatten()
+    count_rates_flat = data_chunk.coincidence_count_rate[:, SWAPI_COARSE_SWEEP_BINS].flatten()
     central_effective_area_scale = (
         dependencies.efficiency_calibration_table.central_effective_area_scale_for(
             center_of_epoch, "helium"
@@ -211,9 +205,7 @@ if __name__ == "__main__":
         SpiceKernelTypes.EphemerisReconstructed,
         SpiceKernelTypes.EphemerisPredicted,
     ]
-    non_ephemeris_kernel_types = [
-        t for t in SpiceKernelTypes if t not in ephemeris_kernel_types
-    ]
+    non_ephemeris_kernel_types = [t for t in SpiceKernelTypes if t not in ephemeris_kernel_types]
     spice_kernel_filenames = list(
         dict.fromkeys(
             os.path.basename(path)
@@ -257,16 +249,12 @@ if __name__ == "__main__":
     )
 
     if not arguments.use_cache or not cache_path.exists():
-        dependencies.swapi_response.warm_cache(
-            dependencies.data.energy / SWAPI_L2_K_FACTOR
-        )
+        dependencies.swapi_response.warm_cache(dependencies.data.energy / SWAPI_L2_K_FACTOR)
         runner = ParallelChunkRunner(
             dependencies.swapi_response, dependencies.efficiency_calibration_table
         )
         pui_chunks = list(chunk_l2_data(dependencies.data, 50))
-        proton_results = runner.run(
-            list(chunk_l2_data(dependencies.data, 5)), ProtonChunkFitter()
-        )
+        proton_results = runner.run(list(chunk_l2_data(dependencies.data, 5)), ProtonChunkFitter())
         pui_fitter = PuiChunkFitter(
             density_of_neutral_helium_lookup_table=dependencies.density_of_neutral_helium_calibration_table,
             hydrogen_inflow_vector=dependencies.hydrogen_inflow_vector,
@@ -287,22 +275,14 @@ if __name__ == "__main__":
         pickup_ion_data, sw_velocity_rtn_by_chunk_epoch = pickle.load(cache_file)
 
     epochs_tt2000 = np.asarray(pickup_ion_data.epoch, dtype=np.int64)
-    timestamps = np.array(
-        [cdf_library.tt2000_to_datetime(int(t)) for t in epochs_tt2000]
-    )
+    timestamps = np.array([cdf_library.tt2000_to_datetime(int(t)) for t in epochs_tt2000])
 
-    spectrogram_cache_path = Path(
-        f"/tmp/swapi_pui_spectrograms_per_sweep_{compact_date}.pkl"
-    )
+    spectrogram_cache_path = Path(f"/tmp/swapi_pui_spectrograms_per_sweep_{compact_date}.pkl")
     all_chunks = list(chunk_l2_data(dependencies.data, 50))
 
     if not arguments.use_cache or not spectrogram_cache_path.exists():
-        print(
-            "Building per-sweep observed and modeled spectrograms (one replay per chunk)..."
-        )
-        dependencies.swapi_response.warm_cache(
-            dependencies.data.energy / SWAPI_L2_K_FACTOR
-        )
+        print("Building per-sweep observed and modeled spectrograms (one replay per chunk)...")
+        dependencies.swapi_response.warm_cache(dependencies.data.energy / SWAPI_L2_K_FACTOR)
 
         chunk_count = min(len(all_chunks), len(epochs_tt2000))
         per_sweep_voltages = []
@@ -312,15 +292,11 @@ if __name__ == "__main__":
 
         for chunk_index in range(chunk_count):
             data_chunk = all_chunks[chunk_index]
-            voltages_2d = (
-                data_chunk.energy[:, SWAPI_COARSE_SWEEP_BINS] / SWAPI_L2_K_FACTOR
-            )
+            voltages_2d = data_chunk.energy[:, SWAPI_COARSE_SWEEP_BINS] / SWAPI_L2_K_FACTOR
             rates_2d = data_chunk.coincidence_count_rate[:, SWAPI_COARSE_SWEEP_BINS]
             per_sweep_voltages.append(voltages_2d)
             per_sweep_observed.append(rates_2d)
-            per_sweep_epoch_tt2000.append(
-                np.asarray(data_chunk.sci_start_time, dtype=np.int64)
-            )
+            per_sweep_epoch_tt2000.append(np.asarray(data_chunk.sci_start_time, dtype=np.int64))
 
             model_rates_for_chunk = np.full_like(rates_2d, np.nan, dtype=float)
 
@@ -347,14 +323,10 @@ if __name__ == "__main__":
                 except Exception as replay_error:  # noqa: BLE001
                     print(f"chunk {chunk_index} replay failed: {replay_error}")
                 else:
-                    model_rates_for_chunk[:, replay["bin_mask"]] = replay[
-                        "modeled_rate_per_sweep"
-                    ]
+                    model_rates_for_chunk[:, replay["bin_mask"]] = replay["modeled_rate_per_sweep"]
             per_sweep_model.append(model_rates_for_chunk)
 
-        energies_per_sweep_ev = (
-            np.concatenate(per_sweep_voltages, axis=0) * SWAPI_L2_K_FACTOR
-        )
+        energies_per_sweep_ev = np.concatenate(per_sweep_voltages, axis=0) * SWAPI_L2_K_FACTOR
         observed_spectrogram = np.concatenate(per_sweep_observed, axis=0)
         model_spectrogram = np.concatenate(per_sweep_model, axis=0)
         sweep_epochs_tt2000 = np.concatenate(per_sweep_epoch_tt2000, axis=0)
@@ -389,10 +361,7 @@ if __name__ == "__main__":
     model_sorted = model_spectrogram[:, energy_sort_order]
 
     positive_rate_values = np.concatenate(
-        [
-            array[np.isfinite(array) & (array > 0)]
-            for array in (observed_sorted, model_sorted)
-        ]
+        [array[np.isfinite(array) & (array > 0)] for array in (observed_sorted, model_sorted)]
     )
     if positive_rate_values.size:
         rate_vmin = max(float(np.percentile(positive_rate_values, 1)), 1e-3)
@@ -422,9 +391,7 @@ if __name__ == "__main__":
     figure.colorbar(observed_mesh, ax=observed_axis, label="rate / s$^{-1}$")
     plt.setp(observed_axis.get_xticklabels(), visible=False)
 
-    model_axis = figure.add_subplot(
-        grid_spec[1], sharex=observed_axis, sharey=observed_axis
-    )
+    model_axis = figure.add_subplot(grid_spec[1], sharex=observed_axis, sharey=observed_axis)
     model_mesh = model_axis.pcolormesh(
         sweep_timestamps,
         mean_energies_ev_sorted,
@@ -435,9 +402,7 @@ if __name__ == "__main__":
     )
     model_axis.set_yscale("log")
     model_axis.set_ylabel("Energy / eV")
-    model_axis.set_title(
-        "Fitted helium PUI model coincidence count rate (per 12 s sweep)"
-    )
+    model_axis.set_title("Fitted helium PUI model coincidence count rate (per 12 s sweep)")
     figure.colorbar(model_mesh, ax=model_axis, label="rate / s$^{-1}$")
     plt.setp(model_axis.get_xticklabels(), visible=False)
 
@@ -488,23 +453,18 @@ if __name__ == "__main__":
             for _, _, _, cdf_var_name in timeseries_panels:
                 published_l3a_values_by_var[cdf_var_name] = (
                     np.asarray(published_cdf[cdf_var_name][...], dtype=float),
-                    np.asarray(
-                        published_cdf[f"{cdf_var_name}_uncert"][...], dtype=float
-                    ),
+                    np.asarray(published_cdf[f"{cdf_var_name}_uncert"][...], dtype=float),
                 )
 
     local_flags = np.asarray(pickup_ion_data.quality_flags, dtype=np.int64)
     local_flagged = local_flags != 0
 
-    for panel_index, (ylabel, yscale, values, cdf_var_name) in enumerate(
-        timeseries_panels
-    ):
+    for panel_index, (ylabel, yscale, values, cdf_var_name) in enumerate(timeseries_panels):
         axis = figure.add_subplot(grid_spec[panel_index + 2], sharex=observed_axis)
         nominal_values_array = unumpy.nominal_values(values)
         std_devs_array = unumpy.std_devs(values)
         show_legend = (
-            panel_index == CUTOFF_SPEED_PANEL_INDEX
-            or published_l3a_timestamps is not None
+            panel_index == CUTOFF_SPEED_PANEL_INDEX or published_l3a_timestamps is not None
         )
         axis.errorbar(
             timestamps,
@@ -527,9 +487,7 @@ if __name__ == "__main__":
                 label="flag != 0" if show_legend else None,
             )
         if published_l3a_timestamps is not None:
-            published_nominal, published_uncert = published_l3a_values_by_var[
-                cdf_var_name
-            ]
+            published_nominal, published_uncert = published_l3a_values_by_var[cdf_var_name]
             valid = (
                 np.isfinite(published_nominal)
                 & (published_uncert >= 0)
@@ -561,10 +519,7 @@ if __name__ == "__main__":
                 linewidth=0,
                 label=r"$\pm 20\%$ SW speed",
             )
-        if (
-            panel_index == CUTOFF_SPEED_PANEL_INDEX
-            or published_l3a_timestamps is not None
-        ):
+        if panel_index == CUTOFF_SPEED_PANEL_INDEX or published_l3a_timestamps is not None:
             axis.legend(loc="best", fontsize="small")
         axis.set_ylabel(ylabel)
         axis.set_yscale(yscale)

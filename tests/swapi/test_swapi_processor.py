@@ -142,9 +142,7 @@ class TestSwapiProcessor(TestCase):
             f"imap_{instrument}_{DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR}_{dependency_start_date}_{version}.cdf",
         ]
 
-        ancillary_inputs = [
-            AncillaryInput(file_name) for file_name in input_file_names[1:]
-        ]
+        ancillary_inputs = [AncillaryInput(file_name) for file_name in input_file_names[1:]]
 
         dependencies = ProcessingInputCollection(science_input, *ancillary_inputs)
 
@@ -173,9 +171,7 @@ class TestSwapiProcessor(TestCase):
             [chunk_of_fifty],
         ]
 
-        mock_l3a_dependencies = (
-            mock_swapi_l3_dependencies_class.fetch_dependencies.return_value
-        )
+        mock_l3a_dependencies = mock_swapi_l3_dependencies_class.fetch_dependencies.return_value
         mock_l3a_dependencies.data = Mock(energy=energy_1d)
 
         mock_manager = mock_imap_attribute_manager.return_value
@@ -189,9 +185,7 @@ class TestSwapiProcessor(TestCase):
             dependency_start_date,
         )
 
-        mock_swapi_l3_dependencies_class.fetch_dependencies.assert_called_once_with(
-            dependencies
-        )
+        mock_swapi_l3_dependencies_class.fetch_dependencies.assert_called_once_with(dependencies)
 
         mock_swapi_response = mock_l3a_dependencies.swapi_response
         mock_efficiency_lut = mock_l3a_dependencies.efficiency_calibration_table
@@ -225,12 +219,8 @@ class TestSwapiProcessor(TestCase):
             pui_fitter_kwargs["density_of_neutral_helium_lookup_table"],
             mock_density_of_neutral_helium_calibration_table,
         )
-        self.assertIs(
-            pui_fitter_kwargs["hydrogen_inflow_vector"], mock_hydrogen_inflow_vector
-        )
-        self.assertIs(
-            pui_fitter_kwargs["helium_inflow_vector"], mock_helium_inflow_vector
-        )
+        self.assertIs(pui_fitter_kwargs["hydrogen_inflow_vector"], mock_hydrogen_inflow_vector)
+        self.assertIs(pui_fitter_kwargs["helium_inflow_vector"], mock_helium_inflow_vector)
         self.assertIs(pui_fitter_kwargs["proton_sw_results"], proton_runner_result)
 
         mock_manager.add_global_attribute.assert_has_calls(
@@ -238,9 +228,7 @@ class TestSwapiProcessor(TestCase):
                 call("Data_version", outgoing_version),
                 call("Generation_date", date.today().strftime("%Y%m%d")),
                 call("Logical_source", "imap_swapi_l3a_pui-he"),
-                call(
-                    "Logical_file_id", f"imap_swapi_l3a_pui-he_{start_date_as_str}_v123"
-                ),
+                call("Logical_file_id", f"imap_swapi_l3a_pui-he_{start_date_as_str}_v123"),
             ]
         )
 
@@ -250,9 +238,7 @@ class TestSwapiProcessor(TestCase):
         for key, expected_val in pui_runner_result.items():
             np.testing.assert_array_equal(expected_val, actual_kwargs[key])
 
-        mock_manager.add_instrument_attrs.assert_called_once_with(
-            "swapi", "l3a", descriptor
-        )
+        mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a", descriptor)
 
         self.assertEqual(input_file_names, pickup_ion_data.parent_file_names)
         mock_write_cdf.assert_called_once_with(
@@ -355,9 +341,7 @@ class TestSwapiProcessor(TestCase):
             f"imap_{instrument}_{PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR}_{dependency_start_date}_{version}.cdf",
         ]
 
-        ancillary_inputs = [
-            AncillaryInput(file_name) for file_name in input_file_names[1:]
-        ]
+        ancillary_inputs = [AncillaryInput(file_name) for file_name in input_file_names[1:]]
 
         dependencies = ProcessingInputCollection(science_input, *ancillary_inputs)
 
@@ -386,18 +370,14 @@ class TestSwapiProcessor(TestCase):
 
         swapi_l3a_dependencies = create_swapi_l3a_dependencies_with_mocks()
         swapi_l3a_dependencies.data = Mock(energy=energy)
-        mock_swapi_l3_dependencies_class.fetch_dependencies.return_value = (
-            swapi_l3a_dependencies
-        )
+        mock_swapi_l3_dependencies_class.fetch_dependencies.return_value = swapi_l3a_dependencies
 
         mock_manager = mock_imap_attribute_manager.return_value
 
         swapi_processor = SwapiProcessor(dependencies, input_metadata)
         product = swapi_processor.process()
 
-        mock_swapi_l3_dependencies_class.fetch_dependencies.assert_called_once_with(
-            dependencies
-        )
+        mock_swapi_l3_dependencies_class.fetch_dependencies.assert_called_once_with(dependencies)
 
         swapi_l3a_dependencies.swapi_response.warm_cache.assert_called_once()
 
@@ -431,9 +411,7 @@ class TestSwapiProcessor(TestCase):
             ]
         )
 
-        mock_manager.add_instrument_attrs.assert_called_once_with(
-            "swapi", "l3a", descriptor
-        )
+        mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a", descriptor)
 
         self.assertEqual(input_file_names, proton_solar_wind_data.parent_file_names)
         mock_write_cdf.assert_called_once_with(
@@ -468,9 +446,7 @@ class TestSwapiProcessor(TestCase):
         outgoing_data_level = "l3a"
         start_date = datetime(2025, 8, 28)
         l3a_descriptor = "alpha-sw"
-        input_version = create_mock_version_map(
-            descriptor=l3a_descriptor, minor_version=123
-        )
+        input_version = create_mock_version_map(descriptor=l3a_descriptor, minor_version=123)
         outgoing_version = "123"
         start_date_as_str = datetime.strftime(start_date, "%Y%m%d")
 
@@ -523,9 +499,7 @@ class TestSwapiProcessor(TestCase):
             f"imap_{instrument}_{PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR}_{dependency_start_date}_{version}.cdf",
         ]
 
-        ancillary_inputs = [
-            AncillaryInput(file_name) for file_name in input_file_names[1:]
-        ]
+        ancillary_inputs = [AncillaryInput(file_name) for file_name in input_file_names[1:]]
         dependencies = ProcessingInputCollection(science_input, *ancillary_inputs)
 
         input_metadata = InputMetadata(
@@ -554,18 +528,14 @@ class TestSwapiProcessor(TestCase):
         swapi_l3a_dependencies.data = Mock(energy=energy)
         swapi_l3a_dependencies.mag_data = Mock()
         swapi_l3a_dependencies.mag_is_preliminary = False
-        mock_swapi_l3_dependencies_class.fetch_dependencies.return_value = (
-            swapi_l3a_dependencies
-        )
+        mock_swapi_l3_dependencies_class.fetch_dependencies.return_value = swapi_l3a_dependencies
 
         mock_manager = mock_imap_attribute_manager.return_value
 
         swapi_processor = SwapiProcessor(dependencies, input_metadata)
         product = swapi_processor.process()
 
-        mock_swapi_l3_dependencies_class.fetch_dependencies.assert_called_once_with(
-            dependencies
-        )
+        mock_swapi_l3_dependencies_class.fetch_dependencies.assert_called_once_with(dependencies)
 
         swapi_l3a_dependencies.swapi_response.warm_cache.assert_called_once()
 
@@ -598,9 +568,7 @@ class TestSwapiProcessor(TestCase):
                 ),
             ]
         )
-        mock_manager.add_instrument_attrs.assert_called_once_with(
-            "swapi", "l3a", l3a_descriptor
-        )
+        mock_manager.add_instrument_attrs.assert_called_once_with("swapi", "l3a", l3a_descriptor)
 
         self.assertEqual(input_file_names, alpha_solar_wind_data.parent_file_names)
         mock_write_cdf.assert_called_once_with(
@@ -690,9 +658,7 @@ class TestSwapiProcessor(TestCase):
                 sentinel.alpha_velocity_delta_minus1,
                 sentinel.alpha_velocity_delta_plus1,
             ),
-            DeltaMinusPlus(
-                sentinel.pui_velocity_delta_minus1, sentinel.pui_velocity_delta_plus1
-            ),
+            DeltaMinusPlus(sentinel.pui_velocity_delta_minus1, sentinel.pui_velocity_delta_plus1),
             DeltaMinusPlus(sentinel.energy_delta_minus1, sentinel.energy_delta_plus1),
             DeltaMinusPlus(
                 sentinel.proton_velocity_delta_minus2,
@@ -702,9 +668,7 @@ class TestSwapiProcessor(TestCase):
                 sentinel.alpha_velocity_delta_minus2,
                 sentinel.alpha_velocity_delta_plus2,
             ),
-            DeltaMinusPlus(
-                sentinel.pui_velocity_delta_minus2, sentinel.pui_velocity_delta_plus2
-            ),
+            DeltaMinusPlus(sentinel.pui_velocity_delta_minus2, sentinel.pui_velocity_delta_plus2),
             DeltaMinusPlus(sentinel.energy_delta_minus2, sentinel.energy_delta_plus2),
         ]
 
@@ -723,8 +687,8 @@ class TestSwapiProcessor(TestCase):
 
         average_coincident_count_rates = coarse_count_rates
         # σ propagation through Σ/N over n independent sweeps shrinks the per-sweep σ by √n.
-        average_coincident_count_rate_uncertainties = (
-            coarse_count_rate_uncertainties / np.sqrt(n_sweeps)
+        average_coincident_count_rate_uncertainties = coarse_count_rate_uncertainties / np.sqrt(
+            n_sweeps
         )
         energy = coarse_energies
 
@@ -763,9 +727,7 @@ class TestSwapiProcessor(TestCase):
         swapi_processor = SwapiProcessor(dependencies, input_metadata)
         product = swapi_processor.process()
 
-        mock_swapi_l3b_dependencies_class.fetch_dependencies.assert_called_once_with(
-            dependencies
-        )
+        mock_swapi_l3b_dependencies_class.fetch_dependencies.assert_called_once_with(dependencies)
 
         mock_geometric_factor_calibration_table = mock_swapi_l3b_dependencies_class.fetch_dependencies.return_value.geometric_factor_calibration_table
         mock_efficiency_table = mock_swapi_l3b_dependencies_class.fetch_dependencies.return_value.efficiency_calibration_table
@@ -799,9 +761,7 @@ class TestSwapiProcessor(TestCase):
 
         np.testing.assert_array_equal(
             nominal_count_rates,
-            nominal_values(
-                mock_calculate_proton_solar_wind_vdf.call_args_list[0].args[1]
-            ),
+            nominal_values(mock_calculate_proton_solar_wind_vdf.call_args_list[0].args[1]),
         )
         np.testing.assert_array_equal(
             std_devs_count_rates,
@@ -821,9 +781,7 @@ class TestSwapiProcessor(TestCase):
         )
         np.testing.assert_array_equal(
             nominal_count_rates,
-            nominal_values(
-                mock_calculate_alpha_solar_wind_vdf.call_args_list[0].args[1]
-            ),
+            nominal_values(mock_calculate_alpha_solar_wind_vdf.call_args_list[0].args[1]),
         )
         np.testing.assert_array_equal(
             std_devs_count_rates,
@@ -861,37 +819,27 @@ class TestSwapiProcessor(TestCase):
 
         np.testing.assert_array_equal(
             energy,
-            mock_calculate_combined_solar_wind_differential_flux.call_args_list[0].args[
-                0
-            ],
+            mock_calculate_combined_solar_wind_differential_flux.call_args_list[0].args[0],
         )
         np.testing.assert_array_equal(
             nominal_count_rates,
             nominal_values(
-                mock_calculate_combined_solar_wind_differential_flux.call_args_list[
-                    0
-                ].args[1]
+                mock_calculate_combined_solar_wind_differential_flux.call_args_list[0].args[1]
             ),
         )
         np.testing.assert_array_equal(
             std_devs_count_rates,
             std_devs(
-                mock_calculate_combined_solar_wind_differential_flux.call_args_list[
-                    0
-                ].args[1]
+                mock_calculate_combined_solar_wind_differential_flux.call_args_list[0].args[1]
             ),
         )
         self.assertEqual(
             mock_efficiency_table.relative_efficiency.return_value,
-            mock_calculate_combined_solar_wind_differential_flux.call_args_list[0].args[
-                2
-            ],
+            mock_calculate_combined_solar_wind_differential_flux.call_args_list[0].args[2],
         )
         self.assertEqual(
             mock_geometric_factor_calibration_table,
-            mock_calculate_combined_solar_wind_differential_flux.call_args_list[0].args[
-                3
-            ],
+            mock_calculate_combined_solar_wind_differential_flux.call_args_list[0].args[3],
         )
         delta_calls = mock_calculate_delta_minus_plus.call_args_list
         self.assertEqual(sentinel.proton_calculated_velocities1, delta_calls[0].args[0])
@@ -939,18 +887,14 @@ class TestSwapiProcessor(TestCase):
                 sentinel.proton_velocity_delta_minus1,
                 sentinel.proton_velocity_delta_minus2,
             ],
-            mock_combined_vdf_data.call_args_list[0].kwargs[
-                "proton_sw_velocities_delta_minus"
-            ],
+            mock_combined_vdf_data.call_args_list[0].kwargs["proton_sw_velocities_delta_minus"],
         )
         np.testing.assert_array_equal(
             [
                 sentinel.proton_velocity_delta_plus1,
                 sentinel.proton_velocity_delta_plus2,
             ],
-            mock_combined_vdf_data.call_args_list[0].kwargs[
-                "proton_sw_velocities_delta_plus"
-            ],
+            mock_combined_vdf_data.call_args_list[0].kwargs["proton_sw_velocities_delta_plus"],
         )
         np.testing.assert_array_equal(
             [
@@ -972,15 +916,11 @@ class TestSwapiProcessor(TestCase):
                 sentinel.alpha_velocity_delta_minus1,
                 sentinel.alpha_velocity_delta_minus2,
             ],
-            mock_combined_vdf_data.call_args_list[0].kwargs[
-                "alpha_sw_velocities_delta_minus"
-            ],
+            mock_combined_vdf_data.call_args_list[0].kwargs["alpha_sw_velocities_delta_minus"],
         )
         np.testing.assert_array_equal(
             [sentinel.alpha_velocity_delta_plus1, sentinel.alpha_velocity_delta_plus2],
-            mock_combined_vdf_data.call_args_list[0].kwargs[
-                "alpha_sw_velocities_delta_plus"
-            ],
+            mock_combined_vdf_data.call_args_list[0].kwargs["alpha_sw_velocities_delta_plus"],
         )
         np.testing.assert_array_equal(
             [
@@ -996,15 +936,11 @@ class TestSwapiProcessor(TestCase):
         )
         np.testing.assert_array_equal(
             [sentinel.pui_velocity_delta_minus1, sentinel.pui_velocity_delta_minus2],
-            mock_combined_vdf_data.call_args_list[0].kwargs[
-                "pui_sw_velocities_delta_minus"
-            ],
+            mock_combined_vdf_data.call_args_list[0].kwargs["pui_sw_velocities_delta_minus"],
         )
         np.testing.assert_array_equal(
             [sentinel.pui_velocity_delta_plus1, sentinel.pui_velocity_delta_plus2],
-            mock_combined_vdf_data.call_args_list[0].kwargs[
-                "pui_sw_velocities_delta_plus"
-            ],
+            mock_combined_vdf_data.call_args_list[0].kwargs["pui_sw_velocities_delta_plus"],
         )
         np.testing.assert_array_equal(
             [
@@ -1020,29 +956,21 @@ class TestSwapiProcessor(TestCase):
         )
         np.testing.assert_array_equal(
             [sentinel.energy_delta_minus1, sentinel.energy_delta_minus2],
-            mock_combined_vdf_data.call_args_list[0].kwargs[
-                "combined_energy_delta_minus"
-            ],
+            mock_combined_vdf_data.call_args_list[0].kwargs["combined_energy_delta_minus"],
         )
         np.testing.assert_array_equal(
             [sentinel.energy_delta_plus1, sentinel.energy_delta_plus2],
-            mock_combined_vdf_data.call_args_list[0].kwargs[
-                "combined_energy_delta_plus"
-            ],
+            mock_combined_vdf_data.call_args_list[0].kwargs["combined_energy_delta_plus"],
         )
         np.testing.assert_array_equal(
             [
                 sentinel.calculated_diffential_flux1,
                 sentinel.calculated_diffential_flux2,
             ],
-            mock_combined_vdf_data.call_args_list[0].kwargs[
-                "combined_differential_flux"
-            ],
+            mock_combined_vdf_data.call_args_list[0].kwargs["combined_differential_flux"],
         )
 
-        self.assertEqual(
-            input_file_names, mock_combined_vdf_data.return_value.parent_file_names
-        )
+        self.assertEqual(input_file_names, mock_combined_vdf_data.return_value.parent_file_names)
         mock_save_data.assert_called_once_with(mock_combined_vdf_data.return_value)
         self.assertEqual([mock_save_data.return_value], product)
 
@@ -1064,9 +992,7 @@ class TestSwapiProcessor(TestCase):
         swapi_processor = SwapiProcessor(Mock(), input_metadata)
         with self.assertRaises(NotImplementedError) as cm:
             swapi_processor.process()
-        self.assertEqual(
-            ("unknown descriptor", "not-a-real-descriptor"), cm.exception.args
-        )
+        self.assertEqual(("unknown descriptor", "not-a-real-descriptor"), cm.exception.args)
 
     def test_process_l3a_alpha_raises_when_mag_data_missing(self):
         input_metadata = InputMetadata(
@@ -1110,15 +1036,9 @@ class TestCalculateGseVelocities(TestCase):
         self.assertEqual(10, epoch)
         np.testing.assert_array_equal([400.0, 1.0, 2.0], velocity)
         np.testing.assert_array_equal(np.eye(3), covariance)
-        np.testing.assert_array_equal(
-            [[-400.0, 29.0, 2.0]], result["proton_sw_velocity_gse"]
-        )
-        np.testing.assert_array_equal(
-            [2 * np.eye(3)], result["proton_sw_velocity_gse_covariance"]
-        )
-        self.assertEqual(
-            int(SwapiL3Flags.PREDICTIVE_EPHEMERIS), result["quality_flags"][0]
-        )
+        np.testing.assert_array_equal([[-400.0, 29.0, 2.0]], result["proton_sw_velocity_gse"])
+        np.testing.assert_array_equal([2 * np.eye(3)], result["proton_sw_velocity_gse_covariance"])
+        self.assertEqual(int(SwapiL3Flags.PREDICTIVE_EPHEMERIS), result["quality_flags"][0])
 
     def test_conversion_failure_gives_fill_and_fit_error(self, mock_convert):
         result = self._result([400.0, 1.0, 2.0])
@@ -1139,9 +1059,7 @@ class TestCalculateGseVelocities(TestCase):
 
         mock_convert.assert_not_called()
         self._assert_all_fill(result)
-        self.assertEqual(
-            int(SwapiL3Flags.PREDICTIVE_EPHEMERIS), result["quality_flags"][0]
-        )
+        self.assertEqual(int(SwapiL3Flags.PREDICTIVE_EPHEMERIS), result["quality_flags"][0])
 
 
 def create_swapi_l3a_dependencies_with_mocks():

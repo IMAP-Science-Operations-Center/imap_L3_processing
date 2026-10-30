@@ -49,9 +49,7 @@ class TestHiCombinedDependencies(unittest.TestCase):
         self.assertEqual(expected_45_return_maps, result.h45_maps)
         self.assertEqual(expected_90_return_maps, result.h90_maps)
 
-    @patch(
-        "imap_l3_processing.hi.hi_combined_sensor_dependencies.imap_data_access.download"
-    )
+    @patch("imap_l3_processing.hi.hi_combined_sensor_dependencies.imap_data_access.download")
     @patch(
         "imap_l3_processing.hi.hi_combined_sensor_dependencies.RectangularIntensityMapData.read_from_path"
     )

@@ -34,9 +34,7 @@ def download_parents(path: Path, output_dir: Path):
             except Exception as e:  # noqa: BLE001
                 failures += 1
 
-                print(
-                    f"failed to download file: {file} after {failures} attempts, retrying..."
-                )
+                print(f"failed to download file: {file} after {failures} attempts, retrying...")
                 if failures == retries:
                     raise Exception(
                         f"failed to download file: {file} after {retries} attempts, exiting"

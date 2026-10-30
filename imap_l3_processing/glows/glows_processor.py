@@ -82,16 +82,12 @@ logger = logging.getLogger(__name__)
 
 
 class GlowsProcessor(Processor):
-    def __init__(
-        self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata
-    ):
+    def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
         super().__init__(dependencies, input_metadata)
 
     def process(self):
         if self.input_metadata.data_level == "l3a":
-            l3a_dependencies = GlowsL3ADependencies.fetch_dependencies(
-                self.dependencies
-            )
+            l3a_dependencies = GlowsL3ADependencies.fetch_dependencies(self.dependencies)
 
             products = []
             l3a_output = self.process_l3a(l3a_dependencies)
@@ -101,13 +97,9 @@ class GlowsProcessor(Processor):
             return products
         elif self.input_metadata.data_level == "l3b":
             products_list = []
-            l3bc_major_version = self.input_metadata.version.lookup(
-                GLOWS_L3B_DESCRIPTOR
-            ).major
+            l3bc_major_version = self.input_metadata.version.lookup(GLOWS_L3B_DESCRIPTOR).major
             l3bc_initializer_data: GlowsL3BCInitializerData = (
-                GlowsL3BCInitializer.get_crs_to_process(
-                    self.dependencies, l3bc_major_version
-                )
+                GlowsL3BCInitializer.get_crs_to_process(self.dependencies, l3bc_major_version)
             )
 
             if len(l3bc_initializer_data.l3bc_dependencies) > 0:
@@ -125,9 +117,7 @@ class GlowsProcessor(Processor):
 
             reprocess_info = fetch_reprocess_info(self.dependencies)
 
-            l3d_major_version = self.input_metadata.version.lookup(
-                GLOWS_L3D_DESCRIPTOR
-            ).major
+            l3d_major_version = self.input_metadata.version.lookup(GLOWS_L3D_DESCRIPTOR).major
             l3bs = list(
                 {
                     **l3bc_initializer_data.l3bs_by_cr,
@@ -148,9 +138,7 @@ class GlowsProcessor(Processor):
                 l3d_major_version,
             )
             if l3d_initializer_result is None:
-                logger.info(
-                    "No inputs to L3d have changed. Skipping processing of L3d and L3e!"
-                )
+                logger.info("No inputs to L3d have changed. Skipping processing of L3d and L3e!")
                 return products_list
 
             version_number, glows_l3d_dependency, old_l3d = l3d_initializer_result
@@ -164,9 +152,7 @@ class GlowsProcessor(Processor):
             logger.info(
                 f"Finished processing L3d up to CR: {process_l3d_result.last_processed_cr}"
             )
-            logger.info(
-                f"Saved L3d CDF output to: {process_l3d_result.l3d_cdf_file_path}"
-            )
+            logger.info(f"Saved L3d CDF output to: {process_l3d_result.l3d_cdf_file_path}")
             for txt_file in process_l3d_result.l3d_text_file_paths:
                 logger.info(f"Saved L3d text file output to: {txt_file}")
 
@@ -198,9 +184,7 @@ class GlowsProcessor(Processor):
 
             return products_list
 
-    def process_l3a(
-        self, dependencies: GlowsL3ADependencies
-    ) -> GlowsL3LightCurve | None:
+    def process_l3a(self, dependencies: GlowsL3ADependencies) -> GlowsL3LightCurve | None:
         data = dependencies.data
         l3_data = L3aData(dependencies.ancillary_files)
         l3_data.process_l2_data_file(data)
@@ -235,14 +219,11 @@ class GlowsProcessor(Processor):
         start_date = l3bc_deps.start_date.strftime("%Y%m%d")
         minor_version_str = str(Version(None, l3bc_deps.version.minor))
         zip_path = (
-            TEMP_CDF_FOLDER_PATH
-            / f"imap_glows_l3b-archive_{start_date}_{minor_version_str}.zip"
+            TEMP_CDF_FOLDER_PATH / f"imap_glows_l3b-archive_{start_date}_{minor_version_str}.zip"
         )
         json_filename = "cr_to_process.json"
         with ZipFile(zip_path, "w", ZIP_DEFLATED) as file:
-            file.write(
-                external_dependencies.lyman_alpha_path, "lyman_alpha_composite.nc"
-            )
+            file.write(external_dependencies.lyman_alpha_path, "lyman_alpha_composite.nc")
             file.write(external_dependencies.omni2_data_path, "omni2_all_years.dat")
             file.write(external_dependencies.f107_index_file_path, "f107_fluxtable.txt")
             cr = {
@@ -251,12 +232,8 @@ class GlowsProcessor(Processor):
                 "cr_start_date": str(l3bc_deps.start_date),
                 "cr_end_date": str(l3bc_deps.end_date),
                 "bad_days_list": l3bc_deps.ancillary_files["bad_days_list"].name,
-                "pipeline_settings": l3bc_deps.ancillary_files[
-                    "pipeline_settings"
-                ].name,
-                "waw_helioion_mp": l3bc_deps.ancillary_files[
-                    "WawHelioIonMP_parameters"
-                ].name,
+                "pipeline_settings": l3bc_deps.ancillary_files["pipeline_settings"].name,
+                "waw_helioion_mp": l3bc_deps.ancillary_files["WawHelioIonMP_parameters"].name,
                 "uv_anisotropy": l3bc_deps.ancillary_files["uv_anisotropy"].name,
                 "repointing_file": l3bc_deps.repointing_file_path.name,
             }
@@ -285,9 +262,7 @@ def process_l3bc(processor, initializer_data: GlowsL3BCInitializerData):
         with SwallowExceptionAndLog(
             f"Exception caught in L3BC science code, skipping CR {dependency.carrington_rotation_number}"
         ) as manager:
-            dependency_filtering_out_bad_days = replace(
-                dependency, l3a_data=filtered_days
-            )
+            dependency_filtering_out_bad_days = replace(dependency, l3a_data=filtered_days)
             l3b_data, l3c_data = generate_l3bc(dependency_filtering_out_bad_days)
         if manager.exception_caught:
             continue
@@ -319,16 +294,12 @@ def process_l3bc(processor, initializer_data: GlowsL3BCInitializerData):
         l3b_data_product.parent_file_names += processor.get_parent_file_names(
             [*dependency.l3a_file_names, zip_path]
         )
-        l3b_cdf = save_data(
-            l3b_data_product, cr_number=dependency.carrington_rotation_number
-        )
+        l3b_cdf = save_data(l3b_data_product, cr_number=dependency.carrington_rotation_number)
 
         l3c_data_product.parent_file_names += processor.get_parent_file_names(
             [zip_path, Path(l3b_cdf)]
         )
-        l3c_cdf = save_data(
-            l3c_data_product, cr_number=dependency.carrington_rotation_number
-        )
+        l3c_cdf = save_data(l3c_data_product, cr_number=dependency.carrington_rotation_number)
 
         logger.info(f"Finished processing CR: {dependency.carrington_rotation_number}")
         for path in [l3b_cdf, l3c_cdf]:
@@ -348,17 +319,11 @@ def process_l3d(
 ) -> GlowsL3DProcessorOutput | None:
 
     collections.deque(
-        (
-            create_glows_l3b_json_file_from_cdf(l3b)
-            for l3b in dependencies.l3b_file_paths
-        ),
+        (create_glows_l3b_json_file_from_cdf(l3b) for l3b in dependencies.l3b_file_paths),
         maxlen=0,
     )
     collections.deque(
-        (
-            create_glows_l3c_json_file_from_cdf(l3c)
-            for l3c in dependencies.l3c_file_paths
-        ),
+        (create_glows_l3c_json_file_from_cdf(l3c) for l3c in dependencies.l3c_file_paths),
         maxlen=0,
     )
 
@@ -382,14 +347,11 @@ def process_l3d(
     )
 
     file_manifest = {
-        "external_files": {
-            key: str(val) for key, val in dependencies.external_files.items()
-        },
+        "external_files": {key: str(val) for key, val in dependencies.external_files.items()},
         "ancillary_files": {
             "pipeline_settings": str(dependencies.ancillary_files["pipeline_settings"]),
             "WawHelioIon": {
-                key: str(val)
-                for key, val in dependencies.ancillary_files["WawHelioIon"].items()
+                key: str(val) for key, val in dependencies.ancillary_files["WawHelioIon"].items()
             },
         },
         "l3d_cdf_filename": output_l3d_cdf_filename,
@@ -420,33 +382,25 @@ def process_l3d(
         output_text_files = []
         for text_file in os.listdir(PATH_TO_L3D_TOOLKIT / "data_l3d_txt"):
             if str(last_processed_cr) in text_file:
-                output_text_files.append(
-                    PATH_TO_L3D_TOOLKIT / "data_l3d_txt" / text_file
-                )
+                output_text_files.append(PATH_TO_L3D_TOOLKIT / "data_l3d_txt" / text_file)
 
         txt_files_with_correct_version = rename_l3d_text_outputs(
             output_text_files, str(Version(None, version.minor))
         )
 
         for txt_file in txt_files_with_correct_version:
-            shutil.copy(
-                txt_file, generate_imap_file_path(txt_file.name).construct_path()
-            )
+            shutil.copy(txt_file, generate_imap_file_path(txt_file.name).construct_path())
 
         file_name = f"imap_glows_l3d_solar-params-history_19470303-cr0{last_processed_cr}_v00.json"
 
-        parent_file_names = get_parent_file_names_from_l3d_json(
-            PATH_TO_L3D_TOOLKIT / "data_l3d"
-        )
+        parent_file_names = get_parent_file_names_from_l3d_json(PATH_TO_L3D_TOOLKIT / "data_l3d")
 
         l3d_data_product = convert_json_to_l3d_data_product(
             PATH_TO_L3D_TOOLKIT / "data_l3d" / file_name,
             data_product_metadata,
             parent_file_names,
         )
-        l3d_data_product_path = save_data(
-            l3d_data_product, cr_number=dependencies.end_cr
-        )
+        l3d_data_product_path = save_data(l3d_data_product, cr_number=dependencies.end_cr)
 
         return GlowsL3DProcessorOutput(
             l3d_data_product_path, txt_files_with_correct_version, last_processed_cr
@@ -457,9 +411,7 @@ def process_l3d(
 def process_l3e(initializer_data: GlowsL3EInitializerOutput):
     products_list = []
 
-    lo_pivot_angles = get_lo_pivot_angles(
-        initializer_data.repointings.repointing_numbers
-    )
+    lo_pivot_angles = get_lo_pivot_angles(initializer_data.repointings.repointing_numbers)
     for repointing in initializer_data.repointings.repointing_numbers:
         with SwallowExceptionAndLog(
             f"Exception encountered when processing L3e for repointing {repointing}"
@@ -488,9 +440,7 @@ def process_l3e(initializer_data: GlowsL3EInitializerOutput):
                     )
                     pivot_info = lo_pivot_angles[repointing]
                     if pivot_info.parent_filename is not None:
-                        lo_parent_file_names = lo_parent_file_names + [
-                            pivot_info.parent_filename
-                        ]
+                        lo_parent_file_names = lo_parent_file_names + [pivot_info.parent_filename]
                     lo_version = initializer_data.repointings.lo_repointings[repointing]
                     products_list.extend(
                         process_l3e_lo(
@@ -512,9 +462,7 @@ def process_l3e(initializer_data: GlowsL3EInitializerOutput):
                     hi_parent_file_names = (
                         initializer_data.dependencies.get_hi_parents() + kernel_names
                     )
-                    hi_90_version = initializer_data.repointings.hi_90_repointings[
-                        repointing
-                    ]
+                    hi_90_version = initializer_data.repointings.hi_90_repointings[repointing]
                     products_list.extend(
                         process_l3e_hi(
                             hi_parent_file_names,
@@ -535,9 +483,7 @@ def process_l3e(initializer_data: GlowsL3EInitializerOutput):
                     hi_parent_file_names = (
                         initializer_data.dependencies.get_hi_parents() + kernel_names
                     )
-                    hi_45_version = initializer_data.repointings.hi_45_repointings[
-                        repointing
-                    ]
+                    hi_45_version = initializer_data.repointings.hi_45_repointings[repointing]
                     products_list.extend(
                         process_l3e_hi(
                             hi_parent_file_names,
@@ -551,17 +497,13 @@ def process_l3e(initializer_data: GlowsL3EInitializerOutput):
                         )
                     )
 
-            ul_parent_file_names = (
-                initializer_data.dependencies.get_ul_parents() + kernel_names
-            )
+            ul_parent_file_names = initializer_data.dependencies.get_ul_parents() + kernel_names
 
             with SwallowExceptionAndLog(
                 f"Exception encountered when processing L3e ultra SF for repointing {repointing}"
             ):
                 if repointing in initializer_data.repointings.ultra_sf_repointings:
-                    ul_sf_version = initializer_data.repointings.ultra_sf_repointings[
-                        repointing
-                    ]
+                    ul_sf_version = initializer_data.repointings.ultra_sf_repointings[repointing]
                     products_list.extend(
                         process_l3e_ul_sf(
                             ul_parent_file_names,
@@ -578,9 +520,7 @@ def process_l3e(initializer_data: GlowsL3EInitializerOutput):
                 f"Exception encountered when processing L3e ultra HF for repointing {repointing}"
             ):
                 if repointing in initializer_data.repointings.ultra_hf_repointings:
-                    ul_hf_version = initializer_data.repointings.ultra_hf_repointings[
-                        repointing
-                    ]
+                    ul_hf_version = initializer_data.repointings.ultra_hf_repointings[repointing]
                     products_list.extend(
                         process_l3e_ul_hf(
                             ul_parent_file_names,

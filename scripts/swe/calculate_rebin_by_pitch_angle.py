@@ -14,18 +14,10 @@ from imap_l3_processing.swe.l3.swe_l3_dependencies import SweL3Dependencies
 from imap_l3_processing.swe.swe_processor import SweProcessor
 
 swe_l2_file_path = Path(r"data/imap/swe/l2/2025/12/imap_swe_l2_sci_20251217_v002.cdf")
-swe_l1b_file_path = Path(
-    r"data/imap/swe/l1b/2025/12/imap_swe_l1b_sci_20251217_v004.cdf"
-)
-mag_file_path = Path(
-    r"data/imap/mag/l1d/2025/12/imap_mag_l1d_norm-dsrf_20251217_v001.cdf"
-)
-swapi_file_path = Path(
-    r"data/imap/swapi/l3a/2025/12/imap_swapi_l3a_proton-sw_20251217_v002.cdf"
-)
-configuration_file_path = Path(
-    r"data/imap/ancillary/swe/imap_swe_config_20251119_v002.json"
-)
+swe_l1b_file_path = Path(r"data/imap/swe/l1b/2025/12/imap_swe_l1b_sci_20251217_v004.cdf")
+mag_file_path = Path(r"data/imap/mag/l1d/2025/12/imap_mag_l1d_norm-dsrf_20251217_v001.cdf")
+swapi_file_path = Path(r"data/imap/swapi/l3a/2025/12/imap_swapi_l3a_proton-sw_20251217_v002.cdf")
+configuration_file_path = Path(r"data/imap/ancillary/swe/imap_swe_config_20251119_v002.json")
 
 spice_files = [
     "naif0012.tls",

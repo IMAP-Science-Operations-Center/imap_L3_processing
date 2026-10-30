@@ -19,12 +19,8 @@ from imap_l3_processing.maps.rectangular_survival_probability import (
 )
 from imap_l3_processing.ultra.models import UltraGlowsL3eData, UltraL1CPSet
 
-L1CPointingSet = TypeVar(
-    "L1CPointingSet", bound=InputRectangularPointingSet | UltraL1CPSet
-)
-GlowsL3eData = TypeVar(
-    "GlowsL3eData", bound=GlowsL3eRectangularMapInputData | UltraGlowsL3eData
-)
+L1CPointingSet = TypeVar("L1CPointingSet", bound=InputRectangularPointingSet | UltraL1CPSet)
+GlowsL3eData = TypeVar("GlowsL3eData", bound=GlowsL3eRectangularMapInputData | UltraGlowsL3eData)
 
 
 def combine_glows_l3e_with_l1c_pointing(
@@ -59,9 +55,7 @@ def process_survival_probabilities(
     pointing_sets = []
 
     if cg_corrected is None:
-        cg_corrected = (
-            l2_descriptor_parts.reference_frame == ReferenceFrame.Heliospheric
-        )
+        cg_corrected = l2_descriptor_parts.reference_frame == ReferenceFrame.Heliospheric
 
     for l1c, glows_l3e in combined_glows:
         pointing_sets.append(
@@ -83,13 +77,9 @@ def process_survival_probabilities(
     survival_dataset = survival_sky_map.to_dataset()
 
     input_data = survival_probabilities_dependencies.l2_data.intensity_map_data
-    survival_probabilities = survival_dataset[
-        "exposure_weighted_survival_probabilities"
-    ].values
+    survival_probabilities = survival_dataset["exposure_weighted_survival_probabilities"].values
     survival_corrected_intensity = input_data.ena_intensity / survival_probabilities
-    corrected_stat_uncert = (
-        input_data.ena_intensity_stat_uncert / survival_probabilities
-    )
+    corrected_stat_uncert = input_data.ena_intensity_stat_uncert / survival_probabilities
     corrected_sys_err = input_data.ena_intensity_sys_err / survival_probabilities
 
     map_data = RectangularIntensityMapData(
@@ -116,9 +106,7 @@ def process_survival_probabilities(
     )
 
     if input_data.bg_intensity is not None:
-        map_data.intensity_map_data.bg_intensity = (
-            input_data.bg_intensity / survival_probabilities
-        )
+        map_data.intensity_map_data.bg_intensity = input_data.bg_intensity / survival_probabilities
         map_data.intensity_map_data.bg_intensity_sys_err = (
             input_data.bg_intensity_sys_err / survival_probabilities
         )

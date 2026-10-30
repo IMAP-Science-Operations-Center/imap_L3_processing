@@ -43,9 +43,7 @@ class TestHitProcessor(TestCase):
 
     @patch("imap_l3_processing.utils.spiceypy")
     @patch("imap_l3_processing.hit.l3.hit_processor.save_data")
-    @patch(
-        "imap_l3_processing.hit.l3.hit_processor.HITL3SectoredDependencies.fetch_dependencies"
-    )
+    @patch("imap_l3_processing.hit.l3.hit_processor.HITL3SectoredDependencies.fetch_dependencies")
     @patch("imap_l3_processing.hit.l3.hit_processor.calculate_unit_vector")
     @patch("imap_l3_processing.hit.l3.hit_processor.get_hit_bin_polar_coordinates")
     @patch("imap_l3_processing.hit.l3.hit_processor.get_sector_unit_vectors")
@@ -80,9 +78,7 @@ class TestHitProcessor(TestCase):
         )
 
         mock_processing_input_collection = Mock()
-        mock_processing_input_collection.get_file_paths.return_value = [
-            Path("test/parent_path")
-        ]
+        mock_processing_input_collection.get_file_paths.return_value = [Path("test/parent_path")]
 
         epochs = np.array([123, 234])
         epoch_deltas = np.array([12, 13])
@@ -130,12 +126,8 @@ class TestHitProcessor(TestCase):
         delta_minus_NeMgSi_time2 = np.full(2, 102)
 
         mock_hit_data.cno = np.array([CNO_time1, CNO_time2])
-        mock_hit_data.delta_plus_cno = np.array(
-            [delta_plus_CNO_time1, delta_plus_CNO_time2]
-        )
-        mock_hit_data.delta_minus_cno = np.array(
-            [delta_minus_CNO_time1, delta_minus_CNO_time2]
-        )
+        mock_hit_data.delta_plus_cno = np.array([delta_plus_CNO_time1, delta_plus_CNO_time2])
+        mock_hit_data.delta_minus_cno = np.array([delta_minus_CNO_time1, delta_minus_CNO_time2])
         mock_hit_data.he4 = np.array([helium4_time1, helium4_time2])
         mock_hit_data.delta_plus_he4 = np.array(
             [delta_plus_helium4_time1, delta_plus_helium4_time2]
@@ -151,12 +143,8 @@ class TestHitProcessor(TestCase):
             [delta_minus_hydrogen_time1, delta_minus_hydrogen_time2]
         )
         mock_hit_data.fe = np.array([iron_time1, iron_time2])
-        mock_hit_data.delta_plus_fe = np.array(
-            [delta_plus_iron_time1, delta_plus_iron_time2]
-        )
-        mock_hit_data.delta_minus_fe = np.array(
-            [delta_minus_iron_time1, delta_minus_iron_time2]
-        )
+        mock_hit_data.delta_plus_fe = np.array([delta_plus_iron_time1, delta_plus_iron_time2])
+        mock_hit_data.delta_minus_fe = np.array([delta_minus_iron_time1, delta_minus_iron_time2])
         mock_hit_data.nemgsi = np.array([NeMgSi_time1, NeMgSi_time2])
         mock_hit_data.delta_plus_nemgsi = np.array(
             [delta_plus_NeMgSi_time1, delta_plus_NeMgSi_time2]
@@ -342,9 +330,7 @@ class TestHitProcessor(TestCase):
 
         processor = HitProcessor(mock_processing_input_collection, input_metadata)
         product = processor.process()
-        mock_fetch_dependencies.assert_called_once_with(
-            mock_processing_input_collection
-        )
+        mock_fetch_dependencies.assert_called_once_with(mock_processing_input_collection)
 
         mock_mag_data.rebin_to.assert_called_once_with(
             mock_hit_data.epoch, mock_hit_data.epoch_delta
@@ -357,13 +343,9 @@ class TestHitProcessor(TestCase):
             mock_hit_data.zenith, mock_hit_data.azimuth
         )
 
-        self.assertEqual(
-            1, mock_rotate_particle_vectors_from_hit_despun_to_imap_despun.call_count
-        )
+        self.assertEqual(1, mock_rotate_particle_vectors_from_hit_despun_to_imap_despun.call_count)
         np.testing.assert_array_equal(
-            mock_rotate_particle_vectors_from_hit_despun_to_imap_despun.call_args_list[
-                0
-            ].args[0],
+            mock_rotate_particle_vectors_from_hit_despun_to_imap_despun.call_args_list[0].args[0],
             -expected_sector_unit_vectors,
         )
 
@@ -503,24 +485,18 @@ class TestHitProcessor(TestCase):
             ]
         )
 
-        saved_data_product: HitPitchAngleDataProduct = mock_save_data.call_args_list[
-            0
-        ].args[0]
+        saved_data_product: HitPitchAngleDataProduct = mock_save_data.call_args_list[0].args[0]
 
         self.assertEqual(input_metadata, saved_data_product.input_metadata)
         self.assertEqual(["parent_path"], saved_data_product.parent_file_names)
         np.testing.assert_array_equal(saved_data_product.epochs, epochs)
         np.testing.assert_array_equal(saved_data_product.epoch_deltas, epoch_deltas)
 
-        np.testing.assert_array_equal(
-            saved_data_product.pitch_angles, sentinel.pitch_angles
-        )
+        np.testing.assert_array_equal(saved_data_product.pitch_angles, sentinel.pitch_angles)
         np.testing.assert_array_equal(
             saved_data_product.pitch_angle_deltas, sentinel.pitch_angle_deltas
         )
-        np.testing.assert_array_equal(
-            saved_data_product.gyrophases, sentinel.gyrophases
-        )
+        np.testing.assert_array_equal(saved_data_product.gyrophases, sentinel.gyrophases)
         np.testing.assert_array_equal(
             saved_data_product.gyrophase_deltas, sentinel.gyrophase_deltas
         )
@@ -699,12 +675,8 @@ class TestHitProcessor(TestCase):
         )
 
         self.assertIs(mock_hit_data.h_energy, saved_data_product.h_energies)
-        self.assertIs(
-            mock_hit_data.h_energy_delta_plus, saved_data_product.h_energy_delta_plus
-        )
-        self.assertIs(
-            mock_hit_data.h_energy_delta_minus, saved_data_product.h_energy_delta_minus
-        )
+        self.assertIs(mock_hit_data.h_energy_delta_plus, saved_data_product.h_energy_delta_plus)
+        self.assertIs(mock_hit_data.h_energy_delta_minus, saved_data_product.h_energy_delta_minus)
         self.assertIs(mock_hit_data.he4_energy, saved_data_product.he4_energies)
         self.assertIs(
             mock_hit_data.he4_energy_delta_plus,
@@ -763,9 +735,7 @@ class TestHitProcessor(TestCase):
     @patch("imap_l3_processing.utils.spiceypy")
     @patch("imap_l3_processing.hit.l3.hit_processor.save_data")
     @patch("imap_l3_processing.hit.l3.hit_processor.process_pha_event", autospec=True)
-    @patch(
-        "imap_l3_processing.hit.l3.hit_processor.HitL3PhaDependencies.fetch_dependencies"
-    )
+    @patch("imap_l3_processing.hit.l3.hit_processor.HitL3PhaDependencies.fetch_dependencies")
     @patch("imap_l3_processing.hit.l3.hit_processor.PHAEventReader.read_all_pha_events")
     def test_process_direct_event_product(
         self,
@@ -885,9 +855,7 @@ class TestHitProcessor(TestCase):
         )
 
         mock_processing_input_collection = Mock()
-        mock_processing_input_collection.get_file_paths.return_value = [
-            Path("test/parent_path")
-        ]
+        mock_processing_input_collection.get_file_paths.return_value = [Path("test/parent_path")]
 
         mock_hit_l3_pha_dependencies = mock_fetch_dependencies.return_value
         mock_hit_l3_pha_dependencies.hit_l1_data.epoch = [
@@ -912,9 +880,7 @@ class TestHitProcessor(TestCase):
         processor = HitProcessor(mock_processing_input_collection, input_metadata)
         product = processor.process()
 
-        mock_fetch_dependencies.assert_called_once_with(
-            mock_processing_input_collection
-        )
+        mock_fetch_dependencies.assert_called_once_with(mock_processing_input_collection)
         mock_read_all_events.assert_has_calls(
             [call(sentinel.binary_stream_1), call(sentinel.binary_stream_2)]
         )
@@ -964,15 +930,9 @@ class TestHitProcessor(TestCase):
                 ]
             ),
         )
-        np.testing.assert_array_equal(
-            direct_event_product.charge, np.array([9.0, 10.0, 12.0])
-        )
-        np.testing.assert_array_equal(
-            direct_event_product.energy, np.array([99, 100, 200])
-        )
-        np.testing.assert_array_equal(
-            direct_event_product.particle_id, np.array([1, 1, 2])
-        )
+        np.testing.assert_array_equal(direct_event_product.charge, np.array([9.0, 10.0, 12.0]))
+        np.testing.assert_array_equal(direct_event_product.energy, np.array([99, 100, 200]))
+        np.testing.assert_array_equal(direct_event_product.particle_id, np.array([1, 1, 2]))
 
         np.testing.assert_array_equal(
             direct_event_product.e_delta, np.array([103.7, np.nan, 106.7])
@@ -988,21 +948,15 @@ class TestHitProcessor(TestCase):
         np.testing.assert_array_equal(
             direct_event_product.priority_buffer_number, np.array([2, 2, 3])
         )
-        np.testing.assert_array_equal(
-            direct_event_product.latency, np.array([20, 20, 30])
-        )
+        np.testing.assert_array_equal(direct_event_product.latency, np.array([20, 20, 30]))
         np.testing.assert_array_equal(
             direct_event_product.stim_tag, np.array([False, False, True])
         )
         np.testing.assert_array_equal(
             direct_event_product.long_event_flag, np.array([False, False, True])
         )
-        np.testing.assert_array_equal(
-            direct_event_product.haz_tag, np.array([False, False, True])
-        )
-        np.testing.assert_array_equal(
-            direct_event_product.a_b_side, np.array([0, np.nan, 0])
-        )
+        np.testing.assert_array_equal(direct_event_product.haz_tag, np.array([False, False, True]))
+        np.testing.assert_array_equal(direct_event_product.a_b_side, np.array([0, np.nan, 0]))
         np.testing.assert_array_equal(
             direct_event_product.has_unread_adcs, np.array([True, True, False])
         )
@@ -1053,9 +1007,7 @@ class TestHitProcessor(TestCase):
             )
             mask[idx] = False
 
-        self.assertTrue(
-            np.all(direct_event_product.pha_value[mask] == UNSIGNED_INT2_FILL_VALUE)
-        )
+        self.assertTrue(np.all(direct_event_product.pha_value[mask] == UNSIGNED_INT2_FILL_VALUE))
         self.assertTrue(np.all(np.isnan(direct_event_product.energy_at_detector[mask])))
         self.assertFalse(np.any(direct_event_product.is_low_gain[mask]))
 
@@ -1135,14 +1087,10 @@ class TestHitProcessor(TestCase):
 
         processor = HitProcessor(Mock(), input_metadata)
         with self.assertLogs():
-            actual_product = processor.process_direct_event_product(
-                mock_direct_event_dependencies
-            )
+            actual_product = processor.process_direct_event_product(mock_direct_event_dependencies)
 
         self.assertEqual(1, len(actual_product.epoch))
-        self.assertEqual(
-            datetime(year=2020, month=2, day=1, hour=1), actual_product.epoch[0]
-        )
+        self.assertEqual(datetime(year=2020, month=2, day=1, hour=1), actual_product.epoch[0])
 
     def test_raise_error_if_descriptor_doesnt_match(self):
         input_metadata = InputMetadata(

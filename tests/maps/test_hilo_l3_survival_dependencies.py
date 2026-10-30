@@ -13,9 +13,7 @@ from imap_l3_processing.models import Instrument
 
 class TestHiLoL3SurvivalDependencies(unittest.TestCase):
     @patch("imap_l3_processing.maps.hilo_l3_survival_dependencies.parse_map_descriptor")
-    @patch(
-        "imap_l3_processing.maps.hilo_l3_survival_dependencies.imap_data_access.download"
-    )
+    @patch("imap_l3_processing.maps.hilo_l3_survival_dependencies.imap_data_access.download")
     @patch("imap_l3_processing.maps.hilo_l3_survival_dependencies.read_glows_l3e_data")
     @patch(
         "imap_l3_processing.maps.hilo_l3_survival_dependencies.read_l1c_rectangular_pointing_set_data"
@@ -47,9 +45,7 @@ class TestHiLoL3SurvivalDependencies(unittest.TestCase):
             ]
 
             l2_map_descriptor = "ena-h-sf-nsp-ram-hae-6deg-1yr"
-            l2_filename = (
-                f"imap_{instrument.value}_l2_{l2_map_descriptor}_20250415_v001.cdf"
-            )
+            l2_filename = f"imap_{instrument.value}_l2_{l2_map_descriptor}_20250415_v001.cdf"
 
             dependencies = ProcessingInputCollection(
                 ScienceInput(l2_filename),
@@ -80,16 +76,12 @@ class TestHiLoL3SurvivalDependencies(unittest.TestCase):
                 sentinel.glows_data_3,
             ]
 
-            actual = HiLoL3SurvivalDependencies.fetch_dependencies(
-                dependencies, instrument
-            )
+            actual = HiLoL3SurvivalDependencies.fetch_dependencies(dependencies, instrument)
 
             expected_imap_data_access_calls = [call(l2_filename)] + [
                 call(path) for path in l1c_file_names + glows_file_names
             ]
-            mock_imap_data_access_download.assert_has_calls(
-                expected_imap_data_access_calls
-            )
+            mock_imap_data_access_download.assert_has_calls(expected_imap_data_access_calls)
 
             mock_read_from_path.assert_called_once_with(sentinel.l2_file_path)
 
@@ -145,9 +137,7 @@ class TestHiLoL3SurvivalDependencies(unittest.TestCase):
         anti_input = ScienceInput(anti_l2_filename)
         glows_input = ScienceInput(glows_l3e_filename)
         l1c_input = ScienceInput(l1c_filename)
-        dependencies = ProcessingInputCollection(
-            ram_input, anti_input, glows_input, l1c_input
-        )
+        dependencies = ProcessingInputCollection(ram_input, anti_input, glows_input, l1c_input)
 
         mock_ram_survival_dependencies = Mock(spec=HiLoL3SurvivalDependencies)
         mock_ram_survival_dependencies.dependency_file_paths = [
@@ -168,20 +158,14 @@ class TestHiLoL3SurvivalDependencies(unittest.TestCase):
         result = HiL3SingleSensorFullSpinDependencies.fetch_dependencies(dependencies)
         self.assertIsInstance(result, HiL3SingleSensorFullSpinDependencies)
         self.assertEqual(result.ram_dependencies, mock_ram_survival_dependencies)
-        self.assertEqual(
-            result.antiram_dependencies, mock_antiram_survival_dependencies
-        )
+        self.assertEqual(result.antiram_dependencies, mock_antiram_survival_dependencies)
 
         [ram_dependencies, instrument] = mock_fetch_dependencies.call_args_list[0].args
         self.assertIsInstance(ram_dependencies, ProcessingInputCollection)
-        self.assertEqual(
-            [ram_input, glows_input, l1c_input], ram_dependencies.processing_input
-        )
+        self.assertEqual([ram_input, glows_input, l1c_input], ram_dependencies.processing_input)
         self.assertEqual(Instrument.IMAP_HI, instrument)
 
-        [antiram_dependencies, instrument] = mock_fetch_dependencies.call_args_list[
-            1
-        ].args
+        [antiram_dependencies, instrument] = mock_fetch_dependencies.call_args_list[1].args
         self.assertIsInstance(antiram_dependencies, ProcessingInputCollection)
         self.assertEqual(
             [anti_input, glows_input, l1c_input], antiram_dependencies.processing_input

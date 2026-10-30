@@ -22,10 +22,8 @@ class TestUltraL3ToRectangularDependencies(unittest.TestCase):
             "map_file",
         ]
 
-        ultra_l3_to_rectangular_dependencies = (
-            UltraL3ToRectangularDependencies.fetch_dependencies(
-                processing_input_collection
-            )
+        ultra_l3_to_rectangular_dependencies = UltraL3ToRectangularDependencies.fetch_dependencies(
+            processing_input_collection
         )
 
         mock_download.assert_has_calls(

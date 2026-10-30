@@ -26,12 +26,8 @@ class TestUltraSurvivalProbability(unittest.TestCase):
     @patch(
         "imap_l3_processing.ultra.science.ultra_survival_probability.geometry.frame_transform_az_el"
     )
-    @patch(
-        "imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim"
-    )
-    def test_ultra_survival_probability_pset_calls_super(
-        self, _, mock_frame_transform_az_el
-    ):
+    @patch("imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim")
+    def test_ultra_survival_probability_pset_calls_super(self, _, mock_frame_transform_az_el):
         input_l1c_pset = _create_ultra_l1c_pset(np.array([2]), np.full((1, 1, 12), 1))
         glows = _build_glows_l3e_ultra()
 
@@ -46,9 +42,7 @@ class TestUltraSurvivalProbability(unittest.TestCase):
     @patch(
         "imap_l3_processing.ultra.science.ultra_survival_probability.geometry.frame_transform_az_el"
     )
-    @patch(
-        "imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim"
-    )
+    @patch("imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim")
     @patch.object(UltraConstants, "PSET_ENERGY_BIN_EDGES", new=[0.5, 1.5, 4])
     def test_ultra_survival_probability_rotates_to_glows_frame(
         self, mock_unitim, mock_frame_transform_az_el
@@ -85,17 +79,13 @@ class TestUltraSurvivalProbability(unittest.TestCase):
                 ]
             ]
         )
-        survival_probability_times_exposure = prod.data[
-            "survival_probability_times_exposure"
-        ]
+        survival_probability_times_exposure = prod.data["survival_probability_times_exposure"]
         np.testing.assert_array_equal(
             survival_probability_times_exposure.values,
             expected_survival_probabilities_values,
         )
 
-    @patch(
-        "imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim"
-    )
+    @patch("imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim")
     @patch(
         "imap_l3_processing.ultra.science.ultra_survival_probability.geometry.frame_transform_az_el"
     )
@@ -115,20 +105,14 @@ class TestUltraSurvivalProbability(unittest.TestCase):
 
         prod = UltraSurvivalProbability(input_l1c_pset, glows, bin_groups=[0, 1])
 
-        expected_survival_probabilities_values = np.array(
-            [[[2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0]]]
-        )
-        survival_probability_times_exposure = prod.data[
-            "survival_probability_times_exposure"
-        ]
+        expected_survival_probabilities_values = np.array([[[2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0]]])
+        survival_probability_times_exposure = prod.data["survival_probability_times_exposure"]
         np.testing.assert_array_equal(
             survival_probability_times_exposure.values,
             expected_survival_probabilities_values,
         )
 
-    @patch(
-        "imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim"
-    )
+    @patch("imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim")
     @patch(
         "imap_l3_processing.ultra.science.ultra_survival_probability.geometry.frame_transform_az_el"
     )
@@ -166,8 +150,7 @@ class TestUltraSurvivalProbability(unittest.TestCase):
                 expected_flagged,
             ),
             (
-                GlowsL3Flags.PREDICTIVE_EPHEMERIS
-                | GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
+                GlowsL3Flags.PREDICTIVE_EPHEMERIS | GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
                 expected_flagged,
                 expected_flagged,
                 expected_unflagged,
@@ -179,8 +162,7 @@ class TestUltraSurvivalProbability(unittest.TestCase):
                 expected_flagged,
             ),
             (
-                GlowsL3Flags.PERSISTED_LAST_POINT
-                | GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
+                GlowsL3Flags.PERSISTED_LAST_POINT | GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
                 expected_unflagged,
                 expected_flagged,
                 expected_flagged,
@@ -212,13 +194,9 @@ class TestUltraSurvivalProbability(unittest.TestCase):
                     flags=flag,
                 )
 
-                mock_frame_transform_az_el.side_effect = lambda et, az_el, to, _from: (
-                    az_el
-                )
+                mock_frame_transform_az_el.side_effect = lambda et, az_el, to, _from: az_el
 
-                prod = UltraSurvivalProbability(
-                    input_l1c_pset, glows, bin_groups=[0, 1]
-                )
+                prod = UltraSurvivalProbability(input_l1c_pset, glows, bin_groups=[0, 1])
 
                 np.testing.assert_array_equal(
                     prod.data["predicted_ephemeris_flag"], expected_predicted_ephem_flag
@@ -240,9 +218,7 @@ class TestUltraSurvivalProbability(unittest.TestCase):
                     prod.data["survival_probability_times_exposure"].dims,
                 )
 
-    @patch(
-        "imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim"
-    )
+    @patch("imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim")
     @patch(
         "imap_l3_processing.ultra.science.ultra_survival_probability.geometry.frame_transform_az_el"
     )
@@ -264,17 +240,13 @@ class TestUltraSurvivalProbability(unittest.TestCase):
         prod = UltraSurvivalProbability(input_l1c_pset, glows, bin_groups=[0, 1, 2])
 
         expected_survival_probabilities_values = np.array([[[2] * 12, [4] * 12]])
-        survival_probability_times_exposure = prod.data[
-            "survival_probability_times_exposure"
-        ]
+        survival_probability_times_exposure = prod.data["survival_probability_times_exposure"]
         np.testing.assert_array_equal(
             survival_probability_times_exposure.values,
             expected_survival_probabilities_values,
         )
 
-    @patch(
-        "imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim"
-    )
+    @patch("imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim")
     @patch(
         "imap_l3_processing.ultra.science.ultra_survival_probability.geometry.frame_transform_az_el"
     )
@@ -288,9 +260,7 @@ class TestUltraSurvivalProbability(unittest.TestCase):
     ):
         glows_energies = np.array([1, 100, 10000])
         ultra_energies = np.array([10, 10, 10, 10, 1000, 1000, 1000, 1000])
-        input_l1c_pset = _create_ultra_l1c_pset(
-            ultra_energies, np.full((1, 2 * 4, 12), 1)
-        )
+        input_l1c_pset = _create_ultra_l1c_pset(ultra_energies, np.full((1, 2 * 4, 12), 1))
         glows_surv_prob = np.array([[[1] * 12, [3] * 12, [5] * 12]])
 
         glows = _build_glows_l3e_ultra(
@@ -302,17 +272,13 @@ class TestUltraSurvivalProbability(unittest.TestCase):
         prod = UltraSurvivalProbability(input_l1c_pset, glows)
 
         expected_survival_probabilities_values = np.array([[[2] * 12, [4] * 12]])
-        survival_probability_times_exposure = prod.data[
-            "survival_probability_times_exposure"
-        ]
+        survival_probability_times_exposure = prod.data["survival_probability_times_exposure"]
         np.testing.assert_array_equal(
             survival_probability_times_exposure.values,
             expected_survival_probabilities_values,
         )
 
-    @patch(
-        "imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim"
-    )
+    @patch("imap_l3_processing.ultra.science.ultra_survival_probability.spiceypy.unitim")
     @patch(
         "imap_l3_processing.ultra.science.ultra_survival_probability.geometry.frame_transform_az_el"
     )
@@ -388,9 +354,7 @@ class TestUltraSurvivalProbability(unittest.TestCase):
                 ]
             ]
         )
-        survival_probability_times_exposure = prod.data[
-            "survival_probability_times_exposure"
-        ]
+        survival_probability_times_exposure = prod.data["survival_probability_times_exposure"]
         np.testing.assert_array_almost_equal(
             survival_probability_times_exposure.values,
             expected_survival_probabilities_values,
@@ -406,24 +370,19 @@ class TestUltraSurvivalProbabilitySkyMap(SpiceTestCase):
         l3e_sp_1 = np.full((1, 1, pointing_set_pixels), 0.5)
         l3e_sp_2 = np.full((1, 1, pointing_set_pixels), 0.25)
         glows_energies = np.array([1])
-        l1c_1 = _create_ultra_l1c_pset(
-            energy=np.array([1]), exposure_factor=l1c_exposure_1
-        )
+        l1c_1 = _create_ultra_l1c_pset(energy=np.array([1]), exposure_factor=l1c_exposure_1)
         l3e_glows_1 = _build_glows_l3e_ultra(
             survival_probabilities=l3e_sp_1,
             energies=glows_energies,
             nside=pointing_set_nside,
             flags=GlowsL3Flags.PREDICTIVE_EPHEMERIS,
         )
-        l1c_2 = _create_ultra_l1c_pset(
-            energy=np.array([1]), exposure_factor=l1c_exposure_2
-        )
+        l1c_2 = _create_ultra_l1c_pset(energy=np.array([1]), exposure_factor=l1c_exposure_2)
         l3e_glows_2 = _build_glows_l3e_ultra(
             survival_probabilities=l3e_sp_2,
             energies=glows_energies,
             nside=pointing_set_nside,
-            flags=GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO
-            | GlowsL3Flags.PERSISTED_LAST_POINT,
+            flags=GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO | GlowsL3Flags.PERSISTED_LAST_POINT,
         )
 
         pset_1 = UltraSurvivalProbability(l1c_1, l3e_glows_1, bin_groups=[0, 1])
@@ -466,17 +425,13 @@ class TestUltraSurvivalProbabilitySkyMap(SpiceTestCase):
         l3e_sp_1 = np.full((1, 1, pointing_set_pixels), 0.5)
         l3e_sp_2 = np.full((1, 1, pointing_set_pixels), np.nan)
         glows_energies = np.array([1])
-        l1c_1 = _create_ultra_l1c_pset(
-            energy=np.array([1]), exposure_factor=l1c_exposure_1
-        )
+        l1c_1 = _create_ultra_l1c_pset(energy=np.array([1]), exposure_factor=l1c_exposure_1)
         l3e_glows_1 = _build_glows_l3e_ultra(
             survival_probabilities=l3e_sp_1,
             energies=glows_energies,
             nside=pointing_set_nside,
         )
-        l1c_2 = _create_ultra_l1c_pset(
-            energy=np.array([1]), exposure_factor=l1c_exposure_2
-        )
+        l1c_2 = _create_ultra_l1c_pset(energy=np.array([1]), exposure_factor=l1c_exposure_2)
         l3e_glows_2 = _build_glows_l3e_ultra(
             survival_probabilities=l3e_sp_2,
             energies=glows_energies,

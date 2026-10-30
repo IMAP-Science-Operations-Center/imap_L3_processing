@@ -23,12 +23,8 @@ class TestGenerateL3BC(TestCase):
     def test_generate_l3bc_integration(self):
         cr = 2091
         external_files = {
-            "f107_raw_data": get_test_instrument_team_data_path(
-                "glows/f107_fluxtable.txt"
-            ),
-            "omni_raw_data": get_test_instrument_team_data_path(
-                "glows/omni2_all_years.dat"
-            ),
+            "f107_raw_data": get_test_instrument_team_data_path("glows/f107_fluxtable.txt"),
+            "omni_raw_data": get_test_instrument_team_data_path("glows/omni2_all_years.dat"),
         }
         ancillary_files = {
             "uv_anisotropy": get_test_data_path(
@@ -37,9 +33,7 @@ class TestGenerateL3BC(TestCase):
             "WawHelioIonMP_parameters": get_test_data_path(
                 "glows/imap_glows_WawHelioIonMP_v002.json"
             ),
-            "bad_days_list": get_test_data_path(
-                "glows/imap_glows_bad-days-list_v001.dat"
-            ),
+            "bad_days_list": get_test_data_path("glows/imap_glows_bad-days-list_v001.dat"),
             "pipeline_settings": get_test_data_path(
                 "glows/l3d_drift_test/imap_glows_pipeline-settings-l3bcde_20100101_v006.json"
             ),
@@ -50,9 +44,7 @@ class TestGenerateL3BC(TestCase):
             f"imap_glows_l3a_hist_2010010{x}-repoint0000{x}_v001.cdf" for x in (1, 2, 3)
         ]
         for name in l3a_file_names:
-            l3a_data.append(
-                create_glows_l3a_dictionary_from_cdf(l3a_data_folder_path / name)
-            )
+            l3a_data.append(create_glows_l3a_dictionary_from_cdf(l3a_data_folder_path / name))
 
         dependencies = GlowsL3BCDependencies(
             l3a_data=l3a_data,
@@ -96,12 +88,8 @@ class TestGenerateL3BC(TestCase):
     def test_generate_l3bc_integration_all_data_in_bad_season(self):
         cr = 2093
         external_files = {
-            "f107_raw_data": get_test_instrument_team_data_path(
-                "glows/f107_fluxtable.txt"
-            ),
-            "omni_raw_data": get_test_instrument_team_data_path(
-                "glows/omni2_all_years.dat"
-            ),
+            "f107_raw_data": get_test_instrument_team_data_path("glows/f107_fluxtable.txt"),
+            "omni_raw_data": get_test_instrument_team_data_path("glows/omni2_all_years.dat"),
         }
         ancillary_files = {
             "uv_anisotropy": get_test_data_path(
@@ -110,9 +98,7 @@ class TestGenerateL3BC(TestCase):
             "WawHelioIonMP_parameters": get_test_data_path(
                 "glows/imap_glows_WawHelioIonMP_20100101_v002.json"
             ),
-            "bad_days_list": get_test_data_path(
-                "glows/imap_glows_bad-days-list_v001.dat"
-            ),
+            "bad_days_list": get_test_data_path("glows/imap_glows_bad-days-list_v001.dat"),
             "pipeline_settings": get_test_instrument_team_data_path(
                 "glows/imap_glows_pipeline-settings-L3bc_20250707_v002.json"
             ),
@@ -120,8 +106,7 @@ class TestGenerateL3BC(TestCase):
         l3a_data_folder_path = get_test_data_path("glows/l3a_products")
         l3a_data = [
             create_glows_l3a_dictionary_from_cdf(
-                l3a_data_folder_path
-                / "imap_glows_l3a_hist_20100201-repoint00032_v001.cdf"
+                l3a_data_folder_path / "imap_glows_l3a_hist_20100201-repoint00032_v001.cdf"
             )
         ]
 
@@ -139,19 +124,14 @@ class TestGenerateL3BC(TestCase):
         with self.assertRaises(CannotProcessCarringtonRotationError) as context:
             generate_l3bc(dependencies)
         self.assertTrue(
-            "All days for Carrington Rotation are in a bad season."
-            in str(context.exception)
+            "All days for Carrington Rotation are in a bad season." in str(context.exception)
         )
 
     def test_generate_l3bc_appends_used_l3a_files_to_header(self):
         cr = 2096
         external_files = {
-            "f107_raw_data": get_test_instrument_team_data_path(
-                "glows/f107_fluxtable.txt"
-            ),
-            "omni_raw_data": get_test_instrument_team_data_path(
-                "glows/omni2_all_years.dat"
-            ),
+            "f107_raw_data": get_test_instrument_team_data_path("glows/f107_fluxtable.txt"),
+            "omni_raw_data": get_test_instrument_team_data_path("glows/omni2_all_years.dat"),
         }
         ancillary_files = {
             "uv_anisotropy": get_test_data_path(
@@ -160,9 +140,7 @@ class TestGenerateL3BC(TestCase):
             "WawHelioIonMP_parameters": get_test_data_path(
                 "glows/imap_glows_WawHelioIonMP_20100101_v002.json"
             ),
-            "bad_days_list": get_test_data_path(
-                "glows/imap_glows_bad-days-list_v001.dat"
-            ),
+            "bad_days_list": get_test_data_path("glows/imap_glows_bad-days-list_v001.dat"),
             "pipeline_settings": get_test_data_path(
                 "glows/imap_glows_pipeline-settings-l3bcde_20250423_v001.json"
             ),
@@ -199,8 +177,7 @@ class TestGenerateL3BC(TestCase):
 
         l3a_folder_path = get_test_data_path("glows/l3a_products")
         l3a_data = [
-            create_glows_l3a_dictionary_from_cdf(l3a_folder_path / file)
-            for file in l3a_files
+            create_glows_l3a_dictionary_from_cdf(l3a_folder_path / file) for file in l3a_files
         ]
 
         dependencies = GlowsL3BCDependencies(
@@ -226,7 +203,4 @@ class TestGenerateL3BC(TestCase):
             "imap_glows_l3a_hist_20100518-repoint00138_v012.cdf",
         ]
 
-        self.assertEqual(
-            expected_l3a_parent_files, l3b["header"]["l3a_input_files_name"]
-        )
-
+        self.assertEqual(expected_l3a_parent_files, l3b["header"]["l3a_input_files_name"])

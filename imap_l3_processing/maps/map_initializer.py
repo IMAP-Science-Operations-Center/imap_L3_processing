@@ -29,9 +29,7 @@ class PossibleMapToProduce:
 
 class MapInitializer(abc.ABC):
     def __init__(self, instrument: str):
-        l3_query_results = imap_data_access.query(
-            instrument=instrument, data_level="l3"
-        )
+        l3_query_results = imap_data_access.query(instrument=instrument, data_level="l3")
         self.existing_l3_maps = self.get_latest_version_by_descriptor_and_start_date(
             l3_query_results
         )
@@ -57,23 +55,18 @@ class MapInitializer(abc.ABC):
                 {descriptor: Version(major_version, 1)}
             )
 
-            if (
-                    (highest_version_path_by_start_date := self.existing_l3_maps.get(descriptor))
-                    and (path_with_highest_version := highest_version_path_by_start_date.get(start_time))
+            if (highest_version_path_by_start_date := self.existing_l3_maps.get(descriptor)) and (
+                path_with_highest_version := highest_version_path_by_start_date.get(start_time)
             ):
                 existing_parents = read_cdf_parents(path_with_highest_version)
                 existing_path = ScienceFilePath(path_with_highest_version)
                 if (
-                        possible_map.input_files.issubset(existing_parents)
-                        and major_version == existing_path.major_version
+                    possible_map.input_files.issubset(existing_parents)
+                    and major_version == existing_path.major_version
                 ):
                     continue
-                new_version = Version(
-                    major_version, existing_path.minor_version + 1
-                )
-                possible_map.input_metadata.version = VersionMap(
-                    {descriptor: new_version}
-                )
+                new_version = Version(major_version, existing_path.minor_version + 1)
+                possible_map.input_metadata.version = VersionMap({descriptor: new_version})
             maps_to_make.append(possible_map)
         return maps_to_make
 
@@ -95,9 +88,7 @@ class MapInitializer(abc.ABC):
     ) -> defaultdict:
         qr_by_descriptor_and_start_date = defaultdict(list)
         for qr in query_results:
-            qr_by_descriptor_and_start_date[
-                (qr["descriptor"], qr["start_date"])
-            ].append(qr)
+            qr_by_descriptor_and_start_date[(qr["descriptor"], qr["start_date"])].append(qr)
 
         file_paths_by_descriptor = defaultdict(dict)
         for (

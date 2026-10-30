@@ -395,16 +395,14 @@ class SwapiProcessorIntegration(unittest.TestCase):
         self.assertEqual(0, result.returncode)
         self.assertTrue(expected_file_path.exists())
 
-        l2_file_path = ScienceFilePath(
-            "imap_swapi_l2_sci_20260101_v001.0001.cdf"
-        ).construct_path()
+        l2_file_path = ScienceFilePath("imap_swapi_l2_sci_20260101_v001.0001.cdf").construct_path()
         self.assertTrue(l2_file_path.exists())
 
         with CDF(str(l2_file_path)) as l2_cdf, CDF(str(expected_file_path)) as l3b_cdf:
             print(l3b_cdf.keys())
-            l2_coincidence_rate = l2_cdf["swp_coin_rate"][
-                :50, SWAPI_COARSE_SWEEP_BINS
-            ].mean(axis=0)
+            l2_coincidence_rate = l2_cdf["swp_coin_rate"][:50, SWAPI_COARSE_SWEEP_BINS].mean(
+                axis=0
+            )
             combined_differential_flux = l3b_cdf["combined_differential_flux"][0]
 
             geometric_factor = l2_coincidence_rate / combined_differential_flux

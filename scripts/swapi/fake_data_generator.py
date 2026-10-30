@@ -30,9 +30,7 @@ def generate_sweeps(n=5):
 
 def generate_sweep_energies():
     coarse_sweep_energies = np.geomspace(100, 19000, 62)
-    return np.concatenate(
-        (np.array([np.nan]), coarse_sweep_energies, np.array([np.nan] * 9))
-    )
+    return np.concatenate((np.array([np.nan]), coarse_sweep_energies, np.array([np.nan] * 9)))
 
 
 # K Factor may come from a lookup table in the future
@@ -50,6 +48,4 @@ def get_spin_phase_using_spice(time):
 
 
 def generate_peak(energies, height, center, narrowness):
-    return np.exp(
-        np.log(height) - narrowness * np.square(np.log(energies) - np.log(center))
-    )
+    return np.exp(np.log(height) - narrowness * np.square(np.log(energies) - np.log(center)))

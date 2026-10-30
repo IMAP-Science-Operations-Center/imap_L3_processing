@@ -47,13 +47,7 @@ _VELOCITY_R_IDX, _VELOCITY_T_IDX, _VELOCITY_N_IDX = (
 def _esa_voltage_at_speed(speed_km_s: float) -> float:
     """ESA voltage (V) whose central proton speed equals `speed_km_s`. The
     relation is `V = ½ m_p v² / (e · k_SWAPI)`."""
-    return (
-        0.5
-        * PROTON_MASS_KG
-        * (speed_km_s * 1e3) ** 2
-        / PROTON_CHARGE_COULOMBS
-        / SWAPI_K_FACTOR
-    )
+    return 0.5 * PROTON_MASS_KG * (speed_km_s * 1e3) ** 2 / PROTON_CHARGE_COULOMBS / SWAPI_K_FACTOR
 
 
 # Putting the bulk speed at the passband center maximizes the rate and
@@ -156,9 +150,7 @@ class TestCalculateIntegralRateBehavior(_ForwardModelFixture):
 
     def test_rate_is_positive_when_velocity_aligns_with_boresight(self):
         """With bulk speed at the passband center and the flow aimed along boresight, the predicted rate is strictly positive."""
-        rate, _ = calculate_integral(
-            proton_params(), self.response_grid, self.rotation_matrix
-        )
+        rate, _ = calculate_integral(proton_params(), self.response_grid, self.rotation_matrix)
         self.assertGreater(rate, 0.0)
 
     def test_rate_is_linear_in_density(self):
@@ -256,12 +248,8 @@ class TestAnalyticJacobianAgainstFiniteDifferences(_ForwardModelFixture):
 
     def test_log_temperature_jacobian_is_correct(self):
         """At an off-axis bulk state, the analytic log-temperature Jacobian column matches a central finite difference of the rate to within GL quadrature noise."""
-        _, analytic_jacobian = model_solar_wind_ideal_coincidence_rates(
-            self.sw, self.ctx
-        )
-        fd_column = _finite_difference_jacobian_column(
-            self.state, self.ctx, LOG_TEMPERATURE_IDX
-        )
+        _, analytic_jacobian = model_solar_wind_ideal_coincidence_rates(self.sw, self.ctx)
+        fd_column = _finite_difference_jacobian_column(self.state, self.ctx, LOG_TEMPERATURE_IDX)
         np.testing.assert_allclose(
             analytic_jacobian[:, LOG_TEMPERATURE_IDX],
             fd_column,
@@ -271,12 +259,8 @@ class TestAnalyticJacobianAgainstFiniteDifferences(_ForwardModelFixture):
 
     def test_velocity_r_jacobian_is_correct(self):
         """At an off-axis bulk state, the analytic v_R Jacobian column matches a central finite difference of the rate to within GL quadrature noise."""
-        _, analytic_jacobian = model_solar_wind_ideal_coincidence_rates(
-            self.sw, self.ctx
-        )
-        fd_column = _finite_difference_jacobian_column(
-            self.state, self.ctx, _VELOCITY_R_IDX
-        )
+        _, analytic_jacobian = model_solar_wind_ideal_coincidence_rates(self.sw, self.ctx)
+        fd_column = _finite_difference_jacobian_column(self.state, self.ctx, _VELOCITY_R_IDX)
         np.testing.assert_allclose(
             analytic_jacobian[:, _VELOCITY_R_IDX],
             fd_column,
@@ -286,12 +270,8 @@ class TestAnalyticJacobianAgainstFiniteDifferences(_ForwardModelFixture):
 
     def test_velocity_t_jacobian_is_correct(self):
         """At an off-axis bulk state, the analytic v_T Jacobian column matches a central finite difference of the rate to within GL quadrature noise."""
-        _, analytic_jacobian = model_solar_wind_ideal_coincidence_rates(
-            self.sw, self.ctx
-        )
-        fd_column = _finite_difference_jacobian_column(
-            self.state, self.ctx, _VELOCITY_T_IDX
-        )
+        _, analytic_jacobian = model_solar_wind_ideal_coincidence_rates(self.sw, self.ctx)
+        fd_column = _finite_difference_jacobian_column(self.state, self.ctx, _VELOCITY_T_IDX)
         np.testing.assert_allclose(
             analytic_jacobian[:, _VELOCITY_T_IDX],
             fd_column,
@@ -301,12 +281,8 @@ class TestAnalyticJacobianAgainstFiniteDifferences(_ForwardModelFixture):
 
     def test_velocity_n_jacobian_is_correct(self):
         """At an off-axis bulk state, the analytic v_N Jacobian column matches a central finite difference of the rate to within GL quadrature noise."""
-        _, analytic_jacobian = model_solar_wind_ideal_coincidence_rates(
-            self.sw, self.ctx
-        )
-        fd_column = _finite_difference_jacobian_column(
-            self.state, self.ctx, _VELOCITY_N_IDX
-        )
+        _, analytic_jacobian = model_solar_wind_ideal_coincidence_rates(self.sw, self.ctx)
+        fd_column = _finite_difference_jacobian_column(self.state, self.ctx, _VELOCITY_N_IDX)
         np.testing.assert_allclose(
             analytic_jacobian[:, _VELOCITY_N_IDX],
             fd_column,

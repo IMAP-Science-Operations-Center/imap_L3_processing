@@ -73,9 +73,7 @@ INTEGRATED_FIELD_SUFFIXES: tuple[str, ...] = (
 
 
 def _detect_negative(density: np.ndarray, tensor: np.ndarray) -> np.ndarray:
-    return (density < 0) | np.any(
-        tensor[:, TEMPERATURE_TENSOR_DIAGONAL_INDICES] < 0, axis=-1
-    )
+    return (density < 0) | np.any(tensor[:, TEMPERATURE_TENSOR_DIAGONAL_INDICES] < 0, axis=-1)
 
 
 def check_and_mask_negative_moments(moment_data: SweL3MomentData) -> np.ndarray:
@@ -102,9 +100,7 @@ def check_and_mask_negative_moments(moment_data: SweL3MomentData) -> np.ndarray:
             core_negative | halo_negative | total_negative
         ] = np.nan
 
-    flags[core_negative | halo_negative | total_negative] |= np.uint16(
-        SweL3Flags.NEGATIVE_MOMENT
-    )
+    flags[core_negative | halo_negative | total_negative] |= np.uint16(SweL3Flags.NEGATIVE_MOMENT)
     return flags
 
 
@@ -147,14 +143,10 @@ def check_temperature_outlier_flag(data: np.ndarray):
                 temp_data = data[left_idx:right_idx]
                 # Check if current value is beyond 3-sigma of median from data
                 median = np.nanmedian(
-                    np.delete(temp_data, k)[
-                        np.delete(tof_copy[left_idx:right_idx], k) == 0
-                    ]
+                    np.delete(temp_data, k)[np.delete(tof_copy[left_idx:right_idx], k) == 0]
                 )
                 deviation = np.nanstd(
-                    np.delete(temp_data, k)[
-                        np.delete(tof_copy[left_idx:right_idx], k) == 0
-                    ]
+                    np.delete(temp_data, k)[np.delete(tof_copy[left_idx:right_idx], k) == 0]
                 )
                 if np.abs(median - data[i]) >= deviation * 3.0:
                     TEMPERATURE_OUTLIER[i] = SweL3Flags.TEMPERATURE_OUTLIER
@@ -164,9 +156,7 @@ def check_temperature_outlier_flag(data: np.ndarray):
 
 
 class SweProcessor(Processor):
-    def __init__(
-        self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata
-    ):
+    def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
         super().__init__(dependencies, input_metadata)
 
     def process(self):
@@ -186,9 +176,7 @@ class SweProcessor(Processor):
 
         average_psd = []
         swe_quality_flags = np.empty_like(swe_epoch, dtype=np.uint16)
-        spacecraft_potential: np.ndarray[np.float64] = np.empty_like(
-            swe_epoch, dtype=np.float64
-        )
+        spacecraft_potential: np.ndarray[np.float64] = np.empty_like(swe_epoch, dtype=np.float64)
         halo_core: np.ndarray[np.float64] = np.empty_like(swe_epoch, dtype=np.float64)
         corrected_energy_bins = []
         rebinned_mag_data = dependencies.mag_data.rebin_to(
@@ -201,9 +189,7 @@ class SweProcessor(Processor):
             npts = 7 // 2
             left_idx = max(i - npts, 0)
             right_idx = i + (i - left_idx + 1)
-            time_avg_psd = np.nanmean(
-                swe_l2_data.phase_space_density[left_idx:right_idx], axis=0
-            )
+            time_avg_psd = np.nanmean(swe_l2_data.phase_space_density[left_idx:right_idx], axis=0)
 
             average_psd.append(
                 average_over_look_directions(
@@ -213,8 +199,8 @@ class SweProcessor(Processor):
                 )
             )
 
-            spacecraft_potential[i], halo_core[i], swe_quality_flags[i] = (
-                mec_breakpoint_finder(swe_l2_data.energy, average_psd[i])
+            spacecraft_potential[i], halo_core[i], swe_quality_flags[i] = mec_breakpoint_finder(
+                swe_l2_data.energy, average_psd[i]
             )
 
             corrected_energy_bins.append(swe_l2_data.energy - spacecraft_potential[i])
@@ -277,26 +263,18 @@ class SweProcessor(Processor):
                 psd_array > UNPHYSICAL_PSD_THRESHOLD,
                 axis=tuple(range(1, psd_array.ndim)),
             )
-            swe_quality_flags[unphysical_psd_per_epoch] |= np.uint16(
-                SweL3Flags.UNPHYSICAL_PSD
-            )
+            swe_quality_flags[unphysical_psd_per_epoch] |= np.uint16(SweL3Flags.UNPHYSICAL_PSD)
 
         if dependencies.mag_is_preliminary:
-            swe_quality_flags = np.bitwise_or(
-                swe_quality_flags, SweL3Flags.PRELIMINARY_MAG
-            )
+            swe_quality_flags = np.bitwise_or(swe_quality_flags, SweL3Flags.PRELIMINARY_MAG)
 
-        last_cal_interval = (
-            swe_l2_data.data_quality & SweL1bFlags.LAST_CAL_INTERVAL
-        ) != 0
+        last_cal_interval = (swe_l2_data.data_quality & SweL1bFlags.LAST_CAL_INTERVAL) != 0
         swe_quality_flags[last_cal_interval] |= np.uint16(
             SweL3Flags.FALLBACK_CALIBRATION_EXTRAPOLATED
         )
 
         rebinned_mask = np.ma.masked_invalid(swe_l2_data.phase_space_density_rebinned)
-        dist_by_phi_rebinned = np.average(
-            rebinned_mask, weights=geometric_fractions, axis=-1
-        )
+        dist_by_phi_rebinned = np.average(rebinned_mask, weights=geometric_fractions, axis=-1)
         dist_fun_1d_rebinned = np.ma.average(dist_by_phi_rebinned, axis=-1)
         dist_by_theta_rebinned = np.ma.average(rebinned_mask, axis=-2)
 
@@ -429,14 +407,10 @@ class SweProcessor(Processor):
                 core_nfit = jbreak - ifit
                 ifit += 1
                 if core_nfit == 0:
-                    logger.info(
-                        f"Bad core-halo breakpoint value at index {i}. Continuing."
-                    )
+                    logger.info(f"Bad core-halo breakpoint value at index {i}. Continuing.")
                     continue
 
-                halo_nfit = (
-                    min(len(swe_l2_data.energy) - jbreak, 5)
-                )
+                halo_nfit = min(len(swe_l2_data.energy) - jbreak, 5)
 
                 core_moment_fit_result = core_fit_moments_retrying_on_failure(
                     corrected_energy_bins[i],
@@ -491,9 +465,7 @@ class SweProcessor(Processor):
                     )
                     core_temp_theta_rtns[i] = core_temp_theta_rtn
                     core_temp_phi_rtns[i] = core_temp_phi_rtn
-                    core_temp_avg = (
-                        2 * core_moment.t_perpendicular + core_moment.t_parallel
-                    ) / 3
+                    core_temp_avg = (2 * core_moment.t_perpendicular + core_moment.t_parallel) / 3
 
                     if 1e3 < core_temp_avg < 1e7:
                         core_integrate_result = integrate(
@@ -510,26 +482,22 @@ class SweProcessor(Processor):
                             [0, 0, 0, 0, 0, 0],
                         )
                         if core_integrate_result is not None:
-                            scale_core_density_output: ScaleDensityOutput = (
-                                scale_core_density(
-                                    core_integrate_result.density,
-                                    core_integrate_result.velocity,
-                                    core_integrate_result.temperature,
-                                    core_moment,
-                                    ifit,
-                                    corrected_energy_bins[i],
-                                    spacecraft_potential[i],
-                                    cos_theta,
-                                    config["aperture_field_of_view_radians"],
-                                    instrument_phi[i],
-                                    core_moment_fit_result.regress_result,
-                                    core_integrate_result.base_energy,
-                                )
+                            scale_core_density_output: ScaleDensityOutput = scale_core_density(
+                                core_integrate_result.density,
+                                core_integrate_result.velocity,
+                                core_integrate_result.temperature,
+                                core_moment,
+                                ifit,
+                                corrected_energy_bins[i],
+                                spacecraft_potential[i],
+                                cos_theta,
+                                config["aperture_field_of_view_radians"],
+                                instrument_phi[i],
+                                core_moment_fit_result.regress_result,
+                                core_integrate_result.base_energy,
                             )
 
-                            core_density_integrated[i] = (
-                                scale_core_density_output.density
-                            )
+                            core_density_integrated[i] = scale_core_density_output.density
                             core_velocity_integrated[i] = apply_rotation_matrix(
                                 dps_to_rtn, scale_core_density_output.velocity
                             )
@@ -537,20 +505,16 @@ class SweProcessor(Processor):
                                 scale_core_density_output.temperature
                             )
 
-                            magnitude, theta, phi = (
-                                rotate_vector_to_rtn_spherical_coordinates(
-                                    dps_to_rtn, core_integrate_result.heat_flux
-                                )
+                            magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(
+                                dps_to_rtn, core_integrate_result.heat_flux
                             )
 
                             core_heat_flux_magnitude[i] = magnitude
                             core_heat_flux_theta[i] = theta
                             core_heat_flux_phi[i] = phi
 
-                            core_primary_eigen_vector, core_temps = (
-                                calculate_primary_eigenvector(
-                                    scale_core_density_output.temperature
-                                )
+                            core_primary_eigen_vector, core_temps = calculate_primary_eigenvector(
+                                scale_core_density_output.temperature
                             )
 
                             core_t_parallel_integrated[i] = core_temps[0]
@@ -559,10 +523,8 @@ class SweProcessor(Processor):
                                 core_temps[2],
                             ]
 
-                            magnitude, theta, phi = (
-                                rotate_vector_to_rtn_spherical_coordinates(
-                                    dps_to_rtn, core_primary_eigen_vector
-                                )
+                            magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(
+                                dps_to_rtn, core_primary_eigen_vector
                             )
                             core_temperature_theta_rtn_integrated[i] = theta
                             core_temperature_phi_rtn_integrated[i] = phi
@@ -598,9 +560,7 @@ class SweProcessor(Processor):
                             assert total_integration_output is not None, (
                                 "not yet checking if this is None"
                             )
-                            total_density_integrated[i] = (
-                                total_integration_output.density
-                            )
+                            total_density_integrated[i] = total_integration_output.density
                             total_velocity_integrated[i] = apply_rotation_matrix(
                                 dps_to_rtn, total_integration_output.velocity
                             )
@@ -608,10 +568,8 @@ class SweProcessor(Processor):
                                 total_integration_output.temperature
                             )
 
-                            magnitude, theta, phi = (
-                                rotate_vector_to_rtn_spherical_coordinates(
-                                    dps_to_rtn, total_integration_output.heat_flux
-                                )
+                            magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(
+                                dps_to_rtn, total_integration_output.heat_flux
                             )
 
                             total_heat_flux_magnitude[i] = magnitude
@@ -619,9 +577,7 @@ class SweProcessor(Processor):
                             total_heat_flux_phi[i] = phi
 
                             total_primary_eigen_vector, total_temps = (
-                                calculate_primary_eigenvector(
-                                    total_integration_output.temperature
-                                )
+                                calculate_primary_eigenvector(total_integration_output.temperature)
                             )
 
                             total_t_parallel_integrated[i] = total_temps[0]
@@ -630,10 +586,8 @@ class SweProcessor(Processor):
                                 total_temps[2],
                             ]
 
-                            magnitude, theta, phi = (
-                                rotate_vector_to_rtn_spherical_coordinates(
-                                    dps_to_rtn, total_primary_eigen_vector
-                                )
+                            magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(
+                                dps_to_rtn, total_primary_eigen_vector
                             )
                             total_temperature_theta_rtn_integrated[i] = theta
                             total_temperature_phi_rtn_integrated[i] = phi
@@ -647,9 +601,7 @@ class SweProcessor(Processor):
                                 rebinned_mag_data[i],
                             )
 
-                            total_temperature_parallel_to_mag[i] = (
-                                total_t_parallel_to_mag
-                            )
+                            total_temperature_parallel_to_mag[i] = total_t_parallel_to_mag
                             total_temperature_perpendicular_to_mag[i] = [
                                 total_t_perpendicular_to_mag_average,
                                 total_t_perpendicular_to_mag_ratio,
@@ -659,9 +611,7 @@ class SweProcessor(Processor):
                             logger.info(f"core integrate failed at index {i}")
 
                     else:
-                        logger.info(
-                            f"core temp {core_temp_avg} out of range at index {i}"
-                        )
+                        logger.info(f"core temp {core_temp_avg} out of range at index {i}")
                 else:
                     logger.info(f"bad core moment fit result at index {i}")
 
@@ -703,9 +653,7 @@ class SweProcessor(Processor):
                     )
                     halo_temp_theta_rtns[i] = halo_temp_theta_rtn
                     halo_temp_phi_rtns[i] = halo_temp_phi_rtn
-                    halo_temp_avg = (
-                        2 * halo_moment.t_perpendicular + halo_moment.t_parallel
-                    ) / 3
+                    halo_temp_avg = (2 * halo_moment.t_perpendicular + halo_moment.t_parallel) / 3
                     if 1e4 < halo_temp_avg < 1e8:
                         halo_integrate_result = integrate(
                             jbreak,
@@ -721,25 +669,21 @@ class SweProcessor(Processor):
                             [0, 0, 0, 0, 0, 0],
                         )
                         if halo_integrate_result is not None:
-                            scale_halo_density_output: ScaleDensityOutput = (
-                                scale_halo_density(
-                                    halo_integrate_result.density,
-                                    halo_integrate_result.velocity,
-                                    halo_integrate_result.temperature,
-                                    halo_moment,
-                                    spacecraft_potential[i],
-                                    halo_core[i],
-                                    cos_theta,
-                                    config["aperture_field_of_view_radians"],
-                                    instrument_phi[i],
-                                    halo_moment_fit_result.regress_result,
-                                    halo_integrate_result.base_energy,
-                                )
+                            scale_halo_density_output: ScaleDensityOutput = scale_halo_density(
+                                halo_integrate_result.density,
+                                halo_integrate_result.velocity,
+                                halo_integrate_result.temperature,
+                                halo_moment,
+                                spacecraft_potential[i],
+                                halo_core[i],
+                                cos_theta,
+                                config["aperture_field_of_view_radians"],
+                                instrument_phi[i],
+                                halo_moment_fit_result.regress_result,
+                                halo_integrate_result.base_energy,
                             )
 
-                            halo_density_integrated[i] = (
-                                scale_halo_density_output.density
-                            )
+                            halo_density_integrated[i] = scale_halo_density_output.density
                             halo_velocity_integrated[i] = apply_rotation_matrix(
                                 dps_to_rtn, scale_halo_density_output.velocity
                             )
@@ -747,20 +691,16 @@ class SweProcessor(Processor):
                                 scale_halo_density_output.temperature
                             )
 
-                            magnitude, theta, phi = (
-                                rotate_vector_to_rtn_spherical_coordinates(
-                                    dps_to_rtn, halo_integrate_result.heat_flux
-                                )
+                            magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(
+                                dps_to_rtn, halo_integrate_result.heat_flux
                             )
 
                             halo_heat_flux_magnitude[i] = magnitude
                             halo_heat_flux_theta[i] = theta
                             halo_heat_flux_phi[i] = phi
 
-                            halo_primary_eigen_vector, halo_temps = (
-                                calculate_primary_eigenvector(
-                                    scale_halo_density_output.temperature
-                                )
+                            halo_primary_eigen_vector, halo_temps = calculate_primary_eigenvector(
+                                scale_halo_density_output.temperature
                             )
 
                             halo_t_parallel_integrated[i] = halo_temps[0]
@@ -769,10 +709,8 @@ class SweProcessor(Processor):
                                 halo_temps[2],
                             ]
 
-                            magnitude, theta, phi = (
-                                rotate_vector_to_rtn_spherical_coordinates(
-                                    dps_to_rtn, halo_primary_eigen_vector
-                                )
+                            magnitude, theta, phi = rotate_vector_to_rtn_spherical_coordinates(
+                                dps_to_rtn, halo_primary_eigen_vector
                             )
                             halo_temperature_theta_rtn_integrated[i] = theta
                             halo_temperature_phi_rtn_integrated[i] = phi
@@ -794,9 +732,7 @@ class SweProcessor(Processor):
                         else:
                             logger.info(f"halo integrate failed at index {i}")
                     else:
-                        logger.info(
-                            f"halo temp {halo_temp_avg} out of range at index {i}"
-                        )
+                        logger.info(f"halo temp {halo_temp_avg} out of range at index {i}")
                 else:
                     logger.info(f"bad halo moment fit result at index {i}")
 
@@ -811,18 +747,10 @@ class SweProcessor(Processor):
             core_fit_num_points=core_fit_num_points,
             core_chisq=core_fit_chi_squareds,
             halo_chisq=halo_fit_chi_squareds,
-            core_density_fit=np.array(
-                [core_moment.density for core_moment in core_moments]
-            ),
-            halo_density_fit=np.array(
-                [halo_moment.density for halo_moment in halo_moments]
-            ),
-            core_t_parallel_fit=np.array(
-                [core_moment.t_parallel for core_moment in core_moments]
-            ),
-            halo_t_parallel_fit=np.array(
-                [halo_moment.t_parallel for halo_moment in halo_moments]
-            ),
+            core_density_fit=np.array([core_moment.density for core_moment in core_moments]),
+            halo_density_fit=np.array([halo_moment.density for halo_moment in halo_moments]),
+            core_t_parallel_fit=np.array([core_moment.t_parallel for core_moment in core_moments]),
+            halo_t_parallel_fit=np.array([halo_moment.t_parallel for halo_moment in halo_moments]),
             core_t_perpendicular_fit=np.array(
                 [core_moment.t_perpendicular for core_moment in core_moments]
             ),
@@ -864,21 +792,15 @@ class SweProcessor(Processor):
             core_temperature_theta_rtn_integrated=np.rad2deg(
                 core_temperature_theta_rtn_integrated
             ),
-            core_temperature_phi_rtn_integrated=np.rad2deg(
-                core_temperature_phi_rtn_integrated
-            ),
+            core_temperature_phi_rtn_integrated=np.rad2deg(core_temperature_phi_rtn_integrated),
             halo_temperature_theta_rtn_integrated=np.rad2deg(
                 halo_temperature_theta_rtn_integrated
             ),
-            halo_temperature_phi_rtn_integrated=np.rad2deg(
-                halo_temperature_phi_rtn_integrated
-            ),
+            halo_temperature_phi_rtn_integrated=np.rad2deg(halo_temperature_phi_rtn_integrated),
             total_temperature_theta_rtn_integrated=np.rad2deg(
                 total_temperature_theta_rtn_integrated
             ),
-            total_temperature_phi_rtn_integrated=np.rad2deg(
-                total_temperature_phi_rtn_integrated
-            ),
+            total_temperature_phi_rtn_integrated=np.rad2deg(total_temperature_phi_rtn_integrated),
             core_temperature_parallel_to_mag=core_temperature_parallel_to_mag,
             core_temperature_perpendicular_to_mag=core_temperature_perpendicular_to_mag,
             halo_temperature_parallel_to_mag=halo_temperature_parallel_to_mag,
@@ -887,8 +809,7 @@ class SweProcessor(Processor):
             total_temperature_perpendicular_to_mag=total_temperature_perpendicular_to_mag,
             core_temperature_tensor_integrated=core_temperature_tensor_integrated * 1e4,
             halo_temperature_tensor_integrated=halo_temperature_tensor_integrated * 1e4,
-            total_temperature_tensor_integrated=total_temperature_tensor_integrated
-            * 1e4,
+            total_temperature_tensor_integrated=total_temperature_tensor_integrated * 1e4,
             quality_flags=quality_flags,
         )
 
@@ -898,9 +819,7 @@ class SweProcessor(Processor):
         swe_l2_data = dependencies.swe_l2_data
         swe_epoch = swe_l2_data.epoch
         config = dependencies.configuration
-        mag_max_distance = np.timedelta64(
-            int(config["max_mag_offset_in_minutes"] * 60e9), "ns"
-        )
+        mag_max_distance = np.timedelta64(int(config["max_mag_offset_in_minutes"] * 60e9), "ns")
 
         mag_nearest_interpolator = NearestInterpolator(
             from_epoch=dependencies.mag_data.epoch,
@@ -912,11 +831,9 @@ class SweProcessor(Processor):
 
         swapi_l3a_proton_data = dependencies.swapi_l3a_proton_data
         swapi_epoch = swapi_l3a_proton_data.epoch
-        solar_wind_vectors, used_predict_to_rotate_solar_wind = (
-            rotate_rtn_vectors_to_dps(
-                swapi_epoch,
-                swapi_l3a_proton_data.proton_sw_velocity_rtn,
-            )
+        solar_wind_vectors, used_predict_to_rotate_solar_wind = rotate_rtn_vectors_to_dps(
+            swapi_epoch,
+            swapi_l3a_proton_data.proton_sw_velocity_rtn,
         )
         proton_sw_speed = swapi_l3a_proton_data.proton_sw_speed
         fallback_to_speed = np.any(np.isnan(solar_wind_vectors), axis=1) & np.isfinite(
@@ -942,17 +859,13 @@ class SweProcessor(Processor):
 
         rebinned_solar_wind_vectors = solar_wind_interpolator.interpolate_data()
 
-        rebinned_fallback_to_speed = solar_wind_interpolator.interpolate_flags(
-            fallback_to_speed
-        )
-        rebinned_used_predict_to_rotate_solar_wind = (
-            solar_wind_interpolator.interpolate_flags(used_predict_to_rotate_solar_wind)
+        rebinned_fallback_to_speed = solar_wind_interpolator.interpolate_flags(fallback_to_speed)
+        rebinned_used_predict_to_rotate_solar_wind = solar_wind_interpolator.interpolate_flags(
+            used_predict_to_rotate_solar_wind
         )
 
         swe_flags = np.full(len(swe_epoch), SweL3Flags.NONE, dtype=np.uint16)
-        swe_flags[rebinned_fallback_to_speed] |= np.uint16(
-            SweL3Flags.FALLBACK_SWAPI_SPEED
-        )
+        swe_flags[rebinned_fallback_to_speed] |= np.uint16(SweL3Flags.FALLBACK_SWAPI_SPEED)
         swe_flags[rebinned_used_predict_to_rotate_solar_wind] |= np.uint16(
             SweL3Flags.PREDICTIVE_EPHEMERIS
         )
@@ -1036,10 +949,8 @@ class SweProcessor(Processor):
                 phase_space_density_1d.append(
                     integrate_distribution_to_get_1d_spectrum(rebinned_psd, config)
                 )
-                inbound, outbound = (
-                    integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(
-                        rebinned_psd, config
-                    )
+                inbound, outbound = integrate_distribution_to_get_inbound_and_outbound_1d_spectrum(
+                    rebinned_psd, config
                 )
                 phase_space_density_inward.append(inbound)
                 phase_space_density_outward.append(outbound)

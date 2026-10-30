@@ -65,37 +65,23 @@ class L1aDataDirectEvents:
         # corrected (missing fields filter_temperature and hv_voltage) by looking at
         # glows_appsw-master/tooling/science/models/direct_event_file_model.py:42
         self.data["data_every_second"] = {}
-        self.data["data_every_second"]["imap_sclk_last_pps"] = int.from_bytes(
-            data[0:4], "big"
-        )
-        self.data["data_every_second"]["glows_sclk_last_pps"] = int.from_bytes(
-            data[4:8], "big"
-        )
-        self.data["data_every_second"]["glows_ssclk_last_pps"] = int.from_bytes(
-            data[8:12], "big"
-        )
-        self.data["data_every_second"]["imap_sclk_next_pps"] = int.from_bytes(
-            data[12:16], "big"
-        )
+        self.data["data_every_second"]["imap_sclk_last_pps"] = int.from_bytes(data[0:4], "big")
+        self.data["data_every_second"]["glows_sclk_last_pps"] = int.from_bytes(data[4:8], "big")
+        self.data["data_every_second"]["glows_ssclk_last_pps"] = int.from_bytes(data[8:12], "big")
+        self.data["data_every_second"]["imap_sclk_next_pps"] = int.from_bytes(data[12:16], "big")
         self.data["data_every_second"]["catbed_heater_active"] = bool(int(data[16]))
         self.data["data_every_second"]["spin_period_valid"] = bool(int(data[17]))
         self.data["data_every_second"]["spin_phase_at_next_pps_valid"] = bool(int(data[18]))
         self.data["data_every_second"]["spin_period_source"] = bool(int(data[19]))
-        self.data["data_every_second"]["spin_period"] = int.from_bytes(
-            data[20:22], "big"
-        )
+        self.data["data_every_second"]["spin_period"] = int.from_bytes(data[20:22], "big")
         self.data["data_every_second"]["spin_phase_at_next_pps"] = int.from_bytes(
             data[22:24], "big"
         )
         self.data["data_every_second"]["number_of_completed_spins"] = int.from_bytes(
             data[24:28], "big"
         )
-        self.data["data_every_second"]["filter_temperature"] = int.from_bytes(
-            data[28:30], "big"
-        )
-        self.data["data_every_second"]["hv_voltage"] = int.from_bytes(
-            data[30:32], "big"
-        )
+        self.data["data_every_second"]["filter_temperature"] = int.from_bytes(data[28:30], "big")
+        self.data["data_every_second"]["hv_voltage"] = int.from_bytes(data[30:32], "big")
         self.data["data_every_second"]["glows_time_on_pps_valid"] = bool(int(data[32]))
         self.data["data_every_second"]["time_status_valid"] = bool(int(data[33]))
         self.data["data_every_second"]["housekeeping_valid"] = bool(int(data[34]))
@@ -122,9 +108,7 @@ class L1aDataDirectEvents:
             return error_messages
 
         # sanity check, the first direct event must be uncompressed 8-byte structure
-        assert len(data) >= 48, (
-            f"error create_l1a_from_l0_data(): len(data)={len(data)} < 48"
-        )
+        assert len(data) >= 48, f"error create_l1a_from_l0_data(): len(data)={len(data)} < 48"
 
         # read the first direct event, which is always uncompressed (i.e., not timedelta but full timestamp)
         current_event = DirectEvent.build_event_from_uncompressed_data(data[40:48])
@@ -216,9 +200,7 @@ class L1aDataDirectEvents:
                 #                pass
                 #                raise Exception('error create_l1a_from_l0_data(): unexpected marker %d or end of data stream %d %d' % \
                 #                                (marker, i, len(binary_stream_of_timedeltas)))
-                error_messages.append(
-                    f"DE: direct event decompressing failed at byte {i - 1}"
-                )
+                error_messages.append(f"DE: direct event decompressing failed at byte {i - 1}")
                 break
 
             # sanity check
@@ -232,9 +214,9 @@ class L1aDataDirectEvents:
     def generate_file_name(self, extension):
         # file names should be tagged with utc time as suggested in Sec. 1.4.2 of
         # "IMAP SDC to Instrument Team ICD"
-        start_time_utc = time_sec_subsec_to_utc(
-            self.data["imap_start_time_seconds"], 0
-        ).strftime("%Y%m%d%H%M%S")
+        start_time_utc = time_sec_subsec_to_utc(self.data["imap_start_time_seconds"], 0).strftime(
+            "%Y%m%d%H%M%S"
+        )
 
         # the output file name is constructed using a convention defined in Sec. 1.4.2 of
         # "IMAP SDC to Instrument Team ICD"

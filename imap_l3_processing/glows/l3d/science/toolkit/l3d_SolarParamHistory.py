@@ -132,7 +132,9 @@ class SolarParamsHistory:
 
         self.lat_grid = self.settings["solar_wind_grid"]  # latitudinal grid [deg]
         self.CR_grid = None  # regular grid with Carrington rotation period resolution. Bin centered on Carr halves
-        self.time_grid = None  # decimal year corresponding to the regular grid with bins on Carrington halves
+        self.time_grid = (
+            None  # decimal year corresponding to the regular grid with bins on Carrington halves
+        )
         self.CR_last = None
 
         self.solar_params = {}  # ionization parameters interplolated to the Carrington rotation halves
@@ -143,7 +145,9 @@ class SolarParamsHistory:
         for k in anc_input_from_instr_team["WawHelioIon"]:
             self.flags[k] = None
 
-        self.glows_flags = None  # GLOWS quality-flag bitmask per CR (initialized in generate_initial_history)
+        self.glows_flags = (
+            None  # GLOWS quality-flag bitmask per CR (initialized in generate_initial_history)
+        )
 
     def _check_ini_data(self):
         """
@@ -181,9 +185,7 @@ class SolarParamsHistory:
         # list of the L3d text files from the latest CR
         fn_initial = {}
         for k, value in l3d_txt_fn_list.items():
-            idx_latest = np.array(
-                [f.split("cr_")[1].split("_")[0] for f in value]
-            ).argmax()
+            idx_latest = np.array([f.split("cr_")[1].split("_")[0] for f in value]).argmax()
             fn_initial[k] = value[idx_latest]
         return fn_initial
 
@@ -217,19 +219,11 @@ class SolarParamsHistory:
             idx_read_b = [idx_read_b[0]]
             idx_read_c = [idx_read_c[0]]
             cr_params["uv-anis"] = data_l3b[idx_current]["uv_anisotropy_factor"]
-            cr_params["phion"] = data_l3b[idx_current]["ion_rate_profile"]["ph_rate"][
-                Nmid
-            ]
-            cr_params["p-dens"] = data_l3c[idx_current]["solar_wind_profile"][
-                "proton_density"
-            ]
-            cr_params["speed"] = data_l3c[idx_current]["solar_wind_profile"][
-                "plasma_speed"
-            ]
+            cr_params["phion"] = data_l3b[idx_current]["ion_rate_profile"]["ph_rate"][Nmid]
+            cr_params["p-dens"] = data_l3c[idx_current]["solar_wind_profile"]["proton_density"]
+            cr_params["speed"] = data_l3c[idx_current]["solar_wind_profile"]["plasma_speed"]
             p_dens_ecl = data_l3c[idx_current]["solar_wind_ecliptic"]["proton_density"]
-            a_abundance_ecl = data_l3c[idx_current]["solar_wind_ecliptic"][
-                "alpha_abundance"
-            ]
+            a_abundance_ecl = data_l3c[idx_current]["solar_wind_ecliptic"]["alpha_abundance"]
             cr_params["e-dens"] = p_dens_ecl * (1 + 2 * a_abundance_ecl)
         else:
             # if idx_read_b[-1]>=len(CR_list_b): raise Exception('L3d not generated: there is not enough L3b data to interpolate')
@@ -241,12 +235,8 @@ class SolarParamsHistory:
 
             # time nodes that will be used for interpolation. The first one is the last time stamp from the previous CR, the second and the third are next available L3bc dates
             # Usually t_b=t_c, but there could be a cases when for a current CR L3b was generated and L3c is not. Then we can still generate L3d if we have both L3b and L3c for later CR
-            t_nods_b = np.concatenate(
-                [[fun.jd_fm_Carrington(self.ini_data["CR_last"])], t_b.jd]
-            )
-            t_nods_c = np.concatenate(
-                [[fun.jd_fm_Carrington(self.ini_data["CR_last"])], t_c.jd]
-            )
+            t_nods_b = np.concatenate([[fun.jd_fm_Carrington(self.ini_data["CR_last"])], t_b.jd])
+            t_nods_c = np.concatenate([[fun.jd_fm_Carrington(self.ini_data["CR_last"])], t_c.jd])
 
             # UV-anisotropy
             anisotropy = np.concatenate(
@@ -268,10 +258,7 @@ class SolarParamsHistory:
                 [
                     [self.ini_data["data"]["phion"][-1]],
                     np.array(
-                        [
-                            data_l3b[i]["ion_rate_profile"]["ph_rate"][Nmid]
-                            for i in idx_read_b
-                        ]
+                        [data_l3b[i]["ion_rate_profile"]["ph_rate"][Nmid] for i in idx_read_b]
                     ),
                 ]
             )
@@ -282,10 +269,7 @@ class SolarParamsHistory:
                 [
                     [self.ini_data["data"]["p-dens"][-1]],
                     np.array(
-                        [
-                            data_l3c[i]["solar_wind_profile"]["proton_density"]
-                            for i in idx_read_c
-                        ]
+                        [data_l3c[i]["solar_wind_profile"]["proton_density"] for i in idx_read_c]
                     ),
                 ]
             )
@@ -293,38 +277,23 @@ class SolarParamsHistory:
                 [
                     [self.ini_data["data"]["speed"][-1]],
                     np.array(
-                        [
-                            data_l3c[i]["solar_wind_profile"]["plasma_speed"]
-                            for i in idx_read_c
-                        ]
+                        [data_l3c[i]["solar_wind_profile"]["plasma_speed"] for i in idx_read_c]
                     ),
                 ]
             )
             cr_params["p-dens"] = np.array(
-                [
-                    np.interp(t_CR.jd, t_nods_c, p_dens[:, i])
-                    for i in np.arange(len(p_dens[0]))
-                ]
+                [np.interp(t_CR.jd, t_nods_c, p_dens[:, i]) for i in np.arange(len(p_dens[0]))]
             )
             cr_params["speed"] = np.array(
-                [
-                    np.interp(t_CR.jd, t_nods_c, sw_speed[:, i])
-                    for i in np.arange(len(sw_speed[0]))
-                ]
+                [np.interp(t_CR.jd, t_nods_c, sw_speed[:, i]) for i in np.arange(len(sw_speed[0]))]
             )
 
             # electron density in the ecliptic plane calculated from p-dens and alpha-abundance
             p_dens_ecl = np.array(
-                [
-                    data_l3c[i]["solar_wind_ecliptic"]["proton_density"]
-                    for i in idx_read_c
-                ]
+                [data_l3c[i]["solar_wind_ecliptic"]["proton_density"] for i in idx_read_c]
             )
             a_abundance_ecl = np.array(
-                [
-                    data_l3c[i]["solar_wind_ecliptic"]["alpha_abundance"]
-                    for i in idx_read_c
-                ]
+                [data_l3c[i]["solar_wind_ecliptic"]["alpha_abundance"] for i in idx_read_c]
             )
             e_dens_ecl = np.concatenate(
                 [
@@ -362,9 +331,7 @@ class SolarParamsHistory:
         # At first all values are set at fill value defined in pipeline settings
 
         for f in fn_list:
-            if np.logical_or(
-                np.logical_or(f == "speed", f == "p-dens"), f == "uv-anis"
-            ):
+            if np.logical_or(np.logical_or(f == "speed", f == "p-dens"), f == "uv-anis"):
                 self.solar_params[f] = np.ones((Nt, Nl)) * fill_value
                 self.flags[f] = np.ones(Nt) * fill_value
             elif np.logical_or(np.logical_or(f == "lya", f == "phion"), f == "e-dens"):
@@ -424,13 +391,9 @@ class SolarParamsHistory:
         hdr_temp[4] = "ground software version: " + VERSION + "\n"
         hdr_temp[5] = "creation date: " + Time.now().iso + "\n"
         hdr_temp[6] = "input files: " + self.header["l3d_cdf_filename"] + "\n"
-        hdr_temp[7] = (
-            "external dependencies: " + self.header["external_dependeciens"] + "\n"
-        )
+        hdr_temp[7] = "external dependencies: " + self.header["external_dependeciens"] + "\n"
         hdr_temp[8] = "last CR: " + str(self.CR_last) + "\n"
-        hdr_temp[9] = (
-            "fill value: " + str(self.settings["WawHelioIonGlows_fill_value"]) + "\n"
-        )
+        hdr_temp[9] = "fill value: " + str(self.settings["WawHelioIonGlows_fill_value"]) + "\n"
         hdr_temp[15] = "Remarks:\n"
         hdr_temp[29] = "###############################################"
         return hdr_temp
@@ -454,17 +417,15 @@ class SolarParamsHistory:
         N = self.settings["hdr_txt_lines_number"]
         for f in fn_list:
             self.ini_data["hdr_txt"][f] = fun.read_hdr_txt(fn_list[f], N)
-            if np.logical_or(
-                np.logical_or(f == "speed", f == "p-dens"), f == "uv-anis"
-            ):
+            if np.logical_or(np.logical_or(f == "speed", f == "p-dens"), f == "uv-anis"):
                 (
                     self.ini_data["time"][f],
                     self.ini_data["data"][f],
                     self.ini_data["flags"][f],
                 ) = self._read_profile(fn_list[f])
             elif np.logical_or(np.logical_or(f == "lya", f == "phion"), f == "e-dens"):
-                self.ini_data["time"][f], self.ini_data["data"][f] = (
-                    self._read_ecliptic(fn_list[f])
+                self.ini_data["time"][f], self.ini_data["data"][f] = self._read_ecliptic(
+                    fn_list[f]
                 )
 
     def _read_profile(self, fn):
@@ -514,9 +475,7 @@ class SolarParamsHistory:
         """
 
         for f in fn_out:
-            if np.logical_or(
-                np.logical_or(f == "speed", f == "p-dens"), f == "uv-anis"
-            ):
+            if np.logical_or(np.logical_or(f == "speed", f == "p-dens"), f == "uv-anis"):
                 self._save_to_txt_profile(fn_out[f], f, hdr[f])
             elif np.logical_or(np.logical_or(f == "lya", f == "phion"), f == "e-dens"):
                 self._save_to_txt_ecliptic(fn_out[f], f, hdr[f])
@@ -563,9 +522,7 @@ class SolarParamsHistory:
         """
         Generates new value for given CR of the solar parameters.
         """
-        cr_params, idx_read_b, idx_read_c = self._generate_cr_solar_params(
-            CR, data_l3b, data_l3c
-        )
+        cr_params, idx_read_b, idx_read_c = self._generate_cr_solar_params(CR, data_l3b, data_l3c)
 
         self.header["l3b_input_filename"].extend(
             data_l3b[i]["header"]["filename"] for i in idx_read_b
@@ -576,9 +533,7 @@ class SolarParamsHistory:
 
         # add a row with values for current CR
         for k in self.ini_data["label"]:
-            if np.logical_or(
-                np.logical_or(k == "speed", k == "p-dens"), k == "uv-anis"
-            ):
+            if np.logical_or(np.logical_or(k == "speed", k == "p-dens"), k == "uv-anis"):
                 self.solar_params[k] = np.r_[self.solar_params[k], [cr_params[k]]]
             elif np.logical_or(k == "phion", k == "e-dens"):
                 self.solar_params[k] = np.append(self.solar_params[k], cr_params[k])
@@ -627,17 +582,11 @@ class SolarParamsHistory:
 
         # add a row with values copied from the last CR generated from the GLOWS data
         for k in self.ini_data["label"]:
-            if np.logical_or(
-                np.logical_or(k == "speed", k == "p-dens"), k == "uv-anis"
-            ):
-                self.solar_params[k] = np.r_[
-                    self.solar_params[k], [self.solar_params[k][-1]]
-                ]
+            if np.logical_or(np.logical_or(k == "speed", k == "p-dens"), k == "uv-anis"):
+                self.solar_params[k] = np.r_[self.solar_params[k], [self.solar_params[k][-1]]]
 
             elif np.logical_or(k == "phion", k == "e-dens"):
-                self.solar_params[k] = np.append(
-                    self.solar_params[k], self.solar_params[k][-1]
-                )
+                self.solar_params[k] = np.append(self.solar_params[k], self.solar_params[k][-1])
         # add flags
         self.flags["uv-anis"] = np.append(
             self.flags["uv-anis"], self.settings["l3d_source_flags"]["freezed"]
@@ -667,9 +616,7 @@ class SolarParamsHistory:
         lya_CR = fun.generate_cr_lya(CR, data_lya)
         self.solar_params["lya"] = np.append(self.solar_params["lya"], lya_CR)
 
-    def update_solar_params_hist(
-        self, ext_dependencies, data_l3b, data_l3c, CR_current
-    ):
+    def update_solar_params_hist(self, ext_dependencies, data_l3b, data_l3c, CR_current):
         """
         Updates structure by calculating parameters values from last CR in the initial data until currently processed CR
         """

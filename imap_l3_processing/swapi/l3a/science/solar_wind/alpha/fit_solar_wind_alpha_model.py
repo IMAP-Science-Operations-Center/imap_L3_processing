@@ -159,9 +159,7 @@ def _construct_alpha_fit_result(
     delta_v_fit = float(result.x[2])
     velocity_rtn = proton_bulk + delta_v_fit * magnetic_field_direction
 
-    speed_ratio = np.linalg.norm(velocity_rtn, axis=-1) / np.linalg.norm(
-        proton_bulk, axis=-1
-    )
+    speed_ratio = np.linalg.norm(velocity_rtn, axis=-1) / np.linalg.norm(proton_bulk, axis=-1)
     if speed_ratio < MIN_TOLERABLE_ALPHA_SPEED_RATIO:
         return _nan_alpha_fit_result(bad_fit_flag | SwapiL3Flags.BAD_FIT)
 
@@ -180,9 +178,8 @@ def _construct_alpha_fit_result(
     delta_v_sigma = float(np.sqrt(max(cov_x[2, 2], 0.0)))
 
     sigma_dv2 = max(cov_x[2, 2], 0.0)
-    velocity_covariance_rtn = (
-        proton_moments.velocity_rtn_covariance()
-        + sigma_dv2 * np.outer(magnetic_field_direction, magnetic_field_direction)
+    velocity_covariance_rtn = proton_moments.velocity_rtn_covariance() + sigma_dv2 * np.outer(
+        magnetic_field_direction, magnetic_field_direction
     )
 
     return AlphaSolarWindFitResult(

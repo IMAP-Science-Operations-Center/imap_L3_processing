@@ -31,13 +31,9 @@ class TestSectoredProductsAlgorithms(TestCase):
                 )
 
     def test_get_hit_bin_polar_coordinates(self):
-        declinations, azimuths, declination_delta, azimuth_delta = (
-            get_hit_bin_polar_coordinates()
-        )
+        declinations, azimuths, declination_delta, azimuth_delta = get_hit_bin_polar_coordinates()
 
         np.testing.assert_array_equal(declination_delta, [11.25] * 8, strict=True)
         np.testing.assert_array_equal(azimuth_delta, [12.0] * 15, strict=True)
-        np.testing.assert_array_almost_equal(
-            declinations, 11.25 + np.arange(0, 8) * 22.5
-        )
+        np.testing.assert_array_almost_equal(declinations, 11.25 + np.arange(0, 8) * 22.5)
         np.testing.assert_array_almost_equal(azimuths, 12 + np.arange(15) * 24)

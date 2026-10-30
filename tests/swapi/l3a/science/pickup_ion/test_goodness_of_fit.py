@@ -62,15 +62,10 @@ class TestGoodnessOfFit(TestCase):
             chunk_mean_model_rates >= peak_model_rate * CUTOFF_DROP_RATIO
         ].max()
         past_cutoff_mask = esa_energies > cutoff_mask_energy
-        assert (
-            past_cutoff_mask.sum() == 4
-        )  # 4 points by construction: three zero, one nonzero
+        assert past_cutoff_mask.sum() == 4  # 4 points by construction: three zero, one nonzero
 
         def extra_counts_past_cutoff(fraction: float) -> dict:
-            return {
-                "observed_rates": model_rates
-                + past_cutoff_mask * peak_model_rate * fraction
-            }
+            return {"observed_rates": model_rates + past_cutoff_mask * peak_model_rate * fraction}
 
         def poisson_sampled_observed_rates() -> dict:
             livetime = 0.145
@@ -94,9 +89,7 @@ class TestGoodnessOfFit(TestCase):
         }
         for case_name, (expected, overrides) in cases.items():
             with self.subTest(case_name):
-                self.assertEqual(
-                    expected, is_good_fit(**{**defaults, **overrides}), msg=case_name
-                )
+                self.assertEqual(expected, is_good_fit(**{**defaults, **overrides}), msg=case_name)
 
     def test_fitted_parameter_range_criteria(self):
         """A fit whose cutoff speed leaves the allowed multiple of the bulk
@@ -170,6 +163,4 @@ class TestGoodnessOfFit(TestCase):
         }
         for case_name, (expected, overrides) in cases.items():
             with self.subTest(case_name):
-                self.assertEqual(
-                    expected, is_good_fit(**{**defaults, **overrides}), msg=case_name
-                )
+                self.assertEqual(expected, is_good_fit(**{**defaults, **overrides}), msg=case_name)

@@ -1,4 +1,3 @@
-
 import numpy as np
 from numpy import ndarray
 
@@ -26,9 +25,7 @@ def calculate_initial_guess(
     counts_per_sweep = alpha_ctx.count_rate
     voltage_per_sweep = alpha_ctx.esa_voltage[0]
     proton_true_per_sweep = proton_true_rate.reshape(n_sweeps, n_bins)
-    proton_obs_per_sweep = proton_true_per_sweep * deadtime_factor(
-        proton_true_per_sweep
-    )
+    proton_obs_per_sweep = proton_true_per_sweep * deadtime_factor(proton_true_per_sweep)
 
     count_avg = counts_per_sweep.mean(axis=0)
     proton_bg_avg = proton_obs_per_sweep.mean(axis=0)

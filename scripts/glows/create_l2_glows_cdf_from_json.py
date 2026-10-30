@@ -12,9 +12,7 @@ from spacepy.pycdf import CDF
 from tests.test_helpers import get_test_data_path
 
 
-def fill_official_l2_cdf_with_json_values(
-    output_folder: Path, input_path: Path
-) -> None:
+def fill_official_l2_cdf_with_json_values(output_folder: Path, input_path: Path) -> None:
     official_l2_path = get_test_data_path(
         "glows/imap_glows_l2_hist_20260323-repoint00194_v005.cdf"
     )
@@ -57,18 +55,13 @@ def fill_official_l2_cdf_with_json_values(
                 "ecliptic_lat",
             ]
             for var in lightcurve_vars:
-                cdf[var] = np.array(instrument_data["daily_lightcurve"][var])[
-                    np.newaxis, :
-                ]
+                cdf[var] = np.array(instrument_data["daily_lightcurve"][var])[np.newaxis, :]
 
-            cdf["raw_histograms"] = np.array(
-                instrument_data["daily_lightcurve"]["raw_histogram"]
-            )[np.newaxis, :]
+            cdf["raw_histograms"] = np.array(instrument_data["daily_lightcurve"]["raw_histogram"])[
+                np.newaxis, :
+            ]
             cdf["histogram_flag_array"] = np.array(
-                [
-                    int(f, 16)
-                    for f in instrument_data["daily_lightcurve"]["histogram_flag_array"]
-                ]
+                [int(f, 16) for f in instrument_data["daily_lightcurve"]["histogram_flag_array"]]
             )[np.newaxis, :]
 
             single_value_vars = [
@@ -106,13 +99,9 @@ def fill_official_l2_cdf_with_json_values(
             cdf["number_of_good_l1b_inputs"][0] = instrument_data["header"][
                 "number_of_l1b_files_used"
             ]
-            cdf["total_l1b_inputs"][0] = instrument_data["header"][
-                "number_of_all_l1b_files"
-            ]
+            cdf["total_l1b_inputs"][0] = instrument_data["header"]["number_of_all_l1b_files"]
             cdf.attrs["pkts_file_name"] = instrument_data["header"]["pkts_file_name"]
-            cdf.attrs["ancillary_data_files"] = instrument_data["header"][
-                "ancillary_data_files"
-            ]
+            cdf.attrs["ancillary_data_files"] = instrument_data["header"]["ancillary_data_files"]
             cdf.attrs["flight_software_version"] = instrument_data["header"][
                 "flight_software_version"
             ]

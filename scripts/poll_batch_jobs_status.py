@@ -15,10 +15,7 @@ def format_job(job) -> str:
     input_collection.deserialize(dependencies_passed)
 
     processing_input = "\n".join(
-        [
-            f"\t\t{type(pi)}: {pi.filename_list}"
-            for pi in input_collection.processing_input
-        ]
+        [f"\t\t{type(pi)}: {pi.filename_list}" for pi in input_collection.processing_input]
     )
 
     return f"""
@@ -39,16 +36,13 @@ AFTER_DATE = datetime.now(tz=timezone.utc)
 url = "https://api.dev.imap-mission.com/batch-job"
 
 while True:
-    response = requests.get(
-        url=url, params={"instrument": INSTRUMENT, "data_level": DATA_LEVEL}
-    )
+    response = requests.get(url=url, params={"instrument": INSTRUMENT, "data_level": DATA_LEVEL})
     logs = json.loads(json.dumps(response.json()))
     relevant_logs = [
         log
         for log in logs
         if log["started_at"] is not None
-        and datetime.fromisoformat(log["started_at"]).replace(tzinfo=timezone.utc)
-        > AFTER_DATE
+        and datetime.fromisoformat(log["started_at"]).replace(tzinfo=timezone.utc) > AFTER_DATE
     ]
 
     print("\n".join([format_job(job) for job in relevant_logs]))

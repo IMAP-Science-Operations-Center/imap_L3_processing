@@ -32,9 +32,7 @@ def _swapi_response_returning_per_voltage_response_grid():
             oa_passband=None,
             central_speed=float(voltage),
             central_effective_area=0.0,
-            azimuthal_transmission=AzimuthalTransmissionGrid(
-                values=np.zeros(1), spacing=0.1
-            ),
+            azimuthal_transmission=AzimuthalTransmissionGrid(values=np.zeros(1), spacing=0.1),
         )
 
     response.get_response_grid.side_effect = _build_response_grid
@@ -73,17 +71,13 @@ class TestSolarWindFitContextSubset(unittest.TestCase):
         # `subset` rebuilds response_grids as a numba.typed.List; cast to a
         # plain list for value-level comparison.
         self.assertEqual(list(kept.response_grids), self.full_ctx.response_grids)
-        np.testing.assert_array_equal(
-            kept.rotation_matrices, self.full_ctx.rotation_matrices
-        )
+        np.testing.assert_array_equal(kept.rotation_matrices, self.full_ctx.rotation_matrices)
 
     def test_subset_picks_bin_axis_at_the_given_indices_preserving_sweeps(self):
         """Selecting bin indices [0, 2] yields a context with those two bin columns from each sweep; count_rate and esa_voltage stay 2D as (n_sweeps, n_kept_bins)."""
         kept = self.full_ctx.subset(np.array([0, 2]))
         np.testing.assert_array_equal(kept.count_rate, [[10.0, 30.0], [40.0, 60.0]])
-        np.testing.assert_array_equal(
-            kept.esa_voltage, [[100.0, 300.0], [400.0, 600.0]]
-        )
+        np.testing.assert_array_equal(kept.esa_voltage, [[100.0, 300.0], [400.0, 600.0]])
         # Flat sweep-major bin-minor order: s0b0, s0b2, s1b0, s1b2
         self.assertEqual(list(kept.response_grids), ["s0b0", "s0b2", "s1b0", "s1b2"])
         np.testing.assert_array_equal(
@@ -118,9 +112,7 @@ class TestBuildSolarWindFitContext(unittest.TestCase):
         """When every voltage is finite and positive, the context preserves count_rate and esa_voltage verbatim and builds one ResponseGrid per bin."""
         count_rate = np.array([10.0, 20.0, 30.0])
         esa_voltage = np.array([100.0, 200.0, 300.0])
-        ctx, _response = self._call_factory(
-            count_rate=count_rate, esa_voltage=esa_voltage
-        )
+        ctx, _response = self._call_factory(count_rate=count_rate, esa_voltage=esa_voltage)
         np.testing.assert_array_equal(ctx.count_rate, count_rate)
         np.testing.assert_array_equal(ctx.esa_voltage, esa_voltage)
         self.assertEqual(len(ctx.response_grids), 3)
@@ -169,9 +161,7 @@ class TestBuildSolarWindFitContext(unittest.TestCase):
         """The factory calls `get_response_grid` once per voltage (in ravel order) and stores the resulting grids in the same order."""
         count_rate = np.array([10.0, 20.0])
         esa_voltage = np.array([100.0, 200.0])
-        ctx, response = self._call_factory(
-            count_rate=count_rate, esa_voltage=esa_voltage
-        )
+        ctx, response = self._call_factory(count_rate=count_rate, esa_voltage=esa_voltage)
         self.assertEqual(response.get_response_grid.call_count, 2)
         self.assertEqual(ctx.response_grids[0].central_speed, 100.0)
         self.assertEqual(ctx.response_grids[1].central_speed, 200.0)

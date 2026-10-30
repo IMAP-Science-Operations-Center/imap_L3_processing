@@ -86,21 +86,15 @@ class TestL3eLoModel(unittest.TestCase):
                     DataProductVariable(EPOCH_CDF_VAR_NAME, sentinel.epoch),
                     DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, sentinel.epoch_delta),
                     DataProductVariable(ENERGY_VAR_NAME, energy_array),
-                    DataProductVariable(
-                        ENERGY_DELTA_PLUS_VAR_NAME, sentinel.energy_delta_plus
-                    ),
-                    DataProductVariable(
-                        ENERGY_DELTA_MINUS_VAR_NAME, sentinel.energy_delta_minus
-                    ),
+                    DataProductVariable(ENERGY_DELTA_PLUS_VAR_NAME, sentinel.energy_delta_plus),
+                    DataProductVariable(ENERGY_DELTA_MINUS_VAR_NAME, sentinel.energy_delta_minus),
                     DataProductVariable(SPIN_ANGLE_VAR_NAME, spin_angle_array),
                     DataProductVariable(
                         PROBABILITY_OF_SURVIVAL_VAR_NAME,
                         sentinel.probability_of_survival,
                     ),
                     DataProductVariable(ENERGY_LABEL_VAR_NAME, expected_energy_labels),
-                    DataProductVariable(
-                        SPIN_ANGLE_LABEL_VAR_NAME, expected_spin_angle_labels
-                    ),
+                    DataProductVariable(SPIN_ANGLE_LABEL_VAR_NAME, expected_spin_angle_labels),
                     DataProductVariable(ELONGATION_VAR_NAME, sentinel.elongation),
                     DataProductVariable(
                         SPIN_AXIS_LATITUDE_VAR_NAME,
@@ -558,10 +552,8 @@ class TestL3eLoModel(unittest.TestCase):
 
         args.spacecraft_info = spacecraft_info
 
-        l3e_lo_product: GlowsL3ELoData = (
-            GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product(
-                mock_metadata, lo_file_path, epoch, epoch_delta, elongation_value, args
-            )
+        l3e_lo_product: GlowsL3ELoData = GlowsL3ELoData.convert_dat_to_glows_l3e_lo_product(
+            mock_metadata, lo_file_path, epoch, epoch_delta, elongation_value, args
         )
 
         mock_calculate_energy_deltas.assert_called_once_with(
@@ -575,17 +567,13 @@ class TestL3eLoModel(unittest.TestCase):
             strict=True,
         )
         np.testing.assert_equal(l3e_lo_product.energy, expected_energy, strict=True)
-        np.testing.assert_equal(
-            l3e_lo_product.energy_delta_plus, sentinel.energy_delta_plus
-        )
+        np.testing.assert_equal(l3e_lo_product.energy_delta_plus, sentinel.energy_delta_plus)
         np.testing.assert_equal(
             l3e_lo_product.energy_delta_minus,
             sentinel.energy_delta_minus,
         )
 
-        np.testing.assert_equal(
-            l3e_lo_product.spin_angle, expected_spin_angle, strict=True
-        )
+        np.testing.assert_equal(l3e_lo_product.spin_angle, expected_spin_angle, strict=True)
         np.testing.assert_equal(
             l3e_lo_product.probability_of_survival.shape,
             expected_survival_probability_shape,
@@ -611,22 +599,10 @@ class TestL3eLoModel(unittest.TestCase):
             [expected_program_version], l3e_lo_product.program_version, strict=True
         )
 
-        np.testing.assert_equal(
-            l3e_lo_product.spacecraft_radius, np.array([0.5]), strict=True
-        )
-        np.testing.assert_equal(
-            l3e_lo_product.spacecraft_longitude, np.array([85.4]), strict=True
-        )
-        np.testing.assert_equal(
-            l3e_lo_product.spacecraft_latitude, np.array([45.1]), strict=True
-        )
+        np.testing.assert_equal(l3e_lo_product.spacecraft_radius, np.array([0.5]), strict=True)
+        np.testing.assert_equal(l3e_lo_product.spacecraft_longitude, np.array([85.4]), strict=True)
+        np.testing.assert_equal(l3e_lo_product.spacecraft_latitude, np.array([45.1]), strict=True)
 
-        np.testing.assert_equal(
-            l3e_lo_product.spacecraft_velocity_x, np.array([2.1]), strict=True
-        )
-        np.testing.assert_equal(
-            l3e_lo_product.spacecraft_velocity_y, np.array([2.2]), strict=True
-        )
-        np.testing.assert_equal(
-            l3e_lo_product.spacecraft_velocity_z, np.array([2.3]), strict=True
-        )
+        np.testing.assert_equal(l3e_lo_product.spacecraft_velocity_x, np.array([2.1]), strict=True)
+        np.testing.assert_equal(l3e_lo_product.spacecraft_velocity_y, np.array([2.2]), strict=True)
+        np.testing.assert_equal(l3e_lo_product.spacecraft_velocity_z, np.array([2.3]), strict=True)

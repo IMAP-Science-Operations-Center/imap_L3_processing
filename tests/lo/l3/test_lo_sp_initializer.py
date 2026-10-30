@@ -91,9 +91,7 @@ class TestLoSPInitializer(unittest.TestCase):
 
         initializer = LoSPInitializer()
         descriptor = "l090-ena-h-sf-sp-ram-hae-6deg-12mo"
-        actual_maps_to_produce = initializer.get_maps_that_should_be_produced(
-            descriptor, 3
-        )
+        actual_maps_to_produce = initializer.get_maps_that_should_be_produced(descriptor, 3)
 
         self.mock_query.assert_has_calls(
             [
@@ -110,24 +108,12 @@ class TestLoSPInitializer(unittest.TestCase):
 
         mock_read_cdf_parents.assert_has_calls(
             [
-                call(
-                    "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20100101_v001.cdf"
-                ),
-                call(
-                    "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20100401_v001.cdf"
-                ),
-                call(
-                    "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20100701_v001.cdf"
-                ),
-                call(
-                    "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20101001_v001.cdf"
-                ),
-                call(
-                    "imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100101_v003.0001.cdf"
-                ),
-                call(
-                    "imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100401_v003.0001.cdf"
-                ),
+                call("imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20100101_v001.cdf"),
+                call("imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20100401_v001.cdf"),
+                call("imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20100701_v001.cdf"),
+                call("imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-12mo_20101001_v001.cdf"),
+                call("imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100101_v003.0001.cdf"),
+                call("imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-12mo_20100401_v003.0001.cdf"),
             ]
         )
 

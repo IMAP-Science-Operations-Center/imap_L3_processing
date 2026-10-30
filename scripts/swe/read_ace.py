@@ -138,18 +138,14 @@ def calculate_phase(phase, spin_period):
             f1 = N_PHI_LEVEL1 * sss + k + 1
             f2 = 120 * sss + N_ENERGIES_LEVEL1 * k + rrr + 1
             offset = (
-                (0.0547645 + f1 * 0.0575027 + (f2 - 0.5) * K_FOR_THIS_MODE)
-                * 12.0
-                / spin_period
+                (0.0547645 + f1 * 0.0575027 + (f2 - 0.5) * K_FOR_THIS_MODE) * 12.0 / spin_period
             )
             phi[i][k] = phase + offset
     CONVERT_PHI_TO_IMAP_AZIMUTH = 270
     return (phi + CONVERT_PHI_TO_IMAP_AZIMUTH - SWE_MOUNTING_ANGLE) % 360
 
 
-def calculate_acquisition_time(
-    phase: float, spin_period: float, epoch: datetime
-) -> np.ndarray:
+def calculate_acquisition_time(phase: float, spin_period: float, epoch: datetime) -> np.ndarray:
     met = get_met_from_epoch(epoch)
 
     met_rounded = (met // 15) * 15
@@ -174,15 +170,11 @@ def plot_dnswe_data_from_hdf(file_path):
     print(f"Data:\n{data}")
 
     # For simplicity, let's plot the first 2D slice (you can change this depending on your needs)
-    data_slice = data[
-        :, 0, 0, 0, :
-    ]  # Select a slice (e.g., first 2D slice from the 5D array)
+    data_slice = data[:, 0, 0, 0, :]  # Select a slice (e.g., first 2D slice from the 5D array)
 
     # Plot the data
     plt.figure(figsize=(10, 6))
-    plt.imshow(
-        data_slice, norm=LogNorm(), aspect="auto", cmap="viridis", origin="lower"
-    )
+    plt.imshow(data_slice, norm=LogNorm(), aspect="auto", cmap="viridis", origin="lower")
     plt.colorbar(label="DNSWE Values")
     plt.title("Plot of DNSWE_COUNT dataset slice")
     plt.xlabel("Dimension 1")
@@ -258,9 +250,7 @@ ds_expanded = xr.DataArray(
         "dim4": "cem",
     },
 )
-decompress_table = decompression_table = np.array(
-    [decompressed_counts(i) for i in range(256)]
-)
+decompress_table = decompression_table = np.array([decompressed_counts(i) for i in range(256)])
 counts = decompress_table[ds_expanded.values.astype(int)]
 sample_time = 0.10031
 sample_time_microseconds = int(sample_time * 1e6)
@@ -276,15 +266,13 @@ cal_t0, cal_t1 = np.array(
     ]
 )
 
-calibration = cal_t0 + ((sc_times - t0) / (t1 - t0))[
-    :, np.newaxis, np.newaxis, np.newaxis
-] * (cal_t1 - cal_t0)
+calibration = cal_t0 + ((sc_times - t0) / (t1 - t0))[:, np.newaxis, np.newaxis, np.newaxis] * (
+    cal_t1 - cal_t0
+)
 
 rates *= calibration
 
-phase, spin = get_phase_and_spin(
-    "instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf"
-)
+phase, spin = get_phase_and_spin("instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf")
 
 acquisition_time = []
 

@@ -95,9 +95,7 @@ def _params(cutoff_speed_kms: float) -> FittingParameters:
 
 def main():
     voltages = (
-        pd.read_csv(
-            REPO_ROOT / "tests" / "test_data" / "swapi" / "pui_count_rate_reference.csv"
-        )
+        pd.read_csv(REPO_ROOT / "tests" / "test_data" / "swapi" / "pui_count_rate_reference.csv")
         .iloc[:, 0]
         .to_numpy()
     )
@@ -140,10 +138,8 @@ def main():
     bin_weights = chunk_response.bin_weights[0, voltage_index, :]
 
     # Fine-grid reference response for the same voltage step.
-    bulk_azimuth_deg, bulk_elevation_deg = (
-        velocity_components_to_angles_in_instrument_frame(
-            bulk_vec[0], bulk_vec[1], bulk_vec[2]
-        )
+    bulk_azimuth_deg, bulk_elevation_deg = velocity_components_to_angles_in_instrument_frame(
+        bulk_vec[0], bulk_vec[1], bulk_vec[2]
     )
     fine_grid = np.linspace(1.0, _GRID_MAX_KMS, _FINE_GRID_POINTS)
     fine_collapsed = build_collapsed_response_grid(
@@ -180,9 +176,9 @@ def main():
                 coarse_grid, params, apply_cutoff=True
             )
             # Production: trapezoidal partial cell, via the real forward model.
-            rate_with[i] = calculate_coincidence_rate(
-                chunk_response, distribution, params
-            )[0, voltage_index]
+            rate_with[i] = calculate_coincidence_rate(chunk_response, distribution, params)[
+                0, voltage_index
+            ]
             # Converged reference: grid-corrected cutoff on a fine grid.
             f_fine = sampled_distribution(fine_grid, params, apply_cutoff=False)
             apply_partial_heaviside_at_cutoff(f_fine, fine_grid, cutoff)

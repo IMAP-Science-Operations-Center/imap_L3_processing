@@ -47,9 +47,7 @@ def calculate_mev(word: PHAWord, gain_lookup_table: GainLookupTable) -> float:
     return word.adc_value * gain_coeffs.a + gain_coeffs.b
 
 
-def analyze_event(
-    event: RawPHAEvent, rule_lookup: HitEventTypeLookup
-) -> EventAnalysis | None:
+def analyze_event(event: RawPHAEvent, rule_lookup: HitEventTypeLookup) -> EventAnalysis | None:
 
     def get_adc_value(pha_word: PHAWord):
         return 20 * pha_word.adc_value if pha_word.is_low_gain else pha_word.adc_value
@@ -153,16 +151,12 @@ def compute_charge(
     double_power_law_lookup: RangeFitLookup,
 ) -> float:
     if valid_ranges[detected_range.range].is_in_range(e_prime, delta_e):
-        charges, deltas = double_power_law_lookup.evaluate_e_prime(
-            detected_range, e_prime
-        )
+        charges, deltas = double_power_law_lookup.evaluate_e_prime(detected_range, e_prime)
         assert np.array_equal(deltas, np.sort(deltas)), "values are not increasing"
         index_2 = clip(np.searchsorted(deltas, delta_e), 1, len(charges) - 1)
         index_1 = index_2 - 1
 
-        B = np.log(charges[index_2] / charges[index_1]) / np.log(
-            deltas[index_2] / deltas[index_1]
-        )
+        B = np.log(charges[index_2] / charges[index_1]) / np.log(deltas[index_2] / deltas[index_1])
         A = charges[index_1] / (deltas[index_1] ** B)
 
         return A * delta_e**B
@@ -187,14 +181,11 @@ def process_pha_event(
 
         energies = [calculate_corrected_energy(word) for word in event.pha_words]
         total_energy = sum(
-            calculate_corrected_energy(word)
-            for word in event_analysis.words_with_highest_energy
+            calculate_corrected_energy(word) for word in event_analysis.words_with_highest_energy
         )
         e_delta = calculate_corrected_energy(event_analysis.e_delta_word)
         e_prime = calculate_corrected_energy(event_analysis.e_prime_word)
-        charge = compute_charge(
-            event_analysis.range, e_delta, e_prime, range_fit_lookup
-        )
+        charge = compute_charge(event_analysis.range, e_delta, e_prime, range_fit_lookup)
 
         return EventOutput(
             original_event=event,

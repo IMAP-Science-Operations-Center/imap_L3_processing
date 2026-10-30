@@ -79,9 +79,7 @@ class TestInterpolateAzimuthalTransmission(unittest.TestCase):
         for fraction in [0.25, 0.7, 0.9]:
             with self.subTest(fraction=fraction):
                 az = az_lower + fraction * _SPACING_DEG
-                expected = (1 - fraction) * self.values[idx] + fraction * self.values[
-                    idx + 1
-                ]
+                expected = (1 - fraction) * self.values[idx] + fraction * self.values[idx + 1]
                 got = interpolate_azimuthal_transmission(self.grid, az)
                 self.assertAlmostEqual(got, float(expected))
 
@@ -172,9 +170,7 @@ class TestRealGridShape(unittest.TestCase):
         self.assertAlmostEqual(float(grid.values[0]), 1e-3)
 
 
-def _build_grid_satisfying_invariants(
-    spacing: float = 0.1, n: int = 1801
-) -> np.ndarray:
+def _build_grid_satisfying_invariants(spacing: float = 0.1, n: int = 1801) -> np.ndarray:
     """Build a synthetic values array that respects the SG-floor and OA-plateau
     invariants the interpolator's short-circuit branches assume. Cells outside
     those two ranges are set to a neutral 0.5 so a test can corrupt a single

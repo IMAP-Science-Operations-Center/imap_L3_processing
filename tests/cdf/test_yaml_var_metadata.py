@@ -46,9 +46,7 @@ class TestCdfUtils(TestCase):
         for filename, yaml_data in self.test_cases_file:
             with self.subTest(filename):
                 self.assertIn("epoch", yaml_data.keys(), "no entry in file for 'epoch'")
-                self.assertEqual(
-                    "epoch", yaml_data["epoch"]["NAME"], "epoch must be lowercase"
-                )
+                self.assertEqual("epoch", yaml_data["epoch"]["NAME"], "epoch must be lowercase")
 
                 self._epoch_meets_schema(yaml_data)
                 if "epoch_delta" in yaml_data:
@@ -128,9 +126,7 @@ class TestCdfUtils(TestCase):
             if "swe_l3" in filename and variable_key in temperature_vars:
                 found.add(variable_key)
                 with self.subTest(f"{filename}:{variable_key}"):
-                    self.assertEqual(
-                        "K", variable["UNITS"], f"{variable_key} UNITS should be 'K'"
-                    )
+                    self.assertEqual("K", variable["UNITS"], f"{variable_key} UNITS should be 'K'")
         self.assertEqual(
             temperature_vars,
             found,
@@ -165,12 +161,8 @@ class TestCdfUtils(TestCase):
     def test_each_variable_has_data_type_and_fill_value(self):
         for filename, yaml_data, variable_key, variable in self.test_cases_variable:
             with self.subTest(f"{filename}:{variable_key}"):
-                self.assertIn(
-                    "DATA_TYPE", variable.keys(), f'{variable_key} requires "DATA_TYPE"'
-                )
-                self.assertIn(
-                    "FILLVAL", variable.keys(), f'{variable_key} requires "FILLVAL"'
-                )
+                self.assertIn("DATA_TYPE", variable.keys(), f'{variable_key} requires "DATA_TYPE"')
+                self.assertIn("FILLVAL", variable.keys(), f'{variable_key} requires "FILLVAL"')
 
     def test_all_angle_variables_in_degrees(self):
         for filename, yaml_data, variable_key, variable in self.test_cases_variable:
@@ -196,17 +188,15 @@ class TestCdfUtils(TestCase):
 
     def test_attrs_that_point_to_another_var_actually_point_to_something(self):
         def _is_pointer_attr(attr: str) -> bool:
-            return (
-                attr.startswith(("DEPEND_", "LABL_PTR_"))
-                or attr in ["DELTA_PLUS_VAR", "DELTA_MINUS_VAR"]
-            )
+            return attr.startswith(("DEPEND_", "LABL_PTR_")) or attr in [
+                "DELTA_PLUS_VAR",
+                "DELTA_MINUS_VAR",
+            ]
 
         for filename, yaml_data, variable_key, variable in self.test_cases_variable:
             with self.subTest(f"{filename}:{variable_key}"):
                 pointed_to_vars = [
-                    (attr, variable[attr])
-                    for attr in variable
-                    if _is_pointer_attr(attr)
+                    (attr, variable[attr]) for attr in variable if _is_pointer_attr(attr)
                 ]
                 for attr, pointed_to_var in pointed_to_vars:
                     self.assertIn(
@@ -248,9 +238,7 @@ class TestCdfUtils(TestCase):
                             datetime.fromisoformat("9999-12-31T23:59:59.999999"),
                         )
                     case _:
-                        self.assertFalse(
-                            True, f"Found unknown DATA_TYPE: {variable['DATA_TYPE']}"
-                        )
+                        self.assertFalse(True, f"Found unknown DATA_TYPE: {variable['DATA_TYPE']}")
 
     def test_all_record_varying_data_depends_on_epoch(self):
         for filename, yaml_data, variable_key, variable in self.test_cases_variable:
@@ -264,10 +252,7 @@ class TestCdfUtils(TestCase):
 
     def _epoch_meets_schema(self, yaml_data: dict):
         epoch_delta_types = ["epoch_delta", "epoch_delta_plus", "epoch_delta_minus"]
-        if any(
-                epoch_delta_type in yaml_data
-                for epoch_delta_type in epoch_delta_types
-        ):
+        if any(epoch_delta_type in yaml_data for epoch_delta_type in epoch_delta_types):
             self.assertEqual(20, len(yaml_data["epoch"].keys()))
         else:
             self.assertEqual(18, len(yaml_data["epoch"].keys()))
@@ -291,12 +276,8 @@ class TestCdfUtils(TestCase):
             ["Epoch", "J2000 Nanoseconds"],
             "epoch FIELDNAM should be Epoch",
         )
-        self.assertEqual(
-            " ", yaml_data["epoch"]["FORMAT"], "epoch FORMAT should be ' '"
-        )
-        self.assertEqual(
-            "Epoch", yaml_data["epoch"]["LABLAXIS"], "epoch LABLAXIS should be Epoch"
-        )
+        self.assertEqual(" ", yaml_data["epoch"]["FORMAT"], "epoch FORMAT should be ' '")
+        self.assertEqual("Epoch", yaml_data["epoch"]["LABLAXIS"], "epoch LABLAXIS should be Epoch")
         self.assertEqual("ns", yaml_data["epoch"]["UNITS"], "epoch UNITS should be ns")
         self.assertEqual(
             datetime.fromisoformat("2099-12-31T00:00:00.000000"),
@@ -314,9 +295,7 @@ class TestCdfUtils(TestCase):
         self.assertEqual(
             "J2000", yaml_data["epoch"]["TIME_BASE"], "epoch TIME_BASE should be J2000"
         )
-        self.assertEqual(
-            "TT", yaml_data["epoch"]["TIME_SCALE"], "epoch TIME_SCALE should be TT"
-        )
+        self.assertEqual("TT", yaml_data["epoch"]["TIME_SCALE"], "epoch TIME_SCALE should be TT")
         self.assertEqual(
             "INCREASE",
             yaml_data["epoch"]["MONOTON"],
@@ -367,9 +346,7 @@ class TestCdfUtils(TestCase):
             yaml_data["epoch_delta"]["LABLAXIS"],
             "epoch_delta LABLAXIS should be 'Epoch delta'",
         )
-        self.assertEqual(
-            "ns", yaml_data["epoch_delta"]["UNITS"], "epoch_delta UNITS should be ns"
-        )
+        self.assertEqual("ns", yaml_data["epoch_delta"]["UNITS"], "epoch_delta UNITS should be ns")
         self.assertEqual(
             0,
             yaml_data["epoch_delta"]["VALIDMIN"],

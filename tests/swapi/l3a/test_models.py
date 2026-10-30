@@ -135,9 +135,7 @@ class TestModels(CdfModelTestCase):
             speed_sun_uncert,
             PROTON_SOLAR_WIND_SPEED_SUN_UNCERTAINTY_CDF_VAR_NAME,
         )
-        self.assert_variable_attributes(
-            next(var_iter), epoch_delta, EPOCH_DELTA_CDF_VAR_NAME
-        )
+        self.assert_variable_attributes(next(var_iter), epoch_delta, EPOCH_DELTA_CDF_VAR_NAME)
         self.assert_variable_attributes(
             next(var_iter), temperature, PROTON_SOLAR_WIND_TEMPERATURE_CDF_VAR_NAME
         )
@@ -167,9 +165,7 @@ class TestModels(CdfModelTestCase):
             bulk_v_rtn_cov,
             PROTON_SOLAR_WIND_VELOCITY_RTN_COVARIANCE_CDF_VAR_NAME,
         )
-        expected_velocity_uncert = np.sqrt(
-            np.diagonal(bulk_v_rtn_cov, axis1=1, axis2=2)
-        )
+        expected_velocity_uncert = np.sqrt(np.diagonal(bulk_v_rtn_cov, axis1=1, axis2=2))
         self.assert_variable_attributes(
             next(var_iter),
             expected_velocity_uncert,
@@ -261,9 +257,7 @@ class TestModels(CdfModelTestCase):
 
         var_iter = iter(variables)
         self.assert_variable_attributes(next(var_iter), epoch_data, EPOCH_CDF_VAR_NAME)
-        self.assert_variable_attributes(
-            next(var_iter), speed, ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME
-        )
+        self.assert_variable_attributes(next(var_iter), speed, ALPHA_SOLAR_WIND_SPEED_CDF_VAR_NAME)
         self.assert_variable_attributes(
             next(var_iter),
             speed_uncert,
@@ -277,9 +271,7 @@ class TestModels(CdfModelTestCase):
             speed_sun_uncert,
             ALPHA_SOLAR_WIND_SPEED_SUN_UNCERTAINTY_CDF_VAR_NAME,
         )
-        self.assert_variable_attributes(
-            next(var_iter), epoch_delta, EPOCH_DELTA_CDF_VAR_NAME
-        )
+        self.assert_variable_attributes(next(var_iter), epoch_delta, EPOCH_DELTA_CDF_VAR_NAME)
         self.assert_variable_attributes(
             next(var_iter), density, ALPHA_SOLAR_WIND_DENSITY_CDF_VAR_NAME
         )
@@ -309,9 +301,7 @@ class TestModels(CdfModelTestCase):
             velocity_rtn_cov,
             ALPHA_SOLAR_WIND_VELOCITY_RTN_COVARIANCE_CDF_VAR_NAME,
         )
-        expected_velocity_uncert = np.sqrt(
-            np.diagonal(velocity_rtn_cov, axis1=1, axis2=2)
-        )
+        expected_velocity_uncert = np.sqrt(np.diagonal(velocity_rtn_cov, axis1=1, axis2=2))
         self.assert_variable_attributes(
             next(var_iter),
             expected_velocity_uncert,
@@ -380,9 +370,7 @@ class TestModels(CdfModelTestCase):
 
         expected_temperature_nominal = np.arange(1e5, step=10000.0)
         expected_temperature_std_dev = np.arange(100, step=10.0)
-        expected_temperature = uarray(
-            expected_temperature_nominal, expected_temperature_std_dev
-        )
+        expected_temperature = uarray(expected_temperature_nominal, expected_temperature_std_dev)
 
         expected_quality_flags = np.full(20, 0)
 
@@ -479,15 +467,11 @@ class TestModels(CdfModelTestCase):
             path = save_data(initial_data)
             loaded = SwapiL3aProtonDataFromCDF.from_file(path)
             np.testing.assert_equal(loaded.l2_parent_file_name, l2_parent_file_name)
-            np.testing.assert_equal(
-                loaded.velocity_rtn, initial_data.proton_sw_velocity_rtn
-            )
+            np.testing.assert_equal(loaded.velocity_rtn, initial_data.proton_sw_velocity_rtn)
             np.testing.assert_equal(
                 loaded.velocity_rtn_covariance,
                 initial_data.proton_sw_velocity_rtn_covariance,
             )
             np.testing.assert_equal(loaded.density, initial_data.proton_sw_density)
-            np.testing.assert_equal(
-                loaded.temperature, initial_data.proton_sw_temperature
-            )
+            np.testing.assert_equal(loaded.temperature, initial_data.proton_sw_temperature)
             np.testing.assert_equal(loaded.quality_flags, initial_data.quality_flags)

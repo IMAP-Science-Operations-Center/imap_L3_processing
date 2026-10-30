@@ -82,9 +82,7 @@ class TestGlowsL3EUtils(unittest.TestCase):
 
         radius, longitude, latitude = 70000000, -8.0, -0.9
 
-        rotation_matrix = np.array(
-            [[10.0, 11.0, 12.0], [13.0, 14.0, 15.0], [16.0, 17.0, 18.0]]
-        )
+        rotation_matrix = np.array([[10.0, 11.0, 12.0], [13.0, 14.0, 15.0], [16.0, 17.0, 18.0]])
         mock_pxform.return_value = rotation_matrix
 
         spin_axis_long, spin_axis_lat = -1.4, 0.2
@@ -93,8 +91,8 @@ class TestGlowsL3EUtils(unittest.TestCase):
             (Mock(), spin_axis_long, spin_axis_lat),
         ]
 
-        call_args: GlowsL3eSpacecraftInfo = (
-            determine_spacecraft_info_for_l3e_executable(repointing_midpoint)
+        call_args: GlowsL3eSpacecraftInfo = determine_spacecraft_info_for_l3e_executable(
+            repointing_midpoint
         )
 
         self.assertIsInstance(call_args, GlowsL3eSpacecraftInfo)
@@ -110,9 +108,7 @@ class TestGlowsL3EUtils(unittest.TestCase):
         mock_pxform.assert_called_once_with(
             "IMAP_DPS", "ECLIPJ2000", mock_date_time_2et.return_value
         )
-        np.testing.assert_array_equal(
-            [12.0, 15.0, 18.0], mock_reclat.call_args_list[1][0][0]
-        )
+        np.testing.assert_array_equal([12.0, 15.0, 18.0], mock_reclat.call_args_list[1][0][0])
 
         self.assertEqual(0.4679210985587912, call_args.spacecraft_radius)
         self.assertEqual(261.6337638953414, call_args.spacecraft_longitude)
@@ -120,24 +116,16 @@ class TestGlowsL3EUtils(unittest.TestCase):
         self.assertEqual(vx, call_args.spacecraft_velocity_x)
         self.assertEqual(vy, call_args.spacecraft_velocity_y)
         self.assertEqual(vz, call_args.spacecraft_velocity_z)
-        self.assertEqual(
-            np.rad2deg(spin_axis_long) % 360, call_args.spin_axis_longitude
-        )
+        self.assertEqual(np.rad2deg(spin_axis_long) % 360, call_args.spin_axis_longitude)
         self.assertEqual(np.rad2deg(spin_axis_lat), call_args.spin_axis_latitude)
 
     def test_determine_spacecraft_info_using_predict_if_needed(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
             input_files = [
                 get_integration_test_data_path("spice/de440.bsp"),
-                get_integration_test_data_path(
-                    "spice/imap_dps_2025_359_2026_058_002.ah.bc"
-                ),
-                get_integration_test_data_path(
-                    "spice/imap_dps_2025_359_2026_131_002.ah.bc"
-                ),
-                get_integration_test_data_path(
-                    "spice/imap_recon_20250925_20260520_v01.bsp"
-                ),
+                get_integration_test_data_path("spice/imap_dps_2025_359_2026_058_002.ah.bc"),
+                get_integration_test_data_path("spice/imap_dps_2025_359_2026_131_002.ah.bc"),
+                get_integration_test_data_path("spice/imap_recon_20250925_20260520_v01.bsp"),
                 get_integration_test_data_path("spice/imap_science_120.tf"),
                 get_integration_test_data_path("spice/imap_sclk_0171.tsc"),
                 get_integration_test_data_path("spice/naif0012.tls"),
@@ -185,16 +173,12 @@ class TestGlowsL3EUtils(unittest.TestCase):
                 date_with_predict = datetime(2026, 3, 25, 12)
                 date_without_predict = datetime(2026, 1, 15, 12)
 
-                result_without_predict = (
-                    determine_spacecraft_info_using_predict_if_needed(
-                        date_without_predict, spice_with_predict, spice_without_predict
-                    )
+                result_without_predict = determine_spacecraft_info_using_predict_if_needed(
+                    date_without_predict, spice_with_predict, spice_without_predict
                 )
                 spacecraft_info, glows_flags, kernel_names = result_without_predict
                 self.assertEqual(GlowsL3Flags.NONE, glows_flags)
-                self.assertEqual(
-                    ["kernel 5", "kernel 6", "kernel 7", "kernel 8"], kernel_names
-                )
+                self.assertEqual(["kernel 5", "kernel 6", "kernel 7", "kernel 8"], kernel_names)
                 self.assertEqual(
                     GlowsL3eSpacecraftInfo(
                         spacecraft_radius=0.974926812207828,
@@ -214,9 +198,7 @@ class TestGlowsL3EUtils(unittest.TestCase):
                 )
                 spacecraft_info, glows_flags, kernel_names = result_with_predict
                 self.assertEqual(GlowsL3Flags.PREDICTIVE_EPHEMERIS, glows_flags)
-                self.assertEqual(
-                    ["kernel 1", "kernel 2", "kernel 3", "kernel 4"], kernel_names
-                )
+                self.assertEqual(["kernel 1", "kernel 2", "kernel 3", "kernel 4"], kernel_names)
                 self.assertEqual(
                     GlowsL3eSpacecraftInfo(
                         spacecraft_radius=0.9869148557889134,
@@ -232,9 +214,7 @@ class TestGlowsL3EUtils(unittest.TestCase):
                 )
 
     def test_get_lo_pivot_angle_from_l1b_file_real_cdf(self):
-        l1b_file = get_test_data_path(
-            "glows/imap_lo_l1b_nhk_20260318-repoint00189_v003.cdf"
-        )
+        l1b_file = get_test_data_path("glows/imap_lo_l1b_nhk_20260318-repoint00189_v003.cdf")
         actual = get_lo_pivot_angle_from_l1b_file(l1b_file)
         self.assertEqual(90.0, actual)
 
@@ -333,14 +313,12 @@ class TestGlowsL3EUtils(unittest.TestCase):
             (
                 "between cr 4 and 5",
                 datetime(2025, 6, 7),
-                GlowsL3Flags.PREDICTIVE_EPHEMERIS
-                | GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
+                GlowsL3Flags.PREDICTIVE_EPHEMERIS | GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
             ),
             (
                 "after last data point",
                 datetime(2025, 6, 15, 1),
-                GlowsL3Flags.PREDICTIVE_EPHEMERIS
-                | GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
+                GlowsL3Flags.PREDICTIVE_EPHEMERIS | GlowsL3Flags.NOMINAL_ALPHA_PROTON_RATIO,
             ),
         ]
 
@@ -361,21 +339,14 @@ class TestGlowsL3EUtils(unittest.TestCase):
                 self.assertIsInstance(actual, int)
                 self.assertEqual(expected, actual)
 
-    @patch(
-        "imap_l3_processing.glows.l3e.glows_l3e_utils.get_lo_pivot_angle_from_l1b_file"
-    )
+    @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.get_lo_pivot_angle_from_l1b_file")
     @patch("imap_l3_processing.glows.l3e.glows_l3e_utils.imap_data_access")
-    def test_get_lo_pivot_angles(
-        self, mock_imap_data_access, mock_get_pivot_angle_from_file
-    ):
+    def test_get_lo_pivot_angles(self, mock_imap_data_access, mock_get_pivot_angle_from_file):
         available_repointings = [1, 2, 3, 4, 5, 6]
         mock_imap_data_access.query.return_value = [
-            {"file_path": f"file{i}.cdf", "repointing": i}
-            for i in available_repointings
+            {"file_path": f"file{i}.cdf", "repointing": i} for i in available_repointings
         ]
-        mock_imap_data_access.download.side_effect = lambda name: Path(
-            "local/path/to", name
-        )
+        mock_imap_data_access.download.side_effect = lambda name: Path("local/path/to", name)
         pivot_angles_by_file_path = {
             Path("local/path/to/file1.cdf"): 25,
             Path("local/path/to/file2.cdf"): 75,
@@ -451,13 +422,7 @@ class TestGlowsL3EUtils(unittest.TestCase):
         expected_energy_delta_minus = np.array([9, 900, 90000])
         expected_energy_delta_plus = np.array([90, 9000, 900000])
 
-        actual_energy_delta_plus, actual_energy_delta_minus = calculate_energy_deltas(
-            centers
-        )
+        actual_energy_delta_plus, actual_energy_delta_minus = calculate_energy_deltas(centers)
 
-        np.testing.assert_array_equal(
-            actual_energy_delta_plus, expected_energy_delta_plus
-        )
-        np.testing.assert_array_equal(
-            actual_energy_delta_minus, expected_energy_delta_minus
-        )
+        np.testing.assert_array_equal(actual_energy_delta_plus, expected_energy_delta_plus)
+        np.testing.assert_array_equal(actual_energy_delta_minus, expected_energy_delta_minus)

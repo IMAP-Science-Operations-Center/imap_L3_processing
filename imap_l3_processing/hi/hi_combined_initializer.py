@@ -33,8 +33,8 @@ class HiCombinedInitializer(MapInitializer):
         super().__init__("hi")
 
         l2_query_results = imap_data_access.query(instrument="hi", data_level="l2")
-        l2_by_descriptor_and_start_date = (
-            self.get_latest_version_by_descriptor_and_start_date(l2_query_results)
+        l2_by_descriptor_and_start_date = self.get_latest_version_by_descriptor_and_start_date(
+            l2_query_results
         )
         self.input_maps = dict(self.existing_l3_maps, **l2_by_descriptor_and_start_date)
         self.canonical_map_start_date = canonical_map_start_date
@@ -42,21 +42,15 @@ class HiCombinedInitializer(MapInitializer):
     def furnish_spice_dependencies(self, map_to_produce: PossibleMapToProduce):
         pass
 
-    def get_maps_that_can_be_produced(
-        self, input_descriptor: str
-    ) -> list[PossibleMapToProduce]:
+    def get_maps_that_can_be_produced(self, input_descriptor: str) -> list[PossibleMapToProduce]:
         possible_maps_to_produce = []
         map_descriptor: MapDescriptorParts = parse_map_descriptor(input_descriptor)
 
         hi90_ram_descriptor = map_descriptor_parts_to_string(
-            dataclasses.replace(
-                map_descriptor, sensor=Sensor.Hi90, spin_phase=SpinPhase.RamOnly
-            )
+            dataclasses.replace(map_descriptor, sensor=Sensor.Hi90, spin_phase=SpinPhase.RamOnly)
         )
         hi45_ram_descriptor = map_descriptor_parts_to_string(
-            dataclasses.replace(
-                map_descriptor, sensor=Sensor.Hi45, spin_phase=SpinPhase.RamOnly
-            )
+            dataclasses.replace(map_descriptor, sensor=Sensor.Hi45, spin_phase=SpinPhase.RamOnly)
         )
 
         hi90_anti_descriptor = map_descriptor_parts_to_string(

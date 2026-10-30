@@ -14,9 +14,7 @@ _CDF_FLOAT_NUMPY_DTYPE = {
 }
 
 
-def write_cdf(
-    file_path: str, data: DataProduct, attribute_manager: ImapAttributeManager
-):
+def write_cdf(file_path: str, data: DataProduct, attribute_manager: ImapAttributeManager):
     with CDF(file_path, "") as cdf:
         cdf.col_major(True)
         try:
@@ -38,9 +36,7 @@ def write_cdf(
             "glows",
         ):
             try:
-                map_descriptor = naming.MapDescriptor.from_string(
-                    data.input_metadata.descriptor
-                )
+                map_descriptor = naming.MapDescriptor.from_string(data.input_metadata.descriptor)
             except ValueError:
                 # Assume this is not actually a map
                 pass
@@ -52,7 +48,7 @@ def write_cdf(
             data_array = np.asanyarray(data_product.value)
 
             if map_descriptor is not None and (
-                    map_var_catdesc := map_descriptor.build_map_var_catdesc(var_name)
+                map_var_catdesc := map_descriptor.build_map_var_catdesc(var_name)
             ):
                 variable_attributes["CATDESC"] = map_var_catdesc
 
@@ -66,17 +62,13 @@ def write_cdf(
                 data_array = None
             else:
                 target_float_dtype = _CDF_FLOAT_NUMPY_DTYPE.get(data_type.value)
-                if target_float_dtype is not None and np.issubdtype(
-                    data_array.dtype, np.floating
-                ):
+                if target_float_dtype is not None and np.issubdtype(data_array.dtype, np.floating):
                     data_array = data_array.astype(target_float_dtype)
 
                 if "FILLVAL" in variable_attributes:
                     if np.issubdtype(data_array.dtype, np.floating):
                         data_array = np.ma.masked_invalid(data_array)
-                    data_array = np.ma.filled(
-                        data_array, variable_attributes["FILLVAL"]
-                    )
+                    data_array = np.ma.filled(data_array, variable_attributes["FILLVAL"])
                 else:
                     assert not np.ma.isMaskedArray(data_array)
 

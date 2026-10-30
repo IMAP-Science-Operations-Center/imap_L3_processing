@@ -36,9 +36,7 @@ def run_spectral_index(input: Path):
 
     dependencies = ProcessingInputCollection(ScienceInput(input.name))
     if parsed.instrument == "ultra":
-        dependencies.add(
-            AncillaryInput("imap_ultra_ulc-spx-energy-ranges_20250407_v000.dat")
-        )
+        dependencies.add(AncillaryInput("imap_ultra_ulc-spx-energy-ranges_20250407_v000.dat"))
 
     data_path = parsed.construct_path()
     data_path.parent.mkdir(parents=True, exist_ok=True)

@@ -213,9 +213,7 @@ class TestModels(CdfModelTestCase):
 
         variables = iter(variables)
         # @formatter:off
-        self.assert_variable_attributes(
-            next(variables), sentinel.epoch, EPOCH_CDF_VAR_NAME
-        )
+        self.assert_variable_attributes(next(variables), sentinel.epoch, EPOCH_CDF_VAR_NAME)
         self.assert_variable_attributes(
             next(variables), sentinel.epoch_delta, EPOCH_DELTA_CDF_VAR_NAME
         )
@@ -228,9 +226,7 @@ class TestModels(CdfModelTestCase):
             sentinel.energy_delta_minus,
             ENERGY_DELTA_MINUS_CDF_VAR_NAME,
         )
-        self.assert_variable_attributes(
-            next(variables), pitch_angle, PITCH_ANGLE_CDF_VAR_NAME
-        )
+        self.assert_variable_attributes(next(variables), pitch_angle, PITCH_ANGLE_CDF_VAR_NAME)
         self.assert_variable_attributes(
             next(variables), sentinel.pitch_angle_delta, PITCH_ANGLE_DELTA_CDF_VAR_NAME
         )
@@ -300,12 +296,8 @@ class TestModels(CdfModelTestCase):
             sentinel.core_fit_num_points,
             CORE_FIT_NUM_POINTS_CDF_VAR_NAME,
         )
-        self.assert_variable_attributes(
-            next(variables), sentinel.chisq_c, CHISQ_C_CDF_VAR_NAME
-        )
-        self.assert_variable_attributes(
-            next(variables), sentinel.chisq_h, CHISQ_H_CDF_VAR_NAME
-        )
+        self.assert_variable_attributes(next(variables), sentinel.chisq_c, CHISQ_C_CDF_VAR_NAME)
+        self.assert_variable_attributes(next(variables), sentinel.chisq_h, CHISQ_H_CDF_VAR_NAME)
         self.assert_variable_attributes(
             next(variables), sentinel.core_density_fit, CORE_DENSITY_FIT_CDF_VAR_NAME
         )
@@ -583,9 +575,7 @@ class TestModels(CdfModelTestCase):
             sentinel.total_temperature_tensor_integrated,
             TOTAL_TEMPERATURE_TENSOR_INTEGRATED_CDF_VAR_NAME,
         )
-        self.assert_variable_attributes(
-            next(variables), sentinel.swp_flags, SWE_FLAGS_VAR_NAME
-        )
+        self.assert_variable_attributes(next(variables), sentinel.swp_flags, SWE_FLAGS_VAR_NAME)
         self.assert_variable_attributes(
             next(variables), sentinel.raw_1d_psd_rebinned, "raw_1d_psd_rebinned"
         )
@@ -674,12 +664,8 @@ class TestModels(CdfModelTestCase):
             ],
             TOTAL_TEMPERATURE_TENSOR_INTEGRATED_LABEL,
         )
-        self.assert_variable_attributes(
-            next(variables), sentinel.inst_az_label, "inst_az_label"
-        )
-        self.assert_variable_attributes(
-            next(variables), sentinel.inst_el_label, "inst_el_label"
-        )
+        self.assert_variable_attributes(next(variables), sentinel.inst_az_label, "inst_az_label")
+        self.assert_variable_attributes(next(variables), sentinel.inst_el_label, "inst_el_label")
         self.assert_variable_attributes(next(variables), [1, 2, 3, 4, 5, 6], TENSOR_ID)
 
         self.assertEqual([], list(variables), "unexpected variable found")

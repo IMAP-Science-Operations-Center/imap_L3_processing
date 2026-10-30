@@ -58,9 +58,7 @@ def get_spice_data_path(filename: str) -> Path:
 
 
 def get_integration_test_spice_data_path(filename: str) -> Path:
-    return (
-        Path(tests.__file__).parent / "integration" / "test_data" / "spice" / filename
-    )
+    return Path(tests.__file__).parent / "integration" / "test_data" / "spice" / filename
 
 
 def get_test_data_folder() -> Path:
@@ -216,9 +214,7 @@ def assert_dict_close(x, y, rtol=1e-7, path=None):
         for k in x:
             assert_dict_close(x[k], y[k], rtol, path.copy() + [k])
     elif isinstance(x, (list, np.ndarray, float)):
-        np.testing.assert_allclose(
-            x, y, rtol=rtol, err_msg=f"path to failure: {path_str}"
-        )
+        np.testing.assert_allclose(x, y, rtol=rtol, err_msg=f"path to failure: {path_str}")
     else:
         assert x == y, f"{x} != {y} at path {path_str}"
 
@@ -274,9 +270,7 @@ def create_mock_query_results(
     for fn, ingestion_date in zip(file_names, ingestion_dates):
         imap_file_path = generate_imap_file_path(Path(fn).name)
         file_path = str(
-            imap_file_path.construct_path().relative_to(
-                imap_data_access.config["DATA_DIR"]
-            )
+            imap_file_path.construct_path().relative_to(imap_data_access.config["DATA_DIR"])
         ).replace("\\", "/")
 
         match imap_file_path:
@@ -336,9 +330,7 @@ def run_periodically(frequency: timedelta):
     def run_periodically_decorator(test_item):
         @wraps(test_item)
         def test_thing(*args):
-            periodically_run_tests_path = (
-                Path(__file__).parent / "periodically_run_tests.json"
-            )
+            periodically_run_tests_path = Path(__file__).parent / "periodically_run_tests.json"
             periodically_run_tests = json.loads(periodically_run_tests_path.read_text())
 
             last_run = periodically_run_tests.get(test_item.__name__)

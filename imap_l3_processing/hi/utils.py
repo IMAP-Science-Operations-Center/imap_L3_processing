@@ -36,14 +36,11 @@ def read_l1c_rectangular_pointing_set_data(
         pointing_start_met = (
             cdf["pointing_start_met"][...] if "pointing_start_met" in cdf else None
         )
-        pointing_end_met = (
-            cdf["pointing_end_met"][...] if "pointing_end_met" in cdf else None
-        )
+        pointing_end_met = cdf["pointing_end_met"][...] if "pointing_end_met" in cdf else None
         epoch_delta = (
             cdf["epoch_delta"][...]
             if "epoch_delta" in cdf
-            else met_to_ttj2000ns(pointing_end_met)
-            - met_to_ttj2000ns(pointing_start_met)
+            else met_to_ttj2000ns(pointing_end_met) - met_to_ttj2000ns(pointing_start_met)
         )
         return InputRectangularPointingSet(
             epoch=cdf["epoch"][0],
@@ -68,8 +65,6 @@ def read_glows_l3e_data(cdf_path: Path | str) -> GlowsL3eRectangularMapInputData
             repointing=repointing,
             energy=read_numeric_variable(cdf[ENERGY_VAR_NAME]),
             spin_angle=read_numeric_variable(cdf[SPIN_ANGLE_VAR_NAME]),
-            probability_of_survival=read_numeric_variable(
-                cdf[PROBABILITY_OF_SURVIVAL_VAR_NAME]
-            ),
+            probability_of_survival=read_numeric_variable(cdf[PROBABILITY_OF_SURVIVAL_VAR_NAME]),
             flags=cdf[GLOWS_FLAGS_VAR_NAME][...],
         )

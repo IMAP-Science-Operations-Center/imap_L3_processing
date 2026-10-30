@@ -37,9 +37,7 @@ def main():
     eff_area = area_df["effective_area"].to_numpy()
 
     transmission = swapi_response._azimuthal_transmission
-    azimuths = (
-        np.arange(len(transmission)) * SwapiResponse.AZIMUTHAL_TRANSMISSION_SPACING_DEG
-    )
+    azimuths = np.arange(len(transmission)) * SwapiResponse.AZIMUTHAL_TRANSMISSION_SPACING_DEG
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
 

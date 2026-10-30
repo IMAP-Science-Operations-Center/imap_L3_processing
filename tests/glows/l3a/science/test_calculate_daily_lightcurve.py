@@ -18,16 +18,12 @@ from imap_l3_processing.glows.l3a.science.time_independent_background_lookup_tab
 
 class TestCalculateDailyLightcurve(unittest.TestCase):
     def setUp(self):
-        self.all_zero_time_independent_background = (
-            TimeIndependentBackgroundLookupTable(
-                latitudes=np.array([-90, 90]),
-                longitudes=np.array([0]),
-                background_values=np.zeros(shape=(2, 1)),
-            )
+        self.all_zero_time_independent_background = TimeIndependentBackgroundLookupTable(
+            latitudes=np.array([-90, 90]),
+            longitudes=np.array([0]),
+            background_values=np.zeros(shape=(2, 1)),
         )
-        self.enable_all_flags_configuration = BadAngleFlagConfiguration(
-            True, True, True, True
-        )
+        self.enable_all_flags_configuration = BadAngleFlagConfiguration(True, True, True, True)
 
     def test_rebin_with_no_flags_and_equal_exposure_times(self):
         photon_flux = np.full(3600, 1.0)
@@ -316,9 +312,7 @@ class TestCalculateDailyLightcurve(unittest.TestCase):
     def test_calculate_spin_angles(self):
         spin_angles = np.array([70, 130, 190, 250, 310, 10, 70, 130, 190, 350, 10, 30])
 
-        np.testing.assert_array_equal(
-            [130, 310, 130, 10], calculate_spin_angles(4, spin_angles)
-        )
+        np.testing.assert_array_equal([130, 310, 130, 10], calculate_spin_angles(4, spin_angles))
 
         realistic_angles = np.linspace(0, 360, 3600, endpoint=False) + 0.05
         expected_4_degree_bins = np.linspace(0, 360, 90, endpoint=False) + 2

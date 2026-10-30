@@ -41,9 +41,7 @@ def _pad_lightcurve(values) -> np.ndarray:
 
 
 def read_l2_glows_data(cdf: CDF) -> GlowsL2Data:
-    assert 1 == cdf["photon_flux"].shape[0], (
-        "Level 2 file should have only one histogram"
-    )
+    assert 1 == cdf["photon_flux"].shape[0], "Level 2 file should have only one histogram"
 
     light_curve = GlowsL2LightCurve(
         photon_flux=cdf["photon_flux"][0],
@@ -146,9 +144,7 @@ def create_glows_l3a_from_dictionary(
         start_time=data["start_time"],
         end_time=data["end_time"],
         photon_flux=_pad_lightcurve(data["daily_lightcurve"]["photon_flux"]),
-        photon_flux_uncertainty=_pad_lightcurve(
-            data["daily_lightcurve"]["flux_uncertainties"]
-        ),
+        photon_flux_uncertainty=_pad_lightcurve(data["daily_lightcurve"]["flux_uncertainties"]),
         raw_histogram=_pad_lightcurve(data["daily_lightcurve"]["raw_histogram"]),
         exposure_times=_pad_lightcurve(data["daily_lightcurve"]["exposure_times"]),
         spin_angle=_pad_lightcurve(data["daily_lightcurve"]["spin_angle"]),
@@ -173,12 +169,8 @@ def create_glows_l3a_from_dictionary(
         pulse_length_std_dev=np.array([data["pulse_length_std_dev"]]),
         position_angle_offset_average=np.array([data["position_angle_offset_average"]]),
         position_angle_offset_std_dev=np.array([data["position_angle_offset_std_dev"]]),
-        spin_axis_orientation_average=get_lon_lat(
-            data["spin_axis_orientation_average"]
-        ),
-        spin_axis_orientation_std_dev=get_lon_lat(
-            data["spin_axis_orientation_std_dev"]
-        ),
+        spin_axis_orientation_average=get_lon_lat(data["spin_axis_orientation_average"]),
+        spin_axis_orientation_std_dev=get_lon_lat(data["spin_axis_orientation_std_dev"]),
         spacecraft_location_average=get_xyz(data["spacecraft_location_average"]),
         spacecraft_location_std_dev=get_xyz(data["spacecraft_location_std_dev"]),
         spacecraft_velocity_average=get_xyz(data["spacecraft_velocity_average"]),
@@ -203,9 +195,7 @@ def create_glows_l3a_dictionary_from_cdf(cdf_file_path: Path) -> dict:
             "exposure_times": cdf["exposure_times"][0][:valid_bin_count],
             "photon_flux": cdf["photon_flux"][0][:valid_bin_count],
             "flux_uncertainties": cdf["photon_flux_uncertainty"][0][:valid_bin_count],
-            "extra_heliospheric_bckgrd": cdf["extra_heliospheric_bckgrd"][0][
-                :valid_bin_count
-            ],
+            "extra_heliospheric_bckgrd": cdf["extra_heliospheric_bckgrd"][0][:valid_bin_count],
             "time_dependent_bckgrd": cdf["time_dependent_bckgrd"][0][:valid_bin_count],
             "spin_angle": cdf["spin_angle"][0][:valid_bin_count],
             "raw_histogram": cdf["raw_histogram"][0][:valid_bin_count],

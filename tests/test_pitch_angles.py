@@ -46,9 +46,7 @@ class TestPitchAngles(unittest.TestCase):
 
         many_vectors = np.array([[0.1, 0, 0], [30, 40, 0]])
         unit_vectors = calculate_unit_vector(many_vectors)
-        np.testing.assert_array_almost_equal(
-            [[1, 0, 0], [3 / 5, 4 / 5, 0]], unit_vectors
-        )
+        np.testing.assert_array_almost_equal([[1, 0, 0], [3 / 5, 4 / 5, 0]], unit_vectors)
 
     def test_rotate_from_imap_despun_to_hit_despun(self):
         vector = np.array([1.0, 1.0, 1.0])
@@ -70,8 +68,8 @@ class TestPitchAngles(unittest.TestCase):
             dtype=float,
         )
 
-        rotated_particle_vectors = (
-            rotate_particle_vectors_from_hit_despun_to_imap_despun(particle_vectors)
+        rotated_particle_vectors = rotate_particle_vectors_from_hit_despun_to_imap_despun(
+            particle_vectors
         )
 
         expected_particle_vectors = np.array(
@@ -83,9 +81,7 @@ class TestPitchAngles(unittest.TestCase):
             ]
         )
 
-        np.testing.assert_array_almost_equal(
-            rotated_particle_vectors, expected_particle_vectors
-        )
+        np.testing.assert_array_almost_equal(rotated_particle_vectors, expected_particle_vectors)
 
     def test_calculate_gyrophase(self):
         particle_vector = np.array(
@@ -291,9 +287,7 @@ class TestPitchAngles(unittest.TestCase):
                 np.testing.assert_array_equal(
                     intensity_pa_and_gyro, expected_intensity_by_pa_gyrophase
                 )
-                np.testing.assert_array_equal(
-                    intensity_pa_only, expected_intensity_by_pa
-                )
+                np.testing.assert_array_equal(intensity_pa_only, expected_intensity_by_pa)
 
     def test_rebin_by_pitch_angle_and_gyrophase_pa_product_only_correctly_weights_when_averaging(
         self,
@@ -359,13 +353,9 @@ class TestPitchAngles(unittest.TestCase):
             ]
         )
 
-        expected_delta_plus_pa_only = np.array(
-            [[0.084187, 0.252562], [0.43045, 0.60958]]
-        )
+        expected_delta_plus_pa_only = np.array([[0.084187, 0.252562], [0.43045, 0.60958]])
 
-        expected_delta_minus_pa_only = np.array(
-            [[0.102896, 0.308687], [0.526106, 0.745042]]
-        )
+        expected_delta_minus_pa_only = np.array([[0.102896, 0.308687], [0.526106, 0.745042]])
 
         rebinned_data = rebin_by_pitch_angle_and_gyrophase(
             intensity,
@@ -382,12 +372,8 @@ class TestPitchAngles(unittest.TestCase):
 
         np.testing.assert_allclose(delta_plus_pa_gyro, expected_delta_plus_pa_gyro)
         np.testing.assert_allclose(delta_minus_pa_gyro, expected_delta_minus_pa_gyro)
-        np.testing.assert_allclose(
-            delta_plus_pa_only, expected_delta_plus_pa_only, rtol=1e-5
-        )
-        np.testing.assert_allclose(
-            delta_minus_pa_only, expected_delta_minus_pa_only, rtol=1e-5
-        )
+        np.testing.assert_allclose(delta_plus_pa_only, expected_delta_plus_pa_only, rtol=1e-5)
+        np.testing.assert_allclose(delta_minus_pa_only, expected_delta_minus_pa_only, rtol=1e-5)
 
 
 if __name__ == "__main__":

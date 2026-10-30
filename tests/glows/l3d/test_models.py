@@ -62,9 +62,7 @@ class TestModels(CdfModelTestCase):
 
         variables = data_product.to_data_product_variables()
 
-        expected_epoch_delta = np.full_like(
-            epoch, CARRINGTON_ROTATION_IN_NANOSECONDS / 2
-        )
+        expected_epoch_delta = np.full_like(epoch, CARRINGTON_ROTATION_IN_NANOSECONDS / 2)
         expected_latitude_label = [f"{deg:.1f} degrees" for deg in latitude]
 
         self.assertEqual(15, len(variables))
@@ -73,16 +71,12 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(
             next(variables), expected_epoch_delta, EPOCH_DELTA_CDF_VAR_NAME
         )
-        self.assert_variable_attributes(
-            next(variables), latitude, LATITUDE_CDF_CDF_VAR_NAME
-        )
+        self.assert_variable_attributes(next(variables), latitude, LATITUDE_CDF_CDF_VAR_NAME)
         self.assert_variable_attributes(
             next(variables), expected_latitude_label, LATITUDE_LABEL_CDF_VAR_NAME
         )
         self.assert_variable_attributes(next(variables), cr, CR_CDF_VAR_NAME)
-        self.assert_variable_attributes(
-            next(variables), plasma_speed, SPEED_CDF_VAR_NAME
-        )
+        self.assert_variable_attributes(next(variables), plasma_speed, SPEED_CDF_VAR_NAME)
         self.assert_variable_attributes(
             next(variables), proton_density, PROTON_DENSITY_CDF_VAR_NAME
         )
@@ -90,9 +84,7 @@ class TestModels(CdfModelTestCase):
             next(variables), ultraviolet_anisotropy, UV_ANISOTROPY_CDF_VAR_NAME
         )
         self.assert_variable_attributes(next(variables), phion, PHION_CDF_VAR_NAME)
-        self.assert_variable_attributes(
-            next(variables), lyman_alpha, LYMAN_ALPHA_CDF_VAR_NAME
-        )
+        self.assert_variable_attributes(next(variables), lyman_alpha, LYMAN_ALPHA_CDF_VAR_NAME)
         self.assert_variable_attributes(
             next(variables), electron_density, ELECTRON_DENSITY_CDF_VAR_NAME
         )
@@ -105,6 +97,4 @@ class TestModels(CdfModelTestCase):
         self.assert_variable_attributes(
             next(variables), proton_density_flag, PROTON_DENSITY_FLAG_CDF_VAR_NAME
         )
-        self.assert_variable_attributes(
-            next(variables), glows_flags, GLOWS_FLAGS_CDF_VAR_NAME
-        )
+        self.assert_variable_attributes(next(variables), glows_flags, GLOWS_FLAGS_CDF_VAR_NAME)

@@ -6,9 +6,7 @@ from pathlib import Path
 output_dir = Path(r"C:\Users\Harrison\Downloads\glows_l3e_for_ultra_validation")
 output_dir.mkdir(exist_ok=True)
 input_dir = Path(r"C:\Users\Harrison\Downloads\\")
-for i, file in enumerate(
-    input_dir.rglob("imap_glows_l3e_survival-probability-ul*.cdf")
-):
+for i, file in enumerate(input_dir.rglob("imap_glows_l3e_survival-probability-ul*.cdf")):
     if i > 184:
         break
     new_repoint = re.sub(r"repoint\d{5}", f"repoint{i:05}", file.name)

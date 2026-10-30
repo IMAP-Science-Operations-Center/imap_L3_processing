@@ -125,14 +125,10 @@ class CRToProcess:
                 self.pipeline_settings_file_name
             )
             pipeline_settings = read_pipeline_settings(pipeline_settings_local_path)
-            self._buffer_time = timedelta(
-                days=pipeline_settings["initializer_time_delta_days"]
-            )
+            self._buffer_time = timedelta(days=pipeline_settings["initializer_time_delta_days"])
         return self._buffer_time
 
-    def has_valid_external_dependencies(
-        self, external_deps: ExternalDependencies
-    ) -> bool:
+    def has_valid_external_dependencies(self, external_deps: ExternalDependencies) -> bool:
         return validate_dependencies(
             self.cr_start_date,
             self.cr_end_date,
@@ -215,9 +211,7 @@ class GlowsL3BIonizationRate(DataProduct):
 
         parent_file_names = []
         parent_file_names += collect_file_names(model["header"]["ancillary_data_files"])
-        parent_file_names += collect_file_names(
-            model["header"]["external_dependeciens"]
-        )
+        parent_file_names += collect_file_names(model["header"]["external_dependeciens"])
         return cls(
             input_metadata=input_metadata,
             parent_file_names=parent_file_names,
@@ -264,9 +258,7 @@ class GlowsL3CSolarWind(DataProduct):
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
-            DataProductVariable(
-                "epoch", self.epoch, cdf_data_type=pycdf.const.CDF_TIME_TT2000
-            ),
+            DataProductVariable("epoch", self.epoch, cdf_data_type=pycdf.const.CDF_TIME_TT2000),
             DataProductVariable(
                 "epoch_delta", self.epoch_delta, cdf_data_type=pycdf.const.CDF_INT8
             ),
@@ -327,9 +319,7 @@ class GlowsL3CSolarWind(DataProduct):
 
         parent_file_names = []
         parent_file_names += collect_file_names(model["header"]["ancillary_data_files"])
-        parent_file_names += collect_file_names(
-            model["header"]["external_dependeciens"]
-        )
+        parent_file_names += collect_file_names(model["header"]["external_dependeciens"])
         return cls(
             input_metadata=input_metadata,
             epoch=np.array([epoch]),
@@ -338,21 +328,11 @@ class GlowsL3CSolarWind(DataProduct):
             cr=np.array([model["CR"]]),
             lat_grid=np.array(latitude_grid),
             lat_grid_label=[f"{x}°" for x in latitude_grid],
-            plasma_speed_ecliptic=np.array(
-                [model["solar_wind_ecliptic"]["plasma_speed"]]
-            ),
-            proton_density_ecliptic=np.array(
-                [model["solar_wind_ecliptic"]["proton_density"]]
-            ),
-            alpha_abundance_ecliptic=np.array(
-                [model["solar_wind_ecliptic"]["alpha_abundance"]]
-            ),
-            plasma_speed_profile=np.array(
-                [model["solar_wind_profile"]["plasma_speed"]]
-            ),
-            proton_density_profile=np.array(
-                [model["solar_wind_profile"]["proton_density"]]
-            ),
+            plasma_speed_ecliptic=np.array([model["solar_wind_ecliptic"]["plasma_speed"]]),
+            proton_density_ecliptic=np.array([model["solar_wind_ecliptic"]["proton_density"]]),
+            alpha_abundance_ecliptic=np.array([model["solar_wind_ecliptic"]["alpha_abundance"]]),
+            plasma_speed_profile=np.array([model["solar_wind_profile"]["plasma_speed"]]),
+            proton_density_profile=np.array([model["solar_wind_profile"]["proton_density"]]),
             glows_flags=np.array([model["glows_flags"]], dtype=np.uint16),
             parent_file_names=parent_file_names,
         )

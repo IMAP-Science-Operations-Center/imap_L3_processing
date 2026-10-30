@@ -25,9 +25,7 @@ from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 def read_l2_data_from_dat(file_path: str) -> SwapiL2Data:
     data = np.loadtxt(file_path)
     data = data.reshape((-1, 72, 8))
-    start_time = int(
-        np.datetime64("2010-01-01", "ns") - np.datetime64("2000-01-01T12:00", "ns")
-    )
+    start_time = int(np.datetime64("2010-01-01", "ns") - np.datetime64("2000-01-01T12:00", "ns"))
     twelve_seconds_in_nanoseconds = 12_000_000_000
     epochs = start_time + twelve_seconds_in_nanoseconds * np.arange(len(data))
 
@@ -65,9 +63,7 @@ fig = plt.figure()
 def plot_sweeps(data):
     for i in range(len(data.sci_start_time)):
         axes = fig.add_subplot(len(data.sci_start_time) + 1, 1, i + 1)
-        axes.loglog(
-            data.energy, data.coincidence_count_rate[i, :], marker=".", linestyle="None"
-        )
+        axes.loglog(data.energy, data.coincidence_count_rate[i, :], marker=".", linestyle="None")
         axes.set(xlabel="Energy", ylabel="Count Rate")
 
 
@@ -116,9 +112,9 @@ def plot_and_calculate_alpha_solar_wind_temperature_and_density_for_combined_swe
         alpha_count_rate_model(peak_energies, *values)
         - nominal_values(peak_average_alpha_count_rates)
     )
-    reduced_chisq = np.sum(
-        np.square(residual / std_devs(peak_average_alpha_count_rates))
-    ) / (len(peak_energies) - 3)
+    reduced_chisq = np.sum(np.square(residual / std_devs(peak_average_alpha_count_rates))) / (
+        len(peak_energies) - 3
+    )
     if reduced_chisq > 10:
         raise ValueError("Failed to fit - chi-squared too large", reduced_chisq)
     density, temperature, speed = correlated_values(values, covariance)

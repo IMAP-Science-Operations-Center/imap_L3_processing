@@ -93,9 +93,7 @@ class TestHitPitchAngleDataProduct(TestCase):
             DataProductVariable("pitch_angle_delta", sentinel.pitch_angles_deltas),
             DataProductVariable("gyrophase", NumpyArrayMatcher(gyrophases)),
             DataProductVariable("gyrophase_delta", sentinel.gyrophase_deltas),
-            DataProductVariable(
-                "h_macropixel_intensity", sentinel.h_macropixel_intensity
-            ),
+            DataProductVariable("h_macropixel_intensity", sentinel.h_macropixel_intensity),
             DataProductVariable(
                 "h_macropixel_intensity_delta_plus",
                 sentinel.h_macropixel_intensity_delta_plus,
@@ -116,9 +114,7 @@ class TestHitPitchAngleDataProduct(TestCase):
             DataProductVariable("h_energy", NumpyArrayMatcher(h_energy)),
             DataProductVariable("h_energy_delta_plus", sentinel.h_energy_delta_plus),
             DataProductVariable("h_energy_delta_minus", sentinel.h_energy_delta_minus),
-            DataProductVariable(
-                "he4_macropixel_intensity", sentinel.he4_macropixel_intensity
-            ),
+            DataProductVariable("he4_macropixel_intensity", sentinel.he4_macropixel_intensity),
             DataProductVariable(
                 "he4_macropixel_intensity_delta_plus",
                 sentinel.he4_macropixel_intensity_delta_plus,
@@ -127,9 +123,7 @@ class TestHitPitchAngleDataProduct(TestCase):
                 "he4_macropixel_intensity_delta_minus",
                 sentinel.he4_macropixel_intensity_delta_minus,
             ),
-            DataProductVariable(
-                "he4_macropixel_intensity_pa", sentinel.he4_pa_intensity
-            ),
+            DataProductVariable("he4_macropixel_intensity_pa", sentinel.he4_pa_intensity),
             DataProductVariable(
                 "he4_macropixel_intensity_pa_delta_plus",
                 sentinel.he4_pa_intensity_delta_plus,
@@ -139,15 +133,9 @@ class TestHitPitchAngleDataProduct(TestCase):
                 sentinel.he4_pa_intensity_delta_minus,
             ),
             DataProductVariable("he4_energy", NumpyArrayMatcher(he_energy)),
-            DataProductVariable(
-                "he4_energy_delta_plus", sentinel.he4_energy_delta_plus
-            ),
-            DataProductVariable(
-                "he4_energy_delta_minus", sentinel.he4_energy_delta_minus
-            ),
-            DataProductVariable(
-                "cno_macropixel_intensity", sentinel.cno_macropixel_intensity
-            ),
+            DataProductVariable("he4_energy_delta_plus", sentinel.he4_energy_delta_plus),
+            DataProductVariable("he4_energy_delta_minus", sentinel.he4_energy_delta_minus),
+            DataProductVariable("cno_macropixel_intensity", sentinel.cno_macropixel_intensity),
             DataProductVariable(
                 "cno_macropixel_intensity_delta_plus",
                 sentinel.cno_macropixel_intensity_delta_plus,
@@ -156,9 +144,7 @@ class TestHitPitchAngleDataProduct(TestCase):
                 "cno_macropixel_intensity_delta_minus",
                 sentinel.cno_macropixel_intensity_delta_minus,
             ),
-            DataProductVariable(
-                "cno_macropixel_intensity_pa", sentinel.cno_pa_intensity
-            ),
+            DataProductVariable("cno_macropixel_intensity_pa", sentinel.cno_pa_intensity),
             DataProductVariable(
                 "cno_macropixel_intensity_pa_delta_plus",
                 sentinel.cno_pa_intensity_delta_plus,
@@ -168,12 +154,8 @@ class TestHitPitchAngleDataProduct(TestCase):
                 sentinel.cno_pa_intensity_delta_minus,
             ),
             DataProductVariable("cno_energy", NumpyArrayMatcher(cno_energy)),
-            DataProductVariable(
-                "cno_energy_delta_plus", sentinel.cno_energy_delta_plus
-            ),
-            DataProductVariable(
-                "cno_energy_delta_minus", sentinel.cno_energy_delta_minus
-            ),
+            DataProductVariable("cno_energy_delta_plus", sentinel.cno_energy_delta_plus),
+            DataProductVariable("cno_energy_delta_minus", sentinel.cno_energy_delta_minus),
             DataProductVariable(
                 "nemgsi_macropixel_intensity", sentinel.ne_mg_si_macropixel_intensity
             ),
@@ -185,9 +167,7 @@ class TestHitPitchAngleDataProduct(TestCase):
                 "nemgsi_macropixel_intensity_delta_minus",
                 sentinel.ne_mg_si_macropixel_intensity_delta_minus,
             ),
-            DataProductVariable(
-                "nemgsi_macropixel_intensity_pa", sentinel.ne_mg_si_pa_intensity
-            ),
+            DataProductVariable("nemgsi_macropixel_intensity_pa", sentinel.ne_mg_si_pa_intensity),
             DataProductVariable(
                 "nemgsi_macropixel_intensity_pa_delta_plus",
                 sentinel.ne_mg_si_pa_intensity_delta_plus,
@@ -197,15 +177,9 @@ class TestHitPitchAngleDataProduct(TestCase):
                 sentinel.ne_mg_si_pa_intensity_delta_minus,
             ),
             DataProductVariable("nemgsi_energy", NumpyArrayMatcher(nemgsi_energy)),
-            DataProductVariable(
-                "nemgsi_energy_delta_plus", sentinel.ne_mg_si_energy_delta_plus
-            ),
-            DataProductVariable(
-                "nemgsi_energy_delta_minus", sentinel.ne_mg_si_energy_delta_minus
-            ),
-            DataProductVariable(
-                "fe_macropixel_intensity", sentinel.iron_macropixel_intensity
-            ),
+            DataProductVariable("nemgsi_energy_delta_plus", sentinel.ne_mg_si_energy_delta_plus),
+            DataProductVariable("nemgsi_energy_delta_minus", sentinel.ne_mg_si_energy_delta_minus),
+            DataProductVariable("fe_macropixel_intensity", sentinel.iron_macropixel_intensity),
             DataProductVariable(
                 "fe_macropixel_intensity_delta_plus",
                 sentinel.iron_macropixel_intensity_delta_plus,
@@ -214,9 +188,7 @@ class TestHitPitchAngleDataProduct(TestCase):
                 "fe_macropixel_intensity_delta_minus",
                 sentinel.iron_macropixel_intensity_delta_minus,
             ),
-            DataProductVariable(
-                "fe_macropixel_intensity_pa", sentinel.iron_pa_intensity
-            ),
+            DataProductVariable("fe_macropixel_intensity_pa", sentinel.iron_pa_intensity),
             DataProductVariable(
                 "fe_macropixel_intensity_pa_delta_plus",
                 sentinel.iron_pa_intensity_delta_plus,
@@ -226,18 +198,10 @@ class TestHitPitchAngleDataProduct(TestCase):
                 sentinel.iron_pa_intensity_delta_minus,
             ),
             DataProductVariable("fe_energy", NumpyArrayMatcher(fe_energy)),
-            DataProductVariable(
-                "fe_energy_delta_plus", sentinel.iron_energy_delta_plus
-            ),
-            DataProductVariable(
-                "fe_energy_delta_minus", sentinel.iron_energy_delta_minus
-            ),
-            DataProductVariable(
-                "measurement_pitch_angle", mock_measurement_pitch_angle
-            ),
-            DataProductVariable(
-                "measurement_gyrophase", sentinel.measurement_gyrophase
-            ),
+            DataProductVariable("fe_energy_delta_plus", sentinel.iron_energy_delta_plus),
+            DataProductVariable("fe_energy_delta_minus", sentinel.iron_energy_delta_minus),
+            DataProductVariable("measurement_pitch_angle", mock_measurement_pitch_angle),
+            DataProductVariable("measurement_gyrophase", sentinel.measurement_gyrophase),
             DataProductVariable(
                 "pitch_angle_label",
                 [
@@ -304,9 +268,7 @@ class TestHitPitchAngleDataProduct(TestCase):
                 ],
             ),
             DataProductVariable("azimuth", NumpyArrayMatcher(np.array([10, 180, 350]))),
-            DataProductVariable(
-                "zenith", NumpyArrayMatcher(np.array([10.25, 90.75, 170.5]))
-            ),
+            DataProductVariable("zenith", NumpyArrayMatcher(np.array([10.25, 90.75, 170.5]))),
             DataProductVariable("azimuth_label", ["10.0", "180.0", "350.0"]),
             DataProductVariable("zenith_label", ["10.25", "90.75", "170.5"]),
             DataProductVariable("hit_flags", sentinel.quality_flags),

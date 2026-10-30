@@ -12,12 +12,7 @@ if __name__ == "__main__":
         yaml_data = yaml.safe_load(yaml_file)
 
     all_headers = {
-        key: ""
-        for key in set(
-            chain.from_iterable(
-                [data.keys() for data in yaml_data.values()]
-            )
-        )
+        key: "" for key in set(chain.from_iterable([data.keys() for data in yaml_data.values()]))
     }
     valid_variables = [data for data in yaml_data.values() if "NAME" in data]
     with open(outpath, "w") as out_file:

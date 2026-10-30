@@ -161,9 +161,7 @@ class DailyIonizationRate:
 
         self.header = {
             "software_version": VERSION,
-            "ancillary_data_files": anc_input_from_instr_team[
-                "WawHelioIonMP_parameters"
-            ],
+            "ancillary_data_files": anc_input_from_instr_team["WawHelioIonMP_parameters"],
             "l3a_input_filename": None,
         }
 
@@ -272,9 +270,7 @@ class DailyIonizationRate:
                 lsq_mtrx, lightcurve, sample_weight=1.0 / (uncert * uncert)
             )
         else:
-            raise ValueError(
-                "Unknown regression method. Use LinearRegression, Lasso or Ridge"
-            )
+            raise ValueError("Unknown regression method. Use LinearRegression, Lasso or Ridge")
 
         self.lcrv["decomposition_coeff"] = lin_model.coef_
 
@@ -308,9 +304,7 @@ class DailyIonizationRate:
                     k = i
             # Case when we are crossing 0-360
             else:
-                if np.logical_or(
-                    self.lcrv["ecl_lon"] >= ini, self.lcrv["ecl_lon"] <= fin
-                ):
+                if np.logical_or(self.lcrv["ecl_lon"] >= ini, self.lcrv["ecl_lon"] <= fin):
                     k = i
         return k
 
@@ -325,9 +319,7 @@ class DailyIonizationRate:
         """
         # Open and load json file with L3a data
 
-        self.spacecraft_location = list(
-            data_l3a["spacecraft_location_average"].values()
-        )
+        self.spacecraft_location = list(data_l3a["spacecraft_location_average"].values())
         self.lcrv["ecl_lon"] = np.degrees(
             fun.get_spher_coord_rad(np.array(self.spacecraft_location))[1]
         )
@@ -462,14 +454,10 @@ class DailyIonizationRate:
         model_const = np.array(self.model["vg_points"]["parameters"]["model_const"])
         model_matrix = np.array(self.model["vg_points"]["parameters"]["model_matrix"])
         hion_const = np.array(self.model["params_hion"]["hion_const"])
-        lcrv_filtration = np.array(
-            self.model["vg_points"]["parameters"]["lcrv_filtration"]
-        )
+        lcrv_filtration = np.array(self.model["vg_points"]["parameters"]["lcrv_filtration"])
 
         # Transformation PCA (we are taking only the first few components of the light curve decomposition)
-        lcrv_params_PCA = np.dot(self.lcrv["decomposition_coeff"], lcrv_Trmatrix)[
-            :lcrv_filtration
-        ]
+        lcrv_params_PCA = np.dot(self.lcrv["decomposition_coeff"], lcrv_Trmatrix)[:lcrv_filtration]
         # Transformation from light curve parameters into total ion parameters
         total_ion_params = np.concatenate(
             (model_const + np.dot(model_matrix, lcrv_params_PCA), hion_const)

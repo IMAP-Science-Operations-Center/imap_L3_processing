@@ -887,9 +887,7 @@ class mpfit:
         # Parameter damping doesn't work when user is providing their own
         # gradients.
         if (self.damp != 0) and (autoderivative == 0):
-            self.errmsg = (
-                "ERROR: keywords DAMP and AUTODERIVATIVE are mutually exclusive"
-            )
+            self.errmsg = "ERROR: keywords DAMP and AUTODERIVATIVE are mutually exclusive"
             return
 
         # Parameters can either be stored in parinfo, or x. x takes precedence if it exists
@@ -942,9 +940,7 @@ class mpfit:
         pfixed = self.parinfo(parinfo, "fixed", default=0, n=npar)
         pfixed = pfixed == 1
         for i in range(npar):
-            pfixed[i] = pfixed[i] or (
-                ptied[i] != ""
-            )  # Tied parameters are also effectively fixed
+            pfixed[i] = pfixed[i] or (ptied[i] != "")  # Tied parameters are also effectively fixed
 
         # Finite differencing step, absolute and relative, and sidedness of deriv.
         step = self.parinfo(parinfo, "step", default=0.0, n=npar)
@@ -980,15 +976,12 @@ class mpfit:
         if (limited is not None) and (limits is not None):
             # Error checking on limits in parinfo
             if numpy.any(
-                (limited[:, 0] & (xall < limits[:, 0]))
-                | (limited[:, 1] & (xall > limits[:, 1]))
+                (limited[:, 0] & (xall < limits[:, 0])) | (limited[:, 1] & (xall > limits[:, 1]))
             ):
                 self.errmsg = "ERROR: parameters are not within PARINFO limits"
                 return
             if numpy.any(
-                (limited[:, 0] & limited[:, 1])
-                & (limits[:, 0] >= limits[:, 1])
-                & (pfixed == 0)
+                (limited[:, 0] & limited[:, 1]) & (limits[:, 0] >= limits[:, 1]) & (pfixed == 0)
             ):
                 self.errmsg = "ERROR: PARINFO parameter limits are not consistent"
                 return
@@ -1013,14 +1006,7 @@ class mpfit:
 
         n = len(x)
         # Check input parameters for errors
-        if (
-            (n < 0)
-            or (ftol <= 0)
-            or (xtol <= 0)
-            or (gtol <= 0)
-            or (maxiter < 0)
-            or (factor <= 0)
-        ):
+        if (n < 0) or (ftol <= 0) or (xtol <= 0) or (gtol <= 0) or (maxiter < 0) or (factor <= 0):
             self.errmsg = "ERROR: input keywords are inconsistent"
             return
 
@@ -1092,9 +1078,7 @@ class mpfit:
 
                     # Check for user termination
                     if self.status < 0:
-                        self.errmsg = "WARNING: premature termination by " + str(
-                            iterfunct
-                        )
+                        self.errmsg = "WARNING: premature termination by " + str(iterfunct)
                         return
 
                     # If parameters were changed (grrr..) then re-tie
@@ -1219,9 +1203,7 @@ class mpfit:
             while 1:
                 # Determine the levenberg-marquardt parameter
                 self.catch_msg = "calculating LM parameter (MPFIT_)"
-                [fjac, par, wa1, wa2] = self.lmpar(
-                    fjac, ipvt, diag, qtf, delta, wa1, wa2, par=par
-                )
+                [fjac, par, wa1, wa2] = self.lmpar(fjac, ipvt, diag, qtf, delta, wa1, wa2, par=par)
                 # Store the direction p and x+p. Calculate the norm of p
                 wa1 = -wa1
 
@@ -1245,15 +1227,11 @@ class mpfit:
                             wa1[whupeg] = numpy.clip(wa1[whupeg], numpy.min(wa1), 0.0)
 
                         dwa1 = numpy.abs(wa1) > machep
-                        whl = (
-                            numpy.nonzero(((dwa1 != 0.0) & qllim) & ((x + wa1) < llim))
-                        )[0]
+                        whl = (numpy.nonzero(((dwa1 != 0.0) & qllim) & ((x + wa1) < llim)))[0]
                         if len(whl) > 0:
                             t = (llim[whl] - x[whl]) / wa1[whl]
                             alpha = numpy.min([alpha, numpy.min(t)])
-                        whu = (
-                            numpy.nonzero(((dwa1 != 0.0) & qulim) & ((x + wa1) > ulim))
-                        )[0]
+                        whu = (numpy.nonzero(((dwa1 != 0.0) & qulim) & ((x + wa1) > ulim)))[0]
                         if len(whu) > 0:
                             t = (ulim[whu] - x[whu]) / wa1[whu]
                             alpha = numpy.min([alpha, numpy.min(t)])
@@ -1261,13 +1239,10 @@ class mpfit:
                     # Obey any max step values.
                     if qminmax:
                         nwa1 = wa1 * alpha
-                        whmax = (
-                            numpy.nonzero((qmax[ifree] != 0.0) & (maxstep[ifree] > 0))
-                        )[0]
+                        whmax = (numpy.nonzero((qmax[ifree] != 0.0) & (maxstep[ifree] > 0)))[0]
                         if len(whmax) > 0:
                             mrat = numpy.max(
-                                numpy.abs(nwa1[whmax])
-                                / numpy.abs(maxstep[ifree[whmax]])
+                                numpy.abs(nwa1[whmax]) / numpy.abs(maxstep[ifree[whmax]])
                             )
                             if mrat > 1:
                                 alpha = alpha / mrat
@@ -1358,11 +1333,7 @@ class mpfit:
                     self.niter = self.niter + 1
 
                 # Tests for convergence
-                if (
-                    (numpy.abs(actred) <= ftol)
-                    and (prered <= ftol)
-                    and (0.5 * ratio <= 1)
-                ):
+                if (numpy.abs(actred) <= ftol) and (prered <= ftol) and (0.5 * ratio <= 1):
                     self.status = 1
                 if delta <= xtol * xnorm:
                     self.status = 2
@@ -1379,11 +1350,7 @@ class mpfit:
                 # Tests for termination and stringent tolerances
                 if self.niter >= maxiter:
                     self.status = 5
-                if (
-                    (numpy.abs(actred) <= machep)
-                    and (prered <= machep)
-                    and (0.5 * ratio <= 1)
-                ):
+                if (numpy.abs(actred) <= machep) and (prered <= machep) and (0.5 * ratio <= 1):
                     self.status = 6
                 if delta <= machep * xnorm:
                     self.status = 7
@@ -1904,9 +1871,7 @@ class mpfit:
                         a[j:, lk] = ajk - ajj * sum(ajk * ajj) / a[j, lj]
                         if (pivot != 0) and (rdiag[k] != 0):
                             temp = a[j, lk] / rdiag[k]
-                            rdiag[k] = rdiag[k] * numpy.sqrt(
-                                numpy.max([(1.0 - temp**2), 0.0])
-                            )
+                            rdiag[k] = rdiag[k] * numpy.sqrt(numpy.max([(1.0 - temp**2), 0.0]))
                             temp = rdiag[k] / wa[k]
                             if (0.05 * temp * temp) <= machep:
                                 rdiag[k] = self.enorm(a[j + 1 :, lk])
@@ -2043,9 +2008,7 @@ class mpfit:
                 # Accumulate the transformation in the row of s
                 if n > k + 1:
                     temp = cosine * r[k + 1 : n, k] + sine * sdiag[k + 1 : n]
-                    sdiag[k + 1 : n] = (
-                        -sine * r[k + 1 : n, k] + cosine * sdiag[k + 1 : n]
-                    )
+                    sdiag[k + 1 : n] = -sine * r[k + 1 : n, k] + cosine * sdiag[k + 1 : n]
                     r[k + 1 : n, k] = temp
             sdiag[j] = r[j, j]
             r[j, j] = x[j]

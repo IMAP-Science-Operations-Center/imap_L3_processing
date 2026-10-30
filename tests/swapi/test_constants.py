@@ -26,9 +26,7 @@ class TestConstants(unittest.TestCase):
         self.assertEqual(SWAPI_FINE_SWEEP_BINS.stop, SWAPI_SCIENCE_BINS.stop)
 
     def test_coarse_sweep_has_62_bins_and_fine_has_9(self):
-        self.assertEqual(
-            SWAPI_COARSE_SWEEP_BINS.stop - SWAPI_COARSE_SWEEP_BINS.start, 62
-        )
+        self.assertEqual(SWAPI_COARSE_SWEEP_BINS.stop - SWAPI_COARSE_SWEEP_BINS.start, 62)
         self.assertEqual(SWAPI_FINE_SWEEP_BINS.stop - SWAPI_FINE_SWEEP_BINS.start, 9)
 
     def test_simion_k_factor(self):

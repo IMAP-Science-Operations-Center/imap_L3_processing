@@ -20,9 +20,7 @@ class TestGlowsL3DInitializer(unittest.TestCase):
     @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.read_cdf_parents")
     @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.read_pipeline_settings")
     @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.imap_data_access.query")
-    @patch(
-        "imap_l3_processing.glows.l3d.glows_l3d_initializer.imap_data_access.download"
-    )
+    @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.imap_data_access.download")
     @patch(
         "imap_l3_processing.glows.l3d.glows_l3d_initializer.GlowsL3DDependencies.fetch_dependencies"
     )
@@ -158,20 +156,14 @@ class TestGlowsL3DInitializer(unittest.TestCase):
                 mock_download.assert_called_once_with(
                     "imap_glows_pipeline-settings-l3bcde_19470301_v000.json"
                 )
-                mock_read_pipeline_settings.assert_called_once_with(
-                    mock_download.return_value
-                )
+                mock_read_pipeline_settings.assert_called_once_with(mock_download.return_value)
 
                 [fetch_dependencies_call] = mock_fetch_l3d_dependencies.call_args_list
 
                 [actual_l3d_inputs, actual_external_deps] = fetch_dependencies_call.args
 
-                pipeline_l3d_input_paths = actual_l3d_inputs.get_file_paths(
-                    source="glows"
-                )
-                pipeline_l3d_input_filenames = [
-                    p.name for p in pipeline_l3d_input_paths
-                ]
+                pipeline_l3d_input_paths = actual_l3d_inputs.get_file_paths(source="glows")
+                pipeline_l3d_input_filenames = [p.name for p in pipeline_l3d_input_paths]
                 self.assertEqual(
                     [
                         "imap_glows_l3b_ion-rate-profile_20200101-cr00001_v000.cdf",
@@ -194,16 +186,12 @@ class TestGlowsL3DInitializer(unittest.TestCase):
                 self.assertEqual(external_dependencies, actual_external_deps)
 
                 self.assertEqual(Version(requested_major_version, 2), actual_version)
-                self.assertEqual(
-                    mock_fetch_l3d_dependencies.return_value, actual_l3d_deps
-                )
+                self.assertEqual(mock_fetch_l3d_dependencies.return_value, actual_l3d_deps)
                 self.assertEqual(most_recent_l3d, actual_old_l3d)
 
     @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.read_cdf_parents")
     @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.read_pipeline_settings")
-    @patch(
-        "imap_l3_processing.glows.l3d.glows_l3d_initializer.imap_data_access.download"
-    )
+    @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.imap_data_access.download")
     @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.imap_data_access.query")
     @patch(
         "imap_l3_processing.glows.l3d.glows_l3d_initializer.GlowsL3DDependencies.fetch_dependencies"
@@ -251,19 +239,15 @@ class TestGlowsL3DInitializer(unittest.TestCase):
 
         mock_query.side_effect = self._create_ancillary_query_results([most_recent_l3d])
         new_major_version = 1
-        actual_version, actual_l3d_deps, actual_old_l3d = (
-            GlowsL3DInitializer.should_process_l3d(
-                external_dependencies, l3bs, l3cs, ReprocessInfo([]), new_major_version
-            )
+        actual_version, actual_l3d_deps, actual_old_l3d = GlowsL3DInitializer.should_process_l3d(
+            external_dependencies, l3bs, l3cs, ReprocessInfo([]), new_major_version
         )
 
         self.assertEqual(Version(new_major_version, 2), actual_version)
         self.assertEqual(mock_fetch_l3d_dependencies.return_value, actual_l3d_deps)
         self.assertEqual(most_recent_l3d, actual_old_l3d)
 
-    @patch(
-        "imap_l3_processing.glows.l3d.glows_l3d_initializer.imap_data_access.download"
-    )
+    @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.imap_data_access.download")
     @patch(
         "imap_l3_processing.glows.l3d.glows_l3d_initializer.read_pipeline_settings",
         return_value={"start_cr": 0},
@@ -290,9 +274,7 @@ class TestGlowsL3DInitializer(unittest.TestCase):
         mock_fetch_l3d_deps.assert_called_once()
         self.assertIsNone(old_l3d)
 
-    @patch(
-        "imap_l3_processing.glows.l3d.glows_l3d_initializer.imap_data_access.download"
-    )
+    @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.imap_data_access.download")
     @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.read_pipeline_settings")
     @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.read_cdf_parents")
     @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.imap_data_access.query")
@@ -357,9 +339,7 @@ class TestGlowsL3DInitializer(unittest.TestCase):
         mock_fetch_l3d_deps.assert_not_called()
         self.assertIsNone(actual_l3d_deps)
 
-    @patch(
-        "imap_l3_processing.glows.l3d.glows_l3d_initializer.imap_data_access.download"
-    )
+    @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.imap_data_access.download")
     @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.imap_data_access.query")
     @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.read_pipeline_settings")
     @patch(
@@ -387,9 +367,7 @@ class TestGlowsL3DInitializer(unittest.TestCase):
         mock_fetch_l3d_deps.assert_not_called()
         self.assertIsNone(actual_l3d_deps)
 
-    @patch(
-        "imap_l3_processing.glows.l3d.glows_l3d_initializer.imap_data_access.download"
-    )
+    @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.imap_data_access.download")
     @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.read_cdf_parents")
     @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.imap_data_access.query")
     @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.read_pipeline_settings")
@@ -407,9 +385,7 @@ class TestGlowsL3DInitializer(unittest.TestCase):
         most_recent_l3d = "imap_glows_l3d_solar-hist_19470301-cr00002_v001.0002.cdf"
 
         mock_fetch_dependencies.return_value = sentinel.l3d_deps
-        mock_query.side_effect = (
-            self._create_ancillary_query_results([most_recent_l3d]) * 6
-        )
+        mock_query.side_effect = self._create_ancillary_query_results([most_recent_l3d]) * 6
         mock_read_pipeline_settings.return_value = {"start_cr": 1}
 
         l3bs = [
@@ -481,12 +457,8 @@ class TestGlowsL3DInitializer(unittest.TestCase):
 
                 [actual_l3d_inputs, actual_external_deps] = fetch_dependencies_call.args
 
-                pipeline_l3d_input_paths = actual_l3d_inputs.get_file_paths(
-                    source="glows"
-                )
-                pipeline_l3d_input_filenames = [
-                    p.name for p in pipeline_l3d_input_paths
-                ]
+                pipeline_l3d_input_paths = actual_l3d_inputs.get_file_paths(source="glows")
+                pipeline_l3d_input_filenames = [p.name for p in pipeline_l3d_input_paths]
                 self.assertEqual(
                     [
                         "imap_glows_l3b_ion-rate-profile_20200101-cr00001_v000.cdf",
@@ -506,9 +478,7 @@ class TestGlowsL3DInitializer(unittest.TestCase):
 
                 self.assertEqual(external_dependencies, actual_external_deps)
 
-    @patch(
-        "imap_l3_processing.glows.l3d.glows_l3d_initializer.imap_data_access.download"
-    )
+    @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.imap_data_access.download")
     @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.read_cdf_parents")
     @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.imap_data_access.query")
     @patch("imap_l3_processing.glows.l3d.glows_l3d_initializer.read_pipeline_settings")
@@ -526,9 +496,7 @@ class TestGlowsL3DInitializer(unittest.TestCase):
         most_recent_l3d = "imap_glows_l3d_solar-hist_19470301-cr00002_v001.0002.cdf"
 
         mock_fetch_dependencies.return_value = sentinel.l3d_deps
-        mock_query.side_effect = (
-            self._create_ancillary_query_results([most_recent_l3d]) * 2
-        )
+        mock_query.side_effect = self._create_ancillary_query_results([most_recent_l3d]) * 2
         mock_read_pipeline_settings.return_value = {"start_cr": 1}
 
         l3bs = ["imap_glows_l3b_ion-rate-profile_20200101-cr00001_v000.cdf"]
@@ -569,21 +537,11 @@ class TestGlowsL3DInitializer(unittest.TestCase):
     def _create_ancillary_query_results(self, l3d_query_result):
         return [
             create_mock_query_results(l3d_query_result),
-            create_mock_query_results(
-                ["imap_glows_plasma-speed-2026d_19470301_v001.dat"]
-            ),
-            create_mock_query_results(
-                ["imap_glows_proton-density-2026d_19470301_v000.dat"]
-            ),
-            create_mock_query_results(
-                ["imap_glows_uv-anisotropy-2026d_19470301_v000.dat"]
-            ),
+            create_mock_query_results(["imap_glows_plasma-speed-2026d_19470301_v001.dat"]),
+            create_mock_query_results(["imap_glows_proton-density-2026d_19470301_v000.dat"]),
+            create_mock_query_results(["imap_glows_uv-anisotropy-2026d_19470301_v000.dat"]),
             create_mock_query_results(["imap_glows_photoion-2026d_19470301_v000.dat"]),
             create_mock_query_results(["imap_glows_lya-2026d_19470301_v000.dat"]),
-            create_mock_query_results(
-                ["imap_glows_electron-density-2026d_19470301_v000.dat"]
-            ),
-            create_mock_query_results(
-                ["imap_glows_pipeline-settings-l3bcde_19470301_v000.json"]
-            ),
+            create_mock_query_results(["imap_glows_electron-density-2026d_19470301_v000.dat"]),
+            create_mock_query_results(["imap_glows_pipeline-settings-l3bcde_19470301_v000.json"]),
         ]

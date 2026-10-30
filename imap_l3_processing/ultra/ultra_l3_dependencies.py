@@ -51,12 +51,8 @@ class UltraL3Dependencies:
         )
 
         l2_map_path = imap_data_access.download(ultra_l2_name)
-        ultra_l1c_downloaded_paths = [
-            imap_data_access.download(l1c) for l1c in ultra_l1c_names
-        ]
-        glows_l3e_download_paths = [
-            imap_data_access.download(path) for path in glows_l3e_names
-        ]
+        ultra_l1c_downloaded_paths = [imap_data_access.download(l1c) for l1c in ultra_l1c_names]
+        glows_l3e_download_paths = [imap_data_access.download(path) for path in glows_l3e_names]
 
         if energy_bin_group_sizes_names:
             energy_bin_group_sizes_path = imap_data_access.download(
@@ -90,15 +86,11 @@ class UltraL3Dependencies:
 
         l2_healpix_map_data = load_or_create_healpix_l2(l2_map_path, l1c_file_paths)
 
-        l2_rectangular_map_data = RectangularIntensityMapData.read_from_path(
-            l2_map_path
-        )
+        l2_rectangular_map_data = RectangularIntensityMapData.read_from_path(l2_map_path)
         energy_bin_group_sizes = None
         if energy_bin_path:
             paths.append(energy_bin_path)
-            energy_bin_group_sizes = np.loadtxt(
-                energy_bin_path, delimiter=",", dtype=np.uint8
-            )
+            energy_bin_group_sizes = np.loadtxt(energy_bin_path, delimiter=",", dtype=np.uint8)
 
         return cls(
             ultra_l2_healpix_map=l2_healpix_map_data,
@@ -156,26 +148,17 @@ class UltraL3CombinedDependencies:
     u90_dependencies: UltraL3Dependencies
 
     @classmethod
-    def fetch_dependencies(
-        cls, deps: ProcessingInputCollection
-    ) -> UltraL3CombinedDependencies:
+    def fetch_dependencies(cls, deps: ProcessingInputCollection) -> UltraL3CombinedDependencies:
         descriptors = ["u45", "u90", "45sensor", "90sensor", "survival-probability-ul"]
-        file_paths = get_dependency_paths_by_descriptor(
-            deps=deps, descriptors=descriptors
-        )
+        file_paths = get_dependency_paths_by_descriptor(deps=deps, descriptors=descriptors)
 
         assert len(file_paths["u45"]) == 1
         assert len(file_paths["u90"]) == 1
 
-        u45_pset_paths = [
-            imap_data_access.download(pset) for pset in file_paths["45sensor"]
-        ]
-        u90_pset_paths = [
-            imap_data_access.download(pset) for pset in file_paths["90sensor"]
-        ]
+        u45_pset_paths = [imap_data_access.download(pset) for pset in file_paths["45sensor"]]
+        u90_pset_paths = [imap_data_access.download(pset) for pset in file_paths["90sensor"]]
         glows_l3e_pset_paths = [
-            imap_data_access.download(pset)
-            for pset in file_paths["survival-probability-ul"]
+            imap_data_access.download(pset) for pset in file_paths["survival-probability-ul"]
         ]
         u45_map_path = imap_data_access.download(file_paths["u45"][0])
         u90_map_path = imap_data_access.download(file_paths["u90"][0])
@@ -244,9 +227,7 @@ def load_or_create_healpix_l2(
     else:
         logger.info("Cached HEALPix L2 not found; building from pointing sets")
         l2_healpix_datasets = ultra_l2(l1c_paths_dict, descriptor=l2_descriptor)
-        l2_healpix_data = HealPixIntensityMapData.read_from_xarray(
-            l2_healpix_datasets[0]
-        )
+        l2_healpix_data = HealPixIntensityMapData.read_from_xarray(l2_healpix_datasets[0])
         logger.info("Saving HEALPix L2 to cache at %s", cache_path)
         with open(cache_path, "wb") as f:
             pickle.dump(l2_healpix_data, f)

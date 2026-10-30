@@ -53,21 +53,15 @@ from tests.test_helpers import (
     with_tempdir,
 )
 
-GLOWS_INTEGRATION_DATA_DIR = get_run_local_data_path(
-    "glows_l3bcde_integration_data_dir"
-)
+GLOWS_INTEGRATION_DATA_DIR = get_run_local_data_path("glows_l3bcde_integration_data_dir")
 INTEGRATION_TEST_DATA = Path(__file__).parent / "test_data"
 GLOWS_TEST_DATA = get_test_data_path("glows")
 
 
 def generate_test_function_import_path(fn: Callable) -> str:
     path_to_imap_processing_dir = Path(tests.__file__).parent.parent
-    path_to_file = Path(fn.__code__.co_filename).relative_to(
-        path_to_imap_processing_dir
-    )
-    path_in_import_style = (
-        str(path_to_file).replace(".py", ".").replace(os.path.sep, ".")
-    )
+    path_to_file = Path(fn.__code__.co_filename).relative_to(path_to_imap_processing_dir)
+    path_in_import_style = str(path_to_file).replace(".py", ".").replace(os.path.sep, ".")
     return path_in_import_style + fn.__qualname__
 
 
@@ -188,9 +182,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         )
         with open(expected_json_path) as f:
             instrument_team_dict = json.load(f)
-        expected_output = create_glows_l3a_from_dictionary(
-            instrument_team_dict, input_metadata
-        )
+        expected_output = create_glows_l3a_from_dictionary(instrument_team_dict, input_metadata)
 
         with CDF(str(input_l2_cdf_path)) as cdf_data:
             l2_glows_data = read_l2_glows_data(cdf_data)
@@ -232,31 +224,19 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             expected_dict["photon_flux_uncertainty"],
             rtol=1e-3,
         )
-        np.testing.assert_allclose(
-            actual_dict["raw_histogram"], expected_dict["raw_histogram"]
-        )
+        np.testing.assert_allclose(actual_dict["raw_histogram"], expected_dict["raw_histogram"])
         np.testing.assert_allclose(
             actual_dict["exposure_times"], expected_dict["exposure_times"], rtol=1e-3
         )
-        np.testing.assert_allclose(
-            actual_dict["number_of_bins"], expected_dict["number_of_bins"]
-        )
+        np.testing.assert_allclose(actual_dict["number_of_bins"], expected_dict["number_of_bins"])
         self.assertEqual(actual_dict["epoch"], expected_dict["epoch"])
-        np.testing.assert_allclose(
-            actual_dict["epoch_delta"], expected_dict["epoch_delta"]
-        )
-        np.testing.assert_allclose(
-            actual_dict["spin_angle"], expected_dict["spin_angle"]
-        )
+        np.testing.assert_allclose(actual_dict["epoch_delta"], expected_dict["epoch_delta"])
+        np.testing.assert_allclose(actual_dict["spin_angle"], expected_dict["spin_angle"])
         np.testing.assert_allclose(
             actual_dict["spin_angle_delta"], expected_dict["spin_angle_delta"]
         )
-        np.testing.assert_allclose(
-            actual_dict["latitude"], expected_dict["latitude"], atol=1e-3
-        )
-        np.testing.assert_allclose(
-            actual_dict["longitude"], expected_dict["longitude"], atol=1e-3
-        )
+        np.testing.assert_allclose(actual_dict["latitude"], expected_dict["latitude"], atol=1e-3)
+        np.testing.assert_allclose(actual_dict["longitude"], expected_dict["longitude"], atol=1e-3)
         np.testing.assert_allclose(
             actual_dict["filter_temperature_average"],
             expected_dict["filter_temperature_average"],
@@ -417,9 +397,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
 
             processing_input = ProcessingInputCollection(
                 RepointInput("imap_2026_090_01.repoint"),
-                AncillaryInput(
-                    "imap_glows_force-reprocessing-config_20250101_v000.csv"
-                ),
+                AncillaryInput("imap_glows_force-reprocessing-config_20250101_v000.csv"),
             )
 
             version_map = VersionMap(
@@ -444,12 +422,8 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             [unfiltered] = identified
             repointings_to_update = set(range(36, 116))
             # Repoint 20 is not otherwise updated, so it is only there because the force reprocessing config lists it
-            self.assertEqual(
-                repointings_to_update | {20}, set(unfiltered.repointing_numbers)
-            )
-            self.assertEqual(
-                repointings_to_update | {20}, set(unfiltered.ultra_sf_repointings)
-            )
+            self.assertEqual(repointings_to_update | {20}, set(unfiltered.repointing_numbers))
+            self.assertEqual(repointings_to_update | {20}, set(unfiltered.ultra_sf_repointings))
             for versions in [
                 unfiltered.hi_90_repointings,
                 unfiltered.hi_45_repointings,
@@ -459,21 +433,11 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
                 self.assertEqual(repointings_to_update, set(versions))
 
             expected_files = [
-                ScienceFilePath(
-                    "imap_glows_l3b_ion-rate-profile_20251102-cr02304_v000.0001.cdf"
-                ),
-                ScienceFilePath(
-                    "imap_glows_l3b_ion-rate-profile_20251130-cr02305_v000.0001.cdf"
-                ),
-                ScienceFilePath(
-                    "imap_glows_l3c_sw-profile_20251102-cr02304_v000.0001.cdf"
-                ),
-                ScienceFilePath(
-                    "imap_glows_l3c_sw-profile_20251130-cr02305_v000.0001.cdf"
-                ),
-                ScienceFilePath(
-                    "imap_glows_l3d_solar-hist_19470303-cr02306_v002.0001.cdf"
-                ),
+                ScienceFilePath("imap_glows_l3b_ion-rate-profile_20251102-cr02304_v000.0001.cdf"),
+                ScienceFilePath("imap_glows_l3b_ion-rate-profile_20251130-cr02305_v000.0001.cdf"),
+                ScienceFilePath("imap_glows_l3c_sw-profile_20251102-cr02304_v000.0001.cdf"),
+                ScienceFilePath("imap_glows_l3c_sw-profile_20251130-cr02305_v000.0001.cdf"),
+                ScienceFilePath("imap_glows_l3d_solar-hist_19470303-cr02306_v002.0001.cdf"),
                 AncillaryFilePath("imap_glows_uv-anis_19470303_20260110_v001.dat"),
                 AncillaryFilePath("imap_glows_lya_19470303_20260110_v001.dat"),
                 AncillaryFilePath("imap_glows_e-dens_19470303_20260110_v001.dat"),
@@ -551,19 +515,15 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
     @run_periodically(timedelta(days=14))
     @run_test_in_docker
     def test_l3bcde_automatic_reprocessing(self):
-        new_l3a_file = (
-            GLOWS_TEST_DATA / "imap_glows_l3a_hist_20251118-repoint00052_v001.cdf"
-        )
+        new_l3a_file = GLOWS_TEST_DATA / "imap_glows_l3a_hist_20251118-repoint00052_v001.cdf"
         l3bcde_input_files = [
             GLOWS_TEST_DATA / "imap_glows_l3a_hist_20251113-repoint00047_v001.cdf",
             GLOWS_TEST_DATA / "imap_glows_l3a_hist_20251129-repoint00063_v001.cdf",
             GLOWS_TEST_DATA / "imap_glows_l3a_hist_20251201-repoint00065_v001.cdf",
             GLOWS_TEST_DATA / "imap_glows_l3a_hist_20251226-repoint00090_v001.cdf",
             new_l3a_file,
-            GLOWS_TEST_DATA
-            / "imap_glows_l3b_ion-rate-profile_20251102-cr02304_v001.cdf",
-            GLOWS_TEST_DATA
-            / "imap_glows_l3b_ion-rate-profile_20251130-cr02305_v001.cdf",
+            GLOWS_TEST_DATA / "imap_glows_l3b_ion-rate-profile_20251102-cr02304_v001.cdf",
+            GLOWS_TEST_DATA / "imap_glows_l3b_ion-rate-profile_20251130-cr02305_v001.cdf",
             GLOWS_TEST_DATA / "imap_glows_l3c_sw-profile_20251102-cr02304_v001.cdf",
             GLOWS_TEST_DATA / "imap_glows_l3c_sw-profile_20251130-cr02305_v001.cdf",
             GLOWS_TEST_DATA / "imap_glows_l3d_solar-hist_19470303-cr02304_v001.cdf",
@@ -615,9 +575,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         ):
             processing_input = ProcessingInputCollection(
                 RepointInput("imap_2026_090_01.repoint"),
-                AncillaryInput(
-                    "imap_glows_force-reprocessing-config_20250101_v000.csv"
-                ),
+                AncillaryInput("imap_glows_force-reprocessing-config_20250101_v000.csv"),
             )
             input_metadata = InputMetadata(
                 instrument="glows",
@@ -639,15 +597,9 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
                 self.assertEqual(all_repointings, set(versions))
 
             expected_files = [
-                ScienceFilePath(
-                    "imap_glows_l3b_ion-rate-profile_20251102-cr02304_v001.0002.cdf"
-                ),
-                ScienceFilePath(
-                    "imap_glows_l3c_sw-profile_20251102-cr02304_v001.0002.cdf"
-                ),
-                ScienceFilePath(
-                    "imap_glows_l3d_solar-hist_19470303-cr02306_v001.0002.cdf"
-                ),
+                ScienceFilePath("imap_glows_l3b_ion-rate-profile_20251102-cr02304_v001.0002.cdf"),
+                ScienceFilePath("imap_glows_l3c_sw-profile_20251102-cr02304_v001.0002.cdf"),
+                ScienceFilePath("imap_glows_l3d_solar-hist_19470303-cr02306_v001.0002.cdf"),
                 AncillaryFilePath("imap_glows_uv-anis_19470303_20260110_v002.dat"),
                 AncillaryFilePath("imap_glows_lya_19470303_20260110_v002.dat"),
                 AncillaryFilePath("imap_glows_e-dens_19470303_20260110_v002.dat"),
@@ -682,8 +634,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
     def test_glows_l3abcde_from_l2(self):
         ancillary_file_paths = [
             GLOWS_TEST_DATA / "imap_glows_l2-calibration_20251112_v003.dat",
-            GLOWS_TEST_DATA
-            / "imap_glows_l3a-map-of-extra-helio-bckgrd_20251112_v001.dat",
+            GLOWS_TEST_DATA / "imap_glows_l3a-map-of-extra-helio-bckgrd_20251112_v001.dat",
             GLOWS_TEST_DATA / "imap_glows_pipeline-settings_20251112_v002.json",
             GLOWS_TEST_DATA / "imap_glows_l3a-time-dep-bckgrd_20251112_v001.dat",
         ]
@@ -751,16 +702,12 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             INTEGRATION_TEST_DATA / "spice" / "imap_recon_20250925_20260520_v01.bsp",
         ]
 
-        lo_l1b_folder = Path(
-            "/Users/harrison/Development/imap_L3_processing/data/imap/lo/l1b"
-        )
+        lo_l1b_folder = Path("/Users/harrison/Development/imap_L3_processing/data/imap/lo/l1b")
         lo_l1b_inputs = list(lo_l1b_folder.rglob("*.cdf"))
 
         l3a_inputs = list((l3a_integration_data_dir / "imap/glows/l3a").rglob("*.cdf"))
 
-        repoint_file_path = [
-            INTEGRATION_TEST_DATA / "spice" / "imap_2026_139_01.repoint"
-        ]
+        repoint_file_path = [INTEGRATION_TEST_DATA / "spice" / "imap_2026_139_01.repoint"]
 
         logging.basicConfig(
             force=True,
@@ -768,17 +715,13 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         )
 
-        input_paths = (
-            l3bcde_ancillary_inputs + l3a_inputs + repoint_file_path + lo_l1b_inputs
-        )
+        input_paths = l3bcde_ancillary_inputs + l3a_inputs + repoint_file_path + lo_l1b_inputs
         with mock_imap_data_access(
             get_run_local_data_path("glows_l3bcde_with_prod_l2"), input_paths
         ):
             processing_input = ProcessingInputCollection(
                 RepointInput("imap_2026_139_01.repoint"),
-                AncillaryInput(
-                    "imap_glows_force-reprocessing-config_20250101_v000.csv"
-                ),
+                AncillaryInput("imap_glows_force-reprocessing-config_20250101_v000.csv"),
             )
             input_metadata = InputMetadata(
                 instrument="glows",
@@ -801,9 +744,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         )
 
-        imap_data_access.config["DATA_DIR"] = get_run_local_data_path(
-            "glows_l3bcde_prod"
-        )
+        imap_data_access.config["DATA_DIR"] = get_run_local_data_path("glows_l3bcde_prod")
 
         test_reprocessing_file = get_test_data_path(
             "glows/imap_glows_force-reprocessing-config_20250101_v000.csv"
@@ -843,9 +784,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
 
         # Nothing is uploaded, so reruns compute the same output names as earlier local runs; overwrite them
         with (
-            patch(
-                "imap_l3_data_processor._parse_cli_arguments"
-            ) as mock_parse_cli_arguments,
+            patch("imap_l3_data_processor._parse_cli_arguments") as mock_parse_cli_arguments,
             patch(
                 "imap_l3_processing.glows.glows_processor.save_data",
                 side_effect=partial(save_data, delete_if_present=True),
@@ -880,12 +819,8 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
         with open(json_file_path) as f:
             instrument_data = json.load(f)
         with CDF(str(new_file_path), masterpath=str(official_l2_path)) as cdf:
-            start_of_epoch_window = datetime.fromisoformat(
-                instrument_data["start_time"]
-            )
-            end_of_epoch_window = datetime.fromisoformat(
-                instrument_data["end_time"]
-            )
+            start_of_epoch_window = datetime.fromisoformat(instrument_data["start_time"])
+            end_of_epoch_window = datetime.fromisoformat(instrument_data["end_time"])
             epoch_window = end_of_epoch_window - start_of_epoch_window
             epoch = start_of_epoch_window + epoch_window / 2
 
@@ -902,20 +837,13 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
                 "ecliptic_lat",
             ]
             for var in lightcurve_vars:
-                cdf[var] = np.array(instrument_data["daily_lightcurve"][var])[
-                    np.newaxis, :
-                ]
+                cdf[var] = np.array(instrument_data["daily_lightcurve"][var])[np.newaxis, :]
 
-            cdf["raw_histograms"] = np.array(
-                instrument_data["daily_lightcurve"]["raw_histogram"]
-            )[np.newaxis, :]
+            cdf["raw_histograms"] = np.array(instrument_data["daily_lightcurve"]["raw_histogram"])[
+                np.newaxis, :
+            ]
             cdf["histogram_flag_array"] = np.array(
-                [
-                    int(f, 16)
-                    for f in instrument_data["daily_lightcurve"][
-                        "histogram_flag_array"
-                    ]
-                ]
+                [int(f, 16) for f in instrument_data["daily_lightcurve"]["histogram_flag_array"]]
             )[np.newaxis, :]
 
             single_value_vars = [
@@ -953,9 +881,7 @@ class TestGlowsProcessorIntegration(unittest.TestCase):
             cdf["number_of_good_l1b_inputs"][0] = instrument_data["header"][
                 "number_of_l1b_files_used"
             ]
-            cdf["total_l1b_inputs"][0] = instrument_data["header"][
-                "number_of_all_l1b_files"
-            ]
+            cdf["total_l1b_inputs"][0] = instrument_data["header"]["number_of_all_l1b_files"]
 
         return new_file_path
 

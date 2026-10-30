@@ -147,9 +147,7 @@ def parse_map_descriptor(descriptor: str) -> MapDescriptorParts | None:
         return None
 
     sensor_part_from_str = {desc: sensor_part for desc, sensor_part in sensor_mapping}
-    quantity_part_from_str = {
-        desc: quantity_part for desc, quantity_part in quantity_mapping
-    }
+    quantity_part_from_str = {desc: quantity_part for desc, quantity_part in quantity_mapping}
     cg_correction_part_from_str = {
         desc: cg_correction_part for desc, cg_correction_part in cg_correction_mapping
     }
@@ -159,9 +157,7 @@ def parse_map_descriptor(descriptor: str) -> MapDescriptorParts | None:
     spin_phase_part_from_str = {
         desc: spin_phase_part for desc, spin_phase_part in spin_phase_mapping
     }
-    grid_size_part_from_str = {
-        desc: grid_size_part for desc, grid_size_part in grid_size_mapping
-    }
+    grid_size_part_from_str = {desc: grid_size_part for desc, grid_size_part in grid_size_mapping}
     spectral_index_energy_range = None
     if descriptor_part_match["spectral_index_range"] is not None:
         spectral_index_energy_range = (
@@ -187,9 +183,7 @@ def parse_map_descriptor(descriptor: str) -> MapDescriptorParts | None:
 
 def map_descriptor_parts_to_string(descriptor_parts: MapDescriptorParts) -> str:
     sensor_part_to_str = {sensor_part: desc for desc, sensor_part in sensor_mapping}
-    quantity_part_to_str = {
-        quantity_part: desc for desc, quantity_part in quantity_mapping
-    }
+    quantity_part_to_str = {quantity_part: desc for desc, quantity_part in quantity_mapping}
     cg_correction_part_to_str = {
         cg_correction_part: desc for desc, cg_correction_part in cg_correction_mapping
     }
@@ -199,9 +193,7 @@ def map_descriptor_parts_to_string(descriptor_parts: MapDescriptorParts) -> str:
     spin_phase_part_to_str = {
         spin_phase_part: desc for desc, spin_phase_part in spin_phase_mapping
     }
-    grid_size_part_to_str = {
-        grid_size_part: desc for desc, grid_size_part in grid_size_mapping
-    }
+    grid_size_part_to_str = {grid_size_part: desc for desc, grid_size_part in grid_size_mapping}
     spectral_index_energy_range = ""
     if descriptor_parts.spectral_index_energy_range is not None:
         spectral_index_energy_range = f"{descriptor_parts.spectral_index_energy_range[0]:02}{descriptor_parts.spectral_index_energy_range[1]:02}"

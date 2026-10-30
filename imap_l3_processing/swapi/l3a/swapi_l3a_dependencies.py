@@ -102,9 +102,7 @@ class SwapiL3ADependencies:
     ):
         return cls(
             data=read_l2_swapi_data(CDF(str(science_dependency_path))),
-            efficiency_calibration_table=EfficiencyCalibrationTable(
-                efficiency_calibration_path
-            ),
+            efficiency_calibration_table=EfficiencyCalibrationTable(efficiency_calibration_path),
             density_of_neutral_helium_calibration_table=DensityOfNeutralHeliumLookupTable.from_file(
                 neutral_helium_path
             ),
