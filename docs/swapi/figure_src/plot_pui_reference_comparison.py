@@ -164,7 +164,7 @@ def main():
 
     try:
         production_rate_hz = compute_production_rates(voltage_v)
-    except Exception:
+    except Exception:  # noqa: BLE001
         traceback.print_exc()
         print("calculate_coincidence_rate failed — skipping production overlay.")
     else:

@@ -352,7 +352,7 @@ def _bootstrap_sigmas(
             mass_kg=PROTON_MASS_KG,
             mass_per_charge_m_p_per_e=PROTON_MASS_PER_CHARGE_M_P_PER_E,
         )
-
+        # ruff: disable[B023]
         cache = {}
 
         def _eval(state):
@@ -372,6 +372,7 @@ def _bootstrap_sigmas(
             if "state" not in cache or not np.array_equal(state, cache["state"]):
                 _eval(state)
             return cache["j"]
+        # ruff: enable[B023]
 
         try:
             raw = scipy.optimize.least_squares(
@@ -381,7 +382,7 @@ def _bootstrap_sigmas(
                 method="lm",
                 xtol=xtol,
             )
-        except Exception:
+        except (TypeError, ValueError):
             continue
         if not raw.success:
             continue
@@ -458,10 +459,10 @@ def _build_intro_table(science_result, coarse_result, boot, wind):
         (
             "Temperature $`T`$ (K)",
             f"$`({sci_fit.temperature.nominal_value / 1e4:.3f} \\pm "
-            f"{sci_fit.temperature.std_dev / 1e4:.3f})\\times10^{{4}}`$",
+            + f"{sci_fit.temperature.std_dev / 1e4:.3f})\\times10^{{4}}`$",
             f"$`\\pm {boot['T_sigma'] / 1e4:.3f}\\times10^{{4}}`$",
             f"$`({coa_fit.temperature.nominal_value / 1e4:.3f} \\pm "
-            f"{coa_fit.temperature.std_dev / 1e4:.3f})\\times10^{{4}}`$",
+            + f"{coa_fit.temperature.std_dev / 1e4:.3f})\\times10^{{4}}`$",
             wind_T,
         ),
         (

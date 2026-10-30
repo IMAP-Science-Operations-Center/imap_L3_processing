@@ -88,7 +88,7 @@ def main():
         [
             (
                 f"Poisson + {_LOGNORMAL_REL_SIGMA:.0%} log-normal "
-                f"+ {_NOISE_FLOOR_HZ:g} Hz floor",
+                + f"+ {_NOISE_FLOOR_HZ:g} Hz floor",
                 poisson_lognormal_floor_data,
             ),
         ]
@@ -190,7 +190,7 @@ def _process_one(i):
         initial_guess = calculate_initial_guess(fit_ctx)
         first_result = optimize_solar_wind_proton_params(initial_guess, fit_ctx)
         final_result = escape_local_minimum(first_result, fit_ctx)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"  case {i}: fit failed ({type(e).__name__}: {e})")
         return nan_row
 
@@ -356,7 +356,7 @@ def _plot_results(experiments: list[tuple[str, pd.DataFrame]]) -> None:
                 va="top",
                 ha="left",
                 fontsize=7.5,
-                bbox=dict(boxstyle="round,pad=0.3", fc="white", alpha=0.8),
+                bbox={"boxstyle": "round,pad=0.3", "fc": "white", "alpha": 0.8},
             )
             if col_idx == 0:
                 ax_top.legend(fontsize=7, loc="upper right", framealpha=0.8)
@@ -425,7 +425,7 @@ def _plot_results(experiments: list[tuple[str, pd.DataFrame]]) -> None:
                 va="top",
                 ha="left",
                 fontsize=7.5,
-                bbox=dict(boxstyle="round,pad=0.3", fc="white", alpha=0.8),
+                bbox={"boxstyle": "round,pad=0.3", "fc": "white", "alpha": 0.8},
             )
             if col_idx == 0:
                 ax_bot.legend(fontsize=7, loc="upper right", framealpha=0.8)

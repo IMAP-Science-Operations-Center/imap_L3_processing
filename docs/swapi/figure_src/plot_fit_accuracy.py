@@ -177,7 +177,7 @@ def _process_one(i):
     )
     try:
         initial_guess = calculate_initial_guess(fit_ctx)
-    except Exception:
+    except Exception:  # noqa: BLE001
         initial_guess = SolarWindParams(
             density=float("nan"),
             velocity_rtn=np.array([float("nan")] * 3),
@@ -186,7 +186,7 @@ def _process_one(i):
         )
     try:
         result = fit_solar_wind_proton_model(fit_ctx)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"  case {i}: fit failed ({type(e).__name__}: {e}); flagging bad")
         from uncertainties import ufloat
 
@@ -378,7 +378,7 @@ def _plot_results(data: pd.DataFrame) -> None:
             va="top",
             ha="left",
             fontsize=6.5,
-            bbox=dict(boxstyle="round,pad=0.3", fc="white", alpha=0.75),
+            bbox={"boxstyle": "round,pad=0.3", "fc": "white", "alpha": 0.75},
         )
 
     axes[0].legend(fontsize=8, loc="lower right", framealpha=0.8)
