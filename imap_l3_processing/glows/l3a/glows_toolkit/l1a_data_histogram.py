@@ -79,8 +79,10 @@ class L1aDataHistogram:
         # sanity check
         if self.data["number_of_events"] != np.sum(self.data["histogram"]):
             error_messages.append(
-                "HIST: number of events is not equal to the sum over histogram %d %d"
-                % (self.data["number_of_events"], np.sum(self.data["histogram"]))
+                "HIST: number of events is not equal to the sum over histogram {:d} {:d}".format(
+                    self.data["number_of_events"],
+                    np.sum(self.data["histogram"]),
+                )
             )
 
         self.data["filter_temperature_average"] = l0_data["filter_temperature_average"]
@@ -116,8 +118,8 @@ class L1aDataHistogram:
         Args:
             file_name: name of file with L1a data
         """
-        file_handler = open(file_name, "r")
-        self.data = json.load(file_handler)
+        with open(file_name, "r") as file_handler:
+            self.data = json.load(file_handler)
 
         # hexadecimal values saved as strings require special treatment to make them integers
         self.data["flags"]["flags_set_onboard"] = int(
@@ -126,7 +128,6 @@ class L1aDataHistogram:
 
         # additional field to keep track where data come from
         self.data["l1a_file_name"] = file_name
-        file_handler.close()
 
     def save_data_to_file(self):
         """
@@ -161,35 +162,27 @@ class L1aDataHistogram:
 
         # the output file name is constructed using a convention defined in Sec. 1.4.2 of
         # "IMAP SDC to Instrument Team ICD"
-        file_name = "data_l1a_histograms/imap_glows_l1a_%s_orbX_modX_p_v00.json" % (
-            start_time_utc
-        )
+        file_name = f"data_l1a_histograms/imap_glows_l1a_{start_time_utc}_orbX_modX_p_v00.json"
 
-        file_handler = open(file_name, "w")
-        print(json_content, file=file_handler)
-        file_handler.close()
+        with open(file_name, "w") as file_handler:
+            print(json_content, file=file_handler)
 
     def total_counts_file_init(self, tag):
         """
         Initialize a file for storing total count numbers for L1a histograms
         This kind of information is needed when L1b is generated (for one of the filters)
         """
-        file_handler = open("data_l1a_histograms/total_counts_file.dat", "w")
-        file_handler.write(
-            "%s %s\n" % (tag, self.data["block_header"]["pkts_file_name"])
-        )
-        file_handler.close()
+        with open("data_l1a_histograms/total_counts_file.dat", "w") as file_handler:
+            file_handler.write(f"{tag} {self.data['block_header']['pkts_file_name']}\n")
 
     def total_counts_file_update(self):
         """
         Update a file for storing total counts numbers for L1a histograms
         """
-        file_handler = open("data_l1a_histograms/total_counts_file.dat", "a")
-        file_handler.write(
-            "%d %d\n"
-            % (
-                self.data["block_header"]["seq_count_in_pkts_file"],
-                int(np.sum(self.data["histogram"])),
+        with open("data_l1a_histograms/total_counts_file.dat", "a") as file_handler:
+            file_handler.write(
+                "{:d} {:d}".format(
+                    self.data["block_header"]["seq_count_in_pkts_file"],
+                    int(np.sum(self.data["histogram"])),
+                )
             )
-        )
-        file_handler.close()

@@ -81,7 +81,7 @@ class ParallelChunkRunner:
                 _run_one, [(chunk, geom) for chunk, geom in zip(chunks, geometries)]
             )
 
-        return {k: np.array([r[k] for r in results]) for k in results[0].keys()}
+        return {k: np.array([r[k] for r in results]) for k in results[0]}
 
 
 def _init_worker(swapi_response, efficiency_table, fitter):
@@ -160,7 +160,7 @@ class AlphaChunkFitter(ChunkFitter):
                     :, SWAPI_SCIENCE_BINS
                 ]
                 rm = tracker.run(get_swapi_geometry, science_bin_times.ravel())
-            except Exception:
+            except SpiceyError:
                 logger.info(
                     f"Missing SPICE information at epoch {pycdf.lib.tt2000_to_datetime(int(epoch))}, continuing with fill value"
                 )
@@ -168,7 +168,7 @@ class AlphaChunkFitter(ChunkFitter):
             if rm is not None:
                 try:
                     sc_vel = tracker.run(get_spacecraft_velocity_rtn, epoch)
-                except Exception:
+                except SpiceyError:
                     logger.warning(
                         "SPICE gap in spacecraft velocity.",
                         exc_info=True,
@@ -392,14 +392,14 @@ class PuiChunkFitter(ChunkFitter):
             )
             return _pui_fill_result(epoch, quality_flag)
 
-        return dict(
-            epoch=epoch,
-            ionization_rate=fit_result.ionization_rate,
-            cutoff_speed=fit_result.cutoff_speed,
-            density=fit_result.density,
-            temperature=fit_result.temperature,
-            quality_flags=int(quality_flag) | int(fit_result.flags),
-        )
+        return {
+            "epoch": epoch,
+            "ionization_rate": fit_result.ionization_rate,
+            "cutoff_speed": fit_result.cutoff_speed,
+            "density": fit_result.density,
+            "temperature": fit_result.temperature,
+            "quality_flags": int(quality_flag) | int(fit_result.flags),
+        }
 
 
 def _proton_moments_from_fit(result, epoch, data_chunk, sc_velocity_rtn):
@@ -428,21 +428,21 @@ def _proton_moments_from_fit(result, epoch, data_chunk, sc_velocity_rtn):
     if not np.isfinite(speed_nom):
         speed_nom = _peak_proton_speed_kms(data_chunk)
 
-    return dict(
-        epoch=epoch,
-        proton_sw_speed=speed_nom,
-        proton_sw_speed_uncert=speed_unc,
-        proton_sw_speed_sun=sun_speed_nom,
-        proton_sw_speed_sun_uncert=sun_speed_unc,
-        proton_sw_temperature=temp_nom,
-        proton_sw_temperature_uncert=temp_unc,
-        proton_sw_density=density_nom,
-        proton_sw_density_uncert=density_unc,
-        proton_sw_velocity_rtn_sun=velocity_rtn_sun,
-        proton_sw_velocity_rtn=velocity_rtn_sc,
-        proton_sw_velocity_rtn_covariance=velocity_rtn_covariance,
-        quality_flags=result.quality_flag,
-    )
+    return {
+        "epoch": epoch,
+        "proton_sw_speed": speed_nom,
+        "proton_sw_speed_uncert": speed_unc,
+        "proton_sw_speed_sun": sun_speed_nom,
+        "proton_sw_speed_sun_uncert": sun_speed_unc,
+        "proton_sw_temperature": temp_nom,
+        "proton_sw_temperature_uncert": temp_unc,
+        "proton_sw_density": density_nom,
+        "proton_sw_density_uncert": density_unc,
+        "proton_sw_velocity_rtn_sun": velocity_rtn_sun,
+        "proton_sw_velocity_rtn": velocity_rtn_sc,
+        "proton_sw_velocity_rtn_covariance": velocity_rtn_covariance,
+        "quality_flags": result.quality_flag,
+    }
 
 
 def _alpha_moments_from_fit(result, epoch, sc_velocity_rtn):
@@ -466,21 +466,21 @@ def _alpha_moments_from_fit(result, epoch, sc_velocity_rtn):
         velocity_rtn_sun = np.full(3, np.nan)
         sun_speed_nom = sun_speed_unc = np.nan
 
-    return dict(
-        epoch=epoch,
-        alpha_sw_speed=speed.nominal_value,
-        alpha_sw_speed_uncert=speed.std_dev,
-        alpha_sw_speed_sun=sun_speed_nom,
-        alpha_sw_speed_sun_uncert=sun_speed_unc,
-        alpha_sw_density=alpha.density.nominal_value,
-        alpha_sw_density_uncert=alpha.density.std_dev,
-        alpha_sw_temperature=alpha.temperature.nominal_value,
-        alpha_sw_temperature_uncert=alpha.temperature.std_dev,
-        alpha_sw_velocity_rtn_sun=velocity_rtn_sun,
-        alpha_sw_velocity_rtn=velocity_rtn_sc,
-        alpha_sw_velocity_rtn_covariance=velocity_rtn_covariance,
-        quality_flags=result.quality_flag,
-    )
+    return {
+        "epoch": epoch,
+        "alpha_sw_speed": speed.nominal_value,
+        "alpha_sw_speed_uncert": speed.std_dev,
+        "alpha_sw_speed_sun": sun_speed_nom,
+        "alpha_sw_speed_sun_uncert": sun_speed_unc,
+        "alpha_sw_density": alpha.density.nominal_value,
+        "alpha_sw_density_uncert": alpha.density.std_dev,
+        "alpha_sw_temperature": alpha.temperature.nominal_value,
+        "alpha_sw_temperature_uncert": alpha.temperature.std_dev,
+        "alpha_sw_velocity_rtn_sun": velocity_rtn_sun,
+        "alpha_sw_velocity_rtn": velocity_rtn_sc,
+        "alpha_sw_velocity_rtn_covariance": velocity_rtn_covariance,
+        "quality_flags": result.quality_flag,
+    }
 
 
 _PEAK_SPEED_HALF_WIDTH = 4
@@ -593,14 +593,14 @@ def _pui_fill_result(epoch, proton_sw_quality_flag, reason=None) -> dict:
             f"{reason}; using fill values"
         )
     nan = ufloat(np.nan, np.nan)
-    return dict(
-        epoch=epoch,
-        ionization_rate=nan,
-        cutoff_speed=nan,
-        density=nan,
-        temperature=nan,
-        quality_flags=int(proton_sw_quality_flag),
-    )
+    return {            
+        "epoch": epoch,
+        "ionization_rate": nan,
+        "cutoff_speed": nan,
+        "density": nan,
+        "temperature": nan,
+        "quality_flags": int(proton_sw_quality_flag),
+    }
 
 
 def _nan_proton_result(flag) -> ProtonSolarWindFitResult:

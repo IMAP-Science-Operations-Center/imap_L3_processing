@@ -2085,7 +2085,7 @@ class TestGlowsProcessor(unittest.TestCase):
             spacecraft_info=spacecraft_info,
         )
 
-        mock_run.assert_called_once_with(["./survProbUltra"] + ultra_args)
+        mock_run.assert_called_once_with(["./survProbUltra"] + ultra_args, check=False)
 
         output_data_path = Path("probSur.Imap.Ul_20241007_000000_date.001.dat")
 
@@ -2226,7 +2226,7 @@ class TestGlowsProcessor(unittest.TestCase):
         )
 
         mock_run.assert_called_once_with(
-            ["./survProbUltra"] + expected_rest_frame_args.to_argument_list()
+            ["./survProbUltra"] + expected_rest_frame_args.to_argument_list(), check=False
         )
 
         output_data_path = Path("probSur.Imap.Ul.V0_20241007_000000_date.001.dat")
@@ -2367,7 +2367,7 @@ class TestGlowsProcessor(unittest.TestCase):
                     spacecraft_info=spacecraft_info,
                 )
 
-                mock_run.assert_called_once_with(["./survProbHi"] + hi_args)
+                mock_run.assert_called_once_with(["./survProbHi"] + hi_args, check=False)
 
                 first_output_data_path = Path(
                     f"probSur.Imap.Hi_20241007_000000_date.001_{descriptor_elongation[:5]}.dat"
@@ -2507,7 +2507,7 @@ class TestGlowsProcessor(unittest.TestCase):
                     spacecraft_info=spacecraft_info,
                 )
 
-                mock_run.assert_called_once_with(["./survProbLo"] + lo_call_args)
+                mock_run.assert_called_once_with(["./survProbLo"] + lo_call_args, check=False)
 
                 first_output_file_path = Path(
                     f"probSur.Imap.Lo_20241007_000000_date.100_{elongation_filename}.dat"

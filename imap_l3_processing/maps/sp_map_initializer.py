@@ -73,7 +73,7 @@ class SPMapInitializer(MapInitializer):
             )
 
         possible_maps = []
-        for str_start_date in sorted(list(possible_start_dates)):
+        for str_start_date in sorted(possible_start_dates):
             start_date = datetime.strptime(str_start_date, "%Y%m%d")
 
             l2_file_paths = []

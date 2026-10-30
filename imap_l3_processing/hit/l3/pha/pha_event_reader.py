@@ -1,7 +1,7 @@
 import csv
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
+from typing import ClassVar, Literal
 
 from bitstring import BitStream
 
@@ -17,7 +17,7 @@ class Detector:
     def __str__(self):
         return "L" + str(self.layer) + self.side + self.segment
 
-    detector_mapping = {}
+    detector_mapping: ClassVar[dict[int, tuple[str, str]]] = {}
 
     @classmethod
     def from_address(cls, address: int):

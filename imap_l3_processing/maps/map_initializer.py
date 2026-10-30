@@ -57,25 +57,23 @@ class MapInitializer(abc.ABC):
                 {descriptor: Version(major_version, 1)}
             )
 
-            if highest_version_path_by_start_date := self.existing_l3_maps.get(
-                descriptor
+            if (
+                    (highest_version_path_by_start_date := self.existing_l3_maps.get(descriptor))
+                    and (path_with_highest_version := highest_version_path_by_start_date.get(start_time))
             ):
-                if path_with_highest_version := highest_version_path_by_start_date.get(
-                    start_time
-                ):
-                    existing_parents = read_cdf_parents(path_with_highest_version)
-                    existing_path = ScienceFilePath(path_with_highest_version)
-                    if (
+                existing_parents = read_cdf_parents(path_with_highest_version)
+                existing_path = ScienceFilePath(path_with_highest_version)
+                if (
                         possible_map.input_files.issubset(existing_parents)
                         and major_version == existing_path.major_version
-                    ):
-                        continue
-                    new_version = Version(
-                        major_version, existing_path.minor_version + 1
-                    )
-                    possible_map.input_metadata.version = VersionMap(
-                        {descriptor: new_version}
-                    )
+                ):
+                    continue
+                new_version = Version(
+                    major_version, existing_path.minor_version + 1
+                )
+                possible_map.input_metadata.version = VersionMap(
+                    {descriptor: new_version}
+                )
             maps_to_make.append(possible_map)
         return maps_to_make
 
@@ -105,9 +103,9 @@ class MapInitializer(abc.ABC):
         for (
             descriptor,
             start_date,
-        ), query_results in qr_by_descriptor_and_start_date.items():
+        ), qr in qr_by_descriptor_and_start_date.items():
             highest_version_qr = max(
-                query_results,
+                qr,
                 key=lambda x: (
                     x["minor_version"]
                     if "minor_version" in x

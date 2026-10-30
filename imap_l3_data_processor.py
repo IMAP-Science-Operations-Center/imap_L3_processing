@@ -234,7 +234,7 @@ def imap_l3_processor():
         for path in paths:
             try:
                 imap_data_access.upload(path)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 exceptions.append(e)
         if exceptions:
             raise OSError(f"Failed to upload some files: {exceptions}")
@@ -257,6 +257,6 @@ if __name__ == "__main__":
 
         try:
             imap_l3_processor()
-        except Exception as e:
+        except Exception:
             logger.error("Unhandled Exception:")
-            raise e
+            raise

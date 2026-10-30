@@ -81,10 +81,10 @@ def angle_vec(vec1, vec2):
       [   0.   40.   80.  120.  160.  160.  120.   80.   40.    0.]
     """
     if np.shape(vec1) != np.shape(vec2):
-        raise Exception("angle_vec() error: np.shape(vec1)!=np.shape(vec2)")
+        raise ValueError("angle_vec() error: np.shape(vec1)!=np.shape(vec2)")
     if vec1.ndim == 1:
         if np.shape(vec1)[0] != 3:
-            raise Exception("angle_vec() error: np.shape(vec1)[0]!=3")
+            raise ValueError("angle_vec() error: np.shape(vec1)[0]!=3")
         r_1 = np.sqrt(np.dot(vec1, vec1))
         r_2 = np.sqrt(np.dot(vec2, vec2))
         cos = np.dot(vec1, vec2) / (r_1 * r_2)
@@ -99,7 +99,7 @@ def angle_vec(vec1, vec2):
         return 0.0
 
     if np.shape(vec1)[1] != 3:
-        raise Exception("angle_vec() error: np.shape(vec1)[1]!=3")
+        raise ValueError("angle_vec() error: np.shape(vec1)[1]!=3")
     r_1 = np.sqrt((vec1 * vec1).sum(axis=1))
     r_2 = np.sqrt((vec2 * vec2).sum(axis=1))
     idxs0 = np.nonzero(np.logical_and(r_1 != 0.0, r_2 != 0.0))
@@ -162,7 +162,7 @@ def get_spher_coord_rad(vec):
     """
     if vec.ndim == 1:
         if np.shape(vec)[0] != 3:
-            raise Exception("get_spher_coord_rad() error: np.shape(vec)[0]!=3")
+            raise ValueError("get_spher_coord_rad() error: np.shape(vec)[0]!=3")
         vec_m = np.sqrt(np.dot(vec, vec))
         if vec_m == 0.0:
             lat = 0.0
@@ -177,7 +177,7 @@ def get_spher_coord_rad(vec):
             [vec_m, lon, lat]
         )  # return one array similarly as in Mathematica
     if np.shape(vec)[1] != 3:
-        raise Exception("get_spher_coord_rad() error: np.shape(vec)[1]!=3")
+        raise ValueError("get_spher_coord_rad() error: np.shape(vec)[1]!=3")
     vec_m = np.sqrt((vec * vec).sum(axis=1))
     idxs = np.nonzero(vec_m != 0.0)
     lat = np.zeros((len(vec_m)), float)
@@ -291,7 +291,7 @@ def make_co_vec(l_q, b_q):
       [  1.00000000e+00  -2.44929360e-16   6.12323400e-17]]
     """
     if np.shape(l_q) != np.shape(b_q):
-        raise Exception("make_co_vec() error: np.shape(l_q)!=np.shape(b_q)")
+        raise ValueError("make_co_vec() error: np.shape(l_q)!=np.shape(b_q)")
     if np.isscalar(l_q):
         return np.array(
             [np.cos(l_q) * np.sin(b_q), np.sin(l_q) * np.sin(b_q), np.cos(b_q)]
@@ -342,7 +342,7 @@ def make_vec(l_q, b_q):
        [  6.12323400e-17  -1.49975978e-32   1.00000000e+00]]
     """
     if np.shape(l_q) != np.shape(b_q):
-        raise Exception("make_vec() error: np.shape(l_q)!=np.shape(b_q)")
+        raise ValueError("make_vec() error: np.shape(l_q)!=np.shape(b_q)")
     if np.isscalar(l_q):
         return np.array(
             [np.cos(l_q) * np.cos(b_q), np.sin(l_q) * np.cos(b_q), np.sin(b_q)]
@@ -869,9 +869,9 @@ def spin2lb_test_on_grid(spin_off, tht):
         ist = 1
 
     if ist == 0:
-        print("spin2lb_test_on_grid(tht=%g,spin_off=%g): passed" % (tht, spin_off))
+        print(f"spin2lb_test_on_grid(tht={tht:g},spin_off={spin_off:g}): passed")
         return 1
-    print("spin2lb_test_on_grid(tht=%g,spin_off=%g): failed" % (tht, spin_off))
+    print(f"spin2lb_test_on_grid(tht={tht:g},spin_off={spin_off:g}): failed")
     return 0
 
 
@@ -937,7 +937,7 @@ def spin2lb_test_on_text_file(filename):
         ist = 1
 
     if ist == 0:
-        print("spin2lb_test_on_text_file('%s'): passed" % filename)
+        print(f"spin2lb_test_on_text_file('{filename:s}'): passed")
         return 1
-    print("spin2lb_test_on_text_file('%s'): failed" % filename)
+    print(f"spin2lb_test_on_text_file('{filename:s}'): failed")
     return 0

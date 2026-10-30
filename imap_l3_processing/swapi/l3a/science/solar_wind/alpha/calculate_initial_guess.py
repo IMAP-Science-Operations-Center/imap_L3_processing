@@ -75,7 +75,7 @@ def _get_alpha_peak_indices(residuals, energies, proton_peak_index) -> slice:
             break
 
     if first_index_at_or_above_min_energy is None:
-        raise Exception("Proton peak too high to find alpha peak")
+        raise RuntimeError("Proton peak too high to find alpha peak")
 
     window_energy_min = None
     for i in reversed(range(first_index_at_or_above_min_energy + 1)):
@@ -85,7 +85,7 @@ def _get_alpha_peak_indices(residuals, energies, proton_peak_index) -> slice:
             break
 
     if window_energy_min is None:
-        raise Exception("Alpha peak not found")
+        raise RuntimeError("Alpha peak not found")
 
     window_energy_max = max_energy
 
@@ -95,5 +95,5 @@ def _get_alpha_peak_indices(residuals, energies, proton_peak_index) -> slice:
     alpha_peak_index = masked_residuals.argmax()
 
     if alpha_peak_index < 3:
-        raise Exception("Alpha peak too close to high-energy edge")
+        raise RuntimeError("Alpha peak too close to high-energy edge")
     return slice(alpha_peak_index - 3, alpha_peak_index + 2)

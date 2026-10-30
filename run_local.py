@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import logging
 import os
 import re
@@ -1381,18 +1382,17 @@ def create_codice_hi_l3b_pitch_angles_cdf():
 if __name__ == "__main__":
     furnish_local_spice()
     logging.basicConfig(force=True, level=logging.INFO)
-    if "codice-lo" in sys.argv:
-        if "l3a" in sys.argv:
-            if "partial-densities" in sys.argv:
-                print(create_codice_lo_l3a_partial_densities_cdf())
-            elif "direct-events" in sys.argv:
-                print(create_codice_lo_l3a_direct_events_cdf())
-            elif "ratios" in sys.argv:
-                print(create_codice_lo_l3a_ratios_cdf())
-            elif "abundances" in sys.argv:
-                print(create_codice_lo_l3a_abundances_cdf())
-            elif "3d-instrument-frame" in sys.argv:
-                print(create_codice_lo_l3b_3d_distributions_cdf(sys.argv[-1]))
+    if "codice-lo" in sys.argv and "l3a" in sys.argv:
+        if "partial-densities" in sys.argv:
+            print(create_codice_lo_l3a_partial_densities_cdf())
+        elif "direct-events" in sys.argv:
+            print(create_codice_lo_l3a_direct_events_cdf())
+        elif "ratios" in sys.argv:
+            print(create_codice_lo_l3a_ratios_cdf())
+        elif "abundances" in sys.argv:
+            print(create_codice_lo_l3a_abundances_cdf())
+        elif "3d-instrument-frame" in sys.argv:
+            print(create_codice_lo_l3b_3d_distributions_cdf(sys.argv[-1]))
 
     if "codice-hi" in sys.argv:
         if "l3a" in sys.argv:
@@ -1453,7 +1453,7 @@ if __name__ == "__main__":
         elif "l3a" in sys.argv:
             make_glows_l3a_files()
         else:
-            raise Exception("level not specified")
+            raise argparse.ArgumentError("level not specified")
 
     if "hit" in sys.argv:
         if "direct_event" in sys.argv:

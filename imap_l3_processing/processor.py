@@ -18,7 +18,7 @@ class Processor(abc.ABC):
     def process(self) -> list[Path]:
         raise NotImplementedError()
 
-    def get_parent_file_names(self, file_paths: list[Path | str] = None) -> list[str]:
+    def get_parent_file_names(self, file_paths: list[Path | str] | None = None) -> list[str]:
         if file_paths:
             parent_file_names = [
                 Path(parent_file_name).name for parent_file_name in file_paths

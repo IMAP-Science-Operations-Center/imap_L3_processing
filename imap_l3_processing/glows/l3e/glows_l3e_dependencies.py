@@ -197,7 +197,7 @@ class GlowsL3EDependencies:
 
         with open("ionization.files.dat", "w") as ionization_file:
             ionization_file.write(
-                "\n".join(
+                "\n".join(  # noqa: FLY002
                     [
                         self.lya_series.name,
                         self.solar_uv_anisotropy.name,

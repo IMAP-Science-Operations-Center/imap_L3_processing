@@ -617,7 +617,7 @@ def process_l3e_lo(
 
     logger.info(f"Processing L3e Lo, calling survProbLo with {call_args}")
 
-    run(["./survProbLo"] + call_args)
+    run(["./survProbLo"] + call_args, check=False)
 
     input_metadata = InputMetadata(
         instrument="glows",
@@ -682,7 +682,7 @@ def process_l3e_ul_sf(
 
     logger.info(f"Processing L3e Ultra, calling survProbUltra with {call_args}")
 
-    run(["./survProbUltra"] + call_args)
+    run(["./survProbUltra"] + call_args, check=False)
 
     input_metadata = InputMetadata(
         instrument="glows",
@@ -743,7 +743,7 @@ def process_l3e_ul_hf(
 
     call_args = call_args_object.to_argument_list()
     logger.info(f"Processing L3e Ultra, calling survProbUltra with {call_args}")
-    run(["./survProbUltra"] + call_args)
+    run(["./survProbUltra"] + call_args, check=False)
 
     input_metadata = InputMetadata(
         instrument="glows",
@@ -802,7 +802,7 @@ def process_l3e_hi(
 
     logger.info(f"Processing L3e Hi, calling survProbHi with {call_args}")
 
-    run(["./survProbHi"] + call_args)
+    run(["./survProbHi"] + call_args, check=False)
 
     descriptor = f"survival-probability-hi-{180 - elongation}"
     input_metadata = InputMetadata(

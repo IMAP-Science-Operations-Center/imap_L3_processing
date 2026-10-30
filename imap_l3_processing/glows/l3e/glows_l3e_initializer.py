@@ -157,11 +157,11 @@ def query_existing_l3es_versions(descriptor: str) -> dict[int, Version]:
         instrument="glows", data_level="l3e", version="latest", descriptor=descriptor
     )
     for l3e in l3e_files:
-        if "major_version" in l3e.keys() and "minor_version" in l3e.keys():
+        if "major_version" in l3e and "minor_version" in l3e:
             existing_l3es_for_descriptor[int(l3e["repointing"])] = Version(
                 l3e["major_version"], l3e["minor_version"]
             )
-        elif "version" in l3e.keys():
+        elif "version" in l3e:
             existing_l3es_for_descriptor[int(l3e["repointing"])] = Version.from_version(
                 l3e["version"]
             )

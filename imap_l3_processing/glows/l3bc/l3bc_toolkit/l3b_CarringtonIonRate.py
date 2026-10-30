@@ -2,6 +2,7 @@
 Author: Izabela Kowalska-Leszczynska (ikowalska@cbk.waw.pl)
 Carrington averaged ionization rate class
 """
+# ruff: noqa: N999
 
 import json
 import logging
@@ -273,7 +274,7 @@ class CarringtonIonizationRate:
                 photoion_mean = self._calculate_photoion_from_f107(data_mean[1])
             else:
                 # if there are no data in the next CR, then we need to wait for another CR
-                raise Exception(
+                raise RuntimeError(
                     "There are no data to interpolate F10.7 for CR=%d",
                     self.carr_ion_rate["CR"],
                 )
@@ -393,6 +394,5 @@ class CarringtonIonizationRate:
 
         json_content = json.dumps(output, indent=3)
 
-        output_fp = open(fn, "w")
-        print(json_content, file=output_fp)
-        output_fp.close()
+        with open(fn, "w") as output_fp:
+            print(json_content, file=output_fp)

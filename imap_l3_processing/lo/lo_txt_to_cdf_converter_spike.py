@@ -386,7 +386,7 @@ if __name__ == "__main__":
         shutil.copy(file, output_path)
         l1c_paths.append(output_path)
     if len(l1c_paths) == 0:
-        raise Exception(f"Expected l1c files to be provided in {local_l1c_input}")
+        raise ValueError(f"Expected l1c files to be provided in {local_l1c_input}")
 
     output_maps = []
     for masked, descriptor_suffix in [(False, ""), (True, "Msk")]:
@@ -540,10 +540,8 @@ if __name__ == "__main__":
         combined_inputs = []
         for output_map in output_maps:
             if any(
-                [
-                    f"_{combined_dep}_" in output_map.name
-                    for combined_dep in combined_dependencies
-                ]
+                f"_{combined_dep}_" in output_map.name
+                for combined_dep in combined_dependencies
             ):
                 combined_inputs.append(output_map)
 

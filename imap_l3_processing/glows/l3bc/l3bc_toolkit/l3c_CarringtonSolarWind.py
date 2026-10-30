@@ -2,6 +2,7 @@
 Author: Izabela Kowalska-Leszczynska (ikowalska@cbk.waw.pl)
 Carrington solar wind class
 """
+# ruff: noqa: N999
 
 import json
 import logging
@@ -149,7 +150,7 @@ class CarringtonSolarWind:
                     "lat= %lf deg: observed cx rate is smaller than min of the cx_grid",
                     self.sw_profile["grid"][i],
                 )
-                raise Exception(
+                raise RuntimeError(
                     "L3c not generated: observed cx rate is smaller than min of the cx_grid"
                 )
             # Searching for a measured charge exchange in the cx_grid. In that way we will find sw speed
@@ -240,6 +241,5 @@ class CarringtonSolarWind:
 
         json_content = json.dumps(output, indent=3)
 
-        output_fp = open(fn, "w")
-        print(json_content, file=output_fp)
-        output_fp.close()
+        with open(fn, "w") as output_fp:
+            print(json_content, file=output_fp)

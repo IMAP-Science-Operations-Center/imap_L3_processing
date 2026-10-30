@@ -2,6 +2,7 @@ import csv
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
+from typing import ClassVar
 
 from imap_l3_processing.hit.l3.pha.pha_event_reader import Detector
 
@@ -24,7 +25,7 @@ class DetectedRange:
 
 
 class CosineCorrectionLookupTable:
-    _l1_detector_order = [
+    _l1_detector_order: ClassVar[tuple[str]] = (
         "L1A0a",
         "L1A0b",
         "L1A0c",
@@ -40,8 +41,8 @@ class CosineCorrectionLookupTable:
         "L1A4a",
         "L1A4b",
         "L1A4c",
-    ]
-    _l2_detector_order = [
+    )
+    _l2_detector_order: ClassVar[tuple[str]] = (
         "L2A0",
         "L2A1",
         "L2A2",
@@ -52,7 +53,7 @@ class CosineCorrectionLookupTable:
         "L2A7",
         "L2A8",
         "L2A9",
-    ]
+    )
 
     def __init__(
         self,

@@ -51,9 +51,10 @@ def write_cdf(
             data_type = getattr(pycdf.const, variable_attributes["DATA_TYPE"])
             data_array = np.asanyarray(data_product.value)
 
-            if map_descriptor is not None:
-                if map_var_catdesc := map_descriptor.build_map_var_catdesc(var_name):
-                    variable_attributes["CATDESC"] = map_var_catdesc
+            if map_descriptor is not None and (
+                    map_var_catdesc := map_descriptor.build_map_var_catdesc(var_name)
+            ):
+                variable_attributes["CATDESC"] = map_var_catdesc
 
             record_varying = variable_attributes["RECORD_VARYING"].lower() == "rv"
             if record_varying:

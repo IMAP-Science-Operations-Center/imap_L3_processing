@@ -53,11 +53,10 @@ class L1bDataDirectEvents:
         """
 
         # load conversion/decoding table for ancillary parameters collected onboard
-        file_handler = open(
+        with open(
             anc_input_from_instr_team["conversion_table_for_anc_data"], "r"
-        )
-        conversion_table = json.load(file_handler)
-        file_handler.close()
+        ) as file_handler:
+            conversion_table = json.load(file_handler)
 
         # ancillary parameters collected onboard that need to be decoded
         self.data["filter_temperature"] = decode_ancillary_parameter(
@@ -152,11 +151,10 @@ class L1bDataDirectEvents:
                 ).astype(float)
 
             # load conversion/decoding table for ancillary parameters collected onboard
-            file_handler = open(
+            with open(
                 anc_input_from_instr_team["conversion_table_for_anc_data"], "r"
-            )
-            conversion_table = json.load(file_handler)
-            file_handler.close()
+            ) as file_handler:
+                conversion_table = json.load(file_handler)
 
             # convert pulse lengths into physical units
             if (
@@ -206,19 +204,19 @@ class L1bDataDirectEvents:
         # create local copy for printing purposes
         data = copy.deepcopy(self.data)
 
-        for key in fmt["arrays"].keys():
+        for key in fmt["arrays"]:
             if isinstance(
                 data[key], np.ndarray
             ):  # check if we have more than one direct event
                 data[key] = (
                     "["
-                    + ", ".join(map(lambda x: fmt["arrays"][key] % x, list(data[key])))
+                    + ", ".join(fmt["arrays"][key] % x for x in list(data[key]))
                     + "]"
                 )
             else:
                 data[key] = "[" + fmt["arrays"][key] % data[key] + "]"
-        for key in fmt["scalar variables"].keys():
-            data[key] = "|" + fmt["scalar variables"][key] % data[key] + "|"
+        for key, value in fmt["scalar variables"].items():
+            data[key] = "|" + value % data[key] + "|"
 
         # generate JSON content to be saved in output file
         json_content = json.dumps(data, indent=4, default=vars)
@@ -233,13 +231,10 @@ class L1bDataDirectEvents:
 
         # the output file name is constructed using a convention defined in Sec. 1.4.2 of
         # "IMAP SDC to Instrument Team ICD"
-        file_name = "data_l1b_direct_events/imap_glows_l1b_%s_orbX_modX_p_v00.json" % (
-            start_time_utc
-        )
+        file_name = f"data_l1b_direct_events/imap_glows_l1b_{start_time_utc}_orbX_modX_p_v00.json"
 
-        file_handler = open(file_name, "w")
-        print(json_content, file=file_handler)
-        file_handler.close()
+        with open(file_name, "w") as file_handler:
+            print(json_content, file=file_handler)
 
     def set_times(self, l1a_data):
         """

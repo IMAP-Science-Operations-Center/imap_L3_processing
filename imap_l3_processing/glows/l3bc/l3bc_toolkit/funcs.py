@@ -133,7 +133,7 @@ def check_nan(data):
     """
     for key in data:
         if np.any(np.isnan(np.array(data[key]))):
-            raise Exception("There are NaN in the output data")
+            raise ValueError("There are NaN in the output data")
 
 
 def cr_from_l3b_fn(fn):
@@ -239,7 +239,7 @@ def f107_daily_data(t, flux):
     t_out: daily time array (astropy.time)
     flux_out: daily F10.7 flux adjusted to 1au (10^(-22) W/m^2/Hz)
     """
-    idx_noon, idx_dup = select_noon(t)  # select one measurment per day
+    idx_noon, _idx_dup = select_noon(t)  # select one measurment per day
     idx_no0 = np.where(flux[idx_noon] > 0)[0]
     t_out = t[idx_noon[idx_no0]]
     flux_out = flux[idx_noon[idx_no0]]
@@ -319,7 +319,7 @@ def get_spher_coord_rad(vec):
     """
     if vec.ndim == 1:
         if np.shape(vec)[0] != 3:
-            raise "get_spher_coord_rad() error: np.shape(vec)[0]!=3"
+            raise ValueError("get_spher_coord_rad() error: np.shape(vec)[0]!=3")
         r = np.sqrt(np.dot(vec, vec))
         if r == 0.0:
             b = 0.0
@@ -333,7 +333,7 @@ def get_spher_coord_rad(vec):
         return np.array([r, l, b])  # return one array similarly as in Mathematica
     else:
         if np.shape(vec)[1] != 3:
-            raise "get_spher_coord_rad() error: np.shape(vec)[1]!=3"
+            raise ValueError("get_spher_coord_rad() error: np.shape(vec)[1]!=3")
         r = np.sqrt((vec * vec).sum(axis=1))
         idxs = np.nonzero(r != 0.0)
         b = np.zeros((len(r)), np.float64)
@@ -418,7 +418,7 @@ def process_omni_param(omni_raw, cr_grid, param_settings):
         logging.info(
             "There are gaps in the OMNI2 data that cannot be filled by the interpolation"
         )
-        raise Exception("OMNI Error: not enough data for interpolation")
+        raise RuntimeError("OMNI Error: not enough data for interpolation")
 
     return param_value_interp, used_nominal_per_cr
 
@@ -534,9 +534,8 @@ def read_json(fn):
     """
     Opens, reads and returns the content of the json file
     """
-    fp = open(fn, "r")
-    data = json.load(fp)
-    fp.close()
+    with open(fn, "r") as fp:
+        data = json.load(fp)
     return data
 
 

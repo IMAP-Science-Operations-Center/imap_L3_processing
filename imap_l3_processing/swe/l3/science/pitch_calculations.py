@@ -67,16 +67,20 @@ def mec_breakpoint_finder(
     )
     spline_derivative = spline.derivative(2)
     curvature = spline_derivative(np.log(spline_energies))
+
+    # Defaults if the spline peak finder did not work
+    sc_pot = np.nan
+    ch_break = np.nan
+    BACKUP_SPLINE_UNRESOLVED = SweL3Flags.BACKUP_SPLINE_UNRESOLVED
     try:
         peaks = scipy.signal.find_peaks(curvature)[0]
-        sc_pot = spline_energies[peaks[0]]
-        ch_break = spline_energies[peaks[1]]
-        BACKUP_SPLINE_UNRESOLVED = SweL3Flags.NONE
-    except Exception:
-        # Spline peak finder did not work
-        BACKUP_SPLINE_UNRESOLVED = SweL3Flags.BACKUP_SPLINE_UNRESOLVED
-        sc_pot = np.nan
-        ch_break = np.nan
+    except (TypeError, ValueError):
+        pass
+    else:
+        if len(peaks) == 2:
+            sc_pot = spline_energies[peaks[0]]
+            ch_break = spline_energies[peaks[1]]
+            BACKUP_SPLINE_UNRESOLVED = SweL3Flags.NONE
 
     def piece_wise_model_mec(x, b0, b1, b2, b3):
         """
@@ -137,9 +141,8 @@ def mec_breakpoint_finder(
     if FALLBACK_POTENTIAL_ESTIMATE == SweL3Flags.NONE:
         try:
             initial_guess = [log_psd[0], 1, 7, 1]
-            z, cov = scipy.optimize.curve_fit(
-                fitting_model, np.exp(log_energy_sc), log_psd_sc, p0=initial_guess
-            )
+            z = scipy.optimize.curve_fit(
+                fitting_model, np.exp(log_energy_sc), log_psd_sc, p0=initial_guess)[0]
             # Make sure the fit converged
             if (
                 (z[0] == initial_guess[0])
@@ -160,43 +163,41 @@ def mec_breakpoint_finder(
                 )
                 # spline not used
                 BACKUP_SPLINE_UNRESOLVED = SweL3Flags.NONE
-        except Exception:
+        except (TypeError, ValueError):
             # Fall back on Spline method
             # Fit did not converge
             BACKUP_SPLINE_UNRESOLVED = SweL3Flags.BACKUP_SPLINE_UNRESOLVED
             sc_pot_output = sc_pot
     else:
         sc_pot_output = return_value
+    
+    # Default to fallback on Spline method
+    BREAKPOINT_FIT_UNCONVERGED = SweL3Flags.BREAKPOINT_FIT_UNCONVERGED
+    ch_break_output = ch_break
     # Try Core-Halo Breakpoint Fit
-    BREAKPOINT_FIT_UNCONVERGED = SweL3Flags.NONE
-    try:
-        initial_guess = [log_psd_ch[0], 1, 65, 1]
-        z, cov = scipy.optimize.curve_fit(
-            fitting_model, np.exp(log_energy_ch), log_psd_ch, p0=initial_guess
-        )
-        # Make sure the fit converged
-        if (
-            (z[0] == initial_guess[0])
-            & (z[1] == initial_guess[1])
-            & (z[2] == initial_guess[2])
-            & (z[3] == initial_guess[3])
-        ):
-            # Fall back on Spline method
-            # Fit did not converge
-            BREAKPOINT_FIT_UNCONVERGED = SweL3Flags.BREAKPOINT_FIT_UNCONVERGED
-            ch_break_output = ch_break
-        else:
-            # Fit worked
-            # Check whether breakpoint has three points to left and right
-            # If so, then find intersection of linear fits to each side
-            ch_break_output = refine_breakpoint_value(
-                np.exp(log_energy_ch), log_psd_ch, z[2], 3
-            )
-    except Exception:
-        # Fall back on Spline method
-        # Fit did not converge
-        BREAKPOINT_FIT_UNCONVERGED = SweL3Flags.BREAKPOINT_FIT_UNCONVERGED
-        ch_break_output = ch_break
+    if len(log_psd_ch) > 1:
+        try:
+            initial_guess = [log_psd_ch[0], 1, 65, 1]
+            z = scipy.optimize.curve_fit(
+                fitting_model, np.exp(log_energy_ch), log_psd_ch, p0=initial_guess
+            )[0]
+            # Make sure the fit converged...if not, fall back on spline values
+            if not (
+                (z[0] == initial_guess[0])
+                & (z[1] == initial_guess[1])
+                & (z[2] == initial_guess[2])
+                & (z[3] == initial_guess[3])
+            ):
+                # Fit worked
+                # Check whether breakpoint has three points to left and right
+                # If so, then find intersection of linear fits to each side
+                ch_break_output = refine_breakpoint_value(
+                    np.exp(log_energy_ch), log_psd_ch, z[2], 3
+                )
+                BREAKPOINT_FIT_UNCONVERGED = SweL3Flags.NONE
+        except (TypeError, ValueError):
+            # Fit did not converge, fall back on Spline method
+            pass
     return (
         sc_pot_output,
         ch_break_output,

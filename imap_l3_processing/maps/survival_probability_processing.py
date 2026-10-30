@@ -47,7 +47,7 @@ def filter_bad_days(input_psets: list[L1CPointingSet]) -> list[L1CPointingSet]:
 def process_survival_probabilities(
     survival_probabilities_dependencies: HiLoL3SurvivalDependencies,
     spice_frame_name: SpiceFrame,
-    cg_corrected: bool = None,
+    cg_corrected: bool | None = None,
 ) -> RectangularIntensityMapData:
     l2_descriptor_parts = survival_probabilities_dependencies.l2_map_descriptor_parts
 

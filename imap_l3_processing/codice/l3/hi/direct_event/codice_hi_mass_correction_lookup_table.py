@@ -18,7 +18,7 @@ class CodiceHiMassCorrectionLookupTable:
         data = {}
 
         file = pd.read_excel(file_path, sheet_name=None, index_col=0, skiprows=[0])
-        for sheet_name in file.keys():
+        for sheet_name in file:
             ssd_name_match = re.match(SSD_SHEET_NAME_FORMAT, sheet_name)
             if ssd_name_match:
                 ssd = int(ssd_name_match.group(1))

@@ -2,6 +2,7 @@
 Author: Izabela Kowalska-Leszczynska (ikowalska@cbk.waw.pl)
 Daily ionization rate class
 """
+# ruff: noqa: N999
 
 import json
 import logging
@@ -271,7 +272,7 @@ class DailyIonizationRate:
                 lsq_mtrx, lightcurve, sample_weight=1.0 / (uncert * uncert)
             )
         else:
-            raise Exception(
+            raise ValueError(
                 "Unknown regression method. Use LinearRegression, Lasso or Ridge"
             )
 
@@ -420,9 +421,8 @@ class DailyIonizationRate:
 
         json_content = json.dumps(output, indent=3)
 
-        output_fp = open(fn, "w")
-        print(json_content, file=output_fp)
-        output_fp.close()
+        with open(fn, "w") as output_fp:
+            print(json_content, file=output_fp)
 
     def _subtract_background(self):
         """

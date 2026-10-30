@@ -35,9 +35,8 @@ class L3aData:
         self.var = {}
 
         # read pipeline settings to be used for L3a
-        file_handler = open(anc_input_from_instr_team["settings"], "r")
-        settings = json.load(file_handler)
-        file_handler.close()
+        with open(anc_input_from_instr_team["settings"], "r") as file_handler:
+            settings = json.load(file_handler)
         self.var["nominal_number_of_bins"] = settings["l3a_nominal_number_of_bins"]
 
     def _compute_extra_heliospheric_bckgrd(self, anc_input_from_instr_team):
@@ -52,19 +51,18 @@ class L3aData:
         if check_if_contains_actual_data(
             anc_input_from_instr_team["extra_heliospheric_bckgrd"]
         ):
-            fh = open(anc_input_from_instr_team["extra_heliospheric_bckgrd"], "r")
-            for i in range(3):
-                line = fh.readline()
-            # sanity check
-            if line.split()[4] != "NSIDE":
-                raise Exception(
-                    "error _compute_extra_heliospheric_bckgrd(): NSIDE string not found"
-                )
-            # read NSIDE parameter for healpix grid
-            nside = int(line.split()[6])
-            # read ecliptic coords and background values span on a healpix grid
-            lon_lat_bckgrd = np.loadtxt(fh)
-            fh.close()
+            with open(anc_input_from_instr_team["extra_heliospheric_bckgrd"], "r") as fh:
+                for i in range(3):
+                    line = fh.readline()
+                # sanity check
+                if line.split()[4] != "NSIDE":
+                    raise ValueError(
+                        "error _compute_extra_heliospheric_bckgrd(): NSIDE string not found"
+                    )
+                # read NSIDE parameter for healpix grid
+                nside = int(line.split()[6])
+                # read ecliptic coords and background values span on a healpix grid
+                lon_lat_bckgrd = np.loadtxt(fh)
 
             # generate Healpix grid internally here for a sanity check performed later
             ahp = HEALPix(nside=nside, order="ring")
@@ -78,7 +76,7 @@ class L3aData:
                 np.fabs(lon - lon_lat_bckgrd[:, 0]).max() > 1.0e-6
                 or np.fabs(lat - lon_lat_bckgrd[:, 1]).max() > 1.0e-6
             ):
-                raise Exception(
+                raise ValueError(
                     "error _compute_extra_heliospheric_bckgrd(): "
                     + "healpix grid mismatch (NSIDE wrong? NESTED ordering instead of RING?)"
                 )
@@ -105,39 +103,38 @@ class L3aData:
             anc_input_from_instr_team["time_dependent_bckgrd"]
         ):
             # read the size of the background-estimate array
-            fh = open(anc_input_from_instr_team["time_dependent_bckgrd"], "r")
-            for i in range(2):
-                line = fh.readline()
-            # sanity check
-            if (
-                line.split()[5] != "array"
-                or line.split()[6] != "size"
-                or line.split()[7] != "="
-            ):
-                raise Exception(
-                    "error _compute_time_dependent_bckgrd(): input file header does not contain expected keywords (1)"
-                )
-            # read the number of bins
-            bckgrd_array_size = int(line.split()[8])
-            # sanity check
-            if bckgrd_array_size != 3600:
-                raise Exception(
-                    "error _compute_time_dependent_bckgrd(): array size in input file header is not equal to 3600"
-                )
+            with open(anc_input_from_instr_team["time_dependent_bckgrd"], "r") as fh:
+                for i in range(2):
+                    line = fh.readline()
+                # sanity check
+                if (
+                    line.split()[5] != "array"
+                    or line.split()[6] != "size"
+                    or line.split()[7] != "="
+                ):
+                    raise ValueError(
+                        "error _compute_time_dependent_bckgrd(): input file header does not contain expected keywords (1)"
+                    )
+                # read the number of bins
+                bckgrd_array_size = int(line.split()[8])
+                # sanity check
+                if bckgrd_array_size != 3600:
+                    raise ValueError(
+                        "error _compute_time_dependent_bckgrd(): array size in input file header is not equal to 3600"
+                    )
 
-            # read the array of spin angles for which the background was estimated
-            line = fh.readline()
-            # sanity check
-            if (
-                line.split()[1] != "spin"
-                or line.split()[2] != "angle"
-                or line.split()[3] != "grid:"
-            ):
-                raise Exception(
-                    "error _compute_time_dependent_bckgrd(): input file header does not contain expected keywords (2)"
-                )
-            bckgrd_array_spin_angle = np.fromstring(line[18:], dtype=float, sep=" ")
-            fh.close()
+                # read the array of spin angles for which the background was estimated
+                line = fh.readline()
+                # sanity check
+                if (
+                    line.split()[1] != "spin"
+                    or line.split()[2] != "angle"
+                    or line.split()[3] != "grid:"
+                ):
+                    raise ValueError(
+                        "error _compute_time_dependent_bckgrd(): input file header does not contain expected keywords (2)"
+                    )
+                bckgrd_array_spin_angle = np.fromstring(line[18:], dtype=float, sep=" ")
 
             # read L3a lightcurve start dates and array of corrections
             start_dates = np.loadtxt(
@@ -163,10 +160,10 @@ class L3aData:
             else:
                 idx = idx[0]
                 if idx.size != 1:
-                    raise Exception(
+                    raise ValueError(
                         "error _compute_time_dependent_bckgrd(): not-found or multiple-definition error for "
-                        + "the start date %s"
-                        % self.data["start_time"].replace(" ", "T")
+                        "the start date {}".format(self.data["start_time"].replace(" ", "T")
+                        )
                     )
 
                 # interpolate the background estimate from the bckgrd_array into the centers of the scanning circle bins
@@ -370,9 +367,8 @@ class L3aData:
         Args:
             file_name: name of of file with L1b data
         """
-        file_handler = open(file_name, "r")
-        self.data = json.load(file_handler)
-        file_handler.close()
+        with open(file_name, "r") as file_handler:
+            self.data = json.load(file_handler)
 
         # additional field to keep track where data come from
         self.data["l3a_file_name"] = file_name
@@ -384,7 +380,7 @@ class L3aData:
         good_angle_idxs = np.nonzero(
             np.array(self.data["daily_lightcurve"]["exposure_times"]) > 0
         )[0]
-        for key in self.data["daily_lightcurve"].keys():
+        for key in self.data["daily_lightcurve"]:
             self.data["daily_lightcurve"][key] = self.data["daily_lightcurve"][key][
                 good_angle_idxs
             ]
@@ -448,28 +444,25 @@ class L3aData:
         # them to be saved as one-liners (i.e., without \n after each element) or we want them to
         # be printed with a specific format by json.dumps()
         # so we convert variables to strings as defined in fmt
-        for key in fmt["daily_lightcurve"].keys():
+        for key, value in fmt["daily_lightcurve"].items:
             data["daily_lightcurve"][key] = (
                 "["
                 + ", ".join(
-                    map(
-                        lambda x: fmt["daily_lightcurve"][key] % x,
-                        list(data["daily_lightcurve"][key]),
-                    )
+                    value % x for x in list(data["daily_lightcurve"][key])
                 )
                 + "]"
             )
-        for key in fmt["scalar variables"].keys():
-            data[key] = "|" + fmt["scalar variables"][key] % data[key] + "|"
-        for key in fmt["lon lat variables"].keys():
+        for key, value in fmt["scalar variables"].items():
+            data[key] = "|" + value % data[key] + "|"
+        for key, value in fmt["lon lat variables"].items():
             for sec_key in ["lon", "lat"]:
                 data[key][sec_key] = (
-                    "|" + fmt["lon lat variables"][key] % data[key][sec_key] + "|"
+                    "|" + value % data[key][sec_key] + "|"
                 )
-        for key in fmt["vector variables"].keys():
+        for key, value in fmt["vector variables"].items():
             for sec_key in ["x", "y", "z"]:
                 data[key][sec_key] = (
-                    "|" + fmt["vector variables"][key] % data[key][sec_key] + "|"
+                    "|" + value % data[key][sec_key] + "|"
                 )
 
         # generate JSON content to be saved in output file
@@ -484,8 +477,7 @@ class L3aData:
         # "IMAP SDC to Instrument Team ICD"
         # date_utc = ''.join(filter(str.isdigit, self.data['identifier']))
         date_utc = "".join(filter(str.isdigit, self.data["start_time"]))
-        file_name = "data_l3a/imap_glows_l3a_%s_orbX_modX_p_v00.json" % date_utc
+        file_name = f"data_l3a/imap_glows_l3a_{date_utc}_orbX_modX_p_v00.json"
 
-        file_handler = open(file_name, "w")
-        print(json_content, file=file_handler)
-        file_handler.close()
+        with open(file_name, "w") as file_handler:
+            print(json_content, file=file_handler)

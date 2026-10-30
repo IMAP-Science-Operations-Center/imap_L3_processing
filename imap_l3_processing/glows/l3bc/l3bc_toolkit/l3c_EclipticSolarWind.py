@@ -2,6 +2,7 @@
 Author: Izabela Kowalska-Leszczynska (ikowalska@cbk.waw.pl)
 Solar wind parameters data in the ecliptic plane
 """
+# ruff: noqa: N999
 
 import logging
 from dataclasses import dataclass
@@ -87,7 +88,7 @@ class EclipticSolarWind:
         # TODO: SWAPI if we have full 13 Carrington rotation periods of data
 
         # Read solar wind parameters (Carrington averaged parameters on common carrington number grid)
-        grid_cr, plasma_speed, proton_dens, p_alpha = self.read_sw_ecliptic(
+        _grid_cr, plasma_speed, proton_dens, p_alpha = self.read_sw_ecliptic(
             ext_dependencies
         )
 
@@ -214,6 +215,6 @@ class EclipticSolarWind:
                 ext_dependencies
             )
         else:
-            raise Exception("Unknown solar wind source. Select OMNI or SWAPI")
+            raise ValueError("Unknown solar wind source. Select OMNI or SWAPI")
 
         return grid_cr, plasma_speed, proton_dens, p_alpha

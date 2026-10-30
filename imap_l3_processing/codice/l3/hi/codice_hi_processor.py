@@ -228,7 +228,7 @@ class CodiceHiProcessor(Processor):
                 particle_unit_vectors, mag_unit_vectors[time_index]
             )
 
-            for species, species_intensity in species_intensities.items():
+            for species_intensity in species_intensities.values():
                 intensity = species_intensity.l2_intensity[time_index]
 
                 intensities_delta_plus = np.full_like(intensity, 0)

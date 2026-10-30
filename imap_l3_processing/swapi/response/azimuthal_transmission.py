@@ -32,7 +32,7 @@ def interpolate_azimuthal_transmission(
         return SG_PLATEAU_TRANSMISSION
 
     i_float = abs_azimuth / grid.spacing
-    i_lower = int(math.floor(i_float))
+    i_lower = math.floor(i_float)
     i_upper = i_lower + 1
 
     n = len(grid.values)

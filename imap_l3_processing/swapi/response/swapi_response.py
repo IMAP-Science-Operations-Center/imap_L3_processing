@@ -129,7 +129,7 @@ class SwapiResponse:
         for v in np.unique(np.asarray(esa_voltages, dtype=float).ravel()):
             key = self._cache_key(v)
             if np.isfinite(v) and key not in self._passband_grid_cache:
-                self._passband_grid_cache[key] = dict()
+                self._passband_grid_cache[key] = {}
                 for region in ("SG", "OA"):
                     passband = build_passband_grid(self._get_passband_values(v, region))
                     self._passband_grid_cache[key][region] = passband

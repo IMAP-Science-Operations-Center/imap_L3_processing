@@ -75,39 +75,39 @@ def analyze_event(
                 unsaturated_words, key=get_adc_value
             )
 
-        l1_detector = [
+        l1_detector = next(
             group
             for group in rule.included_detector_groups
             if group[0:3] == f"L1{rule.range.side.name}"
-        ][0]
-        l2_detector = [
+        )
+        l2_detector = next(
             group
             for group in rule.included_detector_groups
             if group[0:3] == f"L2{rule.range.side.name}"
-        ][0]
+        )
 
         if rule.range.range == DetectorRange.R2:
             e_prime_group = l2_detector
             e_delta_group = l1_detector
         elif rule.range.range == DetectorRange.R3:
-            e_prime_group = [
+            e_prime_group = next(
                 group
                 for group in rule.included_detector_groups
                 if group[0:3] == f"L3{rule.range.side.name}"
-            ][0]
+            )
             e_delta_group = l2_detector
         elif rule.range.range == DetectorRange.R4:
             opposite_side = "A" if rule.range.side.name == "B" else "B"
-            e_prime_group = [
+            e_prime_group = next(
                 group
                 for group in rule.included_detector_groups
                 if group[0:3] == f"L3{opposite_side}"
-            ][0]
-            e_delta_group = [
+            )
+            e_delta_group = next(
                 group
                 for group in rule.included_detector_groups
                 if group[0:3] == f"L3{rule.range.side.name}"
-            ][0]
+            )
 
         return EventAnalysis(
             range=rule.range,

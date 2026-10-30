@@ -53,7 +53,7 @@ class GlowsL3BCDependencies:
         }
 
         l3a_data = []
-        for l3a_file in sorted(list(cr_to_process.l3a_file_names)):
+        for l3a_file in sorted(cr_to_process.l3a_file_names):
             downloaded_file_path = imap_data_access.download(l3a_file)
             l3a_data.append(create_glows_l3a_dictionary_from_cdf(downloaded_file_path))
 

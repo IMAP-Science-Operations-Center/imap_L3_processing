@@ -160,7 +160,7 @@ class SolarParamsHistory:
             ]
         )
         if (diff > eps).any():
-            raise Exception(
+            raise ValueError(
                 "Incorrect format of the input files. Last CR is not the same in all files"
             )
         else:
@@ -180,11 +180,11 @@ class SolarParamsHistory:
 
         # list of the L3d text files from the latest CR
         fn_initial = {}
-        for k in l3d_txt_fn_list:
+        for k, value in l3d_txt_fn_list.items():
             idx_latest = np.array(
-                [f.split("cr_")[1].split("_")[0] for f in l3d_txt_fn_list[k]]
+                [f.split("cr_")[1].split("_")[0] for f in value]
             ).argmax()
-            fn_initial[k] = l3d_txt_fn_list[k][idx_latest]
+            fn_initial[k] = value[idx_latest]
         return fn_initial
 
     def _generate_cr_solar_params(self, CR, data_l3b, data_l3c):
@@ -505,9 +505,8 @@ class SolarParamsHistory:
         output["glows_flags"] = [int(v) for v in self.glows_flags]
 
         json_content = json.dumps(output, indent=3)
-        output_fp = open(fn, "w")
-        print(json_content, file=output_fp)
-        output_fp.close()
+        with open(fn, "w") as output_fp:
+            print(json_content, file=output_fp)
 
     def save_to_txt(self, fn_out, hdr):
         """

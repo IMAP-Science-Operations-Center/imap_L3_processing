@@ -68,7 +68,7 @@ class SpiceKernelTypes(enum.Enum):
 def save_data(
     data: DataProduct,
     delete_if_present: bool = False,
-    folder_path: Path = None,
+    folder_path: Path | None = None,
     cr_number=None,
 ) -> Path:
     science_file_path = data.input_metadata.to_science_file_path(cr_number=cr_number)

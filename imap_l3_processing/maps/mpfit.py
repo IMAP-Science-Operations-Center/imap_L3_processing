@@ -608,7 +608,7 @@ class mpfit:
         self,
         fcn,
         xall=None,
-        functkw={},
+        functkw={},  # noqa: B006
         parinfo=None,
         ftol=1.0e-10,
         xtol=1.0e-10,
@@ -618,7 +618,7 @@ class mpfit:
         factor=100.0,
         nprint=1,
         iterfunct="default",
-        iterkw={},
+        iterkw={},  # noqa: B006
         nocovar=0,
         rescale=0,
         autoderivative=1,
@@ -1071,7 +1071,7 @@ class mpfit:
             if self.qanytied:
                 self.params = self.tie(self.params, ptied)
 
-            if (nprint > 0) and (iterfunct is not None):
+            if (nprint > 0) and (iterfunct is not None):  # noqa: SIM102
                 if ((self.niter - 1) % nprint) == 0:
                     xnew0 = self.params.copy()
 
@@ -1497,11 +1497,12 @@ class mpfit:
         if quiet:
             return
         if fnorm is None:
-            [status, fvec] = self.call(fcn, x, functkw)
+            [_status, fvec] = self.call(fcn, x, functkw)
             fnorm = self.enorm(fvec) ** 2
 
         # Determine which parameters to print
         nprint = len(x)
+        # ruff: disable[UP031]
         print(
             "Iter ",
             ("%6i" % iter),
@@ -1521,6 +1522,7 @@ class mpfit:
                 iprint = 1
             if iprint:
                 print(p + (pformat % x[i]) + "  ")
+        # ruff: enable[UP031]
         return 0
 
     # fmt: off
@@ -2289,7 +2291,7 @@ class mpfit:
             if ptied[i] == "":
                 continue
             cmd = "p[" + str(i) + "] = " + ptied[i]
-            exec(cmd)
+            exec(cmd)  # noqa: S102
         return p
 
     # fmt: off

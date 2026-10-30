@@ -253,11 +253,10 @@ class L1bDataHistogram:
         """
 
         # load conversion/decoding table for ancillary parameters collected onboard
-        file_handler = open(
-            anc_input_from_instr_team["conversion_table_for_anc_data"], "r"
-        )
-        conversion_table = json.load(file_handler)
-        file_handler.close()
+        with open(
+                anc_input_from_instr_team["conversion_table_for_anc_data"], "r"
+        ) as file_handler:
+            conversion_table = json.load(file_handler)
 
         # ancillary parameters collected onboard that need to be decoded
         (
@@ -390,9 +389,8 @@ class L1bDataHistogram:
             anc_input_from_instr_team: ancillary input provided by IMAP/GLOWS Instrument Team
         """
         # read filter settings
-        file_handler = open(anc_input_from_instr_team["settings"], "r")
-        settings = json.load(file_handler)
-        file_handler.close()
+        with open(anc_input_from_instr_team["settings"], "r") as file_handler:
+            settings = json.load(file_handler)
 
         # set uv-source-related part of histogram flag array
         self._set_histogram_flag_array_uv_sources(anc_input_from_instr_team, settings)
@@ -603,9 +601,8 @@ class L1bDataHistogram:
         Args:
             file_name: name of of file with L1b data
         """
-        file_handler = open(file_name, "r")
-        self.data = json.load(file_handler)
-        file_handler.close()
+        with open(file_name, "r") as file_handler:
+            self.data = json.load(file_handler)
 
         # hexadecimal values saved as strings require special treatment to make them integers
         self.data["histogram_flag_array"] = [
@@ -671,34 +668,29 @@ class L1bDataHistogram:
         # them to be saved as one-liners (i.e., without \n after each element) or we want them to
         # be printed with a specific format by json.dumps()
         # so we convert variables to strings as defined in fmt
-        for key in fmt["arrays"].keys():
+        for key in fmt["arrays"]:
             data[key] = (
                 "["
-                + ", ".join(map(lambda x: fmt["arrays"][key] % x, list(data[key])))
+                + ", ".join(fmt["arrays"][key] % x for x in list(data[key]))
                 + "]"
             )
-        for key in fmt["scalar variables"].keys():
-            data[key] = "|" + fmt["scalar variables"][key] % data[key] + "|"
-        for key in fmt["lon lat variables"].keys():
+        for key, value in fmt["scalar variables"].items():
+            data[key] = "|" + value % data[key] + "|"
+        for key, value in fmt["lon lat variables"].items():
             for sec_key in ["lon", "lat"]:
                 data[key][sec_key] = (
-                    "|" + fmt["lon lat variables"][key] % data[key][sec_key] + "|"
+                    "|" + value % data[key][sec_key] + "|"
                 )
-        for key in fmt["vector variables"].keys():
+        for key, value in fmt["vector variables"].items():
             for sec_key in ["x", "y", "z"]:
                 data[key][sec_key] = (
-                    "|" + fmt["vector variables"][key] % data[key][sec_key] + "|"
+                    "|" + value % data[key][sec_key] + "|"
                 )
 
         # histogram_flag_array requires special hexadecimal treatment
         data["histogram_flag_array"] = (
             "["
-            + ", ".join(
-                map(
-                    lambda x: '"0x' + format(x, "x").zfill(4) + '"',
-                    list(data["histogram_flag_array"]),
-                )
-            )
+            + ", ".join(f'0x{x:04x}"' for x in list(data["histogram_flag_array"]))
             + "]"
         )
 
@@ -710,34 +702,29 @@ class L1bDataHistogram:
         json_content = json_content.replace('|"', "").replace('"|', "")
         json_content = json_content.replace('\\"', '"')
 
-        if 1 == 2:
-            # some fields need to be temporarily converted to string arrays, because we want to force
-            # them to be saved as one-liners (i.e., without \n after each element) by json.dumps()
-            spin_angle_tmp = self.data["imap_spin_angle_bin_cntr"]
-            histogram_tmp = self.data["histogram"]
-            flags_tmp = self.data["histogram_flag_array"]
-            self.data["histogram"] = (
-                "[" + ", ".join(map(str, list(histogram_tmp))) + "]"
-            )
-            self.data["imap_spin_angle_bin_cntr"] = (
-                "[" + ", ".join(map(lambda x: "%.2f" % x, list(spin_angle_tmp))) + "]"
-            )
-            self.data["histogram_flag_array"] = (
-                "["
-                + ", ".join(
-                    map(
-                        lambda x: '"0x' + format(x, "x").zfill(4) + '"', list(flags_tmp)
-                    )
-                )
-                + "]"
-            )
-            json_content = json.dumps(self.data, indent=4, default=vars)
-            self.data["imap_spin_angle_bin_cntr"] = spin_angle_tmp
-            self.data["histogram"] = histogram_tmp
-            self.data["histogram_flag_array"] = flags_tmp
-            # modify json_content to make string arrays be seen finally as number arrays
-            json_content = json_content.replace('"[', "[").replace(']"', "]")
-            json_content = json_content.replace('\\"', '"')
+        # some fields need to be temporarily converted to string arrays, because we want to force
+        # them to be saved as one-liners (i.e., without \n after each element) by json.dumps()
+        spin_angle_tmp = self.data["imap_spin_angle_bin_cntr"]
+        histogram_tmp = self.data["histogram"]
+        flags_tmp = self.data["histogram_flag_array"]
+        self.data["histogram"] = (
+            "[" + ", ".join(map(str, list(histogram_tmp))) + "]"
+        )
+        self.data["imap_spin_angle_bin_cntr"] = (
+            "[" + ", ".join(f"{x:.2f}" for x in list(spin_angle_tmp)) + "]"
+        )
+        self.data["histogram_flag_array"] = (
+            "["
+            + ", ".join(f'0x{x:04x}"' for x in list(flags_tmp))
+            + "]"
+        )
+        json_content = json.dumps(self.data, indent=4, default=vars)
+        self.data["imap_spin_angle_bin_cntr"] = spin_angle_tmp
+        self.data["histogram"] = histogram_tmp
+        self.data["histogram_flag_array"] = flags_tmp
+        # modify json_content to make string arrays be seen finally as number arrays
+        json_content = json_content.replace('"[', "[").replace(']"', "]")
+        json_content = json_content.replace('\\"', '"')
 
         # start_time_utc string for output file name, based on unique_block_identifier
         start_time_utc = "".join(
@@ -746,14 +733,12 @@ class L1bDataHistogram:
 
         # the output file name is constructed using a convention defined in Sec. 1.4.2 of
         # "IMAP SDC to Instrument Team ICD"
-        file_name = "data_l1b_histograms/imap_glows_l1b_%s_orbX_modX_p_v00.json" % (
-            start_time_utc
-        )
+        file_name = f"data_l1b_histograms/imap_glows_l1b_{start_time_utc}_orbX_modX_p_v00.json"
+
 
         # save data
-        file_handler = open(file_name, "w")
-        print(json_content, file=file_handler)
-        file_handler.close()
+        with open(file_name, "w") as file_handler:
+            print(json_content, file=file_handler)
 
         # TO_BE_REMOVED append file name to l1b list needed for the l1b-to-l2 processing
         # file_handler = open('l1b_list.dat', 'a')
@@ -770,42 +755,39 @@ class L1bDataHistogram:
             anc_input_from_instr_team: ancillary input provided by IMAP/GLOWS Instrument Team
             type_of_list: 'exclusions_by_instr_team' or 'suspected_transients'
         """
-        file_handler = open(anc_input_from_instr_team[type_of_list], "r")
-        line = file_handler.readline()
-        while line:
-            if line[0] != "#":
-                # sanity check
-                assert line[:2] == "20" and line[10] == "T", (
-                    "Bad identifier "
-                    + line[:20]
-                    + " in "
-                    + anc_input_from_instr_team[type_of_list]
-                )
-                identifier = line.rstrip().split(" ")[0]
-                flags = line.rstrip().split(" ")[1]
-
-                # sanity check
-                # this check turned out to be inappropriate because number of bins is not always the same
-                # assert len(flags) == self.data['number_of_bins_per_histogram'], \
-                #    'Bad length of mask_array for identifier ' + identifier + ' in ' + \
-                #    anc_input_from_instr_team[type_of_list]
-
-                if identifier == self.data["unique_block_identifier"]:
-                    flags = np.array(list(flags)).astype(bool)
-                    #                    print(np.shape(flags))
-                    if type_of_list == "exclusions_by_instr_team":
-                        flags = np.left_shift(
-                            flags, L1B_L2_HIST_FLAG_FIELDS["is_excluded_by_instr_team"]
-                        )
-                    if type_of_list == "suspected_transients":
-                        flags = np.left_shift(
-                            flags, L1B_L2_HIST_FLAG_FIELDS["is_suspected_transient"]
-                        )
-                    self.data["histogram_flag_array"] = (
-                        self.data["histogram_flag_array"] | flags
+        with open(anc_input_from_instr_team[type_of_list], "r") as file_handler:
+            for line in file_handler:
+                if line[0] != "#":
+                    # sanity check
+                    assert line[:2] == "20" and line[10] == "T", (
+                        "Bad identifier "
+                        + line[:20]
+                        + " in "
+                        + anc_input_from_instr_team[type_of_list]
                     )
-            line = file_handler.readline()
-        file_handler.close()
+                    identifier = line.rstrip().split(" ")[0]
+                    flags = line.rstrip().split(" ")[1]
+
+                    # sanity check
+                    # this check turned out to be inappropriate because number of bins is not always the same
+                    # assert len(flags) == self.data['number_of_bins_per_histogram'], \
+                    #    'Bad length of mask_array for identifier ' + identifier + ' in ' + \
+                    #    anc_input_from_instr_team[type_of_list]
+
+                    if identifier == self.data["unique_block_identifier"]:
+                        flags = np.array(list(flags)).astype(bool)
+                        #                    print(np.shape(flags))
+                        if type_of_list == "exclusions_by_instr_team":
+                            flags = np.left_shift(
+                                flags, L1B_L2_HIST_FLAG_FIELDS["is_excluded_by_instr_team"]
+                            )
+                        if type_of_list == "suspected_transients":
+                            flags = np.left_shift(
+                                flags, L1B_L2_HIST_FLAG_FIELDS["is_suspected_transient"]
+                            )
+                        self.data["histogram_flag_array"] = (
+                            self.data["histogram_flag_array"] | flags
+                        )
 
     def _set_histogram_flag_array_excl_by_instr_team(self, anc_input_from_instr_team):
         """
@@ -814,38 +796,35 @@ class L1bDataHistogram:
         Args:
             anc_input_from_instr_team: ancillary input provided by IMAP/GLOWS Instrument Team
         """
-        file_handler = open(anc_input_from_instr_team["exclusions_by_instr_team"], "r")
-        line = file_handler.readline()
-        while line:
-            if line[0] != "#":
-                # sanity check
-                assert line[:2] == "20" and line[10] == "_", (
-                    "Bad identifier "
-                    + line[:20]
-                    + " in "
-                    + anc_input_from_instr_team["exclusions_by_instr_team"]
-                )
-                identifier = line.rstrip().split(" ")[0]
-                flags = line.rstrip().split(" ")[1]
-
-                # sanity check
-                assert len(flags) == self.data["number_of_bins_per_histogram"], (
-                    "Bad length of mask_array for identifier "
-                    + identifier
-                    + " in "
-                    + anc_input_from_instr_team["exclusions_by_instr_team"]
-                )
-
-                if identifier == self.data["unique_block_identifier"]:
-                    flags = np.array(list(flags)).astype(bool)
-                    flags = np.left_shift(
-                        flags, L1B_L2_HIST_FLAG_FIELDS["is_excluded_by_instr_team"]
+        with open(anc_input_from_instr_team["exclusions_by_instr_team"], "r") as file_handler:
+            for line in file_handler:
+                if line[0] != "#":
+                    # sanity check
+                    assert line[:2] == "20" and line[10] == "_", (
+                        "Bad identifier "
+                        + line[:20]
+                        + " in "
+                        + anc_input_from_instr_team["exclusions_by_instr_team"]
                     )
-                    self.data["histogram_flag_array"] = (
-                        self.data["histogram_flag_array"] | flags
+                    identifier = line.rstrip().split(" ")[0]
+                    flags = line.rstrip().split(" ")[1]
+
+                    # sanity check
+                    assert len(flags) == self.data["number_of_bins_per_histogram"], (
+                        "Bad length of mask_array for identifier "
+                        + identifier
+                        + " in "
+                        + anc_input_from_instr_team["exclusions_by_instr_team"]
                     )
-            line = file_handler.readline()
-        file_handler.close()
+
+                    if identifier == self.data["unique_block_identifier"]:
+                        flags = np.array(list(flags)).astype(bool)
+                        flags = np.left_shift(
+                            flags, L1B_L2_HIST_FLAG_FIELDS["is_excluded_by_instr_team"]
+                        )
+                        self.data["histogram_flag_array"] = (
+                            self.data["histogram_flag_array"] | flags
+                        )
 
     def _set_histogram_flag_array_uv_sources(self, anc_input_from_instr_team, settings):
         """
@@ -1019,25 +998,24 @@ class L1bDataHistogram:
         Compute daily average for the total number of counts in L1a histograms
         """
         file_name = "data_l1a_histograms/total_counts_file.dat"
-        file_handler = open(file_name, "r")
-        line = file_handler.readline()
+        with open(file_name, "r") as file_handler:
+            line = file_handler.readline()
 
-        # sanity check
-        assert (
-            line.rstrip().split(" ")[1] == self.data["block_header"]["pkts_file_name"]
-        ), (
-            "Packets file name "
-            + line.rstrip().split(" ")[1]
-            + " in "
-            + file_name
-            + " is different from currently processed packets file "
-            + self.data["block_header"]["pkts_file_name"]
-        )
+            # sanity check
+            assert (
+                line.rstrip().split(" ")[1] == self.data["block_header"]["pkts_file_name"]
+            ), (
+                "Packets file name "
+                + line.rstrip().split(" ")[1]
+                + " in "
+                + file_name
+                + " is different from currently processed packets file "
+                + self.data["block_header"]["pkts_file_name"]
+            )
 
-        # the first column of data array below: 'seq_count_in_pkts_file'
-        # the second column: total counts in a L1a histogram
-        data = np.loadtxt(file_handler)
-        file_handler.close()
+            # the first column of data array below: 'seq_count_in_pkts_file'
+            # the second column: total counts in a L1a histogram
+            data = np.loadtxt(file_handler)
         total_counts_average = np.mean(data[:, 1])
         total_counts_std_dev = np.std(data[:, 1])
         return total_counts_average, total_counts_std_dev
