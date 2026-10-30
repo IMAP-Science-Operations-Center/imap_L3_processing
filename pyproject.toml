@@ -60,3 +60,4 @@ addopts = "-ra"
 target-version = "py310"
 line-length = 99
 lint.ignore = ["DTZ", "E741", "LOG015"]
+lint.typing-extensions = false

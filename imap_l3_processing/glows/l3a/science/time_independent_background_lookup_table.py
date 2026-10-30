@@ -4,7 +4,6 @@ from typing import TypeVar
 
 import numpy as np
 import scipy.interpolate
-from typing_extensions import Self
 
 T = TypeVar("T", bound="TimeIndependentBackgroundLookupTable")
 
@@ -30,7 +29,7 @@ class TimeIndependentBackgroundLookupTable:
         )
 
     @classmethod
-    def from_file(cls, path: Path) -> Self:
+    def from_file(cls: type[T], path: Path) -> T:
         values = np.loadtxt(path)
         numlat, numlon = values.shape
         longitudes = np.linspace(0, 360, numlon, endpoint=False)
