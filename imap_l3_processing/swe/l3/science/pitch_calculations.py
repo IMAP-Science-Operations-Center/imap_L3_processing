@@ -75,7 +75,7 @@ def mec_breakpoint_finder(
     except (TypeError, ValueError):
         pass
     else:
-        if len(peaks) == 2:
+        if len(peaks) >= 2:
             sc_pot = spline_energies[peaks[0]]
             ch_break = spline_energies[peaks[1]]
             BACKUP_SPLINE_UNRESOLVED = SweL3Flags.NONE
