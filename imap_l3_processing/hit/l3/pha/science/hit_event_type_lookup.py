@@ -50,9 +50,7 @@ class HitEventTypeLookup:
                     included_detector_groups = []
                     excluded_detector_groups = []
 
-                    for detector_group, is_included in zip(
-                        detector_groups[:-1], row[:-1]
-                    ):
+                    for detector_group, is_included in zip(detector_groups[:-1], row[:-1]):
                         if is_included == "1":
                             included_detector_groups.append(detector_group)
                         elif is_included == "0":

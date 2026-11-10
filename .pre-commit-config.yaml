@@ -20,7 +20,7 @@ repos:
               | docs/.*\.(svg|png)$                    # documentation images
             )
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.15.2"
+    rev: "v0.16.10"
     hooks:
       - id: ruff-check
         args: [--fix]

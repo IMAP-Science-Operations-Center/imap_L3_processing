@@ -6,7 +6,7 @@ import shutil
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
-from typing import Self, Optional, override, Literal
+from typing import Literal, Self, override
 
 import imap_data_access
 import numpy as np
@@ -28,26 +28,22 @@ from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.utils import furnished_metakernel
 from tests.test_helpers import get_run_local_data_path
 
-LO_ENERGIES_IN_KEV = (
-    np.array([16.33, 30.47, 55.76, 106.3, 200.0, 405.0, 787.3]) / 1000.0
-)
+LO_ENERGIES_IN_KEV = np.array([16.33, 30.47, 55.76, 106.3, 200.0, 405.0, 787.3]) / 1000.0
 LO_ENERGY_BIN_LOWERS = np.array([10.9, 20.4, 36.8, 71.6, 135.0, 269.0, 504.7]) / 1000.0
-LO_ENERGY_BIN_UPPERS = (
-    np.array([21.7, 40.5, 74.7, 140.9, 265.0, 541.0, 1069.9]) / 1000.0
-)
+LO_ENERGY_BIN_UPPERS = np.array([21.7, 40.5, 74.7, 140.9, 265.0, 541.0, 1069.9]) / 1000.0
 
 
 class CsvNameToProduct:
     @abc.abstractmethod
-    def get_energy_and_quantity(self, filename) -> Optional[tuple[int, str]]:
+    def get_energy_and_quantity(self, filename) -> tuple[int, str] | None:
         raise NotImplementedError
 
 
 @dataclasses.dataclass
 class NBSNameMapping(CsvNameToProduct):
     @override
-    def get_energy_and_quantity(self, filename: str) -> Optional[tuple[int, str]]:
-        if fn_match := re.match("map_([a-zA-Z]+)_esa(\d{1}).csv", filename):
+    def get_energy_and_quantity(self, filename: str) -> tuple[int, str] | None:
+        if fn_match := re.match(r"map_([a-zA-Z]+)_esa(\d{1}).csv", filename):
             [quantity, energy] = fn_match.groups()
 
             csv_to_l2_cdf_mapping = {
@@ -68,8 +64,8 @@ class NBSNameMapping(CsvNameToProduct):
 
 class CGNameMapping(CsvNameToProduct):
     @override
-    def get_energy_and_quantity(self, filename: str) -> Optional[tuple[int, str]]:
-        if fn_match := re.match("([a-zA-Z]+_[a-zA-Z]+)_esa(\d{1}).csv", filename):
+    def get_energy_and_quantity(self, filename: str) -> tuple[int, str] | None:
+        if fn_match := re.match(r"([a-zA-Z]+_[a-zA-Z]+)_esa(\d{1}).csv", filename):
             [quantity, energy] = fn_match.groups()
 
             csv_to_l2_cdf_mapping = {
@@ -92,10 +88,8 @@ class SputterOrBootStrapNameMapping(CsvNameToProduct):
         self.correction = correction
 
     @override
-    def get_energy_and_quantity(self, filename: str) -> Optional[tuple[int, str]]:
-        if fn_match := re.match(
-            "map_flux_(\d{1})_Hy_([a-zA-Z]+)_([a-zA-Z]+).csv", filename
-        ):
+    def get_energy_and_quantity(self, filename: str) -> tuple[int, str] | None:
+        if fn_match := re.match(r"map_flux_(\d{1})_Hy_([a-zA-Z]+)_([a-zA-Z]+).csv", filename):
             [energy, correction, quantity] = fn_match.groups()
 
             csv_to_l2_cdf_mapping = {
@@ -146,9 +140,7 @@ class LoProcessingInput:
     def load_data_dir(data_dir: Path, name_mapping: CsvNameToProduct, **kwargs):
         temp_data = {}
         for data_file_path in data_dir.iterdir():
-            if energy_and_quantity := name_mapping.get_energy_and_quantity(
-                data_file_path.name
-            ):
+            if energy_and_quantity := name_mapping.get_energy_and_quantity(data_file_path.name):
                 esa_step, data_type = energy_and_quantity
                 if data_type not in temp_data:
                     temp_data[data_type] = np.full((1, 7, 60, 30), np.nan)
@@ -170,23 +162,15 @@ class LoProcessingInput:
     ) -> Self:
         if use_masked_data:
             loaded_data = {
-                **LoProcessingInput.load_data_dir(
-                    input_path / "maps", name_mapping, skiprows=1
-                ),
-                **LoProcessingInput.load_data_dir(
-                    input_path / "masked_maps", name_mapping
-                ),
+                **LoProcessingInput.load_data_dir(input_path / "maps", name_mapping, skiprows=1),
+                **LoProcessingInput.load_data_dir(input_path / "masked_maps", name_mapping),
             }
         else:
             loaded_data = {
-                **LoProcessingInput.load_data_dir(
-                    input_path / "maps", name_mapping, skiprows=1
-                ),
+                **LoProcessingInput.load_data_dir(input_path / "maps", name_mapping, skiprows=1),
             }
 
-        start_date_nanoseconds = (
-            manifest.start_date - TT2000_EPOCH
-        ).total_seconds() * 1e9
+        start_date_nanoseconds = (manifest.start_date - TT2000_EPOCH).total_seconds() * 1e9
         end_date_nanoseconds = (manifest.end_date - TT2000_EPOCH).total_seconds() * 1e9
 
         skymap = RectangularSkyMap(6, SpiceFrame.ECLIPJ2000)
@@ -210,10 +194,7 @@ class LoProcessingInput:
                     ["energy"],
                     LO_ENERGY_BIN_UPPERS - LO_ENERGIES_IN_KEV,
                 ),
-                **{
-                    quantity: (map_data_coords, data)
-                    for quantity, data in loaded_data.items()
-                },
+                **{quantity: (map_data_coords, data) for quantity, data in loaded_data.items()},
                 **additional_map_data,
             },
             coords={
@@ -225,15 +206,11 @@ class LoProcessingInput:
         )
 
         if "ena_intensity_stat_var" in l2_dataset.data_vars:
-            l2_dataset["ena_intensity_stat_uncert"] = np.sqrt(
-                l2_dataset["ena_intensity_stat_var"]
-            )
+            l2_dataset["ena_intensity_stat_uncert"] = np.sqrt(l2_dataset["ena_intensity_stat_var"])
             l2_dataset.drop_vars(["ena_intensity_stat_var"])
 
         if "bg_intensity_stat_var" in l2_dataset.data_vars:
-            l2_dataset["bg_intensity_stat_uncert"] = np.sqrt(
-                l2_dataset["bg_intensity_stat_var"]
-            )
+            l2_dataset["bg_intensity_stat_uncert"] = np.sqrt(l2_dataset["bg_intensity_stat_var"])
             l2_dataset.drop_vars(["bg_intensity_stat_var"])
 
         variables_to_mask = [
@@ -277,9 +254,7 @@ class LoProcessingInput:
     def get_survival_corrected_dependencies(self, l1c_files: list[Path]):
         # l1c_results = imap_data_access.query(instrument="lo", data_level="l1c", version="latest")
         # l1c_inputs = [Path(l1c["file_path"]) for l1c in l1c_results if l1c["repointing"] in self.repoints]
-        l1c_inputs = [
-            p for p in l1c_files if ScienceFilePath(p.name).repointing in self.repoints
-        ]
+        l1c_inputs = [p for p in l1c_files if ScienceFilePath(p.name).repointing in self.repoints]
 
         glows_query_results = imap_data_access.query(
             instrument="glows",
@@ -294,10 +269,7 @@ class LoProcessingInput:
         ]
 
         return ProcessingInputCollection(
-            *(
-                ScienceInput(p.name)
-                for p in [self.l2_cdf_path, *glows_paths, *l1c_inputs]
-            )
+            *(ScienceInput(p.name) for p in [self.l2_cdf_path, *glows_paths, *l1c_inputs])
         )
 
     def make_l3_input_metadata(self, l3_descriptor: str) -> InputMetadata:
@@ -335,9 +307,7 @@ def copy_to_output_directory_and_rename_for_initial_release(
         output_dir.mkdir(parents=True, exist_ok=True)
         output_path = output_dir / new_name
 
-        with CDF(
-            str(output_path), masterpath=str(generated_path), readonly=False
-        ) as cdf:
+        with CDF(str(output_path), masterpath=str(generated_path), readonly=False) as cdf:
             cdf.attrs["Logical_file_id"] = output_path.stem
 
 
@@ -345,9 +315,7 @@ def download_all_l1c(path: Path):
     original_data_dir = imap_data_access.config["DATA_DIR"]
     try:
         imap_data_access.config["DATA_DIR"] = path
-        all_l1c = imap_data_access.query(
-            instrument="lo", data_level="l1c", version="latest"
-        )
+        all_l1c = imap_data_access.query(instrument="lo", data_level="l1c", version="latest")
 
         with ThreadPoolExecutor() as pool:
             for l1c in all_l1c:
@@ -386,7 +354,7 @@ if __name__ == "__main__":
         shutil.copy(file, output_path)
         l1c_paths.append(output_path)
     if len(l1c_paths) == 0:
-        raise Exception(f"Expected l1c files to be provided in {local_l1c_input}")
+        raise ValueError(f"Expected l1c files to be provided in {local_l1c_input}")
 
     output_maps = []
     for masked, descriptor_suffix in [(False, ""), (True, "Msk")]:
@@ -458,9 +426,7 @@ if __name__ == "__main__":
                 manifest=manifest,
                 l2_descriptor=f"l{pivot:03d}-enasnbs{descriptor_suffix}-h-sf-nsp-ram-hae-6deg-6mo",
                 version=1,
-                input_path=sputter_or_bootstrap_input_path
-                / "outdir"
-                / f"pivot_{pivot}",
+                input_path=sputter_or_bootstrap_input_path / "outdir" / f"pivot_{pivot}",
                 name_mapping=SputterOrBootStrapNameMapping("sput"),
                 use_masked_data=masked,
                 exposure_factor=nbs_processing_input.dataset["exposure_factor"],
@@ -470,9 +436,7 @@ if __name__ == "__main__":
                 manifest=manifest,
                 l2_descriptor=f"l{pivot:03d}-enasbs{descriptor_suffix}-h-sf-nsp-ram-hae-6deg-6mo",
                 version=1,
-                input_path=sputter_or_bootstrap_input_path
-                / "outdir"
-                / f"pivot_{pivot}",
+                input_path=sputter_or_bootstrap_input_path / "outdir" / f"pivot_{pivot}",
                 name_mapping=SputterOrBootStrapNameMapping("boot"),
                 use_masked_data=masked,
                 exposure_factor=nbs_processing_input.dataset["exposure_factor"],
@@ -540,10 +504,7 @@ if __name__ == "__main__":
         combined_inputs = []
         for output_map in output_maps:
             if any(
-                [
-                    f"_{combined_dep}_" in output_map.name
-                    for combined_dep in combined_dependencies
-                ]
+                f"_{combined_dep}_" in output_map.name for combined_dep in combined_dependencies
             ):
                 combined_inputs.append(output_map)
 
@@ -582,6 +543,4 @@ if __name__ == "__main__":
         output_maps.extend([combined_sp_map, combined_spx_map])
 
     release_directory = get_run_local_data_path("IMAP-Lo June 2nd 2026 Maps")
-    copy_to_output_directory_and_rename_for_initial_release(
-        release_directory, output_maps
-    )
+    copy_to_output_directory_and_rename_for_initial_release(release_directory, output_maps)

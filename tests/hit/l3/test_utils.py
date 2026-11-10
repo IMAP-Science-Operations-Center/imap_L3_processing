@@ -159,21 +159,11 @@ class TestUtils(TestCase):
             with self.subTest(path):
                 result = read_l2_hit_data(path)
 
-                np.testing.assert_array_equal(
-                    result.h, np.full_like(hydrogen_data, np.nan)
-                )
-                np.testing.assert_array_equal(
-                    result.he4, np.full_like(helium_data, np.nan)
-                )
-                np.testing.assert_array_equal(
-                    result.cno, np.full_like(cno_data, np.nan)
-                )
-                np.testing.assert_array_equal(
-                    result.nemgsi, np.full_like(nemgsi_data, np.nan)
-                )
-                np.testing.assert_array_equal(
-                    result.fe, np.full_like(iron_data, np.nan)
-                )
+                np.testing.assert_array_equal(result.h, np.full_like(hydrogen_data, np.nan))
+                np.testing.assert_array_equal(result.he4, np.full_like(helium_data, np.nan))
+                np.testing.assert_array_equal(result.cno, np.full_like(cno_data, np.nan))
+                np.testing.assert_array_equal(result.nemgsi, np.full_like(nemgsi_data, np.nan))
+                np.testing.assert_array_equal(result.fe, np.full_like(iron_data, np.nan))
 
                 np.testing.assert_array_equal(
                     result.delta_plus_h, np.full_like(hydrogen_data, np.nan)

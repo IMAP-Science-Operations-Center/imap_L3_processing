@@ -39,8 +39,8 @@ class VasyliunasSiscoeVdfTest(unittest.TestCase):
             / "swapi"
             / "imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf"
         )
-        self.density_of_neutral_helium_lookup_table = (
-            DensityOfNeutralHeliumLookupTable.from_file(density_lut_path)
+        self.density_of_neutral_helium_lookup_table = DensityOfNeutralHeliumLookupTable.from_file(
+            density_lut_path
         )
 
     def _evaluate(self, cutoff_speed: float) -> np.ndarray:
@@ -75,8 +75,7 @@ class VasyliunasSiscoeVdfTest(unittest.TestCase):
         cutoff_index = 300
         fraction_below_cutoff = 0.3
         cutoff_speed = float(
-            _SPEED_GRID.centers[cutoff_index]
-            + (fraction_below_cutoff - 0.5) * _SPEED_GRID.spacing
+            _SPEED_GRID.centers[cutoff_index] + (fraction_below_cutoff - 0.5) * _SPEED_GRID.spacing
         )
 
         result = self._evaluate(cutoff_speed)
@@ -107,9 +106,7 @@ class VasyliunasSiscoeVdfTest(unittest.TestCase):
         np.testing.assert_allclose(result, expected, rtol=1e-12)
 
     @patch(f"{_VASYLIUNAS_SISCOE_MODULE}.DensityOfNeutralHeliumLookupTable.density")
-    def test_returns_the_uncut_filled_shell_when_the_cutoff_is_above_the_grid(
-        self, mock_density
-    ):
+    def test_returns_the_uncut_filled_shell_when_the_cutoff_is_above_the_grid(self, mock_density):
         mock_density.return_value = 1
         cutoff_speed = float(_SPEED_GRID.centers[-1] + _SPEED_GRID.spacing)
 

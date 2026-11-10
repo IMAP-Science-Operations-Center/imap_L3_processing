@@ -3,9 +3,9 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from imap_data_access.processing_input import (
+    AncillaryInput,
     ProcessingInputCollection,
     ScienceInput,
-    AncillaryInput,
 )
 
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor

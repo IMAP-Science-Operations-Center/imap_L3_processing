@@ -58,17 +58,13 @@ class NearestInterpolator:
         right_delta = np.abs(from_epoch_as_dt64[right_indices] - to_epoch_as_dt64)
         left_delta = np.abs(from_epoch_as_dt64[left_indices] - to_epoch_as_dt64)
 
-        self.best_indices = np.where(
-            right_delta < left_delta, right_indices, left_indices
-        )
+        self.best_indices = np.where(right_delta < left_delta, right_indices, left_indices)
 
         min_deltas = np.abs(from_epoch_as_dt64[self.best_indices] - to_epoch_as_dt64)
         self.min_outside_range = min_deltas > maximum_distance
 
     def interpolate_data(self) -> np.ndarray:
-        closest_data = self.only_valid_from_data[self.best_indices].astype(
-            float, copy=True
-        )
+        closest_data = self.only_valid_from_data[self.best_indices].astype(float, copy=True)
         closest_data[self.min_outside_range] = np.nan
         return closest_data
 

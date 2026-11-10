@@ -3,8 +3,8 @@ import unittest
 import numpy as np
 
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import (
-    SpinAngleLookup,
     PositionToElevationLookup,
+    SpinAngleLookup,
 )
 
 

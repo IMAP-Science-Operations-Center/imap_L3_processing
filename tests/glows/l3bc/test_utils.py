@@ -1,13 +1,12 @@
 import unittest
 from datetime import datetime
-from typing import Optional
 
 import numpy as np
 from imap_processing.spice.repoint import set_global_repoint_table_paths
 
 from imap_l3_processing.glows.l3bc.utils import (
-    get_pointing_date_range,
     get_best_ancillary,
+    get_pointing_date_range,
 )
 from tests.test_helpers import get_test_data_path
 
@@ -91,9 +90,7 @@ class TestUtils(unittest.TestCase):
                     start_date, end_date, available_ancillaries
                 )
 
-                self.assertEqual(
-                    expected_best_ancillary_file_name, actual_ancillary_name
-                )
+                self.assertEqual(expected_best_ancillary_file_name, actual_ancillary_name)
 
     def test_get_pointing_date_range(self):
         repointing_number = 13
@@ -137,7 +134,7 @@ def create_imap_data_access_json(
     start_date: str,
     descriptor: str = "hist",
     version: str = "v001",
-    repointing: Optional[int] = None,
+    repointing: int | None = None,
 ) -> dict:
     return {
         "file_path": file_path,

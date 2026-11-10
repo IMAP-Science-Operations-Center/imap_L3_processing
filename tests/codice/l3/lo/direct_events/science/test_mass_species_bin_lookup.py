@@ -23,9 +23,7 @@ class TestMassSpeciesBinLookup(unittest.TestCase):
         np.testing.assert_array_equal(
             mass_species_bin_lookup.mass_per_charge, expected_mass_per_charge
         )
-        np.testing.assert_array_equal(
-            mass_species_bin_lookup.mass_ranges, expected_mass_range
-        )
+        np.testing.assert_array_equal(mass_species_bin_lookup.mass_ranges, expected_mass_range)
 
     def test_get_species(self):
         lookup = MassSpeciesBinLookup(
@@ -52,6 +50,4 @@ class TestMassSpeciesBinLookup(unittest.TestCase):
         test_cases = [("hplus", 0), ("heplusplus", 1), ("oplus6", 2), ("heplus", 3)]
         for species, index in test_cases:
             with self.subTest(species):
-                self.assertEqual(
-                    index, mass_species_bin_lookup.get_species_index(species)
-                )
+                self.assertEqual(index, mass_species_bin_lookup.get_species_index(species))

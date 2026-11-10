@@ -1,15 +1,14 @@
 from datetime import datetime
-from typing import Optional
 
 import numpy as np
 import spiceypy
 
 from imap_l3_processing.maps.map_models import (
-    RectangularIntensityMapData,
+    GlowsL3eRectangularMapInputData,
+    InputRectangularPointingSet,
     IntensityMapData,
     RectangularCoords,
-    InputRectangularPointingSet,
-    GlowsL3eRectangularMapInputData,
+    RectangularIntensityMapData,
     RectangularSpectralIndexMapData,
     SpectralIndexMapData,
 )
@@ -29,9 +28,7 @@ def create_intensity_map_data(
     lon = lon if lon is not None else np.array([1.0])
     lat = lat if lat is not None else np.array([1.0])
     energy = energy if energy is not None else np.array([1.0])
-    energy_delta = (
-        energy_delta if energy_delta is not None else np.full((len(energy), 2), 1)
-    )
+    energy_delta = energy_delta if energy_delta is not None else np.full((len(energy), 2), 1)
     epoch = epoch if epoch is not None else np.ma.array([datetime.now()])
     epoch_delta = epoch_delta if epoch_delta is not None else np.ma.array([86400 * 1e9])
     flux = (
@@ -61,9 +58,7 @@ def create_intensity_map_data(
         latitude=lat,
         longitude=lon,
         exposure_factor=np.full_like(flux, 0),
-        obs_date=np.ma.array(
-            np.full(more_real_flux.shape, datetime(year=2010, month=1, day=1))
-        ),
+        obs_date=np.ma.array(np.full(more_real_flux.shape, datetime(year=2010, month=1, day=1))),
         obs_date_range=np.ma.array(np.full_like(more_real_flux, 0)),
         solid_angle=np.full_like(more_real_flux, 0),
         ena_intensity=flux,
@@ -90,9 +85,7 @@ def create_rectangular_intensity_map_data(
     lon = lon if lon is not None else np.array([1.0])
     lat = lat if lat is not None else np.array([1.0])
     energy = energy if energy is not None else np.array([1.0])
-    energy_delta = (
-        energy_delta if energy_delta is not None else np.full((len(energy), 2), 1)
-    )
+    energy_delta = energy_delta if energy_delta is not None else np.full((len(energy), 2), 1)
     epoch = epoch if epoch is not None else np.ma.array([datetime.now()])
     epoch_delta = epoch_delta if epoch_delta is not None else np.ma.array([86400 * 1e9])
     flux = (
@@ -160,9 +153,7 @@ def create_rectangular_intensity_map(
     intensity_map_data: IntensityMapData = None, coords: RectangularCoords = None
 ) -> RectangularIntensityMapData:
     intensity_map = (
-        intensity_map_data
-        if intensity_map_data is not None
-        else create_intensity_map_data()
+        intensity_map_data if intensity_map_data is not None else create_intensity_map_data()
     )
 
     if coords is None:
@@ -218,9 +209,7 @@ def create_rectangular_spectral_index_map_data(
     lon = lon if lon is not None else np.array([1.0])
     lat = lat if lat is not None else np.array([1.0])
     energy = energy if energy is not None else np.array([1.0])
-    energy_delta = (
-        energy_delta if energy_delta is not None else np.full((len(energy), 2), 1)
-    )
+    energy_delta = energy_delta if energy_delta is not None else np.full((len(energy), 2), 1)
     epoch = epoch if epoch is not None else np.ma.array([datetime.now()])
     epoch_delta = epoch_delta if epoch_delta is not None else np.ma.array([86400 * 1e9])
     spectral_index = (
@@ -276,15 +265,19 @@ def create_rectangular_spectral_index_map_data(
 
 def create_l1c_pset(
     epoch: datetime = datetime(2025, 4, 15, 12),
-    epoch_delta: np.ndarray = np.array([43200_000_000_000]),
+    epoch_delta: np.ndarray | None | tuple = (),
     repointing: int = 1,
-    energy_steps: np.ndarray = np.array([1]),
-    exposures: Optional[np.ndarray] = None,
+    energy_steps: np.ndarray | None = None,
+    exposures: np.ndarray | None = None,
     pointing_start_met=None,
     pointing_end_met=None,
     hae_longitude=None,
     hae_latitude=None,
 ) -> InputRectangularPointingSet:
+    if isinstance(epoch_delta, tuple) and epoch_delta == ():
+        epoch_delta = np.array([43200_000_000_000])
+    if energy_steps is None:
+        energy_steps = np.array([1])
     epoch_j2000 = np.array([spiceypy.datetime2et(epoch)]) * 1e9
     exposures = (
         exposures
@@ -315,11 +308,15 @@ def create_l1c_pset(
 def create_l3e_pset(
     epoch: datetime = datetime(2025, 4, 15, 12),
     repointing: int = 1,
-    energy_steps=np.array([0.5, 5.0, 12.0]),
-    spin_angle=np.arange(0, 360),
-    sp: Optional[np.array] = None,
-    flags: Optional[np.array] = None,
+    energy_steps: np.ndarray | None = None,
+    spin_angle: np.ndarray | None = None,
+    sp: np.ndarray | None = None,
+    flags: np.ndarray | None = None,
 ) -> GlowsL3eRectangularMapInputData:
+    if energy_steps is None:
+        energy_steps = np.array([0.5, 5.0, 12.0])
+    if spin_angle is None:
+        spin_angle = np.arange(0, 360)
     epoch_j2000 = np.array([spiceypy.datetime2et(epoch)]) * 1e9
     sp = sp or np.full(shape=(1, len(energy_steps), len(spin_angle)), fill_value=0.5)
     flags = flags or np.full(1, 0, dtype=np.uint16)

@@ -57,11 +57,7 @@ class TestGeometricFactorLookup(TestCase):
         expected_num_esa_steps = 128
         expected_num_positions = 24
 
-        path = (
-            get_test_data_folder()
-            / "codice"
-            / "imap_codice_l2-lo-gfactor_20251212_v003.csv"
-        )
+        path = get_test_data_folder() / "codice" / "imap_codice_l2-lo-gfactor_20251212_v003.csv"
         lookup = GeometricFactorLookup.read_from_csv(path)
 
         self.assertIsInstance(lookup, GeometricFactorLookup)
@@ -143,9 +139,7 @@ class TestGeometricFactorLookup(TestCase):
         ) in epoch_esa_step_index_pairs_and_expected_factors:
             np.testing.assert_array_equal(
                 actual[epoch, esa_step, :, :],
-                np.broadcast_to(
-                    expected_factors[esa_step], all_spin_sectors_and_positions
-                ),
+                np.broadcast_to(expected_factors[esa_step], all_spin_sectors_and_positions),
                 f"Mismatch at epoch:{epoch}, esa:{esa_step}",
             )
 
@@ -276,9 +270,7 @@ class TestGeometricFactorLookup(TestCase):
         ) in epoch_esa_step_index_pairs_and_expected_factors:
             np.testing.assert_array_equal(
                 actual[epoch, esa_step, :, :],
-                np.broadcast_to(
-                    expected_factors[esa_step], all_spin_sectors_and_positions
-                ),
+                np.broadcast_to(expected_factors[esa_step], all_spin_sectors_and_positions),
             )
 
     @patch(

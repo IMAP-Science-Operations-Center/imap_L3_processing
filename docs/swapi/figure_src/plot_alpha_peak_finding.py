@@ -34,6 +34,8 @@ import matplotlib.pyplot as plt
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
+from figure_utils import FIGURES_DIR, load_swapi_response
+
 from imap_l3_processing.constants import (
     ALPHA_MASS_PER_CHARGE_M_P_PER_E,
     ALPHA_PARTICLE_MASS_KG,
@@ -70,7 +72,6 @@ from imap_l3_processing.swapi.l3a.utils import (
 )
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 from imap_l3_processing.utils import SpiceKernelTypes
-from figure_utils import FIGURES_DIR, load_swapi_response
 
 DATE_YYYYMMDD = "20260101"
 N_SWEEPS = 5
@@ -126,9 +127,7 @@ def _furnish_spice_around(date_yyyymmdd: str) -> None:
     spk_start = target - timedelta(days=90)
 
     metakernel_url = (
-        urlparse(imap_data_access.config["DATA_ACCESS_URL"])
-        ._replace(path="metakernel")
-        .geturl()
+        urlparse(imap_data_access.config["DATA_ACCESS_URL"])._replace(path="metakernel").geturl()
     )
     j2000 = datetime(2000, 1, 1, 12)
 
@@ -176,23 +175,15 @@ def _read_5_sweep_block(
         epoch_ns = np.asarray(
             cdf.raw_var("epoch")[sweep_start : sweep_start + n_sweeps], dtype=np.int64
         )
-        cr = np.asarray(
-            cdf["swp_coin_rate"][sweep_start : sweep_start + n_sweeps, :], dtype=float
-        )
-        esa = np.asarray(
-            cdf["esa_energy"][sweep_start : sweep_start + n_sweeps, :], dtype=float
-        )
+        cr = np.asarray(cdf["swp_coin_rate"][sweep_start : sweep_start + n_sweeps, :], dtype=float)
+        esa = np.asarray(cdf["esa_energy"][sweep_start : sweep_start + n_sweeps, :], dtype=float)
     return epoch_ns, cr, esa
 
 
 def _coarse_measurement_times_ns(epoch_ns: np.ndarray) -> np.ndarray:
     coarse_bins = np.arange(SWAPI_COARSE_SWEEP_BINS.start, SWAPI_COARSE_SWEEP_BINS.stop)
-    seconds_into_sweep = (
-        coarse_bins * SWAPI_BIN_PERIOD_S + SWAPI_LIVETIME_CENTER_OFFSET_S
-    )
-    return (
-        epoch_ns[:, None] + seconds_into_sweep * ONE_SECOND_IN_NANOSECONDS
-    ).flatten()
+    seconds_into_sweep = coarse_bins * SWAPI_BIN_PERIOD_S + SWAPI_LIVETIME_CENTER_OFFSET_S
+    return (epoch_ns[:, None] + seconds_into_sweep * ONE_SECOND_IN_NANOSECONDS).flatten()
 
 
 # --------------------------------------------------------------------------- #
@@ -351,8 +342,7 @@ def _plot_case(ax, swapi_response, cdf_path, mag_data, chunk_index):
 def main():
     if not os.environ.get("IMAP_API_KEY"):
         raise SystemExit(
-            "IMAP_API_KEY environment variable is not set. "
-            "Export it before running this script."
+            "IMAP_API_KEY environment variable is not set. Export it before running this script."
         )
     print(f"Downloading L2 for {DATE_YYYYMMDD}…")
     cdf_path = _download_l2(DATE_YYYYMMDD)

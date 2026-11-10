@@ -1,17 +1,17 @@
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Any
+from typing import Any
 
-from imap_data_access.file_validation import ScienceFilePath, ImapFilePath
+from imap_data_access.file_validation import ImapFilePath, ScienceFilePath
 from spacepy.pycdf import CDF
 
 
 def convert_epoch_time(
     filename,
     target=datetime(2026, 10, 20, 12),
-    new_science_file_parts: Optional[dict[str, Any]] = None,
-) -> Optional[Path]:
+    new_science_file_parts: dict[str, Any] | None = None,
+) -> Path | None:
     file_path = Path(filename)
     new_science_file_parts = new_science_file_parts or {}
 

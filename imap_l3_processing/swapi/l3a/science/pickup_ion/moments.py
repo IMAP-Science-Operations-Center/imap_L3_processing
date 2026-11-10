@@ -49,9 +49,7 @@ def calculate_helium_pui_density(
             density_of_neutral_helium_lookup_table=density_of_neutral_helium_lookup_table,
         )
         integral = float(np.sum(speed_grid.spherical_shell_integration_weights * f_pui))
-        return (
-            4 * np.pi * integral / (CENTIMETERS_PER_METER * METERS_PER_KILOMETER) ** 3
-        )
+        return 4 * np.pi * integral / (CENTIMETERS_PER_METER * METERS_PER_KILOMETER) ** 3
 
     return calculate(ionization_rate, cutoff_speed)
 

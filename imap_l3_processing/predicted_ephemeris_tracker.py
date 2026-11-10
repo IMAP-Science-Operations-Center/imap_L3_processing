@@ -1,7 +1,8 @@
-from typing import Callable, ParamSpec, TypeVar
+from collections.abc import Callable
+from typing import ParamSpec, TypeVar
 
 from imap_data_access import SPICEFilePath
-from spiceypy import spiceypy, KernelPool, SpiceyError
+from spiceypy import KernelPool, SpiceyError, spiceypy
 
 
 class PredictedEphemerisTracker:

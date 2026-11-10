@@ -13,16 +13,12 @@ from imap_l3_processing.swapi.l3a.models import (
 )
 
 SOLAR_WIND_ENERGY_CDF_VAR_NAME = "combined_energy"
-SOLAR_WIND_COMBINED_ENERGY_DELTA_MINUS_CDF_VAR_NAME = (
-    "combined_energy_stat_uncert_minus"
-)
+SOLAR_WIND_COMBINED_ENERGY_DELTA_MINUS_CDF_VAR_NAME = "combined_energy_stat_uncert_minus"
 SOLAR_WIND_COMBINED_ENERGY_DELTA_PLUS_CDF_VAR_NAME = "combined_energy_stat_uncert_plus"
 SOLAR_WIND_ENERGY_LABEL_CDF_VAR_NAME = "combined_energy_label"
 
 COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_CDF_VAR_NAME = "combined_differential_flux"
-COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_DELTA_CDF_VAR_NAME = (
-    "combined_differential_flux_stat_uncert"
-)
+COMBINED_SOLAR_WIND_DIFFERENTIAL_FLUX_DELTA_CDF_VAR_NAME = "combined_differential_flux_stat_uncert"
 
 
 @dataclass
@@ -47,9 +43,7 @@ class SwapiL3BCombinedVDF(DataProduct):
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         energy_count = self.combined_energy.shape[-1]
-        energy_labels = numpy.char.mod(
-            "ESA %02d", np.arange(start=1, stop=energy_count + 1)
-        )
+        energy_labels = numpy.char.mod("ESA %02d", np.arange(start=1, stop=energy_count + 1))
         return [
             DataProductVariable(
                 EPOCH_CDF_VAR_NAME,

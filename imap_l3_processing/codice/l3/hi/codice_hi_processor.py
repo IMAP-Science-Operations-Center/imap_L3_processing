@@ -7,8 +7,10 @@ from imap_data_access.processing_input import ProcessingInputCollection
 from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3a_direct_events_dependencies import (
     CodiceHiL3aDirectEventsDependencies,
 )
-from imap_l3_processing.codice.l3.hi.models import CodiceHiL3PitchAngleDataProduct
-from imap_l3_processing.codice.l3.hi.models import CodiceL3HiDirectEvents
+from imap_l3_processing.codice.l3.hi.models import (
+    CodiceHiL3PitchAngleDataProduct,
+    CodiceL3HiDirectEvents,
+)
 from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies import (
     CodicePitchAngleDependencies,
 )
@@ -21,9 +23,9 @@ from imap_l3_processing.hit.l3.sectored_products.science.sectored_products_algor
 )
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.pitch_angles import (
-    calculate_unit_vector,
-    calculate_pitch_angle,
     calculate_gyrophase,
+    calculate_pitch_angle,
+    calculate_unit_vector,
     rebin_by_pitch_angle_and_gyrophase,
 )
 from imap_l3_processing.processor import Processor
@@ -31,9 +33,7 @@ from imap_l3_processing.utils import save_data
 
 
 class CodiceHiProcessor(Processor):
-    def __init__(
-        self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata
-    ):
+    def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
         super().__init__(dependencies, input_metadata)
 
     def process(self) -> list[Path]:
@@ -43,9 +43,7 @@ class CodiceHiProcessor(Processor):
             )
             data_product = self.process_l3a_direct_event(dependencies)
         elif self.input_metadata.data_level == "l3b":
-            dependencies = CodicePitchAngleDependencies.fetch_dependencies(
-                self.dependencies
-            )
+            dependencies = CodicePitchAngleDependencies.fetch_dependencies(self.dependencies)
             data_product = self.process_l3b(dependencies)
         else:
             raise NotImplementedError(
@@ -88,8 +86,7 @@ class CodiceHiProcessor(Processor):
 
                 incident_ion_energy[i, j, :npts] = l2_energy * correction_factors
                 estimated_mass[i, j, :npts] = (
-                    incident_ion_energy[i, j, :npts]
-                    / l2_data.energy_per_nuc[i, j, :npts]
+                    incident_ion_energy[i, j, :npts] / l2_data.energy_per_nuc[i, j, :npts]
                 )
 
         return CodiceL3HiDirectEvents(
@@ -120,22 +117,15 @@ class CodiceHiProcessor(Processor):
         sectored_intensities = dependencies.codice_sectored_intensities_data
         epochs = dependencies.codice_sectored_intensities_data.epoch
         h_energy_bins = dependencies.codice_sectored_intensities_data.energy_h.shape[0]
-        he3he4_energy_bins = (
-            dependencies.codice_sectored_intensities_data.energy_he3he4.shape[0]
-        )
-        cno_energy_bins = (
-            dependencies.codice_sectored_intensities_data.energy_cno.shape[0]
-        )
-        fe_energy_bins = dependencies.codice_sectored_intensities_data.energy_fe.shape[
-            0
-        ]
+        he3he4_energy_bins = dependencies.codice_sectored_intensities_data.energy_he3he4.shape[0]
+        cno_energy_bins = dependencies.codice_sectored_intensities_data.energy_cno.shape[0]
+        fe_energy_bins = dependencies.codice_sectored_intensities_data.energy_fe.shape[0]
         rebinned_mag_data = mag_data.rebin_to(
             sectored_intensities.epoch, sectored_intensities.epoch_delta_plus
         )
 
         spin_angles_in_dps_elevation_by_spin_angle = (
-            sectored_intensities.spin_angles.T
-            + CODICE_INSTRUMENT_TO_SC_FRAME_SPIN_ANGLE_OFFSET
+            sectored_intensities.spin_angles.T + CODICE_INSTRUMENT_TO_SC_FRAME_SPIN_ANGLE_OFFSET
         ) % 360
 
         mag_unit_vectors = calculate_unit_vector(rebinned_mag_data)
@@ -151,12 +141,10 @@ class CodiceHiProcessor(Processor):
         pitch_angle_delta_value = (180 / num_pitch_angle_bins) / 2
         gyrophase_delta_value = (360 / num_gyrophase_bins) / 2
         pitch_angle_bins = (
-            np.linspace(0, 180, num_pitch_angle_bins, endpoint=False)
-            + pitch_angle_delta_value
+            np.linspace(0, 180, num_pitch_angle_bins, endpoint=False) + pitch_angle_delta_value
         )
         gyrophase_bins = (
-            np.linspace(0, 360, num_gyrophase_bins, endpoint=False)
-            + gyrophase_delta_value
+            np.linspace(0, 360, num_gyrophase_bins, endpoint=False) + gyrophase_delta_value
         )
 
         h_pa_shape = (len(epochs), h_energy_bins, num_pitch_angle_bins)
@@ -222,11 +210,9 @@ class CodiceHiProcessor(Processor):
             pitch_angles = calculate_pitch_angle(
                 particle_unit_vectors, mag_unit_vectors[time_index]
             )
-            gyrophases = calculate_gyrophase(
-                particle_unit_vectors, mag_unit_vectors[time_index]
-            )
+            gyrophases = calculate_gyrophase(particle_unit_vectors, mag_unit_vectors[time_index])
 
-            for species, species_intensity in species_intensities.items():
+            for species_intensity in species_intensities.values():
                 intensity = species_intensity.l2_intensity[time_index]
 
                 intensities_delta_plus = np.full_like(intensity, 0)
@@ -249,9 +235,7 @@ class CodiceHiProcessor(Processor):
                     number_of_gyrophase_bins=num_gyrophase_bins,
                 )
 
-                species_intensity.intensity_by_pa[time_index] = (
-                    rebinned_intensities_by_pa
-                )
+                species_intensity.intensity_by_pa[time_index] = rebinned_intensities_by_pa
                 species_intensity.intensity_by_pa_and_gyro[time_index] = (
                     rebinned_intensities_by_pa_and_gyro
                 )
@@ -296,9 +280,7 @@ class CodiceHiProcessor(Processor):
         )
 
 
-def _create_pa_and_gyro_nan_arrays(
-    pitch_angle_shape, pitch_angle_and_gyrophase_shape
-) -> np.array:
+def _create_pa_and_gyro_nan_arrays(pitch_angle_shape, pitch_angle_and_gyrophase_shape) -> np.array:
     return np.full(pitch_angle_shape, fill_value=np.nan), np.full(
         pitch_angle_and_gyrophase_shape, fill_value=np.nan
     )

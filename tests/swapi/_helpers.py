@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 import numpy as np
 from spacepy import pycdf
@@ -15,7 +14,6 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindPara
 from imap_l3_processing.swapi.response.deadtime import deadtime_factor
 from imap_l3_processing.swapi.response.swapi_response import ResponseGrid, SwapiResponse
 from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path
-
 
 # Calibration CSVs shipped with the repo. Loading the full SwapiResponse from
 # these triggers the same code path the production pipeline uses.
@@ -34,7 +32,7 @@ SWAPI_EFFICIENCY_TABLE_PATH = get_test_data_path(
 
 
 def load_swapi_response(
-    warm_cache_voltages: Optional[np.ndarray] = None,
+    warm_cache_voltages: np.ndarray | None = None,
 ) -> SwapiResponse:
     """Build a `SwapiResponse` from the CSV files."""
     response = SwapiResponse.from_files(

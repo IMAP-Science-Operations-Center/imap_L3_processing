@@ -32,9 +32,7 @@ from tests.swapi._helpers import NOMINAL_TEST_EPOCH_TT2000, load_swapi_response
 from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path
 
 _REFERENCE_CSV_PATH = get_test_data_path("swapi/pui_count_rate_reference.csv")
-_DENSITY_LUT_PATH = get_test_instrument_team_data_path(
-    "swapi/density-of-neutral-helium-lut.dat"
-)
+_DENSITY_LUT_PATH = get_test_instrument_team_data_path("swapi/density-of-neutral-helium-lut.dat")
 
 # Must match scripts/swapi/pui_xarray_reference.py so the production kernel is
 # evaluated at the same point as the precomputed reference CSV.
@@ -69,9 +67,7 @@ class CalculateCoincidenceRateAgainstReferenceTest(unittest.TestCase):
         )
         bulk_sw_per_bin = np.broadcast_to(bulk_vec, (1, voltage_v.size, 3)).copy()
 
-        swapi_response = load_swapi_response(
-            warm_cache_voltages=voltage_v.astype(float)
-        )
+        swapi_response = load_swapi_response(warm_cache_voltages=voltage_v.astype(float))
         chunk_response = build_chunk_collapsed_response(
             swapi_response=swapi_response,
             voltages_v=voltage_v.astype(float),
@@ -94,9 +90,7 @@ class CalculateCoincidenceRateAgainstReferenceTest(unittest.TestCase):
         # rtol covers the deep-falloff collapse difference (production reads a
         # few percent low there); atol covers the low-rate tail where the two
         # quadratures' relative spread is large but absolute rates are tiny.
-        np.testing.assert_allclose(
-            production_rate_hz, reference_rate_hz, atol=0.1, rtol=0.03
-        )
+        np.testing.assert_allclose(production_rate_hz, reference_rate_hz, atol=0.1, rtol=0.03)
 
 
 if __name__ == "__main__":

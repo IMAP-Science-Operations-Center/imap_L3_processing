@@ -81,9 +81,7 @@ class CalculatePickupIonValuesNoiselessRecoveryTest(unittest.TestCase):
             bulk_sw_per_bin_kms=bulk_sw_per_bin_swapi_kms,
             time_as_tt2000=NOMINAL_TEST_EPOCH_TT2000,
             species=Species.HELIUM_PLUS,
-            cutoff_speed_max_kms=_SOLAR_WIND_SPEED_INERTIAL_KMS
-            * MAX_CUTOFF_SPEED_RATIO
-            * 1.1,
+            cutoff_speed_max_kms=_SOLAR_WIND_SPEED_INERTIAL_KMS * MAX_CUTOFF_SPEED_RATIO * 1.1,
         )
         noiseless_count_rates = (
             calculate_coincidence_rate(
@@ -126,9 +124,7 @@ class CalculatePickupIonValuesNoiselessRecoveryTest(unittest.TestCase):
             ),
         ]:
             with self.subTest(parameter=name):
-                self.assertAlmostEqual(
-                    fitted.nominal_value, truth, delta=truth * 1e-6, msg=name
-                )
+                self.assertAlmostEqual(fitted.nominal_value, truth, delta=truth * 1e-6, msg=name)
 
     def test_the_fit_is_accepted_and_every_reported_value_is_finite(self):
         self.assertEqual(int(self.fit_result.flags), int(SwapiL3Flags.NONE))
@@ -165,11 +161,7 @@ class PickupIonFitInputDataTest(unittest.TestCase):
             ),
             (
                 "count rates given on the full sweep instead of the coarse sweep",
-                {
-                    "coincidence_count_rates": np.zeros(
-                        (_N_SWEEPS, SWAPI_SWEEP_BIN_COUNT)
-                    )
-                },
+                {"coincidence_count_rates": np.zeros((_N_SWEEPS, SWAPI_SWEEP_BIN_COUNT))},
             ),
             (
                 "count rates holding a number of sweeps other than the 50 in a window",
@@ -177,11 +169,7 @@ class PickupIonFitInputDataTest(unittest.TestCase):
             ),
             (
                 "bulk velocities given on the full sweep instead of the coarse sweep",
-                {
-                    "bulk_sw_per_bin_swapi_kms": np.zeros(
-                        (_N_SWEEPS, SWAPI_SWEEP_BIN_COUNT, 3)
-                    )
-                },
+                {"bulk_sw_per_bin_swapi_kms": np.zeros((_N_SWEEPS, SWAPI_SWEEP_BIN_COUNT, 3))},
             ),
             (
                 "bulk velocities missing their component axis",
@@ -212,9 +200,7 @@ class PickupIonFitInputDataTest(unittest.TestCase):
 class CalculatePickupIonValuesFillTest(unittest.TestCase):
     """Tests for fill value logic in `calculate_pickup_ion_values`."""
 
-    MODULE_PATH = (
-        "imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_pickup_ion_values"
-    )
+    MODULE_PATH = "imap_l3_processing.swapi.l3a.science.pickup_ion.calculate_pickup_ion_values"
     ENERGY_PER_COARSE_STEP = np.linspace(100.0, 8000.0, _N_COARSE_BINS)
     ENERGY_RANGE_ADMITTING_EVERY_BIN = (0.0, 1.0e9)
     MODELED_RATES = np.full((_N_SWEEPS, _N_COARSE_BINS), 3.0)
@@ -264,9 +250,7 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
 
         with (
             patch(f"{module_path}.build_chunk_collapsed_response") as mock_build,
-            patch(
-                f"{module_path}.scipy.optimize.least_squares", return_value=fake_result
-            ),
+            patch(f"{module_path}.scipy.optimize.least_squares", return_value=fake_result),
             patch(
                 f"{module_path}.compute_hc3_parameter_covariance",
                 return_value=np.diag(log_parameter_variances),
@@ -279,15 +263,9 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
                 f"{module_path}.calculate_pickup_ion_fit_energy_range",
                 return_value=self.ENERGY_RANGE_ADMITTING_EVERY_BIN,
             ),
-            patch(
-                f"{module_path}.is_good_fit", return_value=fit_is_good
-            ) as mock_is_good_fit,
-            patch(
-                f"{module_path}.calculate_helium_pui_density"
-            ) as mock_calculate_density,
-            patch(
-                f"{module_path}.calculate_helium_pui_temperature"
-            ) as mock_calculate_temperature,
+            patch(f"{module_path}.is_good_fit", return_value=fit_is_good) as mock_is_good_fit,
+            patch(f"{module_path}.calculate_helium_pui_density") as mock_calculate_density,
+            patch(f"{module_path}.calculate_helium_pui_temperature") as mock_calculate_temperature,
         ):
             mock_build.return_value = MagicMock()
             fit_result = calculate_pickup_ion_values(
@@ -380,9 +358,7 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
         np.testing.assert_allclose(
             response_args["voltages_v"], self.ENERGY_PER_COARSE_STEP / SWAPI_L2_K_FACTOR
         )
-        np.testing.assert_allclose(
-            response_args["bulk_sw_per_bin_kms"], bulk_sw_per_bin_swapi_kms
-        )
+        np.testing.assert_allclose(response_args["bulk_sw_per_bin_kms"], bulk_sw_per_bin_swapi_kms)
         np.testing.assert_allclose(
             run.is_good_fit_mock.call_args.kwargs["observed_rates"],
             np.tile(count_rates_per_step, (_N_SWEEPS, 1)),
@@ -412,9 +388,7 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
         np.testing.assert_allclose(modeled_params["cutoff_speed"], 450.0)
 
         goodness_of_fit_args = run.is_good_fit_mock.call_args.kwargs
-        np.testing.assert_array_equal(
-            goodness_of_fit_args["model_rates"], self.MODELED_RATES
-        )
+        np.testing.assert_array_equal(goodness_of_fit_args["model_rates"], self.MODELED_RATES)
         np.testing.assert_allclose(goodness_of_fit_args["cutoff_speed_kms"], 450.0)
         np.testing.assert_allclose(goodness_of_fit_args["ionization_rate"], 1e-7)
         np.testing.assert_allclose(
@@ -448,9 +422,7 @@ class CalculatePickupIonValuesFillTest(unittest.TestCase):
         run = self._run_calculate_with_mocked_fit(nominal=self._good_nominal())
 
         self.assertIs(run.fit_result.density, run.calculate_density_mock.return_value)
-        self.assertIs(
-            run.fit_result.temperature, run.calculate_temperature_mock.return_value
-        )
+        self.assertIs(run.fit_result.temperature, run.calculate_temperature_mock.return_value)
 
     def test_solar_wind_speed_in_the_sun_frame_is_the_rtn_vector_sum(self):
         """The model is defined against the Sun-frame solar wind speed, which is
@@ -516,16 +488,12 @@ class CalculatePickupIonFitEnergyRangeTest(unittest.TestCase):
             with self.subTest(case=label):
                 bulk_speed = solar_wind_bulk_speed_kms * units.km / units.s
                 proton_energy_per_charge_volts = (
-                    (0.5 * constants.m_p * bulk_speed**2 / constants.e.si)
-                    .to(units.V)
-                    .value
+                    (0.5 * constants.m_p * bulk_speed**2 / constants.e.si).to(units.V).value
                 )
                 nominal_alpha_peak = 2 * proton_energy_per_charge_volts
                 nominal_pickup_ion_cutoff = 16 * proton_energy_per_charge_volts
                 expected_upper_edge = nominal_pickup_ion_cutoff
-                expected_lower_edge = np.sqrt(
-                    nominal_alpha_peak * nominal_pickup_ion_cutoff
-                )
+                expected_lower_edge = np.sqrt(nominal_alpha_peak * nominal_pickup_ion_cutoff)
 
                 lower_edge, upper_edge = calculate_pickup_ion_fit_energy_range(
                     solar_wind_bulk_speed_kms
@@ -548,9 +516,7 @@ class CalculatePickupIonFitEnergyRangeTest(unittest.TestCase):
         """Doubling the bulk speed quadruples both window edges, since the edges
         are fixed multiples of a kinetic energy."""
         lower_edge, upper_edge = calculate_pickup_ion_fit_energy_range(350.0)
-        doubled_lower_edge, doubled_upper_edge = calculate_pickup_ion_fit_energy_range(
-            700.0
-        )
+        doubled_lower_edge, doubled_upper_edge = calculate_pickup_ion_fit_energy_range(700.0)
 
         self.assertAlmostEqual(doubled_lower_edge / lower_edge, 4.0)
         self.assertAlmostEqual(doubled_upper_edge / upper_edge, 4.0)

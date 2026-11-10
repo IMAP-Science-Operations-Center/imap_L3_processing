@@ -1,9 +1,9 @@
 import dataclasses
+import math
 import unittest
 from datetime import datetime
-from unittest.mock import patch, call, sentinel, create_autospec
+from unittest.mock import call, create_autospec, patch, sentinel
 
-import math
 import numpy as np
 import spiceypy
 from spiceypy import SpiceyError
@@ -11,29 +11,28 @@ from spiceypy import SpiceyError
 from imap_l3_processing.predicted_ephemeris_tracker import PredictedEphemerisTracker
 from imap_l3_processing.swe.l3.science import moment_calculations
 from imap_l3_processing.swe.l3.science.moment_calculations import (
-    compute_maxwellian_weight_factors,
-    filter_and_flatten_regress_parameters,
-    regress,
-    calculate_fit_temperature_density_velocity,
-    rotate_temperature,
-    apply_rotation_matrix,
-    Moments,
-    halotrunc,
-    compute_density_scale,
-    core_fit_moments_retrying_on_failure,
-    halo_fit_moments_retrying_on_failure,
-    scale_halo_density,
-    rotate_vector_to_rtn_spherical_coordinates,
-    calculate_primary_eigenvector,
-    rotation_matrix_builder,
-    rotate_temperature_tensor_to_mag,
     MomentFitResults,
+    Moments,
+    apply_rotation_matrix,
+    calculate_fit_temperature_density_velocity,
+    calculate_primary_eigenvector,
+    compute_density_scale,
+    compute_maxwellian_weight_factors,
+    core_fit_moments_retrying_on_failure,
+    filter_and_flatten_regress_parameters,
+    halo_fit_moments_retrying_on_failure,
+    halotrunc,
+    regress,
     rotate_rtn_vectors_to_dps,
+    rotate_temperature,
+    rotate_temperature_tensor_to_mag,
+    rotate_vector_to_rtn_spherical_coordinates,
+    rotation_matrix_builder,
+    scale_halo_density,
 )
-from tests.test_helpers import create_dataclass_mock
-from tests.test_helpers import get_test_data_path
-from imap_l3_processing.swe.swe_processor import check_temperature_outlier_flag
 from imap_l3_processing.swe.quality_flags import SweL3Flags
+from imap_l3_processing.swe.swe_processor import check_temperature_outlier_flag
+from tests.test_helpers import create_dataclass_mock, get_test_data_path
 
 MODULE = "imap_l3_processing.swe.l3.science.moment_calculations"
 
@@ -54,16 +53,12 @@ class TestMomentsCalculation(unittest.TestCase):
         density_history = np.array([100, 89, 72])
 
         negative_density_value = -1
-        density_greater_than_rolling_average_of_history = (
-            np.average(density_history) * 1.35 + 1
-        )
+        density_greater_than_rolling_average_of_history = np.average(density_history) * 1.35 + 1
 
         valid_density = 13
         moments_1 = create_dataclass_mock(Moments, density=sentinel.density1)
         moments_2 = create_dataclass_mock(Moments, density=sentinel.density2)
-        moments_3_with_valid_density = create_dataclass_mock(
-            Moments, density=sentinel.density3
-        )
+        moments_3_with_valid_density = create_dataclass_mock(Moments, density=sentinel.density3)
         mock_calculate_fit_temp_dens_velocity.side_effect = [
             moments_1,
             moments_2,
@@ -207,14 +202,10 @@ class TestMomentsCalculation(unittest.TestCase):
         density_history = np.array([100, 89, 72])
 
         negative_density_value = -1
-        density_greater_than_rolling_average_of_history = (
-            np.average(density_history) * 1.85 + 1
-        )
+        density_greater_than_rolling_average_of_history = np.average(density_history) * 1.85 + 1
 
         valid_density = 13
-        moments_with_valid_density = create_dataclass_mock(
-            Moments, density=valid_density
-        )
+        moments_with_valid_density = create_dataclass_mock(Moments, density=valid_density)
         mock_calculate_fit_temp_dens_velocity.side_effect = [
             create_dataclass_mock(Moments, density=negative_density_value),
             create_dataclass_mock(
@@ -507,9 +498,7 @@ class TestMomentsCalculation(unittest.TestCase):
         counts = np.array([[[536.0, 20000, 536.0], [1.2, 3072.0000001359296, 1.2]]])
         acquisition_duration = np.array([[80000.0, 40000.0]])
         count_rates = counts / acquisition_duration[:, :, np.newaxis]
-        weight_factors = compute_maxwellian_weight_factors(
-            count_rates, acquisition_duration
-        )
+        weight_factors = compute_maxwellian_weight_factors(count_rates, acquisition_duration)
 
         first_weight = np.sqrt(21.25 + 536) / 536
         second_weight = np.sqrt(87381.25 + 20000.0) / 20000
@@ -537,9 +526,7 @@ class TestMomentsCalculation(unittest.TestCase):
         weights = np.loadtxt(
             get_test_data_path("swe/fake_weights.csv"), delimiter=",", dtype=np.float64
         )
-        yreg = np.loadtxt(
-            get_test_data_path("swe/fake_yreg.csv"), delimiter=",", dtype=np.float64
-        )
+        yreg = np.loadtxt(get_test_data_path("swe/fake_yreg.csv"), delimiter=",", dtype=np.float64)
 
         regression_values, chisq = regress(velocity_vectors, weights, yreg)
 
@@ -579,9 +566,7 @@ class TestMomentsCalculation(unittest.TestCase):
             ],
             dtype=np.float64,
         )
-        moments = calculate_fit_temperature_density_velocity(
-            regress_output_of_full_fake_data
-        )
+        moments = calculate_fit_temperature_density_velocity(regress_output_of_full_fake_data)
 
         self.assertAlmostEqual(1.958299, moments.alpha, places=5)
         self.assertAlmostEqual(1.729684, moments.beta, places=5)
@@ -640,9 +625,7 @@ class TestMomentsCalculation(unittest.TestCase):
             vectors, [[3, 0, 0], [4, 0, 0], [10, 0, 0], [10, 0, 0], [0, 0, 0]]
         )
         np.testing.assert_array_equal(actual_weights, [3, 1e-36, 10, 11, 12])
-        np.testing.assert_array_equal(
-            yreg, [np.log(3), -80.6, np.log(10), np.log(11), np.log(12)]
-        )
+        np.testing.assert_array_equal(yreg, [np.log(3), -80.6, np.log(10), np.log(11), np.log(12)])
 
     def test_rotate_dps_vector_to_rtn(self):
         dsp_vector = np.array([0, 1, 0])
@@ -667,13 +650,9 @@ class TestMomentsCalculation(unittest.TestCase):
         rotation_matrix = np.array([[0, 0, 1], [1, 0, 0], [0, 1, 0]])
         mock_pxform.return_value = rotation_matrix
 
-        actual_rotation_matrix = moment_calculations.get_dps_to_rtn_rotation_matrix(
-            epoch
-        )
+        actual_rotation_matrix = moment_calculations.get_dps_to_rtn_rotation_matrix(epoch)
         mock_datetime2et.assert_called_once_with(epoch)
-        mock_pxform.assert_called_once_with(
-            "IMAP_DPS", "IMAP_RTN", mock_datetime2et.return_value
-        )
+        mock_pxform.assert_called_once_with("IMAP_DPS", "IMAP_RTN", mock_datetime2et.return_value)
         np.testing.assert_array_equal(actual_rotation_matrix, rotation_matrix)
 
     @patch(f"{MODULE}.spiceypy.pxform")
@@ -690,9 +669,7 @@ class TestMomentsCalculation(unittest.TestCase):
             moment_calculations.get_dps_to_rtn_rotation_matrix(epoch)
 
         mock_datetime2et.assert_called_once_with(epoch)
-        mock_pxform.assert_called_once_with(
-            "IMAP_DPS", "IMAP_RTN", mock_datetime2et.return_value
-        )
+        mock_pxform.assert_called_once_with("IMAP_DPS", "IMAP_RTN", mock_datetime2et.return_value)
 
     def test_rotate_temperature(self):
         temperature_alpha = math.pi / 4
@@ -714,9 +691,7 @@ class TestMomentsCalculation(unittest.TestCase):
                 np.array(
                     [
                         np.asin(expected_rtn_temperature[2]),
-                        np.atan2(
-                            expected_rtn_temperature[1], expected_rtn_temperature[0]
-                        ),
+                        np.atan2(expected_rtn_temperature[1], expected_rtn_temperature[0]),
                     ]
                 ),
             ),
@@ -754,9 +729,7 @@ class TestMomentsCalculation(unittest.TestCase):
                     core_halo_break - spacecraft_potential, speed, temperature
                 )
 
-                self.assertAlmostEqual(
-                    expected_density_scale, dscale, delta=allowable_difference
-                )
+                self.assertAlmostEqual(expected_density_scale, dscale, delta=allowable_difference)
 
     def test_halotrunc(self):
         density = 130
@@ -840,9 +813,7 @@ class TestMomentsCalculation(unittest.TestCase):
                     moments, t_parallel=t_parallel, t_perpendicular=t_perpendicular
                 )
 
-                scaled_density = halotrunc(
-                    moments, core_halo_breakpoint, spacecraft_potential
-                )
+                scaled_density = halotrunc(moments, core_halo_breakpoint, spacecraft_potential)
 
                 self.assertAlmostEqual(expected_density, scaled_density, places=3)
 
@@ -860,9 +831,9 @@ class TestMomentsCalculation(unittest.TestCase):
         ).reshape(20, 7, 30)
         phase_space_density_expected_shape = np.moveaxis(phase_space_density, 2, 1)
 
-        energy = np.loadtxt(
-            get_test_data_path("swe/energies.csv"), delimiter=","
-        ).reshape(20, 7, 30)[:, 0, 0]
+        energy = np.loadtxt(get_test_data_path("swe/energies.csv"), delimiter=",").reshape(
+            20, 7, 30
+        )[:, 0, 0]
 
         sintheta = np.array(
             [
@@ -912,9 +883,7 @@ class TestMomentsCalculation(unittest.TestCase):
         np.testing.assert_allclose(
             np.array([-1053.53, 327.55, 1919.34]), integrate_outputs.velocity, rtol=1e-4
         )
-        np.testing.assert_allclose(
-            np.array(-10.7911), integrate_outputs.base_energy, rtol=1e-4
-        )
+        np.testing.assert_allclose(np.array(-10.7911), integrate_outputs.base_energy, rtol=1e-4)
         np.testing.assert_allclose(
             np.array([48.1855, -1.06466, 62.4149, -1.06081, -37.8901, -8.58049]),
             integrate_outputs.temperature,
@@ -940,9 +909,9 @@ class TestMomentsCalculation(unittest.TestCase):
         ).reshape(20, 7, 30)
         phase_space_density_expected_shape = np.moveaxis(phase_space_density, 2, 1)
 
-        energy = np.loadtxt(
-            get_test_data_path("swe/energies.csv"), delimiter=","
-        ).reshape(20, 7, 30)[:, 0, 0]
+        energy = np.loadtxt(get_test_data_path("swe/energies.csv"), delimiter=",").reshape(
+            20, 7, 30
+        )[:, 0, 0]
 
         sintheta = np.array(
             [
@@ -995,9 +964,9 @@ class TestMomentsCalculation(unittest.TestCase):
         inst_az_data_energy_spin = inst_az_data[:, 0, :]
         phase_space_density_energy_spin_cem = np.moveaxis(phase_space_density, 2, 1)
 
-        energy = np.loadtxt(
-            get_test_data_path("swe/energies.csv"), delimiter=","
-        ).reshape(20, 7, 30)[:, 0, 0]
+        energy = np.loadtxt(get_test_data_path("swe/energies.csv"), delimiter=",").reshape(
+            20, 7, 30
+        )[:, 0, 0]
 
         artificial_all_positive_sintheta = np.array(
             [
@@ -1042,13 +1011,9 @@ class TestMomentsCalculation(unittest.TestCase):
             rtol=1e-4,
         )
 
+        np.testing.assert_allclose(np.array(-10.7911), integrate_outputs.base_energy, rtol=1e-4)
         np.testing.assert_allclose(
-            np.array(-10.7911), integrate_outputs.base_energy, rtol=1e-4
-        )
-        np.testing.assert_allclose(
-            np.array(
-                [5.13448e13, 1.0269e14, 1.54034e14, 2.05379e14, 2.56724e14, 3.08069e14]
-            ),
+            np.array([5.13448e13, 1.0269e14, 1.54034e14, 2.05379e14, 2.56724e14, 3.08069e14]),
             integrate_outputs.temperature,
             rtol=2e-4,
         )
@@ -1173,9 +1138,7 @@ class TestMomentsCalculation(unittest.TestCase):
             core_density_output.cdelt,
             rtol=5e-5,
         )
-        np.testing.assert_allclose(
-            5718525.41685336, core_density_output.density, rtol=1e-5
-        )
+        np.testing.assert_allclose(5718525.41685336, core_density_output.density, rtol=1e-5)
         np.testing.assert_allclose(
             np.array(
                 [
@@ -1499,9 +1462,7 @@ class TestMomentsCalculation(unittest.TestCase):
             rtol=1e-5,
         )
         np.testing.assert_allclose(
-            np.array(
-                [-67.071986, 60.433456, -14.211044, 129.49805, 161.93695, 72.622535]
-            ),
+            np.array([-67.071986, 60.433456, -14.211044, 129.49805, 161.93695, 72.622535]),
             scaled_density.temperature,
             rtol=3e-5,
         )
@@ -1874,9 +1835,7 @@ class TestMomentsCalculation(unittest.TestCase):
             pred_tracker_3,
         ]
 
-        epochs = np.array(
-            [datetime(2020, 1, 1), datetime(2020, 1, 2), datetime(2020, 1, 3)]
-        )
+        epochs = np.array([datetime(2020, 1, 1), datetime(2020, 1, 2), datetime(2020, 1, 3)])
         rtn_vectors = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
         mock_datetime2et.side_effect = (sentinel.et_1, sentinel.et_2, sentinel.et_3)
 
@@ -1898,9 +1857,7 @@ class TestMomentsCalculation(unittest.TestCase):
             mock_pxform, "IMAP_RTN", "IMAP_DPS", sentinel.et_3
         )
 
-        expected_dps_vectors = np.array(
-            [[2, 4, 6], [12, 15, 18], [np.nan, np.nan, np.nan]]
-        )
+        expected_dps_vectors = np.array([[2, 4, 6], [12, 15, 18], [np.nan, np.nan, np.nan]])
 
         np.testing.assert_array_equal(dps_vectors, expected_dps_vectors)
         np.testing.assert_array_equal(used_predict, [False, True, False])

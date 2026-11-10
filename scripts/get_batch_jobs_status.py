@@ -66,9 +66,7 @@ headers = {"x-api-key": os.getenv("IMAP_API_KEY")}
 
 if "log_id" not in vars(args):
     query_params = {
-        key: val
-        for key, val in vars(args).items()
-        if val is not None and key not in ["command"]
+        key: val for key, val in vars(args).items() if val is not None and key not in ["command"]
     }
     response = requests.get(
         url=f"{imap_dev_url}/processing-jobs", headers=headers, params=query_params
@@ -92,9 +90,7 @@ if "log_id" not in vars(args):
             "job_log_stream_id",
         ]
 
-        records.append(
-            {key: val for key, val in processing_job.items() if key in relevant_fields}
-        )
+        records.append({key: val for key, val in processing_job.items() if key in relevant_fields})
 
     pd.set_option("display.max_colwidth", None)
     if len(records) > 0:
@@ -106,7 +102,5 @@ if "log_id" not in vars(args):
     else:
         print("Found no jobs that matched query params!")
 else:
-    logs = requests.get(
-        url=f"{imap_dev_url}/processing-logs/{args.log_id}", headers=headers
-    )
+    logs = requests.get(url=f"{imap_dev_url}/processing-logs/{args.log_id}", headers=headers)
     print(logs.text)

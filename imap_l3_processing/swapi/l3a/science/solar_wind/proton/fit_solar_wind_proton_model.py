@@ -13,11 +13,11 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     LOG_TEMPERATURE_IDX,
     VELOCITY_SLICE,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.escape_local_minimum import (
-    escape_local_minimum,
-)
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.calculate_initial_guess import (
     calculate_initial_guess,
+)
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.escape_local_minimum import (
+    escape_local_minimum,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.optimize_solar_wind_proton_params import (
     OptimizeSolarWindProtonParamsResult,
@@ -29,7 +29,6 @@ from imap_l3_processing.swapi.l3a.science.uncertainties import (
     r_squared,
 )
 from imap_l3_processing.swapi.quality_flags import SwapiL3Flags
-
 
 _R_SQUARED_PEAK_HALF_WIDTH = 4
 
@@ -59,9 +58,7 @@ def _construct_fit_result(final_result, ctx):
     if not final_result.success:
         return _nan_proton_fit_result(int(SwapiL3Flags.FIT_ERROR))
 
-    fit_r_squared = _coarse_peak_averaged_r_squared(
-        final_result.residuals, ctx.count_rate
-    )
+    fit_r_squared = _coarse_peak_averaged_r_squared(final_result.residuals, ctx.count_rate)
     flag_bad = fit_r_squared < 0.9 or final_result.sw_params.temperature > 5.0e5
     if flag_bad:
         return _nan_proton_fit_result(int(SwapiL3Flags.BAD_FIT))
@@ -115,20 +112,14 @@ def _derive_uncertainties(
     result: OptimizeSolarWindProtonParamsResult,
     ctx: SolarWindFitContext,
 ) -> tuple[float, float, ndarray]:
-    parameter_covariance = compute_hc3_parameter_covariance(
-        result.jacobian, result.residuals
-    )
+    parameter_covariance = compute_hc3_parameter_covariance(result.jacobian, result.residuals)
     if not np.all(np.isfinite(parameter_covariance)):
         return np.nan, np.nan, np.full((3, 3), np.nan)
 
     log_density_variance = parameter_covariance[LOG_DENSITY_IDX, LOG_DENSITY_IDX]
-    log_temperature_variance = parameter_covariance[
-        LOG_TEMPERATURE_IDX, LOG_TEMPERATURE_IDX
-    ]
+    log_temperature_variance = parameter_covariance[LOG_TEMPERATURE_IDX, LOG_TEMPERATURE_IDX]
 
-    density_error = float(
-        result.sw_params.density * np.sqrt(max(log_density_variance, 0.0))
-    )
+    density_error = float(result.sw_params.density * np.sqrt(max(log_density_variance, 0.0)))
     temperature_error = float(
         result.sw_params.temperature * np.sqrt(max(log_temperature_variance, 0.0))
     )

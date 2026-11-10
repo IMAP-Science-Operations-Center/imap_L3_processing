@@ -104,15 +104,9 @@ class TestEfficiencyCalibrationTable(unittest.TestCase):
         )
         efficiency_table = EfficiencyCalibrationTable(calibration_table_path)
 
-        time_as_float = float(
-            pycdf.lib.datetime_to_tt2000(datetime(year=2001, month=2, day=1))
-        )
-        self.assertEqual(
-            efficiency_table.relative_efficiency(time_as_float, Species.ALPHA), 0.9
-        )
-        self.assertEqual(
-            efficiency_table.relative_efficiency(time_as_float, Species.PROTON), 0.1
-        )
+        time_as_float = float(pycdf.lib.datetime_to_tt2000(datetime(year=2001, month=2, day=1)))
+        self.assertEqual(efficiency_table.relative_efficiency(time_as_float, Species.ALPHA), 0.9)
+        self.assertEqual(efficiency_table.relative_efficiency(time_as_float, Species.PROTON), 0.1)
 
     def test_raises_exception_if_ask_for_time_before_the_table_starts(self):
         """A time earlier than every row raises rather than falling back to the first row."""
@@ -127,9 +121,7 @@ class TestEfficiencyCalibrationTable(unittest.TestCase):
                 pycdf.lib.datetime_to_tt2000(time), Species.PROTON
             )
 
-        self.assertEqual(
-            (f"No efficiency data for {time}",), content_manager.exception.args
-        )
+        self.assertEqual((f"No efficiency data for {time}",), content_manager.exception.args)
 
     def test_loads_calibration_table_with_single_row(self):
         """A one-row table still parses and serves both species for any later time."""
@@ -140,12 +132,6 @@ class TestEfficiencyCalibrationTable(unittest.TestCase):
 
         # file has one row, with 0.1 for H, 0.9 for He.
 
-        time_after_row = pycdf.lib.datetime_to_tt2000(
-            datetime(year=2001, month=2, day=1)
-        )
-        self.assertEqual(
-            efficiency_table.relative_efficiency(time_after_row, Species.PROTON), 0.1
-        )
-        self.assertEqual(
-            efficiency_table.relative_efficiency(time_after_row, Species.ALPHA), 0.9
-        )
+        time_after_row = pycdf.lib.datetime_to_tt2000(datetime(year=2001, month=2, day=1))
+        self.assertEqual(efficiency_table.relative_efficiency(time_after_row, Species.PROTON), 0.1)
+        self.assertEqual(efficiency_table.relative_efficiency(time_after_row, Species.ALPHA), 0.9)

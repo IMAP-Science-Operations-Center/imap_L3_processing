@@ -7,9 +7,7 @@ from tests.test_helpers import get_test_data_path
 class TestInflowVector(unittest.TestCase):
     def test_from_file(self):
         vector = InflowVector.from_file(
-            get_test_data_path(
-                "swapi/imap_swapi_hydrogen-inflow-vector_20100101_v001.dat"
-            )
+            get_test_data_path("swapi/imap_swapi_hydrogen-inflow-vector_20100101_v001.dat")
         )
         self.assertIsInstance(vector, InflowVector)
         self.assertEqual(22, vector.speed_km_per_s)

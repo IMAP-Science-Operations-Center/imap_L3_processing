@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch, call, sentinel, Mock, create_autospec
+from unittest.mock import Mock, call, create_autospec, patch, sentinel
 
 import numpy as np
 from imap_data_access import RepointInput
@@ -9,12 +9,12 @@ from imap_data_access.file_validation import Version
 
 from imap_l3_processing.glows.descriptors import (
     GLOWS_L3BCDE_DESCRIPTORS,
+    GLOWS_L3E_DESCRIPTORS,
     GLOWS_L3E_HI_45_DESCRIPTOR,
     GLOWS_L3E_HI_90_DESCRIPTOR,
     GLOWS_L3E_LO_DESCRIPTOR,
-    GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
     GLOWS_L3E_ULTRA_HF_DESCRIPTOR,
-    GLOWS_L3E_DESCRIPTORS,
+    GLOWS_L3E_ULTRA_SF_DESCRIPTOR,
 )
 from imap_l3_processing.glows.l3d.models import GlowsL3DProcessorOutput
 from imap_l3_processing.glows.l3e.glows_l3e_initializer import (
@@ -61,19 +61,13 @@ class TestGlowsL3EInitializer(unittest.TestCase):
         )
 
         mock_get_most_recently_uploaded_ancillary.side_effect = [
-            create_mock_query_results(
-                ["imap_glows_pipeline-settings-l3bcde_20200101_v000.cdf"]
-            )[0],
-            create_mock_query_results(["imap_glows_energy-grid-lo_20200101_v000.cdf"])[
+            create_mock_query_results(["imap_glows_pipeline-settings-l3bcde_20200101_v000.cdf"])[
                 0
             ],
+            create_mock_query_results(["imap_glows_energy-grid-lo_20200101_v000.cdf"])[0],
             create_mock_query_results(["imap_glows_tess-xyz-8_20200101_v000.cdf"])[0],
-            create_mock_query_results(["imap_glows_energy-grid-hi_20200101_v000.cdf"])[
-                0
-            ],
-            create_mock_query_results(
-                ["imap_glows_energy-grid-ultra_20200101_v000.cdf"]
-            )[0],
+            create_mock_query_results(["imap_glows_energy-grid-hi_20200101_v000.cdf"])[0],
+            create_mock_query_results(["imap_glows_energy-grid-ultra_20200101_v000.cdf"])[0],
             create_mock_query_results(["imap_glows_tess-ang-16_20200101_v000.cdf"])[0],
         ]
 
@@ -84,12 +78,8 @@ class TestGlowsL3EInitializer(unittest.TestCase):
             mock_spice_without_predict,
         )
 
-        updated_l3d = Path(
-            "path/to/imap_glows_l3d_solar-hist_19470303-cr02091_v000.cdf"
-        )
-        updated_l3d_text_file_path = Path(
-            "imap_glows_e-dens_19470303_20100101_v000.dat"
-        )
+        updated_l3d = Path("path/to/imap_glows_l3d_solar-hist_19470303-cr02091_v000.cdf")
+        updated_l3d_text_file_path = Path("imap_glows_e-dens_19470303_20100101_v000.dat")
         glows_l3d_processor_output = GlowsL3DProcessorOutput(
             updated_l3d, [updated_l3d_text_file_path], sentinel.last_processed_cr
         )
@@ -98,9 +88,7 @@ class TestGlowsL3EInitializer(unittest.TestCase):
         mock_find_first_updated_cr.return_value = 2091
 
         mock_l3e_dependencies = mock_fetch_dependencies.return_value
-        mock_l3e_dependencies.pipeline_settings = {
-            "start_cr": sentinel.start_of_mission_cr
-        }
+        mock_l3e_dependencies.pipeline_settings = {"start_cr": sentinel.start_of_mission_cr}
         mock_l3e_dependencies.repointing_file = Path("path/to/repointing_file")
 
         expected_hi_45 = {1234: Version(None, 1), 2468: Version(None, 1)}
@@ -163,13 +151,9 @@ class TestGlowsL3EInitializer(unittest.TestCase):
                     instrument="glows",
                     descriptor="pipeline-settings-l3bcde",
                 ),
-                call(
-                    table="ancillary", instrument="glows", descriptor="energy-grid-lo"
-                ),
+                call(table="ancillary", instrument="glows", descriptor="energy-grid-lo"),
                 call(table="ancillary", instrument="glows", descriptor="tess-xyz-8"),
-                call(
-                    table="ancillary", instrument="glows", descriptor="energy-grid-hi"
-                ),
+                call(table="ancillary", instrument="glows", descriptor="energy-grid-hi"),
                 call(
                     table="ancillary",
                     instrument="glows",
@@ -202,9 +186,7 @@ class TestGlowsL3EInitializer(unittest.TestCase):
             pipeline_l3e_input_filenames,
         )
 
-        [repoint_input] = actual_l3e_inputs.get_file_paths(
-            data_type=RepointInput.data_type
-        )
+        [repoint_input] = actual_l3e_inputs.get_file_paths(data_type=RepointInput.data_type)
         self.assertEqual("imap_2026_105_01.repoint.csv", repoint_input.name)
 
         self.assertEqual(actual_initializer_output, expected_initializer_data)
@@ -229,12 +211,8 @@ class TestGlowsL3EInitializer(unittest.TestCase):
         mock_imap_data_access,
         mock_get_most_recently_uploaded_ancillary,
     ):
-        updated_l3d = Path(
-            "path/to/imap_glows_l3d_solar-hist_19470303-cr02091_v000.cdf"
-        )
-        updated_l3d_text_file_path = Path(
-            "imap_glows_e-dens_19470303_20100101_v000.dat"
-        )
+        updated_l3d = Path("path/to/imap_glows_l3d_solar-hist_19470303-cr02091_v000.cdf")
+        updated_l3d_text_file_path = Path("imap_glows_e-dens_19470303_20100101_v000.dat")
         expected_last_cr = 2091
         glows_l3d_processor_output = GlowsL3DProcessorOutput(
             updated_l3d, [updated_l3d_text_file_path], expected_last_cr
@@ -242,34 +220,24 @@ class TestGlowsL3EInitializer(unittest.TestCase):
         previous_l3d = "imap_glows_l3d_solar-hist_19470303-cr02091_v000.cdf"
 
         mock_l3e_dependencies = mock_fetch_dependencies.return_value
-        mock_l3e_dependencies.pipeline_settings = {
-            "start_cr": sentinel.start_of_mission_cr
-        }
+        mock_l3e_dependencies.pipeline_settings = {"start_cr": sentinel.start_of_mission_cr}
         mock_find_first_updated_cr.return_value = None
-        mock_identify_versions_for_l3e_output_files.return_value = (
-            GlowsL3eVersionsForRepointings(
-                repointing_numbers=[],
-                hi_90_repointings={},
-                hi_45_repointings={},
-                lo_repointings={},
-                ultra_sf_repointings={},
-                ultra_hf_repointings={},
-            )
+        mock_identify_versions_for_l3e_output_files.return_value = GlowsL3eVersionsForRepointings(
+            repointing_numbers=[],
+            hi_90_repointings={},
+            hi_45_repointings={},
+            lo_repointings={},
+            ultra_sf_repointings={},
+            ultra_hf_repointings={},
         )
         mock_get_most_recently_uploaded_ancillary.side_effect = [
-            create_mock_query_results(
-                ["imap_glows_pipeline-settings-l3bcde_20200101_v000.cdf"]
-            )[0],
-            create_mock_query_results(["imap_glows_energy-grid-lo_20200101_v000.cdf"])[
+            create_mock_query_results(["imap_glows_pipeline-settings-l3bcde_20200101_v000.cdf"])[
                 0
             ],
+            create_mock_query_results(["imap_glows_energy-grid-lo_20200101_v000.cdf"])[0],
             create_mock_query_results(["imap_glows_tess-xyz-8_20200101_v000.cdf"])[0],
-            create_mock_query_results(["imap_glows_energy-grid-hi_20200101_v000.cdf"])[
-                0
-            ],
-            create_mock_query_results(
-                ["imap_glows_energy-grid-ultra_20200101_v000.cdf"]
-            )[0],
+            create_mock_query_results(["imap_glows_energy-grid-hi_20200101_v000.cdf"])[0],
+            create_mock_query_results(["imap_glows_energy-grid-ultra_20200101_v000.cdf"])[0],
             create_mock_query_results(["imap_glows_tess-ang-16_20200101_v000.cdf"])[0],
         ]
 
@@ -308,35 +276,25 @@ class TestGlowsL3EInitializer(unittest.TestCase):
         _,
     ):
         mock_get_most_recently_uploaded_ancillary.side_effect = [
-            create_mock_query_results(
-                ["imap_glows_pipeline-settings-l3bcde_20200101_v000.cdf"]
-            )[0],
-            create_mock_query_results(["imap_glows_energy-grid-lo_20200101_v000.cdf"])[
+            create_mock_query_results(["imap_glows_pipeline-settings-l3bcde_20200101_v000.cdf"])[
                 0
             ],
+            create_mock_query_results(["imap_glows_energy-grid-lo_20200101_v000.cdf"])[0],
             create_mock_query_results(["imap_glows_tess-xyz-8_20200101_v000.cdf"])[0],
-            create_mock_query_results(["imap_glows_energy-grid-hi_20200101_v000.cdf"])[
-                0
-            ],
-            create_mock_query_results(
-                ["imap_glows_energy-grid-ultra_20200101_v000.cdf"]
-            )[0],
+            create_mock_query_results(["imap_glows_energy-grid-hi_20200101_v000.cdf"])[0],
+            create_mock_query_results(["imap_glows_energy-grid-ultra_20200101_v000.cdf"])[0],
             create_mock_query_results(["imap_glows_tess-ang-16_20200101_v000.cdf"])[0],
         ]
-        mock_identify_versions_for_l3e_output_files.return_value = (
-            GlowsL3eVersionsForRepointings(
-                repointing_numbers=[],
-                ultra_sf_repointings={},
-                ultra_hf_repointings={},
-                lo_repointings={},
-                hi_45_repointings={},
-                hi_90_repointings={},
-            )
+        mock_identify_versions_for_l3e_output_files.return_value = GlowsL3eVersionsForRepointings(
+            repointing_numbers=[],
+            ultra_sf_repointings={},
+            ultra_hf_repointings={},
+            lo_repointings={},
+            hi_45_repointings={},
+            hi_90_repointings={},
         )
 
-        updated_l3d = Path(
-            "path/to/imap_glows_l3d_solar-hist_19470303-cr02091_v012.0001.cdf"
-        )
+        updated_l3d = Path("path/to/imap_glows_l3d_solar-hist_19470303-cr02091_v012.0001.cdf")
         glows_l3d_processor_output = GlowsL3DProcessorOutput(
             updated_l3d, [], sentinel.last_processed_cr
         )
@@ -365,9 +323,7 @@ class TestGlowsL3EInitializer(unittest.TestCase):
             sentinel.reprocess_info,
         )
 
-    @patch(
-        "imap_l3_processing.glows.l3e.glows_l3e_initializer.imap_data_access.download"
-    )
+    @patch("imap_l3_processing.glows.l3e.glows_l3e_initializer.imap_data_access.download")
     @patch("imap_l3_processing.glows.l3e.glows_l3e_initializer.CDF")
     def test_find_first_updated_cr(self, mock_CDF, mock_download):
         num_crs = 10
@@ -438,9 +394,7 @@ class TestGlowsL3EInitializer(unittest.TestCase):
 
                 mock_CDF.side_effect = [old_l3d, new_l3d]
 
-                actual_cr = find_first_updated_cr(
-                    sentinel.new_l3d_path, sentinel.old_l3d_filename
-                )
+                actual_cr = find_first_updated_cr(sentinel.new_l3d_path, sentinel.old_l3d_filename)
 
                 mock_download.assert_called_once_with(sentinel.old_l3d_filename)
                 mock_CDF.assert_has_calls(
@@ -544,12 +498,8 @@ class TestGlowsL3EInitializer(unittest.TestCase):
         }
 
         self.assertCountEqual(all_repointing_numbers, result.repointing_numbers)
-        self.assertEqual(
-            expected_versions_for_hi90_repoint_number, result.hi_90_repointings
-        )
-        self.assertEqual(
-            expected_versions_for_hi45_repoint_number, result.hi_45_repointings
-        )
+        self.assertEqual(expected_versions_for_hi90_repoint_number, result.hi_90_repointings)
+        self.assertEqual(expected_versions_for_hi45_repoint_number, result.hi_45_repointings)
         self.assertEqual(expected_versions_for_lo_repoint_number, result.lo_repointings)
         self.assertEqual(
             expected_versions_for_ultra_sf_repoint_number, result.ultra_sf_repointings
@@ -781,33 +731,24 @@ class TestGlowsL3EInitializer(unittest.TestCase):
         )
 
         expected_versions_for_hi45_repoint_number = {
-            repoint_number: Version(3, 2)
-            for repoint_number in updated_repointing_numbers
+            repoint_number: Version(3, 2) for repoint_number in updated_repointing_numbers
         }
         expected_versions_for_hi90_repoint_number = {
-            repoint_number: Version(4, 3)
-            for repoint_number in updated_repointing_numbers
+            repoint_number: Version(4, 3) for repoint_number in updated_repointing_numbers
         }
         expected_versions_for_lo_repoint_number = {
-            repoint_number: Version(5, 4)
-            for repoint_number in updated_repointing_numbers
+            repoint_number: Version(5, 4) for repoint_number in updated_repointing_numbers
         }
         expected_versions_for_ultra_sf_repoint_number = {
-            repoint_number: Version(6, 5)
-            for repoint_number in updated_repointing_numbers
+            repoint_number: Version(6, 5) for repoint_number in updated_repointing_numbers
         }
         expected_versions_for_ultra_hf_repoint_number = {
-            repoint_number: Version(7, 6)
-            for repoint_number in updated_repointing_numbers
+            repoint_number: Version(7, 6) for repoint_number in updated_repointing_numbers
         }
 
         self.assertCountEqual(updated_repointing_numbers, result.repointing_numbers)
-        self.assertEqual(
-            expected_versions_for_hi90_repoint_number, result.hi_90_repointings
-        )
-        self.assertEqual(
-            expected_versions_for_hi45_repoint_number, result.hi_45_repointings
-        )
+        self.assertEqual(expected_versions_for_hi90_repoint_number, result.hi_90_repointings)
+        self.assertEqual(expected_versions_for_hi45_repoint_number, result.hi_45_repointings)
         self.assertEqual(expected_versions_for_lo_repoint_number, result.lo_repointings)
         self.assertEqual(
             expected_versions_for_ultra_sf_repoint_number, result.ultra_sf_repointings

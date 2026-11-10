@@ -24,9 +24,7 @@ def rotate_from_imap_despun_to_hit_despun(
         [-0.5, 0.866025, 0],
         [0, 0, 1],
     ]
-    return (
-        rotation_matrix_from_imap_despun_frame_to_hit_despun_instrument_frame @ vector
-    )
+    return rotation_matrix_from_imap_despun_frame_to_hit_despun_instrument_frame @ vector
 
 
 def rotate_particle_vectors_from_hit_despun_to_imap_despun(
@@ -43,28 +41,18 @@ def rotate_particle_vectors_from_hit_despun_to_imap_despun(
     return output
 
 
-def calculate_gyrophase(
-    particle_vectors: np.ndarray, magnetic_field_vector: np.ndarray
-):
+def calculate_gyrophase(particle_vectors: np.ndarray, magnetic_field_vector: np.ndarray):
     magnetic_field_plus_z = magnetic_field_vector
     imap_dps_plus_y = [0, 1, 0]
     if np.all(np.cross(magnetic_field_plus_z, imap_dps_plus_y) == 0):
         return np.full(shape=particle_vectors.shape[:-1], fill_value=np.nan)
-    magnetic_field_plus_x = calculate_unit_vector(
-        np.cross(imap_dps_plus_y, magnetic_field_plus_z)
-    )
+    magnetic_field_plus_x = calculate_unit_vector(np.cross(imap_dps_plus_y, magnetic_field_plus_z))
     magnetic_field_plus_y = calculate_unit_vector(
         np.cross(magnetic_field_plus_z, magnetic_field_plus_x)
     )
-    particle_magnetic_field_x_component = np.sum(
-        particle_vectors * magnetic_field_plus_x, axis=-1
-    )
-    particle_magnetic_field_y_component = np.sum(
-        particle_vectors * magnetic_field_plus_y, axis=-1
-    )
-    gyrophases = np.atan2(
-        particle_magnetic_field_x_component, particle_magnetic_field_y_component
-    )
+    particle_magnetic_field_x_component = np.sum(particle_vectors * magnetic_field_plus_x, axis=-1)
+    particle_magnetic_field_y_component = np.sum(particle_vectors * magnetic_field_plus_y, axis=-1)
+    gyrophases = np.atan2(particle_magnetic_field_x_component, particle_magnetic_field_y_component)
 
     return np.mod(np.degrees(gyrophases), 360)
 
@@ -95,12 +83,8 @@ def rebin_by_pitch_angle_and_gyrophase(
         np.zeros(shape=output_shape_pa_and_gyro), 0
     )
 
-    rebinned_summed_pa_only_with_delta_plus = uarray(
-        np.zeros(shape=output_shape_pa_only), 0
-    )
-    rebinned_summed_pa_only_with_delta_minus = uarray(
-        np.zeros(shape=output_shape_pa_only), 0
-    )
+    rebinned_summed_pa_only_with_delta_plus = uarray(np.zeros(shape=output_shape_pa_only), 0)
+    rebinned_summed_pa_only_with_delta_minus = uarray(np.zeros(shape=output_shape_pa_only), 0)
 
     rebinned_count_by_pa_and_gyro = np.zeros(shape=output_shape_pa_and_gyro)
     rebinned_count_pa_only = np.zeros(shape=output_shape_pa_only)
@@ -112,9 +96,7 @@ def rebin_by_pitch_angle_and_gyrophase(
             np.ravel(intensity_with_delta_plus[i]),
             np.ravel(intensity_with_delta_minus[i]),
         ):
-            if not (
-                np.isnan(intensity_with_plus.nominal_value) or np.isnan(pitch_angle)
-            ):
+            if not (np.isnan(intensity_with_plus.nominal_value) or np.isnan(pitch_angle)):
                 if pitch_angle == 180:
                     pitch_angle_bin = number_of_pitch_angle_bins - 1
                 else:
@@ -134,13 +116,9 @@ def rebin_by_pitch_angle_and_gyrophase(
                     rebinned_summed_by_pa_and_gyro_with_delta_minus[
                         i, pitch_angle_bin, gyrophase_bin
                     ] += intensity_with_minus
-                    rebinned_count_by_pa_and_gyro[
-                        i, pitch_angle_bin, gyrophase_bin
-                    ] += 1
+                    rebinned_count_by_pa_and_gyro[i, pitch_angle_bin, gyrophase_bin] += 1
 
-                rebinned_summed_pa_only_with_delta_plus[i, pitch_angle_bin] += (
-                    intensity_with_plus
-                )
+                rebinned_summed_pa_only_with_delta_plus[i, pitch_angle_bin] += intensity_with_plus
                 rebinned_summed_pa_only_with_delta_minus[i, pitch_angle_bin] += (
                     intensity_with_minus
                 )

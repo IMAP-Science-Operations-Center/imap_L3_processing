@@ -42,15 +42,11 @@ def _quad_discontinuity_points(
     cutoff_speed: float, lut: DensityOfNeutralHeliumLookupTable
 ) -> tuple[float, float, float]:
     radius_au = _DISTANCE_KM / ONE_AU_IN_KM
-    lower = (lut.grid[1][0] / radius_au) ** (
-        1.0 / SWAPI_PUI_COOLING_INDEX
-    ) * cutoff_speed
+    lower = (lut.grid[1][0] / radius_au) ** (1.0 / SWAPI_PUI_COOLING_INDEX) * cutoff_speed
     return (0.0, lower, cutoff_speed)
 
 
-def _quad_density_reference(
-    cutoff_speed: float, lut: DensityOfNeutralHeliumLookupTable
-) -> float:
+def _quad_density_reference(cutoff_speed: float, lut: DensityOfNeutralHeliumLookupTable) -> float:
     integral, _ = scipy.integrate.quad(
         lambda v: _reference_vdf(v, cutoff_speed, lut) * v * v,
         0.0,
@@ -115,8 +111,8 @@ class CalculatePuiDensityAndTemperatureTest(unittest.TestCase):
             / "swapi"
             / "imap_swapi_l2_density-of-neutral-helium-lut-text-not-cdf_20241023_v002.cdf"
         )
-        self.density_of_neutral_helium_lookup_table = (
-            DensityOfNeutralHeliumLookupTable.from_file(density_lut_path)
+        self.density_of_neutral_helium_lookup_table = DensityOfNeutralHeliumLookupTable.from_file(
+            density_lut_path
         )
 
     def _calculate_density(self, cutoff_speed):

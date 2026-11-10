@@ -1,17 +1,17 @@
 import math
 import unittest
-from unittest.mock import patch, Mock, sentinel
+from unittest.mock import Mock, patch, sentinel
 
 import numpy as np
 
-from imap_l3_processing.hit.l3.pha.pha_event_reader import PHAWord, Detector
+from imap_l3_processing.hit.l3.pha.pha_event_reader import Detector, PHAWord
 from imap_l3_processing.hit.l3.pha.science.calculate_pha import (
     EventAnalysis,
+    EventOutput,
     analyze_event,
     calculate_mev,
-    process_pha_event,
-    EventOutput,
     compute_charge,
+    process_pha_event,
 )
 from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import (
     DetectedRange,
@@ -57,23 +57,13 @@ class TestCalculatePHA(unittest.TestCase):
             adc_overflow=False,
         )
         mev = calculate_mev(low_gain_word, gain_lookup_table)
-        self.assertEqual(
-            high_gain_a_value * high_gain_adc_value + high_gain_b_value, mev
-        )
+        self.assertEqual(high_gain_a_value * high_gain_adc_value + high_gain_b_value, mev)
 
     def test_analyze_range(self):
-        detector_1_in_group_1 = Detector(
-            layer=1, side="A", segment="b", address=10, group="L1A14"
-        )
-        detector_2_in_group_1 = Detector(
-            layer=1, side="A", segment="c", address=11, group="L1A14"
-        )
-        detector_1_in_group_2 = Detector(
-            layer=2, side="A", segment="c", address=15, group="L2A"
-        )
-        detector_1_in_group_3 = Detector(
-            layer=3, side="A", segment="a", address=20, group="L3A"
-        )
+        detector_1_in_group_1 = Detector(layer=1, side="A", segment="b", address=10, group="L1A14")
+        detector_2_in_group_1 = Detector(layer=1, side="A", segment="c", address=11, group="L1A14")
+        detector_1_in_group_2 = Detector(layer=2, side="A", segment="c", address=15, group="L2A")
+        detector_1_in_group_3 = Detector(layer=3, side="A", segment="a", address=20, group="L3A")
 
         detector_to_pha_value = [
             (detector_1_in_group_1, 10),
@@ -116,15 +106,9 @@ class TestCalculatePHA(unittest.TestCase):
         self.assertEqual(expected_event_analysis, event_analysis)
 
     def test_analyze_range_mixed_sides(self):
-        detector_2_in_L2A_group = Detector(
-            layer=2, side="A", segment="c", address=11, group="L2A"
-        )
-        detector_1_in_L2A_group = Detector(
-            layer=2, side="A", segment="b", address=10, group="L2A"
-        )
-        detector_1_in_L2B_group = Detector(
-            layer=2, side="B", segment="c", address=15, group="L2B"
-        )
+        detector_2_in_L2A_group = Detector(layer=2, side="A", segment="c", address=11, group="L2A")
+        detector_1_in_L2A_group = Detector(layer=2, side="A", segment="b", address=10, group="L2A")
+        detector_1_in_L2B_group = Detector(layer=2, side="B", segment="c", address=15, group="L2B")
         detector_1_in_L1B14_group = Detector(
             layer=1, side="B", segment="a", address=20, group="L1B14"
         )
@@ -180,24 +164,12 @@ class TestCalculatePHA(unittest.TestCase):
         self.assertEqual(expected_event_analysis, event_analysis)
 
     def test_analyze_range_with_range_4(self):
-        detector_1_in_group_1 = Detector(
-            layer=1, side="A", segment="b", address=10, group="L1A14"
-        )
-        detector_2_in_group_1 = Detector(
-            layer=1, side="A", segment="c", address=11, group="L1A14"
-        )
-        detector_1_in_group_2 = Detector(
-            layer=2, side="A", segment="c", address=15, group="L2A"
-        )
-        detector_1_in_group_3 = Detector(
-            layer=3, side="A", segment="a", address=20, group="L3A"
-        )
-        detector_1_in_group_4 = Detector(
-            layer=3, side="B", segment="a", address=21, group="L3B"
-        )
-        detector_1_in_group_5 = Detector(
-            layer=2, side="B", segment="a", address=22, group="L2B"
-        )
+        detector_1_in_group_1 = Detector(layer=1, side="A", segment="b", address=10, group="L1A14")
+        detector_2_in_group_1 = Detector(layer=1, side="A", segment="c", address=11, group="L1A14")
+        detector_1_in_group_2 = Detector(layer=2, side="A", segment="c", address=15, group="L2A")
+        detector_1_in_group_3 = Detector(layer=3, side="A", segment="a", address=20, group="L3A")
+        detector_1_in_group_4 = Detector(layer=3, side="B", segment="a", address=21, group="L3B")
+        detector_1_in_group_5 = Detector(layer=2, side="B", segment="a", address=22, group="L2B")
 
         detector_to_pha_value = [
             (detector_1_in_group_1, 10),
@@ -224,9 +196,7 @@ class TestCalculatePHA(unittest.TestCase):
 
         event_analysis = analyze_event(raw_pha_event, range_lookup_table)
 
-        range_lookup_table.lookup_range.assert_called_with(
-            {"L1A14", "L2A", "L3A", "L3B", "L2B"}
-        )
+        range_lookup_table.lookup_range.assert_called_with({"L1A14", "L2A", "L3A", "L3B", "L2B"})
 
         expected_highest_words = [
             detector_to_word_tuples[str(detector_2_in_group_1)],
@@ -248,15 +218,9 @@ class TestCalculatePHA(unittest.TestCase):
 
     def test_analyze_event_uses_detectors_with_highest_adc_values(self):
 
-        detector_l1ab = Detector(
-            layer=1, side="A", segment="b", address=10, group="L1A14"
-        )
-        detector_l1ac = Detector(
-            layer=1, side="A", segment="c", address=11, group="L1A14"
-        )
-        detector_l2ac = Detector(
-            layer=2, side="A", segment="c", address=15, group="L2A"
-        )
+        detector_l1ab = Detector(layer=1, side="A", segment="b", address=10, group="L1A14")
+        detector_l1ac = Detector(layer=1, side="A", segment="c", address=11, group="L1A14")
+        detector_l2ac = Detector(layer=2, side="A", segment="c", address=15, group="L2A")
 
         word_l1ab = PHAWord(
             adc_value=1,
@@ -343,9 +307,7 @@ class TestCalculatePHA(unittest.TestCase):
                 word_l1ac.adc_value = l1ac_adc
                 word_l1ac.is_low_gain = l1ac_is_low_gain
 
-                raw_pha_event = create_raw_pha_event(
-                    pha_words=[word_l1ab, word_l1ac, word_l2ac]
-                )
+                raw_pha_event = create_raw_pha_event(pha_words=[word_l1ab, word_l1ac, word_l2ac])
 
                 rule_stub = Rule(
                     range=DetectedRange(DetectorRange.R2, DetectorSide.A),
@@ -367,33 +329,19 @@ class TestCalculatePHA(unittest.TestCase):
                 )
 
                 self.assertEqual(expected_event_analysis.range, event_analysis.range)
-                self.assertEqual(
-                    expected_event_analysis.l1_detector, event_analysis.l1_detector
-                )
-                self.assertEqual(
-                    expected_event_analysis.l2_detector, event_analysis.l2_detector
-                )
-                self.assertEqual(
-                    expected_event_analysis.e_delta_word, event_analysis.e_delta_word
-                )
-                self.assertEqual(
-                    expected_event_analysis.e_prime_word, event_analysis.e_prime_word
-                )
+                self.assertEqual(expected_event_analysis.l1_detector, event_analysis.l1_detector)
+                self.assertEqual(expected_event_analysis.l2_detector, event_analysis.l2_detector)
+                self.assertEqual(expected_event_analysis.e_delta_word, event_analysis.e_delta_word)
+                self.assertEqual(expected_event_analysis.e_prime_word, event_analysis.e_prime_word)
                 self.assertEqual(
                     expected_event_analysis.words_with_highest_energy,
                     event_analysis.words_with_highest_energy,
                 )
 
     def test_analyze_event_filters_out_events_with_all_saturated_data(self):
-        detector_l1ab = Detector(
-            layer=1, side="A", segment="b", address=10, group="L1A14"
-        )
-        detector_l1ac = Detector(
-            layer=1, side="A", segment="c", address=11, group="L1A14"
-        )
-        detector_l2ac = Detector(
-            layer=2, side="A", segment="c", address=15, group="L2A"
-        )
+        detector_l1ab = Detector(layer=1, side="A", segment="b", address=10, group="L1A14")
+        detector_l1ac = Detector(layer=1, side="A", segment="c", address=11, group="L1A14")
+        detector_l2ac = Detector(layer=2, side="A", segment="c", address=15, group="L2A")
 
         word_l1ab = PHAWord(
             adc_value=2047,
@@ -417,9 +365,7 @@ class TestCalculatePHA(unittest.TestCase):
             is_last_pha=False,
         )
 
-        raw_pha_event = create_raw_pha_event(
-            pha_words=[word_l1ab, word_l1ac, word_l2ac]
-        )
+        raw_pha_event = create_raw_pha_event(pha_words=[word_l1ab, word_l1ac, word_l2ac])
 
         rule_stub = Rule(
             range=DetectedRange(DetectorRange.R2, DetectorSide.A),
@@ -434,18 +380,10 @@ class TestCalculatePHA(unittest.TestCase):
         self.assertIsNone(event_analysis)
 
     def test_analyze_event_handles_no_calc_rules(self):
-        detector_1_in_group_1 = Detector(
-            layer=1, side="A", segment="b", address=10, group="L1A14"
-        )
-        detector_2_in_group_1 = Detector(
-            layer=1, side="A", segment="c", address=11, group="L1A14"
-        )
-        detector_1_in_group_2 = Detector(
-            layer=2, side="A", segment="c", address=15, group="L2A"
-        )
-        detector_1_in_group_3 = Detector(
-            layer=3, side="A", segment="a", address=20, group="L3A"
-        )
+        detector_1_in_group_1 = Detector(layer=1, side="A", segment="b", address=10, group="L1A14")
+        detector_2_in_group_1 = Detector(layer=1, side="A", segment="c", address=11, group="L1A14")
+        detector_1_in_group_2 = Detector(layer=2, side="A", segment="c", address=15, group="L2A")
+        detector_1_in_group_3 = Detector(layer=3, side="A", segment="a", address=20, group="L3A")
 
         detector_to_pha_value = [
             (detector_1_in_group_1, 10),
@@ -569,9 +507,7 @@ class TestCalculatePHA(unittest.TestCase):
         cosine_correction = 12.2
 
         mock_cosine_correction_table = Mock()
-        mock_cosine_correction_table.get_cosine_correction.return_value = (
-            cosine_correction
-        )
+        mock_cosine_correction_table.get_cosine_correction.return_value = cosine_correction
 
         event_output = process_pha_event(
             raw_pha_event,
@@ -595,17 +531,13 @@ class TestCalculatePHA(unittest.TestCase):
         expected_l2_higher_energy = cosine_correction * (
             word2_gain.a * pha_word2_adc_value + word2_gain.b
         )
-        expected_energy3 = cosine_correction * (
-            word3_gain.a * pha_word3_adc_value + word3_gain.b
-        )
+        expected_energy3 = cosine_correction * (word3_gain.a * pha_word3_adc_value + word3_gain.b)
         self.assertEqual(
             [expected_l1_energy, expected_l2_higher_energy, expected_energy3],
             event_output.energies,
         )
 
-        self.assertEqual(
-            expected_l1_energy + expected_l2_higher_energy, event_output.total_energy
-        )
+        self.assertEqual(expected_l1_energy + expected_l2_higher_energy, event_output.total_energy)
         self.assertEqual(raw_pha_event, event_output.original_event)
 
         mock_compute_charge.assert_called_once_with(
@@ -638,9 +570,7 @@ class TestCalculatePHA(unittest.TestCase):
                     delta_e_losses,
                 )
 
-                detected_range = DetectedRange(
-                    range=DetectorRange.R2, side=DetectorSide.A
-                )
+                detected_range = DetectedRange(range=DetectorRange.R2, side=DetectorSide.A)
                 e_prime = 200
                 charge = compute_charge(
                     detected_range, delta_e, e_prime, mock_double_power_law_fit_params
@@ -720,7 +650,7 @@ class TestCalculatePHA(unittest.TestCase):
                 self.assertEqual(expected_nan, np.isnan(result))
 
     def _create_detector_from_string(
-        self, detector_string: str, detector_group: str = None
+        self, detector_string: str, detector_group: str | None = None
     ):
         layer = int(detector_string[1])
         group = detector_group if detector_group is not None else "L1A4c"
@@ -734,12 +664,10 @@ class TestCalculatePHA(unittest.TestCase):
         )
 
     def _create_event_from_detectors_and_groups(
-        self, detectors: list[str], groups: list[str] = None
+        self, detectors: list[str], groups: list[str] | None = None
     ):
         if groups and len(detectors) != len(groups):
-            self.assertTrue(
-                False, msg="Detectors and groups must have the same length in setup"
-            )
+            self.assertTrue(False, msg="Detectors and groups must have the same length in setup")
 
         detector_objects = [
             self._create_detector_from_string(d, g) for d, g in zip(detectors, groups)

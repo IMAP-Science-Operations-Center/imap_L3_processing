@@ -1,12 +1,10 @@
 from datetime import date
 
-from spacepy.pycdf import CDF
 import numpy as np
+from spacepy.pycdf import CDF
 
 filename = f"imap_hi_l3_spectral-fit-index_{date.today().strftime('%Y%m%d')}_"
-temp_cdf = CDF(
-    rf"C:\Users\Harrison\Development\imap_L3_processing\temp_cdf_data\{filename}.cdf"
-)
+temp_cdf = CDF(rf"C:\Users\Harrison\Development\imap_L3_processing\temp_cdf_data\{filename}.cdf")
 map_cdf = CDF(
     rf"C:\Users\Harrison\Development\cava\test\test_data\map_files\map_cdfs\{filename}.cdf"
 )

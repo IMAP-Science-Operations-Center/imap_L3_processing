@@ -72,7 +72,7 @@ import pint_xarray  # noqa: F401
 import xarray as xr
 
 from imap_l3_processing.constants import HE_PUI_PARTICLE_MASS_PER_CHARGE_M_P_PER_E
-from tests.test_helpers import get_test_instrument_team_data_path, get_test_data_path
+from tests.test_helpers import get_test_data_path, get_test_instrument_team_data_path
 
 OUTPUT_PATH = get_test_data_path("swapi/pui_count_rate_reference.csv")
 
@@ -125,9 +125,7 @@ source_speed_ratio = np.sqrt(
     passband_coefficients["energy_ratio"].values / K_FACTOR.to("eV/V/e").magnitude
 )
 passband_coefficients = (
-    passband_coefficients.assign_coords(
-        speed_ratio=("energy_ratio", source_speed_ratio)
-    )
+    passband_coefficients.assign_coords(speed_ratio=("energy_ratio", source_speed_ratio))
     .swap_dims({"energy_ratio": "speed_ratio"})
     .drop_vars("energy_ratio")
 )
@@ -175,9 +173,7 @@ speed_ratio = passband_coefficients["speed_ratio"]
 _abs_az = az_transmission_native["abs_azimuth"].values
 _trans = az_transmission_native.values
 _az_signed = np.concatenate([-_abs_az[:0:-1], _abs_az])
-azimuth_deg = xr.DataArray(
-    _az_signed, dims="azimuth_deg", coords={"azimuth_deg": _az_signed}
-)
+azimuth_deg = xr.DataArray(_az_signed, dims="azimuth_deg", coords={"azimuth_deg": _az_signed})
 azimuthal_transmission = xr.DataArray(
     np.concatenate([_trans[:0:-1], _trans]),
     dims="azimuth_deg",
@@ -195,9 +191,9 @@ direction = xr.concat(
     dim="cartesian",
 ).assign_coords(cartesian=["x", "y", "z"])
 
-central_instrument_speed = np.sqrt(
-    2 * K_FACTOR * voltages / HE_PLUS_MASS_PER_CHARGE
-).pint.to("km/s")
+central_instrument_speed = np.sqrt(2 * K_FACTOR * voltages / HE_PLUS_MASS_PER_CHARGE).pint.to(
+    "km/s"
+)
 
 """## Evaluate passband at each ESA voltage"""
 
@@ -318,11 +314,7 @@ d3v = speed_grid**2 * deg2_to_sr * cos_elevation
 
 integrand = effective_area * flux * d3v
 
-integral = (
-    integrand.integrate("azimuth_deg")
-    .integrate("elevation_deg")
-    .integrate("speed_ratio")
-)
+integral = integrand.integrate("azimuth_deg").integrate("elevation_deg").integrate("speed_ratio")
 count_rate = (integral * central_instrument_speed).pint.to("counts/s")
 
 count_rate.to_series().to_csv(OUTPUT_PATH)

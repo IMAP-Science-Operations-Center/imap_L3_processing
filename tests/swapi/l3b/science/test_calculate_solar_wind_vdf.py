@@ -4,11 +4,11 @@ from unittest.mock import create_autospec
 import numpy as np
 
 from imap_l3_processing.swapi.l3b.science.calculate_solar_wind_vdf import (
-    calculate_proton_solar_wind_vdf,
     GeometricFactorCalibrationTable,
     calculate_alpha_solar_wind_vdf,
-    calculate_pui_solar_wind_vdf,
     calculate_delta_minus_plus,
+    calculate_proton_solar_wind_vdf,
+    calculate_pui_solar_wind_vdf,
 )
 
 

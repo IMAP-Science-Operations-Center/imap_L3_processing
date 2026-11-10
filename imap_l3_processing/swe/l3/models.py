@@ -24,12 +24,8 @@ PHASE_SPACE_DENSITY_1D_CDF_VAR_NAME = "phase_space_density_1d"
 PHASE_SPACE_DENSITY_INWARD_CDF_VAR_NAME = "phase_space_density_inward"
 PHASE_SPACE_DENSITY_OUTWARD_CDF_VAR_NAME = "phase_space_density_outward"
 INTENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME = "intensity_by_pitch_angle"
-INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME = (
-    "intensity_by_pitch_angle_and_gyrophase"
-)
-INTENSITY_UNCERTAINTY_BY_PITCH_ANGLE_CDF_VAR_NAME = (
-    "intensity_uncertainty_by_pitch_angle"
-)
+INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME = "intensity_by_pitch_angle_and_gyrophase"
+INTENSITY_UNCERTAINTY_BY_PITCH_ANGLE_CDF_VAR_NAME = "intensity_uncertainty_by_pitch_angle"
 INTENSITY_UNCERTAINTY_BY_PITCH_ANGLE_AND_GYROPHASE_CDF_VAR_NAME = (
     "intensity_uncertainty_by_pitch_angle_and_gyrophase"
 )
@@ -60,67 +56,43 @@ HALO_SPEED_INTEGRATED_CDF_VAR_NAME = "halo_speed_integrated"
 TOTAL_SPEED_INTEGRATED_CDF_VAR_NAME = "total_speed_integrated"
 CORE_VELOCITY_VECTOR_RTN_INTEGRATED_CDF_VAR_NAME = "core_velocity_vector_rtn_integrated"
 HALO_VELOCITY_VECTOR_RTN_INTEGRATED_CDF_VAR_NAME = "halo_velocity_vector_rtn_integrated"
-TOTAL_VELOCITY_VECTOR_RTN_INTEGRATED_CDF_VAR_NAME = (
-    "total_velocity_vector_rtn_integrated"
-)
+TOTAL_VELOCITY_VECTOR_RTN_INTEGRATED_CDF_VAR_NAME = "total_velocity_vector_rtn_integrated"
 CORE_HEAT_FLUX_MAGNITUDE_INTEGRATED_CDF_VAR_NAME = "core_heat_flux_magnitude_integrated"
 CORE_HEAT_FLUX_THETA_INTEGRATED_CDF_VAR_NAME = "core_heat_flux_theta_integrated"
 CORE_HEAT_FLUX_PHI_INTEGRATED_CDF_VAR_NAME = "core_heat_flux_phi_integrated"
 HALO_HEAT_FLUX_MAGNITUDE_INTEGRATED_CDF_VAR_NAME = "halo_heat_flux_magnitude_integrated"
 HALO_HEAT_FLUX_THETA_INTEGRATED_CDF_VAR_NAME = "halo_heat_flux_theta_integrated"
 HALO_HEAT_FLUX_PHI_INTEGRATED_CDF_VAR_NAME = "halo_heat_flux_phi_integrated"
-TOTAL_HEAT_FLUX_MAGNITUDE_INTEGRATED_CDF_VAR_NAME = (
-    "total_heat_flux_magnitude_integrated"
-)
+TOTAL_HEAT_FLUX_MAGNITUDE_INTEGRATED_CDF_VAR_NAME = "total_heat_flux_magnitude_integrated"
 TOTAL_HEAT_FLUX_THETA_INTEGRATED_CDF_VAR_NAME = "total_heat_flux_theta_integrated"
 TOTAL_HEAT_FLUX_PHI_INTEGRATED_CDF_VAR_NAME = "total_heat_flux_phi_integrated"
 CORE_T_PARALLEL_INTEGRATED_CDF_VAR_NAME = "core_t_parallel_integrated"
 CORE_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME = "core_t_perpendicular_integrated"
-CORE_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME = (
-    "core_t_ratio_perpendicular_integrated"
-)
+CORE_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME = "core_t_ratio_perpendicular_integrated"
 HALO_T_PARALLEL_INTEGRATED_CDF_VAR_NAME = "halo_t_parallel_integrated"
 HALO_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME = "halo_t_perpendicular_integrated"
-HALO_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME = (
-    "halo_t_ratio_perpendicular_integrated"
-)
+HALO_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME = "halo_t_ratio_perpendicular_integrated"
 TOTAL_T_PARALLEL_INTEGRATED_CDF_VAR_NAME = "total_t_parallel_integrated"
 TOTAL_T_PERPENDICULAR_INTEGRATED_CDF_VAR_NAME = "total_t_perpendicular_integrated"
-TOTAL_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME = (
-    "total_t_ratio_perpendicular_integrated"
-)
-CORE_TEMPERATURE_THETA_RTN_INTEGRATED_CDF_VAR_NAME = (
-    "core_temperature_theta_rtn_integrated"
-)
+TOTAL_T_PERPENDICULAR_RATIO_INTEGRATED_CDF_VAR_NAME = "total_t_ratio_perpendicular_integrated"
+CORE_TEMPERATURE_THETA_RTN_INTEGRATED_CDF_VAR_NAME = "core_temperature_theta_rtn_integrated"
 CORE_TEMPERATURE_PHI_RTN_INTEGRATED_CDF_VAR_NAME = "core_temperature_phi_rtn_integrated"
-HALO_TEMPERATURE_THETA_RTN_INTEGRATED_CDF_VAR_NAME = (
-    "halo_temperature_theta_rtn_integrated"
-)
+HALO_TEMPERATURE_THETA_RTN_INTEGRATED_CDF_VAR_NAME = "halo_temperature_theta_rtn_integrated"
 HALO_TEMPERATURE_PHI_RTN_INTEGRATED_CDF_VAR_NAME = "halo_temperature_phi_rtn_integrated"
-TOTAL_TEMPERATURE_THETA_RTN_INTEGRATED_CDF_VAR_NAME = (
-    "total_temperature_theta_rtn_integrated"
-)
-TOTAL_TEMPERATURE_PHI_RTN_INTEGRATED_CDF_VAR_NAME = (
-    "total_temperature_phi_rtn_integrated"
-)
+TOTAL_TEMPERATURE_THETA_RTN_INTEGRATED_CDF_VAR_NAME = "total_temperature_theta_rtn_integrated"
+TOTAL_TEMPERATURE_PHI_RTN_INTEGRATED_CDF_VAR_NAME = "total_temperature_phi_rtn_integrated"
 CORE_TEMPERATURE_PARALLEL_TO_MAG_CDF_VAR_NAME = "core_temperature_parallel_to_mag"
-CORE_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME = (
-    "core_temperature_perpendicular_to_mag"
-)
+CORE_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME = "core_temperature_perpendicular_to_mag"
 CORE_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME = (
     "core_temperature_ratio_perpendicular_to_mag"
 )
 HALO_TEMPERATURE_PARALLEL_TO_MAG_CDF_VAR_NAME = "halo_temperature_parallel_to_mag"
-HALO_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME = (
-    "halo_temperature_perpendicular_to_mag"
-)
+HALO_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME = "halo_temperature_perpendicular_to_mag"
 HALO_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME = (
     "halo_temperature_ratio_perpendicular_to_mag"
 )
 TOTAL_TEMPERATURE_PARALLEL_TO_MAG_CDF_VAR_NAME = "total_temperature_parallel_to_mag"
-TOTAL_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME = (
-    "total_temperature_perpendicular_to_mag"
-)
+TOTAL_TEMPERATURE_PERPENDICULAR_TO_MAG_CDF_VAR_NAME = "total_temperature_perpendicular_to_mag"
 TOTAL_TEMPERATURE_RATIO_PERPENDICULAR_TO_MAG_CDF_VAR_NAME = (
     "total_temperature_ratio_perpendicular_to_mag"
 )
@@ -138,9 +110,7 @@ CORE_VELOCITY_VECTOR_RTN_FIT_LABEL = "core_velocity_vector_rtn_fit_label"
 HALO_VELOCITY_VECTOR_RTN_FIT_LABEL = "halo_velocity_vector_rtn_fit_label"
 CORE_VELOCITY_VECTOR_RTN_INTEGRATED_LABEL = "core_velocity_vector_rtn_integrated_label"
 HALO_VELOCITY_VECTOR_RTN_INTEGRATED_LABEL = "halo_velocity_vector_rtn_integrated_label"
-TOTAL_VELOCITY_VECTOR_RTN_INTEGRATED_LABEL = (
-    "total_velocity_vector_rtn_integrated_label"
-)
+TOTAL_VELOCITY_VECTOR_RTN_INTEGRATED_LABEL = "total_velocity_vector_rtn_integrated_label"
 CORE_TEMPERATURE_TENSOR_INTEGRATED_LABEL = "core_temperature_tensor_integrated_label"
 HALO_TEMPERATURE_TENSOR_INTEGRATED_LABEL = "halo_temperature_tensor_integrated_label"
 TOTAL_TEMPERATURE_TENSOR_INTEGRATED_LABEL = "total_temperature_tensor_integrated_label"
@@ -282,20 +252,12 @@ class SweL3Data(DataProduct):
             DataProductVariable(EPOCH_CDF_VAR_NAME, value=self.epoch),
             DataProductVariable(EPOCH_DELTA_CDF_VAR_NAME, value=self.epoch_delta),
             DataProductVariable(ENERGY_CDF_VAR_NAME, value=self.energy),
-            DataProductVariable(
-                ENERGY_DELTA_PLUS_CDF_VAR_NAME, value=self.energy_delta_plus
-            ),
-            DataProductVariable(
-                ENERGY_DELTA_MINUS_CDF_VAR_NAME, value=self.energy_delta_minus
-            ),
+            DataProductVariable(ENERGY_DELTA_PLUS_CDF_VAR_NAME, value=self.energy_delta_plus),
+            DataProductVariable(ENERGY_DELTA_MINUS_CDF_VAR_NAME, value=self.energy_delta_minus),
             DataProductVariable(PITCH_ANGLE_CDF_VAR_NAME, value=self.pitch_angle),
-            DataProductVariable(
-                PITCH_ANGLE_DELTA_CDF_VAR_NAME, value=self.pitch_angle_delta
-            ),
+            DataProductVariable(PITCH_ANGLE_DELTA_CDF_VAR_NAME, value=self.pitch_angle_delta),
             DataProductVariable(GYROPHASE_BINS_CDF_VAR_NAME, value=self.gyrophase_bins),
-            DataProductVariable(
-                GYROPHASE_DELTA_CDF_VAR_NAME, value=self.gyrophase_delta
-            ),
+            DataProductVariable(GYROPHASE_DELTA_CDF_VAR_NAME, value=self.gyrophase_delta),
             DataProductVariable(
                 PHASE_SPACE_DENSITY_BY_PITCH_ANGLE_CDF_VAR_NAME,
                 value=self.phase_space_density_by_pitch_angle,
@@ -341,12 +303,8 @@ class SweL3Data(DataProduct):
                 CORE_FIT_NUM_POINTS_CDF_VAR_NAME,
                 value=self.moment_data.core_fit_num_points,
             ),
-            DataProductVariable(
-                CHISQ_C_CDF_VAR_NAME, value=self.moment_data.core_chisq
-            ),
-            DataProductVariable(
-                CHISQ_H_CDF_VAR_NAME, value=self.moment_data.halo_chisq
-            ),
+            DataProductVariable(CHISQ_C_CDF_VAR_NAME, value=self.moment_data.core_chisq),
+            DataProductVariable(CHISQ_H_CDF_VAR_NAME, value=self.moment_data.halo_chisq),
             DataProductVariable(
                 CORE_DENSITY_FIT_CDF_VAR_NAME, value=self.moment_data.core_density_fit
             ),
@@ -581,12 +539,8 @@ class SweL3Data(DataProduct):
             ),
             DataProductVariable(SWE_FLAGS_VAR_NAME, value=self.swe_flags),
             DataProductVariable("raw_1d_psd_rebinned", value=self.raw_1d_psd_rebinned),
-            DataProductVariable(
-                "raw_psd_by_theta_rebinned", value=self.raw_psd_by_theta_rebinned
-            ),
-            DataProductVariable(
-                "raw_psd_by_phi_rebinned", value=self.raw_psd_by_phi_rebinned
-            ),
+            DataProductVariable("raw_psd_by_theta_rebinned", value=self.raw_psd_by_theta_rebinned),
+            DataProductVariable("raw_psd_by_phi_rebinned", value=self.raw_psd_by_phi_rebinned),
             DataProductVariable("inst_az", value=self.inst_az),
             DataProductVariable("inst_el", value=self.inst_el),
             DataProductVariable(

@@ -24,8 +24,7 @@ class TestPredictedEphemerisTracker(unittest.TestCase):
             "de440.bsp",
         ]
         spice_test_paths = [
-            str(get_integration_test_spice_data_path(file_name))
-            for file_name in spice_file_names
+            str(get_integration_test_spice_data_path(file_name)) for file_name in spice_file_names
         ]
 
         with KernelPool(spice_test_paths):
@@ -41,9 +40,7 @@ class TestPredictedEphemerisTracker(unittest.TestCase):
                 tracker.run(imap_state, et_no_coverage, SpiceFrame.ECLIPJ2000)
             self.assertFalse(tracker.used_predict)
 
-            state2 = tracker.run(
-                imap_state, et_requiring_predict, SpiceFrame.ECLIPJ2000
-            )
+            state2 = tracker.run(imap_state, et_requiring_predict, SpiceFrame.ECLIPJ2000)
             self.assertTrue(tracker.used_predict)
 
             expected_state_no_predict = [
@@ -90,9 +87,7 @@ class TestPredictedEphemerisTracker(unittest.TestCase):
             self.assertEqual(1, mock_spice_function_2.call_count)
 
     def test_predicted_ephemeris_tracker_skips_retry_if_no_predict_kernel(self):
-        other_kernel = get_integration_test_spice_data_path(
-            "imap_2025_105_2026_105_01.ah.bc"
-        )
+        other_kernel = get_integration_test_spice_data_path("imap_2025_105_2026_105_01.ah.bc")
         with KernelPool([str(other_kernel)]):
             mock_spice_function_1 = Mock(side_effect=SpiceyError())
             tracker = PredictedEphemerisTracker()

@@ -4,9 +4,9 @@ from unittest.mock import call, patch
 
 import imap_data_access
 from imap_data_access.processing_input import (
+    AncillaryInput,
     ProcessingInputCollection,
     ScienceInput,
-    AncillaryInput,
 )
 
 from imap_l3_processing.codice.l3.hi.direct_event.codice_hi_l3a_direct_events_dependencies import (
@@ -45,9 +45,7 @@ class TestCodiceHiL3aDirectEventDependencies(unittest.TestCase):
             "imap_codice_l3-hi-mass-correction-lut_20100105_v010.xlsx"
         )
 
-        codice_l2_direct_event_science_input = ScienceInput(
-            codice_l2_direct_event_input_file_name
-        )
+        codice_l2_direct_event_science_input = ScienceInput(codice_l2_direct_event_input_file_name)
         codice_l1a_direct_event_science_input = ScienceInput(
             codice_l1a_direct_event_input_file_name
         )
@@ -109,12 +107,8 @@ class TestCodiceHiL3aDirectEventDependencies(unittest.TestCase):
 
         self.assertEqual(mock_from_file_paths.return_value, codice_l3_dependencies)
 
-    @patch(
-        "imap_l3_processing.codice.l3.hi.models.CodiceL2HiDirectEventData.read_from_cdf"
-    )
-    @patch(
-        "imap_l3_processing.codice.l3.hi.models.CodiceL1aHiDirectEvents.read_from_cdf"
-    )
+    @patch("imap_l3_processing.codice.l3.hi.models.CodiceL2HiDirectEventData.read_from_cdf")
+    @patch("imap_l3_processing.codice.l3.hi.models.CodiceL1aHiDirectEvents.read_from_cdf")
     @patch(
         "imap_l3_processing.codice.l3.hi.direct_event.codice_hi_mass_correction_lookup_table.CodiceHiMassCorrectionLookupTable.from_file"
     )
@@ -126,9 +120,7 @@ class TestCodiceHiL3aDirectEventDependencies(unittest.TestCase):
     ):
         codice_l2_cdf_file = Path("CodiceL2CDF")
         codice_l1a_cdf_file = Path("CodiceL1aCDF")
-        codice_mass_correction_lut_ancillary_file = Path(
-            "CodiceMassCorrectionLutAncillary"
-        )
+        codice_mass_correction_lut_ancillary_file = Path("CodiceMassCorrectionLutAncillary")
 
         codice_l3_dependencies = CodiceHiL3aDirectEventsDependencies.from_file_paths(
             codice_l2_cdf_file,

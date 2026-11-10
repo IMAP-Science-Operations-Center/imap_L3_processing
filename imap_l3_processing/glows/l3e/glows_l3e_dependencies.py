@@ -8,7 +8,7 @@ from pathlib import Path
 import imap_data_access
 from imap_data_access.processing_input import ProcessingInputCollection, RepointInput
 
-from imap_l3_processing.utils import furnish_spice_metakernel, SpiceKernelTypes
+from imap_l3_processing.utils import SpiceKernelTypes, furnish_spice_metakernel
 
 logger = logging.getLogger(__name__)
 
@@ -43,21 +43,13 @@ class GlowsL3EDependencies:
 
     @classmethod
     def fetch_dependencies(cls, dependencies: ProcessingInputCollection):
-        lya_series_dependency = dependencies.get_file_paths(
-            source="glows", descriptor="lya"
-        )
+        lya_series_dependency = dependencies.get_file_paths(source="glows", descriptor="lya")
         solar_uv_anisotropy_dependency = dependencies.get_file_paths(
             source="glows", descriptor="uv-anis"
         )
-        speed_3d_dependency = dependencies.get_file_paths(
-            source="glows", descriptor="speed"
-        )
-        density_3d_dependency = dependencies.get_file_paths(
-            source="glows", descriptor="p-dens"
-        )
-        phion_hydrogen_dependency = dependencies.get_file_paths(
-            source="glows", descriptor="phion"
-        )
+        speed_3d_dependency = dependencies.get_file_paths(source="glows", descriptor="speed")
+        density_3d_dependency = dependencies.get_file_paths(source="glows", descriptor="p-dens")
+        phion_hydrogen_dependency = dependencies.get_file_paths(source="glows", descriptor="phion")
         sw_eqtr_electrons_dependency = dependencies.get_file_paths(
             source="glows", descriptor="e-dens"
         )
@@ -66,12 +58,8 @@ class GlowsL3EDependencies:
             source="glows", descriptor="pipeline-settings-l3bcde"
         )
 
-        tess_xyz_dependency = dependencies.get_file_paths(
-            source="glows", descriptor="tess-xyz-8"
-        )
-        tess_ang_dependency = dependencies.get_file_paths(
-            source="glows", descriptor="tess-ang-16"
-        )
+        tess_xyz_dependency = dependencies.get_file_paths(source="glows", descriptor="tess-xyz-8")
+        tess_ang_dependency = dependencies.get_file_paths(source="glows", descriptor="tess-ang-16")
 
         energy_grid_lo_dependency = dependencies.get_file_paths(
             source="glows", descriptor="energy-grid-lo"
@@ -84,35 +72,25 @@ class GlowsL3EDependencies:
         )
 
         lya_series_path = imap_data_access.download(lya_series_dependency[0])
-        solar_uv_anisotropy_path = imap_data_access.download(
-            solar_uv_anisotropy_dependency[0]
-        )
+        solar_uv_anisotropy_path = imap_data_access.download(solar_uv_anisotropy_dependency[0])
         speed_3d_path = imap_data_access.download(speed_3d_dependency[0])
         density_3d_path = imap_data_access.download(density_3d_dependency[0])
         phion_hydrogen_path = imap_data_access.download(phion_hydrogen_dependency[0])
-        sw_eqtr_electrons_path = imap_data_access.download(
-            sw_eqtr_electrons_dependency[0]
-        )
+        sw_eqtr_electrons_path = imap_data_access.download(sw_eqtr_electrons_dependency[0])
 
-        pipeline_settings_path = imap_data_access.download(
-            pipeline_settings_dependency[0]
-        )
+        pipeline_settings_path = imap_data_access.download(pipeline_settings_dependency[0])
 
         tess_xyz_path = imap_data_access.download(tess_xyz_dependency[0])
         tess_ang_path = imap_data_access.download(tess_ang_dependency[0])
 
         energy_grid_lo_path = imap_data_access.download(energy_grid_lo_dependency[0])
         energy_grid_hi_path = imap_data_access.download(energy_grid_hi_dependency[0])
-        energy_grid_ultra_path = imap_data_access.download(
-            energy_grid_ultra_dependency[0]
-        )
+        energy_grid_ultra_path = imap_data_access.download(energy_grid_ultra_dependency[0])
 
         with open(pipeline_settings_path) as f:
             pipeline_settings = json.load(f)
 
-        repoint_file_dependency = dependencies.get_file_paths(
-            data_type=RepointInput.data_type
-        )
+        repoint_file_dependency = dependencies.get_file_paths(data_type=RepointInput.data_type)
         repoint_file_path = imap_data_access.download(repoint_file_dependency[0])
 
         return cls(
@@ -134,9 +112,7 @@ class GlowsL3EDependencies:
 
     @staticmethod
     def collect_spice_dependencies(start_date: datetime, end_date: datetime):
-        logger.info(
-            f"Querying for SPICE data over the range: {start_date} to {end_date}"
-        )
+        logger.info(f"Querying for SPICE data over the range: {start_date} to {end_date}")
 
         kernel_types_with_predicted = GLOWS_L3E_REQUIRED_SPICE_KERNELS
         kernel_types_without_predicted = [
@@ -174,9 +150,7 @@ class GlowsL3EDependencies:
         if self.energy_grid_ultra is not None:
             shutil.copy(
                 self.energy_grid_ultra,
-                self.pipeline_settings["executable_dependency_paths"][
-                    "energy-grid-ultra"
-                ],
+                self.pipeline_settings["executable_dependency_paths"]["energy-grid-ultra"],
             )
         if self.tess_xyz_8 is not None:
             shutil.copy(
@@ -197,7 +171,7 @@ class GlowsL3EDependencies:
 
         with open("ionization.files.dat", "w") as ionization_file:
             ionization_file.write(
-                "\n".join(
+                "\n".join(  # noqa: FLY002
                     [
                         self.lya_series.name,
                         self.solar_uv_anisotropy.name,

@@ -73,25 +73,21 @@ def generate_l3bc(dependencies: GlowsL3BCDependencies):
     solar_wind_Carr.header["external_dependeciens"] = sw_ecliptic.external_dependeciens
 
     # Solar wind parameters passed to the CarringtonSolarWind structure for L3c processing
-    idx_current_CR = np.abs(
-        sw_ecliptic.CR_grid - ion_rate_Carr.carr_ion_rate["CR"]
-    ).argmin()
+    idx_current_CR = np.abs(sw_ecliptic.CR_grid - ion_rate_Carr.carr_ion_rate["CR"]).argmin()
     solar_wind_Carr.sw_ecliptic["mean_speed"] = sw_ecliptic.mean_speed[idx_current_CR]
-    solar_wind_Carr.sw_ecliptic["mean_proton_density"] = (
-        sw_ecliptic.mean_proton_density[idx_current_CR]
-    )
-    solar_wind_Carr.sw_ecliptic["mean_alpha_abundance"] = (
-        sw_ecliptic.mean_alpha_abundance[idx_current_CR]
-    )
+    solar_wind_Carr.sw_ecliptic["mean_proton_density"] = sw_ecliptic.mean_proton_density[
+        idx_current_CR
+    ]
+    solar_wind_Carr.sw_ecliptic["mean_alpha_abundance"] = sw_ecliptic.mean_alpha_abundance[
+        idx_current_CR
+    ]
     # Solar wind parameters passed to the CarringtonIonizationRate structure for L3c processing
     ion_rate_Carr.sw_ecliptic["mean_speed"] = sw_ecliptic.mean_speed[idx_current_CR]
     ion_rate_Carr.sw_ecliptic["mean_proton_density"] = sw_ecliptic.mean_proton_density[
         idx_current_CR
     ]
     # Calculate averaged ionization rate profile and save it to the file
-    ion_rate_Carr.calculate_photoion(
-        dependencies.ancillary_files, dependencies.external_files
-    )
+    ion_rate_Carr.calculate_photoion(dependencies.ancillary_files, dependencies.external_files)
 
     ion_rate_Carr.calculate_averaged_profile()
     ion_rate_Carr.calculate_charge_exchange()

@@ -25,9 +25,7 @@ def read_numeric_variable(var: pycdf.Var) -> np.ndarray:
     return np.where(var[...] == var.attrs["FILLVAL"], np.nan, var[...])
 
 
-OUTPUT_PATH = (
-    Path(__file__).parent.parent.parent / "comparisons" / "interpolated_calibration"
-)
+OUTPUT_PATH = Path(__file__).parent.parent.parent / "comparisons" / "interpolated_calibration"
 HERITAGE_PATH = r"instrument_team_data/swe/swepam-nswe-1999-159.v1-02.hdf"
 
 variable_mapping = {
@@ -236,9 +234,7 @@ def compute_canonicalized_data(population: str):
     plt.savefig(OUTPUT_PATH / f"{population}_temperature_rtn_theta.png")
     plt.clf()
 
-    plt.plot(
-        heritage_canonical_phi, ".", label=f"Heritage: {heritage_phi_rtn_integrated}"
-    )
+    plt.plot(heritage_canonical_phi, ".", label=f"Heritage: {heritage_phi_rtn_integrated}")
     plt.plot(canonical_phi, ".", label=f"Modern {phi_rtn_integrated}")
     plt.legend()
     plt.savefig(OUTPUT_PATH / f"{population}_temperature_rtn_phi.png")

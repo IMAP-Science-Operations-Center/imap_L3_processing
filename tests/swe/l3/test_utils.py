@@ -9,13 +9,13 @@ import spiceypy
 from imap_processing.quality_flags import SweL1bFlags
 from spacepy.pycdf import CDF
 
-from imap_l3_processing.swe.l3.models import SweL2Data, SwapiL3aProtonData, SweL1bData
+from imap_l3_processing.swe.l3.models import SwapiL3aProtonData, SweL1bData, SweL2Data
 from imap_l3_processing.swe.l3.utils import (
-    read_swe_config,
+    compute_epoch_delta_in_ns,
+    read_l1b_swe_data,
     read_l2_swe_data,
     read_l3a_swapi_proton_data,
-    read_l1b_swe_data,
-    compute_epoch_delta_in_ns,
+    read_swe_config,
 )
 from tests.spice_test_case import SpiceTestCase
 from tests.test_helpers import get_test_data_path
@@ -115,9 +115,7 @@ class TestUtils(SpiceTestCase):
         self.assertTrue(np.all(np.isnan(result.inst_az_spin_sector[1])))
         spiceypy.sct2e(-43, 0.1)
         self.assertEqual(result.phase_space_density.shape, (6, 24, 30, 7))
-        self.assertEqual(
-            result.phase_space_density[3][11][8][4], 3.1664245168848865e-28
-        )
+        self.assertEqual(result.phase_space_density[3][11][8][4], 3.1664245168848865e-28)
         self.assertTrue(np.all(np.isnan(result.phase_space_density[1])))
 
         self.assertEqual(result.acquisition_time.shape, (6, 24, 30))
@@ -132,9 +130,7 @@ class TestUtils(SpiceTestCase):
         self.assertTrue(np.all(result.acquisition_duration[1] == 0))
 
         self.assertEqual(result.phase_space_density_rebinned.shape, (6, 24, 30, 7))
-        self.assertEqual(
-            result.phase_space_density_rebinned[3][11][8][4], 1.2744421815220178e-27
-        )
+        self.assertEqual(result.phase_space_density_rebinned[3][11][8][4], 1.2744421815220178e-27)
         self.assertTrue(np.isnan(result.phase_space_density_rebinned[0][0][0][0]))
         self.assertTrue(np.all(np.isnan(result.phase_space_density_rebinned[1])))
 
@@ -177,9 +173,7 @@ class TestUtils(SpiceTestCase):
     def test_compute_epoch_delta_in_ns(self):
         acq_duration_microseconds = np.full((4, 24, 30), 80_000)
         settle_duration_microseconds = np.full((4, 4), 10000 / 3)
-        result = compute_epoch_delta_in_ns(
-            acq_duration_microseconds, settle_duration_microseconds
-        )
+        result = compute_epoch_delta_in_ns(acq_duration_microseconds, settle_duration_microseconds)
         expected = np.full(4, 30 * 1e9)
         np.testing.assert_array_equal(expected, result)
 

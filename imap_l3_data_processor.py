@@ -19,13 +19,13 @@ from imap_l3_processing.hi.hi_combined_initializer import (
 )
 from imap_l3_processing.hi.hi_processor import HiProcessor
 from imap_l3_processing.hi.hi_sp_initializer import (
-    HiSPInitializer,
     HI_SP_MAP_DESCRIPTORS,
+    HiSPInitializer,
 )
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
 from imap_l3_processing.lo.l3.lo_sp_initializer import (
-    LoSPInitializer,
     LO_SP_MAP_DESCRIPTORS,
+    LoSPInitializer,
 )
 from imap_l3_processing.lo.lo_processor import LoProcessor
 from imap_l3_processing.maps.map_descriptors import parse_map_descriptor
@@ -33,15 +33,15 @@ from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.swapi.swapi_processor import SwapiProcessor
 from imap_l3_processing.swe.swe_processor import SweProcessor
 from imap_l3_processing.ultra.ultra_combined_nsp_initializer import (
-    UltraCombinedNSPInitializer,
     ULTRA_COMBINED_NSP_DESCRIPTORS,
+    UltraCombinedNSPInitializer,
 )
 from imap_l3_processing.ultra.ultra_processor import UltraProcessor
 from imap_l3_processing.ultra.ultra_sp_initializer import (
-    UltraSPInitializer,
     ULTRA_45_DESCRIPTORS,
     ULTRA_90_DESCRIPTORS,
     ULTRA_COMBINED_SP_DESCRIPTORS,
+    UltraSPInitializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -90,9 +90,7 @@ def imap_l3_processor():
         processing_input_collection.deserialize(args.dependency)
         version_map = VersionMap({}, Version(None, args.version))
     else:
-        processing_input_collection.deserialize(
-            json.dumps(parsed_dependency["dependency"])
-        )
+        processing_input_collection.deserialize(json.dumps(parsed_dependency["dependency"]))
         version_map = VersionMap(
             {
                 k: Version(v["major_version"], v["minor_version"])
@@ -102,9 +100,7 @@ def imap_l3_processor():
 
     repointing_number = None
     if args.repointing is not None:
-        repointing_number_match = re.match(
-            r"repoint(?P<repoint>\d{5})", args.repointing
-        )
+        repointing_number_match = re.match(r"repoint(?P<repoint>\d{5})", args.repointing)
         if repointing_number_match is None:
             raise ValueError("Unexpected repointing number command line format!")
         repointing_number = int(repointing_number_match["repoint"])
@@ -165,13 +161,9 @@ def imap_l3_processor():
                 )
             )
 
-        logger.info(
-            f"maps to produce {[m.input_metadata.descriptor for m in maps_to_produce]}"
-        )
+        logger.info(f"maps to produce {[m.input_metadata.descriptor for m in maps_to_produce]}")
         if len(maps_to_produce) == 0:
-            logger.info(
-                f"Did not find any maps to produce for instrument {args.instrument}"
-            )
+            logger.info(f"Did not find any maps to produce for instrument {args.instrument}")
 
         for map_to_produce in maps_to_produce:
             logger.info(
@@ -190,9 +182,7 @@ def imap_l3_processor():
                     f"Failed to produce map {map_to_produce.input_metadata.descriptor}, {map_to_produce.input_metadata.start_date}!",
                     exc_info=e,
                 )
-    elif args.instrument == "swapi" and (
-        args.data_level == "l3a" or args.data_level == "l3b"
-    ):
+    elif args.instrument == "swapi" and (args.data_level == "l3a" or args.data_level == "l3b"):
         processor = SwapiProcessor(processing_input_collection, input_dependency)
         paths = processor.process()
     elif args.instrument == "glows" and args.data_level in ["l3a", "l3b"]:
@@ -234,10 +224,10 @@ def imap_l3_processor():
         for path in paths:
             try:
                 imap_data_access.upload(path)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 exceptions.append(e)
         if exceptions:
-            raise IOError(f"Failed to upload some files: {exceptions}")
+            raise OSError(f"Failed to upload some files: {exceptions}")
 
 
 def _furnish_spice_kernels(processing_input_collection):
@@ -257,6 +247,6 @@ if __name__ == "__main__":
 
         try:
             imap_l3_processor()
-        except Exception as e:
+        except Exception:
             logger.error("Unhandled Exception:")
-            raise e
+            raise

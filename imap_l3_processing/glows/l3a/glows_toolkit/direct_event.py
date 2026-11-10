@@ -4,6 +4,7 @@ Author: Marek Strumik, maro at cbk.waw.pl
 
 import struct
 from dataclasses import dataclass
+
 from .constants import SUBSECOND_LIMIT
 
 
@@ -27,10 +28,8 @@ class DirectEvent:
         values = struct.unpack(">II", raw)
         return DirectEvent(  # see glows_appsw/-/blob/master/libs/science/data/include/science/science_direct_event.h (bits 22,23 are not used)
             seconds=values[0],
-            subseconds=values[1]
-            & 0x1FFFFF,  # subsecond encoding on the least significant 21 bits
-            impulse_length=(values[1] >> 24)
-            & 0xFF,  # first byte encodes the impulse length
+            subseconds=values[1] & 0x1FFFFF,  # subsecond encoding on the least significant 21 bits
+            impulse_length=(values[1] >> 24) & 0xFF,  # first byte encodes the impulse length
             multi_event=bool(
                 (values[1] >> 23) & 0b1
             ),  # KPLabs says it is set by FPGA and currently not used by AppSW at all

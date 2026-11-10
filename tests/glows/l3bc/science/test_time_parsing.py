@@ -25,9 +25,7 @@ class TestTimeParsing(unittest.TestCase):
                 result_l3bc = time_from_yday_l3bc(time_rows)
                 result_l3d = time_from_yday_l3d(time_rows)
             except ValueError:
-                self.fail(
-                    "Fast parser should not crash, check formatting of date string."
-                )
+                self.fail("Fast parser should not crash, check formatting of date string.")
 
         np.testing.assert_array_equal(
             result_l3bc,

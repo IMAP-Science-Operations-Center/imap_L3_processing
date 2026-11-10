@@ -1,6 +1,6 @@
 from numpy import ndarray
 
-from imap_l3_processing.constants import METERS_PER_KILOMETER, CENTIMETERS_PER_METER
+from imap_l3_processing.constants import CENTIMETERS_PER_METER, METERS_PER_KILOMETER
 from imap_l3_processing.swapi.l3b.science.geometric_factor_calibration_table import (
     GeometricFactorCalibrationTable,
 )

@@ -4,8 +4,8 @@ import numpy as np
 import scipy
 
 from imap_l3_processing.maps.map_models import (
-    SpectralIndexMapData,
     IntensityMapData,
+    SpectralIndexMapData,
     calculate_datetime_weighted_average,
 )
 from imap_l3_processing.maps.mpfit import mpfit
@@ -32,9 +32,7 @@ def calculate_spectral_index_for_multiple_ranges(
         obs_date=np.concat([m.obs_date for m in spectral_maps], axis=1),
         obs_date_range=np.concat([m.obs_date_range for m in spectral_maps], axis=1),
         solid_angle=intensity_data.solid_angle,
-        ena_spectral_index=np.concat(
-            [m.ena_spectral_index for m in spectral_maps], axis=1
-        ),
+        ena_spectral_index=np.concat([m.ena_spectral_index for m in spectral_maps], axis=1),
         ena_spectral_index_stat_uncert=np.concat(
             [m.ena_spectral_index_stat_uncert for m in spectral_maps], axis=1
         ),
@@ -42,10 +40,7 @@ def calculate_spectral_index_for_multiple_ranges(
             [m.ena_spectral_index_scalar_coefficient for m in spectral_maps], axis=1
         ),
         ena_spectral_index_scalar_coefficient_stat_uncert=np.concat(
-            [
-                m.ena_spectral_index_scalar_coefficient_stat_uncert
-                for m in spectral_maps
-            ],
+            [m.ena_spectral_index_scalar_coefficient_stat_uncert for m in spectral_maps],
             axis=1,
         ),
         ena_spectral_index_chisq=np.concat(
@@ -55,9 +50,7 @@ def calculate_spectral_index_for_multiple_ranges(
     )
 
 
-def slice_energy_range(
-    data: IntensityMapData, start: float, end: float
-) -> IntensityMapData:
+def slice_energy_range(data: IntensityMapData, start: float, end: float) -> IntensityMapData:
     energy_mask = np.logical_and(data.energy >= start, data.energy < end)
     return dataclasses.replace(
         data,
@@ -79,9 +72,7 @@ def slice_energy_range_by_bin(
     data: IntensityMapData, start_bin_id: int, end_bin_id: int
 ) -> IntensityMapData:
     max_bin_id = 1 + len(data.energy)
-    bin_ids_in_range = (1 <= start_bin_id <= max_bin_id) and (
-        1 <= end_bin_id <= max_bin_id
-    )
+    bin_ids_in_range = (1 <= start_bin_id <= max_bin_id) and (1 <= end_bin_id <= max_bin_id)
     bin_ids_valid = bin_ids_in_range and start_bin_id < end_bin_id
     if not bin_ids_valid:
         raise ValueError(f"Error slicing energy bins {start_bin_id},{end_bin_id}")
@@ -132,17 +123,13 @@ def fit_spectral_index_map(intensity_data: IntensityMapData) -> SpectralIndexMap
         axis=1,
         keepdims=True,
     )
-    total_exposure_factor = np.sum(
-        intensity_data.exposure_factor, axis=1, keepdims=True
-    )
+    total_exposure_factor = np.sum(intensity_data.exposure_factor, axis=1, keepdims=True)
     positive_gammas = output_gammas < 0
     output_gammas[positive_gammas] = np.nan
     output_scalar_coefficients[positive_gammas] = np.nan
     output_gamma_errors[positive_gammas] = np.nan
     chisq[positive_gammas] = np.nan
-    quality_flags = np.bitwise_or.reduce(
-        intensity_data.quality_flags, axis=1, keepdims=True
-    )
+    quality_flags = np.bitwise_or.reduce(intensity_data.quality_flags, axis=1, keepdims=True)
 
     return SpectralIndexMapData(
         epoch=intensity_data.epoch,
@@ -228,9 +215,7 @@ def fit_arrays_to_power_law(
                     chisqs[i] = fit.fnorm / fit.dof
         output_gammas[epoch, 0] = gammas.reshape(fluxes.shape[2:])
         output_gamma_errors[epoch, 0] = gamma_errors.reshape(fluxes.shape[2:])
-        output_scalar_coefficients[epoch, 0] = scalar_coefficients.reshape(
-            fluxes.shape[2:]
-        )
+        output_scalar_coefficients[epoch, 0] = scalar_coefficients.reshape(fluxes.shape[2:])
         output_scalar_coefficients_errors[epoch, 0] = scalar_coefficient_errors.reshape(
             fluxes.shape[2:]
         )

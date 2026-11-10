@@ -50,9 +50,7 @@ class ReprocessInfo:
 
     @staticmethod
     def _parse_header(line: str) -> datetime:
-        ignore_after = datetime.fromisoformat(
-            line.removeprefix(IGNORE_AFTER_PREFIX).strip()
-        )
+        ignore_after = datetime.fromisoformat(line.removeprefix(IGNORE_AFTER_PREFIX).strip())
         if ignore_after.tzinfo is None:
             ignore_after = ignore_after.replace(tzinfo=timezone.utc)
         return ignore_after
@@ -78,9 +76,7 @@ class ReprocessInfo:
 
     def should_reprocess_l3d(self) -> bool:
         return GLOWS_L3D_DESCRIPTOR in self.products_to_reprocess or any(
-            set(self.products_to_reprocess.keys()).intersection(
-                set(GLOWS_L3E_DESCRIPTORS)
-            )
+            set(self.products_to_reprocess.keys()).intersection(set(GLOWS_L3E_DESCRIPTORS))
         )
 
     def get_repoints_for_descriptor(self, descriptor: str, repointing_data) -> set[int]:
@@ -91,9 +87,7 @@ class ReprocessInfo:
         repoints = set(reprocess_targets.repoints)
 
         for cr in reprocess_targets.carrington_rotations:
-            repoints.update(
-                get_repoint_numbers_within_cr_window(cr, cr, repointing_data)
-            )
+            repoints.update(get_repoint_numbers_within_cr_window(cr, cr, repointing_data))
 
         return repoints
 
@@ -102,7 +96,5 @@ def fetch_reprocess_info(input_collection: ProcessingInputCollection) -> Reproce
     [reprocessing_file_path] = input_collection.get_file_paths(
         source="glows", descriptor=GLOWS_REPROCESSING_DESCRIPTOR
     )
-    path_to_downloaded_ancillary = imap_data_access.download(
-        reprocessing_file_path.name
-    )
+    path_to_downloaded_ancillary = imap_data_access.download(reprocessing_file_path.name)
     return ReprocessInfo.parse_from_ancillary(path_to_downloaded_ancillary)

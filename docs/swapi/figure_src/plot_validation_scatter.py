@@ -21,6 +21,14 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from figure_utils import (
+    ANCHOR_ROTATION_SWAPI_TO_RTN,
+    FIGURES_DIR,
+    REPO_ROOT,
+    load_swapi_response,
+    peak_esa_voltage_for_proton_bulk_speed,
+    run_parallel_map,
+)
 
 from imap_l3_processing.constants import (
     PROTON_MASS_KG,
@@ -31,20 +39,9 @@ from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 
-from figure_utils import (
-    ANCHOR_ROTATION_SWAPI_TO_RTN,
-    FIGURES_DIR,
-    REPO_ROOT,
-    load_swapi_response,
-    peak_esa_voltage_for_proton_bulk_speed,
-    run_parallel_map,
-)
-
 _worker_state: types.SimpleNamespace | None = None
 
-_REFERENCE_INTEGRALS_PATH = (
-    REPO_ROOT / "tests" / "test_data" / "swapi" / "reference_integrals.csv"
-)
+_REFERENCE_INTEGRALS_PATH = REPO_ROOT / "tests" / "test_data" / "swapi" / "reference_integrals.csv"
 _OUTPUT_PATH = FIGURES_DIR / "validation_scatter.svg"
 
 
@@ -139,9 +136,7 @@ def _plot_scatter(reference: np.ndarray, optimized: np.ndarray) -> None:
     ax.set_aspect("equal")
     ax.set_xlabel("Reference count rate (Hz)")
     ax.set_ylabel("Optimized count rate (Hz)")
-    ax.set_title(
-        "Optimized vs. reference integrator across 10,000 random SW configurations"
-    )
+    ax.set_title("Optimized vs. reference integrator across 10,000 random SW configurations")
     ax.grid(True, which="both", alpha=0.3)
     ax.legend(loc="upper left", framealpha=0.9)
 
@@ -169,19 +164,13 @@ def main():
     bulk_speeds = df["bulk_speed_km_s"].to_numpy(dtype=float)
 
     print(f"Warming passband cache for {len(df)} rows...")
-    peak_voltages = np.array(
-        [peak_esa_voltage_for_proton_bulk_speed(v) for v in bulk_speeds]
-    )
+    peak_voltages = np.array([peak_esa_voltage_for_proton_bulk_speed(v) for v in bulk_speeds])
     swapi_response.warm_cache(peak_voltages)
     for unique_voltage in np.unique(peak_voltages):
-        swapi_response.get_response_grid(
-            float(unique_voltage), PROTON_MASS_PER_CHARGE_M_P_PER_E
-        )
+        swapi_response.get_response_grid(float(unique_voltage), PROTON_MASS_PER_CHARGE_M_P_PER_E)
 
     _initialize_worker_state(rows, peak_voltages, swapi_response)
-    optimized = np.array(
-        run_parallel_map(_process_one, len(df), desc="integrals", chunksize=64)
-    )
+    optimized = np.array(run_parallel_map(_process_one, len(df), desc="integrals", chunksize=64))
 
     valid = (references > 0) & (optimized > 0)
     rel = np.abs(optimized[valid] / references[valid] - 1.0)

@@ -59,8 +59,7 @@ def thermal_speed(sw_params: SolarWindParams) -> float:
 def temperature_to_thermal_speed(mass: float, temperature: float) -> float:
     """mass [kg], temperature [K] -> thermal speed [km/s]."""
     return (
-        math.sqrt(BOLTZMANN_CONSTANT_JOULES_PER_KELVIN * temperature / mass)
-        / METERS_PER_KILOMETER
+        math.sqrt(BOLTZMANN_CONSTANT_JOULES_PER_KELVIN * temperature / mass) / METERS_PER_KILOMETER
     )
 
 
@@ -68,7 +67,5 @@ def temperature_to_thermal_speed(mass: float, temperature: float) -> float:
 def thermal_speed_to_temperature(thermal_speed: float, mass: float) -> float:
     """thermal speed [km/s], mass [kg] -> temperature [K]."""
     return (
-        mass
-        * (thermal_speed * METERS_PER_KILOMETER) ** 2
-        / BOLTZMANN_CONSTANT_JOULES_PER_KELVIN
+        mass * (thermal_speed * METERS_PER_KILOMETER) ** 2 / BOLTZMANN_CONSTANT_JOULES_PER_KELVIN
     )

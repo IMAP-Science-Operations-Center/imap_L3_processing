@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 from imap_data_access import download
 from imap_data_access.processing_input import ProcessingInputCollection
@@ -8,15 +7,15 @@ from spacepy.pycdf import CDF
 
 from imap_l3_processing.models import MagData
 from imap_l3_processing.swapi.descriptors import (
-    SWAPI_L2_DESCRIPTOR,
-    DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR,
-    EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR,
-    HYDROGEN_INFLOW_VECTOR_DESCRIPTOR,
-    HELIUM_INFLOW_VECTOR_DESCRIPTOR,
     AZIMUTHAL_TRANSMISSION_DESCRIPTOR,
     CENTRAL_EFFECTIVE_AREA_DESCRIPTOR,
-    PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR,
+    DENSITY_OF_NEUTRAL_HELIUM_DESCRIPTOR,
+    EFFICIENCY_LOOKUP_TABLE_DESCRIPTOR,
+    HELIUM_INFLOW_VECTOR_DESCRIPTOR,
+    HYDROGEN_INFLOW_VECTOR_DESCRIPTOR,
     MAG_RTN_DESCRIPTOR,
+    PASSBAND_FIT_COEFFICIENTS_DESCRIPTOR,
+    SWAPI_L2_DESCRIPTOR,
 )
 from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.science.pickup_ion.density_of_neutral_helium_lookup_table import (
@@ -24,11 +23,11 @@ from imap_l3_processing.swapi.l3a.science.pickup_ion.density_of_neutral_helium_l
 )
 from imap_l3_processing.swapi.l3a.science.pickup_ion.inflow_vector import InflowVector
 from imap_l3_processing.swapi.l3a.utils import read_l2_swapi_data, read_mag_rtn_data
-from imap_l3_processing.utils import select_mag_path
 from imap_l3_processing.swapi.response.efficiency_calibration_table import (
     EfficiencyCalibrationTable,
 )
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
+from imap_l3_processing.utils import select_mag_path
 
 
 @dataclass
@@ -39,7 +38,7 @@ class SwapiL3ADependencies:
     hydrogen_inflow_vector: InflowVector
     helium_inflow_vector: InflowVector
     swapi_response: SwapiResponse
-    mag_data: Optional[MagData] = None
+    mag_data: MagData | None = None
     mag_is_preliminary: bool = False
 
     @classmethod
@@ -98,14 +97,12 @@ class SwapiL3ADependencies:
         azimuthal_transmission_path: Path,
         central_effective_area_path: Path,
         passband_fit_coefficients_path: Path,
-        mag_path: Optional[Path] = None,
+        mag_path: Path | None = None,
         mag_is_preliminary: bool = False,
     ):
         return cls(
             data=read_l2_swapi_data(CDF(str(science_dependency_path))),
-            efficiency_calibration_table=EfficiencyCalibrationTable(
-                efficiency_calibration_path
-            ),
+            efficiency_calibration_table=EfficiencyCalibrationTable(efficiency_calibration_path),
             density_of_neutral_helium_calibration_table=DensityOfNeutralHeliumLookupTable.from_file(
                 neutral_helium_path
             ),

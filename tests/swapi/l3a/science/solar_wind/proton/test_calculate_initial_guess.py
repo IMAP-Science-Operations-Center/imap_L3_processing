@@ -8,24 +8,23 @@ from imap_l3_processing.constants import (
     PROTON_CHARGE_COULOMBS,
     PROTON_MASS_KG,
 )
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     model_solar_wind_ideal_coincidence_rates,
 )
+from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
+    SolarWindParams,
+)
 from imap_l3_processing.swapi.l3a.science.solar_wind.proton.calculate_initial_guess import (
     INITIAL_TEMPERATURE_FLOOR_K,
     calculate_initial_guess,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
-    SolarWindParams,
-)
 from imap_l3_processing.swapi.l3a.utils import optimal_density_scale
-from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.species import Species
 from tests.swapi._helpers import NOMINAL_TEST_EPOCH_TT2000, load_swapi_response
-
 
 # RTN → SWAPI rotation. Body +Y (the SWAPI boresight / spin axis) in RTN is
 # column 1 of the transpose, i.e. -R̂_RTN. The solar wind direction (anti-
@@ -130,9 +129,7 @@ class TestCalculateInitialGuessSeeds(unittest.TestCase):
 
         temperature_seed_arg = patched_refine.call_args.args[3]
         expected_temperature = 60_000.0 * (peak_speed / 400.0) ** 2
-        np.testing.assert_allclose(
-            temperature_seed_arg, expected_temperature, rtol=1e-12
-        )
+        np.testing.assert_allclose(temperature_seed_arg, expected_temperature, rtol=1e-12)
 
     def test_temperature_seed_floors_at_one_ev(self):
         """At a low peak speed where 60_000·(v/400)² is below 1 eV, the temperature seed handed to the refiner is clamped to `INITIAL_TEMPERATURE_FLOOR_K`."""
@@ -213,9 +210,7 @@ class TestCalculateInitialGuessDensity(unittest.TestCase):
             temperature=guess.temperature,
             mass=ctx.mass_kg,
         )
-        unit_rates, _ = model_solar_wind_ideal_coincidence_rates(
-            unit_density_params, ctx
-        )
+        unit_rates, _ = model_solar_wind_ideal_coincidence_rates(unit_density_params, ctx)
         expected_density = optimal_density_scale(unit_rates, ctx.count_rate)
         np.testing.assert_allclose(guess.density, expected_density, rtol=1e-10)
 

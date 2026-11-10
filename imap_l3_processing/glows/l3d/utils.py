@@ -2,7 +2,6 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import imap_data_access
 import numpy as np
@@ -10,14 +9,12 @@ from imap_data_access.file_validation import Version
 from spacepy.pycdf import CDF
 
 import imap_l3_processing
+from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
 from imap_l3_processing.glows.l3bc.utils import get_midpoint_of_cr
 from imap_l3_processing.glows.l3d.models import GlowsL3DSolarParamsHistory
 from imap_l3_processing.models import InputMetadata
-from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
 
-PATH_TO_L3D_TOOLKIT = (
-    Path(imap_l3_processing.__file__).parent / "glows" / "l3d" / "science"
-)
+PATH_TO_L3D_TOOLKIT = Path(imap_l3_processing.__file__).parent / "glows" / "l3d" / "science"
 
 
 def create_glows_l3c_json_file_from_cdf(cdf_file_path: Path):
@@ -27,17 +24,11 @@ def create_glows_l3c_json_file_from_cdf(cdf_file_path: Path):
         json_dict = {
             "header": {"filename": cdf_file_path.name},
             "solar_wind_profile": {
-                "proton_density": read_numeric_variable(cdf["proton_density_profile"])[
-                    0
-                ].tolist(),
-                "plasma_speed": read_numeric_variable(cdf["plasma_speed_profile"])[
-                    0
-                ].tolist(),
+                "proton_density": read_numeric_variable(cdf["proton_density_profile"])[0].tolist(),
+                "plasma_speed": read_numeric_variable(cdf["plasma_speed_profile"])[0].tolist(),
             },
             "solar_wind_ecliptic": {
-                "proton_density": float(
-                    read_numeric_variable(cdf["proton_density_ecliptic"])[0]
-                ),
+                "proton_density": float(read_numeric_variable(cdf["proton_density_ecliptic"])[0]),
                 "alpha_abundance": float(
                     read_numeric_variable(cdf["alpha_abundance_ecliptic"])[0]
                 ),
@@ -62,9 +53,7 @@ def create_glows_l3b_json_file_from_cdf(cdf_file_path: Path):
             },
             "date": cdf["mean_time"][0].isoformat(),
             "CR": cr_number,
-            "uv_anisotropy_factor": read_numeric_variable(cdf["uv_anisotropy_factor"])[
-                0
-            ].tolist(),
+            "uv_anisotropy_factor": read_numeric_variable(cdf["uv_anisotropy_factor"])[0].tolist(),
             "ion_rate_profile": {
                 "lat_grid": read_numeric_variable(cdf["lat_grid"]).tolist(),
                 "ph_rate": read_numeric_variable(cdf["ph_rate"])[0].tolist(),
@@ -95,9 +84,7 @@ def convert_json_to_l3d_data_product(
         parent_file_names=parent_file_names,
         latitude=l3d_json_dict["lat_grid"],
         cr=l3d_json_dict["cr_grid"],
-        epoch=np.array(
-            [datetime.fromisoformat(time) for time in l3d_json_dict["time_grid"]]
-        ),
+        epoch=np.array([datetime.fromisoformat(time) for time in l3d_json_dict["time_grid"]]),
         plasma_speed=l3d_json_dict["solar_params"]["speed"],
         proton_density=l3d_json_dict["solar_params"]["p-dens"],
         ultraviolet_anisotropy=l3d_json_dict["solar_params"]["uv-anis"],
@@ -120,9 +107,7 @@ def get_parent_file_names_from_l3d_json(l3d_folder: Path) -> list[str]:
 
     with open(l3d_folder / l3d_file_paths[0]) as l3d:
         l3d_data = json.load(l3d)
-        ancillary_files = [
-            Path(file).name for file in l3d_data["header"]["ancillary_data_files"]
-        ]
+        ancillary_files = [Path(file).name for file in l3d_data["header"]["ancillary_data_files"]]
         external_dependencies = Path(l3d_data["header"]["external_dependeciens"]).name
         parent_file_names.update(ancillary_files)
         parent_file_names.add(external_dependencies)
@@ -130,12 +115,8 @@ def get_parent_file_names_from_l3d_json(l3d_folder: Path) -> list[str]:
     for file_path in l3d_file_paths:
         with open(l3d_folder / file_path, "r") as l3d:
             l3d_data = json.load(l3d)
-            l3b_parents = [
-                Path(file).name for file in l3d_data["header"]["l3b_input_filename"]
-            ]
-            l3c_parents = [
-                Path(file).name for file in l3d_data["header"]["l3c_input_filename"]
-            ]
+            l3b_parents = [Path(file).name for file in l3d_data["header"]["l3b_input_filename"]]
+            l3c_parents = [Path(file).name for file in l3d_data["header"]["l3c_input_filename"]]
             parent_file_names.update(l3b_parents)
             parent_file_names.update(l3c_parents)
 
@@ -165,7 +146,7 @@ def rename_l3d_text_outputs(paths: list[Path], version: str) -> list[Path]:
     return out_paths
 
 
-def query_for_most_recent_l3d(descriptor: str) -> Optional[dict]:
+def query_for_most_recent_l3d(descriptor: str) -> dict | None:
     query_result = imap_data_access.query(
         instrument="glows", data_level="l3d", descriptor=descriptor
     )

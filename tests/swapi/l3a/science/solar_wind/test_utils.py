@@ -24,9 +24,7 @@ class TestAverageSpinAxisRtn(unittest.TestCase):
     def test_single_rotation_returns_its_y_axis(self):
         """A single identity rotation yields +Y_RTN since column 1 of the identity is (0, 1, 0)."""
         rotation = np.eye(3)
-        np.testing.assert_array_equal(
-            average_spin_axis_rtn(rotation[np.newaxis]), [0.0, 1.0, 0.0]
-        )
+        np.testing.assert_array_equal(average_spin_axis_rtn(rotation[np.newaxis]), [0.0, 1.0, 0.0])
 
     def test_constant_axis_across_sweeps_returns_that_axis(self):
         """Five identical identity rotations average to the same +Y_RTN unit vector, confirming the mean is over the sweep axis."""
@@ -97,9 +95,7 @@ class TestCountRateConversionFactor(unittest.TestCase):
             * deg_to_rad_squared
             * km_to_cm
         )
-        np.testing.assert_allclose(
-            count_rate_conversion_factor(sw, rg), expected, rtol=1e-12
-        )
+        np.testing.assert_allclose(count_rate_conversion_factor(sw, rg), expected, rtol=1e-12)
 
 
 if __name__ == "__main__":

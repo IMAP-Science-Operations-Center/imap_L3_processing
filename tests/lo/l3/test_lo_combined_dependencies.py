@@ -1,7 +1,7 @@
 import unittest
-from unittest.mock import sentinel, call, patch
+from unittest.mock import call, patch, sentinel
 
-from imap_data_access import ScienceInput, ProcessingInputCollection
+from imap_data_access import ProcessingInputCollection, ScienceInput
 
 from imap_l3_processing.lo.l3.lo_combined_dependencies import LoCombinedDependencies
 
@@ -10,9 +10,7 @@ class TestLoCombinedDependencies(unittest.TestCase):
     @patch(
         "imap_l3_processing.lo.l3.lo_combined_dependencies.RectangularIntensityMapData.read_from_path"
     )
-    @patch(
-        "imap_l3_processing.lo.l3.lo_combined_dependencies.imap_data_access.download"
-    )
+    @patch("imap_l3_processing.lo.l3.lo_combined_dependencies.imap_data_access.download")
     def test_fetch_dependencies(self, mock_download, mock_read_from_path):
         lo75_input = "imap_lo_l3_l075-ena-h-hf-sp-ram-hae-6deg-6mo_20250422_v001.cdf"
         lo90_input = "imap_lo_l3_l090-ena-h-hf-sp-ram-hae-6deg-6mo_20250422_v001.cdf"
@@ -28,9 +26,7 @@ class TestLoCombinedDependencies(unittest.TestCase):
         )
         dependencies = LoCombinedDependencies.fetch_dependencies(inputs)
 
-        mock_download.assert_has_calls(
-            [call(lo75_input), call(lo90_input), call(lo105_input)]
-        )
+        mock_download.assert_has_calls([call(lo75_input), call(lo90_input), call(lo105_input)])
 
         mock_read_from_path.assert_called_with(mock_download.return_value)
         self.assertEqual(mock_lo_map_data, dependencies.map_data)

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Sat Jan  3 21:04:46 2026
 
@@ -7,10 +6,11 @@ Created on Sat Jan  3 21:04:46 2026
 """
 
 import os
-from pathlib import Path
-import pandas as pd
-import numpy as np
 from datetime import datetime
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
 
 # -----------------------------
 # Configuration
@@ -55,8 +55,10 @@ def build_header(file_type, hmin, hmax):
         " skyframe=ECLIPJ2000 posframe=J2000",
         "",
         " chat=0 smearspread='0/0/0' calc='0/0/0'",
-        " frame_epoch=914561779.587 resp_class=lo_triple "
-        "zaxis_ra_deg=+274.476346 zaxis_dec_deg=-22.782473",
+        (
+            " frame_epoch=914561779.587 resp_class=lo_triple "
+            "zaxis_ra_deg=+274.476346 zaxis_dec_deg=-22.782473"
+        ),
         " ram_ra_deg=+186.7725 ram_dec_deg=-3.2847 mtype_list='40' energy_list='21,41'",
         " check_mt_list='40' check_species='20' rate_factor='1000' e_nominal='0.015'",
         "",
@@ -127,7 +129,6 @@ for pp in [75, 90, 105]:
         # with open(f'/Users/hafijulislam/UNH/csv_to_isoc/converted/map_cnts_esa{esa}.txt', "w") as f:
         with open(out_path, "w") as f:
             f.write("\n".join(header) + "\n")
-            for row in data:
-                f.write("\t".join(f"{val:.6e}" for val in row) + "\n")
+            f.writelines("\t".join(f"{val:.6e}" for val in row) + "\n" for row in data)
 
     print(f"Converted Maps for Pivot {pp}")

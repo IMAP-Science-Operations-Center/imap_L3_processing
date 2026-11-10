@@ -81,10 +81,10 @@ def angle_vec(vec1, vec2):
       [   0.   40.   80.  120.  160.  160.  120.   80.   40.    0.]
     """
     if np.shape(vec1) != np.shape(vec2):
-        raise Exception("angle_vec() error: np.shape(vec1)!=np.shape(vec2)")
+        raise ValueError("angle_vec() error: np.shape(vec1)!=np.shape(vec2)")
     if vec1.ndim == 1:
         if np.shape(vec1)[0] != 3:
-            raise Exception("angle_vec() error: np.shape(vec1)[0]!=3")
+            raise ValueError("angle_vec() error: np.shape(vec1)[0]!=3")
         r_1 = np.sqrt(np.dot(vec1, vec1))
         r_2 = np.sqrt(np.dot(vec2, vec2))
         cos = np.dot(vec1, vec2) / (r_1 * r_2)
@@ -99,17 +99,13 @@ def angle_vec(vec1, vec2):
         return 0.0
 
     if np.shape(vec1)[1] != 3:
-        raise Exception("angle_vec() error: np.shape(vec1)[1]!=3")
+        raise ValueError("angle_vec() error: np.shape(vec1)[1]!=3")
     r_1 = np.sqrt((vec1 * vec1).sum(axis=1))
     r_2 = np.sqrt((vec2 * vec2).sum(axis=1))
     idxs0 = np.nonzero(np.logical_and(r_1 != 0.0, r_2 != 0.0))
-    cos = (vec1[idxs0[0], :] * vec2[idxs0[0], :]).sum(axis=1) / (
-        r_1[idxs0[0]] * r_2[idxs0[0]]
-    )
+    cos = (vec1[idxs0[0], :] * vec2[idxs0[0], :]).sum(axis=1) / (r_1[idxs0[0]] * r_2[idxs0[0]])
     idxs = np.nonzero(np.logical_and(cos < -1.0, np.fabs(cos + 1.0) < 1.0e-14))
-    cos[
-        idxs[0]
-    ] = -1.0  # just in case if cos is shifted below -1 due to numerical errors
+    cos[idxs[0]] = -1.0  # just in case if cos is shifted below -1 due to numerical errors
     idxs = np.nonzero(np.logical_and(cos > 1.0, np.fabs(cos - 1.0) < 1.0e-14))
     cos[idxs[0]] = 1.0  # just in case if cos is shifted above 1 due to numerical errors
     angle = np.zeros((np.shape(vec1)[0]), dtype=float)
@@ -162,7 +158,7 @@ def get_spher_coord_rad(vec):
     """
     if vec.ndim == 1:
         if np.shape(vec)[0] != 3:
-            raise Exception("get_spher_coord_rad() error: np.shape(vec)[0]!=3")
+            raise ValueError("get_spher_coord_rad() error: np.shape(vec)[0]!=3")
         vec_m = np.sqrt(np.dot(vec, vec))
         if vec_m == 0.0:
             lat = 0.0
@@ -173,11 +169,9 @@ def get_spher_coord_rad(vec):
             lon = 0.0
         else:
             lon = np.arctan2(vec[1], vec[0]) % (2 * np.pi)
-        return np.array(
-            [vec_m, lon, lat]
-        )  # return one array similarly as in Mathematica
+        return np.array([vec_m, lon, lat])  # return one array similarly as in Mathematica
     if np.shape(vec)[1] != 3:
-        raise Exception("get_spher_coord_rad() error: np.shape(vec)[1]!=3")
+        raise ValueError("get_spher_coord_rad() error: np.shape(vec)[1]!=3")
     vec_m = np.sqrt((vec * vec).sum(axis=1))
     idxs = np.nonzero(vec_m != 0.0)
     lat = np.zeros((len(vec_m)), float)
@@ -185,9 +179,7 @@ def get_spher_coord_rad(vec):
     lon = np.arctan2(vec[:, 1], vec[:, 0]) % (2 * np.pi)  # compute longitude
     idxs = np.nonzero(np.logical_and(vec[:, 0] == 0.0, vec[:, 1] == 0.0))
     lon[idxs[0]] = 0.0  # set lon=0 if vec[:,0]==0.0 and vec[:,1]==0.0
-    return np.column_stack(
-        [vec_m, lon, lat]
-    )  # return one array similarly as in Mathematica
+    return np.column_stack([vec_m, lon, lat])  # return one array similarly as in Mathematica
 
 
 def lb2spin(l_0, b_0, soff, l_q, b_q):
@@ -291,14 +283,10 @@ def make_co_vec(l_q, b_q):
       [  1.00000000e+00  -2.44929360e-16   6.12323400e-17]]
     """
     if np.shape(l_q) != np.shape(b_q):
-        raise Exception("make_co_vec() error: np.shape(l_q)!=np.shape(b_q)")
+        raise ValueError("make_co_vec() error: np.shape(l_q)!=np.shape(b_q)")
     if np.isscalar(l_q):
-        return np.array(
-            [np.cos(l_q) * np.sin(b_q), np.sin(l_q) * np.sin(b_q), np.cos(b_q)]
-        )
-    return np.column_stack(
-        [np.cos(l_q) * np.sin(b_q), np.sin(l_q) * np.sin(b_q), np.cos(b_q)]
-    )
+        return np.array([np.cos(l_q) * np.sin(b_q), np.sin(l_q) * np.sin(b_q), np.cos(b_q)])
+    return np.column_stack([np.cos(l_q) * np.sin(b_q), np.sin(l_q) * np.sin(b_q), np.cos(b_q)])
 
 
 def make_vec(l_q, b_q):
@@ -342,14 +330,10 @@ def make_vec(l_q, b_q):
        [  6.12323400e-17  -1.49975978e-32   1.00000000e+00]]
     """
     if np.shape(l_q) != np.shape(b_q):
-        raise Exception("make_vec() error: np.shape(l_q)!=np.shape(b_q)")
+        raise ValueError("make_vec() error: np.shape(l_q)!=np.shape(b_q)")
     if np.isscalar(l_q):
-        return np.array(
-            [np.cos(l_q) * np.cos(b_q), np.sin(l_q) * np.cos(b_q), np.sin(b_q)]
-        )
-    return np.column_stack(
-        [np.cos(l_q) * np.cos(b_q), np.sin(l_q) * np.cos(b_q), np.sin(b_q)]
-    )
+        return np.array([np.cos(l_q) * np.cos(b_q), np.sin(l_q) * np.cos(b_q), np.sin(b_q)])
+    return np.column_stack([np.cos(l_q) * np.cos(b_q), np.sin(l_q) * np.cos(b_q), np.sin(b_q)])
 
 
 def position_angle(a_1, d_1, a_2, d_2):
@@ -393,9 +377,7 @@ def position_angle(a_1, d_1, a_2, d_2):
         50.43084061  62.72683044  73.55865702  82.60570856  90.        ]
     """
     delta_a = a_1 - a_2
-    pos_a = np.arctan2(
-        np.sin(delta_a), np.cos(d_2) * np.tan(d_1) - np.sin(d_2) * np.cos(delta_a)
-    )
+    pos_a = np.arctan2(np.sin(delta_a), np.cos(d_2) * np.tan(d_1) - np.sin(d_2) * np.cos(delta_a))
     return pos_a
 
 
@@ -803,9 +785,7 @@ def spin2lb(l_0, b_0, spin_ang, spin_off, tht):
         vec0 = np.array([-np.sin(tht), 0.0, np.cos(tht)])  # temporary vector to rotate
         vec = np.matmul(rot_mtrx, vec0)  # rotate vec0
     else:
-        vec0 = np.column_stack(
-            [-np.sin(tht), np.zeros((len(tht)), dtype=float), np.cos(tht)]
-        )
+        vec0 = np.column_stack([-np.sin(tht), np.zeros((len(tht)), dtype=float), np.cos(tht)])
         vec = np.einsum("lij,lj->li", rot_mtrx, vec0)
     rlb = get_spher_coord_rad(vec)
     if np.isscalar(l_0):
@@ -869,9 +849,9 @@ def spin2lb_test_on_grid(spin_off, tht):
         ist = 1
 
     if ist == 0:
-        print("spin2lb_test_on_grid(tht=%g,spin_off=%g): passed" % (tht, spin_off))
+        print(f"spin2lb_test_on_grid(tht={tht:g},spin_off={spin_off:g}): passed")
         return 1
-    print("spin2lb_test_on_grid(tht=%g,spin_off=%g): failed" % (tht, spin_off))
+    print(f"spin2lb_test_on_grid(tht={tht:g},spin_off={spin_off:g}): failed")
     return 0
 
 
@@ -901,9 +881,7 @@ def spin2lb_test_on_text_file(filename):
       1
     """
     # load a text file with testing cases
-    l_0, b_0, s_0, spin_off, tht, l_q, b_q = np.radians(
-        np.loadtxt(filename, unpack=True)
-    )
+    l_0, b_0, s_0, spin_off, tht, l_q, b_q = np.radians(np.loadtxt(filename, unpack=True))
 
     # back-and-forth transforms
     ltbt = spin2lb(l_0, b_0, s_0, spin_off, tht)
@@ -937,7 +915,7 @@ def spin2lb_test_on_text_file(filename):
         ist = 1
 
     if ist == 0:
-        print("spin2lb_test_on_text_file('%s'): passed" % filename)
+        print(f"spin2lb_test_on_text_file('{filename:s}'): passed")
         return 1
-    print("spin2lb_test_on_text_file('%s'): failed" % filename)
+    print(f"spin2lb_test_on_text_file('{filename:s}'): failed")
     return 0

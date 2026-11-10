@@ -2,17 +2,19 @@
 Author: Izabela Kowalska-Leszczynska (ikowalska@cbk.waw.pl)
 Carrington solar wind class
 """
+# ruff: noqa: N999
 
 import json
+import logging
 from dataclasses import dataclass
+
+import astropy.constants as const
+import astropy.units as u
 import numpy as np
 from astropy.time import Time
-import astropy.units as u
-import astropy.constants as const
-from . import funcs as fun
-from .constants import VERSION, PHISICAL_CONSTANTS
 
-import logging
+from . import funcs as fun
+from .constants import PHISICAL_CONSTANTS, VERSION
 
 logging.basicConfig(level=logging.ERROR)
 
@@ -148,7 +150,7 @@ class CarringtonSolarWind:
                     "lat= %lf deg: observed cx rate is smaller than min of the cx_grid",
                     self.sw_profile["grid"][i],
                 )
-                raise Exception(
+                raise RuntimeError(
                     "L3c not generated: observed cx rate is smaller than min of the cx_grid"
                 )
             # Searching for a measured charge exchange in the cx_grid. In that way we will find sw speed
@@ -183,20 +185,12 @@ class CarringtonSolarWind:
         output["CR"] = self.sw_profile["CR"]
         output["solar_wind_ecliptic"] = {}
         output["solar_wind_ecliptic"]["plasma_speed"] = self.sw_ecliptic["mean_speed"]
-        output["solar_wind_ecliptic"]["proton_density"] = self.sw_ecliptic[
-            "mean_proton_density"
-        ]
-        output["solar_wind_ecliptic"]["alpha_abundance"] = self.sw_ecliptic[
-            "mean_alpha_abundance"
-        ]
+        output["solar_wind_ecliptic"]["proton_density"] = self.sw_ecliptic["mean_proton_density"]
+        output["solar_wind_ecliptic"]["alpha_abundance"] = self.sw_ecliptic["mean_alpha_abundance"]
         output["solar_wind_profile"] = {}
         output["solar_wind_profile"]["lat_grid"] = self.sw_profile["grid"]
-        output["solar_wind_profile"]["plasma_speed"] = self.sw_profile[
-            "plasma_speed"
-        ].tolist()
-        output["solar_wind_profile"]["proton_density"] = self.sw_profile[
-            "proton_density"
-        ].tolist()
+        output["solar_wind_profile"]["plasma_speed"] = self.sw_profile["plasma_speed"].tolist()
+        output["solar_wind_profile"]["proton_density"] = self.sw_profile["proton_density"].tolist()
 
         return output
 
@@ -218,20 +212,12 @@ class CarringtonSolarWind:
         output["CR"] = self.sw_profile["CR"]
         output["solar_wind_ecliptic"] = {}
         output["solar_wind_ecliptic"]["plasma_speed"] = self.sw_ecliptic["mean_speed"]
-        output["solar_wind_ecliptic"]["proton_density"] = self.sw_ecliptic[
-            "mean_proton_density"
-        ]
-        output["solar_wind_ecliptic"]["alpha_abundance"] = self.sw_ecliptic[
-            "mean_alpha_abundance"
-        ]
+        output["solar_wind_ecliptic"]["proton_density"] = self.sw_ecliptic["mean_proton_density"]
+        output["solar_wind_ecliptic"]["alpha_abundance"] = self.sw_ecliptic["mean_alpha_abundance"]
         output["solar_wind_profile"] = {}
         output["solar_wind_profile"]["lat_grid"] = self.sw_profile["grid"]
-        output["solar_wind_profile"]["plasma_speed"] = self.sw_profile[
-            "plasma_speed"
-        ].tolist()
-        output["solar_wind_profile"]["proton_density"] = self.sw_profile[
-            "proton_density"
-        ].tolist()
+        output["solar_wind_profile"]["plasma_speed"] = self.sw_profile["plasma_speed"].tolist()
+        output["solar_wind_profile"]["proton_density"] = self.sw_profile["proton_density"].tolist()
 
         # Check validity of the data
         fun.check_nan(output["solar_wind_ecliptic"])
@@ -239,6 +225,5 @@ class CarringtonSolarWind:
 
         json_content = json.dumps(output, indent=3)
 
-        output_fp = open(fn, "w")
-        print(json_content, file=output_fp)
-        output_fp.close()
+        with open(fn, "w") as output_fp:
+            print(json_content, file=output_fp)

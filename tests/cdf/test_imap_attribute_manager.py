@@ -9,9 +9,7 @@ from imap_l3_processing.cdf.imap_attribute_manager import ImapAttributeManager
 
 class TestImapCdfManager(TestCase):
     def setUp(self):
-        self.config_folder_path = (
-            Path(imap_l3_processing.__file__).parent.resolve() / "cdf/config"
-        )
+        self.config_folder_path = Path(imap_l3_processing.__file__).parent.resolve() / "cdf/config"
         self.base_manager = CdfAttributeManager(
             variable_schema_layers=[
                 self.config_folder_path / "imap_l3_variable_cdf_attrs_schema.yaml",
@@ -48,9 +46,7 @@ class TestImapCdfManager(TestCase):
         self.base_manager.load_variable_attributes(
             self.config_folder_path / "imap_swapi_l3a_variable_attrs.yaml"
         )
-        self.base_manager.add_global_attribute(
-            "ground_software_version", "test version"
-        )
+        self.base_manager.add_global_attribute("ground_software_version", "test version")
 
         self.assertEqual(
             self.base_manager.get_global_attributes(), manager.get_global_attributes()
@@ -121,15 +117,11 @@ class TestImapCdfManager(TestCase):
             manager.get_variable_attributes("combined_energy"),
         )
         self.assertEqual(
-            self.base_manager.get_variable_attributes(
-                "combined_energy_stat_uncert_minus"
-            ),
+            self.base_manager.get_variable_attributes("combined_energy_stat_uncert_minus"),
             manager.get_variable_attributes("combined_energy_stat_uncert_minus"),
         )
         self.assertEqual(
-            self.base_manager.get_variable_attributes(
-                "combined_energy_stat_uncert_plus"
-            ),
+            self.base_manager.get_variable_attributes("combined_energy_stat_uncert_plus"),
             manager.get_variable_attributes("combined_energy_stat_uncert_plus"),
         )
 
@@ -138,9 +130,7 @@ class TestImapCdfManager(TestCase):
             manager.get_variable_attributes("combined_differential_flux"),
         )
         self.assertEqual(
-            self.base_manager.get_variable_attributes(
-                "combined_differential_flux_stat_uncert"
-            ),
+            self.base_manager.get_variable_attributes("combined_differential_flux_stat_uncert"),
             manager.get_variable_attributes("combined_differential_flux_stat_uncert"),
         )
 
@@ -170,9 +160,7 @@ class TestImapCdfManager(TestCase):
         self,
     ):
         manager = ImapAttributeManager()
-        manager.add_instrument_attrs(
-            "hi", "l3", "45sensor-spacecraft-survival-full-4deg-map"
-        )
+        manager.add_instrument_attrs("hi", "l3", "45sensor-spacecraft-survival-full-4deg-map")
 
         self.base_manager.load_global_attributes(
             self.config_folder_path / "imap_hi_l3_global_cdf_attrs.yaml"

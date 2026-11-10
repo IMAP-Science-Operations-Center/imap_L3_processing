@@ -48,9 +48,7 @@ class TestDensityArrayAndScalarInputs(TestCase):
 
     def test_negative_angle_wraps_via_modulo(self):
         lut = _table_with_360_anchor()
-        np.testing.assert_array_equal(
-            lut.density(np.array([-180.0]), np.array([0.2])), [0.0225]
-        )
+        np.testing.assert_array_equal(lut.density(np.array([-180.0]), np.array([0.2])), [0.0225])
 
     def test_table_extension_to_360_when_input_only_reaches_180(self):
         lut = _table_without_360_anchor()
@@ -59,21 +57,15 @@ class TestDensityArrayAndScalarInputs(TestCase):
 
     def test_distance_above_grid_returns_fill(self):
         lut = _table_with_360_anchor()
-        np.testing.assert_array_equal(
-            lut.density(np.array([0.0]), np.array([5.0])), [0.0]
-        )
+        np.testing.assert_array_equal(lut.density(np.array([0.0]), np.array([5.0])), [0.0])
 
     def test_density_at_grid_point(self):
         lut = _table_with_360_anchor()
-        np.testing.assert_allclose(
-            lut.density(np.array([0.0]), np.array([0.1])), [0.01]
-        )
+        np.testing.assert_allclose(lut.density(np.array([0.0]), np.array([0.1])), [0.01])
 
     def test_density_below_lower_limit(self):
         lut = _table_with_360_anchor()
-        np.testing.assert_allclose(
-            lut.density(np.array([0.0]), np.array([0.1 / 2])), [0.01 / 2]
-        )
+        np.testing.assert_allclose(lut.density(np.array([0.0]), np.array([0.1 / 2])), [0.01 / 2])
 
 
 class TestTableExtension(TestCase):

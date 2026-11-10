@@ -2,14 +2,16 @@
 Author: Marek Strumik, maro at cbk.waw.pl
 """
 
-import json
 import copy
+import json
+
 import numpy as np
-from .constants import VERSION, SUBSECOND_LIMIT
+
+from .constants import SUBSECOND_LIMIT, VERSION
 from .funcs import (
     decode_ancillary_parameter,
-    time_sec_subsec_to_utc,
     time_sec_subsec_to_float64,
+    time_sec_subsec_to_utc,
 )
 
 
@@ -24,9 +26,7 @@ class L1bDataDirectEvents:
         """
         self.data = {}
 
-    def _block_header_add_list_of_anc_files(
-        self, anc_input_from_sdc, anc_input_from_instr_team
-    ):
+    def _block_header_add_list_of_anc_files(self, anc_input_from_sdc, anc_input_from_instr_team):
         """
         Add list of used ancillary files to block header
         Args:
@@ -35,9 +35,7 @@ class L1bDataDirectEvents:
         """
         self.data["header"]["ancillary_data_files"] = []
         for key in ["conversion_table_for_anc_data"]:
-            self.data["header"]["ancillary_data_files"].append(
-                anc_input_from_instr_team[key]
-            )
+            self.data["header"]["ancillary_data_files"].append(anc_input_from_instr_team[key])
         # for key in anc_input_from_sdc:
         #    self.data['block_header']['ancillary_data_files'].append(anc_input_from_sdc[key])
 
@@ -51,11 +49,8 @@ class L1bDataDirectEvents:
         """
 
         # load conversion/decoding table for ancillary parameters collected onboard
-        file_handler = open(
-            anc_input_from_instr_team["conversion_table_for_anc_data"], "r"
-        )
-        conversion_table = json.load(file_handler)
-        file_handler.close()
+        with open(anc_input_from_instr_team["conversion_table_for_anc_data"], "r") as file_handler:
+            conversion_table = json.load(file_handler)
 
         # ancillary parameters collected onboard that need to be decoded
         self.data["filter_temperature"] = decode_ancillary_parameter(
@@ -71,9 +66,7 @@ class L1bDataDirectEvents:
             "spin_phase", conversion_table, l1a_data["spin_phase_at_next_pps"]
         )
 
-    def create_l1b_from_l1a_data(
-        self, l1a, anc_input_from_sdc, anc_input_from_instr_team
-    ):
+    def create_l1b_from_l1a_data(self, l1a, anc_input_from_sdc, anc_input_from_instr_team):
         """
         Sets values of L1b fields using L1a data read from a file
         Args:
@@ -89,9 +82,7 @@ class L1bDataDirectEvents:
         }
 
         # add list of used ancillary files to block_header
-        self._block_header_add_list_of_anc_files(
-            anc_input_from_sdc, anc_input_from_instr_team
-        )
+        self._block_header_add_list_of_anc_files(anc_input_from_sdc, anc_input_from_instr_team)
 
         # self.data['unique_identifier'] = \
         #    time_sec_subsec_to_utc(l1a.data['data_every_second']['imap_sclk_last_pps'],
@@ -138,9 +129,7 @@ class L1bDataDirectEvents:
                 self.data["flags"][key] = l1a.data["data_every_second"][key]
 
         if np.shape(l1a.direct_events)[0] > 0:
-            if (
-                l1a.direct_events.ndim > 1
-            ):  # this is supposed to check if we have more than one DE
+            if l1a.direct_events.ndim > 1:  # this is supposed to check if we have more than one DE
                 self.data["direct_event_glows_times"] = (
                     l1a.direct_events[:, 0] + l1a.direct_events[:, 1] / SUBSECOND_LIMIT
                 ).astype(float)
@@ -150,16 +139,13 @@ class L1bDataDirectEvents:
                 ).astype(float)
 
             # load conversion/decoding table for ancillary parameters collected onboard
-            file_handler = open(
+            with open(
                 anc_input_from_instr_team["conversion_table_for_anc_data"], "r"
-            )
-            conversion_table = json.load(file_handler)
-            file_handler.close()
+            ) as file_handler:
+                conversion_table = json.load(file_handler)
 
             # convert pulse lengths into physical units
-            if (
-                l1a.direct_events.ndim > 1
-            ):  # this is supposed to check if we have more than one DE
+            if l1a.direct_events.ndim > 1:  # this is supposed to check if we have more than one DE
                 self.data["direct_event_pulse_lengths"] = decode_ancillary_parameter(
                     "pulse_length", conversion_table, l1a.direct_events[:, 2]
                 )
@@ -204,19 +190,13 @@ class L1bDataDirectEvents:
         # create local copy for printing purposes
         data = copy.deepcopy(self.data)
 
-        for key in fmt["arrays"].keys():
-            if isinstance(
-                data[key], np.ndarray
-            ):  # check if we have more than one direct event
-                data[key] = (
-                    "["
-                    + ", ".join(map(lambda x: fmt["arrays"][key] % x, list(data[key])))
-                    + "]"
-                )
+        for key in fmt["arrays"]:
+            if isinstance(data[key], np.ndarray):  # check if we have more than one direct event
+                data[key] = "[" + ", ".join(fmt["arrays"][key] % x for x in list(data[key])) + "]"
             else:
                 data[key] = "[" + fmt["arrays"][key] % data[key] + "]"
-        for key in fmt["scalar variables"].keys():
-            data[key] = "|" + fmt["scalar variables"][key] % data[key] + "|"
+        for key, value in fmt["scalar variables"].items():
+            data[key] = "|" + value % data[key] + "|"
 
         # generate JSON content to be saved in output file
         json_content = json.dumps(data, indent=4, default=vars)
@@ -231,13 +211,10 @@ class L1bDataDirectEvents:
 
         # the output file name is constructed using a convention defined in Sec. 1.4.2 of
         # "IMAP SDC to Instrument Team ICD"
-        file_name = "data_l1b_direct_events/imap_glows_l1b_%s_orbX_modX_p_v00.json" % (
-            start_time_utc
-        )
+        file_name = f"data_l1b_direct_events/imap_glows_l1b_{start_time_utc}_orbX_modX_p_v00.json"
 
-        file_handler = open(file_name, "w")
-        print(json_content, file=file_handler)
-        file_handler.close()
+        with open(file_name, "w") as file_handler:
+            print(json_content, file=file_handler)
 
     def set_times(self, l1a_data):
         """

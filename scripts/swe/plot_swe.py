@@ -18,7 +18,5 @@ rebinned_by_theta = np.ma.average(rebinned_ma, axis=-2)
 
 (fig, (ax1, ax2)) = plt.subplots(2, 1)
 ax1.pcolormesh(dist_1d.filled(np.nan).T, norm="log")
-ax2.pcolormesh(
-    np.ma.mean(rebinned_by_phi[:, :, 0:4], axis=-1).filled(np.nan).T, norm="log"
-)
+ax2.pcolormesh(np.ma.mean(rebinned_by_phi[:, :, 0:4], axis=-1).filled(np.nan).T, norm="log")
 plt.show()

@@ -31,9 +31,7 @@ from imap_l3_processing.swapi.response.swapi_response import ResponseGrid
 
 _EL = np.linspace(-15.0, 15.0, 601)
 _AZ_SG = np.linspace(-20.0, 20.0, 801)
-_AZ_OA_NEG = np.concatenate(
-    [np.arange(-150.0, -30.0, 0.5), np.linspace(-30.0, -20.0, 201)]
-)
+_AZ_OA_NEG = np.concatenate([np.arange(-150.0, -30.0, 0.5), np.linspace(-30.0, -20.0, 201)])
 _AZ_OA_POS = np.concatenate([np.linspace(20.0, 30.0, 201), np.arange(30.5, 151.0, 0.5)])
 _SP_RATIO = np.linspace(0.9, 1.1, 200)
 
@@ -139,9 +137,7 @@ def _integrate_region(
             bulk_along_direction = (
                 direction_r * bulk_r + direction_t * bulk_t + direction_n * bulk_n
             )
-            transmission_at_az = _interpolate_transmission(
-                transmission, transmission_spacing, az
-            )
+            transmission_at_az = _interpolate_transmission(transmission, transmission_spacing, az)
             az_weight = az_weights[i_az] * transmission_at_az
             for i_sp in range(sp_ratio_points.shape[0]):
                 speed_ratio = sp_ratio_points[i_sp]
@@ -156,9 +152,7 @@ def _integrate_region(
                     speed_ratio,
                 )
                 exponent = (
-                    speed * speed
-                    + bulk_speed_squared
-                    - 2.0 * speed * bulk_along_direction
+                    speed * speed + bulk_speed_squared - 2.0 * speed * bulk_along_direction
                 ) * inv_two_sigma_sq
                 integrand = passband * speed**3 * math.exp(-exponent)
                 speed_weight = central_speed * sp_ratio_weights[i_sp]
@@ -318,9 +312,7 @@ def reference_integrals_batch(response_grids, sws, rotation_matrices):
         bulk_speeds[i] = bulk_speed(sws[i])
         thermal_speeds[i] = params.thermal_speed(sws[i])
         densities[i] = sws[i].density
-    transmission = np.ascontiguousarray(
-        first_grid.azimuthal_transmission.values, dtype=np.float64
-    )
+    transmission = np.ascontiguousarray(first_grid.azimuthal_transmission.values, dtype=np.float64)
     return _batch(
         sg_values_all,
         oa_values_all,
@@ -350,9 +342,7 @@ def reference_integrals_batch(response_grids, sws, rotation_matrices):
     )
 
 
-def reference_integral_fixed_limits(
-    response_grid: ResponseGrid, sw, rotation_matrix
-) -> float:
+def reference_integral_fixed_limits(response_grid: ResponseGrid, sw, rotation_matrix) -> float:
     """Single-sample ground truth (delegates to the parallel batch)."""
     rm = np.asarray(rotation_matrix, dtype=np.float64).reshape(1, 3, 3)
     return float(reference_integrals_batch([response_grid], [sw], rm)[0])

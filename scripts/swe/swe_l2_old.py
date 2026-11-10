@@ -7,8 +7,7 @@ import imap_processing.swe.l1b.swe_l1b
 import imap_processing.tests.conftest
 import pandas as pd
 from imap_processing import imap_module_directory
-from imap_processing.cdf.utils import load_cdf
-from imap_processing.cdf.utils import write_cdf
+from imap_processing.cdf.utils import load_cdf, write_cdf
 
 # from imap_processing.spice.spin import set_global_spin_table_paths
 from imap_processing.swe.l1a.swe_l1a import swe_l1a

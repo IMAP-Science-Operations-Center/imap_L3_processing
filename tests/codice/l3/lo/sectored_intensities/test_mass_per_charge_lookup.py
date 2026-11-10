@@ -12,9 +12,7 @@ class TestMassPerChargeLookup(unittest.TestCase):
             "codice/imap_codice_mass-per-charge_20241110_v002.csv"
         )
 
-        mass_per_charge_lookup = MassPerChargeLookup.read_from_file(
-            mass_per_charge_csv_path
-        )
+        mass_per_charge_lookup = MassPerChargeLookup.read_from_file(mass_per_charge_csv_path)
 
         self.assertEqual(1, mass_per_charge_lookup.hplus)
         self.assertEqual(2, mass_per_charge_lookup.heplusplus)

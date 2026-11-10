@@ -29,17 +29,11 @@ class TestEfficiencyLookup(unittest.TestCase):
                     + [f"position_{i}" for i in range(num_positions)]
                 )
                 for i in range(num_energies):
-                    csv_writer.writerow(
-                        ["hplus", "sw", i, *expected_efficiency_data[i, :]]
-                    )
+                    csv_writer.writerow(["hplus", "sw", i, *expected_efficiency_data[i, :]])
                 for i in range(num_energies):
-                    csv_writer.writerow(
-                        ["cplus6", "sw", i, *expected_efficiency_data[i, :] * 6]
-                    )
+                    csv_writer.writerow(["cplus6", "sw", i, *expected_efficiency_data[i, :] * 6])
                 for i in range(num_energies):
-                    csv_writer.writerow(
-                        ["hplus", "nsw", i, *expected_efficiency_data[i, :] * 42]
-                    )
+                    csv_writer.writerow(["hplus", "nsw", i, *expected_efficiency_data[i, :] * 42])
 
             efficiency_lookup = EfficiencyLookup.read_from_csv(output_csv, "hplus")
 

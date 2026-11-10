@@ -29,6 +29,4 @@ class UniformSpeedGrid:
         self.centers: NDArray = np.linspace(min_speed, max_center_speed, _CELL_COUNT)
         self.spacing: float = float(self.centers[1] - self.centers[0])
         self.size: int = int(self.centers.size)
-        self.spherical_shell_integration_weights: NDArray = (
-            self.centers**2 * self.spacing
-        )
+        self.spherical_shell_integration_weights: NDArray = self.centers**2 * self.spacing

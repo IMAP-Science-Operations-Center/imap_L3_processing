@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Union
 
 import numpy as np
 from spacepy.pycdf import CDF
@@ -118,9 +117,7 @@ class HitDirectEventDataProduct(DataProduct):
             DataProductVariable(E_PRIME_VAR_NAME, self.e_prime),
             DataProductVariable(DETECTED_RANGE_VAR_NAME, self.detected_range),
             DataProductVariable(PARTICLE_ID_VAR_NAME, self.particle_id),
-            DataProductVariable(
-                PRIORITY_BUFFER_NUMBER_VAR_NAME, self.priority_buffer_number
-            ),
+            DataProductVariable(PRIORITY_BUFFER_NUMBER_VAR_NAME, self.priority_buffer_number),
             DataProductVariable(LATENCY_VAR_NAME, self.latency),
             DataProductVariable(STIM_TAG_VAR_NAME, self.stim_tag),
             DataProductVariable(LONG_EVENT_FLAG_VAR_NAME, self.long_event_flag),
@@ -149,6 +146,6 @@ class HitL1Data:
     event_binary: np.ndarray[str]
 
     @classmethod
-    def read_from_cdf(cls, cdf_file_path: Union[Path, str]):
+    def read_from_cdf(cls, cdf_file_path: Path | str):
         with CDF(str(cdf_file_path)) as cdf:
             return cls(cdf["epoch"][...], cdf["pha_raw"][...])

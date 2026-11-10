@@ -62,10 +62,7 @@ for descriptor in descriptors:
         f"imap_{instrument}_l3_{descriptor}": {
             "Logical_source_description": "IMAP Lo Instrument Level 3 "
             + ", ".join(
-                [
-                    logical_source_description_parts[part]
-                    for part in descriptor.split("-")
-                ]
+                [logical_source_description_parts[part] for part in descriptor.split("-")]
             ),
             "Data_level": "3",
             "Data_type": f"L3_{time_range}>Level-3 {time_range}",

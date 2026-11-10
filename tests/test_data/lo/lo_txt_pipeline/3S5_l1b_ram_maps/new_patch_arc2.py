@@ -1,9 +1,9 @@
+import cartopy.crs as ccrs
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-from scipy.spatial.transform import Rotation as R
 from matplotlib.colors import LogNorm
+from scipy.spatial.transform import Rotation as R
 
 PI = np.pi
 
@@ -32,9 +32,7 @@ def somewhat_great_circle_centered(rot, lat0, lon0, angle, npts=400):
     t = np.linspace(0, 2 * np.pi, npts)
 
     angle_r = np.radians(angle)
-    pts = np.cos(angle_r) * p + np.sin(angle_r) * (
-        np.outer(np.cos(t), u) + np.outer(np.sin(t), v)
-    )
+    pts = np.cos(angle_r) * p + np.sin(angle_r) * (np.outer(np.cos(t), u) + np.outer(np.sin(t), v))
     # rotate into map frame
     pts_rot = rot.apply(pts)
 
@@ -103,9 +101,7 @@ def make_imap_lo_reference_points(rot, option=1):
         labels = ["Nose", "V1", "V2", "Tail"]
     if option == 2:
         npoints = 7
-        lons = np.array(
-            [259.200622, 255.499300, 289.800000, 79.200622, 221, 150.0, 0.0]
-        )
+        lons = np.array([259.200622, 255.499300, 289.800000, 79.200622, 221, 150.0, 0.0])
         lats = np.array([5.116296, 34.999941, -35.600000, -5.116296, 39, 0.0, 0.0])
         labels = ["Nose", "V1", "V2", "Tail", "Rcen", "Stbd", "Port"]
     if option == 3:
@@ -154,7 +150,7 @@ def make_imap_lo_reference_points(rot, option=1):
         # --- Reference point in ORIGINAL coordinates ---
     lat_points = np.linspace(0.0, 0.0, npoints)
     lon_points = np.linspace(0.0, 0.0, npoints)
-    for i in range(0, npoints):
+    for i in range(npoints):
         ref_lat = lats[i]  # degrees
         ref_lon = lons[i]  # degrees
 
@@ -228,9 +224,7 @@ def make_imap_lo_map(
     xyz_rot = rot.apply(xyz)
 
     lat_rot = np.degrees(np.arcsin(xyz_rot[:, 2])).reshape(ny + 1, nx + 1)
-    lon_rot = np.degrees(np.arctan2(xyz_rot[:, 1], xyz_rot[:, 0])).reshape(
-        ny + 1, nx + 1
-    )
+    lon_rot = np.degrees(np.arctan2(xyz_rot[:, 1], xyz_rot[:, 0])).reshape(ny + 1, nx + 1)
     lon_rot = (lon_rot + 180) % 360 - 180
 
     # For the data
@@ -243,8 +237,6 @@ def make_imap_lo_map(
     fig, ax = plt.subplots(figsize=(10, 5), subplot_kw={"projection": ccrs.Mollweide()})
     ax.set_facecolor("darkblue")
 
-    vmin = vmin
-    vmax = vmax
     data_clipped = np.clip(data, vmin, vmax)
     data_filled = np.copy(data_clipped)
     data_filled[np.isnan(data_clipped)] = vmin
@@ -321,7 +313,7 @@ def make_imap_lo_map(
                     ax.text(
                         lon_here,
                         seg_lat[0],
-                        f"{int(round(lat_orig))}°",
+                        f"{round(lat_orig)}°",
                         transform=ccrs.PlateCarree(),
                         color="orange",
                         fontsize=6,
@@ -435,7 +427,7 @@ def make_imap_lo_map(
     if opt_points > 0:
         labels, lon_points, lat_points = make_imap_lo_reference_points(rot, opt_points)
         npoints = len(labels)
-        for i in range(0, npoints):
+        for i in range(npoints):
             lon_ref_rot = lon_points[i]
             lat_ref_rot = lat_points[i]
             ref_label = labels[i]

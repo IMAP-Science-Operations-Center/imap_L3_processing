@@ -25,9 +25,7 @@ def convert_velocity_relative_to_imap(velocity, ephemeris_time, from_frame, to_f
     velocity_in_target_frame_relative_to_imap = convert_velocity_to_reference_frame(
         velocity, ephemeris_time, from_frame, to_frame
     )
-    imap_velocity = spiceypy.spkezr("IMAP", ephemeris_time, to_frame, "NONE", "SUN")[0][
-        3:6
-    ]
+    imap_velocity = spiceypy.spkezr("IMAP", ephemeris_time, to_frame, "NONE", "SUN")[0][3:6]
 
     return velocity_in_target_frame_relative_to_imap + imap_velocity
 

@@ -1,19 +1,19 @@
 import unittest
 from pathlib import Path
-from unittest.mock import patch, call
+from unittest.mock import call, patch
 
 import imap_data_access
 from imap_data_access.processing_input import (
-    ScienceInput,
     AncillaryInput,
     ProcessingInputCollection,
+    ScienceInput,
 )
 
 from imap_l3_processing.glows.descriptors import (
-    GLOWS_L2_DESCRIPTOR,
     GLOWS_CALIBRATION_DATA_DESCRIPTOR,
-    GLOWS_PIPELINE_SETTINGS_DESCRIPTOR,
     GLOWS_EXTRA_HELIOSPHERIC_BACKGROUND_DESCRIPTOR,
+    GLOWS_L2_DESCRIPTOR,
+    GLOWS_PIPELINE_SETTINGS_DESCRIPTOR,
     GLOWS_TIME_DEPENDENT_BACKGROUND_DESCRIPTOR,
 )
 from imap_l3_processing.glows.l3a.glows_l3a_dependencies import GlowsL3ADependencies
@@ -51,16 +51,9 @@ class TestGlowsL3aDependencies(unittest.TestCase):
             AncillaryInput(time_dependent_background_dependency_filename),
         )
         science_data_dir = (
-            imap_data_access.config["DATA_DIR"]
-            / "imap"
-            / "glows"
-            / "l2a"
-            / "2023"
-            / "01"
+            imap_data_access.config["DATA_DIR"] / "imap" / "glows" / "l2a" / "2023" / "01"
         )
-        ancillary_data_dir = (
-            imap_data_access.config["DATA_DIR"] / "imap" / "ancillary" / "glows"
-        )
+        ancillary_data_dir = imap_data_access.config["DATA_DIR"] / "imap" / "ancillary" / "glows"
 
         cdf_path_str = "some_cdf.cdf"
         cdf_path_name = Path(cdf_path_str)
@@ -99,13 +92,8 @@ class TestGlowsL3aDependencies(unittest.TestCase):
             [
                 call(science_data_dir / cdf_dependency_filename),
                 call(ancillary_data_dir / calibration_data_dependency_filename),
-                call(
-                    ancillary_data_dir
-                    / extra_heliospheric_background_dependency_filename
-                ),
-                call(
-                    ancillary_data_dir / time_dependent_background_dependency_filename
-                ),
+                call(ancillary_data_dir / extra_heliospheric_background_dependency_filename),
+                call(ancillary_data_dir / time_dependent_background_dependency_filename),
                 call(ancillary_data_dir / settings_dependency_filename),
             ],
             mock_download.call_args_list,

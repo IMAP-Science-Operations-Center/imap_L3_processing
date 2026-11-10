@@ -1,7 +1,6 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Union
 
 import numpy as np
 
@@ -26,7 +25,7 @@ class BadAngleFlagConfiguration:
         return np.any(np.logical_and(configuration, flags), axis=-2)
 
     @classmethod
-    def from_file(cls, file_path: Union[Path, str]):
+    def from_file(cls, file_path: Path | str):
         with open(file_path) as f:
             config = json.load(f)
 

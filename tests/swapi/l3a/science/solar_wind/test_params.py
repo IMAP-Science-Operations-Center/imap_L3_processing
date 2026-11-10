@@ -52,9 +52,7 @@ class TestSolarWindParamsFromVector(unittest.TestCase):
         original = proton_params(
             density=3.7, velocity_rtn=(-420.0, 5.0, -2.0), temperature=85_000.0
         )
-        round_tripped = SolarWindParams.from_vector(
-            original.to_vector(), mass=original.mass
-        )
+        round_tripped = SolarWindParams.from_vector(original.to_vector(), mass=original.mass)
         self.assertAlmostEqual(round_tripped.density, original.density)
         self.assertAlmostEqual(round_tripped.temperature, original.temperature)
         np.testing.assert_array_equal(round_tripped.velocity_rtn, original.velocity_rtn)

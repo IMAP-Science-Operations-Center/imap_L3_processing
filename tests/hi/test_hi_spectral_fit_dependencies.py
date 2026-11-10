@@ -1,20 +1,20 @@
 import unittest
 from pathlib import Path
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 import numpy as np
 from imap_data_access.processing_input import (
-    ScienceInput,
-    ProcessingInputCollection,
     AncillaryInput,
+    ProcessingInputCollection,
+    ScienceInput,
 )
 
 from imap_l3_processing.hi.hi_spectral_fit_dependencies import (
     HiSpectralIndexDependencies,
 )
 from imap_l3_processing.maps.map_models import (
-    RectangularIntensityMapData,
     IntensityMapData,
+    RectangularIntensityMapData,
 )
 from imap_l3_processing.maps.quality_flags import MapL3Flags
 
@@ -33,9 +33,7 @@ class TestHiSpectralFitDependencies(unittest.TestCase):
         self.assertEqual(mock_read_from_path.call_count, 1)
         self.assertEqual(mock_read_from_path.return_value, result.map_data)
 
-    @patch(
-        "imap_l3_processing.hi.hi_spectral_fit_dependencies.imap_data_access.download"
-    )
+    @patch("imap_l3_processing.hi.hi_spectral_fit_dependencies.imap_data_access.download")
     @patch(
         "imap_l3_processing.hi.hi_spectral_fit_dependencies.RectangularIntensityMapData.read_from_path"
     )
@@ -82,9 +80,7 @@ def _create_intensity_map_data(
 ):
     full_shape = (1, 1, 8, 15)
     return IntensityMapData(
-        ena_intensity=ena_intensity
-        if ena_intensity is not None
-        else np.full(full_shape, 1),
+        ena_intensity=ena_intensity if ena_intensity is not None else np.full(full_shape, 1),
         ena_intensity_stat_uncert=None,
         ena_intensity_sys_err=None,
         epoch=None,

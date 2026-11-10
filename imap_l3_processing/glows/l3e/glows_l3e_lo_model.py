@@ -67,31 +67,23 @@ class GlowsL3ELoData(DataProduct):
             lines = input_data.readlines()
 
             energy_line = [line for line in lines if line.startswith("#energy_grid")]
-            energies = np.array(
-                [float(i) for i in re.findall(r"\d+.\d+", energy_line[0])]
-            )
+            energies = np.array([float(i) for i in re.findall(r"\d+.\d+", energy_line[0])])
 
-            code_version_line = [
-                line for line in lines if line.startswith("# code version")
-            ]
+            code_version_line = [line for line in lines if line.startswith("# code version")]
             code_version = code_version_line[0].split(",")[0][14:].strip()
 
         spin_angle_and_survival_probabilities = np.loadtxt(
             file_path, skiprows=200, dtype=np.float64
         )
         spin_angles = spin_angle_and_survival_probabilities[:, 0]
-        survival_probabilities = np.array(
-            [spin_angle_and_survival_probabilities[:, 1:].T]
-        )
+        survival_probabilities = np.array([spin_angle_and_survival_probabilities[:, 1:].T])
 
         energy_delta_plus, energy_delta_minus = calculate_energy_deltas(energies)
 
         return cls(
             input_metadata=input_metadata,
             epoch=np.array([epoch]),
-            epoch_delta=np.array(
-                [epoch_delta.total_seconds() * ONE_SECOND_IN_NANOSECONDS]
-            ),
+            epoch_delta=np.array([epoch_delta.total_seconds() * ONE_SECOND_IN_NANOSECONDS]),
             energy=energies,
             energy_delta_plus=energy_delta_plus,
             energy_delta_minus=energy_delta_minus,
@@ -104,15 +96,9 @@ class GlowsL3ELoData(DataProduct):
             spacecraft_radius=np.array([args.spacecraft_info.spacecraft_radius]),
             spacecraft_longitude=np.array([args.spacecraft_info.spacecraft_longitude]),
             spacecraft_latitude=np.array([args.spacecraft_info.spacecraft_latitude]),
-            spacecraft_velocity_x=np.array(
-                [args.spacecraft_info.spacecraft_velocity_x]
-            ),
-            spacecraft_velocity_y=np.array(
-                [args.spacecraft_info.spacecraft_velocity_y]
-            ),
-            spacecraft_velocity_z=np.array(
-                [args.spacecraft_info.spacecraft_velocity_z]
-            ),
+            spacecraft_velocity_x=np.array([args.spacecraft_info.spacecraft_velocity_x]),
+            spacecraft_velocity_y=np.array([args.spacecraft_info.spacecraft_velocity_y]),
+            spacecraft_velocity_z=np.array([args.spacecraft_info.spacecraft_velocity_z]),
             glows_flags=np.array([0], dtype=np.uint16),
         )
 
@@ -127,9 +113,7 @@ class GlowsL3ELoData(DataProduct):
             DataProductVariable(ENERGY_DELTA_PLUS_VAR_NAME, self.energy_delta_plus),
             DataProductVariable(ENERGY_DELTA_MINUS_VAR_NAME, self.energy_delta_minus),
             DataProductVariable(SPIN_ANGLE_VAR_NAME, self.spin_angle),
-            DataProductVariable(
-                PROBABILITY_OF_SURVIVAL_VAR_NAME, self.probability_of_survival
-            ),
+            DataProductVariable(PROBABILITY_OF_SURVIVAL_VAR_NAME, self.probability_of_survival),
             DataProductVariable(ENERGY_LABEL_VAR_NAME, energy_labels),
             DataProductVariable(SPIN_ANGLE_LABEL_VAR_NAME, spin_angle_labels),
             DataProductVariable(ELONGATION_VAR_NAME, self.elongation),
@@ -138,17 +122,9 @@ class GlowsL3ELoData(DataProduct):
             DataProductVariable(PROGRAM_VERSION_VAR_NAME, self.program_version),
             DataProductVariable(SPACECRAFT_RADIUS_VAR_NAME, self.spacecraft_radius),
             DataProductVariable(SPACECRAFT_LATITUDE_VAR_NAME, self.spacecraft_latitude),
-            DataProductVariable(
-                SPACECRAFT_LONGITUDE_VAR_NAME, self.spacecraft_longitude
-            ),
-            DataProductVariable(
-                SPACECRAFT_VELOCITY_X_VAR_NAME, self.spacecraft_velocity_x
-            ),
-            DataProductVariable(
-                SPACECRAFT_VELOCITY_Y_VAR_NAME, self.spacecraft_velocity_y
-            ),
-            DataProductVariable(
-                SPACECRAFT_VELOCITY_Z_VAR_NAME, self.spacecraft_velocity_z
-            ),
+            DataProductVariable(SPACECRAFT_LONGITUDE_VAR_NAME, self.spacecraft_longitude),
+            DataProductVariable(SPACECRAFT_VELOCITY_X_VAR_NAME, self.spacecraft_velocity_x),
+            DataProductVariable(SPACECRAFT_VELOCITY_Y_VAR_NAME, self.spacecraft_velocity_y),
+            DataProductVariable(SPACECRAFT_VELOCITY_Z_VAR_NAME, self.spacecraft_velocity_z),
             DataProductVariable(GLOWS_FLAGS_VAR_NAME, self.glows_flags),
         ]

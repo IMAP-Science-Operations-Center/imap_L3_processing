@@ -54,9 +54,9 @@ for var in map_vars:
         continue
 
     print(var)
-    for attr in l3_attrs.keys():
+    for attr in l3_attrs:
         if attr in l2_attrs and l2_attrs[attr] != l3_attrs[attr]:
             print(f"\t{attr}: {l2_attrs[attr]}\t{l3_attrs[attr]}")
 
-    not_included_keys = [key for key in l3_attrs.keys() if key not in l2_attrs.keys()]
+    not_included_keys = [key for key in l3_attrs if key not in l2_attrs]
     print(var, not_included_keys)

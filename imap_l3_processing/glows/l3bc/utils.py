@@ -1,6 +1,5 @@
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -9,7 +8,7 @@ from imap_processing.spice.repoint import get_repoint_data
 
 def get_best_ancillary(
     start_date: datetime, end_date: datetime, ancillary_query_results: list[dict]
-) -> Optional[str]:
+) -> str | None:
     valid_ancillaries = []
     for ancillary_file in ancillary_query_results:
         ancillary_start_date = datetime.strptime(ancillary_file["start_date"], "%Y%m%d")
@@ -37,9 +36,7 @@ carrington_length = timedelta(days=27.2753)
 
 
 def get_date_range_of_cr(cr_number: int) -> tuple[datetime, datetime]:
-    start_date = (
-        first_carrington_start_date + (cr_number - carrington_first) * carrington_length
-    )
+    start_date = first_carrington_start_date + (cr_number - carrington_first) * carrington_length
     return start_date, start_date + carrington_length
 
 
@@ -50,8 +47,7 @@ def get_midpoint_of_cr(cr_number: int) -> datetime:
 
 def get_cr_for_date_time(datetime_to_check: datetime) -> int:
     return int(
-        carrington_first
-        + (datetime_to_check - first_carrington_start_date) / carrington_length
+        carrington_first + (datetime_to_check - first_carrington_start_date) / carrington_length
     )
 
 
@@ -66,6 +62,4 @@ def get_pointing_date_range(repointing: int) -> (datetime, datetime):
     start_time = repointing_data_start["repoint_end_utc"]
     end_time = repointing_data_end["repoint_start_utc"]
 
-    return np.datetime64(start_time).astype(datetime), np.datetime64(end_time).astype(
-        datetime
-    )
+    return np.datetime64(start_time).astype(datetime), np.datetime64(end_time).astype(datetime)

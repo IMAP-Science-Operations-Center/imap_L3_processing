@@ -79,9 +79,9 @@ class CodiceL2HiDirectEventData:
                 gain=read_variable_and_mask_fill_values(cdf[GAIN_VAR_NAME])[
                     :, :CODICE_HI_NUM_L2_PRIORITIES, ...
                 ],
-                spin_sector=read_variable_and_mask_fill_values(
-                    cdf[SPIN_SECTOR_VAR_NAME]
-                )[:, :CODICE_HI_NUM_L2_PRIORITIES, ...],
+                spin_sector=read_variable_and_mask_fill_values(cdf[SPIN_SECTOR_VAR_NAME])[
+                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
+                ],
             )
         # @formatter:on
 
@@ -124,21 +124,15 @@ PITCH_ANGLE_DELTA_VAR_NAME = "pitch_angle_delta"
 GYROPHASE_VAR_NAME = "gyrophase"
 GYROPHASE_DELTA_VAR_NAME = "gyrophase_delta"
 H_INTENSITY_BY_PITCH_ANGLE_VAR_NAME = "h_intensity_by_pitch_angle"
-H_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = (
-    "h_intensity_by_pitch_angle_and_gyrophase"
-)
+H_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = "h_intensity_by_pitch_angle_and_gyrophase"
 HE3HE4_INTENSITY_BY_PITCH_ANGLE_VAR_NAME = "he3he4_intensity_by_pitch_angle"
 HE3HE4_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = (
     "he3he4_intensity_by_pitch_angle_and_gyrophase"
 )
 CNO_INTENSITY_BY_PITCH_ANGLE_VAR_NAME = "cno_intensity_by_pitch_angle"
-CNO_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = (
-    "cno_intensity_by_pitch_angle_and_gyrophase"
-)
+CNO_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = "cno_intensity_by_pitch_angle_and_gyrophase"
 FE_INTENSITY_BY_PITCH_ANGLE_VAR_NAME = "fe_intensity_by_pitch_angle"
-FE_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = (
-    "fe_intensity_by_pitch_angle_and_gyrophase"
-)
+FE_INTENSITY_BY_PITCH_ANGLE_AND_GYROPHASE_VAR_NAME = "fe_intensity_by_pitch_angle_and_gyrophase"
 ENERGY_H_LABEL_VAR_NAME = "energy_h_label"
 ENERGY_CNO_LABEL_VAR_NAME = "energy_cno_label"
 ENERGY_FE_LABEL_VAR_NAME = "energy_fe_label"
@@ -175,12 +169,8 @@ class CodiceL3HiDirectEvents(DataProduct):
     def __post_init__(self):
         self.priority_index = np.arange(CODICE_HI_NUM_L2_PRIORITIES)
         self.event_index = np.arange(self.ssd_id.shape[-1])
-        self.priority_index_label = np.array(
-            [str(i) for i in range(CODICE_HI_NUM_L2_PRIORITIES)]
-        )
-        self.event_index_label = np.array(
-            [str(i) for i in range(len(self.event_index))]
-        )
+        self.priority_index_label = np.array([str(i) for i in range(CODICE_HI_NUM_L2_PRIORITIES)])
+        self.event_index_label = np.array([str(i) for i in range(len(self.event_index))])
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -203,9 +193,7 @@ class CodiceL3HiDirectEvents(DataProduct):
             DataProductVariable(SPIN_SECTOR_VAR_NAME, self.spin_sector),
             DataProductVariable(PRIORITY_INDEX_VAR_NAME, self.priority_index),
             DataProductVariable(EVENT_INDEX_VAR_NAME, self.event_index),
-            DataProductVariable(
-                PRIORITY_INDEX_LABEL_VAR_NAME, self.priority_index_label
-            ),
+            DataProductVariable(PRIORITY_INDEX_LABEL_VAR_NAME, self.priority_index_label),
             DataProductVariable(EVENT_INDEX_LABEL_VAR_NAME, self.event_index_label),
         ]
 

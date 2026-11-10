@@ -13,10 +13,7 @@ from scripts.swapi.swapi_alpha_sw_speed_temperature_density_demo import (
 def generate_cdf_from_dat(dat_file_path: str, output_filename: str):
     dat_data = read_l2_data_from_dat(dat_file_path)
     cdf_file_path = (
-        Path(imap_l3_processing.__file__).parent.parent
-        / "swapi"
-        / "test_data"
-        / output_filename
+        Path(imap_l3_processing.__file__).parent.parent / "swapi" / "test_data" / output_filename
     )
 
     with CDF(str(cdf_file_path), "") as cdf:
@@ -31,8 +28,6 @@ def generate_cdf_from_dat(dat_file_path: str, output_filename: str):
 
 if __name__ == "__main__":
     generate_cdf_from_dat(
-        os.path.abspath(
-            "../../instrument_team_data/swapi/swapi_test_data_50_sweeps.dat"
-        ),
+        os.path.abspath("../../instrument_team_data/swapi/swapi_test_data_50_sweeps.dat"),
         "imap_swapi_l2_sci_20100101_v001",
     )

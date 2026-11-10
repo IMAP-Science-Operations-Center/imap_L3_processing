@@ -3,31 +3,29 @@ import sys
 
 import numpy as np
 import scipy
-from matplotlib import pyplot as plt
-from numpy import ndarray
-from spacepy.pycdf import CDF
-from uncertainties import ufloat, correlated_values
-from uncertainties.unumpy import uarray, nominal_values, std_devs
-
-from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_speed import (
     calculate_alpha_solar_wind_speed,
     calculate_combined_sweeps,
     get_alpha_peak_indices,
 )
 from imap_l3_processing.swapi.l3a.science.calculate_alpha_solar_wind_temperature_and_density import (
-    calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps,
     AlphaTemperatureDensityCalibrationTable,
     alpha_count_rate_model,
+    calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps,
 )
+from matplotlib import pyplot as plt
+from numpy import ndarray
+from spacepy.pycdf import CDF
+from uncertainties import correlated_values, ufloat
+from uncertainties.unumpy import nominal_values, std_devs, uarray
+
+from imap_l3_processing.swapi.l3a.models import SwapiL2Data
 
 
 def read_l2_data_from_dat(file_path: str) -> SwapiL2Data:
     data = np.loadtxt(file_path)
     data = data.reshape((-1, 72, 8))
-    start_time = int(
-        np.datetime64("2010-01-01", "ns") - np.datetime64("2000-01-01T12:00", "ns")
-    )
+    start_time = int(np.datetime64("2010-01-01", "ns") - np.datetime64("2000-01-01T12:00", "ns"))
     twelve_seconds_in_nanoseconds = 12_000_000_000
     epochs = start_time + twelve_seconds_in_nanoseconds * np.arange(len(data))
 
@@ -65,9 +63,7 @@ fig = plt.figure()
 def plot_sweeps(data):
     for i in range(len(data.sci_start_time)):
         axes = fig.add_subplot(len(data.sci_start_time) + 1, 1, i + 1)
-        axes.loglog(
-            data.energy, data.coincidence_count_rate[i, :], marker=".", linestyle="None"
-        )
+        axes.loglog(data.energy, data.coincidence_count_rate[i, :], marker=".", linestyle="None")
         axes.set(xlabel="Energy", ylabel="Count Rate")
 
 
@@ -82,7 +78,7 @@ def run_example_dat_files():
     temperature_density_lut = AlphaTemperatureDensityCalibrationTable.from_file(
         r"swapi/test_data/imap_swapi_alpha-density-temperature-lut_20240920_v000.dat"
     )
-    alpha_temperature, alpha_density = (
+    _alpha_temperature, _alpha_density = (
         calculate_alpha_solar_wind_temperature_and_density_for_combined_sweeps(
             temperature_density_lut, alpha_speed, coincident_count_rate, energy
         )
@@ -116,9 +112,9 @@ def plot_and_calculate_alpha_solar_wind_temperature_and_density_for_combined_swe
         alpha_count_rate_model(peak_energies, *values)
         - nominal_values(peak_average_alpha_count_rates)
     )
-    reduced_chisq = np.sum(
-        np.square(residual / std_devs(peak_average_alpha_count_rates))
-    ) / (len(peak_energies) - 3)
+    reduced_chisq = np.sum(np.square(residual / std_devs(peak_average_alpha_count_rates))) / (
+        len(peak_energies) - 3
+    )
     if reduced_chisq > 10:
         raise ValueError("Failed to fit - chi-squared too large", reduced_chisq)
     density, temperature, speed = correlated_values(values, covariance)
@@ -143,7 +139,7 @@ def main(file_path):
     elif file_path[-4:] == ".cdf":
         data = read_l2_data(os.path.abspath(file_path))
     else:
-        raise Exception("The demo can only load data from .dat or .cdf files!")
+        raise ValueError("The demo can only load data from .dat or .cdf files!")
 
     coincident_count_rate = uarray(
         data.coincidence_count_rate, data.coincidence_count_rate_uncertainty
@@ -181,5 +177,5 @@ if __name__ == "__main__":
     try:
         file_path = sys.argv[1]
         main(file_path)
-    except Exception:
+    except (IndexError, ValueError):
         main(os.path.abspath("../../instrument_team_data/swapi/swapi_test_data_v5.dat"))

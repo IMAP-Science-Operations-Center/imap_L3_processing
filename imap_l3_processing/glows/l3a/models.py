@@ -169,30 +169,18 @@ class GlowsL3LightCurve(DataProduct):
             DataProductVariable(
                 FILTER_TEMPERATURE_STD_DEV_CDF_VAR_NAME, self.filter_temperature_std_dev
             ),
-            DataProductVariable(
-                HV_VOLTAGE_AVERAGE_CDF_VAR_NAME, self.hv_voltage_average
-            ),
-            DataProductVariable(
-                HV_VOLTAGE_STD_DEV_CDF_VAR_NAME, self.hv_voltage_std_dev
-            ),
-            DataProductVariable(
-                SPIN_PERIOD_AVERAGE_CDF_VAR_NAME, self.spin_period_average
-            ),
-            DataProductVariable(
-                SPIN_PERIOD_STD_DEV_CDF_VAR_NAME, self.spin_period_std_dev
-            ),
+            DataProductVariable(HV_VOLTAGE_AVERAGE_CDF_VAR_NAME, self.hv_voltage_average),
+            DataProductVariable(HV_VOLTAGE_STD_DEV_CDF_VAR_NAME, self.hv_voltage_std_dev),
+            DataProductVariable(SPIN_PERIOD_AVERAGE_CDF_VAR_NAME, self.spin_period_average),
+            DataProductVariable(SPIN_PERIOD_STD_DEV_CDF_VAR_NAME, self.spin_period_std_dev),
             DataProductVariable(
                 SPIN_PERIOD_GROUND_AVERAGE_CDF_VAR_NAME, self.spin_period_ground_average
             ),
             DataProductVariable(
                 SPIN_PERIOD_GROUND_STD_DEV_CDF_VAR_NAME, self.spin_period_ground_std_dev
             ),
-            DataProductVariable(
-                PULSE_LENGTH_AVERAGE_CDF_VAR_NAME, self.pulse_length_average
-            ),
-            DataProductVariable(
-                PULSE_LENGTH_STD_DEV_CDF_VAR_NAME, self.pulse_length_std_dev
-            ),
+            DataProductVariable(PULSE_LENGTH_AVERAGE_CDF_VAR_NAME, self.pulse_length_average),
+            DataProductVariable(PULSE_LENGTH_STD_DEV_CDF_VAR_NAME, self.pulse_length_std_dev),
             DataProductVariable(
                 POSITION_ANGLE_OFFSET_AVERAGE_CDF_VAR_NAME,
                 self.position_angle_offset_average,

@@ -57,9 +57,7 @@ class _Evaluator:
 
     def _eval(self, state: ndarray) -> None:
         sw = SolarWindParams.from_vector(state, self.ctx.mass_kg)
-        rate_ideal, jacobian_ideal = model_solar_wind_ideal_coincidence_rates(
-            sw, self.ctx
-        )
+        rate_ideal, jacobian_ideal = model_solar_wind_ideal_coincidence_rates(sw, self.ctx)
 
         df = deadtime_factor(rate_ideal)
 

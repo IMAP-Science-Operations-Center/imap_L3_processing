@@ -7,18 +7,18 @@ import scipy.optimize
 from imap_l3_processing.swapi.l3a.science.solar_wind.fit_context import (
     build_solar_wind_fit_context,
 )
-from imap_l3_processing.swapi.l3a.science.solar_wind.proton.optimize_solar_wind_proton_params import (
-    OptimizeSolarWindProtonParamsResult,
-    optimize_solar_wind_proton_params,
-)
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import (
     N_STATE,
     SolarWindParams,
 )
+from imap_l3_processing.swapi.l3a.science.solar_wind.proton.optimize_solar_wind_proton_params import (
+    OptimizeSolarWindProtonParamsResult,
+    optimize_solar_wind_proton_params,
+)
 from imap_l3_processing.swapi.species import Species
 from tests.swapi._helpers import (
-    NOMINAL_TEST_EPOCH_TT2000,
     NOMINAL_SWAPI_TO_RTN_ROTATION,
+    NOMINAL_TEST_EPOCH_TT2000,
     REALISTIC_ESA_VOLTAGES,
     load_swapi_response,
     proton_params,
@@ -29,9 +29,7 @@ from tests.swapi._helpers import (
 def _build_proton_fit_context(count_rate: np.ndarray):
     response = load_swapi_response(warm_cache_voltages=REALISTIC_ESA_VOLTAGES)
     n_sweeps = len(REALISTIC_ESA_VOLTAGES)
-    rotation_matrices = np.broadcast_to(
-        NOMINAL_SWAPI_TO_RTN_ROTATION, (n_sweeps, 3, 3)
-    ).copy()
+    rotation_matrices = np.broadcast_to(NOMINAL_SWAPI_TO_RTN_ROTATION, (n_sweeps, 3, 3)).copy()
     return build_solar_wind_fit_context(
         count_rate=count_rate,
         esa_voltage=REALISTIC_ESA_VOLTAGES,
@@ -151,9 +149,7 @@ class TestOptimizeSolarWindProtonParamsResultShape(unittest.TestCase):
 
     def test_jacobian_shape_is_n_residuals_by_n_state(self):
         """The jacobian has shape (n_residuals, N_STATE) — one row per residual, one column per fit parameter."""
-        self.assertEqual(
-            self.result.jacobian.shape, (self.ctx.count_rate.size, N_STATE)
-        )
+        self.assertEqual(self.result.jacobian.shape, (self.ctx.count_rate.size, N_STATE))
 
     def test_success_is_bool(self):
         """The success field is a plain Python bool rather than numpy's bool-like wrapper."""

@@ -25,8 +25,7 @@ class CodiceProcessorIntegration(unittest.TestCase):
             CODICE_TEST_DATA_DIR / "imap_codice_lo-energy-per-charge_20241110_v002.csv"
         )
         mass_coefficient_path = (
-            CODICE_TEST_DATA_DIR
-            / "imap_codice_mass-coefficient-lookup_20241110_v003.csv"
+            CODICE_TEST_DATA_DIR / "imap_codice_mass-coefficient-lookup_20241110_v003.csv"
         )
         input_files = [
             CODICE_TEST_DATA_DIR / "imap_codice_l2_lo-direct-events_20260307_v004.cdf",
@@ -82,16 +81,13 @@ class CodiceProcessorIntegration(unittest.TestCase):
                 self.assertEqual(expected_parents, set(cdf.attrs["Parents"]))
 
     @patch("imap_l3_data_processor._parse_cli_arguments")
-    def test_codice_lo_partial_densities_and_sw_products(
-        self, mock_parse_cli_arguments
-    ):
+    def test_codice_lo_partial_densities_and_sw_products(self, mock_parse_cli_arguments):
         input_files = [
             INTEGRATION_DATA_DIR / "imap_codice_l2_lo-sw-species_20260301_v001.cdf",
             INTEGRATION_DATA_DIR / "imap_codice_mass-per-charge_20241110_v003.csv",
             INTEGRATION_DATA_DIR
             / "imap_codice_l3a_lo-partial-densities-25ccf871_20260301_v001.json",
-            INTEGRATION_DATA_DIR
-            / "imap_codice_l3a_lo-sw-ratios-25ccf871_20260301_v001.json",
+            INTEGRATION_DATA_DIR / "imap_codice_l3a_lo-sw-ratios-25ccf871_20260301_v001.json",
         ]
         with mock_imap_data_access(OUTPUT_DIR, input_files):
 
@@ -143,8 +139,7 @@ class CodiceProcessorIntegration(unittest.TestCase):
             CODICE_TEST_DATA_DIR / "imap_codice_lo-energy-per-charge_20241110_v002.csv",
             CODICE_TEST_DATA_DIR / "imap_codice_l3-lo-efficiency_20251008_v003.csv",
             CODICE_TEST_DATA_DIR / "imap_codice_l2-lo-gfactor_20251212_v003.csv",
-            CODICE_TEST_DATA_DIR
-            / "imap_codice_lo-mass-species-bin-lookup_20250309_v003.csv",
+            CODICE_TEST_DATA_DIR / "imap_codice_lo-mass-species-bin-lookup_20250309_v003.csv",
         ]
 
         processing_input = ProcessingInputCollection(
@@ -178,14 +173,11 @@ class CodiceProcessorIntegration(unittest.TestCase):
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_codice_hi_direct_events(self, mock_parse_cli_arguments):
         input_files = [
-            CODICE_TEST_DATA_DIR
-            / "imap_codice_l1a_hi-direct-events_20260831_v001.0003.cdf",
-            CODICE_TEST_DATA_DIR
-            / "imap_codice_l2_hi-direct-events_20260831_v001.0003.cdf",
+            CODICE_TEST_DATA_DIR / "imap_codice_l1a_hi-direct-events_20260831_v001.0003.cdf",
+            CODICE_TEST_DATA_DIR / "imap_codice_l2_hi-direct-events_20260831_v001.0003.cdf",
             CODICE_TEST_DATA_DIR
             / "imap_codice_l3-hi-mass-correction-lut-truncated_20251008_v001.xlsx",
-            INTEGRATION_DATA_DIR
-            / "imap_codice_l3a_hi-direct-events-e968219e_20260831_v001.json",
+            INTEGRATION_DATA_DIR / "imap_codice_l3a_hi-direct-events-e968219e_20260831_v001.json",
         ]
         with mock_imap_data_access(OUTPUT_DIR, input_files):
             mock_arguments = Mock()

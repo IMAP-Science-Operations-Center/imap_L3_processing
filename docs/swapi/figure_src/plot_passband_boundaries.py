@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 from pathlib import Path
 
@@ -8,10 +10,10 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+from figure_utils import FIGURES_DIR, load_swapi_response
 
 from imap_l3_processing.swapi.response.passband_grid import PassbandGrid
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
-from figure_utils import FIGURES_DIR, load_swapi_response
 
 _ELEVATION_DISPLAY_LIMIT_DEG = 15.0
 _ACTIVE_ELEVATION_SAMPLE_COUNT = 300
@@ -40,9 +42,7 @@ def main():
                 else response_grid.sg_passband
             )
             axis = axes[row, column]
-            last_image = plot_region_panel(
-                axis, grid, region, esa_voltage, central_speed
-            )
+            last_image = plot_region_panel(axis, grid, region, esa_voltage, central_speed)
             if column == 0:
                 axis.set_ylabel("Elevation (deg)")
 
@@ -101,9 +101,7 @@ def grid_axis_coordinates(
 ) -> tuple[np.ndarray, np.ndarray]:
     n_elevations, n_speed_ratios = transmission_values.shape
     elevations = grid.min_elevation + np.arange(n_elevations) * grid.elevation_spacing
-    speed_ratios = (
-        grid.min_speed_ratio + np.arange(n_speed_ratios) * grid.speed_ratio_spacing
-    )
+    speed_ratios = grid.min_speed_ratio + np.arange(n_speed_ratios) * grid.speed_ratio_spacing
     return elevations, speed_ratios
 
 
@@ -148,9 +146,7 @@ def draw_integration_window_outline(
     closed_x = np.concatenate(
         [lower_speed_ratios, upper_speed_ratios[::-1], [lower_speed_ratios[0]]]
     )
-    closed_y = np.concatenate(
-        [active_elevations, active_elevations[::-1], [active_elevations[0]]]
-    )
+    closed_y = np.concatenate([active_elevations, active_elevations[::-1], [active_elevations[0]]])
     axis.plot(closed_x, closed_y, color="tab:blue", linewidth=2.5)
 
 

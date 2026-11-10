@@ -4,15 +4,15 @@ import multiprocessing
 import os
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, TypeVar
+from typing import TypeVar
 
 import numpy as np
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT))
 
-# ruff: disable[E402]
 from imap_l3_processing.constants import (
     METERS_PER_KILOMETER,
     PROTON_CHARGE_COULOMBS,
@@ -20,7 +20,6 @@ from imap_l3_processing.constants import (
 )
 from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.response.swapi_response import SwapiResponse
-# ruff: enable[E402]
 
 FIGURES_DIR = REPO_ROOT / "docs" / "swapi" / "figures"
 
@@ -180,12 +179,11 @@ def run_parallel_map(
     results: list[_T | None] = [None] * n_items
     report_every = max(1, n_items // 20)
     with multiprocessing.get_context("fork").Pool(processes=n_workers) as pool:
-        completed = 0
         for index, value in pool.imap_unordered(
             _IndexedCall(process_one), range(n_items), chunksize=chunksize
         ):
             results[index] = value
-            completed += 1
+            completed = index + 1
             if completed % report_every == 0 or completed == n_items:
                 elapsed = time.perf_counter() - start
                 print(f"  {desc}: {completed}/{n_items} ({elapsed:.1f}s)")

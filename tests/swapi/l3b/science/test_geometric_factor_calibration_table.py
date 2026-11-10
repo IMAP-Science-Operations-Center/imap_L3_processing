@@ -8,9 +8,7 @@ from tests.test_helpers import get_test_data_path
 
 class TestGeometricFactorTable(unittest.TestCase):
     def test_geometric_factor_table_from_file(self):
-        file_path = get_test_data_path(
-            "swapi/imap_swapi_energy-gf-sw-lut_20100101_v001.csv"
-        )
+        file_path = get_test_data_path("swapi/imap_swapi_energy-gf-sw-lut_20100101_v001.csv")
 
         calibration_table = GeometricFactorCalibrationTable.from_file(file_path)
 

@@ -6,11 +6,11 @@ from imap_data_access.processing_input import ProcessingInputCollection, Science
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.descriptors import (
-    GLOWS_L2_DESCRIPTOR,
-    GLOWS_TIME_DEPENDENT_BACKGROUND_DESCRIPTOR,
     GLOWS_CALIBRATION_DATA_DESCRIPTOR,
     GLOWS_EXTRA_HELIOSPHERIC_BACKGROUND_DESCRIPTOR,
+    GLOWS_L2_DESCRIPTOR,
     GLOWS_PIPELINE_SETTINGS_DESCRIPTOR,
+    GLOWS_TIME_DEPENDENT_BACKGROUND_DESCRIPTOR,
 )
 from imap_l3_processing.glows.l3a.models import GlowsL2Data
 from imap_l3_processing.glows.l3a.utils import read_l2_glows_data
@@ -27,8 +27,7 @@ class GlowsL3ADependencies:
         desired_input = next(
             science_input
             for science_input in science_inputs
-            if science_input.descriptor == GLOWS_L2_DESCRIPTOR
-            and science_input.source == "glows"
+            if science_input.descriptor == GLOWS_L2_DESCRIPTOR and science_input.source == "glows"
         )
 
         l2_cdf_file_path: Path = desired_input.imap_file_paths[0].construct_path()
@@ -51,12 +50,8 @@ class GlowsL3ADependencies:
         )
 
         calibration_path = download(calibration_dependency[0])
-        extra_heliospheric_background = download(
-            extra_heliospheric_background_dependency[0]
-        )
-        time_dependent_background_path = download(
-            time_dependent_background_dependency[0]
-        )
+        extra_heliospheric_background = download(extra_heliospheric_background_dependency[0])
+        time_dependent_background_path = download(time_dependent_background_dependency[0])
         settings_path = download(settings_dependency[0])
 
         ancillary_files = {

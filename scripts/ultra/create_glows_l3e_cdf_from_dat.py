@@ -11,9 +11,7 @@ from imap_l3_processing.utils import save_data
 
 version = 0
 
-glows_dat_dir = Path(
-    r"C:\Users\Harrison\Downloads\timeshifted_glows_data\fake_l3_validation"
-)
+glows_dat_dir = Path(r"C:\Users\Harrison\Downloads\timeshifted_glows_data\fake_l3_validation")
 glows_dat_files = list(glows_dat_dir.glob("*"))
 output_dir = Path(r"C:\Users\Harrison\Downloads\timeshifted_glows_data\cdf")
 output_dir.mkdir(exist_ok=True)

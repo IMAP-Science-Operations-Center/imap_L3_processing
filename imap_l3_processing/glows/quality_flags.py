@@ -1,6 +1,5 @@
 from imap_processing.quality_flags import CommonFlags, FlagNameMixin
 
-
 NOMINAL_ALPHA_PROTON_RATIO_VALUE: float = 0.04
 
 

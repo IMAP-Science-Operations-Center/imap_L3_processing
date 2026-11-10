@@ -21,9 +21,7 @@ def report_out_of_range_uncertainties(path: Path | str):
 
             values = cdf[var][...]
 
-            bad_vals = ((values < valid_min) | (values > valid_max)) & (
-                values != fill_val
-            )
+            bad_vals = ((values < valid_min) | (values > valid_max)) & (values != fill_val)
             bad_indices = np.argwhere(bad_vals)
             if len(bad_indices) > 0:
                 print(
@@ -32,13 +30,9 @@ def report_out_of_range_uncertainties(path: Path | str):
 
 
 def get_all_swapi_l3a():
-    query_results = imap_data_access.query(
-        instrument="swapi", data_level="l3a", version="latest"
-    )
+    query_results = imap_data_access.query(instrument="swapi", data_level="l3a", version="latest")
     paths_to_downloaded_files = []
-    for result in sorted(
-        query_results, key=lambda r: (r["descriptor"], r["start_date"])
-    ):
+    for result in sorted(query_results, key=lambda r: (r["descriptor"], r["start_date"])):
         file_path = imap_data_access.download(result["file_path"])
         paths_to_downloaded_files.append(file_path)
     return paths_to_downloaded_files

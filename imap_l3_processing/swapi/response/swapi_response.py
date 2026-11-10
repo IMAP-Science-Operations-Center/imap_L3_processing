@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, NamedTuple
+from typing import NamedTuple
 
 import numpy as np
 import pandas as pd
@@ -10,6 +11,7 @@ from imap_l3_processing.constants import (
     METERS_PER_KILOMETER,
     PROTON_CHARGE_OVER_MASS_C_PER_KG,
 )
+from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.response.azimuthal_transmission import (
     AzimuthalTransmissionGrid,
     validate_azimuthal_transmission_values,
@@ -21,7 +23,6 @@ from imap_l3_processing.swapi.response.passband_grid import (
     PassbandGrid,
     build_passband_grid,
 )
-from imap_l3_processing.swapi.constants import SWAPI_K_FACTOR
 from imap_l3_processing.swapi.species import Species
 
 
@@ -108,9 +109,7 @@ class SwapiResponse:
     def _get_central_effective_area(self, esa_voltage: float) -> float:
         return float(self._central_effective_area_at_voltage(np.abs(esa_voltage)))
 
-    def _central_speed(
-        self, esa_voltage: float, mass_per_charge_m_p_per_e: float
-    ) -> float:
+    def _central_speed(self, esa_voltage: float, mass_per_charge_m_p_per_e: float) -> float:
         # formula: v_0 = sqrt(2 k* |V| (e/m_p) / mass_per_charge_m_p_per_e).
 
         return float(
@@ -128,7 +127,7 @@ class SwapiResponse:
         for v in np.unique(np.asarray(esa_voltages, dtype=float).ravel()):
             key = self._cache_key(v)
             if np.isfinite(v) and key not in self._passband_grid_cache:
-                self._passband_grid_cache[key] = dict()
+                self._passband_grid_cache[key] = {}
                 for region in ("SG", "OA"):
                     passband = build_passband_grid(self._get_passband_values(v, region))
                     self._passband_grid_cache[key][region] = passband
@@ -139,9 +138,7 @@ class SwapiResponse:
         esa_voltage: float,
         species: Species,
     ) -> ResponseGrid:
-        relative_efficiency = self._efficiency_table.relative_efficiency(
-            time_as_tt2000, species
-        )
+        relative_efficiency = self._efficiency_table.relative_efficiency(time_as_tt2000, species)
 
         cache_key = (
             self._cache_key(float(esa_voltage)),
@@ -164,9 +161,7 @@ class SwapiResponse:
         response_grid = ResponseGrid(
             sg_passband=passband_pair["SG"],
             oa_passband=passband_pair["OA"],
-            central_speed=self._central_speed(
-                esa_voltage, species.mass_per_charge_m_p_per_e
-            ),
+            central_speed=self._central_speed(esa_voltage, species.mass_per_charge_m_p_per_e),
             central_effective_area=self._get_central_effective_area(esa_voltage)
             * relative_efficiency,
             azimuthal_transmission=self._azimuthal_transmission_grid,

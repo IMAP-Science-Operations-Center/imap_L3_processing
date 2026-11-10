@@ -18,9 +18,7 @@ def create_survival_probabilities_file(
     glows_file_path: Path, date_for_file: datetime, cdf_file_path: Path
 ):
     with open(glows_file_path) as input_data:
-        energy_line = [
-            line for line in input_data.readlines() if line.startswith("#energy_grid")
-        ]
+        energy_line = [line for line in input_data if line.startswith("#energy_grid")]
         assert len(energy_line) == 1
         match = [float(x) for x in re.findall(r"\s+([0-9.]+)", energy_line[0])]
         energy_units = re.search(r"\[(.+)]", energy_line[0]).group(1)
@@ -37,7 +35,7 @@ def create_survival_probabilities_file(
     latitude = lats.value
     longitude = lons.value
     skips = 0
-    for i in range(0, 3072):
+    for i in range(3072):
         if i in healpix_index:
             output_survival_probabilities[:, i] = spin_angle_and_survival_probabilities[
                 i - skips, 3:-1
@@ -91,10 +89,10 @@ if __name__ == "__main__":
 
     for i in range(num_psets_to_generate):
         date_to_set = start_date + timedelta(days=i)
-        filename = f"imap_glows_l3e_survival-probability-ul_{date_to_set.strftime('%Y%m%d')}_v015.cdf"
-        cdf_file_path = get_test_data_path(
-            f"ultra/fake_l3e_survival_probabilities/{filename}"
+        filename = (
+            f"imap_glows_l3e_survival-probability-ul_{date_to_set.strftime('%Y%m%d')}_v015.cdf"
         )
+        cdf_file_path = get_test_data_path(f"ultra/fake_l3e_survival_probabilities/{filename}")
 
         cdf_file_path.unlink(missing_ok=True)
         create_survival_probabilities_file(input_file_path, date_to_set, cdf_file_path)

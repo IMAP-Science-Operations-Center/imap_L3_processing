@@ -27,8 +27,6 @@ class CodiceLoL3aRatiosDependencies:
 
     @classmethod
     def from_file_paths(cls, codice_l2_lo_cdf: Path | str):
-        partial_density_data = CodiceLoPartialDensityData.read_from_cdf(
-            codice_l2_lo_cdf
-        )
+        partial_density_data = CodiceLoPartialDensityData.read_from_cdf(codice_l2_lo_cdf)
 
         return cls(partial_density_data)

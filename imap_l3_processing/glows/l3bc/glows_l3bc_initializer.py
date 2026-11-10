@@ -2,28 +2,27 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 import imap_data_access
-from imap_data_access import ScienceFilePath, ProcessingInputCollection, RepointInput
+from imap_data_access import ProcessingInputCollection, RepointInput, ScienceFilePath
 from imap_data_access.file_validation import Version
 from imap_processing.spice.repoint import set_global_repoint_table_paths
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.glows.descriptors import (
     BAD_DAYS_LIST_DESCRIPTOR,
-    WAW_HELIOION_DESCRIPTOR,
-    UV_ANISOTROPY_1CR_DESCRIPTOR,
-    PIPELINE_SETTINGS_L3BCDE_DESCRIPTOR,
     GLOWS_L3B_DESCRIPTOR,
     GLOWS_L3C_DESCRIPTOR,
+    PIPELINE_SETTINGS_L3BCDE_DESCRIPTOR,
+    UV_ANISOTROPY_1CR_DESCRIPTOR,
+    WAW_HELIOION_DESCRIPTOR,
 )
 from imap_l3_processing.glows.l3bc.glows_l3bc_dependencies import GlowsL3BCDependencies
 from imap_l3_processing.glows.l3bc.models import CRToProcess, ExternalDependencies
 from imap_l3_processing.glows.l3bc.utils import (
-    get_date_range_of_cr,
     get_best_ancillary,
     get_cr_for_date_time,
+    get_date_range_of_cr,
 )
 from imap_l3_processing.utils import read_cdf_parents
 
@@ -58,8 +57,7 @@ class GlowsL3BCInitializer:
             instrument="glows", data_level="l3a", descriptor="hist", version="latest"
         )
         l3a_files_names = [
-            Path(l3a_query_result["file_path"]).name
-            for l3a_query_result in l3a_query_results
+            Path(l3a_query_result["file_path"]).name for l3a_query_result in l3a_query_results
         ]
         cr_to_l3a_file_names = GlowsL3BCInitializer.group_l3a_by_cr(l3a_files_names)
 
@@ -77,12 +75,10 @@ class GlowsL3BCInitializer:
         )
 
         l3bs_by_cr = {
-            int(result["cr"]): Path(result["file_path"]).name
-            for result in l3b_query_result
+            int(result["cr"]): Path(result["file_path"]).name for result in l3b_query_result
         }
         l3cs_by_cr = {
-            int(result["cr"]): Path(result["file_path"]).name
-            for result in l3c_query_result
+            int(result["cr"]): Path(result["file_path"]).name for result in l3c_query_result
         }
 
         uv_anisotropy_query_result = imap_data_access.query(
@@ -165,13 +161,11 @@ class GlowsL3BCInitializer:
                     external_dependencies,
                     major_version_to_process,
                 ):
-                    l3bc_dependencies = (
-                        GlowsL3BCDependencies.download_from_cr_to_process(
-                            cr_candidate,
-                            version,
-                            external_dependencies,
-                            repoint_downloaded_path,
-                        )
+                    l3bc_dependencies = GlowsL3BCDependencies.download_from_cr_to_process(
+                        cr_candidate,
+                        version,
+                        external_dependencies,
+                        repoint_downloaded_path,
                     )
                     all_l3bc_dependencies.append(l3bc_dependencies)
                 else:
@@ -193,17 +187,13 @@ class GlowsL3BCInitializer:
         l3bs_by_cr: dict[int, str],
         external_dependencies: ExternalDependencies,
         major_version: int | None,
-    ) -> Optional[Version]:
+    ) -> Version | None:
         if not cr_candidate.buffer_time_has_elapsed_since_cr():
-            logger.warning(
-                f"Not enough time has elapsed for cr {cr_candidate.cr_rotation_number}"
-            )
+            logger.warning(f"Not enough time has elapsed for cr {cr_candidate.cr_rotation_number}")
             return None
 
         if not cr_candidate.has_valid_external_dependencies(external_dependencies):
-            logger.warning(
-                f"Invalid external dependencies for {cr_candidate.cr_rotation_number}"
-            )
+            logger.warning(f"Invalid external dependencies for {cr_candidate.cr_rotation_number}")
             return None
 
         match l3bs_by_cr.get(cr_candidate.cr_rotation_number):
@@ -216,10 +206,8 @@ class GlowsL3BCInitializer:
                     existing_path.major_version, existing_path.minor_version
                 )
                 major_version_updated = major_version != existing_version.major
-                inputs_changed = (
-                    not cr_candidate.pipeline_dependency_file_names().issubset(
-                        l3b_parents
-                    )
+                inputs_changed = not cr_candidate.pipeline_dependency_file_names().issubset(
+                    l3b_parents
                 )
                 if major_version_updated or inputs_changed:
                     return Version(major_version, existing_version.minor + 1)

@@ -26,24 +26,23 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+from figure_utils import (
+    FIGURES_DIR,
+    load_swapi_response,
+    peak_esa_voltage_for_proton_bulk_speed,
+    velocity_rtn_from_swapi_angles,
+)
 
 from imap_l3_processing.constants import (
+    EV_TO_KELVIN,
     PROTON_MASS_KG,
     PROTON_MASS_PER_CHARGE_M_P_PER_E,
-    EV_TO_KELVIN,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.forward_model import (
     calculate_integral,
 )
 from imap_l3_processing.swapi.l3a.science.solar_wind.params import SolarWindParams
 from scripts.swapi.reference_integral import reference_integral_fixed_limits
-from figure_utils import (
-    FIGURES_DIR,
-    velocity_rtn_from_swapi_angles,
-    load_swapi_response,
-    peak_esa_voltage_for_proton_bulk_speed,
-)
-
 
 # (label, bulk_speed, T_K, bulk_azimuth, bulk_elevation, density)
 CASES = [
@@ -103,9 +102,7 @@ def main():
     handles_for_legend = None
     for ax, (label, v_b, T_k, az, el, density) in zip(axes.flat, CASES):
         v_peak = peak_esa_voltage_for_proton_bulk_speed(v_b)
-        esa_voltages = np.logspace(
-            np.log10(0.4 * v_peak), np.log10(2.5 * v_peak), n_voltages
-        )
+        esa_voltages = np.logspace(np.log10(0.4 * v_peak), np.log10(2.5 * v_peak), n_voltages)
         sw = SolarWindParams(
             density=density,
             velocity_rtn=velocity_rtn_from_swapi_angles(v_b, az, el),
@@ -122,9 +119,7 @@ def main():
             )
             rate, _ = calculate_integral(sw, response_grid, rotation_matrix)
             optimized[i] = rate
-            reference[i] = reference_integral_fixed_limits(
-                response_grid, sw, rotation_matrix
-            )
+            reference[i] = reference_integral_fixed_limits(response_grid, sw, rotation_matrix)
 
         (h_ref,) = ax.plot(
             esa_voltages,

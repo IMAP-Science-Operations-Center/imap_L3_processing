@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime
-from unittest.mock import patch, Mock, call
+from unittest.mock import Mock, call, patch
 
 from imap_data_access.file_validation import Version
 
@@ -41,9 +41,7 @@ class TestHiCombinedInitializer(unittest.TestCase):
             descriptor = f"hic-ena-h-hf-sp-full-hae-{deg}-1yr"
 
             for input_major_version in [None, 2]:
-                expected_version_map = VersionMap(
-                    {descriptor: Version(input_major_version, 1)}
-                )
+                expected_version_map = VersionMap({descriptor: Version(input_major_version, 1)})
 
                 with self.subTest(deg=deg, major_version=input_major_version):
                     self.hi_combined_initializer_mock_query.side_effect = [
@@ -78,10 +76,8 @@ class TestHiCombinedInitializer(unittest.TestCase):
                     ]
 
                     initializer = HiCombinedInitializer()
-                    actual_maps_to_produce = (
-                        initializer.get_maps_that_should_be_produced(
-                            descriptor, input_major_version
-                        )
+                    actual_maps_to_produce = initializer.get_maps_that_should_be_produced(
+                        descriptor, input_major_version
                     )
 
                     self.hi_combined_initializer_mock_query.assert_has_calls(
@@ -94,9 +90,7 @@ class TestHiCombinedInitializer(unittest.TestCase):
                     self.assertEqual(expected_maps_to_produce, actual_maps_to_produce)
 
     @patch("imap_l3_processing.maps.map_initializer.read_cdf_parents")
-    def test_get_maps_that_should_be_produced_new_major_version(
-        self, mock_read_cdf_parents: Mock
-    ):
+    def test_get_maps_that_should_be_produced_new_major_version(self, mock_read_cdf_parents: Mock):
         mock_read_cdf_parents.return_value = {*l3_sp_input_maps}
 
         existing_file_without_major_number = (
@@ -318,11 +312,7 @@ class TestHiCombinedInitializer(unittest.TestCase):
                             start_date=datetime(2025, 1, 1),
                             end_date=datetime(2026, 1, 1),
                             version=VersionMap(
-                                {
-                                    descriptor: Version(
-                                        input_major_version, expected_minor_version
-                                    )
-                                }
+                                {descriptor: Version(input_major_version, expected_minor_version)}
                             ),
                             descriptor=descriptor,
                         ),

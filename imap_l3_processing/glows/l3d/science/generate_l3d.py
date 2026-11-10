@@ -9,7 +9,6 @@ import sys
 import warnings
 
 import numpy as np
-
 import toolkit.funcs as fun
 import toolkit.l3d_SolarParamHistory as sph
 
@@ -31,9 +30,7 @@ l3c_fn_list = np.array(sorted(glob.glob("data_l3c/imap_glows_l3c*.json")))
 data_l3b = [fun.read_json(fn) for fn in l3b_fn_list]
 data_l3c = [fun.read_json(fn) for fn in l3c_fn_list]
 
-solar_param_hist = sph.SolarParamsHistory(
-    ANC_INPUT_FROM_INSTRUMENT_TEAM, EXT_DEPENDENCIES
-)
+solar_param_hist = sph.SolarParamsHistory(ANC_INPUT_FROM_INSTRUMENT_TEAM, EXT_DEPENDENCIES)
 fn_initial = ANC_INPUT_FROM_INSTRUMENT_TEAM["WawHelioIon"]
 
 # Start generating from the initial files (not using the last entry from L3d)
@@ -45,9 +42,7 @@ solar_param_hist.header["ancillary_data_files"] = [
 solar_param_hist.header["l3d_cdf_filename"] = L3D_CDF_FILENAME
 solar_param_hist.generate_initial_history(fn_initial)
 
-solar_param_hist.update_solar_params_hist(
-    EXT_DEPENDENCIES, data_l3b, data_l3c, CR_current
-)
+solar_param_hist.update_solar_params_hist(EXT_DEPENDENCIES, data_l3b, data_l3c, CR_current)
 
 # filename of the data products (main json file and the text version)
 start_date = solar_param_hist.time_grid[0]

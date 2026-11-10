@@ -63,9 +63,7 @@ class LoSPInitializer(SPMapInitializer):
     def _collect_glows_psets_by_repoint(self, descriptor: str) -> dict[int, str]:
         return self.glows_files_by_repointing
 
-    def _get_l2_dependencies(
-        self, descriptor: MapDescriptorParts
-    ) -> list[MapDescriptorParts]:
+    def _get_l2_dependencies(self, descriptor: MapDescriptorParts) -> list[MapDescriptorParts]:
         return [
             dataclasses.replace(
                 descriptor, survival_correction=SurvivalCorrection.NotSurvivalCorrected

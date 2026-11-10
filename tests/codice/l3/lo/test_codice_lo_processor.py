@@ -1,16 +1,13 @@
 import unittest
 import warnings
 from dataclasses import fields
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
 from pathlib import Path
-from unittest.mock import Mock, patch, call, sentinel, MagicMock
+from unittest.mock import MagicMock, Mock, call, patch, sentinel
 
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
 
-from imap_l3_processing.codice.l3.lo.codice_lo_l3b_3d_distributions_dependencies import (
-    CodiceLoL3b3dDistributionsDependencies,
-)
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_direct_events_dependencies import (
     CodiceLoL3aDirectEventsDependencies,
 )
@@ -19,6 +16,9 @@ from imap_l3_processing.codice.l3.lo.codice_lo_l3a_partial_densities_dependencie
 )
 from imap_l3_processing.codice.l3.lo.codice_lo_l3a_ratios_dependencies import (
     CodiceLoL3aRatiosDependencies,
+)
+from imap_l3_processing.codice.l3.lo.codice_lo_l3b_3d_distributions_dependencies import (
+    CodiceLoL3b3dDistributionsDependencies,
 )
 from imap_l3_processing.codice.l3.lo.codice_lo_processor import CodiceLoProcessor
 from imap_l3_processing.codice.l3.lo.direct_events.science.angle_lookup import (
@@ -34,17 +34,17 @@ from imap_l3_processing.codice.l3.lo.direct_events.science.geometric_factor_look
     GeometricFactorLookup,
 )
 from imap_l3_processing.codice.l3.lo.models import (
-    CodiceLoL3aPartialDensityDataProduct,
-    CodiceLoL2DirectEventData,
-    CodiceLoL3aDirectEventDataProduct,
-    CodiceLoL2SWSpeciesData,
-    CodiceLoL1aSWPriorityRates,
-    CodiceLoL1aNSWPriorityRates,
-    CodiceLoPartialDensityData,
-    CodiceLoL3aRatiosDataProduct,
     CODICE_LO_L2_NUM_PRIORITIES,
-    CodiceLoL3ChargeStateDistributionsDataProduct,
+    CodiceLoL1aNSWPriorityRates,
+    CodiceLoL1aSWPriorityRates,
+    CodiceLoL2DirectEventData,
+    CodiceLoL2SWSpeciesData,
+    CodiceLoL3aDirectEventDataProduct,
+    CodiceLoL3aPartialDensityDataProduct,
+    CodiceLoL3aRatiosDataProduct,
     CodiceLoL3b3dDistributionDataProduct,
+    CodiceLoL3ChargeStateDistributionsDataProduct,
+    CodiceLoPartialDensityData,
 )
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import (
     MassPerChargeLookup,
@@ -52,9 +52,9 @@ from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charg
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from tests.test_helpers import (
+    NumpyArrayMatcher,
     create_dataclass_mock,
     get_test_data_path,
-    NumpyArrayMatcher,
 )
 
 MODULE = "imap_l3_processing.codice.l3.lo.codice_lo_processor"
@@ -91,9 +91,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         )
         mock_spiceypy.ktotal.return_value = 0
 
-        processor = CodiceLoProcessor(
-            dependencies=input_collection, input_metadata=input_metadata
-        )
+        processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
         product = processor.process()
 
         mock_fetch_dependencies.assert_called_once_with(processor.dependencies)
@@ -101,9 +99,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             mock_fetch_dependencies.return_value
         )
 
-        mock_save_data.assert_called_once_with(
-            mock_process_l3a_partial_densities.return_value
-        )
+        mock_save_data.assert_called_once_with(mock_process_l3a_partial_densities.return_value)
 
         self.assertEqual(
             ["parent_file_1", "parent_file_2"],
@@ -134,21 +130,15 @@ class TestCodiceLoProcessor(unittest.TestCase):
         )
         mock_spiceypy.ktotal.return_value = 0
 
-        processor = CodiceLoProcessor(
-            dependencies=input_collection, input_metadata=input_metadata
-        )
+        processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
         product = processor.process()
 
         mock_fetch_dependencies.assert_called_once_with(processor.dependencies)
-        mock_process_l3a_ratios.assert_called_once_with(
-            mock_fetch_dependencies.return_value
-        )
+        mock_process_l3a_ratios.assert_called_once_with(mock_fetch_dependencies.return_value)
 
         mock_save_data.assert_called_once_with(mock_process_l3a_ratios.return_value)
 
-        self.assertEqual(
-            ["parent_file_1"], mock_process_l3a_ratios.return_value.parent_file_names
-        )
+        self.assertEqual(["parent_file_1"], mock_process_l3a_ratios.return_value.parent_file_names)
         self.assertEqual([mock_save_data.return_value], product)
 
     @patch(f"{MODULE}.CodiceLoL3aRatiosDependencies.fetch_dependencies")
@@ -174,15 +164,11 @@ class TestCodiceLoProcessor(unittest.TestCase):
         )
         mock_spiceypy.ktotal.return_value = 0
 
-        processor = CodiceLoProcessor(
-            dependencies=input_collection, input_metadata=input_metadata
-        )
+        processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
         product = processor.process()
 
         mock_fetch_dependencies.assert_called_once_with(processor.dependencies)
-        mock_process_l3a_abundances.assert_called_once_with(
-            mock_fetch_dependencies.return_value
-        )
+        mock_process_l3a_abundances.assert_called_once_with(mock_fetch_dependencies.return_value)
 
         mock_save_data.assert_called_once_with(mock_process_l3a_abundances.return_value)
 
@@ -231,12 +217,10 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         dependency = CodiceLoL3aRatiosDependencies(data)
         input_metadata = Mock()
-        processor = CodiceLoProcessor(
-            dependencies=Mock(), input_metadata=input_metadata
-        )
+        processor = CodiceLoProcessor(dependencies=Mock(), input_metadata=input_metadata)
 
-        ratios_data_product: CodiceLoL3aRatiosDataProduct = (
-            processor.process_l3a_ratios(dependency)
+        ratios_data_product: CodiceLoL3aRatiosDataProduct = processor.process_l3a_ratios(
+            dependency
         )
         self.assertEqual(input_metadata, ratios_data_product.input_metadata)
         np.testing.assert_array_equal(
@@ -281,9 +265,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
     def test_process_ratios_calculate_abundance_ratios_using_safe_divide(self):
         now = datetime.now()
         data = CodiceLoPartialDensityData(
-            epoch=np.array(
-                [now, now + timedelta(minutes=4), now + timedelta(minutes=8)]
-            ),
+            epoch=np.array([now, now + timedelta(minutes=4), now + timedelta(minutes=8)]),
             epoch_delta=np.array([120_000_000_000, 120_000_000_000, 120_000_000_000]),
             fe_hiq_partial_density=np.array([0, 0, 0]),
             fe_loq_partial_density=np.array([0, 0, 0]),
@@ -303,30 +285,18 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         dependency = CodiceLoL3aRatiosDependencies(data)
         input_metadata = Mock()
-        processor = CodiceLoProcessor(
-            dependencies=Mock(), input_metadata=input_metadata
-        )
+        processor = CodiceLoProcessor(dependencies=Mock(), input_metadata=input_metadata)
 
         with warnings.catch_warnings(record=True) as w:
             ratios_data_product = processor.process_l3a_ratios(dependency)
         self.assertEqual(0, len(w))
 
         self.assertEqual(input_metadata, ratios_data_product.input_metadata)
-        np.testing.assert_array_equal(
-            ratios_data_product.epoch, [now + timedelta(minutes=4)]
-        )
-        np.testing.assert_array_equal(
-            ratios_data_product.epoch_delta, [360_000_000_000]
-        )
-        np.testing.assert_array_almost_equal(
-            ratios_data_product.fe_to_o_ratio, np.array([np.nan])
-        )
-        np.testing.assert_array_almost_equal(
-            ratios_data_product.mg_to_o_ratio, np.array([np.nan])
-        )
-        np.testing.assert_array_almost_equal(
-            ratios_data_product.c_to_o_ratio, np.array([np.nan])
-        )
+        np.testing.assert_array_equal(ratios_data_product.epoch, [now + timedelta(minutes=4)])
+        np.testing.assert_array_equal(ratios_data_product.epoch_delta, [360_000_000_000])
+        np.testing.assert_array_almost_equal(ratios_data_product.fe_to_o_ratio, np.array([np.nan]))
+        np.testing.assert_array_almost_equal(ratios_data_product.mg_to_o_ratio, np.array([np.nan]))
+        np.testing.assert_array_almost_equal(ratios_data_product.c_to_o_ratio, np.array([np.nan]))
         np.testing.assert_array_almost_equal(
             ratios_data_product.c6_to_c4_ratio, np.array([np.nan])
         )
@@ -387,13 +357,9 @@ class TestCodiceLoProcessor(unittest.TestCase):
 
         dependency = CodiceLoL3aRatiosDependencies(data)
         input_metadata = Mock()
-        processor = CodiceLoProcessor(
-            dependencies=Mock(), input_metadata=input_metadata
-        )
+        processor = CodiceLoProcessor(dependencies=Mock(), input_metadata=input_metadata)
 
-        abundances_data_product = processor.process_l3a_charge_state_distributions(
-            dependency
-        )
+        abundances_data_product = processor.process_l3a_charge_state_distributions(dependency)
         self.assertIsInstance(
             abundances_data_product, CodiceLoL3ChargeStateDistributionsDataProduct
         )
@@ -458,14 +424,10 @@ class TestCodiceLoProcessor(unittest.TestCase):
         )
         dependency = CodiceLoL3aRatiosDependencies(data)
         input_metadata = Mock()
-        processor = CodiceLoProcessor(
-            dependencies=Mock(), input_metadata=input_metadata
-        )
+        processor = CodiceLoProcessor(dependencies=Mock(), input_metadata=input_metadata)
 
         with warnings.catch_warnings(record=True) as w:
-            abundances_data_product = processor.process_l3a_charge_state_distributions(
-                dependency
-            )
+            abundances_data_product = processor.process_l3a_charge_state_distributions(dependency)
         self.assertEqual(0, len(w))
 
         self.assertIsInstance(
@@ -473,9 +435,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         )
         self.assertEqual(input_metadata, abundances_data_product.input_metadata)
         np.testing.assert_array_equal(abundances_data_product.epoch, [now])
-        np.testing.assert_array_equal(
-            abundances_data_product.epoch_delta, [120_000_000_000]
-        )
+        np.testing.assert_array_equal(abundances_data_product.epoch_delta, [120_000_000_000])
 
         np.testing.assert_array_almost_equal(
             abundances_data_product.oxygen_charge_state_distribution,
@@ -512,24 +472,18 @@ class TestCodiceLoProcessor(unittest.TestCase):
         )
         mock_spiceypy.ktotal.return_value = 0
 
-        processor = CodiceLoProcessor(
-            dependencies=input_collection, input_metadata=input_metadata
-        )
+        processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
         product = processor.process()
 
         mock_fetch_dependencies.assert_called_once_with(processor.dependencies)
-        mock_process_direct_event.assert_called_once_with(
-            mock_fetch_dependencies.return_value
-        )
+        mock_process_direct_event.assert_called_once_with(mock_fetch_dependencies.return_value)
 
         mock_save_data.assert_called_once_with(mock_process_direct_event.return_value)
 
         self.assertEqual([mock_save_data.return_value], product)
 
     def test_raises_exception_on_non_l3_input_metadata(self):
-        input_metadata = InputMetadata(
-            "codice", "L2a", Mock(), Mock(), "v02", "bad-descriptor"
-        )
+        input_metadata = InputMetadata("codice", "L2a", Mock(), Mock(), "v02", "bad-descriptor")
 
         processor = CodiceLoProcessor(Mock(), input_metadata)
         with self.assertRaises(NotImplementedError) as context:
@@ -550,13 +504,9 @@ class TestCodiceLoProcessor(unittest.TestCase):
             "v02",
             descriptor="lo-partial-densities",
         )
-        processor = CodiceLoProcessor(
-            dependencies=input_collection, input_metadata=input_metadata
-        )
+        processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
 
-        epochs = np.array(
-            [datetime(2025, 1, 1), datetime(2025, 1, 2), datetime(2025, 1, 3)]
-        )
+        epochs = np.array([datetime(2025, 1, 1), datetime(2025, 1, 2), datetime(2025, 1, 3)])
         num_species = 14
 
         codice_lo_l2_data = CodiceLoL2SWSpeciesData(
@@ -600,9 +550,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         codice_lo_dependencies = CodiceLoL3aPartialDensitiesDependencies(
             codice_lo_l2_data, mass_per_charge_lookup
         )
-        result_data_product = processor.process_l3a_partial_densities(
-            codice_lo_dependencies
-        )
+        result_data_product = processor.process_l3a_partial_densities(codice_lo_dependencies)
 
         self.assertEqual(num_species, mock_calculate_partial_densities.call_count)
 
@@ -687,14 +635,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
         self.assertIsInstance(result_data, CodiceLoPartialDensityData)
 
         np.testing.assert_array_equal(result_data.epoch, codice_lo_l2_data.epoch)
-        np.testing.assert_array_equal(
-            result_data.epoch_delta, codice_lo_l2_data.epoch_delta_plus
-        )
-        (
-            self.assertEqual(
-                sentinel.hplus_partial_density, result_data.hplus_partial_density
-            ),
-        )
+        np.testing.assert_array_equal(result_data.epoch_delta, codice_lo_l2_data.epoch_delta_plus)
+        (self.assertEqual(sentinel.hplus_partial_density, result_data.hplus_partial_density),)
         (
             self.assertEqual(
                 sentinel.heplusplus_partial_density,
@@ -753,9 +695,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         sw_priority_rates.p2_heplusplus = rng.random(priority_counts_variable_shape)
         sw_priority_rates.p3_heavies = rng.random(priority_counts_variable_shape)
         sw_priority_rates.p4_dcrs = rng.random(priority_counts_variable_shape)
-        sw_priority_rates.half_spin_per_esa_step = rng.random(
-            (num_epochs, num_energy_bins)
-        )
+        sw_priority_rates.half_spin_per_esa_step = rng.random((num_epochs, num_energy_bins))
         sw_priority_rates.rgfo_spin_sector = rng.random(num_epochs)
         sw_priority_rates.rgfo_esa_step = rng.random(num_epochs)
         sw_priority_rates.nso_spin_sector = rng.random(num_epochs)
@@ -763,35 +703,27 @@ class TestCodiceLoProcessor(unittest.TestCase):
         sw_priority_rates.esa_step = np.arange(128)
         sw_priority_rates.rgfo_half_spin = rng.random(num_epochs)
         sw_priority_rates.nso_half_spin = rng.random(num_epochs)
-        sw_priority_rates.acquisition_time_per_esa_step = rng.random(
-            (num_epochs, num_energy_bins)
-        )
+        sw_priority_rates.acquisition_time_per_esa_step = rng.random((num_epochs, num_energy_bins))
 
         nsw_priority_rates = create_dataclass_mock(CodiceLoL1aNSWPriorityRates)
         nsw_priority_rates.epoch = epochs
         nsw_priority_rates.p5_heavies = rng.random(priority_counts_variable_shape)
-        nsw_priority_rates.p6_hplus_heplusplus = rng.random(
-            priority_counts_variable_shape
-        )
+        nsw_priority_rates.p6_hplus_heplusplus = rng.random(priority_counts_variable_shape)
 
-        mass_per_charge = rng.random(
-            (num_epochs, CODICE_LO_L2_NUM_PRIORITIES, event_buffer_size)
-        )
+        mass_per_charge = rng.random((num_epochs, CODICE_LO_L2_NUM_PRIORITIES, event_buffer_size))
         mock_calculate_mass_per_charge.return_value = mass_per_charge
         mass = rng.random((num_epochs, CODICE_LO_L2_NUM_PRIORITIES, event_buffer_size))
         mock_calculate_mass.return_value = mass
 
         codice_l2_variables = {
-            f.name: rng.random(
-                (num_epochs, CODICE_LO_L2_NUM_PRIORITIES, event_buffer_size)
-            )
+            f.name: rng.random((num_epochs, CODICE_LO_L2_NUM_PRIORITIES, event_buffer_size))
             for f in fields(CodiceLoL2DirectEventData)
         }
 
         codice_l2_variables["epoch"] = epochs
         codice_l2_variables["spin_angle"] *= 360
-        codice_l2_variables["data_quality"] = rng.random((num_epochs))
-        codice_l2_variables["num_events"] = rng.random((num_epochs))
+        codice_l2_variables["data_quality"] = rng.random(num_epochs)
+        codice_l2_variables["num_events"] = rng.random(num_epochs)
 
         expected_energy_per_charge = codice_l2_variables["energy_per_charge"]
         expected_apd_energy = codice_l2_variables["apd_energy"]
@@ -835,17 +767,13 @@ class TestCodiceLoProcessor(unittest.TestCase):
         input_metadata = InputMetadata(
             "codice", "l3a", Mock(spec=datetime), Mock(spec=datetime), "v02"
         )
-        processor = CodiceLoProcessor(
-            dependencies=input_collection, input_metadata=input_metadata
-        )
+        processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
         l3a_direct_event_data_product = processor.process_l3a_direct_event_data_product(
             dependencies
         )
 
         self.assertEqual(1, mock_calculate_mass.call_count)
-        np.testing.assert_equal(
-            mock_calculate_mass.call_args.args[0], expected_apd_energy
-        )
+        np.testing.assert_equal(mock_calculate_mass.call_args.args[0], expected_apd_energy)
         np.testing.assert_equal(mock_calculate_mass.call_args.args[1], expected_tof)
         np.testing.assert_equal(
             mock_calculate_mass.call_args.args[2], dependencies.mass_coefficient_lookup
@@ -855,33 +783,17 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_equal(
             mock_calculate_mass_per_charge.call_args.args[0], expected_energy_per_charge
         )
-        np.testing.assert_equal(
-            mock_calculate_mass_per_charge.call_args.args[1], expected_tof
-        )
+        np.testing.assert_equal(mock_calculate_mass_per_charge.call_args.args[1], expected_tof)
 
         self.assertEqual(1, mock_calculate_normalization_factor.call_count)
-        actual_stacked_priorities = mock_calculate_normalization_factor.call_args.args[
-            0
-        ]
+        actual_stacked_priorities = mock_calculate_normalization_factor.call_args.args[0]
 
-        np.testing.assert_equal(
-            actual_stacked_priorities[:, 0], sw_priority_rates.p0_tcrs
-        )
-        np.testing.assert_equal(
-            actual_stacked_priorities[:, 1], sw_priority_rates.p1_hplus
-        )
-        np.testing.assert_equal(
-            actual_stacked_priorities[:, 2], sw_priority_rates.p2_heplusplus
-        )
-        np.testing.assert_equal(
-            actual_stacked_priorities[:, 3], sw_priority_rates.p3_heavies
-        )
-        np.testing.assert_equal(
-            actual_stacked_priorities[:, 4], sw_priority_rates.p4_dcrs
-        )
-        np.testing.assert_equal(
-            actual_stacked_priorities[:, 5], nsw_priority_rates.p5_heavies
-        )
+        np.testing.assert_equal(actual_stacked_priorities[:, 0], sw_priority_rates.p0_tcrs)
+        np.testing.assert_equal(actual_stacked_priorities[:, 1], sw_priority_rates.p1_hplus)
+        np.testing.assert_equal(actual_stacked_priorities[:, 2], sw_priority_rates.p2_heplusplus)
+        np.testing.assert_equal(actual_stacked_priorities[:, 3], sw_priority_rates.p3_heavies)
+        np.testing.assert_equal(actual_stacked_priorities[:, 4], sw_priority_rates.p4_dcrs)
+        np.testing.assert_equal(actual_stacked_priorities[:, 5], nsw_priority_rates.p5_heavies)
         np.testing.assert_equal(
             actual_stacked_priorities[:, 6], nsw_priority_rates.p6_hplus_heplusplus
         )
@@ -911,9 +823,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             mock_lookup_normalization_per_event.call_args.args[3], expected_spin_sector
         )
 
-        self.assertIsInstance(
-            l3a_direct_event_data_product, CodiceLoL3aDirectEventDataProduct
-        )
+        self.assertIsInstance(l3a_direct_event_data_product, CodiceLoL3aDirectEventDataProduct)
         self.assertEqual(input_metadata, l3a_direct_event_data_product.input_metadata)
 
         np.testing.assert_array_equal(l3a_direct_event_data_product.epoch, epochs)
@@ -942,18 +852,12 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(
             expected_apd_energy, l3a_direct_event_data_product.apd_energy
         )
-        np.testing.assert_array_equal(
-            expected_apd_gain, l3a_direct_event_data_product.gain
-        )
-        np.testing.assert_array_equal(
-            expected_apd_id, l3a_direct_event_data_product.apd_id
-        )
+        np.testing.assert_array_equal(expected_apd_gain, l3a_direct_event_data_product.gain)
+        np.testing.assert_array_equal(expected_apd_id, l3a_direct_event_data_product.apd_id)
         np.testing.assert_array_equal(
             expected_data_quality, l3a_direct_event_data_product.data_quality
         )
-        np.testing.assert_array_equal(
-            expected_elevation, l3a_direct_event_data_product.elevation
-        )
+        np.testing.assert_array_equal(expected_elevation, l3a_direct_event_data_product.elevation)
         np.testing.assert_array_equal(
             expected_energy_per_charge, l3a_direct_event_data_product.energy_per_charge
         )
@@ -966,9 +870,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_array_equal(
             expected_num_events, l3a_direct_event_data_product.num_events
         )
-        np.testing.assert_array_equal(
-            expected_position, l3a_direct_event_data_product.position
-        )
+        np.testing.assert_array_equal(expected_position, l3a_direct_event_data_product.position)
         np.testing.assert_array_equal(
             expected_spin_angle, l3a_direct_event_data_product.spin_angle
         )
@@ -1087,9 +989,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         sw_priority_rates.p2_heplusplus = rng.random(sw_priority_counts_shape)
         sw_priority_rates.p3_heavies = rng.random(sw_priority_counts_shape)
         sw_priority_rates.p4_dcrs = rng.random(sw_priority_counts_shape)
-        sw_priority_rates.half_spin_per_esa_step = rng.random(
-            (num_sw_epochs, num_energy_bins)
-        )
+        sw_priority_rates.half_spin_per_esa_step = rng.random((num_sw_epochs, num_energy_bins))
         sw_priority_rates.rgfo_spin_sector = rng.random(num_sw_epochs)
         sw_priority_rates.rgfo_esa_step = rng.random(num_sw_epochs)
         sw_priority_rates.nso_spin_sector = rng.random(num_sw_epochs)
@@ -1166,15 +1066,11 @@ class TestCodiceLoProcessor(unittest.TestCase):
         input_metadata = InputMetadata(
             "codice", "l3a", Mock(spec=datetime), Mock(spec=datetime), "v02"
         )
-        processor = CodiceLoProcessor(
-            dependencies=input_collection, input_metadata=input_metadata
-        )
+        processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
         result = processor.process_l3a_direct_event_data_product(dependencies)
 
         self.assertEqual(1, mock_calculate_normalization_factor.call_count)
-        actual_stacked_priorities = mock_calculate_normalization_factor.call_args.args[
-            0
-        ]
+        actual_stacked_priorities = mock_calculate_normalization_factor.call_args.args[0]
         self.assertEqual(
             (
                 num_direct_event_epochs,
@@ -1185,81 +1081,43 @@ class TestCodiceLoProcessor(unittest.TestCase):
             actual_stacked_priorities.shape,
         )
 
-        np.testing.assert_equal(
-            actual_stacked_priorities[0, 0], sw_priority_rates.p0_tcrs[0]
-        )
-        np.testing.assert_equal(
-            actual_stacked_priorities[0, 1], sw_priority_rates.p1_hplus[0]
-        )
+        np.testing.assert_equal(actual_stacked_priorities[0, 0], sw_priority_rates.p0_tcrs[0])
+        np.testing.assert_equal(actual_stacked_priorities[0, 1], sw_priority_rates.p1_hplus[0])
         np.testing.assert_equal(
             actual_stacked_priorities[0, 2], sw_priority_rates.p2_heplusplus[0]
         )
-        np.testing.assert_equal(
-            actual_stacked_priorities[0, 3], sw_priority_rates.p3_heavies[0]
-        )
-        np.testing.assert_equal(
-            actual_stacked_priorities[0, 4], sw_priority_rates.p4_dcrs[0]
-        )
-        np.testing.assert_equal(
-            actual_stacked_priorities[0, 5], nsw_priority_rates.p5_heavies[0]
-        )
+        np.testing.assert_equal(actual_stacked_priorities[0, 3], sw_priority_rates.p3_heavies[0])
+        np.testing.assert_equal(actual_stacked_priorities[0, 4], sw_priority_rates.p4_dcrs[0])
+        np.testing.assert_equal(actual_stacked_priorities[0, 5], nsw_priority_rates.p5_heavies[0])
         np.testing.assert_equal(
             actual_stacked_priorities[0, 6], nsw_priority_rates.p6_hplus_heplusplus[0]
         )
 
-        expected_sw_nan_block = np.full(
-            (5, num_energy_bins, priority_l1_spin_sectors), np.nan
-        )
-        np.testing.assert_equal(
-            actual_stacked_priorities[1, 0:5], expected_sw_nan_block
-        )
-        np.testing.assert_equal(
-            actual_stacked_priorities[1, 5], nsw_priority_rates.p5_heavies[1]
-        )
+        expected_sw_nan_block = np.full((5, num_energy_bins, priority_l1_spin_sectors), np.nan)
+        np.testing.assert_equal(actual_stacked_priorities[1, 0:5], expected_sw_nan_block)
+        np.testing.assert_equal(actual_stacked_priorities[1, 5], nsw_priority_rates.p5_heavies[1])
         np.testing.assert_equal(
             actual_stacked_priorities[1, 6], nsw_priority_rates.p6_hplus_heplusplus[1]
         )
 
-        np.testing.assert_equal(
-            actual_stacked_priorities[2, 0], sw_priority_rates.p0_tcrs[1]
-        )
-        np.testing.assert_equal(
-            actual_stacked_priorities[2, 1], sw_priority_rates.p1_hplus[1]
-        )
+        np.testing.assert_equal(actual_stacked_priorities[2, 0], sw_priority_rates.p0_tcrs[1])
+        np.testing.assert_equal(actual_stacked_priorities[2, 1], sw_priority_rates.p1_hplus[1])
         np.testing.assert_equal(
             actual_stacked_priorities[2, 2], sw_priority_rates.p2_heplusplus[1]
         )
-        np.testing.assert_equal(
-            actual_stacked_priorities[2, 3], sw_priority_rates.p3_heavies[1]
-        )
-        np.testing.assert_equal(
-            actual_stacked_priorities[2, 4], sw_priority_rates.p4_dcrs[1]
-        )
-        expected_nsw_nan_block = np.full(
-            (2, num_energy_bins, priority_l1_spin_sectors), np.nan
-        )
-        np.testing.assert_equal(
-            actual_stacked_priorities[2, 5:7], expected_nsw_nan_block
-        )
+        np.testing.assert_equal(actual_stacked_priorities[2, 3], sw_priority_rates.p3_heavies[1])
+        np.testing.assert_equal(actual_stacked_priorities[2, 4], sw_priority_rates.p4_dcrs[1])
+        expected_nsw_nan_block = np.full((2, num_energy_bins, priority_l1_spin_sectors), np.nan)
+        np.testing.assert_equal(actual_stacked_priorities[2, 5:7], expected_nsw_nan_block)
 
-        np.testing.assert_equal(
-            actual_stacked_priorities[3, 0], sw_priority_rates.p0_tcrs[2]
-        )
-        np.testing.assert_equal(
-            actual_stacked_priorities[3, 1], sw_priority_rates.p1_hplus[2]
-        )
+        np.testing.assert_equal(actual_stacked_priorities[3, 0], sw_priority_rates.p0_tcrs[2])
+        np.testing.assert_equal(actual_stacked_priorities[3, 1], sw_priority_rates.p1_hplus[2])
         np.testing.assert_equal(
             actual_stacked_priorities[3, 2], sw_priority_rates.p2_heplusplus[2]
         )
-        np.testing.assert_equal(
-            actual_stacked_priorities[3, 3], sw_priority_rates.p3_heavies[2]
-        )
-        np.testing.assert_equal(
-            actual_stacked_priorities[3, 4], sw_priority_rates.p4_dcrs[2]
-        )
-        np.testing.assert_equal(
-            actual_stacked_priorities[3, 5], nsw_priority_rates.p5_heavies[2]
-        )
+        np.testing.assert_equal(actual_stacked_priorities[3, 3], sw_priority_rates.p3_heavies[2])
+        np.testing.assert_equal(actual_stacked_priorities[3, 4], sw_priority_rates.p4_dcrs[2])
+        np.testing.assert_equal(actual_stacked_priorities[3, 5], nsw_priority_rates.p5_heavies[2])
         np.testing.assert_equal(
             actual_stacked_priorities[3, 6], nsw_priority_rates.p6_hplus_heplusplus[2]
         )
@@ -1279,9 +1137,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             actual_normalization_per_event[2, 5:7, :], np.zeros((2, event_buffer_size))
         )
 
-        sentinel_row = np.full(
-            event_buffer_size, sentinel_normalization_per_event_value
-        )
+        sentinel_row = np.full(event_buffer_size, sentinel_normalization_per_event_value)
         np.testing.assert_array_equal(
             actual_normalization_per_event[0],
             np.full(
@@ -1296,27 +1152,13 @@ class TestCodiceLoProcessor(unittest.TestCase):
                 sentinel_normalization_per_event_value,
             ),
         )
-        np.testing.assert_array_equal(
-            actual_normalization_per_event[1, 5], sentinel_row
-        )
-        np.testing.assert_array_equal(
-            actual_normalization_per_event[1, 6], sentinel_row
-        )
-        np.testing.assert_array_equal(
-            actual_normalization_per_event[2, 0], sentinel_row
-        )
-        np.testing.assert_array_equal(
-            actual_normalization_per_event[2, 1], sentinel_row
-        )
-        np.testing.assert_array_equal(
-            actual_normalization_per_event[2, 2], sentinel_row
-        )
-        np.testing.assert_array_equal(
-            actual_normalization_per_event[2, 3], sentinel_row
-        )
-        np.testing.assert_array_equal(
-            actual_normalization_per_event[2, 4], sentinel_row
-        )
+        np.testing.assert_array_equal(actual_normalization_per_event[1, 5], sentinel_row)
+        np.testing.assert_array_equal(actual_normalization_per_event[1, 6], sentinel_row)
+        np.testing.assert_array_equal(actual_normalization_per_event[2, 0], sentinel_row)
+        np.testing.assert_array_equal(actual_normalization_per_event[2, 1], sentinel_row)
+        np.testing.assert_array_equal(actual_normalization_per_event[2, 2], sentinel_row)
+        np.testing.assert_array_equal(actual_normalization_per_event[2, 3], sentinel_row)
+        np.testing.assert_array_equal(actual_normalization_per_event[2, 4], sentinel_row)
 
         np.testing.assert_array_equal(
             result.normalization, np.flip(expected_normalization, axis=2)
@@ -1374,9 +1216,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         sw_mask[0, 0, 0] = True
         sw_priority_rates = create_dataclass_mock(CodiceLoL1aSWPriorityRates)
         sw_priority_rates.epoch = sw_priority_epochs
-        sw_priority_rates.p0_tcrs = np.ma.array(
-            rng.random(sw_priority_counts_shape), mask=sw_mask
-        )
+        sw_priority_rates.p0_tcrs = np.ma.array(rng.random(sw_priority_counts_shape), mask=sw_mask)
         sw_priority_rates.p1_hplus = np.ma.array(
             rng.random(sw_priority_counts_shape), mask=sw_mask
         )
@@ -1386,12 +1226,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
         sw_priority_rates.p3_heavies = np.ma.array(
             rng.random(sw_priority_counts_shape), mask=sw_mask
         )
-        sw_priority_rates.p4_dcrs = np.ma.array(
-            rng.random(sw_priority_counts_shape), mask=sw_mask
-        )
-        sw_priority_rates.half_spin_per_esa_step = rng.random(
-            (num_sw_epochs, num_energy_bins)
-        )
+        sw_priority_rates.p4_dcrs = np.ma.array(rng.random(sw_priority_counts_shape), mask=sw_mask)
+        sw_priority_rates.half_spin_per_esa_step = rng.random((num_sw_epochs, num_energy_bins))
         sw_priority_rates.rgfo_spin_sector = rng.random(num_sw_epochs)
         sw_priority_rates.rgfo_esa_step = rng.random(num_sw_epochs)
         sw_priority_rates.nso_spin_sector = rng.random(num_sw_epochs)
@@ -1474,9 +1310,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         input_metadata = InputMetadata(
             "codice", "l3a", Mock(spec=datetime), Mock(spec=datetime), "v02"
         )
-        processor = CodiceLoProcessor(
-            dependencies=input_collection, input_metadata=input_metadata
-        )
+        processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
         result = processor.process_l3a_direct_event_data_product(dependencies)
         self.assertIsInstance(result, CodiceLoL3aDirectEventDataProduct)
         self.assertEqual(
@@ -1489,9 +1323,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         )
 
         self.assertEqual(1, mock_calculate_normalization_factor.call_count)
-        actual_stacked_priorities = mock_calculate_normalization_factor.call_args.args[
-            0
-        ]
+        actual_stacked_priorities = mock_calculate_normalization_factor.call_args.args[0]
         self.assertEqual(
             (
                 num_direct_event_epochs,
@@ -1502,9 +1334,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             actual_stacked_priorities.shape,
         )
 
-        np.testing.assert_equal(
-            actual_stacked_priorities[0, :, 0, 0], np.full(7, np.nan)
-        )
+        np.testing.assert_equal(actual_stacked_priorities[0, :, 0, 0], np.full(7, np.nan))
 
     @patch(f"{MODULE}.SpinAngleLookup")
     @patch(f"{MODULE}.lookup_normalization_per_event", autospec=True)
@@ -1562,9 +1392,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         sw_priority_rates.p2_heplusplus = rng.random(sw_priority_counts_shape)
         sw_priority_rates.p3_heavies = rng.random(sw_priority_counts_shape)
         sw_priority_rates.p4_dcrs = rng.random(sw_priority_counts_shape)
-        sw_priority_rates.half_spin_per_esa_step = rng.random(
-            (num_sw_epochs, num_energy_bins)
-        )
+        sw_priority_rates.half_spin_per_esa_step = rng.random((num_sw_epochs, num_energy_bins))
         sw_priority_rates.rgfo_spin_sector = rng.random(num_sw_epochs)
         sw_priority_rates.rgfo_esa_step = rng.random(num_sw_epochs)
         sw_priority_rates.nso_spin_sector = rng.random(num_sw_epochs)
@@ -1641,9 +1469,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         input_metadata = InputMetadata(
             "codice", "l3a", Mock(spec=datetime), Mock(spec=datetime), "v02"
         )
-        processor = CodiceLoProcessor(
-            dependencies=input_collection, input_metadata=input_metadata
-        )
+        processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
         result = processor.process_l3a_direct_event_data_product(dependencies)
 
         variables_to_compare = [
@@ -1744,21 +1570,15 @@ class TestCodiceLoProcessor(unittest.TestCase):
         ]
 
         counts_3d_distribution = mock_rebin.return_value
-        counts_3d_distribution.__getitem__.return_value = (
-            sentinel.counts_for_species_by_priority
-        )
+        counts_3d_distribution.__getitem__.return_value = sentinel.counts_for_species_by_priority
 
-        processor = CodiceLoProcessor(
-            dependencies=Mock(), input_metadata=input_metadata
-        )
-        l3b_3d_distribution_data_product = (
-            processor.process_l3b_3d_distribution_product(dependencies)
+        processor = CodiceLoProcessor(dependencies=Mock(), input_metadata=input_metadata)
+        l3b_3d_distribution_data_product = processor.process_l3b_3d_distribution_product(
+            dependencies
         )
 
         mock_elevation_angle_lookup_class.assert_called_once()
-        counts_3d_distribution.__getitem__.assert_called_once_with(
-            sentinel.species_index
-        )
+        counts_3d_distribution.__getitem__.assert_called_once_with(sentinel.species_index)
         mock_rebin.assert_called_once_with(
             direct_event_data=mock_l3a_direct_event_data,
             mass_species_bin_lookup=dependencies.mass_species_bin_lookup,
@@ -1825,12 +1645,8 @@ class TestCodiceLoProcessor(unittest.TestCase):
         self.assertIsInstance(
             l3b_3d_distribution_data_product, CodiceLoL3b3dDistributionDataProduct
         )
-        self.assertEqual(
-            processor.input_metadata, l3b_3d_distribution_data_product.input_metadata
-        )
-        self.assertEqual(
-            mock_l3a_direct_event_data.epoch, l3b_3d_distribution_data_product.epoch
-        )
+        self.assertEqual(processor.input_metadata, l3b_3d_distribution_data_product.input_metadata)
+        self.assertEqual(mock_l3a_direct_event_data.epoch, l3b_3d_distribution_data_product.epoch)
         self.assertEqual(
             mock_l3a_direct_event_data.epoch_delta,
             l3b_3d_distribution_data_product.epoch_delta,
@@ -1924,9 +1740,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         )
         mock_spiceypy.ktotal.return_value = 0
 
-        processor = CodiceLoProcessor(
-            dependencies=input_collection, input_metadata=input_metadata
-        )
+        processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
         product = processor.process()
 
         mock_fetch_dependencies.assert_called_once_with(processor.dependencies, species)
@@ -1977,14 +1791,9 @@ class TestCodiceLoProcessor(unittest.TestCase):
             ),
         )
 
-        processor = CodiceLoProcessor(
-            dependencies=input_collection, input_metadata=input_metadata
-        )
+        processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
 
-        try:
-            processor.process_l3a_direct_event_data_product(dependencies)
-        except Exception as e:
-            self.fail(e)
+        processor.process_l3a_direct_event_data_product(dependencies)
 
 
 if __name__ == "__main__":

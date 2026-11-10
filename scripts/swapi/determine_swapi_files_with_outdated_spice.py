@@ -17,7 +17,7 @@ for descriptor in descriptors:
         file_path = imap_data_access.download(result["file_path"])
 
         with CDF(str(file_path)) as cdf:
-            used_predict = any(["pred" in entry for entry in cdf.attrs["Parents"]])
+            used_predict = any("pred" in entry for entry in cdf.attrs["Parents"])
 
             if used_predict:
                 dates_that_used_predict.append(result["start_date"])

@@ -5,16 +5,16 @@ from imap_data_access import download
 from imap_data_access.processing_input import ProcessingInputCollection, ScienceInput
 
 from imap_l3_processing.codice.l3.lo.direct_events.science.energy_lookup import (
-    EnergyLookup,
     ESA_TO_ENERGY_PER_CHARGE_LOOKUP_DESCRIPTOR,
+    EnergyLookup,
 )
 from imap_l3_processing.codice.l3.lo.direct_events.science.mass_coefficient_lookup import (
     MassCoefficientLookup,
 )
 from imap_l3_processing.codice.l3.lo.models import (
-    CodiceLoL2DirectEventData,
-    CodiceLoL1aSWPriorityRates,
     CodiceLoL1aNSWPriorityRates,
+    CodiceLoL1aSWPriorityRates,
+    CodiceLoL2DirectEventData,
 )
 
 SW_PRIORITY_DESCRIPTOR = "lo-sw-priority"
@@ -38,17 +38,17 @@ class CodiceLoL3aDirectEventsDependencies:
         direct_events_paths = []
         for science_input in dependencies.get_science_inputs():
             match science_input:
-                case ScienceInput(
-                    data_type="l1a", source="codice", descriptor=descriptor
-                ) if descriptor == SW_PRIORITY_DESCRIPTOR:
+                case ScienceInput(data_type="l1a", source="codice", descriptor=descriptor) if (
+                    descriptor == SW_PRIORITY_DESCRIPTOR
+                ):
                     sw_priority_rates_paths.extend(science_input.filename_list)
-                case ScienceInput(
-                    data_type="l1a", source="codice", descriptor=descriptor
-                ) if descriptor == NSW_PRIORITY_DESCRIPTOR:
+                case ScienceInput(data_type="l1a", source="codice", descriptor=descriptor) if (
+                    descriptor == NSW_PRIORITY_DESCRIPTOR
+                ):
                     nsw_priority_rates_paths.extend(science_input.filename_list)
-                case ScienceInput(
-                    data_type="l2", source="codice", descriptor=descriptor
-                ) if descriptor == DIRECT_EVENTS_DESCRIPTOR:
+                case ScienceInput(data_type="l2", source="codice", descriptor=descriptor) if (
+                    descriptor == DIRECT_EVENTS_DESCRIPTOR
+                ):
                     direct_events_paths.extend(science_input.filename_list)
 
         assert len(sw_priority_rates_paths) == 1
@@ -69,12 +69,8 @@ class CodiceLoL3aDirectEventsDependencies:
         nsw_priority_rates_downloaded_path = download(nsw_priority_rates_path)
         direct_events_downloaded_path = download(direct_events_path)
 
-        mass_coefficients_file_downloaded_path = download(
-            mass_coefficients_file_path.name
-        )
-        energy_per_charge_lookup_downloaded_path = download(
-            energy_per_charge_file_path.name
-        )
+        mass_coefficients_file_downloaded_path = download(mass_coefficients_file_path.name)
+        energy_per_charge_lookup_downloaded_path = download(energy_per_charge_file_path.name)
 
         return cls.from_file_paths(
             sw_priority_rates_downloaded_path,
@@ -96,15 +92,9 @@ class CodiceLoL3aDirectEventsDependencies:
         mass_coefficients_file_path = MassCoefficientLookup.read_from_csv(
             mass_coefficients_file_path
         )
-        sw_priority_rates = CodiceLoL1aSWPriorityRates.read_from_cdf(
-            sw_priority_rates_cdf
-        )
-        nsw_priority_rates = CodiceLoL1aNSWPriorityRates.read_from_cdf(
-            nsw_priority_rates_cdf
-        )
-        codice_l2_direct_events = CodiceLoL2DirectEventData.read_from_cdf(
-            direct_event_path
-        )
+        sw_priority_rates = CodiceLoL1aSWPriorityRates.read_from_cdf(sw_priority_rates_cdf)
+        nsw_priority_rates = CodiceLoL1aNSWPriorityRates.read_from_cdf(nsw_priority_rates_cdf)
+        codice_l2_direct_events = CodiceLoL2DirectEventData.read_from_cdf(direct_event_path)
         energy_lookup = EnergyLookup.read_from_csv(esa_to_energy_per_charge_file_path)
 
         return cls(

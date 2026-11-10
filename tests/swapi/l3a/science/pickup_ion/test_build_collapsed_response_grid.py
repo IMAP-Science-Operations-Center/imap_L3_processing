@@ -34,9 +34,7 @@ _BULK_ELEVATION = -10.0
 class BuildCollapsedResponseGridTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        swapi_response = load_swapi_response(
-            warm_cache_voltages=np.array([_ESA_VOLTAGE])
-        )
+        swapi_response = load_swapi_response(warm_cache_voltages=np.array([_ESA_VOLTAGE]))
         cls.response_grid = swapi_response.get_response_grid(
             NOMINAL_TEST_EPOCH_TT2000, _ESA_VOLTAGE, _SPECIES
         )
@@ -45,9 +43,7 @@ class BuildCollapsedResponseGridTest(unittest.TestCase):
         cls.reference_h = reference["h_truth_km3_per_s"].to_numpy()
 
     def test_grid_matches_precomputed_shell_integral_reference(self):
-        speed_in_sw_frame = build_default_v_prime_grid_kms(
-            self.response_grid, _BULK_SPEED
-        )
+        speed_in_sw_frame = build_default_v_prime_grid_kms(self.response_grid, _BULK_SPEED)
         collapsed = build_collapsed_response_grid(
             self.response_grid,
             bulk_speed=_BULK_SPEED,
@@ -69,9 +65,7 @@ class BuildCollapsedResponseGridTest(unittest.TestCase):
             msg="production v' axis upper endpoint must match reference",
         )
 
-        h_truth = np.interp(
-            collapsed.speed_in_sw_frame, self.reference_v_prime, self.reference_h
-        )
+        h_truth = np.interp(collapsed.speed_in_sw_frame, self.reference_v_prime, self.reference_h)
 
         # Compare only where the reference is meaningfully above the noise
         # floor. Near v' extremes both implementations differ in their
@@ -83,9 +77,7 @@ class BuildCollapsedResponseGridTest(unittest.TestCase):
         trusted = h_truth > 0.05 * peak
         self.assertGreater(trusted.sum(), 16, "trusted region too small")
 
-        rel_err = (
-            np.abs(collapsed.values[trusted] - h_truth[trusted]) / h_truth[trusted]
-        )
+        rel_err = np.abs(collapsed.values[trusted] - h_truth[trusted]) / h_truth[trusted]
         worst = int(np.argmax(rel_err))
         worst_index = int(np.flatnonzero(trusted)[worst])
         self.assertLess(
@@ -123,9 +115,7 @@ class BuildCollapsedResponseGridTest(unittest.TestCase):
         # dblquad truth — while sr_idx 21 is still inside the passband-filter
         # cutoff (passband > 1e-3) so the cos guard genuinely activates.
         esa_voltage = 10000.0
-        swapi_response = load_swapi_response(
-            warm_cache_voltages=np.array([esa_voltage])
-        )
+        swapi_response = load_swapi_response(warm_cache_voltages=np.array([esa_voltage]))
         response_grid = swapi_response.get_response_grid(
             NOMINAL_TEST_EPOCH_TT2000, esa_voltage, _SPECIES
         )
@@ -139,9 +129,7 @@ class BuildCollapsedResponseGridTest(unittest.TestCase):
         cos_delta_azimuth_target = 1.0 - 5e-7
         cos_angle_target = cos_delta_azimuth_target * cos_elevation
         v_singular_kms = float(
-            np.sqrt(
-                speed**2 + bulk_speed**2 - 2 * cos_angle_target * speed * bulk_speed
-            )
+            np.sqrt(speed**2 + bulk_speed**2 - 2 * cos_angle_target * speed * bulk_speed)
         )
 
         collapsed = build_collapsed_response_grid(

@@ -1,7 +1,7 @@
 import unittest
-from unittest.mock import patch, call
+from unittest.mock import call, patch
 
-from imap_data_access import ScienceInput, ProcessingInputCollection
+from imap_data_access import ProcessingInputCollection, ScienceInput
 
 from imap_l3_processing.ultra.ultra_l3_to_rectangular_dependencies import (
     UltraL3ToRectangularDependencies,
@@ -22,10 +22,8 @@ class TestUltraL3ToRectangularDependencies(unittest.TestCase):
             "map_file",
         ]
 
-        ultra_l3_to_rectangular_dependencies = (
-            UltraL3ToRectangularDependencies.fetch_dependencies(
-                processing_input_collection
-            )
+        ultra_l3_to_rectangular_dependencies = UltraL3ToRectangularDependencies.fetch_dependencies(
+            processing_input_collection
         )
 
         mock_download.assert_has_calls(

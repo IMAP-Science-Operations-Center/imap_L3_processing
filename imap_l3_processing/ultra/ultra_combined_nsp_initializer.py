@@ -7,9 +7,9 @@ from imap_data_access.file_validation import Version
 
 from imap_l3_processing.maps.map_descriptors import (
     Sensor,
+    get_duration_from_map_descriptor,
     map_descriptor_parts_to_string,
     parse_map_descriptor,
-    get_duration_from_map_descriptor,
 )
 from imap_l3_processing.maps.map_initializer import MapInitializer, PossibleMapToProduce
 from imap_l3_processing.models import InputMetadata, VersionMap
@@ -31,13 +31,9 @@ ULTRA_COMBINED_NSP_DESCRIPTORS = [
 
 class UltraCombinedNSPInitializer(MapInitializer):
     def __init__(self):
-        l2_ultra_maps_query_results = imap_data_access.query(
-            instrument="ultra", data_level="l2"
-        )
+        l2_ultra_maps_query_results = imap_data_access.query(instrument="ultra", data_level="l2")
         self.l2_maps_by_descriptor_and_start = (
-            self.get_latest_version_by_descriptor_and_start_date(
-                l2_ultra_maps_query_results
-            )
+            self.get_latest_version_by_descriptor_and_start_date(l2_ultra_maps_query_results)
         )
         energy_bin_group_sizes_files = imap_data_access.query(
             instrument="ultra",
@@ -57,9 +53,7 @@ class UltraCombinedNSPInitializer(MapInitializer):
             kernel_types=ULTRA_SP_SPICE_KERNELS,
         )
 
-    def get_maps_that_can_be_produced(
-        self, descriptor: str
-    ) -> list[PossibleMapToProduce]:
+    def get_maps_that_can_be_produced(self, descriptor: str) -> list[PossibleMapToProduce]:
         descriptor_parts = parse_map_descriptor(descriptor)
         if descriptor_parts is None:
             raise ValueError(f"Invalid map descriptor: {descriptor}")
@@ -73,47 +67,35 @@ class UltraCombinedNSPInitializer(MapInitializer):
         ]
 
         first_input_descriptor = input_map_descriptors[0]
-        possible_start_dates = self.l2_maps_by_descriptor_and_start[
-            first_input_descriptor
-        ].keys()
+        possible_start_dates = self.l2_maps_by_descriptor_and_start[first_input_descriptor].keys()
 
         possible_maps_to_produce = []
         for str_start_date in possible_start_dates:
             input_map_filenames = []
             for input_descriptor in input_map_descriptors:
-                if (
-                    str_start_date
-                    in self.l2_maps_by_descriptor_and_start[input_descriptor]
-                ):
+                if str_start_date in self.l2_maps_by_descriptor_and_start[input_descriptor]:
                     input_map_filenames.append(
-                        self.l2_maps_by_descriptor_and_start[input_descriptor][
-                            str_start_date
-                        ]
+                        self.l2_maps_by_descriptor_and_start[input_descriptor][str_start_date]
                     )
 
             if len(input_map_filenames) != len(input_map_descriptors):
                 continue
 
             pset_filenames = [
-                l1c
-                for l2 in input_map_filenames
-                for l1c in self.get_l1c_parents_from_map(l2)
+                l1c for l2 in input_map_filenames for l1c in self.get_l1c_parents_from_map(l2)
             ]
 
             start_date = datetime.strptime(str_start_date, "%Y%m%d")
             possible_maps_to_produce.append(
                 PossibleMapToProduce(
                     input_files=set(
-                        pset_filenames
-                        + input_map_filenames
-                        + self.ancillary_dependencies
+                        pset_filenames + input_map_filenames + self.ancillary_dependencies
                     ),
                     input_metadata=InputMetadata(
                         instrument="ultra",
                         data_level="l3",
                         start_date=start_date,
-                        end_date=start_date
-                        + get_duration_from_map_descriptor(descriptor_parts),
+                        end_date=start_date + get_duration_from_map_descriptor(descriptor_parts),
                         version=VersionMap({}, Version(None, 1)),
                         descriptor=descriptor,
                     ),

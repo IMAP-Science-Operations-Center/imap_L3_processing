@@ -1,6 +1,5 @@
 from datetime import timedelta
 from pathlib import Path
-from typing import Union
 
 from spacepy.pycdf import CDF
 
@@ -8,7 +7,7 @@ from imap_l3_processing.cdf.cdf_utils import read_numeric_variable
 from imap_l3_processing.hit.l3.models import HitL2Data
 
 
-def read_l2_hit_data(cdf_file_path: Union[str, Path]) -> HitL2Data:
+def read_l2_hit_data(cdf_file_path: str | Path) -> HitL2Data:
     with CDF(str(cdf_file_path)) as cdf:
         return HitL2Data(
             epoch=cdf["epoch"][...],

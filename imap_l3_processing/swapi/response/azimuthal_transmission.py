@@ -5,7 +5,6 @@ import numba
 import numpy as np
 from numpy import ndarray
 
-
 SG_PLATEAU_AZIMUTH_MAX_DEG = 9.0
 SG_PLATEAU_TRANSMISSION = 1 / 1000
 
@@ -33,7 +32,7 @@ def interpolate_azimuthal_transmission(
         return SG_PLATEAU_TRANSMISSION
 
     i_float = abs_azimuth / grid.spacing
-    i_lower = int(math.floor(i_float))
+    i_lower = math.floor(i_float)
     i_upper = i_lower + 1
 
     n = len(grid.values)
