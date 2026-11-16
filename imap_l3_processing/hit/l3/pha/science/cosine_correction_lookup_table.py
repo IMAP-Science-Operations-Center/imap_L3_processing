@@ -80,7 +80,9 @@ class CosineCorrectionLookupTable:
             (range_4B_file_path, self._range4B_corrections),
         ]:
             with open(str(path)) as file:
-                detected_range_reader = csv.reader(file, delimiter=",")
+                detected_range_reader = csv.reader(
+                    (r for r in file if not r.startswith("#")), delimiter=","
+                )
 
                 for row_num, row in enumerate(detected_range_reader):
                     for col_num, value in enumerate(row):
