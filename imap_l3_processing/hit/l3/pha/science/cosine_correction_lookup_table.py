@@ -102,8 +102,8 @@ class CosineCorrectionLookupTable:
             DetectedRange(DetectorRange.R2, DetectorSide.A): self._range2A_corrections,
             DetectedRange(DetectorRange.R3, DetectorSide.A): self._range3A_corrections,
             DetectedRange(DetectorRange.R4, DetectorSide.A): self._range4A_corrections,
-            DetectedRange(DetectorRange.R2, DetectorSide.B): self._range2A_corrections,
-            DetectedRange(DetectorRange.R3, DetectorSide.B): self._range3A_corrections,
-            DetectedRange(DetectorRange.R4, DetectorSide.B): self._range4A_corrections,
+            DetectedRange(DetectorRange.R2, DetectorSide.B): self._range2B_corrections,
+            DetectedRange(DetectorRange.R3, DetectorSide.B): self._range3B_corrections,
+            DetectedRange(DetectorRange.R4, DetectorSide.B): self._range4B_corrections,
         }
         return corrections_by_range[detected_range][(l1_detector.segment, l2_detector.segment)]
