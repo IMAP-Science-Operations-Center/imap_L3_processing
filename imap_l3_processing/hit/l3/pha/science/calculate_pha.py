@@ -18,6 +18,9 @@ from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import (
     HitEventTypeLookup,
 )
 from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
+from imap_l3_processing.hit.l3.pha.science.window_correction_lookup_table import (
+    WindowCorrectionLookupTable,
+)
 
 
 @dataclass
@@ -167,24 +170,27 @@ def process_pha_event(
     event: RawPHAEvent,
     cosine_table: CosineCorrectionLookupTable,
     gain_table: GainLookupTable,
+    window_correction_table: WindowCorrectionLookupTable,
     range_fit_lookup: RangeFitLookup,
     rule_lookup: HitEventTypeLookup,
 ) -> EventOutput:
     event_analysis = analyze_event(event, rule_lookup)
+    energies = [calculate_mev(word, gain_table) for word in event.pha_words]
     if event_analysis:
         correction = cosine_table.get_cosine_correction(
             event_analysis.range, event_analysis.l1_detector, event_analysis.l2_detector
         )
 
-        def calculate_corrected_energy(word):
-            return correction * calculate_mev(word, gain_table)
-
-        energies = [calculate_corrected_energy(word) for word in event.pha_words]
-        total_energy = sum(
-            calculate_corrected_energy(word) for word in event_analysis.words_with_highest_energy
-        )
-        e_delta = calculate_corrected_energy(event_analysis.e_delta_word)
-        e_prime = calculate_corrected_energy(event_analysis.e_prime_word)
+        window_corrected_energies = []
+        for word in event_analysis.words_with_highest_energy:
+            window_correction_factor = window_correction_table.get_correction_factor(
+                event_analysis.range.range, word.detector.address
+            )
+            deposited_energy = calculate_mev(word, gain_table)
+            window_corrected_energies.append(window_correction_factor * deposited_energy)
+        total_energy = sum(window_corrected_energies)
+        e_delta = correction * calculate_mev(event_analysis.e_delta_word, gain_table)
+        e_prime = correction * calculate_mev(event_analysis.e_prime_word, gain_table)
         charge = compute_charge(event_analysis.range, e_delta, e_prime, range_fit_lookup)
 
         return EventOutput(
@@ -197,7 +203,6 @@ def process_pha_event(
             e_prime=e_prime,
         )
     else:
-        energies = [calculate_mev(word, gain_table) for word in event.pha_words]
         return EventOutput(
             original_event=event,
             charge=None,

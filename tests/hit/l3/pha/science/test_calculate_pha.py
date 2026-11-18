@@ -21,8 +21,13 @@ from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import
 from imap_l3_processing.hit.l3.pha.science.gain_lookup_table import DetectorGain, Gain
 from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import Rule
 from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
+from imap_l3_processing.hit.l3.pha.science.window_correction_lookup_table import (
+    WindowCorrectionLookupTable,
+)
 from tests.hit.l3.hit_test_builders import create_raw_pha_event
 from tests.test_helpers import get_test_data_path
+
+MODULE = "imap_l3_processing.hit.l3.pha.science.calculate_pha"
 
 
 class TestCalculatePHA(unittest.TestCase):
@@ -407,8 +412,8 @@ class TestCalculatePHA(unittest.TestCase):
 
         self.assertIsNone(event_analysis)
 
-    @patch("imap_l3_processing.hit.l3.pha.science.calculate_pha.analyze_event")
-    @patch("imap_l3_processing.hit.l3.pha.science.calculate_pha.calculate_mev")
+    @patch(f"{MODULE}.analyze_event")
+    @patch(f"{MODULE}.calculate_mev")
     def test_process_event_for_event_with_invalid_detector_sequences(
         self, mock_calculate_mev, mock_analyze_event
     ):
@@ -437,7 +442,7 @@ class TestCalculatePHA(unittest.TestCase):
         mock_calculate_mev.side_effect = [word1_mev, word2_mev]
         mock_analyze_event.return_value = None
 
-        event_output = process_pha_event(raw_pha_event, Mock(), Mock(), Mock(), Mock())
+        event_output = process_pha_event(raw_pha_event, Mock(), Mock(), Mock(), Mock(), Mock())
 
         expected_event_output = EventOutput(
             original_event=raw_pha_event,
@@ -450,106 +455,115 @@ class TestCalculatePHA(unittest.TestCase):
         )
         self.assertEqual(expected_event_output, event_output)
 
-    @patch("imap_l3_processing.hit.l3.pha.science.calculate_pha.compute_charge")
-    @patch(
-        "imap_l3_processing.hit.l3.pha.science.calculate_pha.analyze_event",
-        spec_set=True,
-    )
-    def test_process_pha_event(self, mock_analyze_event, mock_compute_charge):
-        pha_word1_adc_value = 53
-        pha_word2_adc_value = 92
-        pha_word3_adc_value = 48
+    @patch(f"{MODULE}.compute_charge")
+    @patch(f"{MODULE}.analyze_event", spec_set=True)
+    def test_process_pha_event_sums_window_corrected_energies_and_cosine_corrects_only_delta_e_and_e_prime(
+        self, mock_analyze_event, mock_compute_charge
+    ):
+        word_19_adc = 53
+        word_8_adc = 92
+        word_7_adc = 48
 
-        l1_word = PHAWord(
-            detector=Detector.from_address(12),
-            adc_value=pha_word1_adc_value,
+        word_19 = PHAWord(
+            detector=Detector.from_address(19),
+            adc_value=word_19_adc,
             adc_overflow=False,
             is_low_gain=True,
             is_last_pha=False,
         )
-        l2_high_energy_word = PHAWord(
-            detector=Detector.from_address(28),
-            adc_value=pha_word2_adc_value,
+        word_8 = PHAWord(
+            detector=Detector.from_address(8),
+            adc_value=word_8_adc,
             adc_overflow=False,
             is_low_gain=False,
             is_last_pha=False,
         )
-        l2_low_energy_word = PHAWord(
-            detector=Detector.from_address(29),
-            adc_value=pha_word3_adc_value,
+        word_7 = PHAWord(
+            detector=Detector.from_address(7),
+            adc_value=word_7_adc,
             adc_overflow=False,
             is_low_gain=False,
             is_last_pha=False,
         )
 
-        raw_pha_event = create_raw_pha_event(
-            pha_words=[l1_word, l2_high_energy_word, l2_low_energy_word]
-        )
+        raw_pha_event = create_raw_pha_event(pha_words=[word_19, word_8, word_7])
 
-        word1_gain = Gain(a=10.76, b=14.3)
-        word2_gain = Gain(a=25.89, b=11.2)
-        word3_gain = Gain(a=31.3, b=5.9)
-
-        mock_analyze_event.return_value = EventAnalysis(
-            range=sentinel.detected_range,
-            l1_detector=sentinel.l1_detector,
-            l2_detector=sentinel.l2_detector,
-            e_delta_word=l1_word,
-            e_prime_word=l2_high_energy_word,
-            words_with_highest_energy=[l1_word, l2_high_energy_word],
-        )
-
+        gain_19 = Gain(a=10.76, b=14.3)
+        gain_8 = Gain(a=25.89, b=11.2)
+        gain_7 = Gain(a=31.3, b=5.9)
         gain_lookup_table = {
-            DetectorGain.HIGH: {28: word2_gain, 29: word3_gain},
-            DetectorGain.LOW: {12: word1_gain},
+            DetectorGain.HIGH: {8: gain_8, 7: gain_7},
+            DetectorGain.LOW: {19: gain_19},
         }
 
-        cosine_correction = 12.2
+        range_2_wincorr = np.full(64, 256)
+        range_2_wincorr[19] = 300
+        range_2_wincorr[8] = 270
+        range_3_and_4_wincorr = np.full(64, 256)
+        range_3_and_4_wincorr[19] = 500
+        range_3_and_4_wincorr[8] = 400
+        window_correction_table = WindowCorrectionLookupTable(
+            range_2_wincorr, range_3_and_4_wincorr
+        )
 
+        cosine_k = 0.93
         mock_cosine_correction_table = Mock()
-        mock_cosine_correction_table.get_cosine_correction.return_value = cosine_correction
+        mock_cosine_correction_table.get_cosine_correction.return_value = cosine_k
 
-        event_output = process_pha_event(
-            raw_pha_event,
-            mock_cosine_correction_table,
-            gain_lookup_table,
-            sentinel.range_fit_lookup,
-            sentinel.rule_lookup,
-        )
+        mev_19 = word_19_adc * gain_19.a + gain_19.b
+        mev_8 = word_8_adc * gain_8.a + gain_8.b
+        mev_7 = word_7_adc * gain_7.a + gain_7.b
 
-        mock_analyze_event.assert_called_once_with(raw_pha_event, sentinel.rule_lookup)
+        cases = [
+            (DetectedRange(DetectorRange.R2, DetectorSide.A), range_2_wincorr),
+            (DetectedRange(DetectorRange.R3, DetectorSide.A), range_3_and_4_wincorr),
+            (DetectedRange(DetectorRange.R4, DetectorSide.B), range_3_and_4_wincorr),
+        ]
+        for detected_range, wincorr_row in cases:
+            with self.subTest(detected_range=detected_range):
+                mock_analyze_event.reset_mock()
+                mock_compute_charge.reset_mock()
+                mock_cosine_correction_table.reset_mock(return_value=True)
+                mock_cosine_correction_table.get_cosine_correction.return_value = cosine_k
+                mock_analyze_event.return_value = EventAnalysis(
+                    range=detected_range,
+                    l1_detector=word_19.detector,
+                    l2_detector=word_8.detector,
+                    e_delta_word=word_19,
+                    e_prime_word=word_8,
+                    words_with_highest_energy=[word_19, word_8],
+                )
 
-        mock_cosine_correction_table.get_cosine_correction.assert_called_once_with(
-            sentinel.detected_range, sentinel.l1_detector, sentinel.l2_detector
-        )
+                event_output = process_pha_event(
+                    raw_pha_event,
+                    mock_cosine_correction_table,
+                    gain_lookup_table,
+                    window_correction_table,
+                    sentinel.range_fit_lookup,
+                    sentinel.rule_lookup,
+                )
 
-        self.assertIsInstance(event_output, EventOutput)
+                mock_analyze_event.assert_called_once_with(raw_pha_event, sentinel.rule_lookup)
+                mock_cosine_correction_table.get_cosine_correction.assert_called_once_with(
+                    detected_range, word_19.detector, word_8.detector
+                )
 
-        expected_l1_energy = cosine_correction * (
-            word1_gain.a * pha_word1_adc_value + word1_gain.b
-        )
-        expected_l2_higher_energy = cosine_correction * (
-            word2_gain.a * pha_word2_adc_value + word2_gain.b
-        )
-        expected_energy3 = cosine_correction * (word3_gain.a * pha_word3_adc_value + word3_gain.b)
-        self.assertEqual(
-            [expected_l1_energy, expected_l2_higher_energy, expected_energy3],
-            event_output.energies,
-        )
-
-        self.assertEqual(expected_l1_energy + expected_l2_higher_energy, event_output.total_energy)
-        self.assertEqual(raw_pha_event, event_output.original_event)
-
-        mock_compute_charge.assert_called_once_with(
-            sentinel.detected_range,
-            expected_l1_energy,
-            expected_l2_higher_energy,
-            sentinel.range_fit_lookup,
-        )
-        self.assertEqual(mock_compute_charge.return_value, event_output.charge)
-        self.assertEqual(sentinel.detected_range, event_output.detected_range)
-        self.assertEqual(expected_l1_energy, event_output.e_delta)
-        self.assertEqual(expected_l2_higher_energy, event_output.e_prime)
+                self.assertEqual(raw_pha_event, event_output.original_event)
+                self.assertEqual(detected_range, event_output.detected_range)
+                self.assertEqual(mock_compute_charge.return_value, event_output.charge)
+                np.testing.assert_allclose(event_output.energies, [mev_19, mev_8, mev_7])
+                np.testing.assert_allclose(
+                    event_output.total_energy,
+                    wincorr_row[19] / 256 * mev_19 + wincorr_row[8] / 256 * mev_8,
+                )
+                np.testing.assert_allclose(event_output.e_delta, cosine_k * mev_19)
+                np.testing.assert_allclose(event_output.e_prime, cosine_k * mev_8)
+                mock_compute_charge.assert_called_once_with(
+                    detected_range,
+                    cosine_k * mev_19,
+                    cosine_k * mev_8,
+                    sentinel.range_fit_lookup,
+                )
 
     def test_compute_charge(self):
         charges = [3, 4, 5, 6]
