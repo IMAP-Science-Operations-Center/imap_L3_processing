@@ -77,6 +77,9 @@ from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import (
     HitEventTypeLookup,
 )
 from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
+from imap_l3_processing.hit.l3.pha.science.window_correction_lookup_table import (
+    WindowCorrectionLookupTable,
+)
 from imap_l3_processing.hit.l3.utils import read_l2_hit_data
 from imap_l3_processing.lo.l3.lo_l3_spectral_fit_dependencies import (
     LoL3SpectralFitDependencies,
@@ -530,31 +533,34 @@ def create_hit_sectored_cdf(dependencies: HITL3SectoredDependencies) -> Path:
     return cdf_path
 
 
-def create_hit_direct_event_cdf():
+def create_hit_direct_event_cdf() -> Path:
     cosine_table = CosineCorrectionLookupTable(
-        get_test_data_path("hit/pha_events/imap_hit_range-2A-cosine-lookup_20250203_v000.csv"),
-        get_test_data_path("hit/pha_events/imap_hit_range-2B-cosine-lookup_20250203_v000.csv"),
-        get_test_data_path("hit/pha_events/imap_hit_range-3A-cosine-lookup_20250203_v000.csv"),
-        get_test_data_path("hit/pha_events/imap_hit_range-3B-cosine-lookup_20250203_v000.csv"),
-        get_test_data_path("hit/pha_events/imap_hit_range-4A-cosine-lookup_20250203_v000.csv"),
-        get_test_data_path("hit/pha_events/imap_hit_range-4B-cosine-lookup_20250203_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-2A-cosine-lookup_20250203_v001.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-3A-cosine-lookup_20250203_v001.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-4A-cosine-lookup_20250203_v001.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-2B-cosine-lookup_20250203_v001.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-3B-cosine-lookup_20250203_v001.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-4B-cosine-lookup_20250203_v001.csv"),
     )
     gain_table = GainLookupTable.from_file(
         get_test_data_path("hit/pha_events/imap_hit_hi-gain-lookup_20250203_v000.csv"),
-        get_test_data_path("hit/pha_events/imap_hit_lo-gain-lookup_20250203_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_lo-gain-lookup_20260514_v001.csv"),
     )
 
     range_fit_lookup = RangeFitLookup.from_files(
-        get_test_data_path("hit/pha_events/imap_hit_range-2A-charge-fit-lookup_20250319_v000.csv"),
-        get_test_data_path("hit/pha_events/imap_hit_range-3A-charge-fit-lookup_20250319_v000.csv"),
-        get_test_data_path("hit/pha_events/imap_hit_range-4A-charge-fit-lookup_20250319_v000.csv"),
-        get_test_data_path("hit/pha_events/imap_hit_range-2B-charge-fit-lookup_20250319_v000.csv"),
-        get_test_data_path("hit/pha_events/imap_hit_range-3B-charge-fit-lookup_20250319_v000.csv"),
-        get_test_data_path("hit/pha_events/imap_hit_range-4B-charge-fit-lookup_20250319_v000.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-2A-charge-fit-lookup_20250319_v001.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-3A-charge-fit-lookup_20250319_v001.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-4A-charge-fit-lookup_20250319_v001.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-2B-charge-fit-lookup_20250319_v001.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-3B-charge-fit-lookup_20250319_v001.csv"),
+        get_test_data_path("hit/pha_events/imap_hit_range-4B-charge-fit-lookup_20250319_v001.csv"),
     )
 
     event_type_look = HitEventTypeLookup.from_csv(
-        get_test_data_path("hit/pha_events/imap_hit_hit-event-type-lookup_20250228_v000.csv")
+        get_test_data_path("hit/pha_events/imap_hit_hit-event-type-lookup_20250228_v003.csv")
+    )
+    window_correction_lookup = WindowCorrectionLookupTable.from_file(
+        get_test_data_path("hit/pha_events/imap_hit_wincorr_20250901_v000.csv")
     )
 
     hit_l1_data = HitL1Data.read_from_cdf(
@@ -567,6 +573,7 @@ def create_hit_direct_event_cdf():
         gain_lookup=gain_table,
         range_fit_lookup=range_fit_lookup,
         event_type_lookup=event_type_look,
+        window_correction_lookup=window_correction_lookup,
     )
     input_metadata = InputMetadata(
         instrument="hit",
