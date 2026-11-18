@@ -64,3 +64,17 @@ Deviations from the plan, recorded as they happen.
 **Original plan:** Rename `charges` and `deltas` to `track_charges` and `track_values_at_e_prime`.
 **What changed:** `compute_charge` still uses `charges` and `deltas`.
 **Why:** The longer names do not make the interpolation easier to read.
+
+## 10. Direct-events integration test passed on the first run (Phase 5.1)
+
+**When:** 2026-11-18
+**Original plan:** Running the new test before Phases 2–4 land should fail, either on the old `compute_charge` assert or on a missing `window_correction_lookup`.
+**What changed:** `test_hit_direct_events_product` passed on the first run. No processor change was needed.
+**Why:** Phases 2–4 were already committed before this session started.
+
+## 11. `create_hit_direct_event_cdf` was not run by hand (Phase 5.2)
+
+**When:** 2026-11-18
+**Original plan:** Run `create_hit_direct_event_cdf` once if `data/imap/hit/l1a/2010/01/imap_hit_l1a_direct-events_20100105_v001.cdf` exists locally.
+**What changed:** The script was updated and not executed.
+**Why:** That L1A file is not on disk. The end-to-end path is covered by `test_hit_direct_events_product`, which uses the checked-in v009 file.
