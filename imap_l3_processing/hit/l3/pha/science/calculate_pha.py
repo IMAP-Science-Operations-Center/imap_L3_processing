@@ -120,50 +120,24 @@ def analyze_event(event: RawPHAEvent, rule_lookup: HitEventTypeLookup) -> EventA
         )
 
 
-@dataclass
-class ValidDetectorRange:
-    e_prime_min: float
-    e_prime_max: float
-    delta_e_min: float
-    delta_e_max: float
-
-    def is_in_range(self, e_prime: float, delta_e: float) -> bool:
-        return (
-            self.e_prime_min <= e_prime <= self.e_prime_max
-            and self.delta_e_min <= delta_e <= self.delta_e_max
-        )
-
-
-valid_ranges = {
-    DetectorRange.R2: ValidDetectorRange(
-        e_prime_min=0.2, e_prime_max=860, delta_e_min=0.1, delta_e_max=430
-    ),
-    DetectorRange.R3: ValidDetectorRange(
-        e_prime_min=1.0, e_prime_max=4300, delta_e_min=0.2, delta_e_max=860
-    ),
-    DetectorRange.R4: ValidDetectorRange(
-        e_prime_min=1.0, e_prime_max=4300, delta_e_min=1.0, delta_e_max=4300
-    ),
-}
-
-
 def compute_charge(
     detected_range: DetectedRange,
     delta_e: float,
     e_prime: float,
     double_power_law_lookup: RangeFitLookup,
 ) -> float:
-    if valid_ranges[detected_range.range].is_in_range(e_prime, delta_e):
-        charges, deltas = double_power_law_lookup.evaluate_e_prime(detected_range, e_prime)
-        assert np.array_equal(deltas, np.sort(deltas)), "values are not increasing"
-        index_2 = clip(np.searchsorted(deltas, delta_e), 1, len(charges) - 1)
-        index_1 = index_2 - 1
+    if delta_e <= 0 or e_prime <= 0:
+        return np.nan
+    charges, deltas = double_power_law_lookup.evaluate_e_prime(detected_range, e_prime)
+    if not np.all(np.diff(deltas) > 0):
+        return np.nan
+    index_2 = clip(np.searchsorted(deltas, delta_e), 1, len(charges) - 1)
+    index_1 = index_2 - 1
 
-        B = np.log(charges[index_2] / charges[index_1]) / np.log(deltas[index_2] / deltas[index_1])
-        A = charges[index_1] / (deltas[index_1] ** B)
+    B = np.log(charges[index_2] / charges[index_1]) / np.log(deltas[index_2] / deltas[index_1])
+    A = charges[index_1] / (deltas[index_1] ** B)
 
-        return A * delta_e**B
-    return np.nan
+    return A * delta_e**B
 
 
 def process_pha_event(

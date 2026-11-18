@@ -20,12 +20,10 @@ from imap_l3_processing.hit.l3.pha.science.cosine_correction_lookup_table import
 )
 from imap_l3_processing.hit.l3.pha.science.gain_lookup_table import DetectorGain, Gain
 from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import Rule
-from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
 from imap_l3_processing.hit.l3.pha.science.window_correction_lookup_table import (
     WindowCorrectionLookupTable,
 )
 from tests.hit.l3.hit_test_builders import create_raw_pha_event
-from tests.test_helpers import get_test_data_path
 
 MODULE = "imap_l3_processing.hit.l3.pha.science.calculate_pha"
 
@@ -568,24 +566,29 @@ class TestCalculatePHA(unittest.TestCase):
     def test_compute_charge(self):
         charges = [3, 4, 5, 6]
         delta_e_losses = [1, 2, 20, 200]
+        range_2_side_a = DetectedRange(range=DetectorRange.R2, side=DetectorSide.A)
         cases = [
-            (15.0, 1, 2),
-            (2, 1, 2),
-            (2, 0, 1),
-            (1.1, 0, 1),
-            (0.2, 0, 1),
-            (300, 2, 3),
+            (range_2_side_a, 15.0, 200, 1, 2),
+            (range_2_side_a, 2, 200, 1, 2),
+            (range_2_side_a, 2, 200, 0, 1),
+            (range_2_side_a, 1.1, 200, 0, 1),
+            (range_2_side_a, 0.2, 200, 0, 1),
+            (range_2_side_a, 300, 200, 2, 3),
+            (range_2_side_a, 430.1, 860.1, 2, 3),
+            (DetectedRange(DetectorRange.R2, DetectorSide.B), 0.09, 0.19, 0, 1),
+            (DetectedRange(DetectorRange.R3, DetectorSide.A), 860.1, 4300.1, 2, 3),
+            (DetectedRange(DetectorRange.R3, DetectorSide.B), 0.19, 0.9, 0, 1),
+            (DetectedRange(DetectorRange.R4, DetectorSide.A), 4300.1, 4300.1, 2, 3),
+            (DetectedRange(DetectorRange.R4, DetectorSide.B), 0.9, 0.9, 0, 1),
         ]
-        for delta_e, index_1, index_2 in cases:
-            with self.subTest(delta_e):
+        for detected_range, delta_e, e_prime, index_1, index_2 in cases:
+            with self.subTest(detected_range=detected_range, delta_e=delta_e, e_prime=e_prime):
                 mock_double_power_law_fit_params = Mock()
                 mock_double_power_law_fit_params.evaluate_e_prime.return_value = (
                     charges,
                     delta_e_losses,
                 )
 
-                detected_range = DetectedRange(range=DetectorRange.R2, side=DetectorSide.A)
-                e_prime = 200
                 charge = compute_charge(
                     detected_range, delta_e, e_prime, mock_double_power_law_fit_params
                 )
@@ -601,67 +604,40 @@ class TestCalculatePHA(unittest.TestCase):
 
                 self.assertAlmostEqual(charge, A * delta_e**B)
 
-    def test_compute_charge_returns_nan_if_e_prime_or_delta_e_are_outside_of_range(
-        self,
-    ):
-        detected_range_1 = DetectedRange(range=DetectorRange.R2, side=DetectorSide.A)
-        detected_range_2 = DetectedRange(range=DetectorRange.R3, side=DetectorSide.B)
-        detected_range_3 = DetectedRange(range=DetectorRange.R4, side=DetectorSide.A)
-        range_fit_lookup_table = RangeFitLookup.from_files(
-            get_test_data_path(
-                "hit/pha_events/imap_hit_range-2A-charge-fit-lookup_20250319_v000.csv"
-            ),
-            get_test_data_path(
-                "hit/pha_events/imap_hit_range-3A-charge-fit-lookup_20250319_v000.csv"
-            ),
-            get_test_data_path(
-                "hit/pha_events/imap_hit_range-4A-charge-fit-lookup_20250319_v000.csv"
-            ),
-            get_test_data_path(
-                "hit/pha_events/imap_hit_range-2B-charge-fit-lookup_20250319_v000.csv"
-            ),
-            get_test_data_path(
-                "hit/pha_events/imap_hit_range-3B-charge-fit-lookup_20250319_v000.csv"
-            ),
-            get_test_data_path(
-                "hit/pha_events/imap_hit_range-4B-charge-fit-lookup_20250319_v000.csv"
-            ),
+    def test_compute_charge_is_nan_when_delta_e_or_e_prime_is_not_positive(self):
+        mock_lookup = Mock()
+        mock_lookup.evaluate_e_prime.return_value = (
+            np.array([3, 4, 5, 6]),
+            np.array([1, 2, 20, 200]),
         )
-        test_cases = [
-            ("detector 1 - delta_e over max", detected_range_1, 430.1, 860, True),
-            ("detector 1 - delta_e at max", detected_range_1, 430, 860, False),
-            ("detector 1 - delta_e at min", detected_range_1, 0.1, 860, False),
-            ("detector 1 - delta_e under min", detected_range_1, 0.09, 860, True),
-            ("detector 1 - e_prime over max", detected_range_1, 430, 860.1, True),
-            ("detector 1 - e_prime at max", detected_range_1, 430, 860, False),
-            ("detector 1 - e_prime at min", detected_range_1, 430, 0.2, False),
-            ("detector 1 - e_prime under min", detected_range_1, 430, 0.19, True),
-            ("detector 2 - delta_e over max", detected_range_2, 860.1, 430, True),
-            ("detector 2 - delta_e at max", detected_range_2, 860, 430, False),
-            ("detector 2 - delta_e at min", detected_range_2, 0.2, 860, False),
-            ("detector 2 - delta_e under min", detected_range_2, 0.19, 860, True),
-            ("detector 2 - e_prime over max", detected_range_2, 430, 4300.1, True),
-            ("detector 2 - e_prime at max", detected_range_2, 430, 4300, False),
-            ("detector 2 - e_prime at min", detected_range_2, 1, 1.0, False),
-            ("detector 2 - e_prime under min", detected_range_2, 430, 0.9, True),
-            ("detector 3 - delta_e over max", detected_range_3, 4300.1, 860, True),
-            ("detector 3 - delta_e at max", detected_range_3, 4300, 860, False),
-            ("detector 3 - delta_e at min", detected_range_3, 1.0, 860, False),
-            ("detector 3 - delta_e under min", detected_range_3, 0.09, 860, True),
-            ("detector 3 - e_prime over max", detected_range_3, 430, 4300.1, True),
-            ("detector 3 - e_prime at max", detected_range_3, 430, 4300, False),
-            ("detector 3 - e_prime at min", detected_range_3, 430, 1.0, False),
-            ("detector 3 - e_prime under min", detected_range_3, 430, 0.9, True),
+        detected_range = DetectedRange(DetectorRange.R2, DetectorSide.A)
+        cases = [
+            (0.0, 50.0),
+            (-1.5, 50.0),
+            (5.0, 0.0),
+            (5.0, -3.0),
         ]
-        for test_name, detected_range, delta_e, e_prime, expected_nan in test_cases:
-            with self.subTest(test_name):
-                result = compute_charge(
-                    detected_range,
-                    delta_e=delta_e,
-                    e_prime=e_prime,
-                    double_power_law_lookup=range_fit_lookup_table,
+        for delta_e, e_prime in cases:
+            with self.subTest(delta_e=delta_e, e_prime=e_prime):
+                charge = compute_charge(detected_range, delta_e, e_prime, mock_lookup)
+                self.assertTrue(np.isnan(charge))
+
+    def test_compute_charge_is_nan_when_tracks_at_e_prime_are_not_strictly_increasing(self):
+        detected_range = DetectedRange(DetectorRange.R3, DetectorSide.A)
+        track_values = [
+            [1, 20, 2, 200],
+            [1, 2, 2, 200],
+            [1, np.nan, 20, 200],
+        ]
+        for values in track_values:
+            with self.subTest(track_values=values):
+                mock_lookup = Mock()
+                mock_lookup.evaluate_e_prime.return_value = (
+                    np.array([3, 4, 5, 6]),
+                    np.array(values, dtype=float),
                 )
-                self.assertEqual(expected_nan, np.isnan(result))
+                charge = compute_charge(detected_range, 5.0, 50.0, mock_lookup)
+                self.assertTrue(np.isnan(charge))
 
     def _create_detector_from_string(
         self, detector_string: str, detector_group: str | None = None
