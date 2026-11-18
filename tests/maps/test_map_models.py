@@ -1167,7 +1167,7 @@ class TestMapModels(unittest.TestCase):
         cdf = CDF(
             str(
                 get_integration_test_data_path(
-                    "lo/multiple_arcs/imap_lo_l2_l090-ena-h-hf-nsp-ram-hae-6deg-1yr_20250415_v005.cdf"
+                    "lo/sdc_pipeline_dependency_inputs/imap_lo_l2_l090-ena-h-hf-nsp-ram-hae-6deg-1yr_20250415_v005.cdf"
                 )
             )
         )
