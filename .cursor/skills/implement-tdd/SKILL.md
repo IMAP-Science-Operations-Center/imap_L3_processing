@@ -76,7 +76,7 @@ Work through the TDD steps from the instructions in order. For each cycle:
 
 After all TDD cycles are complete:
 
-1. Run every test file that was touched or that corresponds to a changed production file.
+1. Run every unit test file that was touched or that corresponds to a changed production file. Skip files under `tests/integration/`.
 2. Confirm no regressions — especially tests that assert defaults or round-trip the full config, since new fields with default values must not break them.
 3. Run `ReadLints` on all changed production and test files. Fix any lint errors introduced by the changeset.
 
@@ -103,25 +103,17 @@ These rules govern every test written or modified during execution. Violations m
 
 ---
 
-## Phase 4: Run the full test suite
+## Phase 4: Run the unit test suite
 
-After final verification passes, run the entire unit test suite to catch any regressions beyond the directly affected files.
+After final verification passes, run the unit tests to catch regressions beyond the directly affected files. Do not run integration tests. Anything under `tests/integration/` is out of scope for this skill, including the Docker GLOWS tests.
 
-1. Run: `uv run python -m unittest discover tests`
-2. If the changed instrument has an integration test (`tests/integration/test_<instrument>_processor_integration.py`), make sure it ran and passed. The `@run_test_in_docker` GLOWS tests listed below can be skipped when Docker is not running.
-3. Run `uv run ruff check .` and `uv run ruff format --check .` and fix anything introduced by this session.
-4. If any test fails, determine whether it is caused by the changes in this session.
-   - If yes, fix the regression and re-run the full suite.
+1. Run: `uv run pytest tests --ignore=tests/integration`
+2. Run `uv run ruff check .` and `uv run ruff format --check .` and fix anything introduced by this session.
+3. If any test fails, determine whether it is caused by the changes in this session.
+   - If yes, fix the regression and re-run the unit suite with the same command.
    - If no (pre-existing failure), note it for the user and move on.
-5. Do not consider the task complete until the full suite passes (or all failures are confirmed pre-existing, including the Docker GLOWS tests below when Docker is not running).
+4. Do not consider the task complete until the unit suite passes (or all failures are confirmed pre-existing).
    **NOTE:** Failures like `ValueError: could not convert string 'version' ...` or `SpiceNOLEAPSECONDS` usually mean Git LFS files are still pointer stubs — run `git lfs pull` rather than changing code.
-   **NOTE:** The tests decorated with `@run_test_in_docker` in `tests/integration/test_glows_processor_integration.py` (`test_l3bcde_first_time_processing`, `test_l3bcde_automatic_reprocessing`, `test_glows_l3abcde_from_l2`, `test_run_glows_l3be_against_prod`) build and run `Dockerfile_glows_integration` and need a running Docker daemon. If Docker is not available, skip them:
-
-   ```
-   uv run pytest -k "not test_l3bcde_first_time_processing and not test_l3bcde_automatic_reprocessing and not test_glows_l3abcde_from_l2 and not test_run_glows_l3be_against_prod"
-   ```
-
-   A `failed to connect to the docker API` error from these tests means Docker is not running. Leave the tests skipped and continue.
 
 ---
 
@@ -166,7 +158,7 @@ If the instructions for this session came from a plan directory under `.cursor/p
 1. **Phase 1** → Read instructions and existing tests. Produce test plan. Wait for user confirmation.
 2. **Phase 2** → Execute Red-Green-Refactor cycles in the order specified by the instructions.
 3. **Phase 3** → Final verification: run all affected tests, check lints.
-4. **Phase 4** → Run the full unit test suite to catch regressions.
+4. **Phase 4** → Run the unit test suite (`pytest tests --ignore=tests/integration`) to catch regressions. Do not run `tests/integration/`.
 5. **Phase 5** → If a plan was used, record any deviations in `DRIFT.md` inside the plan directory. Skip when no plan directory exists.
 
 Do not skip phases. Keep changes scoped to what the instructions specify.
