@@ -36,3 +36,31 @@ Deviations from the plan, recorded as they happen.
 **Original plan:** Compute `calculate_mev` once per word and reuse that value for `energies`, `total_energy`, `e_delta`, and `e_prime`.
 **What changed:** The uncorrected `energies` list is computed once, above the analyzed/NOCALC branch. `total_energy` is a loop that looks up the window factor, converts that word to MeV, and appends the product. `e_delta` and `e_prime` still call `calculate_mev`.
 **Why:** `PHAWord` is an unfrozen dataclass, so a reuse map would be keyed by `id()`. The loop names the window factor and the deposited energy. `calculate_mev` is a multiply-add.
+
+## 6. Outside-bounds cases folded into `test_compute_charge` (Phase 4.1)
+
+**When:** 2026-11-18
+**Original plan:** Add `test_compute_charge_interpolates_energies_outside_former_table_45_bounds` for the six energies just outside the old Table 45 bounds.
+**What changed:** Those six rows were added to the existing `test_compute_charge` cases. Each case now carries its own `detected_range` and `e_prime`.
+**Why:** The new rows use the same mock tracks, the same lookup assertion, and the same Eq. 62–64 check. Only the inputs differ.
+
+## 7. Unused lookup imports removed (Phase 4.2)
+
+**When:** 2026-11-18
+**Original plan:** Delete `test_compute_charge_returns_nan_if_e_prime_or_delta_e_are_outside_of_range`.
+**What changed:** The `RangeFitLookup` and `get_test_data_path` imports were removed with that test.
+**Why:** Only the deleted test used them, and leaving them would fail ruff's unused-import check.
+
+## 8. Equal-track row returns a finite charge before the fix (Phase 4.5)
+
+**When:** 2026-11-18
+**Original plan:** `[1, 2, 2, 200]` passes the `np.sort` check and then divides by `log(1) = 0`.
+**What changed:** With ΔE = 5, `searchsorted` picks indices 2 and 3 (track values 2 and 200), so the row returns a finite charge. The test still fails before the fix.
+**Why:** The equal pair is not the pair the interpolation uses for this ΔE.
+
+## 9. Track locals keep their old names (Phase 4.7)
+
+**When:** 2026-11-18
+**Original plan:** Rename `charges` and `deltas` to `track_charges` and `track_values_at_e_prime`.
+**What changed:** `compute_charge` still uses `charges` and `deltas`.
+**Why:** The longer names do not make the interpolation easier to read.
