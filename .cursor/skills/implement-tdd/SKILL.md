@@ -108,13 +108,20 @@ These rules govern every test written or modified during execution. Violations m
 After final verification passes, run the entire unit test suite to catch any regressions beyond the directly affected files.
 
 1. Run: `uv run python -m unittest discover tests`
-2. If the changed instrument has an integration test (`tests/integration/test_<instrument>_processor_integration.py`), make sure it ran and passed.
+2. If the changed instrument has an integration test (`tests/integration/test_<instrument>_processor_integration.py`), make sure it ran and passed. The `@run_test_in_docker` GLOWS tests listed below can be skipped when Docker is not running.
 3. Run `uv run ruff check .` and `uv run ruff format --check .` and fix anything introduced by this session.
 4. If any test fails, determine whether it is caused by the changes in this session.
    - If yes, fix the regression and re-run the full suite.
    - If no (pre-existing failure), note it for the user and move on.
-5. Do not consider the task complete until the full suite passes (or all failures are confirmed pre-existing).
+5. Do not consider the task complete until the full suite passes (or all failures are confirmed pre-existing, including the Docker GLOWS tests below when Docker is not running).
    **NOTE:** Failures like `ValueError: could not convert string 'version' ...` or `SpiceNOLEAPSECONDS` usually mean Git LFS files are still pointer stubs — run `git lfs pull` rather than changing code.
+   **NOTE:** The tests decorated with `@run_test_in_docker` in `tests/integration/test_glows_processor_integration.py` (`test_l3bcde_first_time_processing`, `test_l3bcde_automatic_reprocessing`, `test_glows_l3abcde_from_l2`, `test_run_glows_l3be_against_prod`) build and run `Dockerfile_glows_integration` and need a running Docker daemon. If Docker is not available, skip them:
+
+   ```
+   uv run pytest -k "not test_l3bcde_first_time_processing and not test_l3bcde_automatic_reprocessing and not test_glows_l3abcde_from_l2 and not test_run_glows_l3be_against_prod"
+   ```
+
+   A `failed to connect to the docker API` error from these tests means Docker is not running. Leave the tests skipped and continue.
 
 ---
 

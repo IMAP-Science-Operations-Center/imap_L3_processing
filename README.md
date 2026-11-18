@@ -96,6 +96,18 @@ float64...` or `spiceypy` errors like `SpiceNOLEAPSECONDS`/`SpiceMISSINGTIMEINFO
   since the suite is written with `unittest.TestCase`.
 - To run tests for a single instrument, point either of the above at its directory, e.g.
   `uv run pytest tests/swapi`.
+- Tests decorated with `@run_test_in_docker` in
+  `tests/integration/test_glows_processor_integration.py`
+  (`test_l3bcde_first_time_processing`, `test_l3bcde_automatic_reprocessing`,
+  `test_glows_l3abcde_from_l2`, and `test_run_glows_l3be_against_prod`) build and run
+  `Dockerfile_glows_integration`. They need a running Docker daemon. If Docker is not
+  available, skip them:
+
+  ```
+  uv run pytest -k "not test_l3bcde_first_time_processing and not test_l3bcde_automatic_reprocessing and not test_glows_l3abcde_from_l2 and not test_run_glows_l3be_against_prod"
+  ```
+
+  A `failed to connect to the docker API` error from these tests means Docker is not running.
 - `pytest-xdist` is installed (`-n auto`), but is not currently used in CI or recommended locally,
   as some tests are not yet safe to run in parallel (TODO).
 
