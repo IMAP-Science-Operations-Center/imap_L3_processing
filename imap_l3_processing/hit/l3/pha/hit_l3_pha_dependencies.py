@@ -12,6 +12,9 @@ from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import (
     HitEventTypeLookup,
 )
 from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
+from imap_l3_processing.hit.l3.pha.science.window_correction_lookup_table import (
+    WindowCorrectionLookupTable,
+)
 
 HIT_L1A_EVENT_DESCRIPTOR = "direct-events"
 HIT_L3_RANGE_2A_COSINE_LOOKUP_DESCRIPTOR = "range-2A-cosine-lookup"
@@ -29,6 +32,7 @@ HIT_L3_RANGE_2B_CHARGE_FIT_LOOKUP_DESCRIPTOR = "range-2B-charge-fit-lookup"
 HIT_L3_RANGE_3B_CHARGE_FIT_LOOKUP_DESCRIPTOR = "range-3B-charge-fit-lookup"
 HIT_L3_RANGE_4B_CHARGE_FIT_LOOKUP_DESCRIPTOR = "range-4B-charge-fit-lookup"
 HIT_L3_EVENT_TYPE_LOOKUP_DESCRIPTOR = "hit-event-type-lookup"
+HIT_L3_WINCORR_LOOKUP_DESCRIPTOR = "wincorr"
 
 
 @dataclass
@@ -38,9 +42,10 @@ class HitL3PhaDependencies:
     gain_lookup: GainLookupTable
     range_fit_lookup: RangeFitLookup
     event_type_lookup: HitEventTypeLookup
+    window_correction_lookup: WindowCorrectionLookupTable
 
     @classmethod
-    def fetch_dependencies(cls, dependencies: ProcessingInputCollection):
+    def fetch_dependencies(cls, dependencies: ProcessingInputCollection) -> "HitL3PhaDependencies":
         try:
             l1_events_dependency = next(
                 dependency
@@ -130,6 +135,11 @@ class HitL3PhaDependencies:
                 source="hit", descriptor=HIT_L3_EVENT_TYPE_LOOKUP_DESCRIPTOR
             )[0]
         )
+        wincorr_lookup_path = download(
+            dependencies.get_file_paths(source="hit", descriptor=HIT_L3_WINCORR_LOOKUP_DESCRIPTOR)[
+                0
+            ]
+        )
 
         cosine_lookup_table = CosineCorrectionLookupTable(
             range_2A_cosine_lookup_path,
@@ -149,10 +159,12 @@ class HitL3PhaDependencies:
             range_4B_charge_fit_lookup_path,
         )
         event_type_lookup_table = HitEventTypeLookup.from_csv(event_type_lookup_path)
+        window_correction_lookup = WindowCorrectionLookupTable.from_file(wincorr_lookup_path)
         return cls(
             hit_l1_data=hit_l1_data,
             cosine_correction_lookup=cosine_lookup_table,
             gain_lookup=gain_lookup_table,
             range_fit_lookup=range_fit_lookup_table,
             event_type_lookup=event_type_lookup_table,
+            window_correction_lookup=window_correction_lookup,
         )

@@ -46,7 +46,7 @@ Make the code self-documenting through clear names and structure:
 def fetch_user(user_id: int) -> User:
     return db.get_user(user_id)
 
-# GOOD — extract a well-named helper instead of commenting
+# GOOD — a helper whose name is a domain concept the expression does not say
 def _is_within_business_hours(timestamp: datetime) -> bool:
     return 9 <= timestamp.hour < 17
 
@@ -64,7 +64,7 @@ if _is_within_business_hours(now):
 ## When tempted to write a comment
 
 1. **Rename** the variable/function/class so the name conveys the intent.
-2. **Extract** a helper with a descriptive name.
+2. **Extract** a helper only when its name is a domain concept the inline expression does not already say. Do not extract a one-call forwarder to avoid repeating a short line. See "Keep Code DAMP, Not Overly DRY" in `agent-guidelines.mdc`.
 3. **Restructure** the code so the flow is obvious.
 4. **Delete** the comment — git history and the code already tell the story.
 

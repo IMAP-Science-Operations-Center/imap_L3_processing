@@ -185,6 +185,38 @@ The instruction "Keep your responses short, since they will be displayed on a co
 
 # Code Quality Principles
 
+## Keep Code DAMP, Not Overly DRY
+Repeat a short, obvious expression at the call site. A helper that is called once and whose body is what the caller would have written is redirection: the reader has to jump away to see the same thing.
+
+**Extract a helper only when at least one of these is true:**
+- The name is a domain concept the inline expression does not already say.
+- The body is long enough that leaving it inline would bury the caller.
+- The same non-trivial logic is duplicated, and a future change must happen in one place.
+
+**Do not:**
+- Wrap one call in a function whose name restates that call (`_download_lookup` that only calls `download(...)`).
+- Add an empty-check or other guard in a helper when the inline code already fails the same way (indexing an empty list already raises).
+- Introduce a second list or constant so two sites can share names, when each site is clearer written out.
+
+Repeating a short expression is not the copy-paste shortcut in "Do the Right Thing." That shortcut is skipping a real structural fix. Matching the surrounding code is the structural fix when every neighbor already does the thing inline.
+
+```python
+# BAD — one caller, and the body is the call the caller would have written
+def _download_ancillary(dependencies: ProcessingInputCollection, descriptor: str) -> Path:
+    return download(dependencies.get_file_paths(source="hit", descriptor=descriptor)[0])
+
+wincorr_path = _download_ancillary(dependencies, WINCORR_DESCRIPTOR)
+
+# GOOD — same shape as the other downloads next to it
+wincorr_path = download(
+    dependencies.get_file_paths(source="hit", descriptor=WINCORR_DESCRIPTOR)[0]
+)
+
+# GOOD — the name is a domain concept the comparison does not say
+def _is_within_business_hours(timestamp: datetime) -> bool:
+    return 9 <= timestamp.hour < 17
+```
+
 ## Always Add Type Annotations
 **CRITICAL:** All new and modified code must include type annotations for:
 - **Function parameters** — every parameter must be annotated
