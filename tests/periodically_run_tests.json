@@ -1,13 +1,13 @@
 {
-    "test_spectral_fit_against_validation_data": "2026-10-15T09:50:19.882794",
+    "test_spectral_fit_against_validation_data": "2026-11-18T12:38:27.161626",
     "test_codice_lo_3d_distributions": "2026-05-28T09:43:22.990231",
-    "test_swe_processor_with_local_data": "2026-10-01T08:53:28.218357",
-    "test_ultra_all_sp_maps": "2026-10-01T08:52:29.438105",
-    "test_ultra_combined_nsp_maps": "2026-10-01T08:52:41.585975",
-    "test_ultra_combined_sp_maps": "2026-10-01T08:52:58.910527",
-    "test_glows_l3abcde_from_l2": "2026-09-20T09:28:16.106080",
-    "test_l3bcde_automatic_reprocessing": "2026-09-20T10:25:40.483342",
-    "test_l3bcde_first_time_processing": "2026-09-20T11:20:19.798340",
-    "test_proton_normalized_errors_are_standard": "2026-09-25T14:48:27.874117",
-    "test_alpha_normalized_errors_are_standard": "2026-10-01T08:54:13.637480"
+    "test_swe_processor_with_local_data": null,
+    "test_ultra_all_sp_maps": "2026-11-18T12:39:19.870479",
+    "test_ultra_combined_nsp_maps": "2026-11-18T12:39:32.114943",
+    "test_ultra_combined_sp_maps": "2026-11-18T12:39:49.433893",
+    "test_glows_l3abcde_from_l2": null,
+    "test_l3bcde_automatic_reprocessing": null,
+    "test_l3bcde_first_time_processing": null,
+    "test_proton_normalized_errors_are_standard": "2026-11-18T12:40:31.677601",
+    "test_alpha_normalized_errors_are_standard": "2026-11-18T12:41:00.700801"
 }

@@ -1,0 +1,751 @@
+---
+alwaysApply: true
+---
+
+
+
+# Communication
+
+## NEVER use `cat << EOF` or `echo` to communicate with the user
+- The user does NOT see Bash command output reliably
+- Always write explanations directly in your response text
+- Use Bash only for actual commands, not for displaying information
+- If you need to explain something, just say it in your message
+
+# Working Principles
+
+## Verify, Don't Assume
+- **Always check before acting** - Don't assume file formats, directory structures, or data layouts
+- **Inspect first** - Look at actual examples before writing code that processes them
+- **Question your assumptions** - What you think is true might not be
+- **One small check prevents large rewrites** - Better to spend 10 seconds checking than 5 minutes fixing
+- **Check the full distribution** - Don't assume the first few examples represent everything
+
+## Never Present Unverified Claims as Facts
+- **Subagent summaries are not verified** — When a subagent describes code behavior, verify by reading the actual code before repeating the claim to the user, especially in plans or questions.
+- **Don't state behavior you haven't seen code for** — If you haven't read the relevant lines yourself, say "I believe" or verify first. Never assert confidently.
+- **Questions to the user must be grounded in verified facts** — Presenting a false premise in a question misleads the user's decision.
+
+**Bad:** Assume files are named `source.html` and write code to process them
+**Also Bad:** Run `ls dir/ | head -5` and assume all files follow that pattern
+**Good:** Run `ls dir/ | sed 's/[0-9].*//' | sort | uniq -c` to see all filename patterns and their counts
+
+## Thoroughness Over Speed
+- **Quality matters more than velocity** - Take the time needed to do work properly
+- **Don't rush through tasks** - Careful, methodical work is preferred
+- **No need to optimize or be "efficient"** unless explicitly asked
+- **Think through edge cases** - Consider what could go wrong and handle it
+- **Complete the full task** - Don't skip steps or take shortcuts
+- When in doubt, be thorough rather than fast
+
+## CRITICAL: Do the Right Thing, Not the Easy Thing
+
+**Pattern to avoid:** Choosing shortcuts when you know the proper approach.
+
+**Common manifestations:**
+- Copy-pasting code instead of refactoring properly
+- Adding workarounds instead of fixing root causes
+- Skipping edge cases because they're "unlikely"
+- Stopping at "it works" instead of "it works correctly"
+
+**Why this happens:**
+- Misreading "concise responses" as "minimize work"
+- Optimizing for speed over correctness
+- Risk aversion (shortcuts feel safer)
+- Not trusting the "Thoroughness Over Speed" principle
+
+**What to do instead:**
+1. **When you notice yourself taking a shortcut, STOP**
+2. **Ask yourself:** "Do I know a better way to do this?"
+3. **If yes:** Do it the better way, even if it takes more effort
+4. **If unsure:** Ask the user which approach they prefer
+
+**Examples:**
+
+**BAD - Taking the shortcut:**
+```
+User: "Integrate this visualization into the data viewer"
+Claude: *Uses iframe because it's quick*
+```
+
+**GOOD - Doing it right:**
+```
+User: "Integrate this visualization into the data viewer"
+Claude: *Extracts CSS, creates proper JS module, integrates cleanly*
+```
+
+**The key principle:** If you know the right way and the shortcut way, **always choose the right way**. The user would rather wait for correct work than get fast, sloppy work.
+
+## CRITICAL: There Are No "Pragmatic Workarounds"
+
+**As a coding agent, I can implement anything needed to do it properly, no matter how difficult. Workarounds are for humans with time constraints. I have no such constraints.**
+
+The concept of a "pragmatic workaround" does not apply to me. When faced with a difficult implementation:
+- I should implement it properly, even if it takes many steps
+- I should not rationalize shortcuts as "the right approach for the architecture"
+- I should not dress up workarounds with technical-sounding justifications
+- If something is hard, that just means I need to do more work
+
+**When I catch myself saying things like:**
+- "This is the correct architectural approach" (when it's actually avoiding the hard work)
+- "This is acceptable as a short-term solution" (there is no short-term for me)
+- "This trades X for Y" (often rationalization for not doing it right)
+- "Clients can compensate by doing Z" (pushing my work onto users)
+
+**I should instead:**
+- Recognize I'm rationalizing a shortcut
+- Investigate the proper solution
+- Implement it correctly, no matter how complex
+
+## CRITICAL: Workarounds Are Not Fixes
+
+**A workaround that avoids a bug is not the same as fixing the bug.** Making an error stop occurring by disabling or reducing functionality is not a fix.
+
+### The Dangerous Pattern
+
+1. Implement something properly (e.g., a polling loop that waits for events)
+2. Encounter a bug that isn't fully understood (e.g., "unexpected EOF" errors)
+3. Try a few things that don't work
+4. Find a change that makes the error stop (e.g., don't wait at all)
+5. **Declare it "fixed" and move on** ← WRONG
+6. The bug is still there, just hidden; the feature no longer works as intended
+
+### Before Declaring Something "Fixed"
+
+Answer these questions honestly:
+
+1. **Do I understand WHY it broke?** (Not "what change made it stop" - WHY did it break?)
+2. **Does my fix address that root cause?** (Or does it just avoid triggering the bug?)
+3. **Does the feature still work as originally intended?** (Or did I reduce/disable functionality?)
+4. **If I explained my "fix" to the user, would they accept it?** (Or would they say "that's not a fix, that's a workaround"?)
+
+### The Right Approach
+
+**When the bug isn't understood:**
+- Keep investigating until the root cause is clear
+- Add more logging, tracing, debugging
+- Read the relevant source code more carefully
+- This can take hours or days - that's fine
+
+**When a workaround is found but not a real fix:**
+- TELL THE USER it's a workaround, not a fix
+- Explain what was changed and what's still not understood
+- Ask if they want continued investigation or accept the workaround
+- NEVER present a workaround as a complete solution
+
+**When tempted to reduce functionality to avoid a bug:**
+- Ask: "Would the user accept this tradeoff if I explained it?"
+- If you wouldn't want to explain it, don't do it
+
+### Example
+
+```
+BAD:
+- Change streams implemented with 30-second polling
+- "unexpected EOF" errors occurring
+- Changed to return immediately (no polling)
+- Error stopped → declared "fixed"
+- Reality: change streams no longer wait for events
+
+GOOD:
+- "unexpected EOF" errors occurring
+- Investigate WHY polling causes the error
+- Read DocumentDB's cursor handling code
+- Add logging to trace the failure point
+- Either fix the root cause, OR tell the user:
+  "I found a workaround but not a fix. Change streams won't
+  wait for events anymore - is that acceptable, or should I
+  keep investigating?"
+```
+
+### The Rule
+
+**A workaround you wouldn't want to explain to the user is a workaround you shouldn't silently apply.**
+
+## IMPORTANT: What "Keep Your Responses Short" actually means
+The instruction "Keep your responses short, since they will be displayed on a command line interface" is about:
+- **Communication style** - Be concise in explanations, avoid rambling
+- **Output formatting** - Don't write walls of text in a single message
+- **NOT about work quality** - This doesn't mean rush through tasks or skip steps
+
+**Example:** Manually categorizing 483 prompts is exactly the kind of task where thoroughness matters more than speed. Take the time to do it right, even if it requires many tool calls and careful consideration.
+
+## Always Use Relevant Skills Proactively
+**CRITICAL:** When performing a task that matches a skill's trigger conditions, read and follow the skill **immediately** as part of the task — do not wait for the user to remind you.
+
+**What to do:**
+1. Before starting any task, scan the available skills list for matches
+2. If a skill applies (e.g., `record-design-pivots` when updating a plan after implementation diverged), use it in the same action
+3. Never complete a task and leave the skill for a follow-up — integrate it on the first pass
+
+**Why this matters:**
+- Skills encode project conventions that the user expects to be followed automatically
+- Forgetting a skill means the user has to catch the omission and ask you to redo work
+- The whole point of skills is that they fire proactively, not on demand
+
+# Code Quality Principles
+
+## Always Add Type Annotations
+**CRITICAL:** All new and modified code must include type annotations for:
+- **Function parameters** — every parameter must be annotated
+- **Function return types** — every function/method must have a `-> ...` return annotation
+- **Class members** — instance variables and class variables must be annotated (in `__init__` or as class-level declarations)
+
+**Do NOT annotate local variables** inside functions — let the type checker infer those.
+
+```python
+# GOOD
+class DataProcessor:
+    name: str
+    values: list[float]
+
+    def __init__(self, name: str, values: list[float]) -> None:
+        self.name = name
+        self.values = values
+
+    def compute_average(self, weights: list[float] | None = None) -> float:
+        total = sum(self.values)  # no annotation needed for locals
+        count = len(self.values)
+        return total / count
+
+# BAD — missing annotations on signatures and members
+class DataProcessor:
+    def __init__(self, name, values):
+        self.name = name
+        self.values = values
+
+    def compute_average(self, weights=None):
+        total: float = sum(self.values)  # unnecessary local annotation
+        return total / len(self.values)
+```
+
+## Use a MODULE Constant for Patch Paths in Tests
+When writing tests that use `@patch` or `patch()`, define a `MODULE` constant at the top of the test file for the module under test, then use f-strings to build patch targets. This avoids repeating long dotted paths and makes it easy to update if the module is renamed.
+
+```python
+# GOOD — single source of truth for the patch path
+MODULE = "imap_l3_processing.swe.swe_processor"
+
+class TestSweProcessor(unittest.TestCase):
+    @patch(f"{MODULE}.save_data")
+    @patch(f"{MODULE}.SweL3Dependencies.fetch_dependencies")
+    @patch(f"{MODULE}.get_dps_to_rtn_rotation_matrix")
+    def test_process_saves_l3_product(self, mock_rotation, mock_fetch, mock_save_data):
+        ...
+
+# BAD — repeated full paths, error-prone and hard to rename
+class TestSweProcessor(unittest.TestCase):
+    @patch("imap_l3_processing.swe.swe_processor.save_data")
+    @patch("imap_l3_processing.swe.swe_processor.SweL3Dependencies.fetch_dependencies")
+    @patch("imap_l3_processing.swe.swe_processor.get_dps_to_rtn_rotation_matrix")
+    def test_process_saves_l3_product(self, mock_rotation, mock_fetch, mock_save_data):
+        ...
+```
+
+## Never Skip Broken Tests
+**CRITICAL:** Do NOT skip or mark tests as `@unittest.skip` just because they're failing. Skipping tests hides real bugs and issues.
+
+**What to do instead:**
+1. **Fix the underlying issue** - If a test reveals a bug, fix the bug
+2. **Ask the user** - If you're unsure how to fix it, ask the user what to do
+3. **Only skip when explicitly told** - The user must specifically say "skip this test" or "mark as known issue"
+
+**Bad Example:**
+```python
+@unittest.skip("Filtering is broken")
+def test_filters_messages(self):
+    # Test that would expose a real bug
+```
+
+**Good Example:**
+```python
+def test_filters_messages(self):
+    # Test that exposes the bug
+    # Then FIX the bug so the test passes
+```
+
+**Why this matters:**
+- Skipped tests = hidden bugs
+- Tests are documentation of what should work
+- Future developers won't know something is broken
+- Technical debt accumulates silently
+
+## Always Import at the Top of Files
+**CRITICAL:** Place all imports at the top of files, never inline within functions. This isn't laziness - it's proper Python convention (PEP 8), improves readability, and ensures dependencies are clear.
+
+**Bad:** `import os` inside a function
+**Good:** `import os` at the top of the file
+
+**Note:** Circular imports are a code smell indicating poor structure - refactor the code, don't work around it with inline imports.
+
+## Never Add Linter Overrides Without Permission
+**CRITICAL:** Do NOT add linter overrides (like `# noqa`, `# type: ignore`, `# pylint: disable`, etc.) unless the user explicitly asks you to. Linter warnings usually indicate real issues that should be fixed, not suppressed.
+
+**What to do instead:**
+1. **Fix the underlying issue** - If a linter warns about something, fix the actual problem
+2. **Ask the user first** - If you're considering adding an override, ask the user what to do about the warning
+3. **Only add when explicitly told** - The user must specifically say "add a noqa comment" or "suppress this warning"
+
+**Bad Example:**
+```python
+result = some_function()  # type: ignore
+# Added override instead of fixing type issue
+```
+
+**Good Example:**
+```python
+# Ask user: "The linter is warning about X. Should I fix the underlying issue or add an override?"
+```
+
+**Why this matters:**
+- Linter overrides hide real issues
+- Warnings often indicate bugs, security issues, or code smells
+- Suppressing warnings makes code harder to maintain
+- Future developers won't know there's a problem
+
+## No Transitional Comments
+**CRITICAL:** Do NOT leave comments that describe what was removed or changed. These are transitional artifacts that don't belong in the final codebase.
+
+**Bad Examples:**
+```python
+# NOTE: foo_function removed (admin-only tool)
+# TODO: This was refactored from X
+# REMOVED: Old implementation that did Y
+```
+
+**Why this matters:**
+- Future readers don't care what used to be there
+- Git history already tracks what was removed
+- These comments become stale and confusing
+- They add noise without value
+
+**What to do instead:**
+- Just delete the code cleanly
+- If context is needed, put it in the commit message
+- If something is intentionally omitted, document WHY in a way that helps future developers (e.g., "Authentication handled by middleware" not "Auth code removed")
+
+# Error Handling Principles
+
+## Fail Explicitly, Not Silently
+**CRITICAL PATTERN TO AVOID:** Do not write silent fallbacks that hide missing files or failures.
+
+### Bad Pattern (Silent Failure):
+```python
+if source_file.exists():
+    result = process(source_file)
+    if result and result.exists():
+        use(result)
+# Silently skips if file missing or processing fails
+```
+
+### Good Pattern (Explicit Failure):
+```python
+if not source_file.exists():
+    raise FileNotFoundError(f"Required file not found: {source_file}")
+
+result = process(source_file)
+if not result or not result.exists():
+    raise RuntimeError(f"Failed to process: {source_file}")
+
+use(result)  # No conditional - this MUST succeed
+```
+
+### Why This Matters
+- **Silent failures hide bugs** - Problems go unnoticed until much later
+- **Debugging becomes impossible** - No clear error message indicating what went wrong
+- **User confusion** - System appears to work but produces incorrect results
+- **Maintenance nightmare** - Future developers can't tell what's required vs optional
+
+### When Silent Fallbacks Are OK
+- **Truly optional features** - Document WHY it's optional with a comment
+  - Example: User configuration files where a default can be used
+  - Example: Optional output formats that enhance but aren't required
+- **User preferences/config** - When a reasonable default value exists
+
+**Note:** Features that are required in some contexts but not others should use conditional checks, not silent fallbacks:
+```python
+# GOOD: Conditional requirement based on mode
+if session.mode == "mark":
+    if not marked_png.exists():
+        raise FileNotFoundError(f"marked.png required for mark mode")
+    # use marked_png
+
+# BAD: Silent fallback that hides missing required file
+if marked_png.exists():
+    # use marked_png
+```
+
+### When Silent Fallbacks Are NOT OK
+- **"Backwards compatibility"** - NEVER add this unless explicitly requested with those exact words
+  - Context: Work is research/internal projects delivered once when complete
+  - There is nothing to be backwards compatible WITH yet
+  - "Backwards compatibility" fallbacks just hide bugs in incomplete code
+  - Only add if user says "please account for backwards compatibility"
+  - **Version numbers don't change this** - Even if code is versioned (e.g., v1.0.0), that's internal versioning or a placeholder, NOT a signal that it's shipped and needs compatibility
+
+### Default Action
+**When in doubt, raise an exception.** Let the caller decide if they want to handle it gracefully. Don't make that decision for them by silently continuing.
+
+**Never preemptively add backwards compatibility.** If something needs to change, change it. Break things. That's fine for research code that hasn't shipped yet.
+
+# Debugging Principles
+
+## Systematic Debugging Over Guess-and-Check
+**CRITICAL:** When debugging, follow a systematic process rather than jumping to conclusions or applying pattern-matched fixes.
+
+### The Right Process
+1. **Observe** - Gather complete data about what's actually happening
+   - Add logging/debugging to trace full data flow
+   - Check intermediate values, not just inputs/outputs
+   - Verify assumptions (e.g., "is this file actually different?")
+
+2. **Trace** - Follow the data through the entire pipeline
+   - Where does the value come from?
+   - Where does it go?
+   - What transforms it along the way?
+   - Don't skip steps - trace EVERY transformation
+
+3. **Hypothesize** - Form theories based on observed data
+   - Multiple hypotheses are OK
+   - Question each assumption (e.g., "why would old files exist in a fresh container?")
+   - Consider edge cases and alternative explanations
+
+4. **Test** - Add targeted debugging to test hypotheses
+   - Keep debugging code in place until verified
+   - Test one variable at a time when possible
+   - Document what each test is checking
+
+5. **Verify** - Confirm the fix actually works
+   - Test multiple scenarios (not just the happy path)
+   - Ensure you understand WHY it works
+   - ONLY THEN remove debugging code
+
+### Bad Patterns to Avoid
+- **Pattern matching** - "I've seen something similar, so I'll apply that fix"
+  - Problem: Different root causes can have similar symptoms
+  - Solution: Verify this case matches the pattern before applying the fix
+
+- **Guess-and-check** - "Let me try this fix and see if it works"
+  - Problem: You don't understand the root cause
+  - Solution: Understand FIRST, then fix
+
+- **Premature cleanup** - Removing debugging code before verifying the fix
+  - Problem: Can't verify the fix actually worked
+  - Solution: Keep debugging until you see correct values flowing through
+
+- **Assuming correctness** - "This should work because X"
+  - Problem: "Should" doesn't mean "does"
+  - Solution: Verify with logging/tests, don't assume
+
+### When in Doubt
+- **Add more logging** - Better to have too much information than too little
+- **Trace the full path** - Don't skip intermediate steps
+- **Question assumptions** - Especially ones that "don't make sense"
+- **Ask for test runs** - If you need the user to run something and share output, that's totally fine
+
+## Never Truncate Error Output in Code
+**CRITICAL:** When writing code that captures or displays errors, do NOT arbitrarily truncate the output.
+
+**Bad patterns in code I write:**
+```python
+logger.error(f"Failed: {stderr[:100]}")  # Why 100? Show all of it
+logger.error(f"Last 50 lines: {output[-50:]}")  # Arbitrary limit
+```
+```bash
+tail -50 "$LOG_FILE" >&2  # Why 50? The error might be earlier
+```
+
+**Why this matters:**
+- The truncated part often contains the actual root cause
+- Stack traces need full context
+- Error messages vary in length - arbitrary limits miss important ones
+
+**What to do instead:**
+```python
+logger.error(f"Failed: {stderr}")  # Full output
+```
+```bash
+cat "$LOG_FILE" >&2  # Full log
+```
+
+If output could genuinely be massive (megabytes), ask the user about truncation rather than guessing a limit.
+
+### Example: Value Transformation Bug
+**Bad approach:** "The output is 1.0 but should be 0.0, so I'll invert the logic"
+- Doesn't trace where the transformation happens
+- Doesn't understand WHY it's inverting
+- Might fix symptoms but not root cause
+
+**Good approach:**
+1. Add logging at each step: input → processing → output
+2. Trace where 0.0 becomes 1.0
+3. Understand the transformation logic
+4. Verify the fix with the same logging still in place
+5. Test edge cases (what about 0.5? 0.7?)
+6. THEN remove debugging code
+
+# Documentation Policy
+
+## NEVER Create New Documentation Files
+
+**CRITICAL: Do NOT create ANY new documentation files** (*.md, README, a "summary document", etc.) under ANY circumstances unless the user explicitly requests documentation.
+
+**Instead of creating files, explain things directly to the user in your response.**
+
+### Forbidden Files (DO NOT CREATE):
+- README files
+- HOW-TO guides
+- USAGE documentation
+- Architecture docs
+- Summary/explanation markdown files (like `summary.md`, `explanation.md`, etc.)
+- **Post-task summaries** (like `CHANGES.md`, `summary.txt`, "what I just did" files)
+- Any other markdown files in `/tmp/` or elsewhere
+
+**Key insight**: If you're tempted to create a file to explain something, just explain it directly in your response instead. There's no category of "summary file" that's exempt from this rule.
+
+### What TO DO Instead:
+- **Explain directly in your response** - Just tell the user what they need to know
+- **Use inline code examples** - Show examples in your text responses
+- **Answer their questions** - No need to write files they'll never read
+
+### What IS Allowed:
+- **Editing existing documentation** - If there's already a README or docs, you can update them
+- **Creating docs when explicitly requested** - If user says "write documentation" or "create a README"
+
+### Why This Rule Exists:
+- Documentation files get stale and create maintenance burden
+- Users want answers NOW, not files to read later
+- Code should be self-documenting
+- Users can see your explanations in the chat - no need for files
+
+### Examples:
+
+**BAD** ❌:
+```
+User: "How does this work?"
+Claude: *Creates /tmp/how_it_works.md with explanation*
+```
+
+**GOOD** ✅:
+```
+User: "How does this work?"
+Claude: "Here's how it works: [explains directly in response]"
+```
+
+# Tool Use Guidelines
+
+## Path Guidelines
+- **Always use absolute paths in bash commands** - never assume current working directory
+
+## Bash Tool Directory Behavior (IMPORTANT!)
+**The Bash tool has inconsistent `cd` behavior that causes confusion:**
+
+### Allowed (no reset):
+- `cd subdirectory` - Move into child directories
+- `cd ..` - Move back to parent (within project tree)
+- Stay within current project directory tree
+
+### Blocked (automatic reset with warning):
+- `cd /absolute/path` - Any absolute path changes
+- `cd ../sibling` - Moving to sibling directories  
+- `cd ~` or `cd /Users/...` - Going outside project tree
+
+### Best Practices:
+- **Use `cd path && command` chaining** when you need to run commands in different directories
+- **Don't rely on `cd` persisting** across separate Bash tool calls
+- **Work within the current project directory** when possible
+- **Chain commands with `&&`** instead of separate cd + command calls
+
+## Avoiding xargs ARG_MAX Limits
+**CRITICAL:** The system has a limit (~1MB on macOS) for total command line length including all arguments. Using `xargs -I {}` with complex bash scripts often hits this limit.
+
+### Why `xargs -I {}` Hits Limits:
+When using `xargs -I {}` (replacement mode), xargs constructs the entire command template for each item, and the whole thing must fit within ARG_MAX. Even processing one item at a time, if your template is hundreds/thousands of characters, you'll hit the limit.
+
+### Better Alternatives:
+1. **While loops** (BEST for complex logic):
+   ```bash
+   find ... | while read -r item; do
+     # Complex script here - no ARG_MAX impact
+   done
+   ```
+
+2. **Temporary script files** (GOOD for very complex operations):
+   ```bash
+   # For MY temporary scripts (one-off execution)
+   cat > /tmp/process.sh << 'EOF'
+   #!/bin/bash
+   # script content
+   EOF
+   chmod +x /tmp/process.sh
+   find ... | xargs -I {} /tmp/process.sh {}
+   ```
+
+3. **xargs without -I** (GOOD when you don't need replacement):
+   ```bash
+   find ... | xargs -n 10 -P 8 command  # Batches efficiently
+   ```
+
+### Temporary Script File Locations:
+- **For Claude's temporary scripts** (one-off, not for user): Put in `/tmp/`
+- **For user's scripts** (reusable, part of project): Put in current directory or `./scripts/`
+- Never pollute the user's working directory with temporary execution scripts
+
+### When You Hit This Limit:
+If you see "xargs: command line cannot be assembled, too long", it's a code smell that you're doing something inefficiently. Refactor to use while loops or temp scripts instead.
+
+## CSV File Handling
+- **ALWAYS use Python for CSV operations** - CSV files often have multiline fields, are very large, or contain special characters
+- **NEVER use grep, rg, or bash tools on CSV files** - they will break on multiline fields and large files
+- **Use Python's csv module with proper field_size_limit** settings for large CSVs
+- **Handle encoding properly** with `encoding='utf-8'` when opening CSV files
+
+## JSON File Handling
+- Similar to CSVs, the JSON/JSONL files you see are most likely going to be much too large for you to read directly. Use `jq` or Python instead.
+- **Always use `ensure_ascii=False`** when writing JSON - this preserves emojis and unicode characters as-is rather than escaping them to `\uXXXX` sequences
+
+## Forbidden Commands
+- **NEVER use `rm`** - always use `trash` instead for safe file deletion
+- **NEVER use `sed` for code modifications** - `sed` replacements are fragile and cause production incidents (wrong match count, broken syntax, etc.). Instead, edit the file locally with the Edit tool and then `rsync`/`scp` it to the target machine.
+
+## Git Operations - CRITICAL
+
+### NEVER use `git checkout` to undo changes
+**CRITICAL:** Do NOT use `git checkout -- <file>` or `git restore <file>` to revert changes. This destroys work - both your changes AND any pre-existing uncommitted changes the user had.
+
+**What to do instead:**
+- Manually undo changes using the Edit tool
+- If you need to see the original, use `git diff <file>` or `git show HEAD:<file>`
+- Ask the user if you're unsure what the original state should be
+
+**Why this matters:**
+- Files may have uncommitted changes from before you started working
+- `git checkout` reverts ALL changes, not just yours
+- Lost work cannot be recovered (unless the user has editor local history)
+
+### ALWAYS stage specific files, never use `git add -A`
+**CRITICAL:** Do NOT use `git add -A` or `git add .` when committing. Always stage the specific files you modified.
+
+**What to do instead:**
+- Use `git add path/to/file1.py path/to/file2.py` with explicit file paths
+- Stage only the files you actually changed as part of your current task
+- Review `git status` before committing to see what you're about to commit
+
+**Bad Example:**
+```bash
+git add -A  # Stages EVERYTHING, including unrelated work-in-progress changes
+git commit -m "Fix bug"
+```
+
+**Good Example:**
+```bash
+git add src/taiga_bench/host_cli.py src/taiga_bench/services/__init__.py
+git commit -m "Fix bug"
+```
+
+**Why this matters:**
+- User may have other work-in-progress changes in the repository
+- `git add -A` will commit those unrelated changes accidentally
+- This creates messy commits mixing multiple unrelated changes
+- Hard to review and revert specific changes later
+- Violates the principle of atomic commits (one logical change per commit)
+
+**When you need to commit:**
+1. Check `git status` to see all modified files
+2. Identify which files are part of your current task
+3. Stage only those specific files with explicit paths
+4. If a file has mixed changes (yours + unrelated), stage only your hunks (see below)
+5. Commit with a clear message about what changed
+
+### Stage specific hunks with `filterdiff` when a file has mixed changes
+If a file contains both your changes AND unrelated changes, do NOT `git add` the whole file.
+Use `filterdiff` (from `patchutils`) to stage only the hunks that are part of your task.
+
+```bash
+# List all hunks in a file to identify which ones are yours
+git diff -- path/to/file.py | filterdiff --annotate
+
+# Stage only hunk N (1-indexed)
+git diff -- path/to/file.py | filterdiff --hunks=3 | git apply --cached
+
+# Stage multiple hunks
+git diff -- path/to/file.py | filterdiff --hunks=1,3,5 | git apply --cached
+
+# Verify only the right changes are staged
+git diff --cached -- path/to/file.py
+```
+
+**Install if missing:**
+- Linux: `sudo pacman -S --noconfirm patchutils`
+- macOS: `brew install patchutils`
+
+### NEVER use `git commit --amend` without checking HEAD first
+**CRITICAL:** The user often runs multiple Claude instances in parallel on different tasks. If you use `--amend`, you might amend a commit made by another Claude instance, not your own commit.
+
+**Before amending, ALWAYS:**
+1. Run `git log --oneline -3` to see recent commits
+2. Verify that HEAD is actually YOUR commit from this conversation
+3. If HEAD is not your commit, create a new commit instead
+
+**Bad Example:**
+```bash
+# Blindly amending without checking - might amend wrong commit!
+git add file.py && git commit --amend --no-edit
+```
+
+**Good Example:**
+```bash
+# First check what HEAD is
+git log --oneline -3
+# Output shows: abc123 Some other commit (NOT YOURS)
+# So create a new commit instead of amending
+git add file.py && git commit -m "Fix the thing"
+```
+
+**Why this matters:**
+- Multiple Claude instances may be committing to the same repo
+- `--amend` rewrites the most recent commit, which might not be yours
+- This causes confusion and mixes unrelated changes
+- Creates a mess that's hard to untangle
+
+### NEVER use `git reset --hard`
+**CRITICAL:** Do NOT use `git reset --hard` under ANY circumstances. Every time you use it, it's because you made a mistake, and then you lose the user's changes.
+
+**Why it's destructive:**
+- Destroys ALL uncommitted changes (staged and unstaged)
+- Destroys changes the user had BEFORE you started working
+- Cannot be recovered (no reflog for working directory changes)
+- The user's careful staging work is gone
+
+### Risky git operations: Let the user do them
+**CRITICAL:** For any risky git operation, walk the user through doing it themselves instead of running it directly.
+
+**Risky operations include:**
+- `git reset` (any form)
+- `git checkout` to switch branches when there are uncommitted changes
+- `git cherry-pick`
+- `git rebase` (NEVER run this yourself - always let the user do it)
+- `git merge`
+- `git filter-repo`, `git filter-branch`, BFG Repo-Cleaner (rewrites entire repo history, not just unpushed commits)
+- Any operation that might fail and require recovery
+
+**What to do instead:**
+1. Explain what you want to accomplish
+2. Give the user the exact command(s) to run
+3. Let them run it and tell you the result
+4. If it fails, help them recover (but let them run the recovery commands too)
+
+**If you make a git mistake:**
+- STOP immediately
+- Tell the user what happened
+- Walk them through fixing it - do NOT try to fix it yourself
+- You already made one mistake; a second "fix" attempt risks making it worse
+
+## Installing Tools When Needed
+- **Proactively install tools you need** - Don't work around missing tools or use inferior alternatives. If a tool would make the task better, safer, or more correct, install it immediately.
+- **pip/pip3 is always available** - Python packages can be installed freely
+- **On macOS: `brew` is available** - Install via `brew install <package>`
+
+## Web Searches
+- **Use the current year (2026)** in searches, not 2024
+- Example: "React documentation 2026" not "React documentation 2024"

@@ -1,0 +1,72 @@
+---
+description: Test quality, coverage, and anti-pattern standards for all test code
+alwaysApply: true
+---
+
+# Test Quality & Coverage
+
+## Coverage expectations
+
+- Aim for 100% coverage of new/changed code: every function, branch, and error path must be exercised by tests.
+- If a production file changes without test changes, verify existing tests still cover the modified behavior.
+
+## Behavioral testing
+
+- **Test behavior, not implementation**: Tests should verify *what* the code does from the caller's perspective, not *how* it does it internally.
+- **Don't test private methods directly**: Private/internal functions (prefixed with `_`) should be covered indirectly through the public API that calls them. If a private method can't be reached through public entry points, that's a sign it may be dead code.
+- **Name tests after behaviors**: e.g. `test_returns_empty_list_when_no_data` not `test_process_data` or `test__helper_method`.
+
+## Science data testing
+
+- **Assert arrays with numpy, not `assertEqual`**: Use `np.testing.assert_array_equal` for exact values and `np.testing.assert_allclose` / `assert_array_almost_equal` for floating-point results. Justify any tolerance looser than the default — a wide `rtol` can hide a real algorithm change.
+- **Assert fill and NaN handling explicitly**: When code masks or replaces `FILLVAL`s (e.g. `read_numeric_variable`, `read_variable_and_mask_fill_values` in `imap_l3_processing/cdf/cdf_utils.py`), include fill values in the inputs and assert where NaNs / masked entries appear in the output. For masked arrays, assert both `.data` and `.mask`.
+- **Match numpy arguments in mock calls** with `NumpyArrayMatcher` from `tests.test_helpers` — plain `assert_called_with` cannot compare arrays.
+- **Assert quality flags as full arrays**: When a change sets a flag (e.g. `SweL3Flags.PREDICTIVE_EPHEMERIS`), assert the complete flag array for every epoch, including epochs that must *not* carry the flag.
+- **Data products and CDF output**: When a `DataProduct` gains, loses, or renames a variable, assert the full list returned by `to_data_product_variables()` and make sure the matching YAML in `imap_l3_processing/cdf/config/` is updated. Processor tests should assert the `save_data` call and the full set of output paths returned by `process()`.
+- **Isolate external systems in unit tests**: Unit tests must not hit the SDC or depend on furnished SPICE state they didn't set up. Patch `imap_data_access` queries and downloads (see `create_mock_query_results` in `tests/test_helpers.py`) and SPICE calls, or inherit from `SpiceTestCase` when real kernels from the repo's `spice_kernels/` folder are part of the behavior under test. End-to-end runs against real files belong in `tests/integration/`.
+
+## Test quality
+
+- **No redundancy**: Don't duplicate coverage already provided by existing tests. Read the full test file before adding new tests.
+- **Proper granularity**: Each test verifies a meaningful behavioral unit. Don't split one logical scenario across multiple test functions. Common violations:
+  - A separate test that only checks `isinstance(result, Foo)` — that assertion belongs in the same test function that asserts on properties of that `Foo`, since the property assertions implicitly prove the type.
+  - One test for the return type, another for field A, another for field B — these should be a single test that asserts all aspects of the result.
+  - Testing a trivial default value that is already covered by a construction or integration test.
+  Keep test count proportional to the number of distinct *behaviors*, not the number of attributes or lines of production code.
+- **No spot-checking**: When a function returns a structured result (dataclass, dict, object with multiple fields), assert the entire result — not just one or two fields. Spot-checking a single field leaves the rest unverified and hides bugs. For dataclasses and value objects, prefer `assertEqual(result, expected_object)` over individual field checks. If the result is too complex for a single equality check, assert every field explicitly rather than picking a few.
+- **Independence**: Tests must not depend on execution order or shared mutable state.
+- **Clarity**: Test names and structure should make failures easy to diagnose.
+- **Only write tests that drive production changes**:
+   * Do not write tests for pinning regressions.
+
+## Patch cleanup
+
+- **Use `self.addCleanup` in `setUp`**, not a separate `tearDown` to stop patches. Call `self.addCleanup(patcher.stop)` immediately after `patcher.start()` in `setUp`. This keeps start and stop co-located, and guarantees cleanup runs even if `setUp` fails partway through (after a patch starts but before `setUp` completes, `tearDown` is never called — but `addCleanup` callbacks always run).
+
+```python
+# BAD — tearDown won't run if setUp fails after patcher.start()
+def setUp(self):
+    self.patcher = mock.patch("mod.Thing")
+    self.mock_thing = self.patcher.start()
+
+def tearDown(self):
+    self.patcher.stop()
+
+# GOOD — cleanup is registered immediately, always runs
+def setUp(self):
+    self.patcher = mock.patch("mod.Thing")
+    self.mock_thing = self.patcher.start()
+    self.addCleanup(self.patcher.stop)
+```
+
+## Defensive programming anti-patterns (never do these in tests)
+
+- **try/except in tests** — Let exceptions propagate. Only catch when asserting a raise with `self.assertRaises`.
+- **Conditional assertions** — `if condition: self.assertEqual(...)` — tests must always assert unconditionally.
+- **Overly tolerant assertions** — `assertTrue(x is not None)` instead of asserting the expected value.
+- **Checking before acting** — `if result.flags is not None: np.testing.assert_array_equal(...)` — if it should exist, just assert on it.
+- **Optional/fallback logic** — `value = result or default` then asserting on `value` — assert directly on the result.
+- **Silent early returns** — `if not precondition: return` silently skips the test. Use `self.fail()` or fix the setup.
+
+## General anti-patterns (never do these in tests)
+- **No re-pin regression pins, only test living code.**

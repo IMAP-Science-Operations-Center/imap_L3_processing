@@ -1,0 +1,6 @@
+{
+  "additionalReadwritePaths": [
+    "~/.spacepy",
+    "~/.matplotlib"
+  ]
+}
