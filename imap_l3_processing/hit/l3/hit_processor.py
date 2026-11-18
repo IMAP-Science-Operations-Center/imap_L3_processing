@@ -111,6 +111,7 @@ class HitProcessor(Processor):
                 raw_event,
                 direct_event_dependencies.cosine_correction_lookup,
                 direct_event_dependencies.gain_lookup,
+                direct_event_dependencies.window_correction_lookup,
                 direct_event_dependencies.range_fit_lookup,
                 direct_event_dependencies.event_type_lookup,
             )
