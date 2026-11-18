@@ -23,12 +23,16 @@ class GainLookupTable(dict):
         low_gain_lookup = {}
 
         with open(str(high_gain_file_path)) as gain_file:
-            gain_reader = csv.reader(gain_file, delimiter=" ")
+            gain_reader = csv.reader(
+                (r for r in gain_file if not r.startswith("#")), delimiter=" "
+            )
             for detector_address, a, b in gain_reader:
                 high_gain_lookup[int(detector_address)] = Gain(a=float(a), b=float(b))
 
         with open(str(low_gain_file_path)) as gain_file:
-            gain_reader = csv.reader(gain_file, delimiter=" ")
+            gain_reader = csv.reader(
+                (r for r in gain_file if not r.startswith("#")), delimiter=" "
+            )
             for detector_address, a, b in gain_reader:
                 low_gain_lookup[int(detector_address)] = Gain(a=float(a), b=float(b))
 

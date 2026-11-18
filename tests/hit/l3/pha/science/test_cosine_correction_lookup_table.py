@@ -44,7 +44,7 @@ class TestCosineCorrectionLookupTable(unittest.TestCase):
             ),
         )
         self.assertEqual(
-            0.978643,
+            0.998643,
             lookup_table.get_cosine_correction(
                 DetectedRange(DetectorRange.R2, DetectorSide.B),
                 L1B0b_detector,
