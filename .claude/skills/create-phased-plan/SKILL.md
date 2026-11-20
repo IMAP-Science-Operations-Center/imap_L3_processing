@@ -43,8 +43,9 @@ The card number controls the plan directory name (see Phase 4) and the **Card re
 
 1. **Capture the card number**, if any, from the slash-command argument or the user's message.
 2. **Read everything the user provided** — description, acceptance criteria, goals, implementation details, linked designs, and any additional context.
-3. **Explore the codebase** to understand the areas that will be affected. Read relevant production files, existing tests, and related modules to build a clear picture of the current state.
-4. **Identify ambiguities or gaps** in the requirements. If anything is unclear, ask the user before proceeding.
+3. **Collect source documents into `documents/`** — save every algorithm document, issue attachment, ancillary sample, email export, or other source file the plan relies on into `.claude/plans/<directory-name>/documents/` (see Phase 4 for the directory name and the `documents/` rules). Always do this, even when a document is only read once; never leave source documents in a scratch or temp directory, and never put them anywhere else in the plan directory.
+4. **Explore the codebase** to understand the areas that will be affected. Read relevant production files, existing tests, and related modules to build a clear picture of the current state.
+5. **Identify ambiguities or gaps** in the requirements. If anything is unclear, ask the user before proceeding.
 
 ---
 
@@ -128,12 +129,13 @@ The card number prefix is **only** added when a card number was found in the arg
 ├── phase-1-<name>.md        # Gherkin Feature + TDD steps for phase 1
 ├── phase-2-<name>.md        # Gherkin Feature + TDD steps for phase 2
 ├── ...                      # One markdown file per BDD phase
+├── documents/               # Algorithm docs and other source documents (git-ignored, always present)
 └── mock_designs/            # Mock designs and wireframes (if applicable)
 ```
 
 ### `overview.md` — required sections
 
-- **Card reference** — card number (if any) and title.
+- **Card reference** — card number (if any) and title, plus a **Source documents** list naming each file in `documents/`, the section(s) the plan relies on, and where it came from (issue attachment URL, email, shared drive path). `documents/` is git-ignored, so this list is the only way another developer can find the same files.
 - **Goal** — what the card achieves from the user's perspective.
 - **Affected areas** — which production files, modules, and test files are involved, grouped under `Production` and `Tests` subheadings.
 - **Phase summary** — a numbered table of all phases with the Gherkin Feature title and a one-line description of each. Do not paste the full Gherkin blocks here — they live in the phase files.
@@ -170,6 +172,15 @@ After the header block, the phase file must include:
 - **TDD steps** — ordered list of Red / Green / Refactor cycles. Each Red step's heading should name the Scenario it covers (e.g. `### 2.1 Red — Scenario: Two data blocks separated by a gap render as two line segments`).
 - **Done criteria** — a checklist that, when complete, proves every Scenario in the Gherkin block passes.
 
+### `documents/`
+
+Every plan has a `documents/` subdirectory holding the algorithm documents and other source documents the plan was built from (PDFs, issue attachments, ancillary CSV samples, exported emails).
+
+- **Always** put source documents here, using their original file names. Do not create other folders for them (e.g. `source_documents/`, `docs/`), and do not put them at the plan root.
+- `documents/` is **git-ignored** (`.claude/plans/*/documents/` and `.cursor/plans/*/documents/` in `.gitignore`). Before writing files there, check that the ignore rule exists with `git check-ignore -v .claude/plans/<directory-name>/documents/<file>`. If it is missing, add it to `.gitignore` before saving any document.
+- Because the folder is not committed, list every file and its origin in `overview.md` → **Card reference → Source documents**, and refer to documents from phase files by relative path (`documents/<file>`) plus the section, table, or equation number, so the reference still makes sense without the file.
+- When a document becomes a test fixture (e.g. an ancillary CSV), copy it into `tests/test_data/...` as part of a TDD step. The copy under `documents/` stays as the untracked original.
+
 ### `mock_designs/`
 
 If the card involves UI changes, create or place mock designs in this subdirectory. Reference them from the relevant phase files.
@@ -188,10 +199,10 @@ After creating all files, present a summary to the user:
 
 ## Execution order
 
-1. **Phase 1** → Capture the card number argument; understand the card; explore affected code; clarify ambiguities.
+1. **Phase 1** → Capture the card number argument; understand the card; save source documents into the plan's git-ignored `documents/` folder; explore affected code; clarify ambiguities.
 2. **Phase 2** → Decompose into Gherkin Features with Scenarios.
 3. **Phase 3** → Define TDD steps within each Feature, mapping each Scenario onto specific tests.
-4. **Phase 4** → Create the plan directory (with optional card-number prefix), `overview.md`, per-phase markdown files (each opening with the `Depends on` / `Blocks` / `Doc references` header block), and `mock_designs/` if needed.
+4. **Phase 4** → Create the plan directory (with optional card-number prefix), `overview.md`, per-phase markdown files (each opening with the `Depends on` / `Blocks` / `Doc references` header block), `documents/` (git-ignored source documents), and `mock_designs/` if needed.
 5. **Phase 5** → Present the plan summary and wait for user confirmation.
 
 Do not skip phases. Do not begin implementation — this skill only produces the plan.
