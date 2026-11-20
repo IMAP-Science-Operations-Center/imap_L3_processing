@@ -11,6 +11,14 @@ from imap_l3_processing.constants import (
     UNSIGNED_INT1_FILL_VALUE,
     UNSIGNED_INT2_FILL_VALUE,
 )
+from imap_l3_processing.hit.l3.electron.hit_l3_electron_dependencies import (
+    HitL3ElectronDependencies,
+)
+from imap_l3_processing.hit.l3.electron.models import HitL1bIalirtRates
+from imap_l3_processing.hit.l3.electron.science.electron_intensity import ElectronIntensities
+from imap_l3_processing.hit.l3.electron.science.electron_intensity_factors import (
+    ElectronIntensityFactors,
+)
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import (
     HITL3SectoredDependencies,
 )
@@ -35,6 +43,8 @@ from imap_l3_processing.hit.quality_flags import HitL3Flags
 from imap_l3_processing.models import InputMetadata, MagData
 from imap_l3_processing.processor import Processor
 from tests.test_helpers import NumpyArrayMatcher, create_dataclass_mock
+
+MODULE = "imap_l3_processing.hit.l3.hit_processor"
 
 
 class TestHitProcessor(TestCase):
@@ -1095,6 +1105,186 @@ class TestHitProcessor(TestCase):
         self.assertEqual(1, len(actual_product.epoch))
         self.assertEqual(datetime(year=2020, month=2, day=1, hour=1), actual_product.epoch[0])
 
+    @patch("imap_l3_processing.utils.spiceypy")
+    @patch(f"{MODULE}.save_data")
+    @patch(f"{MODULE}.calculate_electron_intensities")
+    @patch(f"{MODULE}.HitL3ElectronDependencies.fetch_dependencies")
+    def test_process_electron_product_builds_and_saves_product(
+        self,
+        mock_fetch_dependencies,
+        mock_calculate_electron_intensities,
+        mock_save_data,
+        mock_spiceypy,
+    ):
+        mock_spiceypy.ktotal.return_value = 0
+
+        input_metadata = InputMetadata(
+            instrument="hit",
+            data_level="l3",
+            start_date=datetime(2026, 5, 13),
+            end_date=None,
+            version="",
+            descriptor="electron",
+        )
+        mock_processing_input_collection = Mock()
+        mock_processing_input_collection.get_file_paths.return_value = [Path("test/parent_path")]
+
+        epoch = np.array([datetime(2026, 6, 1), datetime(2026, 6, 1, 0, 1)])
+        rates = np.arange(40, dtype=float).reshape(2, 20)
+        rates_delta_plus = np.arange(100, 140, dtype=float).reshape(2, 20)
+        rates_delta_minus = np.arange(200, 240, dtype=float).reshape(2, 20)
+        factors = ElectronIntensityFactors(
+            a_side_rate_indices=np.arange(6),
+            b_side_rate_indices=np.arange(6, 12),
+            delta_e_mev=np.array([0.5, 0.5, 1.0, 1.0, 2.0, 3.0]),
+            geometry_factor_cm2_sr=np.ones(6),
+            background=np.zeros(6),
+        )
+        mock_fetch_dependencies.return_value = HitL3ElectronDependencies(
+            ialirt_rates=HitL1bIalirtRates(
+                epoch=epoch,
+                rates=rates,
+                rates_delta_plus=rates_delta_plus,
+                rates_delta_minus=rates_delta_minus,
+            ),
+            intensity_factors=factors,
+        )
+
+        intensities = ElectronIntensities(
+            a_side=np.arange(12, dtype=float).reshape(2, 6),
+            a_side_delta_plus=np.arange(12, 24, dtype=float).reshape(2, 6),
+            a_side_delta_minus=np.arange(24, 36, dtype=float).reshape(2, 6),
+            b_side=np.arange(36, 48, dtype=float).reshape(2, 6),
+            b_side_delta_plus=np.arange(48, 60, dtype=float).reshape(2, 6),
+            b_side_delta_minus=np.arange(60, 72, dtype=float).reshape(2, 6),
+        )
+        mock_calculate_electron_intensities.return_value = intensities
+
+        processor = HitProcessor(mock_processing_input_collection, input_metadata)
+        result = processor.process()
+
+        mock_fetch_dependencies.assert_called_once_with(mock_processing_input_collection)
+        mock_calculate_electron_intensities.assert_called_once_with(
+            NumpyArrayMatcher(rates),
+            NumpyArrayMatcher(rates_delta_plus),
+            NumpyArrayMatcher(rates_delta_minus),
+            factors,
+        )
+        mock_save_data.assert_called_once()
+
+        saved_product = mock_save_data.call_args.args[0]
+        np.testing.assert_array_equal(saved_product.epoch, epoch)
+        np.testing.assert_array_equal(
+            saved_product.energy, np.array([0.25, 0.75, 1.5, 2.5, 4.0, 6.5])
+        )
+        np.testing.assert_array_equal(
+            saved_product.energy_delta_plus, np.array([0.25, 0.25, 0.5, 0.5, 1.0, 1.5])
+        )
+        np.testing.assert_array_equal(
+            saved_product.energy_delta_minus, np.array([0.25, 0.25, 0.5, 0.5, 1.0, 1.5])
+        )
+        self.assertEqual(
+            [
+                "<500 keV",
+                "500-1000 keV",
+                "1000-2000 keV",
+                "2000-3000 keV",
+                "3000-5000 keV",
+                ">5000 keV",
+            ],
+            saved_product.energy_labels,
+        )
+        np.testing.assert_array_equal(saved_product.a_side, intensities.a_side)
+        np.testing.assert_array_equal(
+            saved_product.a_side_delta_plus, intensities.a_side_delta_plus
+        )
+        np.testing.assert_array_equal(
+            saved_product.a_side_delta_minus, intensities.a_side_delta_minus
+        )
+        np.testing.assert_array_equal(saved_product.b_side, intensities.b_side)
+        np.testing.assert_array_equal(
+            saved_product.b_side_delta_plus, intensities.b_side_delta_plus
+        )
+        np.testing.assert_array_equal(
+            saved_product.b_side_delta_minus, intensities.b_side_delta_minus
+        )
+        np.testing.assert_array_equal(
+            saved_product.hit_flags,
+            np.full(2, HitL3Flags.NONE, dtype=np.uint16),
+            strict=True,
+        )
+        self.assertEqual(input_metadata, saved_product.input_metadata)
+        self.assertEqual(["parent_path"], saved_product.parent_file_names)
+        self.assertEqual([mock_save_data.return_value], result)
+
+    @patch("imap_l3_processing.utils.spiceypy")
+    @patch(f"{MODULE}.save_data")
+    @patch(f"{MODULE}.calculate_electron_intensities")
+    @patch(f"{MODULE}.HitL3ElectronDependencies.fetch_dependencies")
+    def test_no_electron_product_before_2026_05_13(
+        self,
+        mock_fetch_dependencies,
+        mock_calculate_electron_intensities,
+        mock_save_data,
+        mock_spiceypy,
+    ):
+        mock_spiceypy.ktotal.return_value = 0
+
+        input_metadata = InputMetadata(
+            instrument="hit",
+            data_level="l3",
+            start_date=datetime(2026, 5, 12),
+            end_date=None,
+            version="",
+            descriptor="electron",
+        )
+        factors = ElectronIntensityFactors(
+            a_side_rate_indices=np.arange(6),
+            b_side_rate_indices=np.arange(6, 12),
+            delta_e_mev=np.ones(6),
+            geometry_factor_cm2_sr=np.ones(6),
+            background=np.zeros(6),
+        )
+        rates = np.zeros((2, 20))
+        mock_fetch_dependencies.return_value = HitL3ElectronDependencies(
+            ialirt_rates=HitL1bIalirtRates(
+                epoch=np.array([datetime(2026, 5, 12), datetime(2026, 5, 12, 0, 1)]),
+                rates=rates,
+                rates_delta_plus=rates,
+                rates_delta_minus=rates,
+            ),
+            intensity_factors=factors,
+        )
+        mock_calculate_electron_intensities.return_value = ElectronIntensities(
+            a_side=np.zeros((2, 6)),
+            a_side_delta_plus=np.zeros((2, 6)),
+            a_side_delta_minus=np.zeros((2, 6)),
+            b_side=np.zeros((2, 6)),
+            b_side_delta_plus=np.zeros((2, 6)),
+            b_side_delta_minus=np.zeros((2, 6)),
+        )
+
+        mock_processing_input_collection = Mock()
+        mock_processing_input_collection.get_file_paths.return_value = [Path("test/parent_path")]
+        processor = HitProcessor(mock_processing_input_collection, input_metadata)
+        with self.assertLogs(MODULE, level="INFO") as logs:
+            result = processor.process()
+
+        self.assertEqual(
+            [
+                (
+                    "INFO:imap_l3_processing.hit.l3.hit_processor:"
+                    "No HIT L3 electron data is produced before 2026-05-13 "
+                    "(L4 energy slices changed); start date 2026-05-12"
+                )
+            ],
+            logs.output,
+        )
+        self.assertEqual([], result)
+        mock_fetch_dependencies.assert_not_called()
+        mock_calculate_electron_intensities.assert_not_called()
+        mock_save_data.assert_not_called()
+
     def test_raise_error_if_descriptor_doesnt_match(self):
         input_metadata = InputMetadata(
             instrument="hit",
@@ -1111,7 +1301,7 @@ class TestHitProcessor(TestCase):
 
         self.assertEqual(
             e.exception.args[0],
-            "Don't know how to generate 'spectral-index' /n Known HIT l3 data products: 'macropixel', 'direct-events'.",
+            "Don't know how to generate 'spectral-index' \n Known HIT l3 data products: 'macropixel', 'direct-events', 'electron'.",
         )
 
     T = TypeVar("T")
