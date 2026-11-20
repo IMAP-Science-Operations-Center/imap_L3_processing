@@ -1,7 +1,7 @@
 # Phase 3 — Direct-event energies follow the v1.11.05 incident energy calculation
 
 > **Depends on:** Phase 1 (`WindowCorrectionLookupTable` and its `get_correction_factor`), Phase 2 (`HitL3PhaDependencies.window_correction_lookup` exists for the processor to pass through)
-> **Blocks:** Phase 5 (the end-to-end run exercises the new energy calculation)
+> **Blocks:** Phase 5 (the end-to-end run exercises the new energy calculation), Phase 6 (restructures `process_pha_event` per the PR 255 review)
 > **Doc references:**
 > - [`.claude/rules/test-quality-coverage.md`](../../rules/test-quality-coverage.md) — numpy float assertions, assert every field, `NumpyArrayMatcher` / mock-call patterns
 > - [`.claude/rules/agent-guidelines.md`](../../rules/agent-guidelines.md) — type annotations, `MODULE` patch constant

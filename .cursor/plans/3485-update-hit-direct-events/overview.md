@@ -45,7 +45,7 @@ Local `main` is **3 commits behind `origin/main`**. The missing commits are #253
 - `imap_l3_processing/hit/l3/pha/hit_l3_pha_dependencies.py`
 - `imap_l3_processing/hit/l3/pha/science/calculate_pha.py`
 - `imap_l3_processing/hit/l3/hit_processor.py`
-- `imap_l3_processing/cdf/config/imap_hit_l3_direct-events_variable_attrs.yaml` (`energy`, `energy_in_detector` CATDESC)
+- `imap_l3_processing/cdf/config/imap_hit_l3_direct-events_variable_attrs.yaml` (`energy`, `energy_in_detector`, `delta_e`, `e_prime` CATDESC and VAR_NOTES)
 - `run_local.py` (`create_hit_direct_event_cdf`), `run_local_with_upload_and_download.py` (HIT direct-events dependency list): developer scripts, no tests
 
 ### Tests
@@ -71,6 +71,7 @@ Local `main` is **3 commits behind `origin/main`**. The missing commits are #253
 | 3 | [`phase-3-incident-energy-window-correction.md`](phase-3-incident-energy-window-correction.md) | Direct-event energies follow the v1.11.05 incident energy calculation | `energy` = Σ k·MeV with no cosine correction; `energy_in_detector` uncorrected; ΔE/E′ keep cosine K; the processor passes the WINCORR lookup through |
 | 4 | [`phase-4-charge-without-energy-bounds.md`](phase-4-charge-without-energy-bounds.md) | Charge is computed without the Table 45 energy bounds | Remove the bounds gating; NaN (not a crash) when the power-law interpolation is undefined |
 | 5 | [`phase-5-direct-events-end-to-end-v1p11-ancillaries.md`](phase-5-direct-events-end-to-end-v1p11-ancillaries.md) | HIT L3 direct-events product is produced from the v1.11.05 ancillary set | Add the new ancillary fixtures (including charge-fit v001 built from Tables 46–48), a direct-events integration test, and updated run_local helpers |
+| 6 | [`phase-6-address-pr-255-review.md`](phase-6-address-pr-255-review.md) | Direct-events metadata and PHA event processing follow the PR 255 review | Short CATDESC + VAR_NOTES for the energy variables, restructure `process_pha_event` (early return, `cosine_correction` next to its use), reply to review questions, hand off sds-data-manager PR and 2026-07-30 sample day |
 
 ## Dependency graph
 
@@ -79,6 +80,7 @@ Phase 1 (wincorr lookup table)
    └─▶ Phase 2 (fetch wincorr dependency)
           └─▶ Phase 3 (incident energy uses WINCORR, cosine only on ΔE/E′)
                  └─▶ Phase 5 (end-to-end with v1.11.05 ancillaries)
+                        └─▶ Phase 6 (PR 255 review)
 Phase 4 (charge without energy bounds) ───────────▶ Phase 5
 ```
 
@@ -86,9 +88,10 @@ Phase 4 (charge without energy bounds) ───────────▶ Phas
 |---|---|---|
 | 1 | none | 2, 3 |
 | 2 | 1 | 3, 5 |
-| 3 | 1, 2 | 5 |
+| 3 | 1, 2 | 5, 6 |
 | 4 | none | 5 |
-| 5 | 2, 3, 4 | none |
+| 5 | 2, 3, 4 | 6 |
+| 6 | 3, 5 | none |
 
 Phase 4 is independent of Phases 1–3 and can be done in any order relative to them.
 

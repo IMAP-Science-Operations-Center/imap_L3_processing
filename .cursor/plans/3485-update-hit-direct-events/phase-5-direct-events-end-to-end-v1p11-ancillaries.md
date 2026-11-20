@@ -1,7 +1,7 @@
 # Phase 5 — HIT L3 direct-events product is produced from the v1.11.05 ancillary set
 
 > **Depends on:** Phase 2 (the `wincorr` ancillary must be fetched), Phase 3 (the new energy calculation is exercised), Phase 4 (the v001 Range 2 charge-fit tracks are not in Z order inside the old bounds, which would trip the old `assert`)
-> **Blocks:** none
+> **Blocks:** Phase 6 (its integration-test output is where the PR 255 metadata changes are checked)
 > **Doc references:**
 > - [`.claude/rules/test-quality-coverage.md`](../../rules/test-quality-coverage.md) — end-to-end runs against real files belong in `tests/integration/`
 > - [`.claude/rules/agent-guidelines.md`](../../rules/agent-guidelines.md) — verify fixtures before relying on them
