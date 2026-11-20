@@ -9,5 +9,6 @@
     "test_l3bcde_automatic_reprocessing": null,
     "test_l3bcde_first_time_processing": null,
     "test_proton_normalized_errors_are_standard": "2026-11-18T12:40:31.677601",
-    "test_alpha_normalized_errors_are_standard": "2026-11-18T12:41:00.700801"
+    "test_alpha_normalized_errors_are_standard": "2026-11-18T12:41:00.700801",
+    "test_lo_l3_with_sdc_pipeline_dependencies": "2026-11-20T17:08:50.698512"
 }
