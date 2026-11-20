@@ -53,7 +53,8 @@ charge:
 energy:
   NAME: energy
   DATA_TYPE: CDF_FLOAT
-  CATDESC: Energy (sum of all delta-Es with cosine correction)
+  CATDESC: Incident Energy
+  VAR_NOTES: Sum of window-corrected energies deposited in each participating detector
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -71,7 +72,8 @@ energy:
 energy_in_detector:
   NAME: energy_in_detector
   DATA_TYPE: CDF_FLOAT
-  CATDESC: Energy in detector (delta-E in detector_id detector with cosine correction)
+  CATDESC: Energy deposited in detector_id detector
+  VAR_NOTES: No cosine correction
   VAR_TYPE: support_data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -104,7 +106,8 @@ range:
 delta_e:
   NAME: delta_e
   DATA_TYPE: CDF_FLOAT
-  CATDESC: Delta E (energy deposited in detector that particle fully penetrates)
+  CATDESC: Delta E (energy deposited in last detector that particle fully penetrates)
+  VAR_NOTES: Cosine corrected for species lookup table
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch
@@ -123,6 +126,7 @@ e_prime:
   NAME: e_prime
   DATA_TYPE: CDF_FLOAT
   CATDESC: E prime (energy deposited in stopping detector)
+  VAR_NOTES: Cosine corrected for species lookup table
   VAR_TYPE: data
   RECORD_VARYING: RV
   DEPEND_0: epoch

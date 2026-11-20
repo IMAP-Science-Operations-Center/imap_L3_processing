@@ -61,6 +61,14 @@ uv run python -m unittest tests.swe.test_swe_processor.TestSweProcessor.test_som
 
 Tests live under `tests/`, mirroring the `imap_l3_processing/` package layout (e.g. `imap_l3_processing/swe/swe_processor.py` → `tests/swe/test_swe_processor.py`). Integration tests that run a full processor end-to-end against real data live in `tests/integration/`. When discovering a subdirectory, pass `-t .` so test modules import as `tests.<instrument>...`.
 
+The tests decorated with `@run_test_in_docker` in `tests/integration/test_glows_processor_integration.py` (`test_l3bcde_first_time_processing`, `test_l3bcde_automatic_reprocessing`, `test_glows_l3abcde_from_l2`, `test_run_glows_l3be_against_prod`) build and run `Dockerfile_glows_integration` and need a running Docker daemon. If Docker is not available, skip them:
+
+```bash
+uv run pytest -k "not test_l3bcde_first_time_processing and not test_l3bcde_automatic_reprocessing and not test_glows_l3abcde_from_l2 and not test_run_glows_l3be_against_prod"
+```
+
+A `failed to connect to the docker API` error from these tests means Docker is not running. Leave them skipped.
+
 ## Linting and formatting
 
 ```bash
