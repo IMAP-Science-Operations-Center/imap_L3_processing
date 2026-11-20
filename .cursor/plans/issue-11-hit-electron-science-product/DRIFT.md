@@ -113,3 +113,24 @@ Deviations from the plan, recorded as they happen.
 **Original plan:** Add `ELECTRON_*_VAR_NAME` constants and reuse `EPOCH_VAR_NAME`, `EPOCH_DELTA_VAR_NAME`, and `HIT_FLAGS_CDF_VAR_NAME`.
 **What changed:** `to_data_product_variables` uses the CDF names as string literals. `ELECTRON_EPOCH_DELTA_NS` remains.
 **Why:** The names are only used in that one list.
+
+## 17. Cutoff date folded into the build-and-save test (Phase 5.1–5.4)
+
+**When:** 2026-11-20
+**Original plan:** `test_electron_product_is_only_produced_from_2026_05_13` uses a `subTest` per Examples row. The build-and-save scenario uses start date 2026-06-01. The 2026-05-13 row asserts the saved path and that fetch is called once.
+**What changed:** `test_process_electron_product_builds_and_saves_product` uses start date 2026-05-13 and asserts the full saved product. `test_no_electron_product_before_2026_05_13` covers only 2026-05-12.
+**Why:** The 2026-05-13 row would repeat the build-and-save test.
+
+## 18. Factors object is matched directly (Phase 5.1)
+
+**When:** 2026-11-20
+**Original plan:** `calculate_electron_intensities.assert_called_once_with` wraps the factors in `NumpyArrayMatcher`.
+**What changed:** The factors object is passed directly, next to `NumpyArrayMatcher` for the three rate arrays.
+**Why:** The processor passes that same `ElectronIntensityFactors` instance through. `NumpyArrayMatcher` compares arrays.
+
+## 19. Cutoff date is a local variable (Phase 5.4)
+
+**When:** 2026-11-20
+**Original plan:** `ELECTRON_PRODUCT_START_DATE = datetime(2026, 5, 13)` is a module constant.
+**What changed:** `electron_product_start_date` is assigned inside the `electron` branch of `process()`.
+**Why:** The date is only used by that branch.
