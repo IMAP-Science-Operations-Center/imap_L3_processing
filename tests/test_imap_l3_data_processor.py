@@ -133,16 +133,12 @@ class TestImapL3DataProcessor(TestCase):
     @patch("imap_l3_data_processor.UltraProcessor")
     @patch("imap_l3_data_processor.HiSPInitializer")
     @patch("imap_l3_data_processor.HiProcessor")
-    @patch("imap_l3_data_processor.LoSPInitializer")
-    @patch("imap_l3_data_processor.LoProcessor")
     @patch("imap_l3_data_processor.imap_data_access.upload")
     @patch("imap_l3_data_processor.argparse")
     def test_scheduled_map_jobs_invoke_correct_initializer(
         self,
         mock_argparse,
         mock_upload,
-        mock_lo_processor_class,
-        mock_lo_initializer_class,
         mock_hi_processor_class,
         mock_hi_initializer_class,
         mock_ultra_processor_class,
@@ -165,13 +161,7 @@ class TestImapL3DataProcessor(TestCase):
                 mock_hi_processor_class,
                 HI_COMBINED_DESCRIPTORS,
             ),
-            (
-                "lo",
-                "all-maps",
-                mock_lo_initializer_class,
-                mock_lo_processor_class,
-                LO_SP_MAP_DESCRIPTORS,
-            ),
+
             (
                 "ultra",
                 "u45-maps",

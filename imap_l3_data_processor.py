@@ -116,7 +116,7 @@ def imap_l3_processor():
         repointing=repointing_number,
     )
     if (
-        args.instrument in ["hi", "lo", "ultra"]
+        args.instrument in ["hi", "ultra"]
         and args.data_level == "l3"
         and not parse_map_descriptor(args.descriptor)
     ):
@@ -127,7 +127,6 @@ def imap_l3_processor():
                 HiProcessor,
                 HI_COMBINED_DESCRIPTORS,
             ),
-            ("lo", "all-maps"): (LoSPInitializer, LoProcessor, LO_SP_MAP_DESCRIPTORS),
             ("ultra", "u45-maps"): (
                 UltraSPInitializer,
                 UltraProcessor,

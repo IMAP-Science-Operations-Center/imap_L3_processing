@@ -1,7 +1,7 @@
 {
     "test_spectral_fit_against_validation_data": "2026-11-18T12:38:27.161626",
     "test_codice_lo_3d_distributions": "2026-05-28T09:43:22.990231",
-    "test_swe_processor_with_local_data": null,
+    "test_swe_processor_with_local_data": "2026-11-18T14:40:05.462942",
     "test_ultra_all_sp_maps": "2026-11-18T12:39:19.870479",
     "test_ultra_combined_nsp_maps": "2026-11-18T12:39:32.114943",
     "test_ultra_combined_sp_maps": "2026-11-18T12:39:49.433893",
@@ -9,5 +9,6 @@
     "test_l3bcde_automatic_reprocessing": null,
     "test_l3bcde_first_time_processing": null,
     "test_proton_normalized_errors_are_standard": "2026-11-18T12:40:31.677601",
-    "test_alpha_normalized_errors_are_standard": "2026-11-18T12:41:00.700801"
+    "test_alpha_normalized_errors_are_standard": "2026-11-18T12:41:00.700801",
+    "test_lo_l3_with_sdc_pipeline_dependencies": "2026-11-20T17:08:50.698512"
 }
