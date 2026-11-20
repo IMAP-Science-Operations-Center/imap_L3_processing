@@ -39,7 +39,7 @@ Feature: HIT L3 electron CDF is produced end to end from a real L1B file
     When imap_l3_data_processor runs with instrument "hit", level "l3", descriptor "electron" and date 20260601
     Then "imap_hit_l3_electron_20260601_v001.cdf" exists
     And it contains exactly the 13 variables emitted by HitElectronDataProduct
-    And electron_intensity_sunward and electron_intensity_antisunward have shape (1440, 6)
+    And electron_intensity_a_side and electron_intensity_b_side have shape (1440, 6)
     And every intensity whose L1B rate is not fill is finite
 ```
 

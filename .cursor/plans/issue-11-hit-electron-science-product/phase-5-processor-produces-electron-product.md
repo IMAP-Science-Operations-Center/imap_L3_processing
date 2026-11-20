@@ -35,7 +35,7 @@ Feature: HIT L3 processor produces the electron product
   Scenario: An electron product is built from the dependencies and saved
     Given the start date is 2026-06-01
     And HitL3ElectronDependencies.fetch_dependencies returns 2 epochs of L1B I-ALiRT rates and intensity factors
-    And calculate_electron_intensities returns known sunward and antisunward arrays
+    And calculate_electron_intensities returns known A-side and B-side arrays
     When HitProcessor.process is called
     Then calculate_electron_intensities is called with the L1B rates, delta_plus, delta_minus and the factors
     And save_data is called once with a HitElectronDataProduct whose epoch is the L1B epoch,
