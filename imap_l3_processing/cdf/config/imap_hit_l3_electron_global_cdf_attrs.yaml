@@ -1,0 +1,5 @@
+imap_hit_l3_electron:
+  Data_level: "3"
+  Instrument_type: Particles (space)
+  Data_type: L3_Electron>Level-3 Science data
+  Logical_source_description: IMAP Mission HIT Instrument Level-3 Electron Intensity Science Data

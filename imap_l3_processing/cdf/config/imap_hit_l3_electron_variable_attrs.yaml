@@ -1,0 +1,243 @@
+epoch:
+  NAME: epoch
+  DATA_TYPE: CDF_TIME_TT2000
+  CATDESC: Time, number of nanoseconds since J2000 with leap seconds included
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  FIELDNAM: Epoch
+  FORMAT: ' '
+  LABLAXIS: Epoch
+  UNITS: ns
+  VALIDMIN: 1990-01-01T00:00:00.000000000
+  VALIDMAX: 2099-12-31T00:00:00.000000000
+  FILLVAL: 9999-12-31T23:59:59.999999999
+  TIME_BASE: J2000
+  TIME_SCALE: TT
+  DELTA_PLUS_VAR: epoch_delta
+  DELTA_MINUS_VAR: epoch_delta
+  MONOTON: INCREASE
+  REFERENCE_POSITION: Rotating Earth Geoid
+  SCALETYP: linear
+  SI_CONVERSION: 1e-9>seconds
+epoch_delta:
+  NAME: epoch_delta
+  DATA_TYPE: CDF_INT8
+  CATDESC: Epoch delta
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  FIELDNAM: Epoch Delta
+  FORMAT: I19
+  LABLAXIS: Epoch delta
+  UNITS: ns
+  VALIDMIN: 0
+  VALIDMAX: 86000000000000
+  FILLVAL: -9223372036854775808
+  SCALETYP: linear
+electron_energy:
+  NAME: electron_energy
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Energy bin midpoints for electron intensity
+  VAR_TYPE: support_data
+  RECORD_VARYING: NRV
+  FIELDNAM: Electron Energy
+  FORMAT: F15.3
+  LABLAXIS: Electron energy
+  UNITS: MeV
+  VALIDMIN: 0
+  VALIDMAX: 1000
+  FILLVAL: -1.0000E+31
+  DELTA_PLUS_VAR: electron_energy_delta_plus
+  DELTA_MINUS_VAR: electron_energy_delta_minus
+  SPECIES: electron
+electron_energy_delta_plus:
+  NAME: electron_energy_delta_plus
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Electron energy bin delta plus
+  VAR_TYPE: support_data
+  RECORD_VARYING: NRV
+  FIELDNAM: Electron Energy Delta Plus
+  FORMAT: F15.3
+  LABLAXIS: Energy delta plus
+  UNITS: MeV
+  VALIDMIN: 0
+  VALIDMAX: 1000
+  FILLVAL: -1.0000E+31
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+  SPECIES: electron
+electron_energy_delta_minus:
+  NAME: electron_energy_delta_minus
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Electron energy bin delta minus
+  VAR_TYPE: support_data
+  RECORD_VARYING: NRV
+  FIELDNAM: Electron Energy Delta Minus
+  FORMAT: F15.3
+  LABLAXIS: Energy delta minus
+  UNITS: MeV
+  VALIDMIN: 0
+  VALIDMAX: 1000
+  FILLVAL: -1.0000E+31
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+  SPECIES: electron
+electron_energy_label:
+  NAME: electron_energy_label
+  DATA_TYPE: CDF_CHAR
+  CATDESC: Label for electron energy
+  VAR_TYPE: metadata
+  RECORD_VARYING: NRV
+  FIELDNAM: Electron Energy Label
+  FORMAT: a20
+  UNITS: ' '
+  FILLVAL: ' '
+  SPECIES: electron
+electron_intensity_a_side:
+  NAME: electron_intensity_a_side
+  DATA_TYPE: CDF_REAL4
+  CATDESC: A-side electron intensity by energy, propagating toward the Sun
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DEPEND_1: electron_energy
+  DISPLAY_TYPE: spectrogram
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: A-side Electron Intensity
+  FORMAT: g9.3
+  LABLAXIS: A-side intensity
+  UNITS: "#/(cm^2-s-sr-MeV)"
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.0000E+31
+  LABL_PTR_1: electron_energy_label
+  DELTA_PLUS_VAR: electron_intensity_a_side_delta_plus
+  DELTA_MINUS_VAR: electron_intensity_a_side_delta_minus
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+  SPECIES: electron
+  VAR_NOTES: >-
+    A side, propagating toward the Sun. Intensity follows Algorithm Document Eq. 32,
+    J = (q - b) / (60 * delta_E * G), over the 60 s L1B frame.
+    No data is produced before 2026-05-13.
+electron_intensity_a_side_delta_plus:
+  NAME: electron_intensity_a_side_delta_plus
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Plus uncertainty for A-side electron intensity by energy
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DEPEND_1: electron_energy
+  FIELDNAM: A-side Plus Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: A-side unc.
+  UNITS: "#/(cm^2-s-sr-MeV)"
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.0000E+31
+  LABL_PTR_1: electron_energy_label
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+  SPECIES: electron
+electron_intensity_a_side_delta_minus:
+  NAME: electron_intensity_a_side_delta_minus
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Minus uncertainty for A-side electron intensity by energy
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DEPEND_1: electron_energy
+  FIELDNAM: A-side Minus Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: A-side unc.
+  UNITS: "#/(cm^2-s-sr-MeV)"
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.0000E+31
+  LABL_PTR_1: electron_energy_label
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+  SPECIES: electron
+electron_intensity_b_side:
+  NAME: electron_intensity_b_side
+  DATA_TYPE: CDF_REAL4
+  CATDESC: B-side electron intensity by energy, propagating away from the Sun
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DEPEND_1: electron_energy
+  DISPLAY_TYPE: spectrogram
+  VARIABLE_PURPOSE: PRIMARY_VAR,SUMMARY
+  FIELDNAM: B-side Electron Intensity
+  FORMAT: g9.3
+  LABLAXIS: B-side intensity
+  UNITS: "#/(cm^2-s-sr-MeV)"
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.0000E+31
+  LABL_PTR_1: electron_energy_label
+  DELTA_PLUS_VAR: electron_intensity_b_side_delta_plus
+  DELTA_MINUS_VAR: electron_intensity_b_side_delta_minus
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+  SPECIES: electron
+  VAR_NOTES: >-
+    B side, propagating away from the Sun. Intensity follows Algorithm Document Eq. 32,
+    J = (q - b) / (60 * delta_E * G), over the 60 s L1B frame.
+    No data is produced before 2026-05-13.
+electron_intensity_b_side_delta_plus:
+  NAME: electron_intensity_b_side_delta_plus
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Plus uncertainty for B-side electron intensity by energy
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DEPEND_1: electron_energy
+  FIELDNAM: B-side Plus Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: B-side unc.
+  UNITS: "#/(cm^2-s-sr-MeV)"
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.0000E+31
+  LABL_PTR_1: electron_energy_label
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+  SPECIES: electron
+electron_intensity_b_side_delta_minus:
+  NAME: electron_intensity_b_side_delta_minus
+  DATA_TYPE: CDF_REAL4
+  CATDESC: Minus uncertainty for B-side electron intensity by energy
+  VAR_TYPE: support_data
+  RECORD_VARYING: RV
+  DEPEND_0: epoch
+  DEPEND_1: electron_energy
+  FIELDNAM: B-side Minus Uncertainty
+  FORMAT: g9.3
+  LABLAXIS: B-side unc.
+  UNITS: "#/(cm^2-s-sr-MeV)"
+  VALIDMIN: 0
+  VALIDMAX: 10000000000
+  FILLVAL: -1.0000E+31
+  LABL_PTR_1: electron_energy_label
+  SCALEMIN: 0.0001
+  SCALEMAX: 1000
+  SPECIES: electron
+hit_flags:
+  NAME: hit_flags
+  DATA_TYPE: CDF_UINT2
+  CATDESC: "Quality flags for HIT L3 electron (caution required if nonzero)"
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  DISPLAY_TYPE: time_series
+  SCALETYP: linear
+  RECORD_VARYING: RV
+  FIELDNAM: Quality Flags for HIT L3 electron
+  FORMAT: I5
+  UNITS: '0: okay; nonzero: caution'
+  VALIDMIN: 0
+  VALIDMAX: 65534
+  FILLVAL: 65535
+  LABLAXIS: Quality flags for HIT L3 electron
+  VAR_NOTES: >-
+    No electron-specific quality flags are defined. All bits are reserved.

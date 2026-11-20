@@ -78,7 +78,10 @@ After all TDD cycles are complete:
 
 1. Run every test file that was touched or that corresponds to a changed production file.
 2. Confirm no regressions — especially tests that assert defaults or round-trip the full config, since new fields with default values must not break them.
-3. Run `uv run ruff check <changed files>` and `uv run ruff format --check <changed files>` on all changed production and test files. Fix any lint errors introduced by the changeset.
+3. Lint and format the changed production and test files with the pre-commit ruff hooks. They apply fixes, and `.pre-commit-config.yaml` excludes `.cursor/` and `.claude/`:
+   - `uv run pre-commit run ruff-check --files <changed files>`
+   - `uv run pre-commit run ruff-format --files <changed files>`
+   If a hook rewrites a file, re-run the affected tests, then run that hook again until it passes.
 
 ---
 
@@ -109,7 +112,10 @@ After final verification passes, run the entire unit test suite to catch any reg
 
 1. Run: `uv run python -m unittest discover tests`
 2. If the changed instrument has an integration test (`tests/integration/test_<instrument>_processor_integration.py`), make sure it ran and passed. The `@run_test_in_docker` GLOWS tests listed below can be skipped when Docker is not running.
-3. Run `uv run ruff check .` and `uv run ruff format --check .` and fix anything introduced by this session.
+3. Lint and format with the pre-commit ruff hooks. They apply fixes, and `.pre-commit-config.yaml` excludes `.cursor/` and `.claude/`:
+   - `uv run pre-commit run ruff-check --all-files`
+   - `uv run pre-commit run ruff-format --all-files`
+   If a hook rewrites a file, re-run the affected tests, then run that hook again until it passes. Do not run `ruff` on the whole tree; that also formats Markdown under `.cursor/` and `.claude/`.
 4. If any test fails, determine whether it is caused by the changes in this session.
    - If yes, fix the regression and re-run the full suite.
    - If no (pre-existing failure), note it for the user and move on.

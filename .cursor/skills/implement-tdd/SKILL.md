@@ -108,7 +108,10 @@ These rules govern every test written or modified during execution. Violations m
 After final verification passes, run the unit tests to catch regressions beyond the directly affected files. Do not run integration tests. Anything under `tests/integration/` is out of scope for this skill, including the Docker GLOWS tests.
 
 1. Run: `uv run pytest tests --ignore=tests/integration`
-2. Run `uv run ruff check .` and `uv run ruff format --check .` and fix anything introduced by this session.
+2. Lint and format with the pre-commit ruff hooks. They apply fixes, and `.pre-commit-config.yaml` excludes `.cursor/` and `.claude/`:
+   - `uv run pre-commit run ruff-check --all-files`
+   - `uv run pre-commit run ruff-format --all-files`
+   If a hook rewrites a file, re-run the affected tests, then run that hook again until it passes. Do not run `ruff` on the whole tree; that also formats Markdown under `.cursor/` and `.claude/`.
 3. If any test fails, determine whether it is caused by the changes in this session.
    - If yes, fix the regression and re-run the unit suite with the same command.
    - If no (pre-existing failure), note it for the user and move on.

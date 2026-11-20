@@ -85,3 +85,31 @@ Deviations from the plan, recorded as they happen.
 **Original plan:** `ElectronIntensities` fields are `sunward` and `antisunward`, plus their delta fields.
 **What changed:** The fields are `a_side`, `a_side_delta_plus`, `a_side_delta_minus`, `b_side`, `b_side_delta_plus`, and `b_side_delta_minus`.
 **Why:** The instrument team said sunward/antisunward in the code is confusing. Direction wording can go in CDF `VAR_NOTES` later. Phases 4–6 and the overview now use `a_side` / `b_side`. The CDF variables are `electron_intensity_a_side` and `electron_intensity_b_side`, and the product fields are `a_side*` and `b_side*`.
+
+## 13. Attribute test fails on schema warnings (Phase 4.3)
+
+**When:** 2026-11-20
+**Original plan:** `get_variable_attributes` raises on a missing key or a schema violation, and the Red failure is `FileNotFoundError` or `KeyError`.
+**What changed:** The test wraps every lookup in `assertNoLogs(level="WARNING")`. The Red failure is `KeyError`, because `add_instrument_attrs` skips a missing YAML file.
+**Why:** `get_variable_attributes` only logs a warning when a required attribute is missing. A lookup loop would accept a variable that fails the schema.
+
+## 14. Energy label includes the required attributes (Phase 4.4)
+
+**When:** 2026-11-20
+**Original plan:** Copy the macropixel `*_energy_label` entry shape.
+**What changed:** `electron_energy_label` also sets `UNITS: ' '` and `RECORD_VARYING: NRV`.
+**Why:** The macropixel label is missing both, and the schema marks them required. Entry 13 makes that a test failure.
+
+## 15. Product builder stays in the model test (Phase 4.5)
+
+**When:** 2026-11-20
+**Original plan:** Move `_build_electron_data_product()` to `tests/hit/l3/hit_test_builders.py` because Phase 5 needs it for the `save_data` assertion.
+**What changed:** The helper stays in `tests/hit/l3/electron/test_models.py`.
+**Why:** Phase 5 checks the product the processor built. It does not construct a `HitElectronDataProduct` itself.
+
+## 16. CDF names are string literals (Phase 4.2)
+
+**When:** 2026-11-20
+**Original plan:** Add `ELECTRON_*_VAR_NAME` constants and reuse `EPOCH_VAR_NAME`, `EPOCH_DELTA_VAR_NAME`, and `HIT_FLAGS_CDF_VAR_NAME`.
+**What changed:** `to_data_product_variables` uses the CDF names as string literals. `ELECTRON_EPOCH_DELTA_NS` remains.
+**Why:** The names are only used in that one list.
