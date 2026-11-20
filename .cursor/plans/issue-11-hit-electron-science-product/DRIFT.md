@@ -134,3 +134,10 @@ Deviations from the plan, recorded as they happen.
 **Original plan:** `ELECTRON_PRODUCT_START_DATE = datetime(2026, 5, 13)` is a module constant.
 **What changed:** `electron_product_start_date` is assigned inside the `electron` branch of `process()`.
 **Why:** The date is only used by that branch.
+
+## 20. Integration helper returns the output path (Phase 6.1)
+
+**When:** 2026-11-20
+**Original plan:** `test_hit_electron_product` calls the existing `_run_hit_l3_product` and then opens the output CDF.
+**What changed:** `_run_hit_l3_product` returns the output path. The electron test uses that path. The macropixel and direct-events tests ignore the return value.
+**Why:** The helper builds the path from `ScienceFilePath` inside the mocked data directory. Returning it is how the test opens the file it just wrote.
