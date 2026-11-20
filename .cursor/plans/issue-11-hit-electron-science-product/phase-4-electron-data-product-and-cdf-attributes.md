@@ -20,10 +20,10 @@
 | `electron_energy` | (6) | bin midpoint, MeV |
 | `electron_energy_delta_plus`, `electron_energy_delta_minus` | (6) | ΔE/2, MeV |
 | `electron_energy_label` | (6) | e.g. `300-400 keV` |
-| `electron_intensity_sunward` | (n, 6) | A side, propagating toward the Sun |
-| `electron_intensity_sunward_delta_plus`, `_delta_minus` | (n, 6) | ±σ |
-| `electron_intensity_antisunward` | (n, 6) | B side, propagating away from the Sun |
-| `electron_intensity_antisunward_delta_plus`, `_delta_minus` | (n, 6) | ±σ |
+| `electron_intensity_a_side` | (n, 6) | A side, propagating toward the Sun |
+| `electron_intensity_a_side_delta_plus`, `_delta_minus` | (n, 6) | ±σ |
+| `electron_intensity_b_side` | (n, 6) | B side, propagating away from the Sun |
+| `electron_intensity_b_side_delta_plus`, `_delta_minus` | (n, 6) | ±σ |
 | `hit_flags` | (n) | quality flags |
 
 ## Gherkin Feature & Scenarios
@@ -32,14 +32,14 @@
 Feature: HIT electron data product exposes ISTP variables
 
   Scenario: The data product emits every electron CDF variable in order
-    Given a HitElectronDataProduct with 2 epochs, 6 energy bins, sunward and antisunward intensities
+    Given a HitElectronDataProduct with 2 epochs, 6 energy bins, A-side and B-side intensities
       with plus and minus uncertainties, and hit_flags
     When to_data_product_variables is called
     Then the result is exactly the list of DataProductVariables
       epoch, epoch_delta, electron_energy, electron_energy_delta_plus, electron_energy_delta_minus,
-      electron_energy_label, electron_intensity_sunward, electron_intensity_sunward_delta_plus,
-      electron_intensity_sunward_delta_minus, electron_intensity_antisunward,
-      electron_intensity_antisunward_delta_plus, electron_intensity_antisunward_delta_minus, hit_flags
+      electron_energy_label, electron_intensity_a_side, electron_intensity_a_side_delta_plus,
+      electron_intensity_a_side_delta_minus, electron_intensity_b_side,
+      electron_intensity_b_side_delta_plus, electron_intensity_b_side_delta_minus, hit_flags
     And each variable's value is the matching field of the data product
     And epoch_delta is 30 seconds in nanoseconds for every epoch
 
@@ -57,8 +57,8 @@ Feature: HIT electron data product exposes ISTP variables
 - `imap_l3_processing/hit/l3/electron/models.py`: add the variable-name constants and the `HitElectronDataProduct(DataProduct)` dataclass. The fields are:
   - `epoch`
   - `energy`, `energy_delta_plus`, `energy_delta_minus`, `energy_labels`
-  - `sunward`, `sunward_delta_plus`, `sunward_delta_minus`
-  - `antisunward`, `antisunward_delta_plus`, `antisunward_delta_minus`
+  - `a_side`, `a_side_delta_plus`, `a_side_delta_minus`
+  - `b_side`, `b_side_delta_plus`, `b_side_delta_minus`
   - `hit_flags`
 - `imap_l3_processing/cdf/config/imap_hit_l3_electron_global_cdf_attrs.yaml` *(new)*:
   - `Data_type: L3_Electron>Level-3 Science data`

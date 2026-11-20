@@ -160,9 +160,9 @@ Phases 2 and 3 can run in either order once Phase 1 is done. Phase 4 is independ
 - **Δt = 1 minute:** each L1B epoch is one HIT science frame, so the 60·Δt divisor is the constant 60 s. *Verified*: the epoch spacing is exactly 60 s and the values are counts per frame.
 - **Uncertainty fill handling:** the L1B uncertainty variables have no `FILLVAL`. The reader takes them as stored and sets them to NaN wherever `ialirtrates` is fill, so a fill rate never comes with a finite uncertainty.
 - **Variable naming:**
-  - `electron_intensity_sunward` is the A side (doc: "particles propagating toward the Sun").
-  - `electron_intensity_antisunward` is the B side ("propagating away from the Sun").
-  - CATDESC spells out the side and the propagation direction so the name can't be misread as a look direction.
+  - `electron_intensity_a_side` is the A side (doc: "particles propagating toward the Sun").
+  - `electron_intensity_b_side` is the B side ("propagating away from the Sun").
+  - Names follow the instrument team's A/B side terminology. CATDESC and `VAR_NOTES` spell out the propagation direction.
 - **Energy coordinate:**
   - `electron_energy` is the arithmetic midpoint of each bin's bounds, with `electron_energy_delta_minus` and `electron_energy_delta_plus` both equal to ΔE/2.
   - Bin bounds are the cumulative sum of the ancillary ΔE: 0–0.3, 0.3–0.4, 0.4–0.8, 0.8–1.2, 1.2–2.0 and 2.0–90 MeV.

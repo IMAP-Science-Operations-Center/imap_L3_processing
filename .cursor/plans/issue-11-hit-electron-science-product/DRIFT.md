@@ -43,3 +43,45 @@ Deviations from the plan, recorded as they happen.
 **Original plan:** A module-level `_download_required` raises `ValueError` when `get_file_paths` is empty, and both inputs use it.
 **What changed:** Each lookup checks for an empty list and raises inside `fetch_dependencies`.
 **Why:** The helper only wrapped two short lookups.
+
+## 7. NaN rate folded into the frame-divisor test (Phase 3.5–3.6)
+
+**When:** 2026-11-20
+**Original plan:** A separate `test_nan_rate_yields_nan_only_in_its_epoch_and_bin`, kept separate only if it drove a production change.
+**What changed:** The NaN at epoch 1, index 12 is set in `test_converts_a_and_b_side_rates_to_intensities_with_frame_divisor`, and that test asserts the single NaN cell. `assert_allclose` uses `equal_nan=True` so the NaN position is part of the array comparison.
+**Why:** Numpy propagates the NaN through the division, so the assertion did not require new production code.
+
+## 8. Distinct minus uncertainty in the first test (Phase 3.3)
+
+**When:** 2026-11-20
+**Original plan:** Step 3.1 passes the same array for plus and minus, then step 3.3 changes minus to `3 * (k + 1)`.
+**What changed:** The first test uses `3 * (k + 1)` for minus from the start, expecting `[0.05 … 0.3]` on A side and `[0.55 … 0.8]` on B side.
+**Why:** Changing the assertion during refactor would not have had a failing run first.
+
+## 9. `IALIRT_RATE_COUNT` lives next to the rates check (Phase 3.8)
+
+**When:** 2026-11-20
+**Original plan:** Import `IALIRT_RATE_COUNT` from the Phase 1 factors module.
+**What changed:** `electron_intensity.py` defines `IALIRT_RATE_COUNT = 20`.
+**Why:** Drift entry 3 dropped that constant from the factors module. This is the only place that uses it.
+
+## 10. Per-bin test asserts the uncertainties (Phase 3.4)
+
+**When:** 2026-11-20
+**Original plan:** Assert the full sunward and antisunward intensity arrays.
+**What changed:** The same test also asserts all four uncertainty arrays, which stay `600 / (60 · ΔE · G)` with no background subtraction.
+**Why:** A non-zero background is the case that shows the subtraction applies to intensity only.
+
+## 11. Side conversion stays inline (Phase 3.3)
+
+**When:** 2026-11-20
+**Original plan:** Extract `_convert_side` so the A and B sides share one code path.
+**What changed:** `calculate_electron_intensities` computes both sides inline.
+**Why:** The helper only restated the two conversions.
+
+## 12. Result fields are `a_side` and `b_side` (Phase 3)
+
+**When:** 2026-11-20
+**Original plan:** `ElectronIntensities` fields are `sunward` and `antisunward`, plus their delta fields.
+**What changed:** The fields are `a_side`, `a_side_delta_plus`, `a_side_delta_minus`, `b_side`, `b_side_delta_plus`, and `b_side_delta_minus`.
+**Why:** The instrument team said sunward/antisunward in the code is confusing. Direction wording can go in CDF `VAR_NOTES` later. Phases 4–6 and the overview now use `a_side` / `b_side`. The CDF variables are `electron_intensity_a_side` and `electron_intensity_b_side`, and the product fields are `a_side*` and `b_side*`.
