@@ -150,33 +150,7 @@ def process_pha_event(
 ) -> EventOutput:
     event_analysis = analyze_event(event, rule_lookup)
     energies = [calculate_mev(word, gain_table) for word in event.pha_words]
-    if event_analysis:
-        correction = cosine_table.get_cosine_correction(
-            event_analysis.range, event_analysis.l1_detector, event_analysis.l2_detector
-        )
-
-        window_corrected_energies = []
-        for word in event_analysis.words_with_highest_energy:
-            window_correction_factor = window_correction_table.get_correction_factor(
-                event_analysis.range.range, word.detector.address
-            )
-            deposited_energy = calculate_mev(word, gain_table)
-            window_corrected_energies.append(window_correction_factor * deposited_energy)
-        total_energy = sum(window_corrected_energies)
-        e_delta = correction * calculate_mev(event_analysis.e_delta_word, gain_table)
-        e_prime = correction * calculate_mev(event_analysis.e_prime_word, gain_table)
-        charge = compute_charge(event_analysis.range, e_delta, e_prime, range_fit_lookup)
-
-        return EventOutput(
-            original_event=event,
-            charge=charge,
-            total_energy=total_energy,
-            energies=energies,
-            detected_range=event_analysis.range,
-            e_delta=e_delta,
-            e_prime=e_prime,
-        )
-    else:
+    if not event_analysis:
         return EventOutput(
             original_event=event,
             charge=None,
@@ -186,3 +160,29 @@ def process_pha_event(
             e_delta=None,
             e_prime=None,
         )
+
+    window_corrected_energies = []
+    for word in event_analysis.words_with_highest_energy:
+        window_correction_factor = window_correction_table.get_correction_factor(
+            event_analysis.range.range, word.detector.address
+        )
+        deposited_energy = calculate_mev(word, gain_table)
+        window_corrected_energies.append(window_correction_factor * deposited_energy)
+    total_energy = sum(window_corrected_energies)
+
+    cosine_correction = cosine_table.get_cosine_correction(
+        event_analysis.range, event_analysis.l1_detector, event_analysis.l2_detector
+    )
+    e_delta = cosine_correction * calculate_mev(event_analysis.e_delta_word, gain_table)
+    e_prime = cosine_correction * calculate_mev(event_analysis.e_prime_word, gain_table)
+    charge = compute_charge(event_analysis.range, e_delta, e_prime, range_fit_lookup)
+
+    return EventOutput(
+        original_event=event,
+        charge=charge,
+        total_energy=total_energy,
+        energies=energies,
+        detected_range=event_analysis.range,
+        e_delta=e_delta,
+        e_prime=e_prime,
+    )
