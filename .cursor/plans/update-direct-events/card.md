@@ -1,1 +1,0 @@
-Issue Link: https://github.com/IMAP-Science-Operations-Center/imap_L3_processing/issues/69
