@@ -5,8 +5,16 @@ from datetime import timedelta
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+import imap_data_access
 import numpy as np
-from imap_data_access import ProcessingInputCollection, ScienceFilePath, ScienceInput
+from imap_data_access import (
+    ProcessingInputCollection,
+    ScienceFilePath,
+    ScienceInput,
+    DependencyFilePath,
+)
+from imap_data_access.file_validation import generate_imap_file_path
+from imap_data_access.io import IMAPDataAccessError
 from spacepy.pycdf import CDF
 from spiceypy import spiceypy
 
@@ -18,6 +26,7 @@ from tests.test_helpers import (
     get_test_data_path,
     run_periodically,
 )
+from tests.integration.utils import parse_dependency_json_files
 
 INTEGRATION_TEST_DATA_PATH = Path(__file__).parent / "test_data"
 
@@ -29,52 +38,121 @@ class TestMapIntegration(unittest.TestCase):
     def tearDown(self):
         spiceypy.kclear()
 
+    @run_periodically(timedelta(days=14))
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_lo_l3_with_sdc_pipeline_dependencies(self, mock_parse_cli_arguments):
-        lo_multiple_arcs_test_data_dir = (
-            INTEGRATION_TEST_DATA_PATH / "lo/sdc_pipeline_dependency_inputs"
-        )
+        cases_from_updated_lo_l3_mapping_products = {
+            "row_12": [
+                "l075-spxnsnbs-h-sf-nsp-ram-hae-6deg-6mo",
+                "l090-spxnsnbs-h-sf-nsp-ram-hae-6deg-6mo",
+                "l105-spxnsnbs-h-sf-nsp-ram-hae-6deg-6mo",
+            ],
+            "row_13": [
+                "l075-enasbs-h-hf-sp-ram-hae-6deg-6mo",
+                "l090-enasbs-h-hf-sp-ram-hae-6deg-6mo",
+                "l105-enasbs-h-hf-sp-ram-hae-6deg-6mo",
+            ],
+            "row_14": [
+                "l075-spxsbs-h-hf-nsp-ram-hae-6deg-6mo",
+                "l090-spxsbs-h-hf-nsp-ram-hae-6deg-6mo",
+                "l105-spxsbs-h-hf-nsp-ram-hae-6deg-6mo",
+            ],
+            "row_15": [
+                "l075-spxsbs-h-hf-sp-ram-hae-6deg-6mo",
+                "l090-spxsbs-h-hf-sp-ram-hae-6deg-6mo",
+                "l105-spxsbs-h-hf-sp-ram-hae-6deg-6mo",
+            ],
+            "row_16": [
+                "l075-spxnsnbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
+                "l090-spxnsnbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
+                "l105-spxnsnbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
+                "ilo-spxnsnbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
+            ],
+            "row_17": [
+                "ilo-spxsnbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
+            ],
+            "row_18": [
+                "ilo-spxsbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
+            ],
+            "row_19": [
+                "l075-enasbsMsk-h-hf-sp-ram-hae-6deg-6mo",
+                "l090-enasbsMsk-h-hf-sp-ram-hae-6deg-6mo",
+                "l105-enasbsMsk-h-hf-sp-ram-hae-6deg-6mo",
+                "ilo-enasbsMsk-h-hf-sp-ram-hae-6deg-6mo",
+            ],
+            "row_20": [
+                "l075-spxsbsMsk-h-hf-nsp-ram-hae-6deg-6mo",
+                "l090-spxsbsMsk-h-hf-nsp-ram-hae-6deg-6mo",
+                "l105-spxsbsMsk-h-hf-nsp-ram-hae-6deg-6mo",
+                "ilo-spxsbsMsk-h-hf-nsp-ram-hae-6deg-6mo",
+            ],
+            "row_21": [
+                "l075-spxsbsMsk-h-hf-sp-ram-hae-6deg-6mo",
+                "l090-spxsbsMsk-h-hf-sp-ram-hae-6deg-6mo",
+                "l105-spxsbsMsk-h-hf-sp-ram-hae-6deg-6mo",
+                "ilo-spxsbsMsk-h-hf-sp-ram-hae-6deg-6mo",
+            ],
+        }
         lo_imap_data_dir = get_run_local_data_path("lo/integration_data")
+        lo_sdc_pipeline_test_data_dir = (
+            INTEGRATION_TEST_DATA_PATH / "lo/sdc_pipeline_dependency_inputs_2025"
+        )
+        
+        imap_data_access.config["DATA_DIR"] = lo_sdc_pipeline_test_data_dir
+        deps_base_dir = lo_sdc_pipeline_test_data_dir / "imap/dependency/lo"
+        test_files_to_download_on_first_time_running = parse_dependency_json_files(deps_base_dir)
+        print(
+            f"Downloading {len(test_files_to_download_on_first_time_running)} files if they are not present."
+        )
+        try:
+            for file_name in test_files_to_download_on_first_time_running:
+                imap_path = generate_imap_file_path(file_name)
+                if isinstance(imap_path, ScienceFilePath) and imap_path.data_level.lower() == "l3" and imap_path.instrument == 'lo':
+                    continue
+                imap_data_access.download(file_name)
+        except IMAPDataAccessError:
+            raise RuntimeError("API key must be configured for this test.")
+        print("All files present.")
 
-        input_files = list(lo_multiple_arcs_test_data_dir.glob("*.cdf")) + [
-            INTEGRATION_TEST_DATA_PATH / "spice" / "naif020.tls",
-            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_science_108.tf",
-            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_sclk_008.tsc",
-            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
-            INTEGRATION_TEST_DATA_PATH / "spice" / "de440.bsp",
-            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_recon_20250415_20260415_v01.bsp",
-        ]
+        input_files = list(lo_sdc_pipeline_test_data_dir.rglob("*.*"))
         with mock_imap_data_access(lo_imap_data_dir, input_files):
-            logging.basicConfig(
-                force=True,
-                level=logging.INFO,
-                format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            )
+            for descriptor in [
+                case
+                for case_block in cases_from_updated_lo_l3_mapping_products.values()
+                for case in case_block
+            ]:
+                with self.subTest(descriptor=descriptor):
+                    spiceypy.kclear()
+                    logging.basicConfig(
+                        force=True,
+                        level=logging.INFO,
+                        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                    )
 
-            mock_arguments = Mock()
-            mock_arguments.instrument = "lo"
-            mock_arguments.data_level = "l3"
-            mock_arguments.descriptor = "l090-enasbsMsk-h-hf-sp-ram-hae-6deg-6mo"
-            mock_arguments.start_date = "20250415"
-            mock_arguments.end_date = None
-            mock_arguments.repointing = None
-            mock_arguments.version = "v001"
-            mock_arguments.dependency = (
-                INTEGRATION_TEST_DATA_PATH
-                / "lo/lo_test_dependencies.json"
-            ).read_text()
-            mock_arguments.upload_to_sdc = False
-            mock_parse_cli_arguments.return_value = mock_arguments
+                    mock_arguments = Mock()
+                    mock_arguments.instrument = "lo"
+                    mock_arguments.data_level = "l3"
+                    mock_arguments.descriptor = f"{descriptor}"
+                    mock_arguments.start_date = "20251225"
+                    mock_arguments.end_date = "20251231"
+                    mock_arguments.repointing = None
+                    mock_arguments.dependency = (
+                        DependencyFilePath(f"imap_lo_l3_{descriptor}_20251225_v001.0001.json")
+                        .construct_path()
+                        .read_text()
+                    )
+                    mock_arguments.upload_to_sdc = False
+                    mock_parse_cli_arguments.return_value = mock_arguments
 
-            imap_l3_data_processor.imap_l3_processor()
+                    imap_l3_data_processor.imap_l3_processor()
 
-            expected_map_path = ScienceFilePath(
-                "imap_lo_l3_l090-enasbsMsk-h-hf-sp-ram-hae-6deg-6mo_20250415_v001.0005.cdf"
-            ).construct_path()
-            self.assertTrue(
-                expected_map_path.exists(),
-                f"Expected file {expected_map_path.name} not found",
-            )
+                    expected_map_path = ScienceFilePath(
+                        f"imap_lo_l3_{descriptor}_20251225_v001.0001.cdf"
+                    ).construct_path()
+                    self.assertTrue(
+                        expected_map_path.exists(),
+                        f"Expected file {expected_map_path.name} not found",
+                    )
 
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_hi_all_sp_maps_single_sensor(self, mock_parse_cli_arguments):
