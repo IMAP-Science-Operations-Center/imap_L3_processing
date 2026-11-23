@@ -27,7 +27,6 @@ O5_PARTIAL_DENSITY_VAR_NAME = "oplus5_partial_density"
 O6_PARTIAL_DENSITY_VAR_NAME = "oplus6_partial_density"
 O7_PARTIAL_DENSITY_VAR_NAME = "oplus7_partial_density"
 O8_PARTIAL_DENSITY_VAR_NAME = "oplus8_partial_density"
-NE_PARTIAL_DENSITY_VAR_NAME = "ne_partial_density"
 MG_PARTIAL_DENSITY_VAR_NAME = "mg_partial_density"
 SI_PARTIAL_DENSITY_VAR_NAME = "si_partial_density"
 FE_LOW_PARTIAL_DENSITY_VAR_NAME = "fe_loq_partial_density"
@@ -47,7 +46,6 @@ class CodiceLoL2SWSpeciesData:
     hplus: ndarray
     heplusplus: ndarray
     heplus: ndarray
-    ne: ndarray
     cplus4: ndarray
     cplus5: ndarray
     cplus6: ndarray
@@ -73,7 +71,6 @@ class CodiceLoL2SWSpeciesData:
                 hplus=read_numeric_variable(cdf["hplus"]),
                 heplusplus=read_numeric_variable(cdf["heplusplus"]),
                 heplus=read_numeric_variable(cdf["heplus"]),
-                ne=read_numeric_variable(cdf["ne"]),
                 cplus4=read_numeric_variable(cdf["cplus4"]),
                 cplus5=read_numeric_variable(cdf["cplus5"]),
                 cplus6=read_numeric_variable(cdf["cplus6"]),
@@ -274,7 +271,6 @@ class CodiceLoPartialDensityData:
     oplus6_partial_density: ndarray
     oplus7_partial_density: ndarray
     oplus8_partial_density: ndarray
-    ne_partial_density: ndarray
     mg_partial_density: ndarray
     si_partial_density: ndarray
     fe_loq_partial_density: ndarray
@@ -295,7 +291,6 @@ class CodiceLoPartialDensityData:
                 oplus6_partial_density=read_numeric_variable(cdf[O6_PARTIAL_DENSITY_VAR_NAME]),
                 oplus7_partial_density=read_numeric_variable(cdf[O7_PARTIAL_DENSITY_VAR_NAME]),
                 oplus8_partial_density=read_numeric_variable(cdf[O8_PARTIAL_DENSITY_VAR_NAME]),
-                ne_partial_density=read_numeric_variable(cdf[NE_PARTIAL_DENSITY_VAR_NAME]),
                 mg_partial_density=read_numeric_variable(cdf[MG_PARTIAL_DENSITY_VAR_NAME]),
                 si_partial_density=read_numeric_variable(cdf[SI_PARTIAL_DENSITY_VAR_NAME]),
                 fe_loq_partial_density=read_numeric_variable(cdf[FE_LOW_PARTIAL_DENSITY_VAR_NAME]),
@@ -322,7 +317,6 @@ class CodiceLoL3aPartialDensityDataProduct(DataProduct):
             DataProductVariable(O6_PARTIAL_DENSITY_VAR_NAME, self.data.oplus6_partial_density),
             DataProductVariable(O7_PARTIAL_DENSITY_VAR_NAME, self.data.oplus7_partial_density),
             DataProductVariable(O8_PARTIAL_DENSITY_VAR_NAME, self.data.oplus8_partial_density),
-            DataProductVariable(NE_PARTIAL_DENSITY_VAR_NAME, self.data.ne_partial_density),
             DataProductVariable(MG_PARTIAL_DENSITY_VAR_NAME, self.data.mg_partial_density),
             DataProductVariable(SI_PARTIAL_DENSITY_VAR_NAME, self.data.si_partial_density),
             DataProductVariable(FE_LOW_PARTIAL_DENSITY_VAR_NAME, self.data.fe_loq_partial_density),

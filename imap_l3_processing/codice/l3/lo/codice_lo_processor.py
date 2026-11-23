@@ -187,11 +187,6 @@ class CodiceLoProcessor(Processor):
             codice_lo_l2_data.energy_per_charge,
             mass_per_charge_lookup.oplus8,
         )
-        ne_partial_density = calculate_partial_densities(
-            codice_lo_l2_data.ne,
-            codice_lo_l2_data.energy_per_charge,
-            mass_per_charge_lookup.ne,
-        )
         mg_partial_density = calculate_partial_densities(
             codice_lo_l2_data.mg,
             codice_lo_l2_data.energy_per_charge,
@@ -227,7 +222,6 @@ class CodiceLoProcessor(Processor):
                 oplus6_partial_density=oplus6_partial_density,
                 oplus7_partial_density=oplus7_partial_density,
                 oplus8_partial_density=oplus8_partial_density,
-                ne_partial_density=ne_partial_density,
                 mg_partial_density=mg_partial_density,
                 si_partial_density=si_partial_density,
                 fe_loq_partial_density=fe_loq_partial_density,

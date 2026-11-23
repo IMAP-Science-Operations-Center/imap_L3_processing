@@ -209,7 +209,6 @@ class TestCodiceLoProcessor(unittest.TestCase):
             cplus4_partial_density=np.array([17, 18, 19, 17, 19]),
             cplus5_partial_density=np.array([20, 21, 22, 18, 20]),
             cplus6_partial_density=np.array([23, 24, 25, 19, 21]),
-            ne_partial_density=np.arange(5),
             si_partial_density=np.arange(5),
             heplusplus_partial_density=np.arange(5),
             hplus_partial_density=np.arange(5),
@@ -277,7 +276,6 @@ class TestCodiceLoProcessor(unittest.TestCase):
             cplus4_partial_density=np.array([0, 0, 0]),
             cplus5_partial_density=np.array([0, 0, 0]),
             cplus6_partial_density=np.array([0, 0, 0]),
-            ne_partial_density=np.arange(3),
             si_partial_density=np.arange(3),
             heplusplus_partial_density=np.arange(3),
             hplus_partial_density=np.arange(3),
@@ -349,7 +347,6 @@ class TestCodiceLoProcessor(unittest.TestCase):
             cplus4_partial_density=np.array([16, 17, 18, 18, 18]),
             cplus5_partial_density=np.array([20, 20, 20, 21, 21]),
             cplus6_partial_density=np.array([23, 23, 23, 24, 24]),
-            ne_partial_density=np.arange(5),
             si_partial_density=np.arange(5),
             heplusplus_partial_density=np.arange(5),
             hplus_partial_density=np.arange(5),
@@ -417,7 +414,6 @@ class TestCodiceLoProcessor(unittest.TestCase):
             cplus4_partial_density=np.array([0]),
             cplus5_partial_density=np.array([0]),
             cplus6_partial_density=np.array([0]),
-            ne_partial_density=np.array([1]),
             si_partial_density=np.array([1]),
             heplusplus_partial_density=np.array([1]),
             hplus_partial_density=np.array([1]),
@@ -507,7 +503,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
 
         epochs = np.array([datetime(2025, 1, 1), datetime(2025, 1, 2), datetime(2025, 1, 3)])
-        num_species = 14
+        num_species = 13
 
         codice_lo_l2_data = CodiceLoL2SWSpeciesData(
             *[Mock() for _ in range(len(fields(CodiceLoL2SWSpeciesData)))],
@@ -540,7 +536,6 @@ class TestCodiceLoProcessor(unittest.TestCase):
             oplus6_partial_density,
             oplus7_partial_density,
             oplus8_partial_density,
-            sentinel.ne_partial_density,
             mg_partial_density,
             sentinel.si_partial_density,
             fe_loq_partial_density,
@@ -602,11 +597,6 @@ class TestCodiceLoProcessor(unittest.TestCase):
                     mass_per_charge_lookup.oplus8,
                 ),
                 call(
-                    codice_lo_l2_data.ne,
-                    codice_lo_l2_data.energy_per_charge,
-                    mass_per_charge_lookup.ne,
-                ),
-                call(
                     codice_lo_l2_data.mg,
                     codice_lo_l2_data.energy_per_charge,
                     mass_per_charge_lookup.mg,
@@ -650,7 +640,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         self.assertEqual(oplus6_partial_density, result_data.oplus6_partial_density)
         self.assertEqual(oplus7_partial_density, result_data.oplus7_partial_density)
         self.assertEqual(oplus8_partial_density, result_data.oplus8_partial_density)
-        self.assertEqual(sentinel.ne_partial_density, result_data.ne_partial_density)
+        self.assertFalse(hasattr(result_data, "ne_partial_density"))
         self.assertEqual(mg_partial_density, result_data.mg_partial_density)
         self.assertEqual(sentinel.si_partial_density, result_data.si_partial_density)
         self.assertEqual(fe_loq_partial_density, result_data.fe_loq_partial_density)
