@@ -1,8 +1,10 @@
 import json
 import logging
+import os
 import unittest
 from datetime import timedelta
 from pathlib import Path
+from unittest import skipUnless
 from unittest.mock import Mock, patch
 
 import imap_data_access
@@ -14,7 +16,6 @@ from imap_data_access import (
     DependencyFilePath,
 )
 from imap_data_access.file_validation import generate_imap_file_path
-from imap_data_access.io import IMAPDataAccessError
 from spacepy.pycdf import CDF
 from spiceypy import spiceypy
 
@@ -38,61 +39,60 @@ class TestMapIntegration(unittest.TestCase):
     def tearDown(self):
         spiceypy.kclear()
 
+    @skipUnless(os.environ.get("IMAP_API_KEY"), "requires production API key")
     @run_periodically(timedelta(days=14))
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_lo_l3_with_sdc_pipeline_dependencies(self, mock_parse_cli_arguments):
-        cases_from_updated_lo_l3_mapping_products = {
-            "row_12": [
-                "l075-spxnsnbs-h-sf-nsp-ram-hae-6deg-6mo",
-                "l090-spxnsnbs-h-sf-nsp-ram-hae-6deg-6mo",
-                "l105-spxnsnbs-h-sf-nsp-ram-hae-6deg-6mo",
-            ],
-            "row_13": [
-                "l075-enasbs-h-hf-sp-ram-hae-6deg-6mo",
-                "l090-enasbs-h-hf-sp-ram-hae-6deg-6mo",
-                "l105-enasbs-h-hf-sp-ram-hae-6deg-6mo",
-            ],
-            "row_14": [
-                "l075-spxsbs-h-hf-nsp-ram-hae-6deg-6mo",
-                "l090-spxsbs-h-hf-nsp-ram-hae-6deg-6mo",
-                "l105-spxsbs-h-hf-nsp-ram-hae-6deg-6mo",
-            ],
-            "row_15": [
-                "l075-spxsbs-h-hf-sp-ram-hae-6deg-6mo",
-                "l090-spxsbs-h-hf-sp-ram-hae-6deg-6mo",
-                "l105-spxsbs-h-hf-sp-ram-hae-6deg-6mo",
-            ],
-            "row_16": [
-                "l075-spxnsnbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
-                "l090-spxnsnbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
-                "l105-spxnsnbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
-                "ilo-spxnsnbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
-            ],
-            "row_17": [
-                "ilo-spxsnbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
-            ],
-            "row_18": [
-                "ilo-spxsbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
-            ],
-            "row_19": [
-                "l075-enasbsMsk-h-hf-sp-ram-hae-6deg-6mo",
-                "l090-enasbsMsk-h-hf-sp-ram-hae-6deg-6mo",
-                "l105-enasbsMsk-h-hf-sp-ram-hae-6deg-6mo",
-                "ilo-enasbsMsk-h-hf-sp-ram-hae-6deg-6mo",
-            ],
-            "row_20": [
-                "l075-spxsbsMsk-h-hf-nsp-ram-hae-6deg-6mo",
-                "l090-spxsbsMsk-h-hf-nsp-ram-hae-6deg-6mo",
-                "l105-spxsbsMsk-h-hf-nsp-ram-hae-6deg-6mo",
-                "ilo-spxsbsMsk-h-hf-nsp-ram-hae-6deg-6mo",
-            ],
-            "row_21": [
-                "l075-spxsbsMsk-h-hf-sp-ram-hae-6deg-6mo",
-                "l090-spxsbsMsk-h-hf-sp-ram-hae-6deg-6mo",
-                "l105-spxsbsMsk-h-hf-sp-ram-hae-6deg-6mo",
-                "ilo-spxsbsMsk-h-hf-sp-ram-hae-6deg-6mo",
-            ],
+        all_pivot_angles = [
+            "l075",
+            "l090",
+            "l105",
+        ]
+        combined = ["ilo"]
+        all_pivot_angles_and_combined = [*all_pivot_angles, *combined]
+
+        survival_corrected_intensity_map_variables = {
+            "ena_intensity",
+            "ena_intensity_stat_uncert",
+            "ena_intensity_sys_err",
+            "ena_intensity_sys_err_minus",
+            "ena_intensity_sys_err_plus",
+            "bg_intensity",
+            "bg_intensity_stat_uncert",
+            "bg_intensity_sys_err",
+            "exposure_factor",
+            "obs_date",
+            "obs_date_range",
+            "quality_flags",
+            "survival_probability",
+            "solid_angle",
         }
+
+        spectral_index_map_variables = {
+            "ena_spectral_index",
+            "ena_spectral_index_chisq",
+            "ena_spectral_index_stat_uncert",
+            "ena_spectral_scalar",
+            "ena_spectral_scalar_stat_uncert",
+            "exposure_factor",
+            "obs_date",
+            "obs_date_range",
+            "quality_flags",
+            "solid_angle"
+        }
+
+        cases_from_updated_lo_l3_mapping_products = [
+            ("spxnsnbs-h-sf-nsp-ram-hae-6deg-6mo", all_pivot_angles, spectral_index_map_variables),
+            ("enasbs-h-hf-sp-ram-hae-6deg-6mo", all_pivot_angles, survival_corrected_intensity_map_variables),
+            ("spxsbs-h-hf-nsp-ram-hae-6deg-6mo", all_pivot_angles, spectral_index_map_variables),
+            ("spxsbs-h-hf-sp-ram-hae-6deg-6mo", all_pivot_angles, spectral_index_map_variables),
+            ("spxnsnbsMsk-h-sf-nsp-ram-hae-6deg-6mo", all_pivot_angles_and_combined, spectral_index_map_variables),
+            ("spxsnbsMsk-h-sf-nsp-ram-hae-6deg-6mo", combined, spectral_index_map_variables),
+            ("spxsbsMsk-h-sf-nsp-ram-hae-6deg-6mo", combined, spectral_index_map_variables),
+            ("enasbsMsk-h-hf-sp-ram-hae-6deg-6mo", all_pivot_angles_and_combined, survival_corrected_intensity_map_variables),
+            ("spxsbsMsk-h-hf-nsp-ram-hae-6deg-6mo", all_pivot_angles_and_combined, spectral_index_map_variables),
+            ("spxsbsMsk-h-hf-sp-ram-hae-6deg-6mo", all_pivot_angles_and_combined, spectral_index_map_variables),
+        ]
         lo_imap_data_dir = get_run_local_data_path("lo/integration_data")
         lo_sdc_pipeline_test_data_dir = (
             INTEGRATION_TEST_DATA_PATH / "lo/sdc_pipeline_dependency_inputs_2025"
@@ -104,23 +104,21 @@ class TestMapIntegration(unittest.TestCase):
         print(
             f"Downloading {len(test_files_to_download_on_first_time_running)} files if they are not present."
         )
-        try:
-            for file_name in test_files_to_download_on_first_time_running:
-                imap_path = generate_imap_file_path(file_name)
-                if isinstance(imap_path, ScienceFilePath) and imap_path.data_level.lower() == "l3" and imap_path.instrument == 'lo':
-                    continue
-                imap_data_access.download(file_name)
-        except IMAPDataAccessError:
-            raise RuntimeError("API key must be configured for this test.")
+        for file_name in test_files_to_download_on_first_time_running:
+            imap_path = generate_imap_file_path(file_name)
+            if isinstance(imap_path, ScienceFilePath) and imap_path.data_level.lower() == "l3" and imap_path.instrument == 'lo':
+                continue
+            imap_data_access.download(file_name)
         print("All files present.")
 
         input_files = list(lo_sdc_pipeline_test_data_dir.rglob("*.*"))
         with mock_imap_data_access(lo_imap_data_dir, input_files):
-            for descriptor in [
-                case
-                for case_block in cases_from_updated_lo_l3_mapping_products.values()
-                for case in case_block
-            ]:
+            descriptor_and_expected_variables = [
+                (f"{sensor}-{suffix}", expected_map_variables)
+                for suffix, sensor_block, expected_map_variables in cases_from_updated_lo_l3_mapping_products
+                for sensor in sensor_block
+            ]
+            for descriptor, expected_map_variables in descriptor_and_expected_variables:
                 with self.subTest(descriptor=descriptor):
                     spiceypy.kclear()
                     logging.basicConfig(
@@ -153,6 +151,11 @@ class TestMapIntegration(unittest.TestCase):
                         expected_map_path.exists(),
                         f"Expected file {expected_map_path.name} not found",
                     )
+
+                    with CDF(str(expected_map_path)) as cdf:
+                        self.assertEqual(cdf["epoch"].shape, (1,), "Expected epoch to be of shape (1,)")
+                        for map_variable in expected_map_variables:
+                            self.assertIn(map_variable, cdf,f"Expected map variable {map_variable} not found in cdf")
 
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_hi_all_sp_maps_single_sensor(self, mock_parse_cli_arguments):
