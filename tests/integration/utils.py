@@ -1,12 +1,5 @@
 import json
-
-import imap_data_access
-from argparse import ArgumentParser
 from pathlib import Path
-
-from imap_data_access import ScienceFilePath
-from imap_data_access.file_validation import generate_imap_file_path
-
 
 def parse_dependency_json_files(base_dir: Path) -> list[str]:
     if not base_dir.exists():
