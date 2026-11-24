@@ -335,7 +335,7 @@ def run_periodically(frequency: timedelta):
 
             last_run = periodically_run_tests.get(test_item.__name__)
 
-            if last_run is not None:
+            if last_run is not None and not os.getenv("RUN_ALL_EXPENSIVE_TESTS"):
                 last_run_time = datetime.fromisoformat(last_run) + frequency
                 if datetime.now() < last_run_time:
                     raise SkipTest(
