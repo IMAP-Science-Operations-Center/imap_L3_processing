@@ -1,0 +1,51 @@
+{
+  "dependency": [
+    {
+      "type": "science",
+      "files": [
+        "imap_glows_l3e_survival-probability-lo_20251225-repoint00089_v002.0005.cdf",
+        "imap_glows_l3e_survival-probability-lo_20251226-repoint00090_v002.0005.cdf",
+        "imap_glows_l3e_survival-probability-lo_20251229-repoint00093_v002.0005.cdf",
+        "imap_glows_l3e_survival-probability-lo_20251228-repoint00092_v002.0005.cdf",
+        "imap_glows_l3e_survival-probability-lo_20251227-repoint00091_v002.0005.cdf",
+        "imap_glows_l3e_survival-probability-lo_20251230-repoint00094_v002.0005.cdf"
+      ]
+    },
+    {
+      "type": "science",
+      "files": [
+        "imap_lo_l1c_pset_20251229-repoint00093_v001.0011.cdf",
+        "imap_lo_l1c_pset_20251225-repoint00089_v001.0005.cdf",
+        "imap_lo_l1c_pset_20251228-repoint00092_v001.0013.cdf",
+        "imap_lo_l1c_pset_20251230-repoint00094_v001.0007.cdf",
+        "imap_lo_l1c_pset_20251226-repoint00090_v001.0008.cdf",
+        "imap_lo_l1c_pset_20251227-repoint00091_v001.0008.cdf"
+      ]
+    },
+    {
+      "type": "science",
+      "files": [
+        "imap_lo_l2_l075-enasbsMsk-h-hf-nsp-ram-hae-6deg-6mo_20251225_v001.0001.cdf"
+      ]
+    },
+    {
+      "type": "spice",
+      "files": [
+        "naif0012.tls",
+        "imap_140.tf",
+        "imap_science_130.tf",
+        "imap_sclk_0265.tsc",
+        "de440.bsp",
+        "imap_recon_20250925_20261102_v01.bsp",
+        "imap_2025_357_2026_082_010.ah.bc",
+        "imap_dps_2025_357_2026_082_010.ah.bc"
+      ]
+    }
+  ],
+  "version": {
+    "l075-enasbsMsk-h-hf-sp-ram-hae-6deg-6mo": {
+      "major_version": 1,
+      "minor_version": 1
+    }
+  }
+}
