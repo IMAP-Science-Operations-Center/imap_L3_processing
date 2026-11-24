@@ -144,7 +144,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
             2.283e-8
             * np.deg2rad(15)
             * np.deg2rad(15)
-            * 0.4
+            * 0.04
             * intensities
             * np.sqrt(energy_steps[np.newaxis, :, np.newaxis])
             * np.sqrt(mass_per_charge),
@@ -164,7 +164,7 @@ class TestCodiceLoCalculations(unittest.TestCase):
             2.283e-8
             * np.deg2rad(15)
             * np.deg2rad(15)
-            * 0.4
+            * 0.04
             * np.array([1 + 2 * 10 + 3 * 100, 4 + 5 * 10])
             * np.sqrt(mass_per_charge)
         )
