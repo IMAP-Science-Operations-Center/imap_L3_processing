@@ -3,3 +3,7 @@ imap_hit_l3_direct-events:
   Instrument_type: Particles (space)
   Data_type: L3_direct-events>Level-3 Science data
   Logical_source_description: IMAP Mission HIT Instrument Level-3 Direct Event Science Data
+  MODS:
+    - >-
+      Major version 2, Nov 25, 2026 - Added window correction.
+      Total energy is now computed using the WINCORR ancillary file instead of cosine corrections.
