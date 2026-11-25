@@ -137,8 +137,10 @@ class TestImapL3DataProcessor(TestCase):
     @patch("imap_l3_data_processor.LoProcessor")
     @patch("imap_l3_data_processor.imap_data_access.upload")
     @patch("imap_l3_data_processor.argparse")
+    @patch("imap_l3_data_processor.spiceypy.kclear")
     def test_scheduled_map_jobs_invoke_correct_initializer(
         self,
+        mock_spice_kclear,
         mock_argparse,
         mock_upload,
         mock_lo_processor_class,
@@ -238,6 +240,7 @@ class TestImapL3DataProcessor(TestCase):
                 mock_argparse.reset_mock()
                 mock_initializer_class.reset_mock()
                 mock_processor_class.reset_mock()
+                mock_spice_kclear.reset_mock()
 
                 with self.subTest(
                     instrument=instrument,
@@ -288,6 +291,10 @@ class TestImapL3DataProcessor(TestCase):
                     self.assertEqual(
                         len(expected_descriptors),
                         mock_initializer.furnish_spice_dependencies.call_count,
+                    )
+                    self.assertEqual(
+                        len(expected_descriptors),
+                        mock_spice_kclear.call_count,
                     )
                     mock_initializer.furnish_spice_dependencies.assert_called_with(
                         possible_map_to_produce

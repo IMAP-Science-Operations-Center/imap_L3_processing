@@ -83,9 +83,9 @@ with CDF(str(path), readonly=True) as cdf:
 
 ```python
 with CDF(str(path), readonly=True) as cdf:
-    var = cdf['epoch']
+    var = cdf["epoch"]
     full_array = var[...]
-    first_n    = var[:10]
+    first_n = var[:10]
     one_record = var[0]
 ```
 
@@ -112,11 +112,11 @@ Epoch variables (`CDF_EPOCH`, `CDF_EPOCH16`, `CDF_TIME_TT2000`) decode by defaul
 
 ```python
 with CDF(str(path), readonly=True) as cdf:
-    var = cdf['proton_density']
-    units    = var.attrs['UNITS']
-    catdesc  = var.attrs['CATDESC']
-    fillval  = var.attrs['FILLVAL']
-    display  = var.attrs.get('DISPLAY_TYPE', '')
+    var = cdf["proton_density"]
+    units = var.attrs["UNITS"]
+    catdesc = var.attrs["CATDESC"]
+    fillval = var.attrs["FILLVAL"]
+    display = var.attrs.get("DISPLAY_TYPE", "")
 
     for k, v in var.attrs.items():
         print(f"{k} = {v!r}")
@@ -132,9 +132,9 @@ Common variable attributes (ISTP convention): `CATDESC`, `UNITS`, `VAR_TYPE`, `D
 
 ```python
 with CDF(str(path), readonly=True) as cdf:
-    parents      = list(cdf.attrs['Parents'])
-    first_parent = cdf.attrs['Parents'][0]
-    all_entries  = cdf.attrs['Parents'][...]
+    parents = list(cdf.attrs["Parents"])
+    first_parent = cdf.attrs["Parents"][0]
+    all_entries = cdf.attrs["Parents"][...]
 
     for k in cdf.attrs:
         entries = list(cdf.attrs[k])
@@ -162,8 +162,8 @@ with CDF(str(path), readonly=True) as cdf:
     print("\n=== Variables ===")
     for name in cdf:
         var = cdf[name]
-        catdesc = var.attrs.get('CATDESC', '')
-        units   = var.attrs.get('UNITS', '')
+        catdesc = var.attrs.get("CATDESC", "")
+        units = var.attrs.get("UNITS", "")
         print(f"  {name:<32} shape={var.shape} dtype={var.dtype} units={units!r}  '{catdesc}'")
 ```
 

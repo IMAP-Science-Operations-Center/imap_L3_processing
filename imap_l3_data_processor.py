@@ -169,6 +169,7 @@ def imap_l3_processor():
             logger.info(
                 f"Processing map {map_to_produce.input_metadata.descriptor}, {map_to_produce.input_metadata.start_date}"
             )
+            spiceypy.kclear()
             initializer.furnish_spice_dependencies(map_to_produce)
 
             try:

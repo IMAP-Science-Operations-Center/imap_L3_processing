@@ -547,7 +547,7 @@ Claude: "Here's how it works: [explains directly in response]"
 
 ### Blocked (automatic reset with warning):
 - `cd /absolute/path` - Any absolute path changes
-- `cd ../sibling` - Moving to sibling directories  
+- `cd ../sibling` - Moving to sibling directories
 - `cd ~` or `cd /Users/...` - Going outside project tree
 
 ### Best Practices:
