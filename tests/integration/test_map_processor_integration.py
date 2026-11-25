@@ -1,12 +1,21 @@
 import json
 import logging
+import os
 import unittest
 from datetime import timedelta
 from pathlib import Path
+from unittest import skipUnless
 from unittest.mock import Mock, patch
 
+import imap_data_access
 import numpy as np
-from imap_data_access import ProcessingInputCollection, ScienceFilePath, ScienceInput
+from imap_data_access import (
+    ProcessingInputCollection,
+    ScienceFilePath,
+    ScienceInput,
+    DependencyFilePath,
+)
+from imap_data_access.file_validation import generate_imap_file_path
 from spacepy.pycdf import CDF
 from spiceypy import spiceypy
 
@@ -18,6 +27,7 @@ from tests.test_helpers import (
     get_test_data_path,
     run_periodically,
 )
+from tests.integration.utils import parse_dependency_json_files
 
 INTEGRATION_TEST_DATA_PATH = Path(__file__).parent / "test_data"
 
@@ -29,56 +39,123 @@ class TestMapIntegration(unittest.TestCase):
     def tearDown(self):
         spiceypy.kclear()
 
+    @skipUnless(os.environ.get("IMAP_API_KEY"), "requires production API key")
+    @run_periodically(timedelta(days=14))
     @patch("imap_l3_data_processor._parse_cli_arguments")
-    def test_lo_l3_multiple_arcs(self, mock_parse_cli_arguments):
-        lo_multiple_arcs_test_data_dir = INTEGRATION_TEST_DATA_PATH / "lo/multiple_arcs"
-        lo_imap_data_dir = get_run_local_data_path("lo/integration_data")
-
-        input_files = list(lo_multiple_arcs_test_data_dir.glob("*.cdf")) + [
-            INTEGRATION_TEST_DATA_PATH / "spice" / "naif020.tls",
-            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_science_108.tf",
-            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_sclk_008.tsc",
-            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
-            INTEGRATION_TEST_DATA_PATH / "spice" / "de440.bsp",
-            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_recon_20250415_20260415_v01.bsp",
+    def test_lo_l3_with_sdc_pipeline_dependencies(self, mock_parse_cli_arguments):
+        all_pivot_angles = [
+            "l075",
+            "l090",
+            "l105",
         ]
+        combined = ["ilo"]
+        all_pivot_angles_and_combined = [*all_pivot_angles, *combined]
 
+        survival_corrected_intensity_map_variables = {
+            "ena_intensity",
+            "ena_intensity_stat_uncert",
+            "ena_intensity_sys_err",
+            "ena_intensity_sys_err_minus",
+            "ena_intensity_sys_err_plus",
+            "bg_intensity",
+            "bg_intensity_stat_uncert",
+            "bg_intensity_sys_err",
+            "exposure_factor",
+            "obs_date",
+            "obs_date_range",
+            "quality_flags",
+            "survival_probability",
+            "solid_angle",
+        }
+
+        spectral_index_map_variables = {
+            "ena_spectral_index",
+            "ena_spectral_index_chisq",
+            "ena_spectral_index_stat_uncert",
+            "ena_spectral_scalar",
+            "ena_spectral_scalar_stat_uncert",
+            "exposure_factor",
+            "obs_date",
+            "obs_date_range",
+            "quality_flags",
+            "solid_angle"
+        }
+
+        cases_from_updated_lo_l3_mapping_products = [
+            ("spxnsnbs-h-sf-nsp-ram-hae-6deg-6mo", all_pivot_angles, spectral_index_map_variables),
+            ("enasbs-h-hf-sp-ram-hae-6deg-6mo", all_pivot_angles, survival_corrected_intensity_map_variables),
+            ("spxsbs-h-hf-nsp-ram-hae-6deg-6mo", all_pivot_angles, spectral_index_map_variables),
+            ("spxsbs-h-hf-sp-ram-hae-6deg-6mo", all_pivot_angles, spectral_index_map_variables),
+            ("spxnsnbsMsk-h-sf-nsp-ram-hae-6deg-6mo", all_pivot_angles_and_combined, spectral_index_map_variables),
+            ("spxsnbsMsk-h-sf-nsp-ram-hae-6deg-6mo", combined, spectral_index_map_variables),
+            ("spxsbsMsk-h-sf-nsp-ram-hae-6deg-6mo", combined, spectral_index_map_variables),
+            ("enasbsMsk-h-hf-sp-ram-hae-6deg-6mo", all_pivot_angles_and_combined, survival_corrected_intensity_map_variables),
+            ("spxsbsMsk-h-hf-nsp-ram-hae-6deg-6mo", all_pivot_angles_and_combined, spectral_index_map_variables),
+            ("spxsbsMsk-h-hf-sp-ram-hae-6deg-6mo", all_pivot_angles_and_combined, spectral_index_map_variables),
+        ]
+        lo_imap_data_dir = get_run_local_data_path("lo/integration_data")
+        lo_sdc_pipeline_test_data_dir = (
+            INTEGRATION_TEST_DATA_PATH / "lo/sdc_pipeline_dependency_inputs_2025"
+        )
+        
+        imap_data_access.config["DATA_DIR"] = lo_sdc_pipeline_test_data_dir
+        deps_base_dir = lo_sdc_pipeline_test_data_dir / "imap/dependency/lo"
+        test_files_to_download_on_first_time_running = parse_dependency_json_files(deps_base_dir)
+        print(
+            f"Downloading {len(test_files_to_download_on_first_time_running)} files if they are not present."
+        )
+        for file_name in test_files_to_download_on_first_time_running:
+            imap_path = generate_imap_file_path(file_name)
+            if isinstance(imap_path, ScienceFilePath) and imap_path.data_level.lower() == "l3" and imap_path.instrument == 'lo':
+                continue
+            imap_data_access.download(file_name)
+        print("All files present.")
+
+        input_files = list(lo_sdc_pipeline_test_data_dir.rglob("*.*"))
         with mock_imap_data_access(lo_imap_data_dir, input_files):
-            logging.basicConfig(
-                force=True,
-                level=logging.INFO,
-                format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            )
+            descriptor_and_expected_variables = [
+                (f"{sensor}-{suffix}", expected_map_variables)
+                for suffix, sensor_block, expected_map_variables in cases_from_updated_lo_l3_mapping_products
+                for sensor in sensor_block
+            ]
+            for descriptor, expected_map_variables in descriptor_and_expected_variables:
+                with self.subTest(descriptor=descriptor):
+                    spiceypy.kclear()
+                    logging.basicConfig(
+                        force=True,
+                        level=logging.INFO,
+                        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                    )
 
-            mock_arguments = Mock()
-            mock_arguments.instrument = "lo"
-            mock_arguments.data_level = "l3"
-            mock_arguments.descriptor = "all-maps"
-            mock_arguments.start_date = "20250415"
-            mock_arguments.end_date = None
-            mock_arguments.repointing = None
-            mock_arguments.version = "v001"
-            mock_arguments.dependency = "[]"
-            mock_arguments.upload_to_sdc = False
-            mock_parse_cli_arguments.return_value = mock_arguments
+                    mock_arguments = Mock()
+                    mock_arguments.instrument = "lo"
+                    mock_arguments.data_level = "l3"
+                    mock_arguments.descriptor = f"{descriptor}"
+                    mock_arguments.start_date = "20251225"
+                    mock_arguments.end_date = "20251231"
+                    mock_arguments.repointing = None
+                    mock_arguments.dependency = (
+                        DependencyFilePath(f"imap_lo_l3_{descriptor}_20251225_v001.0001.json")
+                        .construct_path()
+                        .read_text()
+                    )
+                    mock_arguments.upload_to_sdc = False
+                    mock_parse_cli_arguments.return_value = mock_arguments
 
-            imap_l3_data_processor.imap_l3_processor()
+                    imap_l3_data_processor.imap_l3_processor()
 
-            expected_map_path = ScienceFilePath(
-                "imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-1yr_20250415_v001.cdf"
-            ).construct_path()
-            self.assertTrue(
-                expected_map_path.exists(),
-                f"Expected file {expected_map_path.name} not found",
-            )
+                    expected_map_path = ScienceFilePath(
+                        f"imap_lo_l3_{descriptor}_20251225_v001.0001.cdf"
+                    ).construct_path()
+                    self.assertTrue(
+                        expected_map_path.exists(),
+                        f"Expected file {expected_map_path.name} not found",
+                    )
 
-            expected_map_path = ScienceFilePath(
-                "imap_lo_l3_l090-ena-h-hf-sp-ram-hae-6deg-1yr_20250415_v001.cdf"
-            ).construct_path()
-            self.assertTrue(
-                expected_map_path.exists(),
-                f"Expected file {expected_map_path.name} not found",
-            )
+                    with CDF(str(expected_map_path)) as cdf:
+                        self.assertEqual(cdf["epoch"].shape, (1,), "Expected epoch to be of shape (1,)")
+                        for map_variable in expected_map_variables:
+                            self.assertIn(map_variable, cdf,f"Expected map variable {map_variable} not found in cdf")
 
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_hi_all_sp_maps_single_sensor(self, mock_parse_cli_arguments):
@@ -348,82 +425,6 @@ class TestMapIntegration(unittest.TestCase):
 
             with CDF(str(expected_map_path)) as cdf:
                 self.assertEqual(set(nsp_files), set(cdf.attrs["Parents"]))
-
-    @patch("imap_l3_data_processor._parse_cli_arguments")
-    def test_lo_all_sp_maps(self, mock_parse_cli_arguments):
-        lo_test_data_dir = INTEGRATION_TEST_DATA_PATH / "lo"
-        lo_imap_data_dir = get_run_local_data_path("lo/integration_data")
-
-        input_files = [
-            lo_test_data_dir / "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-1yr_20260101_v900.cdf",
-            lo_test_data_dir / "imap_lo_l2_l090-ena-h-hf-nsp-ram-hae-6deg-1yr_20260101_v900.cdf",
-            get_test_data_path("lo/imap_lo_l1c_pset_20260101-repoint01261_v001.cdf"),
-            lo_test_data_dir
-            / "imap_glows_l3e_survival-probability-lo_20260101-repoint01261_v001.cdf",
-            lo_test_data_dir
-            / "imap_glows_l3e_survival-probability-lo_20270418-repoint03003_v001.cdf",
-            INTEGRATION_TEST_DATA_PATH / "spice" / "naif020.tls",
-            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_science_108.tf",
-            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_sclk_008.tsc",
-            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_dps_2025_105_2026_105_009.ah.bc",
-            INTEGRATION_TEST_DATA_PATH / "spice" / "de440.bsp",
-            INTEGRATION_TEST_DATA_PATH / "spice" / "imap_recon_20250415_20260415_v01.bsp",
-        ]
-
-        with mock_imap_data_access(lo_imap_data_dir, input_files):
-            logging.basicConfig(
-                force=True,
-                level=logging.INFO,
-                format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            )
-
-            mock_arguments = Mock()
-            mock_arguments.instrument = "lo"
-            mock_arguments.data_level = "l3"
-            mock_arguments.descriptor = "all-maps"
-            mock_arguments.start_date = "20250415"
-            mock_arguments.end_date = None
-            mock_arguments.repointing = None
-            mock_arguments.version = "v001"
-            mock_arguments.dependency = "[]"
-            mock_arguments.upload_to_sdc = False
-
-            mock_parse_cli_arguments.return_value = mock_arguments
-
-            imap_l3_data_processor.imap_l3_processor()
-
-            expected_ena_path = ScienceFilePath(
-                "imap_lo_l3_l090-ena-h-sf-sp-ram-hae-6deg-1yr_20260101_v001.cdf"
-            ).construct_path()
-            expected_hf_ena_path = ScienceFilePath(
-                "imap_lo_l3_l090-ena-h-hf-sp-ram-hae-6deg-1yr_20260101_v001.cdf"
-            ).construct_path()
-            self.assertTrue(
-                expected_ena_path.exists(),
-                f"Expected file {expected_ena_path.name} not found",
-            )
-            self.assertTrue(
-                expected_hf_ena_path.exists(),
-                f"Expected file {expected_hf_ena_path.name} not found",
-            )
-            expected_ena_parents = {
-                "imap_lo_l2_l090-ena-h-sf-nsp-ram-hae-6deg-1yr_20260101_v900.cdf",
-                "imap_lo_l1c_pset_20260101-repoint01261_v001.cdf",
-                "imap_glows_l3e_survival-probability-lo_20260101-repoint01261_v001.cdf",
-            }
-            expected_hf_ena_parents = {
-                "imap_lo_l2_l090-ena-h-hf-nsp-ram-hae-6deg-1yr_20260101_v900.cdf",
-                "imap_lo_l1c_pset_20260101-repoint01261_v001.cdf",
-                "imap_glows_l3e_survival-probability-lo_20260101-repoint01261_v001.cdf",
-            }
-
-            with CDF(str(expected_ena_path)) as cdf:
-                self.assertEqual(expected_ena_parents, set(cdf.attrs["Parents"]))
-                self.assertIn("survival_probability", cdf)
-
-            with CDF(str(expected_hf_ena_path)) as cdf:
-                self.assertEqual(expected_hf_ena_parents, set(cdf.attrs["Parents"]))
-                self.assertIn("survival_probability", cdf)
 
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_lo_isn_maps(self, mock_parse_cli_arguments):
