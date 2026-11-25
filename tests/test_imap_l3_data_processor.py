@@ -15,7 +15,6 @@ from imap_data_access.processing_input import (
 from imap_l3_data_processor import imap_l3_processor
 from imap_l3_processing.hi.hi_combined_initializer import HI_COMBINED_DESCRIPTORS
 from imap_l3_processing.hi.hi_sp_initializer import HI_SP_MAP_DESCRIPTORS
-from imap_l3_processing.lo.l3.lo_sp_initializer import LO_SP_MAP_DESCRIPTORS
 from imap_l3_processing.maps.map_initializer import PossibleMapToProduce
 from imap_l3_processing.models import InputMetadata, VersionMap
 from imap_l3_processing.ultra.ultra_combined_nsp_initializer import (
@@ -163,7 +162,6 @@ class TestImapL3DataProcessor(TestCase):
                 mock_hi_processor_class,
                 HI_COMBINED_DESCRIPTORS,
             ),
-
             (
                 "ultra",
                 "u45-maps",

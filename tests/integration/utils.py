@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+
 def parse_dependency_json_files(base_dir: Path) -> list[str]:
     if not base_dir.exists():
         raise ValueError(f"{base_dir} does not exist")
