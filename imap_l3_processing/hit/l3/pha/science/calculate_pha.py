@@ -18,6 +18,9 @@ from imap_l3_processing.hit.l3.pha.science.hit_event_type_lookup import (
     HitEventTypeLookup,
 )
 from imap_l3_processing.hit.l3.pha.science.range_fit_lookup import RangeFitLookup
+from imap_l3_processing.hit.l3.pha.science.window_correction_lookup_table import (
+    WindowCorrectionLookupTable,
+)
 
 
 @dataclass
@@ -117,87 +120,37 @@ def analyze_event(event: RawPHAEvent, rule_lookup: HitEventTypeLookup) -> EventA
         )
 
 
-@dataclass
-class ValidDetectorRange:
-    e_prime_min: float
-    e_prime_max: float
-    delta_e_min: float
-    delta_e_max: float
-
-    def is_in_range(self, e_prime: float, delta_e: float) -> bool:
-        return (
-            self.e_prime_min <= e_prime <= self.e_prime_max
-            and self.delta_e_min <= delta_e <= self.delta_e_max
-        )
-
-
-valid_ranges = {
-    DetectorRange.R2: ValidDetectorRange(
-        e_prime_min=0.2, e_prime_max=860, delta_e_min=0.1, delta_e_max=430
-    ),
-    DetectorRange.R3: ValidDetectorRange(
-        e_prime_min=1.0, e_prime_max=4300, delta_e_min=0.2, delta_e_max=860
-    ),
-    DetectorRange.R4: ValidDetectorRange(
-        e_prime_min=1.0, e_prime_max=4300, delta_e_min=1.0, delta_e_max=4300
-    ),
-}
-
-
 def compute_charge(
     detected_range: DetectedRange,
     delta_e: float,
     e_prime: float,
     double_power_law_lookup: RangeFitLookup,
 ) -> float:
-    if valid_ranges[detected_range.range].is_in_range(e_prime, delta_e):
-        charges, deltas = double_power_law_lookup.evaluate_e_prime(detected_range, e_prime)
-        assert np.array_equal(deltas, np.sort(deltas)), "values are not increasing"
-        index_2 = clip(np.searchsorted(deltas, delta_e), 1, len(charges) - 1)
-        index_1 = index_2 - 1
+    if delta_e <= 0 or e_prime <= 0:
+        return np.nan
+    charges, deltas = double_power_law_lookup.evaluate_e_prime(detected_range, e_prime)
+    if not np.all(np.diff(deltas) > 0):
+        return np.nan
+    index_2 = clip(np.searchsorted(deltas, delta_e), 1, len(charges) - 1)
+    index_1 = index_2 - 1
 
-        B = np.log(charges[index_2] / charges[index_1]) / np.log(deltas[index_2] / deltas[index_1])
-        A = charges[index_1] / (deltas[index_1] ** B)
+    B = np.log(charges[index_2] / charges[index_1]) / np.log(deltas[index_2] / deltas[index_1])
+    A = charges[index_1] / (deltas[index_1] ** B)
 
-        return A * delta_e**B
-    return np.nan
+    return A * delta_e**B
 
 
 def process_pha_event(
     event: RawPHAEvent,
     cosine_table: CosineCorrectionLookupTable,
     gain_table: GainLookupTable,
+    window_correction_table: WindowCorrectionLookupTable,
     range_fit_lookup: RangeFitLookup,
     rule_lookup: HitEventTypeLookup,
 ) -> EventOutput:
     event_analysis = analyze_event(event, rule_lookup)
-    if event_analysis:
-        correction = cosine_table.get_cosine_correction(
-            event_analysis.range, event_analysis.l1_detector, event_analysis.l2_detector
-        )
-
-        def calculate_corrected_energy(word):
-            return correction * calculate_mev(word, gain_table)
-
-        energies = [calculate_corrected_energy(word) for word in event.pha_words]
-        total_energy = sum(
-            calculate_corrected_energy(word) for word in event_analysis.words_with_highest_energy
-        )
-        e_delta = calculate_corrected_energy(event_analysis.e_delta_word)
-        e_prime = calculate_corrected_energy(event_analysis.e_prime_word)
-        charge = compute_charge(event_analysis.range, e_delta, e_prime, range_fit_lookup)
-
-        return EventOutput(
-            original_event=event,
-            charge=charge,
-            total_energy=total_energy,
-            energies=energies,
-            detected_range=event_analysis.range,
-            e_delta=e_delta,
-            e_prime=e_prime,
-        )
-    else:
-        energies = [calculate_mev(word, gain_table) for word in event.pha_words]
+    energies = [calculate_mev(word, gain_table) for word in event.pha_words]
+    if not event_analysis:
         return EventOutput(
             original_event=event,
             charge=None,
@@ -207,3 +160,29 @@ def process_pha_event(
             e_delta=None,
             e_prime=None,
         )
+
+    window_corrected_energies = []
+    for word in event_analysis.words_with_highest_energy:
+        window_correction_factor = window_correction_table.get_correction_factor(
+            event_analysis.range.range, word.detector.address
+        )
+        deposited_energy = calculate_mev(word, gain_table)
+        window_corrected_energies.append(window_correction_factor * deposited_energy)
+    total_energy = sum(window_corrected_energies)
+
+    cosine_correction = cosine_table.get_cosine_correction(
+        event_analysis.range, event_analysis.l1_detector, event_analysis.l2_detector
+    )
+    e_delta = cosine_correction * calculate_mev(event_analysis.e_delta_word, gain_table)
+    e_prime = cosine_correction * calculate_mev(event_analysis.e_prime_word, gain_table)
+    charge = compute_charge(event_analysis.range, e_delta, e_prime, range_fit_lookup)
+
+    return EventOutput(
+        original_event=event,
+        charge=charge,
+        total_energy=total_energy,
+        energies=energies,
+        detected_range=event_analysis.range,
+        e_delta=e_delta,
+        e_prime=e_prime,
+    )
