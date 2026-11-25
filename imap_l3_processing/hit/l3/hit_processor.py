@@ -1,4 +1,6 @@
 import logging
+from datetime import datetime
+from pathlib import Path
 
 import numpy as np
 from imap_data_access.processing_input import ProcessingInputCollection
@@ -6,6 +8,13 @@ from imap_data_access.processing_input import ProcessingInputCollection
 from imap_l3_processing.constants import (
     UNSIGNED_INT1_FILL_VALUE,
     UNSIGNED_INT2_FILL_VALUE,
+)
+from imap_l3_processing.hit.l3.electron.hit_l3_electron_dependencies import (
+    HitL3ElectronDependencies,
+)
+from imap_l3_processing.hit.l3.electron.models import HitElectronDataProduct
+from imap_l3_processing.hit.l3.electron.science.electron_intensity import (
+    calculate_electron_intensities,
 )
 from imap_l3_processing.hit.l3.hit_l3_sectored_dependencies import (
     HITL3SectoredDependencies,
@@ -38,7 +47,7 @@ class HitProcessor(Processor):
     def __init__(self, dependencies: ProcessingInputCollection, input_metadata: InputMetadata):
         super().__init__(dependencies, input_metadata)
 
-    def process(self):
+    def process(self) -> list[Path]:
         if self.input_metadata.descriptor == "macropixel":
             dependencies = HITL3SectoredDependencies.fetch_dependencies(self.dependencies)
             pitch_angle_data_product = self.process_pitch_angle_product(dependencies)
@@ -53,10 +62,52 @@ class HitProcessor(Processor):
             direct_event_data_product.parent_file_names = self.get_parent_file_names()
             cdf_file_path = save_data(direct_event_data_product)
             return [cdf_file_path]
+        elif self.input_metadata.descriptor == "electron":
+            electron_product_start_date = datetime(2026, 5, 13)
+            if self.input_metadata.start_date < electron_product_start_date:
+                logger.info(
+                    f"No HIT L3 electron data is produced before "
+                    f"{electron_product_start_date:%Y-%m-%d} (L4 energy slices changed); "
+                    f"start date {self.input_metadata.start_date:%Y-%m-%d}"
+                )
+                return []
+            dependencies = HitL3ElectronDependencies.fetch_dependencies(self.dependencies)
+            product = self.process_electron_product(dependencies)
+            product.parent_file_names = self.get_parent_file_names()
+            return [save_data(product)]
         else:
             raise ValueError(
-                f"Don't know how to generate '{self.input_metadata.descriptor}' /n Known HIT l3 data products: 'macropixel', 'direct-events'."
+                f"Don't know how to generate '{self.input_metadata.descriptor}' \n "
+                "Known HIT l3 data products: 'macropixel', 'direct-events', 'electron'."
             )
+
+    def process_electron_product(
+        self, dependencies: HitL3ElectronDependencies
+    ) -> HitElectronDataProduct:
+        factors = dependencies.intensity_factors
+        intensities = calculate_electron_intensities(
+            dependencies.ialirt_rates.rates,
+            dependencies.ialirt_rates.rates_delta_plus,
+            dependencies.ialirt_rates.rates_delta_minus,
+            factors,
+        )
+        return HitElectronDataProduct(
+            input_metadata=self.input_metadata,
+            epoch=dependencies.ialirt_rates.epoch,
+            energy=(factors.energy_lower_mev + factors.energy_upper_mev) / 2,
+            energy_delta_plus=factors.delta_e_mev / 2,
+            energy_delta_minus=factors.delta_e_mev / 2,
+            energy_labels=factors.energy_labels,
+            a_side=intensities.a_side,
+            a_side_delta_plus=intensities.a_side_delta_plus,
+            a_side_delta_minus=intensities.a_side_delta_minus,
+            b_side=intensities.b_side,
+            b_side_delta_plus=intensities.b_side_delta_plus,
+            b_side_delta_minus=intensities.b_side_delta_minus,
+            hit_flags=np.full(
+                len(dependencies.ialirt_rates.epoch), HitL3Flags.NONE, dtype=np.uint16
+            ),
+        )
 
     def process_direct_event_product(
         self, direct_event_dependencies: HitL3PhaDependencies

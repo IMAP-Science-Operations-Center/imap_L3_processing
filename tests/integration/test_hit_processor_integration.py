@@ -3,11 +3,13 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+import numpy as np
 from imap_data_access.processing_input import (
     ProcessingInputCollection,
     ScienceFilePath,
     generate_imap_input,
 )
+from spacepy.pycdf import CDF
 
 import imap_l3_data_processor
 from tests.integration.integration_test_helpers import mock_imap_data_access
@@ -22,7 +24,7 @@ class HitProcessorIntegration(unittest.TestCase):
         output_directory_name: str,
         descriptor: str,
         start_date: str,
-    ) -> None:
+    ) -> Path:
         output_path = get_run_local_data_path(output_directory_name)
 
         with mock_imap_data_access(output_path, input_files):
@@ -58,6 +60,8 @@ class HitProcessorIntegration(unittest.TestCase):
                 expected_output_path.exists(),
                 f"Expected file {expected_output_path.name} not found",
             )
+
+        return expected_output_path
 
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_hit_macropixel_product(self, mock_parse_cli_arguments: Mock) -> None:
@@ -114,3 +118,46 @@ class HitProcessorIntegration(unittest.TestCase):
             "direct-events",
             "20100105",
         )
+
+    @patch("imap_l3_data_processor._parse_cli_arguments")
+    def test_hit_electron_product(self, mock_parse_cli_arguments: Mock) -> None:
+        input_files = [
+            get_test_data_path("hit/electron/imap_hit_l1b_standard-rates_20260601_v001.0003.cdf"),
+            get_test_data_path(
+                "hit/electron/imap_hit_electron-intensity-factors_20260513_v001.csv"
+            ),
+        ]
+        output_path = self._run_hit_l3_product(
+            mock_parse_cli_arguments,
+            input_files,
+            "hit_electron_integration",
+            "electron",
+            "20260601",
+        )
+
+        with CDF(str(output_path), readonly=True) as cdf:
+            self.assertEqual(
+                {
+                    "epoch",
+                    "epoch_delta",
+                    "electron_energy",
+                    "electron_energy_delta_plus",
+                    "electron_energy_delta_minus",
+                    "electron_energy_label",
+                    "electron_intensity_a_side",
+                    "electron_intensity_a_side_delta_plus",
+                    "electron_intensity_a_side_delta_minus",
+                    "electron_intensity_b_side",
+                    "electron_intensity_b_side_delta_plus",
+                    "electron_intensity_b_side_delta_minus",
+                    "hit_flags",
+                },
+                set(cdf.keys()),
+            )
+            a_side = cdf["electron_intensity_a_side"][...]
+            b_side = cdf["electron_intensity_b_side"][...]
+
+        self.assertEqual((1440, 6), a_side.shape)
+        self.assertEqual((1440, 6), b_side.shape)
+        np.testing.assert_array_equal(np.isfinite(a_side), np.full((1440, 6), True))
+        np.testing.assert_array_equal(np.isfinite(b_side), np.full((1440, 6), True))

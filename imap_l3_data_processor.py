@@ -23,10 +23,6 @@ from imap_l3_processing.hi.hi_sp_initializer import (
     HiSPInitializer,
 )
 from imap_l3_processing.hit.l3.hit_processor import HitProcessor
-from imap_l3_processing.lo.l3.lo_sp_initializer import (
-    LO_SP_MAP_DESCRIPTORS,
-    LoSPInitializer,
-)
 from imap_l3_processing.lo.lo_processor import LoProcessor
 from imap_l3_processing.maps.map_descriptors import parse_map_descriptor
 from imap_l3_processing.models import InputMetadata, VersionMap
