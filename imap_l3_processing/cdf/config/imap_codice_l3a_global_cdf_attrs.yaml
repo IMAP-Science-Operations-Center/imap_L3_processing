@@ -2,6 +2,10 @@ imap_codice_l3a_lo-partial-densities:
   Data_level: "3a"
   Data_type: L3A_lo-partial-densities>Level-3A partial densities
   Logical_source_description: IMAP Mission CoDICE Lo Instrument Partial Densities
+  MODS:
+    - >-
+      Major version 2, Nov. 24, 2026 - Remove ne_partial_density.
+      Corrected energy passband width, lowering densities by order of magnitude.
 
 imap_codice_l3a_lo-sw-ratios:
   Data_level: "3a"

@@ -47,7 +47,6 @@ LO_L2_SW_SPECIES_DATA_VARS = [
     "hplus",
     "heplusplus",
     "heplus",
-    "ne",
     "cplus4",
     "cplus5",
     "cplus6",
@@ -77,7 +76,6 @@ class TestModels(CdfModelTestCase):
                 hplus = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
                 heplus = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
                 heplusplus = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
-                ne = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
                 cplus4 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
                 cplus5 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
                 cplus6 = rng.random((len(epoch), len(energy_per_charge), len(spin_sector)))
@@ -100,7 +98,6 @@ class TestModels(CdfModelTestCase):
                 cdf_file["hplus"] = hplus
                 cdf_file["heplusplus"] = heplusplus
                 cdf_file["heplus"] = heplus
-                cdf_file["ne"] = ne
                 cdf_file["cplus4"] = cplus4
                 cdf_file["cplus5"] = cplus5
                 cdf_file["cplus6"] = cplus6
@@ -126,7 +123,6 @@ class TestModels(CdfModelTestCase):
             np.testing.assert_array_equal(result.hplus, hplus)
             np.testing.assert_array_equal(result.heplusplus, heplusplus)
             np.testing.assert_array_equal(result.heplus, heplus)
-            np.testing.assert_array_equal(result.ne, ne)
             np.testing.assert_array_equal(result.cplus4, cplus4)
             np.testing.assert_array_equal(result.cplus5, cplus5)
             np.testing.assert_array_equal(result.cplus6, cplus6)
@@ -140,6 +136,8 @@ class TestModels(CdfModelTestCase):
             np.testing.assert_array_equal(result.fe_loq, fe_loq)
             np.testing.assert_array_equal(result.fe_hiq, fe_hiq)
             np.testing.assert_array_equal(result.data_quality, data_quality)
+            self.assertFalse(hasattr(result, "ne"))
+            self.assertFalse(hasattr(result, "unc_ne"))
 
     def test_lo_l2_sw_species_read_from_cdf_handles_fillval(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -176,7 +174,6 @@ class TestModels(CdfModelTestCase):
             np.testing.assert_array_equal(result.hplus, nans)
             np.testing.assert_array_equal(result.heplusplus, nans)
             np.testing.assert_array_equal(result.heplus, nans)
-            np.testing.assert_array_equal(result.ne, nans)
             np.testing.assert_array_equal(result.cplus4, nans)
             np.testing.assert_array_equal(result.cplus5, nans)
             np.testing.assert_array_equal(result.cplus6, nans)
@@ -205,7 +202,6 @@ class TestModels(CdfModelTestCase):
             "oplus6_partial_density": np.array([15]),
             "oplus7_partial_density": np.array([15]),
             "oplus8_partial_density": np.array([15]),
-            "ne_partial_density": np.array([15]),
             "mg_partial_density": np.array([15]),
             "si_partial_density": np.array([15]),
             "fe_loq_partial_density": np.array([15]),
@@ -218,7 +214,7 @@ class TestModels(CdfModelTestCase):
 
         actual_data_product_variables = data_product.to_data_product_variables()
 
-        self.assertEqual(16, len(actual_data_product_variables))
+        self.assertEqual(15, len(actual_data_product_variables))
 
         for input_variable, actual_data_product_variable in zip(
             input_data_product_kwargs.items(), actual_data_product_variables
@@ -278,7 +274,6 @@ class TestModels(CdfModelTestCase):
             oplus6_partial_density=rng.random(len(epoch), dtype="float32"),
             oplus7_partial_density=rng.random(len(epoch), dtype="float32"),
             oplus8_partial_density=rng.random(len(epoch), dtype="float32"),
-            ne_partial_density=rng.random(len(epoch), dtype="float32"),
             mg_partial_density=rng.random(len(epoch), dtype="float32"),
             si_partial_density=rng.random(len(epoch), dtype="float32"),
             fe_loq_partial_density=rng.random(len(epoch), dtype="float32"),
