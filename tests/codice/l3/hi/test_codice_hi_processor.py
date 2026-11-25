@@ -400,6 +400,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
             energy_he3he4=(np.array([1.11, 1.17]) * 1.4),
             energy_he3he4_plus=np.repeat(1.6, len(np.array([1.11, 1.17]))),
             energy_he3he4_minus=np.repeat(1.6, len(np.array([1.11, 1.17]))),
+            quality_flags=np.array([2**7 | CodiceL3Flags.GAIN_TEST, 0]),
         )
 
         dependencies = CodicePitchAngleDependencies(
@@ -439,6 +440,12 @@ class TestCodiceHiProcessor(unittest.TestCase):
         expected_cno_intensity_binned_by_pa_and_gyro = rng.random((2, 3, 6, 12))
         expected_fe_intensity_binned_by_pa_and_gyro = rng.random((2, 2, 6, 12))
 
+        expected_quality_flags = np.array(
+            [
+                CodiceL3Flags.PRELIMINARY_MAG | CodiceL3Flags.GAIN_TEST,
+                CodiceL3Flags.PRELIMINARY_MAG,
+            ]
+        )
         expected_parents = []
 
         mock_rebin_by_pitch_angle_and_gyrophase.side_effect = [
@@ -684,7 +691,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
 
         np.testing.assert_array_equal(
             codice_hi_data_product.codice_flags,
-            np.array([CodiceL3Flags.PRELIMINARY_MAG, CodiceL3Flags.PRELIMINARY_MAG]),
+            expected_quality_flags,
         )
 
         np.testing.assert_array_equal(codice_hi_data_product.parent_file_names, expected_parents)

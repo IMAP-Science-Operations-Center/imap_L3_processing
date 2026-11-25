@@ -17,7 +17,10 @@ from imap_l3_processing.codice.l3.hi.pitch_angle.codice_pitch_angle_dependencies
 from imap_l3_processing.codice.l3.lo.constants import (
     CODICE_INSTRUMENT_TO_SC_FRAME_SPIN_ANGLE_OFFSET,
 )
-from imap_l3_processing.codice.quality_flags import CodiceL3Flags
+from imap_l3_processing.codice.quality_flags import (
+    CodiceL2FlagsMask,
+    CodiceL3Flags,
+)
 from imap_l3_processing.hit.l3.sectored_products.science.sectored_products_algorithms import (
     get_sector_unit_vectors,
 )
@@ -203,6 +206,7 @@ class CodiceHiProcessor(Processor):
         # @formatter:on
 
         codice_flags = np.full(len(epochs), CodiceL3Flags.NONE)
+        codice_flags = sectored_intensities.quality_flags & CodiceL2FlagsMask
         if dependencies.mag_is_preliminary:
             codice_flags |= CodiceL3Flags.PRELIMINARY_MAG
 

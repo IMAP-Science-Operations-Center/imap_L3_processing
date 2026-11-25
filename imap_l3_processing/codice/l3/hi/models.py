@@ -16,6 +16,7 @@ CODICE_HI_NUM_L2_PRIORITIES = 6
 ELEVATION_ANGLE_VAR_NAME = "elevation_angle"
 GAIN_VAR_NAME = "gain"
 SPIN_SECTOR_VAR_NAME = "spin_sector"
+CODICE_L2_QUALITY_FLAG_VAR_NAME = "quality_flags"
 
 
 @dataclass
@@ -328,6 +329,7 @@ class CodiceHiL2SectoredIntensitiesData:
     energy_he3he4: ndarray
     energy_he3he4_plus: ndarray
     energy_he3he4_minus: ndarray
+    quality_flags: ndarray
 
     @classmethod
     def read_from_cdf(cls, l2_sectored_intensities_cdf):
@@ -356,6 +358,9 @@ class CodiceHiL2SectoredIntensitiesData:
                 energy_he3he4=cdf["energy_he3he4"][...],
                 energy_he3he4_plus=cdf["energy_he3he4_plus"][...],
                 energy_he3he4_minus=cdf["energy_he3he4_minus"][...],
+                quality_flags=cdf[CODICE_L2_QUALITY_FLAG_VAR_NAME][...]
+                if CODICE_L2_QUALITY_FLAG_VAR_NAME in cdf
+                else np.zeros(len(cdf["epoch"]), dtype=int),
             )
 
 

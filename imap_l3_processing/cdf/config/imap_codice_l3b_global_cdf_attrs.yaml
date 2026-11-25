@@ -2,6 +2,9 @@ imap_codice_l3b_hi-pitch-angle:
   Data_level: "3b"
   Data_type: L3B_hi-pitch-angle>Level-3b pitch angle
   Logical_source_description: IMAP Mission CoDICE Hi Instrument Pitch Angle
+  MODS:
+    - >-
+      Major version 2, Dec. 2, 2026 - Pass through quality flags from level 2.
 
 imap_codice_l3b_lo-hplus-3d-distribution:
   Data_level: "3b"
