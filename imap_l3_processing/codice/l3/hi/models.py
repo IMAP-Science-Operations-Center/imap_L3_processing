@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from datetime import timedelta
 
 import numpy as np
@@ -39,52 +39,30 @@ class CodiceL2HiDirectEventData:
 
     @classmethod
     def read_from_cdf(cls, filename):
-        # @formatter:off
         with CDF(str(filename)) as cdf:
-            return cls(
-                epoch=cdf["epoch"][...],
-                epoch_delta_plus=cdf["epoch_delta_plus"][...],
-                data_quality=read_variable_and_mask_fill_values(cdf["data_quality"])[
-                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
-                ],
-                multi_flag=read_variable_and_mask_fill_values(cdf["multi_flag"])[
-                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
-                ],
-                number_of_events=read_variable_and_mask_fill_values(cdf["num_events"])[
-                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
-                ],
-                ssd_energy=read_variable_and_mask_fill_values(cdf["ssd_energy"])[
-                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
-                ],
-                ssd_id=read_variable_and_mask_fill_values(cdf["ssd_id"])[
-                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
-                ],
-                spin_angle=read_numeric_variable(cdf["spin_angle"])[
-                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
-                ],
-                spin_number=read_variable_and_mask_fill_values(cdf["spin_number"])[
-                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
-                ],
-                time_of_flight=read_numeric_variable(cdf["tof"])[
-                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
-                ],
-                type=read_variable_and_mask_fill_values(cdf["type"])[
-                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
-                ],
-                energy_per_nuc=read_numeric_variable(cdf["energy_per_nuc"])[
-                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
-                ],
-                elevation_angle=read_numeric_variable(cdf[ELEVATION_ANGLE_VAR_NAME])[
-                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
-                ],
-                gain=read_variable_and_mask_fill_values(cdf[GAIN_VAR_NAME])[
-                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
-                ],
-                spin_sector=read_variable_and_mask_fill_values(cdf[SPIN_SECTOR_VAR_NAME])[
-                    :, :CODICE_HI_NUM_L2_PRIORITIES, ...
-                ],
+            data = {
+                "epoch": cdf["epoch"][...],
+                "epoch_delta_plus": cdf["epoch_delta_plus"][...],
+                "number_of_events": read_variable_and_mask_fill_values(cdf["num_events"]),
+                "spin_angle": read_numeric_variable(cdf["spin_angle"]),
+                "time_of_flight": read_numeric_variable(cdf["tof"]),
+                "energy_per_nuc": read_numeric_variable(cdf["energy_per_nuc"]),
+                "elevation_angle": read_numeric_variable(cdf[ELEVATION_ANGLE_VAR_NAME]),
+                "gain": read_variable_and_mask_fill_values(cdf[GAIN_VAR_NAME]),
+                "spin_sector": read_variable_and_mask_fill_values(cdf[SPIN_SECTOR_VAR_NAME]),
+            }
+            data.update(
+                {
+                    f.name: read_variable_and_mask_fill_values(cdf[f.name])
+                    for f in fields(cls)
+                    if f.name not in data
+                }
             )
-        # @formatter:on
+            data = {
+                k: v if len(v.shape) < 2 else v[:, :CODICE_HI_NUM_L2_PRIORITIES, ...]
+                for k, v in data.items()
+            }
+            return cls(**data)
 
 
 EPOCH_VAR_NAME = "epoch"
@@ -330,38 +308,26 @@ class CodiceHiL2SectoredIntensitiesData:
     energy_he3he4_plus: ndarray
     energy_he3he4_minus: ndarray
     quality_flags: ndarray
+    intensities = ("h", "cno", "fe", "he3he4")
 
     @classmethod
     def read_from_cdf(cls, l2_sectored_intensities_cdf):
         with CDF(str(l2_sectored_intensities_cdf)) as cdf:
-            return cls(
-                epoch=cdf["epoch"][...],
-                epoch_delta_plus=np.array(
-                    [timedelta(seconds=ns / 1e9) for ns in cdf["epoch_delta_plus"][...]]
-                ),
-                spin_angles=cdf["spin_angle"][...],
-                elevation_angle=cdf["elevation_angle"][...],
-                data_quality=cdf["data_quality"][...],
-                h_intensities=read_numeric_variable(cdf["h"]),
-                energy_h=cdf["energy_h"][...],
-                energy_h_plus=cdf["energy_h_plus"][...],
-                energy_h_minus=cdf["energy_h_minus"][...],
-                cno_intensities=read_numeric_variable(cdf["cno"]),
-                energy_cno=cdf["energy_cno"][...],
-                energy_cno_plus=cdf["energy_cno_plus"][...],
-                energy_cno_minus=cdf["energy_cno_minus"][...],
-                fe_intensities=read_numeric_variable(cdf["fe"]),
-                energy_fe=cdf["energy_fe"][...],
-                energy_fe_plus=cdf["energy_fe_plus"][...],
-                energy_fe_minus=cdf["energy_fe_minus"][...],
-                he3he4_intensities=read_numeric_variable(cdf["he3he4"]),
-                energy_he3he4=cdf["energy_he3he4"][...],
-                energy_he3he4_plus=cdf["energy_he3he4_plus"][...],
-                energy_he3he4_minus=cdf["energy_he3he4_minus"][...],
-                quality_flags=cdf[CODICE_L2_QUALITY_FLAG_VAR_NAME][...]
-                if CODICE_L2_QUALITY_FLAG_VAR_NAME in cdf
-                else np.zeros(len(cdf["epoch"]), dtype=int),
+            data = {
+                f"{species}_intensities": read_numeric_variable(cdf[species])
+                for species in cls.intensities
+            }
+            data["epoch_delta_plus"] = np.array(
+                [timedelta(seconds=ns / 1e9) for ns in cdf["epoch_delta_plus"][...]]
             )
+            data["quality_flags"] = (
+                cdf[CODICE_L2_QUALITY_FLAG_VAR_NAME][...]
+                if CODICE_L2_QUALITY_FLAG_VAR_NAME in cdf
+                else np.zeros(len(cdf["epoch"]), dtype=int)
+            )
+            data["spin_angles"] = cdf["spin_angle"][...]
+            data.update({f.name: cdf[f.name][...] for f in fields(cls) if f.name not in data})
+            return cls(**data)
 
 
 @dataclass
