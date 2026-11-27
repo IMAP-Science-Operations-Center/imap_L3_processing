@@ -10,10 +10,10 @@ from unittest.mock import Mock, patch
 import imap_data_access
 import numpy as np
 from imap_data_access import (
+    DependencyFilePath,
     ProcessingInputCollection,
     ScienceFilePath,
     ScienceInput,
-    DependencyFilePath,
 )
 from imap_data_access.file_validation import generate_imap_file_path
 from spacepy.pycdf import CDF
@@ -22,12 +22,12 @@ from spiceypy import spiceypy
 import imap_l3_data_processor
 from imap_l3_processing.hi.hi_combined_initializer import HI_COMBINED_DESCRIPTORS
 from tests.integration.integration_test_helpers import mock_imap_data_access
+from tests.integration.utils import parse_dependency_json_files
 from tests.test_helpers import (
     get_run_local_data_path,
     get_test_data_path,
     run_periodically,
 )
-from tests.integration.utils import parse_dependency_json_files
 
 INTEGRATION_TEST_DATA_PATH = Path(__file__).parent / "test_data"
 
@@ -78,26 +78,46 @@ class TestMapIntegration(unittest.TestCase):
             "obs_date",
             "obs_date_range",
             "quality_flags",
-            "solid_angle"
+            "solid_angle",
         }
 
         cases_from_updated_lo_l3_mapping_products = [
             ("spxnsnbs-h-sf-nsp-ram-hae-6deg-6mo", all_pivot_angles, spectral_index_map_variables),
-            ("enasbs-h-hf-sp-ram-hae-6deg-6mo", all_pivot_angles, survival_corrected_intensity_map_variables),
+            (
+                "enasbs-h-hf-sp-ram-hae-6deg-6mo",
+                all_pivot_angles,
+                survival_corrected_intensity_map_variables,
+            ),
             ("spxsbs-h-hf-nsp-ram-hae-6deg-6mo", all_pivot_angles, spectral_index_map_variables),
             ("spxsbs-h-hf-sp-ram-hae-6deg-6mo", all_pivot_angles, spectral_index_map_variables),
-            ("spxnsnbsMsk-h-sf-nsp-ram-hae-6deg-6mo", all_pivot_angles_and_combined, spectral_index_map_variables),
+            (
+                "spxnsnbsMsk-h-sf-nsp-ram-hae-6deg-6mo",
+                all_pivot_angles_and_combined,
+                spectral_index_map_variables,
+            ),
             ("spxsnbsMsk-h-sf-nsp-ram-hae-6deg-6mo", combined, spectral_index_map_variables),
             ("spxsbsMsk-h-sf-nsp-ram-hae-6deg-6mo", combined, spectral_index_map_variables),
-            ("enasbsMsk-h-hf-sp-ram-hae-6deg-6mo", all_pivot_angles_and_combined, survival_corrected_intensity_map_variables),
-            ("spxsbsMsk-h-hf-nsp-ram-hae-6deg-6mo", all_pivot_angles_and_combined, spectral_index_map_variables),
-            ("spxsbsMsk-h-hf-sp-ram-hae-6deg-6mo", all_pivot_angles_and_combined, spectral_index_map_variables),
+            (
+                "enasbsMsk-h-hf-sp-ram-hae-6deg-6mo",
+                all_pivot_angles_and_combined,
+                survival_corrected_intensity_map_variables,
+            ),
+            (
+                "spxsbsMsk-h-hf-nsp-ram-hae-6deg-6mo",
+                all_pivot_angles_and_combined,
+                spectral_index_map_variables,
+            ),
+            (
+                "spxsbsMsk-h-hf-sp-ram-hae-6deg-6mo",
+                all_pivot_angles_and_combined,
+                spectral_index_map_variables,
+            ),
         ]
         lo_imap_data_dir = get_run_local_data_path("lo/integration_data")
         lo_sdc_pipeline_test_data_dir = (
             INTEGRATION_TEST_DATA_PATH / "lo/sdc_pipeline_dependency_inputs_2025"
         )
-        
+
         imap_data_access.config["DATA_DIR"] = lo_sdc_pipeline_test_data_dir
         deps_base_dir = lo_sdc_pipeline_test_data_dir / "imap/dependency/lo"
         test_files_to_download_on_first_time_running = parse_dependency_json_files(deps_base_dir)
@@ -106,7 +126,11 @@ class TestMapIntegration(unittest.TestCase):
         )
         for file_name in test_files_to_download_on_first_time_running:
             imap_path = generate_imap_file_path(file_name)
-            if isinstance(imap_path, ScienceFilePath) and imap_path.data_level.lower() == "l3" and imap_path.instrument == 'lo':
+            if (
+                isinstance(imap_path, ScienceFilePath)
+                and imap_path.data_level.lower() == "l3"
+                and imap_path.instrument == "lo"
+            ):
                 continue
             imap_data_access.download(file_name)
         print("All files present.")
@@ -153,9 +177,15 @@ class TestMapIntegration(unittest.TestCase):
                     )
 
                     with CDF(str(expected_map_path)) as cdf:
-                        self.assertEqual(cdf["epoch"].shape, (1,), "Expected epoch to be of shape (1,)")
+                        self.assertEqual(
+                            cdf["epoch"].shape, (1,), "Expected epoch to be of shape (1,)"
+                        )
                         for map_variable in expected_map_variables:
-                            self.assertIn(map_variable, cdf,f"Expected map variable {map_variable} not found in cdf")
+                            self.assertIn(
+                                map_variable,
+                                cdf,
+                                f"Expected map variable {map_variable} not found in cdf",
+                            )
 
     @patch("imap_l3_data_processor._parse_cli_arguments")
     def test_hi_all_sp_maps_single_sensor(self, mock_parse_cli_arguments):
