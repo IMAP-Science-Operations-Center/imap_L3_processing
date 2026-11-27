@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import namedtuple
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from pathlib import Path
 
 import numpy as np
@@ -35,6 +35,8 @@ RGFO_ESA_STEP_VAR_NAME = "rgfo_esa_step"
 RGFO_SPIN_SECTOR_VAR_NAME = "rgfo_spin_sector"
 RGFO_HALF_SPIN_VAR_NAME = "rgfo_half_spin"
 HALF_SPIN_PER_ESA_STEP_VAR_NAME = "half_spin_per_esa_step"
+CODICE_L2_QUALITY_FLAG_VAR_NAME = "quality_flags"
+CODICE_L3_QUALITY_FLAG_VAR_NAME = "codice_flags"
 
 
 @dataclass
@@ -59,32 +61,34 @@ class CodiceLoL2SWSpeciesData:
     fe_loq: ndarray
     fe_hiq: ndarray
     data_quality: ndarray
+    quality_flags: ndarray
 
     @classmethod
     def read_from_cdf(cls, l2_lo_sw_species_cdf: Path):
         with CDF(str(l2_lo_sw_species_cdf)) as cdf:
-            return cls(
-                epoch=cdf["epoch"][...],
-                epoch_delta_minus=cdf["epoch_delta_minus"][...],
-                epoch_delta_plus=cdf["epoch_delta_plus"][...],
-                energy_per_charge=cdf["energy_per_charge"][...],
-                hplus=read_numeric_variable(cdf["hplus"]),
-                heplusplus=read_numeric_variable(cdf["heplusplus"]),
-                heplus=read_numeric_variable(cdf["heplus"]),
-                cplus4=read_numeric_variable(cdf["cplus4"]),
-                cplus5=read_numeric_variable(cdf["cplus5"]),
-                cplus6=read_numeric_variable(cdf["cplus6"]),
-                oplus5=read_numeric_variable(cdf["oplus5"]),
-                oplus6=read_numeric_variable(cdf["oplus6"]),
-                oplus7=read_numeric_variable(cdf["oplus7"]),
-                oplus8=read_numeric_variable(cdf["oplus8"]),
-                cnoplus=read_numeric_variable(cdf["cnoplus"]),
-                mg=read_numeric_variable(cdf["mg"]),
-                si=read_numeric_variable(cdf["si"]),
-                fe_loq=read_numeric_variable(cdf["fe_loq"]),
-                fe_hiq=read_numeric_variable(cdf["fe_hiq"]),
-                data_quality=cdf["data_quality"][...],
+            data = {
+                f: cdf[f][...]
+                for f in (
+                    "epoch",
+                    "epoch_delta_minus",
+                    "epoch_delta_plus",
+                    "energy_per_charge",
+                    "data_quality",
+                )
+            }
+            data["quality_flags"] = (
+                cdf[CODICE_L2_QUALITY_FLAG_VAR_NAME][...]
+                if CODICE_L2_QUALITY_FLAG_VAR_NAME in cdf
+                else np.zeros(len(cdf["epoch"]), dtype=np.uint16)
             )
+            data.update(
+                {
+                    f.name: read_numeric_variable(cdf[f.name])
+                    for f in fields(cls)
+                    if f.name not in data
+                }
+            )
+            return cls(**data)
 
 
 EnergyAndSpinAngle = namedtuple(
@@ -111,63 +115,38 @@ class CodiceLoL2DirectEventData:
     spin_sector: ndarray
     tof: ndarray
     type: ndarray
+    quality_flags: ndarray
 
     @classmethod
     def read_from_cdf(cls, l2_direct_event_cdf: Path):
         with CDF(str(l2_direct_event_cdf)) as cdf:
-            result = cls(
-                epoch=cdf["epoch"][...],
-                epoch_delta_plus=cdf["epoch_delta_plus"][...],
-                epoch_delta_minus=cdf["epoch_delta_minus"][...],
-                apd_energy=read_variable_and_mask_fill_values(cdf["apd_energy"])[
-                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
-                ],
-                gain=read_variable_and_mask_fill_values(cdf["gain"])[
-                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
-                ],
-                apd_id=read_variable_and_mask_fill_values(cdf["apd_id"])[
-                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
-                ],
-                data_quality=read_variable_and_mask_fill_values(cdf["data_quality"])[
-                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
-                ],
-                energy_step=read_variable_and_mask_fill_values(cdf["energy_step"])[
-                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
-                ],
-                energy_per_charge=read_variable_and_mask_fill_values(cdf["energy_per_charge"])[
-                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
-                ],
-                multi_flag=read_variable_and_mask_fill_values(cdf["multi_flag"])[
-                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
-                ],
-                num_events=read_variable_and_mask_fill_values(cdf["num_events"])[
-                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
-                ],
-                spin_angle=read_variable_and_mask_fill_values(cdf["spin_angle"])[
-                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
-                ],
-                spin_sector=read_variable_and_mask_fill_values(cdf["spin_sector"])[
-                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
-                ].astype(int),
-                elevation_angle=read_variable_and_mask_fill_values(cdf["elevation_angle"])[
-                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
-                ],
-                tof=read_variable_and_mask_fill_values(cdf["tof"])[
-                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
-                ],
-                type=read_variable_and_mask_fill_values(cdf["type"])[
-                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
-                ],
-                position=read_variable_and_mask_fill_values(cdf["position"])[
-                    :, :CODICE_LO_L2_NUM_PRIORITIES, ...
-                ],
+            no_mask = (
+                "epoch",
+                "epoch_delta_minus",
+                "epoch_delta_plus",
             )
-            result.tof = np.ma.masked_less(result.tof, 0)
-            return result
+            data = {f: cdf[f][...] for f in no_mask}
+            data["quality_flags"] = (
+                cdf[CODICE_L2_QUALITY_FLAG_VAR_NAME][...]
+                if CODICE_L2_QUALITY_FLAG_VAR_NAME in cdf
+                else np.zeros(len(cdf["epoch"]), dtype=np.uint16)
+            )
+            data.update(
+                {
+                    f.name: read_variable_and_mask_fill_values(cdf[f.name])[
+                        :, :CODICE_LO_L2_NUM_PRIORITIES, ...
+                    ]
+                    for f in fields(cls)
+                    if f.name not in data
+                }
+            )
+            data["tof"] = np.ma.masked_less(data["tof"], 0)
+            data["spin_sector"] = data["spin_sector"].astype(int)
+            return cls(**data)
 
 
 @dataclass
-class CodiceLoL1aSWPriorityRates:
+class CodiceLoL1aPriorityRates:
     epoch: np.ndarray
     epoch_delta_plus: np.ndarray
     epoch_delta_minus: np.ndarray
@@ -179,6 +158,31 @@ class CodiceLoL1aSWPriorityRates:
     st_bias_gain_mode: np.ndarray
     data_quality: np.ndarray
     spin_period: np.ndarray
+
+    @classmethod
+    def read_from_cdf(cls, cdf_path: Path):
+        with CDF(str(cdf_path)) as cdf:
+            no_mask = (
+                "epoch",
+                "epoch_delta_minus",
+                "epoch_delta_plus",
+                "acquisition_time_per_esa_step",
+            )
+            data = {f: cdf[f][...] for f in no_mask}
+            data["spin_sector_index"] = cdf["spin_sector"][...]
+            data["spin_period"] = read_numeric_variable(cdf["spin_period"])
+            data.update(
+                {
+                    f.name: read_variable_and_mask_fill_values(cdf[f.name])
+                    for f in fields(cls)
+                    if f.name not in data
+                }
+            )
+            return cls(**data)
+
+
+@dataclass
+class CodiceLoL1aSWPriorityRates(CodiceLoL1aPriorityRates):
     p0_tcrs: np.ndarray
     p1_hplus: np.ndarray
     p2_heplusplus: np.ndarray
@@ -191,71 +195,11 @@ class CodiceLoL1aSWPriorityRates:
     nso_esa_step: np.ndarray
     esa_step: np.ndarray
 
-    @classmethod
-    def read_from_cdf(cls, cdf_path: Path):
-        with CDF(str(cdf_path)) as cdf:
-            return cls(
-                epoch=cdf["epoch"][...],
-                epoch_delta_plus=cdf["epoch_delta_plus"][...],
-                epoch_delta_minus=cdf["epoch_delta_minus"][...],
-                acquisition_time_per_esa_step=cdf["acquisition_time_per_esa_step"][...],
-                spin_sector_index=cdf["spin_sector"][...],
-                rgfo_half_spin=read_variable_and_mask_fill_values(cdf["rgfo_half_spin"]),
-                nso_half_spin=read_variable_and_mask_fill_values(cdf["nso_half_spin"]),
-                sw_bias_gain_mode=read_variable_and_mask_fill_values(cdf["sw_bias_gain_mode"]),
-                st_bias_gain_mode=read_variable_and_mask_fill_values(cdf["st_bias_gain_mode"]),
-                data_quality=read_variable_and_mask_fill_values(cdf["data_quality"]),
-                spin_period=read_numeric_variable(cdf["spin_period"]),
-                p0_tcrs=read_variable_and_mask_fill_values(cdf["p0_tcrs"]),
-                p1_hplus=read_variable_and_mask_fill_values(cdf["p1_hplus"]),
-                p2_heplusplus=read_variable_and_mask_fill_values(cdf["p2_heplusplus"]),
-                p3_heavies=read_variable_and_mask_fill_values(cdf["p3_heavies"]),
-                p4_dcrs=read_variable_and_mask_fill_values(cdf["p4_dcrs"]),
-                half_spin_per_esa_step=read_variable_and_mask_fill_values(
-                    cdf["half_spin_per_esa_step"]
-                ),
-                rgfo_spin_sector=read_variable_and_mask_fill_values(cdf["rgfo_spin_sector"]),
-                rgfo_esa_step=read_variable_and_mask_fill_values(cdf["rgfo_esa_step"]),
-                nso_spin_sector=read_variable_and_mask_fill_values(cdf["nso_spin_sector"]),
-                nso_esa_step=read_variable_and_mask_fill_values(cdf["nso_esa_step"]),
-                esa_step=read_variable_and_mask_fill_values(cdf["esa_step"]),
-            )
-
 
 @dataclass
-class CodiceLoL1aNSWPriorityRates:
-    epoch: np.ndarray
-    epoch_delta_plus: np.ndarray
-    epoch_delta_minus: np.ndarray
-    acquisition_time_per_esa_step: np.ndarray
-    spin_sector_index: np.ndarray
-    rgfo_half_spin: np.ndarray
-    data_quality: np.ndarray
+class CodiceLoL1aNSWPriorityRates(CodiceLoL1aPriorityRates):
     p5_heavies: np.ndarray
     p6_hplus_heplusplus: np.ndarray
-    nso_half_spin: np.ndarray
-    sw_bias_gain_mode: np.ndarray
-    st_bias_gain_mode: np.ndarray
-    spin_period: np.ndarray
-
-    @classmethod
-    def read_from_cdf(cls, cdf_path: Path):
-        with CDF(str(cdf_path)) as cdf:
-            return cls(
-                epoch=cdf["epoch"][...],
-                epoch_delta_plus=cdf["epoch_delta_plus"][...],
-                epoch_delta_minus=cdf["epoch_delta_minus"][...],
-                acquisition_time_per_esa_step=cdf["acquisition_time_per_esa_step"][...],
-                spin_sector_index=cdf["spin_sector"][...],
-                rgfo_half_spin=read_variable_and_mask_fill_values(cdf["rgfo_half_spin"]),
-                data_quality=read_variable_and_mask_fill_values(cdf["data_quality"]),
-                p5_heavies=read_variable_and_mask_fill_values(cdf["p5_heavies"]),
-                p6_hplus_heplusplus=read_variable_and_mask_fill_values(cdf["p6_hplus_heplusplus"]),
-                nso_half_spin=read_variable_and_mask_fill_values(cdf["nso_half_spin"]),
-                sw_bias_gain_mode=read_variable_and_mask_fill_values(cdf["sw_bias_gain_mode"]),
-                st_bias_gain_mode=read_variable_and_mask_fill_values(cdf["st_bias_gain_mode"]),
-                spin_period=read_numeric_variable(cdf["spin_period"]),
-            )
 
 
 @dataclass
@@ -275,6 +219,7 @@ class CodiceLoPartialDensityData:
     si_partial_density: ndarray
     fe_loq_partial_density: ndarray
     fe_hiq_partial_density: ndarray
+    codice_flags: ndarray
 
     @classmethod
     def read_from_cdf(cls, cdf_path: Path | str):
@@ -297,6 +242,7 @@ class CodiceLoPartialDensityData:
                 fe_hiq_partial_density=read_numeric_variable(
                     cdf[FE_HIGH_PARTIAL_DENSITY_VAR_NAME]
                 ),
+                codice_flags=cdf[CODICE_L3_QUALITY_FLAG_VAR_NAME][...],
             )
 
 
@@ -323,6 +269,7 @@ class CodiceLoL3aPartialDensityDataProduct(DataProduct):
             DataProductVariable(
                 FE_HIGH_PARTIAL_DENSITY_VAR_NAME, self.data.fe_hiq_partial_density
             ),
+            DataProductVariable(CODICE_L3_QUALITY_FLAG_VAR_NAME, self.data.codice_flags),
         ]
 
 
@@ -396,6 +343,7 @@ class CodiceLoDirectEventData:
     rgfo_esa_step: np.ndarray
     tof: np.ndarray
     type: np.ndarray
+    codice_flags: np.ndarray
 
     @classmethod
     def read_from_cdf(cls, cdf_path: Path | str):
@@ -436,6 +384,9 @@ class CodiceLoDirectEventData:
                 rgfo_esa_step=read_variable_and_mask_fill_values(cdf[RGFO_ESA_STEP_VAR_NAME]),
                 tof=read_variable_and_mask_fill_values(cdf[TOF_VAR_NAME]),
                 type=read_variable_and_mask_fill_values(cdf[TYPE_VAR_NAME]),
+                codice_flags=cdf[CODICE_L3_QUALITY_FLAG_VAR_NAME][...]
+                if CODICE_L3_QUALITY_FLAG_VAR_NAME in cdf
+                else np.zeros(len(cdf[EPOCH_VAR_NAME]), dtype=np.uint16),
             )
 
 
@@ -457,6 +408,7 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
     spin_sector: np.ndarray
     normalization_per_event: np.ndarray
     esa_step: np.ndarray
+    codice_flags: np.ndarray
 
     def __post_init__(self):
         self.priority_index = np.arange(CODICE_LO_L2_NUM_PRIORITIES)
@@ -511,6 +463,7 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
             DataProductVariable(SPIN_SECTOR_VAR_NAME, self.spin_sector),
             DataProductVariable(TOF_VAR_NAME, self.tof),
             DataProductVariable(TYPE_VAR_NAME, self.type),
+            DataProductVariable(CODICE_L3_QUALITY_FLAG_VAR_NAME, self.codice_flags),
         ]
 
 
@@ -534,6 +487,7 @@ class CodiceLoL3aRatiosDataProduct(DataProduct):
     c6_to_c4_ratio: ndarray
     o7_to_o6_ratio: ndarray
     felo_to_fehi_ratio: ndarray
+    codice_flags: ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -546,6 +500,7 @@ class CodiceLoL3aRatiosDataProduct(DataProduct):
             DataProductVariable(C6_TO_C4_RATIO_VAR_NAME, self.c6_to_c4_ratio),
             DataProductVariable(O7_TO_O6_RATIO_VAR_NAME, self.o7_to_o6_ratio),
             DataProductVariable(FELO_TO_FEHI_RATIO_VAR_NAME, self.felo_to_fehi_ratio),
+            DataProductVariable(CODICE_L3_QUALITY_FLAG_VAR_NAME, self.codice_flags),
         ]
 
 
@@ -555,6 +510,7 @@ class CodiceLoL3ChargeStateDistributionsDataProduct(DataProduct):
     epoch_delta: np.ndarray
     oxygen_charge_state_distribution: np.ndarray
     carbon_charge_state_distribution: np.ndarray
+    codice_flags: ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -570,6 +526,7 @@ class CodiceLoL3ChargeStateDistributionsDataProduct(DataProduct):
             ),
             DataProductVariable("oxygen_charge_state", np.array([5, 6, 7, 8])),
             DataProductVariable("carbon_charge_state", np.array([4, 5, 6])),
+            DataProductVariable(CODICE_L3_QUALITY_FLAG_VAR_NAME, self.codice_flags),
         ]
 
 
@@ -602,6 +559,7 @@ class CodiceLoL3b3dDistributionDataProduct(DataProduct):
     rgfo_spin_sector: np.ndarray
     rgfo_half_spin: np.ndarray
     half_spin_per_esa_step: np.ndarray
+    codice_flags: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -623,4 +581,5 @@ class CodiceLoL3b3dDistributionDataProduct(DataProduct):
             DataProductVariable(RGFO_SPIN_SECTOR_VAR_NAME, self.rgfo_spin_sector),
             DataProductVariable(RGFO_HALF_SPIN_VAR_NAME, self.rgfo_half_spin),
             DataProductVariable(HALF_SPIN_PER_ESA_STEP_VAR_NAME, self.half_spin_per_esa_step),
+            DataProductVariable(CODICE_L3_QUALITY_FLAG_VAR_NAME, self.codice_flags),
         ]

@@ -9,6 +9,7 @@ from imap_data_access.file_validation import Version
 from spacepy.pycdf import CDF
 
 from imap_l3_processing.codice.l3.lo.models import (
+    CODICE_L3_QUALITY_FLAG_VAR_NAME,
     CODICE_LO_L2_NUM_PRIORITIES,
     ELEVATION_ANGLE_LABEL_VAR_NAME,
     ELEVATION_DELTA_VAR_NAME,
@@ -206,6 +207,7 @@ class TestModels(CdfModelTestCase):
             "si_partial_density": np.array([15]),
             "fe_loq_partial_density": np.array([15]),
             "fe_hiq_partial_density": np.array([15]),
+            "codice_flags": np.zeros(1, int),
         }
 
         data_product = CodiceLoL3aPartialDensityDataProduct(
@@ -214,7 +216,7 @@ class TestModels(CdfModelTestCase):
 
         actual_data_product_variables = data_product.to_data_product_variables()
 
-        self.assertEqual(15, len(actual_data_product_variables))
+        self.assertEqual(16, len(actual_data_product_variables))
 
         for input_variable, actual_data_product_variable in zip(
             input_data_product_kwargs.items(), actual_data_product_variables
@@ -241,12 +243,13 @@ class TestModels(CdfModelTestCase):
             "c6_to_c4_ratio": np.array([6]),
             "o7_to_o6_ratio": np.array([7]),
             "felo_to_fehi_ratio": np.array([8]),
+            "codice_flags": np.zeros(1, np.uint16),
         }
 
         data_product = CodiceLoL3aRatiosDataProduct(Mock(), **input_data_product_kwargs)
         actual_data_product_variables = data_product.to_data_product_variables()
 
-        self.assertEqual(9, len(actual_data_product_variables))
+        self.assertEqual(10, len(actual_data_product_variables))
 
         for input_variable, actual_data_product_variable in zip(
             input_data_product_kwargs.items(), actual_data_product_variables
@@ -278,6 +281,7 @@ class TestModels(CdfModelTestCase):
             si_partial_density=rng.random(len(epoch), dtype="float32"),
             fe_loq_partial_density=rng.random(len(epoch), dtype="float32"),
             fe_hiq_partial_density=rng.random(len(epoch), dtype="float32"),
+            codice_flags=np.zeros(len(epoch), np.uint16),
         )
 
         input_metadata = InputMetadata(
@@ -313,13 +317,14 @@ class TestModels(CdfModelTestCase):
             "epoch_delta": np.array([1]),
             "oxygen_charge_state_distribution": rng.random((len(epoch_data), 4)),
             "carbon_charge_state_distribution": rng.random((len(epoch_data), 3)),
+            "codice_flags": np.zeros(1, np.uint16),
         }
 
         data_product = CodiceLoL3ChargeStateDistributionsDataProduct(
             Mock(), **input_data_product_kwargs
         )
         actual_data_product_variables = data_product.to_data_product_variables()
-        self.assertEqual(6, len(actual_data_product_variables))
+        self.assertEqual(7, len(actual_data_product_variables))
         for input_variable, actual_data_product_variable in zip(
             input_data_product_kwargs.items(), actual_data_product_variables[:4]
         ):
@@ -334,7 +339,7 @@ class TestModels(CdfModelTestCase):
         (
             oxygen_charge_states,
             carbon_charge_states,
-        ) = actual_data_product_variables[4:]
+        ) = actual_data_product_variables[4:6]
         np.testing.assert_array_equal(oxygen_charge_states.value, [5, 6, 7, 8])
         self.assertEqual("oxygen_charge_state", oxygen_charge_states.name)
 
@@ -555,6 +560,7 @@ class TestModels(CdfModelTestCase):
             esa_step=esa_step,
             energy_per_charge=rng.random((len(epoch), len(priority), len(event_num))),
             type=rng.integers(0, 5, (len(epoch), len(priority), len(event_num))),
+            codice_flags=np.zeros(len(epoch), int),
         )
 
         np.testing.assert_array_equal(direct_event.event_index, np.arange(len(event_num)))
@@ -724,6 +730,7 @@ class TestModels(CdfModelTestCase):
         elevation = np.array([10, 20, 30])
         spin_angle = np.array([40, 50, 60])
         energy = np.array([70, 80, 90])
+        codice_flags = np.zeros(3, np.uint16)
 
         data_product = CodiceLoL3b3dDistributionDataProduct(
             input_metadata=Mock(),
@@ -743,10 +750,11 @@ class TestModels(CdfModelTestCase):
             rgfo_spin_sector=sentinel.rgfo_spin_sector,
             rgfo_half_spin=sentinel.rgfo_half_spin,
             half_spin_per_esa_step=sentinel.half_spin_per_esa_step,
+            codice_flags=codice_flags,
         )
 
         actual_data_product_variables = data_product.to_data_product_variables()
-        self.assertEqual(18, len(actual_data_product_variables))
+        self.assertEqual(19, len(actual_data_product_variables))
         actual_variables = iter(actual_data_product_variables)
 
         self.assert_variable_attributes(next(actual_variables), sentinel.epoch, EPOCH_VAR_NAME)
@@ -800,6 +808,9 @@ class TestModels(CdfModelTestCase):
             next(actual_variables),
             sentinel.half_spin_per_esa_step,
             HALF_SPIN_PER_ESA_STEP_VAR_NAME,
+        )
+        self.assert_variable_attributes(
+            next(actual_variables), codice_flags, CODICE_L3_QUALITY_FLAG_VAR_NAME
         )
 
     def test_codice_lo_l2_direct_events_reads_from_correct_float_data(self):

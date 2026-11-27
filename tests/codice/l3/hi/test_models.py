@@ -147,6 +147,7 @@ class TestModels(unittest.TestCase):
             elevation_angle=rng.random(event_data_shape),
             gain=rng.random(event_data_shape),
             spin_sector=rng.random(event_data_shape),
+            codice_flags=np.zeros(len(expected_epoch), np.uint16),
         )
 
         data_product_variables = l3_data_product.to_data_product_variables()

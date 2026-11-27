@@ -420,5 +420,7 @@ codice_flags:
   LABLAXIS: Quality flags for CoDICE Hi L3b
   VAR_NOTES: >-
     Each bit corresponds to a specific potential concern. See release notes for details.
+    Bit 0: gain test in progress (propagated from level 2)
+    Bit 1: MCP current mitigation active (propagated from level 2)
     Bit 2: preliminary MAG L1D used for magnetic field direction instead of the nominal MAG L2 product.
     Other bits are reserved.
