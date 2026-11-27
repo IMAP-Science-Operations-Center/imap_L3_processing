@@ -62,6 +62,7 @@ class CodiceHiProcessor(Processor):
         l2_data = dependencies.codice_l2_hi_data
         l1a_data = dependencies.codice_l1a_hi_data
         hi_mass_correction_lookup = dependencies.codice_hi_mass_correction_lut_ancillary
+        codice_flags = l2_data.quality_flags & CodiceL2FlagsMask
 
         incident_ion_energy = np.full_like(l2_data.ssd_energy, fill_value=np.nan)
         estimated_mass = np.full_like(l2_data.energy_per_nuc, fill_value=np.nan)
@@ -111,6 +112,7 @@ class CodiceHiProcessor(Processor):
             elevation_angle=l2_data.elevation_angle,
             gain=l2_data.gain,
             spin_sector=l2_data.spin_sector,
+            codice_flags=codice_flags,
         )
 
     def process_l3b(

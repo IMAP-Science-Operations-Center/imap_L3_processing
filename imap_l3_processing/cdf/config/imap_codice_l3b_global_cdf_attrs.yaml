@@ -6,22 +6,28 @@ imap_codice_l3b_hi-pitch-angle:
     - >-
       Major version 2, Dec. 2, 2026 - Pass through quality flags from level 2.
 
-imap_codice_l3b_lo-hplus-3d-distribution:
+
+lo_3d_distribution: &lo_3d_distribution
   Data_level: "3b"
+  MODS:
+    - Major version 2, Dec. 2, 2026 - Add codice_flags variable, passed through from L3a direct events.
+
+imap_codice_l3b_lo-hplus-3d-distribution:
+  <<: *lo_3d_distribution
   Data_type: L3B_lo-hplus-3d-distribution>Level-3B H+ 3d distribution
   Logical_source_description: IMAP Mission CoDICE Lo H+ 3d Instrument Frame Distributions
 
 imap_codice_l3b_lo-heplus-3d-distribution:
-  Data_level: "3b"
+  <<: *lo_3d_distribution
   Data_type: L3B_lo-heplus-3d-distribution>Level-3B He+ 3d distribution
   Logical_source_description: IMAP Mission CoDICE Lo He+ 3d Instrument Frame Distributions
 
 imap_codice_l3b_lo-heplusplus-3d-distribution:
-  Data_level: "3b"
+  <<: *lo_3d_distribution
   Data_type: L3B_lo-heplusplus-3d-distribution>Level-3B He++ 3d distribution
   Logical_source_description: IMAP Mission CoDICE Lo He++ 3d Instrument Frame Distributions
 
 imap_codice_l3b_lo-oplus6-3d-distribution:
-  Data_level: "3b"
+  <<: *lo_3d_distribution
   Data_type: L3B_lo-oplus6-3d-distribution>Level-3B O+6 3d distribution
   Logical_source_description: IMAP Mission CoDICE Lo O+6 3d Instrument Frame Distributions

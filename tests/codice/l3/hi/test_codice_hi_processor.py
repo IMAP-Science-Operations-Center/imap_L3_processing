@@ -107,6 +107,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
         l2_ssd_energy = np.full(shape, np.nan)
         l2_gain = np.full(shape, np.nan)
         l2_energy_per_nuc = np.full(shape, np.nan)
+        l2_quality_flags = np.array([2**7 | CodiceL3Flags.GAIN_TEST, 0, 0])
 
         rng = np.random.default_rng(0)
         for i in range(shape[0]):
@@ -148,6 +149,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
             elevation_angle=sentinel.l2_elevation_angle,
             gain=l2_gain,
             spin_sector=sentinel.l2_spin_sector,
+            quality_flags=l2_quality_flags,
         )
         dependencies = CodiceHiL3aDirectEventsDependencies(
             codice_l2_hi_data=l2_data,
@@ -162,6 +164,9 @@ class TestCodiceHiProcessor(unittest.TestCase):
                 expected_incident_ion_energy[i, j, :npts] = l2_ssd_energy[i, j, :npts]
         for (i, j, k), event in high_gain_events.items():
             expected_incident_ion_energy[i, j, k] = event["l2_energy"] * event["factor"]
+        expected_codice_flags = np.array(
+            [CodiceL3Flags.GAIN_TEST, CodiceL3Flags.NONE, CodiceL3Flags.NONE]
+        )
 
         expected_output = CodiceL3HiDirectEvents(
             input_metadata=sentinel.input_metadata,
@@ -182,6 +187,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
             elevation_angle=sentinel.l2_elevation_angle,
             gain=l2_gain,
             spin_sector=sentinel.l2_spin_sector,
+            codice_flags=expected_codice_flags,
         )
 
         actual_output = codice_hi_processor.process_l3a_direct_event(dependencies=dependencies)
@@ -224,6 +230,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
             ssd_energy=np.ones_like(expected_ssd_energy),
             tof=np.ones_like(expected_ssd_energy),
         )
+        l2_quality_flags = np.zeros(2, int)
         mock_lut = Mock()
 
         l2_data = CodiceL2HiDirectEventData(
@@ -242,6 +249,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
             elevation_angle=sentinel.l2_elevation_angle,
             gain=l2_gain,
             spin_sector=sentinel.l2_spin_sector,
+            quality_flags=l2_quality_flags,
         )
         dependencies = CodiceHiL3aDirectEventsDependencies(
             codice_l2_hi_data=l2_data,
@@ -278,6 +286,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
             elevation_angle=sentinel.l2_elevation_angle,
             gain=l2_gain,
             spin_sector=sentinel.l2_spin_sector,
+            codice_flags=l2_quality_flags,
         )
 
         actual_output = codice_hi_processor.process_l3a_direct_event(dependencies=dependencies)
@@ -440,7 +449,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
         expected_cno_intensity_binned_by_pa_and_gyro = rng.random((2, 3, 6, 12))
         expected_fe_intensity_binned_by_pa_and_gyro = rng.random((2, 2, 6, 12))
 
-        expected_quality_flags = np.array(
+        expected_codice_flags = np.array(
             [
                 CodiceL3Flags.PRELIMINARY_MAG | CodiceL3Flags.GAIN_TEST,
                 CodiceL3Flags.PRELIMINARY_MAG,
@@ -691,7 +700,7 @@ class TestCodiceHiProcessor(unittest.TestCase):
 
         np.testing.assert_array_equal(
             codice_hi_data_product.codice_flags,
-            expected_quality_flags,
+            expected_codice_flags,
         )
 
         np.testing.assert_array_equal(codice_hi_data_product.parent_file_names, expected_parents)

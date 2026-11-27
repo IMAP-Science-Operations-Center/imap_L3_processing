@@ -42,6 +42,7 @@ from imap_l3_processing.codice.l3.lo.science.codice_lo_calculations import (
     rebin_3d_distribution_azimuth_to_elevation,
     rebin_to_counts_by_species_elevation_and_spin_sector,
 )
+from imap_l3_processing.codice.quality_flags import CodiceL2FlagsMask
 from imap_l3_processing.data_utils import safe_divide
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
@@ -111,6 +112,7 @@ class CodiceLoProcessor(Processor):
             c6_to_c4_ratio=safe_divide(c6, c4),
             o7_to_o6_ratio=safe_divide(o7, o6),
             felo_to_fehi_ratio=safe_divide(feloq, fehiq),
+            codice_flags=input_data.codice_flags,
         )
 
     def process_l3a_charge_state_distributions(
@@ -137,6 +139,7 @@ class CodiceLoProcessor(Processor):
             epoch_delta=_sum_over_block(dependencies.partial_density_data.epoch_delta, 3),
             oxygen_charge_state_distribution=o_distribution,
             carbon_charge_state_distribution=c_distribution,
+            codice_flags=dependencies.partial_density_data.codice_flags,
         )
 
     def process_l3a_partial_densities(self, dependencies: CodiceLoL3aPartialDensitiesDependencies):
@@ -207,6 +210,7 @@ class CodiceLoProcessor(Processor):
             codice_lo_l2_data.energy_per_charge,
             mass_per_charge_lookup.fe_hiq,
         )
+        codice_flags = codice_lo_l2_data.quality_flags & CodiceL2FlagsMask
 
         return CodiceLoL3aPartialDensityDataProduct(
             input_metadata=self.input_metadata,
@@ -226,6 +230,7 @@ class CodiceLoProcessor(Processor):
                 si_partial_density=si_partial_density,
                 fe_loq_partial_density=fe_loq_partial_density,
                 fe_hiq_partial_density=fe_hiq_partial_density,
+                codice_flags=codice_flags,
             ),
         )
 
@@ -236,6 +241,7 @@ class CodiceLoProcessor(Processor):
         codice_nsw_priority_counts_l1a_data = dependencies.codice_lo_l1a_nsw_priority_rates
         codice_direct_events = dependencies.codice_l2_direct_events
         esa_energy_per_charge_lookup = dependencies.energy_lookup
+        codice_flags = codice_direct_events.quality_flags & CodiceL2FlagsMask
 
         mass_coefficient_lookup = dependencies.mass_coefficient_lookup
 
@@ -385,6 +391,7 @@ class CodiceLoProcessor(Processor):
             spin_sector=codice_direct_events.spin_sector,
             tof=codice_direct_events.tof,
             type=codice_direct_events.type,
+            codice_flags=codice_flags,
         )
 
     def process_l3b_3d_distribution_product(
@@ -466,6 +473,7 @@ class CodiceLoProcessor(Processor):
             half_spin_per_esa_step=np.flip(
                 dependencies.l3a_direct_event_data.half_spin_per_esa_step
             ),
+            codice_flags=dependencies.l3a_direct_event_data.codice_flags,
         )
 
 

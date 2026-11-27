@@ -49,6 +49,7 @@ from imap_l3_processing.codice.l3.lo.models import (
 from imap_l3_processing.codice.l3.lo.sectored_intensities.science.mass_per_charge_lookup import (
     MassPerChargeLookup,
 )
+from imap_l3_processing.codice.quality_flags import CodiceL3Flags
 from imap_l3_processing.models import InputMetadata
 from imap_l3_processing.processor import Processor
 from tests.test_helpers import (
@@ -212,6 +213,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             si_partial_density=np.arange(5),
             heplusplus_partial_density=np.arange(5),
             hplus_partial_density=np.arange(5),
+            codice_flags=np.zeros(1, np.uint16),
         )
 
         dependency = CodiceLoL3aRatiosDependencies(data)
@@ -260,6 +262,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         np.testing.assert_array_almost_equal(
             ratios_data_product.felo_to_fehi_ratio, np.array([5 / 2, 12 / 11])
         )
+        np.testing.assert_array_almost_equal(ratios_data_product.codice_flags, data.codice_flags)
 
     def test_process_ratios_calculate_abundance_ratios_using_safe_divide(self):
         now = datetime.now()
@@ -279,6 +282,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             si_partial_density=np.arange(3),
             heplusplus_partial_density=np.arange(3),
             hplus_partial_density=np.arange(3),
+            codice_flags=np.zeros(1, np.uint16),
         )
 
         dependency = CodiceLoL3aRatiosDependencies(data)
@@ -350,6 +354,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             si_partial_density=np.arange(5),
             heplusplus_partial_density=np.arange(5),
             hplus_partial_density=np.arange(5),
+            codice_flags=np.zeros(1, np.uint16),
         )
 
         dependency = CodiceLoL3aRatiosDependencies(data)
@@ -397,6 +402,9 @@ class TestCodiceLoProcessor(unittest.TestCase):
                 ]
             ),
         )
+        np.testing.assert_array_almost_equal(
+            abundances_data_product.codice_flags, data.codice_flags
+        )
 
     def test_process_abundances_uses_safe_divide(self):
 
@@ -417,6 +425,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             si_partial_density=np.array([1]),
             heplusplus_partial_density=np.array([1]),
             hplus_partial_density=np.array([1]),
+            codice_flags=np.zeros(1, np.uint16),
         )
         dependency = CodiceLoL3aRatiosDependencies(data)
         input_metadata = Mock()
@@ -503,6 +512,9 @@ class TestCodiceLoProcessor(unittest.TestCase):
         processor = CodiceLoProcessor(dependencies=input_collection, input_metadata=input_metadata)
 
         epochs = np.array([datetime(2025, 1, 1), datetime(2025, 1, 2), datetime(2025, 1, 3)])
+        quality_flags = np.array(
+            [2**7 | CodiceL3Flags.GAIN_TEST, CodiceL3Flags.NONE, CodiceL3Flags.NONE]
+        )
         num_species = 13
 
         codice_lo_l2_data = CodiceLoL2SWSpeciesData(
@@ -514,6 +526,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         )
 
         codice_lo_l2_data.epoch = epochs
+        codice_lo_l2_data.quality_flags = quality_flags
 
         cplus4_partial_density = np.array([1])
         cplus5_partial_density = np.array([2])
@@ -625,6 +638,9 @@ class TestCodiceLoProcessor(unittest.TestCase):
         self.assertIsInstance(result_data, CodiceLoPartialDensityData)
 
         np.testing.assert_array_equal(result_data.epoch, codice_lo_l2_data.epoch)
+        np.testing.assert_array_equal(
+            result_data.codice_flags, np.array([CodiceL3Flags.GAIN_TEST, 0, 0])
+        )
         np.testing.assert_array_equal(result_data.epoch_delta, codice_lo_l2_data.epoch_delta_plus)
         (self.assertEqual(sentinel.hplus_partial_density, result_data.hplus_partial_density),)
         (
@@ -714,6 +730,10 @@ class TestCodiceLoProcessor(unittest.TestCase):
         codice_l2_variables["spin_angle"] *= 360
         codice_l2_variables["data_quality"] = rng.random(num_epochs)
         codice_l2_variables["num_events"] = rng.random(num_epochs)
+        expected_codice_flags = np.zeros(num_epochs, int)
+        expected_codice_flags[1] = CodiceL3Flags.MCP_CURRENT
+        codice_l2_variables["quality_flags"] = expected_codice_flags.copy()
+        codice_l2_variables["quality_flags"][:2] |= 2**7
 
         expected_energy_per_charge = codice_l2_variables["energy_per_charge"]
         expected_apd_energy = codice_l2_variables["apd_energy"]
@@ -922,6 +942,10 @@ class TestCodiceLoProcessor(unittest.TestCase):
             sw_priority_rates.acquisition_time_per_esa_step,
             l3a_direct_event_data_product.acquisition_time_per_esa_step,
         )
+        np.testing.assert_array_equal(
+            expected_codice_flags,
+            l3a_direct_event_data_product.codice_flags,
+        )
 
     @patch(f"{MODULE}.SpinAngleLookup")
     @patch(f"{MODULE}.lookup_normalization_per_event", autospec=True)
@@ -1019,6 +1043,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         codice_l2_variables["spin_angle"] *= 360
         codice_l2_variables["data_quality"] = rng.random((num_direct_event_epochs,))
         codice_l2_variables["num_events"] = rng.random((num_direct_event_epochs,))
+        codice_l2_variables["quality_flags"] = np.zeros(num_direct_event_epochs, int)
 
         direct_events = CodiceLoL2DirectEventData(**codice_l2_variables)
 
@@ -1263,6 +1288,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         codice_l2_variables["spin_angle"] *= 360
         codice_l2_variables["data_quality"] = rng.random((num_direct_event_epochs,))
         codice_l2_variables["num_events"] = rng.random((num_direct_event_epochs,))
+        codice_l2_variables["quality_flags"] = np.zeros(num_direct_event_epochs, int)
 
         direct_events = CodiceLoL2DirectEventData(**codice_l2_variables)
 
@@ -1422,6 +1448,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
         codice_l2_variables["spin_angle"] *= 360
         codice_l2_variables["data_quality"] = rng.random((num_direct_event_epochs,))
         codice_l2_variables["num_events"] = rng.random((num_direct_event_epochs,))
+        codice_l2_variables["quality_flags"] = np.zeros(num_direct_event_epochs, int)
 
         direct_events = CodiceLoL2DirectEventData(**codice_l2_variables)
 
@@ -1523,6 +1550,7 @@ class TestCodiceLoProcessor(unittest.TestCase):
             spin_angle=sentinel.spin_angle,
             spin_angle_bin_delta=sentinel.spin_angle_bin_delta,
             spin_angle_bin=np.array([30, 90, 170, 350]),
+            codice_flags=np.array([1, 2, 3, 4], np.uint16),
         )
 
         mock_geometric_factor_lut = Mock(spec=GeometricFactorLookup)
@@ -1696,6 +1724,10 @@ class TestCodiceLoProcessor(unittest.TestCase):
             l3b_3d_distribution_data_product.species_data_stat_uncert,
         )
         self.assertEqual(sentinel.species, l3b_3d_distribution_data_product.species)
+        np.testing.assert_array_equal(
+            np.array([1, 2, 3, 4]),
+            l3b_3d_distribution_data_product.codice_flags,
+        )
 
     def test_process_3d_distributions_save_for_each_species(self):
 

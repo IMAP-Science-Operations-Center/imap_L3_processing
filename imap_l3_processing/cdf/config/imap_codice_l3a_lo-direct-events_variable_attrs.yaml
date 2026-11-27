@@ -594,3 +594,25 @@ type:
     0 = TCR (Triple Coincidence, STA + STB + SP + APD);
     1 = DCR (Double Coincidence, STA + STB + SP);
     2 = APD-only energy event (APD with one or two of STA, STB, SP).
+
+codice_flags:
+  NAME: codice_flags
+  DATA_TYPE: CDF_UINT2
+  CATDESC: "Quality flags for CoDICE Lo L3a (caution required if nonzero)"
+  DEPEND_0: epoch
+  VAR_TYPE: data
+  RECORD_VARYING: RV
+  DISPLAY_TYPE: time_series
+  SCALETYP: linear
+  FIELDNAM: Quality flags for CoDICE Lo L3a
+  FORMAT: I5
+  UNITS: '0: okay; nonzero: caution'
+  VALIDMIN: 0
+  VALIDMAX: 65534
+  FILLVAL: 65535
+  LABLAXIS: Quality flags for CoDICE Lo L3a
+  VAR_NOTES: >-
+    Each bit corresponds to a specific potential concern. See release notes for details.
+    Bit 0: gain test in progress (propagated from level 2)
+    Bit 1: MCP current mitigation active (propagated from level 2)
+    Other bits are reserved.

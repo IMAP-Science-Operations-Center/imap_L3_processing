@@ -35,6 +35,8 @@ RGFO_ESA_STEP_VAR_NAME = "rgfo_esa_step"
 RGFO_SPIN_SECTOR_VAR_NAME = "rgfo_spin_sector"
 RGFO_HALF_SPIN_VAR_NAME = "rgfo_half_spin"
 HALF_SPIN_PER_ESA_STEP_VAR_NAME = "half_spin_per_esa_step"
+CODICE_L2_QUALITY_FLAG_VAR_NAME = "quality_flags"
+CODICE_L3_QUALITY_FLAG_VAR_NAME = "codice_flags"
 
 
 @dataclass
@@ -59,6 +61,7 @@ class CodiceLoL2SWSpeciesData:
     fe_loq: ndarray
     fe_hiq: ndarray
     data_quality: ndarray
+    quality_flags: ndarray
 
     @classmethod
     def read_from_cdf(cls, l2_lo_sw_species_cdf: Path):
@@ -73,6 +76,11 @@ class CodiceLoL2SWSpeciesData:
                     "data_quality",
                 )
             }
+            data["quality_flags"] = (
+                cdf[CODICE_L2_QUALITY_FLAG_VAR_NAME][...]
+                if CODICE_L2_QUALITY_FLAG_VAR_NAME in cdf
+                else np.zeros(len(cdf["epoch"]), dtype=np.uint16)
+            )
             data.update(
                 {
                     f.name: read_numeric_variable(cdf[f.name])
@@ -107,6 +115,7 @@ class CodiceLoL2DirectEventData:
     spin_sector: ndarray
     tof: ndarray
     type: ndarray
+    quality_flags: ndarray
 
     @classmethod
     def read_from_cdf(cls, l2_direct_event_cdf: Path):
@@ -117,6 +126,11 @@ class CodiceLoL2DirectEventData:
                 "epoch_delta_plus",
             )
             data = {f: cdf[f][...] for f in no_mask}
+            data["quality_flags"] = (
+                cdf[CODICE_L2_QUALITY_FLAG_VAR_NAME][...]
+                if CODICE_L2_QUALITY_FLAG_VAR_NAME in cdf
+                else np.zeros(len(cdf["epoch"]), dtype=np.uint16)
+            )
             data.update(
                 {
                     f.name: read_variable_and_mask_fill_values(cdf[f.name])[
@@ -205,6 +219,7 @@ class CodiceLoPartialDensityData:
     si_partial_density: ndarray
     fe_loq_partial_density: ndarray
     fe_hiq_partial_density: ndarray
+    codice_flags: ndarray
 
     @classmethod
     def read_from_cdf(cls, cdf_path: Path | str):
@@ -227,6 +242,7 @@ class CodiceLoPartialDensityData:
                 fe_hiq_partial_density=read_numeric_variable(
                     cdf[FE_HIGH_PARTIAL_DENSITY_VAR_NAME]
                 ),
+                codice_flags=cdf[CODICE_L3_QUALITY_FLAG_VAR_NAME][...],
             )
 
 
@@ -253,6 +269,7 @@ class CodiceLoL3aPartialDensityDataProduct(DataProduct):
             DataProductVariable(
                 FE_HIGH_PARTIAL_DENSITY_VAR_NAME, self.data.fe_hiq_partial_density
             ),
+            DataProductVariable(CODICE_L3_QUALITY_FLAG_VAR_NAME, self.data.codice_flags),
         ]
 
 
@@ -326,6 +343,7 @@ class CodiceLoDirectEventData:
     rgfo_esa_step: np.ndarray
     tof: np.ndarray
     type: np.ndarray
+    codice_flags: np.ndarray
 
     @classmethod
     def read_from_cdf(cls, cdf_path: Path | str):
@@ -366,6 +384,9 @@ class CodiceLoDirectEventData:
                 rgfo_esa_step=read_variable_and_mask_fill_values(cdf[RGFO_ESA_STEP_VAR_NAME]),
                 tof=read_variable_and_mask_fill_values(cdf[TOF_VAR_NAME]),
                 type=read_variable_and_mask_fill_values(cdf[TYPE_VAR_NAME]),
+                codice_flags=cdf[CODICE_L3_QUALITY_FLAG_VAR_NAME][...]
+                if CODICE_L3_QUALITY_FLAG_VAR_NAME in cdf
+                else np.zeros(len(cdf[EPOCH_VAR_NAME]), dtype=np.uint16),
             )
 
 
@@ -387,6 +408,7 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
     spin_sector: np.ndarray
     normalization_per_event: np.ndarray
     esa_step: np.ndarray
+    codice_flags: np.ndarray
 
     def __post_init__(self):
         self.priority_index = np.arange(CODICE_LO_L2_NUM_PRIORITIES)
@@ -441,6 +463,7 @@ class CodiceLoL3aDirectEventDataProduct(CodiceLoDirectEventData, DataProduct):
             DataProductVariable(SPIN_SECTOR_VAR_NAME, self.spin_sector),
             DataProductVariable(TOF_VAR_NAME, self.tof),
             DataProductVariable(TYPE_VAR_NAME, self.type),
+            DataProductVariable(CODICE_L3_QUALITY_FLAG_VAR_NAME, self.codice_flags),
         ]
 
 
@@ -464,6 +487,7 @@ class CodiceLoL3aRatiosDataProduct(DataProduct):
     c6_to_c4_ratio: ndarray
     o7_to_o6_ratio: ndarray
     felo_to_fehi_ratio: ndarray
+    codice_flags: ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -476,6 +500,7 @@ class CodiceLoL3aRatiosDataProduct(DataProduct):
             DataProductVariable(C6_TO_C4_RATIO_VAR_NAME, self.c6_to_c4_ratio),
             DataProductVariable(O7_TO_O6_RATIO_VAR_NAME, self.o7_to_o6_ratio),
             DataProductVariable(FELO_TO_FEHI_RATIO_VAR_NAME, self.felo_to_fehi_ratio),
+            DataProductVariable(CODICE_L3_QUALITY_FLAG_VAR_NAME, self.codice_flags),
         ]
 
 
@@ -485,6 +510,7 @@ class CodiceLoL3ChargeStateDistributionsDataProduct(DataProduct):
     epoch_delta: np.ndarray
     oxygen_charge_state_distribution: np.ndarray
     carbon_charge_state_distribution: np.ndarray
+    codice_flags: ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -500,6 +526,7 @@ class CodiceLoL3ChargeStateDistributionsDataProduct(DataProduct):
             ),
             DataProductVariable("oxygen_charge_state", np.array([5, 6, 7, 8])),
             DataProductVariable("carbon_charge_state", np.array([4, 5, 6])),
+            DataProductVariable(CODICE_L3_QUALITY_FLAG_VAR_NAME, self.codice_flags),
         ]
 
 
@@ -532,6 +559,7 @@ class CodiceLoL3b3dDistributionDataProduct(DataProduct):
     rgfo_spin_sector: np.ndarray
     rgfo_half_spin: np.ndarray
     half_spin_per_esa_step: np.ndarray
+    codice_flags: np.ndarray
 
     def to_data_product_variables(self) -> list[DataProductVariable]:
         return [
@@ -553,4 +581,5 @@ class CodiceLoL3b3dDistributionDataProduct(DataProduct):
             DataProductVariable(RGFO_SPIN_SECTOR_VAR_NAME, self.rgfo_spin_sector),
             DataProductVariable(RGFO_HALF_SPIN_VAR_NAME, self.rgfo_half_spin),
             DataProductVariable(HALF_SPIN_PER_ESA_STEP_VAR_NAME, self.half_spin_per_esa_step),
+            DataProductVariable(CODICE_L3_QUALITY_FLAG_VAR_NAME, self.codice_flags),
         ]

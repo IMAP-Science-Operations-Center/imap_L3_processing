@@ -36,6 +36,7 @@ class CodiceL2HiDirectEventData:
     elevation_angle: ndarray
     gain: ndarray
     spin_sector: ndarray
+    quality_flags: ndarray
 
     @classmethod
     def read_from_cdf(cls, filename):
@@ -51,6 +52,11 @@ class CodiceL2HiDirectEventData:
                 "gain": read_variable_and_mask_fill_values(cdf[GAIN_VAR_NAME]),
                 "spin_sector": read_variable_and_mask_fill_values(cdf[SPIN_SECTOR_VAR_NAME]),
             }
+            data["quality_flags"] = (
+                cdf[CODICE_L2_QUALITY_FLAG_VAR_NAME][...]
+                if CODICE_L2_QUALITY_FLAG_VAR_NAME in cdf
+                else np.zeros(len(cdf["epoch"]), dtype=np.uint16)
+            )
             data.update(
                 {
                     f.name: read_variable_and_mask_fill_values(cdf[f.name])
@@ -140,6 +146,8 @@ class CodiceL3HiDirectEvents(DataProduct):
     elevation_angle: ndarray
     gain: ndarray
     spin_sector: ndarray
+    codice_flags: ndarray
+
     priority_index: ndarray = field(init=False)
     event_index: ndarray = field(init=False)
     priority_index_label: ndarray = field(init=False)
@@ -174,6 +182,7 @@ class CodiceL3HiDirectEvents(DataProduct):
             DataProductVariable(EVENT_INDEX_VAR_NAME, self.event_index),
             DataProductVariable(PRIORITY_INDEX_LABEL_VAR_NAME, self.priority_index_label),
             DataProductVariable(EVENT_INDEX_LABEL_VAR_NAME, self.event_index_label),
+            DataProductVariable(CODICE_FLAGS_VAR_NAME, self.codice_flags),
         ]
 
 
@@ -323,7 +332,7 @@ class CodiceHiL2SectoredIntensitiesData:
             data["quality_flags"] = (
                 cdf[CODICE_L2_QUALITY_FLAG_VAR_NAME][...]
                 if CODICE_L2_QUALITY_FLAG_VAR_NAME in cdf
-                else np.zeros(len(cdf["epoch"]), dtype=int)
+                else np.zeros(len(cdf["epoch"]), dtype=np.uint16)
             )
             data["spin_angles"] = cdf["spin_angle"][...]
             data.update({f.name: cdf[f.name][...] for f in fields(cls) if f.name not in data})

@@ -4,23 +4,30 @@ imap_codice_l3a_lo-partial-densities:
   Logical_source_description: IMAP Mission CoDICE Lo Instrument Partial Densities
   MODS:
     - >-
-      Major version 2, Nov. 24, 2026 - Remove ne_partial_density.
-      Corrected energy passband width, lowering densities by order of magnitude.
+      Major version 2, Dec. 2, 2026 - Remove ne_partial_density.
+      Correct energy passband width, lowering densities by order of magnitude.
+      Add codice_flags variable, passed through from level 2 quality flags.
 
 imap_codice_l3a_lo-sw-ratios:
   Data_level: "3a"
   Data_type: L3A_lo-sw-ratios>Level-3A sw ratios
   Logical_source_description: IMAP Mission CoDICE Lo Instrument SW Ratios
+  MODS:
+    - Major version 2, Dec. 2, 2026 - Add codice_flags variable, passed through from L3a partial densities.
 
 imap_codice_l3a_lo-direct-events:
   Data_level: "3a"
   Data_type: L3A_lo-direct-events>Level-3A direct events
   Logical_source_description: IMAP Mission CoDICE Lo Instrument Direct Events
+  MODS:
+    - Major version 2, Dec. 2, 2026 - Add codice_flags variable, passed through from level 2 quality flags.
 
 imap_codice_l3a_lo-sw-charge-state-distributions:
   Data_level: "3a"
   Data_type: L3A_lo-sw-charge-state-distributions>Level-3A charge state distributions
   Logical_source_description: IMAP Mission CoDICE Instrument Charge State Distributions
+  MODS:
+    - Major version 2, Dec. 2, 2026 - Add codice_flags variable, passed through from L3a partial densities.
 
 imap_codice_l3a_hi-direct-events:
   Data_level: "3a"
@@ -28,3 +35,4 @@ imap_codice_l3a_hi-direct-events:
   Logical_source_description: IMAP Mission CoDICE Hi Instrument Direct Events
   MODS:
     - "Major version 2, Oct. 8, 2026 - Add incident_ion_energy and use to calculate estimated_mass."
+    - Major version 3, Dec. 2, 2026 - Add codice_flags variable, passed through from level 2 quality flags.
